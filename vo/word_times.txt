@@ -1,0 +1,11 @@
+# reel length 16.73 s · last word ends 16.01 s · voice en-US-BrianMultilingualNeural +12%
+l01 0.12-3.02  Wait! Before you post that reel, check three things.
+  Wait@0.16 Before@0.75 you@1.05 post@1.18 that@1.50 reel@1.72 check@2.05 three@2.30 things@2.54
+l02 3.32-6.32  One: the hook. Does something move in the first second?
+  One@3.36 the@3.62 hook@3.71 Does@4.42 something@4.53 move@4.88 in@5.25 the@5.40 first@5.49 second@5.78
+l03 6.62-10.18  Two: captions. With the sound off, can people still follow?
+  Two@6.66 captions@7.18 With@8.14 the@8.25 sound@8.33 off@8.64 can@8.94 people@9.11 still@9.36 follow@9.61
+l04 10.48-13.93  Three: the safe zone. Keep your text away from the buttons.
+  Three@10.52 the@10.98 safe@11.07 zone@11.35 Keep@12.05 your@12.24 text@12.39 away@12.72 from@13.02 the@13.22 buttons@13.32
+l05 14.23-16.01  All three good? Post it.
+  All@14.27 three@14.39 good@14.66 Post@15.37 it@15.70

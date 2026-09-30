@@ -1,0 +1,40 @@
+{
+  "bpm": 120,
+  "mood": "bright",
+  "cuts": [ {"after": "l01"}, {"after": "l02"}, {"after": "l03"}, {"after": "l04"} ],
+  "cues": [
+    {"t": 0.02, "sfx": "pop", "gain": 0.3, "note": "phone drops in"},
+    {"word": "wait", "sfx": "slam", "gain": 0.55, "note": "Clawd leaps in, WAIT!"},
+    {"word": "wait", "offset": 0.16, "sfx": "boing", "gain": 0.3, "pan": -0.3, "note": "Clawd lands"},
+    {"word": "post", "line": "l01", "sfx": "snap", "gain": 0.4, "note": "ring round POST"},
+    {"word": "reel", "sfx": "shimmer", "gain": 0.22, "note": "twinkles"},
+    {"word": "check", "sfx": "whip", "gain": 0.3, "note": "phone lifts"},
+    {"word": "three", "line": "l01", "sfx": "blip", "gain": 0.35, "pan": -0.2, "note": "badge 1"},
+    {"word": "three", "line": "l01", "offset": 0.12, "sfx": "blip", "gain": 0.35, "note": "badge 2"},
+    {"word": "things", "sfx": "pop", "gain": 0.4, "pan": 0.2, "note": "badge 3"},
+
+    {"word": "one", "sfx": "title", "gain": 0.4, "note": "header 1"},
+    {"word": "move", "sfx": "boing", "gain": 0.4, "note": "ball starts bouncing"},
+    {"word": "first", "sfx": "click", "gain": 0.4, "note": "0:01 chip"},
+    {"word": "second", "sfx": "ding", "gain": 0.2, "note": "chip burst"},
+
+    {"word": "two", "sfx": "title", "gain": 0.4, "note": "header 2"},
+    {"word": "sound", "offset": -0.15, "sfx": "pop", "gain": 0.3, "pan": 0.3, "note": "speaker pops in"},
+    {"word": "off", "sfx": "buzz", "gain": 0.35, "pan": 0.3, "note": "speaker crossed out"},
+    {"word": "follow", "sfx": "coin", "gain": 0.3, "note": "captions appear"},
+
+    {"word": "three", "line": "l04", "sfx": "title", "gain": 0.4, "note": "header 3"},
+    {"word": "safe", "sfx": "ratchet", "gain": 0.25, "note": "zone draws itself"},
+    {"word": "away", "sfx": "whip", "offset": 0.2, "gain": 0.3, "note": "text slides into the zone"},
+    {"word": "away", "sfx": "ding", "offset": 0.3, "gain": 0.22, "note": "tick"},
+    {"word": "buttons", "sfx": "boing", "gain": 0.3, "pan": 0.3, "note": "buttons bounce"},
+
+    {"word": "all", "sfx": "lock", "gain": 0.4, "pan": -0.3, "note": "tick 1"},
+    {"word": "three", "line": "l05", "sfx": "lock", "gain": 0.4, "note": "tick 2"},
+    {"word": "good", "sfx": "lock", "gain": 0.4, "pan": 0.3, "note": "tick 3"},
+    {"word": "post", "line": "l05", "sfx": "slam", "gain": 0.6, "note": "POST pressed"},
+    {"word": "post", "line": "l05", "sfx": "boom", "gain": 0.5, "note": "POST boom"},
+    {"word": "post", "line": "l05", "offset": 0.1, "sfx": "shimmer", "gain": 0.3, "note": "hearts"},
+    {"word": "it", "sfx": "coin", "gain": 0.3, "note": "second hop"}
+  ]
+}

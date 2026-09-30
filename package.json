@@ -1,0 +1,23 @@
+{
+  "name": "kaiships-reel-kit",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Make painted, narrated, captioned vertical reels with Claude Code: p5.brush animation, AI voiceover, word-locked captions, generated music and SFX.",
+  "author": "Kaiships.ai",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "setup": "node setup.mjs",
+    "make": "node make.mjs",
+    "vo": "node make.mjs vo",
+    "audio": "node make.mjs audio",
+    "render": "node make.mjs render",
+    "verify": "node make.mjs verify"
+  },
+  "dependencies": {
+    "p5": "^2.3.3",
+    "p5.brush": "^2.2.3",
+    "puppeteer-core": "^25.11.0"
+  }
+}

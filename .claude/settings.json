@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node setup.mjs:*)",
+      "Bash(node make.mjs:*)",
+      "Bash(node render.mjs:*)",
+      "Bash(npm install:*)"
+    ]
+  }
+}
