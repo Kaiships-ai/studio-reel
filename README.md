@@ -44,3 +44,7 @@ Change something after it renders:
 - The voiceover needs an internet connection.
 - Something broke? Tell Claude "setup failed, fix it" and paste the error. Or DM @kaiships.ai on Instagram.
 - Licence: unlimited videos, personal or commercial. Please don't share or resell the kit itself. See `LICENSE.md`.
+
+## Bonus: Token Diet
+
+Open `bonus/token-diet.html` in your browser (also as `.md`): one page on the three tools I use or recommend to keep Claude's token bill down while making reels: Caveman, CodeBurn and OmniRoute. You install them yourself; they are not part of the kit.
