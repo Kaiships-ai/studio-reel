@@ -1,20 +1,254 @@
-<!doctype html>
-<html lang="en">
-<head>
+<!DOCTYPE html>
+<html lang="en" data-rendered="1"><head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Token Diet</title>
+<!--
+  ksa-free-source LOCKED TEMPLATE.
+  Do not edit CSS; edit content.json only. Build: node build.mjs <content.json> <out.html>
+  The CSS block below is copied verbatim from 02-content-funnel/weeks/2026-W40/plan.html,
+  followed by a small "free-doc additions" block (W40 tokens only). Changing the look needs Kai's yes.
+-->
 <script>
-(function(){try{var m=(location.search+location.hash).match(/theme=(light|dark)/);var t=m?m[1]:localStorage.getItem("td-theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}})();
+(function(){try{var m=location.search.match(/theme=(light|dark)/);var t=m?m[1]:localStorage.getItem('ks-theme');if(t)document.documentElement.dataset.theme=t;}catch(e){}})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&amp;family=Instrument+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<script id="content" type="application/json">{
+ "lang": "en",
+ "title": "Token Diet",
+ "crumb": [
+  "kaiships.ai",
+  "Reel Kit · bonus",
+  "Token Diet"
+ ],
+ "eyebrow": "Reel Kit · bonus",
+ "subtitle": "A bonus playbook from the kaiships.ai Reel Kit.",
+ "intro": "Making a reel with Claude Code is a lot of back and forth: scripts, cuts, captions, renders, fixes. Every round trip costs tokens. These are three tools I use or recommend to keep that in check.",
+ "sections": [
+  {
+   "id": "words",
+   "title": "Words on this page",
+   "sub": "Plain meanings, in case some of these are new.",
+   "blocks": [
+    {
+     "type": "gloss",
+     "items": [
+      [
+       "Token",
+       "The small chunk of text an AI reads and writes. Usage and limits are counted in tokens."
+      ],
+      [
+       "Claude Code",
+       "Anthropic's AI assistant that works inside your terminal and your project files."
+      ],
+      [
+       "Terminal",
+       "The text window where you type commands (Terminal on Mac, PowerShell on Windows)."
+      ],
+      [
+       "npm / Node.js",
+       "Node.js runs JavaScript tools on your computer. npm comes with it and installs those tools."
+      ],
+      [
+       "Gateway",
+       "A small program on your computer that passes your AI requests on to a provider."
+      ],
+      [
+       "Provider",
+       "A company that runs AI models you can connect to, like Anthropic or OpenAI."
+      ],
+      [
+       "MCP server",
+       "An add-on that gives your AI assistant extra tools, like reading a website or an app."
+      ],
+      [
+       "API",
+       "Application Programming Interface: the way one program talks to another, like a tool sending your requests to an AI provider."
+      ],
+      [
+       "CLAUDE.md",
+       "A notes file in your project that Claude Code reads at the start of every session."
+      ],
+      [
+       "MIT licence",
+       "A common open-source licence: free to use, copy and change."
+      ],
+      [
+       "Q&amp;A",
+       "Questions and answers."
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "tools",
+   "blocks": [
+    {
+     "type": "callout",
+     "tone": "clay",
+     "html": "\u003cb>Before you start:\u003c/b> you need Node.js 22.13 or newer (OmniRoute needs 22.22+ or 24+). Check with \u003ccode>node -v\u003c/code>. Get it from \u003ca href=\"https://nodejs.org\">nodejs.org\u003c/a>."
+    },
+    {
+     "type": "tool",
+     "id": "caveman",
+     "n": 1,
+     "name": "Caveman",
+     "chip": "talk less",
+     "tagline": "Make Claude talk less.",
+     "parts": [
+      {
+       "label": "What it is",
+       "html": "A free skill that makes your agent answer in short, blunt \"caveman\" sentences. Code, commands, file paths and exact error messages stay untouched. Only the prose around them gets cut."
+      },
+      {
+       "label": "How I use it",
+       "html": "I run it on full (the old name for today's default, \u003ccode>/caveman\u003c/code>)."
+      },
+      {
+       "label": "What its README says",
+       "html": "In the repo's own test, default \u003ccode>/caveman\u003c/code> cut output tokens by a median 3%, \"inside the noise\"; \u003ccode>/ultracave\u003c/code> cut 35% (length only, not correctness). Its rules add about 1,000 input tokens to every call, so on short one-line Q&amp;A it can cost more than it saves. The README's advice: measure it yourself, and turn it off if it loses."
+      },
+      {
+       "label": "Commands",
+       "commands": [
+        {
+         "cmd": "npx skills add JuliusBrussee/caveman -g"
+        }
+       ],
+       "after": "Type \u003ccode>/caveman\u003c/code> if it doesn't switch on by itself. Other modes: \u003ccode>/ultracave\u003c/code> strips the grammar, \u003ccode>/megacave\u003c/code> speaks classical Chinese. To turn it off, say \u003ccode>stop caveman\u003c/code>, \u003ccode>/caveman off\u003c/code> or \u003ccode>normal mode\u003c/code>."
+      }
+     ],
+     "source": {
+      "label": "github.com/JuliusBrussee/caveman",
+      "url": "https://github.com/JuliusBrussee/caveman"
+     }
+    },
+    {
+     "type": "tool",
+     "id": "codeburn",
+     "n": 2,
+     "name": "CodeBurn",
+     "chip": "measure",
+     "tagline": "See where your tokens go.",
+     "parts": [
+      {
+       "label": "What it is",
+       "html": "A free tool that reads the session files Claude Code already saves on your computer and shows what you spent, by tool, model, project and task. No account, no sign-up. On a subscription the dollar figure is an estimate: your measured tokens priced at published API rates."
+      },
+      {
+       "label": "How I use it",
+       "html": "After a render session, to see which part of the work ate the tokens."
+      },
+      {
+       "label": "Commands",
+       "commands": [
+        {
+         "cmd": "npm i -g codeburn@latest",
+         "note": "update to the latest version"
+        },
+        {
+         "cmd": "codeburn",
+         "note": "dashboard; arrow keys change the period"
+        },
+        {
+         "cmd": "codeburn optimize",
+         "note": "lists what costs tokens without earning them"
+        },
+        {
+         "cmd": "codeburn optimize --apply",
+         "note": "review and apply the fixes"
+        },
+        {
+         "cmd": "codeburn act undo --last",
+         "note": "put the last fix back"
+        }
+       ],
+       "after": "\u003ccode>optimize\u003c/code> points out things like a file the agent re-reads every turn, an MCP server you installed and never call, or a \u003ccode>CLAUDE.md\u003c/code> that grew long enough to ride along in every request."
+      }
+     ],
+     "source": {
+      "label": "github.com/getagentseal/codeburn",
+      "url": "https://github.com/getagentseal/codeburn"
+     }
+    },
+    {
+     "type": "tool",
+     "id": "omniroute",
+     "n": 3,
+     "name": "OmniRoute",
+     "chip": "fall back",
+     "tagline": "My pick for when the quota runs out.",
+     "parts": [
+      {
+       "label": "What it is",
+       "html": "A free, MIT-licensed AI gateway that runs on your own computer. One endpoint in front of many AI providers, with automatic fallback to another provider when one hits its limit. Claude Code is one of the supported tools."
+      },
+      {
+       "label": "When to reach for it",
+       "html": "When your Claude quota runs out in the middle of a session and you still have a reel to finish."
+      },
+      {
+       "label": "Commands",
+       "commands": [
+        {
+         "cmd": "npm install -g omniroute"
+        },
+        {
+         "cmd": "omniroute",
+         "note": "window 1: gateway + dashboard, localhost:20128"
+        },
+        {
+         "cmd": "omniroute run claude --model openai/gpt-5.4",
+         "note": "window 2"
+        }
+       ],
+       "after": "\u003cb>Two windows:\u003c/b> \u003ccode>omniroute\u003c/code> keeps the first busy, so type \u003ccode>omniroute run\u003c/code> in a second. Connect a provider under \u003cb>Providers\u003c/b> first, then swap \u003ccode>openai/gpt-5.4\u003c/code> (the README's example) for one of its models. No config files written."
+      }
+     ],
+     "source": {
+      "label": "github.com/diegosouzapw/OmniRoute",
+      "url": "https://github.com/diegosouzapw/OmniRoute"
+     },
+     "warn": "\u003cb>Know the trade-off.\u003c/b> Your prompts and files go to whatever provider you connect. You'll be on a different model, so output can differ. Check each provider's terms before connecting an account."
+    }
+   ]
+  },
+  {
+   "id": "routine",
+   "title": "A reel session routine",
+   "blocks": [
+    {
+     "type": "steps",
+     "items": [
+      {
+       "name": "Measure.",
+       "html": "Open \u003ccode>codeburn\u003c/code> after a session. Run \u003ccode>codeburn optimize\u003c/code> now and then to clear out waste."
+      },
+      {
+       "name": "Compress.",
+       "html": "Caveman on, then check in CodeBurn that it actually helps on your work."
+      },
+      {
+       "name": "Fall back.",
+       "html": "If the quota runs out, launch Claude Code through OmniRoute and finish the reel."
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "ps": null,
+ "footer": "Tools I use or recommend. You install them yourself, from their official pages. Kaiships has no affiliation with any of them."
+}</script>
 <style>
+/* ===== LOCKED: W40 plan.html CSS, verbatim. Do not edit CSS; edit content.json only. ===== */
 :root{
   --bg:#FAF9F5;--surface:#FFFFFF;--surface-2:#F3F0E8;--ink:#1F1E1D;--muted:#625E55;--faint:#948F85;
   --line:#E6E1D6;--line-2:#D4CDBF;--clay:#D97757;--clay-ink:#B4583A;--clay-bg:#D977571A;
-  --olive:#6E7B4E;--olive-bg:#6E7B4E1A;
+  --olive:#6E7B4E;--olive-bg:#6E7B4E1A;--slate:#5B6B7A;--slate-bg:#5B6B7A1A;--rust:#B04A3F;--rust-bg:#B04A3F14;
   --serif:"Newsreader",Georgia,"Times New Roman",serif;
   --sans:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
@@ -23,210 +257,361 @@
   :root:not([data-theme="light"]){color-scheme:dark;
     --bg:#1C1B19;--surface:#252421;--surface-2:#2E2C28;--ink:#EEEBE3;--muted:#ABA69A;--faint:#7A766C;
     --line:#383631;--line-2:#4A4740;--clay:#E08966;--clay-ink:#EFA184;--clay-bg:#E089661F;
-    --olive:#A7B57F;--olive-bg:#A7B57F1F;}
+    --olive:#A7B57F;--olive-bg:#A7B57F1F;--slate:#9DB0C2;--slate-bg:#9DB0C21F;--rust:#E07A6E;--rust-bg:#E07A6E1F;}
 }
 :root[data-theme="dark"]{color-scheme:dark;
   --bg:#1C1B19;--surface:#252421;--surface-2:#2E2C28;--ink:#EEEBE3;--muted:#ABA69A;--faint:#7A766C;
   --line:#383631;--line-2:#4A4740;--clay:#E08966;--clay-ink:#EFA184;--clay-bg:#E089661F;
-  --olive:#A7B57F;--olive-bg:#A7B57F1F;}
+  --olive:#A7B57F;--olive-bg:#A7B57F1F;--slate:#9DB0C2;--slate-bg:#9DB0C21F;--rust:#E07A6E;--rust-bg:#E07A6E1F;}
 
 *{box-sizing:border-box}
+html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
-.wrap{max-width:860px;margin:0 auto;padding-inline:20px;padding-block:40px 72px}
-.eyebrow,.lbl,.chip,.sec-h{font-family:var(--mono);font-weight:500;text-transform:uppercase;letter-spacing:.12em}
-.eyebrow{font-size:11px;color:var(--clay-ink)}
-h1{font-family:var(--serif);font-weight:600;font-size:clamp(30px,5vw,44px);line-height:1.1;margin:10px 0 0;text-wrap:balance}
-h2,h3{font-family:var(--serif);font-weight:600;margin:0;text-wrap:balance}
-.lede{color:var(--muted);max-width:66ch;margin:14px 0 0;font-size:16px}
+a{color:var(--clay-ink);text-underline-offset:2px}
 code{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);border:1px solid var(--line);border-radius:5px;padding:1px 6px;overflow-wrap:anywhere}
-a{color:var(--clay-ink);font-weight:600;text-underline-offset:2px;overflow-wrap:anywhere}
-a:focus-visible,button:focus-visible{outline:2px solid var(--clay);outline-offset:2px}
+.mono{font-family:var(--mono)}
+.lbl{font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
 
-/* header row + theme toggle */
-.top{display:flex;justify-content:space-between;align-items:center;gap:12px}
-.theme{font:inherit;font-size:13px;background:transparent;border:1px solid var(--line-2);color:var(--muted);border-radius:8px;padding:6px 12px;cursor:pointer}
+/* top bar */
+.top{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top-in{max-width:1320px;margin:0 auto;padding:10px 20px;display:flex;gap:12px;align-items:center}
+.crumb{font-family:var(--mono);font-size:12px;color:var(--muted);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crumb a{color:var(--muted);text-decoration:none}.crumb a:hover{color:var(--clay-ink)}
+.crumb b{color:var(--ink);font-weight:500}
+.btn{font:500 12px var(--mono);border:1px solid var(--line-2);background:var(--surface);color:var(--ink);border-radius:8px;padding:5px 10px;cursor:pointer}
+.btn:hover{border-color:var(--clay)}
+.topbar-prog{height:2px;background:var(--clay);width:0;transition:width .1s linear}
 
-/* glossary */
-.gloss{margin-top:32px;background:var(--surface);border:1.5px solid var(--line-2);border-radius:12px;padding:20px 22px}
-.gloss h2{font-size:22px;margin-bottom:4px}
-.gloss .hint{color:var(--muted);font-size:13.5px;margin:0 0 16px}
-.gloss dl{margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 28px}
-.gloss dl>div{display:grid;grid-template-columns:118px 1fr;gap:10px;align-items:baseline;border-top:1px solid var(--line);padding-top:10px}
-.gloss dt{font-weight:600;font-size:14px}
-.gloss dd{margin:0;font-size:14px;color:var(--muted)}
-.gloss .wide{grid-column:1/-1}
+/* layout */
+.page{max-width:1320px;margin:0 auto;padding:0 20px 80px;display:grid;grid-template-columns:250px minmax(0,1fr);gap:48px}
+.rail{min-width:0;position:sticky;top:64px;align-self:start;padding-top:40px;max-height:calc(100vh - 64px);overflow:auto}
+.tree{font-family:var(--mono);font-size:12.5px;line-height:1.5;margin:0;padding:0;list-style:none}
+.tree li{margin:0}
+.tree a{display:flex;gap:6px;padding:3px 6px;border-radius:6px;color:var(--muted);text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tree a .br{color:var(--line-2);flex:none}
+.tree a:hover{color:var(--ink);background:var(--surface-2)}
+.tree a.on{color:var(--clay-ink);background:var(--clay-bg)}
+.tree a.on .br{color:var(--clay)}
+.tree .root a{color:var(--ink);font-weight:500}
+.prog{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+.prog .bar{max-width:100%;font-family:var(--mono);font-size:12px;letter-spacing:-.5px;color:var(--clay);white-space:nowrap;overflow:hidden}
+.prog .bar i{font-style:normal;color:var(--line-2)}
+.prog .row{display:flex;justify-content:space-between;align-items:baseline;margin-top:4px}
+.prog .pct{font-family:var(--mono);font-size:12px;color:var(--ink)}
+.hint{font-family:var(--mono);font-size:10.5px;color:var(--faint);letter-spacing:.08em;text-transform:uppercase;margin-top:12px}
+.wprog{margin-top:18px;padding:12px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface)}
+.wprog .bar{color:var(--olive);overflow:hidden}
 
-/* before you start */
-.rule{margin-top:24px;border-left:3px solid var(--clay);background:var(--clay-bg);border-radius:0 8px 8px 0;padding:10px 14px;font-size:14.5px}
-.rule p{margin:0}.rule p+p{margin-top:6px}
+main{padding-top:40px;min-width:0}
+.eyebrow{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--clay-ink)}
+h1{font-family:var(--serif);font-weight:600;font-size:clamp(30px,5vw,44px);line-height:1.1;margin:10px 0 0;text-wrap:balance}
+.lede{color:var(--muted);max-width:68ch;margin:14px 0 0;font-size:16px}
+section.sec{margin-top:56px;scroll-margin-top:72px}
+section.sec>h2{font-family:var(--serif);font-weight:600;font-size:28px;line-height:1.2;margin:0 0 6px}
+.sec-sub{color:var(--muted);margin:0 0 20px;max-width:70ch}
+h3.sub{font-family:var(--serif);font-weight:600;font-size:20px;margin:32px 0 12px;scroll-margin-top:72px}
+p.txt{margin:0 0 14px;max-width:72ch}
 
-/* tool cards */
-.tools{margin-top:36px}
-.card{background:var(--surface);border:1.5px solid var(--line);border-radius:12px;overflow:hidden}
-.card+.card{margin-top:18px}
-.card-h{padding:18px 22px;border-bottom:1px solid var(--line)}
-.card-h .row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:baseline}
-.card-h h2{font-size:26px;flex:1 1 240px}
-.card-h h2 .n{color:var(--clay-ink)}
-.chip{font-size:10.5px;border-radius:999px;padding:3px 10px;border:1px solid var(--line-2);color:var(--muted);background:var(--surface);white-space:nowrap}
-.hyp{margin:10px 0 0;font-size:15.5px;max-width:74ch}
-.sec{padding:16px 22px;border-bottom:1px solid var(--line)}
-.sec:last-child{border-bottom:0}
-.sec p{margin:0;font-size:14.5px;max-width:74ch}
-.sec p+p,.sec p+.cmd,.sec .cmd+p{margin-top:10px}
-.lbl{display:block;font-size:10.5px;color:var(--faint);margin-bottom:8px}
-.src{font-size:13.5px;color:var(--muted)}
+/* blocks */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:20px 0}
+.stat{background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:14px 16px}
+.stat .v{font-family:var(--serif);font-size:30px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .s{font-size:12.5px;color:var(--muted);margin-top:4px}
+.stat.clay{border-color:var(--clay)} .stat.clay .v{color:var(--clay-ink)}
+.stat.rust .v{color:var(--rust)}
 
-/* code blocks (built from the page's code token) */
-.cmd{position:relative;background:var(--surface-2);border:1px solid var(--line);border-radius:10px}
-.cmd pre{margin:0;padding:12px 14px;padding-right:72px;font-family:var(--mono);font-size:12.5px;line-height:1.75;color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere}
+.callout{border-radius:12px;padding:16px 18px;margin:16px 0;border:1.5px solid var(--line-2);background:var(--surface)}
+.callout.clay{border-color:var(--clay);background:var(--clay-bg)}
+.callout.olive{border-color:var(--olive);background:var(--olive-bg)}
+.callout.rust{border-color:var(--rust);background:var(--rust-bg)}
+.callout h4{margin:0 0 8px;font-family:var(--serif);font-size:18px;font-weight:600}
+.callout ol,.callout ul{margin:0;padding-left:20px}.callout li{margin:4px 0}
+
+.tbl-wrap{overflow-x:auto;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);margin:12px 0}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);text-align:left;padding:10px 14px;border-bottom:1.5px solid var(--line);white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:none}
+td.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+th.num{text-align:right}
+.na{color:var(--faint);font-style:italic}
+
+.chip{display:inline-block;font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:2px 7px;border:1px solid var(--line-2);color:var(--muted);background:var(--surface-2);white-space:nowrap}
+.chip.clay{color:var(--clay-ink);border-color:var(--clay);background:var(--clay-bg)}
+.chip.olive{color:var(--olive);border-color:var(--olive);background:var(--olive-bg)}
+.chip.slate{color:var(--slate);border-color:var(--slate);background:var(--slate-bg)}
+.chip.rust{color:var(--rust);border-color:var(--rust);background:var(--rust-bg)}
+.kw{font-family:var(--mono);font-weight:500;font-size:12.5px;color:var(--clay-ink);background:var(--clay-bg);border-radius:5px;padding:1px 7px}
+
+.gloss{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 28px;background:var(--surface);border:1.5px solid var(--line-2);border-radius:12px;padding:6px 20px}
+.gloss>div{display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:baseline;border-bottom:1px solid var(--line);padding:10px 0}
+.gloss dt{font-weight:600;font-size:14px}.gloss dd{margin:0;font-size:14px;color:var(--muted)}
+
+/* proposals */
+.props{display:grid;gap:10px}
+.prop{display:grid;grid-template-columns:30px 1fr;gap:12px;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:14px 16px}
+.prop .n{font-family:var(--serif);font-size:22px;color:var(--clay);line-height:1}
+.prop .f{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.prop .c{margin:4px 0}.prop .w{font-size:13.5px;color:var(--muted)}
+.prop .ask{margin-top:8px;display:flex;gap:6px}
+
+/* week strip */
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin:16px 0}
+.day{border:1.5px solid var(--line);border-radius:10px;padding:10px;min-height:118px;background:var(--surface);display:flex;flex-direction:column;gap:6px}
+.day.empty{background:transparent;border-style:dashed}
+.day .d{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.06em}
+.day .t{font-size:13.5px;font-weight:500;line-height:1.35}
+.day.post{border-color:var(--clay)}
+.day .m{margin-top:auto;display:flex;flex-wrap:wrap;gap:4px}
+
+/* script cards */
+.script{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;margin:18px 0;overflow:hidden;scroll-margin-top:72px}
+.script-h{padding:16px 18px;border-bottom:1px solid var(--line);display:grid;gap:8px}
+.script-h .row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.script-h h3{margin:0;font-family:var(--serif);font-weight:600;font-size:21px;line-height:1.25}
+.script-h .src{font-size:13px;color:var(--muted)}
+.hook{padding:14px 18px;background:var(--surface-2);border-bottom:1px solid var(--line);display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:baseline}
+.hook .q{font-family:var(--serif);font-size:19px;font-weight:500}
+.vers{display:grid;grid-template-columns:1fr 1fr}
+.ver{padding:16px 18px;font-size:14.5px;line-height:1.7}
+.ver+.ver{border-left:1px solid var(--line)}
+.ver .lbl{display:block;margin-bottom:8px}
+.ver.kai .lbl{color:var(--clay-ink)}
+.meta{border-top:1px solid var(--line);padding:12px 18px;display:grid;gap:10px;font-size:13.5px}
+.meta .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);display:block;margin-bottom:2px}
+.cards{display:flex;flex-wrap:wrap;gap:6px;counter-reset:c}
+.cards span{border:1px solid var(--line-2);border-radius:8px;padding:3px 9px;font-size:13px;background:var(--bg)}
+.tools a{margin-right:4px}
+.fix{color:var(--muted)}
+.warn{background:var(--rust-bg);border-top:1px solid var(--line);padding:10px 18px;font-size:13.5px}
+.pick{border-top:1px solid var(--line);padding:10px 18px;display:flex;gap:8px;align-items:center;background:var(--surface-2)}
+
+/* graph */
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;font-size:13px;color:var(--muted);margin:8px 0 14px}
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.filters button{font:500 12px var(--mono);border:1px solid var(--line-2);background:var(--surface);color:var(--muted);border-radius:999px;padding:4px 12px;cursor:pointer}
+.filters button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid-wrap{overflow-x:auto;border:1.5px solid var(--line);border-radius:14px;background:var(--surface)}
+.g{display:grid;grid-template-columns:96px repeat(6,minmax(0,1fr))}
+.g .hd{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:10px 12px;border-bottom:1.5px solid var(--line)}
+.g .rh{padding:12px 10px;border-bottom:1px solid var(--line);font-family:var(--serif);font-weight:600;font-size:16px;background:var(--surface-2)}
+.g .rh small{display:block;font-family:var(--sans);font-weight:400;font-size:12px;color:var(--muted)}
+.cell{padding:10px 10px;overflow-wrap:anywhere;border-bottom:1px solid var(--line);border-left:1px solid var(--line);display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:1.4;position:relative;transition:opacity .15s}
+.cell .idea{font-weight:500}
+.cell .src{font-family:var(--mono);font-size:11px;color:var(--faint)}
+.cell .src b{color:var(--ink);font-weight:500}
+.cell .foot{margin-top:auto;display:flex;flex-wrap:wrap;gap:4px}
+.cell.used{background:var(--clay-bg)}
+.cell.used::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--clay)}
+.cell.dim{opacity:.22}
+.heat{display:inline-block;height:4px;border-radius:2px;background:var(--clay);vertical-align:middle}
+
+/* timeline */
+.tl{list-style:none;margin:16px 0;padding:0;display:grid;gap:0}
+.tl li{display:grid;grid-template-columns:40px 1fr;gap:14px;position:relative;padding-bottom:14px}
+.tl li:not(:last-child)::after{content:"";position:absolute;left:19px;top:40px;bottom:0;width:1.5px;background:var(--line-2)}
+.tl .dot{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-family:var(--serif);font-weight:600;font-size:17px;border:1.5px solid var(--line-2);background:var(--surface);color:var(--faint)}
+.tl li.done .dot{background:var(--olive);border-color:var(--olive);color:var(--bg)}
+.tl li.wait .dot{background:var(--clay);border-color:var(--clay);color:var(--bg)}
+.tl li.blocked .dot{background:var(--rust);border-color:var(--rust);color:var(--bg)}
+.tl .body{background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:12px 16px}
+.tl li.wait .body{border-color:var(--clay)}
+.tl li.todo .body{background:transparent;border-style:dashed}
+.tl .hrow{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline}
+.tl .nm{font-family:var(--serif);font-weight:600;font-size:18px}
+.tl .when{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-left:auto}
+.tl .note{font-size:14px;color:var(--muted);margin-top:4px}
+.log{font-family:var(--mono);font-size:12.5px;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:12px 16px;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--muted)}
+
+.links{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.links a{font-family:var(--mono);font-size:12px;text-decoration:none;border:1px solid var(--line-2);border-radius:8px;padding:5px 10px;background:var(--surface);color:var(--ink)}
+.links a:hover{border-color:var(--clay)}
+footer{margin-top:64px;padding-top:14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--faint)}
+
+@media (max-width:900px){
+  .page{grid-template-columns:minmax(0,1fr);gap:0}
+  .rail{position:static;max-height:none;padding-top:20px;border-bottom:1px solid var(--line);padding-bottom:16px}
+  .tree .l3{display:none}
+  .g{grid-template-columns:96px repeat(6,150px)}
+  .gloss{grid-template-columns:1fr}
+  .vers{grid-template-columns:1fr}.ver+.ver{border-left:none;border-top:1px solid var(--line)}
+  .week{grid-template-columns:1fr 1fr}
+  .day{min-height:0}
+  .page{padding:0 16px 64px}.top-in{padding:10px 16px}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+/* interactive calendar */
+.cal-f{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.cal-f button{font:inherit;font-size:12.5px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);border-radius:999px;padding:4px 12px;cursor:pointer}
+.cal-f button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.cal .cd{background:var(--surface);border:1.5px solid var(--line);border-radius:10px;min-height:150px;padding:8px;display:flex;flex-direction:column;gap:6px}
+.cal .cd.today{border-color:var(--clay)}
+.cal .cd.over{background:var(--clay-bg)}
+.cal .dh{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:flex;justify-content:space-between}
+.cal .it{border:1px solid var(--line-2);border-radius:8px;padding:6px 8px;font-size:12.5px;line-height:1.35;cursor:pointer;background:var(--surface-2)}
+.cal .it[draggable="true"]{cursor:grab}
+.cal .it.done{border-color:var(--olive);background:var(--olive-bg)}
+.cal .it.ready{border-color:var(--clay);background:var(--clay-bg)}
+.cal .it.todo{border-style:dashed}
+.cal .it.sel{outline:2px solid var(--clay);outline-offset:1px}
+.cal .it.hide{display:none}
+.cal .it b{display:block;font-weight:600}
+.cal .it small{font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+.cal-d{margin-top:12px;background:var(--surface);border:1.5px solid var(--line-2);border-radius:12px;padding:14px 16px;font-size:14px}
+.cal-d h4{margin:0 0 6px;font-family:var(--serif);font-size:18px}
+.cal-d dl{display:grid;grid-template-columns:120px 1fr;gap:4px 12px;margin:8px 0 0}
+.cal-d dt{font-family:var(--mono);font-size:11px;text-transform:uppercase;color:var(--muted);padding-top:2px}
+.cal-d dd{margin:0}
+.cal-hint{font-size:12.5px;color:var(--muted);margin-top:8px}
+@media (max-width:760px){.cal{grid-template-columns:1fr}.cal .cd{min-height:auto}}
+
+/* ===== LOCKED: free-doc additions (W40 tokens only). Do not edit CSS; edit content.json only. ===== */
+.meta{grid-template-columns:minmax(0,1fr)}
+.meta>div{min-width:0}
+.meta p{margin:0;max-width:72ch}.meta p+p,.meta .cmd+p,.meta p+.cmd{margin-top:8px}
+.script-h h3 .n{color:var(--clay-ink)}
+.cmd{position:relative;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;min-width:0}
+.cmd pre{margin:0;padding:12px 14px;padding-right:76px;font-family:var(--mono);font-size:12.5px;line-height:1.75;color:var(--ink);white-space:pre;overflow-x:auto}
 .cmd .c{color:var(--faint)}
-.copy{position:absolute;top:8px;right:8px;font-family:var(--mono);font-weight:500;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;background:var(--surface);border:1px solid var(--line-2);color:var(--muted);border-radius:6px;padding:3px 9px;cursor:pointer}
+.copy{position:absolute;top:8px;right:8px;font:500 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;background:var(--surface);border:1px solid var(--line-2);color:var(--muted);border-radius:6px;padding:3px 9px;cursor:pointer}
+.copy:hover{border-color:var(--clay)}
 .copy.ok{color:var(--olive);border-color:var(--olive);background:var(--olive-bg)}
-
-/* trade-off + routine */
-.card.warn{border-color:var(--clay)}
-.card.warn .card-h{background:var(--clay-bg)}
-.open{margin-top:36px}
-.open h2{font-size:24px}
-.steps{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:0}
-.steps li{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:baseline;padding:12px 0;border-top:1px solid var(--line);font-size:14.5px}
-.steps li:first-child{border-top:0}
-.steps .n{font-family:var(--serif);font-weight:600;font-size:20px;color:var(--faint);line-height:1.2}
-.foot{margin-top:40px;padding-top:14px;border-top:1.5px solid var(--line-2);font-size:13.5px;color:var(--muted);font-style:italic}
-
-@media (max-width:700px){
-  .gloss dl{grid-template-columns:1fr}
-}
-@media (max-width:480px){
-  .wrap{padding-inline:16px}
-  .gloss{padding:16px}
-  .gloss dl>div{grid-template-columns:1fr;gap:2px}
-  .card-h,.sec{padding-inline:16px}
-  .card-h h2{font-size:23px}
-  .cmd pre{white-space:pre;overflow-wrap:normal;overflow-x:auto;padding-top:38px;padding-right:14px}
-}
-@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+.tl li:not([class]) .body{border-color:var(--line)}
+.ps{margin-top:40px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--clay);outline-offset:2px}
+@media (max-width:480px){.cmd pre{padding-top:38px;padding-right:14px}.hook{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="top">
-      <div class="eyebrow">Reel Kit · bonus</div>
-      <button class="theme" id="theme" type="button" aria-label="Switch light or dark theme">Dark</button>
-    </div>
-    <h1>Token Diet</h1>
-    <p class="lede">A bonus playbook from the kaiships.ai Reel Kit.</p>
-    <p class="lede">Making a reel with Claude Code is a lot of back and forth: scripts, cuts, captions, renders, fixes. Every round trip costs tokens. These are three tools I use or recommend to keep that in check.</p>
-  </header>
-
-  <section class="gloss" aria-labelledby="gloss-h">
-    <h2 id="gloss-h">Words on this page</h2>
-    <p class="hint">Plain meanings, in case some of these are new.</p>
-    <dl>
-      <div><dt>Token</dt><dd>The small chunk of text an AI reads and writes. Usage and limits are counted in tokens.</dd></div>
-      <div><dt>Claude Code</dt><dd>Anthropic's AI assistant that works inside your terminal and your project files.</dd></div>
-      <div><dt>Terminal</dt><dd>The text window where you type commands (Terminal on Mac, PowerShell on Windows).</dd></div>
-      <div><dt>npm / Node.js</dt><dd>Node.js runs JavaScript tools on your computer. npm comes with it and installs those tools.</dd></div>
-      <div><dt>Gateway</dt><dd>A small program on your computer that passes your AI requests on to a provider.</dd></div>
-      <div><dt>Provider</dt><dd>A company that runs AI models you can connect to, like Anthropic or OpenAI.</dd></div>
-      <div class="wide"><dt>MCP server</dt><dd>An add-on that gives your AI assistant extra tools, like reading a website or an app.</dd></div>
-    </dl>
-  </section>
-
-  <div class="rule">
-    <p><b>Before you start:</b> you need Node.js 22.13 or newer (OmniRoute needs 22.22+ or 24+). Check with <code>node -v</code>. Get it from <a href="https://nodejs.org" target="_blank" rel="noopener">nodejs.org</a>.</p>
-  </div>
-
-  <main class="tools">
-    <article class="card" id="caveman">
-      <div class="card-h">
-        <div class="row"><h2><span class="n">1.</span> Caveman</h2><span class="chip">talk less</span></div>
-        <p class="hyp">Make Claude talk less.</p>
-      </div>
-      <div class="sec"><span class="lbl">What it is</span>
-        <p>A free skill that makes your agent answer in short, blunt "caveman" sentences. Code, commands, file paths and exact error messages stay untouched. Only the prose around them gets cut.</p></div>
-      <div class="sec"><span class="lbl">How I use it</span>
-        <p>I run it on full (the old name for today's default, <code>/caveman</code>).</p></div>
-      <div class="sec"><span class="lbl">What its README says</span>
-        <p>In the repo's own test, default <code>/caveman</code> cut output tokens by a median 3%, "inside the noise"; <code>/ultracave</code> cut 35% (length only, not correctness). Its rules add about 1,000 input tokens to every call, so on short one-line Q&amp;A it can cost more than it saves. The README's advice: measure it yourself, and turn it off if it loses.</p></div>
-      <div class="sec"><span class="lbl">Commands</span>
-        <div class="cmd"><pre>npx skills add JuliusBrussee/caveman -g</pre><button class="copy" type="button">Copy</button></div>
-        <p>Type <code>/caveman</code> if it doesn't switch on by itself. Other modes: <code>/ultracave</code> strips the grammar, <code>/megacave</code> speaks classical Chinese. To turn it off, say <code>stop caveman</code>, <code>/caveman off</code> or <code>normal mode</code>.</p></div>
-      <div class="sec"><p class="src">Source: <a href="https://github.com/JuliusBrussee/caveman" target="_blank" rel="noopener">github.com/JuliusBrussee/caveman</a></p></div>
-    </article>
-
-    <article class="card" id="codeburn">
-      <div class="card-h">
-        <div class="row"><h2><span class="n">2.</span> CodeBurn</h2><span class="chip">measure</span></div>
-        <p class="hyp">See where your tokens go.</p>
-      </div>
-      <div class="sec"><span class="lbl">What it is</span>
-        <p>A free tool that reads the session files Claude Code already saves on your computer and shows what you spent, by tool, model, project and task. No account, no sign-up. On a subscription the dollar figure is an estimate: your measured tokens priced at published API rates.</p></div>
-      <div class="sec"><span class="lbl">How I use it</span>
-        <p>After a render session, to see which part of the work ate the tokens.</p></div>
-      <div class="sec"><span class="lbl">Commands</span>
-        <div class="cmd"><pre>npm i -g codeburn@latest    <span class="c"># update to the latest version</span>
-codeburn                    <span class="c"># dashboard; arrow keys change the period</span>
-codeburn optimize           <span class="c"># lists what costs tokens without earning them</span>
-codeburn optimize --apply   <span class="c"># review and apply the fixes</span>
-codeburn act undo --last    <span class="c"># put the last fix back</span></pre><button class="copy" type="button">Copy</button></div>
-        <p><code>optimize</code> points out things like a file the agent re-reads every turn, an MCP server you installed and never call, or a <code>CLAUDE.md</code> that grew long enough to ride along in every request.</p></div>
-      <div class="sec"><p class="src">Source: <a href="https://github.com/getagentseal/codeburn" target="_blank" rel="noopener">github.com/getagentseal/codeburn</a></p></div>
-    </article>
-
-    <article class="card" id="omniroute">
-      <div class="card-h">
-        <div class="row"><h2><span class="n">3.</span> OmniRoute</h2><span class="chip">fall back</span></div>
-        <p class="hyp">My pick for when the quota runs out.</p>
-      </div>
-      <div class="sec"><span class="lbl">What it is</span>
-        <p>A free, MIT-licensed AI gateway that runs on your own computer. One endpoint in front of many AI providers, with automatic fallback to another provider when one hits its limit. Claude Code is one of the supported tools.</p></div>
-      <div class="sec"><span class="lbl">When to reach for it</span>
-        <p>When your Claude quota runs out in the middle of a session and you still have a reel to finish.</p></div>
-      <div class="sec"><span class="lbl">Commands</span>
-        <div class="cmd"><pre>npm install -g omniroute
-omniroute                     <span class="c"># window 1: gateway + dashboard, localhost:20128</span>
-omniroute run claude --model openai/gpt-5.4   <span class="c"># window 2</span></pre><button class="copy" type="button">Copy</button></div>
-        <p><b>Two windows:</b> <code>omniroute</code> keeps the first busy, so type <code>omniroute run</code> in a second. Connect a provider under <b>Providers</b> first, then swap <code>openai/gpt-5.4</code> (the README's example) for one of its models. No config files written.</p></div>
-      <div class="sec"><p class="src">Source: <a href="https://github.com/diegosouzapw/OmniRoute" target="_blank" rel="noopener">github.com/diegosouzapw/OmniRoute</a></p></div>
-    </article>
-
-    <article class="card warn" id="trade-off">
-      <div class="card-h"><div class="row"><h2>Know the trade-off</h2><span class="chip">OmniRoute</span></div></div>
-      <div class="sec"><p>Your prompts and files go to whatever provider you connect. You'll be on a different model, so output can differ. Check each provider's terms before connecting an account.</p></div>
-    </article>
-  </main>
-
-  <section class="open" aria-labelledby="routine-h">
-    <h2 id="routine-h">A reel session routine</h2>
-    <ol class="steps">
-      <li><span class="n">1</span><span><b>Measure.</b> Open <code>codeburn</code> after a session. Run <code>codeburn optimize</code> now and then to clear out waste.</span></li>
-      <li><span class="n">2</span><span><b>Compress.</b> Caveman on, then check in CodeBurn that it actually helps on your work.</span></li>
-      <li><span class="n">3</span><span><b>Fall back.</b> If the quota runs out, launch Claude Code through OmniRoute and finish the reel.</span></li>
-    </ol>
-  </section>
-
-  <p class="foot">Tools I use or recommend. You install them yourself, from their official pages. Kaiships has no affiliation with any of them.</p>
+<div class="top"><div class="top-in"><div class="crumb" id="crumb">kaiships.ai / Reel Kit · bonus / <b>Token Diet</b></div><button class="btn" id="theme" type="button">◐ theme</button></div><div class="topbar-prog" id="topprog" style="width: 0%;"></div></div>
+<div class="page">
+  <aside class="rail"><nav id="toc" aria-label="Contents"><ul class="tree" id="tree"><li class="root"><a href="#top">Token Diet</a></li><li><a href="#words" data-t="words"><span class="br">├</span>Words on this page</a></li><li><a href="#caveman" data-t="caveman"><span class="br">├</span>1. Caveman</a></li><li><a href="#codeburn" data-t="codeburn"><span class="br">├</span>2. CodeBurn</a></li><li><a href="#omniroute" data-t="omniroute"><span class="br">├</span>3. OmniRoute</a></li><li><a href="#routine" data-t="routine"><span class="br">└</span>A reel session routine</a></li></ul></nav>
+    <div class="prog"><div class="bar" id="bar"><i>░░░░░░░░░░░░░░░░░░░░░░░░░░░░</i></div><div class="row"><span class="lbl" id="readlbl">read</span><span class="pct" id="pct">00%</span></div></div>
+    <div class="hint" id="hint">↑ / ↓ to jump</div>
+  </aside>
+  <main id="top"><div class="eyebrow">Reel Kit · bonus</div><h1>Token Diet</h1><p class="lede">A bonus playbook from the kaiships.ai Reel Kit.</p><p class="lede">Making a reel with Claude Code is a lot of back and forth: scripts, cuts, captions, renders, fixes. Every round trip costs tokens. These are three tools I use or recommend to keep that in check.</p><section class="sec" id="words"><h2>Words on this page</h2><p class="sec-sub">Plain meanings, in case some of these are new.</p><dl class="gloss"><div><dt>Token</dt><dd>The small chunk of text an AI reads and writes. Usage and limits are counted in tokens.</dd></div><div><dt>Claude Code</dt><dd>Anthropic's AI assistant that works inside your terminal and your project files.</dd></div><div><dt>Terminal</dt><dd>The text window where you type commands (Terminal on Mac, PowerShell on Windows).</dd></div><div><dt>npm / Node.js</dt><dd>Node.js runs JavaScript tools on your computer. npm comes with it and installs those tools.</dd></div><div><dt>Gateway</dt><dd>A small program on your computer that passes your AI requests on to a provider.</dd></div><div><dt>Provider</dt><dd>A company that runs AI models you can connect to, like Anthropic or OpenAI.</dd></div><div><dt>MCP server</dt><dd>An add-on that gives your AI assistant extra tools, like reading a website or an app.</dd></div><div><dt>API</dt><dd>Application Programming Interface: the way one program talks to another, like a tool sending your requests to an AI provider.</dd></div><div><dt>CLAUDE.md</dt><dd>A notes file in your project that Claude Code reads at the start of every session.</dd></div><div><dt>MIT licence</dt><dd>A common open-source licence: free to use, copy and change.</dd></div><div><dt>Q&amp;A</dt><dd>Questions and answers.</dd></div></dl></section><section class="sec" id="tools"><div class="callout clay"><p class="txt" style="margin:0"><b>Before you start:</b> you need Node.js 22.13 or newer (OmniRoute needs 22.22+ or 24+). Check with <code>node -v</code>. Get it from <a href="https://nodejs.org" target="_blank" rel="noopener">nodejs.org</a>.</p></div><article class="script" id="caveman"><div class="script-h"><div class="row"><span class="chip clay">talk less</span></div><h3><span class="n">1.</span> Caveman</h3></div>
+  <div class="hook"><span class="lbl">in one line</span><span class="q">Make Claude talk less.</span></div>
+  <div class="meta"><div><span class="k">What it is</span><p>A free skill that makes your agent answer in short, blunt "caveman" sentences. Code, commands, file paths and exact error messages stay untouched. Only the prose around them gets cut.</p></div><div><span class="k">How I use it</span><p>I run it on full (the old name for today's default, <code>/caveman</code>).</p></div><div><span class="k">What its README says</span><p>In the repo's own test, default <code>/caveman</code> cut output tokens by a median 3%, "inside the noise"; <code>/ultracave</code> cut 35% (length only, not correctness). Its rules add about 1,000 input tokens to every call, so on short one-line Q&amp;A it can cost more than it saves. The README's advice: measure it yourself, and turn it off if it loses.</p></div><div><span class="k">Commands</span><div class="cmd"><pre>npx skills add JuliusBrussee/caveman -g</pre><button class="copy" type="button" data-cmd="npx skills add JuliusBrussee/caveman -g">Copy</button></div><p>Type <code>/caveman</code> if it doesn't switch on by itself. Other modes: <code>/ultracave</code> strips the grammar, <code>/megacave</code> speaks classical Chinese. To turn it off, say <code>stop caveman</code>, <code>/caveman off</code> or <code>normal mode</code>.</p></div>
+  <div class="tools"><span class="k">Source</span><a href="https://github.com/JuliusBrussee/caveman" target="_blank" rel="noopener">github.com/JuliusBrussee/caveman</a></div></div>
+  </article><article class="script" id="codeburn"><div class="script-h"><div class="row"><span class="chip clay">measure</span></div><h3><span class="n">2.</span> CodeBurn</h3></div>
+  <div class="hook"><span class="lbl">in one line</span><span class="q">See where your tokens go.</span></div>
+  <div class="meta"><div><span class="k">What it is</span><p>A free tool that reads the session files Claude Code already saves on your computer and shows what you spent, by tool, model, project and task. No account, no sign-up. On a subscription the dollar figure is an estimate: your measured tokens priced at published API rates.</p></div><div><span class="k">How I use it</span><p>After a render session, to see which part of the work ate the tokens.</p></div><div><span class="k">Commands</span><div class="cmd"><pre>npm i -g codeburn@latest   <span class="c"># update to the latest version</span>
+codeburn                   <span class="c"># dashboard; arrow keys change the period</span>
+codeburn optimize          <span class="c"># lists what costs tokens without earning them</span>
+codeburn optimize --apply  <span class="c"># review and apply the fixes</span>
+codeburn act undo --last   <span class="c"># put the last fix back</span></pre><button class="copy" type="button" data-cmd="npm i -g codeburn@latest
+codeburn
+codeburn optimize
+codeburn optimize --apply
+codeburn act undo --last">Copy</button></div><p><code>optimize</code> points out things like a file the agent re-reads every turn, an MCP server you installed and never call, or a <code>CLAUDE.md</code> that grew long enough to ride along in every request.</p></div>
+  <div class="tools"><span class="k">Source</span><a href="https://github.com/getagentseal/codeburn" target="_blank" rel="noopener">github.com/getagentseal/codeburn</a></div></div>
+  </article><article class="script" id="omniroute"><div class="script-h"><div class="row"><span class="chip clay">fall back</span></div><h3><span class="n">3.</span> OmniRoute</h3></div>
+  <div class="hook"><span class="lbl">in one line</span><span class="q">My pick for when the quota runs out.</span></div>
+  <div class="meta"><div><span class="k">What it is</span><p>A free, MIT-licensed AI gateway that runs on your own computer. One endpoint in front of many AI providers, with automatic fallback to another provider when one hits its limit. Claude Code is one of the supported tools.</p></div><div><span class="k">When to reach for it</span><p>When your Claude quota runs out in the middle of a session and you still have a reel to finish.</p></div><div><span class="k">Commands</span><div class="cmd"><pre>npm install -g omniroute
+omniroute                                    <span class="c"># window 1: gateway + dashboard, localhost:20128</span>
+omniroute run claude --model openai/gpt-5.4  <span class="c"># window 2</span></pre><button class="copy" type="button" data-cmd="npm install -g omniroute
+omniroute
+omniroute run claude --model openai/gpt-5.4">Copy</button></div><p><b>Two windows:</b> <code>omniroute</code> keeps the first busy, so type <code>omniroute run</code> in a second. Connect a provider under <b>Providers</b> first, then swap <code>openai/gpt-5.4</code> (the README's example) for one of its models. No config files written.</p></div>
+  <div class="tools"><span class="k">Source</span><a href="https://github.com/diegosouzapw/OmniRoute" target="_blank" rel="noopener">github.com/diegosouzapw/OmniRoute</a></div></div>
+  <div class="warn">⚠️ <b>Know the trade-off.</b> Your prompts and files go to whatever provider you connect. You'll be on a different model, so output can differ. Check each provider's terms before connecting an account.</div></article></section><section class="sec" id="routine"><h2>A reel session routine</h2><ol class="tl"><li><div class="dot">1</div><div class="body"><div class="hrow"><span class="nm">Measure.</span></div><div class="note">Open <code>codeburn</code> after a session. Run <code>codeburn optimize</code> now and then to clear out waste.</div></div></li><li><div class="dot">2</div><div class="body"><div class="hrow"><span class="nm">Compress.</span></div><div class="note">Caveman on, then check in CodeBurn that it actually helps on your work.</div></div></li><li><div class="dot">3</div><div class="body"><div class="hrow"><span class="nm">Fall back.</span></div><div class="note">If the quota runs out, launch Claude Code through OmniRoute and finish the reel.</div></div></li></ol></section><footer>Tools I use or recommend. You install them yourself, from their official pages. Kaiships has no affiliation with any of them.</footer></main>
 </div>
 <script>
 (function(){
-  var root=document.documentElement, btn=document.getElementById("theme");
-  function cur(){var t=root.getAttribute("data-theme");if(t)return t;return matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}
-  function label(){btn.textContent=cur()==="dark"?"Light":"Dark";}
-  label();
-  btn.addEventListener("click",function(){var n=cur()==="dark"?"light":"dark";root.setAttribute("data-theme",n);try{localStorage.setItem("td-theme",n)}catch(e){}label();});
-  document.querySelectorAll(".copy").forEach(function(b){
-    b.addEventListener("click",function(){
-      var pre=b.parentNode.querySelector("pre");
-      var text=pre.innerText.split("\n").map(function(l){return l.replace(/\s+#.*$/,"").replace(/\s+$/,"");}).filter(Boolean).join("\n");
-      function done(){b.textContent="Copied";b.classList.add("ok");setTimeout(function(){b.textContent="Copy";b.classList.remove("ok");},1500);}
-      if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(text).then(done,fallback);}else{fallback();}
-      function fallback(){var t=document.createElement("textarea");t.value=text;t.style.position="fixed";t.style.opacity="0";document.body.appendChild(t);t.select();try{document.execCommand("copy");done();}catch(e){}document.body.removeChild(t);}
-    });
+const D=JSON.parse(document.getElementById('content').textContent||'{}');
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const chip=(t,c)=>`<span class="chip ${c||''}">${t}</span>`;
+const arr=x=>x==null?[]:Array.isArray(x)?x:[x];
+const paras=x=>arr(x).map(h=>`<p>${h}</p>`).join('');
+const UI={en:{toc:'Contents',read:'read',hint:'↑ / ↓ to jump',short:'in one line',src:'Source',copy:'Copy',copied:'Copied'},
+          vi:{toc:'Mục lục',read:'đã đọc',hint:'↑ / ↓ để nhảy mục',short:'một dòng',src:'Nguồn',copy:'Copy',copied:'Đã copy'}};
+const L=UI[D.lang]||UI.en;
+/* pre-rendered by build.mjs (data-rendered="1"): content is already in the body, only wire up the runtime */
+const PRE=document.documentElement.dataset.rendered==='1';
+if(!PRE){
+document.documentElement.lang=D.lang||'en';
+document.title=D.title||'kaiships.ai';
+$('#toc').setAttribute('aria-label',L.toc);$('#readlbl').textContent=L.read;$('#hint').textContent=L.hint;
+const crumb=arr(D.crumb);
+$('#crumb').innerHTML=crumb.map((c,i)=>i==crumb.length-1?`<b>${esc(c)}</b>`:esc(c)).join(' / ');
+
+const cmdBlock=list=>{const w=Math.max(...list.map(c=>c.cmd.length));
+  return `<div class="cmd"><pre>${list.map(c=>esc(c.cmd)+(c.note?' '.repeat(w-c.cmd.length+2)+`<span class="c"># ${esc(c.note)}</span>`:'')).join('\n')}</pre><button class="copy" type="button" data-cmd="${esc(list.map(c=>c.cmd).join('\n'))}">${L.copy}</button></div>`;};
+const B={
+ p:b=>`<p class="txt">${b.html}</p>`,
+ callout:b=>`<div class="callout ${b.tone||''}">${b.title?`<h4>${b.title}</h4>`:''}${b.html?`<p class="txt" style="margin:0">${b.html}</p>`:''}${b.items?`<${b.ordered?'ol':'ul'}>${b.items.map(i=>`<li>${i}</li>`).join('')}</${b.ordered?'ol':'ul'}>`:''}</div>`,
+ gloss:b=>`<dl class="gloss">${b.items.map(g=>`<div><dt>${g[0]}</dt><dd>${g[1]}</dd></div>`).join('')}</dl>`,
+ tool:t=>`<article class="script" id="${esc(t.id)}"><div class="script-h">${t.chip?`<div class="row">${chip(esc(t.chip),'clay')}</div>`:''}<h3>${t.n!=null?`<span class="n">${esc(t.n)}.</span> `:''}${esc(t.name)}</h3></div>
+  ${t.tagline?`<div class="hook"><span class="lbl">${L.short}</span><span class="q">${t.tagline}</span></div>`:''}
+  <div class="meta">${arr(t.parts).map(p=>`<div><span class="k">${esc(p.label)}</span>${paras(p.html)}${p.commands?cmdBlock(p.commands):''}${paras(p.after)}</div>`).join('')}
+  ${t.source?`<div class="tools"><span class="k">${L.src}</span><a href="${esc(t.source.url)}">${esc(t.source.label||t.source.url)}</a></div>`:''}</div>
+  ${t.warn?`<div class="warn">⚠️ ${t.warn}</div>`:''}</article>`,
+ steps:b=>`<ol class="tl">${b.items.map((s,i)=>`<li><div class="dot">${i+1}</div><div class="body"><div class="hrow"><span class="nm">${s.name}</span></div><div class="note">${s.html||''}</div></div></li>`).join('')}</ol>`
+};
+
+let html=`${D.eyebrow?`<div class="eyebrow">${D.eyebrow}</div>`:''}<h1>${D.title||''}</h1>${arr(D.subtitle).concat(arr(D.intro)).map(t=>`<p class="lede">${t}</p>`).join('')}`;
+let tree=`<li class="root"><a href="#top">${esc(D.title||'')}</a></li>`;
+const secs=arr(D.sections);
+secs.forEach((s,si)=>{
+  const last=si==secs.length-1, kids=arr(s.blocks).filter(b=>b.type=='tool');
+  if(s.title)tree+=`<li><a href="#${s.id}" data-t="${s.id}"><span class="br">${last?'└':'├'}</span>${esc(s.title.replace(/<[^>]+>/g,''))}</a></li>`;
+  html+=`<section class="sec" id="${s.id}">${s.title?`<h2>${s.title}</h2>`:''}${s.sub?`<p class="sec-sub">${s.sub}</p>`:''}`;
+  let k=0;
+  arr(s.blocks).forEach(b=>{
+    if(!B[b.type])throw new Error('unknown block type: '+b.type);
+    html+=B[b.type](b);
+    if(b.type=='tool'){k++;const t=(b.n!=null?b.n+'. ':'')+b.name;
+      tree+=s.title?`<li class="l3"><a href="#${b.id}" data-t="${b.id}"><span class="br">${last?'&nbsp;':'│'}&nbsp;${k==kids.length?'└':'├'}</span>${esc(t)}</a></li>`
+                   :`<li><a href="#${b.id}" data-t="${b.id}"><span class="br">${last&&k==kids.length?'└':'├'}</span>${esc(t)}</a></li>`;}
   });
+  html+=`</section>`;
+});
+if(D.ps)html+=`<div class="callout ps"><p class="txt" style="margin:0">${D.ps}</p></div>`;
+html+=`<footer>${D.footer||''}</footer>`;
+$('#main').innerHTML=html;$('#main').id='top';
+$('#tree').innerHTML=tree;
+
+/* every outside link opens in a new tab */
+document.querySelectorAll('#top a[href]').forEach(a=>{if(!a.getAttribute('href').startsWith('#')){a.target='_blank';a.rel='noopener';}});
+}
+
+/* copy buttons: copy commands only, never the # notes */
+document.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',()=>{
+  const text=b.dataset.cmd;
+  const done=()=>{b.textContent=L.copied;b.classList.add('ok');setTimeout(()=>{b.textContent=L.copy;b.classList.remove('ok');},1500);};
+  const fallback=()=>{const t=document.createElement('textarea');t.value=text;t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();try{document.execCommand('copy');done();}catch(e){}t.remove();};
+  if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(text).then(done,fallback);else fallback();
+}));
+
+/* reading progress + active tree (from W40) */
+const links=[...document.querySelectorAll('#tree a[data-t]')];
+const targets=links.map(a=>document.getElementById(a.dataset.t));
+function onScroll(){
+  const h=document.documentElement,max=h.scrollHeight-h.clientHeight,p=max>0?Math.min(1,h.scrollTop/max):1;
+  const n=28,f=Math.round(p*n);
+  $('#bar').innerHTML='█'.repeat(f)+'<i>'+'░'.repeat(n-f)+'</i>';
+  $('#pct').textContent=String(Math.round(p*100)).padStart(2,'0')+'%';
+  $('#topprog').style.width=(p*100)+'%';
+  let cur=-1;targets.forEach((t,i)=>{if(t&&t.getBoundingClientRect().top<120)cur=i;});
+  links.forEach((a,i)=>a.classList.toggle('on',i==cur));
+}
+addEventListener('scroll',onScroll,{passive:true});onScroll();
+addEventListener('keydown',e=>{
+  if(e.target.closest('input,textarea')||e.metaKey||e.ctrlKey)return;
+  if(e.key!='ArrowDown'&&e.key!='ArrowUp')return;
+  const tops=targets.map(t=>t.getBoundingClientRect().top);
+  let i=e.key=='ArrowDown'?tops.findIndex(t=>t>130):[...tops].reverse().findIndex(t=>t<70);
+  if(e.key=='ArrowUp'&&i>=0)i=tops.length-1-i;
+  if(i>=0){e.preventDefault();targets[i].scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});}
+});
+/* theme (from W40; ?theme=light|dark also works) */
+const KEY='ks-theme';
+$('#theme').addEventListener('click',()=>{const r=document.documentElement;const dark=r.dataset.theme?r.dataset.theme=='dark':matchMedia('(prefers-color-scheme:dark)').matches;r.dataset.theme=dark?'light':'dark';try{localStorage.setItem(KEY,r.dataset.theme);}catch(e){}});
+document.documentElement.dataset.rendered='1';
 })();
 </script>
-</body>
-</html>
+
+
+</body></html>
