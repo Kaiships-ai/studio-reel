@@ -134,6 +134,8 @@ These rules come from reviewing many shipped reels. When a rule and an idea clas
 | `src/reel.js` | chapters, transitions (brush, splat, iris), voiceover lookups, captions, safe zone |
 | `src/core.js`, `src/clawd.js`, `src/timeline.js` | the painting engine and the character |
 | `src/clawd-v3.js` | the astronaut Clawd (`{ astro: true }`), moods and props |
+| `.claude/skills/make-reel/SKILL.md` | the `/make-reel` command: one reel end to end |
+| `examples/*.json` | three example scripts with a concept each (copy into `vo/script.json`) |
 | `VOICE.md` | how to write the script: shape, rules, banned phrases, checklist |
 | `ref/example-STORYBOARD.md`, `ref/example-REVIEW.md` | a finished reel's storyboard and review, to show the bar (don't copy its story) |
 | `REVIEW.md` | your review log for the current reel (you write it, step 9) |

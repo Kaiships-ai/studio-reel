@@ -1,0 +1,16 @@
+{
+  "concept": "An arcade. Clawd walks a row of glowing arcade cabinets; each tool is a cabinet that boots up when he drops a coin, and its mini-game shows what the tool does. A high-score board on the back wall fills one row per tool.",
+  "shows_off": "the listicle format from VOICE.md, a game-familiar world, one long take per chapter, brush/splat/iris transitions varied across chapters, astronaut Clawd on the final 'ship it' beat",
+  "how_to_use": "Replace the four <TOOL> lines with real tools and one plain-words benefit each, from facts the user gives or you can source. Never invent a number.",
+  "voice": "en-US-BrianMultilingualNeural",
+  "rate": "+20%",
+  "pause": 0.3,
+  "lines": [
+    { "id": "l01", "text": "Don't start your next project until you've seen these four free tools." },
+    { "id": "l02", "text": "One: <TOOL 1>. <what it does for you, in plain words>." },
+    { "id": "l03", "text": "Two: <TOOL 2>. <what it does for you>." },
+    { "id": "l04", "text": "Three: <TOOL 3>. <what it does for you>." },
+    { "id": "l05", "text": "Four: <TOOL 4>. <what it does for you>." },
+    { "id": "l06", "text": "Comment TOOLS and I'll send you all four links." }
+  ]
+}

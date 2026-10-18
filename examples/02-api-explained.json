@@ -1,0 +1,15 @@
+{
+  "concept": "A painted restaurant. Clawd is the hungry customer (your app), a waiter Clawd in a bow tie is the API, and the kitchen behind the swinging doors is the server. The camera glides from table to kitchen and back in one move; the order ticket is the prop that travels through every chapter.",
+  "shows_off": "motivated camera (it follows the ticket), two characters in different colours, iris transition into the kitchen, a pull-back reveal at the end",
+  "voice": "en-US-BrianMultilingualNeural",
+  "rate": "+12%",
+  "pause": 0.3,
+  "lines": [
+    { "id": "l01", "text": "You use APIs every single day, and nobody ever explains them like this." },
+    { "id": "l02", "text": "Picture a restaurant. You're at the table. That's your app." },
+    { "id": "l03", "text": "The kitchen has the food. That's the server, with all the data." },
+    { "id": "l04", "text": "You can't walk into the kitchen. So a waiter takes your order, and brings back your food." },
+    { "id": "l05", "text": "That waiter is the API. It carries requests in, and answers back out." },
+    { "id": "l06", "text": "Follow for more tech, explained like you're five." }
+  ]
+}

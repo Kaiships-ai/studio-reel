@@ -13,6 +13,15 @@ effects. You get a vertical MP4 (1080×1920) ready to post.
 
 ## Prompts to copy
 
+The fastest way: type `/make-reel` followed by a topic, a script in quotes, or one of the example scripts.
+
+> /make-reel examples/02-api-explained.json
+
+> /make-reel 3 mistakes people make when they start running
+
+`examples/` has three ready scripts that show off the animation (a morning-routine listicle, an API explainer, a
+tools listicle you fill in). Plain sentences work too:
+
 Check the kit works:
 
 > Render the example reel.
@@ -37,6 +46,12 @@ Your own script, word for word:
 Change something after it renders:
 
 > The first 3 seconds are too slow. Make the hook hit harder and render again.
+
+## New in v1.4.1
+
+- **`/make-reel` command.** One slash command runs the whole process. Type `/make-reel` with nothing after it to
+  see the examples.
+- **Three example scripts** in `examples/`, each with a world and camera idea, to show what the kit can animate.
 
 ## New in v1.4
 

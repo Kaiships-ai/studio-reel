@@ -1,0 +1,15 @@
+{
+  "concept": "Clawd's tiny apartment, one long take that wakes up with him. Each habit is a new action in the same room: the alarm clock jumps off the shelf, the curtain rips open into sunlight, a glass of water pours itself, a phone flies into a drawer. A sunrise behind the window fills up as the progress bar.",
+  "shows_off": "blocking in one space, squash and stretch, a continuity prop (the sunrise), splat transition into the CTA",
+  "voice": "en-US-BrianMultilingualNeural",
+  "rate": "+12%",
+  "pause": 0.3,
+  "lines": [
+    { "id": "l01", "text": "Your morning decides your whole day. Here are four tiny habits that fix it." },
+    { "id": "l02", "text": "One: put your alarm across the room, so you have to stand up to stop it." },
+    { "id": "l03", "text": "Two: open the curtains first. Daylight tells your brain the night is over." },
+    { "id": "l04", "text": "Three: drink a full glass of water before coffee." },
+    { "id": "l05", "text": "Four: no phone for the first ten minutes. Your day, not everyone else's." },
+    { "id": "l06", "text": "Try all four tomorrow, and tell me which one stuck." }
+  ]
+}
