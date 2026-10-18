@@ -1,0 +1,11 @@
+name: Idea
+description: Something you want the kit to do
+labels: [idea]
+body:
+  - type: textarea
+    id: idea
+    attributes: { label: What should it do, description: "The reel you want to make and what's missing today." }
+    validations: { required: true }
+  - type: input
+    id: discord
+    attributes: { label: Discord thread (optional) }
