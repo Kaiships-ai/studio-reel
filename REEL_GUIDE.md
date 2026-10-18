@@ -16,7 +16,9 @@ animation principles. Everything there applies, except for the differences below
   important in that band.
 - **Transitions are drawn for you** at every chapter cut: a brush wipe covers the frame for 0.25 s on each side of
   the cut. Your chapter still paints the full frame right up to its edges, but nothing important should happen in
-  its first or last 0.25 s. Pick the wipe's colours with `chapter(..., { wipe: [c1, c2] })`.
+  its first or last 0.25 s. Pick the colours with `chapter(..., { wipe: [c1, c2] })` and the kind with
+  `trans: 'brush' | 'splat' | 'iris'` (`splat` = an ink blot blooms from `at: [x, y]`; `iris` closes to a dot at
+  `at` and opens again). Vary them across the reel.
 - **There is a voiceover, so the voiceover is the clock.** Every event is tied to a spoken word.
 - **The beat:** `bpm` is 120 by default, so a beat is 0.5 s and `pulse(t)`, `beatN` and `move()` follow it. The
   generated music uses the same grid. If you change it, change it in both `src/config.js` and `audio/cues.json`.
@@ -29,7 +31,7 @@ vo('three', 2)             // the 2nd time "three" is spoken
 vo('move', 1, 'l02')       // the 1st "move" inside line l02
 voLine('l02')              // { s, e, text } of a line
 cutAfter('l02')            // the cut point after a line: the middle of the pause before the next line
-chapter(name, start, end, [[t0, shotFn], ...], { wipe: [c1, c2], shotWipes: [[c1, c2], ...], cut: false })
+chapter(name, start, end, [[t0, shotFn], ...], { wipe: [c1, c2], trans: 'brush', at: [540, 800], shotWipes: [[c1, c2], ...], cut: false })
 SAFE                       // { x0: 60, x1: 960, y0: 250, y1: 1300 }
 CAPTION                    // caption look: y, size, colours, words per chunk. Change it here if the reel needs it.
 ```
@@ -111,8 +113,8 @@ The first three seconds decide whether anyone watches the rest. The hook is plan
 
 - Frame 0 is already mid-action: something is moving fast. Never a settling or empty frame. No static holds:
   something changes in every frame from 0 to 3 s.
-- A new visible event about every 0.3 s, locked to the spoken words. The camera is never still (whip, push, orbit,
-  shake on hits).
+- A new visible event about every 0.3 s, locked to the spoken words. The camera is never still (push, orbit, crane,
+  shake on hits), but stays one continuous move: ≤ ~20 px per frame, no hard cuts inside the hook chapter.
 - At least one surprise the viewer doesn't expect by 1.5 s: a reveal, a transformation, a break in scale.
 - Big silhouettes and one focal action at a time.
 - Check it as a strip (`--strip=0:1`) and as a sheet every 0.25 s. Grade the hook on its own before moving on.

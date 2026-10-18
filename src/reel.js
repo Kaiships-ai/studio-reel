@@ -39,14 +39,16 @@ function cutAfter(id) {
 // ---------- chapters ----------
 // chapter('hook', 0, cutAfter('l01'), [[0, shotFn], ...], { wipe: [PAL.clayDk, PAL.clay] })
 // A shot fn(t, lt, dur) paints the whole frame, as in ANIMATION_GUIDE.md. Shot times are video times.
-// o.wipe: the two colours of the brush wipe INTO this chapter. o.cut: true for a hard cut instead.
+// o.wipe: the two colours of the transition INTO this chapter. o.cut: true for a hard cut instead.
+// o.trans: 'brush' (default, paint strokes sweep across) | 'splat' (an ink blot blooms from o.at and opens again)
+//          | 'iris' (the frame closes to a dot at o.at, then opens; uses o.wipe[0]). o.at = [x, y], default the centre.
 // o.shotWipes: [[c1, c2], ...], one pair per shot after the first, to wipe between the chapter's own shots too
 // (without it, shots inside a chapter cut straight to each other: do that on action only).
 const CHAPTERS = [], WIPES = [];
 const WIPE_HALF = .25;   // the wipe covers the frame for this long on each side of a cut
 function chapter(name, start, end, shotList, o = {}) {
   CHAPTERS.push({ name, start, end });
-  if (!o.cut && start > 0) WIPES.push({ t: start, cols: o.wipe || [PAL.clayDk, PAL.clay] });
+  if (!o.cut && start > 0) WIPES.push({ t: start, cols: o.wipe || [PAL.clayDk, PAL.clay], kind: o.trans || 'brush', at: o.at || [W / 2, H / 2] });
   (o.shotWipes || []).forEach((cols, i) => { if (shotList[i + 1]) WIPES.push({ t: shotList[i + 1][0], cols }); });
   shots(shotList);
 }
@@ -57,7 +59,27 @@ function reelOverlay(t) {
     if (Math.abs(d) >= WIPE_HALF) continue;
     flushLetters();                 // the shot's lettering goes under the wipe
     boilSeed('reel-wipe' + w.t);
-    brushWipe(.5 + d / (2 * WIPE_HALF), w.cols);
+    const p = .5 + d / (2 * WIPE_HALF), [x, y] = w.at || [W / 2, H / 2];
+    if (w.kind === 'splat') splatWipe(p, w.cols[0], w.cols[1], x, y);
+    else if (w.kind === 'iris') iris(x, y, p < .5 ? lerp(1250, 0, easeIn(p * 2)) : lerp(0, 1250, easeOut((p - .5) * 2)), w.cols[0]);
+    else brushWipe(p, w.cols);
+  }
+}
+// An ink blot blooms out of (x, y) and covers the frame; after the swap (p = .5) a hole opens in it from the same point.
+function splatWipe(p, c1, c2, x = W / 2, y = H / 2) {
+  if (p <= 0 || p >= 1) return;
+  const R = 1500, blob = (r, seed) => { const pts = []; for (let i = 0; i < 36; i++) { const a = i / 36 * TAU, w = 1 + .16 * Math.sin(a * 5 + seed) + .09 * Math.sin(a * 9 + seed * 2); pts.push([x + Math.cos(a) * r * w, y + Math.sin(a) * r * w]); } return pts; };
+  if (p < .5) {
+    const r = R * easeIn(clamp(p * 2.05)) + 20;
+    paint(blob(r, 1.3), { wash: c1, washOp: 255, fill: c2, fillOp: 90, bleed: .08, tex: .7, border: .6, ink: null });
+    for (let k = 0; k < 9; k++) {   // flying droplets ahead of the blot
+      const a = k / 9 * TAU + .4, d = r * (1.12 + .25 * hash(k)), s = 14 + 30 * hash(k + 5);
+      paint(ellPts(x + Math.cos(a) * d, y + Math.sin(a) * d, s, s * .8, 12, 3), { wash: c1, ink: null });
+    }
+  } else {
+    const r = R * easeOut((p - .5) * 2);
+    if (r < 8) paint(rectPts(-60, -60, W + 120, H + 120), { wash: c1, ink: null });
+    else irisShape(blob(r, 4.1), c1);
   }
 }
 
