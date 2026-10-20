@@ -1,4 +1,6 @@
-# Kaiships Reel Kit
+# Kaiships Studio · Studio Reel
+
+Kaiships Studio Starter. (Formerly the Kaiships Reel Kit.)
 
 Type one prompt. Claude makes the whole reel: script, voiceover, painted animation, captions, music and sound
 effects. You get a vertical MP4 (1080×1920) ready to post.
