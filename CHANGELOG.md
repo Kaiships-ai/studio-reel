@@ -23,6 +23,6 @@ Every release of Studio Reel (Kaiships Studio Starter). Newest first.
 
 - Token Diet bonus (`bonus/token-diet.html`).
 
-## v1.0 · 2026-09-30
+## First release · 2026-09-30
 
 - First release: one prompt to a hand-painted vertical reel.
