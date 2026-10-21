@@ -1,8 +1,0 @@
-node_modules/
-.venv/
-.tools/
-out/
-.kit-env.json
-.DS_Store
-__pycache__/
-vo/_tmp/
