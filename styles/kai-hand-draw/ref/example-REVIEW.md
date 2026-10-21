@@ -1,4 +1,4 @@
-> **Reference only.** This is the real storyboard/review of one finished reel (54.8 s, 7 chapters, hook 8/10), kept to show the bar and the process. It used a second character, a shopkeeper, and a few helpers (`kai()`, `dancer()`, `mood()`, `canonRack`) that are NOT in this kit: cast your own (e.g. a second `clawd()` in another colour). Do not copy its story.
+> **Reference only.** This is the real storyboard/review of one finished reel (54.8 s, 7 chapters, hook 8/10), kept to show the bar and the process. It used Kai as the shopkeeper (`kai()`, now in `engine/kaip.js`) and a few helpers of its own (`dancer()`, `mood()`, `canonRack`): write yours in your film's `c0_props.js`. It ran the older loop (CLAUDE.md step 9, `REMAP`); today's is `WORKFLOW.md` step 11. Do not copy its story.
 
 # REVIEW · reel45-vibe-v2 · rounds 1–3 + self-check · 2026-10-07
 

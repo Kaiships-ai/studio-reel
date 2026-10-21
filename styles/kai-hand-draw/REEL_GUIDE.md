@@ -11,9 +11,10 @@ animation principles. Everything there applies, except for the differences below
 - **Text is allowed and expected.** A reel is watched with the sound off as often as on. Headers, key words, labels
   and numbers go on screen with `letter()`, `chip()`, `stepHeader()` and `statCard()`. The "No text" rule does not
   apply. Its spirit does: show the idea, don't only write it. A sign that repeats the voiceover is still a failure.
-- **Captions are drawn for you.** Whenever someone is speaking, the timeline draws the current few words centred at
-  y 1395 (band 1335–1455) with the spoken word highlighted. Don't paint your own captions and don't put anything
-  important in that band.
+- **Captions are drawn for you**, in the published look: up to 3 words / 18 characters on a painted ink plate centred
+  at y 1395 (band 1320–1470), words turning ochre as they are spoken, the live word 7 % bigger, numbers as digits,
+  brand names on one card (`PROJECT.caption.brands`), hidden while a wipe covers the frame. Don't paint your own
+  captions and don't put anything important in that band.
 - **Transitions are drawn for you** at every chapter cut: a brush wipe covers the frame for 0.25 s on each side of
   the cut. Your chapter still paints the full frame right up to its edges, but nothing important should happen in
   its first or last 0.25 s. Pick the colours with `chapter(..., { wipe: [c1, c2] })` and the kind with
@@ -23,7 +24,7 @@ animation principles. Everything there applies, except for the differences below
 - **The beat:** `bpm` is 120 by default, so a beat is 0.5 s and `pulse(t)`, `beatN` and `move()` follow it. The
   generated music uses the same grid. If you change it, change it in both `src/config.js` and `audio/cues.json`.
 
-## The reel API (`src/reel.js`)
+## The reel API (`engine/reel.js`)
 
 ```js
 vo('post')                 // when "post" is first spoken, in seconds
@@ -33,14 +34,15 @@ voLine('l02')              // { s, e, text } of a line
 cutAfter('l02')            // the cut point after a line: the middle of the pause before the next line
 chapter(name, start, end, [[t0, shotFn], ...], { wipe: [c1, c2], trans: 'brush', at: [540, 800], shotWipes: [[c1, c2], ...], cut: false })
 SAFE                       // { x0: 60, x1: 960, y0: 250, y1: 1300 }
-CAPTION                    // caption look: y, size, colours, words per chunk. Change it here if the reel needs it.
+CAPTION                    // caption look: y, size, colours, words per chunk, brands, digits. Override per film with
+                           // PROJECT.caption = { brands: ['Claude Code', 'Hopper'] } in <film>/src/config.js
 ```
 
 A chapter file is an IIFE that ends with one `chapter()` call. A shot function `fn(t, lt, dur)` paints the whole
 frame, background first. `t` is video time.
 
 ```js
-// src/ch/c2_example.js
+// <film>/src/ch/c2_example.js
 (() => {
   const START = cutAfter('l01'), END = cutAfter('l03'), T_HIT = vo('faster', 1, 'l02');
   function shot(t) {
@@ -55,7 +57,7 @@ frame, background first. `t` is video time.
 })();
 ```
 
-## The kit (`src/kit.js`)
+## The kit (`engine/kit.js`)
 
 Read the file: it is short. `bgWash`, `badge`, `stepHeader`, `chip`, `statCard`, `fileIcon`, `codeBars`, `laptop`,
 `phone` + `phoneAt`, `burst`, `twinkle`, `tick`, and the font helpers `MARKER(s)`, `HAND(s)`, `MONO(s)` (pass
@@ -73,21 +75,30 @@ rotated prop, compute the point yourself (`phoneAt` does it for a phone screen).
 - Spoken and written facts must come from the user or a source you can cite. No invented numbers.
 
 ```json
-{ "voice": "en-US-BrianMultilingualNeural", "rate": "+12%", "pause": 0.3,
+{ "voice": "en-US-BrianMultilingualNeural", "rate": "+20%", "pause": 0.25,
   "lines": [ { "id": "l01", "text": "Wait! Before you post that reel, check three things." },
-             { "id": "l02", "text": "One: the hook.", "pause": 0.15 } ] }
+             { "id": "l02", "text": "One: the hook.", "pause": 0.15 },
+             { "id": "l03", "text": "It's called R.E.A.", "say": "It's called Ree-ah." , "rate": "+25%" },
+             { "id": "l04", "text": "Comment HOOK and I'll send you the list.", "asr": "Comment hook and I'll send you the list." } ] }
 ```
 
-`pause` is the silence after a line. Other voices: `edge-tts --list-voices` (in `.venv`).
+`pause` is the silence after a line. `say` is what the voice reads when it must differ from the caption; `rate` sets
+one line's speed (≤ +25 %); `asr` is what Whisper should hear for a name it spells its own way. Other voices:
+`.venv/bin/python -m edge_tts --list-voices`.
 
 ## Storyboard
 
-Write `STORYBOARD.md` after the voiceover exists, with `vo/word_times.txt` open.
+Write `<film>/STORYBOARD.md` after the voiceover exists, with `vo/word_times.txt` open. It is the film's treatment
+(lemo-opuscar's `TREATMENT.md`): it starts with **three candidate concepts**, a few lines each (three different worlds
+or metaphors), and the one you chose and why. The first concept that comes to mind is usually the cliché.
 
 ```
+Concepts: A … · B … · C … → chose B, because …
 Logline: one sentence.
 World: palette, setting, how the colour changes from chapter to chapter.
 Motif: the thing that comes back at the end.
+Cast: who is on screen (Clawd, Kai, the Researcher), their size (Clawd body ≥ 280 px wide, Kai ≥ 550 px tall in a
+  full shot), and the shared prop helpers written once for all chapters (src/ch/c0_props.js).
 Clawd's arc: the emotion keys across the whole reel.
 
 HOOK 0.00–3.0x  (its own section: see Hook rules)
@@ -121,7 +132,7 @@ The first three seconds decide whether anyone watches the rest. The hook is plan
 
 ## Rules
 
-- **One file per chapter** in `src/ch/`, listed in `studio.html` in order. Private helpers live inside the IIFE.
+- **One file per chapter** in `<film>/src/ch/`, listed in `<film>/index.html` in order. Private helpers live inside the IIFE.
 - **Pure functions of `t` only.** Frames render in parallel and out of order. No `Math.random()`, no state between
   frames. Use `hash(i)` and `jit(a)`, and `boilSeed(key)` before each separate element.
 - **Safe zone:** anything that matters sits in x 60–960, y 250–1300. Instagram covers the bottom ~380 px and the
@@ -144,17 +155,17 @@ The first three seconds decide whether anyone watches the rest. The hook is plan
 - `cues`: one sound per visible hit, timed by `word` (plus `n`, `line`, `offset`) or by `t`. Match the sound to
   the motion: `pop`/`blip` for things appearing, `slam`/`boom` for big hits, `whip`/`whoosh` for fast moves (they
   land ON the cue time), `ding`/`coin`/`shimmer` for rewards, `buzz`/`nope` for mistakes, `title` for headers.
-  `python scripts/make_audio.py --list` prints every name.
+  `.venv/bin/python styles/kai-hand-draw/tools/make_audio.py <film> --list` prints every name.
 - About one to two cues per second. Keep gains 0.2–0.6 so the voice stays on top. The mix ducks under speech.
 - `mood`: `bright` (major) or `tense` (minor until the last chapter).
 
 ## Checking your work
 
 ```
-node render.mjs --sheet=9.6,10.2,11.8,12.4 --cols=4 --w=270 --out=out/check/c2.jpg    # chosen times
-node render.mjs --strip=0:1 --cols=8 --w=200 --out=out/check/hook.jpg                 # every frame of a stretch
-node render.mjs --stills=11.76 --safe --out=out/check/stills                          # full size, with the safe-zone overlay
-node render.mjs --clip=9.3:14 --out=out/check/c2.mp4                                  # a stretch as video, with audio
+node styles/kai-hand-draw/tools/look.mjs <film> --sheet=9.6,10.2,11.8,12.4 --cols=4 --w=270 --out=<film>/out/check/c2.jpg    # chosen times
+node styles/kai-hand-draw/tools/look.mjs <film> --strip=0:1 --cols=8 --w=200 --out=<film>/out/check/hook.jpg                 # every frame of a stretch
+node styles/kai-hand-draw/tools/look.mjs <film> --stills=11.76 --safe --out=<film>/out/check/stills                          # full size, with the safe-zone overlay
+node styles/kai-hand-draw/tools/look.mjs <film> --clip=9.3:14 --out=<film>/out/check/c2.mp4                                  # a stretch as video, with audio
 ```
 
 Open the images with the Read tool and look hard:
@@ -165,5 +176,5 @@ Open the images with the Read tool and look hard:
 - the header is not overlapped, and nothing important is under Instagram's UI (`--safe`)
 - Clawd is on model, big, and separate from the background
 
-Iterate until each shot is charming, readable, lively and on model. After the final render, `node make.mjs verify`
+Iterate until each shot is charming, readable, lively and on model. After the final render, `node styles/kai-hand-draw/tools/make.mjs <film> verify`
 pulls frames from the MP4 itself: look at those too.

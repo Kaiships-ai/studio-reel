@@ -14,6 +14,15 @@ This repository is a library of film styles. Each style has a `styles/<slug>/STY
 
 **Films outside `styles/` are the user's: no LemoLab credit, no watermark.**
 
+## Kaiships: vertical reels (`kai-hand-draw`)
+
+This clone is the Kaiships studio, built on Lemo-Opuscar. A request for a reel, a short, an Instagram video, or
+anything starring Kai or Clawd goes to the style [`kai-hand-draw`](styles/kai-hand-draw/STYLE.md) and follows
+[`styles/kai-hand-draw/WORKFLOW.md`](styles/kai-hand-draw/WORKFLOW.md) instead of the Workflow below: no brief
+questions unless the topic is too vague to script, 1080×1920 at 30 fps, `node styles/kai-hand-draw/tools/make.mjs
+new <name>` to start. The film lives in `films/<name>/`; `core/`, `styles/` and the guides are never edited for one
+film. The `/make-reel` command (`.claude/skills/make-reel/`) runs it end to end.
+
 ## Style and story
 
 - **`STYLE.md` is fixed**: the style's invariants (look, colour, type, motion, camera grammar, sound palette, native moves, pitfalls). Keep all of it.
@@ -32,7 +41,7 @@ If the user hasn't picked a style:
 - Link the gallery, where every style has its demo film: https://lemomo-ai.github.io/lemo-opuscar/
 
 <!-- style-list:start -->
-All 51 styles · 全部风格:
+All 52 styles · 全部风格:
 
 - **实证影像 Evidence Films** (8): 卫星简报 Satellite Briefing, 工程简报板 Engineering Briefing Board, 点云测绘 LiDAR Survey, 白模投影 Projection on White Model, 数据实物化 Data Physicalization, 产品拆解 Exploded Teardown, 显微叙事 Microscope Story, 档案灯台 Archive Light Table
 - **手绘与绘画 Hand-drawn & Painting** (7): 蜡笔儿童绘本 Crayon Picture Book, 水彩笔刷 Watercolor Brush, 中国水墨 Chinese Ink Wash, 油画厚涂 Impasto Oil Painting, 一笔画 One-line Drawing, 白板讲解 Whiteboard Explainer, 钢笔淡彩 Urban Sketch · Pen & Wash
@@ -40,7 +49,7 @@ All 51 styles · 全部风格:
 - **印刷与版画 Print & Printmaking** (5): Risograph 丝网印刷 Risograph Print, 复古半调案卷 Halftone Dossier, 木刻版画 Woodcut Print, 铜版画 Copperplate Engraving, 丝印旅行海报 Silkscreen Travel Poster
 - **图形与排版 Graphic & Type** (7): 瑞士动态排版 Swiss Motion Graphics, 60s 间谍片头 60s Spy Title Sequence, 装饰艺术 Art Deco, 蓝图 / 工程制图 Blueprint, 彩色玻璃窗 Stained Glass, 象形运动图形 Pictogram Motion, ASCII / CRT 终端 ASCII / CRT Terminal
 - **信息与发布 Information & Keynote** (5): 数据叙事 Data Storytelling, 等距信息图 Isometric Infographic, 暗色科技发布 Dark Tech Keynote, 活体实机录屏 Living Screencast, 科幻全息界面 Sci-fi Hologram HUD
-- **卡通与动画 Cartoon & Anime** (4): 1930s 橡皮管卡通 1930s Rubber Hose Cartoon, 80 年代赛璐璐动画 80s Cel Anime, 科幻情景喜剧卡通 Sci-Fi Sitcom Toon, 50s 扁平卡通 Mid-century Cartoon
+- **卡通与动画 Cartoon & Anime** (5): 1930s 橡皮管卡通 1930s Rubber Hose Cartoon, 80 年代赛璐璐动画 80s Cel Anime, 科幻情景喜剧卡通 Sci-Fi Sitcom Toon, 50s 扁平卡通 Mid-century Cartoon, Kai 手绘短视频 Kai Hand-Draw Reel
 - **游戏 Games** (4): 16-bit 像素 RPG 16-bit Pixel RPG, HD-2D, 微游戏快闪（瓦里奥制造式） Microgame Frenzy, 综艺节奏扁平 Game Show Flat
 - **电影与时代 Cinema & Eras** (2): 1920s 默片 1920s Silent Film, 后室 / 新怪谈 Liminal Found Footage
 - **材质与 3D Materials & 3D** (5): 积木玩具 Brick Toy, 纸片立体书 Paper Pop-up Book, 移轴微缩 Tilt-Shift Miniature, 低多边形等距 Low-poly Isometric Island, 玻璃质感产品 Glass Product Render

@@ -1,3 +1,8 @@
+> **Archived product docs (2026-10-21).** This folder holds the buyer-facing files of the standalone kit (v1.4.1):
+> README, `docs/`, `kit.manifest`, `product.json`, `CHANGELOG.md`, `LICENSE.md`, `bonus/`. The kit itself now lives
+> in [`styles/kai-hand-draw/`](../styles/kai-hand-draw/) on the Lemo-Opuscar base, so the paths and commands below
+> (`make.mjs`, `out/`, `examples/`) are out of date until the product is repackaged from this repo.
+
 # Kaiships Studio · Studio Reel
 
 Kaiships Studio Starter. (Formerly the Kaiships Reel Kit.)

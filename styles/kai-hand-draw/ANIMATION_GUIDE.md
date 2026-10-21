@@ -1,11 +1,11 @@
 # Animating Clawd
 
-> **In this kit:** this guide comes from ClaudeAnimationBase by John Heibel (MIT License, see
-> `LICENSE.md`), lightly edited. It was written for wordless 16:9 cartoons. The Kaiships Reel Kit makes
-> vertical, narrated reels, so **`REEL_GUIDE.md` wins wherever the two disagree**: the canvas is 1080×1920 at 30 fps,
-> on-screen text is allowed, captions and chapter wipes are drawn for you, and scenes are chapter files in `src/ch/`
-> registered with `chapter()` instead of `shots()`. The original demo scene and the model-sheet loops are not
-> included; the model sheets in `docs/` were drawn in 16:9.
+> **In this style:** this guide comes from ClaudeAnimationBase by John Heibel (MIT License), lightly edited. It was
+> written for wordless 16:9 cartoons. kai-hand-draw makes vertical, narrated reels, so **`STYLE.md` and
+> `REEL_GUIDE.md` win wherever they disagree**: the canvas is 1080×1920 at 30 fps, on-screen text is allowed, captions
+> and chapter wipes are drawn for you, and scenes are chapter files in `<film>/src/ch/` registered with `chapter()`
+> instead of `shots()`. Model-sheet loops of the cast are in `engine/sheets.js` (`--loop=kai|kaiV3|clawd|cast`); the
+> sheets in `docs/` were drawn in 16:9. `<film>` below is the film's folder, e.g. `films/my-reel`.
 
 Read this whole file before you draw anything. It covers how to make a short, hand-painted cartoon, starring Clawd or any character you design: the rules and animation principles that make it look good, the workflow that catches mistakes, and the full reference for the character and the engine.
 
@@ -150,7 +150,7 @@ Check the storyboard against the rules:
 ### 2. Build
 
 - Set `duration` (and `bpm`) in [src/config.js](src/config.js).
-- Put each chapter in its own file in `src/ch/`, wrapped in an IIFE, and end it with `chapter(...)` (see `REEL_GUIDE.md`; plain `shots([...])` also works). In [studio.html](studio.html), **replace** the example's script tags with yours.
+- Put each chapter in its own file in `src/ch/`, wrapped in an IIFE, and end it with `chapter(...)` (see `REEL_GUIDE.md`; plain `shots([...])` also works). In `<film>/index.html`, list your chapter files in order.
 - Build and check one shot at a time, in order.
 - Within a shot, block the key poses first and check them as stills (`--sheet` at the key times). Add the motion between them once they read.
 
@@ -179,14 +179,14 @@ You can't see motion by reading code. Render and look at every shot, several tim
 
 ```bash
 # contact sheet: the shape of the whole piece (every shot's first, middle and last frames)
-node render.mjs --sheet=0.1,0.8,1.6,2.4,3.1,3.9 --cols=6 --w=216 --out=out/check/sheet.jpg
+node styles/kai-hand-draw/tools/look.mjs <film> --sheet=0.1,0.8,1.6,2.4,3.1,3.9 --cols=6 --w=216 --out=<film>/out/check/sheet.jpg
 # strip: EVERY frame of a moment (turns, takes, jumps, throws, transitions)
-node render.mjs --strip=2.1:2.6 --cols=6 --w=320 --out=out/check/strip.jpg
+node styles/kai-hand-draw/tools/look.mjs <film> --strip=2.1:2.6 --cols=6 --w=320 --out=<film>/out/check/strip.jpg
 # crop: full-resolution detail (faces, hands, contacts, glows); crop=x,y,w,h in frame pixels
-node render.mjs --sheet=2.3,2.4 --crop=760,420,500,400 --w=500 --out=out/check/face.jpg
+node styles/kai-hand-draw/tools/look.mjs <film> --sheet=2.3,2.4 --crop=760,420,500,400 --w=500 --out=<film>/out/check/face.jpg
 # crop-at: the same, following a WORLD point through each frame's camera (a foot or a prop on a moving shot);
 # x,y in world pixels (or an expression evaluated in the page), w,h in frame pixels
-node render.mjs --strip=2.1:2.6 --crop-at=540,1200,500,400 --out=out/check/feet.jpg
+node styles/kai-hand-draw/tools/look.mjs <film> --strip=2.1:2.6 --crop-at=540,1200,500,400 --out=<film>/out/check/feet.jpg
 ```
 
 Open each image and actually look at it. Check:
@@ -209,10 +209,8 @@ Fix what you find, then look again. **Budget:** at least one sheet per shot, a s
 ### 4. Render
 
 ```bash
-node render.mjs --reel                                          # the whole reel: parallel frames + audio → out/<name>.mp4
-node render.mjs --clip --out=out/video.mp4                      # or: straight to MP4 with one worker
-node render.mjs --frames --workers=4                            # or: parallel + resumable JPEG frames into out/frames …
-node render.mjs --encode --out=out/video.mp4                    # … then encode them
+node styles/kai-hand-draw/tools/make.mjs <film> render         # parallel frames (core/render/video.mjs) + mux → <film>/<name>.mp4
+node styles/kai-hand-draw/tools/look.mjs <film> --clip=0:4      # or: one stretch straight to MP4, with audio
 ```
 
 ---
@@ -223,14 +221,17 @@ node render.mjs --encode --out=out/video.mp4                    # … then encod
 
 | file | what's in it |
 |---|---|
-| `src/config.js` | `PROJECT = { duration, bpm, offset, audio? }` |
-| `src/core.js` | canvas, palette, timing and motion helpers, `paint()`, camera, full-frame effects, `glow()`, lettering, paper, render hooks |
-| `src/clawd.js` | Clawd: views, emotions, eyes, mouths, hats, emotes, moves |
-| `src/timeline.js` | `shots()`, `LOOPS`, `brushWipe()` |
-| `src/reel.js`, `src/kit.js` | the reel layer: chapters, captions, voiceover lookups, shared props (see `REEL_GUIDE.md`) |
-| `src/ch/*.js` | the chapters of the current reel (the bundled example is three of them) |
-| `studio.html` | open it in Chrome to scrub the video (`?t=2.5` jumps to a time, `?safe` shows the safe zone) |
-| `render.mjs` | headless renderer: sheets, strips, crops, stills, PNG loops, MP4 |
+| `<film>/src/config.js` | `PROJECT = { name, duration, fps, bpm, offset, cover, caption? }` |
+| `engine/core.js` | canvas, palette, timing and motion helpers, `paint()`, camera, full-frame effects, `glow()`, lettering, paper, render hooks (`window.render(t)`) |
+| `engine/clawd.js`, `engine/clawd-v3.js` | Clawd: views, emotions, eyes, mouths, hats, emotes, moves; the astronaut (`{ astro: true }`) |
+| `engine/kaip.js`, `engine/kai-v3.js` | Kai, painted: `kai(pose, x, y, h, o)`; Kai v3 canon with `{ look: 'v3' }` or `kaiV3(...)` |
+| `engine/cast.js` | the Researcher: `researcher(x, y, s, o)` |
+| `engine/timeline.js` | `shots()`, `LOOPS`, `brushWipe()` |
+| `engine/reel.js`, `engine/kit.js` | the reel layer: chapters, captions, voiceover lookups, shared props (see `REEL_GUIDE.md`) |
+| `engine/sheets.js` | model-sheet loops of the cast |
+| `<film>/src/ch/*.js` | the chapters of the film |
+| `<film>/index.html` | the film's page; open it from the library's server with `?studio` to scrub (`&t=2.5`, `&safe`) |
+| `tools/look.mjs`, `tools/make.mjs` | check images (sheets, strips, crops, stills, clips, camera scan) and the production steps |
 
 ### Frames are pure functions of time
 

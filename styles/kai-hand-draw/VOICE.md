@@ -1,8 +1,9 @@
 # Script voice
 
-Read this before you write `vo/script.json`. **Scope: only scripts you write.** If the user gives a script, speak it
-word for word. Don't tighten it, reorder it or "fix" it. If a line seems wrong (a claim you can't source, a word the
-voice mispronounces), tell the user and ask.
+Read this before you write `<film>/vo/script.json`. **Scope: only scripts you write.** If the user gives a script
+(their own, or a creator's posted reel), speak it word for word. Don't tighten it, reorder it, add teasers or "fix" it.
+A word the voice mispronounces is respelled in that line's `"say"` only; the captions keep `"text"`. A line that seems
+wrong (a claim you can't source, a keyword already used) goes to the user as a question; don't change it yourself.
 
 The test: **a 13–16-year-old understands every line on first listen, and it sounds like a person talking at a
 human pace.**
@@ -17,7 +18,8 @@ human pace.**
    lines on what it does for *you*, in plain words, with at most one number.
 3. **CTA, one line.** What to do next and exactly what they get ("Comment CODING and I'll send you all four links").
 
-Length: 90–120 spoken words, about 30–40 s (`"rate"` in `vo/script.json`: `+12%` default, `+20%` for fast listicles).
+Length: 70–120 spoken words, about 28–40 s. Voice `en-US-BrianMultilingualNeural`, `"rate": "+20%"` (the
+published reels); a line may set its own `"rate"`, never above `+25%` (`check_vo.py` refuses it).
 
 ## Rules
 
@@ -27,10 +29,13 @@ Length: 90–120 spoken words, about 30–40 s (`"rate"` in `vo/script.json`: `+
 - Numbers only from the user's facts or a named source, said the way people say them ("fifty-four percent less code").
 - Talk to one person: "you", "your".
 - The tool is the subject, the viewer's problem is the object: "It turns your codebase into a knowledge graph."
-- **Pace.** Each line lands at 5.0–6.4 syllables per second. No line runs more than ~5 s without a pause: split a
-  long line at its middle comma (same words, two entries).
+- **Pace.** Each line lands at 5.0–6.4 syllables per second of speech. No line runs more than ~5 s without a pause,
+  and no entry has more than 28 words: split a long line at its middle comma (same words, two entries).
 - **The CTA is one continuous breath.** No commas around the keyword ("Comment BUILD below", not "Comment, BUILD,
-  below"): commas make the voice stop and it sounds robotic.
+  below"): commas make the voice stop and it sounds robotic. `check_vo.py` fails any gap over 0.05 s from "comment"
+  to the end of the line.
+- **The keyword** is one short word, easy to say and easy for Whisper to hear, and not used by an earlier reel.
+  `make.mjs verify` checks that Whisper hears it in the final mix.
 
 ## Banned (AI-slop)
 
@@ -53,7 +58,7 @@ tokens, every month. Three: Graphify. It turns your codebase into a knowledge gr
 files, again and again. Four: Agent Skills, by Addy Osmani. Twenty-five skills to spec, plan, build, test and ship,
 and it picks the right one at every stage. Comment CODING, and I'll send you all four links, plus the install commands.
 
-## Checklist (run before `node make.mjs vo`)
+## Checklist (run before `node styles/kai-hand-draw/tools/make.mjs <film> vo`)
 
 - [ ] Hook is one line and says who it's for + what they get
 - [ ] Every item: name alone first, then the plain-words benefit
@@ -61,4 +66,6 @@ and it picks the right one at every stage. Comment CODING, and I'll send you all
 - [ ] No banned phrase; no claim beyond the source
 - [ ] Every number is in the facts list
 - [ ] CTA says what to do and exactly what they'll get, with no commas around the keyword
-- [ ] After `node make.mjs vo`: check `vo/word_times.txt`, every line is 5.0–6.4 syllables/s and none runs > 5 s unbroken
+- [ ] After `node styles/kai-hand-draw/tools/make.mjs <film> vo`: `check_vo.py` passes (rate ≤ +25 %, ≤ 28 words a
+  line, CTA in one breath), its pace warnings are read and fixed or accepted on purpose, and the Whisper check passes
+  (a name Whisper spells its own way goes in that line's `"asr"`)

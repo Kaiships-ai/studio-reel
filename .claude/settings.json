@@ -1,9 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(node setup.mjs:*)",
-      "Bash(node make.mjs:*)",
-      "Bash(node render.mjs:*)",
+      "Bash(node styles/kai-hand-draw/tools/make.mjs:*)",
+      "Bash(node styles/kai-hand-draw/tools/look.mjs:*)",
+      "Bash(node core/render/still.mjs:*)",
+      "Bash(node core/render/video.mjs:*)",
+      "Bash(sh plugin/skills/lemo-opuscar/scripts/setup.sh:*)",
       "Bash(npm install:*)"
     ]
   }
