@@ -9,6 +9,8 @@ order: 1
 
 - [Node.js](https://nodejs.org) 18 or newer.
 - [Claude Code](https://claude.com/claude-code).
+- Python 3.9 or newer (setup installs the voice tools, edge-tts and numpy, into it in a local `.venv`).
+- Chrome or Edge (setup can download a Chrome into `.tools/` if none is found).
 - An internet connection for the first run and for the voiceover.
 
 ## Steps
