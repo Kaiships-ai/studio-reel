@@ -1,23 +1,17 @@
 {
-  "name": "kaiships-reel-kit",
-  "version": "1.4.1",
+  "name": "lemo-opuscar",
+  "version": "0.1.0",
   "private": true,
-  "description": "Make painted, narrated, captioned vertical reels with Claude Code: p5.brush animation, AI voiceover, word-locked captions, generated music and SFX.",
-  "author": "Kaiships.ai",
-  "license": "SEE LICENSE IN LICENSE.md",
   "type": "module",
-  "engines": { "node": ">=18" },
-  "scripts": {
-    "setup": "node setup.mjs",
-    "make": "node make.mjs",
-    "vo": "node make.mjs vo",
-    "audio": "node make.mjs audio",
-    "render": "node make.mjs render",
-    "verify": "node make.mjs verify"
+  "description": "Film styles for coding agents: each style ships a prompt and a demo film made entirely in code, on a shared toolkit.",
+  "engines": {
+    "node": ">=20"
   },
+  "license": "MIT",
   "dependencies": {
     "p5": "^2.3.3",
     "p5.brush": "^2.2.3",
-    "puppeteer-core": "^25.11.0"
+    "playwright-core": "^1.63.0",
+    "three": "^0.170.0"
   }
 }
