@@ -1,0 +1,20 @@
+/* page.css: fonts and layout for a kai-hand-draw film page.
+   Render mode (the core/render tools, viewport 1080x1920): the output canvas fills the page, nothing else shows.
+   Studio mode (index.html?studio in a browser): the frame fits the window, with a scrub bar under it. */
+@font-face { font-family: "Permanent Marker"; src: url(fonts/PermanentMarker-Regular.ttf) format("truetype"); font-display: block; }
+@font-face { font-family: "Shantell Sans"; src: url(fonts/ShantellSans.ttf) format("truetype"); font-weight: 300 800; font-display: block; }
+@font-face { font-family: "JetBrains Mono"; src: url(fonts/JetBrainsMono.ttf) format("truetype"); font-weight: 100 800; font-display: block; }
+@font-face { font-family: "Fredoka"; src: url(fonts/Fredoka.ttf) format("truetype"); font-weight: 300 700; font-display: block; }
+
+html, body { margin: 0; padding: 0; background: #000; overflow: hidden; }
+main { margin: 0; padding: 0; }
+#out { display: block; width: 1080px; height: 1920px; background: #F3EBDC; }
+.p5Canvas { display: none !important; }
+.bar { display: none; }
+
+body.studio { background: #1b1820; color: #eee; font: 13px system-ui, sans-serif; overflow: auto; }
+body.studio main { padding: 12px; display: grid; gap: 8px; justify-items: center; }
+body.studio #out { height: min(86vh, 1920px); width: auto; aspect-ratio: 9 / 16; }
+body.studio .bar { display: flex; gap: 10px; align-items: center; width: min(100%, 720px); }
+body.studio #scrub { flex: 1; }
+body.studio #tt { font-variant-numeric: tabular-nums; min-width: 190px; }

@@ -1,21 +1,12 @@
-# kitenv.py: paths shared by the Python scripts. Tool locations come from .kit-env.json (written by setup.mjs).
-import json, os
+# kitenv.py: paths shared by the Python tools. Every path is inside the film's folder, given as the first argument
+# (make.mjs passes it): python make_vo.py <film>. ffmpeg comes from PATH, as for every core/ tool.
+import os, sys
 
-ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+if len(sys.argv) < 2 or sys.argv[1].startswith('-') or not os.path.isfile(os.path.join(sys.argv[1], 'index.html')):
+    sys.exit(f'usage: {os.path.basename(sys.argv[0])} <film folder with index.html>')
+ROOT = os.path.abspath(sys.argv[1])
 
 def path(*parts):
     return os.path.join(ROOT, *parts)
 
-def _tool(name):
-    try:
-        with open(path('.kit-env.json'), encoding='utf-8') as f:
-            v = json.load(f).get(name)
-    except (OSError, ValueError):
-        v = None
-    if not v:
-        return name                      # fall back to PATH
-    if os.sep not in v and '/' not in v:
-        return v                         # a bare command name
-    return v if os.path.isabs(v) else path(*v.split('/'))
-
-FFMPEG = _tool('ffmpeg')
+FFMPEG = os.environ.get('FFMPEG', 'ffmpeg')

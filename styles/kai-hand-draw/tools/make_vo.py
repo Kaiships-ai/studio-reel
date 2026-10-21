@@ -2,9 +2,17 @@
 # join the lines with chosen pauses, and write:
 #   vo/vo.wav            the voiceover, padded to the reel's full length
 #   src/vo.js            VO_LINES, VO_WORDS, VO_END, VO_DUR for the page (captions, vo(), voLine(), cutAfter())
-#   vo/vo.json           the same data for make_audio.py
+#   vo/vo.json           the same data for make_audio.py and check_vo.py
 #   vo/word_times.txt    every word with its start time, to read while storyboarding
-# Input: vo/script.json. Run it with:  node make.mjs vo      (needs an internet connection)
+#   vo/lines/<id>.wav    each trimmed line, and vo/lines.json, for the speech-to-text check (core/tts/asr_check.py)
+# Input: vo/script.json in the film's folder:
+#   { "voice": "en-US-BrianMultilingualNeural", "rate": "+20%", "pause": 0.25,
+#     "lines": [ { "id": "l01", "text": "What the captions show.", "say": "optional: what is spoken, if it differs",
+#                  "rate": "optional per-line rate", "pause": "optional pause after this line",
+#                  "asr": "optional: what Whisper should hear, for names it spells its own way (core/tts/asr_check.py)" } ] }
+#   "say" respells a word for the voice (R.E.A. → "Ree-ah") while the captions keep "text". Same word count, or the
+#   captions fall back to the spoken words.
+# Run:  node styles/kai-hand-draw/tools/make.mjs <film> vo      (needs an internet connection)
 import asyncio, json, math, os, shutil, subprocess, sys, wave
 import edge_tts
 from kitenv import FFMPEG, path
@@ -13,14 +21,26 @@ SR, FPS = 48000, 30
 LEAD = .12          # silence before the first word
 TAIL = .7           # silence after the last word, so the last picture can land
 
+DEFAULT_RATE = '+20%'   # the published reels' pace; check_vo.py refuses anything above +25%
+
 def load_script():
     with open(path('vo', 'script.json'), encoding='utf-8') as f:
         s = json.load(f)
+    rate = s.get('rate', DEFAULT_RATE)
     lines = []
     for i, l in enumerate(s['lines']):
         if isinstance(l, str): l = {'text': l}
-        lines.append((l.get('id') or f'l{i + 1:02d}', l['text'].strip(), float(l.get('pause', s.get('pause', .3)))))
-    return s.get('voice', 'en-US-BrianMultilingualNeural'), s.get('rate', '+12%'), lines
+        text = l['text'].strip()
+        lines.append({'id': l.get('id') or f'l{i + 1:02d}', 'text': text, 'say': (l.get('say') or text).strip(),
+                      'asr': l.get('asr'), 'rate': l.get('rate', rate), 'gap': float(l.get('pause', s.get('pause', .3)))})
+    return s.get('voice', 'en-US-BrianMultilingualNeural'), rate, lines
+
+def caption_words(words, text):
+    # the spoken words, renamed to the caption's spelling when "say" respelled them (same count only)
+    shown = text.split()
+    if len(shown) != len(words): return words
+    strip = lambda w: w.strip('.,!?…:;"()[]')
+    return [{**w, 'w': strip(t) or w['w']} for w, t in zip(words, shown)]
 
 async def synth(text, voice, rate, mp3):
     words = []
@@ -41,20 +61,25 @@ def wav_dur(p):
 async def main():
     voice, rate, lines = load_script()
     tmp = path('vo', '_tmp'); shutil.rmtree(tmp, ignore_errors=True); os.makedirs(tmp)
+    ldir = path('vo', 'lines'); shutil.rmtree(ldir, ignore_errors=True); os.makedirs(ldir)
     parts, t, out_lines, all_words = [('silence', LEAD)], LEAD, [], []
-    for i, (lid, text, gap) in enumerate(lines):
+    for i, l in enumerate(lines):
+        lid, text, gap = l['id'], l['text'], l['gap']
         mp3, wav, cut = (os.path.join(tmp, f'l{i:02d}.{x}') for x in ('mp3', 'wav', 'cut.wav'))
         try:
-            words = await synth(text, voice, rate, mp3)
+            words = await synth(l['say'], voice, l['rate'], mp3)
         except Exception as e:
             sys.exit(f'edge-tts failed on line {lid} ({type(e).__name__}: {e}). It needs an internet connection; check the voice name "{voice}" too.')
-        if not words: sys.exit(f'edge-tts returned no word timings for line {lid}: "{text}"')
+        if not words: sys.exit(f'edge-tts returned no word timings for line {lid}: "{l["say"]}"')
+        if l['say'] != text: words = caption_words(words, text)
         ff('-i', mp3, '-ac', '1', '-ar', str(SR), wav)
         # keep [first word - 40 ms, last word + 90 ms], with tiny fades so the joins don't click
         a = max(0, words[0]['s'] - .04); b = min(wav_dur(wav), words[-1]['e'] + .09)
         ff('-i', wav, '-ss', f'{a:.3f}', '-to', f'{b:.3f}', '-af', 'afade=t=in:d=0.01,areverse,afade=t=in:d=0.02,areverse', cut)
+        shutil.copy(cut, os.path.join(ldir, f'{lid}.wav'))
         L = b - a
-        out_lines.append({'id': lid, 'text': text, 's': round(t, 3), 'e': round(t + L, 3)})
+        out_lines.append({'id': lid, 'text': text, 'say': l['say'], 'asr': l['asr'] or (l['say'] if l['say'] != text else None),
+                          'rate': l['rate'], 's': round(t, 3), 'e': round(t + L, 3)})
         all_words += [{'w': w['w'], 's': round(t + w['s'] - a, 3), 'e': round(t + w['e'] - a, 3), 'line': lid} for w in words]
         parts.append(('file', cut)); t += L
         if gap and i < len(lines) - 1: parts.append(('silence', gap)); t += gap
@@ -74,8 +99,10 @@ async def main():
 
     data = {'voice': voice, 'rate': rate, 'lines': out_lines, 'words': all_words, 'end': round(end, 3), 'duration': round(dur, 4)}
     with open(path('vo', 'vo.json'), 'w', encoding='utf-8') as f: json.dump(data, f, indent=1)
-    js = '// vo.js: generated by scripts/make_vo.py (node make.mjs vo). Voiceover line and word timings, in seconds of video time.\n'
-    js += 'const VO_LINES = ' + json.dumps(out_lines) + ';\n'
+    with open(os.path.join(ldir, 'lines.json'), 'w', encoding='utf-8') as f:
+        json.dump([{'id': l['id'], 'text': l['text'], **({'asr': l['asr']} if l['asr'] else {})} for l in out_lines], f, indent=1)
+    js = '// vo.js: generated by make_vo.py (make.mjs <film> vo). Voiceover line and word timings, in seconds of video time.\n'
+    js += 'const VO_LINES = ' + json.dumps([{k: l[k] for k in ('id', 'text', 's', 'e')} for l in out_lines]) + ';\n'
     js += 'const VO_WORDS = ' + json.dumps(all_words) + ';\n'
     js += f'const VO_END = {end:.3f};   // the last word ends here\n'
     js += f'const VO_DUR = {dur:.4f};  // the reel\'s length: the voiceover plus a short tail\n'
@@ -87,6 +114,6 @@ async def main():
             f.write(' '.join(f"{w['w']}@{w['s']:.2f}" for w in all_words if w['line'] == l['id']) + '\n')
     print(f'vo/vo.wav  {wav_dur(path("vo", "vo.wav")):.2f} s  (last word ends {end:.2f} s)')
     for l in out_lines: print(f"  {l['s']:6.2f}-{l['e']:6.2f}  {l['id']:5s} {l['text'][:70]}")
-    print('wrote src/vo.js, vo/vo.json, vo/word_times.txt')
+    print('wrote src/vo.js, vo/vo.json, vo/word_times.txt, vo/lines/')
 
 asyncio.run(main())

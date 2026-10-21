@@ -1,7 +1,7 @@
 // core.js: constants, helpers, paper, paint wrapper, compositing and render hooks.
 // Length and rhythm come from PROJECT in config.js.
-// From ClaudeAnimationBase (MIT, (c) 2026 John Heibel). Changed for the Kaiships Reel Kit: vertical 1080x1920 canvas,
-// extra fonts, and a caption hook in composite(). See LICENSE.md.
+// From ClaudeAnimationBase (MIT, (c) 2026 John Heibel). Changed for kai-hand-draw: vertical 1080x1920 canvas, extra
+// fonts, a caption hook in composite(), and the core/render page contract (window.READY, DUR, render(t)).
 const W = 1080, H = 1920;
 const BPM = PROJECT.bpm, BEAT = 60 / BPM, OFF = PROJECT.offset || 0, BOIL = 12, DUR = PROJECT.duration;
 const TAU = Math.PI * 2;
@@ -279,11 +279,19 @@ async function setup() {
   brush.scaleBrushes(5); defineBrushes();
   paperG = makePaper(); grainC = makeGrain(); glowTex = makeGlowTex(); letG = createGraphics(W, H); letG.pixelDensity(1);
   outC = document.getElementById('out'); outX = outC.getContext('2d');
-  // Fonts come from Google Fonts (see studio.html). Offline, the browser falls back to system fonts: don't hang on it.
+  // Fonts are self-hosted (engine/fonts, declared in engine/page.css). Don't hang on them if one fails.
   const fonts = ['100px "Permanent Marker"', '800 100px "Shantell Sans"', '700 100px "JetBrains Mono"', '700 100px "Fredoka"'];
   await Promise.race([Promise.all(fonts.map(f => document.fonts.load(f).catch(() => 0))), new Promise(r => setTimeout(r, 8000))]);
-  window.ready = true;
-  if (!location.search.includes('render')) devUI();
+  // query: ?studio (scrub bar) · ?t=2.5 · ?safe (Instagram UI overlay) · ?nocap (no captions, for covers) · ?loop=<name>
+  const qs = new URLSearchParams(location.search);
+  if (qs.has('safe')) window.SHOW_SAFE = true;
+  if (qs.has('nocap')) window.NO_CAPTIONS = true;
+  if (qs.get('loop') && LOOPS[qs.get('loop')]) window.LOOP = LOOPS[qs.get('loop')];
+  // the page contract of core/render (still.mjs, video.mjs): DUR in seconds, render(t) draws frame t, READY when loaded
+  window.DUR = window.LOOP ? window.LOOP.len : DUR;
+  window.render = async t => { T = t; await redraw(); composite(t); };
+  window.ready = window.READY = true;
+  if (qs.has('studio')) { document.body.classList.add('studio'); devUI(); }
 }
 function draw() {
   if (!window.ready) return;
@@ -292,6 +300,7 @@ function draw() {
   BOILN = Math.floor(T * BOIL); CLAWD_N = 0; boilSeed('frame'); noiseSeed(77);
   image(paperG, 0, 0);
   drawWorld(T);
+  if (typeof captionPlate === 'function') captionPlate(T);   // reel.js: the caption's painted plate, under the grain
   pop();
 }
 function composite(t) {

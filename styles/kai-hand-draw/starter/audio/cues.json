@@ -1,0 +1,12 @@
+{
+  "bpm": 120,
+  "mood": "bright",
+  "cuts": [ {"after": "l01"} ],
+  "cues": [
+    {"t": 0.02, "sfx": "whoosh", "gain": 0.35, "note": "brush sweeps in"},
+    {"word": "clawd", "sfx": "boing", "gain": 0.35, "pan": 0.3, "note": "Clawd hops in"},
+    {"word": "painted", "sfx": "shimmer", "gain": 0.3, "note": "stroke lands"},
+    {"word": "code", "sfx": "slam", "gain": 0.45, "note": "CODE stamp"},
+    {"word": "paint", "sfx": "title", "gain": 0.4, "note": "keyword card"}
+  ]
+}

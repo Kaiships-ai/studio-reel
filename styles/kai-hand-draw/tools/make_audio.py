@@ -3,9 +3,9 @@
 A music bed that follows the chapters, cartoon SFX on the cue times, mixed under the voiceover with ducking,
 loudness-normalised to about -14 LUFS / -1 dBTP.
 
-Input:   audio/cues.json (cuts + SFX cues) and vo/vo.wav + vo/vo.json (from make_vo.py)
+Input:   audio/cues.json (cuts + SFX cues) and vo/vo.wav + vo/vo.json (from make_vo.py), in the film's folder
 Output:  assets/reel-audio.wav (final mix, muxed into the MP4), assets/music.wav (music + SFX), assets/sfx.wav (SFX only)
-Run:     node make.mjs audio
+Run:     node styles/kai-hand-draw/tools/make.mjs <film> audio      (or: python make_audio.py <film> [--list])
 
 cues.json:
   { "bpm": 120,                       tempo of the music; keep it equal to PROJECT.bpm in src/config.js
@@ -16,7 +16,7 @@ cues.json:
               {"t": 3.2, "sfx": "pop"} ] }
   A cue is timed by "t" (seconds) or by "word" (+ optional "n" = nth time it is spoken, "line" = only in that line,
   "offset" = seconds added). Every cut gets a brush-wipe whoosh automatically ("wipes": false turns that off).
-  SFX names: see SFX below (python scripts/make_audio.py --list prints them).
+  SFX names: see SFX below (python make_audio.py <film> --list prints them).
 """
 import os, re, sys, json, wave, subprocess, tempfile
 import numpy as np

@@ -100,3 +100,10 @@ styles/*/demo/**/*.tif
 styles/*/demo/**/*.tiff
 styles/*/demo/**/*.npz
 styles/*/demo/assets/raw/
+
+# ---- Kaiships · kai-hand-draw ----
+# the demo's build outputs (make.mjs writes them next to its sources)
+styles/kai-hand-draw/demo/*.mp4
+styles/kai-hand-draw/demo/*-cover.png
+styles/kai-hand-draw/demo/assets/
+styles/kai-hand-draw/demo/vo/lines/

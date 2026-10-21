@@ -3,10 +3,26 @@
   "rate": "+12%",
   "pause": 0.3,
   "lines": [
-    { "id": "l01", "text": "Wait! Before you post that reel, check three things." },
-    { "id": "l02", "text": "One: the hook. Does something move in the first second?" },
-    { "id": "l03", "text": "Two: captions. With the sound off, can people still follow?" },
-    { "id": "l04", "text": "Three: the safe zone. Keep your text away from the buttons." },
-    { "id": "l05", "text": "All three good? Post it." }
+    {
+      "id": "l01",
+      "text": "Wait! Before you post that reel, check three things.",
+      "asr": "Wait, before you post that real, check three things."
+    },
+    {
+      "id": "l02",
+      "text": "One: the hook. Does something move in the first second?"
+    },
+    {
+      "id": "l03",
+      "text": "Two: captions. With the sound off, can people still follow?"
+    },
+    {
+      "id": "l04",
+      "text": "Three: the safe zone. Keep your text away from the buttons."
+    },
+    {
+      "id": "l05",
+      "text": "All three good? Post it."
+    }
   ]
 }

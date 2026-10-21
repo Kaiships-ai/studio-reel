@@ -5,30 +5,45 @@
   {
    "id": "l01",
    "text": "Wait! Before you post that reel, check three things.",
+   "say": "Wait! Before you post that reel, check three things.",
+   "asr": "Wait, before you post that real, check three things.",
+   "rate": "+12%",
    "s": 0.12,
    "e": 3.018
   },
   {
    "id": "l02",
    "text": "One: the hook. Does something move in the first second?",
+   "say": "One: the hook. Does something move in the first second?",
+   "asr": null,
+   "rate": "+12%",
    "s": 3.318,
    "e": 6.316
   },
   {
    "id": "l03",
    "text": "Two: captions. With the sound off, can people still follow?",
+   "say": "Two: captions. With the sound off, can people still follow?",
+   "asr": null,
+   "rate": "+12%",
    "s": 6.616,
    "e": 10.184
   },
   {
    "id": "l04",
    "text": "Three: the safe zone. Keep your text away from the buttons.",
+   "say": "Three: the safe zone. Keep your text away from the buttons.",
+   "asr": null,
+   "rate": "+12%",
    "s": 10.484,
    "e": 13.928
   },
   {
    "id": "l05",
    "text": "All three good? Post it.",
+   "say": "All three good? Post it.",
+   "asr": null,
+   "rate": "+12%",
    "s": 14.228,
    "e": 16.01
   }
