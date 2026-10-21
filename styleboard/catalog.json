@@ -680,6 +680,23 @@
   "dur": 40.0
  },
  {
+  "slug": "kai-hand-draw",
+  "num": "52",
+  "en": "Kai Hand-Draw Reel",
+  "cn": "Kai 手绘短视频",
+  "cat": "卡通与动画",
+  "cat_en": "Cartoon & Anime",
+  "film": "Three Checks",
+  "line": "Clawd stops a thumb before it hits POST and runs three quick checks, in a vertical watercolour reel with voice and word-locked captions.",
+  "line_cn": "Clawd 在拇指按下发布前拦住它，做三项快速检查：竖屏水彩短视频，配旁白和逐词字幕。",
+  "uses": [
+   "Instagram Reels and Shorts",
+   "Tool and skill listicles",
+   "Explainers with a host character"
+  ],
+  "dur": 16.7
+ },
+ {
   "slug": "pixel-rpg",
   "num": "29",
   "en": "16-bit Pixel RPG",

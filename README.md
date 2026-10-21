@@ -2,9 +2,9 @@
 
 # Lemo-Opuscar
 
-**<!--n-->51<!--/n--> film styles, each with a short film made entirely in code.**<br>
+**<!--n-->52<!--/n--> film styles, each with a short film made entirely in code.**<br>
 Pick a style, bring your own story, and let your coding agent direct the film.<br>
-<sub><!--n-->51<!--/n--> 种影片风格，每种都配一支完全用代码做出来的短片 · 🇨🇳 中文用户请看 <a href="README.zh-CN.md">简体中文说明</a></sub>
+<sub><!--n-->52<!--/n--> 种影片风格，每种都配一支完全用代码做出来的短片 · 🇨🇳 中文用户请看 <a href="README.zh-CN.md">简体中文说明</a></sub>
 
 <a href="https://lemomo-ai.github.io/lemo-opuscar/"><img alt="Watch the gallery" src="https://img.shields.io/badge/-%E2%96%B6%20Watch%20the%20gallery-E8553A?style=for-the-badge"></a> <a href="README.zh-CN.md"><img alt="简体中文" src="https://img.shields.io/badge/README-%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-555?style=for-the-badge"></a> <a href="https://github.com/lemomo-ai/lemo-opuscar/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/lemomo-ai/lemo-opuscar?style=for-the-badge&color=F5B700&label=stars"></a> <a href="#licence"><img alt="MIT · CC BY 4.0" src="https://img.shields.io/badge/licence-MIT%20%C2%B7%20CC%20BY%204.0-2EA44F?style=for-the-badge"></a>
 
@@ -251,6 +251,7 @@ Click a frame for its `STYLE.md`.
 </tr>
 <tr>
 <td width="33%" valign="top"><a href="styles/midcentury-toon/STYLE.md"><img src="docs/frames/midcentury-toon.jpg" alt="Mid-century Cartoon"></a><br><b>Mid-century Cartoon</b><br><i>Meet Pip</i><br><sub>A robot vacuum set up in three steps, told like a 1950s classroom film: place the dock, connect the app, press start.</sub></td>
+<td width="33%" valign="top"><a href="styles/kai-hand-draw/STYLE.md"><img src="docs/frames/kai-hand-draw.jpg" alt="Kai Hand-Draw Reel"></a><br><b>Kai Hand-Draw Reel</b><br><i>Three Checks</i><br><sub>Clawd stops a thumb before it hits POST and runs three quick checks, in a vertical watercolour reel with voice and word-locked captions.</sub></td>
 </tr>
 </table>
 

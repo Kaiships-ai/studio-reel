@@ -78,6 +78,7 @@ Users may name a style in English, in Chinese, or by its folder. Find it here, t
 | 80s Cel Anime | 80 年代赛璐璐动画 | [`cel-anime-80s`](cel-anime-80s/STYLE.md) | *City Lights, 1987* |
 | Sci-Fi Sitcom Toon | 科幻情景喜剧卡通 | [`scifi-toon`](scifi-toon/STYLE.md) | *Coffee Run* |
 | Mid-century Cartoon | 50s 扁平卡通 | [`midcentury-toon`](midcentury-toon/STYLE.md) | *Meet Pip* |
+| Kai Hand-Draw Reel | Kai 手绘短视频 | [`kai-hand-draw`](kai-hand-draw/STYLE.md) | *Three Checks* |
 
 ## Games · 游戏
 
