@@ -1,6 +1,6 @@
 # Viral patterns: what the 1M-view skits do
 
-Source: 41 transcripts in `kaiship-business/02-content-funnel/sources/skit-refs/` (@agentmorphy 20, @base.learn 21, pulled
+Source: 41 transcripts in [`skit-refs/`](skit-refs/) (@agentmorphy 20, @base.learn 21, pulled
 2026-10-16 via Crowsnest, PR #43). Views are from that pull. **Study the structure, never copy a line, a premise + button pair,
 or a joke.** Our skit must stand on its own fact and its own button.
 

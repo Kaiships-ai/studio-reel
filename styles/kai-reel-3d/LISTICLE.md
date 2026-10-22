@@ -1,7 +1,7 @@
-# ksa-reel-3d · listicle mode · v1 (2026-10-17, after reel63 + Kai's review)
+# kai-reel-3d · listicle mode · v1 (2026-10-17, after reel63 + Kai's review)
 
 One narrator, 4–7 chapters, one new world per reel, Clawd from the casting book acting in every chapter. The mindset is the
-hand-drawn listicle's (`../ksa-reel-handdrawn/SKILL.md`, reel11 CODING 92k views, reel45): only the drawing is 3D.
+hand-drawn listicle's (`styles/kai-hand-draw/WORKFLOW.md`, reel11 CODING 92k views, reel45): only the drawing is 3D.
 Reference for the look Kai wants: @nocodealex "12 Claudes judge your idea" (DeEH5Z9OkGk, 28.5 s, 15.2k comments): one court
 world, a taped paper title per chapter, many Claudes in roles (judge, accountant juror), props flying (stamps, ballots), the
 camera always moving, word captions on paper scraps.
@@ -14,13 +14,13 @@ A list of tools and the steps of one skill are the same job: each item or step =
 **Education variant (Kai 2026-10-20, reel65):** "education" = a short lesson on ONE tool: hook (the reference hook, adapted) → what it is in one line → how it works as a named N-step process (each step = chapter, one real example inside) → the takeaway (what to do with it) → CTA. Narrator stays Kai (Achird); Clawd teaches on screen. Not a feature list, not a hype explainer, not an install tutorial. Refs: IG Dee4Y0dJ85K, YT o8LjTSvza0E (the 4-step deep dive), YT Shorts BIg1kNKTEzM (named idea + numbered lessons). Before scripting, watch every reference Kai names and copy its shape.
 
 **Kai, 2026-10-17:** never change what works in the skit mode. Everything listicle-only lives in this file or in the reel's
-own folder. Never run `make-template.sh` from a listicle reel: it would overwrite the skit template.
+own folder. Never run `make.mjs template` from a listicle reel: it would overwrite the skit template.
 
 ## The frame: fixed vs yours
 
 | Fixed (this file decides) | Yours (go all out) |
 |---|---|
-| Facts: every number and claim has a source URL in `BRIEF.md`; invent visuals, never facts | The concept: ONE world or metaphor for the whole reel, new every reel (court, kitchen, dojo…). Grep `## The concept` in `OpenMontage/projects/published/*/*STORYBOARD*.md` first and never repeat one |
+| Facts: every number and claim has a source URL in `BRIEF.md`; invent visuals, never facts | The concept: ONE world or metaphor for the whole reel, new every reel (court, kitchen, dojo…). Grep `## The concept` in `films/*/*STORYBOARD*.md` and `OpenMontage/projects/published/*/*STORYBOARD*.md` (reels before the port) first and never repeat one |
 | Voice: Gemini TTS, ONE call, ONE narrator (Kai = Achird) | The set and its props, written fresh in this reel's `src/set.js`; never copied from another reel |
 | Script: hook in line 1, one chapter per item, CTA keyword last | Which role Clawd plays in each chapter (`cast/roles.json`), crowds of Clawds, Blocky Kai or not |
 | Hook: an event every ~0.3 s in 0–3 s, motion before 0.3 s, a hit SOUND on frame 0, hook ≥ 8/10 | What happens in each chapter: actions, gags, props that fly, land, break |
@@ -37,18 +37,18 @@ seed ─→ 1 brief + facts ─→ 2 script ─→ ⛔ Kai ─→ 3 concept + ca
 ```
 The two ⛔ gates hold while the mode is new (Kai: "reel đầu tiên làm kỹ"). Drop them only when Kai says so.
 
-1. **Start + brief.** `bash new-reel.sh reelNN-slug` (next free number in `posts.csv`). Fill `BRIEF.md`: topic, keyword, the
+1. **Start + brief.** `node styles/kai-reel-3d/tools/make.mjs new reelNN-slug` (next free number in kaiship-business `posts.csv`). Fill `BRIEF.md`: topic, keyword, the
    facts with a source per claim, the closest reference reel. Missing facts: research and source them first.
-   **v2 kit (reel63, 2026-10-18):** start with `bash new-reel.sh reelNN-slug --listicle`. On top of the template you get `listicle/`: `src/stage.js`
+   **v2 kit (reel63, 2026-10-18):** start with `node styles/kai-reel-3d/tools/make.mjs new reelNN-slug --listicle`. On top of the template you get `listicle/`: `src/stage.js`
    (sub-frame motion blur), `src/ch/kit.js` (`camPath`, `shake`, `yawTo`, `plate`, no tint on the flat Clawd), `src/reel.js` (router, wipe, captions with
    yellow number scraps + edge-dim pulse, grade B + neutral light), `src/bg.js` (background life), `src/cast.js` (`'plain'` Clawd), `audio/sfx.py` +
    `audio/score.py` (STFT consonant duck, hit clamp, voice bus −2.5 dB, earshot default), `vo/make_vo.py` + `env.py` (1-narrator Gemini),
    `review/motion.py` · `snaps.py` · `levels.py` · `ref-measure/camspeed.mjs`, `review/BUILDER-SPEC.md` + `VERIFY-SPEC.md`, and reel63's 6 chapters in
    `review/examples-ch/` (reference only). Rewrite for the new reel: `src/set.js` (the world), the CH table + titles + end-card keyword + `NUMW`/`NUMT`
    (the number words) in `src/reel.js`, and `src/bg.js` (2 layers: something that passes every ~2 s + something that works on the beat).
-   Remaking an old reel's words? Keep its keyword: duplicate its ChatbotX DM flow at posting (`ksa-ig-magnet`), never a 2nd keyword with the same word.
+   Remaking an old reel's words? Keep its keyword: duplicate its ChatbotX DM flow at posting (`/ig-dm`), never a 2nd keyword with the same word.
 2. **Script** (`vo/script.json`). `"cast": {"kai": "Achird"}` only, every line `"who": "kai"`. Write it with the hand-drawn voice
-   standard (`../ksa-reel-handdrawn/VOICE.md` + its SKILL.md § Voice standard): each line one flowing sentence ≤ ~28 words; line 1
+   standard (`styles/kai-hand-draw/VOICE.md` § Pace and the CTA rule): each line one flowing sentence ≤ ~28 words; line 1
    = the hook ("Don't … until …" energy, curiosity, a number); one line per item, its benefit in plain words; the CTA line said
    in one breath with no pause around the keyword ("just comment COURT and I'll send you…"). 30–45 s. Riding a hype event with a proven reel: keep the list lines verbatim; the hook names the event as the goal ("If you want to build something like Tesla's flying Roadster, …these four plugins") and the opening shot recreates the event in our world as the source's FULL action sequence, readable start to end (reel64: drive → up the vertical ramp → flip at the top → drop on jets → slam down into smoke, from a frame-grab of the source; a mid-air fragment was not enough, Kai 2026-10-19). Before building that shot, grab the official clip at 0.5 s steps and write per shot: camera angle (rear / front tele / 3/4 tele / top-down…), which way the object turns, and on which side it lands; sketch it as a storyboard HTML with a camera map per frame and get Kai's yes (reel64: flip went the wrong way and the camera was invented; Tesla's own reel = 4 locked tele angles, Kai 2026-10-19). `style` only from calm,
    confident, curious, excited, warm. Send Kai the script as a table → **stop until Kai approves**.
@@ -67,7 +67,7 @@ The two ⛔ gates hold while the mode is new (Kai: "reel đầu tiên làm kỹ"
 4. **Voice.** `vo/make_vo.py` as in VOICE.md (3 takes, pick the best, `--take N`). Gemini needs exactly 2 speakers: copy reel63's
    `vo/make_vo.py` + `vo/env.py` into the new reel (a silent 2nd speaker `unused: Puck`; env.py tolerates a missing Clawd stem; NUMW for
    digits 1–4, 20, 25, 54, 350, "%"). Never edit `template/`. Pace: style "fast, punchy" gave 33 s vs 42 s for the same words (Kai picked it).
-   If a render tool says Playwright's browser is missing (a disk clean-up removes `~/Library/Caches/ms-playwright`): `npx playwright install chromium`.
+   If a render tool says Playwright's browser is missing (a disk clean-up removes `~/Library/Caches/ms-playwright`): `pixi run studio install` (it reinstalls chromium-headless-shell).
    One line changed later (e.g. the CTA keyword): Gemini call with that line + the line before for context, cut at the silence before it, splice
    into the chosen take, `make_vo.py --wav` (or `--take N`) re-times every word; the CTA must be said in one breath (reject a take that pauses after "Comment").
 5. **Set + shared props first.** Write `STORYBOARD.md` (per chapter: time range, Clawd role, actions keyed to words, **a camera beat
@@ -81,7 +81,7 @@ The two ⛔ gates hold while the mode is new (Kai: "reel đầu tiên làm kỹ"
    A look question from Kai (colour, background, a new layer) = 3 still variants on one sheet (`sheet.mjs --q <param>`, mean luma per variant)
    before any full render; he picks, then it goes into the whole reel.
 6. **Chapters.** One `builder` per chapter file `src/ch/cN.js`, in parallel. Each spec pastes the hard rules below and the
-   skit SKILL.md § Hard rules verbatim. Motion numbers only from `src/motion.js` (+ MOTION.md); pure function of t, no `Math.random`.
+   skit WORKFLOW.md § Hard rules verbatim. Motion numbers only from `src/motion.js` (+ MOTION.md); pure function of t, no `Math.random`.
    Alive: something moves, reacts or lands in every frame; Clawd acts in every shot it is in. Each builder measures its own chapter
    with the motion metric (step 3) on a 10 fps sheet render and stays at median ≥ 12 before reporting.
    **v2:** each builder gets `review/BUILDER-SPEC.md` filled in (project, chapter times, the camera-beat row). Builders measure motion on a
@@ -107,7 +107,7 @@ The two ⛔ gates hold while the mode is new (Kai: "reel đầu tiên làm kỹ"
    orchestrator appends it to REVIEW.md. reel63 v2 went 13/9 → 20/3 → 17/1 ✅/❌; with the kit + the hard rules below, round 1 should start near round 3.
 9. **Render + hand over.** The skit mode's step 5 commands (MP4, cover with the hook text and Clawd's face, LUFS on the MP4).
    QA-REPORT (concept · roles · defects · rounds · Gemini calls · agent runs + time to build the world), CAPTION.md per the skit
-   CTA row, then Kai gets the MP4 + a results table. Ship with `/ksa-ship`.
+   CTA row, then Kai gets the MP4 + a results table. Ship as WORKFLOW.md § Ship.
 
 ## Hard rules (paste into every chapter builder spec)
 - 1080×1920, 30 fps. Nothing important at y > 1536 or x > 900 (IG UI). No face or key object in the caption band on any frame.

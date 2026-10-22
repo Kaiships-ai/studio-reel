@@ -12,13 +12,14 @@ Model `gemini-3.8-flash-tts` (set in `vo/script.json`). Two speakers per call is
 
 ## Run
 ```bash
-uv run -q --python 3.12 --with faster-whisper --with speechbrain --with torch --with torchaudio --with soundfile --with numpy \
+pixi run uv run -q --python 3.12 --with faster-whisper --with speechbrain --with torch --with torchaudio --with soundfile --with numpy \
   python vo/make_vo.py              # one Gemini call → vo/takes/take-NN.wav → vo/vo.wav, stems, src/vo.js, src/vo_env.js, vo/voice-qa.md
 python vo/make_vo.py --take 2        # re-cut an earlier take, no API call (same uv prefix)
 python vo/make_vo.py --wav x.wav     # cut any wav. Outputs are 48 kHz (what audio/score.py expects)
 ```
 The request body is the one that made the approved take (`template/ref/gemini_v5.py`, 2026-10-15).
-Key: `GOOGLE_API_KEY` in `OpenMontage/.env` (git-ignored). One call ≈ 15–20 s for ~40 s of dialogue, ~1,000 audio tokens.
+Key: `GOOGLE_API_KEY` in the library root's `.env` (git-ignored; make_vo.py reads the first `.env` above the film).
+speechbrain and torch are not in pixi, so `uv` brings them; `pixi run` in front puts pixi's ffmpeg on the PATH. One call ≈ 15–20 s for ~40 s of dialogue, ~1,000 audio tokens.
 
 ## How to direct
 - `text` = the words verbatim + vocal tags (`<gasp>`, `<sigh>`, `<laugh>`, `<short pause>`); CAPS = stress.
@@ -28,7 +29,7 @@ Key: `GOOGLE_API_KEY` in `OpenMontage/.env` (git-ignored). One call ≈ 15–20 
 - **Clawd's style words come only from the reel58 palette:** calm · calm, curious · matter-of-fact · gentle, sorry · sweet · cheerful ·
   happy · proud · proud, innocent · whisper. Never flat / deadpan / dry / quiet: they pull Puck down to ~80 Hz and it sounds like another
   voice across reels (reel60 v1, Kai 2026-10-17). The deadpan lives in the words, not the style.
-- **3 takes per reel, pick the closest to reel58:** ECAPA similarity to `published/reel58-api-key/vo/vo_<who>.wav` + median pitch
+- **3 takes per reel, pick the closest to reel58:** ECAPA similarity to [`voice-ref/reel58-<who>.flac`](voice-ref/) (lossless copies of `published/reel58-api-key/vo/vo_<who>.wav`) + median pitch
   (reel58: Kai ≈ 140 Hz, Clawd ≈ 123 Hz). Then `--take N` re-cuts the winner. Also whisper the whole take once: a line missing there
   = Gemini skipped it (reel61 take 1 dropped the heart line).
 

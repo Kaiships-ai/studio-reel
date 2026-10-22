@@ -1,5 +1,5 @@
 """cast/page.py: write Kai's casting book HTML from cast/roles.json (+ cast/img/<id>.jpg, <id>-turn.jpg).
-   python page.py roles.json <out.html>      (called by tools/make.mjs cast; images are linked relative to the skill folder)"""
+   python page.py roles.json <out.html>      (called by tools/make.mjs cast; images are linked relative to the HTML file)"""
 import json, sys, os, html
 
 roles = json.load(open(sys.argv[1]))

@@ -2,7 +2,7 @@
 
 Orchestrator: copy to the reel's `review/`, fill every `<…>`, paste it into each builder's prompt with the chapter id + times.
 
-Project: `/Users/kienbeovl/Desktop/kaiships/OpenMontage/projects/<reelNN-slug>` (run every command from there, `export PATH=/opt/homebrew/bin:$PATH`).
+Project: `films/<reelNN-slug>/` in the studio-reel library (run every command from there, through `pixi run`).
 
 **Goal.** Build YOUR chapter with the ADHD camera from round 1: motion metric median **≥ 12** on the blurred render (reference @nocodealex 12.0;
 reel63 v2 chapters 15–22, Kai 100/10). Follow the storyboard's story beats, cast and continuity prop. Go all out inside
@@ -32,9 +32,9 @@ Banned: a hidden snap (a 1-frame jump with no motion around it), any `Math.rando
 
 **Measure before you report (no number = not done). Chapter times:** <from `node render/dbg.mjs "JSON.stringify(window.__dbg.CH.map(c=>[c.id,c.t0,c.t1]))"`>.
 1. Motion metric (your window = chapter t0 + 0.15 → t1 − 0.15, which skips the router's wipe):
-   `node render/shot.mjs --fps 30 --sub 4 --shutter 0.5 --workers 2 --size 540x960 --start <t0+0.15> --end <t1-0.15> --out renders/_m_<id>.mp4 && uv run -q --python 3.12 --with numpy python review/motion.py renders/_m_<id>.mp4`
+   `node render/shot.mjs --fps 30 --sub 4 --shutter 0.5 --workers 2 --size 540x960 --start <t0+0.15> --end <t1-0.15> --out renders/_m_<id>.mp4 && pixi run python review/motion.py renders/_m_<id>.mp4`
    → median ≥ 12 (report median + p75).
-2. Hidden snaps: `node review/ref-measure/camspeed.mjs 2>/dev/null | python3 review/snaps.py <t0> <t1>` → `snaps 0` (report the line).
+2. Hidden snaps: `node review/ref-measure/camspeed.mjs 2>/dev/null | pixi run python review/snaps.py <t0> <t1>` → `snaps 0` (report the line).
 3. Faces in the safe zone, every frame of your chapter (the router's hero = your `hero(t)`):
    `node render/dbg.mjs "JSON.stringify((()=>{const D=window.__dbg,o=[];for(let f=<F0>;f<<F1>;f++){const s=D.prep(f/30);D.camera.position.copy(s.pos);D.camera.fov=s.fov;D.camera.updateProjectionMatrix();D.camera.lookAt(s.tgt);D.camera.updateMatrixWorld();const p=D.S_.face.clone().project(D.camera),x=(p.x+1)/2,y=(1-p.y)/2;if(p.z<1&&(x>0.83||x<0.05||y>0.8||y<0.05||(y>0.68&&y<0.77)))o.push([f,+x.toFixed(2),+y.toFixed(2)])}return o})())" 2>/dev/null | grep -v -e LOG -e ERR`
    (F0/F1 = frame numbers = seconds × 30) → `[]` or a short list you explain.

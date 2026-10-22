@@ -4,7 +4,7 @@ The script is the only thing Kai approves, so it carries the reel. Write it **to
 41 reference reels up to 5.2M views) and **for Gemini TTS acting in one take**, not for a human voice actor.
 
 ## Before you write (5 min)
-1. **Read VIRAL-PATTERNS.md** and 3–4 transcripts from the ≥ 900k tier in `kaiship-business/02-content-funnel/sources/skit-refs/`.
+1. **Read VIRAL-PATTERNS.md** and 3–4 transcripts from the ≥ 900k tier in [`skit-refs/`](skit-refs/).
 2. **Overlap check.** Read both `skit-refs/*/INDEX.md` and the "Already taken" table. If your premise + button pair matches one,
    change the angle or the button. Same topic is fine; the same joke is not.
    Then grep every transcript for the premise's key words (`grep -ril "<word>" skit-refs/*/D*.md`): the table lists premises only, a joke line inside another reel is not in it (2026-10-16: "you deleted the tests" sat in the Gary reel).
@@ -30,7 +30,7 @@ reference punchlines (VIRAL-PATTERNS.md quotes) are taken.
 ## Viral scorecard (self-check, 10 points)
 Score the draft before Kai sees it, with **one line of evidence per item** (the line numbers that earn it). **Below 8/10 →
 rewrite, do not send.** The writer's own score runs high (a 10/10 self-score was re-scored 6/10), so one short verifier pass
-re-scores it before the gate (script only, not a build review round); show the verifier's score at the gate. This "viral score" is separate from the reel's "hook score" (SKILL.md).
+re-scores it before the gate (script only, not a build review round); show the verifier's score at the gate. This "viral score" is separate from the reel's "hook score" (WORKFLOW.md).
 
 | # | Check | 1 point when |
 |---|---|---|

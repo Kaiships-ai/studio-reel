@@ -29,7 +29,7 @@ const filmArg = () => {
 };
 
 const CMD = {
-  // new-reel.sh: the template is the whole engine (Blocky Kai, Clawd, render, review tools); the listicle kit goes on top
+  // the template is the whole engine (Blocky Kai, Clawd, render, review tools); the listicle kit goes on top
   new() {
     const name = pos[1];
     if (!name || !/^[a-z0-9][a-z0-9-]*$/.test(name)) die('usage: make.mjs new <name> [--listicle]   (lowercase letters, digits and dashes, e.g. reel66-hooks)');
@@ -49,7 +49,7 @@ const CMD = {
     console.log(`✓ films/${name}/ ready. Fill BRIEF.md, then write vo/script.json (Kai approves it), then storyboard.html (Kai approves the direction) before any voice`);
   },
 
-  // make-template.sh: a whitelist only (never frames/, renders/, node_modules/, vo/cache, voice takes)
+  // a whitelist only (never frames/, renders/, node_modules/, vo/cache, voice takes)
   template() {
     const SRC = filmArg(), NAME = basename(SRC), has = f => existsSync(join(SRC, f));
     const cp = (f, to = f) => { if (has(f)) { mkdirSync(dirname(join(T, to)), { recursive: true }); cpSync(join(SRC, f), join(T, to), { dereference: true }); } };
@@ -67,7 +67,7 @@ const CMD = {
     console.log(`✓ template refreshed from ${NAME}. Commit styles/kai-reel-3d/template on a branch.`);
   },
 
-  // cast/build.sh: every role in engine/roles/data.js + Kai's default Clawd; only <id> args = re-render just those roles
+  // every role in engine/roles/data.js + Kai's default Clawd; only <id> args = re-render just those roles
   cast() {
     requireReady(env());
     const SRC = filmArg(), at = { cwd: SRC };
@@ -90,6 +90,7 @@ const CMD = {
     const C = join(LIB, 'films', 'covers');
     if (existsSync(C)) return console.log(`films/covers/ already exists: render there (see styles/kai-reel-3d/covers/README.md)`);
     copyTree(join(STYLE, 'covers'), C);
+    for (const d of ['renders/eye', 'renders/all', 'frames']) mkdirSync(join(C, d), { recursive: true });   // sheet.mjs writes there, never creates them
     console.log('✓ films/covers/ ready: add a row to titles-eye.tsv, then  cd films/covers && pixi run python render/all.py titles-eye.tsv');
   },
 };

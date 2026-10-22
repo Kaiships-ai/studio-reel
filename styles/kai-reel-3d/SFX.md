@@ -13,7 +13,7 @@ grows reel by reel — each skit should leave it richer than it found it.
 - Silence is a sound: drop the music for the turn or the button.
 
 ## Where sounds come from (in order)
-1. **Our library** `kaiship-business/assets/sfx/` (create it with the first skit; one folder per category: ui, foley, whoosh,
+1. **Our library** [`sfx/`](sfx/) (`styles/kai-reel-3d/sfx/`; `audio/sfx.py` finds it from any film, `SFX_LIB` overrides; create it with the first skit; one folder per category: ui, foley, whoosh,
    impact, clawd, ambience) + a `LIBRARY.md` row per file: name · source · license · used in.
 2. **Free licensed sources** with a clear license (CC0 or royalty-free for commercial use): Freesound (CC0 filter),
    Sonniss GDC bundles, Pixabay sound effects, Mixkit. Record the license in LIBRARY.md.
@@ -24,7 +24,7 @@ grows reel by reel — each skit should leave it richer than it found it.
 - `window.__cues()` in `reel.js` lists every hit (t, kind) → `audio/cues.json`.
 - Today `audio/score.py` only has synth SFX (chirp/pop/boing) and raises on an unknown `kind`. **The first skit's job:** write
   `audio/sfx.py` (cues.json → per kind a list of library wav layers with gain/offset, each hit 1 frame after its picture, ducked
-  under spoken consonants → `audio/sfx.wav`), create `kaiship-business/assets/sfx/` + `LIBRARY.md`, then `make-template.sh` so
+  under spoken consonants → `audio/sfx.wav`), create `sfx/` + `LIBRARY.md`, then `make.mjs template` so
   every later skit starts with it.
 - Mix sfx.wav + music + voice → `audio/mix.wav`.
 - Check with `review/audio_audit.py` (SFX vs voice levels, LUFS) and by ear on a phone speaker.
@@ -32,7 +32,7 @@ grows reel by reel — each skit should leave it richer than it found it.
 ## Library log (grow it)
 | Kind | File | Source · license | First used in |
 |---|---|---|---|
-| prompt / enter / tap / land / land_big / toggle / rm / poof / poof_ui / sparkle / snap / stand / slump / card | see `kaiship-business/assets/sfx/LIBRARY.md` (17 files) and the KIT in `template/audio/sfx.py` | Pixabay licence (11) · ElevenLabs generated (6) | reel57-permission |
+| prompt / enter / tap / land / land_big / toggle / rm / poof / poof_ui / sparkle / snap / stand / slump / card | see [`sfx/LIBRARY.md`](sfx/LIBRARY.md) (17 files) and the KIT in `template/audio/sfx.py` | Pixabay licence (11) · ElevenLabs generated (6) | reel57-permission |
 | alarm / bot / bots / timer / impact / drop / ping / flare / counter / poweroff / eyesoff / stamp / keypop / relief / check / chart … | +9 files (alarm-stinger, robot-blip, timer-tick, sonar-ping, counter-roll, low-boom, power-down, key-jingle, night-room-tone); KIT in reel58 `audio/sfx.py` | ElevenLabs generated (9) | reel58-api-key |
 
 ## Listicle mode levels (reel63 v2, Kai 100/10, 2026-10-18; skit mode unchanged)

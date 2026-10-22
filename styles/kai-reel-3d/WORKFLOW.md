@@ -1,18 +1,18 @@
----
-name: ksa-reel-3d
-description: Make one 3D reel for @kaiships.ai with Clawd from the casting book (97 roles), voiced by Gemini TTS in one take, from an idea to a verified MP4. Two modes. `skit` = Blocky Kai and Clawd sitting together, a short funny dialogue about AI tools (Kai says skit / kịch ngắn / Kai-and-Clawd dialogue, a Morphy-style two-character reel). `listicle` = one narrator, 4–7 chapters (a list of tools or the steps of one skill), a new world per reel invented by Claude, Clawd plays a role in every chapter and moves as much as the hand-drawn reels (Kai says listicle 3D, reel 3D như reel11 / như reel COURT, reel listicle Clawd 3D). The process is fixed; the story, world, set, camera and motion are the builder's creative call. Trigger: /ksa-reel-3d [skit|listicle]
----
+# kai-reel-3d · two modes (2026-10-17, ported from kaiship-business `ksa-reel-3d` 2026-10-22)
 
-# ksa-reel-3d · two modes (2026-10-17)
+Dev only: Blocky Kai is Kai's likeness and the casting book has real people and franchise nods, so `kit.manifest` keeps this
+folder and `/make-reel-3d` out of every zip. Run every command below from the film folder (`films/<name>/`) through `pixi run`
+(`pixi run node render/shot.mjs …`, `pixi run python review/gate.py`): pixi's node, python and ffmpeg replace `/opt/homebrew/bin`.
+The library tools (`node styles/kai-reel-3d/tools/make.mjs …`) run from the library root.
 
 | Mode | Read | Status |
 |---|---|---|
 | `skit` | this file, top to bottom (it is the skit mode, unchanged from ksa-reel-skit v1.3) | proven: reel57–62 |
 | `listicle` | [LISTICLE.md](LISTICLE.md): it reuses this folder's template, cast, voice, check tools and hard rules, and replaces only the dialogue parts | new, first reel built with full gates |
-| `listicle` kit | `bash new-reel.sh reelNN-slug --listicle` copies `listicle/` (reel63 v2: blur stage, camPath kit, router, bg, levels, specs) | proven: reel63 v2, Kai 100/10 (2026-10-18), `OpenMontage/projects/published/reel63-coding-3d/renders/reel63-coding-3d-v2.mp4` once posted |
+| `listicle` kit | `node styles/kai-reel-3d/tools/make.mjs new reelNN-slug --listicle` copies `listicle/` (reel63 v2: blur stage, camPath kit, router, bg, levels, specs) | proven: reel63 v2, Kai 100/10 (2026-10-18), `OpenMontage/projects/published/reel63-coding-3d/renders/reel63-coding-3d-v2.mp4` once posted |
 
 No mode given: a dialogue idea = `skit`; a list of tools or the steps of one skill = `listicle`. Kai, 2026-10-17: never change what works in the skit mode; listicle-only changes go in LISTICLE.md or in the reel's own folder.
-The old City draft (Tripo Kai, Kaiships City, reel54) is archived at `z-archive/skills-unused/ksa-reel-3d-city-v0/`.
+The old City draft (Tripo Kai, Kaiships City, reel54) is archived in kaiship-business at `z-archive/skills-unused/ksa-reel-3d-city-v0/`.
 
 # skit mode · ksa-reel-skit v1.3 (2026-10-17)
 
@@ -21,13 +21,13 @@ We don't clone other creators any more: the inspiration is a seed, the skit is o
 
 | | |
 |---|---|
-| Reads | this file · [SKIT-WRITING.md](SKIT-WRITING.md) · [VIRAL-PATTERNS.md](VIRAL-PATTERNS.md) · `kaiship-business/02-content-funnel/sources/skit-refs/` · [VOICE.md](VOICE.md) · [MOTION.md](MOTION.md) · [SFX.md](SFX.md) · `template/ref/` |
-| Start | `bash new-reel.sh reelNN-slug` → `OpenMontage/projects/reelNN-slug` (template = engine, Blocky Kai, Clawd, render, review tools) |
+| Reads | this file · [SKIT-WRITING.md](SKIT-WRITING.md) · [VIRAL-PATTERNS.md](VIRAL-PATTERNS.md) · [`skit-refs/`](skit-refs/) · [VOICE.md](VOICE.md) · [MOTION.md](MOTION.md) · [SFX.md](SFX.md) · `template/ref/` |
+| Start | `node styles/kai-reel-3d/tools/make.mjs new reelNN-slug` → `films/reelNN-slug/` (template = engine, Blocky Kai, Clawd, render, review tools) |
 | Writes | `BRIEF.md`, `vo/script.json`, `STORYBOARD.md`, `src/set.js`, `src/reel.js`, `audio/mix.wav`, `renders/<slug>.mp4`, `renders/cover.png`, `REVIEW.md`, `QA-REPORT.md` |
 | Gate | **Two: Kai approves the script** (`vo/script.json` as a table), **then the storyboard sketch** (`storyboard.html`, direction only). Nothing else waits for Kai. Never post or upload. |
-| Done when | MP4 + cover + `CAPTION.md` exist, hook ≥ 8/10 (new format), `REVIEW.md` has no ❌, `vo/voice-qa.md` clean → hand Kai the MP4 + results table. Posting, funnel test and 48 h numbers belong to `ksa-ig-magnet` / `ksa-week`, not this skill |
-| Folder | Build in `OpenMontage/projects/reelNN-slug` (next free number in `posts.csv`; reel57 = the first skit) → move to `backlog/` when done → `published/` after posting; fix old `projects/<name>` paths on every move |
-| CTA | Keyword-led DM flow (ksa-ig-magnet) leading to the website + Discord (Skool stopped 2026-10-18): ONE uppercase word, checked unused in ChatbotX. It lives in the caption and the end-card text; caption goal = Discord join (Kai 2026-10-17, Skool replaced by Discord 2026-10-19): hook line from the skit's own facts · ONE line of why/fix · "💬 Comment <KW>. I'll DM you <gift> + the Discord invite + website link, where I share how I ship with Claude Code." · 3 hashtags; never promise community content that doesn't exist yet; the spoken last line stays the joke unless Kai says otherwise |
+| Done when | MP4 + cover + `CAPTION.md` exist, hook ≥ 8/10 (new format), `REVIEW.md` has no ❌, `vo/voice-qa.md` clean → hand Kai the MP4 + results table. Posting, funnel test and 48 h numbers belong to `/ig-dm`, `/ig-caption` and `/ig-plan`, not this skill |
+| Folder | Build in `films/reelNN-slug/` (git-ignored; next free number in kaiship-business `02-content-funnel/posts.csv`; reel57 = the first skit). The folder stays there when done and after posting. Reels made before the port live in `OpenMontage/projects/backlog/` and `published/` |
+| CTA | Keyword-led DM flow (`/ig-dm`, the comment-keyword flow on ChatbotX) leading to the website + Discord (Skool stopped 2026-10-18): ONE uppercase word, checked unused in ChatbotX. It lives in the caption and the end-card text; caption goal = Discord join (Kai 2026-10-17, Skool replaced by Discord 2026-10-19): hook line from the skit's own facts · ONE line of why/fix · "💬 Comment <KW>. I'll DM you <gift> + the Discord invite + website link, where I share how I ship with Claude Code." · 3 hashtags; never promise community content that doesn't exist yet; the spoken last line stays the joke unless Kai says otherwise |
 
 ## The frame: fixed vs yours
 
@@ -49,27 +49,27 @@ seed idea ─→ 1 script ─→ ⛔ Kai approves ─→ 1b storyboard sketch �
 0. **Run plan (right after Kai approves the storyboard sketch, before any voice call).** Send Kai a short plan: how many reels at once,
    builders (1 per reel, Opus low) and verifiers (1 per reel per round, max 2 rounds), what Kai gets and when (only the MP4s), Gemini
    calls expected (~3 takes per reel), and the steps the orchestrator does itself (voice pick, cover check, ship). Kai, 2026-10-17.
-1. **Script.** `new-reel.sh`, fill `BRIEF.md` (idea, the fact + source, closest reference reel). Write `vo/script.json` per
+1. **Script.** `make.mjs new`, fill `BRIEF.md` (idea, the fact + source, closest reference reel). Write `vo/script.json` per
    SKIT-WRITING.md (20–28 lines, 40–55 s, the viral shape from VIRAL-PATTERNS.md). Score it with the viral scorecard (one evidence line per item);
    below 8/10 rewrite before Kai sees it. One short verifier pass re-scores it before the gate (the "viral score"; the "hook score" in Done-when is separate). Send Kai the gate package (SKIT-WRITING.md § What Kai sees) and **stop until Kai approves**.
    Changes Kai asks for = new table.
 2. **Voice** (VOICE.md). `vo/make_vo.py` = one Gemini call → `vo/vo.wav`, voice stems, `src/vo.js` (line + word times), `src/vo_env.js`
    (mouths), `vo/voice-qa.md`. Any ❌ or "extra speech" row = new take (`--take N` re-cuts an old one, no API call);
    ⚠️ "whisper missed it, voice present" = listen to that line, re-take only if it really is wrong.
-1b. **Storyboard sketch (Kai, 2026-10-17: "kiểu storyboard này rất hay").** `new-reel.sh` copies `storyboard.template.html` → `storyboard.html`
+1b. **Storyboard sketch (Kai, 2026-10-17: "kiểu storyboard này rất hay").** `make.mjs new` copies `storyboard.template.html` → `storyboard.html`
    (reel62's sketch: rough.js 9:16 panels, one set panel on top). Rewrite its `P` array (≈ 10–12 key beats: line, shot `wide|two|kai|clawd|screen`,
    sky/light, screen state, note, music) and the set text, render a headless screenshot to check it, `open` it, and send Kai 5–8 lines
    on the set. Do it fast (one pass, no polish). **Mindset: Kai approves the direction (set, light arc, screen states, the anchor →
    twist, music arc), not the shots.** The builder keeps full creative freedom inside it: angles, cuts, motion, extra props, better
    ideas than the sketch. Only a change to an approved direction item goes back to Kai.
    **Cast Clawd (Kai, 2026-10-17: Clawd is an actor).** Read `cast/roles.json` (98 roles in 19 groups: id · sign · use · risk; the pictures are
-   `cast/img/<id>.jpg`, Kai browses `00-journal/html-visualization/clawd-casting.html`). Pick the role whose `use` fits the story, or
+   `cast/img/<id>.jpg`, Kai browses [`cast/clawd-casting.html`](cast/clawd-casting.html)). Pick the role whose `use` fits the story, or
    `kai-default` (red >>> headband + zipped red jacket) when none fits better; put the role id + its card image in `storyboard.html` with one line
    on why. Kai approves it with the storyboard. In the build: `loadClawdDefault(scene, scale, '<id>')` (`src/cast.js`); for `kai-default` pass NO role
    (`loadClawdDefault(scene, scale)`): `'kai-default'` is a book id only and throws "role not built yet"; set props (fire, chair,
    arrow) come with the role unless the reel passes `noSet`. A role that isn't in the book yet: add it to `engine/roles/data.js` + a build in
    `engine/roles/<batch>.js` (kit rules in `engine/roles/kit.js`: eyes always visible, no mouth, nothing dark under the eyes), then
-   `bash cast/build.sh <reel>` to refresh the pictures, JSON and HTML. Real people, anime and Ninjago = costume nod only.
+   `node styles/kai-reel-3d/tools/make.mjs cast films/<reel>` to refresh the pictures, JSON and HTML (role ids after the film = only those). Real people, anime and Ninjago = costume nod only.
 3. **Build.** `STORYBOARD.md` first (it starts from the approved `storyboard.html` beats): per line → shot, Kai beat, Clawd beat, screen/prop change, SFX, the WORD that fires it.
    Then `src/set.js` + `src/reel.js`. The template page runs reel61-force-push's `reel.js` (template refreshed 2026-10-17: both-heads caption guard, short-shot fold, per-word SFX duck) on its own old `src/vo.js`; once
    your voice step writes the new `vo.js`, that page throws until you rewrite `reel.js` for your lines. Read it first for the
@@ -89,14 +89,14 @@ seed idea ─→ 1 script ─→ ⛔ Kai approves ─→ 1b storyboard sketch �
    | Screen | Only the script's numbers; no counters (show the final number static) |
    | Light | Practical/prop lights near a character reach ≤ 0.15 m (the branch glow turned Clawd's legs lime); no alarm glint in Clawd's eyes |
    | Close | Kai's mouth closed after his last line (the freeze too); end card on a solid plate; cover = the "O" face + hook text, both characters if possible. The last shot ACTS (sigh, head shake, look to the payoff), never a still freeze (Kai, reel62: "Kai đơ thế trông chán") |
-4. **Check** (shell: `export PATH=/opt/homebrew/bin:$PATH`; Python: `uv run -q --python 3.12 --with numpy --with scipy --with matplotlib --with pillow python …`).
+4. **Check** (from the film folder, every command through `pixi run`; Python = `pixi run python …` (numpy, scipy, pillow, soundfile are in pixi); `review/clawd_speed.py` also needs matplotlib, which pixi doesn't have: `pixi run uv run -q --python 3.12 --with numpy --with scipy --with matplotlib --with pillow python review/clawd_speed.py`).
    - Sheets: `node render/sheet.mjs --page reel.html --from 0 --to <T> --n 24 --size 270x480 --out review/sheet.png`.
    - Page audit: `node review/audit.mjs` → `review/audit-page.json` → `review/clawd_speed.py`.
    - Onion on a hero beat: `node render/shot.mjs --start a --end b --fps 30 --size 540x960 --out renders/beat.mp4` (frames stay in
      `frames/`), then `review/onion.py review/onion.png <frame pngs>`.
    - Sound: `node render/dbg.mjs "JSON.stringify(window.__cues())" | grep -v -e LOG -e ERR > audio/cues.json` → SFX + music (SFX.md)
      → `audio/mix.wav` → `review/audio_audit.py`.
-   - **Gate before any 1080p render:** `node review/audit.mjs` + the mix, then `uv run -q --python 3.12 --with numpy --with scipy python
+   - **Gate before any 1080p render:** `node review/audit.mjs` + the mix, then `pixi run python
      review/gate.py` → `review/gate.txt`. Every FAIL fixed, every WARN looked at (the call goes in REVIEW.md). It checks shot length,
      button hold, caption vs heads, IG safe zone (face/eye edges), Kai's mouth in silence, hook frame 0, SFX vs words (2–8 kHz, ≥ 6 dB under),
      screen numbers and counters. Paste `gate.txt` into REVIEW.md.
@@ -112,13 +112,14 @@ seed idea ─→ 1 script ─→ ⛔ Kai approves ─→ 1b storyboard sketch �
    QA-REPORT, then Kai gets the MP4 + a results table (what · output · evidence · status).
 
 ## Cover / thumbnail (eye layout, Kai approved the look 2026-10-20)
-One series look for every reel cover and thumbnail (3D and hand-drawn reels). Gold = `OpenMontage/projects/covers-diorama/gold-tile.png`
+One series look for every reel cover and thumbnail (3D and hand-drawn reels). Gold = [`covers/gold-tile.png`](covers/gold-tile.png)
 ("The client said it's great. / DAILY LIFE · EP 1"): Kai at a desk at eye level, night city window, monitor behind him, Clawd beside, dark
 title card at the bottom.
-- **Engine:** `OpenMontage/projects/covers-diorama` (`cover.html` + `src/cover.js`, `layout=eye` is the default). One cover:
+- **Engine:** [`covers/`](covers/) (`cover.html` + `src/cover.js`, `layout=eye` is the default), worked in `films/covers/` (`node styles/kai-reel-3d/tools/make.mjs covers`
+  makes it once; `titles-eye.tsv` and the renders grow there). One cover, from `films/covers/`:
   `node render/sheet.mjs --page cover.html --times 0 --size 1080x1920 --nolabel --q "<query>" --out renders/eye/NN-<code>.png`
-  (`export PATH=/opt/homebrew/bin:$PATH`). Whole grid: add a row to `titles-eye.tsv` → `python3 render/all.py titles-eye.tsv`.
-- **Row = one cover:** `tag` (`<Series> · EP n`, n counted from `02-content-funnel/posts.csv`) · `title` (sentence case, ≤ 2 short lines, ends with
+  (through `pixi run`). Whole grid: add a row to `titles-eye.tsv` → `pixi run python render/all.py titles-eye.tsv`.
+- **Row = one cover:** `tag` (`<Series> · EP n`, n counted from kaiship-business `02-content-funnel/posts.csv`) · `title` (sentence case, ≤ 2 short lines, ends with
   a period) · `hl` (how many last words get the series colour) · `col` (series colour: Kai & Clawd `#E9BA4F`, Plugins `#EE8A4E`, Claude Code tips
   `#7FB8F0`, Free tools `#5EC4A8`, AI skills `#C9A0F0`) · `sitt` 0.5 typing or 2.6 chin on hand (chin rows: `mugx=0.0 mugr=0.038 mugh=0.1`, the mug
   hides a strap crease) · `mouth` closed / small / open (+`mopen` .5) / O (warnings) · `sky` night / dusk / rain · `flip=1` mirrors the set (never on a
@@ -133,13 +134,13 @@ title card at the bottom.
 
 ## Hard rules (paste into every builder spec)
 - **Voice:** native TTS only — no pitch shift, no time stretch, no per-line speed. Pace and emotion come from the words and `style`.
-  Gemini (VOICE.md) replaces the voice *choice* in the archived City draft (`z-archive/skills-unused/ksa-reel-3d-city-v0/SKILL.md` § Motion Lab 9–10); its voice-QA gate and cut-to-the-speaker rule still apply.
+  Gemini (VOICE.md) replaces the voice *choice* in the archived City draft (kaiship-business `z-archive/skills-unused/ksa-reel-3d-city-v0/SKILL.md` § Motion Lab 9–10); its voice-QA gate and cut-to-the-speaker rule still apply.
 - **Kai canon:** Blocky Kai, never mirrored, no hand close-ups. Mouth from `voMouth(t, words, ENV_K)`; closed between Kai's lines.
 - **Clawd:** default Clawd, 2 vertical slot eyes, no googly eyes, no astronaut dome; acting in every shot it is in.
 - Captions never over a head; nothing important at y > 1536 or x > 900 (IG UI). 1080×1920, 30 fps.
 - Picture reads with the sound off. SFX never over a spoken word's consonants; music 15–18 dB under the dialog.
 - No generic follow card, no style names or counters on screen.
-- Engine fixes go into the reel; refresh the template from a finished reel with `make-template.sh <path>`; never hand-edit `template/`.
+- Engine fixes go into the reel; refresh the template from a finished reel with `node styles/kai-reel-3d/tools/make.mjs template films/<reel>`; never hand-edit `template/`.
 
 ## Lessons this skill is built on
 - v1.2: 41 reference skits (@agentmorphy, @base.learn) show the ≥ 900k reels share one shape: name + fear opener, one-fact
@@ -151,8 +152,8 @@ title card at the bottom.
 
 ## Close out
 QA-REPORT (idea · defects · duration · LUFS · Gemini calls used · agent runs) · CAPTION.md · new motions/SFX worth keeping go to the
-banks in MOTION.md / SFX.md · one line in `kaiship-business/AGENT_LEARNING.md` for a recurring defect · `make-template.sh` if the
+banks in MOTION.md / SFX.md · one line in `AGENT_LEARNING.md` (library root) for a recurring defect · `make.mjs template` if the
 engine improved.
 
 ## Ship (2026-10-16)
-Last step: run `/ksa-ship` to self-review, commit, PR and merge the repo changes from this run (Kai standing approval; stop only on its blockers).
+Last step: self-review, commit, PR and merge the library changes from this run (`styles/kai-reel-3d/`: template, cast, banks; films stay local) on a branch (Kai standing approval; stop only on a blocker).

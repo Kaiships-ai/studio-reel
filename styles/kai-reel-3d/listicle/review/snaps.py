@@ -1,6 +1,6 @@
 # hidden-snap check (LISTICLE hard rule): reads camspeed.mjs output (f, chA, chB, median px/f, max px/f) from stdin.
 # A snap = a frame inside one chapter whose median px/f > 40 and > 2.5 × both neighbours (a jump with no motion around it).
-# usage: node review/ref-measure/camspeed.mjs | python3 review/snaps.py [t0 t1]
+# usage: node review/ref-measure/camspeed.mjs | pixi run python review/snaps.py [t0 t1]
 import sys
 R = [l.split() for l in sys.stdin if l[:1].isdigit()]; R = [(int(a), int(b), int(c), float(d), float(e)) for a, b, c, d, e in R]
 a, b = (float(sys.argv[1]), float(sys.argv[2])) if len(sys.argv) > 2 else (0, 1e9)
