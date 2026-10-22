@@ -24,3 +24,11 @@ quality bar on every chapter. Read `REEL_GUIDE.md`, `ANIMATION_GUIDE.md` and `re
 Done when: `films/<name>/<name>.mp4` and `<name>-cover.png` exist, `make.mjs films/<name> verify` passes (every ✓),
 and `REVIEW.md` has no ❌ (hook ≥ 8/10), with `QA-REPORT.md` and `CAPTION.md` written. Then tell the user: the two
 paths, the length, the hook score, one line on the concept, and any open ⚠ rows.
+
+## Input from a workspace script (`workspace/scripts/<slug>.md`)
+
+Written by `/ig-reel` (and `/ig-human`). Treat it as **a script in quotes**: the `## Script` section is the spoken
+text, one line per beat, hook first and CTA last; speak it word for word. Name the film `<slug>` (from the front
+matter, else the file name). Use `## On-screen` as the card text and timings, and keep the `cta_keyword` spelled
+exactly as written. If the file has no `## Script` section, use its text as a topic. If `status` is `draft`, say once
+that `/ig-human` has not run on it, then carry on. When done, add: next `/ig-caption <slug>`.
