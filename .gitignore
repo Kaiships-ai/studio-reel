@@ -110,3 +110,4 @@ styles/kai-hand-draw/demo/vo/lines/
 
 # pixi environment (installed per machine by /studio)
 .pixi/
+dist/

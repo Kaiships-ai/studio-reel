@@ -32,7 +32,7 @@ rmSync(film, { recursive: true, force: true });
 cpSync(join(dir, 'kit', 'check-reel'), film, { recursive: true });
 // CI machines draw WebGL in software (seconds per frame): 6 fps keeps the whole pipeline in the test, minutes not hours
 const cfg = join(film, 'src', 'config.js');
-writeFileSync(cfg, readFileSync(cfg, 'utf8').replace(/fps: 30/, 'fps: 6').replace(/name: '[^']*'/, "name: 'ci-reel'"));
+writeFileSync(cfg, readFileSync(cfg, 'utf8').replace(/fps:(\s*)30/g, (_, s) => `fps:${s}6`).replace(/name: '[^']*'/, "name: 'ci-reel'"));
 step('make a reel (audio, render, verify)', ['run', 'make', 'films/ci-reel', 'audio', 'render', 'verify', '--no-asr', '--no-camscan']);
 const report = JSON.parse(readFileSync(join(film, 'out', 'check', 'verify.json'), 'utf8'));
 const failed = report.checks.filter(c => c.ok === false);
