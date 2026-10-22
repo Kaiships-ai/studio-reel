@@ -70,7 +70,7 @@ Button labels must be 20 characters or fewer.
 
 This part has no API, so it is always a few clicks:
 
-1. Open the Instagram comment automation page (Automation, Instagram comments; the address ends in `/ig-comments`)
+1. Open the Instagram comment automation page (Automation, Instagram comments; its web address contains `ig-comments`)
    and create a new one.
 2. Track: **Specific posts**, then choose your new reel. Thumbnails can be missing; match by caption and date.
 3. Reply to comments that **contain** the keyword.
