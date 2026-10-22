@@ -1,31 +1,43 @@
 # Kỳ vọng của Kai cho Kaiships Studio (dev only, không ship)
 
-Agent đọc file này trước mỗi việc lớn. Kai chỉ sửa file này; agent tự nghĩ cách làm, tự chạy tới khi "xong khi" đạt,
-và chỉ quay lại với Kai cho các dòng trong **Quyết định chỉ Kai làm được**.
+Agent đọc file này trước mỗi việc lớn. Kai chỉ sửa file này. Agent tự lên kế hoạch, tự chạy cho tới khi đạt "xong khi",
+và chỉ quay lại hỏi Kai những dòng trong **Quyết định chỉ Kai làm được**.
 
-## Sản phẩm là gì
-Người mua tải zip, mở bằng Claude Code, gõ một lệnh, và nhận video hoàn chỉnh về chủ đề của họ, theo style họ chọn trong 52 style.
+## Đích: v1.6 = bản stable
 
-## Kỳ vọng
+Người mua tải zip về, gõ `/studio` rồi nói một ý tưởng còn mơ hồ. Studio gợi ý style và dạng nội dung hợp với ý đó.
+Người mua chọn, studio làm ra reel hoàn chỉnh kèm caption và cover cho kênh của họ.
 
 | # | Kỳ vọng (người mua thấy gì) | Xong khi (kiểm được) | Trạng thái |
 |---|---|---|---|
-| E1 | Workflow hợp lý cho cả 52 style, không chỉ hand-draw: khách biết có style gì, chọn một, ra film | `/studio` và `/make-reel` cho chọn style; mỗi style được mời chọn đều render được từ một zip sạch (test tự động) | chưa làm, chờ quyết định Q1 |
-| E2 | Show off các style | README có gallery poster của 52 style (PR #11); mỗi style có link xem demo video | gallery xong (PR #11); video demo chưa có |
-| E3 | Cài được trên macOS, Windows, Linux không cần admin | CI clean-install xanh trên 5 máy cho mỗi tag `v*` | xong (v1.5) |
-| E4 | Kai không phải babysit | Mỗi việc kết thúc bằng PR + bảng kết quả (việc · output · bằng chứng · trạng thái); agent chỉ hỏi Kai các dòng Q bên dưới | đang áp dụng |
+| E1 | README showcase các style bằng **ảnh do Kai làm**, không phải demo của Lemo | Mỗi style được mời chọn có `styles/<slug>/showcase.jpg` 9:16 cùng một brief ("Ship it."); README chỉ dùng ảnh này | đang thử 3 style (watercolor, swiss-motion, pixel-rpg) |
+| E2 | Onboarding: `/studio` → người mua nói ý mơ hồ → studio đối chiếu với các style và đề xuất 2–3 style kèm ảnh → người mua chọn | Ba ý mơ hồ mẫu đều nhận về 2–3 style hợp lý kèm lý do; style được chọn đi thẳng vào bước làm reel | chưa làm |
+| E3 | Sau khi chọn style: studio đề xuất input (script, storyboard nếu muốn) và cho chọn mode | Hai mode: **`cook`** (Claude sáng tạo hết cỡ, để show off) và **`direct`** (người mua đưa script/storyboard, Claude làm đúng theo) | chưa làm |
+| E4 | Bank dạng nội dung: listicle (thế mạnh), explanation (cần cải thiện), why, education; mở rộng dần | `content-types/<tên>.md`: nhịp, hook, thời lượng, ví dụ; style nào cũng dùng được | chưa làm |
+| E5 | Output: reel hoàn chỉnh + caption + cover | `films/<slug>/`: MP4 1080×1920, cover, `CAPTION.md`; verify pass | có sẵn cho hand-draw; cần cho mọi style được mời chọn |
+| E6 | Crowsnest và DM: đưa vào waitlist để người mua thấy và muốn (FOMO) | `/studio` và README có mục "Sắp có" kèm link waitlist; `/ig-dm` không còn trong bản bán | chưa làm, chờ Q2 |
+| E7 | v1.6 stable | CI clean-install xanh trên 5 máy; mỗi style được mời chọn qua bài render thử 9:16 từ zip sạch; `/verify` draft pass; CHANGELOG; tag `v1.6` | chưa làm |
+| E8 | Kai không phải babysit | Mỗi việc kết thúc bằng PR + bảng kết quả; agent chỉ hỏi các dòng Q | đang áp dụng |
+
+## Thứ tự chạy
+
+1. **Pilot 9:16** (đang chạy): 3 style ở 3 họ khác nhau, đo chất lượng, thời gian, token → chốt cách làm cho 51 style.
+2. **Showcase**: chạy cho mọi style qua được pilot; style không lên được 9:16 thì không mời chọn trong v1.6 (vẫn có trong thư viện).
+3. **Content-type bank** từ những gì đã chứng minh: listicle (kai-hand-draw, reel63), education (reel65).
+4. **Onboarding** trong `/studio` + `/make-reel <style>` với mode `cook` / `direct`.
+5. **Waitlist** cho Crowsnest + DM.
+6. **Stable**: test render cho các style được mời chọn, 5 máy xanh, tag `v1.6`.
 
 ## Quyết định chỉ Kai làm được
 
 | # | Câu hỏi | Đề xuất của agent |
 |---|---|---|
-| Q1 | 51 style kia hiện là phim **ngang 16:9** (chỉ kai-hand-draw là reel dọc 9:16). Với khách, chúng là gì? A) reel dọc cho Instagram: chuyển từng style sang 9:16 · B) phim ngang (YouTube, landing page) giữ nguyên · C) B ngay, rồi chuyển dần 5–10 style hợp reel nhất sang 9:16 | C: khách dùng được cả 52 ngay, và reel dọc mở rộng theo style bán chạy |
-| Q2 | Bản Starter có bao nhiêu style? (D4 trong kế hoạch v1.5) | sau E1: Starter = các style qua test zip sạch mà không cần gói tải thêm |
-| Q3 | Video demo của từng style để ở đâu? (git không chứa MP4) | GitHub Releases của repo + link từ gallery |
+| Q1 | Tên mode | `cook` (Claude đi hết cỡ, giống "let him cook") + `direct` (bạn là đạo diễn). Không dùng `studio:flow`: dễ lẫn với `/studio` và không gợi được tinh thần sáng tạo |
+| Q2 | Waitlist: link ở đâu (Loops form? trang web?); bản Pro còn gì khi DM chuyển sang waitlist, giá có đổi không | Loops form trên kaiships.ai; Pro giữ $79 với plan, reel, human, caption, viral |
+| Q3 | v1.6 mời chọn bao nhiêu style: chỉ các style lên được 9:16, hay cả phim ngang | Chỉ style lên được 9:16 (đúng lời hứa "reel"); phim ngang để bản sau |
 
 ## Không làm lúc này
-Crowsnest (D6), reel 3D cho khách (dev only), đổi giá.
+Crowsnest (waitlist), DM (waitlist), reel 3D cho khách (dev only), đổi giá.
 
 ## Cách Kai thêm một kỳ vọng
-Một dòng là đủ, agent tự viết phần còn lại:
 `Kỳ vọng: <khách thấy gì>. Xong khi: <cái gì kiểm được, nếu nghĩ ra>. Không muốn: <điều Kai ghét, nếu có>.`
