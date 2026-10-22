@@ -10,7 +10,7 @@
 //   … --stills=1.2,3.4 [--out=<film>/out/stills]                    full-res PNGs
 //   … --clip=2:6 [--out=<film>/out/check/part.mp4]                  a stretch straight to MP4, with the film's audio
 //   … --camscan [--workers=4]                                       camera speed: px per frame on screen, every frame
-//   Any of them: --safe (Instagram UI, safe zone, caption band) · --no-captions · --loop=<name> (sheets.js: kai, kaiV3,
+//   Any of them: --safe (Instagram UI, safe zone, caption band) · --no-captions · --loop=<name> (sheets.js: kai,
 //   clawd, cast; times are then loop times).
 import { start } from '../../../kit/env.mjs';
 import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs';

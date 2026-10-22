@@ -41,7 +41,7 @@ password or a missing Node.
    `REEL_GUIDE.md`), each chapter as one camera path with events tied to spoken words, the SFX, the sources.
    `ref/example-STORYBOARD.md` shows the level of detail.
 5. **Prove the look.** Before the chapters: the cast at final size (`look.mjs <film> --sheet=0 --loop=kai`, `clawd`,
-   `cast`, `kaiV3`) and two style frames of the hook. Check them against `STYLE.md`.
+   `cast`) and two style frames of the hook. Check them against `STYLE.md`.
 6. **Chapters.** One file per chapter in `<film>/src/ch/`, each ending in `chapter(...)`, listed in order in
    `<film>/index.html`; shared props once in `c0_props.js`. Set `name` and `cover` in `src/config.js`, and brand
    names for the captions in `PROJECT.caption.brands`.

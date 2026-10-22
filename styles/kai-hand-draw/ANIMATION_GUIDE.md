@@ -4,7 +4,7 @@
 > written for wordless 16:9 cartoons. kai-hand-draw makes vertical, narrated reels, so **`STYLE.md` and
 > `REEL_GUIDE.md` win wherever they disagree**: the canvas is 1080×1920 at 30 fps, on-screen text is allowed, captions
 > and chapter wipes are drawn for you, and scenes are chapter files in `<film>/src/ch/` registered with `chapter()`
-> instead of `shots()`. Model-sheet loops of the cast are in `engine/sheets.js` (`--loop=kai|kaiV3|clawd|cast`); the
+> instead of `shots()`. Model-sheet loops of the cast are in `engine/sheets.js` (`--loop=kai|clawd|cast`); the
 > sheets in `docs/` were drawn in 16:9. `<film>` below is the film's folder, e.g. `films/my-reel`.
 
 Read this whole file before you draw anything. It covers how to make a short, hand-painted cartoon, starring Clawd or any character you design: the rules and animation principles that make it look good, the workflow that catches mistakes, and the full reference for the character and the engine.

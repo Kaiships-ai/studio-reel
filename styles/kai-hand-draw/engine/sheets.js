@@ -1,7 +1,7 @@
 // sheets.js: model sheets of the cast, as standalone loops (LOOPS in timeline.js). Use them to prove the look before
 // building chapters (WORKFLOW.md step 4) and to check a character at final size:
 //   node styles/kai-hand-draw/tools/look.mjs <film> --stills=0 --loop=kai --out=<film>/out/check/kai
-// Loops: kai (the presenter, every pose, as src/character.js sets it) · kaiV3 (Kai v3 canon, every pose) · clawd (moods and v3 astronaut) · cast.
+// Loops: kai (the presenter, every pose, as src/character.js sets it) · clawd (moods and v3 astronaut) · cast.
 (() => {
   const grid = (items, cols, cellH, draw, top = 120) => {
     const cw = W / cols;
@@ -22,11 +22,14 @@
   };
   LOOPS.kai.len = 2;
 
-  LOOPS.kaiV3 = t => {
-    title('KAI V3 · kai(pose, x, y, h, { look: "v3" })');
-    grid(kaiV3.poses, 4, 340, (p, x, y) => kaiV3(p, x, y, p.startsWith('exp-') ? 200 : 290, {}));
-  };
-  LOOPS.kaiV3.len = 2;
+  // kai-v3.js (Kai's own likeness) is not part of the product; the loop exists only where a page loads it.
+  if (typeof kaiV3 !== 'undefined') {
+    LOOPS.kaiV3 = t => {
+      title('KAI V3 · kai(pose, x, y, h, { look: "v3" })');
+      grid(kaiV3.poses, 4, 340, (p, x, y) => kaiV3(p, x, y, p.startsWith('exp-') ? 200 : 290, {}));
+    };
+    LOOPS.kaiV3.len = 2;
+  }
 
   LOOPS.clawd = t => {
     title('CLAWD · clawd(x, y, u, feel(mood, t))');

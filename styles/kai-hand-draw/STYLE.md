@@ -121,8 +121,8 @@ lemo-opuscar `watercolor` style (that one is a landscape walk with no characters
 
 `engine/` (read by every film, never copied or edited for one film): `core.js` (canvas, `PAL`, easing, `kf`,
 `spring`, camera `camBegin/camEnd/toScreen`, `paint`, `inkLine`, `letter`, `glow`, `iris`, render hooks),
-`clawd.js` + `clawd-v3.js` (Clawd, `feel()`, `emotions()`, `move()`), `kaip.js` + `kai-v3.js` (the presenter
-`kai(pose, x, y, h)`, drawn from the film's `CHARACTER`; `kaiV3`), `cast.js` (`researcher`), `timeline.js` (`shots`, `LOOPS`, `brushWipe`), `reel.js` (`chapter`, `vo`,
+`clawd.js` + `clawd-v3.js` (Clawd, `feel()`, `emotions()`, `move()`), `kaip.js` (the presenter
+`kai(pose, x, y, h)`, drawn from the film's `CHARACTER`), `cast.js` (`researcher`), `timeline.js` (`shots`, `LOOPS`, `brushWipe`), `reel.js` (`chapter`, `vo`,
 `voLine`, `cutAfter`, wipes, captions, `SAFE`), `kit.js` (`bgWash`, `stepHeader`, `chip`, `statCard`, `phone`,
 `laptop`, `burst`), `sheets.js` (model-sheet loops). Tools: `tools/make.mjs` (vo, audio, render, verify),
 `tools/look.mjs` (sheets, strips, crops, stills, clips, camera scan).
