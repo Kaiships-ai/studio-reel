@@ -4,7 +4,7 @@
 // 设了环境变量 RENDER_SLOTS（整数）时，整机最多同时这么多个整片渲染（slot.mjs）；不设就不限。分段文件放在 --out 旁边各自独有的隐藏目录，渲完（或失败、被中断）就删。
 // 同一个 demo 可以并行渲多个版本，但每个版本要有自己的 --out：两个渲染写同一个 --out 会直接报错，不会悄悄互相覆盖。
 // <out>.lock 记着占用者的 pid，占用者已不在、或锁文件超过 12 小时没被刷新（pid 被别的进程复用了），都算过期，新渲染接手。
-import fs from 'fs'; import path from 'path'; import { spawn, execFileSync } from 'child_process';
+import fs from 'fs'; import path from 'path'; import { start, run } from '../../kit/env.mjs';
 import { openDemo, closeServer, requireDemo, takeSize } from './page.mjs';
 const args = process.argv.slice(2), { w: W, h: H } = takeSize(args), opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const dir = args[0]; requireDemo(dir);
@@ -45,7 +45,7 @@ try { await Promise.all([...Array(WK)].map(async (_, w) => {
   const a = w * per, b = Math.min(TOTAL, a + per); if (a >= b) return;
   const { browser, page } = await openDemo(dir, { w: W, h: H, q: Q });
   // cwd 设在分段目录、用相对文件名：路径里有 # ? 之类的字符时 ffmpeg 才不会把它当协议语法
-  const ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'mjpeg', '-i', '-',
+  const ff = start('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'mjpeg', '-i', '-',
     '-c:v', 'libx264', '-preset', 'medium', '-crf', '14', '-pix_fmt', 'yuv420p', `seg_${w}.mp4`], { cwd: segDir, stdio: ['pipe', 'inherit', 'inherit'] });
   procs.add(ff); ff.on('close', () => procs.delete(ff));
   let dead = null;   // ffmpeg 提前退出（缺编码器、磁盘满…）：它自己的报错已打到 stderr，这里只记一笔并停止喂帧
@@ -64,8 +64,8 @@ try { await Promise.all([...Array(WK)].map(async (_, w) => {
 })); } catch (e) { fail(`render stopped: ${String(e.message || e).split('\n')[0]}`); }   // 例如页面的 render(t) 抛了错
 const list = path.join(segDir, 'segs.txt');
 fs.writeFileSync(list, [...Array(WK)].map((_, w) => `file 'seg_${w}.mp4'`).filter((_, w) => w * per < TOTAL).join('\n'));
-try { execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', 'segs.txt', '-c', 'copy', 'merged.mp4'], { cwd: segDir, stdio: ['ignore', 'inherit', 'inherit'] }); }
-catch { fail('ffmpeg could not join the segments (its message is above)'); }
+if (run('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', 'segs.txt', '-c', 'copy', 'merged.mp4'], { cwd: segDir, stdio: ['ignore', 'inherit', 'inherit'] }).status !== 0)
+  fail('ffmpeg could not join the segments (its message is above)');
 fs.renameSync(path.join(segDir, 'merged.mp4'), out);   // 最终文件名里有什么字符都无所谓：不经过 ffmpeg
 cleanup(); release();
 console.log('done', out, TOTAL, 'frames', ((Date.now() - t0) / 1000).toFixed(0) + 's');

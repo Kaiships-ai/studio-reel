@@ -1,13 +1,13 @@
-// 无头 Chrome 的启动参数。浏览器本身交给 playwright 按它的版本自己找（npm run 时装的 chromium-headless-shell）；
-// 想用别的可执行文件：PLAYWRIGHT_CHROME=/path/to/chrome-headless-shell
-// GPU：macOS 显式用 Metal（新版 headless-shell 上 --use-angle=gl 会退回 SwiftShader 软渲染，慢 ~6 倍）；
-//      其它系统不强加后端。LEMO_ANGLE=metal|gl|vulkan|swiftshader… 可覆盖，LEMO_ANGLE=default 表示不传 --use-angle。
-export const EXE = process.env.PLAYWRIGHT_CHROME || undefined;   // undefined = 让 playwright 自己找
-const angle = process.env.LEMO_ANGLE || (process.platform === 'darwin' ? 'metal' : 'default');
-// Since Chromium ~M139 SwiftShader WebGL needs an explicit opt-in on machines without a GPU (CI, VMs).
-export const ARGS = [...(angle === 'default' ? [] : [`--use-angle=${angle}`]), ...(angle === 'swiftshader' ? ['--enable-unsafe-swiftshader'] : []), '--enable-gpu', '--ignore-gpu-blocklist', '--font-render-hinting=none', '--force-color-profile=srgb'];
+// Headless Chrome launch options. The browser itself is Playwright's chromium-headless-shell (installed by
+// `pixi run studio install`); PLAYWRIGHT_CHROME=/path/to/chrome-headless-shell uses another one.
+// GPU flags come from kit/env.mjs: Metal on macOS, the system GPU elsewhere with SwiftShader allowed as a fallback.
+// STUDIO_ANGLE=metal|gl|vulkan|swiftshader|default overrides the backend.
+import { env } from '../../kit/env.mjs';
 
-// WebGL 走了软渲染就提醒一次（2D 画布的 demo 不受影响；不会让渲染失败）
+export const EXE = process.env.PLAYWRIGHT_CHROME || undefined;   // undefined = Playwright finds its own
+export const ARGS = env().browser.args;
+
+// Say once when WebGL runs in software (2D canvas pages are unaffected; rendering never fails because of it).
 let warned = false;
 export async function warnIfSoftwareGL(page) {
   if (warned) return; warned = true;
@@ -17,6 +17,6 @@ export async function warnIfSoftwareGL(page) {
       const e = g.getExtension('WEBGL_debug_renderer_info'), name = e ? g.getParameter(e.UNMASKED_RENDERER_WEBGL) : '';
       g.getExtension('WEBGL_lose_context')?.loseContext(); return String(name);
     });
-    if (r && /swiftshader|llvmpipe|software/i.test(r)) console.error(`[note] WebGL runs on software rendering (${r.slice(0, 80)}): 3D/CRT demos will be slow. macOS: LEMO_ANGLE=metal; Linux: needs GPU drivers. See core/README.md.`);
+    if (r && /swiftshader|llvmpipe|software/i.test(r)) console.error(`[note] WebGL runs on software rendering (${r.slice(0, 80)}): rendering works but is slower. A machine with a GPU renders several times faster.`);
   } catch {}
 }

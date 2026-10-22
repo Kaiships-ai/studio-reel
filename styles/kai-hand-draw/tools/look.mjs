@@ -12,7 +12,7 @@
 //   … --camscan [--workers=4]                                       camera speed: px per frame on screen, every frame
 //   Any of them: --safe (Instagram UI, safe zone, caption band) · --no-captions · --loop=<name> (sheets.js: kai, kaiV3,
 //   clawd, cast; times are then loop times).
-import { spawn } from 'node:child_process';
+import { start } from '../../../kit/env.mjs';
 import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { openDemo, closeServer, requireDemo } from '../../../core/render/page.mjs';
@@ -52,7 +52,7 @@ if (args.sheet || args.strip) {
   const p = await page(), [a, b] = span(args.clip), out = args.out || join(film, 'out/check/clip.mp4'); mkdirSync(dirname(out), { recursive: true });
   const audio = join(film, 'assets/reel-audio.wav'), withAudio = existsSync(audio);
   if (!withAudio) console.log(`note: ${audio} does not exist yet, the clip has no sound (make.mjs ${film} audio)`);
-  const ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'mjpeg', '-i', '-',
+  const ff = start('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'mjpeg', '-i', '-',
     ...(withAudio ? ['-ss', String(a), '-t', String(b - a), '-i', audio, '-map', '0:v', '-map', '1:a', '-c:a', 'aac', '-b:a', '192k', '-shortest'] : []),
     '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', out], { stdio: ['pipe', 'inherit', 'inherit'] });
   const n = Math.round((b - a) * fps);

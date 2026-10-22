@@ -6,22 +6,21 @@
 // the page (window.renderSheet), then encoded small and muxed with the film's assets/reel-audio.wav.
 // Writes <film>/out/verify/{draft.mp4, sheet.jpg, report.json}. Exit 0 = every check passed, 1 = a check failed or the
 // page threw. Reads core/ and the engine; edits nothing outside the film's out/verify/.
-import { spawn, spawnSync } from 'node:child_process';
+import { env, start, run as runTool } from '../../../kit/env.mjs';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { openDemo, closeServer, ROOT } from '../../../core/render/page.mjs';
 
 const argv = process.argv.slice(2), pos = argv.filter(a => !a.startsWith('--'));
 const flag = (k, d) => { const f = argv.find(a => a.startsWith(`--${k}=`)); return f ? f.split('=')[1] : d; };
-const run = (cmd, args) => spawnSync(cmd, args, { encoding: 'utf8', cwd: ROOT, maxBuffer: 64 << 20 });
+const run = (tool, args) => runTool(tool, args, { capture: true });
 const t0 = Date.now(), secs = () => ((Date.now() - t0) / 1000).toFixed(1) + ' s';
 
 if (pos[0] === 'doctor') {
   const film = pos[1] && resolve(pos[1]);
   const rows = [
     ['node_modules (p5.brush, playwright-core)', existsSync(join(ROOT, 'node_modules/p5.brush')) && existsSync(join(ROOT, 'node_modules/playwright-core'))],
-    ['ffmpeg + ffprobe on PATH', run('ffmpeg', ['-version']).status === 0 && run('ffprobe', ['-version']).status === 0],
-    ['.venv python (vo/audio steps)', existsSync(join(ROOT, '.venv/bin/python'))],
+    ...['python', 'ffmpeg', 'ffprobe'].map(t => [`${t} (pixi env)`, !!env().tools?.[t]]),
   ];
   if (film) for (const f of ['index.html', 'src/config.js', 'src/vo.js', 'vo/vo.json', 'assets/reel-audio.wav']) rows.push([`${pos[1]}/${f}`, existsSync(join(film, f))]);
   for (const [n, ok] of rows) console.log(`${ok ? '✓' : '✗'} ${n}`);
@@ -79,7 +78,7 @@ closeServer();
 
 const hasAudio = existsSync(AUDIO);
 await new Promise((ok, no) => {
-  const ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'mjpeg', '-i', '-',
+  const ff = start('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'mjpeg', '-i', '-',
     ...(hasAudio ? ['-i', AUDIO, '-map', '0:v', '-map', '1:a', '-c:a', 'aac', '-b:a', '96k'] : []),
     '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '28', '-pix_fmt', 'yuv420p', MP4], { stdio: ['pipe', 'inherit', 'inherit'] });
   ff.on('close', c => c === 0 ? ok() : no(new Error('ffmpeg exit ' + c)));
