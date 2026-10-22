@@ -1,4 +1,4 @@
-// c1_hook.js: a working example chapter (replace it). Kai and Clawd on one set, one long take: the camera pushes in and
+// c1_hook.js: a working example chapter (replace it). The presenter and Clawd on one set, one long take: the camera pushes in and
 // cranes up while each key word lands as an event. The CTA chapter reuses the set.
 (() => {
   const END = cutAfter('l01');

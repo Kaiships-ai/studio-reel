@@ -6,7 +6,7 @@ Concepts: A … · B … · C … → chose …, because …
 Logline: one sentence.
 World: palette, setting, how the colour changes chapter to chapter.
 Motif / continuity prop: the thing that carries across chapters and completes at the end.
-Cast: who is on screen and how big (Clawd body ≥ 280 px wide, Kai ≥ 550 px tall in a full shot); shared props in
+Cast: who is on screen and how big (Clawd body ≥ 280 px wide, the presenter ≥ 550 px tall in a full shot); shared props in
   src/ch/c0_props.js.
 Clawd's arc: the emotion keys across the reel.
 Length: from vo/word_times.txt. 1080×1920, 30 fps.

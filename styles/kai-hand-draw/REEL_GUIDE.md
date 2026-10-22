@@ -97,7 +97,7 @@ Concepts: A … · B … · C … → chose B, because …
 Logline: one sentence.
 World: palette, setting, how the colour changes from chapter to chapter.
 Motif: the thing that comes back at the end.
-Cast: who is on screen (Clawd, Kai, the Researcher), their size (Clawd body ≥ 280 px wide, Kai ≥ 550 px tall in a
+Cast: who is on screen (Clawd, the presenter, the Researcher), their size (Clawd body ≥ 280 px wide, the presenter ≥ 550 px tall in a
   full shot), and the shared prop helpers written once for all chapters (src/ch/c0_props.js).
 Clawd's arc: the emotion keys across the whole reel.
 

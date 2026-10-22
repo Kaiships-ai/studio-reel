@@ -26,7 +26,9 @@ password or a missing Node.
 ## Steps
 
 1. **New film.** `node styles/kai-hand-draw/tools/make.mjs new <name>` copies the starter to `films/<name>/` (a
-   working two-chapter example with Kai and Clawd). Keep its structure, replace its content.
+   working two-chapter example with the presenter and Clawd). Keep its structure, replace its content. If the user
+   pasted a `character-spec v1` block (from `character-designer.html`), write it into `<film>/src/character.js` now
+   (see `.claude/skills/make-reel/SKILL.md` → Using a character spec); otherwise keep the starter's default presenter.
 2. **Script.** `<film>/vo/script.json`, one entry per sentence or beat, ids `l01`, `l02`, … The first line is the
    hook, the last says what to do next ("Comment <KEYWORD> …"). Written per `VOICE.md`, checklist ticked line by
    line. A script the user gives is spoken word for word. Every number, name, price or claim comes from the user or
