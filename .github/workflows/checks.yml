@@ -1,0 +1,22 @@
+# Fast checks on every PR (about a minute, Linux only), docs-only PRs included: they are where Chinese text,
+# private names and unlisted files slip in. The slow install tests are install.yml.
+name: checks
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unit and lint tests (cross-platform rules, CI minute policy)
+        run: node --test test/unit/*.test.mjs
+      - name: Release checks without writing zips (manifest coverage, forbidden strings, Chinese in buyer docs, licences, skill sets)
+        run: node release/build.mjs --dry-run
