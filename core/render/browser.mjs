@@ -4,7 +4,8 @@
 //      其它系统不强加后端。LEMO_ANGLE=metal|gl|vulkan|swiftshader… 可覆盖，LEMO_ANGLE=default 表示不传 --use-angle。
 export const EXE = process.env.PLAYWRIGHT_CHROME || undefined;   // undefined = 让 playwright 自己找
 const angle = process.env.LEMO_ANGLE || (process.platform === 'darwin' ? 'metal' : 'default');
-export const ARGS = [...(angle === 'default' ? [] : [`--use-angle=${angle}`]), '--enable-gpu', '--ignore-gpu-blocklist', '--font-render-hinting=none', '--force-color-profile=srgb'];
+// Since Chromium ~M139 SwiftShader WebGL needs an explicit opt-in on machines without a GPU (CI, VMs).
+export const ARGS = [...(angle === 'default' ? [] : [`--use-angle=${angle}`]), ...(angle === 'swiftshader' ? ['--enable-unsafe-swiftshader'] : []), '--enable-gpu', '--ignore-gpu-blocklist', '--font-render-hinting=none', '--force-color-profile=srgb'];
 
 // WebGL 走了软渲染就提醒一次（2D 画布的 demo 不受影响；不会让渲染失败）
 let warned = false;

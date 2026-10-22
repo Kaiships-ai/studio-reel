@@ -1,0 +1,5 @@
+# reel length 5.10 s · last word ends 4.39 s · voice en-US-BrianMultilingualNeural +20%
+l01 0.12-2.51  Kai and Clawd just painted this whole reel in code.
+  Kai@0.16 and@0.37 Clawd@0.46 just@0.80 painted@1.00 this@1.31 whole@1.43 reel@1.67 in@1.92 code@2.04
+l02 2.76-4.39  Comment PAINT and I'll send you how.
+  Comment@2.80 PAINT@3.12 and@3.45 I'll@3.55 send@3.65 you@3.88 how@3.98

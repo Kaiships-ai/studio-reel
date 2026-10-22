@@ -107,3 +107,6 @@ styles/kai-hand-draw/demo/*.mp4
 styles/kai-hand-draw/demo/*-cover.png
 styles/kai-hand-draw/demo/assets/
 styles/kai-hand-draw/demo/vo/lines/
+
+# pixi environment (installed per machine by /studio)
+.pixi/

@@ -1,0 +1,16 @@
+{
+  "voice": "en-US-BrianMultilingualNeural",
+  "rate": "+20%",
+  "pause": 0.25,
+  "lines": [
+    {
+      "id": "l01",
+      "text": "Kai and Clawd just painted this whole reel in code.",
+      "asr": "Kai and Claude just painted this whole reel in code."
+    },
+    {
+      "id": "l02",
+      "text": "Comment PAINT and I'll send you how."
+    }
+  ]
+}
