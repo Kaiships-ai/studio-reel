@@ -2,18 +2,18 @@
 
 One example among many. Don't reuse its story, arc, shots, props or timings.
 
-Demo: *Toward the Mountain · 山へ五景* (44 s) · `ukiyoe.mp4` · source in [`demo/`](demo/)
+Demo: *Toward the Mountain* (Japanese title `山へ五景`, "five views toward the mountain") (44 s) · `ukiyoe.mp4` · source in [`demo/`](demo/)
 
 
 ## Story & structure
 
 A traveller in a straw hat walks from the rice fields toward a distant mountain: across a bridge in the rain, past a teahouse where the mountain waits in a round window, to a sea that stands up between them. The wave washes the print back to a blank sheet; the next print is the mountain, and he takes off his hat. Five views, one constant subject; the story is told by *where the mountain sits in the frame* each time (tiny on the horizon → framed by a window → dwarfed by a wave → filling the sheet). One character, one goal, one turn.
 
-Arc: jo-ha-kyū (序破急), slow, open, still (jo) → gathering pulse (ha) → rapid rush to a peak (kyū) → a hard cut to silence (ma, 間) → a quiet resolution and a scale reveal. The old guide asked every film to rest on at least three of the five native moves with the strongest at the peak; that was this demo's choice, not a rule.
+Arc: jo-ha-kyū (`序破急`), slow, open, still (jo) → gathering pulse (ha) → rapid rush to a peak (kyū) → a hard cut to silence (ma, `間`) → a quiet resolution and a scale reveal. The old guide asked every film to rest on at least three of the five native moves with the strongest at the peak; that was this demo's choice, not a rule.
 
 Native moves spent: a series of views (the whole film), the handscroll (every transition), printing block by block (the opening and the rebirth after the wave), paper is the white (the foam that erases the print), the frame is an object (the wave breaking out of the border). How the old guide suggested adapting a topic, for this kind of story: make it a journey or a series with one constant subject (a product launch → five views of the product in five places; a city → a day in five prints; a life → five ages, the same tree in every print).
 
-Views: 一 田毎の朝 (rice fields at dawn) · 二 雨の橋 (bridge in the rain) · 三 茶屋の窓 (teahouse window) · 四 海立つ (the sea stands up) · 五 山 (the mountain).
+Views: `一 田毎の朝` (rice fields at dawn) · `二 雨の橋` (bridge in the rain) · `三 茶屋の窓` (teahouse window) · `四 海立つ` (the sea stands up) · `五 山` (the mountain).
 
 ## Shots
 
@@ -24,13 +24,13 @@ Views: 一 田毎の朝 (rice fields at dawn) · 二 雨の橋 (bridge in the ra
 | Middle view | A very slow push (1.00 → 1.065) toward a framing device (round window) |
 | Transitions | Handscroll slide right → left through the mounting gap, getting faster: 1.0 s → 0.9 s → 0.6 s |
 | Climax | First big move: tilt up past the top border into the mount, push in; then crash-zoom into the foam |
-| After the climax | Hard cut to a blank sheet, hold (間), then reprint |
+| After the climax | Hard cut to a blank sheet, hold (`間`, ma), then reprint |
 | Ending | Pull back from the last print to reveal the whole scroll: every view side by side (scale reveal); end card on the scroll |
 
 The climax got the **only big camera move** of the film, played in four beats (~4.5 s total; 25.4–30.4 s in the final cut):
 
 1. **Rise** (~1.9 s): the sea swells into a wall; the camera tilts up past the top border and widens slightly so the figure shrinks.
-2. **Hang / 亮相** (~1.2 s): the crest stands outside the border in the mounting paper, claws open and nearly frozen (jitter ×0.25); the whole print is visible as an object. The drum roll peaks, then an 80 ms silent intake of breath.
+2. **Hang** (`亮相`) (~1.2 s): the crest stands outside the border in the mounting paper, claws open and nearly frozen (jitter ×0.25); the whole print is visible as an object. The drum roll peaks, then an 80 ms silent intake of breath.
 3. **Fall** (~1.2 s): the lip lengthens and rotates down toward the lens, claws grow ×2.5, camera pushes to 3× with a small roll.
 4. **Foam** (~0.7 s): fractal claws burst from the lip to fill the screen, fade to bare paper → hard cut to silence (ma, 30.4–32.2 s).
 
@@ -87,9 +87,9 @@ Voice: calm male storyteller, first person, 5 short lines (Kokoro `am_adam`, spe
 
 ## Titles, subtitles & end card
 
-- **Subtitle cartouche**: cream `rgba(243,231,198,.96)` slip, 2.6 px + 1 px ink border, a small red seal "旅" at the left, Shippori Mincho 500 42 px in sumi, centred 72 px above the bottom. It prints in over 0.22 s with the reveal mask and fades out over 0.25 s.
-- **View cartouche** (vertical, Yuji Syuku): 一 田毎の朝 · 二 雨の橋 · 三 茶屋の窓 · 四 海立つ · 五 山, seal below/beside. Cartouche drop-in: fade + 14 px.
-- **Title**: a vertical cartouche 山へ五景 + a horizontal English slip *Toward the Mountain* laid on the first print, stamped with a seal, lifted away before the first line.
+- **Subtitle cartouche**: cream `rgba(243,231,198,.96)` slip, 2.6 px + 1 px ink border, a small red seal `旅` ("journey") at the left, Shippori Mincho 500 42 px in sumi, centred 72 px above the bottom. It prints in over 0.22 s with the reveal mask and fades out over 0.25 s.
+- **View cartouche** (vertical, Yuji Syuku): the five view titles above (`一 田毎の朝` … `五 山`), seal below/beside. Cartouche drop-in: fade + 14 px.
+- **Title**: a vertical cartouche `山へ五景` + a horizontal English slip *Toward the Mountain* laid on the first print, stamped with a seal, lifted away before the first line.
 
 ## End card
 

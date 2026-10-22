@@ -2,13 +2,13 @@
 
 One example among many. Don't reuse its story, arc, shots, props or timings.
 
-Demo: *The Ship Decides* (船说了算, 40.0 s) · `briefing-board.mp4` · source in [`demo/`](demo/)
+Demo: *The Ship Decides* (Chinese title `船说了算`, 40.0 s) · `briefing-board.mp4` · source in [`demo/`](demo/)
 
 A river 1,000 m wide needs a bridge. The first instinct, piers all the way across, is stamped out the moment a container ship sails into one of them. The new rule: no piers in the channel, one span. Four bridge types are tested against the river's width, drawn to one scale. The river set the question; the ship sets the span.
 
 ## Story & structure
 
-Shape: an elimination that turns early. Hook (0–1 s): the river's width snaps across in the first quarter-second. Setup (1–8 s): "1,000 米", a pier-by-pier beam crossing. Turn (8 s): after a second of near-silence the ship touches the centre pier and a red stamp lands. Development (11–27 s): the rule is written, the piers pop off, a steel ruler is laid bank to bank; dashed projection lines carry the banks down into an elevation "test bench" where four photographed bridges land one after another, each met close by the camera as it lands, then judged in a held frame that shows the whole bridge, the two bank lines (the 1,000 m "door"), its dimension line drawn to its record main span, and the verdict landing after the camera has settled. Each judgement frame is wider than the last, so the widening is the rhythm: the cable-stayed line crawls just past the far bank, the suspension line rockets past it and throws the camera. Ending (32.8–40 s): down at the waterline a side-view container ship comes out from behind the far tower and sails under the suspension span; half a second of room tone; then the only pull-back, starting from the ship, to the whole wall, where the verdict "船决定跨度" is written beside the results. The final frame is the poster.
+Shape: an elimination that turns early. Hook (0–1 s): the river's width snaps across in the first quarter-second. Setup (1–8 s): "1,000 m", a pier-by-pier beam crossing. Turn (8 s): after a second of near-silence the ship touches the centre pier and a red stamp lands. Development (11–27 s): the rule is written, the piers pop off, a steel ruler is laid bank to bank; dashed projection lines carry the banks down into an elevation "test bench" where four photographed bridges land one after another, each met close by the camera as it lands, then judged in a held frame that shows the whole bridge, the two bank lines (the 1,000 m "door"), its dimension line drawn to its record main span, and the verdict landing after the camera has settled. Each judgement frame is wider than the last, so the widening is the rhythm: the cable-stayed line crawls just past the far bank, the suspension line rockets past it and throws the camera. Ending (32.8–40 s): down at the waterline a side-view container ship comes out from behind the far tower and sails under the suspension span; half a second of room tone; then the only pull-back, starting from the ship, to the whole wall, where the verdict "the ship decides the span" is written beside the results. The final frame is the poster.
 
 Why it fits the style: one continuous wall holds a plan view (top-down ship, river, crossing) above an elevation view (side-on bridges) with projection lines between them — a real drafting convention, so a top-down ship and side-on bridges share one board without breaking geometry. The same ship appears in both views: the problem in plan, the answer in elevation. Native moves spent: magnets as countable things, the stamp, erase to a ghost, the physical answer (the ruler), projection lines, ride the dimension line (four times), the subject passes through the answer, leader to the verdict, and the whole-wall reveal as the signature shot.
 
@@ -19,7 +19,7 @@ One continuous camera, no cuts. Times in seconds; zoom 1 = 1,920 board px across
 | # | Time | Shot | Camera | Native move / note |
 |---|---|---|---|---|
 | 1 | 0.0–1.2 | ECU on the left bank, the dimension arrow already leaving it | z 2.6, roll −3°; whips right with the line as it snaps across (0.25), overshoots, settles (z 1.32) | the hook: line, brass hit and kick in the first 0.25 s |
-| 2 | 1.2–2.9 | MCU on "1,000 米" being written | push in (z 1.42), roll +1° | |
+| 2 | 1.2–2.9 | MCU on "1,000 m" being written | push in (z 1.42), roll +1° | |
 | 3 | 2.9–5.5 | MS of the crossing | tilt down as the deck draws, then track right along seven pier magnets (eighths) | magnets as countable things |
 | 4 | 5.5–8.0 | MS → CU up the channel | tilt up as the horn sounds (J-cut), then a slow push to z 2.05 with a −1.6° Dutch tilt | silence 7.0–8.0 |
 | 5 | 8.0–10.7 | CU on the bow, the pier and the stamp → the whole ship | impact shake, then a pull back along the hull (z 1.42) | the stamp; the centre pier jolts |
@@ -29,7 +29,7 @@ One continuous camera, no cuts. Times in seconds; zoom 1 = 1,920 board px across
 | 9 | 18.45–19.25 | CU: the arch rib and hangers as it lands (19.0) | crane down (z 1.6) | |
 | 10 | 19.25–22.45 | **Judgement: arch**, with the beam's result above | pull out (z 0.99), **hold 19.85–22.45 (2.6 s)** | line 19.875–20.25; strike 21.125 |
 | 11 | 22.45–23.4 | CU: the pylon top and its fan as it lands (23.125) | crane down (z 1.8) | |
-| 12 | 23.4–28.2 | **Judgement: cable-stayed**, with the arch's result above | pull out (z 0.81), **hold 24.08–28.2 (4.1 s)** | the line crawls 24.125–25.625 just past the right bank line; "勉强" at 26.0 |
+| 12 | 23.4–28.2 | **Judgement: cable-stayed**, with the arch's result above | pull out (z 0.81), **hold 24.08–28.2 (4.1 s)** | the line crawls 24.125–25.625 just past the right bank line; "barely" at 26.0 |
 | 13 | 28.2–29.1 | CU: the near tower and its long hangers as the heaviest print lands (28.875) | crane down (z 1.38, capped by rescheck) | |
 | 14 | 29.1–32.8 | **Judgement: suspension**, with the cable-stayed result above | pull out (z 0.60), **hold 29.83–32.83 (3.0 s)**; thrown right as the line passes the bank (30.175), settles back | the line rockets 29.875–30.375; ring 31.25; the horn (32.0) brings the side-view ship in at the right edge |
 | 15 | 32.8–35.75 | CU at the waterline: the far tower, hangers, the side-view ship | down to the water (z 1.42), then pan left with the ship under the main span | the subject passes through the answer; silence 35.25–35.75 |
@@ -51,14 +51,14 @@ Judgement frames widen 1,768 → 1,945 → 2,361 → 3,205 board px (28 % → 50
 ## Palette & props
 
 - Board 6,400 × 3,600 board px (16:9, so the final pull-back fills the frame); enamel `#F3F1EB`; wall `#8F8B83`; ink graphite `#23272E`, blue `#1F4FC8`, red `#D33A21`, water hatching `#5F86DA`, drafting grey `#6C727B`.
-- Plan view (top left): river 1,240 px = 1,000 m between two blue banks with grey ground hatching; "1,000 米" above; crossing with seven graphite magnets; the top-down ship scaled to 500 px (about true scale); stamp "否决" (Noto Sans SC 900, pitted red). Rule "新规矩" red with an underline, "航道不立墩" graphite (LXGW Marker Gothic). The ruler: brushed steel with engraved graduations, a magnet at each end.
+- Plan view (top left): river 1,240 px = 1,000 m between two blue banks with grey ground hatching; "1,000 m" above; crossing with seven graphite magnets; the top-down ship scaled to 500 px (about true scale); stamp "rejected" (Noto Sans SC 900, pitted red). Rule "new rule" red with an underline, "no piers in the shipping channel" graphite (LXGW Marker Gothic). The ruler: brushed steel with engraved graduations, a magnet at each end.
 - Elevation (left two-thirds): projection lines dashed blue; four rows scaled so each main span is its record length at 1.24 px per metre (330, 600, 1,208, 2,023 m); each print pinned by two magnets; under each arrow end a label block: a name tag (Noto Sans SC 700, 78 px) and the number in blue marker (100 px), the tag placed by the number's measured width so they never touch. The side-view ship is 340 px long (about true scale) on a hand-drawn waterline. The cable-stayed bridge is a mirrored composite of a single-pylon photo and the suspension bridge's main span is stretched ×1.7 (see `demo/CREDITS`).
-- Right third (never in shot before the reveal): four photo prints with magnets (suspension, cable-stayed, arch, and the side-view ship whose lettering was wiped), a source card ("数据来源"), two sticky notes with the sums (1,208 − 1,000 = 208; 2,023 ÷ 1,000 ≈ 2), a small navigation-clearance sketch without numbers, the verdict "船决定跨度" (400 px, "船" red) at the right middle with a leader from the circled 2,023, and the end card.
+- Right third (never in shot before the reveal): four photo prints with magnets (suspension, cable-stayed, arch, and the side-view ship whose lettering was wiped), a source card ("data sources"), two sticky notes with the sums (1,208 − 1,000 = 208; 2,023 ÷ 1,000 ≈ 2), a small navigation-clearance sketch without numbers, the verdict "the ship decides the span" (400 px, the word "ship" in red) at the right middle with a leader from the circled 2,023, and the end card.
 - Subtitles: frosted strip, Chinese Noto Sans SC 500 42 px over English Archivo 500 29 px, blue tick at left; every cue measured on one line per language (`tools/subcheck.mjs`).
 
 ## Title card
 
-A printed card pinned at the bottom right of the wall from the start, seen only in the reveal: "船说了算", a red rule, "ENGINEERING / BRIEFING BOARD", "工程简报板", "LemoLab × Claude Opus 5.5". It is part of the final wall (the poster) and is on screen for the last three seconds. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
+A printed card pinned at the bottom right of the wall from the start, seen only in the reveal: the Chinese title `船说了算` ("the ship decides"), a red rule, "ENGINEERING / BRIEFING BOARD", the Chinese style name `工程简报板`, "LemoLab × Claude Opus 5.5". It is part of the final wall (the poster) and is on screen for the last three seconds. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 ## Build notes
 

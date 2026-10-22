@@ -55,7 +55,7 @@ Voice: a storyteller, Kokoro `am_michael`, speed 0.86–0.88, 5–6 short lines,
 - **Stage**: red-and-black lacquer frame, carved lintel with gold cloud curls, pillars; blurred children's heads along the bottom in the opening and end-card wides.
 - **Backstage**: lamps as dish + cords, one lit, the other nine just snuffed and trailing smoke.
 - **Motion numbers**: tremor ≈ 3 px / 0.018 rad, ×1.8 under tension; pendulums pre-simulated at 120 Hz; arrivals scale 2.6 → 1, blur 34 → 0 over 0.55 s; exits scale ×1.9, blur +30 px, fade over ~0.9 s; lamp flare overshoot to 1.5×, snuff over 0.35 s; freeze pose on the big gong held ~1 s.
-- **Subtitle placard**: dark brown gradient at 0.93 alpha, thin gold inner line, a small vermilion seal with 说 ("tell", Ma Shan Zheng) on the left, Cormorant Garamond 600, 46 px, cream `#f3e2bf`, centred 58 px above the bottom; slides up 18 px in 0.22 s; shown from line start until speech + 0.8 s (≥ 1.8 s), cut 0.3 s before the next.
+- **Subtitle placard**: dark brown gradient at 0.93 alpha, thin gold inner line, a small vermilion seal with `说` ("tell", Ma Shan Zheng) on the left, Cormorant Garamond 600, 46 px, cream `#f3e2bf`, centred 58 px above the bottom; slides up 18 px in 0.22 s; shown from line start until speech + 0.8 s (≥ 1.8 s), cut 0.3 s before the next.
 - **Title plaque**: "HOU YI / SHOOTS THE SUNS / a shadow puppet tale" cut out of dark hide, red border with a meander band, green cloud-scroll corner roundels, a red seal with carved characters, carried up on two rods and lifted off the cloth to exit.
 
 ## End card

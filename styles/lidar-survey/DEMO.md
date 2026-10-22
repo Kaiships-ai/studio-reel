@@ -2,7 +2,7 @@
 
 One example among many. Don't reuse its story, arc, shots, props or timings.
 
-Demo: *The Fields Under the Forest* 《林下的田》 (40.0 s) · `lidar-survey.mp4` · source in [`demo/`](demo/)
+Demo: *The Fields Under the Forest* (Chinese title `林下的田`) (40.0 s) · `lidar-survey.mp4` · source in [`demo/`](demo/)
 
 From the air, a patch of Ashford, Connecticut is only forest. A laser survey turns the photo into points, a cutting plane strips the canopy layer by layer, and the ground that is left condenses into a surface with stone walls on it: the field system of farms that were here, 3.4 km of wall traced in 0.74 km². One wall is cut and measured; the town's history comes in two numbers; the forest grows back over the walls. Chinese on screen, English narration, bilingual subtitles (Chinese line above, English line below).
 
@@ -22,16 +22,16 @@ One continuous camera (C1 spline over time in target, distance, heading, pitch).
 
 | # | Time | Shot | Camera | Native move / note |
 |---|---|---|---|---|
-| 1 | 0.0–3.75 | NAIP July 2016 photo on the canopy surface, north up; label 2016 年 7 月 · 夏季航拍 | nadir, push 480 → 395 m with a 6° turn | the claim, held still enough to read as a photo |
+| 1 | 0.0–3.75 | NAIP July 2016 photo on the canopy surface, north up; label "July 2016 · summer aerial photo" | nadir, push 480 → 395 m with a 6° turn | the claim, held still enough to read as a photo |
 | 2 | 3.75–6.9 | a scan line crosses left → right; behind it the photo is the point cloud (colour = height above ground) | crane down, tilt nadir → 44° | photo to points; crackle and sweep on the line |
-| 3 | 6.9–10.0 | the cloud; reading 打到地面的回波 27.6 % (lands 7.5) | crane down to a low oblique, 105 m, 15° pitch | canopy as a layer above the ground returns |
+| 3 | 6.9–10.0 | the cloud; reading "returns that reached the ground 27.6 %" (lands 7.5) | crane down to a low oblique, 105 m, 15° pitch | canopy as a layer above the ground returns |
 | 4 | 10.0–13.1 | **signature**: the cutting plane at 30, 24, 18, 12, 6, 0 m, one step per beat; returns above lift away and glow; ruler + histogram on the right edge | slow orbit +12°, 92–105 m | the canopy peel; ticks divide, one descending blip per layer |
 | 5 | 13.1–14.4 | only ground returns left, grey stripes of the scan pattern | orbit continues | near silence |
 | 6 | 14.4–15.9 | a second scan condenses the ground returns into the surface (local relief ×2, raking sun from the north-west) | pull back 100 → 170 m | points condense; the impact |
 | 7 | 15.6–20.0 | 22 traced walls light up in order along the network, amber hairlines on the crests | rising pull-back to 480 m, 48° | scale reveal of the field system |
-| 8 | 20.0–24.4 | reading 已描出的石墙 3.4 km (rolls 20.0–20.6), 22 段 | drift, heading 12° → −12° | held 3.75 s |
+| 8 | 20.0–24.4 | reading "stone walls traced 3.4 km" (rolls 20.0–20.6), "22 segments" | drift, heading 12° → −12° | held 3.75 s |
 | 9 | 24.4–28.75 | push to wall C; a section line glows across it; a chart of the 1,451 raw ground returns (vertical ×5) with the median profile and dimensions 0.56 m / 2.5 m | push 230 → 88 m, pitch 34° → 21°, creep | the section |
-| 10 | 28.75–35.6 | crane up; card 1870 · 67.3 km² 开垦为农田 (29.4), card 2006 · 80.2 km² 为森林 (32.5), bars against the town's ~100 km² | crane up and back to 470 m, 56° | the surface dims a little under the cards |
+| 10 | 28.75–35.6 | crane up; card "1870 · 67.3 km² cleared as farmland" (29.4), card "2006 · 80.2 km² forest" (32.5), bars against the town's ~100 km² | crane up and back to 470 m, 56° | the surface dims a little under the cards |
 | 11 | 33.75–40.0 | the canopy regrows as a faint additive ghost from the ground up; walls glow through; end card from 35.9 | slow rise 470 → 560 m | the regrowth |
 
 ## Score structure
@@ -61,7 +61,7 @@ Mix (in `mix.py`): music −10 dB under the voice and ducked ~5 dB while it spea
 
 ## End card
 
-Left third over the dimmed field system while the canopy regrows: 林下的田 (Noto Sans SC 500), *The Fields Under the Forest*, a short amber rule, `LIDAR SURVEY · 点云测绘`, `LemoLab × Claude Opus 5.5`. 4.1 s. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
+Left third over the dimmed field system while the canopy regrows: the Chinese title `林下的田` ("fields under the forest", Noto Sans SC 500), *The Fields Under the Forest*, a short amber rule, `LIDAR SURVEY` with its Chinese name `点云测绘`, `LemoLab × Claude Opus 5.5`. 4.1 s. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 ## Build notes
 

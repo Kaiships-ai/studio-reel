@@ -7,11 +7,11 @@ Demo: *The Swordsman and the River* (48 s) · `ink-wash.mp4` · source in [`demo
 
 ## Story & structure
 
-A swordsman crosses a river on the water and splits a towering wave with one stroke. One character, one goal, one turn. The brush itself is the event: the stroke that cuts the wave is also the character 水 written in the air.
+A swordsman crosses a river on the water and splits a towering wave with one stroke. One character, one goal, one turn. The brush itself is the event: the stroke that cuts the wave is also the character `水` (water) written in the air.
 
 Arc (48 s): emptiness → a drop of ink (creation) → a small figure in vast space → lightness and joy (the qinggong run across the water) → an overwhelming obstacle drawn as mass (a wet splash of dark ink becoming a wave) → silence → one decisive stroke → release → scale reveal (the figure is a tiny mark in the whole painting) → seal. The closing line is philosophical rather than triumphant ("cut water with a sword and it only flows on").
 
-Native moves spent: one stroke is everything (the opening drop), brush = gesture (the written 水), flying white (the cut, after total silence), splitting a mass (the wave), the handscroll (the final pull-back and seal).
+Native moves spent: one stroke is everything (the opening drop), brush = gesture (the written `水`), flying white (the cut, after total silence), splitting a mass (the wave), the handscroll (the final pull-back and seal).
 
 ## Shots
 
@@ -48,7 +48,7 @@ Voice: calm British narrator, Kokoro `bm_george`, lang `en-gb`, speed .82–.86,
 - The wave: a pale wet body + 4–5 huge loaded strokes curled over at the crest + a few thin wave lines + spray as irregular blots.
 - The hero (`hero.js`): 100-unit rig (hip, chest, head, arms, legs, hem points, flare, sheath, ribbon). Hat = one wet mass + two dry ridge lines + a burnt-ink brim line; robe = one pale mass + two loaded strokes; legs and sword in burnt ink; one ribbon in the wind. The face stays under the hat; features shown once (sword brows, phoenix-eye lids, one nose line, drooping moustache).
 - **Qinggong leap**: body pitched ~30° forward, one knee tucked, the other leg trailing, robe pulled back into a big pale mass with a dark back edge, sleeves streaming. Step cycle: touch (14 %) → rise → glide (45 %) → descend; height `sin(π·phase)`; one ink ring per touch.
-- The written 水: traced from Ma Shan Zheng, `solid: true`, dryness .17, exits tapered to .12–.18, 45° hidden-tip lead-in.
+- The written `水`: traced from Ma Shan Zheng, `solid: true`, dryness .17, exits tapered to .12–.18, 45° hidden-tip lead-in.
 - Stable strokes: `gapLen` fixed reference length; boil on a 5-drawing cycle.
 - The split wave: the upper half rises and rotates, the lower slumps and squashes, with curling crests along both torn edges and pale wash blocks; splatter flies along the sword direction with gravity.
 - Ink bloom: mask `d·(0.62 + 0.8·fbm)`; element blooms use a 1/4-res mask with `destination-in`.
@@ -66,7 +66,7 @@ styles/ink-wash/demo/
   ink.js     brush engine (strokes, bristles, masses, blots)   comp.js    WebGL rice-paper compositor (bleed, edge, paper, bloom)
   hero.js    xieyi figure rig + poses                           face.js    close-up face (one use)
   land.js    mountains, cun, cliffs, pine, reeds, ripples       wave.js    gestural wave
-  glyph.js   "水" traced from Ma Shan Zheng + the cut stroke    seal.js    vermilion seal
+  glyph.js   "water" glyph traced from Ma Shan Zheng + the cut stroke    seal.js    vermilion seal
   world.js   the handscroll world, reveals, shots 1–2           cross.js   crossing + rising (shots 3–4)
   climax.js  silence, writing, the cut (5–6)                    passage.js parted river, bow, scroll, end card (7–8)
   story.js   timeline (single source of truth)                  shots.js   dispatcher, transitions, subtitle spots, sound events

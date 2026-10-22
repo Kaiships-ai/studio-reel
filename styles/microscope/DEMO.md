@@ -2,7 +2,7 @@
 
 One example among many. Don't reuse its story, arc, shots, props or timings.
 
-Demo: *Measured Blue* 《量出来的蓝》 (39.5 s) · `microscope.mp4` · source in [`demo/`](demo/)
+Demo: *Measured Blue* (Chinese title `量出来的蓝`) (39.5 s) · `microscope.mp4` · source in [`demo/`](demo/)
 
 One continuous camera takes a stained slice of human liver from the glass slide in the hand down to a single nucleus and back. On the way it counts the blue (collagen) inside two 1 mm circles 1.4 mm apart: 13.5 % and 32.6 %. Chinese on screen, English narration, bilingual subtitles (Chinese line above, English line below). One public whole-slide scan (Ventana-1.bif, PathAI, CC0); every number is measured from the file and listed with its method in [`demo/FACTS.md`](demo/FACTS.md). The film describes measurements only; it makes no diagnosis.
 
@@ -20,16 +20,16 @@ One continuous take; the camera is a similarity transform interpolated as a log 
 
 | # | Time | Shot | Camera | Native move / note |
 |---|---|---|---|---|
-| 1 | 0.0–2.67 | the whole slide across a graphite bench, label end on the right; a fleck of tissue labelled 一片人肝组织 / 三色染色 | rack focus in 0–0.95, light pool drifting; 68 → 63.5 mm field, roll 90° | the scanner's own photo of the slide, cleaned, logo filled |
+| 1 | 0.0–2.67 | the whole slide across a graphite bench, label end on the right; a fleck of tissue labelled "a piece of human liver tissue / trichrome stain" | rack focus in 0–0.95, light pool drifting; 68 → 63.5 mm field, roll 90° | the scanner's own photo of the slide, cleaned, logo filled |
 | 2 | 2.67–5.33 | slide → tissue | dive ×7, roll 90° → 25° (the tissue's long axis comes level); turret clicks at 1.25× and 2.5× | the cover glass turns to clean glass below 30 mm |
-| 3 | 5.33–9.33 | the tissue, a dimension line grows from its centre: 4.80 mm, 人肝组织 · 三色染色 | creep 9.2 → 8.55 mm | first reading |
+| 3 | 5.33–9.33 | the tissue, a dimension line grows from its centre: 4.80 mm, "human liver tissue · trichrome stain" | creep 9.2 → 8.55 mm | first reading |
 | 4 | 9.33–10.67 | tissue → nodule A | dive ×3.2 to 2.7 mm, roll to 18.5° (A–B line level); clicks 5×, 10× | |
-| 5 | 10.67–15.33 | circle A drawn as an arc with ticks (A · 直径 1 mm); 11.0–12.47 a mint scan front crosses it, every counted collagen pixel lights behind it, the reading rolls to 13.5 % and springs at 12.67; raw counts below | locked, creep | counting the colour |
+| 5 | 10.67–15.33 | circle A drawn as an arc with ticks ("A · diameter 1 mm"); 11.0–12.47 a mint scan front crosses it, every counted collagen pixel lights behind it, the reading rolls to 13.5 % and springs at 12.67; raw counts below | locked, creep | counting the colour |
 | 6 | 15.33–16.67 | the septa slide past | truck 1.41 mm at 10× | |
 | 7 | 16.67–20.67 | circle B, the same count: 32.6 %, lands 18.0 | locked, creep | |
-| 8 | 20.67–26.67 | both circles and both readings in frame from 21.67; silence 21.8–22.67; the verdict panel: B 的蓝色占比是 A 的 2.4 倍 / 相隔 1.41 mm · 同一切片 · 同一染色 | pull back to 3.95 mm (click back to 5×), creep | each reading held ≥ 2.5 s before the verdict |
+| 8 | 20.67–26.67 | both circles and both readings in frame from 21.67; silence 21.8–22.67; the verdict panel: "B's blue share is 2.4 times A's / 1.41 mm apart · same section · same stain" | pull back to 3.95 mm (click back to 5×), creep | each reading held ≥ 2.5 s before the verdict |
 | 9 | 26.67–29.33 | nodule B → one nucleus | dive ×11, roll to 34°; clicks 10×, 20×, 40× | the counted pixels fade on the way down |
-| 10 | 29.33–32.67 | the frame softens, a focal plane sweeps left → right; a mint ring is drawn round one nucleus with caliper ticks, panel 肝细胞核 · 8.5 µm · 核膜外缘拟合 | creep 345 → 318 µm | the focal sweep and the ring |
+| 10 | 29.33–32.67 | the frame softens, a focal plane sweeps left → right; a mint ring is drawn round one nucleus with caliper ticks, panel "hepatocyte nucleus · 8.5 µm · fitted to the outer edge of the nuclear membrane" | creep 345 → 318 µm | the focal sweep and the ring |
 | 11 | 32.67–35.33 | silence 32.3–32.67, then the climb: the scale bar jumps back 20 µm → 5 mm, six quick clicks | pull ×145, roll 34° → 96° | the climb back |
 | 12 | 35.33–39.5 | the glass fills the frame, the slide's edge and a dark sliver of bench at the bottom; title written on the glass | slow drift | end card |
 
@@ -62,7 +62,7 @@ Mix (in `mix.py`): stems set against the voice by active RMS (music −11 dB, pu
 
 ## End card
 
-The camera climbs back until the glass fills the frame; on its empty cover glass, in ink: 量出来的蓝 (Noto Serif SC 600), *Measured Blue*, a rule drawn left to right, `MICROSCOPE STORY · 显微叙事`, `LemoLab × Claude Opus 5.5`, `数据：Ventana-1 · PathAI · CC0`; the tissue fleck sits to the right. 4.2 s. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
+The camera climbs back until the glass fills the frame; on its empty cover glass, in ink: the Chinese title `量出来的蓝` ("measured blue", Noto Serif SC 600), *Measured Blue*, a rule drawn left to right, `MICROSCOPE STORY` with its Chinese name `显微叙事`, `LemoLab × Claude Opus 5.5`, "Data: Ventana-1 · PathAI · CC0"; the tissue fleck sits to the right. 4.2 s. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 ## Build notes
 

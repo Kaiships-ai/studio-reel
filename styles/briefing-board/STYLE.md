@@ -101,10 +101,10 @@ A minimal world (`node demo/kit/batch.mjs park.json`; `fetch_fonts.py park.json`
 ```json
 { "dur": 6, "t": 5.5, "board": { "w": 4000, "h": 2400 }, "hand": 0, "cam": { "x": 1500, "y": 1000, "z": 0.8, "moves": [] },
   "elements": [
-    { "type": "tag", "text": "地下车库", "xy": [560, 800], "size": 60, "arrive": { "t": 0.2, "kind": "swing" } },
+    { "type": "tag", "text": "Underground garage", "xy": [560, 800], "size": 60, "arrive": { "t": 0.2, "kind": "swing" } },
     { "type": "ink", "kind": "dim", "from": [700, 900], "to": [1300, 900], "color": "blue", "t": 0.6, "d": 0.6 },
-    { "type": "ink", "kind": "write", "text": "120 米", "xy": [1360, 940], "size": 100, "color": "blue", "t": 1.2 },
-    { "type": "stamp", "text": "首选", "xy": [1500, 700], "size": 110, "rot": -8, "t": 4.2 } ] }
+    { "type": "ink", "kind": "write", "text": "120 m", "xy": [1360, 940], "size": 100, "color": "blue", "t": 1.2 },
+    { "type": "stamp", "text": "First choice", "xy": [1500, 700], "size": 110, "rot": -8, "t": 4.2 } ] }
 ```
 
 ## 11. Variation space

@@ -2,7 +2,7 @@
 
 One example among many. Don't reuse its story, arc, shots, props or timings.
 
-Demo: *Two Spirals* 《两条螺旋》 (39.4 s) · `data-physical.mp4` · source in [`demo/`](demo/)
+Demo: *Two Spirals* (Chinese title `两条螺旋`) (39.4 s) · `data-physical.mp4` · source in [`demo/`](demo/)
 
 Twelve years of global wind and solar capacity (IRENA 2026, via Our World in Data, CC BY 4.0), built as two spirals of real plates on a walnut dial: one plate is 10 GW for both, aluminium for solar, teal acrylic for wind, a brass plate every 100 GW. Chinese on screen, English narration, bilingual subtitles (Chinese line above, English line below).
 
@@ -21,14 +21,14 @@ One continuous take. Times in seconds; 96 BPM, a bar is 2.5 s.
 | # | Time | Shot | Camera | Native move / note |
 |---|---|---|---|---|
 | 1 | 0.0–2.5 | the 2014 pair assembles (wind from 0.1, solar from 0.4): 35 acrylic plates, 18 aluminium | low side view, pulling back from close | first plates land in the first frame |
-| 2 | 2.5–7.5 | both readings in one column (349.5 / 178.8 GW), held 2.8 s; verdict "风电 = 太阳能 × 1.95" at 5.0 | slow orbit | comparison held before the verdict |
-| 3 | 7.5–10.3 | brackets on one plate "1 片 = 10 GW" and one brass plate "黄铜 = 100 GW" | push into the solar stack's side, f-stop wide | the unit close-up |
+| 2 | 2.5–7.5 | both readings in one column (349.5 / 178.8 GW), held 2.8 s; verdict "wind = solar × 1.95" at 5.0 | slow orbit | comparison held before the verdict |
+| 3 | 7.5–10.3 | brackets on one plate "1 plate = 10 GW" and one brass plate "brass = 100 GW" | push into the solar stack's side, f-stop wide | the unit close-up |
 | 4 | 10.0–17.5 | 2015–2020 pairs cascade one every 1.25 s; brass plates ring | low lateral track along the spiral, rising with the tops | no labels: the inlaid years carry it |
-| 5 | 17.5–22.5 | 2021 assembles; 2020 and 2021 pairs held with four readings from 18.85; suck-out 21.5; verdict "2021 · 太阳能超过风电" at 21.875 | crane up to a locked three-quarter frame, 2–3 % creep | the turn |
+| 5 | 17.5–22.5 | 2021 assembles; 2020 and 2021 pairs held with four readings from 18.85; suck-out 21.5; verdict "2021 · solar overtakes wind" at 21.875 | crane up to a locked three-quarter frame, 2–3 % creep | the turn |
 | 6 | 22.5–25.3 | 2022–2025 pairs cascade in quick succession | fast track along the spiral | the verdict stays in the upper-left third over the move |
-| 7 | 25.3–30.0 | 2025 solar shoots up to 2024's level, then 52 plates are fed one per 1/10 beat; counter 1,883.2 → 2,396.7 GW, "当年新增 +513.5 GW" | crane rising with the top | the feed; style frame at 28.6 |
+| 7 | 25.3–30.0 | 2025 solar shoots up to 2024's level, then 52 plates are fed one per 1/10 beat; counter 1,883.2 → 2,396.7 GW, "added this year +513.5 GW" | crane rising with the top | the feed; style frame at 28.6 |
 | 8 | 30.0–34.4 | the whole set: two spirals, ticks and inlaid years read as a dial | crane back and up to ~70° top view, target offset left for the end card | chart to installation |
-| 9 | 34.4–39.4 | a brass puck engraved ×1.86 falls to the centre (suck-out 33.75–34.375); accent line "2025 · 太阳能装机是风电的 1.86 倍" with a leader to the puck; end card | slow turn of the top view | the last object; poster at 37.8 |
+| 9 | 34.4–39.4 | a brass puck engraved ×1.86 falls to the centre (suck-out 33.75–34.375); accent line "2025 · installed solar is 1.86 times wind" with a leader to the puck; end card | slow turn of the top view | the last object; poster at 37.8 |
 
 ## Score structure
 
@@ -52,13 +52,13 @@ Mix (`demo/mix.py`): stems set against the voice's active RMS (music −10.9 dB,
 - Sweep #C4BEB4 with fog to it; walnut veneer dial (r 3.35, 0.11 thick) with an aluminium rim, inlay in #EFE4CF: 2° tick ring, the two spiral paths (dashes long for solar, short for wind), years in JetBrains Mono.
 - Solar: aluminium plates #C8CCD1, metalness 1, roughness 0.27; wind: acrylic #9FD3D6, transmission 0.72, clearcoat, teal attenuation; brass #D2B07A every tenth plate in both. Plate 0.50 × 0.42, 0.0125 thick (10 GW); solar ring r 2.25–2.58, wind ring 0.6 inside, 27.6° per year.
 - Lights: warm key #FFF1DC from the left at ~35°, 4096 shadow map; cool rims #B9D2FF / #C6DBFF from behind-right and front-right; HDRI `photo_studio_loft_hall` at 0.8 for reflections.
-- The puck: brass, r 0.64, engraved (dark patina) "2025 · ×1.86 · 太阳能 ÷ 风电" with a tick ring.
+- The puck: brass, r 0.64, engraved (dark patina) "2025 · ×1.86 · solar ÷ wind" with a tick ring.
 - Type: Inter 200/300 for numbers, Noto Sans SC 500 for labels, verdicts and subtitles, JetBrains Mono for years and units, Noto Serif SC 600 for the title. Ink #1C1D20, accent #D4521C.
 - Narrator: Kokoro `af_heart`, speed 0.95.
 
 ## End card
 
-Left third over the turning dial: 两条螺旋 (Noto Serif SC), *Two Spirals*, a rule, `DATA PHYSICALIZATION · 数据实物化`, `LemoLab × Claude Opus 5.5`; above it the accent line with its leader to the puck; the data source stays in the top-right corner from the crane on. 4.6 s. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
+Left third over the turning dial: the Chinese title `两条螺旋` ("two spirals", Noto Serif SC), *Two Spirals*, a rule, `DATA PHYSICALIZATION · 数据实物化`, `LemoLab × Claude Opus 5.5`; above it the accent line with its leader to the puck; the data source stays in the top-right corner from the crane on. 4.6 s. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 ## Build notes
 

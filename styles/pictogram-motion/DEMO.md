@@ -5,7 +5,7 @@ One example among many. Don't reuse its story, arc, shots, props or timings.
 Demo: *Aichi-Nagoya 2026 — All 43 Sports* (EN-JP version, 163.6 s, 1920×1080 @ 60 fps, 150 BPM, 70 sport cards, no narration) · `pictogram-motion.mp4` · source in [`demo/`](demo/) (local, not published) · engine: Canvas2D (`engine.js` + `scenes.js` + `poses/*.js`), headless Chrome frame capture, numpy-synthesised score.
 
 
-> **Rights note.** The demo is a fan-made promo for a real event, the 20th Asian Games Aichi-Nagoya 2026. The event name (AICHI-NAGOYA 2026 / THE 20TH ASIAN GAMES), the slogan (IMAGINE ONE ASIA / ここで、ひとつに。), the emblem-like red-sun-and-rings mark drawn in code, the five-colour palette and its colour names, and the grid pattern language all follow the organiser's identity. They belong to the organiser (Aichi-Nagoya Asian Games Organising Committee / Olympic Council of Asia). `demo/ref/` holds official images downloaded from the Games' website for reference only. They are never drawn into the film and must not be redistributed. **Any other film made from this code must replace all event-specific elements** (see [Replacing the event elements](#replacing-the-event-elements)).
+> **Rights note.** The demo is a fan-made promo for a real event, the 20th Asian Games Aichi-Nagoya 2026. The event name (AICHI-NAGOYA 2026 / THE 20TH ASIAN GAMES), the slogan (IMAGINE ONE ASIA / `ここで、ひとつに。`, "together, here"), the emblem-like red-sun-and-rings mark drawn in code, the five-colour palette and its colour names, and the grid pattern language all follow the organiser's identity. They belong to the organiser (Aichi-Nagoya Asian Games Organising Committee / Olympic Council of Asia). `demo/ref/` holds official images downloaded from the Games' website for reference only. They are never drawn into the film and must not be redistributed. **Any other film made from this code must replace all event-specific elements** (see [Replacing the event elements](#replacing-the-event-elements)).
 
 ## Story & structure
 
@@ -108,9 +108,9 @@ Cream `G.CREAM = #fbf6ec`, ink `G.INK = #15111c`. **Gold and ochre take dark typ
 
 ## End card
 
-- The type on the cards *is* the text layer; nothing extra is burned in. `pictogram-motion.srt` lists the title cards (intro lines, chapter titles, each card "01/43  ATHLETICS — SPRINT / 短距離", slogan, end card), generated from the EDL by `demo/srt.cjs`.
+- The type on the cards *is* the text layer; nothing extra is burned in. `pictogram-motion.srt` lists the title cards (intro lines, chapter titles, each card "01/43  ATHLETICS — SPRINT" plus its Japanese name (`短距離`, sprint), slogan, end card), generated from the EDL by `demo/srt.cjs`.
 - **Bilingual rule**: EN is always the big title. The second language is chosen by `?lang=`: `ej` puts Japanese in the big second line (`s.jpBig || s.jp`) and drops the small JP line; the default (ZH) puts Chinese big and Japanese small.
-- **End sequence (demo)**: cream end card, red sun + five-colour rings → **IMAGINE ONE ASIA / ここで、ひとつに。** (the official slogan) → **AICHI-NAGOYA 2026**, the dates, five colour bars and the credit line → fade to black (the last 1.3 s) → 2 s black tail over the music's ring-out.
+- **End sequence (demo)**: cream end card, red sun + five-colour rings → **IMAGINE ONE ASIA** / `ここで、ひとつに。` (the official slogan; "together, here") → **AICHI-NAGOYA 2026**, the dates, five colour bars and the credit line → fade to black (the last 1.3 s) → 2 s black tail over the music's ring-out.
 - **Credit line**: our library's demo ends with "LemoLab × Claude Opus 5.5". It sits on the end card, centred under the five colour bars: `G.maskText(ctx, 'LemoLab × Claude Opus 5.5', W / 2, 1000, F.mono(24), rgba(G.INK, 0.6), inv(0.6, 1.2, l), { ls: '4px', align: 'center' })` in `finaleScene` (right after the colour-bar loop). It slides up 0.6 s after the end card lands (just after the bars), holds for about 3.5 s and fades out with the card. It is quieter than the date line, so it never competes with the title. This sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card (take the line out of `finaleScene` when you adapt the code).
 
 ## Build notes
@@ -246,7 +246,7 @@ POSES.kite = {
   },
 };
 // edl.js, inside a chapter
-card(44, 'KITE FLYING', '放风筝', '凧揚げ', 'kite', { sub: 'NEW' });   // n = index shown as "44 / N"; update the total (see below)
+card(44, 'KITE FLYING', '<Chinese name>', '<Japanese name>', 'kite', { sub: 'NEW' });   // Chinese and Japanese names for kite flying; n = index shown as "44 / N"; update the total (see below)
 ```
 Then: `node lab.mjs stills/lab_kite.png "p=kite&n=8&beats=4"` → `node music/export_timeline.cjs` → (update `compose()` if chapters moved) → `node shot.mjs <t>` → render.
 
@@ -255,7 +255,7 @@ Then: `node lab.mjs stills/lab_kite.png "p=kite&n=8&beats=4"` → `node music/ex
 | What | Where | Replace with |
 |---|---|---|
 | Event name, edition, host city, dates | `scenes.js` 372–373, 398–407, 417, 539–541, 562–566; `cover.html` 94–114; `cover34.html` 90–113 | your own title and date line |
-| Slogan "IMAGINE ONE ASIA / ここで、ひとつに。/ 在这里，合而为一" | `scenes.js` 534–536; covers | your own two-line slogan |
+| Slogan "IMAGINE ONE ASIA" with its Japanese (`ここで、ひとつに。`) and Chinese (`在这里，合而为一`) lines, both "together, here" | `scenes.js` 534–536; covers | your own two-line slogan |
 | Emblem-like mark (red sun + five rings, `rings()`, `RINGS`) | `scenes.js` 341–352, intro 356–375, finale 509–531 | an original mark, e.g. your own shape built from the grid motifs |
 | Palette names (Jonetsu Red, Kakitsubata Purple, Shinrin Green, Kinshachi Gold, Dento Ocher) and hexes | `engine.js` `PAL` (lines 45–51); the name is printed on chapter cards (`scenes.js` 246) | a custom five-hue set with 5 tones each; keep the dark-fg rule for light hues |
 | Item list, counts "/ 43", 43 HUD ticks, "469 EVENTS / 16 DAYS", finale "2026" tile | `edl.js`; `scenes.js` 118, 184, 414–418, 512, 570 | your list and numbers (derive from `CARDS` instead of hard-coding 43) |

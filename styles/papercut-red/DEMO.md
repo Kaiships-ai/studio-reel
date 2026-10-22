@@ -24,7 +24,7 @@ Native moves spent: fold – cut – unfold (the climax), holes are light (the b
 | # | Time (s) | Picture | Camera | Sound |
 |---|---|---|---|---|
 | S1 | 0.0–3.0 | Black 0.25 s → scissor blades bite red paper; two scraps fall; at 2.4 the cut sheet flies away, revealing rice paper | Extreme close-up tracking the tip | snips at 0.25 / 1.0 / 1.75; pipa slide-in at 2.5 |
-| S2 | 3.0–7.0 | Title *NIAN COMES TO TOWN* in cut letters, sawtooth banner border, a 年 seal; paper snow; at 6.5 the title sheet folds over along its middle | Flat front view; exit by page turn | theme A tutti, small gong at 3.0 |
+| S2 | 3.0–7.0 | Title *NIAN COMES TO TOWN* in cut letters, sawtooth banner border, a `年` (nian, "year") seal; paper snow; at 6.5 the title sheet folds over along its middle | Flat front view; exit by page turn | theme A tutti, small gong at 3.0 |
 | S3 | 7.0–12.0 | Night village: indigo paper, punched snow; far hills / houses / bare branches in three layers; warm window flowers; stops on the girl cutting paper at her window | Slow pan in parallax, push to her lit window | theme A soft; L1 |
 | S4 | 12.0–17.0 | The far ridge shivers and **stands up**: its sawtooth is Nian's back; he turns his head, huge, each step a shake; windows go out one per beat, last at 16.5 | Low wide, Nian towering behind the far hills | frame-drum hit, heartbeat + erhu glide; a muffled drum per window; L2 |
 | S5 | 17.0–19.5 | From the dark room: Nian's eye slides into the lattice, fills the window, blinks; the girl ducks below the sill | Locked, inside the room (the film's memorable shot) | **music stops**: wind, snow, heavy breathing |
@@ -87,7 +87,7 @@ Whisper hears "Nian" as "Nyan"/"Nion", the correct pronunciation of nián, so it
 
 Couplet strips slide in beside the window, a red banner with cream cut letters "RED PAPER-CUT" drops in above, gold-foil flecks, and the credit line "LemoLab × Claude Opus 5.5" below in ink. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
-Title and subtitles as built: cut letters in Fraunces 800 on rice paper with sawtooth border strips, a red seal with the character 年 cut as a hole, an italic subline. Subtitle banner `#a8111f`, gold flecks, Fraunces SemiBold 44 px in cream `#fff1d6`, centred 70 px from the bottom, hold ≥ voice + 0.7 s and ≥ 1.8 s.
+Title and subtitles as built: cut letters in Fraunces 800 on rice paper with sawtooth border strips, a red seal with the character `年` (nian) cut as a hole, an italic subline. Subtitle banner `#a8111f`, gold flecks, Fraunces SemiBold 44 px in cream `#fff1d6`, centred 70 px from the bottom, hold ≥ voice + 0.7 s and ≥ 1.8 s.
 
 ## Build notes
 

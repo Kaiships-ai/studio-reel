@@ -1,4 +1,4 @@
-# The buyer's path on every OS: export the repo into a clean non-git folder (as a zip would), install with pixi,
+# The buyer's path on every OS: build the release zip, unzip it into a clean non-git folder, install with pixi,
 # make a reel. Linux on every PR and push to release branches; Windows (PowerShell and Git Bash) when the install
 # path changes; macOS (Apple Silicon + Intel) on tags and by hand. See test/clean-install.mjs.
 name: install
@@ -56,12 +56,16 @@ jobs:
       PIXI_NO_TELEMETRY: '1'
     steps:
       - uses: actions/checkout@v4
-      - name: Export into a folder with a space in its name, without .git (like an unzipped release)
+      - name: Build the Pro zip exactly as buyers get it
+        shell: bash
+        run: node release/build.mjs --tier pro --out "$RUNNER_TEMP/dist"
+      - name: Unzip it into a folder with a space in its name (no .git), as a buyer would
         shell: bash
         run: |
-          dest="$RUNNER_TEMP/Kaiships Studio"
-          mkdir -p "$dest" && git archive HEAD | tar -x -C "$dest"
-          echo "KIT=$dest" >> "$GITHUB_ENV"
+          dest="$RUNNER_TEMP/Kaiships Studio"; mkdir -p "$dest"
+          zip=$(ls "$RUNNER_TEMP"/dist/kaiships-studio-pro-*.zip)
+          if [ "$RUNNER_OS" = Windows ]; then pwsh -NoProfile -Command "Expand-Archive -LiteralPath '$zip' -DestinationPath '$dest'"; else unzip -q "$zip" -d "$dest"; fi
+          echo "KIT=$dest/kaiships-studio" >> "$GITHUB_ENV"
       - name: Install pixi (PowerShell, as a Windows buyer would)
         if: runner.os == 'Windows'
         shell: pwsh
