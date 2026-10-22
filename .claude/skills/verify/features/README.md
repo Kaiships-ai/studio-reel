@@ -5,8 +5,9 @@ The maintained source for proving the user-facing behavior of the Kaiships reel 
 
 ## Baseline preconditions
 
-- Run from the library root (`~/Desktop/kaiships/studio-reel`).
-- `node .claude/skills/verify/draft.mjs doctor films/<name>` is all ✓ (GPU line says Metal).
+- Run from the library root (the folder with `pixi.toml`).
+- Setup done: `pixi run studio doctor` all ✓ (else `pixi run studio install`).
+- `node .claude/skills/verify/draft.mjs doctor films/<name>` is all ✓ (on a Mac the GPU line says Metal).
 - A throwaway film for tests: `node styles/kai-hand-draw/tools/make.mjs new verify-smoke` (fails if it exists;
   reuse it then). Never use a film the user is working on as a sabotage target; copy it.
 
@@ -35,3 +36,5 @@ Each feature file: H1 title, one paragraph, then `Sub-features`, `How to get to 
 - [Sound mix](./sound-mix.md): `audio/cues.json` → `assets/reel-audio.wav` at −14 LUFS.
 - [Chapters on screen](./chapters.md): the picture, proven by the draft verify and the stills sheet.
 - [Full render and delivery](./full-render.md): the 1080x1920 MP4 and cover, only on "full".
+- [Setup](./setup.md): `pixi run studio install | doctor`, the buyer's first run, on macOS, Windows and Linux.
+- [Presenter](./presenter.md): `character-designer.html` → a `character-spec v1` block → `src/character.js`.

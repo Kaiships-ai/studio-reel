@@ -23,10 +23,12 @@ frames (8 fps), small JPEGs, a fast x264 preset, and no mux/loudness/Whisper/cam
 node .claude/skills/verify/draft.mjs doctor films/<name>
 ```
 
-Read-only. ✓ for node_modules, ffmpeg/ffprobe, `.venv`, the film's `index.html`, `src/config.js`, `src/vo.js`,
-`vo/vo.json`, `assets/reel-audio.wav`, and that the page reaches `READY` (prints the GPU: it must say Metal, not
-SwiftShader, or everything is ~6× slower). Exit 1 on any ✗. A missing `vo/vo.json` or `reel-audio.wav` means
-run `make.mjs <film> vo` / `audio` first.
+Read-only. ✓ for node_modules, python/ffmpeg/ffprobe in this folder's pixi env (`kit/env.mjs`), the film's
+`index.html`, `src/config.js`, `src/vo.js`, `vo/vo.json`, `assets/reel-audio.wav`, and that the page reaches `READY`
+(prints the GPU: on a Mac it must say Metal; SwiftShader or "software" means no GPU, which works but is several
+times slower). Exit 1 on any ✗. A ✗ on the tools means the setup is missing: `pixi run studio install` (or
+`pixi run studio doctor` for the buyer-side check). A missing `vo/vo.json` or `reel-audio.wav` means run
+`make.mjs <film> vo` / `audio` first.
 
 ## Launch
 
@@ -51,7 +53,7 @@ Measured on an M5: the 5 s starter in 7 s, the 31 s `rea-xray` reel in 26 s. Exi
 
 | Check | Catches |
 |---|---|
-| no page errors | `[page]` console errors and warnings, e.g. `vo("WORD") … is not in the voiceover` after a script change. An uncaught throw stops the run: `✗ the page threw at t = … s: <message>` |
+| no page errors | `[page]` console errors and warnings, e.g. `vo("WORD") … is not in the voiceover` after a script change, or `[character] hair: "…" is not an option` from a bad `src/character.js`. An uncaught throw stops the run: `✗ the page threw at t = … s: <message>`. Ignored: optional-file 404s, `WebGL: INVALID_OPERATION`, and `GL Driver Message … Performance` notes |
 | draft video 270×480 @ 8 fps | the encode itself |
 | has an audio stream | missing `assets/reel-audio.wav` |
 | video length = `window.DUR` ± 1 frame; picture = voiceover ± 1/30 s; audio = picture ± 0.1 s | `config.js` duration drift, a stale mix after a new voice |
@@ -66,8 +68,10 @@ visible there. Say what you saw.
 ## Drive: full (only when the user says "full")
 
 ```sh
-node styles/kai-hand-draw/tools/make.mjs films/<name> render verify
+node styles/kai-hand-draw/tools/make.mjs films/<name> render verify     # buyers: pixi run make films/<name> render verify
 ```
+
+`--no-asr` skips the Whisper keyword check (it then shows `–`, which is not a pass), `--no-camscan` the camera scan.
 
 The real pipeline: 1080x1920 @ 30 fps, BT.709, −14 LUFS, camscan, Whisper on the CTA keyword, frames in
 `out/check/final_*.jpg`. Minutes, not seconds. Never run it on your own initiative.
@@ -95,6 +99,7 @@ Copy the film, break one scene, run the draft, expect exit 1, delete the copy:
 ```sh
 cp -r films/<name> films/<name>-broken && rm -rf films/<name>-broken/out
 # edit films/<name>-broken/src/ch/<chapter>.js: call an undefined helper, vo('NOT_SPOKEN'), or `return;` at the top of a scene
+# or films/<name>-broken/src/character.js: an option that does not exist, e.g. hair: 'mohawk'
 node .claude/skills/verify/draft.mjs films/<name>-broken; echo "exit=$?"      # expect exit=1 and the ✗ that names it
 rm -rf films/<name>-broken
 ```
