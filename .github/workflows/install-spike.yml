@@ -3,7 +3,7 @@ name: install-spike
 on:
   push:
     branches: ['release/**']
-    paths: ['pixi.toml', 'pixi.lock', '.github/workflows/install-spike.yml', 'core/render/**', 'test/fixture-reel/**']
+    paths: ['pixi.toml', 'pixi.lock', '.github/workflows/install-spike.yml', 'core/render/**', 'kit/check-reel/**']
   workflow_dispatch:
 
 jobs:
@@ -54,11 +54,11 @@ jobs:
           pixi run node node_modules/playwright-core/cli.js install --only-shell chromium
       - name: draft render of the fixture reel (Git Bash / sh)
         shell: bash
-        run: pixi run node .claude/skills/verify/draft.mjs test/fixture-reel --out=out-bash
+        run: pixi run node .claude/skills/verify/draft.mjs kit/check-reel --out=out-bash
       - name: draft render again from PowerShell
         if: runner.os == 'Windows'
         shell: pwsh
-        run: pixi run node .claude/skills/verify/draft.mjs test/fixture-reel --out=out-pwsh
+        run: pixi run node .claude/skills/verify/draft.mjs kit/check-reel --out=out-pwsh
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -7,7 +7,7 @@
 //   cover:    the time (seconds) of the frame saved as the cover image, painted without captions.
 //   caption:  optional overrides of CAPTION in engine/reel.js, e.g. { brands: ['Claude Code', 'Cursor'] }.
 const PROJECT = {
-  name: 'verify-smoke',
+  name: 'check-reel',
   duration: typeof VO_DUR !== 'undefined' ? VO_DUR : 15,
   fps: 30, bpm: 120, offset: 0,
   cover: 1.2,
