@@ -54,14 +54,19 @@ def strip_front_matter(raw):
     return raw[m.end():] if m else raw
 
 
-def md_section(raw, name):
-    """Text under '## name' up to the next heading, or None if there is none."""
+def md_span(raw, name):
+    """(start, end) of the text under '## name', up to the next heading, or None."""
     m = re.search(r"(?im)^#{2,3}[ \t]+" + re.escape(name) + r"[ \t]*$", raw)
     if not m:
         return None
-    rest = raw[m.end():]
-    nxt = re.search(r"(?m)^#{1,3}[ \t]", rest)
-    return rest[:nxt.start()] if nxt else rest
+    nxt = re.search(r"(?m)^#{1,3}[ \t]", raw[m.end():])
+    return m.end(), (m.end() + nxt.start()) if nxt else len(raw)
+
+
+def md_section(raw, name):
+    """Text under '## name' up to the next heading, or None if there is none."""
+    span = md_span(raw, name)
+    return raw[span[0]:span[1]] if span else None
 
 
 def read_input(path, section=None, default_section=None):
