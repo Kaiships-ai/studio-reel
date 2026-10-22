@@ -39,7 +39,7 @@ mkdirSync(OUT, { recursive: true });
 // openDemo prints page console errors and exits 1 on an uncaught page error; count the console ones here too
 const pageErrors = [], err = console.error;
 // (warnings too: a vo('word') missing from the voiceover is a warning; the WebGL ones when a page opens are harmless)
-console.error = (...a) => { const s = a.join(' '); if (s.startsWith('[page]') && !/optional file missing|WebGL: INVALID_OPERATION/.test(s)) pageErrors.push(s); err(...a); };
+console.error = (...a) => { const s = a.join(' '); if (s.startsWith('[page]') && !/optional file missing|WebGL: INVALID_OPERATION|GL Driver Message \(.*Performance/.test(s)) pageErrors.push(s); err(...a); };
 const open = () => openDemo(film, { w: 1080, h: 1920, warnings: true });
 const threw = (at, e) => { console.error(`✗ the page threw at ${typeof at === 'number' ? 't = ' + at.toFixed(3) + ' s' : at}: ${String(e.message || e).split('\n')[0]}`); process.exit(1); };
 let finished = false;

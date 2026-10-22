@@ -4,7 +4,7 @@
 // Needs `pixi` on PATH, nothing else. Runs: studio install → studio doctor (twice; the second must change nothing)
 // → make.mjs on a copy of the check reel (audio, render, verify; no network). Exit 0 only if every step passes.
 import { spawnSync } from 'node:child_process';
-import { existsSync, cpSync, rmSync, readFileSync } from 'node:fs';
+import { existsSync, cpSync, rmSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 const dir = resolve(process.argv[2] || '');
@@ -30,6 +30,9 @@ if (again > 60) fail(`the second install took ${again} s: it should skip everyth
 const film = join(dir, 'films', 'ci-reel');
 rmSync(film, { recursive: true, force: true });
 cpSync(join(dir, 'kit', 'check-reel'), film, { recursive: true });
+// CI machines draw WebGL in software (seconds per frame): 6 fps keeps the whole pipeline in the test, minutes not hours
+const cfg = join(film, 'src', 'config.js');
+writeFileSync(cfg, readFileSync(cfg, 'utf8').replace(/fps: 30/, 'fps: 6').replace(/name: '[^']*'/, "name: 'ci-reel'"));
 step('make a reel (audio, render, verify)', ['run', 'make', 'films/ci-reel', 'audio', 'render', 'verify', '--no-asr', '--no-camscan']);
 const report = JSON.parse(readFileSync(join(film, 'out', 'check', 'verify.json'), 'utf8'));
 const failed = report.checks.filter(c => c.ok === false);

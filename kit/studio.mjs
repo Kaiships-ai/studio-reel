@@ -65,10 +65,10 @@ async function install() {
   const tmp = join(ROOT, 'films', '_studio-check');
   rmSync(tmp, { recursive: true, force: true }); mkdirSync(join(ROOT, 'films'), { recursive: true });
   cpSync(join(ROOT, 'kit', 'check-reel'), tmp, { recursive: true });
-  console.log('  … test render (5 s, low frame rate)');
+  console.log('  … test render (5 s at 4 frames a second: it checks the tools, not the motion)');
   const video = join(tmp, 'out', 'video.mp4'), mp4 = join(tmp, 'check.mp4');
   mkdirSync(join(tmp, 'out'), { recursive: true });
-  if (run('node', ['core/render/video.mjs', tmp, '--size', '1080x1920', '--fps', '6', '--workers', String(Math.min(2, env().workers)), '--out', video]).status !== 0)
+  if (run('node', ['core/render/video.mjs', tmp, '--size', '1080x1920', '--fps', '4', '--workers', String(Math.min(2, env().workers)), '--out', video]).status !== 0)
     return bad('test render', 'the drawing step failed (message above)', 'pixi run studio doctor');
   const { mux } = await import('../core/render/mux.mjs');
   let m; try { m = mux({ video, audio: join(tmp, 'assets', 'reel-audio.wav'), out: mp4, fps: 30, grain: 0, color: 'bt709' }); }
