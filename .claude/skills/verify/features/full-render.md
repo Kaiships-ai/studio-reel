@@ -5,12 +5,13 @@ by `make.mjs verify`. Slow (minutes); run only when the user says "full" or the 
 
 ## Sub-features
 
-- `full.render`: frames via `core/render/video.mjs`, mux and loudness via `core/render/mux.sh`, cover frame.
+- `full.render`: frames via `core/render/video.mjs`, mux and loudness via `core/render/mux.mjs`, cover frame.
 - `full.verify`: size, fps, BT.709, audio, length, LUFS/peak, freeze, black, camera ≤ 20 px/frame, CTA keyword heard.
 
 ## How to get to it (user POV)
 
-- "full" → `node styles/kai-hand-draw/tools/make.mjs films/<name> render verify`. `/make-reel` runs it in step 9–10.
+- "full" → `node styles/kai-hand-draw/tools/make.mjs films/<name> render verify` (buyers: `pixi run make …`).
+  `/make-reel` runs it in step 9–10.
 
 ## Driving it with draft.mjs / make.mjs
 
@@ -22,5 +23,8 @@ Preconditions: the draft verify passes (don't spend minutes on a film that fails
 
 ## Gotchas
 
-- `video.mjs` refuses a second render to the same `--out` (`.lock`); a crashed lock older than its pid is taken over.
-- Whisper needs faster-whisper in `.venv`; without it the keyword check shows `–` (skipped), which is not a pass.
+- `video.mjs` refuses a second render to the same `--out` (`.lock`); a lock whose pid is gone, or older than 12 h,
+  is taken over.
+- `--workers` defaults to half the CPU cores (1–4, `kit/env.mjs`).
+- `--no-asr` (or no faster-whisper in the pixi env) makes the keyword check `–` (skipped), which is not a pass;
+  `--no-camscan` drops the camera row.
