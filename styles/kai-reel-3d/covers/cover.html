@@ -1,0 +1,12 @@
+<!doctype html><html><head><meta charset="utf-8"><title>diorama cover</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@900&family=Poppins:wght@800&display=swap">
+<script type="importmap">{ "imports": { "three": "./vendor/three/build/three.module.js", "three/addons/": "./vendor/three/examples/jsm/" } }</script>
+<style>html,body{margin:0;overflow:hidden;background:#000}canvas{position:absolute;left:0;top:0;width:100vw;height:100vh}
+#card{position:absolute;left:0;right:0;bottom:0;padding:0 5.5vw 21vh;background:linear-gradient(to bottom,rgba(2,2,4,0) 0%,rgba(2,2,4,0) 22%,rgba(2,2,4,.78) 52%,#020203 74%);z-index:5;font-family:Poppins,sans-serif}
+#card::before{content:'';display:block;height:24vh}
+#card .tag{display:inline-block;background:var(--hl,#E9BA4F);color:#15161b;font-weight:800;font-size:1.6vh;letter-spacing:.01em;text-transform:uppercase;padding:.24em .55em;border-radius:.4em;margin-bottom:1.1vh}
+#card h1{margin:0;color:#fff;font-weight:800;font-size:6.0vh;line-height:1.06;letter-spacing:-.015em;text-wrap:balance}
+#card em{font-style:normal;color:var(--hl,#E9BA4F)}</style></head>
+<body><canvas id="gl"></canvas><canvas id="fx"></canvas>
+<script type="module">await Promise.all([document.fonts.load('100px Anton'), document.fonts.load('900 100px Inter'), document.fonts.load('800 100px Poppins')]).catch(() => {}); await import('./src/cover.js');</script>
+</body></html>

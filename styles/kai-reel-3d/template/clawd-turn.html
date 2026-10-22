@@ -1,0 +1,25 @@
+<!doctype html><html><head><meta charset="utf-8"><title>clawd lab</title>
+<script type="importmap">{ "imports": { "three": "./vendor/three/build/three.module.js", "three/addons/": "./vendor/three/examples/jsm/" } }</script>
+<style>html,body{margin:0;overflow:hidden;background:#1d2a33}canvas{position:absolute;left:0;top:0;width:100vw;height:100vh}</style></head>
+<body><canvas id="gl"></canvas><canvas id="fx"></canvas>
+<script type="module">
+import * as THREE from 'three';
+import { createClawd } from './engine/clawd3d.js';
+import { applyRole } from './engine/clawd-roles.js';
+const ROLE=new URLSearchParams(location.search).get('role');
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+const cv=document.getElementById('gl'), W=innerWidth, H=innerHeight; cv.width=W; cv.height=H;
+const r=new THREE.WebGLRenderer({canvas:cv,antialias:true}); r.setSize(W,H,false); r.toneMapping=THREE.ACESFilmicToneMapping; r.outputColorSpace=THREE.SRGBColorSpace; r.shadowMap.enabled=true;
+const scene=new THREE.Scene(); scene.background=new THREE.Color('#1b2230');
+const key=new THREE.DirectionalLight('#ffe2c4',2.2); key.position.set(-20,30,40); scene.add(key);
+scene.add(new THREE.HemisphereLight("#cfe3f0","#5a3a28",1.6));
+const lamp=new THREE.PointLight('#ffb36b',300,80,2); lamp.position.set(30,15,10); scene.add(lamp);
+const cam=new THREE.PerspectiveCamera(30,W/H,1,800); cam.position.set(0,22,120); cam.lookAt(0,-6,0);
+const ANG=[[0,'trước'],[45,'trước-phải 45°'],[90,'phải'],[135,'sau-phải'],[180,'sau'],[225,'sau-trái'],[270,'trái'],[315,'trước-trái 45°']];
+const VAR=ANG.map(([a,l])=>({style:'flat',headband:!ROLE,jacket:!ROLE,rot:-a*Math.PI/180,label:l}));
+const C=[]; VAR.forEach((op,i)=>{ const c=createClawd({...op,contact:true}); if(ROLE) applyRole(c,ROLE,{noSet:true}); c.group.position.set(((i%4)-1.5)*22,-Math.floor(i/4)*20,0); c.group.rotation.y=op.rot;  scene.add(c.group); C.push(c); });
+const fx=document.getElementById('fx'); fx.width=W; fx.height=H; const g=fx.getContext('2d');
+window.__frame=(t)=>{ C.forEach(c=>c.update(t,{blink:false})); r.render(scene,cam);
+  g.clearRect(0,0,W,H); { let x=12345; const id=g.createImageData(W,H); for(let i=0;i<id.data.length;i+=4){ x=(x*1664525+1013904223)>>>0; const v=x>>>24; id.data[i]=id.data[i+1]=id.data[i+2]=v; id.data[i+3]=14; } g.putImageData(id,0,0); const vg=g.createRadialGradient(W/2,H/2,H*0.3,W/2,H/2,W*0.7); vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,.45)'); g.fillStyle=vg; g.fillRect(0,0,W,H); } g.font=`bold ${Math.round(H/44)}px Arial`; g.fillStyle='#f3ecd2'; g.textAlign='center';
+  VAR.map(v=>v.label).forEach((s,i)=>{ const v=new THREE.Vector3(((i%4)-1.5)*22,-Math.floor(i/4)*20-3,0).project(cam); g.fillText(s,(v.x+1)/2*W,(1-v.y)/2*H+H/40); }); };
+</script></body></html>

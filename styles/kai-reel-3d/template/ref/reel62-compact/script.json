@@ -1,0 +1,186 @@
+{
+ "model": "gemini-3.8-flash-tts",
+ "cast": {
+  "kai": "Achird",
+  "clawd": "Puck"
+ },
+ "note": "reel62 draft v5 2026-10-17 (anchor = the Buy button).",
+ "lines": [
+  {
+   "id": "l01",
+   "who": "kai",
+   "role": "",
+   "style": "panicked, rising",
+   "text": "Clawd, it says auto-compact in two percent.",
+   "pattern": "P1 P6 P9"
+  },
+  {
+   "id": "l02",
+   "who": "clawd",
+   "role": "",
+   "style": "calm",
+   "text": "Relax. Your Buy button stays.",
+   "pattern": "\u2693 HOOK neo \u00b7 P4 hope"
+  },
+  {
+   "id": "l03",
+   "who": "kai",
+   "role": "",
+   "style": "relieved, curious",
+   "text": "And everything else?",
+   "pattern": ""
+  },
+  {
+   "id": "l04",
+   "who": "clawd",
+   "role": "",
+   "style": "matter-of-fact",
+   "text": "Fits in twelve lines.",
+   "pattern": "P2 P3 \u00b7 fall"
+  },
+  {
+   "id": "l05",
+   "who": "kai",
+   "role": "",
+   "style": "outraged",
+   "text": "Twelve?! We talked for nine hours!",
+   "pattern": "P3"
+  },
+  {
+   "id": "l06",
+   "who": "clawd",
+   "role": "",
+   "style": "gentle",
+   "text": "The little things go first.",
+   "pattern": "P2"
+  },
+  {
+   "id": "l07",
+   "who": "kai",
+   "role": "",
+   "style": "worried",
+   "text": "What little things?",
+   "pattern": ""
+  },
+  {
+   "id": "l08",
+   "who": "clawd",
+   "role": "",
+   "style": "gentle, sorry",
+   "text": "Mostly you.",
+   "pattern": "P2"
+  },
+  {
+   "id": "l09",
+   "who": "kai",
+   "role": "",
+   "style": "soft, hopeful",
+   "text": "Can I pick what you keep?",
+   "pattern": ""
+  },
+  {
+   "id": "l10",
+   "who": "clawd",
+   "role": "",
+   "style": "gentle",
+   "text": "Slash compact, plus what to keep.",
+   "pattern": "fact P6"
+  },
+  {
+   "id": "l11",
+   "who": "kai",
+   "role": "",
+   "style": "soft, careful",
+   "text": "Slash compact. Keep the part where we're friends.",
+   "pattern": "P5"
+  },
+  {
+   "id": "l12",
+   "who": "clawd",
+   "role": "",
+   "style": "gentle, sorry",
+   "text": "<short pause> I'm gonna miss you, Kai.",
+   "pattern": "P5"
+  },
+  {
+   "id": "l13",
+   "who": "kai",
+   "role": "",
+   "style": "soft",
+   "text": "You're not going anywhere.",
+   "pattern": "P5"
+  },
+  {
+   "id": "l14",
+   "who": "clawd",
+   "role": "",
+   "style": "whisper",
+   "text": "Compacting.",
+   "pattern": ""
+  },
+  {
+   "id": "l15",
+   "who": "kai",
+   "role": "",
+   "style": "nervous",
+   "text": "Clawd?",
+   "pattern": ""
+  },
+  {
+   "id": "l16",
+   "who": "clawd",
+   "role": "",
+   "style": "cheerful",
+   "text": "Still here!",
+   "pattern": ""
+  },
+  {
+   "id": "l17",
+   "who": "kai",
+   "role": "",
+   "style": "overjoyed",
+   "text": "Clawd! You came back!",
+   "pattern": "P5"
+  },
+  {
+   "id": "l18",
+   "who": "clawd",
+   "role": "",
+   "style": "sweet",
+   "text": "You say please. You never read the error.",
+   "pattern": "P5 P6"
+  },
+  {
+   "id": "l19",
+   "who": "kai",
+   "role": "",
+   "style": "laughing",
+   "text": "<laugh> That's me!",
+   "pattern": ""
+  },
+  {
+   "id": "l20",
+   "who": "clawd",
+   "role": "",
+   "style": "proud",
+   "text": "You said last bug six times.",
+   "pattern": "P3 P6"
+  },
+  {
+   "id": "l21",
+   "who": "kai",
+   "role": "",
+   "style": "soft, amazed",
+   "text": "You kept all of it? What did you drop?",
+   "pattern": ""
+  },
+  {
+   "id": "l22",
+   "who": "clawd",
+   "role": "",
+   "style": "proud, innocent",
+   "text": "<short pause> The Buy button.",
+   "pattern": "P7 twist \u2693 (l\u1eadt c\u00e2u 2)"
+  }
+ ]
+}

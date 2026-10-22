@@ -20,6 +20,10 @@ KAISHIPS.md
 kit.manifest
 # Kai's own likeness: kept for Kai's films, never shipped (buyers design their own presenter)
 styles/kai-hand-draw/engine/kai-v3.js
+# Kai's 3D reels (Blocky Kai, casting book with real people and franchise nods): Kai's own use only
+styles/kai-reel-3d/
+.claude/skills/make-reel-3d/
+AGENT_LEARNING.md
 
 [pro]
 .claude/skills/ig-plan/

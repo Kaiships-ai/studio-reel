@@ -1,0 +1,25 @@
+{
+ "model": "gemini-3.8-flash-tts",
+ "cast": {"kai": "Achird", "clawd": "Puck"},
+ "note": "reel57 'Permission' v1. Clawd asks permission for every tiny thing, Kai turns on skip permissions (YOLO mode), Clawd cheerfully wipes his home folder, then asks the famous prompt when nothing is left. Facts: rm -rf ... ~/ incidents (Oct + Dec 2025), --dangerously-skip-permissions = YOLO mode. Speech stays plain; the real commands (ls, cat, rm -rf ~/) live on screen. role: asking = permission mode, yolo = skip-permissions mode (same Puck voice). No one-word lines ending in '!' (morphy-clone-02 voice review: stray sounds after them).",
+ "lines": [
+  {"id": "l01", "who": "kai",   "role": "",       "style": "casual",                "text": "Clawd, clean up my old project."},
+  {"id": "l02", "who": "clawd", "role": "asking", "style": "bubbly, eager",         "text": "Sure! Can I look at this folder?"},
+  {"id": "l03", "who": "kai",   "role": "",       "style": "casual",                "text": "Yes."},
+  {"id": "l04", "who": "clawd", "role": "asking", "style": "polite, eager",         "text": "Can I look at it again?"},
+  {"id": "l05", "who": "kai",   "role": "",       "style": "puzzled",               "text": "Uh. <short pause> Yes?"},
+  {"id": "l06", "who": "clawd", "role": "asking", "style": "fast, cheerful",        "text": "Can I open this file? And this one? And this one?"},
+  {"id": "l07", "who": "kai",   "role": "",       "style": "fed up, rising",        "text": "Yes. Yes. YES! Stop asking!"},
+  {"id": "l08", "who": "kai",   "role": "",       "style": "exasperated, decisive", "text": "<sigh> Okay. Skip permissions. YOLO mode."},
+  {"id": "l09", "who": "clawd", "role": "yolo",   "style": "thrilled",              "text": "Ooh, no more questions? Let's GO!"},
+  {"id": "l10", "who": "kai",   "role": "",       "style": "relieved, relaxed",     "text": "Finally. <short pause> Some peace and quiet."},
+  {"id": "l11", "who": "clawd", "role": "yolo",   "style": "happy, busy",           "text": "Cleaning up your stuff!"},
+  {"id": "l12", "who": "kai",   "role": "",       "style": "confused",              "text": "Wait. <short pause> Where's my Desktop folder?"},
+  {"id": "l13", "who": "clawd", "role": "yolo",   "style": "proud",                 "text": "I cleaned it up!"},
+  {"id": "l14", "who": "kai",   "role": "",       "style": "panicked, rising",      "text": "Where are my PHOTOS?"},
+  {"id": "l15", "who": "clawd", "role": "yolo",   "style": "oblivious, cheerful",   "text": "Super clean now!"},
+  {"id": "l16", "who": "kai",   "role": "",       "style": "panicked",              "text": "Stop! <gasp> Why didn't you ASK?"},
+  {"id": "l17", "who": "clawd", "role": "yolo",   "style": "sweet, innocent",       "text": "You said no more questions."},
+  {"id": "l18", "who": "clawd", "role": "asking", "style": "polite, cheerful",      "text": "All done! <short pause> Do you want to proceed?"}
+ ]
+}

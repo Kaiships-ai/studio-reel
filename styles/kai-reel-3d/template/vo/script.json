@@ -1,0 +1,26 @@
+{
+ "model": "gemini-3.8-flash-tts",
+ "cast": {"kai": "Achird", "clawd": "Puck"},
+ "note": "Example = skit v5 'switch to Haiku' (Kai: 'quá pick', 2026-10-15). Replace the lines; keep the cast. l10's style was 'whispered, tattling' in the approved take, and Gemini read those words aloud: keep styles to plain delivery words. who = kai | clawd (2 speakers max per call). role = free label for the reel code (e.g. haiku / opus = the same Clawd voice acting differently).",
+ "lines": [
+  {"id": "l01", "who": "kai",   "role": "",      "style": "casual, confident",           "text": "Clawd, switch to Haiku 5.5."},
+  {"id": "l02", "who": "clawd", "role": "haiku", "style": "instantly, bubbly and eager", "text": "Done!"},
+  {"id": "l03", "who": "kai",   "role": "",      "style": "casual",                      "text": "Make the design look better."},
+  {"id": "l04", "who": "clawd", "role": "haiku", "style": "very proud, excited",         "text": "Perfect! It looks AMAZING!"},
+  {"id": "l05", "who": "kai",   "role": "",      "style": "confused",                    "text": "Wait. <short pause> Why is the menu on the logo?"},
+  {"id": "l06", "who": "clawd", "role": "haiku", "style": "bubbly, fast",                "text": "Fixed it!"},
+  {"id": "l07", "who": "kai",   "role": "",      "style": "panicked, rising",            "text": "Stop. Stop! <gasp> That's even WORSE!"},
+  {"id": "l08", "who": "clawd", "role": "haiku", "style": "oblivious, cheerful",         "text": "Perfect!"},
+  {"id": "l09", "who": "kai",   "role": "",      "style": "exasperated",                 "text": "<sigh> Okay. Switch to Opus 5.5."},
+  {"id": "l10", "who": "kai",   "role": "",      "style": "quiet, sneaky",              "text": "Haiku broke everything. Please fix it."},
+  {"id": "l11", "who": "clawd", "role": "opus",  "style": "calm, measured",              "text": "I see the problem."},
+  {"id": "l12", "who": "clawd", "role": "opus",  "style": "calm",                        "text": "Done."},
+  {"id": "l13", "who": "kai",   "role": "",      "style": "surprised, impressed",        "text": "Oh. <short pause> That's actually good."},
+  {"id": "l14", "who": "kai",   "role": "",      "style": "eager",                       "text": "Now add a pricing page."},
+  {"id": "l15", "who": "clawd", "role": "opus",  "style": "calm",                        "text": "Done."},
+  {"id": "l16", "who": "kai",   "role": "",      "style": "excited, fast",               "text": "Yes! Okay, now the onboarding..."},
+  {"id": "l17", "who": "clawd", "role": "opus",  "style": "flat, apologetic",            "text": "You've reached your usage limit."},
+  {"id": "l18", "who": "kai",   "role": "",      "style": "disbelief",                   "text": "Seriously?"},
+  {"id": "l19", "who": "kai",   "role": "",      "style": "whispered, guilty",           "text": "Sorry, Clawd. <short pause> I'm trying Codex."}
+ ]
+}

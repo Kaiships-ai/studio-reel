@@ -1,0 +1,535 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Clawd Casting Book</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500&family=Instrument+Sans:wght@400;600&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FAF9F5;--surface:#FFFFFF;--surface-2:#F3F0E8;--ink:#1F1E1D;--muted:#625E55;--faint:#948F85;--line:#E6E1D6;--line-2:#D4CDBF;--clay:#D97757;--clay-ink:#B4583A;--clay-bg:#D977571A;
+--serif:"Newsreader",Georgia,serif;--sans:"Instrument Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1C1B19;--surface:#252421;--surface-2:#2E2C28;--ink:#EEEBE3;--muted:#ABA69A;--faint:#7A766C;--line:#383631;--line-2:#4A4740;--clay:#E08966;--clay-ink:#EFA184;--clay-bg:#E089661F}}
+:root[data-theme="dark"]{--bg:#1C1B19;--surface:#252421;--surface-2:#2E2C28;--ink:#EEEBE3;--muted:#ABA69A;--faint:#7A766C;--line:#383631;--line-2:#4A4740;--clay:#E08966;--clay-ink:#EFA184;--clay-bg:#E089661F}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans)}
+main{max-width:1240px;margin:0 auto;padding:32px 16px 72px}
+h1{font:500 40px/1.1 var(--serif);margin:0 0 6px} .lead{color:var(--muted);max-width:760px;margin:0 0 18px}
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px}
+.gloss div{background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13.5px}
+.gloss b{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--clay-ink);display:block}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
+.chip{font:500 13px var(--sans);border:1.5px solid var(--line-2);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 12px;cursor:pointer}
+.chip span{color:var(--faint);font-family:var(--mono);font-size:11.5px} .chip.on{background:var(--clay-bg);border-color:var(--clay);color:var(--clay-ink)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.card{all:unset;cursor:pointer;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.card:hover,.card:focus-visible{border-color:var(--clay)} .card>img{width:100%;aspect-ratio:1;object-fit:cover;background:#1b2230;display:block}
+.meta{padding:10px 12px 12px} .meta b{display:block;font-size:15px} .meta code{font:12px var(--mono);color:var(--faint)}
+.sign{margin:6px 0 2px;font-size:13.5px} .use{margin:0;color:var(--muted);font-size:13px}
+.risk{display:inline-block;margin-top:6px;font:500 11px var(--mono);color:var(--clay-ink);background:var(--clay-bg);border-radius:6px;padding:2px 6px}
+dialog{border:none;border-radius:16px;padding:0;max-width:min(980px,94vw);background:var(--surface);color:var(--ink)} dialog::backdrop{background:#0009}
+dialog .in{padding:14px} dialog img{width:100%;border-radius:10px;display:block;background:#1b2230} dialog h2{font:500 26px var(--serif);margin:4px 0 8px}
+dialog .x{float:right;font:600 14px var(--sans);border:1.5px solid var(--line-2);background:var(--surface-2);color:var(--ink);border-radius:8px;padding:4px 10px;cursor:pointer}
+</style></head><body><main>
+<h1>Clawd Casting Book</h1>
+<p class="lead">Clawd là diễn viên. Thân cam, 2 mắt khe, 4 chân và cách nhún nhảy giữ nguyên. Mỗi vai chỉ thay trang phục và phụ kiện. Bấm một vai để xem 8 góc.</p>
+<div class="gloss">
+<div><b>id</b>Tên vai trong code: <code>loadClawdDefault(scene, scale, 'id')</code>.</div>
+<div><b>Dấu nhận ra</b>Thứ người xem phải thấy trong 1 giây, kể cả ở cỡ 100 px.</div>
+<div><b>Nod (gợi)</b>Người thật, anime, Ninjago: chỉ gợi bằng trang phục. Không giống mặt, không logo.</div>
+<div><b>Set prop</b>Đạo cụ quanh Clawd (lửa, ghế, mũi tên). Reel tự bật hoặc tắt.</div>
+</div>
+<div class="chips"><button class="chip on" data-f="all">Tất cả <span>98</span></button><button class="chip" data-f="default">Mặc định <span>1</span></button><button class="chip" data-f="office">Văn phòng <span>13</span></button><button class="chip" data-f="job">Nghề nghiệp <span>4</span></button><button class="chip" data-f="meme">Meme <span>6</span></button><button class="chip" data-f="shark">Shark Tank <span>7</span></button><button class="chip" data-f="culture">Văn hoá <span>2</span></button><button class="chip" data-f="anime">Anime <span>2</span></button><button class="chip" data-f="ninjago">Ninjago <span>8</span></button><button class="chip" data-f="creator">Creator <span>4</span></button><button class="chip" data-f="tech">CEO tech <span>6</span></button><button class="chip" data-f="internet">Internet <span>5</span></button><button class="chip" data-f="halloween">Halloween <span>5</span></button><button class="chip" data-f="holiday">Lễ hội <span>7</span></button><button class="chip" data-f="game">Game <span>6</span></button><button class="chip" data-f="sport">Thể thao <span>5</span></button><button class="chip" data-f="movie">Phim <span>6</span></button><button class="chip" data-f="history">Lịch sử <span>5</span></button><button class="chip" data-f="life">Đời sống VN <span>6</span></button></div>
+<div class="grid"><button class="card" data-cat="default" data-id="kai-default">
+  <img src="img/kai-default.jpg" alt="Clawd của Kai (mặc định)" loading="lazy">
+  <div class="meta"><b>Clawd của Kai (mặc định)</b><code>kai-default</code>
+  <p class="sign">red &gt;&gt;&gt; headband + zipped red jacket, like Blocky Kai</p><p class="use">Dùng khi: every skit unless a role fits better</p></div>
+  <template><img src="img/kai-default-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> zipped red jacket · red &gt;&gt;&gt; headband</p></template>
+</button><button class="card" data-cat="office" data-id="developer">
+  <img src="img/developer.jpg" alt="Developer" loading="lazy">
+  <div class="meta"><b>Developer</b><code>developer</code>
+  <p class="sign">hoodie + headphones</p><p class="use">Dùng khi: any coding pain</p></div>
+  <template><img src="img/developer-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> hoodie #3B4252 · headphones round the neck · laptop</p></template>
+</button><button class="card" data-cat="office" data-id="ceo">
+  <img src="img/ceo.jpg" alt="CEO" loading="lazy">
+  <div class="meta"><b>CEO</b><code>ceo</code>
+  <p class="sign">suit + red tie</p><p class="use">Dùng khi: money, layoffs, &quot;AI replaces you&quot;</p></div>
+  <template><img src="img/ceo-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> suit #1F2430 + tie #C2382D · phone</p></template>
+</button><button class="card" data-cat="office" data-id="intern">
+  <img src="img/intern.jpg" alt="Intern" loading="lazy">
+  <div class="meta"><b>Intern</b><code>intern</code>
+  <p class="sign">lanyard badge &quot;INTERN&quot; + big glasses</p><p class="use">Dùng khi: cheap model, first day, mistakes</p></div>
+  <template><img src="img/intern-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> shirt #E8E4DA · oversized glasses · coffee cup</p></template>
+</button><button class="card" data-cat="office" data-id="cto">
+  <img src="img/cto.jpg" alt="CTO tech-bro" loading="lazy">
+  <div class="meta"><b>CTO tech-bro</b><code>cto</code>
+  <p class="sign">puffer vest + white earbuds</p><p class="use">Dùng khi: architecture, &quot;rewrite in Rust&quot;</p></div>
+  <template><img src="img/cto-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> puffer vest #2F3B52 over tee · oat-milk latte</p></template>
+</button><button class="card" data-cat="job" data-id="firefighter">
+  <img src="img/firefighter.jpg" alt="Firefighter" loading="lazy">
+  <div class="meta"><b>Firefighter</b><code>firefighter</code>
+  <p class="sign">red helmet + yellow bands</p><p class="use">Dùng khi: prod is down, incident</p></div>
+  <template><img src="img/firefighter-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> turnout coat #C9A227 + reflective bands · fire helmet #C2382D · hose</p></template>
+</button><button class="card" data-cat="job" data-id="doctor">
+  <img src="img/doctor.jpg" alt="Doctor" loading="lazy">
+  <div class="meta"><b>Doctor</b><code>doctor</code>
+  <p class="sign">white coat + stethoscope</p><p class="use">Dùng khi: debugging, &quot;diagnose the bug&quot;</p></div>
+  <template><img src="img/doctor-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> white coat · head mirror · stethoscope</p></template>
+</button><button class="card" data-cat="job" data-id="detective">
+  <img src="img/detective.jpg" alt="Detective" loading="lazy">
+  <div class="meta"><b>Detective</b><code>detective</code>
+  <p class="sign">fedora + magnifier</p><p class="use">Dùng khi: bug hunt, who broke prod</p></div>
+  <template><img src="img/detective-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> trench coat #B89B6E · fedora #5A4632 · magnifying glass</p></template>
+</button><button class="card" data-cat="job" data-id="sensei">
+  <img src="img/sensei.jpg" alt="Sensei" loading="lazy">
+  <div class="meta"><b>Sensei</b><code>sensei</code>
+  <p class="sign">white beard + black belt</p><p class="use">Dùng khi: teaching, prompts, wisdom</p></div>
+  <template><img src="img/sensei-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> white gi + black belt · long white beard · bamboo staff</p></template>
+</button><button class="card" data-cat="meme" data-id="this-is-fine">
+  <img src="img/this-is-fine.jpg" alt="This is fine" loading="lazy">
+  <div class="meta"><b>This is fine</b><code>this-is-fine</code>
+  <p class="sign">calm Clawd + mug inside a room on fire (set prop)</p><p class="use">Dùng khi: denial while prod burns</p><span class="risk">meme nod</span></div>
+  <template><img src="img/this-is-fine-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> none · tiny bowler hat · coffee mug</p></template>
+</button><button class="card" data-cat="meme" data-id="stonks">
+  <img src="img/stonks.jpg" alt="Stonks" loading="lazy">
+  <div class="meta"><b>Stonks</b><code>stonks</code>
+  <p class="sign">big orange arrow going up behind him</p><p class="use">Dùng khi: fake growth, metrics</p><span class="risk">meme nod</span></div>
+  <template><img src="img/stonks-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> suit #1F2430</p></template>
+</button><button class="card" data-cat="meme" data-id="gigachad">
+  <img src="img/gigachad.jpg" alt="Gigachad" loading="lazy">
+  <div class="meta"><b>Gigachad</b><code>gigachad</code>
+  <p class="sign">black-and-white grade + chin, slow turn</p><p class="use">Dùng khi: Clawd too cool</p><span class="risk">meme nod</span></div>
+  <template><img src="img/gigachad-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> none · square chin plate</p></template>
+</button><button class="card" data-cat="meme" data-id="npc">
+  <img src="img/npc.jpg" alt="NPC" loading="lazy">
+  <div class="meta"><b>NPC</b><code>npc</code>
+  <p class="sign">grey tint body + same line on repeat</p><p class="use">Dùng khi: repetitive AI answers</p></div>
+  <template><img src="img/npc-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> grey tee</p></template>
+</button><button class="card" data-cat="meme" data-id="galaxy-brain">
+  <img src="img/galaxy-brain.jpg" alt="Galaxy brain" loading="lazy">
+  <div class="meta"><b>Galaxy brain</b><code>galaxy-brain</code>
+  <p class="sign">glowing purple brain on top</p><p class="use">Dùng khi: overthinking, &quot;think harder&quot;</p><span class="risk">meme nod</span></div>
+  <template><img src="img/galaxy-brain-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> none · glowing brain dome</p></template>
+</button><button class="card" data-cat="meme" data-id="sigma">
+  <img src="img/sigma.jpg" alt="Sigma" loading="lazy">
+  <div class="meta"><b>Sigma</b><code>sigma</code>
+  <p class="sign">long coat + shades, walks away</p><p class="use">Dùng khi: lone builder, no-reply</p><span class="risk">meme nod</span></div>
+  <template><img src="img/sigma-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> long black coat · black sunglasses</p></template>
+</button><button class="card" data-cat="shark" data-id="shark">
+  <img src="img/shark.jpg" alt="Shark" loading="lazy">
+  <div class="meta"><b>Shark</b><code>shark</code>
+  <p class="sign">suit + fin on the back + leather chair</p><p class="use">Dùng khi: pitch, valuation</p><span class="risk">show nod</span></div>
+  <template><img src="img/shark-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> suit #1F2430 · shark fin</p></template>
+</button><button class="card" data-cat="shark" data-id="mr-wonderful">
+  <img src="img/mr-wonderful.jpg" alt="Mr. Wonderful (nod)" loading="lazy">
+  <div class="meta"><b>Mr. Wonderful (nod)</b><code>mr-wonderful</code>
+  <p class="sign">bald + black frames + coin</p><p class="use">Dùng khi: &quot;you&#x27;re dead to me&quot;, royalties</p><span class="risk">real person: nod only</span></div>
+  <template><img src="img/mr-wonderful-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> dark suit + pocket square · bald cap · black frames · gold coin</p></template>
+</button><button class="card" data-cat="shark" data-id="barbara">
+  <img src="img/barbara.jpg" alt="Barbara Corcoran (nod)" loading="lazy">
+  <div class="meta"><b>Barbara Corcoran (nod)</b><code>barbara</code>
+  <p class="sign">blonde bob + pearls</p><p class="use">Dùng khi: gut-feel investor</p><span class="risk">real person: nod only</span></div>
+  <template><img src="img/barbara-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> red jacket · blonde bob</p></template>
+</button><button class="card" data-cat="shark" data-id="cuban">
+  <img src="img/cuban.jpg" alt="Mark Cuban (nod)" loading="lazy">
+  <div class="meta"><b>Mark Cuban (nod)</b><code>cuban</code>
+  <p class="sign">blue jersey + basketball</p><p class="use">Dùng khi: tech investor, &quot;sales cure all&quot;</p><span class="risk">real person: nod only</span></div>
+  <template><img src="img/cuban-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> sports jersey #1F5FA8 · dark short hair</p></template>
+</button><button class="card" data-cat="shark" data-id="lori">
+  <img src="img/lori.jpg" alt="Lori Greiner (nod)" loading="lazy">
+  <div class="meta"><b>Lori Greiner (nod)</b><code>lori</code>
+  <p class="sign">product box + &quot;hero or zero&quot;</p><p class="use">Dùng khi: consumer product pitch</p><span class="risk">real person: nod only</span></div>
+  <template><img src="img/lori-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> bright dress #2F9E8F · long brown hair · product box</p></template>
+</button><button class="card" data-cat="shark" data-id="daymond">
+  <img src="img/daymond.jpg" alt="Daymond John (nod)" loading="lazy">
+  <div class="meta"><b>Daymond John (nod)</b><code>daymond</code>
+  <p class="sign">cap + streetwear</p><p class="use">Dùng khi: brand, licensing</p><span class="risk">real person: nod only</span></div>
+  <template><img src="img/daymond-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> streetwear jacket · cap · goatee</p></template>
+</button><button class="card" data-cat="shark" data-id="herjavec">
+  <img src="img/herjavec.jpg" alt="Robert Herjavec (nod)" loading="lazy">
+  <div class="meta"><b>Robert Herjavec (nod)</b><code>herjavec</code>
+  <p class="sign">grey suit + shield</p><p class="use">Dùng khi: security, API keys</p><span class="risk">real person: nod only</span></div>
+  <template><img src="img/herjavec-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> slim grey suit · slick dark hair · cybersecurity shield</p></template>
+</button><button class="card" data-cat="culture" data-id="ong-do">
+  <img src="img/ong-do.jpg" alt="Ông đồ Tết" loading="lazy">
+  <div class="meta"><b>Ông đồ Tết</b><code>ong-do</code>
+  <p class="sign">khăn xếp + calligraphy brush + red paper</p><p class="use">Dùng khi: Tết, new-year wishes</p></div>
+  <template><img src="img/ong-do-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> áo the #2B2B3A · khăn xếp · brush + red paper</p></template>
+</button><button class="card" data-cat="culture" data-id="ao-dai">
+  <img src="img/ao-dai.jpg" alt="Áo dài + nón lá" loading="lazy">
+  <div class="meta"><b>Áo dài + nón lá</b><code>ao-dai</code>
+  <p class="sign">conical hat + áo dài flaps</p><p class="use">Dùng khi: Vietnam, culture beats</p></div>
+  <template><img src="img/ao-dai-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> áo dài #C2382D · nón lá</p></template>
+</button><button class="card" data-cat="anime" data-id="goku-nod">
+  <img src="img/goku-nod.jpg" alt="Saiyan (Goku nod)" loading="lazy">
+  <div class="meta"><b>Saiyan (Goku nod)</b><code>goku-nod</code>
+  <p class="sign">spiky hair + orange gi</p><p class="use">Dùng khi: power-up, &quot;over 9000&quot;</p><span class="risk">IP: nod only</span></div>
+  <template><img src="img/goku-nod-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> orange gi + blue belt · spiky black hair</p></template>
+</button><button class="card" data-cat="anime" data-id="naruto-nod">
+  <img src="img/naruto-nod.jpg" alt="Ninja (Naruto nod)" loading="lazy">
+  <div class="meta"><b>Ninja (Naruto nod)</b><code>naruto-nod</code>
+  <p class="sign">forehead plate + spiky blond hair</p><p class="use">Dùng khi: never give up</p><span class="risk">IP: nod only</span></div>
+  <template><img src="img/naruto-nod-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> orange-black track jacket · metal-plate forehead band</p></template>
+</button><button class="card" data-cat="ninjago" data-id="nj-kai">
+  <img src="img/nj-kai.jpg" alt="Ninja of Fire (Kai)" loading="lazy">
+  <div class="meta"><b>Ninja of Fire (Kai)</b><code>nj-kai</code>
+  <p class="sign">red gi + flame emblem</p><p class="use">Dùng khi: Kai&#x27;s own role, fire, drive</p><span class="risk">IP: nod only</span></div>
+  <template><img src="img/nj-kai-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> ninja gi #C2382D · ninja hood · katana</p></template>
+</button><button class="card" data-cat="ninjago" data-id="nj-jay">
+  <img src="img/nj-jay.jpg" alt="Ninja of Lightning (Jay)" loading="lazy">
+  <div class="meta"><b>Ninja of Lightning (Jay)</b><code>nj-jay</code>
+  <p class="sign">blue gi + lightning bolt</p><p class="use">Dùng khi: fast, jokes</p><span class="risk">IP: nod only</span></div>
+  <template><img src="img/nj-jay-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> ninja gi #2F6FC2 · ninja hood · nunchucks</p></template>
+</button><button class="card" data-cat="ninjago" data-id="nj-cole">
+  <img src="img/nj-cole.jpg" alt="Ninja of Earth (Cole)" loading="lazy">
+  <div class="meta"><b>Ninja of Earth (Cole)</b><code>nj-cole</code>
+  <p class="sign">black gi + rock emblem</p><p class="use">Dùng khi: strong, steady</p><span class="risk">IP: nod only</span></div>
+  <template><img src="img/nj-cole-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> ninja gi #26262B · ninja hood · scythe</p></template>
+</button><button class="card" data-cat="ninjago" data-id="nj-zane">
+  <img src="img/nj-zane.jpg" alt="Ninja of Ice (Zane)" loading="lazy">
+  <div class="meta"><b>Ninja of Ice (Zane)</b><code>nj-zane</code>
+  <p class="sign">white gi + snowflake</p><p class="use">Dùng khi: robot logic, calm</p><span class="risk">IP: nod only</span></div>
+  <template><img src="img/nj-zane-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> ninja gi #EDEFF2 · ninja hood · shurikens</p></template>
+</button><button class="card" data-cat="ninjago" data-id="nj-lloyd">
+  <img src="img/nj-lloyd.jpg" alt="Green Ninja (Lloyd)" loading="lazy">
+  <div class="meta"><b>Green Ninja (Lloyd)</b><code>nj-lloyd</code>
+  <p class="sign">green gi + glow</p><p class="use">Dùng khi: the chosen one, leveling up</p><span class="risk">IP: nod only</span></div>
+  <template><img src="img/nj-lloyd-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> ninja gi #3E9B4F · ninja hood · glowing orb</p></template>
+</button><button class="card" data-cat="ninjago" data-id="nj-nya">
+  <img src="img/nj-nya.jpg" alt="Ninja of Water (Nya)" loading="lazy">
+  <div class="meta"><b>Ninja of Water (Nya)</b><code>nj-nya</code>
+  <p class="sign">teal gi + wave emblem</p><p class="use">Dùng khi: flow, adapt</p><span class="risk">IP: nod only</span></div>
+  <template><img src="img/nj-nya-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> ninja gi #1F7F8C · ninja hood · spear</p></template>
+</button><button class="card" data-cat="ninjago" data-id="nj-wu">
+  <img src="img/nj-wu.jpg" alt="Master Wu" loading="lazy">
+  <div class="meta"><b>Master Wu</b><code>nj-wu</code>
+  <p class="sign">straw hat + beard + tea</p><p class="use">Dùng khi: the wise mentor</p><span class="risk">IP: nod only</span></div>
+  <template><img src="img/nj-wu-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> white robe · wide straw hat · long white beard · bamboo staff + tea cup</p></template>
+</button><button class="card" data-cat="ninjago" data-id="nj-garmadon">
+  <img src="img/nj-garmadon.jpg" alt="Garmadon" loading="lazy">
+  <div class="meta"><b>Garmadon</b><code>nj-garmadon</code>
+  <p class="sign">horned helmet + black armour</p><p class="use">Dùng khi: the villain, dark mode</p><span class="risk">IP: nod only; red eyes replace slots only in this role</span></div>
+  <template><img src="img/nj-garmadon-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> dark armour #2A1E2E · horned helmet · glowing red eyes · cape</p></template>
+</button><button class="card" data-cat="creator" data-id="hormozi">
+  <img src="img/hormozi.jpg" alt="Alex Hormozi (nod)" loading="lazy">
+  <div class="meta"><b>Alex Hormozi (nod)</b><code>hormozi</code>
+  <p class="sign">black tee + beard + whiteboard</p><p class="use">Dùng khi: offers, $100M lines</p><span class="risk">real person: nod only</span></div>
+  <template><img src="img/hormozi-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> black tee, tight sleeves · bald cap · dark beard · whiteboard marker</p></template>
+</button><button class="card" data-cat="creator" data-id="nate-herk">
+  <img src="img/nate-herk.jpg" alt="Nate Herk (nod)" loading="lazy">
+  <div class="meta"><b>Nate Herk (nod)</b><code>nate-herk</code>
+  <p class="sign">automation nodes floating</p><p class="use">Dùng khi: n8n, automations</p><span class="risk">real person: nod only</span></div>
+  <template><img src="img/nate-herk-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> casual tee · cap · workflow node</p></template>
+</button><button class="card" data-cat="creator" data-id="nick-saraev">
+  <img src="img/nick-saraev.jpg" alt="Nick Saraev (nod)" loading="lazy">
+  <div class="meta"><b>Nick Saraev (nod)</b><code>nick-saraev</code>
+  <p class="sign">clean desk + &quot;Maker School&quot; style chalk sign (no logo)</p><p class="use">Dùng khi: agency, AI income</p><span class="risk">real person: nod only</span></div>
+  <template><img src="img/nick-saraev-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> plain dark tee · short hair</p></template>
+</button><button class="card" data-cat="creator" data-id="mrbeast">
+  <img src="img/mrbeast.jpg" alt="MrBeast (nod)" loading="lazy">
+  <div class="meta"><b>MrBeast (nod)</b><code>mrbeast</code>
+  <p class="sign">blue hoodie + giant cheque</p><p class="use">Dùng khi: giveaways, &quot;last to leave&quot;</p><span class="risk">real person: nod only</span></div>
+  <template><img src="img/mrbeast-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> blue hoodie · dark hair · giant cheque</p></template>
+</button><button class="card" data-cat="tech" data-id="jensen">
+  <img src="img/jensen.jpg" alt="Jensen Huang (nod)" loading="lazy">
+  <div class="meta"><b>Jensen Huang (nod)</b><code>jensen</code>
+  <p class="sign">black leather jacket + GPU chip</p><p class="use">Dùng khi: GPUs, compute, keynote</p><span class="risk">real person: nod only</span></div>
+  <template><img src="img/jensen-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> black leather jacket · grey-black short hair · GPU chip</p></template>
+</button><button class="card" data-cat="tech" data-id="jobs">
+  <img src="img/jobs.jpg" alt="Steve Jobs (nod)" loading="lazy">
+  <div class="meta"><b>Steve Jobs (nod)</b><code>jobs</code>
+  <p class="sign">black turtleneck + round glasses</p><p class="use">Dùng khi: keynote, &#x27;one more thing&#x27;</p><span class="risk">real person: nod only</span></div>
+  <template><img src="img/jobs-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> black turtleneck · round rimless glasses · small phone</p></template>
+</button><button class="card" data-cat="tech" data-id="zuck">
+  <img src="img/zuck.jpg" alt="Mark Zuckerberg (nod)" loading="lazy">
+  <div class="meta"><b>Mark Zuckerberg (nod)</b><code>zuck</code>
+  <p class="sign">plain grey tee + VR headset pushed up</p><p class="use">Dùng khi: metaverse, open models</p><span class="risk">real person: nod only</span></div>
+  <template><img src="img/zuck-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> plain grey tee · short curly hair</p></template>
+</button><button class="card" data-cat="tech" data-id="altman">
+  <img src="img/altman.jpg" alt="Sam Altman (nod)" loading="lazy">
+  <div class="meta"><b>Sam Altman (nod)</b><code>altman</code>
+  <p class="sign">plain sweater + calm pose</p><p class="use">Dùng khi: AGI, model launches</p><span class="risk">real person: nod only</span></div>
+  <template><img src="img/altman-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> dark green sweater · short hair</p></template>
+</button><button class="card" data-cat="tech" data-id="musk">
+  <img src="img/musk.jpg" alt="Elon Musk (nod)" loading="lazy">
+  <div class="meta"><b>Elon Musk (nod)</b><code>musk</code>
+  <p class="sign">black tee + tiny rocket</p><p class="use">Dùng khi: rockets, X, bold promises</p><span class="risk">real person: nod only</span></div>
+  <template><img src="img/musk-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> black tee · tiny rocket</p></template>
+</button><button class="card" data-cat="tech" data-id="gates">
+  <img src="img/gates.jpg" alt="Bill Gates (nod)" loading="lazy">
+  <div class="meta"><b>Bill Gates (nod)</b><code>gates</code>
+  <p class="sign">sweater + square glasses</p><p class="use">Dùng khi: old-school software, philanthropy</p><span class="risk">real person: nod only</span></div>
+  <template><img src="img/gates-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> V-neck sweater over collared shirt · side-parted hair · square glasses</p></template>
+</button><button class="card" data-cat="internet" data-id="streamer">
+  <img src="img/streamer.jpg" alt="Streamer" loading="lazy">
+  <div class="meta"><b>Streamer</b><code>streamer</code>
+  <p class="sign">glowing RGB headset + mic boom</p><p class="use">Dùng khi: live coding, chat reacts</p></div>
+  <template><img src="img/streamer-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> gaming hoodie · RGB headset with mic · controller</p></template>
+</button><button class="card" data-cat="internet" data-id="youtuber">
+  <img src="img/youtuber.jpg" alt="YouTuber" loading="lazy">
+  <div class="meta"><b>YouTuber</b><code>youtuber</code>
+  <p class="sign">ring light + shocked thumbnail pose</p><p class="use">Dùng khi: thumbnails, clickbait</p></div>
+  <template><img src="img/youtuber-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> casual tee · ring light (set)</p></template>
+</button><button class="card" data-cat="internet" data-id="podcaster">
+  <img src="img/podcaster.jpg" alt="Podcaster" loading="lazy">
+  <div class="meta"><b>Podcaster</b><code>podcaster</code>
+  <p class="sign">big studio mic + headphones</p><p class="use">Dùng khi: long talks, hot takes</p></div>
+  <template><img src="img/podcaster-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> flannel shirt · over-ear headphones · big studio mic on arm (set)</p></template>
+</button><button class="card" data-cat="internet" data-id="crypto-bro">
+  <img src="img/crypto-bro.jpg" alt="Crypto bro" loading="lazy">
+  <div class="meta"><b>Crypto bro</b><code>crypto-bro</code>
+  <p class="sign">laser-red glowing eyes + green chart</p><p class="use">Dùng khi: hype, &#x27;to the moon&#x27;</p><span class="risk">eyes recoloured, never covered</span></div>
+  <template><img src="img/crypto-bro-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> puffer vest · laser eyes (eye glow only) · phone with green candle</p></template>
+</button><button class="card" data-cat="internet" data-id="influencer">
+  <img src="img/influencer.jpg" alt="Influencer" loading="lazy">
+  <div class="meta"><b>Influencer</b><code>influencer</code>
+  <p class="sign">selfie stick + phone</p><p class="use">Dùng khi: flexing, &#x27;link in bio&#x27;</p></div>
+  <template><img src="img/influencer-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> trendy jacket · sunglasses pushed up on head · phone on selfie stick</p></template>
+</button><button class="card" data-cat="halloween" data-id="ghost">
+  <img src="img/ghost.jpg" alt="Ghost" loading="lazy">
+  <div class="meta"><b>Ghost</b><code>ghost</code>
+  <p class="sign">white sheet with two eye holes</p><p class="use">Dùng khi: haunted bug, legacy code</p></div>
+  <template><img src="img/ghost-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> white sheet over the body (eye holes over the slots)</p></template>
+</button><button class="card" data-cat="halloween" data-id="pumpkin">
+  <img src="img/pumpkin.jpg" alt="Pumpkin head" loading="lazy">
+  <div class="meta"><b>Pumpkin head</b><code>pumpkin</code>
+  <p class="sign">pumpkin on top + black cape</p><p class="use">Dùng khi: Halloween, spooky deploy</p></div>
+  <template><img src="img/pumpkin-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> black cape · carved pumpkin hat on top</p></template>
+</button><button class="card" data-cat="halloween" data-id="vampire">
+  <img src="img/vampire.jpg" alt="Vampire" loading="lazy">
+  <div class="meta"><b>Vampire</b><code>vampire</code>
+  <p class="sign">high-collar cape, red lining</p><p class="use">Dùng khi: drains tokens, night coding</p></div>
+  <template><img src="img/vampire-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> black cape with red lining, high collar · slicked hair</p></template>
+</button><button class="card" data-cat="halloween" data-id="mummy">
+  <img src="img/mummy.jpg" alt="Mummy" loading="lazy">
+  <div class="meta"><b>Mummy</b><code>mummy</code>
+  <p class="sign">bandage wraps, eyes peek through</p><p class="use">Dùng khi: ancient legacy codebase</p></div>
+  <template><img src="img/mummy-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> bandage strips wrapped round the body</p></template>
+</button><button class="card" data-cat="halloween" data-id="witch">
+  <img src="img/witch.jpg" alt="Witch" loading="lazy">
+  <div class="meta"><b>Witch</b><code>witch</code>
+  <p class="sign">pointed hat + broom</p><p class="use">Dùng khi: magic prompts, spells</p></div>
+  <template><img src="img/witch-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> purple robe · tall pointed hat · broom</p></template>
+</button><button class="card" data-cat="holiday" data-id="santa">
+  <img src="img/santa.jpg" alt="Santa" loading="lazy">
+  <div class="meta"><b>Santa</b><code>santa</code>
+  <p class="sign">red coat + white trim + sack</p><p class="use">Dùng khi: December, gifts, launches</p></div>
+  <template><img src="img/santa-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> red coat with white trim + black belt · red hat with white pom · gift sack</p></template>
+</button><button class="card" data-cat="holiday" data-id="mua-lan">
+  <img src="img/mua-lan.jpg" alt="Múa lân" loading="lazy">
+  <div class="meta"><b>Múa lân</b><code>mua-lan</code>
+  <p class="sign">big lion-dance head on top</p><p class="use">Dùng khi: Tết, celebration</p></div>
+  <template><img src="img/mua-lan-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> lion-dance head (red-gold) on top</p></template>
+</button><button class="card" data-cat="holiday" data-id="trung-thu">
+  <img src="img/trung-thu.jpg" alt="Trung thu" loading="lazy">
+  <div class="meta"><b>Trung thu</b><code>trung-thu</code>
+  <p class="sign">red star lantern</p><p class="use">Dùng khi: Mid-autumn, kids, nostalgia</p></div>
+  <template><img src="img/trung-thu-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> áo bà ba · star lantern (đèn ông sao)</p></template>
+</button><button class="card" data-cat="holiday" data-id="cupid">
+  <img src="img/cupid.jpg" alt="Cupid" loading="lazy">
+  <div class="meta"><b>Cupid</b><code>cupid</code>
+  <p class="sign">wings + bow with heart arrow</p><p class="use">Dùng khi: Valentine, &#x27;I love this model&#x27;</p></div>
+  <template><img src="img/cupid-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> small halo · bow + heart arrow · small white wings</p></template>
+</button><button class="card" data-cat="holiday" data-id="astronaut">
+  <img src="img/astronaut.jpg" alt="Astronaut" loading="lazy">
+  <div class="meta"><b>Astronaut</b><code>astronaut</code>
+  <p class="sign">white suit + helmet ring + flag</p><p class="use">Dùng khi: the $1M ship to Mars</p></div>
+  <template><img src="img/astronaut-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> white space suit · helmet ring (no visor over eyes) · small backpack</p></template>
+</button><button class="card" data-cat="holiday" data-id="cowboy">
+  <img src="img/cowboy.jpg" alt="Cowboy" loading="lazy">
+  <div class="meta"><b>Cowboy</b><code>cowboy</code>
+  <p class="sign">cowboy hat + lasso</p><p class="use">Dùng khi: wild west deploy, YOLO</p></div>
+  <template><img src="img/cowboy-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> vest + bandana · cowboy hat · lasso</p></template>
+</button><button class="card" data-cat="holiday" data-id="caveman">
+  <img src="img/caveman.jpg" alt="Caveman" loading="lazy">
+  <div class="meta"><b>Caveman</b><code>caveman</code>
+  <p class="sign">pelt + club</p><p class="use">Dùng khi: before AI, old ways</p></div>
+  <template><img src="img/caveman-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> leopard-print pelt · wooden club</p></template>
+</button><button class="card" data-cat="game" data-id="plumber-nod">
+  <img src="img/plumber-nod.jpg" alt="Plumber (Mario nod)" loading="lazy">
+  <div class="meta"><b>Plumber (Mario nod)</b><code>plumber-nod</code>
+  <p class="sign">red cap + blue overalls</p><p class="use">Dùng khi: fixing pipes = pipelines</p><span class="risk">IP: nod only, no letter on cap</span></div>
+  <template><img src="img/plumber-nod-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> blue overalls over red shirt · red cap · big moustache below the eyes, light brown</p></template>
+</button><button class="card" data-cat="game" data-id="miner-nod">
+  <img src="img/miner-nod.jpg" alt="Blocky miner (Minecraft nod)" loading="lazy">
+  <div class="meta"><b>Blocky miner (Minecraft nod)</b><code>miner-nod</code>
+  <p class="sign">cyan tee + pixel pickaxe</p><p class="use">Dùng khi: building, mining, grind</p><span class="risk">IP: nod only</span></div>
+  <template><img src="img/miner-nod-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> cyan tee + blue pants band · pixel pickaxe</p></template>
+</button><button class="card" data-cat="game" data-id="tunic-nod">
+  <img src="img/tunic-nod.jpg" alt="Green tunic hero (Zelda nod)" loading="lazy">
+  <div class="meta"><b>Green tunic hero (Zelda nod)</b><code>tunic-nod</code>
+  <p class="sign">green floppy cap + shield</p><p class="use">Dùng khi: quest, legendary bug</p><span class="risk">IP: nod only</span></div>
+  <template><img src="img/tunic-nod-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> green tunic + brown belt · long green cap · sword + round shield</p></template>
+</button><button class="card" data-cat="game" data-id="crewmate-nod">
+  <img src="img/crewmate-nod.jpg" alt="Crewmate (Among Us nod)" loading="lazy">
+  <div class="meta"><b>Crewmate (Among Us nod)</b><code>crewmate-nod</code>
+  <p class="sign">visor band + backpack</p><p class="use">Dùng khi: sus, impostor bug</p><span class="risk">IP: nod only, eyes stay visible</span></div>
+  <template><img src="img/crewmate-nod-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> space suit body colour · glass visor band ABOVE the eyes · small backpack</p></template>
+</button><button class="card" data-cat="game" data-id="trainer-nod">
+  <img src="img/trainer-nod.jpg" alt="Monster trainer (Pokémon nod)" loading="lazy">
+  <div class="meta"><b>Monster trainer (Pokémon nod)</b><code>trainer-nod</code>
+  <p class="sign">cap + red-white ball</p><p class="use">Dùng khi: &#x27;gotta catch em all&#x27; models</p><span class="risk">IP: nod only</span></div>
+  <template><img src="img/trainer-nod-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> blue vest over tee · red-white cap · red-white ball</p></template>
+</button><button class="card" data-cat="game" data-id="pacman-nod">
+  <img src="img/pacman-nod.jpg" alt="Pac chaser (Pac-Man nod)" loading="lazy">
+  <div class="meta"><b>Pac chaser (Pac-Man nod)</b><code>pacman-nod</code>
+  <p class="sign">pellet trail + maze dots</p><p class="use">Dùng khi: eating tokens, context</p><span class="risk">IP: nod only</span></div>
+  <template><img src="img/pacman-nod-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> yellow pellets trail (set)</p></template>
+</button><button class="card" data-cat="sport" data-id="siuu-nod">
+  <img src="img/siuu-nod.jpg" alt="Footballer (SIUU nod)" loading="lazy">
+  <div class="meta"><b>Footballer (SIUU nod)</b><code>siuu-nod</code>
+  <p class="sign">red kit #7 + celebration jump</p><p class="use">Dùng khi: celebrating a fix</p><span class="risk">real person: nod only, no club logo</span></div>
+  <template><img src="img/siuu-nod-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> red football kit no.7 · football</p></template>
+</button><button class="card" data-cat="sport" data-id="boxer">
+  <img src="img/boxer.jpg" alt="Boxer" loading="lazy">
+  <div class="meta"><b>Boxer</b><code>boxer</code>
+  <p class="sign">red gloves + robe</p><p class="use">Dùng khi: fight with the bug, round 2</p></div>
+  <template><img src="img/boxer-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> boxing shorts + robe · red gloves</p></template>
+</button><button class="card" data-cat="sport" data-id="referee">
+  <img src="img/referee.jpg" alt="Referee" loading="lazy">
+  <div class="meta"><b>Referee</b><code>referee</code>
+  <p class="sign">stripes + red card</p><p class="use">Dùng khi: code review, rejecting PRs</p></div>
+  <template><img src="img/referee-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> black-white striped shirt · red card + whistle</p></template>
+</button><button class="card" data-cat="sport" data-id="f1">
+  <img src="img/f1.jpg" alt="F1 driver" loading="lazy">
+  <div class="meta"><b>F1 driver</b><code>f1</code>
+  <p class="sign">race suit + helmet in hand</p><p class="use">Dùng khi: speed, fast models</p></div>
+  <template><img src="img/f1-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> race suit · racing helmet held</p></template>
+</button><button class="card" data-cat="sport" data-id="gym-bro">
+  <img src="img/gym-bro.jpg" alt="Gym bro" loading="lazy">
+  <div class="meta"><b>Gym bro</b><code>gym-bro</code>
+  <p class="sign">tank top + dumbbell</p><p class="use">Dùng khi: grind, discipline</p></div>
+  <template><img src="img/gym-bro-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> tank top · sweatband · dumbbell</p></template>
+</button><button class="card" data-cat="movie" data-id="terminator-nod">
+  <img src="img/terminator-nod.jpg" alt="Cyborg (Terminator nod)" loading="lazy">
+  <div class="meta"><b>Cyborg (Terminator nod)</b><code>terminator-nod</code>
+  <p class="sign">leather jacket + one red eye</p><p class="use">Dùng khi: AI takes over, &#x27;I&#x27;ll be back&#x27;</p><span class="risk">IP: nod only</span></div>
+  <template><img src="img/terminator-nod-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> black leather jacket · one eye glowing red</p></template>
+</button><button class="card" data-cat="movie" data-id="iron-nod">
+  <img src="img/iron-nod.jpg" alt="Armour hero (Iron Man nod)" loading="lazy">
+  <div class="meta"><b>Armour hero (Iron Man nod)</b><code>iron-nod</code>
+  <p class="sign">red-gold armour + chest light</p><p class="use">Dùng khi: genius builder, suits up</p><span class="risk">IP: nod only</span></div>
+  <template><img src="img/iron-nod-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> red-gold armour plates · glowing chest disc</p></template>
+</button><button class="card" data-cat="movie" data-id="matrix-nod">
+  <img src="img/matrix-nod.jpg" alt="Hacker (Matrix nod)" loading="lazy">
+  <div class="meta"><b>Hacker (Matrix nod)</b><code>matrix-nod</code>
+  <p class="sign">black coat + green code rain</p><p class="use">Dùng khi: red pill, simulation</p><span class="risk">IP: nod only</span></div>
+  <template><img src="img/matrix-nod-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> long black coat · tiny shades ABOVE the eyes · green code rain (set)</p></template>
+</button><button class="card" data-cat="movie" data-id="jedi-nod">
+  <img src="img/jedi-nod.jpg" alt="Space knight (Jedi nod)" loading="lazy">
+  <div class="meta"><b>Space knight (Jedi nod)</b><code>jedi-nod</code>
+  <p class="sign">robe + glowing sword</p><p class="use">Dùng khi: mentor, &#x27;use the docs&#x27;</p><span class="risk">IP: nod only</span></div>
+  <template><img src="img/jedi-nod-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> brown robe + belt · hood down · glowing laser sword</p></template>
+</button><button class="card" data-cat="movie" data-id="bond-nod">
+  <img src="img/bond-nod.jpg" alt="Spy (Bond nod)" loading="lazy">
+  <div class="meta"><b>Spy (Bond nod)</b><code>bond-nod</code>
+  <p class="sign">tux + bow tie</p><p class="use">Dùng khi: stealth, secret features</p><span class="risk">IP: nod only</span></div>
+  <template><img src="img/bond-nod-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> black tuxedo + bow tie · small gadget</p></template>
+</button><button class="card" data-cat="movie" data-id="pirate">
+  <img src="img/pirate.jpg" alt="Pirate" loading="lazy">
+  <div class="meta"><b>Pirate</b><code>pirate</code>
+  <p class="sign">tricorn + cutlass</p><p class="use">Dùng khi: stealing code, open source</p></div>
+  <template><img src="img/pirate-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> red coat + sash · tricorn hat · hook or cutlass</p></template>
+</button><button class="card" data-cat="history" data-id="knight">
+  <img src="img/knight.jpg" alt="Knight" loading="lazy">
+  <div class="meta"><b>Knight</b><code>knight</code>
+  <p class="sign">armour + shield</p><p class="use">Dùng khi: defending prod</p></div>
+  <template><img src="img/knight-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> silver plate armour · helmet with open visor · sword + shield</p></template>
+</button><button class="card" data-cat="history" data-id="samurai">
+  <img src="img/samurai.jpg" alt="Samurai" loading="lazy">
+  <div class="meta"><b>Samurai</b><code>samurai</code>
+  <p class="sign">kimono + topknot + katana</p><p class="use">Dùng khi: discipline, one clean cut</p></div>
+  <template><img src="img/samurai-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> dark kimono + armour plates · topknot · katana at the waist</p></template>
+</button><button class="card" data-cat="history" data-id="pharaoh">
+  <img src="img/pharaoh.jpg" alt="Pharaoh" loading="lazy">
+  <div class="meta"><b>Pharaoh</b><code>pharaoh</code>
+  <p class="sign">striped headdress + gold collar</p><p class="use">Dùng khi: ancient monolith code</p></div>
+  <template><img src="img/pharaoh-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> white-gold collar · striped nemes headdress · crook</p></template>
+</button><button class="card" data-cat="history" data-id="viking">
+  <img src="img/viking.jpg" alt="Viking" loading="lazy">
+  <div class="meta"><b>Viking</b><code>viking</code>
+  <p class="sign">horned helmet + fur</p><p class="use">Dùng khi: raiding competitors</p></div>
+  <template><img src="img/viking-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> fur vest · horned helmet · axe</p></template>
+</button><button class="card" data-cat="history" data-id="king">
+  <img src="img/king.jpg" alt="King" loading="lazy">
+  <div class="meta"><b>King</b><code>king</code>
+  <p class="sign">crown + royal robe</p><p class="use">Dùng khi: winning, top model</p></div>
+  <template><img src="img/king-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> red royal robe with white fur trim · gold crown · sceptre</p></template>
+</button><button class="card" data-cat="office" data-id="pm">
+  <img src="img/pm.jpg" alt="Product Manager" loading="lazy">
+  <div class="meta"><b>Product Manager</b><code>pm</code>
+  <p class="sign">roadmap board with timeline bars + lanyard</p><p class="use">Dùng khi: priorities, scope creep (Kai&#x27;s own job)</p></div>
+  <template><img src="img/pm-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> quarter-zip + lanyard · roadmap board</p></template>
+</button><button class="card" data-cat="office" data-id="hr">
+  <img src="img/hr.jpg" alt="HR" loading="lazy">
+  <div class="meta"><b>HR</b><code>hr</code>
+  <p class="sign">cardigan + clipboard</p><p class="use">Dùng khi: hiring, &#x27;culture fit&#x27;</p></div>
+  <template><img src="img/hr-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> cardigan · clipboard</p></template>
+</button><button class="card" data-cat="office" data-id="sales">
+  <img src="img/sales.jpg" alt="Sales" loading="lazy">
+  <div class="meta"><b>Sales</b><code>sales</code>
+  <p class="sign">blue suit + headset</p><p class="use">Dùng khi: closing deals</p></div>
+  <template><img src="img/sales-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> sharp blue suit · slick hair · phone headset</p></template>
+</button><button class="card" data-cat="office" data-id="marketing">
+  <img src="img/marketing.jpg" alt="Marketing" loading="lazy">
+  <div class="meta"><b>Marketing</b><code>marketing</code>
+  <p class="sign">colourful blazer + megaphone</p><p class="use">Dùng khi: hype, launches</p></div>
+  <template><img src="img/marketing-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> colourful blazer · megaphone</p></template>
+</button><button class="card" data-cat="office" data-id="data-scientist">
+  <img src="img/data-scientist.jpg" alt="Data scientist" loading="lazy">
+  <div class="meta"><b>Data scientist</b><code>data-scientist</code>
+  <p class="sign">lab coat + chart</p><p class="use">Dùng khi: dashboards, numbers</p></div>
+  <template><img src="img/data-scientist-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> lab coat · bar chart</p></template>
+</button><button class="card" data-cat="office" data-id="designer">
+  <img src="img/designer.jpg" alt="Designer" loading="lazy">
+  <div class="meta"><b>Designer</b><code>designer</code>
+  <p class="sign">red beret + striped top</p><p class="use">Dùng khi: &#x27;make it pop&#x27;, UI</p></div>
+  <template><img src="img/designer-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> striped top · red beret · pencil</p></template>
+</button><button class="card" data-cat="office" data-id="support">
+  <img src="img/support.jpg" alt="Support agent" loading="lazy">
+  <div class="meta"><b>Support agent</b><code>support</code>
+  <p class="sign">headset + polo</p><p class="use">Dùng khi: tickets, angry users</p></div>
+  <template><img src="img/support-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> polo · headset with mic</p></template>
+</button><button class="card" data-cat="office" data-id="scrum-master">
+  <img src="img/scrum-master.jpg" alt="Scrum master" loading="lazy">
+  <div class="meta"><b>Scrum master</b><code>scrum-master</code>
+  <p class="sign">kanban board (3 columns of sticky notes)</p><p class="use">Dùng khi: standups, sprints</p></div>
+  <template><img src="img/scrum-master-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> purple hoodie · kanban board</p></template>
+</button><button class="card" data-cat="office" data-id="vc">
+  <img src="img/vc.jpg" alt="VC investor" loading="lazy">
+  <div class="meta"><b>VC investor</b><code>vc</code>
+  <p class="sign">fleece vest + cheque book</p><p class="use">Dùng khi: funding, valuation</p></div>
+  <template><img src="img/vc-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> fleece vest over shirt · cheque book</p></template>
+</button><button class="card" data-cat="life" data-id="xe-om">
+  <img src="img/xe-om.jpg" alt="Tài xế xe ôm" loading="lazy">
+  <div class="meta"><b>Tài xế xe ôm</b><code>xe-om</code>
+  <p class="sign">green helmet + jacket</p><p class="use">Dùng khi: rides, delivery of features</p><span class="risk">no Grab/Be logo</span></div>
+  <template><img src="img/xe-om-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> green jacket (no brand) · green helmet</p></template>
+</button><button class="card" data-cat="life" data-id="shipper">
+  <img src="img/shipper.jpg" alt="Shipper" loading="lazy">
+  <div class="meta"><b>Shipper</b><code>shipper</code>
+  <p class="sign">delivery box on back</p><p class="use">Dùng khi: shipping fast</p></div>
+  <template><img src="img/shipper-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> orange jacket · cap · parcel box · delivery box on back</p></template>
+</button><button class="card" data-cat="life" data-id="bao-ve">
+  <img src="img/bao-ve.jpg" alt="Chú bảo vệ" loading="lazy">
+  <div class="meta"><b>Chú bảo vệ</b><code>bao-ve</code>
+  <p class="sign">guard cap + uniform</p><p class="use">Dùng khi: security, guarding keys</p></div>
+  <template><img src="img/bao-ve-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> blue guard uniform · guard cap · baton</p></template>
+</button><button class="card" data-cat="life" data-id="co-giao">
+  <img src="img/co-giao.jpg" alt="Cô giáo" loading="lazy">
+  <div class="meta"><b>Cô giáo</b><code>co-giao</code>
+  <p class="sign">white áo dài + pointer</p><p class="use">Dùng khi: teaching, explaining</p></div>
+  <template><img src="img/co-giao-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> áo dài trắng · book + pointer</p></template>
+</button><button class="card" data-cat="life" data-id="sinh-vien">
+  <img src="img/sinh-vien.jpg" alt="Học sinh" loading="lazy">
+  <div class="meta"><b>Học sinh</b><code>sinh-vien</code>
+  <p class="sign">white shirt + red scarf</p><p class="use">Dùng khi: learning, first project</p></div>
+  <template><img src="img/sinh-vien-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> white school shirt + red scarf · backpack</p></template>
+</button><button class="card" data-cat="life" data-id="tra-da">
+  <img src="img/tra-da.jpg" alt="Bà bán trà đá" loading="lazy">
+  <div class="meta"><b>Bà bán trà đá</b><code>tra-da</code>
+  <p class="sign">plastic stool + iced tea</p><p class="use">Dùng khi: street talk, gossip</p></div>
+  <template><img src="img/tra-da-turn.jpg" alt="8 góc"><p><b>Trang phục:</b> áo bà ba · nón lá · glass of iced tea · plastic stool (set)</p></template>
+</button></div>
+<dialog id="dlg"><div class="in"><button class="x" onclick="dlg.close()">Đóng</button><h2 id="dt"></h2><div id="db"></div></div></dialog>
+</main><script>
+const dlg=document.getElementById('dlg');
+document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{document.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===c));
+  const f=c.dataset.f;document.querySelectorAll('.card').forEach(k=>k.style.display=(f==='all'||k.dataset.cat===f)?'':'none');});
+document.querySelectorAll('.card').forEach(k=>k.onclick=()=>{document.getElementById('dt').textContent=k.querySelector('b').textContent;
+  document.getElementById('db').innerHTML=k.querySelector('template').innerHTML;dlg.showModal();});
+</script></body></html>
