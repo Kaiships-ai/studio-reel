@@ -6,6 +6,7 @@
 # (LICENSE and THIRD_PARTY_NOTICES.md are exempt, they carry the credits on purpose).
 
 [dev]
+.claude/CLAUDE.md
 .claude/skills/verify/
 .claude/worktrees/
 .github/
