@@ -80,8 +80,7 @@ only for what its fix lines say only they can do (on Linux, `pixi run studio lin
 - **Lock events to words**, not typed numbers: `vo('word')`, `voLine('l02')`, `cutAfter('l02')`, so a new voice keeps
   every hit on its word. After any script change run `make.mjs <film> vo` then `audio`.
 - **Safe zone:** anything that matters inside x 60–960, y 250–1300; captions take y 1320–1470.
-- **Never post or upload.** The channel's series cover (the 3D eye-layout cover) is made by the `ksa-reel-3d` skill;
-  this workflow makes the in-reel cover frame.
+- **Never post or upload.** This workflow makes the reel and its cover frame; posting is the user's call.
 
 ## When something fails
 

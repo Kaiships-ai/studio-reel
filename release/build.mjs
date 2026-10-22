@@ -67,7 +67,8 @@ export function check(tier, files, blob, m) {
     const t = blob(f).toString('utf8');
     for (const [p, re] of forbid) if (re.test(t)) errors.push(`${f}: contains forbidden "${p}"`);
     if (BUYER_DOC(f)) {
-      const cjk = (t.match(/\p{Script=Han}/gu) || []).length; if (cjk) errors.push(`${f}: ${cjk} Chinese characters in a buyer document`);
+      // Chinese is allowed only as a quoted term of art in inline code (`留白` = empty space), never as running text
+      const cjk = (t.replace(/`[^`\n]*`/g, '').match(/\p{Script=Han}/gu) || []).length; if (cjk) errors.push(`${f}: ${cjk} Chinese characters outside inline code in a buyer document`);
       for (const [, , s] of t.matchAll(SKILL_REF)) {
         if (skills.includes(s)) continue;
         if (tier === 'starter' && PRO_SKILLS.includes(s)) warns.push(`${f}: names /${s} (Pro only)`);
