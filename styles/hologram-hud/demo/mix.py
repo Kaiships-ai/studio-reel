@@ -1,7 +1,7 @@
 """mix.py — 《Volt · Spec Scan》界面音 + 机械拟音 + 环境底 + 人声 + 配乐闪避 → mix.wav
 材质：发光的线 = 干净的电子音（正弦 / FM，短、准、在 D 小调里）；机械部件 = 伺服、气压、油压、金属。
 两处静音：near（只剩房间嗡鸣）与 true（全部归零）。旁白期间音乐和环境底侧链压 6 dB。
-用法（仓库根）：.venv/bin/python styles/hologram-hud/demo/mix.py
+用法（仓库根）：pixi run python styles/hologram-hud/demo/mix.py
 """
 import os, sys, json, numpy as np, soundfile as sf
 from scipy.signal import resample_poly

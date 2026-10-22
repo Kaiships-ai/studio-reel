@@ -65,7 +65,7 @@ Ways we sketched to turn other topics into an errand (for reference only):
 ## Titles & end card
 
 - Title: a 1950s atomic-age TV title: chunky block letters (Bungee) in cream with a hard magenta offset shadow and thick ink outline, wrapped by a tilted cyan orbit ring with a coffee bean flying around it and a few twinkling four-point stars; popped in on 12 fps steps on the music downbeat.
-- End card: dark purple, a slow dimmed portal, title, style name in the terminal font, "LemoLab × Claude Opus 5.5", credits; a tiny post-credits gag in the portal. This sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card.
+- End card: dark purple, a slow dimmed portal, title, style name in the terminal font, "LemoLab × Claude Opus 5.5", credits; a tiny post-credits gag in the portal. This sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 ## Build notes
 

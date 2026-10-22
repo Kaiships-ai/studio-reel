@@ -1,5 +1,5 @@
 """混音：材质拟音（和纸 / 木 / 水 / 玻璃，全部合成）+ 旁白 + 原创配乐（对白处闪避）+ 各幅画的环境声 → mix.wav
-用法：.venv/bin/python styles/ukiyoe/demo/mix.py（先跑 core/render/events.mjs、tts、music/score.py）"""
+用法：pixi run python styles/ukiyoe/demo/mix.py（先跑 core/render/events.mjs、tts、music/score.py）"""
 import sys, os, json, numpy as np, soundfile as sf
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, '../../../core/audio'))

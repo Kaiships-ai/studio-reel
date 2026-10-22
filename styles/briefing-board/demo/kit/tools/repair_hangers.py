@@ -3,7 +3,7 @@
 just under the arch rib is continued straight down to the deck in its own colour, and stray soft
 fragments between the rib and the deck are removed.
 
-    python3 kit/tools/repair_hangers.py <id> --deck 0.615 --band 0.06 [--x0 0.16 --x1 0.92]
+    pixi run python kit/tools/repair_hangers.py <id> --deck 0.615 --band 0.06 [--x0 0.16 --x1 0.92]
 
 --deck: normalised y of the deck top; --band: how far under the rib (normalised) a hanger must be visible.
 """

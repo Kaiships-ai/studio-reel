@@ -3,7 +3,7 @@
 by colour, only above a hand-drawn line (the horizon / deck), so hills and water below are never
 keyed in. Output: a greyscale mask at the cropped size, for prep_object.py --mask-max.
 
-    python3 kit/tools/sky_key.py <raw> <out_mask.png> --crop x0,y0,x1,y1 --above "x,y x,y …" [--lo 18 --hi 55]
+    pixi run python kit/tools/sky_key.py <raw> <out_mask.png> --crop x0,y0,x1,y1 --above "x,y x,y …" [--lo 18 --hi 55]
 
 --above: a polyline in cropped pixels; only pixels above it are considered (the sky region).
 Thin dark parts are found with a black top-hat: the sky is estimated by a grey closing (which

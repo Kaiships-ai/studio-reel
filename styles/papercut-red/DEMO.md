@@ -85,7 +85,7 @@ Whisper hears "Nian" as "Nyan"/"Nion", the correct pronunciation of nián, so it
 
 ## End card
 
-Couplet strips slide in beside the window, a red banner with cream cut letters "RED PAPER-CUT" drops in above, gold-foil flecks, and the credit line "LemoLab × Claude Opus 5.5" below in ink. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card.
+Couplet strips slide in beside the window, a red banner with cream cut letters "RED PAPER-CUT" drops in above, gold-foil flecks, and the credit line "LemoLab × Claude Opus 5.5" below in ink. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 Title and subtitles as built: cut letters in Fraunces 800 on rice paper with sawtooth border strips, a red seal with the character 年 cut as a hole, an italic subline. Subtitle banner `#a8111f`, gold flecks, Fraunces SemiBold 44 px in cream `#fff1d6`, centred 70 px from the bottom, hold ≥ voice + 0.7 s and ≥ 1.8 s.
 
@@ -106,10 +106,10 @@ styles/papercut-red/demo/
 ```
 
 1. `node core/render/still.mjs styles/papercut-red/demo <t…> [--q nosub=1]`: review stills; `?test=sheet_girl` etc. for model sheets.
-2. `.venv/bin/python core/tts/tts.py lines.json voices` → `core/tts/asr_check.py` until all OK.
+2. `pixi run python core/tts/tts.py lines.json voices` → `core/tts/asr_check.py` until all OK.
 3. `node core/render/events.mjs` → `music/score.py` → `mix.py` → `subs.py`.
 4. `node core/render/video.mjs styles/papercut-red/demo --fps 24 --workers 3` (1176 frames, ~30 s).
-5. `sh core/render/mux.sh out/video24.mp4 mix.wav papercut-red.mp4 24 0`, then `check_final.py` (per-line whisper on the final mix + blackdetect).
+5. `node core/render/mux.mjs out/video24.mp4 mix.wav papercut-red.mp4 24 0`, then `check_final.py` (per-line whisper on the final mix + blackdetect).
 Or simply `sh styles/papercut-red/demo/build.sh`.
 
 Engine traps: `put()` uses `setTransform`, so it ignores an enclosing `translate`: pass absolute matrices. Test-mode pages must not throw to stop the module (the render harness exits on any page error): guard the `window.render` assignment instead. Engine numbers as used: paper grain mottling ±7 % at ~130 px; edge wobble ≈ 0.35 units; `sawRow`, `sawEdge`, `crescent` / `crescentRows`, `swirl` / `doubleSwirl`, `cloudCut`, `rosette`, `plum`, `coin` in `motifs.js`; half-res bloom blurs; smoothing turned the houses into bread loaves.

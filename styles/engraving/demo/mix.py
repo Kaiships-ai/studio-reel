@@ -1,6 +1,6 @@
 # Sound for "The Honeybee, Plate VII": three layers (room tone, foley keyed to the film's events, the baroque score),
 # the narrator on top with the score ducked under him. Run from the repo root:
-#   .venv/bin/python styles/engraving/demo/mix.py
+#   pixi run python styles/engraving/demo/mix.py
 # reads demo/events.json (node core/render/events.mjs), demo/voices/*.wav, demo/music/stems/*.wav; writes demo/mix.wav
 import sys, os, json, numpy as np, soundfile as sf, soxr
 sys.path.insert(0, '.')

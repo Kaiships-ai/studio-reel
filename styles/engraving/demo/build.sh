@@ -3,7 +3,7 @@
 # Swap in your own content: write a JSON like content.json and pass its name (it must live in this demo folder).
 set -e
 cd "$(dirname "$0")/../../.."
-PY=.venv/bin/python; D=styles/engraving/demo; O=styles/engraving; C=${1:-content.json}
+PY="pixi run -e full python"; D=styles/engraving/demo; O=styles/engraving; C=${1:-content.json}
 # 1. voice lines from the content file → Kokoro (bm_fable, en-gb) → whisper check
 $PY -c "import json,sys; c=json.load(open('$D/$C')); v=c['voice']; json.dump([dict(id=l['id'],text=l['text'],voice=v['voice'],speed=v.get('speed',.92),lang='en-gb',**({'asr':l['asr']} if 'asr' in l else {})) for l in v['lines']], open('$D/lines.json','w'), indent=1)"
 $PY core/tts/tts.py $D/lines.json $D/voices
@@ -19,7 +19,7 @@ $PY $D/tools/subs.py $C && $PY core/render/srt.py $D/out/subs.json $O/engraving.
 # 5. frames (through the batch render gate when it exists) → mux at −14 LUFS with grain 4
 G=""   # 整机渲染限流已在 core/render/video.mjs 里
 $G node core/render/video.mjs $D --fps 24 --workers 2 --q "content=$C" --out $D/out/video.mp4
-sh core/render/mux.sh $D/out/video.mp4 $D/mix.wav $O/engraving.mp4 24 4
+node core/render/mux.mjs $D/out/video.mp4 $D/mix.wav $O/engraving.mp4 24 4
 # 6. stills
 node core/render/still.mjs $D 30.9 --q "content=$C&nosub=1" --out $D/out/still --prefix sf_ && cp $D/out/still/sf_30.9.jpg $D/stills/styleframe.jpg
 node core/render/still.mjs $D 33.5 --q "content=$C&nosub=1" --out $D/out/still --prefix po_ && cp $D/out/still/po_33.5.jpg $O/poster.jpg

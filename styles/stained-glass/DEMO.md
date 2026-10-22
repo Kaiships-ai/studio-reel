@@ -82,7 +82,7 @@ Voice: Kokoro `bf_alice`, speed .86–.88, "like a nun telling an old story", 8 
 
 ## End card
 
-The carved inscription on the stone string course changes from *THE DRAGON OF THE EAST WINDOW* to *STAINED GLASS* and *LEMOLAB × CLAUDE OPUS 5.5* (Cinzel 600, incised and gilded, revealed by the sweep light); the camera pushes in so the credit line is ≥ 30 px, and a thin blue dawn ray touches pane I. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card.
+The carved inscription on the stone string course changes from *THE DRAGON OF THE EAST WINDOW* to *STAINED GLASS* and *LEMOLAB × CLAUDE OPUS 5.5* (Cinzel 600, incised and gilded, revealed by the sweep light); the camera pushes in so the credit line is ≥ 30 px, and a thin blue dawn ray touches pane I. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 ## Rights
 

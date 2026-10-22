@@ -1,6 +1,6 @@
 """《The Honeybee, Plate VII》原创配乐 —— 巴洛克室内乐：羽管键琴 + 弦乐四重奏（拨奏 → 首次拉弓）
 D 大调，96 BPM，4/4，一拍 0.625 s，一小节 2.5 s，16 小节 = 40.0 s。
-运行（仓库根目录）：.venv/bin/python styles/engraving/demo/music/score.py
+运行（仓库根目录）：pixi run python styles/engraving/demo/music/score.py
 输出：music/score.wav、music/stems/{harpsichord,pizz,bowed}.wav、music/cues.json、music/CREDITS_music.txt，
       并打印卡点校验报告（同时写入 music/timing_report.txt，NOTES.md 引用）。
 

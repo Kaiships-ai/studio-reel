@@ -58,7 +58,7 @@ Mix (`demo/mix.py`): voice compressed and about 8–10 dB over the music while i
 
 ## End card
 
-二十一键 (Noto Sans SC 500), *21 Keys, Opened* (Inter Light), `产品拆解 · EXPLODED TEARDOWN`, `CAD：foostan/crkbd · CC BY 4.0`, `LemoLab × Claude Opus 5.5`, an orange rule; the closed keyboard drifting on the right. 5 s. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card.
+二十一键 (Noto Sans SC 500), *21 Keys, Opened* (Inter Light), `产品拆解 · EXPLODED TEARDOWN`, `CAD：foostan/crkbd · CC BY 4.0`, `LemoLab × Claude Opus 5.5`, an orange rule; the closed keyboard drifting on the right. 5 s. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 ## Build notes
 

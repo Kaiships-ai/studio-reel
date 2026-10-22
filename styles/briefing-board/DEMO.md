@@ -58,7 +58,7 @@ Judgement frames widen 1,768 → 1,945 → 2,361 → 3,205 board px (28 % → 50
 
 ## Title card
 
-A printed card pinned at the bottom right of the wall from the start, seen only in the reveal: "船说了算", a red rule, "ENGINEERING / BRIEFING BOARD", "工程简报板", "LemoLab × Claude Opus 5.5". It is part of the final wall (the poster) and is on screen for the last three seconds. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card.
+A printed card pinned at the bottom right of the wall from the start, seen only in the reveal: "船说了算", a red rule, "ENGINEERING / BRIEFING BOARD", "工程简报板", "LemoLab × Claude Opus 5.5". It is part of the final wall (the poster) and is on screen for the last three seconds. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 ## Build notes
 
@@ -77,7 +77,7 @@ demo/
                         the six used ones with sha256); photos, masks and derived/ are downloaded or rebuilt
 ```
 
-1. `sh demo/build.sh` (library set up with `setup.sh deps voice music`): fetches what git does not hold — fonts from Google Fonts (`fetch_fonts.py`: Archivo and IBM Plex Mono from github.com/google/fonts, the CJK subsets through the CSS API), the six photos from Commons (`fetch_sources.py`, ~470 MB), a private `demo/.venv` with onnxruntime and the BiRefNet model (`kit_env.sh`, ~970 MB unless cached), the voice model and the freepats / vsco2ce / vcsl samples — and cuts the objects again (`rebuild_objects.sh`); then speech check → scene → cue check → reading check → camera check (incl. judgement frames) → resolution check → events → render (960 frames, 5 workers) → mix → subtitles (+ one-line check) → mux (−14 LUFS, grain 1) → poster and styleframe → rhythm report → speech check on the final mix → camera plot.
+1. `sh demo/build.sh` (library set up with `pixi run studio install`; the build runs Python in the full environment): fetches what git does not hold — fonts from Google Fonts (`fetch_fonts.py`: Archivo and IBM Plex Mono from github.com/google/fonts, the CJK subsets through the CSS API), the six photos from Commons (`fetch_sources.py`, ~470 MB), a private `demo/.venv` with onnxruntime and the BiRefNet model (`kit_env.sh`, ~970 MB unless cached), the voice model and the freepats / vsco2ce / vcsl samples — and cuts the objects again (`rebuild_objects.sh`); then speech check → scene → cue check → reading check → camera check (incl. judgement frames) → resolution check → events → render (960 frames, 5 workers) → mix → subtitles (+ one-line check) → mux (−14 LUFS, grain 1) → poster and styleframe → rhythm report → speech check on the final mix → camera plot.
 2. Objects: `sh demo/kit/tools/rebuild_objects.sh` recreates every cut-out from the photos at their own resolution (BiRefNet masks are cached in `sources/masks/`; a recomputed mask can differ by a pixel or two from ours).
 3. Stills and thumbnails: a scene JSON that `extends` `scenes/film.json` with its own `cam` and `t`, rendered by `node demo/kit/batch.mjs`.
 

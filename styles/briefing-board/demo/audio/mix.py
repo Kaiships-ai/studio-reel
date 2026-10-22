@@ -1,6 +1,6 @@
 """Score, sound design and mix for "The Ship Decides" → out/mix.wav (48 kHz stereo), plus stems.
 Reads the same timeline as the picture: scenes/film.json (dur, cues, sound events) and audio/vo/.
-Run from anywhere with the library's Python:  $LIB/.venv/bin/python audio/mix.py
+Run from anywhere with the library's Python:  pixi run python audio/mix.py
 
 Score: 120 BPM, D minor turning to D major at the reveal. Electric bass, a MuldjordKit groove,
 claves and woodblock, low brass stabs (trombone, tuba, horn), timpani, tubular bells. The ship's

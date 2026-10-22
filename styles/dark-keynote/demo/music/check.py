@@ -1,5 +1,5 @@
 """配乐自检：静音是否真 0、起音对齐、各段能量/亮度/中频占用、stem 求和。结果打印并写 check.txt。
-用法：.venv/bin/python styles/dark-keynote/demo/music/check.py（先跑 score.py）"""
+用法：pixi run python styles/dark-keynote/demo/music/check.py（先跑 score.py）"""
 import os, json
 import numpy as np
 import soundfile as sf

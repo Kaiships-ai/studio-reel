@@ -41,7 +41,7 @@ Rules: always look *down* on the world (never eye level); every camera path is a
 - **Voices (Kokoro via `core/tts/tts.py`)**: narrator `af_heart`, speed .82–.90 (slow, storybook); the quest-giver `bm_george`, speed .84, low-passed at 7 kHz in the mix so he sits "in the world". 7 narrated lines + 1 dialogue line, each 1–5.4 s. Check with `core/tts/asr_check.py`; put invented names in the `asr` field (`Graywater`, `Ren`, `whisper would`), otherwise whisper flags them.
 - **Music**: one licensed track, edited to picture: Scott Buckley, *Precipice* (CC BY 4.0), cut by `music/edit.py` into five sections (intro pad → **0.8 s breath when the lighthouse dies** → continuous build through forest and storm → **hard stop into a reverb tail at 42.0 when the flame nearly dies**, only the intro pad under it → the composer's own build → **its D→G♭ key-change downbeat placed at 53.500 s = ignition**, located automatically by the steepest < 250 Hz onset (error < 5 ms) → jump to the final E♭ arrival for the title). All cut points are in `music/CUES.md`. Pick one piece whose own arc matches the story; cut inside it rather than stitching tracks.
 - **Ambience & foley (`mix.py`, synthesized with `core/audio/sfx.py`)**: per-set beds with crossfaded gain curves (harbour waves + rope creaks, brazier crackle, forest crickets + leaves, storm rain + wind with a gust swell), and events: lamp-out "fwoomp" 12.3, match strike 16.15, UI chime on the dialogue box 17.3, footsteps from `sfx_events.json` (wood / dirt / stone), thunder 0.25 s after each flash, wind whoosh at the gust, two heartbeats in the silence, the ignition boom (42 Hz drop + air + high shimmer) at 53.5, six small bells as the ships light up.
-- **Mix**: each voice line compressed and RMS-matched; buses levelled to voice −17, music −21, ambience −30, foley −27 dB RMS; music ducks ~2.2 dB under voice, then a **per-line auto-duck** pulls music + ambience to ≈10 dB under each line (only down, never up; the script prints the achieved gap per line, 7–14 dB in the demo); `tanh` soft-clip; final loudness by `core/render/mux.sh` (two-pass loudnorm −14 LUFS, TP −1.2).
+- **Mix**: each voice line compressed and RMS-matched; buses levelled to voice −17, music −21, ambience −30, foley −27 dB RMS; music ducks ~2.2 dB under voice, then a **per-line auto-duck** pulls music + ambience to ≈10 dB under each line (only down, never up; the script prints the achieved gap per line, 7–14 dB in the demo); `tanh` soft-clip; final loudness by `core/render/mux.mjs` (two-pass loudnorm −14 LUFS, TP −1.2).
 
 ## Palette & props
 
@@ -75,7 +75,7 @@ Motion as built:
 - **Chapter card** (0–5.5 s): radial navy background `#11172a → #020308`, `CHAPTER  I` (Cinzel 500 34 px, 10 px tracking, `#d8c28e`) over a gold ornament line with diamond, then the chapter name in Cormorant italic 78 px with a warm glow; one pixel ember drifts across.
 - **Title** (67.4–76.4 s): screen dimmed 50 %, `THE LAMPBEARER` in Cinzel 700 118 px, 14 px tracking, vertical gold gradient `#fff3cf → #e2c27c → #a8803e` with glow; ornament; tagline in Cormorant italic 50 px; music/voice credit at the bottom (24 px, 75 % alpha).
 - **End credit line (library rule)**: every film ends with **"LemoLab × Claude Opus 5.5"**. In the demo it is part of the title card (`ui.js` `title()`, on by default): Cinzel 500 30 px, `#d8c28e` at 85 % alpha, 4 px tracking, centred at y = 668, fading in 70.6–71.6 s, between the tagline and the music credit, which it does not replace. `?nocredit=1` hides it (reproduces the pre-sign-off `hd-2d_v1.mp4`). Draw it the same way in a new film.
-- **End credit line (this library's demo only)**: our demo ends with **"LemoLab × Claude Opus 5.5"**. It is part of the title card (`ui.js` `title()`, on by default): Cinzel 500 30 px, `#d8c28e` at 85 % alpha, 4 px tracking, centred at y = 668, fading in 70.6–71.6 s, between the tagline and the music credit, which it does not replace. `?nocredit=1` hides it (reproduces the pre-sign-off `hd-2d_v1.mp4`). This sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card — when you adapt `ui.js`, delete the credit line.
+- **End credit line (this library's demo only)**: our demo ends with **"LemoLab × Claude Opus 5.5"**. It is part of the title card (`ui.js` `title()`, on by default): Cinzel 500 30 px, `#d8c28e` at 85 % alpha, 4 px tracking, centred at y = 668, fading in 70.6–71.6 s, between the tagline and the music credit, which it does not replace. `?nocredit=1` hides it (reproduces the pre-sign-off `hd-2d_v1.mp4`). This sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card — when you adapt `ui.js`, delete the credit line.
 - Export the `.srt` from the same data (`tools/srt.py`: story.js `VO` + `voices/dur.json`, +0.5 s hold, dialogue prefixed `OLD KEEPER:`).
 
 
@@ -98,10 +98,10 @@ styles/hd-2d/demo/
   tools/srt.py  tools/render_range.mjs  tools/sheet/index.html   srt export, partial re-render, sprite sheet page
 ```
 
-All commands from the repo root. `.venv` is the shared Python env (kokoro-onnx, faster-whisper, librosa).
+All commands from the repo root. Python is the library's full pixi environment (`pixi run -e full python`: kokoro-onnx, faster-whisper; librosa is not installed by default).
 
 ```sh
-PY=.venv/bin/python; D=styles/hd-2d/demo
+PY="pixi run -e full python"; D=styles/hd-2d/demo
 
 # 0. fresh clone: voices/*.wav, music/score.wav and mix.wav are git-ignored (rebuilt below); if music/src/ is empty, fetch the source
 curl -L -o $D/music/src/sb_precipice.mp3 https://www.scottbuckley.com.au/library/wp-content/uploads/2021/01/sb_precipice.mp3
@@ -111,7 +111,7 @@ $PY core/tts/tts.py $D/lines.json $D/voices
 $PY core/tts/asr_check.py $D/lines.json $D/voices      # demo: 1 expected DIFF (n1 "Graywater" → "gray water")
 
 # 2. score edit → music/score.wav (+ CUES.md, measure.json); set OUT_DIR=... to write elsewhere
-(cd $D/music && ../../../../.venv/bin/python edit.py)
+(cd $D/music && pixi run python edit.py)
 
 # 3. mix → demo/mix.wav (optional arg: another output path)
 $PY $D/mix.py
@@ -127,7 +127,7 @@ node core/render/still.mjs $D 8 16.9 30.5 42.8 53.8 62 71 --q tilt=1 --out $D/ou
 node core/render/video.mjs $D --fps 60 --workers 2 --q tilt=1 --out $D/out/video_tilt.mp4
 
 # 7. mux: loudnorm −14 LUFS, grain 0 (pixel art: no film grain)
-sh core/render/mux.sh $D/out/video_tilt.mp4 $D/mix.wav styles/hd-2d/hd-2d.mp4 60 0
+node core/render/mux.mjs $D/out/video_tilt.mp4 $D/mix.wav styles/hd-2d/hd-2d.mp4 60 0
 ```
 
 `?tilt=1` is what makes the tilt-shift cut: it is a **render-time post effect** inside `post_ts.js` (not a second pass over a finished video). Without it you get the plain DOF version. Other page switches: `ss=1` (no supersampling, faster previews), `only=harbor|forest|cliff` (build one set), `nobloom`, `nodof`, `noglow`, `nocredit=1` (hide the end credit line).
@@ -138,7 +138,7 @@ node $D/tools/render_range.mjs 67 76.5 --workers 2 --q tilt=1 --out $D/out/tail.
 ffmpeg -y -i $D/out/video_tilt.mp4 -i $D/out/tail.mp4 -filter_complex \
   "[0:v]trim=end_frame=4020,setpts=PTS-STARTPTS[a];[1:v]setpts=PTS-STARTPTS[b];[a][b]concat=n=2:v=1:a=0[v]" \
   -map "[v]" -c:v libx264 -preset medium -crf 14 -pix_fmt yuv420p $D/out/video_tilt_new.mp4   # 25–150 s (CPU-bound, slower when other renders run)
-sh core/render/mux.sh $D/out/video_tilt_new.mp4 $D/mix.wav styles/hd-2d/hd-2d.mp4 60 0          # 35–245 s, same caveat
+node core/render/mux.mjs $D/out/video_tilt_new.mp4 $D/mix.wav styles/hd-2d/hd-2d.mp4 60 0          # 35–245 s, same caveat
 ```
 
 When you change the story: edit `story.js` first, then copy the voice start times into `vo_times.json` (mix.py reads that file, not story.js), keep `sfx_events.json` footsteps in step with the sets' walk frames, and move the cue constants at the top of `music/edit.py` (`T_CAESURA`, `T_SILENCE`, `T_HIT`, `NARRATION`).

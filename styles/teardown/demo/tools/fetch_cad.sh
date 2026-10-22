@@ -10,7 +10,7 @@ mkdir -p "$TMP/dl" "$TMP/occt"
 for f in pcbs/corne-cherry/hotswap/corne-cherry.kicad_pcb plates/3x6/pcb/plate-top-cherrymx.kicad_pcb cases/3x6/left.step; do
   curl -sfL -o "$TMP/dl/$(basename "$f")" "$B/$f"
 done
-python3 -I "$HERE/tools/extract_pcb.py" "$TMP/dl/corne-cherry.kicad_pcb" "$TMP/dl/plate-top-cherrymx.kicad_pcb" "$HERE/data/pcb.json"
+pixi run python -I "$HERE/tools/extract_pcb.py" "$TMP/dl/corne-cherry.kicad_pcb" "$TMP/dl/plate-top-cherrymx.kicad_pcb" "$HERE/data/pcb.json"
 (cd "$TMP/occt" && npm init -y >/dev/null && npm i --silent occt-import-js@0.0.23)
 OCCT_DIR="$TMP/occt" node "$HERE/tools/step2mesh.mjs" "$TMP/dl/left.step" "$HERE/data/case.bin"
 echo "data regenerated from crkbd@$REV"

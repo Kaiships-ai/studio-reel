@@ -3,7 +3,7 @@
 mid-span on its left edge ([half main span | pylon | back span]). The mirror image is joined on the
 left, giving [back span | pylon | main span | pylon | back span]. CREDITS says so.
 
-    python3 kit/tools/mirror_span.py <half_id> <out_id> --pylon 0.68 --water 0.995
+    pixi run python kit/tools/mirror_span.py <half_id> <out_id> --pylon 0.68 --water 0.995
 """
 import argparse, json, os
 from PIL import Image, ImageOps

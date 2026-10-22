@@ -8,7 +8,7 @@ Everything sits on the timeline (timeline.json, exported from timeline.js) and t
   beds      forest air (filtered wind in leaves, sparse synthesized bird calls) at the start and the end; thin air
   voice     Kokoro (bm_george), compressed, music ducked underneath
 
-usage: $LIB/.venv/bin/python mix.py
+usage: pixi run python mix.py
 """
 import json, os, sys
 import numpy as np

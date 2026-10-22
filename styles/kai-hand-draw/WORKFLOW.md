@@ -15,13 +15,9 @@ demo still renders (`make.mjs styles/kai-hand-draw/demo`), and say so to the use
 
 ## Once per machine
 
-```sh
-npm install                                                   # p5, p5.brush, playwright-core, three
-sh plugin/skills/lemo-opuscar/scripts/setup.sh deps voice     # headless browser, .venv (numpy, edge-tts, faster-whisper)
-```
-
-Needs Node 20+, ffmpeg and Python 3.11+ (or uv). Don't ask the user to run these: run them, and ask only for a
-password or a missing Node.
+Run `/studio` (or `pixi run studio install` directly): it installs node, python, ffmpeg, the drawing packages and
+the headless browser inside this folder, then renders a test reel. Don't ask the user to run it: run it, and ask
+only for what its fix lines say only they can do (on Linux, `pixi run studio linux-deps` needs their password).
 
 ## Steps
 
@@ -56,7 +52,7 @@ password or a missing Node.
 8. **Music and SFX.** `<film>/audio/cues.json`: the chapter cuts and one sound per visible hit, timed by word. Then
    `make.mjs <film> audio`.
 9. **Render.** `make.mjs <film> render`: frames through `core/render/video.mjs`, mux and loudness through
-   `core/render/mux.sh` (BT.709, −14 LUFS), then `<film>/<name>.mp4` and `<film>/<name>-cover.png` (no captions).
+   `core/render/mux.mjs` (BT.709, −14 LUFS), then `<film>/<name>.mp4` and `<film>/<name>-cover.png` (no captions).
 10. **Verify the real file.** `make.mjs <film> verify` checks size, fps, BT.709, audio, length = voice ± 1 frame,
     −14 LUFS / ≤ −1 dBTP, no frozen or black stretch, camera ≤ 20 px/frame, and that Whisper hears the keyword in
     the final mix. It pulls frames into `<film>/out/check/final_*.jpg`: open them. Every check must be ✓.

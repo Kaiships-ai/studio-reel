@@ -62,5 +62,4 @@ hermes-mac
 tail9adca5
 polar_product_id
 plugin/skills/lemo-opuscar
-\.venv/bin/python
 sh core/render/mux\.sh

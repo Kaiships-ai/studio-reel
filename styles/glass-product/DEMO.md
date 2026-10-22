@@ -58,7 +58,7 @@ Voice: Kokoro `am_michael`, speed 0.86–0.88, 3–4 very short lines. "Aura." a
 
 ## End card
 
-The title stays; credits (style name, `LemoLab × Claude Opus 5.5`) fade in at the bottom over a soft dark gradient while the camera pulls back to make room; fade to black in the last 0.6 s. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card.
+The title stays; credits (style name, `LemoLab × Claude Opus 5.5`) fade in at the bottom over a soft dark gradient while the camera pulls back to make room; fade to black in the last 0.6 s. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 ## Rights
 
@@ -79,10 +79,10 @@ styles/glass-product/demo/
 
 1. Write the cue map and `story.js` first (BPM grid, kick list shared by score and renderer).
 2. `node core/render/still.mjs styles/glass-product/demo 9.3 14.6 26.8 [--q nosub=1]`: iterate stills; `--range 0.5:31.5:1` + `sheet.py` for overview passes.
-3. `.venv/bin/python core/tts/tts.py demo/lines.json demo/voices` → `core/tts/asr_check.py` until all OK.
+3. `pixi run python core/tts/tts.py demo/lines.json demo/voices` → `core/tts/asr_check.py` until all OK.
 4. `python demo/music/score.py` → `node core/render/events.mjs demo` → `python demo/mix.py`.
 5. `node core/render/video.mjs demo --fps 24 --workers 3` (768 frames with 2× SSAA, transmission, per-frame PMREM and mirror ≈ 30–45 s on an M-series Mac).
-6. `sh core/render/mux.sh out/video24.mp4 mix.wav glass-product.mp4 24 0`, then `python demo/check_mix.py glass-product.mp4`.
+6. `node core/render/mux.mjs out/video24.mp4 mix.wav glass-product.mp4 24 0`, then `python demo/check_mix.py glass-product.mp4`.
 7. Or simply `sh styles/glass-product/demo/build.sh`.
 
 Pitfalls tied to this demo's props:

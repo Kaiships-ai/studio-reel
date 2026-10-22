@@ -62,7 +62,7 @@ Voice: an old radio announcer calling the action like a horse race (Kokoro `bm_l
 
 ## End card
 
-Same sunburst, a wavy-edged sign with "The End", the style name, `LemoLab × Claude Opus 5.5`, small credit lines at the bottom; it opens with an iris from black. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card.
+Same sunburst, a wavy-edged sign with "The End", the style name, `LemoLab × Claude Opus 5.5`, small credit lines at the bottom; it opens with an iris from black. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 ## Build notes
 
@@ -84,7 +84,7 @@ styles/rubber-hose/demo/
 3. `core/tts/tts.py lines.json voices` → `core/tts/asr_check.py`.
 4. Review: `core/render/still.mjs demo --range a:b:1` + `core/render/sheet.py` (two full passes), and frame strips at 1/12 s on key acting beats.
 5. `node core/render/events.mjs demo` → `python music/score.py` → `python mix.py`.
-6. `node core/render/video.mjs demo --fps 24 --workers 3` → `sh core/render/mux.sh out/video24.mp4 mix.wav rubber-hose.mp4 24 3` → `python demo/tools/final_asr.py rubber-hose.mp4`.
+6. `node core/render/video.mjs demo --fps 24 --workers 3` → `node core/render/mux.mjs out/video24.mp4 mix.wav rubber-hose.mp4 24 3` → `python demo/tools/final_asr.py rubber-hose.mp4`.
 
 Or simply `sh styles/rubber-hose/demo/build.sh`.
 

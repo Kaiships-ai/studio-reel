@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """City Lights, 1987 — 原创 city pop / 合成器放克配乐（numpy + numba 从零合成）
 
-运行：.venv/bin/python styles/cel-anime-80s/demo/music/score.py
+运行：pixi run python styles/cel-anime-80s/demo/music/score.py
 输出：score.wav（48k 立体声 float，正好 59.0 s）、stems/*.wav、score.json
 
 116 BPM，4/4，E♭ 大调 → 第 22 小节升半音到 E 大调。结构与 demo/story.js 的镜头一一对齐：

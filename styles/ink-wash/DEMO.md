@@ -57,7 +57,7 @@ Voice: calm British narrator, Kokoro `bm_george`, lang `en-gb`, speed .82–.86,
 
 Title: two vertical columns written on the scroll itself (English letterforms rotated 90°, Cormorant SC 600, wide tracking) + seal; it fades in wet → dry and evaporates when the pan starts. Subtitles: Cormorant Garamond italic 500, 46 px, 1 px tracking, drying in ~0.35 s.
 
-End card: the whole scroll on a dark table with silk borders and rollers; "CHINESE INK WASH" (Cormorant SC 600, 44 px, 14 px tracking) and the credit line (italic 30 px) in pale paper colour below. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card.
+End card: the whole scroll on a dark table with silk borders and rollers; "CHINESE INK WASH" (Cormorant SC 600, 44 px, 14 px tracking) and the credit line (italic 30 px) in pale paper colour below. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 ## Build notes
 
@@ -75,7 +75,7 @@ styles/ink-wash/demo/
 
 1. Write `story.js` times first (voice durations from `core/tts/tts.py`), then brief the score with the same numbers (the composer can run in parallel).
 2. `node core/render/still.mjs styles/ink-wash/demo --range a:b:1` + `core/render/sheet.py` for overview sheets; `?test=sheet|pose|shui|frame` pages for design work; `?nosub=1`, `?poster=1`.
-3. `node core/render/events.mjs` → `mix.py` → `video.mjs --fps 24 --workers 3` (1152 frames ≈ 60–130 s) → `mux.sh … 24 0` (grain 0: the paper is in the shader).
+3. `node core/render/events.mjs` → `mix.py` → `video.mjs --fps 24 --workers 3` (1152 frames ≈ 60–130 s) → `mux.mjs … 24 0` (grain 0: the paper is in the shader).
 4. Or simply `sh styles/ink-wash/demo/build.sh`.
 
 Pitfalls tied to this demo's props:

@@ -1,5 +1,5 @@
 """From Bean to Cup — original score (acoustic world groove). Run from the repo root:
-.venv/bin/python styles/iso-infographic/demo/music/score.py
+pixi run python styles/iso-infographic/demo/music/score.py
 → music/score.wav (48 kHz stereo), music/stems/*.wav, music/score.json (cue keys for tools/cuecheck.py)
 Grid and cues come from demo/timeline.js (read through node) so picture and music share one source of truth."""
 import sys, os, json, subprocess

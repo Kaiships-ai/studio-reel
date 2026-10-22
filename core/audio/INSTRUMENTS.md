@@ -1,10 +1,10 @@
 # 真实乐器工具链：sampler（采样）+ pluck（物理建模拨弦）
 
-给 Lemo-Opuscar 各风格短片写**原创配乐**用。全部 numpy/soxr 离线合成，**48 kHz**，和 `sfx.py` 同一套约定（`SR`、`add()`、`limit()`）。
+给 Kaiships Studio 各风格短片写**原创配乐**用。全部 numpy/soxr 离线合成，**48 kHz**，和 `sfx.py` 同一套约定（`SR`、`add()`、`limit()`）。
 目标是"听起来像真乐器"：能用采样就用采样（97 件，真人录音），采样库里没有的民族拨弦（古琴、琵琶、三味线……）用物理建模补上（11 个预设）。
 
 - 试听：仓库里没有现成的试听文件（`core/audio/*.wav` 不进 git，也不在采样包里）。下载采样包后，用下面第 1 节的写法给每件乐器弹一个根音-五度-八度的小动机，自己渲一段听
-- 采样库：`core/audio/instruments/`（FLAC 无损；每个库保留原 LICENSE/README）。不在 git 里，按库下载，只下片子用到的：`sh tools/fetch.sh instruments <lib>`（`vsco2ce` 395 MB、`vcsl` 271 MB、`salamander` 218 MB、`freepats` 397 MB、`karoryfer` 74 MB），或 `instruments all`（约 1.4 GB）。第 5 节的「来源」列就是所在的库：VSCO 2 CE → `vsco2ce`，VCSL → `vcsl`，Salamander → `salamander`，FreePats 和 MuldjordKit → `freepats`，Karoryfer → `karoryfer`
+- 采样库：`core/audio/instruments/`（FLAC 无损；每个库保留原 LICENSE/README）。不在 git 里，按库下载，只下片子用到的：`pixi run fetch instruments <lib>`（`vsco2ce` 395 MB、`vcsl` 271 MB、`salamander` 218 MB、`freepats` 397 MB、`karoryfer` 74 MB），或 `instruments all`（约 1.4 GB）。第 5 节的「来源」列就是所在的库：VSCO 2 CE → `vsco2ce`，VCSL → `vcsl`，Salamander → `salamander`，FreePats 和 MuldjordKit → `freepats`，Karoryfer → `karoryfer`
 - 索引：`core/audio/instruments/index.json`（每个库的包里都带一份：每个采样的音高、力度层、起音点、电平；导入即用，不用重建）
 
 ---
@@ -50,7 +50,7 @@ sf.write('cue.wav', mix, SR)
 | `credits(names)` | 按你用到的乐器列表，生成片尾 CREDITS 行（CC BY 必写的原文 + CC0 致谢） |
 | `info(name=None)` / `instruments(fam=None)` | 打印概况 / 列名字（`fam` 取 弦乐/木管/铜管/打击/键盘/拨弦/民族） |
 | `midi(p)` / `hz(p)` / `name(m)` / `seed(n)` | 音名工具；`seed` 固定轮换随机（同样调用顺序 → 同样结果） |
-| `build_index(names=None, force=False)` | 重扫采样并重建 `index.json`（换了/加了采样才需要；~15 s；要 librosa：`requirements-dev.txt`） |
+| `build_index(names=None, force=False)` | 重扫采样并重建 `index.json`（换了/加了采样才需要；~15 s；要 librosa（仅维护用，`pixi run studio install` 不装）） |
 
 **它在背后做了什么**
 - **选采样**：同时考虑"离目标音最近"和"力度层最接近"（代价 = 半音距离 + 4×力度差，向上移调略加罚），同一格里的多个 round-robin 随机轮换，避免机关枪效应。
@@ -344,4 +344,4 @@ core/audio/
 
 来源链接：VSCO 2 CE https://github.com/sgossner/VSCO-2-CE · VCSL https://github.com/sgossner/VCSL · Salamander https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html · FreePats https://freepats.zenvoid.org/ · Karoryfer https://github.com/sfzinstruments （aliexpress-erhu / karoryfer.sneakybass / karoryfer.weresax）
 
-可用性：采样库要先下载（`sh tools/fetch.sh instruments <lib>`，见文首）。用到没下载的库时，`sampler` 报错并给出要跑的那条命令。`sampler.py` 只需核心层 Python 包；`pluck.py` 需要 numba（`setup.sh deps music`）。
+可用性：采样库要先下载（`pixi run fetch instruments <lib>`，见文首）。用到没下载的库时，`sampler` 报错并给出要跑的那条命令。`sampler.py` 只需核心层 Python 包；`pluck.py` 需要 numba（只在 full 环境里：`pixi run -e full python …`，Intel Mac 没有）。

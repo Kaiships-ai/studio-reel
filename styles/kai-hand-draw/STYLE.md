@@ -92,7 +92,7 @@ lemo-opuscar `watercolor` style (that one is a landscape walk with no characters
   `tense` (minor resolving to major), ducked ~9 dB under speech.
 - SFX: cartoon foley on every visible hit, timed by word (`pop`, `slam`, `whoosh`, `ding`, `coin`, `stamp`…),
   about 1–2 per second, gains 0.2–0.6; every chapter wipe gets its whoosh.
-- Mix: −14 LUFS integrated, true peak ≤ −1 dBTP (core/render/mux.sh measures and normalises).
+- Mix: −14 LUFS integrated, true peak ≤ −1 dBTP (core/render/mux.mjs measures and normalises).
 
 ## 8. Native moves
 

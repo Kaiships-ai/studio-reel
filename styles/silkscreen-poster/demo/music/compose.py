@@ -9,7 +9,7 @@
 #   - 鼓：sampler `cajon`（VCSL，CC0 1.0）当底鼓；`snare2:taps`（VCSL，CC0）+ `shaker`（VCSL，CC0）当刷子律动；
 #         `sus_cymbal`（VSCO 2 CE，CC0 1.0）做重印 2 的镲刷渐强与高点的镲
 #   - 混响：sampler.room()
-# 运行：仓库根目录  .venv/bin/python styles/silkscreen-poster/demo/music/compose.py
+# 运行：仓库根目录  pixi run -e full python styles/silkscreen-poster/demo/music/compose.py
 import sys, os, json
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..'))
 sys.path.insert(0, ROOT)

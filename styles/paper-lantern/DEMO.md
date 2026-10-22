@@ -56,7 +56,7 @@ Motion as built in the demo:
 
 **Music:** Kevin MacLeod — **"Ripples"** (guzheng, 0 → ~37 s) handing over to **"Nu Flute"** (dizi + strings) with a 4.5 s crossfade; both CC BY 4.0 (incompetech.com). The handover is solved backwards so Nu Flute's own 70 s swell lands on the poem: `T_FLU = C.L23.at − 70 + .3`. Nu Flute −3.3 dB relative. 2 s fade in, 3 s fade out. Why these: pentatonic, no drums (percussive energy < 0.02) — see `demo/music/MUSIC.md` for the librosa analysis and the rejected candidates.
 
-**Mix (`demo/mix.py`):** voice → downsampled-envelope compressor (−22 dB, 3:1) → HP 70 Hz → RMS −18 dB; music RMS −27.5 dB with **5.5 dB ducking** under speech (0.25 s smoothed envelope); procedural foley at −24…−34 dB: switch click + rising shimmer (lamp on), wooden-mould thud + puff, chimes on reveals, paper rustles, lid thud, train bed (rumble + 0.62 s "clack-clack"), whoosh for the passing train and cloud curtain, city hum, a bite crunch. Everything is placed from `out/timeline.json` (line starts) and `vo/words.json`. Peak-limited to −1 dBFS; the final mux normalises to **−14 LUFS** (two-pass loudnorm in `core/render/mux.sh`).
+**Mix (`demo/mix.py`):** voice → downsampled-envelope compressor (−22 dB, 3:1) → HP 70 Hz → RMS −18 dB; music RMS −27.5 dB with **5.5 dB ducking** under speech (0.25 s smoothed envelope); procedural foley at −24…−34 dB: switch click + rising shimmer (lamp on), wooden-mould thud + puff, chimes on reveals, paper rustles, lid thud, train bed (rumble + 0.62 s "clack-clack"), whoosh for the passing train and cloud curtain, city hum, a bite crunch. Everything is placed from `out/timeline.json` (line starts) and `vo/words.json`. Peak-limited to −1 dBFS; the final mux normalises to **−14 LUFS** (two-pass loudnorm in `core/render/mux.mjs`).
 
 ## Palette & props
 
@@ -94,7 +94,7 @@ Rule: **back layers bright + translucent, front layers dark + opaque**. Interior
 - **Lines that appear as paper in the picture are not subtitled** (`"sub": false` in `script.json`): grandma's letter (L17) and the poem (L23). Don't show the same words twice.
 - Title: vertical Ma Shan Zheng on a paper strip inside the box (「一个月饼 / 的相思」) with a red seal 「中秋」, fading in after the second line.
 - End card: 「中秋快乐」 paper title inside the box + red seal 「团圆」; the credit block (`#credit`, 19 px, two lines: music / assets / fonts) fades in 0.6 s after the last line.
-- **Sign-off (this library's demo only):** our demo's end card carries **"LemoLab × Claude Opus 5.5"** as a **paper-cut strip inside the lightbox**, not as overlay text: `sign` sheet in `src/shots/s18_finale.js` — `w .26, h .02`, centred at `y −.1515` on the dark foreground bank, `z −.024` (in front of the bank layer, near the final focus plane), `text(…, .0115, FONT.song, { fill: '#f3d998', weight: 600 })`, `trans .3`, `shadow/recv: false`. It fades in over `tT + 1.0 → tT + 2.0` (1 s after 「中秋快乐」 starts, ≈116.6–117.6 s) and stays to the end, so it reads as part of the lamp while the credit block sits on the table below. It belongs to the library's own demos: a user's film carries no LemoLab credit, no strip like this and no copy of this end card.
+- **Sign-off (this library's demo only):** our demo's end card carries **"LemoLab × Claude Opus 5.5"** as a **paper-cut strip inside the lightbox**, not as overlay text: `sign` sheet in `src/shots/s18_finale.js` — `w .26, h .02`, centred at `y −.1515` on the dark foreground bank, `z −.024` (in front of the bank layer, near the final focus plane), `text(…, .0115, FONT.song, { fill: '#f3d998', weight: 600 })`, `trans .3`, `shadow/recv: false`. It fades in over `tT + 1.0 → tT + 2.0` (1 s after 「中秋快乐」 starts, ≈116.6–117.6 s) and stays to the end, so it reads as part of the lamp while the credit block sits on the table below. It belongs to the library's own demos: a user's film carries none of the demo's credits, no strip like this and no copy of this end card.
 - `paper-lantern.srt` holds all 25 lines (including the two in-picture ones) at their spoken times.
 
 ## Pitfalls we hit (demo record)
@@ -124,15 +124,15 @@ styles/paper-lantern/demo/
   music/            candidate tracks + MUSIC.md (only km_Ripples.mp3 and km_Nu_Flute.mp3 are used)
 ```
 
-All commands from the repo root (`Lemo-Opuscar/`). Python = `.venv/bin/python`; `edge-tts` must be on `PATH` (user-level `pip install edge-tts`; it is not in `.venv`).
+All commands from the repo root. Python = `pixi run python`; `demo/tts.py` calls the `edge-tts` command, which the pixi environment provides (run it through `pixi run` so it is on `PATH`).
 
 ```sh
 D=styles/paper-lantern/demo
 # 1. voice (Mandarin demo) — delete vo/<id>.mp3 or set "redo": true to regenerate a line
-python3 $D/tts.py                          # → $D/vo/<id>.wav, $D/vo/dur.json
-.venv/bin/python $D/asr.py                 # OK / DIFF per line (≈1.5 min, whisper medium, CPU)
-.venv/bin/python $D/words.py L01 L02 … L25 # → $D/vo/words.json (pass ALL ids: it rewrites the file)
-#    English instead: .venv/bin/python core/tts/tts.py $D/lines_en.json $D/vo && .venv/bin/python core/tts/asr_check.py $D/lines_en.json $D/vo
+pixi run python $D/tts.py                          # → $D/vo/<id>.wav, $D/vo/dur.json
+pixi run python $D/asr.py                 # OK / DIFF per line (≈1.5 min, whisper medium, CPU)
+pixi run python $D/words.py L01 L02 … L25 # → $D/vo/words.json (pass ALL ids: it rewrites the file)
+#    English instead: pixi run python core/tts/tts.py $D/lines_en.json $D/vo && pixi run python core/tts/asr_check.py $D/lines_en.json $D/vo
 
 # 2. timeline + review stills (any number of times, seconds)
 node $D/render/cues.mjs                    # → $D/out/timeline.json (DUR, line cues C, shot plan P)
@@ -141,13 +141,13 @@ node $D/render/still.mjs 5 12.5 62.5 116 --out $D/out/review          # add --q 
 #    debug: ?sheet (character sheet), ?nolit=1 (backlight off), ?hide=clouds,far (S01 layers)
 
 # 3. mix
-.venv/bin/python $D/mix.py                 # → $D/out/mix.wav   (optional arg: other output path)
+pixi run python $D/mix.py                 # → $D/out/mix.wav   (optional arg: other output path)
 
 # 4. render video (≈90 s for 3653 frames with 6 workers on an M-series Mac; ≈3 min with 2)
 node $D/render/video.mjs --workers 6       # → $D/out/video.mp4 (segments written next to the output; any worker count gives the same frames)
 
 # 5. mux: two-pass loudnorm −14 LUFS, 30 fps, no grain
-sh core/render/mux.sh $D/out/video.mp4 $D/out/mix.wav styles/paper-lantern/paper-lantern.mp4 30 0
+node core/render/mux.mjs $D/out/video.mp4 $D/out/mix.wav styles/paper-lantern/paper-lantern.mp4 30 0
 ```
 
 Review loop: stills of every shot at its key word time → sheet (`ffmpeg … tile=6x5`) → fix → only then the full render. Check the room shots (first 10 s, last 8 s) at full SSAA; they carry the "it's a real object" illusion.

@@ -111,7 +111,7 @@ Demo motion numbers: CHUBBY letters fall 700 px in 0.2 s each, 0.25 s apart (one
 
 ## End card
 
-**End card**: the case folder with the file label, the sleeping mascot, the 结案 stamp, and a speech bubble with the closing joke (「本片由 Claude 用代码一帧一帧画完。胖橘表示：全程没有配合。」). Our demo ends with "LemoLab × Claude Opus 5.5" (× = U+00D7). This sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card or its closing joke. In the demo it is a single centred line at the bottom of the end card (added 2026-09-26, `index.html` S10): `txt(g, 'LemoLab × Claude Opus 5.5', {x: 960, y: 1040, 'font-size': 30, 'font-family': F.mono, 'font-weight': 800, fill: C.navy, 'text-anchor': 'middle', 'letter-spacing': 3})`, faded in with a 12 px rise over 27.6–27.9 s (0.3 s after the bubble pops) and held until the navy fade. Keep it in the empty band under the folder; never cover the mascot or the stamp. Write the string literally in the source so `init()` preloads its glyphs.
+**End card**: the case folder with the file label, the sleeping mascot, the 结案 stamp, and a speech bubble with the closing joke (「本片由 Claude 用代码一帧一帧画完。胖橘表示：全程没有配合。」). Our demo ends with "LemoLab × Claude Opus 5.5" (× = U+00D7). This sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card or its closing joke. In the demo it is a single centred line at the bottom of the end card (added 2026-09-26, `index.html` S10): `txt(g, 'LemoLab × Claude Opus 5.5', {x: 960, y: 1040, 'font-size': 30, 'font-family': F.mono, 'font-weight': 800, fill: C.navy, 'text-anchor': 'middle', 'letter-spacing': 3})`, faded in with a 12 px rise over 27.6–27.9 s (0.3 s after the bubble pops) and held until the navy fade. Keep it in the empty band under the folder; never cover the mascot or the stamp. Write the string literally in the source so `init()` preloads its glyphs.
 
 ## Making an English version
 
@@ -129,11 +129,11 @@ styles/halftone-dossier/demo/
   stills/           review stills + styleframe.jpg   out/     intermediates (gitignored)
   PRODUCTION_LOG.md production log (local, not published)
 ```
-Run from the repo root (`Lemo-Opuscar/`); all paths inside the scripts are relative to `demo/`.
+Run from the repo root; all paths inside the scripts are relative to `demo/`.
 
 1. (Only when changing fonts) `cd styles/halftone-dossier/demo && node fetch_fonts.mjs` — needs network; rewrites `fonts/` + `fonts.css`.
 2. Voice/TTS: none in this style (skip). If you add narration, time scenes to it first.
-3. Music: `.venv/bin/python styles/halftone-dossier/demo/music.py` → `demo/music.wav` (≈1 s). Pass a path to write elsewhere.
+3. Music: `pixi run python styles/halftone-dossier/demo/music.py` → `demo/music.wav` (≈1 s). Pass a path to write elsewhere.
 4. Review: open `demo/index.html?t=11.2` in Chrome, or `node styles/halftone-dossier/demo/render.mjs stills 3.3 7.2 11.25 23.3 27.8 --dir out/review` (≈0.25 s per frame) → `demo/out/review/t_*.png`.
 5. Render: `node styles/halftone-dossier/demo/render.mjs video 2` → `demo/out/seg_*.mp4` + `demo/out/video_noaudio.mp4` (CRF 12 master). 900 frames ≈ 0.24 s/frame/worker → about 2 min with 2 workers on an idle machine (5.6 min measured while six other renders shared the CPU).
 6. Mux: `node styles/halftone-dossier/demo/render.mjs mux` → `styles/halftone-dossier/halftone-dossier.mp4` (x264 CRF 16 + music at −1.6 dB, AAC 256 k/48 kHz; ≈15 s; reproduces the published video stream bit-for-bit from the same master). Pass another path to avoid overwriting the published film.

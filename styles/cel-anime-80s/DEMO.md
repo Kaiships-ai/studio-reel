@@ -52,7 +52,7 @@ Voices: an English-dub feel, 8 short lines: the heroine (Kokoro `af_bella`) and 
 
 ## End card
 
-Darkened final dawn background, the title, the style name "80s Cel Anime", "LemoLab × Claude Opus 5.5", a one-line originality note and credits. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card.
+Darkened final dawn background, the title, the style name "80s Cel Anime", "LemoLab × Claude Opus 5.5", a one-line originality note and credits. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 Title card as used: "CITY LIGHTS" in heavy italic chrome with シティ・ライツ above (Dela Gothic One), a red "1987" and a spaced-out tagline. Subtitles: Barlow Semi Condensed 600, 54 px, cream-yellow `#fff0a0`, 9 px dark outline, 96 px above the bottom; radio lines cyan `#8ff4ff` with a boxed "● BASE" tag; each line up for max(duration + 0.6 s, 1.9 s).
 
@@ -79,9 +79,9 @@ styles/cel-anime-80s/demo/
 
 1. Treatment → `story.js` (116 BPM bar grid, shots, lines).
 2. `node styles/cel-anime-80s/demo/tools/still.mjs styles/cel-anime-80s/demo --range 0.5:58.5:1 --out /tmp/cs` → `tools/sheet.py` contact sheet → look → fix. `?test=model|close|side` renders the model sheet / head close-up / rider; `?raw=1` bypasses the CRT pass; `?nosub=1` hides subtitles.
-3. `.venv/bin/python core/tts/tts.py demo/lines.json demo/voices` → `core/tts/asr_check.py`.
-4. `.venv/bin/python demo/music/score.py` (score + stems + cue times).
-5. `node core/render/events.mjs demo` → `.venv/bin/python demo/mix.py`.
+3. `pixi run python core/tts/tts.py demo/lines.json demo/voices` → `core/tts/asr_check.py`.
+4. `pixi run python demo/music/score.py` (score + stems + cue times).
+5. `node core/render/events.mjs demo` → `pixi run python demo/mix.py`.
 6. `node core/render/video.mjs demo --fps 24 --workers 4 --out demo/out/video24.mp4` (1416 frames ≈ 36 s on an M-series Mac).
 7. `sh demo/tools/mux.sh demo/out/video24.mp4 demo/mix.wav cel-anime-80s.mp4 24`, `python demo/tools/srt.py`.
 

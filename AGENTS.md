@@ -1,6 +1,6 @@
-# Lemo-Opuscar: instructions for agents
+# Kaiships Studio: instructions for agents
 
-This repository is a library of film styles. Each style has a `styles/<slug>/STYLE.md` (what the style is) and one demo film made entirely in code (`DEMO.md` and `demo/`). People pick a style and ask for a film about **their own** topic. Your job is to direct and produce that film.
+Kaiships Studio is a library of film styles. Each style has a `styles/<slug>/STYLE.md` (what the style is) and one demo film made entirely in code (`DEMO.md` and `demo/`). People pick a style and ask for a film about **their own** topic. Your job is to direct and produce that film.
 
 | The request | Go to |
 |---|---|
@@ -9,14 +9,13 @@ This repository is a library of film styles. Each style has a `styles/<slug>/STY
 | Directing: story, sound, rhythm, camera, checks, delivery | [`DIRECTOR.md`](DIRECTOR.md) |
 | Building: install, pages, voice, music, mix | [`TECHNIQUE.md`](TECHNIQUE.md) |
 | Tool commands and flags | [`core/README.md`](core/README.md) |
-| The user wants to change a style and keep it as their own, or names a style in `~/lemo-my-styles/` | [`MY-STYLES.md`](MY-STYLES.md) |
-| Adding a style to the library (owner only) | [`MAINTAINING.md`](MAINTAINING.md) |
+| The user wants to change a style and keep it as their own, or names a style in `~/kaiships-my-styles/` | [`MY-STYLES.md`](MY-STYLES.md) |
 
-**Films outside `styles/` are the user's: no LemoLab credit, no watermark.**
+**Films outside `styles/` are the user's: no credit or watermark from us.**
 
 ## Kaiships: vertical reels (`kai-hand-draw`)
 
-This clone is the Kaiships studio, built on Lemo-Opuscar. A request for a reel, a short, an Instagram video, or
+Kaiships Studio's own style is `kai-hand-draw`. A request for a reel, a short, an Instagram video, or
 anything starring Kai or Clawd goes to the style [`kai-hand-draw`](styles/kai-hand-draw/STYLE.md) and follows
 [`styles/kai-hand-draw/WORKFLOW.md`](styles/kai-hand-draw/WORKFLOW.md) instead of the Workflow below: no brief
 questions unless the topic is too vague to script, 1080×1920 at 30 fps, `node styles/kai-hand-draw/tools/make.mjs
@@ -33,26 +32,25 @@ film. The `/make-reel` command (`.claude/skills/make-reel/`) runs it end to end.
 
 ## Finding the style
 
-Users name a style by its gallery name in English or Chinese ("Impasto Oil Painting", "油画厚涂") or by its folder (`impasto`). Look it up in [`styles/README.md`](styles/README.md). If nothing matches clearly, show the closest two or three and ask.
+Users name a style by its English name ("Impasto Oil Painting") or by its folder (`impasto`). Look it up in [`styles/README.md`](styles/README.md). If nothing matches clearly, show the closest two or three and ask.
 
 If the user hasn't picked a style:
 - Suggest two or three that fit their topic.
-- Show them the full list below in the chat, in the user's language only: English names (and English category names) for someone writing in English, Chinese names for someone writing in Chinese. Don't drop, merge or rename anything.
-- Link the gallery, where every style has its demo film: https://lemomo-ai.github.io/lemo-opuscar/
+- Show them the full list below in the chat. Don't drop, merge or rename anything. Every style's demo film is in its folder, `styles/<slug>/` (see `DEMO.md`).
 
 <!-- style-list:start -->
-All 52 styles · 全部风格:
+All 52 styles:
 
-- **实证影像 Evidence Films** (8): 卫星简报 Satellite Briefing, 工程简报板 Engineering Briefing Board, 点云测绘 LiDAR Survey, 白模投影 Projection on White Model, 数据实物化 Data Physicalization, 产品拆解 Exploded Teardown, 显微叙事 Microscope Story, 档案灯台 Archive Light Table
-- **手绘与绘画 Hand-drawn & Painting** (7): 蜡笔儿童绘本 Crayon Picture Book, 水彩笔刷 Watercolor Brush, 中国水墨 Chinese Ink Wash, 油画厚涂 Impasto Oil Painting, 一笔画 One-line Drawing, 白板讲解 Whiteboard Explainer, 钢笔淡彩 Urban Sketch · Pen & Wash
-- **东方传统 East Asian Traditions** (4): 皮影戏 Shadow Puppetry, 浮世绘 Ukiyo-e, 红色窗花剪纸 Red Paper-cut, 纸雕灯影 Paper-cut Lightbox
-- **印刷与版画 Print & Printmaking** (5): Risograph 丝网印刷 Risograph Print, 复古半调案卷 Halftone Dossier, 木刻版画 Woodcut Print, 铜版画 Copperplate Engraving, 丝印旅行海报 Silkscreen Travel Poster
-- **图形与排版 Graphic & Type** (7): 瑞士动态排版 Swiss Motion Graphics, 60s 间谍片头 60s Spy Title Sequence, 装饰艺术 Art Deco, 蓝图 / 工程制图 Blueprint, 彩色玻璃窗 Stained Glass, 象形运动图形 Pictogram Motion, ASCII / CRT 终端 ASCII / CRT Terminal
-- **信息与发布 Information & Keynote** (5): 数据叙事 Data Storytelling, 等距信息图 Isometric Infographic, 暗色科技发布 Dark Tech Keynote, 活体实机录屏 Living Screencast, 科幻全息界面 Sci-fi Hologram HUD
-- **卡通与动画 Cartoon & Anime** (5): 1930s 橡皮管卡通 1930s Rubber Hose Cartoon, 80 年代赛璐璐动画 80s Cel Anime, 科幻情景喜剧卡通 Sci-Fi Sitcom Toon, 50s 扁平卡通 Mid-century Cartoon, Kai 手绘短视频 Kai Hand-Draw Reel
-- **游戏 Games** (4): 16-bit 像素 RPG 16-bit Pixel RPG, HD-2D, 微游戏快闪（瓦里奥制造式） Microgame Frenzy, 综艺节奏扁平 Game Show Flat
-- **电影与时代 Cinema & Eras** (2): 1920s 默片 1920s Silent Film, 后室 / 新怪谈 Liminal Found Footage
-- **材质与 3D Materials & 3D** (5): 积木玩具 Brick Toy, 纸片立体书 Paper Pop-up Book, 移轴微缩 Tilt-Shift Miniature, 低多边形等距 Low-poly Isometric Island, 玻璃质感产品 Glass Product Render
+- **Evidence Films** (8): Satellite Briefing, Engineering Briefing Board, LiDAR Survey, Projection on White Model, Data Physicalization, Exploded Teardown, Microscope Story, Archive Light Table
+- **Hand-drawn & Painting** (7): Crayon Picture Book, Watercolor Brush, Chinese Ink Wash, Impasto Oil Painting, One-line Drawing, Whiteboard Explainer, Urban Sketch · Pen & Wash
+- **East Asian Traditions** (4): Shadow Puppetry, Ukiyo-e, Red Paper-cut, Paper-cut Lightbox
+- **Print & Printmaking** (5): Risograph Print, Halftone Dossier, Woodcut Print, Copperplate Engraving, Silkscreen Travel Poster
+- **Graphic & Type** (7): Swiss Motion Graphics, 60s Spy Title Sequence, Art Deco, Blueprint, Stained Glass, Pictogram Motion, ASCII / CRT Terminal
+- **Information & Keynote** (5): Data Storytelling, Isometric Infographic, Dark Tech Keynote, Living Screencast, Sci-fi Hologram HUD
+- **Cartoon & Anime** (5): 1930s Rubber Hose Cartoon, 80s Cel Anime, Sci-Fi Sitcom Toon, Mid-century Cartoon, Kai Hand-Draw Reel
+- **Games** (4): 16-bit Pixel RPG, HD-2D, Microgame Frenzy, Game Show Flat
+- **Cinema & Eras** (2): 1920s Silent Film, Liminal Found Footage
+- **Materials & 3D** (5): Brick Toy, Paper Pop-up Book, Tilt-Shift Miniature, Low-poly Isometric Island, Glass Product Render
 <!-- style-list:end -->
 
 ## Workflow
@@ -62,7 +60,7 @@ All 52 styles · 全部风格:
    - whether they have material of their own: a voice recording or a preferred voice, music, photos, logos, fonts, and for a style built from real material, their own data or scans;
    - the film's language, if it isn't obvious (default: the language they write in, for voice and subtitles);
    - whether they want to review a storyboard first (default: no);
-   - anything missing on their machine: first run `sh plugin/skills/lemo-opuscar/scripts/setup.sh deps` from the library root (core only) and include what it reports. Add the voice and music tiers later, only if the film needs them (TECHNIQUE.md §1).
+   - anything missing on their machine: first run `pixi run studio doctor` from the library root and include what it reports (`pixi run studio install` sets up what is missing). Use the full environment (`pixi run -e full`, for the Kokoro voice or plucked strings) and `pixi run fetch …` packs later, only if the film needs them (TECHNIQUE.md §1).
 
    Skip what their request already answers. Wait for the reply, fill every other gap with a sensible default, sum up the brief in a few lines and start. Don't come back with more questions.
 2. **Treatment.** Write `TREATMENT.md` in the project folder (DIRECTOR.md §4), before you open the demo.
@@ -75,7 +73,7 @@ Report progress in the user's language. If a step fails, read the error, fix the
 
 ## Where things go
 
-- The film's project folder is `films/<name>/` in a clone (ignored by git), or `<name>/` in the user's folder in skill mode (see the skill's `SKILL.md`). Wherever a guide says `films/<name>/`, read "the project folder". Work only there, unless the user asks you to work in their own project.
-- Run `node core/…` and `sh tools/…` from the library root (`$LIB` in skill mode).
+- The film's project folder is `films/<name>/` (ignored by git). Wherever a guide says `films/<name>/`, read "the project folder". Work only there, unless the user asks you to work in their own project.
+- Run `node core/…` and `pixi run …` from the library root; Python is always `pixi run python` (or `pixi run -e full python`).
 - `core/` has ready-made tools (rendering, TTS, speech check, sampler, sfx, mux). Use them or your own stack, but don't edit `core/` or `styles/` for a user's film.
 - Never kill processes you didn't start. Don't leave background processes running.

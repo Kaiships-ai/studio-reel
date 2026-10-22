@@ -1,5 +1,5 @@
 """Toy Town Rush Hour — 原创配乐（采样马林巴极简主义，事件驱动）
-运行：.venv/bin/python styles/tilt-shift/demo/music/score.py
+运行：pixi run python styles/tilt-shift/demo/music/score.py
 输入 ../events.json；输出 score.wav（48k 立体声）、stems/*.wav、cues.json、CREDITS.txt
 
 设计：120 BPM，十六分 = 0.125s。调性中心 D（D 利底亚 D E F# G# A B C#，与 D 大五声游移）。

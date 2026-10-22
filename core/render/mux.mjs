@@ -43,7 +43,7 @@ const probeDur = f => parseFloat((run('ffprobe', ['-v', 'error', '-show_entries'
 const hms = s => { if (!s || s.startsWith('-') || !s.includes(':')) return 0; const [h, m, x] = s.split(':'); return +h * 3600 + +m * 60 + +x; };
 
 /** Mux one film. Returns { out, I, LRA, TP }. Throws MuxError with a readable message. */
-export function mux({ video, audio, out, fps = 24, grain = 2, color = process.env.STUDIO_COLOR || process.env.LEMO_COLOR || '' }) {
+export function mux({ video, audio, out, fps = 24, grain = 2, color = process.env.STUDIO_COLOR || '' }) {
   if (!video || !audio || !out) die('usage: node core/render/mux.mjs video.mp4 mix.wav out.mp4 [fps=24] [grain=2]');
   if (!existsSync(video)) die(`video not found: ${video}`);
   if (!existsSync(audio)) die(`audio not found: ${audio}`);

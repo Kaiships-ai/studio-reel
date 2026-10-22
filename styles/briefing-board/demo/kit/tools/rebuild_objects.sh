@@ -9,7 +9,7 @@ set -e
 KIT=$(cd "$(dirname "$0")/.." && pwd); DEMO=$(dirname "$KIT")
 LIB=${LIB:-$(cd "$DEMO/../../.." && pwd)}
 cd "$DEMO"
-python3 kit/tools/fetch_sources.py
+pixi run python kit/tools/fetch_sources.py
 . kit/tools/kit_env.sh
 PY="$KPY"
 T="kit/tools"; SRC="sources/candidates"; M="sources/masks"; D="sources/derived"   # relative: the metas record portable paths

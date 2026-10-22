@@ -93,7 +93,7 @@ Voice: calm male storyteller, first person, 5 short lines (Kokoro `am_adam`, spe
 
 ## End card
 
-The whole scroll across the middle on dark indigo `#161a22`; title above, `UKIYO-E · a Lemo-Opuscar demo · LemoLab × Claude Opus 5.5` below, one seal (drawn `source-over`, not multiply, on the dark background). The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card.
+The whole scroll across the middle on dark indigo `#161a22`; title above, `UKIYO-E · a Lemo-Opuscar demo · LemoLab × Claude Opus 5.5` below, one seal (drawn `source-over`, not multiply, on the dark background). The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 ## Build notes
 
@@ -113,7 +113,7 @@ styles/ukiyoe/demo/
 2. `core/tts/tts.py lines.json voices` → `core/tts/asr_check.py`.
 3. `node core/render/events.mjs styles/ukiyoe/demo` → `music/score.py` → `mix.py`.
 4. `node core/render/video.mjs styles/ukiyoe/demo --fps 24 --workers 3` (1056 frames ≈ 45 s, Canvas2D).
-5. `core/render/mux.sh out/video24.mp4 mix.wav ukiyoe.mp4 24 0` → `check_asr.py ukiyoe.mp4`.
+5. `core/render/mux.mjs out/video24.mp4 mix.wav ukiyoe.mp4 24 0` → `check_asr.py ukiyoe.mp4`.
 
 Or simply `sh styles/ukiyoe/demo/build.sh`.
 

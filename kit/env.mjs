@@ -71,7 +71,7 @@ export function env() {
   try { envLockHash = readFileSync(installMarker(), 'utf8').trim(); } catch {}
   cached = derive({
     os: process.platform, arch: process.arch, root: ROOT, cores: cpus().length, exists: existsSync,
-    angle: process.env.STUDIO_ANGLE || process.env.LEMO_ANGLE || '', lockHash: lockHash(), envLockHash,
+    angle: process.env.STUDIO_ANGLE || '', lockHash: lockHash(), envLockHash,
     envName: process.env.PIXI_ENVIRONMENT_NAME || 'default',
   });
   return cached;

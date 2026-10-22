@@ -62,7 +62,7 @@ Mix (in `mix.py`): stems set against the voice by active RMS (music −11 dB, pu
 
 ## End card
 
-The camera climbs back until the glass fills the frame; on its empty cover glass, in ink: 量出来的蓝 (Noto Serif SC 600), *Measured Blue*, a rule drawn left to right, `MICROSCOPE STORY · 显微叙事`, `LemoLab × Claude Opus 5.5`, `数据：Ventana-1 · PathAI · CC0`; the tissue fleck sits to the right. 4.2 s. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card.
+The camera climbs back until the glass fills the frame; on its empty cover glass, in ink: 量出来的蓝 (Noto Serif SC 600), *Measured Blue*, a rule drawn left to right, `MICROSCOPE STORY · 显微叙事`, `LemoLab × Claude Opus 5.5`, `数据：Ventana-1 · PathAI · CC0`; the tissue fleck sits to the right. 4.2 s. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 ## Build notes
 

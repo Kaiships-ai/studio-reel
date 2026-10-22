@@ -71,7 +71,7 @@ Voice: Kokoro `af_heart`, speed 0.86–0.90 (v3 re-voice: `bf_emma` read too bri
 
 Title: hand-lettered on the page in two lines in a corner (Gaegu Bold), written on letter by letter while the colours are scribbled in. Subtitles: Patrick Hand 54 px, indigo crayon.
 
-End card: the next page of the book — "The End" (Gaegu Bold), a small crescent doodle, the style name and credit in Patrick Hand. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card.
+End card: the next page of the book — "The End" (Gaegu Bold), a small crescent doodle, the style name and credit in Patrick Hand. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 ## Build notes
 

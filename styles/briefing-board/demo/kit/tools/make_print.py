@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """A photo print for the wall: a crop of the original photograph on white photo paper.
-    python3 kit/tools/make_print.py <photo> <id> --crop x0,y0,x1,y1 [--w 1100 --border .045 --sat .85]"""
+    pixi run python kit/tools/make_print.py <photo> <id> --crop x0,y0,x1,y1 [--w 1100 --border .045 --sat .85]"""
 import argparse, json, os
 import numpy as np
 from PIL import Image, ImageOps

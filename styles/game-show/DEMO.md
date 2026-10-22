@@ -76,7 +76,7 @@ Motion numbers: `hopY(t, h)` h 8–30 px; `hitSq` 30 rad/s for 0.35 s; downbeat 
 
 ## End card
 
-The demo's last card carries **"LemoLab × Claude Opus 5.5"** (× is U+00D7). It is the first line of the credit card that pops in at bar 90 (144.0 s): a cream 1440×360 card (r 40, 8 px ink outline, −1.5° tilt, back-ease pop over 0.3 s) with three centred lines: `LemoLab × Claude Opus 5.5` in Fredoka 700 66 px ink (y −80), `本片由 Claude Opus 5.5 全程代码生成` in Noto Sans SC 900 60 px (y 30), `下一关：正在训练中……` 50 px in `K.claude` (y 118). It holds 4 s and fades to navy with the film. Code: the `credit` block in the ending scene of `main_b.js`. This sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card (take the `credit` block out when reusing the code).
+The demo's last card carries **"LemoLab × Claude Opus 5.5"** (× is U+00D7). It is the first line of the credit card that pops in at bar 90 (144.0 s): a cream 1440×360 card (r 40, 8 px ink outline, −1.5° tilt, back-ease pop over 0.3 s) with three centred lines: `LemoLab × Claude Opus 5.5` in Fredoka 700 66 px ink (y −80), `本片由 Claude Opus 5.5 全程代码生成` in Noto Sans SC 900 60 px (y 30), `下一关：正在训练中……` 50 px in `K.claude` (y 118). It holds 4 s and fades to navy with the film. Code: the `credit` block in the ending scene of `main_b.js`. This sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card (take the `credit` block out when reusing the code).
 
 ## Rights & facts
 
@@ -112,7 +112,7 @@ styles/game-show/demo/
   historical: main.js (generated), remix2026.js (draft of the remix section, superseded by main_b.js)
 ```
 
-All commands from `styles/game-show/demo/` (the scripts also `chdir` there themselves). `PY=../../../.venv/bin/python`.
+All commands from `styles/game-show/demo/` (the scripts also `chdir` there themselves). `PY="pixi run python"`.
 
 1. **Plan on the grid.** Fill `SECT` (first bar of each level card) in `main_b.js`, set `END_BAR` via the replace in `assemble.py`, add the card bars to `CUTS`, and write a cue list: which beats get which `ev()`.
 2. **Shouts:** add lines to `voices/lines3.txt`, then `sh make_voices.sh out/voices_new` (macOS `say` + ffmpeg), listen, copy the keepers into `voices/`, add the names to `VO` in `music.py`.

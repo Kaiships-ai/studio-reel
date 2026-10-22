@@ -131,7 +131,7 @@ mus *= duck[:, None]
 
 def rms(x): return np.sqrt(np.mean(x ** 2) + 1e-12)
 mix = mus * .85 + vob * .95 + sfxb * 1.0 + amb * 1.0
-# 预先把整体电平推到 RMS≈-17 dB 再限幅在 -1.5 dBFS，让 mux.sh 的两遍 loudnorm 可以线性增益到 -14 LUFS（峰值不会逼它退回动态模式）
+# 预先把整体电平推到 RMS≈-17 dB 再限幅在 -1.5 dBFS，让 mux.mjs 的两遍 loudnorm 可以线性增益到 -14 LUFS（峰值不会逼它退回动态模式）
 mix *= 10 ** ((-17 - 20 * np.log10(rms(mix))) / 20)
 for ch in range(2): mix[:, ch] = limit(mix[:, ch], .84)
 sf.write(os.path.join(HERE, 'mix.wav'), mix.astype(np.float32), SR)

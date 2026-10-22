@@ -111,7 +111,7 @@ Cream `G.CREAM = #fbf6ec`, ink `G.INK = #15111c`. **Gold and ochre take dark typ
 - The type on the cards *is* the text layer; nothing extra is burned in. `pictogram-motion.srt` lists the title cards (intro lines, chapter titles, each card "01/43  ATHLETICS — SPRINT / 短距離", slogan, end card), generated from the EDL by `demo/srt.cjs`.
 - **Bilingual rule**: EN is always the big title. The second language is chosen by `?lang=`: `ej` puts Japanese in the big second line (`s.jpBig || s.jp`) and drops the small JP line; the default (ZH) puts Chinese big and Japanese small.
 - **End sequence (demo)**: cream end card, red sun + five-colour rings → **IMAGINE ONE ASIA / ここで、ひとつに。** (the official slogan) → **AICHI-NAGOYA 2026**, the dates, five colour bars and the credit line → fade to black (the last 1.3 s) → 2 s black tail over the music's ring-out.
-- **Credit line**: our library's demo ends with "LemoLab × Claude Opus 5.5". It sits on the end card, centred under the five colour bars: `G.maskText(ctx, 'LemoLab × Claude Opus 5.5', W / 2, 1000, F.mono(24), rgba(G.INK, 0.6), inv(0.6, 1.2, l), { ls: '4px', align: 'center' })` in `finaleScene` (right after the colour-bar loop). It slides up 0.6 s after the end card lands (just after the bars), holds for about 3.5 s and fades out with the card. It is quieter than the date line, so it never competes with the title. This sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card (take the line out of `finaleScene` when you adapt the code).
+- **Credit line**: our library's demo ends with "LemoLab × Claude Opus 5.5". It sits on the end card, centred under the five colour bars: `G.maskText(ctx, 'LemoLab × Claude Opus 5.5', W / 2, 1000, F.mono(24), rgba(G.INK, 0.6), inv(0.6, 1.2, l), { ls: '4px', align: 'center' })` in `finaleScene` (right after the colour-bar loop). It slides up 0.6 s after the end card lands (just after the bars), holds for about 3.5 s and fades out with the card. It is quieter than the date line, so it never competes with the title. This sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card (take the line out of `finaleScene` when you adapt the code).
 
 ## Build notes
 
@@ -141,7 +141,7 @@ cd styles/pictogram-motion/demo
 node music/export_timeline.cjs                       # → music/timeline.json
 
 # 2. Score (≈30 s; writes music/music_bed.wav, sfx.wav, music.wav, report.txt)
-../../../.venv/bin/python music/music.py
+pixi run python music/music.py
 grep "shots pass" music/report.txt                  # expect 79/79
 
 # 3. Pose check sheets and stills while working

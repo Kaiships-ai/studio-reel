@@ -1,5 +1,5 @@
 """Mix: foley (glass, lead, stone, air) + narration + score (ducked under voice) -> mix.wav
-Run from repo root: .venv/bin/python styles/stained-glass/demo/mix.py"""
+Run from repo root: pixi run python styles/stained-glass/demo/mix.py"""
 import sys, os, json, numpy as np, soundfile as sf, soxr
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')); sys.path.insert(0, ROOT)
 from core.audio.sfx import SR, t_, env_exp, bp, lp, hp, noise, norm, brown, compress, limit, add

@@ -58,7 +58,7 @@ Camera settings used: azimuth 45° by default, elevation **30°** (build), **33�
 
 ## End card
 
-The night scale-reveal frame, darkened; the same title block (static), hex icon, `LOW-POLY ISLAND · LEMO-OPUSCAR`, `LemoLab × Claude Opus 5.5`, credits, laid out so the tiny lit island stays visible in a gap between the text blocks. The "LemoLab × Claude Opus 5.5" sign-off (and the LEMO-OPUSCAR line) belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card.
+The night scale-reveal frame, darkened; the same title block (static), hex icon, `LOW-POLY ISLAND · LEMO-OPUSCAR`, `LemoLab × Claude Opus 5.5`, credits, laid out so the tiny lit island stays visible in a gap between the text blocks. The "LemoLab × Claude Opus 5.5" sign-off (and the LEMO-OPUSCAR line) belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 ## Build notes
 
@@ -78,7 +78,7 @@ styles/lowpoly-island/demo/
 2. `core/tts/tts.py lines.json voices` → `core/tts/asr_check.py` until all OK.
 3. `node core/render/events.mjs styles/lowpoly-island/demo` → `music/score.py` → `music/check.py` → `mix.py`.
 4. `node core/render/video.mjs styles/lowpoly-island/demo --fps 24 --workers 3` (1272 frames, 2× SSAA + GTAO).
-5. `sh core/render/mux.sh out/video24.mp4 mix.wav lowpoly-island.mp4 24 0`. Or just `sh demo/build.sh`.
+5. `node core/render/mux.mjs out/video24.mp4 mix.wav lowpoly-island.mp4 24 0`. Or just `sh demo/build.sh`.
 
 Pitfalls tied to this demo's props:
 

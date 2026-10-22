@@ -50,7 +50,7 @@ Voice: relaxed male narrator, Kokoro `am_adam`, speed 0.95, 5 short lines at 5.6
 
 Subtitles: paper-white knockout strip, 6 px radius, centred 1000 px down, Blue text, Jost 500 42 px, 0.5 px tracking. Title card: "SUNDAY RIDE", Bricolage 800 190 px on the Blue plate in the sky, revealed by a left→right wipe on the first chord, removed on a beat.
 
-End card: blank paper, the title double-hit in Pink + Blue (10 px offset), "RISOGRAPH PRINT", the credit line, registration crosshairs in the corners, and a tiny rider crossing the baseline while the bell rings. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card.
+End card: blank paper, the title double-hit in Pink + Blue (10 px offset), "RISOGRAPH PRINT", the credit line, registration crosshairs in the corners, and a tiny rider crossing the baseline while the bell rings. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 ## Build notes
 

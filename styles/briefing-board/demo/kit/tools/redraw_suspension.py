@@ -4,7 +4,7 @@ positions measured in the cut-out itself. Keyed hangers turn into pale smears on
 is stretched; a parabola fitted to each main cable and the measured hanger positions give clean,
 honest geometry, while the towers and deck stay the photograph.
 
-    python3 kit/tools/redraw_suspension.py <id> [--color .36,.38,.41 --cable 7 --hanger 4 --ss 3]
+    pixi run python kit/tools/redraw_suspension.py <id> [--color .36,.38,.41 --cable 7 --hanger 4 --ss 3]
 
 Uses meta anchors L / R (tower centres at the water line). Towers stay in front of the cables.
 """

@@ -1,5 +1,5 @@
 """成片旁白可懂度自检：从 mix.wav 按字幕区间切段，whisper 转写对比原文
-.venv/bin/python styles/blueprint/demo/tools/check_mix.py"""
+pixi run python styles/blueprint/demo/tools/check_mix.py"""
 import os, json, re, numpy as np, soundfile as sf, librosa
 from faster_whisper import WhisperModel
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

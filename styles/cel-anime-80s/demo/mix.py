@@ -1,5 +1,5 @@
 # 混音：原创配乐（music/score.wav）+ 引擎（按转速曲线合成）+ 雨 / 风 / 海 + 事件拟音 + 人声（调度员走无线电）→ mix.wav
-# 用法：.venv/bin/python styles/cel-anime-80s/demo/mix.py
+# 用法：pixi run python styles/cel-anime-80s/demo/mix.py
 import sys, os, json, numpy as np, soundfile as sf, librosa
 from scipy.ndimage import maximum_filter1d, uniform_filter1d
 HERE = os.path.dirname(os.path.abspath(__file__))

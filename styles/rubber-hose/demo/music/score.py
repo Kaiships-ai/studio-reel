@@ -1,5 +1,5 @@
 """《Coffee Cup Chase》原创配乐：30 年代大乐队 / ragtime（144 BPM，4/4，30 小节 = 50.0 s）
-运行：.venv/bin/python styles/rubber-hose/demo/music/score.py
+运行：pixi run -e full python styles/rubber-hose/demo/music/score.py
 乐器：core/audio/sampler.py 采样（VSCO 2 CE 小号/弱音小号/单簧管/大号/立式钢琴/军鼓/镲/底鼓；VCSL 木琴/木鱼/吊镲）
       + core/audio/pluck.py 班卓（物理建模）+ numpy 合成的滑哨、弹簧"啵嘤"、军鼓刷扫
 输出：score.wav（48 kHz 立体声）、stems/*.wav、score.json（卡点 + cue + 自检）

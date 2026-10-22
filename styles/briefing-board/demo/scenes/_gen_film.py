@@ -2,7 +2,7 @@
 """The whole film as data: one board (the briefing wall), one continuous camera, timed elements,
 sound events and bilingual subtitles  →  scenes/film.json and audio/cues.json.
 
-    python3 scenes/_gen_film.py
+    pixi run python scenes/_gen_film.py
 
 Everything is timed on a 120 BPM grid (beat = 0.5 s; hits on sixteenths) and on the narration
 (audio/vo/dur.json). Layout is in board px (zoom 1 shows 1,920 board px across). The river is

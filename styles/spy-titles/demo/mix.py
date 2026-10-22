@@ -1,5 +1,5 @@
 """混音：纸 + 金属 + 磁带拟音（全部程序合成）+ 磁带简报旁白 + 配乐（旁白下闪避）→ mix.wav
-.venv/bin/python styles/spy-titles/demo/mix.py
+pixi run python styles/spy-titles/demo/mix.py
 """
 import sys, os, json, numpy as np, soundfile as sf, librosa
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.abspath(os.path.join(HERE, '../../..'))

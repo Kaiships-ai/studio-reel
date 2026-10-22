@@ -1,5 +1,5 @@
 """卡点自检：画面关键事件（锁定 / 数值确认 / 点亮 / 热点 / CTA / 旁白起点）↔ 配乐 onset 与静音区。
-用法（仓库根）：.venv/bin/python styles/hologram-hud/demo/tools/cuecheck.py"""
+用法（仓库根）：pixi run python styles/hologram-hud/demo/tools/cuecheck.py"""
 import os, json
 D = os.environ.get('HH_WORK') or os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 EV = json.load(open(os.path.join(D, 'events.json')))['ev']

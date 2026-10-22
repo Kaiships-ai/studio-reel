@@ -2,7 +2,7 @@
 # 从零重现《The Bell Founder》：sh styles/woodcut/demo/build.sh（任意目录运行）
 set -e
 cd "$(dirname "$0")/../../.."
-PY=.venv/bin/python; D=styles/woodcut/demo; O=styles/woodcut
+PY="pixi run -e full python"; D=styles/woodcut/demo; O=styles/woodcut
 $PY core/tts/tts.py $D/lines.json $D/voices                       # 1. Kokoro 配音（am_onyx 0.88，4 句）
 $PY core/tts/asr_check.py $D/lines.json $D/voices                 # 2. whisper 逐句校对 → words.json
 $PY $D/music/score.py                                             # 3. 原创配乐（读 timeline.json）→ music/score.wav + stems + score.json

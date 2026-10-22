@@ -2,12 +2,12 @@
 
 A user picks a style from the library, changes what they want in it, gives it a new name and keeps it as **their own style**. It lives outside the library and never changes it. Then they can name it like any library style when they ask for a film.
 
-Use this guide when the user wants to change a style ("I want to change this style", "make my own version", "我想改风格", "做成我自己的风格"), or when they name a style that is in their own folder. Everything else in a film follows [`AGENTS.md`](AGENTS.md) as usual.
+Use this guide when the user wants to change a style ("I want to change this style", "make my own version"), or when they name a style that is in their own folder. Everything else in a film follows [`AGENTS.md`](AGENTS.md) as usual.
 
 ## Where it lives
 
-- Their styles live in **`~/lemo-my-styles/`**, outside the library, in both clone and skill mode, so library updates, `git pull` and uninstalling never touch them. Use another folder only if the user names one.
-- Each style has its own folder, `~/lemo-my-styles/<slug>/`. `~/lemo-my-styles/README.md` lists them all (one line each: English and Chinese name, slug, base style, what changed). It's how you find a style by name.
+- Their styles live in **`~/kaiships-my-styles/`**, outside the library, so library updates, reinstalls and uninstalling never touch them. Use another folder only if the user names one.
+- Each style has its own folder, `~/kaiships-my-styles/<slug>/`. `~/kaiships-my-styles/README.md` lists them all (one line each: English and Chinese name, slug, base style, what changed). It's how you find a style by name.
 - Never write into `styles/` or edit the library's guides for this.
 
 ## 1. Pick the base
@@ -32,16 +32,16 @@ Ask what they want to change and what to call it (English, Chinese, or both). Up
 
 ## 3. Write it down
 
-In `~/lemo-my-styles/<slug>/`:
+In `~/kaiships-my-styles/<slug>/`:
 
-- **`STYLE.md`**: a full copy of the base `STYLE.md` with the changes written into their sections, so it reads like any style prompt (same 11 sections, no "see the base" gaps). Change the title to the new name, and add one line under it: `Based on <base name> (<base slug>) from Lemo-Opuscar.` Rewrite relative links (`DEMO.md`, `demo/…`) as `$LIB/styles/<base slug>/…`. Keep every pitfall in §9 that still applies; add new ones the changes bring.
-- **`style.json`**: `slug`, `en`, `cn`, `based_on` (the base slug), `library_version` (`git -C "$LIB" rev-parse --short HEAD`, or the plugin version when `$LIB` isn't a git clone), `created`, and `line` / `line_cn` (one sentence each on what the style is).
+- **`STYLE.md`**: a full copy of the base `STYLE.md` with the changes written into their sections, so it reads like any style prompt (same 11 sections, no "see the base" gaps). Change the title to the new name, and add one line under it: `Based on <base name> (<base slug>) from Kaiships Studio.` Rewrite relative links (`DEMO.md`, `demo/…`) as `$LIB/styles/<base slug>/…`. Keep every pitfall in §9 that still applies; add new ones the changes bring.
+- **`style.json`**: `slug`, `en`, `cn`, `based_on` (the base slug), `library_version` (the `version` in the library's `package.json`, or `git -C "$LIB" rev-parse --short HEAD` when the library is a git clone), `created`, and `line` / `line_cn` (one sentence each on what the style is).
 - **`CHANGES.md`**: one row per change: section, base, now, why. This is what the user approves and what you check the test film against.
-- Add the style's line to `~/lemo-my-styles/README.md`.
+- Add the style's line to `~/kaiships-my-styles/README.md`.
 
 ## 4. Prove the look
 
-Render one style frame with the real drawing code (start from the base style's techniques, `DEMO.md` first; copy code into the test project, never edit the library). Put it next to a frame of the base style, so the changes are visible side by side, and check it against the new `STYLE.md`. Save it as `~/lemo-my-styles/<slug>/styleframe.jpg`.
+Render one style frame with the real drawing code (start from the base style's techniques, `DEMO.md` first; copy code into the test project, never edit the library). Put it next to a frame of the base style, so the changes are visible side by side, and check it against the new `STYLE.md`. Save it as `~/kaiships-my-styles/<slug>/styleframe.jpg`.
 
 **Show it to the user and wait.** If they want more changes, update `STYLE.md` and `CHANGES.md` and render again.
 
@@ -53,13 +53,13 @@ A short film whose job is to show the style working, not a full production:
 - **Every change in `CHANGES.md` is clearly on screen** at least once, and the style's native move appears once.
 - Music and sound effects, no voice and no subtitles unless the user asks (a voice is a separate test).
 - Treatment: one structure is enough (no three candidates). No storyboard.
-- Build it as a normal project (`films/<slug>-test/` in a clone, `<slug>-test/` in the user's folder in skill mode) with the usual checks for picture and sound (DIRECTOR.md §11; no LemoLab sign-off).
-- Copy the film and its poster to `~/lemo-my-styles/<slug>/test.mp4` and `test.jpg`.
+- Build it as a normal project (`films/<slug>-test/`) with the usual checks for picture and sound (DIRECTOR.md §11; none of the demo's credits).
+- Copy the film and its poster to `~/kaiships-my-styles/<slug>/test.mp4` and `test.jpg`.
 
 Tell the user where the style folder and the test film are, and list each change with the second where it can be seen.
 
 ## 6. Revise or use it
 
 - **Not right yet**: change `STYLE.md` and `CHANGES.md`, then render the style frame and the test film again.
-- **Using it**: when the user names it, read `~/lemo-my-styles/<slug>/STYLE.md` in place of a library `STYLE.md` and follow the normal workflow in `AGENTS.md`. For techniques, the demo is the base style's (`$LIB/styles/<based_on>/DEMO.md`). The films are the user's: no LemoLab credit, no watermark.
+- **Using it**: when the user names it, read `~/kaiships-my-styles/<slug>/STYLE.md` in place of a library `STYLE.md` and follow the normal workflow in `AGENTS.md`. For techniques, the demo is the base style's (`$LIB/styles/<based_on>/DEMO.md`). The films are the user's: no credit or watermark from us.
 - **After a library update**: if the base `STYLE.md` changed since `library_version`, mention it once and offer to bring the useful fixes into their copy. Don't change their style without asking.

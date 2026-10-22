@@ -1,5 +1,5 @@
 """混音：笔尖沙沙声（按笔速合成，本片最重要的音效）+ 落笔 + 洇墨 + 室内底噪 + 旁白 + 独奏大提琴
-python styles/one-line/demo/mix.py → demo/mix.wav（48k 立体声，响度交给 mux.sh 两遍 loudnorm）"""
+python styles/one-line/demo/mix.py → demo/mix.wav（48k 立体声，响度交给 mux.mjs 两遍 loudnorm）"""
 import sys, os, json, numpy as np, soundfile as sf, librosa
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
 sys.path.insert(0, ROOT)

@@ -50,7 +50,7 @@ One continuous camera (C1 spline over time in target, distance, heading, pitch).
 | History | 28.75–35.6 | rising sine glide for each bar, marimba on its landing | |
 | End | 33.75–40 | grains for the regrowth; forest bed J-cut from 34.4; F-major chord (marimba, pad, bowed vibraphone, soft timpani) | |
 
-Mix (in `mix.py`): music −10 dB under the voice and ducked ~5 dB while it speaks, pulse, foley and beds below; bus compression on music, pulse, foley and beds only; sub-bass high-passed at 38 Hz (46 Hz on hits) with a −5 dB shelf below 62 Hz; master stage to −14.4 LUFS with a true-peak limiter at −4.6 dBTP so `mux.sh` stays linear. The film measures −14.0 LUFS, peak −3.9 dBFS, LRA 2.4 LU (`demo/tools/audiocheck.py` for the impacts and the silence).
+Mix (in `mix.py`): music −10 dB under the voice and ducked ~5 dB while it speaks, pulse, foley and beds below; bus compression on music, pulse, foley and beds only; sub-bass high-passed at 38 Hz (46 Hz on hits) with a −5 dB shelf below 62 Hz; master stage to −14.4 LUFS with a true-peak limiter at −4.6 dBTP so `mux.mjs` stays linear. The film measures −14.0 LUFS, peak −3.9 dBFS, LRA 2.4 LU (`demo/tools/audiocheck.py` for the impacts and the silence).
 
 ## Palette & props
 
@@ -61,7 +61,7 @@ Mix (in `mix.py`): music −10 dB under the voice and ducked ~5 dB while it spea
 
 ## End card
 
-Left third over the dimmed field system while the canopy regrows: 林下的田 (Noto Sans SC 500), *The Fields Under the Forest*, a short amber rule, `LIDAR SURVEY · 点云测绘`, `LemoLab × Claude Opus 5.5`. 4.1 s. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card.
+Left third over the dimmed field system while the canopy regrows: 林下的田 (Noto Sans SC 500), *The Fields Under the Forest*, a short amber rule, `LIDAR SURVEY · 点云测绘`, `LemoLab × Claude Opus 5.5`. 4.1 s. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 ## Build notes
 

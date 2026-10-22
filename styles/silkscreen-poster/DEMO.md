@@ -68,7 +68,7 @@ No narration and no subtitles: the poster text *is* the information. The title c
 
 ## End card
 
-The end card is printed as a last landscape mini-poster in two pulls: a split-fountain pull for the art (sky bands, sun ring, ridge, trail dashes, title), then a `near` pull for the info band (style name, `Lemo-Opuscar`, `LemoLab × Claude Opus 5.5`, font and sample credits). The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card.
+The end card is printed as a last landscape mini-poster in two pulls: a split-fountain pull for the art (sky bands, sun ring, ridge, trail dashes, title), then a `near` pull for the info band (style name, `Lemo-Opuscar`, `LemoLab × Claude Opus 5.5`, font and sample credits). The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 ## Build notes
 
@@ -78,7 +78,7 @@ The end card is printed as a last landscape mini-poster in two pulls: a split-fo
 3. `music/compose.py` reads `events.json` → `score.wav` plus stems.
 4. `mix.py` → `mix.wav` (ambience, foley, ducking, silence windows).
 5. `tools/cuecheck.py` checks the mix onsets against the events: median error 4 ms; 30/33 within 1 frame. The rest are overlapping events and slow harmonica attacks.
-6. Render (`--workers 2`, through a render limiter if your machine has one) → `mux.sh … 24 3`.
+6. Render (`--workers 2`, through a render limiter if your machine has one) → `mux.mjs … 24 3`.
 
 Files: `engine/silk.js` (print engine), `engine/scenes.js` (5 built-in scenes), `engine/poster.js` (template, banner, contrast), `film.js` (timeline and shots), `mix.py`, `music/compose.py`. Roughly 0.1 s per frame; a full render takes under a minute.
 

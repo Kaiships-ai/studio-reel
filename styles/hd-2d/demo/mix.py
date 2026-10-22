@@ -1,5 +1,5 @@
 # 混音：配乐 music/score.wav（配音时自动避让）+ 分场景环境声 + 事件拟音 + 旁白/对白 → mix.wav
-# 用法：.venv/bin/python styles/hd-2d/demo/mix.py [out.wav]（默认写 demo/mix.wav）
+# 用法：pixi run python styles/hd-2d/demo/mix.py [out.wav]（默认写 demo/mix.wav）
 import sys, os, json, numpy as np, soundfile as sf, librosa
 from scipy.ndimage import uniform_filter1d
 HERE = os.path.dirname(os.path.abspath(__file__))

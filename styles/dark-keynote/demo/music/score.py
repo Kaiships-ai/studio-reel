@@ -1,6 +1,6 @@
 """《Room to Think》配乐（dark-keynote 风格 demo）—— 极简主义错相，A 大调 / 升 F 小调游移，120 BPM。
 
-一键重建（任何目录）：  .venv/bin/python styles/dark-keynote/demo/music/score.py
+一键重建（任何目录）：  pixi run python styles/dark-keynote/demo/music/score.py
 唯一数据源：../timeline.json（音符时间 t、关键点 K）。所有乐音严格落在 t 上（按采样起音偏移补偿）。
 输出（本目录）：score.wav、stems/*.wav、score.json、CREDITS_music.txt、check.txt（自检数字）。
 

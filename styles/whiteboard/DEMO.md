@@ -71,7 +71,7 @@ Demo motion numbers: pen hop lift 35 % of the window max; gaps > 0.75 s send the
 - Title and end card are **written on the board** in the same single-line hand; the end card is written under the title so the film ends where it began.
 - Burned subtitles: off-white rounded label (90 %), Architects Daughter 44 px, dark ink text, a short orange marker dash bottom-left. Split at clauses, ≤ 44 chars per line, short clauses merged, two lines above 1250 px.
 
-The demo's end card is written under the title in the same hand (`demo/film.js`, block `END CARD`, from 103.3 s): "Whiteboard Explainer", "Lemo-Opuscar" in orange, "LemoLab × Claude Opus 5.5", then voice, lettering and sample credits in small type; the pen caps at 107.3 s. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card (take those `credit()` lines out when reusing the code).
+The demo's end card is written under the title in the same hand (`demo/film.js`, block `END CARD`, from 103.3 s): "Whiteboard Explainer", "Lemo-Opuscar" in orange, "LemoLab × Claude Opus 5.5", then voice, lettering and sample credits in small type; the pen caps at 107.3 s. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card (take those `credit()` lines out when reusing the code).
 
 ## Build notes
 
@@ -79,7 +79,7 @@ The demo's end card is written under the title in the same hand (`demo/film.js`,
 2. Lay out the board (regions for each idea), then write `demo/film.js`: VO start times, drawings hung on spoken words with `at(id, word)`, pens, camera keys.
 3. `node core/render/events.mjs demo` → `events.json` (every stroke, wipe, magnet, cue anchors).
 4. `music.py` (reads the same events) → `mix.py` (foley generated from events + VO + ducked score).
-5. `node core/render/video.mjs demo --fps 24` → `core/render/mux.sh … 24 2`. Whole film renders in ~30 s.
+5. `node core/render/video.mjs demo --fps 24` → `core/render/mux.mjs … 24 2`. Whole film renders in ~30 s.
 6. `demo/build.sh` does steps 3–5 plus subtitles, poster and stills; `--vo` also redoes step 1.
 
 ### Pitfalls we hit

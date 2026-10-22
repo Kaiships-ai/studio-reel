@@ -1,5 +1,5 @@
 """mix.py · 丝印旅行海报：环境底 + 拟音 + 配乐 → mix.wav
-仓库根运行：.venv/bin/python styles/silkscreen-poster/demo/mix.py
+仓库根运行：pixi run python styles/silkscreen-poster/demo/mix.py
 所有卡点来自 demo/events.json（node core/render/events.mjs 导出），配乐来自 music/score.wav（music/compose.py）。
 材质：刮板 = 橡胶刀口在尼龙网纱上（带网格颗粒的中高频"嘶"）；墨 = 湿、黏的低频"咕"；网框 = 铝框 + 铰链弹簧；纸 = 短促干燥的中频。
 """

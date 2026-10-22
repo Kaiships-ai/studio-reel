@@ -1,6 +1,6 @@
 """原创摇篮曲配乐《The Moon Can't Sleep》：3/4，72 BPM，F 大调，52.0 s
 音乐盒（pluck 模态合成）+ 玩具钢琴（numpy 金属棒击）+ 长笛 + 单簧管 + 钟琴 + 竖琴低音。
-运行：.venv/bin/python styles/crayon-book/demo/music/score.py
+运行：pixi run python styles/crayon-book/demo/music/score.py
 输出：music/score.wav、music/stems/*.wav、music/score.json
 """
 import sys, os, json

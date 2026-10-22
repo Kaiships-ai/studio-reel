@@ -50,7 +50,7 @@ One continuous take. Camera = target, azimuth (0 = south of the target looking n
 | Shadow | 27.0–31.2 | F minor floor (contrabass, cellos, soft organ), timpani heartbeat every two beats, a click per 100 m, timpani + bell when the line lands; one glass note per roof (G5 pre-war, C6 newer) | |
 | Coda / lights | 31.2–40.0 | D♭ → E♭ held; at the lights a C major chord (horns, bowed vibraphone), relays, fan settling; tubular bell C5 and two glass notes on the end card | |
 
-Mix (`demo/mix.py`): music balanced to sit 10 dB under the voice while it speaks and ducked 40 %; hits ducked 20 %, uncompressed; bus compression on music, foley and beds only; a 38 Hz high-pass (46 Hz, 4th order on hits) and a −5 dB shelf below 62 Hz on everything but the voice; master at −14.4 LUFS with a true-peak limiter at −4.6 dBTP; `mux.sh` measures the film at −13.8 LUFS, LRA 6.1 LU. `demo/tools/impactcheck.py`: the date is the loudest momentary moment, the sun −0.7 dB under it; each follows a dip of −20 and −28 dB; the silence sits 16 dB under the median program.
+Mix (`demo/mix.py`): music balanced to sit 10 dB under the voice while it speaks and ducked 40 %; hits ducked 20 %, uncompressed; bus compression on music, foley and beds only; a 38 Hz high-pass (46 Hz, 4th order on hits) and a −5 dB shelf below 62 Hz on everything but the voice; master at −14.4 LUFS with a true-peak limiter at −4.6 dBTP; `mux.mjs` measures the film at −13.8 LUFS, LRA 6.1 LU. `demo/tools/impactcheck.py`: the date is the loudest momentary moment, the sun −0.7 dB under it; each follows a dip of −20 and −28 dB; the silence sits 16 dB under the median program.
 
 ## Palette & props
 
@@ -62,7 +62,7 @@ Mix (`demo/mix.py`): music balanced to sit 10 dB under the voice while it speaks
 
 ## End card
 
-Over the white model as the house lights return, a left block: 被炸平的城市怎样长回来 (Noto Sans SC 500, 64 px), *How a Flattened City Grew Back* (Inter Tight 200), an amber rule, `白模投影 · PROJECTION ON WHITE MODEL`, `3DBAG · BAG · BGT · 鹿特丹市档案馆`, `LemoLab × Claude Opus 5.5`. 35.7–40.0 s. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card.
+Over the white model as the house lights return, a left block: 被炸平的城市怎样长回来 (Noto Sans SC 500, 64 px), *How a Flattened City Grew Back* (Inter Tight 200), an amber rule, `白模投影 · PROJECTION ON WHITE MODEL`, `3DBAG · BAG · BGT · 鹿特丹市档案馆`, `LemoLab × Claude Opus 5.5`. 35.7–40.0 s. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 ## Build notes
 

@@ -1,5 +1,5 @@
 """From Bean to Cup — sound design + mix. Run from the repo root after events.mjs and score.py:
-.venv/bin/python styles/iso-infographic/demo/mix.py   → demo/mix.wav
+pixi run python styles/iso-infographic/demo/mix.py   → demo/mix.wav
 Three layers: ambience beds (crossfaded station to station), foley synthesised per material, music (ducked under voice)."""
 import sys, os, json
 import numpy as np, soundfile as sf, librosa

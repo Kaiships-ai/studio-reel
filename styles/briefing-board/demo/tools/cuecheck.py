@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Cue check: every visual hit in scenes/film.json lands on the music grid (120 BPM, sixteenth notes;
 landings, the stamp and the arrows sit on beats or eighths, pops and small tags may take sixteenths).
-    python3 tools/cuecheck.py [--grid 0.125] [--tol 0.001]
+    pixi run python tools/cuecheck.py [--grid 0.125] [--tol 0.001]
 Hits: photo landings, the stamp, pier magnets, pops, strikes, the ruler, arrowheads, tags, the reveal.
 Exit 1 if any hit misses the grid by more than --tol seconds."""
 import json, os, sys, argparse

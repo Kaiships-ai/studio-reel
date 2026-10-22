@@ -32,7 +32,7 @@ The demo's actual colours, characters, objects and their design notes.
 
 ## End card
 
-What our end card shows. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card.
+What our end card shows. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 ## Build notes
 

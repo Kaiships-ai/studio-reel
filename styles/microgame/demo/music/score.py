@@ -1,5 +1,5 @@
 """《Five-Second Astronaut》原创配乐：放克 / 流行融合（120 → 140 → 160 BPM，E 多利亚 → F# 多利亚 → G# 小调 → A 小调 → A 大调）
-运行：.venv/bin/python styles/microgame/demo/music/score.py
+运行：pixi run -e full python styles/microgame/demo/music/score.py
 输入：demo/timeline.json（全片速度网格）
 输出：music/score.wav、music/stems/*.wav、music/score.json、music/CREDITS_music.txt
 

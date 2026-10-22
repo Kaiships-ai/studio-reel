@@ -1,5 +1,5 @@
 """Original score for 'The Dragon of the East Window' (D Dorian, plainchant / medieval church colour).
-Run: .venv/bin/python styles/stained-glass/demo/music/score.py  ->  music/score.wav, music/stems/*.wav, music/cues.json
+Run: pixi run python styles/stained-glass/demo/music/score.py  ->  music/score.wav, music/stems/*.wav, music/cues.json
 """
 import sys, os, json, numpy as np, soundfile as sf
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..'))

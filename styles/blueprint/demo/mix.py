@@ -1,5 +1,5 @@
 """混音：拟音（纸 / 木 / 笔尖 / 黄铜 / 水）+ 旁白 + 配乐（旁白下闪避）→ mix.wav
-.venv/bin/python styles/blueprint/demo/mix.py"""
+pixi run python styles/blueprint/demo/mix.py"""
 import sys, os, json, numpy as np, soundfile as sf, librosa
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.abspath(os.path.join(HERE, '../../..'))
 sys.path.insert(0, os.path.join(ROOT, 'core/audio'))

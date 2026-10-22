@@ -1,6 +1,6 @@
 """Original symphonic-jazz score for "Midnight at the Starlight Hotel" (art-deco demo).
 Piano lead + clarinet + strings + muted trumpet + brushes, 116 BPM foxtrot → accelerating Charleston (116→138) → stop → 12 bells → the song (D♭).
-All timings come from ../timeline.json. Run: .venv/bin/python styles/art-deco/demo/music/score.py
+All timings come from ../timeline.json. Run: pixi run python styles/art-deco/demo/music/score.py
 Outputs: score.wav, stems/{title,band,bells,whistle}.wav (sum = score.wav), score.json (sync keys + motif), CREDITS_music.txt"""
 import sys, os, json
 import numpy as np, soundfile as sf

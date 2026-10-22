@@ -1,5 +1,5 @@
 """《Hou Yi Shoots the Suns》原创配乐：锣鼓经 + 板胡感（erhu 采样加亮 + 鼻音共振峰 + 可变速滑音）+ 唢呐感（oboe + 饱和 + 共振峰）
-运行（仓库根目录）：.venv/bin/python styles/shadow-puppet/demo/music/score.py
+运行（仓库根目录）：pixi run python styles/shadow-puppet/demo/music/score.py
 输出：music/score.wav（48k 立体声 float，54.4 s）、music/stems/{luogu,banhu,suona,bass}.wav、music/score.json
 时间点全部抄自 demo/story.js 的 T（100 BPM，1 拍 = 0.6 s）。旋律全部原创。"""
 import sys, os, json

@@ -1,6 +1,6 @@
 """A Hundred Summers — original score. Data sonification + modular-synth bed, 90 BPM, D.
 Reads ../events.json (picture events are the score). Writes score.wav, stems/{data,pad,pulse}.wav, score.json.
-All synthesis is numpy (no samples). Run: .venv/bin/python styles/dataviz/demo/music/score.py
+All synthesis is numpy (no samples). Run: pixi run python styles/dataviz/demo/music/score.py
 """
 import os, sys, json, numpy as np, soundfile as sf
 from scipy.signal import butter, sosfilt, fftconvolve

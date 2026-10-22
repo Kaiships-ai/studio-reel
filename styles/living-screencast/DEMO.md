@@ -85,7 +85,7 @@ The Claude app's light theme (ink `#1F1E1C`, clay `#D97757`, `--clay2` `#BD5D3A`
 
 ## End card
 
-Clawd hops across "Say it. Plan it. Review it. Ship it." word by word as it is spoken (Newsreader 64 px, the last word in clay italic), then "Claude Code · in the Claude app" and a small credit line (`film.js`, end-card function): "LemoLab × Claude Opus 5.5 · Unofficial fan film · Voice · Fonts", plus the sample credits (Salamander Grand Piano V3, MuldjordKit, Versilian Studios, Karoryfer). The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card (remove that line when adapting `film.js`).
+Clawd hops across "Say it. Plan it. Review it. Ship it." word by word as it is spoken (Newsreader 64 px, the last word in clay italic), then "Claude Code · in the Claude app" and a small credit line (`film.js`, end-card function): "LemoLab × Claude Opus 5.5 · Unofficial fan film · Voice · Fonts", plus the sample credits (Salamander Grand Piano V3, MuldjordKit, Versilian Studios, Karoryfer). The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card (remove that line when adapting `film.js`).
 
 ## Build notes
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Speech check on the FINAL mix (music, foley and all): transcribe the film with faster-whisper and
 compare with the script, line by line (word match after normalising numbers and punctuation).
-    $LIB/.venv/bin/python tools/final_asr.py <film.mp4> [--model base.en]"""
+    pixi run python tools/final_asr.py <film.mp4> [--model base.en]"""
 import json, os, re, subprocess, sys, tempfile, difflib
 DEMO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 film = sys.argv[1]; model = sys.argv[sys.argv.index('--model') + 1] if '--model' in sys.argv else 'base.en'

@@ -1,5 +1,5 @@
 """《The Swordsman and the River》原创配乐（48.0 s）。
-运行：.venv/bin/python styles/ink-wash/demo/music/score.py  （在仓库根）
+运行：pixi run -e full python styles/ink-wash/demo/music/score.py  （在仓库根）
 古琴 = core/audio/pluck.py guqin（散音/按音滑音/吟猱/泛音/扫弦）；箫 = 采样长笛低音区 + 低通 + 气声噪声；
 大鼓 = gran_cassa + timpani；盖印 = gong2 small；过江脚步 = frame_drum 轻点。F 宫五声（F G A C D），旋律原创。
 输出 score.wav（48k 立体声，峰值 ≤ -1 dBFS）、stems/*.wav、score.json。"""
