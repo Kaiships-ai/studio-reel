@@ -104,4 +104,5 @@ Written by `/ig-caption`. `## Caption` is what you paste into Instagram; `## Fir
 ## Other files
 
 - `swipe.md`: written by `/ig-viral`, read by `/ig-plan` and `/ig-reel`.
+- `viral/captured.tsv`: the reels you looked at for `/ig-viral` (account, followers, median, views, hook).
 - `log.md`: `/ig-reel` appends one line per script you approve, so `/ig-plan` does not repeat a theme.
