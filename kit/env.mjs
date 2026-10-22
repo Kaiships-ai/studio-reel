@@ -37,12 +37,12 @@ export function derive({ os, arch, root, cores, exists, angle, lockHash, envLock
   for (const t of TOOLS) if (!tools[t]) problems.push({ id: t, what: `${t} is not installed in this folder yet`, fix: FIX_INSTALL });
   if (!exists(join(root, 'node_modules', 'p5.brush', 'package.json'))) problems.push({ id: 'npm', what: 'the drawing packages (p5, p5.brush) are not installed yet', fix: FIX_INSTALL });
   if (lockHash && envLockHash && lockHash !== envLockHash) problems.push({ id: 'stale', what: 'the tool versions changed since the last install (this is normal after an update)', fix: FIX_INSTALL });
-  // macOS: Metal. Elsewhere: the system GPU, with SwiftShader allowed as a fallback when there is none (CI, VMs).
-  // Since Chromium ~M139 that fallback needs --enable-unsafe-swiftshader; it never replaces a working GPU.
+  // macOS: Metal. Elsewhere: the system GPU. Everywhere SwiftShader is allowed as the fallback when there is no GPU
+  // (CI, VMs); since Chromium ~M139 that needs --enable-unsafe-swiftshader. It never replaces a working GPU.
   const a = angle || (os === 'darwin' ? 'metal' : 'default');
   const browserArgs = [
     ...(a === 'default' ? [] : [`--use-angle=${a}`]),
-    ...(os === 'darwin' && a === 'metal' ? [] : ['--enable-unsafe-swiftshader']),
+    '--enable-unsafe-swiftshader',
     '--enable-gpu', '--ignore-gpu-blocklist', '--font-render-hinting=none', '--force-color-profile=srgb',
   ];
   const binPath = bins.filter(exists);

@@ -12,12 +12,12 @@ const facts = (os, files, more = {}) => ({
 const npm = 'node_modules/p5.brush/package.json';
 const prefix = '.pixi/envs/default';
 
-test('macOS: tools from the pixi prefix bin, Metal, no SwiftShader flag', () => {
+test('macOS: tools from the pixi prefix bin, Metal, SwiftShader only as fallback', () => {
   const E = derive(facts('darwin', [npm, `${prefix}/bin/python`, `${prefix}/bin/ffmpeg`, `${prefix}/bin/ffprobe`]));
   assert.equal(E.ok, true);
   assert.equal(E.tools.python, join(ROOT, prefix, 'bin/python'));
   assert.ok(E.browser.args.includes('--use-angle=metal'));
-  assert.ok(!E.browser.args.includes('--enable-unsafe-swiftshader'));
+  assert.ok(E.browser.args.includes('--enable-unsafe-swiftshader'));
   assert.equal(E.workers, 4);
 });
 
