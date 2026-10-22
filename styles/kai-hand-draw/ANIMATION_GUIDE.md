@@ -224,7 +224,7 @@ node styles/kai-hand-draw/tools/look.mjs <film> --clip=0:4      # or: one stretc
 | `<film>/src/config.js` | `PROJECT = { name, duration, fps, bpm, offset, cover, caption? }` |
 | `engine/core.js` | canvas, palette, timing and motion helpers, `paint()`, camera, full-frame effects, `glow()`, lettering, paper, render hooks (`window.render(t)`) |
 | `engine/clawd.js`, `engine/clawd-v3.js` | Clawd: views, emotions, eyes, mouths, hats, emotes, moves; the astronaut (`{ astro: true }`) |
-| `engine/kaip.js`, `engine/kai-v3.js` | Kai, painted: `kai(pose, x, y, h, o)`; Kai v3 canon with `{ look: 'v3' }` or `kaiV3(...)` |
+| `engine/kaip.js`, `engine/kai-v3.js` | The presenter, painted: `kai(pose, x, y, h, o)`, its parts and colours from the film's `src/character.js` (`CHARACTER`); Kai v3 canon with `{ look: 'v3' }` or `kaiV3(...)` (not customizable) |
 | `engine/cast.js` | the Researcher: `researcher(x, y, s, o)` |
 | `engine/timeline.js` | `shots()`, `LOOPS`, `brushWipe()` |
 | `engine/reel.js`, `engine/kit.js` | the reel layer: chapters, captions, voiceover lookups, shared props (see `REEL_GUIDE.md`) |

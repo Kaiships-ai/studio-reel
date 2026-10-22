@@ -1,6 +1,6 @@
 ---
 name: make-reel
-description: Make one finished hand-painted vertical reel (1080x1920 MP4 + cover) in the kai-hand-draw style, starring Clawd and Kai, from a topic, a script, or an example file in styles/kai-hand-draw/examples/. Use when the user types /make-reel, or asks for a reel, a short, or an Instagram video.
+description: Make one finished hand-painted vertical reel (1080x1920 MP4 + cover) in the kai-hand-draw style, starring Clawd and your presenter, from a topic, a script, or an example file in styles/kai-hand-draw/examples/. Use when the user types /make-reel, or asks for a reel, a short, or an Instagram video.
 argument-hint: <topic | "script in quotes" | styles/kai-hand-draw/examples/<file>.json>
 ---
 
@@ -15,6 +15,8 @@ Input: `$ARGUMENTS`
   `<placeholders>`, ask the user for the real items first.
 - **A script in quotes** → speak it word for word. Split it into lines, don't edit the words.
 - **A topic** → write the script per `styles/kai-hand-draw/VOICE.md` and tick its checklist.
+- **A `character-spec v1` block** (alone or with a topic) → see **Using a character spec** below, then go on with
+  the topic. A spec alone: write the character file and ask for the topic.
 - **Nothing** → show the three examples in `styles/kai-hand-draw/examples/README.md` and ask which one, or what topic.
 
 Then follow `styles/kai-hand-draw/WORKFLOW.md` exactly, steps 1–12, with `styles/kai-hand-draw/STYLE.md` as the
@@ -32,3 +34,32 @@ text, one line per beat, hook first and CTA last; speak it word for word. Name t
 matter, else the file name). Use `## On-screen` as the card text and timings, and keep the `cta_keyword` spelled
 exactly as written. If the file has no `## Script` section, use its text as a topic. If `status` is `draft`, say once
 that `/ig-human` has not run on it, then carry on. When done, add: next `/ig-caption <slug>`.
+
+## Using a character spec
+
+Buyers design their presenter in `character-designer.html` (library root) and paste a block like this:
+
+```
+character-spec v1
+name: Mai
+skin: #C8875A
+eyes: lashes
+...
+pants_color: #6E6A5E
+```
+
+1. Make the film first (`make.mjs new <name>`), then write `films/<name>/src/character.js` as one object with the
+   same keys and values, copied line for line (strings in quotes, keys unchanged):
+   `const CHARACTER = { name: 'Mai', skin: '#C8875A', eyes: 'lashes', ..., pants_color: '#6E6A5E' };`
+   The starter's `src/character.js` lists every key and its allowed values; `engine/kaip.js` (`PARTS`) is the source
+   of truth. Keep `<script src="src/character.js"></script>` in `index.html`, after `config.js`.
+2. Don't invent parts. A value not in the list (or a colour that isn't `#RRGGBB`) is drawn as the default and shows
+   as a page warning, which fails the draft verify: fix the value, or tell the user which option is closest.
+3. `name` is not drawn: use it wherever the script, captions, `STORYBOARD.md` and `CAPTION.md` name the presenter,
+   never "Kai". The presenter is still drawn with `kai(pose, x, y, h, o)`; only the look changes.
+4. Prove it before the chapters: `node styles/kai-hand-draw/tools/look.mjs films/<name> --stills=0 --loop=kai
+   --out=films/<name>/out/check/presenter` and open the still. Hats (cap, beanie) hide a bun, spikes and the top of
+   curly hair by design.
+5. A user who wants to change the presenter later pastes a new block: rewrite `src/character.js`, nothing else.
+
+No spec pasted → keep the starter's `src/character.js` (the default presenter) and don't ask for one.
