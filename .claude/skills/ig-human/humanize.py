@@ -20,6 +20,7 @@ so that is the model's job, not a regex's.
 Usage (from the project folder)
   pixi run python .claude/skills/ig-human/humanize.py workspace/scripts/<slug>.md --in-place --report
         cleans the "## Script" section in place, keeps <slug>.orig.md, sets status: humanized
+        (only a Script section sets the status; other files keep theirs)
   pixi run python .claude/skills/ig-human/humanize.py workspace/captions/<slug>.md --in-place --section Caption
   pixi run python .claude/skills/ig-human/humanize.py draft.txt -o clean.txt --report
   add --json to emit {text, report} as JSON
@@ -326,7 +327,7 @@ def humanize_sections(raw, names, lex):
         reports.append(rep)
         done.append(name)
     fm = re.match(r"---[ \t]*\n.*?\n---[ \t]*\n", raw, re.S)
-    if fm and done:
+    if fm and "Script" in done:
         head = re.sub(r"(?m)^status:.*$", "status: humanized", fm.group(0))
         raw = head + raw[fm.end():]
     return raw, merge_reports(reports), done
