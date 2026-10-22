@@ -1,0 +1,65 @@
+# kit.manifest: the only list of what ships. release/build.mjs reads it; nothing else lists files.
+# Every tracked file must match exactly one of [starter], [pro], [dev] (the build fails otherwise, so a new file
+# cannot slip into a zip unnoticed). Patterns: `*` = any characters but /, `**` = any path, a trailing / = folder.
+# The first matching section wins, sections are tried in the order [dev], [pro], [starter].
+# Starter ships [starter]; Pro ships [starter] + [pro]. [forbid] = regexes that must not appear in any shipped text file
+# (LICENSE and THIRD_PARTY_NOTICES.md are exempt, they carry the credits on purpose).
+
+[dev]
+.claude/skills/verify/
+.claude/worktrees/
+.github/
+test/
+tools/
+release/
+styleboard/
+docs/
+kaiships/
+KAISHIPS.md
+kit.manifest
+# Kai's own likeness: kept for Kai's films, never shipped (buyers design their own presenter)
+styles/kai-hand-draw/engine/kai-v3.js
+
+[pro]
+.claude/skills/ig-plan/
+.claude/skills/ig-reel/
+.claude/skills/ig-human/
+.claude/skills/ig-viral/
+.claude/skills/ig-dm/
+.claude/skills/ig-caption/
+
+[starter]
+README.md
+LICENSE
+THIRD_PARTY_NOTICES.md
+CHANGELOG.md
+AGENTS.md
+CLAUDE.md
+DIRECTOR.md
+TECHNIQUE.md
+MY-STYLES.md
+product.json
+package.json
+package-lock.json
+pixi.toml
+pixi.lock
+.gitignore
+character-designer.html
+.claude/settings.json
+.claude/skills/studio/
+.claude/skills/make-reel/
+kit/
+core/
+styles/
+workspace/
+
+[forbid]
+kienbeovl
+/Users/
+kaiship-business
+ksa-
+hermes-mac
+tail9adca5
+polar_product_id
+plugin/skills/lemo-opuscar
+sh core/render/mux\.sh

@@ -2,7 +2,7 @@
 (Maestoso → Andante 'Loaf theme' → Hurry → stop-time → Misterioso walk → crash → Agitato → ritardando → SILENCE
 → reed organ enters → Tenderly → the wink → finale). The piano does the sound effects, as it did in 1925:
 glissandi for falls and launches, a cluster for the plank, tremolo for suspense, a crash chord for the melon.
-All timings come from ../timeline.json. Run: .venv/bin/python styles/silent-film/demo/music/score.py
+All timings come from ../timeline.json. Run: pixi run python styles/silent-film/demo/music/score.py
 Outputs: score.wav, score.json (sync keys), CREDITS_music.txt"""
 import sys, os, json
 import numpy as np, soundfile as sf

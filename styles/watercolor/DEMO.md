@@ -88,7 +88,7 @@ Plant colour sets live in `plants.js` `COL` (straw, mulga, salt, gum, gold, ash,
 - **Burned-in, bilingual**, centred at the bottom: English italic Cormorant Garamond 36 px (auto-wrapped to 2 balanced lines at 1400 px, baseline 1000 or 962/1000) + Chinese Noto Serif SC 24 px at 1042, `INK` at 78 %, both over an 18 px paper-coloured shadow halo, drawn twice for density. Visible from `start − .15` to `start + dur + .45` with 0.25/0.35 s fades. The same table (`VO` in `scene.js`) drives the mix and `watercolor.srt`.
 - **Biome card** (top-left): a short painted colour swatch, `01 / 05` mono, name in Cormorant 52 px, italic subtitle. **Gauge** (top-right): `ANNUAL RAINFALL`, value in Cormorant 54 px (`< 250 mm`, `≈ 1,600 mm`), a log-scale bar 100–4,000 mm with a blue drop marker.
 - **Title**: "Follow the Rain" italic Cormorant 124 px wiped in, then the spaced caps subtitle and the Chinese line.
-- **End card**: title block over the faded map + credits in IBM Plex Mono 15 px (music with licence, voice, coastline source, "rainfall bands are schematic"), and under them the sign-off **"LemoLab × Claude Opus 5.5"** in italic Cormorant Garamond 30 px, `INK` 85 %, centred at y 1010, fading in with the credits (105–106.2 s) — a serif italic line so it reads as the film's signature, not another asset credit. Keep it clear of the map (Tasmania sits at y ≈ 845–915). This sign-off belongs to this library's demo only: a user's film carries no LemoLab credit and no copy of this end card.
+- **End card**: title block over the faded map + credits in IBM Plex Mono 15 px (music with licence, voice, coastline source, "rainfall bands are schematic"), and under them the sign-off **"LemoLab × Claude Opus 5.5"** in italic Cormorant Garamond 30 px, `INK` 85 %, centred at y 1010, fading in with the credits (105–106.2 s) — a serif italic line so it reads as the film's signature, not another asset credit. Keep it clear of the map (Tasmania sits at y ≈ 845–915). This sign-off belongs to this library's demo only: a user's film carries none of the demo's credits and no copy of this end card.
 
 ## Pitfalls we hit (demo record)
 
@@ -119,35 +119,35 @@ styles/watercolor/demo/
   mix.py          SFX + voice + music → mix.wav      render.mjs  stills / video / part     mux.sh  → ../watercolor.mp4
 ```
 
-All commands from the repo root, Python = `.venv/bin/python`:
+All commands from the repo root, Python = `pixi run python`:
 
 ```sh
 D=styles/watercolor/demo
 # 1. voice (13 lines, ~10 s) and whisper check
-.venv/bin/python $D/tts/gen.py                 # → $D/voices/v01..v13.wav + dur.json  (OUT=dir to write elsewhere)
-.venv/bin/python $D/asr.py                     # prints each transcript; compare with tts/lines.json
+pixi run python $D/tts/gen.py                 # → $D/voices/v01..v13.wav + dur.json  (OUT=dir to write elsewhere)
+pixi run python $D/asr.py                     # prints each transcript; compare with tts/lines.json
 #    copy the durations into the VO table in scene.js (id, start, dur, en, zh) and set the start times
 # 2. music
 sh $D/music/prep.sh                            # Wildflowers.mp3 → Wildflowers.wav (22.05k mono) + wf48.wav (48k)
-.venv/bin/python $D/music/analyze.py           # → wf_beats.json (plot skipped: no matplotlib in .venv)
-.venv/bin/python $D/music/jump.py              # ranked jump candidates; pick one, put its beat indices in edit.py
-.venv/bin/python $D/music/edit.py              # → score.wav, score_beats.json
+pixi run python $D/music/analyze.py           # → wf_beats.json (plot skipped: no matplotlib in the pixi environment)
+pixi run python $D/music/jump.py              # ranked jump candidates; pick one, put its beat indices in edit.py
+pixi run python $D/music/edit.py              # → score.wav, score_beats.json
 # 3. look at frames while building (≈0.35 s/frame as PNG)
 OUT=$D/out/review node $D/render.mjs stills 5 20 43 66 90 106
-.venv/bin/python core/render/sheet.py $D/out/review/sheet.jpg $D/out/review/t_*.png --cols 3 --w 640
+pixi run python core/render/sheet.py $D/out/review/sheet.jpg $D/out/review/t_*.png --cols 3 --w 640
 # 4. mix (4 s) — writes $D/mix.wav, or pass a path
-.venv/bin/python $D/mix.py
+pixi run python $D/mix.py
 # 5. video: 6816 frames at 60 fps, ~50 ms/frame/worker (8 workers ≈ 2 min; keep 2–3 when other jobs run)
 node $D/render.mjs video 8                     # → $D/out/seg_0..7.mp4 + out/list.txt  (x264 crf 12 intermediates)
 # 6. mux (≈70 s): concat + x264 slow crf 16 g 120 + loudnorm −14 → styles/watercolor/watercolor.mp4
 sh $D/mux.sh                                   # or: sh $D/mux.sh path/to/test.mp4
 # 7. subtitles: VO table → srt
 #    ($D/out/srt_cues.json = VO rows as {t0: s-.15, t1: s+dur+.45, text: "en\nzh"}, dumped from scene.js with a 5-line node script)
-.venv/bin/python core/render/srt.py $D/out/srt_cues.json styles/watercolor/watercolor.srt
+pixi run python core/render/srt.py $D/out/srt_cues.json styles/watercolor/watercolor.srt
 ```
 
 Partial re-render (used for the end-card sign-off): `node $D/render.mjs part 99.4 113.6 $D/out/seg_7.mp4` re-creates the last 8-worker segment exactly (frames 5964–6815), then `sh $D/mux.sh`.
-One-time asset scripts (already run): `node $D/extract_aus.mjs` (coastline), `cd $D && ../../../.venv/bin/python paper.py` (paper), `node $D/fetch_fonts.mjs` (fonts, needs network).
+One-time asset scripts (already run): `node $D/extract_aus.mjs` (coastline), `cd $D && pixi run python paper.py` (paper), `node $D/fetch_fonts.mjs` (fonts, needs network).
 
 ## Engine reference
 

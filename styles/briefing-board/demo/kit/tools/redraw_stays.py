@@ -4,7 +4,7 @@ positions measured in the photo. The photographed stays (twin strands, helical f
 stair-steps and dashes when keyed and scaled; their geometry is simple and exact, so it is measured
 from the sky key and drawn again.
 
-    python3 kit/tools/redraw_stays.py <id> --key sources/masks/cable_sky.png --pylon 4681 --deck-y 2174 \
+    pixi run python kit/tools/redraw_stays.py <id> --key sources/masks/cable_sky.png --pylon 4681 --deck-y 2174 \
         --scan-deck 2110 --scan-left 4520 --scan-right 4850 [--width 7 --color .62,.64,.66]
 
 All coordinates are in the cropped photo (the key's) pixels; the object's meta 'trim' maps them.

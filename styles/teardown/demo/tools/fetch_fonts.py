@@ -1,6 +1,6 @@
 # Fonts (all SIL OFL 1.1, from Google Fonts): Noto Sans SC subset to the characters the overlay uses (CSS API text=),
 # Inter and JetBrains Mono as variable TTFs from github.com/google/fonts, plus their licence texts
-# usage: python3 -I tools/fetch_fonts.py   (run from the film folder; needs network)
+# usage: pixi run python -I tools/fetch_fonts.py   (run from the film folder; needs network)
 import re, urllib.parse, urllib.request, pathlib
 here = pathlib.Path(__file__).resolve().parent.parent
 src = ''.join(p.read_text() for p in (here / 'src').glob('*.js'))

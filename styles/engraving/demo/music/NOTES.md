@@ -4,7 +4,7 @@ Original score written in code (`score.py`; deterministic, and a rebuild gives a
 
 - **Key:** D major. **Tempo:** 96 BPM in 4/4 (beat 0.625 s, bar 2.5 s, 16 bars = 40.0 s).
 - **Forces:** harpsichord (continuo and solo figures) plus a string quartet: solo violin I and ensemble violin II, violas, cellos and contrabass. The strings play pizzicato up to 25.0 s and use the bow only from 26.25 s.
-- **Rebuild:** from the repo root, run `.venv/bin/python styles/engraving/demo/music/score.py`. It takes about 5 s and writes `score.wav`, `stems/`, `cues.json`, `CREDITS_music.txt` and `timing_report.txt`.
+- **Rebuild:** from the repo root, run `pixi run python styles/engraving/demo/music/score.py`. It takes about 5 s and writes `score.wav`, `stems/`, `cues.json`, `CREDITS_music.txt` and `timing_report.txt`.
 - **Level:** integrated loudness is -18.0 LUFS (BS.1770, checked with ffmpeg ebur128). Peak is -1.2 dBFS. The file is 48 kHz stereo, 24-bit.
 - **Stems:** `harpsichord.wav`, `pizz.wav` and `bowed.wav`. Each is 40.0 s and uses the same gain as the mix, so the three sum to the mix before the limiter (about 1 dB of peak limiting on two hits).
 

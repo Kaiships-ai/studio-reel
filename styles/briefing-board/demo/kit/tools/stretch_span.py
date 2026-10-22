@@ -2,7 +2,7 @@
 """Stretch the main span of a bridge cut-out horizontally, leaving the towers and side spans
 untouched, so a photographed bridge can stand for a longer span of the same type at true scale.
 
-    python3 kit/tools/stretch_span.py <id> <out_id> --from 0.20 --to 0.91 --k 1.7
+    pixi run python kit/tools/stretch_span.py <id> <out_id> --from 0.20 --to 0.91 --k 1.7
 
 --from / --to: normalised x range to stretch (between the inner faces of the two towers).
 Anchors are moved with the pixels; the meta records the stretch (CREDITS says so too).

@@ -56,7 +56,7 @@ Motion numbers: the target box starts at 1.9× the rest-pose bounding box, at 30
 
 ## End card
 
-After the lockup: film title, SCI-FI HOLOGRAM HUD, Lemo-Opuscar, LemoLab × Claude Opus 5.5 and credits, each line rolling in. The LemoLab sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card.
+After the lockup: film title, SCI-FI HOLOGRAM HUD, Lemo-Opuscar, LemoLab × Claude Opus 5.5 and credits, each line rolling in. The LemoLab sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 ## Build notes
 

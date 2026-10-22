@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Fetch every font the page uses from Google Fonts (all SIL Open Font License 1.1) into kit/fonts/.
 
-    python3 kit/tools/fetch_fonts.py [scenes/film.json …] [--latin-only]
+    pixi run python kit/tools/fetch_fonts.py [scenes/film.json …] [--latin-only]
 
 - Latin faces, whole files from github.com/google/fonts (ofl/): Archivo (variable, wdth + wght) as
   Archivo-VF.ttf, IBM Plex Mono Medium / SemiBold; plus each family's OFL.txt.

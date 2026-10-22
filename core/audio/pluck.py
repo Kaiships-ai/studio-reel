@@ -12,7 +12,7 @@
 import numpy as np
 from scipy.signal import butter, sosfilt, lfilter
 try: from numba import njit
-except ImportError: raise ImportError('pluck.py needs numba: install the music tier: sh plugin/skills/lemo-opuscar/scripts/setup.sh deps music') from None
+except ImportError: raise ImportError('pluck.py needs numba: run it in the full environment: pixi run -e full python ... (not available on Intel Macs)') from None
 
 try:
     from .sfx import SR

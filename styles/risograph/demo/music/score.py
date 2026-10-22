@@ -1,5 +1,5 @@
 """《Sunday Ride》原创配乐 —— 轻快 bossa nova，120 BPM，D 大调，40.000 s
-一键生成：.venv/bin/python styles/risograph/demo/music/score.py
+一键生成：pixi run python styles/risograph/demo/music/score.py
 产物：music/score.wav（立体声 48k，峰值 −3 dBFS）、music/stems/*.wav、music/score.json
 
 全部 numpy/numba 合成（core/audio/INSTRUMENTS.md 未就绪时的约定做法）：

@@ -46,13 +46,13 @@ Voices: an English-dub feel, 8 short lines: the heroine (Kokoro `af_bella`) and 
 
 - Night: indigo / deep violet / neon magenta / cyan / warm window gold. Dawn: periwinkle / rose / peach / pale gold. The hero's accent: a **coral scarf**, readable in both.
 - Colour-model multipliers used: night lit ×[.78,.74,1.0], shadow ×[.58,.52,.92]; dawn lit ×[1.04,.9,.84]; a backlit silhouette set (dark purple with an orange rim) for the jump. Skin line ≈ `#5a2e2e`.
-- Props: white motorbike, cassette labelled "SIDE A · CITY LIGHTS", headset and goggles (near-black, heavier lines), pinch-grip gloves, rev gauge, drawbridge with red warning lights, rocket on a floodlit pad across the bay, cockpit cassette deck with backlit level meters. Signs: BAR, CAFE, 喫茶, ホテル, カラオケ.
+- Props: white motorbike, cassette labelled "SIDE A · CITY LIGHTS", headset and goggles (near-black, heavier lines), pinch-grip gloves, rev gauge, drawbridge with red warning lights, rocket on a floodlit pad across the bay, cockpit cassette deck with backlit level meters. Signs: BAR, CAFE, `喫茶` (coffee house), `ホテル` (hotel), `カラオケ` (karaoke).
 - The heroine, as built in `head80.js`: eyes at the vertical middle of the head, mouth at the upper third between nose base and chin; iris layered top-dark band → dark upper half → main colour → bright lower crescent, one large and one small highlight; 2–3 separate lashes in the flick; mouth set closed / set / talk / "oh" / pant / smile / open smile with a dark-red interior and a faint lower-lip stroke; profile with a small skull-back, small slightly upturned nose, neck leaning forward. Blinks hold the closed drawing 2–3 frames; brows carry resolve vs exhaustion; shoulders rise when panting; a star glint in the eye highlight on a musical accent.
 - CRT numbers used: chroma blur ~7 px, Cr shift ~2 px; scanlines 3 px period, strength 0.18, gap `1 − a·ph·(1 − 0.6·L)`; grille ±0.06; phosphor glow 0.35; corners `1 − 0.28·(2u²v² + 0.25(u²+v²))`. Moiré check: at 720p the 3 px scanline becomes a clean 2-row alternation; 900p shows a faint 5-row pattern; below 480p it disappears. Film-only artefacts (gate weave, dust, scratches, misregistration) were tried in the treatment and removed: they contradict the tape conceit. The power-on opens the film with a thunk + line whine; tracking noise marks the tape beat with a short hiss/warble.
 
 ## End card
 
-Darkened final dawn background, the title, the style name "80s Cel Anime", "LemoLab × Claude Opus 5.5", a one-line originality note and credits. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card.
+Darkened final dawn background, the title, the style name "80s Cel Anime", "LemoLab × Claude Opus 5.5", a one-line originality note and credits. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 Title card as used: "CITY LIGHTS" in heavy italic chrome with シティ・ライツ above (Dela Gothic One), a red "1987" and a spaced-out tagline. Subtitles: Barlow Semi Condensed 600, 54 px, cream-yellow `#fff0a0`, 9 px dark outline, 96 px above the bottom; radio lines cyan `#8ff4ff` with a boxed "● BASE" tag; each line up for max(duration + 0.6 s, 1.9 s).
 
@@ -79,9 +79,9 @@ styles/cel-anime-80s/demo/
 
 1. Treatment → `story.js` (116 BPM bar grid, shots, lines).
 2. `node styles/cel-anime-80s/demo/tools/still.mjs styles/cel-anime-80s/demo --range 0.5:58.5:1 --out /tmp/cs` → `tools/sheet.py` contact sheet → look → fix. `?test=model|close|side` renders the model sheet / head close-up / rider; `?raw=1` bypasses the CRT pass; `?nosub=1` hides subtitles.
-3. `.venv/bin/python core/tts/tts.py demo/lines.json demo/voices` → `core/tts/asr_check.py`.
-4. `.venv/bin/python demo/music/score.py` (score + stems + cue times).
-5. `node core/render/events.mjs demo` → `.venv/bin/python demo/mix.py`.
+3. `pixi run python core/tts/tts.py demo/lines.json demo/voices` → `core/tts/asr_check.py`.
+4. `pixi run python demo/music/score.py` (score + stems + cue times).
+5. `node core/render/events.mjs demo` → `pixi run python demo/mix.py`.
 6. `node core/render/video.mjs demo --fps 24 --workers 4 --out demo/out/video24.mp4` (1416 frames ≈ 36 s on an M-series Mac).
 7. `sh demo/tools/mux.sh demo/out/video24.mp4 demo/mix.wav cel-anime-80s.mp4 24`, `python demo/tools/srt.py`.
 

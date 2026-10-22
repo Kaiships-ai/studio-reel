@@ -6,7 +6,7 @@ import fs from 'fs';
 import { EXE } from '../../../core/render/browser.mjs';
 // 语言：LANGQ=ej（默认，英日版）/ LANGQ=zh（中文版）。在 demo/ 目录下运行。
 const LANGQ = process.env.LANGQ || 'ej';
-const PY = fs.existsSync('../../../.venv/bin/python') ? '../../../.venv/bin/python' : '/usr/bin/python3';
+const PY = 'pixi run python';
 const args = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 const sheet = process.argv.includes('--sheet');
 const b = await chromium.launch({ executablePath: EXE, args: ['--allow-file-access-from-files'] });

@@ -1,5 +1,5 @@
 """mix.py — 拟音（按材质合成）+ 电台腔旁白 + 配乐闪避 + 1930s 光学声轨老化 → mix.wav
-运行：.venv/bin/python styles/rubber-hose/demo/mix.py（先 node core/render/events.mjs 导出 events.json）"""
+运行：pixi run python styles/rubber-hose/demo/mix.py（先 node core/render/events.mjs 导出 events.json）"""
 import os, sys, json, numpy as np, soundfile as sf
 from scipy.signal import resample_poly, butter, sosfilt
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.abspath(os.path.join(HERE, '../../..'))

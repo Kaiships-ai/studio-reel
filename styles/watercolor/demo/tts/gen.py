@@ -1,5 +1,5 @@
 # 旁白：Kokoro af_heart, speed .93 → ../voices/v01..v13.wav + dur.json
-# 用法（仓库根）：.venv/bin/python styles/watercolor/demo/tts/gen.py   （OUT=dir 可改输出目录，默认 ../voices）
+# 用法（仓库根）：pixi run -e full python styles/watercolor/demo/tts/gen.py   （OUT=dir 可改输出目录，默认 ../voices）
 # 模型用 core/tts/ 里的同一份 kokoro-v1.0.onnx / voices-v1.0.bin（与原项目 tts/ 下的逐字节相同）
 import soundfile as sf, json, numpy as np, os
 OUT = os.path.abspath(os.environ['OUT']) if os.environ.get('OUT') else None

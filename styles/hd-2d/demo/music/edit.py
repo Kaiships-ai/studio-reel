@@ -5,7 +5,7 @@ The Lampbearer 守灯人 — score edit (HD-2D demo)
 Source : "Precipice" by Scott Buckley (CC BY 4.0) — src/sb_precipice.mp3
 Output : score.wav (48 kHz, stereo, 24-bit, 76.5 s, peak <= -1 dBFS), CUES.md
 
-Re-run :  ../../../../.venv/bin/python edit.py
+Re-run :  pixi run python edit.py
           (from this folder; any python with numpy/scipy/soundfile/librosa + ffmpeg on PATH)
 
 Everything that decides timing lives in the CONFIG block below.
@@ -443,7 +443,7 @@ def write_cues(m):
 
 ## 怎么改
 
-改 `edit.py` 顶部 CONFIG：`T_HIT` 改高潮时间点（S4 会整体平移，铺垫长度随 `T_SILENCE[1]` 变化）；`T_CAESURA` 改灯灭停顿；`GAIN_POINTS` / `NARR_DIP_DB` 改响度曲线。然后在本目录运行 `../../../../.venv/bin/python edit.py`，score.wav、measure.json、CUES.md 会一起更新。
+改 `edit.py` 顶部 CONFIG：`T_HIT` 改高潮时间点（S4 会整体平移，铺垫长度随 `T_SILENCE[1]` 变化）；`T_CAESURA` 改灯灭停顿；`GAIN_POINTS` / `NARR_DIP_DB` 改响度曲线。然后在本目录运行 `pixi run python edit.py`，score.wav、measure.json、CUES.md 会一起更新。
 """
     with open(os.path.join(OUT, "CUES.md"), "w") as f:
         f.write(txt)

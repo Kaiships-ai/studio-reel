@@ -1,7 +1,7 @@
 #!/bin/sh
 # 从零重现《Toy Town Rush Hour》：sh styles/tilt-shift/demo/build.sh（在仓库根或任意目录运行均可）
 set -e
-D="$(cd "$(dirname "$0")" && pwd)"; R="$(cd "$D/../../.." && pwd)"; PY="$R/.venv/bin/python"
+D="$(cd "$(dirname "$0")" && pwd)"; R="$(cd "$D/../../.." && pwd)"; PY="pixi run -e full python"
 cd "$R"
 echo "== 1. 配音 + whisper 校对"
 $PY core/tts/tts.py "$D/lines.json" "$D/voices"
@@ -17,7 +17,7 @@ $PY "$D/mix.py"
 echo "== 5. 渲染画面（24fps，3 worker）"
 node core/render/video.mjs "$D" --fps 24 --workers 3 --q noev --out "$D/out/video24.mp4"
 echo "== 6. 合成（两遍 loudnorm -14 LUFS，颗粒 1）"
-sh core/render/mux.sh "$D/out/video24.mp4" "$D/mix.wav" "$D/../tilt-shift.mp4" 24 1
+node core/render/mux.mjs "$D/out/video24.mp4" "$D/mix.wav" "$D/../tilt-shift.mp4" 24 1
 echo "== 7. 海报与风格帧"
 node core/render/still.mjs "$D" 20.6 --q "noev&nohud" --prefix sf_ --out "$D/out/stills"
 cp "$D/out/stills/sf_20.6.jpg" "$D/stills/styleframe.jpg"

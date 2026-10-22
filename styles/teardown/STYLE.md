@@ -108,7 +108,7 @@ All in `demo/src/` (three.js r170, the library's `core/three/post.js` and `core/
 - `main.js`: layers, explode and gap functions, the camera keys (orbit or eye/target, monotone), lights, `window.EV` for the mixer.
 - `tools/extract_pcb.py`, `kicad_geom.py`, `sexp.py`: read any `.kicad_pcb` (outlines, tracks, zones, pads, silkscreen, footprints; plain Python). `tools/step2mesh.mjs`: STEP to mesh.
 
-**Extra packages and packs**, beyond `setup.sh deps [voice] [music]`: `occt-import-js` (npm, LGPL-2.1, not in the library's package.json) to triangulate STEP files, and the studio HDRI (`sh tools/fetch.sh hdri`). Install the npm package yourself into a private `node_modules` in the project folder (as `tools/fetch_cad.sh` does in a temp folder), never into `$LIB`.
+**Extra packages and packs**, beyond `pixi run studio install` (and the full environment, `pixi run -e full`, for Kokoro narration or plucked strings): `occt-import-js` (npm, LGPL-2.1, not in the library's package.json) to triangulate STEP files, and the studio HDRI (`pixi run fetch hdri`). Install the npm package yourself into a private `node_modules` in the project folder (as `tools/fetch_cad.sh` does in a temp folder), never into `$LIB`.
 
 Minimal example, not in the demo: read a plate file with `extract_pcb.py`, extrude `shapeFrom(outline, cutouts)` 1.5 mm as aluminium (`metalness: 1, roughness: .35`) and orbit it with three `CAM` keys.
 

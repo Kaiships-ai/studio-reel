@@ -1,5 +1,5 @@
 """Score, foley, beds and voice for 《被炸平的城市怎样长回来》 -> out/mix.wav + out/stems/*.wav
-usage (from the library root): .venv/bin/python <demo>/mix.py
+usage (from the library root): pixi run python <demo>/mix.py
 Reads timeline.json (beats, sections, VO times) and events.json (window.EV from the page: every layer, pop, tick, roof).
 100 BPM, beat 0.6 s. C minor (the hole) -> E-flat major (the growth) -> A-flat major (the sun) -> C major (lights up).
 Palette: the showroom (projector fan, relays, lamp strike, air of the light wash), mallets and glass for light,

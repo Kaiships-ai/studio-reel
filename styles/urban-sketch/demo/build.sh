@@ -5,9 +5,9 @@ cd "$(dirname "$0")/../../.."
 D=styles/urban-sketch/demo
 node core/render/events.mjs $D
 node $D/tools/export_cues.mjs
-.venv/bin/python $D/audio/score.py
-.venv/bin/python $D/audio/foley.py
-.venv/bin/python $D/audio/mix.py
+pixi run python $D/audio/score.py
+pixi run python $D/audio/foley.py
+pixi run python $D/audio/mix.py
 node core/render/video.mjs $D --fps 24 --workers 4 --out $D/out/video24.mp4
-sh core/render/mux.sh $D/out/video24.mp4 $D/audio/mix.wav styles/urban-sketch/urban-sketch.mp4 24 2
-.venv/bin/python core/render/srt.py $D/subs.json styles/urban-sketch/urban-sketch.srt
+node core/render/mux.mjs $D/out/video24.mp4 $D/audio/mix.wav styles/urban-sketch/urban-sketch.mp4 24 2
+pixi run python core/render/srt.py $D/subs.json styles/urban-sketch/urban-sketch.srt

@@ -1,5 +1,5 @@
 """Blueprint《The Cloud Catcher》原创配乐：巴洛克二声部创意曲，108 BPM，G 大调。
-运行：.venv/bin/python styles/blueprint/demo/music/score.py
+运行：pixi run python styles/blueprint/demo/music/score.py
 输出：score.wav（48k 立体声 47.5 s）、stems/*.wav、score.json（关键时间点 + 自检）
 """
 import sys, os, json

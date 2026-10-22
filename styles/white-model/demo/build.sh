@@ -8,7 +8,7 @@ FILM=$(cd "$HERE/.." && pwd)                         # .../<slug>
 LIB=${LIB:-$(cd "$HERE/../../.." && pwd)}            # films/<slug>/demo or styles/<slug>/demo -> library root
 export LIB
 [ -f "$LIB/core/render/video.mjs" ] || { echo "set LIB to the library folder"; exit 1; }
-PY="$LIB/.venv/bin/python"
+PY="pixi run -e full python"
 NAME=white-model
 BBOX=91500,435200,94300,438000                       # RD New (EPSG:28992), wider than the model crop
 cd "$LIB"
@@ -21,31 +21,31 @@ if [ "${FETCH:-0}" = "1" ] || [ ! -f "$HERE/assets/raw/l13_0.json" ]; then
   done
 fi
 mkdir -p "$HERE/data" "$HERE/out"
-"$PY" -I "$HERE/tools/prep.py" "$HERE" > "$HERE/out/prep.log"      # model.json, water.png, zshadow.png, stats.json (every number on screen)
+$PY -I "$HERE/tools/prep.py" "$HERE" > "$HERE/out/prep.log"      # model.json, water.png, zshadow.png, stats.json (every number on screen)
 # fonts (gitignored .woff2, subset from Google Fonts): fetch when any is missing
 for f in NotoSansSC-300 NotoSansSC-500 InterTight-200 InterTight-400 IBMPlexMono-400; do
-  [ -f "$HERE/fonts/$f.woff2" ] || { "$PY" -I "$HERE/tools/fonts.py" "$HERE"; break; }
+  [ -f "$HERE/fonts/$f.woff2" ] || { $PY -I "$HERE/tools/fonts.py" "$HERE"; break; }
 done
 
 # voice: Kokoro (bm_george), speech-to-text check with the small English model, cues from the real durations
 node "$HERE/tools/export.mjs" "$HERE" > /dev/null || true
-"$PY" core/tts/tts.py "$HERE/voice/lines.json" "$HERE/voice/out"
-WHISPER_MODEL=small.en "$PY" core/tts/asr_check.py "$HERE/voice/lines.json" "$HERE/voice/out" --lang en
+$PY core/tts/tts.py "$HERE/voice/lines.json" "$HERE/voice/out"
+WHISPER_MODEL=small.en $PY core/tts/asr_check.py "$HERE/voice/lines.json" "$HERE/voice/out" --lang en
 node "$HERE/tools/export.mjs" "$HERE"                # cues.json; fails on overlap
 
 # picture, events, score + mix, master, subtitles
 node core/render/events.mjs "$HERE"
 node core/render/video.mjs "$HERE" --fps 24 --workers 4 --out "$HERE/out/video.mp4"
-"$PY" "$HERE/mix.py"
-sh core/render/mux.sh "$HERE/out/video.mp4" "$HERE/out/mix.wav" "$FILM/$NAME.mp4" 24 1
-"$PY" core/render/srt.py "$HERE/out/cues_srt.json" "$FILM/$NAME.srt"
+$PY "$HERE/mix.py"
+node core/render/mux.mjs "$HERE/out/video.mp4" "$HERE/out/mix.wav" "$FILM/$NAME.mp4" 24 1
+$PY core/render/srt.py "$HERE/out/cues_srt.json" "$FILM/$NAME.srt"
 
 # checks
-"$PY" -I "$HERE/tools/cuecheck.py" "$HERE" | tail -1
+$PY -I "$HERE/tools/cuecheck.py" "$HERE" | tail -1
 node "$HERE/tools/subcheck.mjs" "$HERE" | tail -1
 node core/render/readcheck.mjs "$HERE" > "$HERE/out/readcheck.txt" && echo "readcheck ok"
-"$PY" -I "$HERE/tools/motioncheck.py" "$FILM/$NAME.mp4" | tail -2
-"$PY" -I "$HERE/tools/impactcheck.py" "$HERE" | tail -4
+$PY -I "$HERE/tools/motioncheck.py" "$FILM/$NAME.mp4" | tail -2
+$PY -I "$HERE/tools/impactcheck.py" "$HERE" | tail -4
 
 # poster (the signature shot) and the gallery style frame
 mkdir -p "$HERE/stills"

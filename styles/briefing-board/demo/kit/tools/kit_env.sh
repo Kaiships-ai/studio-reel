@@ -1,5 +1,5 @@
 #!/bin/sh
-# The cut-out tools' own environment, kept out of the library's .venv:
+# The cut-out tools' own environment, kept out of the library's pixi environment:
 #   demo/.venv      a private venv with numpy, scipy, Pillow and onnxruntime (made with uv when present)
 #   the matting model BiRefNet-general ONNX (MIT, about 970 MB), found at $BIREFNET_ONNX, demo/.models/,
 #   or ~/.rembg/models/birefnet-general/ (an existing rembg cache), else downloaded into demo/.models/.
@@ -10,7 +10,8 @@ LIB=${LIB:-$(cd "$KIT_DEMO/../../.." && pwd)}
 KPY="$KIT_DEMO/.venv/bin/python"
 if ! "$KPY" -c "import numpy, scipy, PIL, onnxruntime" 2>/dev/null; then
   echo "kit_env: making the private venv $KIT_DEMO/.venv (numpy scipy pillow onnxruntime)"
-  BASEPY="$LIB/.venv/bin/python"; [ -x "$BASEPY" ] || BASEPY=python3
+  BASEPY=$(cd "$LIB" && pixi run python -c "import sys; print(sys.executable)" 2>/dev/null)
+  [ -x "$BASEPY" ] || { echo "kit_env: the library Python is missing; run: pixi run studio install" >&2; exit 1; }
   if command -v uv >/dev/null 2>&1; then
     uv venv --quiet --python "$BASEPY" "$KIT_DEMO/.venv" && uv pip install --quiet --python "$KPY" numpy scipy pillow onnxruntime
   else

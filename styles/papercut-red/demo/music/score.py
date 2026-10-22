@@ -1,6 +1,6 @@
 """Nian Comes to Town — 原创配乐（民乐小合奏）。
 120 BPM，2/4，D 宫五声（D E F# A B）。琵琶（物理建模）+ 筝（dan_tranh 采样）+ 二胡 + 笛（flute 采样）+ 木鱼 + 小锣/大锣 + 手鼓。
-运行：.venv/bin/python styles/papercut-red/demo/music/score.py
+运行：pixi run -e full python styles/papercut-red/demo/music/score.py
 输出：music/score.wav、music/stems/*.wav、music/score.json、music/CREDITS.txt
 """
 import sys, os, json

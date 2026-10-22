@@ -1,6 +1,6 @@
 """Aura — Hear the Light · 原创配乐（纯 numpy 合成，可一键重现）
 120 BPM，F 小调，32.0 s，48 kHz 立体声。
-.venv/bin/python styles/glass-product/demo/music/score.py
+pixi run python styles/glass-product/demo/music/score.py
 输出：score.wav、stems/{bass,drums,arp,pad,fx,bells}.wav、score.json（关键时间点 + 自检）
 """
 import os, json

@@ -2,7 +2,7 @@
 # 从零重现成片：sh styles/crayon-book/demo/build.sh   （任意目录运行均可）
 set -e
 cd "$(dirname "$0")/../../.."
-PY=.venv/bin/python; D=styles/crayon-book/demo
+PY="pixi run -e full python"; D=styles/crayon-book/demo
 $PY core/tts/tts.py $D/lines.json $D/voices                 # 1. Kokoro 配音 af_heart（v3 换声，睡前轻声）
 $PY core/tts/asr_check.py $D/lines.json $D/voices           # 2. whisper 逐句校对
 node core/render/events.mjs $D                              # 3. 时间线 → events.json（旁白/拟音/配乐 cue/星星显现）

@@ -59,7 +59,7 @@ The camera moves *over* prints and between them; it never rotates in 3D space in
 | Pull-back from one sheet to many | The series seen whole | a summary; a timeline; a collection |
 | Crash-zoom into the texture (grain, specks, fibres) | The medium itself becomes the image | a dream; a breakdown; a memory dissolving |
 | Pan across a triptych (three sheets side by side) | One scene too wide for one sheet | a procession; a battle; a festival |
-| Hard cut to a blank sheet | Ma (間), a held breath | aftermath; a pause before a decision |
+| Hard cut to a blank sheet | Ma (`間`), a held breath | aftermath; a pause before a decision |
 
 Framing: bold cropping and extreme foreground elements (a branch, a post, a lantern crossing the frame) are native; depth by stacking, never by perspective. Allowed transitions: scroll slides, printing reveals, a wash back to paper, a cut to blank. No cross-dissolves, no 3D flips.
 
@@ -69,7 +69,7 @@ Framing: bold cropping and extreme foreground elements (a branch, a post, a lant
 - **Modes**: miyako-bushi (in scale), yō, ritsu; long breathy tones with a slide into each note and *meri* drops at phrase ends suit the shakuhachi; the shamisen can hold a pulse or an ostinato.
 - **Techniques, as options**: absolute silence as *ma* (cut reverb tails too); a single sawari note left ringing; free-rhythm breath phrases against a steady pulse; clappers that accelerate (the kabuki curtain call); a taiko heartbeat that tightens into a roll; a koto glissando for a turn of season; a drum call (*kakegoe*) before an entrance.
 - **Foley follows the material**: paper (baren rub = band-passed noise with a slow circular modulation; scroll slide; seal = low thump + tacky peel), wood (block set down, hollow steps), glass (wind chime), water, birds and insects of the season.
-- **Voice**: calm, few short lines, like a poem written beside the print. Duck music ~8 dB under voice, ambience ~4 dB. Loudness −14 LUFS; `mux.sh` grain **0** (the paper is the grain).
+- **Voice**: calm, few short lines, like a poem written beside the print. Duck music ~8 dB under voice, ambience ~4 dB. Loudness −14 LUFS; `mux.mjs` grain **0** (the paper is the grain).
 
 ## 8. Native moves
 

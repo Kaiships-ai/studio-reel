@@ -2,14 +2,14 @@
 # 从零重现《The Runaway Loaf》：sh styles/silent-film/demo/build.sh（任意目录运行）
 set -e
 cd "$(dirname "$0")/../../.."
-PY=.venv/bin/python; D=styles/silent-film/demo; O=styles/silent-film
+PY="pixi run python"; D=styles/silent-film/demo; O=styles/silent-film
 node $D/tools/dump_timeline.mjs                                   # 1. 速度网格（cue sheet 分段）→ timeline.json
 $PY $D/music/score.py                                             # 2. 原创默片钢琴伴奏（立式钢琴 + 簧风琴）→ music/score.wav + score.json
 $PY $D/tools/cuecheck.py                                          # 3. 画面卡点 ↔ 配乐卡点
 $PY $D/mix.py                                                     # 4. 配乐 + 放映机（开机、底噪、静音段、片尾甩片）→ mix.wav
 $PY $D/tools/subs.py && $PY core/render/srt.py $D/out/srt.json $O/silent-film.srt      # 5. 字幕卡文字 → .srt
 node core/render/video.mjs $D --fps 24 --workers 2 --out $D/out/video24.mp4           # 6. 逐帧渲染（4 workers 约 45 s）
-sh core/render/mux.sh $D/out/video24.mp4 $D/mix.wav $D/out/master.mp4 24 1            # 7. 合成：−14 LUFS（颗粒已在画面里，mux 只加 1）
+node core/render/mux.mjs $D/out/video24.mp4 $D/mix.wav $D/out/master.mp4 24 1            # 7. 合成：−14 LUFS（颗粒已在画面里，mux 只加 1）
 ffmpeg -loglevel error -i $D/out/master.mp4 -c:v libx264 -preset slow -crf 25 -tune grain -c:a copy -movflags +faststart -y $O/silent-film.mp4   # 8. 胶片颗粒压缩（~80 MB）
 # 9. 静帧：海报 / 风格帧 / 关卡帧 / 重画样张
 node core/render/still.mjs $D 7.4 23.2 44.9 --out $D/out/still --prefix p_

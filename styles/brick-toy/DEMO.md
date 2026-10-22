@@ -48,7 +48,7 @@ Voice: warm British storyteller, Kokoro `bm_george`, speed ~0.9, 4–6 short lin
 
 ## End card
 
-The darkened final wide, the title (Fredoka 700), a brick icon, "BRICK TOY · LEMO-OPUSCAR" in yellow, the "LemoLab × Claude Opus 5.5" line and the asset credits. That sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card (remove the line drawn in `main.js` if you adapt it).
+The darkened final wide, the title (Fredoka 700), a brick icon, "BRICK TOY · LEMO-OPUSCAR" in yellow, the "LemoLab × Claude Opus 5.5" line and the asset credits. That sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card (remove the line drawn in `main.js` if you adapt it).
 
 ## Build notes
 
@@ -61,10 +61,10 @@ styles/brick-toy/demo/
 ```
 
 1. `node core/render/still.mjs styles/brick-toy/demo <t…>`: review stills, iterate.
-2. `.venv/bin/python core/tts/tts.py lines.json voices` → `core/tts/asr_check.py` to verify.
+2. `pixi run python core/tts/tts.py lines.json voices` → `core/tts/asr_check.py` to verify.
 3. `node core/render/events.mjs styles/brick-toy/demo` → `python music/edit.py` → `python mix.py`.
 4. `node core/render/video.mjs styles/brick-toy/demo --fps 24` (1296 frames with 2× SSAA + GTAO ≈ 65 s on an M4 Pro).
-5. `core/render/mux.sh out/video24.mp4 mix.wav brick-toy.mp4 24`.
+5. `core/render/mux.mjs out/video24.mp4 mix.wav brick-toy.mp4 24`.
 
 Pitfalls tied to this demo's props:
 - The helmet visor made from a sphere segment disappeared inside the cylinder helmet; a curved open-cylinder panel fixed it.

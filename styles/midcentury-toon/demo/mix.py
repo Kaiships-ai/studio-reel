@@ -1,5 +1,5 @@
 """Mix: score (music/score.wav) + Kokoro narration + material-true foley + room tone -> mix.wav
-Run from the repo root: .venv/bin/python styles/midcentury-toon/demo/mix.py
+Run from the repo root: pixi run -e full python styles/midcentury-toon/demo/mix.py
 (needs events.json from core/render/events.mjs, voices/ from core/tts/tts.py, music/score.wav from music/score.py)
 Three layers: ambience (room tone + a quiet mantel clock on the half-note grid, the vacuum motor in the payoff),
 foley (cardboard, plastic, paper, rubber stamp, cable), music; music ducks ~8 dB under the voice.

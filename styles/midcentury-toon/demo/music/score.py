@@ -1,7 +1,7 @@
 """《Meet Pip》配乐 —— 50 年代西海岸冷爵士小乐队（原创）
 颤音琴（主角）/ 长笛（旋律）/ 低音提琴拨弦 / 刷子鼓 + ride / 钢片琴（钟琴弱奏 + 正弦分音合成）
 132 BPM，4/4，40.000 s = 22 小节，F 大调 → 高点起 G 大调。
-在仓库根运行：.venv/bin/python styles/midcentury-toon/demo/music/score.py
+在仓库根运行：pixi run python styles/midcentury-toon/demo/music/score.py
 """
 import sys, os, json
 sys.path.insert(0, '.')

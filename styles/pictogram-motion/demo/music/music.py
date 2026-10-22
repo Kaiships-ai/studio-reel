@@ -5,7 +5,7 @@
 "Wadaiko x Electronic"  |  150 BPM, 4/4  |  D miyako-bushi (D Eb G A Bb) over D minor harmony
 101 bars = 161.6 s (+2 s ring-out).  Picture edit is read from timeline.json.
 
-Run:   /usr/bin/python3 music.py
+Run:   pixi run python music.py
 Out:   music_bed.wav, sfx.wav  (48 kHz / 24-bit stems, unmastered, sum 1:1 = pre-master mix)
        music.wav                (master, -14 LUFS, TP <= -1 dBTP)
        report.txt               (loudness, band energy, onset check)

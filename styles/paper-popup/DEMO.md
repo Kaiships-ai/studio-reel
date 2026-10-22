@@ -2,7 +2,7 @@
 
 One example among many. Don't reuse its story, arc, shots, props or timings.
 
-Demo: *The Little Sprite's Adventure* (*Pip's Paper Adventure*, 小精灵冒险记) (133.0 s, 1920×1080, 60 fps) · `paper-popup.mp4` · source in [`demo/`](demo/) · engine: three.js r170 (WebGL2) rendered frame by frame in headless Chrome, Canvas2D for all paper art, Python for score editing and mixing
+Demo: *The Little Sprite's Adventure* (*Pip's Paper Adventure*, Chinese title `小精灵冒险记`) (133.0 s, 1920×1080, 60 fps) · `paper-popup.mp4` · source in [`demo/`](demo/) · engine: three.js r170 (WebGL2) rendered frame by frame in headless Chrome, Canvas2D for all paper art, Python for score editing and mixing
 
 
 ## Story & structure
@@ -95,7 +95,7 @@ Depth of field (`post.js`): CoC in pixels, max 14, 64-tap golden-angle spiral ga
 
 `drawEnd`, from 123.4 s, over the live desk shot: title in Lilita One 96 px gold (y 170), Chinese title (y 262), italic "The End?" popping in (y 350), then from 127.6 s the sign-off and the asset credits (22 px, y 960/998/1036; the Chinese row uses `'"ZCOOL KuaiLe", Fredoka'`) fade in together; fade to black over the last 1.5 s.
 
-The sign-off **"LemoLab × Claude Opus 5.5"** (× = U+00D7) belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card. In the demo it sits centred under "The End?" at y 430: Fredoka 600 36 px, cream `#fffaf0` fill with a 7 px `rgba(30,20,14,.75)` outline (it lies over the cream backdrop page, so the outline is what makes it read), fading in with the asset credits at 127.6 s, never covering the characters.
+The sign-off **"LemoLab × Claude Opus 5.5"** (× = U+00D7) belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card. In the demo it sits centred under "The End?" at y 430: Fredoka 600 36 px, cream `#fffaf0` fill with a 7 px `rgba(30,20,14,.75)` outline (it lies over the cream backdrop page, so the outline is what makes it read), fading in with the asset credits at 127.6 s, never covering the characters.
 
 ## Pitfalls tied to this demo
 
@@ -130,10 +130,10 @@ styles/paper-popup/demo/
   mux.sh      segments + mix → ../paper-popup.mp4        make_srt.mjs  → ../paper-popup.srt
 ```
 
-All commands can be run from the repo root. Python = the repo `.venv` (numpy, scipy, soundfile, librosa, kokoro-onnx, faster-whisper are installed there).
+All commands can be run from the repo root. Python = the library's full pixi environment (`pixi run -e full python`: numpy, scipy, soundfile, kokoro-onnx, faster-whisper; librosa is not installed by default).
 
 ```sh
-D=styles/paper-popup/demo; PY=.venv/bin/python
+D=styles/paper-popup/demo; PY="pixi run -e full python"
 # 0. once: fonts (re-run after changing Chinese text) and music
 (cd $D && node fetch_fonts.mjs)
 #    download the three MP3s from incompetech.com into $D/music/, then convert to 48 kHz WAV:

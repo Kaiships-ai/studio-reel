@@ -63,7 +63,7 @@ Demo action timings: hammer lean-back 4 frames → strike 2 frames → settle + 
 
 ## End card
 
-Title carved *mirrored* into the block (IM Fell English SC), readable only once the first print is pulled. End card: a fresh print: title carved out of a black panel, a small bell keeping the film's last copper highlight, then *A Woodcut Print*, Lemo-Opuscar, LemoLab × Claude Opus 5.5 and credits in letterpress. The final knife cut under the title echoes the first sound of the film. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card.
+Title carved *mirrored* into the block (IM Fell English SC), readable only once the first print is pulled. End card: a fresh print: title carved out of a black panel, a small bell keeping the film's last copper highlight, then *A Woodcut Print*, Lemo-Opuscar, LemoLab × Claude Opus 5.5 and credits in letterpress. The final knife cut under the title echoes the first sound of the film. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 ## Build notes
 

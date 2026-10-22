@@ -1,6 +1,6 @@
 """Five Rules for a Poster — original motorik score (120 BPM, A dorian).
 Melody data comes from ../score.json (the same file that draws the poster).
-Run: .venv/bin/python styles/swiss-motion/demo/music/score.py  → score.wav + stems/*.wav + score_meta.json
+Run: pixi run python styles/swiss-motion/demo/music/score.py  → score.wav + stems/*.wav + score_meta.json
 """
 import sys, os, json
 import numpy as np, soundfile as sf

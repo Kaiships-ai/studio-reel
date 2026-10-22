@@ -1,5 +1,5 @@
 """《The Velvet Cipher》原创配乐：60 年代间谍大乐队（E 小调，132 BPM）
-运行：.venv/bin/python styles/spy-titles/demo/music/score.py
+运行：pixi run python styles/spy-titles/demo/music/score.py
 输出：music/score.wav、music/stems/*.wav、music/score.json、music/CREDITS_music.txt
 动机 "B–A#–A–G | E"（五度半音下行三步再落主音，附点：长—短—短—长—落）；结尾 Em6/9。
 铜管强奏 = 剪辑点（trumpet_stac + trombone_stac 叠八度 + crash）；冲浪吉他低音弦 + 自制弹簧混响。

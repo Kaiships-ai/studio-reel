@@ -1,7 +1,7 @@
 """Toward the Mountain — 原创配乐（序・破・急）
 三味线（pluck 物理建模，sawari）+ 尺八（recorder/flute 采样：去颤音、气声、滑入、meri/kari）
 + 太鼓（大鼓/通鼓/框鼓采样 + 合成鼓皮）+ 拍子木（木块/响棒采样 + 合成硬木共振）
-运行：.venv/bin/python styles/ukiyoe/demo/music/score.py   → music/score.wav, stems/, score.json
+运行：pixi run python styles/ukiyoe/demo/music/score.py   → music/score.wav, stems/, score.json
 """
 import sys, os, json
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..'))

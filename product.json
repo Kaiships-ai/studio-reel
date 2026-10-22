@@ -1,0 +1,10 @@
+{
+  "name": "Kaiships Studio",
+  "version": "1.5",
+  "editions": {
+    "starter": "Templates and the /make-reel workflow",
+    "pro": "Starter plus the content workflow: /ig-plan, /ig-viral, /ig-reel, /ig-human, /ig-dm, /ig-caption"
+  },
+  "platforms": ["macOS (Apple Silicon, Intel)", "Windows 10/11 x64", "Linux x64 (Ubuntu 22.04+, Debian 12+)"],
+  "requires": ["Claude Code", "internet for the first setup and for voiceovers"]
+}

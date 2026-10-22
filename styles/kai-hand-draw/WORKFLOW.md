@@ -15,18 +15,16 @@ demo still renders (`make.mjs styles/kai-hand-draw/demo`), and say so to the use
 
 ## Once per machine
 
-```sh
-npm install                                                   # p5, p5.brush, playwright-core, three
-sh plugin/skills/lemo-opuscar/scripts/setup.sh deps voice     # headless browser, .venv (numpy, edge-tts, faster-whisper)
-```
-
-Needs Node 20+, ffmpeg and Python 3.11+ (or uv). Don't ask the user to run these: run them, and ask only for a
-password or a missing Node.
+Run `/studio` (or `pixi run studio install` directly): it installs node, python, ffmpeg, the drawing packages and
+the headless browser inside this folder, then renders a test reel. Don't ask the user to run it: run it, and ask
+only for what its fix lines say only they can do (on Linux, `pixi run studio linux-deps` needs their password).
 
 ## Steps
 
 1. **New film.** `node styles/kai-hand-draw/tools/make.mjs new <name>` copies the starter to `films/<name>/` (a
-   working two-chapter example with Kai and Clawd). Keep its structure, replace its content.
+   working two-chapter example with the presenter and Clawd). Keep its structure, replace its content. If the user
+   pasted a `character-spec v1` block (from `character-designer.html`), write it into `<film>/src/character.js` now
+   (see `.claude/skills/make-reel/SKILL.md` → Using a character spec); otherwise keep the starter's default presenter.
 2. **Script.** `<film>/vo/script.json`, one entry per sentence or beat, ids `l01`, `l02`, … The first line is the
    hook, the last says what to do next ("Comment <KEYWORD> …"). Written per `VOICE.md`, checklist ticked line by
    line. A script the user gives is spoken word for word. Every number, name, price or claim comes from the user or
@@ -39,7 +37,7 @@ password or a missing Node.
    `REEL_GUIDE.md`), each chapter as one camera path with events tied to spoken words, the SFX, the sources.
    `ref/example-STORYBOARD.md` shows the level of detail.
 5. **Prove the look.** Before the chapters: the cast at final size (`look.mjs <film> --sheet=0 --loop=kai`, `clawd`,
-   `cast`, `kaiV3`) and two style frames of the hook. Check them against `STYLE.md`.
+   `cast`) and two style frames of the hook. Check them against `STYLE.md`.
 6. **Chapters.** One file per chapter in `<film>/src/ch/`, each ending in `chapter(...)`, listed in order in
    `<film>/index.html`; shared props once in `c0_props.js`. Set `name` and `cover` in `src/config.js`, and brand
    names for the captions in `PROJECT.caption.brands`.
@@ -54,7 +52,7 @@ password or a missing Node.
 8. **Music and SFX.** `<film>/audio/cues.json`: the chapter cuts and one sound per visible hit, timed by word. Then
    `make.mjs <film> audio`.
 9. **Render.** `make.mjs <film> render`: frames through `core/render/video.mjs`, mux and loudness through
-   `core/render/mux.sh` (BT.709, −14 LUFS), then `<film>/<name>.mp4` and `<film>/<name>-cover.png` (no captions).
+   `core/render/mux.mjs` (BT.709, −14 LUFS), then `<film>/<name>.mp4` and `<film>/<name>-cover.png` (no captions).
 10. **Verify the real file.** `make.mjs <film> verify` checks size, fps, BT.709, audio, length = voice ± 1 frame,
     −14 LUFS / ≤ −1 dBTP, no frozen or black stretch, camera ≤ 20 px/frame, and that Whisper hears the keyword in
     the final mix. It pulls frames into `<film>/out/check/final_*.jpg`: open them. Every check must be ✓.
@@ -82,8 +80,7 @@ password or a missing Node.
 - **Lock events to words**, not typed numbers: `vo('word')`, `voLine('l02')`, `cutAfter('l02')`, so a new voice keeps
   every hit on its word. After any script change run `make.mjs <film> vo` then `audio`.
 - **Safe zone:** anything that matters inside x 60–960, y 250–1300; captions take y 1320–1470.
-- **Never post or upload.** The channel's series cover (the 3D eye-layout cover) is made by the `ksa-reel-3d` skill;
-  this workflow makes the in-reel cover frame.
+- **Never post or upload.** This workflow makes the reel and its cover frame; posting is the user's call.
 
 ## When something fails
 

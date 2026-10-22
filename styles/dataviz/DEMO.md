@@ -61,7 +61,7 @@ Motion numbers: 90 BPM (chosen because a 1/32 note is exactly 2 frames at 24 fps
 
 ## End card
 
-Inside the dashed "next cell": title, `DATA STORYTELLING`, a miniature of the stripes plus an empty dashed cell, `Lemo-Opuscar · LemoLab × Claude Opus 5.5`, data, font, voice and music credits (including "2026 value preliminary, retrieved 2026-09-26"), and a handwritten "Her story is fiction. Every number is real." The LemoLab sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card.
+Inside the dashed "next cell": title, `DATA STORYTELLING`, a miniature of the stripes plus an empty dashed cell, `Lemo-Opuscar · LemoLab × Claude Opus 5.5`, data, font, voice and music credits (including "2026 value preliminary, retrieved 2026-09-26"), and a handwritten "Her story is fiction. Every number is real." The LemoLab sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 ## Build notes
 

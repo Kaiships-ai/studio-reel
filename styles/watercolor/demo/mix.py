@@ -1,5 +1,5 @@
 # 配乐 + 旁白 + 合成环境声 → mix.wav（48k 立体声）
-# 用法（仓库根）：.venv/bin/python styles/watercolor/demo/mix.py [out.wav]   （默认写 demo/mix.wav）
+# 用法（仓库根）：pixi run python styles/watercolor/demo/mix.py [out.wav]   （默认写 demo/mix.wav）
 # 输入：music/score.wav、voices/v*.wav + dur.json、scene.js 里 VO 表的开始时间
 import json, re, os, sys, numpy as np, soundfile as sf
 OUTWAV = os.path.abspath(sys.argv[1]) if len(sys.argv) > 1 else None

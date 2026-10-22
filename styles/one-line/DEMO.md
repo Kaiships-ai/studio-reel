@@ -85,7 +85,7 @@ The camera is one continuous move: keyframes of composition centre, zoom, a few 
 
 - Subtitles: Caveat 500, 46 px, ink at 84 %, no box, centred with the baseline 100 px from the bottom; they are **written on** left to right (0.2 s + 17 ms per character) behind a soft paper-coloured halo so passing ink lines never cross the letters; fade out over 0.45 s. Stay ≥ voice + 0.6 s and ≥ 1.8 s.
 - Title: Sacramento (a monoline connected script — itself a one-line drawing) 76 px, written on over 1.6 s in empty paper away from the current vignette, with a small Caveat sub-line. Keep it short enough to disappear before the camera moves into it.
-- End card: Sacramento title on two lines, "ONE-LINE DRAWING" in Caveat 600 with wide tracking, the credit line below, written in the empty paper beside the final picture while the new line is still being drawn. Its "LemoLab × Claude Opus 5.5" line (`subs.js`) belongs to this library's demo only: a user's film carries no LemoLab credit and no copy of this card.
+- End card: Sacramento title on two lines, "ONE-LINE DRAWING" in Caveat 600 with wide tracking, the credit line below, written in the empty paper beside the final picture while the new line is still being drawn. Its "LemoLab × Claude Opus 5.5" line (`subs.js`) belongs to this library's demo only: a user's film carries none of the demo's credits and no copy of this card.
 
 ## Pitfalls we hit (demo record)
 
@@ -120,5 +120,5 @@ styles/one-line/demo/
 2. Voice: `core/tts/tts.py lines.json voices` → `asr_check.py`; read `voices/words.json` and place lines in `story.js`.
 3. Set chapter windows and marks in `face.js`; `node demo/tools/probe.mjs 0.5` prints part boundaries and the nib track to write camera keys.
 4. `node core/render/events.mjs styles/one-line/demo` → `music/score.py` → `mix.py`.
-5. `node core/render/video.mjs styles/one-line/demo --fps 24 --workers 3` (1140 frames ≈ 30–45 s) → `sh core/render/mux.sh out/video24.mp4 mix.wav one-line.mp4 24 0`.
+5. `node core/render/video.mjs styles/one-line/demo --fps 24 --workers 3` (1140 frames ≈ 30–45 s) → `node core/render/mux.mjs out/video24.mp4 mix.wav one-line.mp4 24 0`.
 6. Or simply `sh styles/one-line/demo/build.sh`.

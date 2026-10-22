@@ -5,17 +5,17 @@
 #   FETCH=1 sh demo/build.sh    first re-download the slide (Ventana-1.bif, 227 MB, CC0), rebuild every plate
 #                               and measurement (tools/plates.py, tools/nucleus.py) and re-fetch the fonts.
 #                               Without FETCH, whatever is missing (slide, plates, fonts) is fetched or rebuilt.
-# Needs the library's core tier and voice tier (Kokoro, faster-whisper); the slide reader gets its own .venv here.
+# Needs the library's full pixi environment (Kokoro, faster-whisper); the slide reader gets its own .venv here.
 set -e
 HERE=$(cd "$(dirname "$0")" && pwd)                 # .../<slug>/demo
 FILM=$(cd "$HERE/.." && pwd)                         # .../<slug>
 LIB=${LIB:-$(cd "$HERE/../../.." && pwd)}            # films/<slug>/demo or styles/<slug>/demo -> library root
 export LIB
 [ -f "$LIB/core/render/video.mjs" ] || { echo "set LIB to the library folder"; exit 1; }
-PY="$LIB/.venv/bin/python"
+PY="pixi run -e full python"
 NAME=microscope
 VPY="$HERE/.venv/bin/python"
-if [ ! -x "$VPY" ]; then python3 -m venv "$HERE/.venv"; "$HERE/.venv/bin/pip" install -q tifffile imagecodecs numpy pillow scipy; fi
+if [ ! -x "$VPY" ]; then pixi run python -m venv "$HERE/.venv"; "$HERE/.venv/bin/pip" install -q tifffile imagecodecs numpy pillow scipy; fi
 
 RAW="$HERE/assets/raw/Ventana-1.bif"
 SHA=2eb05cd8f628c36408c3fde09beeeebaaae90181c4f840d5475ec7594bdcbbb6
@@ -36,22 +36,22 @@ cd "$LIB"
 
 # voice: Kokoro af_heart, speech-to-text check (small.en), then cues from the real durations
 node "$HERE/tools/export.mjs" "$HERE" > /dev/null
-"$PY" core/tts/tts.py "$HERE/voice/lines.json" "$HERE/voice/out"
-WHISPER_MODEL=small.en "$PY" core/tts/asr_check.py "$HERE/voice/lines.json" "$HERE/voice/out" --lang en
+$PY core/tts/tts.py "$HERE/voice/lines.json" "$HERE/voice/out"
+WHISPER_MODEL=small.en $PY core/tts/asr_check.py "$HERE/voice/lines.json" "$HERE/voice/out" --lang en
 node "$HERE/tools/export.mjs" "$HERE"
 
 # picture, events, score + mix, master, subtitles
 node core/render/events.mjs "$HERE"
 node core/render/video.mjs "$HERE" --fps 24 --workers 4 --out "$HERE/out/video.mp4"
-"$PY" "$HERE/mix.py"
-sh core/render/mux.sh "$HERE/out/video.mp4" "$HERE/out/mix.wav" "$FILM/$NAME.mp4" 24 0          # no grain: the scan carries its own texture
-"$PY" core/render/srt.py "$HERE/out/cues_srt.json" "$FILM/$NAME.srt"
+$PY "$HERE/mix.py"
+node core/render/mux.mjs "$HERE/out/video.mp4" "$HERE/out/mix.wav" "$FILM/$NAME.mp4" 24 0          # no grain: the scan carries its own texture
+$PY core/render/srt.py "$HERE/out/cues_srt.json" "$FILM/$NAME.srt"
 
 # checks
-"$PY" "$HERE/tools/cuecheck.py" "$HERE" | tail -1
+$PY "$HERE/tools/cuecheck.py" "$HERE" | tail -1
 node "$HERE/tools/subcheck.mjs" "$HERE" | tail -1
 node core/render/readcheck.mjs "$HERE" > "$HERE/out/readcheck.txt" && echo "readcheck ok"
-WHISPER_MODEL=small.en "$PY" "$HERE/tools/finalasr.py" "$FILM/$NAME.mp4" "$HERE" | grep -c '^OK' | sed 's/$/ lines heard in the final mix/'
+WHISPER_MODEL=small.en $PY "$HERE/tools/finalasr.py" "$FILM/$NAME.mp4" "$HERE" | grep -c '^OK' | sed 's/$/ lines heard in the final mix/'
 ffmpeg -v info -i "$FILM/$NAME.mp4" -vf blackdetect=d=0.1:pix_th=0.05 -an -f null - 2>&1 | grep -c black_start | sed 's/$/ black stretches/'
 
 # poster (the signature shot) and the gallery style frame

@@ -1,7 +1,7 @@
 """Measure a hepatocyte nucleus in the 0.25 um/px plate. On 72 rays from the centre: the darkest point between
 2 and 5 um (the nuclear membrane), then the outer edge where brightness climbs half way back to the cytoplasm
 just outside; the edge points are fitted with a circle (least squares, outliers dropped). d = outer diameter.
-usage: .venv/bin/python -I tools/nucleus.py <film_dir> x y   (approximate centre, level-0 px)
+usage: pixi run python -I tools/nucleus.py <film_dir> x y   (approximate centre, level-0 px)
 prints JSON {cx, cy, r_px, d_um, rays, rms_px} and writes it to assets/plates/nucleus.json"""
 import sys, json, os
 import numpy as np

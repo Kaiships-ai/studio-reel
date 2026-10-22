@@ -1,5 +1,5 @@
 """混音：拟音（布 / 皮 / 竹 / 木 / 火）+ 旁白 + 配乐（旁白下闪避）→ mix.wav
-用法（仓库根）：.venv/bin/python styles/shadow-puppet/demo/mix.py"""
+用法（仓库根）：pixi run python styles/shadow-puppet/demo/mix.py"""
 import sys, os, json, numpy as np, soundfile as sf, soxr
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')); sys.path.insert(0, ROOT)
 from core.audio.sfx import SR, t_, env_exp, bp, lp, hp, noise, norm, brown, creak, whoosh, compress, limit, add

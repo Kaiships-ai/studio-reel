@@ -1,6 +1,6 @@
 # Kai Hand-Draw — Style Prompt
 
-> A vertical, narrated reel painted in watercolour and ink on warm paper, starring Clawd (and Kai): a motion-design
+> A vertical, narrated reel painted in watercolour and ink on warm paper, starring Clawd (and your presenter): a motion-design
 > showreel where every spoken key word lands as a visible event, captions locked to the voice. Built for Instagram
 > Reels (1080×1920, 30 fps, 28–45 s) and the @kaiships.ai listicle format.
 > References (grammar only): Saturday-morning cartoon idents (squash, anticipation, a gag a second), Kurzgesagt
@@ -18,7 +18,11 @@ Workflow, commands and deliverables: [`WORKFLOW.md`](WORKFLOW.md). The full API:
   across chapters as a progress bar.
 - **1 chapter = 1 long take.** The camera drifts inside a chapter; cuts happen only between chapters, as painted wipes.
 - **The voice is the clock.** Each key word has an event on that frame (±1 frame). Captions ride on an ink plate.
-- **Clawd is the hero**, big and expressive; **Kai** is the human host when the reel needs a person.
+- **Clawd is the hero**, big and expressive; **your presenter** is the human host when the reel needs a person.
+  The presenter is customizable per film: skin, eyes, brows, hair and its colour, facial hair, glasses, one
+  accessory, the top and its colour, the trousers. Design it in `character-designer.html` (library root), paste the
+  `character-spec v1` block into Claude, and it becomes the film's `src/character.js` (`const CHARACTER`), which
+  `kai()` draws. With no character file the presenter keeps the default look.
 
 Not a slideshow with a voiceover (static cards), not flat motion graphics (swiss-motion), not a 3D skit, not the
 lemo-opuscar `watercolor` style (that one is a landscape walk with no characters, captions or reel format).
@@ -76,7 +80,7 @@ lemo-opuscar `watercolor` style (that one is a landscape walk with no characters
 - **≤ 20 px per frame** on screen (measured by `look.mjs --camscan`); motivated by something in the frame.
 - Framing: anything that matters inside x 60–960, y 250–1300 (Instagram covers the bottom ~380 px and the right
   ~120 px). Nothing over a face; smoke and glow behind characters or ≤ 30 % over them.
-- **Cast size:** Clawd's body ≥ 280 px wide (u ≥ 28) in the main action; Kai ≥ 550 px tall in a full shot. The cast
+- **Cast size:** Clawd's body ≥ 280 px wide (u ≥ 28) in the main action; the presenter ≥ 550 px tall in a full shot. The cast
   fills y 450–1250; the bottom of the safe zone is never left empty.
 - Transitions only between chapters: `brush`, `splat`, `iris` (vary them). No cuts or whip pans inside a chapter.
 
@@ -88,7 +92,7 @@ lemo-opuscar `watercolor` style (that one is a landscape walk with no characters
   `tense` (minor resolving to major), ducked ~9 dB under speech.
 - SFX: cartoon foley on every visible hit, timed by word (`pop`, `slam`, `whoosh`, `ding`, `coin`, `stamp`…),
   about 1–2 per second, gains 0.2–0.6; every chapter wipe gets its whoosh.
-- Mix: −14 LUFS integrated, true peak ≤ −1 dBTP (core/render/mux.sh measures and normalises).
+- Mix: −14 LUFS integrated, true peak ≤ −1 dBTP (core/render/mux.mjs measures and normalises).
 
 ## 8. Native moves
 
@@ -117,14 +121,14 @@ lemo-opuscar `watercolor` style (that one is a landscape walk with no characters
 
 `engine/` (read by every film, never copied or edited for one film): `core.js` (canvas, `PAL`, easing, `kf`,
 `spring`, camera `camBegin/camEnd/toScreen`, `paint`, `inkLine`, `letter`, `glow`, `iris`, render hooks),
-`clawd.js` + `clawd-v3.js` (Clawd, `feel()`, `emotions()`, `move()`), `kaip.js` + `kai-v3.js` (`kai(pose, x, y, h)`,
-`kaiV3`), `cast.js` (`researcher`), `timeline.js` (`shots`, `LOOPS`, `brushWipe`), `reel.js` (`chapter`, `vo`,
+`clawd.js` + `clawd-v3.js` (Clawd, `feel()`, `emotions()`, `move()`), `kaip.js` (the presenter
+`kai(pose, x, y, h)`, drawn from the film's `CHARACTER`), `cast.js` (`researcher`), `timeline.js` (`shots`, `LOOPS`, `brushWipe`), `reel.js` (`chapter`, `vo`,
 `voLine`, `cutAfter`, wipes, captions, `SAFE`), `kit.js` (`bgWash`, `stepHeader`, `chip`, `statCard`, `phone`,
 `laptop`, `burst`), `sheets.js` (model-sheet loops). Tools: `tools/make.mjs` (vo, audio, render, verify),
 `tools/look.mjs` (sheets, strips, crops, stills, clips, camera scan).
 
 ```js
-// a chapter that is not in the demo: Kai hands Clawd a glowing key on "unlock"
+// a chapter that is not in the demo: the presenter hands Clawd a glowing key on "unlock"
 (() => {
   const S = cutAfter('l02'), E = cutAfter('l03'), K = vo('unlock');
   chapter('key', S, E, [[S, t => {
@@ -140,7 +144,7 @@ lemo-opuscar `watercolor` style (that one is a landscape walk with no characters
 
 ## 11. Variation space
 
-Each film chooses its concept world, cast (Clawd alone, Kai + Clawd, the Researcher), chapter count, palette within
+Each film chooses its concept world, cast (Clawd alone, the presenter + Clawd, the Researcher), chapter count, palette within
 §3, camera path within §6, the continuity prop, the music mood and the ending.
 
 - **Structures:** a numbered listicle (hook → 3–5 items → CTA); a before/after (the pain, the tool, the result); a
@@ -148,7 +152,7 @@ Each film chooses its concept world, cast (Clawd alone, Kai + Clawd, the Researc
 - **Openings:** the payoff already happening (a stamp mid-slam); a problem at full speed (a bag sliding into a
   scanner); a scale break (a tiny Clawd next to a giant screen).
 - **Endings:** the continuity prop completes (the bar fills, the rack is full); the hook's image returns, solved;
-  Kai and Clawd point at the keyword card.
+  the presenter and Clawd point at the keyword card.
 
 ---
 

@@ -5,7 +5,7 @@
 #   模型：content.json 的 "model" 指向的 JSON；自己的产品先写 models/gen_<名字>.mjs 生成它（格式见 STYLE.md §11）
 set -e
 cd "$(dirname "$0")/../../.."
-PY=.venv/bin/python; D=styles/hologram-hud/demo; O=styles/hologram-hud
+PY="pixi run -e full python"; D=styles/hologram-hud/demo; O=styles/hologram-hud
 CONTENT=${CONTENT:-content.json}; NAME=${NAME:-hologram-hud}
 if [ "$CONTENT" = "content.json" ]; then W=$D; OUT=$O; else W=$D/out/$NAME; OUT=$W; fi
 mkdir -p $W/out
@@ -24,7 +24,7 @@ $PY $D/mix.py                                                     # 8. 界面音
 $PY core/render/srt.py $W/out/srt.json $OUT/$NAME.srt             # 9. 字幕
 Q="content=$CONTENT&voices=$VREL"
 $RS node core/render/video.mjs $D --fps 24 --workers 2 --q "$Q" --out $W/out/video24.mp4   # 10. 逐帧渲染（甩镜段 5 子帧运动模糊）
-sh core/render/mux.sh $W/out/video24.mp4 $W/mix.wav $OUT/$NAME.mp4 24 0          # 11. 合成：−14 LUFS，无颗粒
+node core/render/mux.mjs $W/out/video24.mp4 $W/mix.wav $OUT/$NAME.mp4 24 0          # 11. 合成：−14 LUFS，无颗粒
 $PY $D/tools/final_asr.py $OUT/$NAME.mp4 || true                  # 12. 成片 whisper 抽查 + 人声频段 SNR
 if [ "$CONTENT" = "content.json" ]; then
   node core/render/still.mjs $D 25.5 --q nosub=1 --out $D/out/still --prefix sf_ && cp $D/out/still/sf_25.5.jpg $D/stills/styleframe.jpg

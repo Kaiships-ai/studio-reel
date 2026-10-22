@@ -10,13 +10,13 @@ FILM=$(cd "$HERE/.." && pwd)                         # .../<slug>
 LIB=${LIB:-$(cd "$HERE/../../.." && pwd)}            # films/<slug>/demo or styles/<slug>/demo -> library root
 export LIB
 [ -f "$LIB/core/render/video.mjs" ] || { echo "set LIB to the library folder"; exit 1; }
-PY="$LIB/.venv/bin/python"
+PY="pixi run -e full python"
 DPY="$HERE/assets/raw/.venv/bin/python"              # data tools need laspy + lazrs + scikit-image (private venv)
 NAME=lidar-survey
 cd "$LIB"
 
-# style-specific packages live in a private venv inside the project, not in $LIB/.venv
-[ -x "$DPY" ] || { python3 -m venv "$HERE/assets/raw/.venv" && "$DPY" -m pip install -q laspy lazrs numpy scipy pillow scikit-image fonttools brotli; }
+# style-specific packages live in a private venv inside the project, not in the library's pixi environment
+[ -x "$DPY" ] || { pixi run python -m venv "$HERE/assets/raw/.venv" && "$DPY" -m pip install -q laspy lazrs numpy scipy pillow scikit-image fonttools brotli; }
 # data: keyed on a gitignored artefact, so a clean clone always rebuilds it
 if [ "${FETCH:-0}" = "1" ] || [ ! -f "$HERE/assets/raw/build/points.bin" ] || [ ! -f "$HERE/assets/raw/build/naip.jpg" ]; then
   "$DPY" -I "$HERE/tools/fetch_ept.py" "$HERE/assets/raw/ept" 14 USGS_LPC_CT_Statewide_B8_2016 -72.2005,-72.1915,41.8830,41.8920
@@ -30,24 +30,24 @@ fi
 
 # voice: Kokoro (bm_george), speech-to-text check with the small English model, cues from the real durations
 node "$HERE/tools/export.mjs" "$HERE" > /dev/null || true
-"$PY" core/tts/tts.py "$HERE/voice/lines.json" "$HERE/voice/out"
-WHISPER_MODEL=small.en "$PY" core/tts/asr_check.py "$HERE/voice/lines.json" "$HERE/voice/out" --lang en
+$PY core/tts/tts.py "$HERE/voice/lines.json" "$HERE/voice/out"
+WHISPER_MODEL=small.en $PY core/tts/asr_check.py "$HERE/voice/lines.json" "$HERE/voice/out" --lang en
 node "$HERE/tools/export.mjs" "$HERE"
 
 # picture, events, score + mix, master, subtitles
 node core/render/events.mjs "$HERE"
 node core/render/video.mjs "$HERE" --fps 24 --workers 3 --out "$HERE/out/video.mp4"
-"$PY" "$HERE/mix.py"
-sh core/render/mux.sh "$HERE/out/video.mp4" "$HERE/out/mix.wav" "$HERE/out/master.mp4" 24 0
+$PY "$HERE/mix.py"
+node core/render/mux.mjs "$HERE/out/video.mp4" "$HERE/out/mix.wav" "$HERE/out/master.mp4" 24 0
 # a dense point cloud is all fine detail: at mux's CRF 19 the film is ~200 MB; CRF 26 looks the same on the points and is ~90 MB
 ffmpeg -v error -y -i "$HERE/out/master.mp4" -map 0 -c:v libx264 -preset slow -crf 26 -pix_fmt yuv420p -c:a copy -movflags +faststart "$FILM/$NAME.mp4"
-"$PY" core/render/srt.py "$HERE/out/cues_srt.json" "$FILM/$NAME.srt"
+$PY core/render/srt.py "$HERE/out/cues_srt.json" "$FILM/$NAME.srt"
 
 # checks
-"$PY" -I "$HERE/tools/cuecheck.py" "$HERE" | tail -1
+$PY -I "$HERE/tools/cuecheck.py" "$HERE" | tail -1
 node "$HERE/tools/subcheck.mjs" "$HERE" | tail -1
 node core/render/readcheck.mjs "$HERE" > "$HERE/out/readcheck.txt" && echo "readcheck ok"
-"$PY" -I "$HERE/tools/motioncheck.py" "$FILM/$NAME.mp4" | tail -2
+$PY -I "$HERE/tools/motioncheck.py" "$FILM/$NAME.mp4" | tail -2
 
 # poster (the signature shot) and the gallery style frame
 ffmpeg -v error -y -ss 15.4 -i "$FILM/$NAME.mp4" -frames:v 1 -q:v 2 "$FILM/poster.jpg"

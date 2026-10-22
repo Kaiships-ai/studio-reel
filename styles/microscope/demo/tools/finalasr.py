@@ -1,5 +1,5 @@
 """Speech-to-text on the final film's mix (music and foley included): every line must still be heard.
-usage: $LIB/.venv/bin/python tools/finalasr.py <film.mp4> <demo_dir>"""
+usage: pixi run python tools/finalasr.py <film.mp4> <demo_dir>"""
 import sys, os, json, subprocess, tempfile, re
 from faster_whisper import WhisperModel
 mp4, D = sys.argv[1], sys.argv[2]

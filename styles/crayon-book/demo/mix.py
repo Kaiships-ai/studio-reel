@@ -1,5 +1,5 @@
 # 混音：原创配乐（music/score.wav）+ 材质拟音（蜡笔刮纸、湿刷子、毡子、纸页）+ 夜晚底噪 + 旁白 → mix.wav
-# 用法：.venv/bin/python styles/crayon-book/demo/mix.py
+# 用法：pixi run python styles/crayon-book/demo/mix.py
 import sys, os, json, numpy as np, soundfile as sf, soxr
 from scipy.ndimage import uniform_filter1d
 HERE = os.path.dirname(os.path.abspath(__file__))

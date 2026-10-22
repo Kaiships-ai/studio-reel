@@ -1,0 +1,4 @@
+# Your content stays on your machine: only the contract is tracked.
+*
+!.gitignore
+!README.md

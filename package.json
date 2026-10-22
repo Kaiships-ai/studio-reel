@@ -1,9 +1,9 @@
 {
-  "name": "lemo-opuscar",
+  "name": "kaiships-studio",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Film styles for coding agents: each style ships a prompt and a demo film made entirely in code, on a shared toolkit.",
+  "description": "Kaiships Studio: hand-drawn vertical reels and 52 film styles, made in code with Claude Code.",
   "engines": {
     "node": ">=20"
   },

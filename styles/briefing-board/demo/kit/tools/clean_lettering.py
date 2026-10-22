@@ -2,7 +2,7 @@
 """Remove lettering and logos from a photo before it is cut out: a large median filter inside given
 rectangles keeps colour blocks and edges between them but wipes letters, logos and markings.
 
-    python3 kit/tools/clean_lettering.py <in> <out.png> --rect x0,y0,x1,y1,size [--rect …]
+    pixi run python kit/tools/clean_lettering.py <in> <out.png> --rect x0,y0,x1,y1,size [--rect …]
 """
 import argparse
 import numpy as np

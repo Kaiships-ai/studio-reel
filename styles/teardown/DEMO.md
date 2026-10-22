@@ -2,7 +2,7 @@
 
 One example among many. Don't reuse its story, arc, shots, props or timings.
 
-Demo: *21 Keys, Opened* 《二十一键》 (38.75 s) · `teardown.mp4` · source in [`demo/`](demo/)
+Demo: *21 Keys, Opened* (Chinese title `二十一键`) (38.75 s) · `teardown.mp4` · source in [`demo/`](demo/)
 
 One half of the open-source Corne v4 split keyboard (foostan/crkbd, CC BY 4.0 / MIT), built from the project's own KiCad board, switch-plate file, case STEP, bill of materials and build guide. Chinese on screen, English narration, bilingual subtitles (Chinese line above, English below). Every number on screen and in the voice is in [`demo/FACTS.md`](demo/FACTS.md). The project's name and logo are not shown in the picture (only in the end-card credit line); the chip and part numbers are component designations from the BOM, and no package top carries a marking.
 
@@ -24,14 +24,14 @@ One continuous camera. Times in seconds; 96 BPM, bar = 2.5 s.
 | 2 | 2.5–4.4 | the orange key travels its 4 mm stroke at 3.13 and returns; pull up to the whole half | dolly → three-quarter hero, 330 mm | one real keystroke |
 | 3 | 4.4–5.0 | held | orbit continues | silence 1 (room tone, a rising suck) |
 | 4 | 5.0–7.5 | keys rise in a wave from the back-left corner, then switches, plate, board, spacers, case; feet stay on the floor | orbit −31° → −9°, pulls back to 432 mm, model slides left (view offset 170 px) | the wave lift; hit at 5.0 |
-| 5 | 6.9–11.9 | six labels draw in down the right column: 键帽 1u ×20 · 1.5u ×1, 机械轴体 十字轴 ×21, 定位板 FR-4 1.6 mm, 电路板 双层 1.6 mm, 铜柱 M2 × 7.5 mm ×4, 外壳 底厚 2.0 mm | slow orbit to +18°; at 10.0 the board and everything above rise 30 mm more | signature frame at 9.75 (poster) |
+| 5 | 6.9–11.9 | six labels draw in down the right column: keycaps 1u ×20 · 1.5u ×1, mechanical switches cross stem ×21, plate FR-4 1.6 mm, PCB two-layer 1.6 mm, brass standoffs M2 × 7.5 mm ×4, case base 2.0 mm thick | slow orbit to +18°; at 10.0 the board and everything above rise 30 mm more | signature frame at 9.75 (poster) |
 | 6 | 12.5–15.0 | down past the plate and the board edge into the gap; the case's interior lights up | dive, 452 mm → 30 mm, tilting up | the dive swoosh starts 0.35 s before |
 | 7 | 15.0–18.1 | the back of the board: RP2040 (7 × 7 mm), flash (16 MB), crystal, 0402 parts, sockets, all at footprint positions | held macro, eye 24 mm under the board, slow drift | leader lands on the chip |
 | 8 | 18.1–21.3 | slide to LED10: the reverse-mounted LED; the lights on the top side come on | macro slide 9 mm | lights on inside |
 | 9 | 21.3–22.3 | out from under the board, up past the plate | rise through the stack | transition |
-| 10 | 22.3–25.0 | the thumb-row switches seen from below: pins over the hot-swap holes; label 热插拔 ×21 | held macro at pin height, switches lifted a further 16 mm | silence 2 at 24.6–25.0 |
+| 10 | 22.3–25.0 | the thumb-row switches seen from below: pins over the hot-swap holes; label "hot-swap ×21" | held macro at pin height, switches lifted a further 16 mm | silence 2 at 24.6–25.0 |
 | 11 | 25.0–27.6 | fast pull back; the case comes up, board, plate, switches; the keys land last in a wave, each with its stroke | pull to 380 mm, three-quarter high | the loudest moment (26.6) |
-| 12 | 27.5–33.7 | dimension lines on the closed half: 键距 19.05 mm, 138.4 mm, 97.6 mm, 11.1 mm | high three-quarter drift, az 20° → 40°, 374 → 336 mm | dimensions drawn on the thing |
+| 12 | 27.5–33.7 | dimension lines on the closed half: key pitch 19.05 mm, 138.4 mm, 97.6 mm, 11.1 mm | high three-quarter drift, az 20° → 40°, 374 → 336 mm | dimensions drawn on the thing |
 | 13 | 33.75–38.75 | end card on the left, the keyboard turning on the right | drift az 40° → 59°, view offset −230 px | |
 
 ## Score structure
@@ -58,7 +58,7 @@ Mix (`demo/mix.py`): voice compressed and about 8–10 dB over the music while i
 
 ## End card
 
-二十一键 (Noto Sans SC 500), *21 Keys, Opened* (Inter Light), `产品拆解 · EXPLODED TEARDOWN`, `CAD：foostan/crkbd · CC BY 4.0`, `LemoLab × Claude Opus 5.5`, an orange rule; the closed keyboard drifting on the right. 5 s. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card.
+the Chinese title `二十一键` ("twenty-one keys", Noto Sans SC 500), *21 Keys, Opened* (Inter Light), `产品拆解 · EXPLODED TEARDOWN` (Chinese style name plus English), "CAD: foostan/crkbd · CC BY 4.0", `LemoLab × Claude Opus 5.5`, an orange rule; the closed keyboard drifting on the right. 5 s. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 ## Build notes
 

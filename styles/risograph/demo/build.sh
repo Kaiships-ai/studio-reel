@@ -2,7 +2,7 @@
 # 从零重现《Sunday Ride》：sh styles/risograph/demo/build.sh（任意目录运行）
 set -e
 cd "$(dirname "$0")/../../.."
-PY=.venv/bin/python; D=styles/risograph/demo
+PY="pixi run -e full python"; D=styles/risograph/demo
 $PY core/tts/tts.py $D/lines.json $D/voices                     # 1. Kokoro 配音（am_adam）
 $PY core/tts/asr_check.py $D/lines.json $D/voices               # 2. whisper 逐句校对（应 mismatches: 0）
 $PY $D/music/score.py                                           # 3. 原创 bossa nova 配乐 → music/score.wav + stems（~25s）

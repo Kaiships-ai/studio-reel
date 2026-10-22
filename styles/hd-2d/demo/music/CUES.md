@@ -73,4 +73,4 @@
 
 ## 怎么改
 
-改 `edit.py` 顶部 CONFIG：`T_HIT` 改高潮时间点（S4 会整体平移，铺垫长度随 `T_SILENCE[1]` 变化）；`T_CAESURA` 改灯灭停顿；`GAIN_POINTS` / `NARR_DIP_DB` 改响度曲线。然后在本目录运行 `../../../../.venv/bin/python edit.py`，score.wav、measure.json、CUES.md 会一起更新。
+改 `edit.py` 顶部 CONFIG：`T_HIT` 改高潮时间点（S4 会整体平移，铺垫长度随 `T_SILENCE[1]` 变化）；`T_CAESURA` 改灯灭停顿；`GAIN_POINTS` / `NARR_DIP_DB` 改响度曲线。然后在本目录运行 `pixi run python edit.py`，score.wav、measure.json、CUES.md 会一起更新。

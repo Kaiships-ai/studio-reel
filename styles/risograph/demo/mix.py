@@ -1,5 +1,5 @@
 """《Sunday Ride》混音：配乐 + 旁白（闪避）+ 拟音 + 环境 → mix.wav
-在仓库根运行：.venv/bin/python styles/risograph/demo/mix.py
+在仓库根运行：pixi run python styles/risograph/demo/mix.py
 拟音跟材质走：纸（印刷机进纸/滚筒/出纸/落纸）、金属小钟（车铃、刹车）、面包皮、鸽子羽毛、水。"""
 import os, sys, json, numpy as np, soundfile as sf, soxr
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))

@@ -1,5 +1,5 @@
 """混音：旁白 + 原创配乐（music/score.wav）+ 按材质合成的拟音（纸、墨、水、丝、铁、木）+ 环境（风、江水）
-用法：.venv/bin/python styles/ink-wash/demo/mix.py  → demo/mix.wav（48k 立体声，未归一，mux.sh 做 −14 LUFS）"""
+用法：pixi run python styles/ink-wash/demo/mix.py  → demo/mix.wav（48k 立体声，未归一，mux.mjs 做 −14 LUFS）"""
 import sys, os, json, numpy as np, soundfile as sf, soxr
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
 sys.path.insert(0, ROOT)

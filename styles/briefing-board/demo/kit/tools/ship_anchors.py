@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Set bow / stern anchors of a side-view ship cut-out at its water line (the lowest wide row).
-    python3 kit/tools/ship_anchors.py <id> [--bow left|right]"""
+    pixi run python kit/tools/ship_anchors.py <id> [--bow left|right]"""
 import argparse, json, os
 import numpy as np
 from PIL import Image

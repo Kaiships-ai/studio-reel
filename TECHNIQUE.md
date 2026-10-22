@@ -14,19 +14,19 @@ mix (duck, compress, balance) ──► mux with ffmpeg, two-pass loudnorm −14
 
 ## 1. Requirements and install
 
-System tools, which the user installs: **Node 20+**, **ffmpeg**, and **Python 3.11+** or [uv](https://docs.astral.sh/uv/). Developed on macOS (Apple silicon); Linux should work; on Windows use WSL. 3D and shader-heavy styles want a GPU.
-
-Everything else installs in tiers, from the library root (`$LIB` in skill mode). Install a tier only when the film needs it:
+Nothing needs to be installed by hand except [pixi](https://pixi.sh), which `/studio` sets up. Runs on macOS, Windows and Linux; 3D and shader-heavy styles want a GPU. Everything else installs inside the library folder, from the library root:
 
 | Command | Adds | Size |
 |---|---|---|
-| `sh plugin/skills/lemo-opuscar/scripts/setup.sh deps` | core: npm packages, headless browser, Python `.venv` (numpy, scipy, soundfile, soxr, pillow): render, synthesize sound, mux | ~350 MB |
-| `… setup.sh deps voice` | Kokoro + model (English, offline), edge-tts (Chinese, online), faster-whisper (voice check) | ~0.55 GB + ~145 MB Whisper model on first check |
-| `… setup.sh deps music` | numba, for plucked strings (`pluck.py`); the sampler itself needs only the core | ~140 MB |
-| `sh tools/fetch.sh instruments <lib>` | a sample library: `freepats`, `karoryfer`, `salamander`, `vcsl`, `vsco2ce` or `all` | 70–400 MB each |
-| `sh tools/fetch.sh hdri` | HDRIs for 3D styles | 12 MB |
+| `pixi run studio install` | first-time setup: Node, Python (numpy, scipy, soundfile, soxr, pillow, edge-tts, faster-whisper), ffmpeg, npm packages, headless browser: render, synthesize sound, voice (edge-tts, online) and the voice check, mux | ~145 MB Whisper model on the first voice check |
+| `pixi run studio doctor` | checks the setup and names what is missing | – |
+| `pixi run studio linux-deps` | Linux only: the system libraries the headless browser needs | – |
+| `pixi run -e full python …` | the full environment: kokoro-onnx (offline Kokoro voice, `tts.py`) and numba (plucked strings, `pluck.py`); not available on Intel Macs. The sampler itself needs only the default environment | – |
+| `pixi run fetch voice` | the Kokoro model | ~350 MB |
+| `pixi run fetch instruments <lib>` | a sample library: `freepats`, `karoryfer`, `salamander`, `vcsl`, `vsco2ce` or `all` | 70–400 MB each |
+| `pixi run fetch hdri` | HDRIs for 3D styles | 12 MB |
 
-Some styles need packages of their own (a LiDAR reader, a slide-scan decoder, a CAD importer); the style's `STYLE.md` lists them. They are packages, not system tools: install them yourself into a private venv or `node_modules` in the project folder, never into `$LIB/.venv`.
+Some styles need packages of their own (a LiDAR reader, a slide-scan decoder, a CAD importer); the style's `STYLE.md` lists them. They are packages, not system tools: install them yourself into a private venv or `node_modules` in the project folder, never into the library's pixi environment.
 
 A synthesized score needs no big download; `sampler.py` names the library to fetch when an instrument is missing. A pack needs about twice its size free while it unpacks. Downloads come from npm, PyPI, GitHub Releases and Hugging Face (`HF_ENDPOINT` sets a mirror).
 
@@ -44,20 +44,20 @@ window.TEXTS = (t) => [{id, text, x0, y0, x1, y1}];   // optional: every text vi
 
 **Paths:** pages reach library files with absolute URLs (`/core/lib.js`, `/node_modules/three/build/three.module.js`); scripts and `build.sh` use `$LIB`. Never `../..`.
 
-A `build.sh` that works in both modes (in skill mode, put `LIB=<path setup.sh printed>` at the top):
+A `build.sh` for a film in `films/<name>/`:
 
 ```sh
 #!/bin/sh
 set -e
 HERE=$(cd "$(dirname "$0")" && pwd)
-LIB=${LIB:-$(cd "$HERE/../.." && pwd)}          # clone mode: <repo>/films/<name>/
+LIB=${LIB:-$(cd "$HERE/../.." && pwd)}          # <library>/films/<name>/
 export LIB
 [ -f "$LIB/core/render/video.mjs" ] || { echo "set LIB to the library folder"; exit 1; }
 cd "$LIB"
 node core/render/events.mjs "$HERE"
 node core/render/video.mjs "$HERE" --fps 24 --out "$HERE/out/video.mp4"
-"$LIB/.venv/bin/python" "$HERE/mix.py"                               # score, foley, voice → out/mix.wav
-sh core/render/mux.sh "$HERE/out/video.mp4" "$HERE/out/mix.wav" "$HERE/<name>.mp4" 24
+pixi run python "$HERE/mix.py"                                       # score, foley, voice → out/mix.wav
+node core/render/mux.mjs "$HERE/out/video.mp4" "$HERE/out/mix.wav" "$HERE/<name>.mp4" 24
 ```
 
 Rules that keep it reliable:
@@ -95,7 +95,7 @@ A small script (`cuecheck.py`, in `styles/<slug>/demo/tools/` of several demos) 
 ## 4. Voice
 
 - **TTS is only the default.** If the user brings a recording or names a voice, use that. Otherwise:
-  - **English**: [Kokoro](https://github.com/thewh1teagle/kokoro-onnx), local, many voices (an unknown `voice` name makes `tts.py` print the full list; `af_` / `am_` are American, `bf_` / `bm_` British; cast the narrator for this film, not the demo's). `core/tts/tts.py lines.json out/` writes one WAV per line and a durations file. Its Chinese voices (`"lang": "cmn"`) work offline but sound plain.
+  - **English**: [Kokoro](https://github.com/thewh1teagle/kokoro-onnx), local, many voices (an unknown `voice` name makes `tts.py` print the full list; `af_` / `am_` are American, `bf_` / `bm_` British; cast the narrator for this film, not the demo's). `pixi run -e full python core/tts/tts.py lines.json out/` (full environment, model from `pixi run fetch voice`) writes one WAV per line and a durations file. Its Chinese voices (`"lang": "cmn"`) work offline but sound plain.
   - **Chinese**: `core/tts/tts_zh.py lines.json out/` uses [edge-tts](https://github.com/rany2/edge-tts) with Microsoft's neural voices (`zh-CN-XiaoxiaoNeural`, `zh-CN-YunxiNeural`…), with the same outputs as `tts.py`, a rate per line and the silence trimmed. **It needs a network connection.**
 - Spell numbers out in the TTS text and write them as digits in the subtitles.
 - **Check every line**: `core/tts/asr_check.py` transcribes each WAV with faster-whisper and compares it with the script (`--lang zh`: character by character); re-generate until it exits 0. A misheard character in a short Chinese line is normal: listen, and if it is right, put what the model heard in the line's `asr` field. It also writes word timestamps for placing lines and subtitles.
@@ -113,7 +113,7 @@ Write an original score from the cue map, in the instruments of the style's soun
 ## 6. Sound effects and mix
 
 - `core/audio/sfx.py` synthesises foley procedurally (click, whoosh, thump, ding, paper, noise beds…) with filters, envelopes and `add(buffer, sound, at, gain, pan)`. Drive it from `window.EV`, so every sound sits exactly on its frame.
-- **Master**: `sh core/render/mux.sh video.mp4 mix.wav out.mp4 24 [grain]` muxes, runs a two-pass loudnorm to −14 LUFS with a true-peak limit, adds grain in ffmpeg and prints the measured loudness; it exits non-zero on any failure. On light backgrounds use less grain; for pixel and vector styles, none.
+- **Master**: `node core/render/mux.mjs video.mp4 mix.wav out.mp4 24 [grain]` muxes, runs a two-pass loudnorm to −14 LUFS with a true-peak limit, adds grain in ffmpeg and prints the measured loudness; it exits non-zero on any failure. On light backgrounds use less grain; for pixel and vector styles, none.
 - Films with grain baked into the picture compress badly; re-encode with `-tune grain` and a higher CRF.
 
 ## 7. Subtitles
@@ -159,4 +159,4 @@ Fonts: Google Fonts (OFL), self-hosted in the project. The typefaces a `STYLE.md
 | 3D with depth of field and real materials | `styles/brick-toy/`, `styles/paper-popup/` |
 | a CRT or VHS look | `core/post/crt.js`, `styles/ascii-crt/`, `styles/backrooms/` |
 
-Each style's `DEMO.md` says how its demo was built. Open it and the code only after your treatment exists, to learn a technique, never to rebuild our film. In skill mode, get the source with `sh <skill folder>/scripts/setup.sh demo <slug>`. Copied demo code often reaches the library with `../..`: replace that with `$LIB` or absolute URLs.
+Each style's `DEMO.md` says how its demo was built. Open it and the code only after your treatment exists, to learn a technique, never to rebuild our film. Copied demo code often reaches the library with `../..`: replace that with `$LIB` or absolute URLs.

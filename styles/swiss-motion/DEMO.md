@@ -94,7 +94,7 @@ The "camera" is a 2D matrix (centre, scale, rotation). It moves only with the pr
 - **Subtitles are part of the layout**, not a bar at the bottom. Each line sits at column 1 on the spread's left page: the first sentence as a 30 px Medium grey lead-in, the rest as a 76 px Bold statement. Each word clip-reveals on its whisper timestamp. Non-rule lines use Regular weight ("Perfect. And a little dull."). In other shots the line sits at column 1 of that shot, at the artifact's headline baseline or under the wall like a museum label.
 - **Title card**: `Five Rules / for a Poster`, 120 px Bold, two lines flush left, sitting on the opening red line. A 19 px caption row with a 1 px rule above it (`A programme in five steps · 1961 · ♩ = 120`).
 - **Caption row + notes**: top of the left page (title / `Rule 0n / 05` / keyword); bottom of column 5: 2–3 technical notes per rule (`Columns 7 · Rows 16 · Module 91 × 40`). Bottom of column 7: a bar counter `bar 04.3`.
-- **End card**: the opening spread again. `Swiss Motion / Graphics` 120 px, red line under it, `LemoLab × Claude Opus 5.5` 36 px, notes at the bottom, hero poster on the right. The LemoLab sign-off belongs to this library's demo only: a user's film carries no LemoLab credit and no copy of this card.
+- **End card**: the opening spread again. `Swiss Motion / Graphics` 120 px, red line under it, `LemoLab × Claude Opus 5.5` 36 px, notes at the bottom, hero poster on the right. The LemoLab sign-off belongs to this library's demo only: a user's film carries none of the demo's credits and no copy of this card.
 
 ## Pitfalls we hit (demo record)
 
@@ -126,4 +126,4 @@ styles/swiss-motion/demo/
 2. `node core/render/still.mjs styles/swiss-motion/demo --range 0.5:43.5:1 --out …` then `sheet.py`. Review a 1 s overview plus dense 0.25 s strips around the break and each transition.
 3. `tts.py` → `asr_check.py` (0 mismatches) → `tools/words.py`.
 4. `music/score.py` (onsets from `score.json`; check sweep onsets ≤ 5 ms) → `events.mjs` → `mix.py` (prints voice/music/foley dB per line).
-5. `video.mjs --workers 3` (1056 frames in ~12 s) → `mux.sh … 24 0`. Or simply `sh styles/swiss-motion/demo/build.sh` (~55 s from zero).
+5. `video.mjs --workers 3` (1056 frames in ~12 s) → `mux.mjs … 24 0`. Or simply `sh styles/swiss-motion/demo/build.sh` (~55 s from zero).

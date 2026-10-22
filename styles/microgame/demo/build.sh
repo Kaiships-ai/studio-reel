@@ -2,7 +2,7 @@
 # 从零重现《Five-Second Astronaut》：sh styles/microgame/demo/build.sh（任意目录运行）
 set -e
 cd "$(dirname "$0")/../../.."
-PY=.venv/bin/python; D=styles/microgame/demo; O=styles/microgame
+PY="pixi run -e full python"; D=styles/microgame/demo; O=styles/microgame
 node $D/tools/dump_timeline.mjs                                   # 1. 速度网格 → timeline.json（配乐 / 混音 / 自检共用）
 $PY core/tts/tts.py $D/lines.json $D/voices                       # 2. Kokoro 配音（am_fenrir / af_bella）
 $PY $D/tools/trim_cmd.py $D/lines.json $D/voices                  # 3. 单词命令去掉元音尾巴（"Pump, now!" → "Pump"）

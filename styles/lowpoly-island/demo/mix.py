@@ -1,5 +1,5 @@
 """混音：拟音（水 / 木 / 石 / 玻璃，跟材质走）+ 环境床（浪、海鸥、风车、虫鸣）+ 旁白 + 配乐闪避 → mix.wav
-用法：.venv/bin/python styles/lowpoly-island/demo/mix.py
+用法：pixi run python styles/lowpoly-island/demo/mix.py
 读取 events.json（页面导出的同一条时间线）、voices/*.wav、music/score.wav"""
 import os, sys, json, numpy as np, soundfile as sf, librosa
 HERE = os.path.dirname(os.path.abspath(__file__))

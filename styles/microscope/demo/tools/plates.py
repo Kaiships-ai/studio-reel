@@ -1,6 +1,6 @@
 """Build every image plate and every measurement of the film from the whole-slide image (Ventana-1.bif, CC0).
 
-usage: .venv/bin/python -I tools/plates.py <demo_dir>
+usage: pixi run python -I tools/plates.py <demo_dir>
 in : assets/raw/Ventana-1.bif, config.json (ROI centres, nucleus guess, measuring roll)
 out: assets/plates/*.jpg|png, assets/plates/plates.json (geometry + measurements)
 

@@ -2,7 +2,7 @@
 # Rebuild the film from scratch: sh styles/stained-glass/demo/build.sh (from any directory)
 set -e
 cd "$(dirname "$0")/../../.."
-PY=.venv/bin/python; D=styles/stained-glass/demo; O=styles/stained-glass
+PY="pixi run -e full python"; D=styles/stained-glass/demo; O=styles/stained-glass
 $PY core/tts/tts.py $D/lines.json $D/voices                    # 1. Kokoro narration (bf_alice)
 $PY core/tts/asr_check.py $D/lines.json $D/voices              # 2. whisper check (asr field: knight/night homophone)
 node core/render/events.mjs $D                                 # 3. timeline -> events.json (voice, foley, subtitle cues)

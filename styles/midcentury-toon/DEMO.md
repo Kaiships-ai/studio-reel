@@ -83,26 +83,26 @@ Demo numbers behind the STYLE.md rules: register offset `(6, 4)` px re-rolled at
 
 ## End card
 
-After the lockup, inside the iris circle: film title, style name, `Lemo-Opuscar`, `LemoLab × Claude Opus 5.5`, asset credits. The LemoLab sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card.
+After the lockup, inside the iris circle: film title, style name, `Lemo-Opuscar`, `LemoLab × Claude Opus 5.5`, asset credits. The LemoLab sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 ## Build notes
 
-1. `demo/content.json` holds every word, number, colour, the voice and the payoff plan. `python3 demo/tools/lines.py` turns it into `lines.json`.
+1. `demo/content.json` holds every word, number, colour, the voice and the payoff plan. `pixi run python demo/tools/lines.py` turns it into `lines.json`.
 2. Kokoro (`core/tts/tts.py`) → `voices/` + `dur.json`; `asr_check.py` until every line is OK (step numbers are compared as digits).
 3. The timeline is built from content (see Shots).
 4. The score (`music/score.py`, forked to a sub-agent with the cue map) → `score.wav`, stems and `hits.json`.
 5. `core/render/events.mjs` exports the same event times the pictures use. `tools/cuecheck.py` checks every hit against the half-beat grid and the score. `mix.py` builds foley, voice, ducking and the three silences.
-6. `tools/cues.mjs` → `.srt`; render with `core/render/video.mjs` (960 frames ≈ 30 s with 2 workers, through `core/render/slot.mjs`); `mux.sh … 24 4`.
+6. `tools/cues.mjs` → `.srt`; render with `core/render/video.mjs` (960 frames ≈ 30 s with 2 workers, through `core/render/slot.mjs`); `mux.mjs … 24 4`.
 7. `sh demo/build.sh` does all of it; `sh demo/build.sh stills` renders the content-swap test.
 
 Pitfalls tied to this demo's props:
 
-1. `demo/content.json` holds every word, number, colour, the voice and the payoff plan. `python3 demo/tools/lines.py` turns it into `lines.json`.
+1. `demo/content.json` holds every word, number, colour, the voice and the payoff plan. `pixi run python demo/tools/lines.py` turns it into `lines.json`.
 2. Kokoro (`core/tts/tts.py`) → `voices/` + `dur.json`; `asr_check.py` until every line is OK (step numbers are compared as digits).
 3. The timeline is built from content: hook 4 bars, each step ≥ 3 bars (from its voice length), the last step 2 bars, then payoff 3, tip 2, lockup 3 and end 2 bars at 132 BPM. Three steps = 22 bars = 40.0 s.
 4. The score (`music/score.py`, forked to a sub-agent with the cue map) → `score.wav`, stems and `hits.json`.
 5. `core/render/events.mjs` exports the same event times the pictures use. `tools/cuecheck.py` checks every hit against the half-beat grid and the score (0 off in the demo). `mix.py` builds foley, voice, ducking and the three silences.
-6. `tools/cues.mjs` → `.srt`; render with `core/render/video.mjs` (960 frames ≈ 30 s with 2 workers); `mux.sh … 24 4`.
+6. `tools/cues.mjs` → `.srt`; render with `core/render/video.mjs` (960 frames ≈ 30 s with 2 workers); `mux.mjs … 24 4`.
 7. `sh demo/build.sh` does all of it; `sh demo/build.sh stills` renders the content-swap test.
 
 ## content.json fields

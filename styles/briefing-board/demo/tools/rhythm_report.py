@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Objective rhythm report on a finished film (picture and sound).
 
-    .venv/bin/python tools/rhythm_report.py <film.mp4> [--events scenes/film.json] [--flat 1.0]
+    pixi run python tools/rhythm_report.py <film.mp4> [--events scenes/film.json] [--flat 1.0]
 
 Picture
   - motion energy per frame: mean |frame - previous frame| on a 480×270 greyscale decode (0–255 scale);

@@ -1,5 +1,5 @@
 # 配乐 + 旁白 + 合成音效（纸片马里奥式）→ mix.wav
-# 用法（仓库根）：.venv/bin/python styles/paper-popup/demo/mix.py [输出路径，默认 demo/mix.wav]
+# 用法（仓库根）：pixi run python styles/paper-popup/demo/mix.py [输出路径，默认 demo/mix.wav]
 import json, re, os, sys, numpy as np, soundfile as sf
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 OUT = sys.argv[1] if len(sys.argv) > 1 else 'mix.wav'

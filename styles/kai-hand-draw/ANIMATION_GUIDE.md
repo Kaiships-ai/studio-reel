@@ -4,7 +4,7 @@
 > written for wordless 16:9 cartoons. kai-hand-draw makes vertical, narrated reels, so **`STYLE.md` and
 > `REEL_GUIDE.md` win wherever they disagree**: the canvas is 1080×1920 at 30 fps, on-screen text is allowed, captions
 > and chapter wipes are drawn for you, and scenes are chapter files in `<film>/src/ch/` registered with `chapter()`
-> instead of `shots()`. Model-sheet loops of the cast are in `engine/sheets.js` (`--loop=kai|kaiV3|clawd|cast`); the
+> instead of `shots()`. Model-sheet loops of the cast are in `engine/sheets.js` (`--loop=kai|clawd|cast`); the
 > sheets in `docs/` were drawn in 16:9. `<film>` below is the film's folder, e.g. `films/my-reel`.
 
 Read this whole file before you draw anything. It covers how to make a short, hand-painted cartoon, starring Clawd or any character you design: the rules and animation principles that make it look good, the workflow that catches mistakes, and the full reference for the character and the engine.
@@ -224,7 +224,7 @@ node styles/kai-hand-draw/tools/look.mjs <film> --clip=0:4      # or: one stretc
 | `<film>/src/config.js` | `PROJECT = { name, duration, fps, bpm, offset, cover, caption? }` |
 | `engine/core.js` | canvas, palette, timing and motion helpers, `paint()`, camera, full-frame effects, `glow()`, lettering, paper, render hooks (`window.render(t)`) |
 | `engine/clawd.js`, `engine/clawd-v3.js` | Clawd: views, emotions, eyes, mouths, hats, emotes, moves; the astronaut (`{ astro: true }`) |
-| `engine/kaip.js`, `engine/kai-v3.js` | Kai, painted: `kai(pose, x, y, h, o)`; Kai v3 canon with `{ look: 'v3' }` or `kaiV3(...)` |
+| `engine/kaip.js`, `engine/kai-v3.js` | The presenter, painted: `kai(pose, x, y, h, o)`, its parts and colours from the film's `src/character.js` (`CHARACTER`); Kai v3 canon with `{ look: 'v3' }` or `kaiV3(...)` (not customizable) |
 | `engine/cast.js` | the Researcher: `researcher(x, y, s, o)` |
 | `engine/timeline.js` | `shots()`, `LOOPS`, `brushWipe()` |
 | `engine/reel.js`, `engine/kit.js` | the reel layer: chapters, captions, voiceover lookups, shared props (see `REEL_GUIDE.md`) |

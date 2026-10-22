@@ -2,7 +2,7 @@
 """Download the source photos the demo's cut-outs are made from, as recorded in
 sources/candidates/candidates.json (every entry with "used": true): original_url → sources/candidates/<file>.
 
-    python3 kit/tools/fetch_sources.py [--all]
+    pixi run python kit/tools/fetch_sources.py [--all]
 
 Each record already holds the Commons page, author, licence and the licence evidence (the file page's
 template); this script prints them as it goes. Files that exist are kept; a recorded sha256 is checked
@@ -14,7 +14,7 @@ import hashlib, json, os, sys, urllib.request, time
 
 HERE = os.path.dirname(os.path.abspath(__file__)); DEMO = os.path.dirname(os.path.dirname(HERE))
 SRC = os.path.join(DEMO, 'sources', 'candidates')
-UA = 'LemoOpuscar-demo-fetch/1.0 (https://github.com/lemomo-ai/lemo-opuscar; library demo rebuild)'
+UA = 'KaishipsStudio-demo-fetch/1.0 (library demo rebuild)'
 
 def sha256(p):
     h = hashlib.sha256()

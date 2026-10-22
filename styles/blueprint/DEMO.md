@@ -74,7 +74,7 @@ Demo motion numbers: exploded parts leave one every ~0.055 of the progress on ei
   - Water: soft damped pats per drop plus a light rain bed.
   - Rubber stamp thump, pen cap click at the very end.
 - **Voice**: dry-humoured British engineer reading his own design notes, Kokoro `bm_daniel`, `lang en-gb`, speed 0.9. Five or six short lines. Keep the climax voiceless.
-- **Mix**: music ducks to ~0.36 under voice and foley ducks by half. Whooshes low-passed at 2.5 kHz (they masked "bellows" in whisper). −14 LUFS. `mux.sh` grain 4 (the paper grain is in the image already).
+- **Mix**: music ducks to ~0.36 under voice and foley ducks by half. Whooshes low-passed at 2.5 kHz (they masked "bellows" in whisper). −14 LUFS. `mux.mjs` grain 4 (the paper grain is in the image already).
 
 ## Palette & props
 
@@ -107,7 +107,7 @@ Demo motion numbers: exploded parts leave one every ~0.055 of the progress on ei
 
 ## End card
 
-**End card**: the title block. The last row is lettered in: STYLE: BLUEPRINT / DRAWN BY: LemoLab × Claude Opus 5.5. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card.
+**End card**: the title block. The last row is lettered in: STYLE: BLUEPRINT / DRAWN BY: LemoLab × Claude Opus 5.5. The "LemoLab × Claude Opus 5.5" sign-off belongs to this library's demo only; a user's film carries none of the demo's credits and no copy of this card.
 
 ## Build notes
 
@@ -124,10 +124,10 @@ styles/blueprint/demo/
 ```
 
 1. `node core/render/still.mjs styles/blueprint/demo --range 0:46:1.5` then `sheet.py` to review. Iterate per section.
-2. `.venv/bin/python core/tts/tts.py lines.json voices`, then `asr_check.py` (6/6 OK).
+2. `pixi run python core/tts/tts.py lines.json voices`, then `asr_check.py` (6/6 OK).
 3. `node core/render/events.mjs`, then `music/score.py`, then `mix.py`, then `tools/check_mix.py`.
 4. `node core/render/video.mjs styles/blueprint/demo --fps 24 --workers 3` (1120 frames, Canvas2D + WebGL, ~30 s).
-5. `sh core/render/mux.sh out/video24.mp4 mix.wav blueprint.mp4 24 4`. Or run everything with `sh styles/blueprint/demo/build.sh`.
+5. `node core/render/mux.mjs out/video24.mp4 mix.wav blueprint.mp4 24 4`. Or run everything with `sh styles/blueprint/demo/build.sh`.
 
 ### Pitfalls we hit
 

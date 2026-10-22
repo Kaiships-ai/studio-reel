@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Presenter Designer</title>
+<!-- Kaiships Studio · character designer. One self-contained file: no network, no fonts to fetch. Open it by
+     double-click. Pick parts, press "Copy for Claude", paste into Claude Code. Every option here is one the reel
+     engine draws (styles/kai-hand-draw/engine/kaip.js, the CHARACTER parts); the preview is a simplified copy of
+     the same shapes, so it shows the parts, not every brush stroke. -->
+<style>
+:root {
+  --bg: #F6F1E7; --panel: #FFFCF6; --ink: #2B2233; --muted: #6E6476; --line: #E4DACB; --chip: #F1EADD;
+  --accent: #C8553D; --accent-ink: #FFFFFF; --paper: #F3EBDC; --focus: #3A7C99; --code: #F4EEE3;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1B1820; --panel: #24202A; --ink: #EDE6F0; --muted: #A79DAF; --line: #3A3441; --chip: #2E2935;
+    --accent: #E07A5F; --accent-ink: #1B1820; --paper: #EFE6D6; --focus: #7FC1DD; --code: #1F1C24;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1B1820; --panel: #24202A; --ink: #EDE6F0; --muted: #A79DAF; --line: #3A3441; --chip: #2E2935;
+  --accent: #E07A5F; --accent-ink: #1B1820; --paper: #EFE6D6; --focus: #7FC1DD; --code: #1F1C24;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 16px/1.5 ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+.mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+header { max-width: 1120px; margin: 0 auto; padding: 28px 16px 8px; display: flex; gap: 16px; align-items: flex-start; justify-content: space-between; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0 0 4px; letter-spacing: -.01em; }
+header p { margin: 0; color: var(--muted); max-width: 56ch; }
+.theme { flex: none; }
+main { max-width: 1120px; margin: 0 auto; padding: 8px 16px 48px; display: grid; grid-template-columns: minmax(280px, 400px) 1fr; gap: 24px; align-items: start; }
+.stage { position: sticky; top: 16px; display: grid; gap: 12px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; }
+.preview { aspect-ratio: 3 / 4; padding: 8px; overflow: hidden; }
+.preview svg { width: 100%; height: 100%; display: block; border-radius: 10px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+button, .btn {
+  font: inherit; font-size: 15px; border-radius: 10px; border: 1px solid var(--line); background: var(--chip); color: var(--ink);
+  padding: 9px 14px; cursor: pointer; min-height: 40px;
+}
+button:hover { border-color: var(--muted); }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 650; }
+.controls { padding: 6px 18px 18px; }
+fieldset { border: 0; margin: 0; padding: 14px 0 14px; border-bottom: 1px solid var(--line); min-width: 0; }
+fieldset:last-of-type { border-bottom: 0; }
+legend { float: left; width: 100%; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 0; margin-bottom: 8px; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+.chips, .swatches, fieldset > input { clear: both; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips label { position: relative; }
+.chips input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.chips span { display: inline-block; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--chip); font-size: 14px; user-select: none; }
+.chips input:checked + span { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.chips input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: 2px; }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+.sw { width: 30px; height: 30px; min-height: 0; padding: 0; border-radius: 50%; border: 2px solid var(--panel); box-shadow: 0 0 0 1px var(--line); }
+.sw[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink); }
+.custom { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); margin-left: 4px; }
+.custom input { width: 34px; height: 30px; padding: 0; border: 1px solid var(--line); border-radius: 8px; background: none; cursor: pointer; }
+.hint { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
+.name input { width: 100%; max-width: 320px; font: inherit; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { padding: 16px; display: grid; gap: 10px; }
+.out p { margin: 0; font-size: 14px; color: var(--muted); }
+.out strong { color: var(--ink); }
+textarea#spec {
+  width: 100%; min-height: 250px; resize: vertical; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+  background: var(--code); color: var(--ink); font: 13px/1.55 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+.status { font-size: 14px; min-height: 1.5em; color: var(--muted); }
+@media (max-width: 760px) {
+  header { padding-top: 20px; }
+  h1 { font-size: 22px; }
+  main { grid-template-columns: 1fr; gap: 16px; }
+  .stage { top: 0; z-index: 2; background: var(--bg); padding: 8px 0 4px; gap: 8px; }
+  .preview { aspect-ratio: auto; height: 210px; padding: 4px; }
+  .stage .row button { flex: 1 1 auto; padding: 8px 10px; }
+  .status:empty { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Design your presenter</h1>
+    <p>Pick the parts, then the colours. When you like it, press <b>Copy for Claude</b> and paste it into Claude Code. Your reels will star this character next to Clawd.</p>
+  </div>
+  <button class="theme" id="theme" type="button" aria-label="Switch light or dark">Dark</button>
+</header>
+<main>
+  <section class="stage" aria-label="Preview">
+    <div class="card preview"><svg id="pv" viewBox="-56 -140 112 148" role="img" aria-label="Preview of your presenter"></svg></div>
+    <div class="row">
+      <button type="button" id="rand">Randomize</button>
+      <button type="button" id="reset">Reset</button>
+      <button type="button" class="primary" id="copy">Copy for Claude</button>
+    </div>
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+  </section>
+  <section>
+    <form class="card controls" id="form" autocomplete="off" onsubmit="return false">
+      <fieldset class="name"><legend>Name or nickname</legend><input id="name" maxlength="24" placeholder="e.g. Alex" aria-label="Name or nickname"></fieldset>
+    </form>
+    <div class="card out" style="margin-top:16px">
+      <p><strong>Your character spec.</strong> Paste it into Claude Code in your studio folder; Claude turns it into the presenter of your next reel.</p>
+      <textarea id="spec" readonly spellcheck="false" aria-label="Character spec to paste into Claude Code"></textarea>
+    </div>
+  </section>
+</main>
+<script>
+(() => {
+  // ---------- the parts (must match engine/kaip.js PARTS and DEF) ----------
+  const INK = '#2B2233', ROSE = '#E27A92', CREAM = '#FFF5E2', SOLE = '#F4EEE2';
+  const PARTS = [
+    { key: 'skin', label: 'Skin tone', colors: [['#F6D2B5', 'fair'], ['#F0C29C', 'light'], ['#E4AE84', 'tan'], ['#D2A273', 'olive'], ['#A86F48', 'brown'], ['#6E4630', 'deep']] },
+    { key: 'eyes', label: 'Eyes', opts: [['classic', 'Classic'], ['big', 'Big'], ['sleepy', 'Sleepy'], ['lashes', 'Lashes']] },
+    { key: 'brows', label: 'Eyebrows', opts: [['classic', 'Classic'], ['thick', 'Thick'], ['thin', 'Thin'], ['arched', 'Arched'], ['none', 'None']] },
+    { key: 'hair', label: 'Hair', opts: [['curly', 'Curly'], ['short', 'Short'], ['long', 'Long'], ['bun', 'Bun'], ['spiky', 'Spiky'], ['afro', 'Afro'], ['bald', 'Bald']] },
+    { key: 'hair_color', label: 'Hair colour', colors: [['#261E2B', 'black'], ['#4A2E22', 'dark brown'], ['#8A4B2A', 'brown'], ['#B0532E', 'auburn'], ['#E3B866', 'blonde'], ['#A9A4A8', 'grey'], ['#E27A92', 'pink'], ['#4F6FB0', 'blue']] },
+    { key: 'facial_hair', label: 'Facial hair', opts: [['none', 'None'], ['stubble', 'Stubble'], ['moustache', 'Moustache'], ['goatee', 'Goatee'], ['beard', 'Beard']] },
+    { key: 'glasses', label: 'Glasses', opts: [['round', 'Round'], ['square', 'Square'], ['big', 'Big round'], ['sunglasses', 'Sunglasses'], ['none', 'None']] },
+    { key: 'accessory', label: 'Accessory', opts: [['none', 'None'], ['cap', 'Cap'], ['beanie', 'Beanie'], ['headband', 'Headband'], ['headphones', 'Headphones'], ['earrings', 'Earrings']], hint: 'A cap or beanie hides a bun, spikes and the top of curly hair.' },
+    { key: 'accessory_color', label: 'Accessory colour', colors: [['#D93A27', 'red'], ['#E8AA38', 'ochre'], ['#2E8C83', 'teal'], ['#3F6FB5', 'blue'], ['#7B5CA8', 'violet'], ['#2B2733', 'ink']] },
+    { key: 'top', label: 'Top', opts: [['tee', 'T-shirt'], ['hoodie', 'Hoodie'], ['shirt', 'Shirt'], ['jacket', 'Open jacket'], ['sweater', 'Sweater']] },
+    { key: 'top_color', label: 'Top colour', colors: [['#2B2733', 'ink'], ['#F2EEE6', 'white'], ['#C8324A', 'red'], ['#D97757', 'clay'], ['#E8AA38', 'ochre'], ['#5E8C61', 'green'], ['#3A9C98', 'teal'], ['#3F6FB5', 'blue'], ['#7B5CA8', 'violet']] },
+    { key: 'pants_color', label: 'Trousers colour', colors: [['#1F1B26', 'black'], ['#3E5A8A', 'denim'], ['#B49A6A', 'khaki'], ['#6E6A5E', 'grey'], ['#E8DCC4', 'cream']] },
+  ];
+  const DEF = { name: '', skin: '#E4AE84', eyes: 'classic', brows: 'classic', hair: 'curly', hair_color: '#261E2B', facial_hair: 'none',
+    glasses: 'round', accessory: 'none', accessory_color: '#D93A27', top: 'tee', top_color: '#2B2733', pants_color: '#1F1B26' };
+  const ORDER = ['name', 'skin', 'eyes', 'brows', 'hair', 'hair_color', 'facial_hair', 'glasses', 'accessory', 'accessory_color', 'top', 'top_color', 'pants_color'];
+  let C = { ...DEF };
+  const store = { get() { try { return JSON.parse(localStorage.getItem('kaiships.character') || 'null'); } catch { return null; } },
+                  set(v) { try { localStorage.setItem('kaiships.character', JSON.stringify(v)); } catch {} } };
+
+  // ---------- controls ----------
+  const form = document.getElementById('form'), $ = id => document.getElementById(id);
+  for (const p of PARTS) {
+    const fs = document.createElement('fieldset'), lg = document.createElement('legend');
+    lg.textContent = p.label; fs.appendChild(lg);
+    if (p.opts) {
+      const box = document.createElement('div'); box.className = 'chips'; box.setAttribute('role', 'radiogroup');
+      for (const [v, l] of p.opts) {
+        const lab = document.createElement('label'), inp = document.createElement('input'), sp = document.createElement('span');
+        inp.type = 'radio'; inp.name = p.key; inp.value = v; inp.addEventListener('change', () => set(p.key, v));
+        sp.textContent = l; lab.append(inp, sp); box.appendChild(lab);
+      }
+      fs.appendChild(box);
+    } else {
+      const box = document.createElement('div'); box.className = 'swatches';
+      for (const [hex, l] of p.colors) {
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'sw'; b.dataset.key = p.key; b.dataset.hex = hex;
+        b.style.background = hex; b.title = l; b.setAttribute('aria-label', `${p.label}: ${l}`);
+        b.addEventListener('click', () => set(p.key, hex)); box.appendChild(b);
+      }
+      const cl = document.createElement('label'), ci = document.createElement('input');
+      cl.className = 'custom'; ci.type = 'color'; ci.id = 'c_' + p.key; ci.setAttribute('aria-label', `${p.label}: custom colour`);
+      ci.addEventListener('input', () => set(p.key, ci.value.toUpperCase()));
+      cl.append(ci, document.createTextNode('custom')); box.appendChild(cl);
+      fs.appendChild(box);
+    }
+    if (p.hint) { const h = document.createElement('p'); h.className = 'hint'; h.textContent = p.hint; fs.appendChild(h); }
+    form.appendChild(fs);
+  }
+  $('name').addEventListener('input', e => set('name', e.target.value));
+  function set(k, v) { C[k] = v; sync(); }
+  function sync() {
+    for (const p of PARTS) {
+      if (p.opts) form.querySelectorAll(`input[name="${p.key}"]`).forEach(i => { i.checked = i.value === C[p.key]; });
+      else {
+        form.querySelectorAll(`.sw[data-key="${p.key}"]`).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.hex === C[p.key])));
+        $('c_' + p.key).value = C[p.key].toLowerCase();
+      }
+    }
+    if ($('name').value !== C.name) $('name').value = C.name;
+    $('spec').value = specText();
+    draw();
+    store.set(C);
+  }
+  const cleanName = n => (n || '').replace(/[\r\n:`]/g, ' ').trim().slice(0, 24) || 'Presenter';
+  function specText() {
+    const lines = ORDER.map(k => `${k}: ${k === 'name' ? cleanName(C.name) : C[k]}`);
+    return 'Use this as the presenter in my kai-hand-draw reels:\n```\ncharacter-spec v1\n' + lines.join('\n') + '\n```\n';
+  }
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  $('rand').addEventListener('click', () => {
+    for (const p of PARTS) C[p.key] = p.opts ? pick(p.opts)[0] : pick(p.colors)[0];
+    if (Math.random() < .5) C.accessory = 'none';
+    if (Math.random() < .5) C.facial_hair = 'none';
+    sync(); say('Randomized. Keep clicking until one feels right.');
+  });
+  $('reset').addEventListener('click', () => { C = { ...DEF, name: C.name }; sync(); say('Back to the default presenter.'); });
+  const say = t => { $('status').textContent = t; };
+
+  // ---------- copy (clipboard, then select-and-copy, then select for Ctrl/Cmd+C) ----------
+  $('copy').addEventListener('click', async () => {
+    const txt = specText(), ta = $('spec');
+    try {
+      if (!navigator.clipboard) throw new Error('no clipboard');
+      await navigator.clipboard.writeText(txt);
+      say('Copied. Now paste it into Claude Code.');
+    } catch {
+      ta.focus(); ta.select(); ta.setSelectionRange(0, ta.value.length);
+      let ok = false; try { ok = document.execCommand('copy'); } catch {}
+      say(ok ? 'Copied. Now paste it into Claude Code.' : 'The browser blocked copying. The spec is selected: press Ctrl+C (Cmd+C on a Mac), then paste it into Claude Code.');
+    }
+  });
+
+  // ---------- theme ----------
+  const root = document.documentElement, mq = matchMedia('(prefers-color-scheme: dark)');
+  const isDark = () => root.dataset.theme ? root.dataset.theme === 'dark' : mq.matches;
+  const label = () => { $('theme').textContent = isDark() ? 'Light' : 'Dark'; };
+  try { const th = localStorage.getItem('kaiships.theme'); if (th) root.dataset.theme = th; } catch {}
+  $('theme').addEventListener('click', () => { root.dataset.theme = isDark() ? 'light' : 'dark'; try { localStorage.setItem('kaiships.theme', root.dataset.theme); } catch {} label(); });
+  mq.addEventListener?.('change', label); label();
+
+  // ---------- colour helpers (same as the engine) ----------
+  const rgb = c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16));
+  const mix = (a, b, k) => '#' + rgb(a).map((v, i) => Math.round(v + (rgb(b)[i] - v) * k).toString(16).padStart(2, '0')).join('').toUpperCase();
+  const light = c => { const [r, g, b] = rgb(c); return (.299 * r + .587 * g + .114 * b) / 255 > .55; };
+  const tint = (c, k) => light(c) ? mix(c, '#2A1A16', k * .8) : mix(c, '#FFFFFF', k);
+
+  // ---------- preview: the engine's shapes in its own units (feet at y 0, the head scaled 1.5 around y -80) ----------
+  const NS = 'http://www.w3.org/2000/svg', svg = $('pv');
+  let g;
+  const el = (tag, at, parent = g) => { const e = document.createElementNS(NS, tag); for (const k in at) e.setAttribute(k, at[k]); parent.appendChild(e); return e; };
+  const st = (fill, sw = .5, o = {}) => ({ fill: fill || 'none', stroke: sw ? INK : 'none', 'stroke-width': sw, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', ...o });
+  const f = n => +n.toFixed(2);
+  const closedPath = (pts, curv) => {
+    if (!curv) return 'M' + pts.map(p => p.map(f).join(' ')).join('L') + 'Z';
+    const m = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], n = pts.length;
+    let d = 'M' + m(pts[n - 1], pts[0]).map(f).join(' ');
+    for (let i = 0; i < n; i++) d += 'Q' + pts[i].map(f).join(' ') + ' ' + m(pts[i], pts[(i + 1) % n]).map(f).join(' ');
+    return d + 'Z';
+  };
+  const openPath = pts => {
+    if (pts.length < 3) return 'M' + pts.map(p => p.map(f).join(' ')).join('L');
+    let d = 'M' + pts[0].map(f).join(' ');
+    for (let i = 1; i < pts.length - 1; i++) d += 'Q' + pts[i].map(f).join(' ') + ' ' + [(pts[i][0] + pts[i + 1][0]) / 2, (pts[i][1] + pts[i + 1][1]) / 2].map(f).join(' ');
+    return d + 'L' + pts[pts.length - 1].map(f).join(' ');
+  };
+  const poly = (pts, fill, sw, o, curv) => el('path', { d: closedPath(pts, curv), ...st(fill, sw, o) });
+  const line = (pts, sw, col) => el('path', { d: openPath(pts), fill: 'none', stroke: col, 'stroke-width': sw, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+  const ell = (cx, cy, rx, ry, fill, sw, o) => el('ellipse', { cx, cy, rx, ry, ...st(fill, sw, o) });
+  const rr = (x, y, w, h, r, fill, sw, o) => el('rect', { x, y, width: w, height: h, rx: r, ...st(fill, sw, o) });
+  const arcPts = (cy, rx, ry, a0, a1, n = 16) => Array.from({ length: n + 1 }, (_, i) => { const a = a0 + (a1 - a0) * i / n; return [Math.cos(a) * rx, cy + Math.sin(a) * ry]; });
+  const hash = i => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+  const TAU = Math.PI * 2, HAT = { cap: 1, beanie: 1 }, LONG = { hoodie: 1, jacket: 1, sweater: 1 };
+
+  function draw() {
+    const d = (v, k) => v === DEF[k];
+    const SKIN = C.skin, SKIN_DK = d(SKIN, 'skin') ? '#C98B62' : mix(SKIN, '#3A1E14', .22);
+    const HAIR = C.hair_color, HAIR_LT = d(HAIR, 'hair_color') ? '#4A3A52' : tint(HAIR, .16), HAIR_HI = d(HAIR, 'hair_color') ? '#6A5874' : tint(HAIR, .32);
+    const TEE = C.top_color, TEE_LT = d(TEE, 'top_color') ? '#4A4458' : tint(TEE, .14), TEE_HI = d(TEE, 'top_color') ? '#6A6380' : tint(TEE, .28);
+    const PANT = C.pants_color, ACC = C.accessory_color, ACC_DK = mix(ACC, '#1A0E0C', .3);
+    const hat = HAT[C.accessory], jk = C.top === 'jacket';
+    svg.textContent = '';
+    const defs = el('defs', {}, svg);
+    defs.innerHTML = `<filter id="wob" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".09" numOctaves="2" seed="${boil}" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale=".9" xChannelSelector="R" yChannelSelector="G"/></filter>
+      <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="3"/><feColorMatrix values="0 0 0 0 .17  0 0 0 0 .13  0 0 0 0 .2  0 0 0 .09 0"/><feComposite in2="SourceGraphic" operator="in"/></filter>`;
+    el('rect', { x: -60, y: -140, width: 120, height: 148, fill: '#F3EBDC' }, svg);
+    el('ellipse', { cx: -12, cy: -96, rx: 30, ry: 26, fill: ROSE, opacity: .12 }, svg);
+    el('rect', { x: -60, y: -6, width: 120, height: 14, fill: '#E8D2B8' }, svg);
+    g = el('g', { filter: 'url(#wob)' }, svg);
+    ell(0, 2, 20, 3.2, INK, 0, { opacity: .14 });
+    // legs + shoes
+    for (const sd of [-1, 1]) {
+      poly([[sd * 2, -46], [sd * 13, -46], [sd * 12, -6], [sd * 3, -6]], PANT, .5);
+      rr(sd > 0 ? 1 : -17, -8, 16, 8, 3.5, INK, .4);
+      rr(sd > 0 ? 1 : -17, -2.6, 16, 2.8, 1.2, SOLE, .35);
+    }
+    const head = (fn) => { const h = el('g', { transform: 'translate(0 -80) scale(1.5) translate(0 80)' }); const keep = g; g = h; fn(); g = keep; };
+    // hair behind everything
+    if (C.hair === 'long' || C.hair === 'afro') head(() => {
+      if (C.hair === 'long') poly([...arcPts(-92, 14.4, 15.2, Math.PI, TAU), [15.4, -82], [15.9, -72], [11.6, -70.4], [9.6, -77], [-9.6, -77], [-11.6, -70.4], [-15.9, -72], [-15.4, -82]], HAIR, .4);
+      else ell(0, -97, 17.5, 15.5, HAIR, .45);
+    });
+    // arms (front pose: both hang behind the torso)
+    for (const side of [-1, 1]) {
+      const a = el('g', { transform: `translate(${side * 15.5} -73) rotate(${-side * .15 * 57.2958})` }), keep = g; g = a;
+      rr(-4.2, -1, 8.4, 10, 3, TEE, .5);
+      rr(-3.4, 7, 6.8, 10, 3.2, LONG[C.top] ? TEE : SKIN, .45);
+      const b = el('g', { transform: `translate(0 16) rotate(${-side * .1 * 57.2958})` }); g = b;
+      rr(-3.2, -1, 6.4, 14, 3, SKIN, .45);
+      ell(0, 14.5, 4.4, 4.2, SKIN, .45);
+      g = keep;
+    }
+    // torso
+    poly([[-17, -76], [-8, -79], [8, -79], [17, -76], [15, -46], [-15, -46]], jk ? '#F6EFE4' : TEE, .6);
+    if (!jk) ell(-5, -70, 5, 3, TEE_HI, 0, { opacity: .45 });
+    rr(-3.6, -83, 7.2, 7, 2, SKIN_DK, 0);
+    line([[-6, -78.6], [0, -76.6], [6, -78.6]], .45, INK);
+    const t0 = -46;
+    if (C.top === 'hoodie') {
+      poly([[-9, -80.4], [-4, -77.2], [4, -77.2], [9, -80.4], [7.6, -75.6], [0, -73.6], [-7.6, -75.6]], TEE_LT, .45, {}, true);
+      for (const s of [-1, 1]) line([[s * 2.2, -75], [s * 2.4, -70], [s * 2.1, -66]], .4, CREAM);
+      rr(-8, t0 - 11, 16, 8, 2, TEE, .4);
+    }
+    if (C.top === 'shirt') {
+      line([[0, -75.6], [0, t0]], .3, TEE_LT);
+      for (const y of [-72, -66, -60, -54, -48]) ell(0, y, .55, .55, CREAM, .2);
+      for (const s of [-1, 1]) poly([[s * 6.8, -79.2], [0, -75.8], [s * 4.6, -73.2]], TEE_HI, .4);
+    }
+    if (jk) for (const s of [-1, 1]) {
+      poly([[s * 17, -76], [s * 8, -79], [s * 4.6, -77.6], [s * 5.6, t0], [s * 15, t0]], TEE, .55);
+      line([[s * 4.8, -77.4], [s * 8.4, -69.6], [s * 6, -63.6]], .4, TEE_HI);
+      line([[s * 9, t0 - 9], [s * 13, t0 - 9]], .35, INK);
+    }
+    if (C.top === 'sweater') {
+      line([[-6.2, -78.2], [0, -75.8], [6.2, -78.2]], 1.3, TEE_LT);
+      const zz = []; for (let x = -14, k = 0; x <= 14; x += 2.8, k++) zz.push([x, -64 + (k % 2 ? 1 : -1)]);
+      el('path', { d: 'M' + zz.map(p => p.join(' ')).join('L'), fill: 'none', stroke: TEE_HI, 'stroke-width': .75, 'stroke-linejoin': 'round' });
+      rr(-15, t0 - 3, 30, 3, 0, TEE_LT, .35);
+    }
+    // head
+    head(() => {
+      for (const ex of [-12.5, 12.5]) ell(ex, -90, 2.4, 3.2, SKIN, .4);
+      ell(0, -91, 12, 13.2, SKIN, .55);
+      ell(-4, -96, 5, 3.5, '#FFFFFF', 0, { opacity: .3 });
+      // glasses
+      const G = C.glasses;
+      for (const ex of [-5.6, 5.6]) {
+        if (G === 'round') rr(ex - 4.6, -94.2, 9.2, 7.6, 3, 'rgba(255,255,255,.35)', .75);
+        if (G === 'square') rr(ex - 4.9, -94, 9.8, 7.2, 1, 'rgba(255,255,255,.35)', .9);
+        if (G === 'big') ell(ex, -90.6, 5.4, 5, 'rgba(255,255,255,.35)', .7);
+      }
+      if (G !== 'none') line([[-1, -91.5], [1, -91.5]], .6, INK);
+      if (G !== 'sunglasses') for (const ex of [-5.6, 5.6]) {
+        const X = ex, Y = -90.4, big = C.eyes === 'big', R = big ? 1.69 : 1.3;
+        if (big) ell(X, Y, 2.5, 2.7, '#FFFFFF', .25);
+        ell(X, Y, R, R * 1.15, INK, 0);
+        ell(X + .45, Y - .5, .45, .45, '#FFFFFF', 0);
+        if (C.eyes === 'sleepy') { rr(X - 2.3, Y - 2.7, 4.6, 2.2, 0, SKIN, 0); line([[X - 2.2, Y - .5], [X + 2.2, Y - .5]], .55, INK); }
+        if (C.eyes === 'lashes') { const s = Math.sign(ex); for (const k of [0, 1]) line([[X + s * (1.1 + k * .7), Y - (1.2 - k * .3)], [X + s * (1.9 + k * .8), Y - (2.1 - k * .3)]], .35, INK); }
+      }
+      if (G === 'sunglasses') for (const ex of [-5.6, 5.6]) { rr(ex - 4.8, -94.2, 9.6, 7, 2.6, INK, .7); line([[ex - 2.6, -89.2], [ex - .6, -92.6]], .35, '#FFFFFF'); }
+      // brows
+      if (C.brows !== 'none') for (const ex of [-5.6, 5.6]) {
+        if (C.brows === 'arched') line([[ex - 3, -97.2], [ex, -98.8], [ex + 3, -97.8]], .66, HAIR);
+        else line([[ex - 3, -97.5], [ex + 3, -98.1]], C.brows === 'thick' ? 1.2 : C.brows === 'thin' ? .36 : .66, HAIR);
+      }
+      for (const ex of [-8, 8]) ell(ex, -85.5, 2.4, 1.3, ROSE, 0, { opacity: .45 });
+      // facial hair
+      const fh = C.facial_hair;
+      if (fh === 'stubble') for (let i = 0; i < 60; i++) {
+        const a = .2 + hash(i * 2.7 + 5) * (Math.PI - .4), r = .8 + .18 * hash(i * 5.3 + 1), x = Math.cos(a) * 12 * r, y = -91 + Math.sin(a) * 13.2 * r;
+        if (y < -86 || (Math.abs(x) < 4.4 && y < -79.6)) continue;
+        ell(x, y, .26, .26, HAIR, 0, { opacity: .7 });
+      }
+      if (fh === 'beard') { poly([...arcPts(-91, 12.5, 13.8, .12, Math.PI - .12), [-10.4, -88.4], [-6, -85.8], [-2.5, -85], [2.5, -85], [6, -85.8], [10.4, -88.4]], HAIR, .4); ell(0, -82.6, 4, 2.3, SKIN, 0); }
+      if (fh === 'goatee') ell(0, -79.4, 2.5, 1.9, HAIR, .3);
+      if (fh === 'moustache' || fh === 'goatee' || fh === 'beard') for (const s of [-1, 1]) el('ellipse', { cx: s * 1.9, cy: -84.7, rx: 2.3, ry: .95, transform: `rotate(${s * .18 * 57.2958} ${s * 1.9} -84.7)`, ...st(HAIR, .27) });
+      line([[-3, -83.6], [0, -81.8], [3, -83.6]], .6, INK);
+      // hair
+      const hs = C.hair;
+      if (hs === 'curly') {
+        [[-14.2, -97.5, 5], [14.2, -97.5, 5], [-12, -101, 6], [12, -101, 6], [-7, -106, 6.5], [7, -106, 6.5], [0, -108, 6.5], [-3, -101, 6], [4, -102, 6]].forEach(([x, y, r], i) => { if (!hat || i < 4) ell(x, y, r, r * .92, HAIR, .33); });
+        if (!hat) for (let k = 0; k < 7; k++) { const a = Math.PI + k / 6 * Math.PI, x = Math.cos(a) * 10, y = -103 + Math.sin(a) * 6; line([[x - 1.5, y], [x, y - 1.6], [x + 1.5, y]], .27, HAIR_HI); }
+      } else if (hs === 'bald') { if (!hat) line([[-5, -101.2], [-2, -102.6], [1.2, -102.4]], .5, '#FFFFFF'); }
+      else {
+        if (hs === 'bun' && !hat) ell(0, -106.8, 5.4, 4.8, HAIR, .36);
+        if (hs === 'spiky' && !hat) for (let k = -2; k <= 2; k++) { const a = Math.PI * 1.5 + k * .42, e = (b, r) => [Math.cos(b) * 12.9 * r, -91 + Math.sin(b) * 14.1 * r]; poly([e(a - .24, .97), e(a + k * .05, 1.34), e(a + .24, .97)], HAIR, .33); }
+        poly([...arcPts(-91, 12.9, 14.1, Math.PI + .14, TAU - .14), [11.6, -95.5], [9, -99.4], [5, -100.4], [1.2, -99.6], [-3, -100.8], [-7, -99.8], [-10.4, -97.8], [-11.8, -95]], HAIR, .36);
+        for (const [x0, y0, x1, y1] of [[-6, -103.4, -2, -101.4], [2, -104, 6.4, -101.8]]) line([[x0, y0], [x1, y1]], .27, HAIR_HI);
+      }
+      // accessory
+      const a = C.accessory;
+      if (a === 'cap' || a === 'beanie') {
+        const cap = a === 'cap', cy = cap ? -94.5 : -95, ry = cap ? 14.2 : 14.6, edge = cap ? -97 : -99, dd = Math.asin((cy - edge) / ry);
+        poly(arcPts(cy, 13.4, ry, Math.PI + dd, TAU - dd), ACC, .48);
+        if (cap) { line([[0, -108.4], [0, -97.4]], .27, ACC_DK); ell(0, -108.5, 1.3, 1.1, ACC_DK, .24); poly([[-12.8, -97.4], [12.8, -97.4], [11, -94.6], [0, -93.6], [-11, -94.6]], ACC_DK, .45, {}, true); }
+        else { rr(-13.8, -101.6, 27.6, 5.2, 2, ACC_DK, .42); for (let k = -4; k <= 4; k++) line([[k * 2.8, -100.8], [k * 2.8, -97.2]], .2, ACC); ell(0, -110.6, 3.4, 3.2, ACC, .33); }
+      } else if (a === 'headband') {
+        const top = [], bot = [];
+        for (let i = 0; i <= 10; i++) { const x = -12.6 + i * 2.52, y = -101.4 + 1.2 * (x / 12.6) ** 2; top.push([x, y]); bot.push([x, y + 2.8]); }
+        poly([...top, ...bot.reverse()], ACC, .42);
+      } else if (a === 'headphones') {
+        const tp = { curly: -115, afro: -113.5, bun: -112.4, spiky: -110.5 }[C.hair] ?? -106.4, band = arcPts(-90, 14.6, -90 - tp, Math.PI, TAU, 18);
+        line(band, 1.8, INK); line(band, 1.08, ACC);
+        for (const s of [-1, 1]) rr(s * 14.6 - 2.4, -95, 4.8, 9, 2, ACC, .42);
+      } else if (a === 'earrings') for (const s of [-1, 1]) ell(s * 12.6, -85.6, 1, 1, ACC, .27);
+    });
+    el('rect', { x: -60, y: -140, width: 120, height: 148, filter: 'url(#grain)', fill: '#000' }, svg);
+  }
+  // the engine's lines boil 12 times a second; the preview breathes slower
+  let boil = 1;
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(() => { boil = boil % 3 + 1; const t = svg.querySelector('feTurbulence'); if (t) t.setAttribute('seed', boil); }, 320);
+
+  const saved = store.get();
+  const valid = (k, v) => { if (k === 'name') return true; const p = PARTS.find(q => q.key === k); return p.opts ? p.opts.some(o => o[0] === v) : /^#[0-9A-F]{6}$/.test(v); };
+  if (saved && typeof saved === 'object') for (const k of ORDER) if (typeof saved[k] === 'string' && valid(k, saved[k])) C[k] = saved[k];
+  sync();
+})();
+</script>
+</body>
+</html>

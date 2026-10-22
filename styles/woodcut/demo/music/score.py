@@ -6,7 +6,7 @@ and a SYNTHESISED ANVIL (numpy modal synthesis) for the forge rhythm.
 CORE RULE: no bell-like tone anywhere before the foley bell at 47.333; tubular bells / hand chimes only after 48.333.
 Key: D minor (dorian colour) -> D major after 48.333. Motif A: D-F-E-A(down)-D  /  D-F#-E-A(down)-D.
 
-Run (any cwd):  .venv/bin/python styles/woodcut/demo/music/score.py
+Run (any cwd):  pixi run python styles/woodcut/demo/music/score.py
 Writes: score.wav, stems/{strings,perc,bells,forge}.wav, score.json, CREDITS.txt  (all 48 kHz stereo, 58.5 s)
 Timing comes from ../timeline.json (single source of truth).
 """

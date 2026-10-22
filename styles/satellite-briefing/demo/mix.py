@@ -9,7 +9,7 @@ so every hit lands on its frame.
   beds      orbit hum + radio hiss + data chatter; desert wind; water lapping (only after silence 2)
   voice     Kokoro (bf_emma), compressed, music ducked underneath
 
-usage: $LIB/.venv/bin/python mix.py
+usage: pixi run python mix.py
 """
 import json, os, sys
 import numpy as np
@@ -626,7 +626,7 @@ def main():
     mix = mix[:int(DUR * SR)]
     fade = int(.5 * SR); mix[-fade:] *= np.linspace(1, 0, fade)[:, None]
     # master: bring the mix to about -14.4 LUFS here and hold true peaks under -4.6 dBTP (4x oversampled
-    # detection), so mux.sh's loudnorm stays in linear mode and the film lands at -14 LUFS / <= -1.2 dBTP
+    # detection), so mux.mjs's loudnorm stays in linear mode and the film lands at -14 LUFS / <= -1.2 dBTP
     for _ in range(3):
         I = lufs(mix)
         mix = mix * 10 ** ((-14.4 - I) / 20)

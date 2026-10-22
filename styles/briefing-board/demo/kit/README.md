@@ -82,7 +82,7 @@ Every ink element draws over `t … t + d`; `erase {t, d}` wipes it to a ghost; 
 ## Add an object
 
 ```sh
-$LIB/.venv/bin/python kit/tools/prep_object.py <photo> <id> --keep-largest [--crop …] [--poly …] --anchor L=0.12,0.86 --anchor R=0.88,0.86
+pixi run python kit/tools/prep_object.py <photo> <id> --keep-largest [--crop …] [--poly …] --anchor L=0.12,0.86 --anchor R=0.88,0.86
 ```
 
 Anchors are in the output's normalised coordinates. Bridges carry `L` and `R` (the main-span supports at

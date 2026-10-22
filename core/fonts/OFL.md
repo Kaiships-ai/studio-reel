@@ -9,7 +9,7 @@
 | Lilita One (Regular) | `f4.woff2` (Latin Extended, 1162), `f5.woff2` (Latin, 387) | see `fonts.css` | Copyright (c) 2011 Juan Montoreano (juan@remolacha.biz), with Reserved Font Names "Lilita One" | http://scripts.sil.org/OFL |
 | IM Fell English (Italic and Regular) | `f6.woff2` (Italic), `f7.woff2` (Regular), each Latin, 387 | see `fonts.css` | (c) 2007 Igino Marini (www.iginomarini.com) With Reserved Font Name IM FELL English Italic / IM FELL English Roman | http://scripts.sil.org/OFL |
 
-How this table was made: the family-to-file mapping comes from `fonts.css`; the copyright and licence lines are the `name` table records (IDs 0 and 14) read from the `.woff2` files themselves with fontTools 4.66.0 (fontTools is not in the shared `.venv`; it was installed in a throw-away environment just to read the files). The designer field (name ID 9) is empty in these files, so the copyright line above is the attribution. Nothing was fetched from a web page for the table.
+How this table was made: the family-to-file mapping comes from `fonts.css`; the copyright and licence lines are the `name` table records (IDs 0 and 14) read from the `.woff2` files themselves with fontTools 4.66.0 (fontTools is not in the shared pixi environment; it was installed in a throw-away environment just to read the files). The designer field (name ID 9) is empty in these files, so the copyright line above is the attribution. Nothing was fetched from a web page for the table.
 
 Lilita One and IM FELL English declare **Reserved Font Names** (see their copyright lines). If you modify or rename these files, condition 3 of the licence below applies.
 

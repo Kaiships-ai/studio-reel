@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Plot out/camcheck.csv (written by tools/camcheck.mjs) → out/camcheck.png:
 frame-content speed (px/frame), acceleration, zoom, and the share of the board's width in frame.
-    python3 tools/camplot.py   (Pillow only)"""
+    pixi run python tools/camplot.py   (Pillow only)"""
 import csv, os
 from PIL import Image, ImageDraw
 DEMO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

@@ -1,5 +1,5 @@
 # 配乐自检：分段 RMS、频段能量、静音段、卡带段频谱、节拍网格、削波、分轨平衡
-# 运行：.venv/bin/python styles/cel-anime-80s/demo/music/analyze.py
+# 运行：pixi run python styles/cel-anime-80s/demo/music/analyze.py
 import os, json, numpy as np, soundfile as sf, librosa, warnings
 from scipy.signal import butter, sosfilt
 warnings.filterwarnings('ignore')

@@ -3,30 +3,29 @@
 //   node styles/kai-hand-draw/tools/make.mjs <film>            everything: vo → audio → render → verify
 //   node styles/kai-hand-draw/tools/make.mjs <film> vo         vo/script.json → voice, timings, voice rules, Whisper check
 //   node styles/kai-hand-draw/tools/make.mjs <film> audio      audio/cues.json → assets/reel-audio.wav (music + SFX + voice)
-//   node styles/kai-hand-draw/tools/make.mjs <film> render     frames (core/render/video.mjs) + mux (core/render/mux.sh,
+//   node styles/kai-hand-draw/tools/make.mjs <film> render     frames (core/render/video.mjs) + mux (core/render/mux.mjs,
 //                                                              BT.709, −14 LUFS) → <film>/<name>.mp4 and <name>-cover.png
 //   node styles/kai-hand-draw/tools/make.mjs <film> verify     checks the MP4 and writes out/check/verify.json
 // Options: --workers=4 (render) · --no-asr (skip the Whisper checks) · --no-camscan (skip the camera speed scan)
 // A film is any folder with index.html, src/config.js, vo/script.json and audio/cues.json: films/<name>/ in this repo
 // (git ignores it), or styles/kai-hand-draw/demo.
-import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync, mkdirSync, cpSync, readdirSync } from 'node:fs';
 import { join, resolve, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { env, run, requireReady } from '../../../kit/env.mjs';
+import { mux } from '../../../core/render/mux.mjs';
 
 const STYLE = resolve(dirname(fileURLToPath(import.meta.url)), '..'), LIB = resolve(STYLE, '../..'), TOOLS = join(STYLE, 'tools');
-const PY = join(LIB, '.venv/bin/python');
 const argv = process.argv.slice(2), pos = argv.filter(a => !a.startsWith('--')), flags = argv.filter(a => a.startsWith('--'));
 const flag = (k, d) => { const f = flags.find(a => a === `--${k}` || a.startsWith(`--${k}=`)); return f ? (f.includes('=') ? f.split('=')[1] : true) : d; };
 const die = m => { console.error('✗ ' + m); process.exit(1); };
-const sh = (cmd, args, o = {}) => {
-  const r = spawnSync(cmd, args, { stdio: 'inherit', cwd: LIB, ...o });
-  if (r.error || r.status !== 0) { if (o.soft) return false; die(`failed: ${[cmd, ...args].join(' ')}${r.error ? '\n  ' + r.error.message : ''}`); }
+// tool is 'node', 'python', 'ffmpeg' or 'ffprobe' (kit/env.mjs finds it in this folder's pixi environment)
+const sh = (tool, args, o = {}) => {
+  const r = run(tool, args, o);
+  if (r.error || r.status !== 0) { if (o.soft) return false; die(`failed: ${[tool, ...args].join(' ')}${r.error ? '\n  ' + r.error.message : ''}`); }
   return true;
 };
-const out = (cmd, args) => spawnSync(cmd, args, { encoding: 'utf8', cwd: LIB, maxBuffer: 64 << 20 });
-if (!existsSync(PY)) die(`no Python venv at ${PY}: run "sh plugin/skills/lemo-opuscar/scripts/setup.sh deps voice" from the library root`);
-if (!existsSync(join(LIB, 'node_modules/p5.brush'))) die('npm packages are missing: run "npm install" in the library root');
+const out = (tool, args) => run(tool, args, { capture: true });
 
 // ---------- new ----------
 if (pos[0] === 'new') {
@@ -42,32 +41,33 @@ if (pos[0] === 'new') {
 }
 
 // ---------- a film ----------
+requireReady(env());
 const film = pos[0] && resolve(pos[0]);
 if (!film || !existsSync(join(film, 'index.html'))) die('usage: make.mjs <film folder> [vo|audio|render|verify]   or   make.mjs new <name>');
 const cfgSrc = readFileSync(join(film, 'src/config.js'), 'utf8');
 const NAME = (cfgSrc.match(/\bname:\s*['"]([^'"]+)['"]/) || [])[1] || basename(film);
 const FPS = +((cfgSrc.match(/\bfps:\s*(\d+)/) || [])[1] || 30), COVER = +((cfgSrc.match(/\bcover:\s*([\d.]+)/) || [])[1] || 1);
 const MP4 = join(film, `${NAME}.mp4`), COVER_PNG = join(film, `${NAME}-cover.png`), CHECK = join(film, 'out/check');
-const hasWhisper = () => out(PY, ['-c', 'import faster_whisper']).status === 0;
+const hasWhisper = () => out('python', ['-c', 'import faster_whisper']).status === 0;
 
 const STEP = {
   vo() {
-    sh(PY, [join(TOOLS, 'make_vo.py'), film]);
-    sh(PY, [join(TOOLS, 'check_vo.py'), film]);
+    sh('python', [join(TOOLS, 'make_vo.py'), film]);
+    sh('python', [join(TOOLS, 'check_vo.py'), film]);
     if (flag('no-asr')) return console.log('(Whisper check skipped: --no-asr)');
-    if (!hasWhisper()) return console.log('⚠ Whisper check skipped: faster-whisper is not installed (sh plugin/skills/lemo-opuscar/scripts/setup.sh deps voice)');
+    if (!hasWhisper()) return console.log('⚠ Whisper check skipped: faster-whisper is not installed (pixi run studio install)');
     // every line must transcribe back to its words; a name Whisper spells its own way goes in the line's "asr" field
-    if (!sh(PY, ['core/tts/asr_check.py', join(film, 'vo/lines/lines.json'), join(film, 'vo/lines'), '--lang', 'en'], { soft: true }))
+    if (!sh('python', ['core/tts/asr_check.py', join(film, 'vo/lines/lines.json'), join(film, 'vo/lines'), '--lang', 'en'], { soft: true }))
       die('a line did not transcribe back to its words (above). Listen to it: fix the text or "say", or put what Whisper hears in that line\'s "asr" field');
   },
-  audio() { sh(PY, [join(TOOLS, 'make_audio.py'), film]); },
+  audio() { sh('python', [join(TOOLS, 'make_audio.py'), film]); },
   render() {
     const audio = join(film, 'assets/reel-audio.wav');
     if (!existsSync(audio)) die(`${audio} is missing: run the audio step first`);
     mkdirSync(join(film, 'out'), { recursive: true });
-    sh('node', ['core/render/video.mjs', film, '--size', '1080x1920', '--fps', String(FPS), '--workers', String(flag('workers', 4)), '--out', join(film, 'out/video.mp4')]);
+    sh('node', ['core/render/video.mjs', film, '--size', '1080x1920', '--fps', String(FPS), '--workers', String(flag('workers', env().workers)), '--out', join(film, 'out/video.mp4')]);
     // grain 0: the page paints its own paper grain. BT.709 limited range, as the published reels.
-    sh('sh', ['core/render/mux.sh', join(film, 'out/video.mp4'), audio, MP4, String(FPS), '0'], { env: { ...process.env, LEMO_COLOR: 'bt709' } });
+    try { mux({ video: join(film, 'out/video.mp4'), audio, out: MP4, fps: FPS, grain: 0, color: 'bt709' }); } catch (e) { die(e.message); }
     sh('node', [join(TOOLS, 'look.mjs'), film, `--stills=${COVER}`, '--no-captions', `--out=${join(film, 'out/cover')}`]);
     const png = readdirSync(join(film, 'out/cover')).filter(f => f.endsWith('.png')).sort().pop();
     cpSync(join(film, 'out/cover', png), COVER_PNG);
@@ -94,7 +94,7 @@ const STEP = {
       ['no black frames', !blacks.length, blacks.length ? blacks.map(([s, e]) => `${s.toFixed(2)}–${e.toFixed(2)} s`).join(', ') : 'none'],
     ];
     if (!flag('no-camscan')) {
-      sh('node', [join(TOOLS, 'look.mjs'), film, '--camscan', `--workers=${flag('workers', 4)}`, `--out=${join(CHECK, 'camscan.json')}`]);
+      sh('node', [join(TOOLS, 'look.mjs'), film, '--camscan', `--workers=${flag('workers', env().workers)}`, `--out=${join(CHECK, 'camscan.json')}`]);
       const cs = JSON.parse(readFileSync(join(CHECK, 'camscan.json'), 'utf8'));
       checks.push(['camera moves ≤ 20 px per frame (hit shakes of 1–2 frames allowed)', !cs.over.length, `max ${cs.maxPxPerFrame} px/frame at ${cs.at} s, ${cs.shakes.length} shake(s)` + (cs.over.length ? ' · too fast: ' + cs.over.map(o => `${o.from}–${o.to} s (${o.max})`).join(', ') : '')]);
     }
@@ -104,7 +104,7 @@ const STEP = {
     if (keyword && !flag('no-asr') && hasWhisper()) {
       const wav = join(CHECK, 'cta.wav');
       out('ffmpeg', ['-y', '-loglevel', 'error', '-ss', String(Math.max(0, last.s - .6)), '-to', String(last.e + .6), '-i', MP4, '-vn', '-ac', '1', '-ar', '16000', wav]);
-      const r = out(PY, ['-c', 'import sys, soundfile as sf; from faster_whisper import WhisperModel as M; a, _ = sf.read(sys.argv[1], dtype="float32"); s, _ = M("base.en").transcribe(a, language="en"); print(" ".join(x.text for x in s))', wav]);
+      const r = out('python', ['-c', 'import sys, soundfile as sf; from faster_whisper import WhisperModel as M; a, _ = sf.read(sys.argv[1], dtype="float32"); s, _ = M("base.en").transcribe(a, language="en"); print(" ".join(x.text for x in s))', wav]);
       const heard = (r.stdout || '').trim(), norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
       checks.push([`keyword "${keyword.toUpperCase()}" heard in the CTA`, norm(heard).includes(norm(keyword)), `Whisper: "${heard}"`]);
     } else checks.push(['keyword heard in the CTA', null, keyword ? 'skipped (no Whisper or --no-asr)' : 'no "Comment <KEYWORD>" in the last line']);

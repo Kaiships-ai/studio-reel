@@ -1,5 +1,5 @@
 #!/bin/sh
-# core/render/mux.sh 的副本：crf 15 + -tune grain（网点与墨粒需要更高码率）
+# core/render/mux.mjs 的副本：crf 15 + -tune grain（网点与墨粒需要更高码率）
 # 合成成片：mux.sh video.mp4 mix.wav out.mp4 [fps] [grain]
 # 视频按目标帧率输出（定格片段自动复制帧）；grain = 颗粒强度（默认 2，0 = 不加；像素/矢量风格用 0）
 # 音频两遍 loudnorm → −14 LUFS / TP −1.2（单遍会偏 0.5 LU 左右）

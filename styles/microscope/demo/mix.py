@@ -12,7 +12,7 @@ every objective change, scan, landing and card), so every sound lands on its fra
   beds      a quiet lab room (fan, a little mains hum, air)
   voice     Kokoro af_heart, compressed, music ducked underneath; two silences (21.8 and 32.3)
 
-usage: $LIB/.venv/bin/python mix.py
+usage: pixi run python mix.py
 """
 import json, os, sys
 import numpy as np

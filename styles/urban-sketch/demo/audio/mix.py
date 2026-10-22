@@ -1,4 +1,4 @@
-# 混音：音乐分轨 + 拟音分轨 → mix.wav（响度交给 mux.sh 两遍 loudnorm）
+# 混音：音乐分轨 + 拟音分轨 → mix.wav（响度交给 mux.mjs 两遍 loudnorm）
 import sys, os, json
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..'))
 sys.path.insert(0, ROOT)
