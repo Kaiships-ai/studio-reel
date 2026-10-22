@@ -22,3 +22,16 @@ faster-whisper = "==1.2.1"
 [tasks]
 studio = "node kit/studio.mjs"
 make = "node styles/kai-hand-draw/tools/make.mjs"
+fetch = "python kit/fetch.py"
+
+# Optional extras some styles use: the offline Kokoro voice (core/tts/tts.py) and plucked strings (core/audio/pluck.py).
+# Use them with `pixi run -e full …`. Kokoro needs onnxruntime, which has no Intel-Mac build, so osx-64 is left out.
+[feature.full]
+platforms = ["osx-arm64", "win-64", "linux-64"]
+
+[feature.full.pypi-dependencies]
+kokoro-onnx = "*"
+numba = "*"
+
+[environments]
+full = { features = ["full"], solve-group = "default" }

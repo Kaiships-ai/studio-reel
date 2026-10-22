@@ -1,38 +1,26 @@
-#!/bin/sh
-# Download large assets that are not in git, from the "assets" release on GitHub.
-# An interrupted download resumes when you run the same command again. It needs about 2.2x the pack's size
-# in free disk space (the download, then the unpacked files).
-set -e
-cd "$(dirname "$0")/.."
-LIBS="freepats karoryfer salamander vcsl vsco2ce"
-usage() {
-  cat <<USAGE
-usage: sh tools/fetch.sh voice | hdri | instruments <lib> | instruments all
-  voice              Kokoro TTS model (English, offline) → core/tts/
-  hdri               Poly Haven HDRIs → core/assets/polyhaven/
-  instruments <lib>  one sample library → core/audio/instruments/  (libs: $LIBS)
-  instruments all    every sample library (about 1.4 GB)
-USAGE
-  exit 1
-}
-case "$1" in
-  voice|hdri) PACKS=$1 ;;
-  instruments)
-    case " $LIBS all " in *" $2 "*) ;; *) usage ;; esac
-    if [ "$2" = all ]; then PACKS=""; for l in $LIBS; do PACKS="$PACKS instruments-$l"; done; else PACKS="instruments-$2"; fi ;;
-  *) usage ;;
-esac
-# the library's own Python when it has one; the system's python3 otherwise (3.8+ is enough here)
-if [ -x .venv/bin/python ]; then PY=.venv/bin/python; else PY=python3; fi
-command -v "$PY" >/dev/null || { echo "✗ python3 is needed to run this script"; exit 1; }
-"$PY" - $PACKS <<'PY'
-import hashlib, json, os, shutil, subprocess, sys, tarfile, time, urllib.error, urllib.request
-man = json.load(open('tools/assets.json'))
-packs = sys.argv[1:]
+"""Download large assets that are not in git (voice model, HDRIs, instrument sample libraries).
+  pixi run fetch voice | hdri | instruments <lib> | instruments all
+    voice              Kokoro TTS model (English, offline) -> core/tts/   (needs the "full" environment to use)
+    hdri               Poly Haven HDRIs -> core/assets/polyhaven/
+    instruments <lib>  one sample library -> core/audio/instruments/  (libs: freepats karoryfer salamander vcsl vsco2ce)
+    instruments all    every sample library (about 1.4 GB)
+An interrupted download resumes when you run the same command again. Needs about 2.2x the pack's size free.
+Packs are the MIT-licensed Lemo-Opuscar asset release (see THIRD_PARTY_NOTICES.md); checksums in kit/assets.json.
+"""
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
+LIBS = 'freepats karoryfer salamander vcsl vsco2ce'.split()
+a = sys.argv[1:]
+if a[:1] in (['voice'], ['hdri']): packs = [a[0]]
+elif a[:1] == ['instruments'] and len(a) > 1 and (a[1] in LIBS or a[1] == 'all'):
+    packs = [f'instruments-{l}' for l in LIBS] if a[1] == 'all' else [f'instruments-{a[1]}']
+else: sys.exit(__doc__)
+import hashlib, json, os, shutil, subprocess, tarfile, time, urllib.error, urllib.request
+os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+man = json.load(open('kit/assets.json', encoding='utf-8'))
 missing = [p for p in packs if p not in man['packs']]
 if missing:
-    sys.exit(f'✗ {", ".join(missing)} is not published yet (tools/assets.json has no entry). Refresh the library '
-             f'(sh plugin/skills/lemo-opuscar/scripts/setup.sh, or git pull) and try again.')
+    sys.exit(f'✗ {", ".join(missing)} is not published yet (kit/assets.json has no entry).')
 
 
 def sha256(path):
@@ -47,10 +35,6 @@ def download(url, tmp, size):
     if have() > size: os.remove(tmp)                                  # not a partial copy of this pack
     if have() == size: return
     print(f'↓ {os.path.basename(url)} ({size / 1e6:.0f} MB){f", resuming at {have() / 1e6:.0f} MB" if have() else ""}', flush=True)
-    if shutil.which('curl'):                                          # resume, retries and a progress bar
-        r = subprocess.run(['curl', '-L', '--fail', '--retry', '3', '--retry-delay', '2', '--connect-timeout', '20', '-C', '-', '-#', '-o', tmp, url])
-        if r.returncode: sys.exit(f'✗ download failed (curl exit {r.returncode}); check the network and run the same command again to resume')
-        return
     fails = 0
     try:
         while have() < size:
@@ -97,10 +81,9 @@ for name in packs:
     if sha256(tmp) != p['sha256']:
         os.remove(tmp)
         sys.exit('✗ checksum mismatch. The pack on the release was probably updated after your copy of the library was.\n'
-                 '  Refresh the library (sh plugin/skills/lemo-opuscar/scripts/setup.sh, or git pull) and run this again. If it still fails, just retry.')
+                 '  Download the latest Kaiships Studio release and run this again. If it still fails, just retry.')
     extract(tmp)
     os.remove(tmp)
     print(f'✓ {name}')
 try: os.rmdir('.release')                                             # ours only when nothing else is staged there
 except OSError: pass
-PY

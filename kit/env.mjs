@@ -22,11 +22,11 @@ const LAYOUT = {
 const FIX_INSTALL = 'pixi run studio install';
 
 /** Pure: derive the environment from observed facts. Unit-tested for every OS; no I/O here. */
-export function derive({ os, arch, root, cores, exists, angle, lockHash, envLockHash }) {
+export function derive({ os, arch, root, cores, exists, angle, lockHash, envLockHash, envName }) {
   const L = LAYOUT[os];
   const problems = [];
   if (!L) return { ok: false, os, arch, root, problems: [{ id: 'os', what: `unsupported system "${os}"`, fix: 'use macOS, Windows or Linux' }] };
-  const prefix = join(root, '.pixi', 'envs', 'default');
+  const prefix = join(root, '.pixi', 'envs', envName || 'default');
   const bins = L.bins(prefix);
   const find = list => list.find(exists) || null;
   const tools = {
@@ -72,6 +72,7 @@ export function env() {
   cached = derive({
     os: process.platform, arch: process.arch, root: ROOT, cores: cpus().length, exists: existsSync,
     angle: process.env.STUDIO_ANGLE || process.env.LEMO_ANGLE || '', lockHash: lockHash(), envLockHash,
+    envName: process.env.PIXI_ENVIRONMENT_NAME || 'default',
   });
   return cached;
 }
