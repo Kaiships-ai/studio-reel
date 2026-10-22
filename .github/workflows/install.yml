@@ -3,7 +3,8 @@
 #   - a PR that changes only docs or content runs nothing;
 #   - unit, lint and release checks run on every PR in checks.yml (~1 min);
 #   - a PR that changes the install path (kit/, core/render/, pixi.*, package*.json, release/, the test, this file)
-#     also runs the clean install on Linux (~15 min);
+#     also runs the clean install on Linux (~15 min); a kit.manifest edit counts only when it moves an existing file in
+#     or out of a zip (release/install-needed.mjs), so a new [dev] entry runs nothing;
 #   - all five machines (Linux, Windows pwsh + Git Bash, macOS arm64 + Intel) run only for a v* tag, by hand
 #     (Actions > install > Run workflow), or when the PR gets the label `test-all-os`.
 # A newer push to the same PR cancels the older run.
@@ -48,8 +49,7 @@ jobs:
         run: |
           base=${{ github.event.pull_request.base.sha || github.event.before }}
           if [ -z "$base" ] || ! git cat-file -e "$base" 2>/dev/null; then echo install=true >> "$GITHUB_OUTPUT"; exit 0; fi
-          git diff --name-only "$base" HEAD | grep -qE '^(kit/|core/render/|styles/kai-hand-draw/tools/|pixi\.(toml|lock)|package(-lock)?\.json|kit\.manifest|release/|test/clean-install\.mjs|\.github/workflows/install\.yml)' \
-            && echo install=true >> "$GITHUB_OUTPUT" || echo install=false >> "$GITHUB_OUTPUT"
+          echo "install=$(node release/install-needed.mjs "$base")" >> "$GITHUB_OUTPUT"
       - id: m
         shell: bash
         env:

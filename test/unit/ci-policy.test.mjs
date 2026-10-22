@@ -5,6 +5,8 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { ROOT } from '../../kit/env.mjs';
+import { installNeeded } from '../../release/install-needed.mjs';
+import { parseManifest } from '../../release/build.mjs';
 
 const WF = join(ROOT, '.github', 'workflows');
 const read = f => readFileSync(join(WF, f), 'utf8');
@@ -26,4 +28,14 @@ test('only checks.yml runs on every PR, and only on Linux', () => {
     assert.equal(f, 'checks.yml', `${f} runs on every PR: add a paths: filter or move the job into checks.yml`);
     assert.doesNotMatch(y, /runs-on:.*(windows|macos)/, 'checks.yml must stay on Linux');
   }
+});
+
+test('install test: a new [dev] manifest entry skips it, moving a shipped file in or out of a zip runs it', () => {
+  const files = ['core/x.js', 'styles/a/STYLE.md', 'styles/a/b.js'];
+  const m = t => parseManifest(t);
+  const base = m('[dev]\n[starter]\ncore/\nstyles/\n');
+  assert.equal(installNeeded(['kit.manifest', 'styles/new3d/x.js'], files, base, m('[dev]\nstyles/new3d/\n[starter]\ncore/\nstyles/\n')), false);
+  assert.equal(installNeeded(['kit.manifest'], files, base, m('[dev]\nstyles/a/b.js\n[starter]\ncore/\nstyles/\n')), true);
+  assert.equal(installNeeded(['styles/a/STYLE.md'], files, base, base), false);
+  assert.equal(installNeeded(['kit/env.mjs'], files, base, base), true);
 });
