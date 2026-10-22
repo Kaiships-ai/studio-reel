@@ -1,0 +1,144 @@
+// release/build.mjs: the release zips, straight from git (uncommitted changes never ship).
+//   node release/build.mjs [--ref HEAD] [--tag v1.5] [--tier starter|pro|all] [--out dist] [--dry-run]
+// kit.manifest decides what ships. Writes dist/kaiships-studio-<tier>-<version>.zip (every entry under
+// kaiships-studio/) and dist/SHA256SUMS. Same ref = same bytes (sorted entries, the commit's time on every file).
+// Refuses to write anything when a check fails: unclassified files, a Pro or dev file in Starter, a forbidden string,
+// Chinese text in a buyer document, a skill a document names that the edition lacks, missing licences.
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { deflateRawSync, crc32 } from 'node:zlib';
+import { join, resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const argv = process.argv.slice(2);
+const opt = (k, d) => { const i = argv.indexOf(`--${k}`); return i >= 0 ? argv[i + 1] : d; };
+const REF = opt('ref', opt('tag', 'HEAD')), TAG = opt('tag', ''), OUT = resolve(opt('out', join(ROOT, 'dist')));
+const TIERS = { starter: ['starter'], pro: ['starter', 'pro'] };
+const tiers = opt('tier', 'all') === 'all' ? Object.keys(TIERS) : [opt('tier')];
+const DRY = argv.includes('--dry-run');
+const git = (args, input) => {
+  const r = spawnSync('git', args, { cwd: ROOT, input, maxBuffer: 1 << 30 });
+  if (r.status !== 0) { console.error(`✗ git ${args.join(' ')}: ${String(r.stderr).trim()}`); process.exit(1); }
+  return r.stdout;
+};
+
+// ---------- the manifest ----------
+export function parseManifest(text) {
+  const m = { dev: [], pro: [], starter: [], forbid: [] }; let sec = null;
+  for (const raw of text.split('\n')) {
+    const line = raw.trim(); if (!line || line.startsWith('#')) continue;
+    const s = /^\[(\w+)\]$/.exec(line); if (s) { sec = s[1]; if (!m[sec]) throw new Error(`kit.manifest: unknown section [${sec}]`); continue; }
+    if (!sec) throw new Error(`kit.manifest: "${line}" is outside a section`);
+    m[sec].push(line);
+  }
+  return m;
+}
+const globRe = g => new RegExp('^' + g.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*\*/g, '\0').replace(/\*/g, '[^/]*').replace(/\0/g, '.*') + (g.endsWith('/') ? '.*' : '') + '$');
+export function classify(files, m) {
+  const order = ['dev', 'pro', 'starter'].map(s => [s, m[s].map(globRe)]);
+  const by = { dev: [], pro: [], starter: [] }, none = [];
+  for (const f of files) { const hit = order.find(([, res]) => res.some(r => r.test(f))); hit ? by[hit[0]].push(f) : none.push(f); }
+  return { by, none };
+}
+
+// ---------- checks ----------
+const TEXT = /\.(md|mjs|js|cjs|json|html|css|py|txt|toml|ya?ml|srt|sh|ps1)$|(^|\/)(LICENSE|CLAUDE\.md|AGENTS\.md)$/;
+const EXEMPT = new Set(['LICENSE', 'THIRD_PARTY_NOTICES.md']);
+const BUYER_DOC = f => /^[^/]+\.md$/.test(f) || /^\.claude\/skills\/[^/]+\/.*\.md$/.test(f) || f === 'workspace/README.md' || f === 'styles/README.md' || /^styles\/[^/]+\/(STYLE|DEMO|WORKFLOW|README)\.md$/.test(f);
+const SKILL_REF = /(^|[\s`("'])\/(ig-[a-z]+|make-reel|studio|crowsnest|verify)\b/g;
+const PRO_SKILLS = ['ig-plan', 'ig-reel', 'ig-human', 'ig-viral', 'ig-dm', 'ig-caption'];
+
+export function check(tier, files, blob, m) {
+  const errors = [], warns = [], set = new Set(files);
+  const skills = [...new Set(files.map(f => /^\.claude\/skills\/([^/]+)\//.exec(f)?.[1]).filter(Boolean))].sort();
+  const want = tier === 'pro' ? ['make-reel', 'studio', ...PRO_SKILLS].sort() : ['make-reel', 'studio'];
+  if (skills.join() !== want.join()) errors.push(`skills are [${skills}] but ${tier} must have exactly [${want}]`);
+  for (const f of ['LICENSE', 'THIRD_PARTY_NOTICES.md', 'README.md', 'pixi.toml', 'pixi.lock', 'kit/env.mjs', 'kit/studio.mjs', '.claude/skills/studio/SKILL.md'])
+    if (!set.has(f)) errors.push(`${f} is missing`);
+  if (set.has('THIRD_PARTY_NOTICES.md')) {
+    const n = blob('THIRD_PARTY_NOTICES.md').toString('utf8');
+    for (const who of ['LemoLab', 'John Heibel']) if (!n.includes(who)) errors.push(`THIRD_PARTY_NOTICES.md does not credit ${who}`);
+  }
+  const forbid = m.forbid.map(p => [p, new RegExp(p)]);
+  for (const f of files) {
+    if (!TEXT.test(f) || EXEMPT.has(f)) continue;
+    const t = blob(f).toString('utf8');
+    for (const [p, re] of forbid) if (re.test(t)) errors.push(`${f}: contains forbidden "${p}"`);
+    if (BUYER_DOC(f)) {
+      const cjk = (t.match(/\p{Script=Han}/gu) || []).length; if (cjk) errors.push(`${f}: ${cjk} Chinese characters in a buyer document`);
+      for (const [, , s] of t.matchAll(SKILL_REF)) {
+        if (skills.includes(s)) continue;
+        if (tier === 'starter' && PRO_SKILLS.includes(s)) warns.push(`${f}: names /${s} (Pro only)`);
+        else errors.push(`${f}: names /${s}, which this edition does not have`);
+      }
+    }
+  }
+  return { errors, warns: [...new Set(warns)] };
+}
+
+// ---------- zip (stored or deflated, deterministic) ----------
+export function zip(entries, date) {
+  const dt = new Date(date), dosT = (dt.getUTCHours() << 11) | (dt.getUTCMinutes() << 5) | (dt.getUTCSeconds() >> 1);
+  const dosD = ((dt.getUTCFullYear() - 1980) << 9) | ((dt.getUTCMonth() + 1) << 5) | dt.getUTCDate();
+  const parts = [], central = []; let off = 0;
+  for (const { name, data } of entries) {
+    const nm = Buffer.from(name, 'utf8'), crc = crc32(data) >>> 0;
+    const def = deflateRawSync(data, { level: 9 }), store = def.length >= data.length, body = store ? data : def;
+    const h = Buffer.alloc(30); h.writeUInt32LE(0x04034b50, 0); h.writeUInt16LE(20, 4); h.writeUInt16LE(0x0800, 6);
+    h.writeUInt16LE(store ? 0 : 8, 8); h.writeUInt16LE(dosT, 10); h.writeUInt16LE(dosD, 12); h.writeUInt32LE(crc, 14);
+    h.writeUInt32LE(body.length, 18); h.writeUInt32LE(data.length, 22); h.writeUInt16LE(nm.length, 26); h.writeUInt16LE(0, 28);
+    parts.push(h, nm, body);
+    const c = Buffer.alloc(46); c.writeUInt32LE(0x02014b50, 0); c.writeUInt16LE(0x0314, 4); c.writeUInt16LE(20, 6); c.writeUInt16LE(0x0800, 8);
+    c.writeUInt16LE(store ? 0 : 8, 10); c.writeUInt16LE(dosT, 12); c.writeUInt16LE(dosD, 14); c.writeUInt32LE(crc, 16);
+    c.writeUInt32LE(body.length, 20); c.writeUInt32LE(data.length, 24); c.writeUInt16LE(nm.length, 28);
+    c.writeUInt32LE((0o100644 << 16) >>> 0, 38); c.writeUInt32LE(off, 42);
+    central.push(c, nm); off += 30 + nm.length + body.length;
+  }
+  const cd = Buffer.concat(central), e = Buffer.alloc(22);
+  e.writeUInt32LE(0x06054b50, 0); e.writeUInt16LE(entries.length, 8); e.writeUInt16LE(entries.length, 10);
+  e.writeUInt32LE(cd.length, 12); e.writeUInt32LE(off, 16);
+  return Buffer.concat([...parts, cd, e]);
+}
+
+// ---------- main ----------
+if (import.meta.url === `file://${process.argv[1]}` || fileURLToPath(import.meta.url) === resolve(process.argv[1] || '')) {
+  const commit = git(['rev-parse', '--verify', `${REF}^{commit}`]).toString().trim();
+  const date = git(['show', '-s', '--format=%cI', commit]).toString().trim();
+  const files = git(['ls-tree', '-r', '-z', '--name-only', commit]).toString().split('\0').filter(Boolean).sort();
+  const m = parseManifest(git(['show', `${commit}:kit.manifest`]).toString());
+  const { by, none } = classify(files, m);
+  if (none.length) { console.error(`✗ ${none.length} tracked file(s) match no section of kit.manifest:\n  ${none.slice(0, 30).join('\n  ')}`); process.exit(1); }
+  // read every shipped blob once
+  const ship = [...by.starter, ...by.pro];
+  const out = git(['cat-file', '--batch'], ship.map(f => `${commit}:${f}`).join('\n') + '\n');
+  const blobs = new Map(); let p = 0;
+  for (const f of ship) {
+    const nl = out.indexOf(10, p), head = out.subarray(p, nl).toString(), size = +head.split(' ')[2];
+    blobs.set(f, out.subarray(nl + 1, nl + 1 + size)); p = nl + 1 + size + 1;
+  }
+  const blob = f => blobs.get(f);
+  const product = JSON.parse(blob('product.json')?.toString() || '{}');
+  const version = TAG ? TAG.replace(/^v/, '') : `${product.version || '0'}-dev+${commit.slice(0, 7)}`;
+  if (TAG && product.version !== TAG.replace(/^v/, '')) { console.error(`✗ product.json says version ${product.version}, the tag is ${TAG}`); process.exit(1); }
+  console.log(`Kaiships Studio ${version} from ${commit.slice(0, 10)} (${date})\n  tracked ${files.length}: starter ${by.starter.length}, pro ${by.pro.length}, dev ${by.dev.length}`);
+  let failed = false; const sums = [];
+  for (const tier of tiers) {
+    if (!TIERS[tier]) { console.error(`✗ unknown tier ${tier}`); process.exit(2); }
+    const list = TIERS[tier].flatMap(s => by[s]).sort();
+    const { errors, warns } = check(tier, list, blob, m);
+    for (const w of warns) console.log(`  ! ${tier}: ${w}`);
+    if (errors.length) { failed = true; console.error(`✗ ${tier}: ${errors.length} problem(s)\n  ${errors.join('\n  ')}`); continue; }
+    const bytes = list.reduce((n, f) => n + blob(f).length, 0);
+    console.log(`  ✓ ${tier}: ${list.length} files, ${(bytes / 1e6).toFixed(1)} MB before compression, every check passed`);
+    if (DRY) continue;
+    const name = `kaiships-studio-${tier}-${version}.zip`;
+    const z = zip(list.map(f => ({ name: `kaiships-studio/${f}`, data: blob(f) })), date);
+    mkdirSync(OUT, { recursive: true }); writeFileSync(join(OUT, name), z);
+    sums.push(`${createHash('sha256').update(z).digest('hex')}  ${name}`);
+    console.log(`  → ${join(OUT, name)} (${(z.length / 1e6).toFixed(1)} MB)`);
+  }
+  if (failed) process.exit(1);
+  if (sums.length) { writeFileSync(join(OUT, 'SHA256SUMS'), sums.join('\n') + '\n'); console.log(`  → ${join(OUT, 'SHA256SUMS')}`); }
+}
