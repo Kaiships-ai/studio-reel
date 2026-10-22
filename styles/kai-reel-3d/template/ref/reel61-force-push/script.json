@@ -1,0 +1,178 @@
+{
+ "model": "gemini-3.8-flash-tts",
+ "cast": {
+  "kai": "Achird",
+  "clawd": "Puck"
+ },
+ "note": "V2 approved by Kai 2026-10-16. Clawd styles = reel58 palette (2026-10-17, voice consistency fix).",
+ "lines": [
+  {
+   "id": "l01",
+   "who": "kai",
+   "role": "",
+   "style": "guilty, fast",
+   "text": "Clawd, I force pushed to main."
+  },
+  {
+   "id": "l02",
+   "who": "clawd",
+   "role": "",
+   "style": "calm, curious",
+   "text": "<gasp> How hard?"
+  },
+  {
+   "id": "l03",
+   "who": "kai",
+   "role": "",
+   "style": "sheepish",
+   "text": "Very. Dash dash force."
+  },
+  {
+   "id": "l04",
+   "who": "clawd",
+   "role": "",
+   "style": "calm",
+   "text": "Whose work was on main?"
+  },
+  {
+   "id": "l05",
+   "who": "kai",
+   "role": "",
+   "style": "small voice",
+   "text": "Everyone's. The whole week."
+  },
+  {
+   "id": "l06",
+   "who": "clawd",
+   "role": "",
+   "style": "matter-of-fact",
+   "text": "Eleven people. Three hundred commits."
+  },
+  {
+   "id": "l07",
+   "who": "kai",
+   "role": "",
+   "style": "hopeful",
+   "text": "Can we undo it?"
+  },
+  {
+   "id": "l08",
+   "who": "clawd",
+   "role": "",
+   "style": "calm",
+   "text": "Yes. If nobody pulled."
+  },
+  {
+   "id": "l09",
+   "who": "kai",
+   "role": "",
+   "style": "relieved",
+   "text": "<sigh> Okay. Nobody pulled."
+  },
+  {
+   "id": "l10",
+   "who": "clawd",
+   "role": "",
+   "style": "matter-of-fact",
+   "text": "Standup was at nine."
+  },
+  {
+   "id": "l11",
+   "who": "kai",
+   "role": "",
+   "style": "rising panic",
+   "text": "They all pulled?"
+  },
+  {
+   "id": "l12",
+   "who": "clawd",
+   "role": "",
+   "style": "calm",
+   "text": "All eleven. Your version."
+  },
+  {
+   "id": "l13",
+   "who": "kai",
+   "role": "",
+   "style": "exasperated",
+   "text": "Why did I even force push?"
+  },
+  {
+   "id": "l14",
+   "who": "clawd",
+   "role": "",
+   "style": "cheerful",
+   "text": "To fix one typo. In the README."
+  },
+  {
+   "id": "l15",
+   "who": "kai",
+   "role": "",
+   "style": "whispered",
+   "text": "Tell the team I'm sick."
+  },
+  {
+   "id": "l16",
+   "who": "clawd",
+   "role": "",
+   "style": "calm",
+   "text": "They're typing. All eleven."
+  },
+  {
+   "id": "l17",
+   "who": "kai",
+   "role": "",
+   "style": "defeated",
+   "text": "It's over."
+  },
+  {
+   "id": "l18",
+   "who": "clawd",
+   "role": "",
+   "style": "sweet",
+   "text": "<short pause> I pushed a branch first."
+  },
+  {
+   "id": "l19",
+   "who": "kai",
+   "role": "",
+   "style": "shocked",
+   "text": "You what?"
+  },
+  {
+   "id": "l20",
+   "who": "clawd",
+   "role": "",
+   "style": "gentle",
+   "text": "You said, trust me. I didn't."
+  },
+  {
+   "id": "l21",
+   "who": "kai",
+   "role": "",
+   "style": "grateful, emotional",
+   "text": "Clawd. You saved my job."
+  },
+  {
+   "id": "l22",
+   "who": "clawd",
+   "role": "",
+   "style": "calm, proud",
+   "text": "Restoring main now."
+  },
+  {
+   "id": "l23",
+   "who": "kai",
+   "role": "",
+   "style": "casual",
+   "text": "Did you fix the typo?"
+  },
+  {
+   "id": "l24",
+   "who": "clawd",
+   "role": "",
+   "style": "proud, innocent",
+   "text": "Not touching it."
+  }
+ ]
+}

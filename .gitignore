@@ -111,3 +111,8 @@ styles/kai-hand-draw/demo/vo/lines/
 # pixi environment (installed per machine by /studio)
 .pixi/
 dist/
+
+# Kai's 3D reels: render scratch of the cover engine, and the Gemini key (make_vo.py reads .env from the library root)
+styles/kai-reel-3d/covers/renders/
+styles/kai-reel-3d/covers/frames/
+.env

@@ -1,0 +1,160 @@
+<!-- storyboard.template.html (ksa-reel-3d skit mode, step 1b). Example = reel62-compact, approved by Kai 2026-10-17.
+     Per reel: rewrite the P array (key beats) and the .set text; keep the drawing helpers. A direction for Kai, not a shot list. -->
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>reel62 Storyboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/roughjs@4.6.6/bundled/rough.js"></script>
+<style>
+:root{--bg:#f6f1e7;--paper:#fffdf8;--ink:#2b2622;--mute:#7a7066;--line:#d9cfc1;--clawd:#d97757;--teal:#2f6f73;--warm:#e8a948;--night:#26324a;--dawn:#f2b56b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1916;--paper:#24211d;--ink:#efe8dc;--mute:#a59a8c;--line:#3b362f}}
+:root[data-theme="dark"]{--bg:#1b1916;--paper:#24211d;--ink:#efe8dc;--mute:#a59a8c;--line:#3b362f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,sans-serif}
+main{max-width:1240px;margin:0 auto;padding:28px 16px 60px}
+h1{font:700 40px/1.1 Caveat,cursive;margin:0 0 4px}
+.sub{color:var(--mute);margin:0 0 18px}
+.set{background:var(--paper);border:1.5px solid var(--line);border-radius:14px;padding:16px;display:grid;grid-template-columns:minmax(0,340px) 1fr;gap:20px;align-items:center;margin-bottom:26px}
+.set svg{width:100%;height:auto}
+.set h2{font:700 28px Caveat,cursive;margin:0 0 6px}
+.set ul{margin:0;padding-left:18px}
+.set li{margin:3px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px}
+.card{background:var(--paper);border:1.5px solid var(--line);border-radius:12px;padding:10px}
+.card svg{width:100%;height:auto;display:block;border-radius:8px}
+.n{font:700 22px Caveat,cursive;color:var(--clawd)}
+.line{font:600 14px Inter;margin:2px 0 4px}
+.meta{font-size:12.5px;color:var(--mute)}
+.meta b{color:var(--ink);font-weight:600}
+.tag{display:inline-block;font:11px ui-monospace,Menlo,monospace;border:1px solid var(--line);border-radius:6px;padding:0 5px;margin-right:4px;color:var(--mute)}
+@media (max-width:640px){.set{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+<h1>reel62 · "auto-compact" · storyboard nháp</h1>
+<p class="sub">Phác nhanh để xem bối cảnh. Hình 9:16, khung tối = đêm, khung cam = bình minh (9 tiếng trôi qua).</p>
+
+<section class="set">
+  <svg id="setsvg" viewBox="0 0 270 480"></svg>
+  <div>
+    <h2>Bối cảnh: bàn làm việc lúc 4 giờ sáng</h2>
+    <ul>
+      <li><b>Giữ set của series</b> (reel58/60/61): laptop khổng lồ, Kai ngồi trên con chuột, Clawd đứng trên bàn phím. Người xem lướt profile thấy ngay là cùng chuỗi.</li>
+      <li><b>Mới:</b> cửa sổ sau lưng. Đầu reel trời đêm có trăng, đến "Still here!" thì trời chuyển bình minh, nắng cam rọi vào. Ánh sáng kể chuyện "9 tiếng".</li>
+      <li><b>Màn hình laptop</b> có 3 trạng thái: thanh context đỏ "auto-compact 2%" → app của Kai có <b>nút BUY</b> cam to (câu neo) → terminal <code>/compact</code>.</li>
+      <li><b>Đạo cụ nhỏ:</b> 3 cốc cà phê rỗng, đèn bàn ấm. Chúng bị "đóng gói" khi nén context.</li>
+      <li><b>Bảng màu:</b> đêm xanh teal + đèn vàng ấm. Twist cuối: nút BUY biến mất, để lại khung nét đứt.</li>
+    </ul>
+  </div>
+</section>
+
+<div class="grid" id="grid"></div>
+</main>
+
+<script>
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const NS = 'http://www.w3.org/2000/svg';
+
+const P = [
+ {n:'1',  l:'Clawd, it says auto-compact in two percent.', shot:'wide', sky:'night', scr:'meter', kai:'panic', cl:'calm', note:'Hook ở frame 0: thanh context đỏ nhấp nháy, Kai bật dậy khỏi chuột.', mus:'piano nhẹ'},
+ {n:'2',  l:'Relax. Your Buy button stays.', shot:'screen', sky:'night', scr:'buy', note:'⚓ CÂU NEO. Cắt sang màn hình: nút BUY cam to, Clawd vỗ vỗ vào nó.', mus:'piano'},
+ {n:'4–5', l:'Fits in twelve lines. · Twelve?! We talked for nine hours!', shot:'kai', sky:'night', scr:'summary', kai:'shock', note:'Màn hình: tờ tóm tắt đúng 12 dòng. Kai sốc, miệng chữ O.', mus:'piano, nhịp hài'},
+ {n:'8',  l:'Mostly you.', shot:'clawd', sky:'night', cl:'sad', note:'Cận Clawd, mắt cụp. Ngừng 0.3 s cho câu thấm.', mus:'piano rơi 1 nốt'},
+ {n:'11', l:'Slash compact. Keep the part where we\'re friends.', shot:'two', sky:'night', scr:'term', kai:'soft', cl:'soft', note:'Kai gõ chậm. Màn hình hiện từng chữ trong terminal.', mus:'strings vào'},
+ {n:'12', l:'I\'m gonna miss you, Kai.', shot:'clawd', sky:'night', cl:'sad', lamp:true, note:'Đỉnh cảm xúc. Đèn bàn ấm sau Clawd, Clawd quay sang nhìn Kai.', mus:'strings dâng'},
+ {n:'14–15', l:'Compacting. · Clawd?', shot:'wide', sky:'dark', scr:'compacting', kai:'soft', cl:'off', note:'Phòng tối, chỉ còn thanh tiến trình. Clawd nhắm mắt, đứng im.', mus:'gần như im lặng'},
+ {n:'16–17', l:'Still here! · Clawd! You came back!', shot:'wide', sky:'dawn', scr:'buy-dim', kai:'joy', cl:'joy', note:'Bình minh tràn vào cửa sổ. Clawd nhảy lên, Kai mừng.', mus:'bùng lên ấm áp'},
+ {n:'18–20', l:'You say please. You never read the error. · That\'s me! · You said last bug six times.', shot:'two', sky:'dawn', bubbles:true, kai:'laugh', cl:'joy', note:'Bong bóng ký ức nổi lên, mỗi bong bóng một câu: "please", "error", "last bug ×6".', mus:'ấm, có nụ cười'},
+ {n:'22', l:'The Buy button.', shot:'screen', sky:'dawn', scr:'gone', note:'TWIST. Màn hình app: nút BUY mờ dần, còn lại khung nét đứt.', mus:'im 0.3 s → pizzicato'},
+ {n:'end', l:'(freeze)', shot:'kai', sky:'dawn', kai:'frozen', scr:'gone', note:'Kai đơ, mắt trợn. Clawd tươi cười ở góc. Hiện chữ COMPACT ở end card.', mus:'nốt cuối'}
+];
+
+function svgEl(svg, tag, attrs){ const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); svg.appendChild(e); return e; }
+function txt(svg,x,y,s,size,fill,anchor='middle',font='Caveat'){ const t=svgEl(svg,'text',{x,y,'font-size':size,fill,'text-anchor':anchor,'font-family':font,'font-weight':700}); t.textContent=s; return t; }
+
+function draw(svg, p){
+  const rc = rough.svg(svg), ink=css('--ink'), add=n=>svg.appendChild(n);
+  const sky = p.sky==='dawn' ? css('--dawn') : p.sky==='dark' ? '#141a26' : css('--night');
+  const room = p.sky==='dawn' ? '#f5e3c8' : p.sky==='dark' ? '#0f131b' : '#1d2a33';
+  const pen = p.sky==='dawn' ? '#2b2622' : '#e9e2d6';
+  add(rc.rectangle(0,0,270,480,{fill:room,fillStyle:'solid',stroke:'none'}));
+
+  const screen = (x,y,w,h)=>{
+    add(rc.rectangle(x,y,w,h,{fill:'#0d1117',fillStyle:'solid',stroke:pen,strokeWidth:1.6,roughness:1.2}));
+    const cx=x+w/2, cy=y+h/2, s=w/200;
+    if(p.scr==='meter'){ txt(svg,cx,y+h*0.32,'Context left until',13*s,'#9fb3c8'); txt(svg,cx,y+h*0.47,'auto-compact: 2%',17*s,'#ff6b6b');
+      add(rc.rectangle(x+w*0.12,y+h*0.6,w*0.76,h*0.12,{stroke:'#9fb3c8',roughness:1})); add(rc.rectangle(x+w*0.12,y+h*0.6,w*0.74,h*0.12,{fill:'#ff5a5a',fillStyle:'solid',stroke:'none'})); }
+    if(p.scr==='buy'||p.scr==='buy-dim'){ txt(svg,cx,y+h*0.25,'kai-app.com',11*s,'#9fb3c8'); add(rc.rectangle(cx-w*0.28,y+h*0.42,w*0.56,h*0.28,{fill:p.scr==='buy'?css('--clawd'):'#7a5040',fillStyle:'solid',stroke:'#fff',strokeWidth:1.5,roughness:1.4})); txt(svg,cx,y+h*0.62,'BUY',22*s,'#fff'); }
+    if(p.scr==='gone'){ txt(svg,cx,y+h*0.25,'kai-app.com',11*s,'#9fb3c8'); add(rc.rectangle(cx-w*0.28,y+h*0.42,w*0.56,h*0.28,{stroke:'#9fb3c8',strokeLineDash:[5,5],roughness:1.4})); txt(svg,cx,y+h*0.62,'?',22*s,'#9fb3c8'); }
+    if(p.scr==='summary'){ txt(svg,cx,y+h*0.18,'summary.md',11*s,'#9fb3c8'); for(let i=0;i<12;i++) add(rc.line(x+w*0.18,y+h*(0.27+i*0.055),x+w*(0.45+((i*37)%40)/100),y+h*(0.27+i*0.055),{stroke:'#c9d6e3',strokeWidth:1,roughness:0.8})); txt(svg,x+w*0.86,y+h*0.9,'12',16*s,'#ff6b6b'); }
+    if(p.scr==='term'){ txt(svg,x+w*0.08,y+h*0.35,'> /compact keep the',12*s,'#7ee08a','start','ui-monospace'); txt(svg,x+w*0.08,y+h*0.5,'  part where we\'re',12*s,'#7ee08a','start','ui-monospace'); txt(svg,x+w*0.08,y+h*0.65,'  friends_',12*s,'#7ee08a','start','ui-monospace'); }
+    if(p.scr==='compacting'){ txt(svg,cx,y+h*0.42,'Compacting…',16*s,'#c9d6e3'); add(rc.rectangle(x+w*0.15,y+h*0.55,w*0.7,h*0.1,{stroke:'#c9d6e3'})); add(rc.rectangle(x+w*0.15,y+h*0.55,w*0.42,h*0.1,{fill:'#c9d6e3',fillStyle:'hachure',hachureGap:3,stroke:'none'})); }
+  };
+  const windowSky=(x,y,w,h)=>{ add(rc.rectangle(x,y,w,h,{fill:sky,fillStyle:'solid',stroke:pen,strokeWidth:1.4}));
+    add(rc.line(x+w/2,y,x+w/2,y+h,{stroke:pen})); add(rc.line(x,y+h/2,x+w,y+h/2,{stroke:pen}));
+    if(p.sky==='dawn'){ add(rc.circle(x+w*0.7,y+h*0.8,w*0.35,{fill:'#ffd27a',fillStyle:'solid',stroke:'#e89a3c'})); }
+    else if(p.sky==='night'){ add(rc.circle(x+w*0.72,y+h*0.25,w*0.18,{fill:'#f3ecd2',fillStyle:'solid',stroke:'none'})); } };
+  const kai=(x,y,s,mood)=>{ // blocky Kai, seated
+    add(rc.rectangle(x-14*s,y,28*s,30*s,{fill:'#3d6fb6',fillStyle:'solid',stroke:ink,roughness:1.3}));
+    add(rc.rectangle(x-15*s,y-30*s,30*s,30*s,{fill:'#f0c9a0',fillStyle:'solid',stroke:ink,roughness:1.3}));
+    add(rc.rectangle(x-16*s,y-36*s,32*s,9*s,{fill:'#2b2622',fillStyle:'solid',stroke:ink}));
+    const ey=y-18*s;
+    if(mood==='frozen'||mood==='shock'||mood==='panic'){ add(rc.circle(x-6*s,ey,6*s,{fill:'#fff',fillStyle:'solid',stroke:ink})); add(rc.circle(x+6*s,ey,6*s,{fill:'#fff',fillStyle:'solid',stroke:ink})); add(rc.ellipse(x,y-7*s,6*s,7*s,{fill:'#2b2622',fillStyle:'solid',stroke:ink})); }
+    else { add(rc.line(x-8*s,ey,x-4*s,ey,{stroke:ink,strokeWidth:2})); add(rc.line(x+4*s,ey,x+8*s,ey,{stroke:ink,strokeWidth:2}));
+      if(mood==='joy'||mood==='laugh') add(rc.arc(x,y-9*s,12*s,8*s,0,Math.PI,false,{stroke:ink,strokeWidth:1.5}));
+      else add(rc.line(x-4*s,y-8*s,x+4*s,y-8*s,{stroke:ink})); }
+    if(mood==='panic'){ txt(svg,x+22*s,y-34*s,'!!',16*s,'#ff6b6b'); }
+    if(mood==='soft'||mood==='laugh'){ add(rc.circle(x-10*s,y-11*s,4*s,{fill:'#f2a3a3',fillStyle:'solid',stroke:'none'})); }
+  };
+  const clawd=(x,y,s,mood)=>{ // Clawd: orange block, 2 slot eyes, 4 legs
+    if(mood==='joy') y-=10*s;
+    add(rc.rectangle(x-18*s,y-22*s,36*s,22*s,{fill:mood==='off'?'#8a5a48':css('--clawd'),fillStyle:'solid',stroke:ink,roughness:1.2}));
+    add(rc.rectangle(x-24*s,y-15*s,6*s,7*s,{fill:css('--clawd'),fillStyle:'solid',stroke:ink})); add(rc.rectangle(x+18*s,y-15*s,6*s,7*s,{fill:css('--clawd'),fillStyle:'solid',stroke:ink}));
+    for(const lx of [-13,-5,5,13]) add(rc.line(x+lx*s,y,x+lx*s,y+7*s,{stroke:ink,strokeWidth:2}));
+    const eh = mood==='sad'?4:mood==='off'?1.5:8;
+    add(rc.rectangle(x-8*s,y-16*s+(8-eh)*s,3*s,eh*s,{fill:'#1a1a1a',fillStyle:'solid',stroke:'none'})); add(rc.rectangle(x+5*s,y-16*s+(8-eh)*s,3*s,eh*s,{fill:'#1a1a1a',fillStyle:'solid',stroke:'none'}));
+    if(mood==='joy'){ txt(svg,x+26*s,y-26*s,'✦',12*s,'#e8a948'); }
+    if(mood==='sad'){ add(rc.circle(x+12*s,y-6*s,3*s,{fill:'#9fd3ff',fillStyle:'solid',stroke:'none'})); }
+  };
+  const desk=(y)=>{ add(rc.rectangle(-5,y,280,480-y+5,{fill:p.sky==='dawn'?'#c9a27a':'#3a2a20',fillStyle:'hachure',hachureGap:6,stroke:pen,roughness:1.5})); };
+  const laptopBase=(x,y,w)=>{ add(rc.rectangle(x,y,w,26,{fill:'#7d848f',fillStyle:'solid',stroke:pen})); for(let i=0;i<9;i++) add(rc.line(x+10+i*(w-20)/8,y+6,x+10+i*(w-20)/8,y+20,{stroke:'#555',strokeWidth:0.8})); };
+  const mouse=(x,y)=>{ add(rc.ellipse(x,y,70,34,{fill:'#c9ccd2',fillStyle:'solid',stroke:pen})); };
+  const cups=(x,y)=>{ for(let i=0;i<3;i++) add(rc.rectangle(x+i*16,y,12,16,{fill:'#efe6d6',fillStyle:'solid',stroke:pen,roughness:1.5})); };
+  const lamp=(x,y)=>{ add(rc.line(x,y,x,y-70,{stroke:pen,strokeWidth:2})); add(rc.polygon([[x-16,y-70],[x+16,y-70],[x+8,y-88],[x-8,y-88]],{fill:css('--warm'),fillStyle:'solid',stroke:pen})); add(rc.circle(x,y-60,70,{fill:'rgba(232,169,72,.18)',fillStyle:'solid',stroke:'none'})); };
+
+  if(p.shot==='wide'||p.shot==='two'){
+    windowSky(170,40,80,96); screen(30,150,210,130); desk(330); laptopBase(30,330,210); cups(200,300); lamp(28,330);
+    mouse(78,378); kai(78,358,p.shot==='two'?1.3:1.1,p.kai); clawd(185,330,p.shot==='two'?1.3:1.1,p.cl);
+  } else if(p.shot==='screen'){
+    windowSky(200,24,56,66); screen(14,100,242,220); desk(360); laptopBase(14,360,242); clawd(70,352,0.9,'calm');
+  } else if(p.shot==='kai'){
+    windowSky(180,40,70,84); screen(-20,150,170,120); desk(380); mouse(140,430); kai(140,400,2.4,p.kai); if(p.kai==='frozen'){ clawd(238,380,0.8,'joy'); }
+  } else if(p.shot==='clawd'){
+    windowSky(16,40,70,84); if(p.lamp) lamp(220,380); screen(140,150,170,120); desk(380); clawd(130,400,2.6,p.cl);
+  }
+  if(p.bubbles){ [['please',60,90],['never read\nthe error',150,70],['last bug ×6',95,140]].forEach(([s,x,y])=>{ add(rc.ellipse(x+20,y,96,40,{fill:'#fffdf8',fillStyle:'solid',stroke:ink,roughness:1.6})); s.split('\n').forEach((t,i,a)=>txt(svg,x+20,y+5+(i-(a.length-1)/2)*14,t,15,ink)); }); }
+  // caption zone + IG safe-zone guide
+  add(rc.line(0,410,270,410,{stroke:'rgba(255,90,90,.35)',strokeLineDash:[3,4],roughness:0.3}));
+}
+
+const grid=document.getElementById('grid');
+function render(){
+  grid.innerHTML='';
+  P.forEach(p=>{
+    const c=document.createElement('div'); c.className='card';
+    const svg=document.createElementNS(NS,'svg'); svg.setAttribute('viewBox','0 0 270 480'); c.appendChild(svg);
+    c.insertAdjacentHTML('beforeend',`<div><span class="n">#${p.n}</span> <span class="tag">${p.shot}</span><span class="tag">${p.sky==='dawn'?'bình minh':p.sky==='dark'?'tối':'đêm'}</span></div><div class="line">“${p.l}”</div><div class="meta">${p.note}<br><b>Nhạc:</b> ${p.mus}</div>`);
+    grid.appendChild(c); draw(svg,p);
+  });
+  const s=document.getElementById('setsvg'); s.innerHTML=''; draw(s,{shot:'wide',sky:'night',scr:'buy',kai:'soft',cl:'calm'});
+}
+render();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',render);
+</script>
+</body>
+</html>

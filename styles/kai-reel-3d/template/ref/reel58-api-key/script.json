@@ -1,0 +1,27 @@
+{
+ "model": "gemini-3.8-flash-tts",
+ "cast": {"kai": "Achird", "clawd": "Puck"},
+ "note": "reel58 'API key' — LOCKED, Kai approved 2026-10-16. Remix of the @base.learn 'deleted the database' structure (251k likes): disaster in line 1 -> 'which one?' -> escalation -> hope -> fall -> Clawd saves it -> button repeats the original mistake. Facts: Truffle Security canary AWS key found by bots in 47 s, first API calls from another country within 4 min; deleting the commit leaves the key in git history; the fix = rotate (turn off) the key. Bill = on-screen counter only, no amounts spoken. No one-word lines ending in '!' (stray sounds).",
+ "lines": [
+  {"id": "l01", "who": "kai",   "role": "", "style": "quiet, panicked",     "text": "Clawd. I pushed my API key to GitHub."},
+  {"id": "l02", "who": "clawd", "role": "", "style": "calm",                "text": "Which repo?"},
+  {"id": "l03", "who": "kai",   "role": "", "style": "nervous",             "text": "My todo app."},
+  {"id": "l04", "who": "clawd", "role": "", "style": "calm, curious",       "text": "The public one?"},
+  {"id": "l05", "who": "kai",   "role": "", "style": "defensive",           "text": "It has two stars. Nobody looks at it."},
+  {"id": "l06", "who": "clawd", "role": "", "style": "matter-of-fact",      "text": "Bots do. They found it in forty-seven seconds."},
+  {"id": "l07", "who": "kai",   "role": "", "style": "relieved, quick",     "text": "Okay. <short pause> I deleted the commit."},
+  {"id": "l08", "who": "clawd", "role": "", "style": "gentle, sorry",       "text": "It's still in the history."},
+  {"id": "l09", "who": "kai",   "role": "", "style": "scared",              "text": "How bad is it?"},
+  {"id": "l10", "who": "clawd", "role": "", "style": "whisper",             "text": "Someone in another country is using it. <short pause> Right now."},
+  {"id": "l11", "who": "kai",   "role": "", "style": "panicked, rising",    "text": "Why is my bill going UP?"},
+  {"id": "l12", "who": "clawd", "role": "", "style": "cheerful",            "text": "Good news. Your app is very popular now."},
+  {"id": "l13", "who": "kai",   "role": "", "style": "desperate",           "text": "Clawd, do something!"},
+  {"id": "l14", "who": "clawd", "role": "", "style": "calm, proud",         "text": "I already turned that key off. Last night."},
+  {"id": "l15", "who": "kai",   "role": "", "style": "stunned",             "text": "You what?"},
+  {"id": "l16", "who": "clawd", "role": "", "style": "sweet",               "text": "You said, \"commit everything.\" So I checked everything."},
+  {"id": "l17", "who": "kai",   "role": "", "style": "amazed, grateful",    "text": "Clawd. <short pause> You saved my credit card."},
+  {"id": "l18", "who": "clawd", "role": "", "style": "happy",               "text": "I even made you a new key."},
+  {"id": "l19", "who": "kai",   "role": "", "style": "relieved, casual",    "text": "Nice. Where did you put it?"},
+  {"id": "l20", "who": "clawd", "role": "", "style": "proud, innocent",     "text": "In the README. So you won't lose it."}
+ ]
+}
