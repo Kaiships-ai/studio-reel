@@ -112,5 +112,5 @@ styles/kai-hand-draw/demo/vo/lines/
 .pixi/
 dist/
 
-# Kai's 3D reels: the Gemini key (make_vo.py reads GOOGLE_API_KEY from a .env above the film)
+# API keys stay on this machine
 .env

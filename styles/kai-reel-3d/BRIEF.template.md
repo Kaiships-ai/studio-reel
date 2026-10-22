@@ -1,7 +1,7 @@
 # <reelNN> · skit · "<one-line idea>"
 
 Make one 3D skit reel for @kaiships.ai with Blocky Kai and Clawd, end to end. Read
-`styles/kai-reel-3d/WORKFLOW.md` first (`/make-reel-3d`). Stop once: after the script, until Kai approves it. At the end,
+`styles/kai-reel-3d/WORKFLOW.md` first (`/make-reel-3d`). Stop twice: after the script, until Kai approves it, then after the storyboard sketch, until Kai approves the direction. At the end,
 hand over the MP4 and the results table; don't wait for anything else.
 
 ## The seed (from Kai or Claude)

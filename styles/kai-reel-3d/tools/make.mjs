@@ -53,7 +53,9 @@ const CMD = {
   template() {
     const SRC = filmArg(), NAME = basename(SRC), has = f => existsSync(join(SRC, f));
     const cp = (f, to = f) => { if (has(f)) { mkdirSync(dirname(join(T, to)), { recursive: true }); cpSync(join(SRC, f), join(T, to), { dereference: true }); } };
-    for (const d of ['src', 'engine', 'cast', 'render', 'vendor']) { rmSync(join(T, d), { recursive: true, force: true }); copyTree(join(SRC, d), join(T, d)); }
+    const DIRS = ['src', 'engine', 'cast', 'render', 'vendor'], missing = DIRS.filter(d => !has(d));
+    if (missing.length) die(`${NAME} has no ${missing.join(', ')}: not a full skit reel, template left as it is`);
+    for (const d of DIRS) { rmSync(join(T, d), { recursive: true, force: true }); copyTree(join(SRC, d), join(T, d)); }
     cp('reel.html');
     for (const f of ['role-card.html', 'clawd-turn.html']) cp(f);   // casting book pages (make.mjs cast renders with them)
     cp('assets/blocky-kai-talk.glb'); cp('assets/kai/kai-library.json');
