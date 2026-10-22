@@ -1,7 +1,7 @@
 // sheets.js: model sheets of the cast, as standalone loops (LOOPS in timeline.js). Use them to prove the look before
 // building chapters (WORKFLOW.md step 4) and to check a character at final size:
 //   node styles/kai-hand-draw/tools/look.mjs <film> --stills=0 --loop=kai --out=<film>/out/check/kai
-// Loops: kai (painted Kai, every pose) · kaiV3 (Kai v3 canon, every pose) · clawd (moods and v3 astronaut) · cast.
+// Loops: kai (the presenter, every pose, as src/character.js sets it) · kaiV3 (Kai v3 canon, every pose) · clawd (moods and v3 astronaut) · cast.
 (() => {
   const grid = (items, cols, cellH, draw, top = 120) => {
     const cw = W / cols;
@@ -14,7 +14,7 @@
   const title = txt => letter(txt, W / 2, 70, 44, PAL.ink);
 
   LOOPS.kai = t => {
-    title('KAI · kai(pose, x, y, h)');
+    title(`${(typeof CHARACTER !== 'undefined' && CHARACTER && CHARACTER.name || 'KAI').toUpperCase()} · kai(pose, x, y, h)`);
     const poses = ['front', 'three-quarter', 'side', 'back', 'point-up', 'point-down', 'think', 'shrug', 'present', 'wave',
       'celebrate', 'thumbsup', 'arms-crossed', 'phone', 'laptop', 'hold-sign', 'peek', 'exp-surprised', 'exp-focused',
       'exp-happy', 'exp-laughing', 'exp-wink'];
