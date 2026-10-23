@@ -19,7 +19,7 @@ Candidate tracks kept in music/ but NOT used in the film (sources and licences i
 - american_walnut_veneer (walnut_diff / walnut_nor / walnut_rough) — https://polyhaven.com/a/american_walnut_veneer
 Environment lighting: three.js RoomEnvironment (procedural, MIT). No HDRI is used.
 
-Fonts (SIL Open Font License 1.1, Google Fonts; files in fonts/src/, licence texts not bundled — see fonts.google.com):
+Fonts (SIL Open Font License 1.1, Google Fonts; files and licence texts (OFL-*.txt) in fonts/):
 - Ma Shan Zheng — titles, poem, seals
 - Zhi Mang Xing — running-script notes
 - Long Cang — the granddaughter's handwriting

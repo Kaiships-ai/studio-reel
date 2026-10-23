@@ -9,6 +9,7 @@ a build check, a manifest entry) in the same change. Drop a row once its mistake
 | Start python, ffmpeg, ffprobe and node only through `run()` / `start()` from `kit/env.mjs`; no `.venv` paths, no `python3`, no `.sh` scripts or `sh` spawns in the buyer path | `test/unit/lint.test.mjs` (checks.yml, every PR) |
 | Where a tool lives on each OS is decided only by `LAYOUT` in `kit/env.mjs` | `test/unit/env.test.mjs` |
 | Every tracked file is in exactly one section of `kit.manifest`; new dev-only files go under `[dev]` | `release/build.mjs` (checks.yml runs `--dry-run` on every PR) |
+| Every font file a shipped style's css/html loads with `url(...)` ships in the zip (demo fonts are committed, not git-ignored) | `missingFonts` in `release/build.mjs` (checks.yml runs `--dry-run` on every PR); `test/unit/build-fonts.test.mjs` |
 | No private names in shipped files: `/Users/`, `ksa-`, Kai's handles and hosts, Polar ids, the dev-only 3D style and the tool it came from | `[forbid]` in `kit.manifest`, checked by `release/build.mjs` |
 | `styles/catalog.md` (what `/studio` matches ideas against) lists every style with a `showcase.jpg`; regenerate it with `tools/readme_gallery.py` | `test/unit/catalog.test.mjs` |
 | Buyer documents (top-level docs, skills, `content-types/`, `styles/catalog.md`, style guides) are English; Chinese only as a quoted term in inline code (`` `留白` `` (empty space)) | `release/build.mjs` |

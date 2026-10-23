@@ -34,7 +34,7 @@ FONTS (SIL Open Font License 1.1, licence texts in fonts/)
   characters used (tools/fonts.py)
 - Barlow Condensed — The Barlow Project Authors (readings, English subtitle line), github.com/google/fonts (ofl/barlowcondensed)
 - IBM Plex Mono — IBM (instruments, source lines), github.com/google/fonts (ofl/ibmplexmono)
-  All fonts are fetched by tools/fonts.py when missing (they are not in git).
+  All fonts ship in fonts/; tools/fonts.py fetches them again (and re-subsets the CJK font) when missing.
 
 VOICE
 - Kokoro-82M (hexgrad), voice bm_george, Apache License 2.0; run locally via kokoro-onnx (MIT) through the

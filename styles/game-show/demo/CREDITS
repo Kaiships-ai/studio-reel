@@ -8,7 +8,7 @@ Imagery
 - Real people referenced by first name only in the Watson quiz scene (KEN / BRAD podiums) and by name in history banners (Kasparov, Lee Sedol). Historical facts only, cartoon stand-ins, no likenesses.
 - Genre reference (grammar only): rhythm-action party games (call-and-response cues, "Perfect!" judgements, stage cards). No names, characters, UI, levels or music from any real game were copied. Note: one on-screen prop line in G7 names a real game series ("任务：做一个节奏天国风格的视频") — see STYLE.md pitfalls.
 
-Fonts (Google Fonts, SIL Open Font License 1.1; woff2 subsets in fonts/, declared in fonts.css — licence text not bundled, see OFL at https://openfontlicense.org)
+Fonts (Google Fonts, SIL Open Font License 1.1; woff2 subsets in fonts/, declared in fonts.css — licence texts in fonts/OFL-*.txt)
 - Noto Sans SC (Google / Adobe) — all Chinese UI text, weight 900
 - Fredoka (Milena Brandão, Hafontia) — rounded Latin display: GAME N tags, years, "Perfect!", name tags (fonts/fr*.woff2, fetched by the v1 project's fetch_fredoka.mjs)
 - ZCOOL KuaiLe (Liu Zhengjiang / ZCOOL) — two hand-lettered props (Watson sign, "9.11 和 9.9" chalkboard)
