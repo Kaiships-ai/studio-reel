@@ -26,7 +26,8 @@ Options (any order, all optional):
   beats, timings, hook patterns and CTA rule. No type given: pick the one that fits the topic.
 - `--mode cook` (default for a topic): no questions at all. You take the idea and go all out: the angle, the script,
   the concept and every shot, at the highest craft the style allows. A topic too vague to script gets your best
-  reading of it, not a question.
+  reading of it, not a question. A fact only the user has and did not give (a price, an item, a number) is left
+  out, never invented.
 - `--mode direct` (default for a script): the user directs. Their script is spoken word for word, their storyboard
   (pasted, or a file path) is the shot list in its order and timings, and their notes override your taste. Fill only
   what they left out, and ask only for a `<placeholder>` they must fill.

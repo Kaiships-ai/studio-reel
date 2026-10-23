@@ -11,7 +11,7 @@ the viewer hears and when. `/studio` proposes one from the buyer's idea, and `/m
 | [why](why.md) | new | a question or a claim about cause: why something happens, fails or works | "why AI agents fail" |
 | [explanation](explanation.md) | improving | how something works, told through one picture everyone already knows | "what an API is" |
 
-When an idea fits two types, pick the one with fewer beats; a reel carries one idea. A list of steps toward one
+When an idea fits two types, pick the one with fewer items or steps to get through; a reel carries one idea. A list of steps toward one
 result is **education**, not a listicle. "Why" is about causes; "explanation" is about mechanism.
 
 ## What every type shares

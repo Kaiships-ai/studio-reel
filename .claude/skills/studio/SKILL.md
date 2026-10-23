@@ -50,13 +50,15 @@ not count), or when the buyer asks which style to use. Otherwise go to step 5.
 2. Read `content-types/README.md` and `styles/catalog.md`. Propose ONE content type (its name and one line on why)
    and 2–3 styles, each with its name, one line on why it fits this idea, and its `showcase.jpg` path. Match the idea
    to each style's "Good for" and look, and pick from different categories. Propose an Evidence Films style only
-   when the buyer has the real material it needs (imagery, data, scans). Offer to open the images: `open <path>`
+   when the idea is about real data, places or objects, and say it needs the buyer's real material (imagery, data,
+   scans). Offer to open the images: `open <path>`
    (macOS), `start "" <path>` (Windows), `xdg-open <path>` (Linux). The buyer picks one, names any style in
    `styles/README.md`, or asks for more (2–3 new ones, never a repeat).
 3. In one message, propose the inputs: the script (you write it from the idea, or they paste theirs), a storyboard
    to review before animation (default no), and the mode: **cook** (you take the idea and go all out, no questions)
    or **direct** (they direct: their script word for word, their storyboard if they have one). Default cook for an
-   idea, direct for a pasted script.
+   idea, direct for a pasted script. If the reel needs facts only the buyer has (their menu and prices, the apps
+   they use, their own numbers), ask for them in this same message: cook asks nothing later.
 4. Run `/make-reel <idea, or the script in quotes> --style <slug> --type <type> --mode <cook|direct>`, adding
    `--storyboard` if they want to review it. Say where it lands: `films/<name>/<name>.mp4`, `<name>-cover.png` and
    `CAPTION.md`.
