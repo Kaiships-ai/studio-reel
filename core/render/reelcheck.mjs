@@ -5,8 +5,16 @@
 //   −14 ± 1 LUFS and peak ≤ −1 dBTP · no frozen stretch · no black frames · the CTA keyword heard by Whisper in the final
 //   mix around the last voice line (vo/vo.json; else the last 4 s) (--keyword) · the deliverables next to it: <name>-cover.png, CAPTION.md, REVIEW.md, QA-REPORT.md
 //   (--no-files skips them, for a check before review).
-// --length defaults to vo/vo.json's "duration" when that file exists (kai-hand-draw films). Writes <film>/out/check/
-// reelcheck.json and n frames pulled from the MP4 (open them and look). Exit 1 if any check is ✗.
+// Then the checks for what reviewers kept catching by eye:
+//   · the spoken hook (line 1 of vo/vo.json) ends by 3.5 s
+//   · something new on screen at least every 0.6 s in the hook (0–3 s) and every 1.5 s after it: the MP4's frames
+//     above the caption band, 90×107 cells, a change = ≥ 1 % of cells moving > 16 levels over 0.1 s
+//   · from the page (<film>/index.html): every window.TEXTS(t) box and every window.BOXES(t) box (the subject, props,
+//     anything that matters) inside x 60–960, y 250–1320, and an entry marked caption: true inside x 60–960,
+//     y 1320–1470, for no more than 0.3 s at a time; and never 0.3 s with only a bare number (a "3" badge) on screen
+// --length defaults to vo/vo.json's "duration" when that file exists, --keyword to the word after "Comment" in its last
+// line. Writes <film>/out/check/reelcheck.json and n frames pulled from the MP4 (open them and look). Exit 1 if any
+// check is ✗. What these cannot see is printed last, as the checks that still need eyes.
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, resolve, basename } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -57,12 +65,119 @@ export function pullFrames(mp4, times, dir) {
   return files;
 }
 
+export const SAFE = { x0: 60, x1: 960, y0: 250, y1: 1320, capY1: 1470 };
+export const HOOK_LINE_MAX = 3.5;
+const span = r => `${r.t0.toFixed(2)}–${r.t1.toFixed(2)} s`;
+
+/** Gaps between frames that changed: [{t0, t1, d}] over the limit (hookMax for a gap that starts in the hook). */
+export function quietStretches(changed, fps, { hook = 3, hookMax = .6, max = 1.5 } = {}) {
+  const out = []; let last = 0;
+  for (let f = 1; f <= changed.length; f++) if (f === changed.length || changed[f]) {
+    const t0 = last / fps, t1 = f / fps, d = t1 - t0;
+    if (d > (t0 < hook ? hookMax : max) + 1e-6) out.push({ t0, t1, d, hook: t0 < hook });
+    last = f;
+  }
+  return out;
+}
+
+/** Per frame of the MP4: did the picture above the caption band change over the last 0.1 s? */
+export function changedFrames(mp4, fps = 30) {
+  const W = 90, H = 107, K = Math.max(1, Math.round(fps / 10)), N = W * H;
+  const r = run('ffmpeg', ['-v', 'error', '-i', mp4, '-vf', `crop=${SAFE.x1 - SAFE.x0}:${SAFE.y1 - SAFE.y0}:${SAFE.x0}:${SAFE.y0},scale=${W}:${H}:flags=area,format=gray`, '-f', 'rawvideo', '-'], { capture: true, encoding: 'buffer' });
+  const buf = r.stdout, n = Math.floor(buf.length / N), changed = [];
+  for (let f = 0; f < n; f++) {
+    if (f < K) { changed.push(true); continue; }
+    let c = 0; for (let i = 0, a = f * N, b = (f - K) * N; i < N; i++) if (Math.abs(buf[a + i] - buf[b + i]) > 16) c++;
+    changed.push(c >= N * .01);
+  }
+  return changed;
+}
+
+const bareNumber = s => /^\s*[#№]?\d{1,2}[.:)]?\s*$/.test(s);
+/** From page samples [{t, texts, boxes}]: boxes outside their zone and bare-number stretches, each ≥ hold s. */
+export function pageFindings(samples, step, { hold = .3, W = 1080, H = 1920 } = {}) {
+  const runs = new Map(), outside = [], lone = []; let alone = null;
+  const close = (k, r) => { if (r.t1 - r.t0 >= hold - 1e-6) outside.push(r); runs.delete(k); };
+  for (const { t, texts = [], boxes = [] } of samples) {
+    const seen = new Set();
+    for (const b of [...texts.map(x => ({ ...x, kind: 'text' })), ...boxes.map(x => ({ ...x, kind: 'box' }))]) {
+      if (b.x1 <= 0 || b.y1 <= 0 || b.x0 >= W || b.y0 >= H) continue;   // off frame: not visible
+      const y0 = b.caption ? SAFE.y1 : SAFE.y0, y1 = b.caption ? SAFE.capY1 : SAFE.y1;
+      if (b.x0 >= SAFE.x0 && b.x1 <= SAFE.x1 && b.y0 >= y0 && b.y1 <= y1) continue;
+      const k = `${b.kind}:${b.id}`; seen.add(k);
+      const r = runs.get(k) || { id: String(b.id), kind: b.kind, text: b.text, t0: t, box: [b.x0, b.y0, b.x1, b.y1].map(Math.round) };
+      r.t1 = t + step; runs.set(k, r);
+    }
+    for (const [k, r] of runs) if (!seen.has(k)) close(k, r);
+    const words = texts.filter(x => !x.caption);
+    if (words.length && words.every(x => bareNumber(x.text))) { alone ??= { t0: t, texts: words.map(x => x.text) }; alone.t1 = t + step; }
+    else if (alone) { if (alone.t1 - alone.t0 >= hold - 1e-6) lone.push(alone); alone = null; }
+  }
+  for (const [k, r] of runs) close(k, r);
+  if (alone && alone.t1 - alone.t0 >= hold - 1e-6) lone.push(alone);
+  return { outside, lone };
+}
+
+/** Render the page every step s and collect window.TEXTS(t) and window.BOXES(t). */
+export async function pageSamples(film, step = .1) {
+  const { openDemo, closeServer } = await import('./page.mjs');
+  const { browser, page } = await openDemo(film, { w: 1080, h: 1920 });
+  const res = await page.evaluate(step => {
+    const hasTexts = typeof window.TEXTS === 'function', hasBoxes = typeof window.BOXES === 'function', samples = [];
+    if (hasTexts || hasBoxes) for (let i = 0; i * step < window.DUR; i++) {
+      const t = i * step; window.render(t);
+      samples.push({ t, texts: hasTexts ? window.TEXTS(t) || [] : [], boxes: hasBoxes ? window.BOXES(t) || [] : [] });
+    }
+    return { hasTexts, hasBoxes, samples };
+  }, step);
+  await browser.close(); closeServer();
+  return res;
+}
+
+/** The checks for what reviewers caught by eye, as [name, ok, detail] rows. */
+export async function eyeChecks({ mp4, film, vo, fps = 30 }) {
+  const checks = [];
+  if (vo && vo.lines && vo.lines.length) {
+    const h = vo.lines[0];
+    checks.push([`spoken hook ends by ${HOOK_LINE_MAX} s`, h.e <= HOOK_LINE_MAX, `line ${h.id} ${h.s.toFixed(2)}–${h.e.toFixed(2)} s`]);
+  } else checks.push([`spoken hook ends by ${HOOK_LINE_MAX} s`, null, 'no vo/vo.json']);
+  const quiet = quietStretches(changedFrames(mp4, fps), fps);
+  checks.push(['something new every ≤ 0.6 s in the hook, ≤ 1.5 s after', !quiet.length,
+    quiet.length ? 'nothing new ' + quiet.map(q => `${span(q)} (${q.d.toFixed(2)} s${q.hook ? ', hook' : ''})`).join(', ') : 'yes']);
+  if (!film || !existsSync(join(film, 'index.html'))) {
+    checks.push(['text and key objects inside the safe zone', null, 'no index.html']);
+    return checks;
+  }
+  const step = .1, P = await pageSamples(film, step);
+  const what = P.hasTexts && P.hasBoxes ? 'TEXTS + BOXES' : P.hasTexts ? 'TEXTS only (add window.BOXES for the subject and props)' : P.hasBoxes ? 'BOXES only' : '';
+  if (!what) {
+    checks.push(['text and key objects inside the safe zone', null, 'the page has no window.TEXTS or window.BOXES']);
+    checks.push(['no bare number on screen without its words', null, 'the page has no window.TEXTS']);
+    return checks;
+  }
+  const { outside, lone } = pageFindings(P.samples, step);
+  checks.push([`text and key objects inside the safe zone (x ${SAFE.x0}–${SAFE.x1}, y ${SAFE.y0}–${SAFE.y1}; captions to ${SAFE.capY1})`, !outside.length,
+    (outside.length ? outside.map(r => `${r.kind} ${r.id}${r.text ? ` "${r.text}"` : ''} [${r.box.join(', ')}] ${span(r)}`).join(' · ') : 'yes') + ` · ${what}`]);
+  checks.push(P.hasTexts
+    ? ['no bare number on screen without its words', !lone.length, lone.length ? lone.map(r => `${r.texts.join(' ')} alone ${span(r)}`).join(', ') : 'yes']
+    : ['no bare number on screen without its words', null, 'the page has no window.TEXTS']);
+  return checks;
+}
+
+export const NEEDS_EYES = [
+  'every prop and screen is finished: no empty placeholder box, no blank page waiting for its content',
+  'the hook is scored on its own (≥ 8/10), and the picture follows each spoken word',
+  'captions match the voice word for word; every number, name and claim has a source',
+  'the mix: every visible action has its sound, and nothing masks a spoken word',
+];
+
 export const printChecks = checks => { for (const [name, good, detail] of checks) console.log(`${good === null ? '–' : good ? '✓' : '✗'} ${name}: ${detail}`); };
 
 if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   const argv = process.argv.slice(2), opt = k => { const i = argv.indexOf(`--${k}`); return i >= 0 ? argv.splice(i, 2)[1] : null; };
   const has = k => { const i = argv.indexOf(`--${k}`); return i >= 0 && !!argv.splice(i, 1); };
-  const mp4Opt = opt('mp4'), lenOpt = opt('length'), keyword = opt('keyword'), fps = +(opt('fps') || 30), n = +(opt('n') || 6);
+  const mp4Opt = opt('mp4'), lenOpt = opt('length'), fps = +(opt('fps') || 30), n = +(opt('n') || 6);
+  let keyword = opt('keyword');
   const noFiles = has('no-files'), noAsr = has('no-asr');
   const film = argv[0] && resolve(argv[0]);
   if (!film || !existsSync(film)) { console.error('usage: node core/render/reelcheck.mjs <film> [--mp4 file] [--length s] [--keyword WORD] [--fps 30] [--n 6] [--no-files] [--no-asr]'); process.exit(2); }
@@ -72,15 +187,18 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   const voJson = join(film, 'vo/vo.json');
   const vo = existsSync(voJson) ? JSON.parse(readFileSync(voJson, 'utf8')) : null, last = vo && vo.lines && vo.lines[vo.lines.length - 1];
   const length = lenOpt != null ? +lenOpt : vo ? vo.duration : null;
+  keyword ??= last && ((last.text.match(/\bcomment\s+([\w-]+)/i) || [])[1] || null);
   const { checks, dur } = mp4Checks(mp4, { fps, length });
-  if (!keyword) checks.push(['keyword heard in the CTA', null, 'no --keyword given']);
+  if (!keyword) checks.push(['keyword heard in the CTA', null, 'no --keyword given and no "Comment <KEYWORD>" in the last voice line']);
   else if (noAsr || !hasWhisper()) checks.push([`keyword "${keyword.toUpperCase()}" heard in the CTA`, null, 'skipped (no Whisper or --no-asr)']);
   else checks.push(keywordCheck(mp4, keyword, last ? last.s - .6 : dur - 4, last ? last.e + .6 : dur, join(check, 'cta.wav')));
   if (!noFiles) for (const f of [`${name}-cover.png`, 'CAPTION.md', 'REVIEW.md', 'QA-REPORT.md'])
     checks.push([`${f} delivered`, existsSync(join(film, f)), existsSync(join(film, f)) ? 'yes' : `missing in ${film}`]);
+  checks.push(...await eyeChecks({ mp4, film, vo, fps }));
   printChecks(checks);
+  console.log(`still needs eyes (no check can see these):\n  · ${NEEDS_EYES.join('\n  · ')}`);
   const frames = pullFrames(mp4, Array.from({ length: n }, (_, i) => Math.min(dur - .1, (i + .5) / n * dur)), check);
-  writeFileSync(join(check, 'reelcheck.json'), JSON.stringify({ mp4, checks: checks.map(([name, ok, detail]) => ({ name, ok, detail })), frames }, null, 1));
+  writeFileSync(join(check, 'reelcheck.json'), JSON.stringify({ mp4, checks: checks.map(([name, ok, detail]) => ({ name, ok, detail })), needsEyes: NEEDS_EYES, frames }, null, 1));
   console.log(`frames from the MP4 (open them and look):\n  ${frames.join('\n  ')}\n${join(check, 'reelcheck.json')}`);
   if (checks.some(c => c[1] === false)) process.exit(1);
 }

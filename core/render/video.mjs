@@ -1,6 +1,8 @@
-// 渲视频：node core/render/video.mjs <demo> [--fps 24] [--workers 3] [--q 'k=v'] [--out <demo>/out/video.mp4] [--size 1920x1080]
+// 渲视频：node core/render/video.mjs <demo> [--fps 24] [--workers 3] [--q 'k=v'] [--out <demo>/out/video.mp4] [--size 1920x1080] [--lossless]
 // 多个片子并行制作时 workers 用 3（默认），单独渲染可开到 6
 // 每个 worker 独立浏览器，JPEG 截图经管道交给 ffmpeg；最后无损拼接
+// --lossless: PNG screenshots into lossless 4:4:4 segments, so fine coloured dots (halftone, riso, dither) are
+// subsampled once, at the mux, instead of twice. About 3× the disk and somewhat slower.
 // 设了环境变量 RENDER_SLOTS（整数）时，整机最多同时这么多个整片渲染（slot.mjs）；不设就不限。分段文件放在 --out 旁边各自独有的隐藏目录，渲完（或失败、被中断）就删。
 // 同一个 demo 可以并行渲多个版本，但每个版本要有自己的 --out：两个渲染写同一个 --out 会直接报错，不会悄悄互相覆盖。
 // <out>.lock 记着占用者的 pid，占用者已不在、或锁文件超过 12 小时没被刷新（pid 被别的进程复用了），都算过期，新渲染接手。
@@ -8,7 +10,12 @@ import fs from 'fs'; import path from 'path'; import { start, run } from '../../
 import { openDemo, closeServer, requireDemo, takeSize } from './page.mjs';
 const args = process.argv.slice(2), { w: W, h: H } = takeSize(args), opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const dir = args[0]; requireDemo(dir);
-const FPS = +opt('--fps', 24), WK = +opt('--workers', 3), Q = opt('--q', '');
+const FPS = +opt('--fps', 24), WK = +opt('--workers', 3), Q = opt('--q', ''), LOSSLESS = args.includes('--lossless');
+const SHOT = LOSSLESS ? { type: 'png' } : { type: 'jpeg', quality: 95 };
+// full range (yuvj), like the JPEG path: mux.mjs reads the frames as full range; plain yuv444p would be limited and
+// come out grey after the BT.709 conversion
+const ENC = LOSSLESS ? ['-c:v', 'png', '-i', '-', '-c:v', 'libx264', '-preset', 'medium', '-qp', '0', '-pix_fmt', 'yuvj444p', '-color_range', 'pc']
+  : ['-c:v', 'mjpeg', '-i', '-', '-c:v', 'libx264', '-preset', 'medium', '-crf', '14', '-pix_fmt', 'yuv420p'];
 if (!(FPS > 0) || !Number.isInteger(WK) || WK < 1) { console.error('bad --fps / --workers: fps must be > 0, workers an integer ≥ 1'); process.exit(2); }
 const out = path.resolve(opt('--out', path.join(dir, 'out', 'video.mp4')));
 const outDir = path.dirname(out), base = path.basename(out, path.extname(out));
@@ -45,8 +52,8 @@ try { await Promise.all([...Array(WK)].map(async (_, w) => {
   const a = w * per, b = Math.min(TOTAL, a + per); if (a >= b) return;
   const { browser, page } = await openDemo(dir, { w: W, h: H, q: Q });
   // cwd 设在分段目录、用相对文件名：路径里有 # ? 之类的字符时 ffmpeg 才不会把它当协议语法
-  const ff = start('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'mjpeg', '-i', '-',
-    '-c:v', 'libx264', '-preset', 'medium', '-crf', '14', '-pix_fmt', 'yuv420p', `seg_${w}.mp4`], { cwd: segDir, stdio: ['pipe', 'inherit', 'inherit'] });
+  const ff = start('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), ...ENC, `seg_${w}.mp4`],
+    { cwd: segDir, stdio: ['pipe', 'inherit', 'inherit'] });
   procs.add(ff); ff.on('close', () => procs.delete(ff));
   let dead = null;   // ffmpeg 提前退出（缺编码器、磁盘满…）：它自己的报错已打到 stderr，这里只记一笔并停止喂帧
   let done; const closed = new Promise(r => { done = r; }); ff.on('close', code => done(code));
@@ -54,7 +61,7 @@ try { await Promise.all([...Array(WK)].map(async (_, w) => {
   ff.stdin.on('error', () => { dead ??= 'ffmpeg closed its input early'; });
   for (let f = a; f < b && !dead; f++) {
     await page.evaluate(t => window.render(t), f / FPS);
-    const buf = await page.screenshot({ type: 'jpeg', quality: 95 });
+    const buf = await page.screenshot(SHOT);
     if (dead) break;
     if (!ff.stdin.write(buf)) await Promise.race([new Promise(r => ff.stdin.once('drain', r)), closed]);
     if ((f - a) % 60 === 0) console.log(`w${w} ${f - a}/${b - a}  ${((Date.now() - t0) / 1000).toFixed(0)}s`);

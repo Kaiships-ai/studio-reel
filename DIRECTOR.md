@@ -78,7 +78,7 @@ Render 6–9 key shots with the real drawing code, tiled into one sheet (`core/r
 - **Vary the pace**: alternate fast and slow, include one clear acceleration or deceleration, and give the audience one breath (a long take or a held pause). A film at one even speed has failed.
 - One action, one sound, one cut, but don't cut on every beat. Leave time to see.
 - **Pace for the viewer, not the clock**:
-  - Hold every subtitle at least 1.8 s, and never shorter than the spoken line + 0.6 s.
+  - Hold every subtitle at least 1.8 s, and never shorter than the spoken line + 0.6 s. (A vertical reel's word-locked captions follow `/make-reel` instead.)
   - After text finishes animating in, hold it for roughly (letters ÷ 15 + 1.5) s in English, (characters ÷ 4.5 + 1.5) s in Chinese; `readcheck.mjs` checks this for you.
   - Hold a title card at least 4 s.
   - Give failures and gags enough time to be understood.

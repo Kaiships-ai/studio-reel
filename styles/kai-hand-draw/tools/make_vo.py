@@ -106,6 +106,7 @@ async def main():
     js += 'const VO_WORDS = ' + json.dumps(all_words) + ';\n'
     js += f'const VO_END = {end:.3f};   // the last word ends here\n'
     js += f'const VO_DUR = {dur:.4f};  // the reel\'s length: the voiceover plus a short tail\n'
+    os.makedirs(path('src'), exist_ok=True)
     with open(path('src', 'vo.js'), 'w', encoding='utf-8') as f: f.write(js)
     with open(path('vo', 'word_times.txt'), 'w', encoding='utf-8') as f:
         f.write(f'# reel length {dur:.2f} s · last word ends {end:.2f} s · voice {voice} {rate}\n')

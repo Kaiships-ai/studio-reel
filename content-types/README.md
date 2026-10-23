@@ -20,7 +20,9 @@ for sale is a **promo**.
 
 - **Length** 30–60 s, 70–160 spoken words. Under 45 s is the safe default for a first reel.
 - **The hook is line 1** and the first 3 s of picture: something is already moving on frame 0, and the viewer knows
-  who it is for and what they get before 2 s.
+  who it is for and what they get before 2 s. The "0–3 s" in each type's beats is the picture: the on-screen hook
+  lands by 3 s. The spoken hook line may run a little longer and ends by 3.5 s, about 11 words at the default voice
+  (`check_vo.py` warns and `reelcheck.mjs` fails past that). Every hook pattern below fits once filled in.
 - **Every number, name, price or claim** comes from the buyer or a source you can name. Invent visuals, never facts.
 - **The CTA is the last line**: one action and exactly what they get ("Comment MENU and I'll send you the full list"),
   said in one breath, no commas around the keyword. Use the brand's keyword from `workspace/brand.md` when it has one.

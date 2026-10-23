@@ -29,7 +29,7 @@ install tutorial. The viewer should be able to do the first step right after wat
 ## Hook patterns
 
 - Proof first: "This <result> took me <real time>. Here's the <N>-step method."
-- "Most people use <thing> wrong. Here's how it's meant to work, in <N> steps."
+- "Most people use <thing> wrong. Here's the fix, in <N> steps."
 - "<Named method>: <N> steps, and you can try the first one today."
 
 ## CTA rule
@@ -45,7 +45,7 @@ product, part by part).
 
 ## A worked outline: "plan your week in 10 minutes" (about 40 s)
 
-1. Hook: a full, colour-coded week fills in at high speed. "This plan took me ten minutes. Here's the three-pass method."
+1. Hook: a full, colour-coded week fills in at high speed. "This plan took ten minutes. Here's the three-pass method."
 2. What it is: "It's a way to plan a week on one page, for anyone who keeps running out of day."
 3. "Pass one: dump." Every task on one list; a real messy list appears.
 4. "Pass two: three big rocks." Three tasks get circled and moved to the top.

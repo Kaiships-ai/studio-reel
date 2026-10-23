@@ -58,9 +58,12 @@ tokens, every month. Three: Graphify. It turns your codebase into a knowledge gr
 files, again and again. Four: Agent Skills, by Addy Osmani. Twenty-five skills to spec, plan, build, test and ship,
 and it picks the right one at every stage. Comment CODING, and I'll send you all four links, plus the install commands.
 
+Its hook (14 words, about 4 s) is older than the 3.5 s hook rule; written today it would be "Don't start Claude Code
+until you've installed these four plugins."
+
 ## Checklist (run before `node styles/kai-hand-draw/tools/make.mjs <film> vo`)
 
-- [ ] Hook is one line and says who it's for + what they get
+- [ ] Hook is one line, says who it's for + what they get, and is spoken by 3.5 s (about 11 words)
 - [ ] Every item: name alone first, then the plain-words benefit
 - [ ] A 13-year-old understands every line
 - [ ] No banned phrase; no claim beyond the source

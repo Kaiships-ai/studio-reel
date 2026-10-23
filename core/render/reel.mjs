@@ -1,0 +1,86 @@
+// reel.mjs: build a vertical reel (1080×1920, 30 fps) in any style from a page that keeps the page contract
+// (core/README.md). Run from the library root:
+//   node core/render/reel.mjs <film>           everything: vo → audio → render → check
+//   node core/render/reel.mjs <film> vo        vo/script.json → vo/vo.wav, src/vo.js, vo/word_times.txt, voice rules,
+//                                              Whisper on every line (kai-hand-draw's make.mjs vo, which serves any film)
+//   node core/render/reel.mjs <film> audio     window.EV → events.json (core/render/events.mjs), then voice + music +
+//                                              SFX → out/mix.wav (core/audio/mix.py, with the film's audio/sound.py)
+//   node core/render/reel.mjs <film> render    frames (core/render/video.mjs --lossless) + mux (core/render/mux.mjs, BT.709,
+//                                              −14 LUFS) → <name>.mp4, <name>-cover.png (the page with ?cover), <name>.srt
+//   node core/render/reel.mjs <film> check     core/render/reelcheck.mjs, then core/render/readcheck.mjs when the page has TEXTS
+// Steps can be combined in order (audio render check). <name> is the film folder's name.
+// Options: --workers N (render) · --cover <s> (default: `cover:` in src/config.js, else 1) · --grain N (mux film grain,
+// default 0: the page owns its texture) · --no-asr (no Whisper checks) · --final (check also wants the deliverables:
+// CAPTION.md, REVIEW.md, QA-REPORT.md; without it check runs with --no-files)
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { join, resolve, basename } from 'node:path';
+import { env, run, requireReady } from '../../kit/env.mjs';
+import { mux } from './mux.mjs';
+import { openDemo, closeServer } from './page.mjs';
+
+const FPS = 30, SIZE = '1080x1920';
+const argv = process.argv.slice(2), steps = [], opts = {};
+for (let i = 0; i < argv.length; i++) {
+  const a = argv[i];
+  if (!a.startsWith('--')) { steps.push(a); continue; }
+  const [k, v] = a.slice(2).split('=');
+  opts[k] = v ?? (['workers', 'cover', 'grain'].includes(k) ? argv[++i] : true);
+}
+const die = m => { console.error('✗ ' + m); process.exit(1); };
+const film = steps.length && resolve(steps.shift());
+if (!film || !existsSync(join(film, 'index.html'))) {
+  console.error('usage: node core/render/reel.mjs <film folder with index.html> [vo] [audio] [render] [check] [--workers N] [--cover s] [--grain N] [--no-asr] [--final]');
+  process.exit(2);
+}
+requireReady(env());
+const NAME = basename(film), MP4 = join(film, `${NAME}.mp4`), OUT = join(film, 'out');
+const cfg = existsSync(join(film, 'src/config.js')) ? readFileSync(join(film, 'src/config.js'), 'utf8') : '';
+const COVER = +(opts.cover ?? (cfg.match(/\bcover:\s*([\d.]+)/) || [])[1] ?? 1);
+const sh = (tool, args) => { const r = run(tool, args); if (r.error || r.status !== 0) die(`failed: ${[tool, ...args].join(' ')}${r.error ? '\n  ' + r.error.message : ''}`); };
+const voJson = () => {
+  const f = join(film, 'vo/vo.json');
+  if (!existsSync(f)) die(`${f} is missing: run the vo step first (node core/render/reel.mjs ${NAME} vo)`);
+  return JSON.parse(readFileSync(f, 'utf8'));
+};
+
+const STEP = {
+  vo() {
+    if (!existsSync(join(film, 'vo/script.json'))) die(`${join(film, 'vo/script.json')} is missing (format: styles/kai-hand-draw/tools/make_vo.py)`);
+    sh('node', ['styles/kai-hand-draw/tools/make.mjs', film, 'vo', ...(opts['no-asr'] ? ['--no-asr'] : [])]);
+  },
+  audio() {
+    sh('node', ['core/render/events.mjs', film, '--size', SIZE, '--out', join(film, 'events.json')]);
+    sh('python', ['core/audio/mix.py', film, '--out', join(OUT, 'mix.wav')]);
+  },
+  async render() {
+    const mix = join(OUT, 'mix.wav');
+    if (!existsSync(mix)) die(`${mix} is missing: run the audio step first`);
+    mkdirSync(OUT, { recursive: true });
+    sh('node', ['core/render/video.mjs', film, '--size', SIZE, '--fps', String(FPS), '--lossless', '--workers', String(opts.workers ?? env().workers), '--out', join(OUT, 'video.mp4')]);
+    try { mux({ video: join(OUT, 'video.mp4'), audio: mix, out: MP4, fps: FPS, grain: opts.grain ?? 0, color: 'bt709' }); } catch (e) { die(e.message); }
+    // the cover: the page with ?cover (pages hide their burned-in captions for it), as a PNG
+    const { browser, page } = await openDemo(film, { w: 1080, h: 1920, q: 'cover' });
+    await page.evaluate(t => window.render(t), COVER);
+    await page.screenshot({ path: join(film, `${NAME}-cover.png`), type: 'png' });
+    await browser.close(); closeServer();
+    const vo = existsSync(join(film, 'vo/vo.json')) ? voJson() : null;
+    if (vo) {
+      const cues = vo.lines.map((l, i) => ({ t0: l.s, t1: i + 1 < vo.lines.length ? vo.lines[i + 1].s : vo.duration, text: l.text }));
+      writeFileSync(join(OUT, 'cues.json'), JSON.stringify(cues));
+      sh('python', ['core/render/srt.py', join(OUT, 'cues.json'), join(film, `${NAME}.srt`)]);
+    }
+    console.log(`✓ ${MP4}\n✓ ${join(film, `${NAME}-cover.png`)} (frame ${COVER} s, ?cover)${vo ? `\n✓ ${join(film, `${NAME}.srt`)}` : ''}`);
+  },
+  check() {
+    const rc = run('node', ['core/render/reelcheck.mjs', film, '--fps', String(FPS), ...(opts.final ? [] : ['--no-files']), ...(opts['no-asr'] ? ['--no-asr'] : [])]);
+    console.log('\nreadcheck (every on-screen text held long enough to read):');
+    const rd = run('node', ['core/render/readcheck.mjs', film, '--size', SIZE]);
+    if (rd.status === 2) console.log('– not checked: the page has no window.TEXTS(t)');
+    if (rc.status !== 0 || rd.status === 1) die('a check failed (above)');
+  },
+};
+for (const s of steps.length ? steps : ['vo', 'audio', 'render', 'check']) {
+  if (!STEP[s]) die(`unknown step "${s}": use vo, audio, render or check`);
+  console.log(`\n=== ${s} · ${film} ===`);
+  await STEP[s]();
+}
