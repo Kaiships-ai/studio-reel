@@ -9,8 +9,9 @@ a build check, a manifest entry) in the same change. Drop a row once its mistake
 | Start python, ffmpeg, ffprobe and node only through `run()` / `start()` from `kit/env.mjs`; no `.venv` paths, no `python3`, no `.sh` scripts or `sh` spawns in the buyer path | `test/unit/lint.test.mjs` (checks.yml, every PR) |
 | Where a tool lives on each OS is decided only by `LAYOUT` in `kit/env.mjs` | `test/unit/env.test.mjs` |
 | Every tracked file is in exactly one section of `kit.manifest`; new dev-only files go under `[dev]` | `release/build.mjs` (checks.yml runs `--dry-run` on every PR) |
-| No private names in shipped files: `/Users/`, `ksa-`, Kai's handles and hosts, Polar ids | `[forbid]` in `kit.manifest`, checked by `release/build.mjs` |
-| Buyer documents are English; Chinese only as a quoted term in inline code (`` `留白` `` (empty space)) | `release/build.mjs` |
+| No private names in shipped files: `/Users/`, `ksa-`, Kai's handles and hosts, Polar ids, the dev-only 3D style and the tool it came from | `[forbid]` in `kit.manifest`, checked by `release/build.mjs` |
+| `styles/catalog.md` (what `/studio` matches ideas against) lists every style with a `showcase.jpg`; regenerate it with `tools/readme_gallery.py` | `test/unit/catalog.test.mjs` |
+| Buyer documents (top-level docs, skills, `content-types/`, `styles/catalog.md`, style guides) are English; Chinese only as a quoted term in inline code (`` `留白` `` (empty space)) | `release/build.mjs` |
 | Starter ships exactly `studio` + `make-reel`, Pro adds the six `ig-*` skills; `verify` never ships | `release/build.mjs` |
 | Kai's own likeness (`engine/kai-v3.js`) never ships; buyers design their presenter | `[dev]` in `kit.manifest`; no shipped page loads it |
 | Actions minutes: work that runs on every PR lives in `checks.yml` (Linux, ~1 min); install tests are path-filtered; the five-machine matrix runs only for a `v*` tag, a manual run or the `test-all-os` label | `test/unit/ci-policy.test.mjs` |

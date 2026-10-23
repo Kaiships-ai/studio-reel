@@ -27,10 +27,12 @@ drawn, scored and mixed by Claude Code writing code: no video generation, no sto
    /studio
    ```
 
-5. Make a reel:
+5. Make your first reel. `/studio` asks what it should be about (a rough idea is fine), suggests a content type and
+   two or three styles with their showcase images, then lets you choose **cook** (Claude takes the idea and goes all
+   out) or **direct** (your script, word for word). Later reels go straight to:
 
    ```text
-   /make-reel <your topic>
+   /make-reel <your topic> --style <style folder> --mode cook
    ```
 
 `/studio` runs `pixi run studio install` for you. If something stops working later, `pixi run studio doctor`

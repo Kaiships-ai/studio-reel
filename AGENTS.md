@@ -5,6 +5,8 @@ Kaiships Studio is a library of film styles. Each style has a `styles/<slug>/STY
 | The request | Go to |
 |---|---|
 | A film about the user's topic (the normal case) | **Style and story**, **Workflow** below |
+| A first reel, "which style fits my idea?", getting started | `/studio` (`.claude/skills/studio/SKILL.md`, step 4 picks the style and content type) |
+| The shape of a reel's script: listicle, education, why, explanation | [`content-types/README.md`](content-types/README.md) |
 | "Which styles are there?" / no style chosen | **Finding the style** below |
 | Directing: story, sound, rhythm, camera, checks, delivery | [`DIRECTOR.md`](DIRECTOR.md) |
 | Building: install, pages, voice, music, mix | [`TECHNIQUE.md`](TECHNIQUE.md) |
@@ -20,7 +22,8 @@ anything starring Kai or Clawd goes to the style [`kai-hand-draw`](styles/kai-ha
 [`styles/kai-hand-draw/WORKFLOW.md`](styles/kai-hand-draw/WORKFLOW.md) instead of the Workflow below: no brief
 questions unless the topic is too vague to script, 1080×1920 at 30 fps, `node styles/kai-hand-draw/tools/make.mjs
 new <name>` to start. The film lives in `films/<name>/`; `core/`, `styles/` and the guides are never edited for one
-film. The `/make-reel` command (`.claude/skills/make-reel/`) runs it end to end.
+film. The `/make-reel` command (`.claude/skills/make-reel/`) runs it end to end. A reel in another style is
+`/make-reel <topic> --style <slug>`: the same vertical format and deliverables, with that style's `STYLE.md` as the bar.
 
 ## Style and story
 
