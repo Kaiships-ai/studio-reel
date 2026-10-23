@@ -29,7 +29,7 @@ real part. `styles/kai-hand-draw/examples/02-api-explained.json` is a finished s
 
 ## Hook patterns
 
-- "You use <thing> every single day, and nobody ever explains it like this."
+- "You use <thing> every day. Nobody explains it like this."
 - "<Thing> sounds complicated. It's just a <everyday picture>."
 - "Here's <thing>, explained like you're five."
 
@@ -46,7 +46,7 @@ Hand-drawn & Painting (whiteboard, one-line drawing, watercolour), Information &
 
 ## A worked outline: "what an API is" (about 28 s)
 
-1. Hook: "You use APIs every single day, and nobody ever explains them like this."
+1. Hook: "You use APIs every day. Nobody explains them like this."
 2. The picture: "Picture a restaurant." Table, waiter and kitchen doors in one wide shot.
 3. "You're at the table. That's your app."
 4. "The kitchen has the food. That's the server, with all the data."

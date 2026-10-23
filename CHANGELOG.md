@@ -12,7 +12,13 @@ Every release of Kaiships Studio. Newest first.
 - **Content types.** Listicle, education, why, explanation and promo: the beats, timings, hooks and CTA of each,
   usable with any style.
 - **One delivery check for every style.** `core/render/reelcheck.mjs` checks size, frame rate, colour, loudness,
-  frozen or black stretches, the CTA keyword in the final mix and the delivered files.
+  frozen or black stretches, the CTA keyword in the final mix and the delivered files. It also catches what reviewers
+  used to find by eye: a spoken hook longer than 3.5 s, stretches with nothing new on screen, text or the subject
+  outside Instagram's safe zone, and a number badge on screen without its title.
+- **One build command for every style.** `core/render/reel.mjs <film>` makes the voice, the sound (voice, music and
+  SFX from the page's events, via `core/audio/mix.py`), the frames, the mastered MP4, the cover, the `.srt` and the
+  checks for any page that keeps the page contract.
+- `video.mjs --lossless` keeps fine coloured dots (riso, halftone, dither) sharp and their colours true.
 - `still.mjs` takes `--quality` for its JPEGs.
 
 ## v1.5 · 2026-10-22

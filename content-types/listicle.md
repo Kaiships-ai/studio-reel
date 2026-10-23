@@ -30,7 +30,7 @@ one result, use [education](education.md) instead.
 
 - "Don't start <thing> until you've seen these <N> <items>."
 - "<Brand or field> has <N> <items> that are completely free."
-- "<N> <items> I use every single day, and the last one saves me <real number>."
+- "<N> <items> I use every day. The last one saves <real number>."
 
 ## CTA rule
 
@@ -44,7 +44,7 @@ per grid card), Information & Keynote (software and products), Print & Printmaki
 
 ## A worked outline: "4 free tools for small online shops" (about 32 s)
 
-1. Hook: "Running a shop alone? These four free tools do the boring part for you." A till drawer bursts open on frame 0.
+1. Hook: "Running a shop alone? Four free tools do the boring part." A till drawer bursts open on frame 0.
 2. "One: <tool>." The first jar lands on the shelf; one line on the hours it saves, from the tool's own page.
 3. "Two: <tool>." The second jar; one line on what it does for the viewer.
 4. "Three: <tool>." The third jar.

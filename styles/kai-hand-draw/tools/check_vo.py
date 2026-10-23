@@ -5,13 +5,13 @@
 Hard rules (exit 1):  rate ≤ +25 % on every line · ≤ 28 words per line · the CTA from "comment" to its end is said
                       in one go (every gap between words ≤ 0.05 s)
 Warnings:             pace outside 5.0–6.4 syllables/s on a line · speech running longer than 5 s without a pause
-                      (≥ 0.2 s) · no "Comment <KEYWORD>" in the last line
+                      (≥ 0.2 s) · the hook line ends after 3.5 s · no "Comment <KEYWORD>" in the last line
 """
 import json, re, sys
 from kitenv import path
 
 RATE_MAX, WORDS_MAX, PACE = 25, 28, (5.0, 6.4)
-RUN_MAX, BREATH, CTA_GAP = 5.0, .2, .05
+RUN_MAX, BREATH, CTA_GAP, HOOK_MAX = 5.0, .2, .05, 3.5
 
 def syllables(word):
     w = word.strip('.,!?…:;"()[]\'').strip()
@@ -52,6 +52,10 @@ def main():
             if d > longest[0]: longest = (d, run_s, a['e'])
             if b: run_s = b['s']
     if longest[0] > RUN_MAX: warn.append(f"speech runs {longest[0]:.1f} s without a pause ({longest[1]:.2f}–{longest[2]:.2f} s), over {RUN_MAX} s")
+
+    # the hook line must be said by ~3.5 s, so its picture can land inside the first 3 s (content-types/README.md)
+    hook = vo['lines'][0]
+    if hook['e'] > HOOK_MAX: warn.append(f"the hook line ({hook['id']}) ends at {hook['e']:.2f} s, over {HOOK_MAX} s: cut it to about 11 words")
 
     # the CTA: "comment <KEYWORD> …" said in one go
     last = vo['lines'][-1]; lw = [w for w in words if w['line'] == last['id']]

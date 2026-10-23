@@ -51,18 +51,31 @@ paths, the length, the hook score, one line on the concept, and any open ⚠ row
 2. Follow `AGENTS.md` → Workflow, steps 2–6 (treatment, look, storyboard only with `--storyboard`, produce,
    self-check), with `DIRECTOR.md` and `TECHNIQUE.md`, and skip its brief questions: the mode decides. Work only in
    `films/<name>/`; copy what you need from the style, never build inside `styles/`.
-3. Reel format, overriding the guides' film defaults: 1080×1920 at 30 fps (`--size 1080x1920 --fps 30` on the
-   render tools, `fps=30` on `mux.mjs`), 30–60 s, voice and word-locked captions, the hook built and checked as
-   its own chapter (first 3 s), the CTA last. Anything that matters inside x 60–960, y 250–1300; captions in
+3. Reel format, overriding the guides' film defaults: 1080×1920 at 30 fps, 30–60 s, voice and word-locked
+   captions, the hook built and checked as its own chapter, the CTA last. The on-screen hook lands by 3 s and the
+   spoken hook line ends by 3.5 s (about 11 words). Anything that matters inside x 60–960, y 250–1320; captions in
    y 1320–1470 (Instagram's buttons cover the rest).
-4. Check the real MP4: `node core/render/reelcheck.mjs films/<name> --length <voice seconds> --keyword <KEYWORD>
-   --no-files` (1080×1920, 30 fps, BT.709, audio present, length = voice ± 1 frame, −14 LUFS and ≤ −1 dBTP, no
-   frozen or black stretch, the keyword heard in the final mix). Every line must be ✓; open the frames it pulls.
-   Add `core/render/readcheck.mjs` for every on-screen text when the page has `window.TEXTS`.
-5. Review and deliver exactly as `styles/kai-hand-draw/WORKFLOW.md` steps 11–12 (fresh reviewers per area, hook
-   ≥ 8/10), with the same files in `films/<name>/`: `<name>.mp4`, `<name>-cover.png`, `STORYBOARD.md`, `REVIEW.md`,
-   `QA-REPORT.md` (with the step 4 numbers), `CAPTION.md`, and the `CREDITS` file `DIRECTOR.md` §11 asks for.
-   Last, run `reelcheck.mjs` again without `--no-files`: it also checks those deliverables are there.
+4. **Captions in a reel are word-locked**: each strip is on screen exactly while its line is spoken, the spoken
+   word marked. DIRECTOR.md §7's 1.8 s subtitle hold does not apply to them (a strip held past its line shows the
+   wrong words under the next one), and the `.srt` keeps the same timing. Every other on-screen text still passes
+   `readcheck.mjs`. This is the rule, not an exception: don't log it in `TREATMENT.md` or `REVIEW.md`.
+5. **Build with `core/render/reel.mjs`**, never a pipeline of your own (commands and details: `core/README.md`):
+   - `vo/script.json` (format in `styles/kai-hand-draw/tools/make_vo.py`, voice rules in
+     `styles/kai-hand-draw/VOICE.md`), then `node core/render/reel.mjs films/<name> vo`. It writes `src/vo.js`
+     (`VO_LINES`, `VO_WORDS`, `VO_DUR`): time every picture event and the captions from it.
+   - The page keeps the page contract: `window.render(t)`, `READY`, `DUR = VO_DUR`, `EV` (one event per visible
+     action, `silence` events for the music cuts), `TEXTS(t)` for every text (badges and labels too, captions left
+     out), `BOXES(t)` for the subject and the props, and no captions when `location.search` has `cover`.
+   - `audio/sound.py`: the score, the SFX for each event type and the ambience, in the style's sound palette.
+   - `node core/render/reel.mjs films/<name> audio render check --cover <s>`: `events.json`, `out/mix.wav`,
+     `<name>.mp4` (lossless frames, BT.709, −14 LUFS), `<name>-cover.png`, `<name>.srt`, then `reelcheck.mjs` and
+     `readcheck.mjs`. After a picture fix, run `audio render check` again.
+   Every line must be ✓ (a – on the page lines means the page doesn't report `TEXTS` or `BOXES`: add them). Open
+   the frames it pulls, and give the reviewers its "still needs eyes" list.
+6. Review and deliver exactly as `styles/kai-hand-draw/WORKFLOW.md` steps 11–12 (fresh reviewers per area, hook
+   ≥ 8/10), with the same files in `films/<name>/`: `<name>.mp4`, `<name>-cover.png`, `<name>.srt`, `STORYBOARD.md`,
+   `REVIEW.md`, `QA-REPORT.md` (with the step 5 numbers), `CAPTION.md`, and the `CREDITS` file `DIRECTOR.md` §11
+   asks for. Last, `node core/render/reel.mjs films/<name> check --final`: it also checks those deliverables are there.
 
 Never post or upload, in any style: posting is the user's call.
 

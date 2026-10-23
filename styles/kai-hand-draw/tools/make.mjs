@@ -8,7 +8,8 @@
 //   node styles/kai-hand-draw/tools/make.mjs <film> verify     checks the MP4 and writes out/check/verify.json
 // Options: --workers=4 (render) · --no-asr (skip the Whisper checks) · --no-camscan (skip the camera speed scan)
 // A film is any folder with index.html, src/config.js, vo/script.json and audio/cues.json: films/<name>/ in this repo
-// (git ignores it), or styles/kai-hand-draw/demo.
+// (git ignores it), or styles/kai-hand-draw/demo. The vo step needs only index.html and vo/script.json, so it serves
+// every style: core/render/reel.mjs runs it for the other styles' reels.
 import { existsSync, readFileSync, writeFileSync, mkdirSync, cpSync, readdirSync } from 'node:fs';
 import { join, resolve, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -45,7 +46,7 @@ if (pos[0] === 'new') {
 requireReady(env());
 const film = pos[0] && resolve(pos[0]);
 if (!film || !existsSync(join(film, 'index.html'))) die('usage: make.mjs <film folder> [vo|audio|render|verify]   or   make.mjs new <name>');
-const cfgSrc = readFileSync(join(film, 'src/config.js'), 'utf8');
+const cfgFile = join(film, 'src/config.js'), cfgSrc = existsSync(cfgFile) ? readFileSync(cfgFile, 'utf8') : '';
 const NAME = (cfgSrc.match(/\bname:\s*['"]([^'"]+)['"]/) || [])[1] || basename(film);
 const FPS = +((cfgSrc.match(/\bfps:\s*(\d+)/) || [])[1] || 30), COVER = +((cfgSrc.match(/\bcover:\s*([\d.]+)/) || [])[1] || 1);
 const MP4 = join(film, `${NAME}.mp4`), COVER_PNG = join(film, `${NAME}-cover.png`), CHECK = join(film, 'out/check');
