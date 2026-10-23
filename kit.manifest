@@ -57,6 +57,7 @@ kit/
 core/
 styles/
 workspace/
+content-types/
 
 [forbid]
 kienbeovl

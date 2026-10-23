@@ -10,3 +10,10 @@ test('styles/catalog.md lists exactly the styles that have a showcase.jpg (rerun
   const listed = [...readFileSync(join(ROOT, 'styles/catalog.md'), 'utf8').matchAll(/^\| `([^`]+)` \|/gm)].map(m => m[1]).sort();
   assert.deepEqual(listed, showcased);
 });
+
+test('every content type /studio can propose has its file', () => {
+  const index = readFileSync(join(ROOT, 'content-types/README.md'), 'utf8');
+  const named = [...index.matchAll(/\]\(([a-z-]+)\.md\)/g)].map(m => m[1]);
+  assert.ok(named.length >= 4, 'content-types/README.md links its types');
+  for (const t of named) assert.ok(existsSync(join(ROOT, 'content-types', `${t}.md`)), `content-types/${t}.md exists`);
+});
