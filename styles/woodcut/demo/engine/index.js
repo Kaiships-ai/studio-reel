@@ -19,10 +19,10 @@ export function canvas(w = 1920, h = 1080) { const c = document.createElement('c
 export function pathOf(g, P, close = true) { g.moveTo(P[0][0], P[0][1]); for (let i = 1; i < P.length; i++) g.lineTo(P[i][0], P[i][1]); if (close) g.closePath(); }
 export function fillPoly(g, polys, col = '#000', rule = 'evenodd') { g.fillStyle = col; g.beginPath(); for (const P of polys) pathOf(g, P); g.fill(rule); }
 
-// offset a closed polygon along its vertex normals (d > 0 = outward for counter-clockwise… we auto-detect)
+// offset a closed polygon along its vertex normals: d > 0 = outward, d < 0 = inward, for either winding
 export function offsetPoly(P, d) {
   let A = 0; for (let i = 0; i < P.length; i++) { const [x0, y0] = P[i], [x1, y1] = P[(i + 1) % P.length]; A += x0 * y1 - x1 * y0; }
-  const sgn = A > 0 ? -1 : 1, n = P.length;
+  const sgn = A > 0 ? 1 : -1, n = P.length;
   return P.map((p, i) => { const a = P[(i - 1 + n) % n], b = P[(i + 1) % n]; let tx = b[0] - a[0], ty = b[1] - a[1]; const l = Math.hypot(tx, ty) || 1; tx /= l; ty /= l; return [p[0] + ty * d * sgn, p[1] - tx * d * sgn]; });
 }
 

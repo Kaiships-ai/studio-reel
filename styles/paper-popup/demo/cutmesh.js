@@ -5,12 +5,13 @@ import { texOf } from './book.js';
 const cache = new Map();
 export function mats(tex, backCol = '#efe8da') {
   const k = tex.uuid + backCol; if (cache.has(k)) return cache.get(k);
-  const front = new THREE.MeshStandardMaterial({ map: tex, alphaTest: .5, alphaToCoverage: true, roughness: .88, side: THREE.FrontSide });
+  const front = new THREE.MeshStandardMaterial({ map: tex, alphaTest: .5, alphaToCoverage: true, roughness: .88, side: THREE.FrontSide, shadowSide: THREE.DoubleSide });
   const back = new THREE.MeshStandardMaterial({ map: tex, alphaTest: .5, alphaToCoverage: true, roughness: .92, side: THREE.BackSide });
   const bc = new THREE.Color(backCol);
   back.onBeforeCompile = s => { s.uniforms.backCol = { value: bc }; s.fragmentShader = 'uniform vec3 backCol;\n' + s.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n diffuseColor.rgb = backCol;'); };
   back.customProgramCacheKey = () => 'paperback';
-  const depth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: tex, alphaTest: .5, side: THREE.DoubleSide });
+  // three sets depth.side from front.shadowSide on every shadow pass; without it a FrontSide card casts only when lit from behind
+  const depth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: tex, alphaTest: .5 });
   const r = { front, back, depth }; cache.set(k, r); return r;
 }
 

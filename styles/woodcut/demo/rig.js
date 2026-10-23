@@ -28,7 +28,7 @@ export function part(key, def) {
 export function drawPart(g, P, t = 1e9, { fill = true } = {}) {
   if (P.S) P.S.draw(g, t, { fill });
   else if (fill) { WC.drawStrokes(g, WC.cutAlong(WC.offsetPoly(P.outline, P.def.halo * .5 || 2), { closed: true, w: P.def.halo || 4, seg: [80, 200], gap: [0, 2], seed: 3 }), { t }); WC.fillPoly(g, [P.outline], P.def.white ? '#fff' : '#000'); }
-  if (P.def.outline) { P.ol = P.ol || WC.cutAlong(WC.offsetPoly(P.outline, -P.def.outline * .45), { closed: true, w: P.def.outline, kind: 'k', seg: [60, 200], gap: [0, 1], seed: 9, jw: .2 }); WC.drawStrokes(g, P.ol, { t, color: '#000' }); }
+  if (P.def.outline) { P.ol = P.ol || WC.cutAlong(WC.offsetPoly(P.outline, P.def.outline * .45), { closed: true, w: P.def.outline, kind: 'k', seg: [60, 200], gap: [0, 1], seed: 9, jw: .2 }); WC.drawStrokes(g, P.ol, { t, color: '#000' }); }
   for (const f of P.feats) { if (f.poly) WC.fillPoly(g, [f.poly], f.col); else WC.drawStrokes(g, f.st, { t, color: f.col }); }
 }
 

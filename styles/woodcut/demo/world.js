@@ -158,7 +158,7 @@ export function drawValley(m, c, t, o = {}) {
   T.body.draw(m, tt); T.belfry.draw(m, tt);
   // belfry arch opening: black void, carved rim
   WC.fillPoly(m, [T.arch], '#000');
-  if (tt > 5.25) WC.drawStrokes(m, K.archRim || (K.archRim = WC.cutAlong(WC.offsetPoly(T.arch, 4), { closed: true, w: 4, kind: 'k', seed: 5 })), { t: tt });
+  if (tt > 5.25) WC.drawStrokes(m, K.archRim || (K.archRim = WC.cutAlong(WC.offsetPoly(T.arch, -4), { closed: true, w: 4, kind: 'k', seed: 5 })), { t: tt });
   if (o.bell) o.bell(m, c);
   T.spire.draw(m, tt); WC.drawStrokes(m, T.spireOutline, { t: tt, color: '#000' });
   if (tt > 5.5) WC.fillPoly(m, [T.finial], '#fff');
