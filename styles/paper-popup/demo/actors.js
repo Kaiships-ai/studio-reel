@@ -9,9 +9,9 @@ import { clamp, lerp } from './lib.js';
 function dynPlane(c, h, ax, ay, side) {
   const t = texOf(c), w = h * c.width / c.height;
   const g = new THREE.PlaneGeometry(w, h); g.translate(w / 2 - ax * w, ay * h - h / 2, 0);
-  const m = new THREE.MeshStandardMaterial({ map: t, alphaTest: .5, alphaToCoverage: true, roughness: .85, side });
+  const m = new THREE.MeshStandardMaterial({ map: t, alphaTest: .5, alphaToCoverage: true, roughness: .85, side, shadowSide: THREE.DoubleSide });
   const mesh = new THREE.Mesh(g, m); mesh.receiveShadow = true;
-  mesh.customDepthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: t, alphaTest: .5, side: THREE.DoubleSide });
+  mesh.customDepthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: t, alphaTest: .5 });
   return { mesh, t };
 }
 
