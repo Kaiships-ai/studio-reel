@@ -45,9 +45,6 @@ styles/*/demo/audio/*.wav
 core/audio/*.wav
 # 大素材走 Releases 的 assets 包，用 sh tools/fetch.sh 下载（清单见 tools/assets.json）
 core/audio/instruments/
-# Demo fonts are not in git: they are free (mostly Google Fonts, OFL); each demo's CREDITS names them
-styles/*/demo/fonts/**/*.ttf
-styles/*/demo/fonts/**/*.otf
 # 发布暂存 / Pages 构建产物
 /.release/
 /_site/
@@ -60,8 +57,6 @@ styles/*/demo/**/*.mp3
 styles/*/demo/**/*.ogg
 styles/*/demo/**/*.flac
 styles/*/demo/**/*.mp4
-styles/*/demo/**/*.woff
-styles/*/demo/**/*.woff2
 styles/*/demo/**/*.gltf
 styles/*/demo/**/*.glb
 styles/*/demo/**/*.bin
@@ -93,9 +88,7 @@ styles/*/demo/PRODUCTION_LOG*
 /docs/social/
 
 
-# Source photos, imagery caches and fonts anywhere in a demo stay local (CREDITS names them; build scripts re-fetch)
-styles/*/demo/**/*.ttf
-styles/*/demo/**/*.otf
+# Source photos and imagery caches in a demo stay local (CREDITS names them; build scripts re-fetch). Demo fonts ship.
 styles/*/demo/**/*.tif
 styles/*/demo/**/*.tiff
 styles/*/demo/**/*.npz

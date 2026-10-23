@@ -3,7 +3,8 @@
 // kit.manifest decides what ships. Writes dist/kaiships-studio-<tier>-<version>.zip (every entry under
 // kaiships-studio/) and dist/SHA256SUMS. Same ref = same bytes (sorted entries, the commit's time on every file).
 // Refuses to write anything when a check fails: unclassified files, a Pro or dev file in Starter, a forbidden string,
-// Chinese text in a buyer document, a skill a document names that the edition lacks, missing licences.
+// Chinese text in a buyer document, a skill a document names that the edition lacks, missing licences,
+// a font a style's css/html loads that is not in the zip.
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -50,6 +51,22 @@ const BUYER_DOC = f => /^[^/]+\.md$/.test(f) || /^\.claude\/skills\/[^/]+\/.*\.m
 const SKILL_REF = /(^|[\s`("'])\/(ig-[a-z]+|make-reel|studio|crowsnest|verify)\b/g;
 const PRO_SKILLS = ['ig-plan', 'ig-reel', 'ig-human', 'ig-viral', 'ig-dm', 'ig-caption'];
 
+// A style's page that names a font file the zip lacks renders in a browser fallback font, silently.
+export function missingFonts(files, blob) {
+  const set = new Set(files), out = [];
+  for (const f of files) {
+    if (!/^styles\/.*\.(css|html)$/.test(f)) continue;
+    for (const [, raw] of blob(f).toString('utf8').matchAll(/url\(\s*['"]?([^'")]+?)['"]?\s*\)/g)) {
+      const url = raw.replace(/[?#].*$/, '');
+      if (!/\.(woff2?|ttf|otf)$/i.test(url) || /^[a-z]+:/i.test(url) || url.startsWith('/core/fonts/')) continue;
+      const parts = url.startsWith('/') ? [] : f.split('/').slice(0, -1);
+      for (const p of url.replace(/^\//, '').split('/')) p === '..' ? parts.pop() : p !== '.' && parts.push(p);
+      if (!set.has(parts.join('/'))) out.push(`${f}: font ${url} is not in the zip`);
+    }
+  }
+  return [...new Set(out)];
+}
+
 export function check(tier, files, blob, m) {
   const errors = [], warns = [], set = new Set(files);
   const skills = [...new Set(files.map(f => /^\.claude\/skills\/([^/]+)\//.exec(f)?.[1]).filter(Boolean))].sort();
@@ -76,6 +93,7 @@ export function check(tier, files, blob, m) {
       }
     }
   }
+  errors.push(...missingFonts(files, blob));
   return { errors, warns: [...new Set(warns)] };
 }
 
