@@ -2,7 +2,7 @@
 
 Every release of Kaiships Studio. Newest first.
 
-## v1.6 · unreleased
+## v1.6 · 2026-10-23
 
 - **Every style makes reels.** All 52 styles now lay out natively at 9:16: `/make-reel <topic> --style <style>`
   makes a vertical reel with a cover and a caption in any of them. The README shows one brief made in every style.
