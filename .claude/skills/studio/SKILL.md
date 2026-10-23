@@ -1,6 +1,6 @@
 ---
 name: studio
-description: Start here. Sets up Kaiships Studio on this computer the first time (installs pixi, then node, python, ffmpeg and the renderer inside this folder, then renders a test reel), writes workspace/brand.md, and on every later run checks the setup and says which command comes next. Use when the user types /studio, says "set up", "install", "get started", "what do I do next", or when any other command fails because the setup is missing.
+description: Start here. Sets up Kaiships Studio on this computer the first time (installs pixi, then node, python, ffmpeg and the renderer inside this folder, then renders a test reel), writes workspace/brand.md, helps pick a style and a content type for the first reel from a rough idea, and on every later run checks the setup and says which command comes next. Use when the user types /studio, says "set up", "install", "get started", "which style", "my first reel", "what do I do next", or when any other command fails because the setup is missing.
 ---
 
 # /studio
@@ -41,7 +41,27 @@ talks to, what they sell or offer, the one word people should comment (CTA keywo
 link if they have one), their timezone, and two or three lines they would actually say on camera.
 Write `workspace/brand.md` in the format of `workspace/README.md` with what they gave; leave the rest out.
 
-## 4. Next step
+## 4. First reel
+
+Only when no film is finished yet (no `films/<name>/<name>.mp4`; `films/_studio-check/` is the setup test and does
+not count), or when the buyer asks which style to use. Otherwise go to step 5.
+
+1. Ask exactly this, alone: "What do you want your first reel to be about? A rough idea is fine."
+2. Read `content-types/README.md` and `styles/catalog.md`. Propose ONE content type (its name and one line on why)
+   and 2–3 styles, each with its name, one line on why it fits this idea, and its `showcase.jpg` path. Match the idea
+   to each style's "Good for" and look, and pick from different categories. Propose an Evidence Films style only
+   when the buyer has the real material it needs (imagery, data, scans). Offer to open the images: `open <path>`
+   (macOS), `start "" <path>` (Windows), `xdg-open <path>` (Linux). The buyer picks one, names any style in
+   `styles/README.md`, or asks for more (2–3 new ones, never a repeat).
+3. In one message, propose the inputs: the script (you write it from the idea, or they paste theirs), a storyboard
+   to review before animation (default no), and the mode: **cook** (you take the idea and go all out, no questions)
+   or **direct** (they direct: their script word for word, their storyboard if they have one). Default cook for an
+   idea, direct for a pasted script.
+4. Run `/make-reel <idea, or the script in quotes> --style <slug> --type <type> --mode <cook|direct>`, adding
+   `--storyboard` if they want to review it. Say where it lands: `films/<name>/<name>.mp4`, `<name>-cover.png` and
+   `CAPTION.md`.
+
+## 5. Next step
 
 Look at what exists and say exactly one next command (and why, in one line):
 
