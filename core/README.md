@@ -30,17 +30,20 @@ The viewport is 1920×1080 at device scale 1, or `--size WxH`. `--q 'k=v&…'` r
 
 | Command | What it does |
 |---|---|
-| `node core/render/still.mjs <demo> <t> [<t> …] [--range a:b:step] [--prefix t_] [--out dir]` | review stills as JPEGs (default `<demo>/stills/t_<t>.jpg`) |
+| `node core/render/still.mjs <demo> <t> [<t> …] [--range a:b:step] [--prefix t_] [--out dir] [--quality 92]` | review stills as JPEGs (`--quality` 1–100) (default `<demo>/stills/t_<t>.jpg`) |
 | `node core/render/video.mjs <demo> [--fps 24] [--workers 3] [--out <demo>/out/video.mp4]` | every frame to a video; up to 6 workers for a single render. Each parallel version needs its own `--out` |
 | `node core/render/events.mjs <demo> [--out <file>]` | export `{dur, ev}` to `<demo>/events.json` |
 | `node core/render/readcheck.mjs <demo> [--step 0.04] [--latin-cps 15] [--cjk-cps 4.5] [--pad 1.5] [--min 1.5]` | reading-time check (below) |
 | `pixi run python core/render/sheet.py out.jpg img… [--cols 4] [--w 480]` | contact sheet |
 | `pixi run python core/render/srt.py cues.json out.srt` | subtitles from `[{t0, t1, text}]` |
 | `node core/render/mux.mjs video.mp4 mix.wav out.mp4 [fps=24] [grain=2]` | mux and master (below) |
+| `node core/render/reelcheck.mjs <film> [--mp4 f] [--length s] [--keyword WORD] [--fps 30] [--no-files]` | delivery checks for a finished vertical reel in any style (below) |
 
 All four page tools take `--size WxH` (default `1920x1080`, even numbers) and `--q 'k=v'`.
 
 **readcheck** asks the page for `window.TEXTS(t)` at every step. Each text must stay fully in frame, unchanged, for at least CJK characters ÷ 4.5 + other non-space characters ÷ 15 + 1.5 s, and never less than `--min`. A new `text` under the same `id` starts a new piece. Subtitles are checked by their `.srt`, not here.
+
+**reelcheck** probes the reel's MP4 (`<film>/<name>.mp4` unless `--mp4`) and prints one ✓ / ✗ / – line per check: 1080×1920 at the fps, BT.709 limited range, an audio stream, length (= `--length` ± 1 frame, or `vo/vo.json`'s duration, else 15–90 s), −14 ± 1 LUFS with peak ≤ −1 dBTP, no frozen stretch, no black frames, the `--keyword` heard by Whisper in the last 4 s, and the deliverables (`<name>-cover.png`, `CAPTION.md`, `REVIEW.md`, `QA-REPORT.md`; `--no-files` skips them). It pulls six frames into `<film>/out/check/` to open and look at. `kai-hand-draw`'s `make.mjs verify` runs the same checks.
 
 **mux** runs a two-pass `loudnorm` to −14 LUFS / true peak −1.2 dB, adds film grain (`grain` 0 = none) and prints the measured loudness. Silent audio is left at its level with a warning; short audio is padded, long audio cut at the picture's end; missing, damaged or truncated audio is refused. It never leaves a partial file.
 
@@ -82,6 +85,7 @@ All four page tools take `--size WxH` (default `1920x1080`, even numbers) and `-
 | render tools | done | page error, missing required file, ffmpeg failure | usage, no `index.html`, `--out` already being written |
 | `readcheck.mjs` | all texts long enough | some too short or never fully visible | could not check (no `TEXTS`) |
 | `mux.mjs` | film written | any failure | – |
+| `reelcheck.mjs` | every check ✓ | a check ✗, or no MP4 | usage |
 | `tts.py`, `srt.py` | done | bad input, missing model, path too long | usage |
 | `tts_zh.py` | done | bad input | network unreachable |
 | `asr_check.py` | all lines pass | mismatches | model failed to load |

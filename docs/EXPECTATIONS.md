@@ -10,12 +10,12 @@ Người mua chọn, studio làm ra reel hoàn chỉnh kèm caption và cover ch
 
 | # | Kỳ vọng (người mua thấy gì) | Xong khi (kiểm được) | Trạng thái |
 |---|---|---|---|
-| E1 | README showcase các style bằng **ảnh do Kai làm**, không phải demo của Lemo | Mỗi style được mời chọn có `styles/<slug>/showcase.jpg` 9:16 cùng một brief ("Ship it."); README chỉ dùng ảnh này | đang thử 3 style (watercolor, swiss-motion, pixel-rpg) |
-| E2 | Onboarding: `/studio` → người mua nói ý mơ hồ → studio đối chiếu với các style và đề xuất 2–3 style kèm ảnh → người mua chọn | Ba ý mơ hồ mẫu đều nhận về 2–3 style hợp lý kèm lý do; style được chọn đi thẳng vào bước làm reel | chưa làm |
-| E3 | Sau khi chọn style: studio đề xuất input (script, storyboard nếu muốn) và cho chọn mode | Hai mode: **`cook`** (Claude sáng tạo hết cỡ, để show off) và **`direct`** (người mua đưa script/storyboard, Claude làm đúng theo) | chưa làm |
-| E4 | Bank dạng nội dung: listicle (thế mạnh), explanation (cần cải thiện), why, education; mở rộng dần | `content-types/<tên>.md`: nhịp, hook, thời lượng, ví dụ; style nào cũng dùng được | chưa làm |
-| E5 | Output: reel hoàn chỉnh + caption + cover | `films/<slug>/`: MP4 1080×1920, cover, `CAPTION.md`; verify pass | có sẵn cho hand-draw; cần cho mọi style được mời chọn |
-| E6 | Crowsnest và DM: đưa vào waitlist để người mua thấy và muốn (FOMO) | `/studio` và README có mục "Sắp có" kèm link waitlist; `/ig-dm` không còn trong bản bán | chưa làm, chờ Q2 |
+| E1 | README showcase các style bằng **ảnh do Kai làm**, không phải demo của Lemo | Mỗi style được mời chọn có `styles/<slug>/showcase.jpg` 9:16 cùng một brief ("Ship it."); README chỉ dùng ảnh này | xong (PR #13): 52/52 style |
+| E2 | Onboarding: `/studio` → người mua nói ý mơ hồ → studio đối chiếu với các style và đề xuất 2–3 style kèm ảnh → người mua chọn | Ba ý mơ hồ mẫu đều nhận về 2–3 style hợp lý kèm lý do; style được chọn đi thẳng vào bước làm reel | xong (PR #14) |
+| E3 | Sau khi chọn style: studio đề xuất input (script, storyboard nếu muốn) và cho chọn mode | Hai mode: **`cook`** (Claude sáng tạo hết cỡ, để show off) và **`direct`** (người mua đưa script/storyboard, Claude làm đúng theo) | xong (PR #14) |
+| E4 | Bank dạng nội dung: listicle (thế mạnh), explanation (cần cải thiện), why, education; mở rộng dần | `content-types/<tên>.md`: nhịp, hook, thời lượng, ví dụ; style nào cũng dùng được | xong: 5 dạng (thêm promo) |
+| E5 | Output: reel hoàn chỉnh + caption + cover | `films/<slug>/`: MP4 1080×1920, cover, `CAPTION.md`; verify pass | `core/render/reelcheck.mjs` kiểm mọi style; reel risograph đang hoàn thiện làm bằng chứng |
+| E6 | Crowsnest và DM: đưa vào waitlist để người mua thấy và muốn (FOMO) | `/studio` và README có mục "Sắp có" kèm link waitlist; `/ig-dm` không còn trong bản bán | README có mục "Coming soon" (Crowsnest), chưa có link; `/ig-dm` vẫn trong Pro, chờ Q2 |
 | E7 | v1.6 stable | CI clean-install xanh trên 5 máy; mỗi style được mời chọn qua bài render thử 9:16 từ zip sạch; `/verify` draft pass; CHANGELOG; tag `v1.6` | chưa làm |
 | E8 | Kai không phải babysit | Mỗi việc kết thúc bằng PR + bảng kết quả; agent chỉ hỏi các dòng Q | đang áp dụng |
 
@@ -32,9 +32,9 @@ Người mua chọn, studio làm ra reel hoàn chỉnh kèm caption và cover ch
 
 | # | Câu hỏi | Đề xuất của agent |
 |---|---|---|
-| Q1 | Tên mode | `cook` (Claude đi hết cỡ, giống "let him cook") + `direct` (bạn là đạo diễn). Không dùng `studio:flow`: dễ lẫn với `/studio` và không gợi được tinh thần sáng tạo |
+| Q1 | Tên mode (**Kai chốt 2026-10-23: `cook` / `direct`**) | `cook` (Claude đi hết cỡ, giống "let him cook") + `direct` (bạn là đạo diễn). Không dùng `studio:flow`: dễ lẫn với `/studio` và không gợi được tinh thần sáng tạo |
 | Q2 | Waitlist: link ở đâu (Loops form? trang web?); bản Pro còn gì khi DM chuyển sang waitlist, giá có đổi không | Loops form trên kaiships.ai; Pro giữ $79 với plan, reel, human, caption, viral |
-| Q3 | v1.6 mời chọn bao nhiêu style: chỉ các style lên được 9:16, hay cả phim ngang | Chỉ style lên được 9:16 (đúng lời hứa "reel"); phim ngang để bản sau |
+| Q3 | v1.6 mời chọn bao nhiêu style | **Kai chốt 2026-10-23: cả 52** (cả 52 đều lên được 9:16) |
 
 ## Không làm lúc này
 Crowsnest (waitlist), DM (waitlist), reel 3D cho khách (dev only), đổi giá.

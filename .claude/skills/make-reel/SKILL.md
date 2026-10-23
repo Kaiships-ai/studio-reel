@@ -22,7 +22,7 @@ Input: `$ARGUMENTS`
 
 Options (any order, all optional):
 - `--style <slug>`: a folder in `styles/` (default `kai-hand-draw`). Any other style: see **Another style** below.
-- `--type <name>`: a file in `content-types/` (`listicle`, `education`, `why`, `explanation`). The script follows its
+- `--type <name>`: a file in `content-types/` (`listicle`, `education`, `why`, `explanation`, `promo`). The script follows its
   beats, timings, hook patterns and CTA rule. No type given: pick the one that fits the topic.
 - `--mode cook` (default for a topic): no questions at all. You take the idea and go all out: the angle, the script,
   the concept and every shot, at the highest craft the style allows. A topic too vague to script gets your best
@@ -55,12 +55,14 @@ paths, the length, the hook score, one line on the concept, and any open ⚠ row
    render tools, `fps=30` on `mux.mjs`), 30–60 s, voice and word-locked captions, the hook built and checked as
    its own chapter (first 3 s), the CTA last. Anything that matters inside x 60–960, y 250–1300; captions in
    y 1320–1470 (Instagram's buttons cover the rest).
-4. Check the real MP4 the way `make.mjs verify` does: 1080×1920, 30 fps, BT.709, audio present, length = voice
-   ± 1 frame, −14 LUFS and ≤ −1 dBTP, no frozen or black stretch, the keyword heard in the final mix
-   (`core/tts/asr_check.py`), plus `core/render/readcheck.mjs` for every on-screen text. Pull frames and open them.
+4. Check the real MP4: `node core/render/reelcheck.mjs films/<name> --length <voice seconds> --keyword <KEYWORD>
+   --no-files` (1080×1920, 30 fps, BT.709, audio present, length = voice ± 1 frame, −14 LUFS and ≤ −1 dBTP, no
+   frozen or black stretch, the keyword heard in the final mix). Every line must be ✓; open the frames it pulls.
+   Add `core/render/readcheck.mjs` for every on-screen text when the page has `window.TEXTS`.
 5. Review and deliver exactly as `styles/kai-hand-draw/WORKFLOW.md` steps 11–12 (fresh reviewers per area, hook
    ≥ 8/10), with the same files in `films/<name>/`: `<name>.mp4`, `<name>-cover.png`, `STORYBOARD.md`, `REVIEW.md`,
    `QA-REPORT.md` (with the step 4 numbers), `CAPTION.md`, and the `CREDITS` file `DIRECTOR.md` §11 asks for.
+   Last, run `reelcheck.mjs` again without `--no-files`: it also checks those deliverables are there.
 
 Never post or upload, in any style: posting is the user's call.
 
