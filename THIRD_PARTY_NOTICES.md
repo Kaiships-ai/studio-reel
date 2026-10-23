@@ -119,3 +119,12 @@ Lemo-Opuscar asset release by LemoLab; they are not in the zip.
 | ZCOOL KuaiLe, Fredoka, Lilita One, IM Fell English (subsets) | `core/fonts/` | SIL Open Font License 1.1 (`core/fonts/OFL.md`) |
 
 Fonts and other assets used by individual style demos are listed in each demo's `CREDITS` file.
+
+### Style showcase images (`styles/<slug>/showcase.jpg`)
+
+Made by Kaiships Studio with each style's own engine. Fonts are SIL Open Font License 1.1 (Google Fonts). Imagery
+used inside three of them:
+
+- `satellite-briefing`: NASA Black Marble 2016 (Suomi NPP VIIRS) via NASA GIBS, free to reuse with credit (credited in the image).
+- `microscope`: CMU-1.svs, OpenSlide test data (Carnegie Mellon University), CC0 1.0.
+- `briefing-board`: "Ring Light 25280737679.jpg" (Serhan Meewisse) and "Laptop and a mug (Unsplash).jpg" (Ryan Riggins), Wikimedia Commons, CC0 1.0.
