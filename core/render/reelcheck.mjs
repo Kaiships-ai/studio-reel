@@ -2,8 +2,8 @@
 //   node core/render/reelcheck.mjs <film> [--mp4 file] [--length s] [--keyword WORD] [--fps 30] [--n 6] [--no-files] [--no-asr]
 // <film> is the project folder (films/<name>/); the MP4 defaults to <film>/<name>.mp4. Checks, each ✓ / ✗ / – (not run):
 //   1080×1920 at the fps · BT.709 limited range · an audio stream · length = --length ± 1 frame (else 15–90 s) ·
-//   −14 ± 1 LUFS and peak ≤ −1 dBTP · no frozen stretch · no black frames · the CTA keyword heard by Whisper in the last
-//   4 s of the final mix (--keyword) · the deliverables next to it: <name>-cover.png, CAPTION.md, REVIEW.md, QA-REPORT.md
+//   −14 ± 1 LUFS and peak ≤ −1 dBTP · no frozen stretch · no black frames · the CTA keyword heard by Whisper in the final
+//   mix around the last voice line (vo/vo.json; else the last 4 s) (--keyword) · the deliverables next to it: <name>-cover.png, CAPTION.md, REVIEW.md, QA-REPORT.md
 //   (--no-files skips them, for a check before review).
 // --length defaults to vo/vo.json's "duration" when that file exists (kai-hand-draw films). Writes <film>/out/check/
 // reelcheck.json and n frames pulled from the MP4 (open them and look). Exit 1 if any check is ✗.
@@ -70,11 +70,12 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   if (!existsSync(mp4)) { console.error(`✗ ${mp4} does not exist: render and mux the reel first`); process.exit(1); }
   mkdirSync(check, { recursive: true });
   const voJson = join(film, 'vo/vo.json');
-  const length = lenOpt != null ? +lenOpt : existsSync(voJson) ? JSON.parse(readFileSync(voJson, 'utf8')).duration : null;
+  const vo = existsSync(voJson) ? JSON.parse(readFileSync(voJson, 'utf8')) : null, last = vo && vo.lines && vo.lines[vo.lines.length - 1];
+  const length = lenOpt != null ? +lenOpt : vo ? vo.duration : null;
   const { checks, dur } = mp4Checks(mp4, { fps, length });
   if (!keyword) checks.push(['keyword heard in the CTA', null, 'no --keyword given']);
   else if (noAsr || !hasWhisper()) checks.push([`keyword "${keyword.toUpperCase()}" heard in the CTA`, null, 'skipped (no Whisper or --no-asr)']);
-  else checks.push(keywordCheck(mp4, keyword, dur - 4, dur, join(check, 'cta.wav')));
+  else checks.push(keywordCheck(mp4, keyword, last ? last.s - .6 : dur - 4, last ? last.e + .6 : dur, join(check, 'cta.wav')));
   if (!noFiles) for (const f of [`${name}-cover.png`, 'CAPTION.md', 'REVIEW.md', 'QA-REPORT.md'])
     checks.push([`${f} delivered`, existsSync(join(film, f)), existsSync(join(film, f)) ? 'yes' : `missing in ${film}`]);
   printChecks(checks);
