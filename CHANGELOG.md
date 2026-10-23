@@ -2,6 +2,19 @@
 
 Every release of Kaiships Studio. Newest first.
 
+## v1.6 · unreleased
+
+- **Every style makes reels.** All 52 styles now lay out natively at 9:16: `/make-reel <topic> --style <style>`
+  makes a vertical reel with a cover and a caption in any of them. The README shows one brief made in every style.
+- **A first reel from a rough idea.** `/studio` asks what the reel should be about, suggests a content type and two
+  or three styles with their showcase images, and lets you choose **cook** (Claude goes all out) or **direct** (your
+  script and storyboard, followed exactly).
+- **Content types.** Listicle, education, why, explanation and promo: the beats, timings, hooks and CTA of each,
+  usable with any style.
+- **One delivery check for every style.** `core/render/reelcheck.mjs` checks size, frame rate, colour, loudness,
+  frozen or black stretches, the CTA keyword in the final mix and the delivered files.
+- `still.mjs` takes `--quality` for its JPEGs.
+
 ## v1.5 · 2026-10-22
 
 - **Runs on macOS, Windows and Linux.** One setup command, `/studio`, installs everything inside the product folder

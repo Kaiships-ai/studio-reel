@@ -10,9 +10,11 @@ the viewer hears and when. `/studio` proposes one from the buyer's idea, and `/m
 | [education](education.md) | proven | how to use ONE thing, taught as a named process of a few steps | "how I plan a week with one notebook" |
 | [why](why.md) | new | a question or a claim about cause: why something happens, fails or works | "why AI agents fail" |
 | [explanation](explanation.md) | improving | how something works, told through one picture everyone already knows | "what an API is" |
+| [promo](promo.md) | new | selling or announcing ONE thing the user makes: a product, a course, a launch | "my template pack opens Friday" |
 
 When an idea fits two types, pick the one with fewer items or steps to get through; a reel carries one idea. A list of steps toward one
-result is **education**, not a listicle. "Why" is about causes; "explanation" is about mechanism.
+result is **education**, not a listicle. "Why" is about causes; "explanation" is about mechanism. Several products are a listicle; one product
+for sale is a **promo**.
 
 ## What every type shares
 

@@ -124,6 +124,13 @@ storytelling and more), each with a `STYLE.md` and a demo film made in code. See
 topic. The guides the agent follows are [`AGENTS.md`](AGENTS.md), [`DIRECTOR.md`](DIRECTOR.md) and
 [`TECHNIQUE.md`](TECHNIQUE.md); to change a style and keep it as your own, see [`MY-STYLES.md`](MY-STYLES.md).
 
+## Coming soon
+
+- **Crowsnest**: a morning dashboard of the posts that beat their own channel's usual numbers overnight, among the
+  accounts you watch, with why each one worked and a button that turns it into your next reel.
+
+<!-- WAITLIST: link goes here when it opens -->
+
 ## Credits and licence
 
 Kaiships Studio's own code is MIT ([`LICENSE`](LICENSE)). It builds on open-source work, credited with its licences in

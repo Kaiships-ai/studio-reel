@@ -14,6 +14,7 @@ import { join, resolve, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { env, run, requireReady } from '../../../kit/env.mjs';
 import { mux } from '../../../core/render/mux.mjs';
+import { mp4Checks, keywordCheck, pullFrames, printChecks, hasWhisper } from '../../../core/render/reelcheck.mjs';
 
 const STYLE = resolve(dirname(fileURLToPath(import.meta.url)), '..'), LIB = resolve(STYLE, '../..'), TOOLS = join(STYLE, 'tools');
 const argv = process.argv.slice(2), pos = argv.filter(a => !a.startsWith('--')), flags = argv.filter(a => a.startsWith('--'));
@@ -48,7 +49,6 @@ const cfgSrc = readFileSync(join(film, 'src/config.js'), 'utf8');
 const NAME = (cfgSrc.match(/\bname:\s*['"]([^'"]+)['"]/) || [])[1] || basename(film);
 const FPS = +((cfgSrc.match(/\bfps:\s*(\d+)/) || [])[1] || 30), COVER = +((cfgSrc.match(/\bcover:\s*([\d.]+)/) || [])[1] || 1);
 const MP4 = join(film, `${NAME}.mp4`), COVER_PNG = join(film, `${NAME}-cover.png`), CHECK = join(film, 'out/check');
-const hasWhisper = () => out('python', ['-c', 'import faster_whisper']).status === 0;
 
 const STEP = {
   vo() {
@@ -77,22 +77,7 @@ const STEP = {
     if (!existsSync(MP4)) die(`${MP4} does not exist: run the render step first`);
     mkdirSync(CHECK, { recursive: true });
     const vo = JSON.parse(readFileSync(join(film, 'vo/vo.json'), 'utf8'));
-    const probe = JSON.parse(out('ffprobe', ['-v', 'error', '-show_streams', '-show_format', '-of', 'json', MP4]).stdout || '{}');
-    const v = (probe.streams || []).find(s => s.codec_type === 'video'), a = (probe.streams || []).find(s => s.codec_type === 'audio');
-    const dur = +(probe.format || {}).duration, fr = v ? eval(v.r_frame_rate) : 0;
-    const ff = (args) => out('ffmpeg', ['-hide_banner', '-nostats', '-i', MP4, ...args, '-f', 'null', '-']).stderr || '';
-    const eb = ff(['-af', 'ebur128=peak=true', '-vn']), I = +((eb.match(/I:\s+(-?[\d.]+) LUFS/g) || []).pop() || '').replace(/[^\d.-]/g, ''), TP = +((eb.match(/Peak:\s+(-?[\d.]+) dBFS/g) || []).pop() || '').replace(/[^\d.-]/g, '');
-    const fz = ff(['-vf', 'freezedetect=n=0.003:d=0.7', '-an']), freezes = [...fz.matchAll(/freeze_start: ([\d.]+)[\s\S]*?freeze_end: ([\d.]+)/g)].map(m => [+m[1], +m[2]]);
-    const bk = ff(['-vf', 'blackdetect=d=0.1:pix_th=0.1', '-an']), blacks = [...bk.matchAll(/black_start:([\d.]+) black_end:([\d.]+)/g)].map(m => [+m[1], +m[2]]);
-    const checks = [
-      ['1080×1920 at ' + FPS + ' fps', v && v.width === 1080 && v.height === 1920 && Math.abs(fr - FPS) < .01, v ? `${v.codec_name} ${v.width}×${v.height} @ ${fr.toFixed(2)} fps, ${v.color_space || '?'} ${v.color_range || ''}` : 'no video stream'],
-      ['BT.709 limited range', v && v.color_space === 'bt709' && v.color_range === 'tv', v ? `${v.color_space} / ${v.color_range}` : ''],
-      ['has an audio stream', !!a, a ? `${a.codec_name} ${a.sample_rate} Hz` : 'none'],
-      ['length = voiceover ± 1 frame', Math.abs(dur - vo.duration) <= 1 / FPS + 1e-3, `${dur.toFixed(3)} s vs ${vo.duration.toFixed(3)} s`],
-      ['loudness −14 ± 1 LUFS, peak ≤ −1 dBTP', Math.abs(I + 14) <= 1 && TP <= -1, `${I} LUFS, ${TP} dBTP`],
-      ['no frozen stretch (freezedetect n=0.003 d=0.7)', !freezes.length, freezes.length ? freezes.map(([s, e]) => `${s.toFixed(2)}–${e.toFixed(2)} s`).join(', ') : 'none'],
-      ['no black frames', !blacks.length, blacks.length ? blacks.map(([s, e]) => `${s.toFixed(2)}–${e.toFixed(2)} s`).join(', ') : 'none'],
-    ];
+    const { checks, dur } = mp4Checks(MP4, { fps: FPS, length: vo.duration });
     if (!flag('no-camscan')) {
       sh('node', [join(TOOLS, 'look.mjs'), film, '--camscan', `--workers=${flag('workers', env().workers)}`, `--out=${join(CHECK, 'camscan.json')}`]);
       const cs = JSON.parse(readFileSync(join(CHECK, 'camscan.json'), 'utf8'));
@@ -102,20 +87,14 @@ const STEP = {
     const last = vo.lines[vo.lines.length - 1], lw = vo.words.filter(w => w.line === last.id);
     const k = lw.findIndex(w => /^comment\b/i.test(w.w)), keyword = k >= 0 && lw[k + 1] ? lw[k + 1].w.replace(/[^\w-]/g, '') : null;
     if (keyword && !flag('no-asr') && hasWhisper()) {
-      const wav = join(CHECK, 'cta.wav');
-      out('ffmpeg', ['-y', '-loglevel', 'error', '-ss', String(Math.max(0, last.s - .6)), '-to', String(last.e + .6), '-i', MP4, '-vn', '-ac', '1', '-ar', '16000', wav]);
-      const r = out('python', ['-c', 'import sys, soundfile as sf; from faster_whisper import WhisperModel as M; a, _ = sf.read(sys.argv[1], dtype="float32"); s, _ = M("base.en").transcribe(a, language="en"); print(" ".join(x.text for x in s))', wav]);
-      const heard = (r.stdout || '').trim(), norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
-      checks.push([`keyword "${keyword.toUpperCase()}" heard in the CTA`, norm(heard).includes(norm(keyword)), `Whisper: "${heard}"`]);
+      checks.push(keywordCheck(MP4, keyword, last.s - .6, last.e + .6, join(CHECK, 'cta.wav')));
     } else checks.push(['keyword heard in the CTA', null, keyword ? 'skipped (no Whisper or --no-asr)' : 'no "Comment <KEYWORD>" in the last line']);
-    for (const [name, good, detail] of checks) console.log(`${good === null ? '–' : good ? '✓' : '✗'} ${name}: ${detail}`);
+    printChecks(checks);
     // frames from the MP4, mid-line so a caption is on screen, spread across the reel
-    const files = [], n = +flag('n', 6);
-    for (let i = 0; i < n; i++) {
+    const n = +flag('n', 6), files = pullFrames(MP4, Array.from({ length: n }, (_, i) => {
       const L = vo.lines[Math.min(vo.lines.length - 1, Math.floor((i + .5) / n * vo.lines.length))];
-      const t = Math.min(dur - .1, (L.s + L.e) / 2), f = join(CHECK, `final_${String(i + 1).padStart(2, '0')}_${t.toFixed(2).replace('.', '_')}s.jpg`);
-      if (out('ffmpeg', ['-y', '-loglevel', 'error', '-ss', t.toFixed(3), '-i', MP4, '-frames:v', '1', '-vf', 'scale=540:-1', '-q:v', '3', f]).status === 0) files.push(f);
-    }
+      return Math.min(dur - .1, (L.s + L.e) / 2);
+    }), CHECK);
     writeFileSync(join(CHECK, 'verify.json'), JSON.stringify({ mp4: MP4, checks: checks.map(([name, ok, detail]) => ({ name, ok, detail })), frames: files }, null, 1));
     console.log(`frames from the MP4 (open them and look):\n  ${files.join('\n  ')}\n${join(CHECK, 'verify.json')}`);
     if (checks.some(c => c[1] === false)) process.exit(1);
