@@ -15,7 +15,7 @@ Người mua chọn, studio làm ra reel hoàn chỉnh kèm caption và cover ch
 | E3 | Sau khi chọn style: studio đề xuất input (script, storyboard nếu muốn) và cho chọn mode | Hai mode: **`cook`** (Claude sáng tạo hết cỡ, để show off) và **`direct`** (người mua đưa script/storyboard, Claude làm đúng theo) | xong (PR #14) |
 | E4 | Bank dạng nội dung: listicle (thế mạnh), explanation (cần cải thiện), why, education; mở rộng dần | `content-types/<tên>.md`: nhịp, hook, thời lượng, ví dụ; style nào cũng dùng được | xong: 5 dạng (thêm promo) |
 | E5 | Output: reel hoàn chỉnh + caption + cover | `films/<slug>/`: MP4 1080×1920, cover, `CAPTION.md`; verify pass | `core/render/reelcheck.mjs` kiểm mọi style; reel risograph đang hoàn thiện làm bằng chứng |
-| E6 | Crowsnest và DM: đưa vào waitlist để người mua thấy và muốn (FOMO) | `/studio` và README có mục "Sắp có" kèm link waitlist; `/ig-dm` không còn trong bản bán | README có mục "Coming soon" (Crowsnest), chưa có link; `/ig-dm` vẫn trong Pro, chờ Q2 |
+| E6 | Crowsnest và DM: đưa vào waitlist để người mua thấy và muốn (FOMO) | `/studio` và README có mục "Sắp có" kèm link waitlist; `/ig-dm` không còn trong bản bán | README có mục "Coming soon" (Crowsnest). Kai chốt 2026-10-23: `/ig-dm` **giữ** trong Pro; waitlist = link vào Discord, có bước qualification trước, **làm sau** |
 | E7 | v1.6 stable | CI clean-install xanh trên 5 máy; mỗi style được mời chọn qua bài render thử 9:16 từ zip sạch; `/verify` draft pass; CHANGELOG; tag `v1.6` | chưa làm |
 | E8 | Kai không phải babysit | Mỗi việc kết thúc bằng PR + bảng kết quả; agent chỉ hỏi các dòng Q | đang áp dụng |
 
@@ -33,7 +33,7 @@ Người mua chọn, studio làm ra reel hoàn chỉnh kèm caption và cover ch
 | # | Câu hỏi | Đề xuất của agent |
 |---|---|---|
 | Q1 | Tên mode (**Kai chốt 2026-10-23: `cook` / `direct`**) | `cook` (Claude đi hết cỡ, giống "let him cook") + `direct` (bạn là đạo diễn). Không dùng `studio:flow`: dễ lẫn với `/studio` và không gợi được tinh thần sáng tạo |
-| Q2 | Waitlist: link ở đâu (Loops form? trang web?); bản Pro còn gì khi DM chuyển sang waitlist, giá có đổi không | Loops form trên kaiships.ai; Pro giữ $79 với plan, reel, human, caption, viral |
+| Q2 | (**Kai chốt 2026-10-23: giữ `/ig-dm`; waitlist qua Discord + qualification, làm sau**) Waitlist: link ở đâu (Loops form? trang web?); bản Pro còn gì khi DM chuyển sang waitlist, giá có đổi không | Loops form trên kaiships.ai; Pro giữ $79 với plan, reel, human, caption, viral |
 | Q3 | v1.6 mời chọn bao nhiêu style | **Kai chốt 2026-10-23: cả 52** (cả 52 đều lên được 9:16) |
 
 ## Không làm lúc này
