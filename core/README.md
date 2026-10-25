@@ -41,6 +41,7 @@ The viewport is 1920×1080 at device scale 1, or `--size WxH`. `--q 'k=v&…'` r
 | `node core/render/mux.mjs video.mp4 mix.wav out.mp4 [fps=24] [grain=2]` | mux and master (below) |
 | `node core/render/reelcheck.mjs <film> [--mp4 f] [--length s] [--keyword WORD] [--fps 30] [--no-files]` | delivery checks for a finished vertical reel in any style (below) |
 | `node core/render/reel.mjs <film> [vo] [audio] [render] [check] [--workers N] [--cover s] [--grain N] [--no-asr] [--final]` | builds a vertical reel in any style (below) |
+| `node core/job.mjs <film> <step> <status> [--files=a,b] [--pct=N] [--qa=9/9] [--style=<slug>] [--type=<name>]` | writes one step of `films/<slug>/job.json`, the run's progress file (below) |
 
 All four page tools take `--size WxH` (default `1920x1080`, even numbers) and `--q 'k=v'`.
 
@@ -51,6 +52,19 @@ All four page tools take `--size WxH` (default `1920x1080`, even numbers) and `-
 **reel.mjs** is the production line for a reel in any style except `kai-hand-draw` (which has `make.mjs`), at 1080×1920 and 30 fps. The film folder holds the page (`index.html`, keeping the page contract), `vo/script.json` (format: `styles/kai-hand-draw/tools/make_vo.py`) and, for its sound, `audio/sound.py` (below). `vo` runs `kai-hand-draw`'s `make.mjs <film> vo`, which works for any film: edge-tts with word timings into `vo/vo.wav`, `vo/vo.json`, `src/vo.js` (`VO_LINES`, `VO_WORDS`, `VO_DUR` for the page), `vo/word_times.txt`, the voice rules and Whisper on every line. `audio` exports `window.EV` to `events.json` and mixes `out/mix.wav` with `core/audio/mix.py`. `render` runs `video.mjs --lossless`, masters with `mux.mjs` (BT.709, −14 LUFS, grain 0 unless `--grain`), renders `<name>-cover.png` with `?cover` at `--cover` s (default: `cover:` in `src/config.js`, else 1) and writes `<name>.srt` from the voice lines. `check` runs `reelcheck.mjs` (with `--no-files` until `--final`) and `readcheck.mjs`. No step runs all four; steps can be listed in order (`audio render check` after a picture fix).
 
 **mux** runs a two-pass `loudnorm` to −14 LUFS / true peak −1.2 dB, adds film grain (`grain` 0 = none) and prints the measured loudness. Silent audio is left at its level with a warning; short audio is padded, long audio cut at the picture's end; missing, damaged or truncated audio is refused. It never leaves a partial file.
+
+**job.json** is the state of one `/make-reel` run, for an app that shows its progress. It exists only for a film in a `films/` folder, and every write replaces the whole file through a rename, so a reader never sees half of it:
+
+```json
+{ "slug": "git-r12", "campaign": "git-r12", "style": "kai-hand-draw", "type": "listicle",
+  "steps": [ { "name": "script", "status": "done", "files": ["vo/script.json"] },
+             { "name": "voice", "status": "running" },
+             { "name": "render", "status": "running", "pct": 60, "pid": 4242 } ],
+  "outputs": ["git-r12.mp4", "git-r12-cover.png", "CAPTION.md"],
+  "qa": "9/9" }
+```
+
+`steps` always has the ten steps in this order: `script voice storyboard chapters audio draft render verify review deliver`, each `pending`, `running`, `done`, `failed` or `waiting` (stopped at a human decision). `files` are relative to the film; a step that runs again loses its old ones until it is done. `pct` is there only while a step reports it (the draft verify does, in tens). `outputs` are the files of the `draft`, `render` and `deliver` steps once each is done. `campaign` is `campaign:` in the front matter of `workspace/scripts/<slug>.md`, or of the script there whose front matter says `slug: <slug>`, else `null`. `qa` is the last verify's passed checks over all. `make.mjs`, `reel.mjs` and the draft verify write their own steps. A step one of them marked `running` carries the tool's `pid`, and turns `failed` when the tool exits with an error. A signal (Ctrl-C, `kill`) stops the tool at once and leaves the step `running`: a reader that finds no process with that `pid` shows the step as failed. The agent's own `running` steps have no `pid`.
 
 ## Audio
 
@@ -95,6 +109,7 @@ All four page tools take `--size WxH` (default `1920x1080`, even numbers) and `-
 | `mux.mjs` | film written | any failure | – |
 | `reelcheck.mjs` | every check ✓ | a check ✗, or no MP4 | usage |
 | `reel.mjs` | every step done (check: every line ✓ or –) | a step failed, or a check ✗ | usage, no `index.html` |
+| `job.mjs` | step written (or no `films/` folder: nothing to write) | – | usage, unknown step, status or flag |
 | `mix.py` | mix written | missing `events.json`, a voice not at 48 kHz, an error in `audio/sound.py` | – |
 | `tts.py`, `srt.py` | done | bad input, missing model, path too long | usage |
 | `tts_zh.py` | done | bad input | network unreachable |

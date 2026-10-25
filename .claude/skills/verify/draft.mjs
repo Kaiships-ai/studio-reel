@@ -10,6 +10,7 @@ import { env, start, run as runTool } from '../../../kit/env.mjs';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { openDemo, closeServer, ROOT } from '../../../core/render/page.mjs';
+import { step as job } from '../../../core/job.mjs';
 
 const argv = process.argv.slice(2), pos = argv.filter(a => !a.startsWith('--'));
 const flag = (k, d) => { const f = argv.find(a => a.startsWith(`--${k}=`)); return f ? f.split('=')[1] : d; };
@@ -35,6 +36,7 @@ if (!film || !existsSync(join(film, 'index.html'))) { console.error('usage: node
 const FPS = +flag('fps', 8), W = +flag('w', 270), H = Math.round(W * 16 / 9 / 2) * 2, N = +flag('n', 6), WK = +flag('workers', 4);
 const OUT = resolve(flag('out', join(film, 'out/verify'))), MP4 = join(OUT, 'draft.mp4'), AUDIO = join(film, 'assets/reel-audio.wav');
 mkdirSync(OUT, { recursive: true });
+job(film, 'draft', 'running', { pct: 0 });   // films/<slug>/job.json: the draft step, its pct in tens while frames draw
 
 // openDemo prints page console errors and exits 1 on an uncaught page error; count the console ones here too
 const pageErrors = [], err = console.error;
@@ -54,6 +56,7 @@ writeFileSync(join(OUT, 'sheet.jpg'), dataURL(sheet.url));
 await probe.browser.close();
 
 const TOTAL = Math.round(DUR * FPS), per = Math.ceil(TOTAL / WK), frames = new Array(TOTAL), ink = new Array(TOTAL);
+let drawn = 0, pct = 0;
 await Promise.all([...Array(WK)].map(async (_, w) => {
   const a = w * per, b = Math.min(TOTAL, a + per); if (a >= b) return;
   const { browser, page } = await open();
@@ -71,6 +74,8 @@ await Promise.all([...Array(WK)].map(async (_, w) => {
       return { url: c.toDataURL('image/jpeg', .85), ink: dark / n };
     }, [f / FPS, W, H]).catch(e => threw(f / FPS, e));
     frames[f] = dataURL(r.url); ink[f] = r.ink;
+    const p = Math.floor(++drawn / TOTAL * 10) * 10;
+    if (p > pct) job(film, 'draft', 'running', { pct: pct = p });
   }
   await browser.close();
 }));
@@ -115,5 +120,6 @@ for (const [n, ok, d] of checks) console.log(`${ok ? '✓' : '✗'} ${n}: ${d}`)
 const pass = checks.every(c => c[1]);
 writeFileSync(join(OUT, 'report.json'), JSON.stringify({ film, pass, seconds: +((Date.now() - t0) / 1000).toFixed(1), fps: FPS, size: `${W}x${H}`, sheetTimes: times, checks: checks.map(([name, ok, detail]) => ({ name, ok, detail })) }, null, 1));
 finished = true;
+job(film, 'draft', pass ? 'done' : 'failed', { files: [MP4, join(OUT, 'sheet.jpg'), join(OUT, 'report.json')] });
 console.log(`${pass ? '✓ draft verify PASSED' : '✗ draft verify FAILED'} in ${secs()}\n  ${MP4}\n  ${join(OUT, 'sheet.jpg')}  (open it: stills at ${times.join(', ')} s)\n  ${join(OUT, 'report.json')}`);
 process.exit(pass ? 0 : 1);

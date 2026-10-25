@@ -79,7 +79,8 @@ The real pipeline: 1080x1920 @ 30 fps, BT.709, −14 LUFS, camscan, Whisper on t
 ## Evidence
 
 Draft: `films/<name>/out/verify/` → `draft.mp4` (small, with sound), `sheet.jpg`, `report.json` (`pass`,
-`seconds`, every check with its measured detail). Full: `films/<name>/<name>.mp4` and `out/check/verify.json`.
+`seconds`, every check with its measured detail). The draft also writes the `draft` step of `films/<name>/job.json`
+(`running` with `pct` in tens, then `done` or `failed`; schema in `core/README.md`). Full: `films/<name>/<name>.mp4` and `out/check/verify.json`.
 `films/` is git-ignored, so evidence never lands in a commit. Quote the ✓/✗ lines and the paths in the reply.
 
 A proof is the real page drawn by the real engine: never stub `vo()`, `chapter()` or `render()`, and never

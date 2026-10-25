@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 import { env, run, requireReady } from '../../../kit/env.mjs';
 import { mux } from '../../../core/render/mux.mjs';
 import { mp4Checks, keywordCheck, pullFrames, printChecks, hasWhisper } from '../../../core/render/reelcheck.mjs';
+import { step as job } from '../../../core/job.mjs';
 
 const STYLE = resolve(dirname(fileURLToPath(import.meta.url)), '..'), LIB = resolve(STYLE, '../..'), TOOLS = join(STYLE, 'tools');
 const argv = process.argv.slice(2), pos = argv.filter(a => !a.startsWith('--')), flags = argv.filter(a => a.startsWith('--'));
@@ -38,6 +39,7 @@ if (pos[0] === 'new') {
   cpSync(join(STYLE, 'starter'), dest, { recursive: true });
   const cfg = join(dest, 'src/config.js');
   writeFileSync(cfg, readFileSync(cfg, 'utf8').replace(/name: '[^']*'/, `name: '${name}'`));
+  job(dest, 'script', 'running', { style: 'kai-hand-draw' });
   console.log(`✓ films/${name}/ ready. Next: write vo/script.json, then  node styles/kai-hand-draw/tools/make.mjs films/${name} vo`);
   process.exit(0);
 }
@@ -91,6 +93,7 @@ const STEP = {
       checks.push(keywordCheck(MP4, keyword, last.s - .6, last.e + .6, join(CHECK, 'cta.wav')));
     } else checks.push(['keyword heard in the CTA', null, keyword ? 'skipped (no Whisper or --no-asr)' : 'no "Comment <KEYWORD>" in the last line']);
     printChecks(checks);
+    job(film, 'verify', 'running', { qa: `${checks.filter(c => c[1]).length}/${checks.length}` });
     // frames from the MP4, mid-line so a caption is on screen, spread across the reel
     const n = +flag('n', 6), files = pullFrames(MP4, Array.from({ length: n }, (_, i) => {
       const L = vo.lines[Math.min(vo.lines.length - 1, Math.floor((i + .5) / n * vo.lines.length))];
@@ -101,9 +104,13 @@ const STEP = {
     if (checks.some(c => c[1] === false)) process.exit(1);
   },
 };
+// each step's job.json name and the files it leaves (films/<slug>/job.json, core/job.mjs)
+const JOB = { vo: ['voice', ['vo/vo.json', 'src/vo.js', 'vo/word_times.txt']], audio: ['audio', ['assets/reel-audio.wav']], render: ['render', [MP4, COVER_PNG]], verify: ['verify', ['out/check/verify.json']] };
 const steps = pos.slice(1);
 for (const s of steps.length ? steps : ['vo', 'audio', 'render', 'verify']) {
   if (!STEP[s]) die(`unknown step "${s}": use vo, audio, render or verify`);
   console.log(`\n=== ${s} · ${film} ===`);
+  job(film, JOB[s][0], 'running');
   STEP[s]();
+  job(film, JOB[s][0], 'done', { files: JOB[s][1] });
 }

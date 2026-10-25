@@ -17,6 +17,7 @@ import { join, resolve, basename } from 'node:path';
 import { env, run, requireReady } from '../../kit/env.mjs';
 import { mux } from './mux.mjs';
 import { openDemo, closeServer } from './page.mjs';
+import { step as job } from '../job.mjs';
 
 const FPS = 30, SIZE = '1080x1920';
 const argv = process.argv.slice(2), steps = [], opts = {};
@@ -76,11 +77,17 @@ const STEP = {
     console.log('\nreadcheck (every on-screen text held long enough to read):');
     const rd = run('node', ['core/render/readcheck.mjs', film, '--size', SIZE]);
     if (rd.status === 2) console.log('– not checked: the page has no window.TEXTS(t)');
+    const rcj = join(OUT, 'check/reelcheck.json'), checks = existsSync(rcj) ? JSON.parse(readFileSync(rcj, 'utf8')).checks : [];
+    if (checks.length) job(film, 'verify', 'running', { qa: `${checks.filter(c => c.ok).length}/${checks.length}` });
     if (rc.status !== 0 || rd.status === 1) die('a check failed (above)');
   },
 };
+// each step's job.json name and the files it leaves (films/<slug>/job.json, core/job.mjs)
+const JOB = { vo: ['voice', ['vo/vo.json', 'src/vo.js', 'vo/word_times.txt']], audio: ['audio', ['events.json', 'out/mix.wav']], render: ['render', [MP4, `${NAME}-cover.png`, `${NAME}.srt`]], check: ['verify', ['out/check/reelcheck.json']] };
 for (const s of steps.length ? steps : ['vo', 'audio', 'render', 'check']) {
   if (!STEP[s]) die(`unknown step "${s}": use vo, audio, render or check`);
   console.log(`\n=== ${s} · ${film} ===`);
+  job(film, JOB[s][0], 'running');
   await STEP[s]();
+  job(film, JOB[s][0], 'done', { files: JOB[s][1] });
 }
