@@ -86,7 +86,9 @@ Never post or upload, in any style: posting is the user's call.
 Another app can show the run's progress from `films/<name>/job.json`, so it must be current after every step. The
 tools write their own steps: `make.mjs` and `reel.mjs` write `voice`, `audio`, `render` and `verify` (with `qa`,
 the passed checks over all), and `make.mjs new` starts the file with `script` running. Write every other step with
-one command when it starts and one when it ends:
+one command when it starts and one when it ends. The file lists the steps in the order a run takes them: `script`,
+`voice`, `storyboard`, `chapters`, `audio`, `draft`, `render`, `verify`, `review`, `deliver`. Work in that order:
+the chapters, then the music and SFX (`audio`), then the draft, then the full render.
 
 ```sh
 node core/job.mjs films/<name> <step> running|done|failed|waiting [--files=a,b] [--style=<slug>] [--type=<name>]
@@ -96,13 +98,14 @@ node core/job.mjs films/<name> <step> running|done|failed|waiting [--files=a,b] 
 |---|---|---|
 | `script` | the script, from the input (first call: `--style` and `--type`) | `vo/script.json` |
 | `storyboard` | the treatment and `STORYBOARD.md`; `waiting` while `--storyboard` waits for approval | `STORYBOARD.md` |
-| `chapters` | the look, then the chapters or the page | `src/ch/` (or `index.html`) |
-| `draft` | the first pass you watch: the hook sheet and stills of WORKFLOW.md step 7 | the sheet and stills |
+| `chapters` | the look, the chapters or the page, and the stills you check them with while you build (WORKFLOW.md steps 5 to 7) | `src/ch/` (or `index.html`) |
+| `draft` | after `audio`, the last look before the full render: the hook sheet and stills of the whole reel with its mix in place (WORKFLOW.md step 7 again) | the sheet and stills |
 | `review` | `REVIEW.md`, every round | `REVIEW.md` |
 | `deliver` | the delivered files | `CAPTION.md`, `QA-REPORT.md`, `STORYBOARD.md`, `REVIEW.md` |
 
 `waiting` is for any stop at a human decision (a `<placeholder>` only the user can fill, a storyboard to approve).
-A step you give up on is `failed`. A tool that fails marks its own step `failed`. Run the tool step again after a
+A step you give up on is `failed`. A tool that fails marks its own step `failed`; a tool that is killed leaves its
+step `running` with its `pid`. Run the tool step again after a
 fix; its step goes back to `running`, then `done`.
 
 ## Input from a workspace script (`workspace/scripts/<slug>.md`)

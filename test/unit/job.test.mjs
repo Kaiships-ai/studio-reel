@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { step, STAGES } from '../../core/job.mjs';
 
@@ -23,7 +23,7 @@ test('a run writes the literal job.json after every step, a failed step and a re
   const base = { slug: 'git-r12', campaign: 'git-r12' };
 
   step(film, 'script', 'running', { style: 'kai-hand-draw', type: 'listicle' });
-  assert.deepEqual(read(), { ...base, steps: steps({ script: { status: 'running' } }), outputs: [], style: 'kai-hand-draw', type: 'listicle' });
+  assert.deepEqual(read(), { ...base, steps: steps({ script: { status: 'running', pid: process.pid } }), outputs: [], style: 'kai-hand-draw', type: 'listicle' });
 
   step(film, 'script', 'done', { files: [join(film, 'vo/script.json')] });
   const script = { status: 'done', files: ['vo/script.json'] };
@@ -42,7 +42,7 @@ test('a run writes the literal job.json after every step, a failed step and a re
   ]);
 
   step(film, 'render', 'running', { pct: 60 });
-  assert.deepEqual(read().steps.find(s => s.name === 'render'), { name: 'render', status: 'running', pct: 60 });
+  assert.deepEqual(read().steps.find(s => s.name === 'render'), { name: 'render', status: 'running', pct: 60, pid: process.pid });
   assert.deepEqual(read().outputs, []);
 
   step(film, 'render', 'done', { files: ['git-r12.mp4', 'git-r12-cover.png'] });
@@ -58,6 +58,14 @@ test('a run writes the literal job.json after every step, a failed step and a re
   step(film, 'render', 'failed');
   assert.deepEqual(read().steps.find(s => s.name === 'render'), { name: 'render', status: 'failed' });
   assert.deepEqual(read().outputs, ['CAPTION.md']);
+});
+
+test('campaign comes from the script whose front matter names the slug, when no file has its name', () => {
+  const { root, film, read } = library();
+  writeFileSync(join(root, 'workspace/scripts/other.md'), '---\nslug: other\ncampaign: nope\n---\n');
+  writeFileSync(join(root, 'workspace/scripts/git-reel-12.md'), '---\nslug: git-r12\ncampaign: "c-77"\n---\n');
+  step(film, 'script', 'running');
+  assert.equal(read().campaign, 'c-77');
 });
 
 test('no script file: campaign is null; a style demo outside films/ gets no job.json', () => {
@@ -77,16 +85,27 @@ test('a bad step, status or field is refused', () => {
   assert.throws(() => step(film, 'render', 'done', { slug: 'x' }), /unknown field slug/);
 });
 
-// a tool process that marked a step running and then dies with an error, Ctrl-C or kill leaves it failed
-for (const [how, exit] of [['process.exit(1)', 1], ["process.kill(process.pid, 'SIGTERM'); setTimeout(() => {}, 5000)", 143]]) {
-  test(`a step running when the process ends with ${how.split(';')[0]} is marked failed`, () => {
-    const { film, read } = library();
-    const code = `import { step } from ${JSON.stringify(JOB)}; step(${JSON.stringify(film)}, 'render', 'running', { pct: 10 }); ${how};`;
-    const r = spawnSync(process.execPath, ['--input-type=module', '-e', code]);
-    assert.equal(r.status, exit);
-    assert.deepEqual(read().steps.find(s => s.name === 'render'), { name: 'render', status: 'failed' });
-  });
-}
+test('a step running when the tool exits with an error is marked failed', () => {
+  const { film, read } = library();
+  const code = `import { step } from ${JSON.stringify(JOB)}; step(${JSON.stringify(film)}, 'render', 'running', { pct: 10 }); process.exit(1);`;
+  assert.equal(spawnSync(process.execPath, ['--input-type=module', '-e', code]).status, 1);
+  assert.deepEqual(read().steps.find(s => s.name === 'render'), { name: 'render', status: 'failed' });
+});
+
+// make.mjs runs each step as a blocking child: a plain kill of make.mjs must still stop it at once
+test('a plain kill of a tool waiting on a child step stops it at once and leaves the step running with its pid', async () => {
+  const { film, read } = library();
+  const code = `import { step } from ${JSON.stringify(JOB)}; import { spawnSync } from 'node:child_process';
+    step(${JSON.stringify(film)}, 'render', 'running'); spawnSync('sleep', ['5']);`;
+  const child = spawn(process.execPath, ['--input-type=module', '-e', code]);
+  while (!existsSync(join(film, 'job.json'))) await new Promise(r => setTimeout(r, 20));
+  const t0 = Date.now();
+  child.kill('SIGTERM');
+  const signal = await new Promise(r => child.on('exit', (c, sig) => r(sig)));
+  assert.equal(signal, 'SIGTERM');
+  assert.ok(Date.now() - t0 < 1000, `still alive ${Date.now() - t0} ms after kill`);
+  assert.deepEqual(read().steps.find(s => s.name === 'render'), { name: 'render', status: 'running', pid: child.pid });
+});
 
 test('the CLI writes a step for the agent', () => {
   const { film, read } = library();

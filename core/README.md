@@ -59,12 +59,12 @@ All four page tools take `--size WxH` (default `1920x1080`, even numbers) and `-
 { "slug": "git-r12", "campaign": "git-r12", "style": "kai-hand-draw", "type": "listicle",
   "steps": [ { "name": "script", "status": "done", "files": ["vo/script.json"] },
              { "name": "voice", "status": "running" },
-             { "name": "render", "status": "running", "pct": 60 } ],
+             { "name": "render", "status": "running", "pct": 60, "pid": 4242 } ],
   "outputs": ["git-r12.mp4", "git-r12-cover.png", "CAPTION.md"],
   "qa": "9/9" }
 ```
 
-`steps` always has the ten steps in this order: `script voice storyboard chapters audio draft render verify review deliver`, each `pending`, `running`, `done`, `failed` or `waiting` (stopped at a human decision). `files` are relative to the film; a step that runs again loses its old ones until it is done. `pct` is there only while a step reports it (the draft verify does, in tens). `outputs` are the files of the `draft`, `render` and `deliver` steps once each is done. `campaign` is `campaign:` in the front matter of `workspace/scripts/<slug>.md`, else `null`. `qa` is the last verify's passed checks over all. `make.mjs`, `reel.mjs` and the draft verify write their own steps; a step they marked `running` turns `failed` when the process exits non-zero, on Ctrl-C or on `kill` (a `kill -9` leaves it `running`).
+`steps` always has the ten steps in this order: `script voice storyboard chapters audio draft render verify review deliver`, each `pending`, `running`, `done`, `failed` or `waiting` (stopped at a human decision). `files` are relative to the film; a step that runs again loses its old ones until it is done. `pct` is there only while a step reports it (the draft verify does, in tens). `outputs` are the files of the `draft`, `render` and `deliver` steps once each is done. `campaign` is `campaign:` in the front matter of `workspace/scripts/<slug>.md`, or of the script there whose front matter says `slug: <slug>`, else `null`. `qa` is the last verify's passed checks over all. `make.mjs`, `reel.mjs` and the draft verify write their own steps. A step one of them marked `running` carries the tool's `pid`, and turns `failed` when the tool exits with an error. A signal (Ctrl-C, `kill`) stops the tool at once and leaves the step `running`: a reader that finds no process with that `pid` shows the step as failed. The agent's own `running` steps have no `pid`.
 
 ## Audio
 
