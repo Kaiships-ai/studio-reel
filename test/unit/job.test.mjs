@@ -53,6 +53,11 @@ test('a run writes the literal job.json after every step, a failed step and a re
   assert.deepEqual(job.outputs, ['git-r12.mp4', 'git-r12-cover.png', 'CAPTION.md']);
   assert.equal(job.qa, '9/9');
   assert.deepEqual(readdirSync(film), ['job.json']);   // no temp file left behind
+
+  step(film, 'render', 'running');   // a rerun after a fix, killed: last run's files and outputs are gone
+  step(film, 'render', 'failed');
+  assert.deepEqual(read().steps.find(s => s.name === 'render'), { name: 'render', status: 'failed' });
+  assert.deepEqual(read().outputs, ['CAPTION.md']);
 });
 
 test('no script file: campaign is null; a style demo outside films/ gets no job.json', () => {
