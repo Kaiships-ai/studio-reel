@@ -10,6 +10,8 @@ Make one reel end to end and hand back the MP4. Don't ask for approval on the wa
 `--mode direct`, ask one question only if the topic is too vague to script; in `--mode cook`, never ask.
 
 Input: `$ARGUMENTS`
+- **A slug with a file `workspace/scripts/<slug>.md`** (e.g. `/make-reel git-r12`), or that file's path → see
+  **Input from a workspace script** below.
 - **A file in `styles/kai-hand-draw/examples/`** → copy its `voice`, `rate`, `pause` and `lines` into
   `films/<name>/vo/script.json` word for word. Use its `concept` as a starting point. If the lines have
   `<placeholders>`, ask the user for the real items first (in `--mode cook`, pick real items you can source).
@@ -79,11 +81,36 @@ paths, the length, the hook score, one line on the concept, and any open ⚠ row
 
 Never post or upload, in any style: posting is the user's call.
 
+## Progress file (`films/<name>/job.json`)
+
+Another app can show the run's progress from `films/<name>/job.json`, so it must be current after every step. The
+tools write their own steps: `make.mjs` and `reel.mjs` write `voice`, `audio`, `render` and `verify` (with `qa`,
+the passed checks over all), and `make.mjs new` starts the file with `script` running. Write every other step with
+one command when it starts and one when it ends:
+
+```sh
+node core/job.mjs films/<name> <step> running|done|failed|waiting [--files=a,b] [--style=<slug>] [--type=<name>]
+```
+
+| Step | What it covers | `--files` when done |
+|---|---|---|
+| `script` | the script, from the input (first call: `--style` and `--type`) | `vo/script.json` |
+| `storyboard` | the treatment and `STORYBOARD.md`; `waiting` while `--storyboard` waits for approval | `STORYBOARD.md` |
+| `chapters` | the look, then the chapters or the page | `src/ch/` (or `index.html`) |
+| `draft` | the first pass you watch: the hook sheet and stills of WORKFLOW.md step 7 | the sheet and stills |
+| `review` | `REVIEW.md`, every round | `REVIEW.md` |
+| `deliver` | the delivered files | `CAPTION.md`, `QA-REPORT.md`, `STORYBOARD.md`, `REVIEW.md` |
+
+`waiting` is for any stop at a human decision (a `<placeholder>` only the user can fill, a storyboard to approve).
+A step you give up on is `failed`. A tool that fails marks its own step `failed`. Run the tool step again after a
+fix; its step goes back to `running`, then `done`.
+
 ## Input from a workspace script (`workspace/scripts/<slug>.md`)
 
-Written by `/ig-reel` (and `/ig-human`). Treat it as **a script in quotes**: the `## Script` section is the spoken
-text, one line per beat, hook first and CTA last; speak it word for word. Name the film `<slug>` (from the front
-matter, else the file name). Use `## On-screen` as the card text and timings, and keep the `cta_keyword` spelled
+Written by `/ig-reel` (and `/ig-human`), or by another app that hands a script over. Treat it as **a script in
+quotes**: the `## Script` section is the spoken text, one line per beat, hook first and CTA last; speak it word for
+word. Name the film `<slug>` (from the front matter, else the file name). Its `campaign:` front matter, if any, goes
+into `job.json` by itself. Use `## On-screen` as the card text and timings, and keep the `cta_keyword` spelled
 exactly as written. If the file has no `## Script` section, use its text as a topic. If `status` is `draft`, say once
 that `/ig-human` has not run on it, then carry on. When done, add: next `/ig-caption <slug>`.
 

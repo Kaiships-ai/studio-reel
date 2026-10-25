@@ -37,4 +37,5 @@ Each feature file: H1 title, one paragraph, then `Sub-features`, `How to get to 
 - [Chapters on screen](./chapters.md): the picture, proven by the draft verify and the stills sheet.
 - [Full render and delivery](./full-render.md): the 1080x1920 MP4 and cover, only on "full".
 - [Setup](./setup.md): `pixi run studio install | doctor`, the buyer's first run, on macOS, Windows and Linux.
+- [Progress file](./job-json.md): `films/<name>/job.json` after every step, for Lead Studio.
 - [Presenter](./presenter.md): `character-designer.html` → a `character-spec v1` block → `src/character.js`.

@@ -70,6 +70,7 @@ hook_formula: 5 Time Collapse
 hook_score: 86
 target_seconds: 30
 cta_keyword: SCENT
+campaign: template-hours # optional: the campaign key, copied into films/<slug>/job.json
 status: draft            # draft -> humanized (after /ig-human)
 ---
 # Template hours
