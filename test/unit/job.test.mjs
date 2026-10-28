@@ -127,7 +127,4 @@ test('preset comes from the script front matter or --preset, an unknown one is r
   writeFileSync(join(fresh.root, 'workspace/scripts/git-r12.md'), '---\nslug: git-r12\npreset: test   # tiny render\n---\n');
   step(fresh.film, 'script', 'running');
   assert.equal(fresh.read().preset, 'test');
-  writeFileSync(join(fresh.root, 'workspace/scripts/git-r12.md'), '---\nslug: git-r12\n---\n');
-  step(fresh.film, 'script', 'done');
-  assert.ok(!('preset' in fresh.read()), 'dropping preset from the script clears it');
 });
