@@ -13,7 +13,9 @@ const library = () => {
   const root = mkdtempSync(join(tmpdir(), 'job-')), film = join(root, 'films/git-r12');
   mkdirSync(film, { recursive: true });
   mkdirSync(join(root, 'workspace/scripts'), { recursive: true });
-  return { root, film, read: () => JSON.parse(readFileSync(join(film, 'job.json'), 'utf8')) };
+  const raw = () => JSON.parse(readFileSync(join(film, 'job.json'), 'utf8'));
+  // read() leaves out the started/ended stamps, which the stamps test checks on raw()
+  return { root, film, raw, read: () => { const j = raw(); return { ...j, steps: j.steps.map(({ started, ended, ...s }) => s) }; } };
 };
 const steps = (over = {}) => STAGES.map(name => ({ name, status: 'pending', ...over[name] }));
 
@@ -60,6 +62,41 @@ test('a run writes the literal job.json after every step, a failed step and a re
   assert.deepEqual(read().outputs, ['CAPTION.md']);
 });
 
+test('a step is stamped started when it starts running and ended when it is done or failed; a rerun starts over', async () => {
+  const { film, raw } = library();
+  const at = name => raw().steps.find(s => s.name === name);
+  const tick = () => new Promise(r => setTimeout(r, 5));
+  const t0 = new Date().toISOString();
+  step(film, 'render', 'running', { pct: 10 });
+  const { started } = at('render');
+  assert.ok(started >= t0 && !isNaN(Date.parse(started)), started);
+  assert.equal(at('render').ended, undefined);
+  await tick();
+  step(film, 'render', 'running', { pct: 50 });   // a pct update is the same run
+  assert.equal(at('render').started, started);
+  await tick();
+  step(film, 'render', 'done', { files: ['git-r12.mp4'] });
+  assert.equal(at('render').started, started);
+  assert.ok(at('render').ended > started);
+  await tick();
+  step(film, 'render', 'running');   // a rerun: a new started, no ended
+  assert.ok(at('render').started > started);
+  assert.equal(at('render').ended, undefined);
+  step(film, 'render', 'failed');
+  assert.ok(at('render').ended >= at('render').started);
+  step(film, 'storyboard', 'waiting');   // waiting and pending get no stamps
+  assert.deepEqual(at('storyboard'), { name: 'storyboard', status: 'waiting' });
+  assert.deepEqual(at('script'), { name: 'script', status: 'pending' });
+});
+
+test('a feedback round ends with deliver done --change, stored as job.change', () => {
+  const { film, read } = library();
+  const r = spawnSync(process.execPath, [JOB, film, 'deliver', 'done', '--files=CAPTION.md', '--change=hook 2.6 s -> 2.1 s']);
+  assert.equal(r.status, 0, r.stderr.toString());
+  assert.equal(read().change, 'hook 2.6 s -> 2.1 s');
+  assert.deepEqual(read().outputs, ['CAPTION.md']);
+});
+
 test('campaign comes from the script whose front matter names the slug, when no file has its name', () => {
   const { root, film, read } = library();
   writeFileSync(join(root, 'workspace/scripts/other.md'), '---\nslug: other\ncampaign: nope\n---\n');
@@ -86,15 +123,16 @@ test('a bad step, status or field is refused', () => {
 });
 
 test('a step running when the tool exits with an error is marked failed', () => {
-  const { film, read } = library();
+  const { film, read, raw } = library();
   const code = `import { step } from ${JSON.stringify(JOB)}; step(${JSON.stringify(film)}, 'render', 'running', { pct: 10 }); process.exit(1);`;
   assert.equal(spawnSync(process.execPath, ['--input-type=module', '-e', code]).status, 1);
   assert.deepEqual(read().steps.find(s => s.name === 'render'), { name: 'render', status: 'failed' });
+  assert.ok(raw().steps.find(s => s.name === 'render').ended);
 });
 
 // make.mjs runs each step as a blocking child: a plain kill of make.mjs must still stop it at once
 test('a plain kill of a tool waiting on a child step stops it at once and leaves the step running with its pid', async () => {
-  const { film, read } = library();
+  const { film, read, raw } = library();
   const code = `import { step } from ${JSON.stringify(JOB)}; import { spawnSync } from 'node:child_process';
     step(${JSON.stringify(film)}, 'render', 'running'); spawnSync('sleep', ['5']);`;
   const child = spawn(process.execPath, ['--input-type=module', '-e', code]);
@@ -105,6 +143,7 @@ test('a plain kill of a tool waiting on a child step stops it at once and leaves
   assert.equal(signal, 'SIGTERM');
   assert.ok(Date.now() - t0 < 1000, `still alive ${Date.now() - t0} ms after kill`);
   assert.deepEqual(read().steps.find(s => s.name === 'render'), { name: 'render', status: 'running', pid: child.pid });
+  assert.ok(raw().steps.find(s => s.name === 'render').started);
 });
 
 test('the CLI writes a step for the agent', () => {
