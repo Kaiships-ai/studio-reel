@@ -95,6 +95,8 @@ test('a feedback round ends with deliver done --change, stored as job.change', (
   assert.equal(r.status, 0, r.stderr.toString());
   assert.equal(read().change, 'hook 2.6 s -> 2.1 s');
   assert.deepEqual(read().outputs, ['CAPTION.md']);
+  spawnSync(process.execPath, [JOB, film, 'deliver', 'running']);   // the next round starts its deliver
+  assert.equal(read().change, undefined);
 });
 
 test('campaign comes from the script whose front matter names the slug, when no file has its name', () => {

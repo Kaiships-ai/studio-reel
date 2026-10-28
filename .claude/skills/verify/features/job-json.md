@@ -14,7 +14,7 @@ Schema and rules: `core/README.md` → **job.json**. Writer: `core/job.mjs`.
 - `job.stamps`: `job.mjs` stamps `started` (ISO) when a step turns `running`, `ended` when it turns `done` or
   `failed`. A rerun gets a new `started` and no `ended`; a `pct` update keeps `started`.
 - `job.change`: a feedback round ends with `node core/job.mjs films/<name> deliver done --change="…"`, stored as
-  the top field `change`.
+  the top field `change`. A new `deliver running` clears it, so a round without `--change` never shows the last one.
 - `job.campaign`: `campaign:` from the front matter of `workspace/scripts/<name>.md`, or of the script there with
   `slug: <name>`.
 

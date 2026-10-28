@@ -49,6 +49,7 @@ export function step(film, name, status, { files, pct, ...top } = {}) {
   else if (status === 'running') delete s.files;   // a rerun: the last run's files are not this run's
   if (status === 'running' && pct != null) s.pct = +pct; else delete s.pct;
   if (status === 'running' && !CLI) s.pid = process.pid; else delete s.pid;   // the agent's own steps have no pid
+  if (name === 'deliver' && status === 'running' && s.started === now) delete job.change;   // a new round's deliver starts with no change
   Object.assign(job, top);
   job.campaign = campaignOf(film) ?? job.campaign;
   job.outputs = job.steps.filter(x => OUTPUT_STEPS.includes(x.name) && x.status === 'done').flatMap(x => x.files || []);
