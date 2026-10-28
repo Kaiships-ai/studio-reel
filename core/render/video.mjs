@@ -1,21 +1,26 @@
-// 渲视频：node core/render/video.mjs <demo> [--fps 24] [--workers 3] [--q 'k=v'] [--out <demo>/out/video.mp4] [--size 1920x1080] [--lossless]
+// 渲视频：node core/render/video.mjs <demo> [--fps 24] [--workers 3] [--q 'k=v'] [--out <demo>/out/video.mp4] [--size 1920x1080] [--lossless] [--preset test]
 // 多个片子并行制作时 workers 用 3（默认），单独渲染可开到 6
 // 每个 worker 独立浏览器，JPEG 截图经管道交给 ffmpeg；最后无损拼接
 // --lossless: PNG screenshots into lossless 4:4:4 segments, so fine coloured dots (halftone, riso, dither) are
 // subsampled once, at the mux, instead of twice. About 3× the disk and somewhat slower.
+// --preset test (core/preset.mjs): the page still lays out at --size, the frames come out at the preset's size
+// (deviceScaleFactor), at most its maxDur seconds, as low-quality JPEGs in a fast encode. --fps defaults to its fps.
 // 设了环境变量 RENDER_SLOTS（整数）时，整机最多同时这么多个整片渲染（slot.mjs）；不设就不限。分段文件放在 --out 旁边各自独有的隐藏目录，渲完（或失败、被中断）就删。
 // 同一个 demo 可以并行渲多个版本，但每个版本要有自己的 --out：两个渲染写同一个 --out 会直接报错，不会悄悄互相覆盖。
 // <out>.lock 记着占用者的 pid，占用者已不在、或锁文件超过 12 小时没被刷新（pid 被别的进程复用了），都算过期，新渲染接手。
 import fs from 'fs'; import path from 'path'; import { start, run } from '../../kit/env.mjs';
 import { openDemo, closeServer, requireDemo, takeSize } from './page.mjs';
+import { preset } from '../preset.mjs';
 const args = process.argv.slice(2), { w: W, h: H } = takeSize(args), opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const dir = args[0]; requireDemo(dir);
-const FPS = +opt('--fps', 24), WK = +opt('--workers', 3), Q = opt('--q', ''), LOSSLESS = args.includes('--lossless');
-const SHOT = LOSSLESS ? { type: 'png' } : { type: 'jpeg', quality: 95 };
+let P; try { P = preset(opt('--preset')); } catch (e) { console.error(e.message); process.exit(2); }
+const FPS = +opt('--fps', P?.fps ?? 24), WK = +opt('--workers', 3), Q = opt('--q', ''), LOSSLESS = args.includes('--lossless') && !P;
+const SCALE = P ? P.w / W : 1, MAXDUR = P?.maxDur ?? Infinity;
+const SHOT = LOSSLESS ? { type: 'png' } : { type: 'jpeg', quality: P?.jpeg ?? 95 };
 // full range (yuvj), like the JPEG path: mux.mjs reads the frames as full range; plain yuv444p would be limited and
 // come out grey after the BT.709 conversion
 const ENC = LOSSLESS ? ['-c:v', 'png', '-i', '-', '-c:v', 'libx264', '-preset', 'medium', '-qp', '0', '-pix_fmt', 'yuvj444p', '-color_range', 'pc']
-  : ['-c:v', 'mjpeg', '-i', '-', '-c:v', 'libx264', '-preset', 'medium', '-crf', '14', '-pix_fmt', 'yuv420p'];
+  : ['-c:v', 'mjpeg', '-i', '-', '-c:v', 'libx264', '-preset', P?.x264 ?? 'medium', '-crf', String(P?.crf ?? 14), '-pix_fmt', 'yuv420p'];
 if (!(FPS > 0) || !Number.isInteger(WK) || WK < 1) { console.error('bad --fps / --workers: fps must be > 0, workers an integer ≥ 1'); process.exit(2); }
 const out = path.resolve(opt('--out', path.join(dir, 'out', 'video.mp4')));
 const outDir = path.dirname(out), base = path.basename(out, path.extname(out));
@@ -47,10 +52,10 @@ const release = process.env.RENDER_SLOTS ? await (await import('./slot.mjs')).ac
 segDir = fs.mkdtempSync(path.join(outDir, `.${base}_segs-`)); fs.writeFileSync(path.join(segDir, 'pid'), String(process.pid));
 const probe = await openDemo(dir, { w: W, h: H, q: Q }); const DUR = await probe.page.evaluate(() => window.DUR); await probe.browser.close();
 if (!(DUR > 0)) fail(`window.DUR must be a positive number of seconds (got ${DUR})`);
-const TOTAL = Math.round(DUR * FPS), per = Math.ceil(TOTAL / WK), t0 = Date.now();
+const TOTAL = Math.round(Math.min(DUR, MAXDUR) * FPS), per = Math.ceil(TOTAL / WK), t0 = Date.now();
 try { await Promise.all([...Array(WK)].map(async (_, w) => {
   const a = w * per, b = Math.min(TOTAL, a + per); if (a >= b) return;
-  const { browser, page } = await openDemo(dir, { w: W, h: H, q: Q });
+  const { browser, page } = await openDemo(dir, { w: W, h: H, q: Q, scale: SCALE });
   // cwd 设在分段目录、用相对文件名：路径里有 # ? 之类的字符时 ffmpeg 才不会把它当协议语法
   const ff = start('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), ...ENC, `seg_${w}.mp4`],
     { cwd: segDir, stdio: ['pipe', 'inherit', 'inherit'] });

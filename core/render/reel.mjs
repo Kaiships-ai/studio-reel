@@ -18,6 +18,7 @@ import { env, run, requireReady } from '../../kit/env.mjs';
 import { mux } from './mux.mjs';
 import { openDemo, closeServer } from './page.mjs';
 import { step as job } from '../job.mjs';
+import { presetOf } from '../preset.mjs';
 
 const FPS = 30, SIZE = '1080x1920';
 const argv = process.argv.slice(2), steps = [], opts = {};
@@ -34,6 +35,7 @@ if (!film || !existsSync(join(film, 'index.html'))) {
   process.exit(2);
 }
 requireReady(env());
+try { const P = presetOf(film); if (P) console.log(`⚠ preset ${P.name} is for kai-hand-draw films (make.mjs): reel.mjs renders the full reel`); } catch (e) { die(e.message); }
 const NAME = basename(film), MP4 = join(film, `${NAME}.mp4`), OUT = join(film, 'out');
 const cfg = existsSync(join(film, 'src/config.js')) ? readFileSync(join(film, 'src/config.js'), 'utf8') : '';
 const COVER = +(opts.cover ?? (cfg.match(/\bcover:\s*([\d.]+)/) || [])[1] ?? 1);

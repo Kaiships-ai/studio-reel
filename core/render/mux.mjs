@@ -12,6 +12,7 @@
 //   A WAV streamed with `ffmpeg … -f wav -` has a placeholder length and three demuxer notes at the end: that is a good
 //   file and is muxed as usual (with a note).
 // Audio shorter than the picture is padded with silence (the video is never cut); longer audio is cut (-shortest).
+// crf / speed (x264 -preset): the H.264 encode, 19 / slow unless a caller asks for a faster one (core/preset.mjs).
 // Colour: by default unchanged from video.mjs (full-range yuvj420p / bt470bg tags); STUDIO_COLOR=bt709 makes standard
 // limited-range yuv420p / bt709.
 // Same ffmpeg arguments, in the same order, as the former core/render/mux.sh.
@@ -43,7 +44,7 @@ const probeDur = f => parseFloat((run('ffprobe', ['-v', 'error', '-show_entries'
 const hms = s => { if (!s || s.startsWith('-') || !s.includes(':')) return 0; const [h, m, x] = s.split(':'); return +h * 3600 + +m * 60 + +x; };
 
 /** Mux one film. Returns { out, I, LRA, TP }. Throws MuxError with a readable message. */
-export function mux({ video, audio, out, fps = 24, grain = 2, color = process.env.STUDIO_COLOR || '' }) {
+export function mux({ video, audio, out, fps = 24, grain = 2, color = process.env.STUDIO_COLOR || '', crf = 19, speed = 'slow' }) {
   if (!video || !audio || !out) die('usage: node core/render/mux.mjs video.mp4 mix.wav out.mp4 [fps=24] [grain=2]');
   if (!existsSync(video)) die(`video not found: ${video}`);
   if (!existsSync(audio)) die(`audio not found: ${audio}`);
@@ -89,7 +90,7 @@ export function mux({ video, audio, out, fps = 24, grain = 2, color = process.en
   } else VF += ',format=yuv420p';
   const w = run('ffmpeg', ['-y', '-loglevel', 'error', '-i', video, '-i', audio,
     '-filter_complex', `[0:v]${VF}[v];[1:a]${LN},aresample=48000${PAD}[a]`,
-    '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-preset', 'slow', '-crf', '19', '-r', String(fps), ...CARGS,
+    '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-preset', speed, '-crf', String(crf), '-r', String(fps), ...CARGS,
     '-c:a', 'aac', '-b:a', '256k', '-movflags', '+faststart', '-shortest', out]);
   if (w.status !== 0) { rmSync(out, { force: true }); die(`ffmpeg failed while writing '${out}' (its message is above)`); }
   if (!existsSync(out) || statSync(out).size === 0) { rmSync(out, { force: true }); die(`no output was written to '${out}'`); }
