@@ -117,7 +117,8 @@ front matter of `workspace/scripts/<slug>.md`, or with `--preset=test` on `make.
 the same for one command. From then on `make.mjs render` and `verify` and the draft verify use it by themselves:
 run the same steps, with no extra flag. `verify` then checks 270×480 at 12 fps and skips the camera scan. Only
 `kai-hand-draw` films have it (`core/render/reel.mjs` warns and renders the full reel). The presets live in
-`core/preset.mjs`.
+`core/preset.mjs`. A preset stays in `job.json` once set, even if the front matter later drops it (a cook started
+with `--preset=test` has no `preset:` line to keep it); a real render of a test film is a new film.
 
 ## Input from a workspace script (`workspace/scripts/<slug>.md`)
 
