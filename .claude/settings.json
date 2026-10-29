@@ -5,6 +5,9 @@
       "Bash(node styles/kai-hand-draw/tools/look.mjs:*)",
       "Bash(node core/render/still.mjs:*)",
       "Bash(node core/render/video.mjs:*)",
+      "Bash(node core/job.mjs:*)",
+      "Bash(node core/render/reel.mjs:*)",
+      "Bash(node .claude/skills/verify/draft.mjs:*)",
       "Bash(npm install:*)",
       "Bash(pixi run *)",
       "PowerShell(pixi run *)"

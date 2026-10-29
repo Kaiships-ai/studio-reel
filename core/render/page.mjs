@@ -22,11 +22,12 @@ export function takeSize(args) {
 }
 const warned = new Set();   // 整个进程里每个可选文件只警告一次（video.mjs 会开好几个页面）
 const FATAL = new Set(['script', 'document']);   // 页面必须有的东西；模块 import 的类型也是 script
-export async function openDemo(dir, { w = 1920, h = 1080, q = '', warnings = false } = {}) {
+// scale < 1 (deviceScaleFactor): the page lays out at w×h and screenshots come out scale times as big
+export async function openDemo(dir, { w = 1920, h = 1080, q = '', warnings = false, scale = 1 } = {}) {
   requireDemo(dir);
   const { port } = await server();
   const browser = await chromium.launch({ executablePath: EXE, args: ARGS });
-  const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
+  const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: scale });
   const log = [];   // 最近的报错，READY 迟迟不来时一起打印
   const note = s => { log.push(s); if (log.length > 8) log.shift(); console.error(s); };
   page.on('console', m => {

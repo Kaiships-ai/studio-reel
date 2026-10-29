@@ -115,3 +115,16 @@ test('the CLI writes a step for the agent', () => {
   assert.equal(read().type, 'why');
   assert.equal(spawnSync(process.execPath, [JOB, film, 'render', 'stuck']).status, 2);
 });
+
+test('preset comes from the script front matter or --preset, an unknown one is refused, none adds no field', () => {
+  const { film, read } = library();
+  step(film, 'script', 'running');
+  assert.ok(!('preset' in read()));
+  assert.equal(spawnSync(process.execPath, [JOB, film, 'script', 'running', '--preset=test']).status, 0);
+  assert.equal(read().preset, 'test');
+  assert.throws(() => step(film, 'render', 'running', { preset: 'tiny' }), /unknown preset "tiny"/);
+  const fresh = library();
+  writeFileSync(join(fresh.root, 'workspace/scripts/git-r12.md'), '---\nslug: git-r12\npreset: test   # tiny render\n---\n');
+  step(fresh.film, 'script', 'running');
+  assert.equal(fresh.read().preset, 'test');
+});
