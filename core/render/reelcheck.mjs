@@ -24,7 +24,7 @@ const out = (tool, args) => run(tool, args, { capture: true });
 export const hasWhisper = () => out('python', ['-c', 'import faster_whisper']).status === 0;
 
 /** The picture and sound checks on one MP4: [[name, ok, detail], …] and the measured duration. */
-export function mp4Checks(mp4, { fps = 30, length = null } = {}) {
+export function mp4Checks(mp4, { fps = 30, length = null, w = 1080, h = 1920 } = {}) {
   const probe = JSON.parse(out('ffprobe', ['-v', 'error', '-show_streams', '-show_format', '-of', 'json', mp4]).stdout || '{}');
   const v = (probe.streams || []).find(s => s.codec_type === 'video'), a = (probe.streams || []).find(s => s.codec_type === 'audio');
   const [num, den] = v ? v.r_frame_rate.split('/').map(Number) : [0, 1];
@@ -34,7 +34,7 @@ export function mp4Checks(mp4, { fps = 30, length = null } = {}) {
   const fz = ff(['-vf', 'freezedetect=n=0.003:d=0.7', '-an']), freezes = [...fz.matchAll(/freeze_start: ([\d.]+)[\s\S]*?freeze_end: ([\d.]+)/g)].map(m => [+m[1], +m[2]]);
   const bk = ff(['-vf', 'blackdetect=d=0.1:pix_th=0.1', '-an']), blacks = [...bk.matchAll(/black_start:([\d.]+) black_end:([\d.]+)/g)].map(m => [+m[1], +m[2]]);
   const checks = [
-    ['1080×1920 at ' + fps + ' fps', v && v.width === 1080 && v.height === 1920 && Math.abs(fr - fps) < .01, v ? `${v.codec_name} ${v.width}×${v.height} @ ${fr.toFixed(2)} fps, ${v.color_space || '?'} ${v.color_range || ''}` : 'no video stream'],
+    [`${w}×${h} at ${fps} fps`, v && v.width === w && v.height === h && Math.abs(fr - fps) < .01, v ? `${v.codec_name} ${v.width}×${v.height} @ ${fr.toFixed(2)} fps, ${v.color_space || '?'} ${v.color_range || ''}` : 'no video stream'],
     ['BT.709 limited range', v && v.color_space === 'bt709' && v.color_range === 'tv', v ? `${v.color_space} / ${v.color_range}` : ''],
     ['has an audio stream', !!a, a ? `${a.codec_name} ${a.sample_rate} Hz` : 'none'],
     length != null

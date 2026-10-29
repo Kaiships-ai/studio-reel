@@ -111,12 +111,24 @@ fix; its step goes back to `running`, then `done`. `job.mjs` stamps each step's 
 A feedback round re-runs only the steps the note changes, draft before final, and ends with `deliver done` plus
 what changed, in a few words: `node core/job.mjs films/<name> deliver done --files=… --change="hook 2.6 s -> 2.1 s"`.
 
+## Test preset (`preset: test`)
+
+A test cook proves the pipeline, not the reel: the render is 270×480 at 12 fps, at most 15 s, in a fast low-quality
+encode, so it takes seconds and the machine stays cool. Never post it. A cook asks for it with `preset: test` in the
+front matter of `workspace/scripts/<slug>.md`, or with `--preset=test` on `make.mjs new <name>` (or on any
+`node core/job.mjs` call); it lands in `job.json` as `"preset": "test"`. `REEL_PRESET=test` in the environment does
+the same for one command. From then on `make.mjs render` and `verify` and the draft verify use it by themselves:
+run the same steps, with no extra flag. `verify` then checks 270×480 at 12 fps and skips the camera scan. Only
+`kai-hand-draw` films have it (`core/render/reel.mjs` warns and renders the full reel). The presets live in
+`core/preset.mjs`. A preset stays in `job.json` once set, even if the front matter later drops it (a cook started
+with `--preset=test` has no `preset:` line to keep it); a real render of a test film is a new film.
+
 ## Input from a workspace script (`workspace/scripts/<slug>.md`)
 
 Written by `/ig-reel` (and `/ig-human`), or by another app that hands a script over. Treat it as **a script in
 quotes**: the `## Script` section is the spoken text, one line per beat, hook first and CTA last; speak it word for
-word. Name the film `<slug>` (from the front matter, else the file name). Its `campaign:` front matter, if any, goes
-into `job.json` by itself. Use `## On-screen` as the card text and timings, and keep the `cta_keyword` spelled
+word. Name the film `<slug>` (from the front matter, else the file name). Its `campaign:` and `preset:` front matter, if any,
+go into `job.json` by themselves. Use `## On-screen` as the card text and timings, and keep the `cta_keyword` spelled
 exactly as written. If the file has no `## Script` section, use its text as a topic. If `status` is `draft`, say once
 that `/ig-human` has not run on it, then carry on. When done, add: next `/ig-caption <slug>`.
 

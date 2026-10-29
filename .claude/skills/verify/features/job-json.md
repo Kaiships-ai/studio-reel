@@ -18,6 +18,9 @@ Schema and rules: `core/README.md` → **job.json**. Writer: `core/job.mjs`.
 - `job.campaign`: `campaign:` from the front matter of `workspace/scripts/<name>.md`, or of the script there with
   `slug: <name>`.
 
+- `job.preset`: `preset:` from the same front matter, or `--preset=test` on `make.mjs new` / `core/job.mjs`; absent
+  when there is none. The render tools read it (`core/preset.mjs`, `full-render.md` → `full.preset-test`).
+
 ## How to get to it (user POV)
 
 - Run `/make-reel <slug>` with a `workspace/scripts/<slug>.md`, then read `films/<slug>/job.json` while it runs.

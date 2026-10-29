@@ -1,5 +1,6 @@
 // make.mjs: the production steps of a kai-hand-draw reel, one command each. Run from the library root.
-//   node styles/kai-hand-draw/tools/make.mjs new <name>       films/<name>/ from the starter (nothing else is touched)
+//   node styles/kai-hand-draw/tools/make.mjs new <name>       films/<name>/ from the starter (nothing else is touched);
+//                                                              --preset=test marks it a test film (below)
 //   node styles/kai-hand-draw/tools/make.mjs <film>            everything: vo → audio → render → verify
 //   node styles/kai-hand-draw/tools/make.mjs <film> vo         vo/script.json → voice, timings, voice rules, Whisper check
 //   node styles/kai-hand-draw/tools/make.mjs <film> audio      audio/cues.json → assets/reel-audio.wav (music + SFX + voice)
@@ -7,6 +8,8 @@
 //                                                              BT.709, −14 LUFS) → <film>/<name>.mp4 and <name>-cover.png
 //   node styles/kai-hand-draw/tools/make.mjs <film> verify     checks the MP4 and writes out/check/verify.json
 // Options: --workers=4 (render) · --no-asr (skip the Whisper checks) · --no-camscan (skip the camera speed scan)
+// Preset (core/preset.mjs): a film whose job.json says `preset: test` (or REEL_PRESET=test) renders 270×480 at 12 fps,
+// at most 15 s, in a fast low-quality encode, and verify checks that size and skips the camera scan.
 // A film is any folder with index.html, src/config.js, vo/script.json and audio/cues.json: films/<name>/ in this repo
 // (git ignores it), or styles/kai-hand-draw/demo. The vo step needs only index.html and vo/script.json, so it serves
 // every style: core/render/reel.mjs runs it for the other styles' reels.
@@ -17,6 +20,7 @@ import { env, run, requireReady } from '../../../kit/env.mjs';
 import { mux } from '../../../core/render/mux.mjs';
 import { mp4Checks, keywordCheck, pullFrames, printChecks, hasWhisper } from '../../../core/render/reelcheck.mjs';
 import { step as job } from '../../../core/job.mjs';
+import { presetOf } from '../../../core/preset.mjs';
 
 const STYLE = resolve(dirname(fileURLToPath(import.meta.url)), '..'), LIB = resolve(STYLE, '../..'), TOOLS = join(STYLE, 'tools');
 const argv = process.argv.slice(2), pos = argv.filter(a => !a.startsWith('--')), flags = argv.filter(a => a.startsWith('--'));
@@ -39,7 +43,7 @@ if (pos[0] === 'new') {
   cpSync(join(STYLE, 'starter'), dest, { recursive: true });
   const cfg = join(dest, 'src/config.js');
   writeFileSync(cfg, readFileSync(cfg, 'utf8').replace(/name: '[^']*'/, `name: '${name}'`));
-  job(dest, 'script', 'running', { style: 'kai-hand-draw' });
+  try { job(dest, 'script', 'running', { style: 'kai-hand-draw', ...(flag('preset') && { preset: flag('preset') }) }); } catch (e) { die(e.message); }
   console.log(`✓ films/${name}/ ready. Next: write vo/script.json, then  node styles/kai-hand-draw/tools/make.mjs films/${name} vo`);
   process.exit(0);
 }
@@ -50,7 +54,8 @@ const film = pos[0] && resolve(pos[0]);
 if (!film || !existsSync(join(film, 'index.html'))) die('usage: make.mjs <film folder> [vo|audio|render|verify]   or   make.mjs new <name>');
 const cfgFile = join(film, 'src/config.js'), cfgSrc = existsSync(cfgFile) ? readFileSync(cfgFile, 'utf8') : '';
 const NAME = (cfgSrc.match(/\bname:\s*['"]([^'"]+)['"]/) || [])[1] || basename(film);
-const FPS = +((cfgSrc.match(/\bfps:\s*(\d+)/) || [])[1] || 30), COVER = +((cfgSrc.match(/\bcover:\s*([\d.]+)/) || [])[1] || 1);
+let P; try { P = presetOf(film); } catch (e) { die(e.message); }
+const FPS = P?.fps ?? +((cfgSrc.match(/\bfps:\s*(\d+)/) || [])[1] || 30), COVER = +((cfgSrc.match(/\bcover:\s*([\d.]+)/) || [])[1] || 1);
 const MP4 = join(film, `${NAME}.mp4`), COVER_PNG = join(film, `${NAME}-cover.png`), CHECK = join(film, 'out/check');
 
 const STEP = {
@@ -68,9 +73,10 @@ const STEP = {
     const audio = join(film, 'assets/reel-audio.wav');
     if (!existsSync(audio)) die(`${audio} is missing: run the audio step first`);
     mkdirSync(join(film, 'out'), { recursive: true });
-    sh('node', ['core/render/video.mjs', film, '--size', '1080x1920', '--fps', String(FPS), '--workers', String(flag('workers', env().workers)), '--out', join(film, 'out/video.mp4')]);
+    if (P) console.log(`preset ${P.name}: ${P.w}×${P.h} at ${P.fps} fps, at most ${P.maxDur} s, fast encode (not for posting)`);
+    sh('node', ['core/render/video.mjs', film, '--size', '1080x1920', '--fps', String(FPS), '--workers', String(flag('workers', env().workers)), ...(P ? ['--preset', P.name] : []), '--out', join(film, 'out/video.mp4')]);
     // grain 0: the page paints its own paper grain. BT.709 limited range, as the published reels.
-    try { mux({ video: join(film, 'out/video.mp4'), audio, out: MP4, fps: FPS, grain: 0, color: 'bt709' }); } catch (e) { die(e.message); }
+    try { mux({ video: join(film, 'out/video.mp4'), audio, out: MP4, fps: FPS, grain: 0, color: 'bt709', ...(P && { crf: P.crf, speed: P.x264 }) }); } catch (e) { die(e.message); }
     sh('node', [join(TOOLS, 'look.mjs'), film, `--stills=${COVER}`, '--no-captions', `--out=${join(film, 'out/cover')}`]);
     const png = readdirSync(join(film, 'out/cover')).filter(f => f.endsWith('.png')).sort().pop();
     cpSync(join(film, 'out/cover', png), COVER_PNG);
@@ -80,8 +86,9 @@ const STEP = {
     if (!existsSync(MP4)) die(`${MP4} does not exist: run the render step first`);
     mkdirSync(CHECK, { recursive: true });
     const vo = JSON.parse(readFileSync(join(film, 'vo/vo.json'), 'utf8'));
-    const { checks, dur } = mp4Checks(MP4, { fps: FPS, length: vo.duration });
-    if (!flag('no-camscan')) {
+    const { checks, dur } = mp4Checks(MP4, { fps: FPS, length: P ? Math.min(vo.duration, P.maxDur) : vo.duration, ...(P && { w: P.w, h: P.h }) });
+    if (P) console.log(`preset ${P.name}: camera scan skipped (it measures the real reel)`);
+    else if (!flag('no-camscan')) {
       sh('node', [join(TOOLS, 'look.mjs'), film, '--camscan', `--workers=${flag('workers', env().workers)}`, `--out=${join(CHECK, 'camscan.json')}`]);
       const cs = JSON.parse(readFileSync(join(CHECK, 'camscan.json'), 'utf8'));
       checks.push(['camera moves ≤ 20 px per frame (hit shakes of 1–2 frames allowed)', !cs.over.length, `max ${cs.maxPxPerFrame} px/frame at ${cs.at} s, ${cs.shakes.length} shake(s)` + (cs.over.length ? ' · too fast: ' + cs.over.map(o => `${o.from}–${o.to} s (${o.max})`).join(', ') : '')]);
@@ -89,7 +96,8 @@ const STEP = {
     // the keyword must be heard: Whisper on the final mix, around the last line
     const last = vo.lines[vo.lines.length - 1], lw = vo.words.filter(w => w.line === last.id);
     const k = lw.findIndex(w => /^comment\b/i.test(w.w)), keyword = k >= 0 && lw[k + 1] ? lw[k + 1].w.replace(/[^\w-]/g, '') : null;
-    if (keyword && !flag('no-asr') && hasWhisper()) {
+    if (P && keyword && last.e > dur) checks.push(['keyword heard in the CTA', null, `skipped (the ${P.name} preset cut the reel at ${dur.toFixed(1)} s)`]);
+    else if (keyword && !flag('no-asr') && hasWhisper()) {
       checks.push(keywordCheck(MP4, keyword, last.s - .6, last.e + .6, join(CHECK, 'cta.wav')));
     } else checks.push(['keyword heard in the CTA', null, keyword ? 'skipped (no Whisper or --no-asr)' : 'no "Comment <KEYWORD>" in the last line']);
     printChecks(checks);

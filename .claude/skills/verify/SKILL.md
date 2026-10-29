@@ -17,6 +17,11 @@ smallest correct viewport with the core tools is 1080x1920. `draft.mjs` keeps th
 size, and scales it down inside the page before encoding. The draw itself is the same cost; the savings are fewer
 frames (8 fps), small JPEGs, a fast x264 preset, and no mux/loudness/Whisper/camscan.
 
+The `test` preset (`core/preset.mjs`, `"preset": "test"` in `job.json`) takes the other route to a small file: the
+page keeps its 1080x1920 viewport and Chromium's deviceScaleFactor (0.25) shrinks the screenshot, so `make.mjs
+render verify` on a test film yields a real 270x480 @ 12 fps MP4 (at most 15 s) in about 9 s for the starter.
+See `features/full-render.md` → `full.preset-test`.
+
 ## Doctor (run first, and whenever anything looks off)
 
 ```sh

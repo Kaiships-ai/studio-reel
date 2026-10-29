@@ -8,6 +8,8 @@ captions, cast, props, camera and cut wipes. This is what most edits change, and
 - `ch.runs`: every frame renders without a page error, a `vo()` warning or a `[character]` warning.
 - `ch.length`: picture length = voiceover.
 - `ch.alive`: no frozen, black or empty (ink-less) stretch.
+- `ch.preset`: a test-preset film (`"preset": "test"` in `job.json`) is drafted up to 15 s; its length row reads
+  `video length = min(window.DUR, 15 s)` and `report.json` has `"preset": "test"`.
 - `ch.look`: the stills sheet shows the cast on model, nothing in the caption band, the intended staging.
 
 ## How to get to it (user POV)
