@@ -91,7 +91,7 @@ one command when it starts and one when it ends. The file lists the steps in the
 the chapters, then the music and SFX (`audio`), then the draft, then the full render.
 
 ```sh
-node core/job.mjs films/<name> <step> running|done|failed|waiting [--files=a,b] [--style=<slug>] [--type=<name>]
+node core/job.mjs films/<name> <step> running|done|failed|waiting [--files=a,b] [--style=<slug>] [--type=<name>] [--change="…"]
 ```
 
 | Step | What it covers | `--files` when done |
@@ -106,7 +106,10 @@ node core/job.mjs films/<name> <step> running|done|failed|waiting [--files=a,b] 
 `waiting` is for any stop at a human decision (a `<placeholder>` only the user can fill, a storyboard to approve).
 A step you give up on is `failed`. A tool that fails marks its own step `failed`; a tool that is killed leaves its
 step `running` with its `pid`. Run the tool step again after a
-fix; its step goes back to `running`, then `done`.
+fix; its step goes back to `running`, then `done`. `job.mjs` stamps each step's `started` and `ended` time itself.
+
+A feedback round re-runs only the steps the note changes, draft before final, and ends with `deliver done` plus
+what changed, in a few words: `node core/job.mjs films/<name> deliver done --files=… --change="hook 2.6 s -> 2.1 s"`.
 
 ## Test preset (`preset: test`)
 

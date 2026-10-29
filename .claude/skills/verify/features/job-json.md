@@ -11,6 +11,10 @@ Schema and rules: `core/README.md` → **job.json**. Writer: `core/job.mjs`.
   `node core/job.mjs films/<name> <step> <status>`.
 - `job.failed`: a tool that exits with an error marks its running step `failed`. A tool killed by a signal leaves
   it `running` with the dead `pid`.
+- `job.stamps`: `job.mjs` stamps `started` (ISO) when a step turns `running`, `ended` when it turns `done` or
+  `failed`. A rerun gets a new `started` and no `ended`; a `pct` update keeps `started`.
+- `job.change`: a feedback round ends with `node core/job.mjs films/<name> deliver done --change="…"`, stored as
+  the top field `change`. A new `deliver running` clears it, so a round without `--change` never shows the last one.
 - `job.campaign`: `campaign:` from the front matter of `workspace/scripts/<name>.md`, or of the script there with
   `slug: <name>`.
 
@@ -23,7 +27,8 @@ Schema and rules: `core/README.md` → **job.json**. Writer: `core/job.mjs`.
 
 ## Driving it with draft.mjs / make.mjs
 
-- Unit: `node --test test/unit/job.test.mjs` (a fake run, the literal file after each step, a failed step).
+- Unit: `node --test test/unit/job.test.mjs` (a fake run, the literal file after each step, a failed step, the
+  `started`/`ended` stamps, `--change`).
 - Real: `rm films/verify-smoke/job.json`, then `make.mjs films/verify-smoke vo audio` and `draft.mjs
   films/verify-smoke`. `job.json` shows `voice`, `audio` and `draft` `done`, the draft's three files in
   `outputs`.
@@ -32,6 +37,7 @@ Schema and rules: `core/README.md` → **job.json**. Writer: `core/job.mjs`.
 
 ## Gotchas
 
+- `draft.mjs` marks `draft` `running` again for each `pct`: that is one run, so `started` stays.
 - A style's demo (`styles/<slug>/demo`) never gets a `job.json`: only a folder inside `films/` does.
 - `reel.mjs vo` runs `make.mjs vo`, so `voice` is written twice. Both writes agree.
 - A plain `kill` of `make.mjs` leaves its child step (e.g. `video.mjs`) running to the end, as before this file existed.

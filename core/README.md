@@ -41,7 +41,7 @@ The viewport is 1920×1080 at device scale 1, or `--size WxH`. `--q 'k=v&…'` r
 | `node core/render/mux.mjs video.mp4 mix.wav out.mp4 [fps=24] [grain=2]` | mux and master (below) |
 | `node core/render/reelcheck.mjs <film> [--mp4 f] [--length s] [--keyword WORD] [--fps 30] [--no-files]` | delivery checks for a finished vertical reel in any style (below) |
 | `node core/render/reel.mjs <film> [vo] [audio] [render] [check] [--workers N] [--cover s] [--grain N] [--no-asr] [--final]` | builds a vertical reel in any style (below) |
-| `node core/job.mjs <film> <step> <status> [--files=a,b] [--pct=N] [--qa=9/9] [--style=<slug>] [--type=<name>]` | writes one step of `films/<slug>/job.json`, the run's progress file (below) |
+| `node core/job.mjs <film> <step> <status> [--files=a,b] [--pct=N] [--qa=9/9] [--style=<slug>] [--type=<name>] [--change="…"]` | writes one step of `films/<slug>/job.json`, the run's progress file (below) |
 
 All four page tools take `--size WxH` (default `1920x1080`, even numbers) and `--q 'k=v'`.
 
@@ -57,14 +57,15 @@ All four page tools take `--size WxH` (default `1920x1080`, even numbers) and `-
 
 ```json
 { "slug": "git-r12", "campaign": "git-r12", "style": "kai-hand-draw", "type": "listicle",
-  "steps": [ { "name": "script", "status": "done", "files": ["vo/script.json"] },
-             { "name": "voice", "status": "running" },
-             { "name": "render", "status": "running", "pct": 60, "pid": 4242 } ],
+  "steps": [ { "name": "script", "status": "done", "files": ["vo/script.json"],
+               "started": "2026-10-29T09:00:00.000Z", "ended": "2026-10-29T09:02:10.000Z" },
+             { "name": "voice", "status": "running", "started": "2026-10-29T09:02:11.000Z" },
+             { "name": "render", "status": "running", "pct": 60, "pid": 4242, "started": "2026-10-29T09:05:00.000Z" } ],
   "outputs": ["git-r12.mp4", "git-r12-cover.png", "CAPTION.md"],
-  "qa": "9/9" }
+  "qa": "9/9", "change": "hook 2.6 s -> 2.1 s" }
 ```
 
-`steps` always has the ten steps in this order: `script voice storyboard chapters audio draft render verify review deliver`, each `pending`, `running`, `done`, `failed` or `waiting` (stopped at a human decision). `files` are relative to the film; a step that runs again loses its old ones until it is done. `pct` is there only while a step reports it (the draft verify does, in tens). `outputs` are the files of the `draft`, `render` and `deliver` steps once each is done. `campaign` is `campaign:` in the front matter of `workspace/scripts/<slug>.md`, or of the script there whose front matter says `slug: <slug>`, else `null`. `preset` (only when set) is `preset:` from the same front matter, else the last `--preset=` given to `core/job.mjs` or `make.mjs new`: `kai-hand-draw`'s `make.mjs` (render, verify) and the draft verify then render at that preset (`core/preset.mjs`; `REEL_PRESET` in the environment overrides it). `qa` is the last verify's passed checks over all. `make.mjs`, `reel.mjs` and the draft verify write their own steps. A step one of them marked `running` carries the tool's `pid`, and turns `failed` when the tool exits with an error. A signal (Ctrl-C, `kill`) stops the tool at once and leaves the step `running`: a reader that finds no process with that `pid` shows the step as failed. The agent's own `running` steps have no `pid`.
+`steps` always has the ten steps in this order: `script voice storyboard chapters audio draft render verify review deliver`, each `pending`, `running`, `done`, `failed` or `waiting` (stopped at a human decision). `files` are relative to the film; a step that runs again loses its old ones until it is done. `started` (ISO time) is stamped when a step turns `running`, `ended` when it turns `done` or `failed`; a step that runs again gets a new `started` and loses `ended` (a `pct` update while it runs keeps `started`). `pct` is there only while a step reports it (the draft verify does, in tens). `outputs` are the files of the `draft`, `render` and `deliver` steps once each is done. `campaign` is `campaign:` in the front matter of `workspace/scripts/<slug>.md`, or of the script there whose front matter says `slug: <slug>`, else `null`. `preset` (only when set) is `preset:` from the same front matter, else the last `--preset=` given to `core/job.mjs` or `make.mjs new`: `kai-hand-draw`'s `make.mjs` (render, verify) and the draft verify then render at that preset (`core/preset.mjs`; `REEL_PRESET` in the environment overrides it). `qa` is the last verify's passed checks over all. `change` is what the last feedback round changed, in a few words, written with `deliver done --change="…"`. `make.mjs`, `reel.mjs` and the draft verify write their own steps. A step one of them marked `running` carries the tool's `pid`, and turns `failed` when the tool exits with an error. A signal (Ctrl-C, `kill`) stops the tool at once and leaves the step `running`: a reader that finds no process with that `pid` shows the step as failed. The agent's own `running` steps have no `pid`.
 
 ## Audio
 
