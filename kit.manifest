@@ -4,6 +4,8 @@
 # The first matching section wins, sections are tried in the order [dev], [pro], [starter].
 # Starter ships [starter]; Pro ships [starter] + [pro]. [forbid] = regexes that must not appear in any shipped text file
 # (LICENSE and THIRD_PARTY_NOTICES.md are exempt, they carry the credits on purpose).
+# [identity] = regexes, ignoring case, that must not appear in any shipped file at all, binaries and those two included:
+# what would lead a buyer from the zip to this repository.
 
 [dev]
 .claude/CLAUDE.md
@@ -71,3 +73,8 @@ plugin/skills/lemo-opuscar
 sh core/render/mux\.sh
 kai-reel-3d
 OpenMontage
+
+[identity]
+kaiships-ai
+studio-reel
+kinebeo

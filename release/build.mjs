@@ -3,6 +3,7 @@
 // kit.manifest decides what ships. Writes dist/kaiships-studio-<tier>-<version>.zip (every entry under
 // kaiships-studio/) and dist/SHA256SUMS. Same ref = same bytes (sorted entries, the commit's time on every file).
 // Refuses to write anything when a check fails: unclassified files, a Pro or dev file in Starter, a forbidden string,
+// anything that names this repository (in any file, binaries included),
 // Chinese text in a buyer document, a skill a document names that the edition lacks, missing licences,
 // a font a style's css/html loads that is not in the zip.
 import { spawnSync } from 'node:child_process';
@@ -27,7 +28,7 @@ const git = (args, input) => {
 
 // ---------- the manifest ----------
 export function parseManifest(text) {
-  const m = { dev: [], pro: [], starter: [], forbid: [] }; let sec = null;
+  const m = { dev: [], pro: [], starter: [], forbid: [], identity: [] }; let sec = null;
   for (const raw of text.split('\n')) {
     const line = raw.trim(); if (!line || line.startsWith('#')) continue;
     const s = /^\[(\w+)\]$/.exec(line); if (s) { sec = s[1]; if (!m[sec]) throw new Error(`kit.manifest: unknown section [${sec}]`); continue; }
@@ -67,6 +68,16 @@ export function missingFonts(files, blob) {
   return [...new Set(out)];
 }
 
+// A name of this repository in the zip, in any file: a buyer must not be able to follow it back here.
+export function repoLinks(files, blob, patterns) {
+  const res = patterns.map(p => [p, new RegExp(p, 'i')]), out = [];
+  for (const f of files) {
+    const t = blob(f).toString('latin1');
+    for (const [p, re] of res) if (re.test(f) || re.test(t)) out.push(`${f}: names this repository ("${p}")`);
+  }
+  return out;
+}
+
 export function check(tier, files, blob, m) {
   const errors = [], warns = [], set = new Set(files);
   const skills = [...new Set(files.map(f => /^\.claude\/skills\/([^/]+)\//.exec(f)?.[1]).filter(Boolean))].sort();
@@ -93,7 +104,7 @@ export function check(tier, files, blob, m) {
       }
     }
   }
-  errors.push(...missingFonts(files, blob));
+  errors.push(...missingFonts(files, blob), ...repoLinks(files, blob, m.identity));
   return { errors, warns: [...new Set(warns)] };
 }
 

@@ -11,6 +11,7 @@ a build check, a manifest entry) in the same change. Drop a row once its mistake
 | Every tracked file is in exactly one section of `kit.manifest`; new dev-only files go under `[dev]` | `release/build.mjs` (checks.yml runs `--dry-run` on every PR) |
 | Every font file a shipped style's css/html loads with `url(...)` ships in the zip (demo fonts are committed, not git-ignored) | `missingFonts` in `release/build.mjs` (checks.yml runs `--dry-run` on every PR); `test/unit/build-fonts.test.mjs` |
 | No private names in shipped files: `/Users/`, `ksa-`, Kai's handles and hosts, Polar ids, the dev-only 3D style and the tool it came from | `[forbid]` in `kit.manifest`, checked by `release/build.mjs` |
+| Nothing in a zip leads a buyer back to this repository: no org, repo or handle name in any file, binaries, LICENSE and notices included | `[identity]` in `kit.manifest`, `repoLinks` in `release/build.mjs`; `test/unit/build-repo-links.test.mjs` |
 | `styles/catalog.md` (what `/studio` matches ideas against) lists every style with a `showcase.jpg`; regenerate it with `tools/readme_gallery.py` | `test/unit/catalog.test.mjs` |
 | Buyer documents (top-level docs, skills, `content-types/`, `styles/catalog.md`, style guides) are English; Chinese only as a quoted term in inline code (`` `留白` `` (empty space)) | `release/build.mjs` |
 | Starter ships exactly `studio` + `make-reel`, Pro adds the six `ig-*` skills; `verify` never ships | `release/build.mjs` |
