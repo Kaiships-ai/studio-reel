@@ -4,7 +4,7 @@
 // summary.json, sheet.jpg, draft.mp4, designer.mp4 and flow.mp4, the video a person watches. Needs internet (edge-tts).
 // In a worktree the evidence is also copied to ~/.claude/orchestrate/proof/evidence/<branch>/<run-id>/.
 import { appendFileSync, cpSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { homedir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { chromium } from 'playwright-core';
 import { run, start } from '../../../kit/env.mjs';
@@ -15,6 +15,15 @@ const flag = k => argv.find(a => a.startsWith(`--${k}=`))?.split('=')[1];
 const RUN = pos[0] || new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
 const FILMS = resolve('films'), EV = join(FILMS, 'verify-evidence', RUN), MAKE = 'styles/kai-hand-draw/tools/make.mjs', DRAFT = '.claude/skills/verify/draft.mjs';
 const FILM = 'films/verify-run', TEST = 'films/verify-run-test', COPY = 'films/verify-run-copy';
+// One run on this machine at a time: it uses every core.
+const LOCK = join(tmpdir(), 'studio-reel-journeys.lock');
+if (existsSync(LOCK)) {
+  const other = +readFileSync(LOCK, 'utf8');
+  let alive = true; try { process.kill(other, 0); } catch { alive = false; }
+  if (alive) { console.error(`✗ another journeys run (pid ${other}) is using this machine. Wait for it.`); process.exit(2); }
+}
+writeFileSync(LOCK, String(process.pid));
+process.on('exit', () => rmSync(LOCK, { force: true }));
 mkdirSync(EV, { recursive: true });
 const TRANSCRIPT = join(EV, 'transcript.txt'), results = [];
 const log = s => appendFileSync(TRANSCRIPT, s + '\n');
