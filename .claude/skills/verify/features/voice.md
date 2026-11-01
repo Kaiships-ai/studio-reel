@@ -6,8 +6,9 @@ checked against the voice rules and transcribed back by Whisper.
 ## Sub-features
 
 - `vo.tts`: edge-tts per line, joined into `vo/vo.wav`, `vo/vo.json` (`duration`, `lines`, `words`).
-- `vo.rules`: `check_vo.py` (rate, ≤ 28 words a line, CTA in one breath; pace outside 5.0–6.4 syl/s is a warning).
-- `vo.asr`: every line transcribes back to its words (or its `asr` field).
+- `vo.rules`: `check_vo.py` (rate, ≤ 28 words a line, CTA in one breath). Warnings only: pace outside 5.0–6.4 syl/s,
+  over 5 s of speech without a pause, a hook line ending after 3.5 s, no "Comment <KEYWORD>" in the last line.
+- `vo.asr`: every line transcribes back to its words (or its `asr` field); a mismatch makes the step exit non-zero.
 
 ## How to get to it (user POV)
 

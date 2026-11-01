@@ -24,7 +24,7 @@ Preconditions: voice and mix done (`doctor` all ✓).
 - Draft: `node .claude/skills/verify/draft.mjs films/<name>` → every row ✓, `✓ draft verify PASSED in <s>`, exit 0.
 - Look: Read `films/<name>/out/verify/sheet.jpg`; for a specific moment add frames with
   `node styles/kai-hand-draw/tools/look.mjs films/<name> --sheet=1.2,1.5 --w=270 --out=films/<name>/out/check/x.jpg`.
-- Break proofs (on a copy, see SKILL.md): an undefined helper → `✗ the page threw at …`, exit 1;
+- Break proofs (on a copy, see SKILL.md): an undefined helper → `[pageerror] <helper> is not defined`, exit 1;
   `vo('NOT_SPOKEN')` → ✗ "no page errors"; `return;` at the top of a scene → ✗ "no empty scene" with its time range; `hair: 'mohawk'` in
   `src/character.js` → ✗ "no page errors" naming `[character] hair`.
 

@@ -35,6 +35,17 @@ times slower). Exit 1 on any ✗. A ✗ on the tools means the setup is missing:
 `pixi run studio doctor` for the buyer-side check). A missing `vo/vo.json` or `reel-audio.wav` means run
 `make.mjs <film> vo` / `audio` first.
 
+## Every feature in one run
+
+```sh
+node .claude/skills/verify/journeys.mjs [run-id] [--only=voice,chapters] [--full] [--any=films/<reel in another style>]
+```
+
+The default before calling a change to the tooling done, about 2 minutes (needs internet for edge-tts). It drives
+every file in `features/` on throwaway `films/verify-run*` with the commands a user types, prints `ok:` or `FAIL:`
+per step, and exits 1 when any failed. Each break is planted in a copy and must fail with its own message. Run one
+at a time: it uses every core. Without `--full` or `--any` those steps print `skip:`, which is not a pass; say so.
+
 ## Launch
 
 Nothing stays running. Each run starts its own static server on 127.0.0.1 (random port) and its own headless
@@ -58,7 +69,7 @@ Measured on an M5: the 5 s starter in 7 s, the 31 s `rea-xray` reel in 26 s. Exi
 
 | Check | Catches |
 |---|---|
-| no page errors | `[page]` console errors and warnings, e.g. `vo("WORD") … is not in the voiceover` after a script change, or `[character] hair: "…" is not an option` from a bad `src/character.js`. An uncaught throw stops the run: `✗ the page threw at t = … s: <message>`. Ignored: optional-file 404s, `WebGL: INVALID_OPERATION`, and `GL Driver Message … Performance` notes |
+| no page errors | `[page]` console errors and warnings, e.g. `vo("WORD") … is not in the voiceover` after a script change, or `[character] hair: "…" is not an option` from a bad `src/character.js`. An uncaught throw stops the run: `[pageerror] <message>` when it happens while the page opens, `✗ the page threw at t = … s: <message>` later. Ignored: optional-file 404s, `WebGL: INVALID_OPERATION`, and `GL Driver Message … Performance` notes |
 | draft video 270×480 @ 8 fps | the encode itself |
 | has an audio stream | missing `assets/reel-audio.wav` |
 | video length = `window.DUR` ± 1 frame; picture = voiceover ± 1/30 s; audio = picture ± 0.1 s | `config.js` duration drift, a stale mix after a new voice |
@@ -92,10 +103,36 @@ A proof is the real page drawn by the real engine: never stub `vo()`, `chapter()
 loosen a threshold to make a film pass. If a check is wrong for a film, say why and recalibrate with
 `VERIFY_INK=1` evidence.
 
+`journeys.mjs` writes `films/verify-evidence/<run-id>/`: `transcript.txt` (every command, its output, every `ok:`),
+`summary.json`, `sheet.jpg`, `report.json`, `flow.mp4` (the designer, then the reel it produced, with voice). In a
+worktree it also copies them to `~/.claude/orchestrate/proof/evidence/<branch>/<run-id>/`, because `films/` goes
+when the worktree does.
+
+A video that shows an error, a blank frame or the wrong presenter is a failed proof, not a rough take. A proof goes
+the user's path: real commands and the real page, no stubs, no writing a tool's output by hand.
+
+## Proof page
+
+A PR that changes what a user gets ends with one page Kai opens to decide it. Fill
+`~/.claude/orchestrate/proof/<pr>/proof.json` and put the media beside it:
+
+```json
+{ "pr": 24, "title": "...", "risk": "low|medium|high", "prUrl": "https://github.com/...",
+  "youWillSee": ["one thing Kai sees, in his words"], "video": "flow.mp4",
+  "states": [{ "name": "Default", "prototype": null, "before": "before.jpg", "after": "after.jpg" }],
+  "numbers": [{ "label": "Draft, 5 s reel", "source": "measured", "expected": 7, "app": 7.1, "tolerancePct": 30 }],
+  "checks": [{ "label": "journeys: 33 ok, 0 failed", "ok": true }], "cost": "...", "undo": "Revert the PR" }
+```
+
+`node .claude/skills/verify/proof-page.mjs ~/.claude/orchestrate/proof/<pr>` fails on a missing file, shrinks the
+video (sound kept) and writes `index.html` and `comment.md`. `states` is for a change to a screen: one with no
+`prototype` adds a failing check; a change with no screen leaves it empty. Publish `index.html` as a private artifact
+with its media, put the URL in `comment.md`, then `gh pr comment <pr> --body-file comment.md`. Kai merges after that.
+
 ## Cleanup
 
 `draft.mjs` closes its browsers and server itself, also on failure (`process.exit` tears them down). Nothing to
-kill. Delete only films you created for the test (e.g. a sabotaged copy), never `out/verify/` of a film you
+kill. `journeys.mjs` deletes its `films/verify-run*` at the end and keeps the evidence. Delete only films you created for the test (e.g. a sabotaged copy), never `out/verify/` of a film you
 are reporting on, and never another film.
 
 ## Proving a check catches a break

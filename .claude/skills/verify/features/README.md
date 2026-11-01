@@ -5,7 +5,7 @@ The maintained source for proving the user-facing behavior of the Kaiships reel 
 
 ## Baseline preconditions
 
-- Run from the library root (the folder with `pixi.toml`).
+- Run from the library root (the folder with `pixi.toml`). If `pixi` is not found, it is in `~/.pixi/bin/`.
 - Setup done: `pixi run studio doctor` all ✓ (else `pixi run studio install`).
 - `node .claude/skills/verify/draft.mjs doctor films/<name>` is all ✓ (on a Mac the GPU line says Metal).
 - A throwaway film for tests: `node styles/kai-hand-draw/tools/make.mjs new verify-smoke` (fails if it exists;
@@ -13,8 +13,9 @@ The maintained source for proving the user-facing behavior of the Kaiships reel 
 
 ## Driving conventions
 
-- The harness is `draft.mjs` (draft verify) and `make.mjs` (the real pipeline steps). Both drive the real page
-  through `core/render/page.mjs`; nothing is mocked.
+- The harness is `journeys.mjs` (every feature below, `--only=<file name>` for one), `draft.mjs` (draft verify) and
+  `make.mjs` (the real pipeline steps). All drive the real page through `core/render/page.mjs`; nothing is mocked.
+- A feature change updates its file here and its journey, which must fail when that step breaks.
 - Draft by default. `make.mjs <film> render verify` (full) only when the user says "full".
 - Treat every command as literal.
 
@@ -38,4 +39,5 @@ Each feature file: H1 title, one paragraph, then `Sub-features`, `How to get to 
 - [Full render and delivery](./full-render.md): the 1080x1920 MP4 and cover, only on "full".
 - [Setup](./setup.md): `pixi run studio install | doctor`, the buyer's first run, on macOS, Windows and Linux.
 - [Progress file](./job-json.md): `films/<name>/job.json` after every step, for Lead Studio.
+- [Reel in another style](./any-style.md): `core/render/reel.mjs` builds and checks a reel made with `--style <slug>`.
 - [Presenter](./presenter.md): `character-designer.html` → a `character-spec v1` block → `src/character.js`.
