@@ -38,8 +38,7 @@ const numbers = proof.numbers
   .join("");
 const checks = proof.checks.map((c) => `<li class="${c.ok ? "ok" : "bad"}">${c.ok ? "✓" : "✗"} ${esc(c.label)}</li>`).join("");
 
-// A body fragment, no doctype/html/head: claude.ai artifacts wrap it in their own skeleton, and browsers open it as is.
-const html = `<title>Proof PR ${esc(proof.pr)}</title><meta name="claude:viewport-fit-sides" content="cover"><style>
+const html = `<!DOCTYPE html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Proof PR ${esc(proof.pr)}</title><meta name="claude:viewport-fit-sides" content="cover"><style>
 :root{--bg:#fff;--fg:#111;--muted:#666;--line:#e5e5e5;--ok:#1a7f37;--bad:#c62828;--video:#000}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111;--fg:#eee;--muted:#999;--line:#2a2a2a;--ok:#4cc26b;--bad:#ef6b6b;color-scheme:dark}}
 :root[data-theme="dark"]{--bg:#111;--fg:#eee;--muted:#999;--line:#2a2a2a;--ok:#4cc26b;--bad:#ef6b6b;color-scheme:dark}
@@ -59,7 +58,7 @@ a{color:inherit}ul{list-style:none;padding:0}.meta{color:var(--muted);font-size:
 <h2>Số thật</h2>${proof.numbers.length ? `<table>${numbers}</table>` : `<p class="meta">PR này không hiện số nào.</p>`}
 <h2>Đã kiểm</h2><ul>${checks}</ul>
 <h2>Chi phí và hoàn tác</h2><p class="meta">${esc(proof.cost)}</p><p class="meta">Hoàn tác: ${esc(proof.undo)}</p>
-<p class="meta"><a href="${esc(proof.prUrl)}">Quay lại PR</a> để bấm Auto-merge, hoặc ghi lỗi ở đó.</p>
+<p class="meta"><a href="${esc(proof.prUrl)}">Quay lại PR</a> để merge, hoặc ghi lỗi ở đó.</p>
 </main>`;
 
 writeFileSync(path.join(dir, "index.html"), html);
