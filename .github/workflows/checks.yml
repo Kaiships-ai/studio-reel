@@ -16,7 +16,12 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Unit and lint tests (cross-platform rules, CI minute policy)
         run: node --test test/unit/*.test.mjs
       - name: Release checks without writing zips (manifest coverage, forbidden strings, Chinese in buyer docs, licences, skill sets)
         run: node release/build.mjs --dry-run
+      - name: A change to what a reel does updates the verify feature map
+        if: github.event_name == 'pull_request'
+        run: git diff --name-only "origin/${{ github.base_ref }}...HEAD" | node .claude/skills/verify/check-coverage.mjs

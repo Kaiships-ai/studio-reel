@@ -44,7 +44,7 @@ node .claude/skills/verify/journeys.mjs [run-id] [--only=voice,chapters] [--full
 The default before calling a change to the tooling done, about 2 minutes (needs internet for edge-tts). It drives
 every file in `features/` on throwaway `films/verify-run*` with the commands a user types, prints `ok:` or `FAIL:`
 per step, and exits 1 when any failed. Each break is planted in a copy and must fail with its own message. Run one
-at a time: it uses every core. Without `--full` or `--any` those steps print `skip:`, which is not a pass; say so.
+at a time: it uses every core, and a second run exits 2 while the first is alive. Without `--full` or `--any` those steps print `skip:`, which is not a pass; say so.
 
 ## Launch
 
