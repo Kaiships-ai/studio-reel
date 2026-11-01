@@ -10,7 +10,7 @@ tools resolved by `kit/env.mjs`.
 - `setup.install`: npm ci (only when `package-lock.json` changed), Playwright headless shell, a WebGL probe, then a
   test render of `kit/check-reel` through `video.mjs` + `mux.mjs`, checked with ffprobe; records `pixi.lock`'s hash in
   `.pixi/studio-installed`.
-- `setup.idempotent`: a second `install` skips every step (about a second).
+- `setup.idempotent`: a second `install` skips npm and the test render; the browser step runs again (a few seconds).
 - `setup.doctor`: read-only ✓/✗ with one `fix:` line per ✗.
 - `setup.linux-deps`: Linux only, the browser's system libraries (sudo).
 - `setup.zip`: the same path from an unzipped release in a folder that is not a git checkout (the old installer
@@ -25,7 +25,7 @@ tools resolved by `kit/env.mjs`.
 Preconditions: `pixi` installed (`~/.pixi/bin/pixi`), internet for a first install.
 
 - Install: `pixi run studio install` → ✓ for tools, drawing packages, `browser  GPU: …`, `test render  1080x1920,
-  5.0 s, sound -13.9 LUFS`, then `Ready.`; run it again → every step "already installed" / "passed before".
+  5.0 s, sound -13.9 LUFS`, then `Ready.`; run it again → `drawing packages  already installed`, `test render  passed before`, and the browser line again.
 - Check: `pixi run studio doctor` → six ✓ and `All good.`, exit 0.
 - As a buyer, on a built zip (slow, minutes): `node release/build.mjs --tier starter`, unzip
   `dist/kaiships-studio-starter-*.zip` into a folder whose name has a space, then

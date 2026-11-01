@@ -67,7 +67,7 @@ await Promise.all([...Array(WK)].map(async (_, w) => {
   const a = w * per, b = Math.min(TOTAL, a + per); if (a >= b) return;
   const { browser, page } = await open();
   // window.render paints #out at 1080x1920; copy it down to W×H in the page (renderSheet would burn a time label in,
-  // which hides frozen stretches from freezedetect). ink = share of dark pixels outside the caption band (y 1320–1470):
+  // which hides frozen stretches from freezedetect). ink = share of dark pixels outside the caption band (y 1300–1490):
   // the cast and props are outlined in ink, bare paper with only a caption has almost none.
   for (let f = a; f < b; f++) {
     const r = await page.evaluate(async ([t, w, h]) => {

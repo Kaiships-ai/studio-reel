@@ -6,7 +6,8 @@ Clawd that renders as-is. The presenter comes from `src/character.js` (see [Pres
 
 ## Sub-features
 
-- `new.create`: copies `styles/kai-hand-draw/starter/` and sets `name` in `src/config.js`.
+- `new.create`: copies `styles/kai-hand-draw/starter/`, sets `name` in `src/config.js`, and starts `job.json` with
+  `script` running (`--preset=test` stores the preset).
 - `new.guard`: refuses a bad name or an existing folder.
 - `new.presenter`: the film gets the starter's `src/character.js` (the default presenter); `index.html` loads it, and
   no shipped page loads `engine/kai-v3.js`.

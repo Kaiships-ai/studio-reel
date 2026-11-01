@@ -40,4 +40,5 @@ Schema and rules: `core/README.md` → **job.json**. Writer: `core/job.mjs`.
 - `draft.mjs` marks `draft` `running` again for each `pct`: that is one run, so `started` stays.
 - A style's demo (`styles/<slug>/demo`) never gets a `job.json`: only a folder inside `films/` does.
 - `reel.mjs vo` runs `make.mjs vo`, so `voice` is written twice. Both writes agree.
-- A plain `kill` of `make.mjs` leaves its child step (e.g. `video.mjs`) running to the end, as before this file existed.
+- A plain `kill` of `make.mjs` leaves its child step (e.g. `video.mjs`) running to the end, holding its lock: a new
+  render of that film is refused until it ends. Stop the pid in `out/video.mp4.lock` first.
