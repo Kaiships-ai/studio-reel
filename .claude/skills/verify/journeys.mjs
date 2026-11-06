@@ -165,7 +165,7 @@ const JOURNEYS = {
   // The paid TMV kit, as a buyer gets it: build the zip, unzip into a fresh folder (a space in its path), install,
   // which renders the sample episode as its test render; then the character designer and a planted break.
   async 'tmv-episode'() {
-    const BOX = join(tmpdir(), `tmv verify ${RUN}`), KIT = join(BOX, 'tmv-studio');
+    const BOX = join(process.platform === 'win32' ? tmpdir() : '/tmp', `tmv verify ${RUN}`)   // macOS tmpdir is too long for espeak-ng's 159-byte data path, KIT = join(BOX, 'tmv-studio');
     let zip = flag('zip');
     await step('the tmv zip builds and passes its gate', () => {
       if (zip) return;
