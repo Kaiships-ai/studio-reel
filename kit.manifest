@@ -30,6 +30,8 @@ AGENT_LEARNING.md
 PLAN.md
 # The paid TMV kit's own files: tmv/<path> replaces or adds <path> in the tmv zip only
 tmv/
+# Ep1 parts copied read-only from the Pro (no Mixkit, no char-kai, no Clawd cast): port source for slice 3, never shipped as is
+dev/
 
 [pro]
 .claude/skills/ig-plan/

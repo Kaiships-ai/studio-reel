@@ -1,0 +1,14 @@
+{
+ "model": "gemini-3.8-flash-tts",
+ "voice": "Achird",
+ "style": "A confident storyteller narrating a short thriller reel in the second person, close to the mic. Steady, even, unhurried pace, about 170 words per minute, every word clear. One continuous read: each sentence flows straight into the next with only a short breath, never a long dramatic pause. Counting numbers land one after another, each a little higher. Warm, sure, quietly urgent.",
+ "paras": [
+  "You wake up to ten million views. Twelve seconds of Reel Studio, the app you built alone at night. And the hard part? It starts now. Because every view has a half-life.",
+  "Problem one: ten million isn't ten million. Instagram counts a view every time your reel starts playing, replays too. One person loops it eleven times, that's eleven views. So how many people actually saw it? You have no way to tell.",
+  "Problem two: your link is in the caption, and nobody can tap it. On Instagram, a caption link is just text. So the comments pile up, link, link, where's the link, and one of them just says price, and you scroll right past it. Rule one: if they can't tap it, it doesn't exist.",
+  "So you get smart. You move the link to your bio and you tell everyone, link in bio. Then you watch the clicks come in. Four. Eleven. Twenty-six. Forty-one.",
+  "Forty-one, out of ten million. That number has a name. Vanity metric. It looks like winning and it pays nothing. And while you were counting, someone else was answering your comments. Same twelve seconds, his account, a link that works. You know that face. Theo. He wrote half your code, and he's already selling it.",
+  "Day one. Ten million views, forty-one clicks, zero dollars, and one copy of your app that works better than yours.",
+  "And the counter is still climbing. You can post a follow-up and ride the wave, or answer the comments one person at a time while it dies. Comment chase, or answer. Day two follows what you pick."
+ ]
+}
