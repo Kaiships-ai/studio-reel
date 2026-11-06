@@ -79,3 +79,13 @@ OpenMontage
 kaiships-ai
 studio-reel
 kinebeo
+
+[tmv_forbid]
+# Not ours to sell in the paid TMV kit (spec section 4.1): Anthropic's mascot, Mixkit sounds, Apple's say voice,
+# Microsoft's online voice, Kai's likeness, third-party IP from the roles files. Ignoring case, names and text.
+clawd
+mixkit
+make_vo_local|\bsay -v
+edge.tts
+kai-v3|blocky.kai|char-kai
+ninjago|daymond

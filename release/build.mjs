@@ -17,8 +17,9 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const argv = process.argv.slice(2);
 const opt = (k, d) => { const i = argv.indexOf(`--${k}`); return i >= 0 ? argv[i + 1] : d; };
 const REF = opt('ref', opt('tag', 'HEAD')), TAG = opt('tag', ''), OUT = resolve(opt('out', join(ROOT, 'dist')));
-const TIERS = { starter: ['starter'], pro: ['starter', 'pro'] };
-const tiers = opt('tier', 'all') === 'all' ? Object.keys(TIERS) : [opt('tier')];
+// tmv = the paid "How we make Ten Million Views" kit (PLAN.md); it also refuses everything in [tmv_forbid]
+const TIERS = { starter: ['starter'], pro: ['starter', 'pro'], tmv: ['starter'] };
+const tiers = opt('tier', 'all') === 'all' ? ['starter', 'pro'] : [opt('tier')];
 const DRY = argv.includes('--dry-run');
 const git = (args, input) => {
   const r = spawnSync('git', args, { cwd: ROOT, input, maxBuffer: 1 << 30 });
@@ -28,7 +29,7 @@ const git = (args, input) => {
 
 // ---------- the manifest ----------
 export function parseManifest(text) {
-  const m = { dev: [], pro: [], starter: [], forbid: [], identity: [] }; let sec = null;
+  const m = { dev: [], pro: [], starter: [], forbid: [], identity: [], tmv_forbid: [] }; let sec = null;
   for (const raw of text.split('\n')) {
     const line = raw.trim(); if (!line || line.startsWith('#')) continue;
     const s = /^\[(\w+)\]$/.exec(line); if (s) { sec = s[1]; if (!m[sec]) throw new Error(`kit.manifest: unknown section [${sec}]`); continue; }
@@ -99,10 +100,14 @@ export function check(tier, files, blob, m) {
       const cjk = (t.replace(/`[^`\n]*`/g, '').match(/\p{Script=Han}/gu) || []).length; if (cjk) errors.push(`${f}: ${cjk} Chinese characters outside inline code in a buyer document`);
       for (const [, , s] of t.matchAll(SKILL_REF)) {
         if (skills.includes(s)) continue;
-        if (tier === 'starter' && PRO_SKILLS.includes(s)) warns.push(`${f}: names /${s} (Pro only)`);
+        if ((tier === 'starter' || tier === 'tmv') && PRO_SKILLS.includes(s)) warns.push(`${f}: names /${s} (Pro only)`);
         else errors.push(`${f}: names /${s}, which this edition does not have`);
       }
     }
+  }
+  if (tier === 'tmv') for (const p of m.tmv_forbid) {
+    const re = new RegExp(p, 'i');
+    for (const f of files) if (!EXEMPT.has(f) && (re.test(f) || (TEXT.test(f) && re.test(blob(f).toString('utf8'))))) errors.push(`${f}: not ours to sell ("${p}")`);
   }
   errors.push(...missingFonts(files, blob), ...repoLinks(files, blob, m.identity));
   return { errors, warns: [...new Set(warns)] };
