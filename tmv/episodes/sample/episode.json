@@ -1,0 +1,22 @@
+{
+  "series": "Ten Million Views",
+  "ep": 1,
+  "title": "Two hundred views",
+  "palette": { "bg": "#0B1230", "bg2": "#1A2150", "left": "#FF3D8B", "right": "#29E0FF" },
+  "cast": [
+    { "id": "nova", "seed": "nova" },
+    { "id": "rook", "seed": "rook" },
+    { "id": "blip", "seed": "blip" }
+  ],
+  "beats": [
+    { "who": "nova", "shot": "close", "line": "I shipped my app today. Two hundred views.", "hud": { "DAY": "1", "VIEWS": "212" } },
+    { "who": "rook", "shot": "two", "line": "Two hundred? My launch ad hit forty thousand by lunch.", "hud": { "RIVAL": "40,000" } },
+    { "who": "nova", "shot": "close", "line": "His app does half of what mine does." },
+    { "who": "blip", "shot": "wide", "line": "Beep. People don't share apps. They share stories." },
+    { "who": "nova", "shot": "two", "with": "blip", "line": "So I show the bug that almost killed it?", "hud": { "VIEWS": "236" } },
+    { "who": "rook", "shot": "close", "line": "Or post a clean demo. Nobody cares about your bugs." },
+    { "who": "blip", "shot": "two", "with": "nova", "line": "One post tonight. Tomorrow, we count.", "hud": { "DAY": "2" } },
+    { "who": "nova", "shot": "wide", "line": "Comment A for the demo, or B for the story." }
+  ],
+  "vote": { "question": "What does Nova post tonight?", "a": "the demo", "b": "the story" }
+}

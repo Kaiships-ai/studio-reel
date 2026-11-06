@@ -6,7 +6,7 @@
 (function () {
   const BUILD = { average: [1, 1], tall: [1.12, 0.92], small: [0.72, 1.05], round: [0.95, 1.25] };
   const shade = (hex, k) => {
-    const n = parseInt(hex.slice(1), 16), f = v => Math.max(0, Math.min(255, Math.round(v * k)));
+    const h = /^#[0-9a-f]{6}$/i.test(hex) ? hex : /^#[0-9a-f]{3}$/i.test(hex) ? '#' + [...hex.slice(1)].map(x => x + x).join('') : '#808080', n = parseInt(h.slice(1), 16), f = v => Math.max(0, Math.min(255, Math.round(v * k)));
     return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`;
   };
   function rr(g, x, y, w, h, r) { g.beginPath(); g.roundRect(x, y, w, h, r); }

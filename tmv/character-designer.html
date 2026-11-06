@@ -89,13 +89,14 @@ function draw() {
   g.scale(k, k);
   const s = Math.min(1.25, 1600 / window.TMV_FIGURE_HEIGHT(c));
   window.TMV_FIGURE(g, c, { x: 540, y: 1700, s, t: performance.now() / 1000, rim: ['#FF3D8B', '#29E0FF'] });
-  $('out').textContent = prompt();
+  const txt = prompt(); if ($('out').textContent !== txt) $('out').textContent = txt;
 }
 $('copy').onclick = async () => {
   const text = prompt();
+  let ok = true;
   try { await navigator.clipboard.writeText(text); }
-  catch { const t = document.createElement('textarea'); t.value = text; document.body.append(t); t.select(); document.execCommand('copy'); t.remove(); }
-  $('status').textContent = `Copied ${c.name}. Paste it into Claude Code.`;
+  catch { const t = document.createElement('textarea'); t.value = text; document.body.append(t); t.select(); try { ok = document.execCommand('copy'); } catch { ok = false; } t.remove(); }
+  $('status').textContent = ok ? `Copied ${c.name}. Paste it into Claude Code.` : 'This browser blocked copying: select the text below and copy it by hand.';
 };
 build();
 (function loop() { draw(); requestAnimationFrame(loop); })();

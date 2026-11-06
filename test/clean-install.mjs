@@ -27,6 +27,14 @@ step('doctor', ['run', 'studio', 'doctor']);
 const again = step('install again (must be a no-op)', ['run', 'studio', 'install']);
 if (again > 60) fail(`the second install took ${again} s: it should skip everything`);
 
+// The TMV kit: install's test render is the sample episode; its check report must be all ✓
+if (!existsSync(join(dir, 'kit', 'check-reel'))) {
+  const rep = JSON.parse(readFileSync(join(dir, 'episodes', 'sample', 'out', 'check.json'), 'utf8'));
+  const bad = rep.checks.filter(c => !c.ok);
+  if (bad.length || !existsSync(rep.mp4)) fail(`sample episode: ${bad.map(c => c.name).join(', ') || 'no MP4'}`);
+  console.log(`\n✓ clean install passed in ${dir}: ${rep.mp4}`);
+  process.exit(0);
+}
 const film = join(dir, 'films', 'ci-reel');
 rmSync(film, { recursive: true, force: true });
 cpSync(join(dir, 'kit', 'check-reel'), film, { recursive: true });

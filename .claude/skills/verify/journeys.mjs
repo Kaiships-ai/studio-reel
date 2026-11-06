@@ -5,6 +5,7 @@
 // In a worktree the evidence is also copied to ~/.claude/orchestrate/proof/evidence/<branch>/<run-id>/.
 import { appendFileSync, cpSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
+import { spawnSync } from 'node:child_process';
 import { join, resolve } from 'node:path';
 import { chromium } from 'playwright-core';
 import { run, start } from '../../../kit/env.mjs';
@@ -159,6 +160,50 @@ const JOURNEYS = {
       for (const row of ['✓ 1080×1920 at 30 fps', '✓ BT.709 limited range', '✓ loudness −14 ± 1 LUFS']) has(r, row);
       if (!existsSync(`${COPY}/verify-run-copy.mp4`) || !existsSync(`${COPY}/verify-run-copy-cover.png`)) throw new Error('no mp4 or cover');
     });
+  },
+  // The paid TMV kit, as a buyer gets it: build the zip, unzip into a fresh folder (a space in its path), install,
+  // which renders the sample episode as its test render; then the character designer and a planted break.
+  async 'tmv-episode'() {
+    const pixi = (cwd, ...a) => { log(`$ (${cwd}) pixi ${a.join(' ')}`); const r = spawnSync('pixi', a, { cwd, encoding: 'utf8', env: { ...process.env, PIXI_NO_TELEMETRY: '1' } }); const out = (r.stdout || '') + (r.stderr || ''); log(out); return { code: r.status, out }; };
+    const BOX = join(tmpdir(), `tmv verify ${RUN}`), KIT = join(BOX, 'tmv-studio');
+    let zip = flag('zip');
+    await step('the tmv zip builds and passes its gate', () => {
+      if (zip) return;
+      const r = has(ok(node('release/build.mjs', '--tier', 'tmv', '--out', join(EV, 'dist'))), /✓ tmv: .* every check passed/);
+      zip = /→ (.*tmv-studio-.*\.zip)/.exec(r.out)[1];
+    });
+    await step('it unzips into a fresh folder with a space in its path', () => {
+      rmSync(BOX, { recursive: true, force: true }); mkdirSync(BOX, { recursive: true });
+      ok(node('-e', `const z=require('node:child_process').spawnSync('python3',['-m','zipfile','-e',process.argv[1],process.argv[2]],{stdio:'inherit'});process.exit(z.status)`, zip, BOX));
+      if (!existsSync(join(KIT, 'episodes/sample/episode.json')) || existsSync(join(KIT, 'kit/check-reel'))) throw new Error('not the tmv layout');
+    });
+    await step('install renders the sample episode as its test render, every check ✓', () => {
+      has(ok(pixi(KIT, 'run', 'studio', 'install')), '✓ test render  episodes/sample/sample.mp4');
+      const rep = JSON.parse(readFileSync(join(KIT, 'episodes/sample/out/check.json'), 'utf8'));
+      const bad = rep.checks.filter(c => !c.ok); if (bad.length) throw new Error(bad.map(c => c.name).join(', '));
+      for (const f of ['sample.mp4', 'out/sheet.jpg', 'out/check.json']) cpSync(join(KIT, 'episodes/sample', f), join(EV, 'tmv-' + f.split('/').pop()));
+    });
+    await step('doctor is all ✓ and a second install is a no-op', () => { has(ok(pixi(KIT, 'run', 'studio', 'doctor')), 'All good.'); has(ok(pixi(KIT, 'run', 'studio', 'install')), 'passed before'); });
+    await step('the character designer opens offline and copies a cast entry', async () => {
+      const b = await chromium.launch({ executablePath: EXE, args: ARGS }), p = await b.newPage({ viewport: { width: 1100, height: 900 } }), errs = [];
+      p.on('pageerror', e => errs.push(e.message));
+      await p.goto('file://' + join(KIT, 'character-designer.html'));
+      for (const s of ['nova', 'rook', 'blip']) { await p.click(`[data-testid=seed-${s}]`); await p.locator('[data-testid=preview]').screenshot({ path: join(EV, `tmv-char-${s}.png`) }); }
+      await p.fill('[data-testid=field-name]', 'Juno'); await p.selectOption('[data-testid=field-hair]', 'curly');
+      await p.locator('[data-testid=preview]').screenshot({ path: join(EV, 'tmv-char-designed.png') });
+      await p.click('[data-testid=copy]'); await p.waitForTimeout(200);
+      const txt = await p.textContent('[data-testid=json]'), st = await p.textContent('#status'); await b.close();
+      if (errs.length) throw new Error(errs.join('; '));
+      const c = JSON.parse(txt.slice(txt.indexOf('{')));
+      if (c.id !== 'juno' || c.hair !== 'curly' || !c.voice) throw new Error('copied cast entry is wrong');
+      if (!/Copied Juno|copy it by hand/.test(st)) throw new Error(`status: ${st}`);
+    });
+    await step('planted break: a beat for someone not in the cast fails with its own message', () => {
+      const bad = join(KIT, 'episodes/broken'); cpSync(join(KIT, 'episodes/sample'), bad, { recursive: true });
+      const f = join(bad, 'episode.json'); writeFileSync(f, readFileSync(f, 'utf8').replace('"who": "rook"', '"who": "nobody"'));
+      has(no(pixi(KIT, 'run', 'node', 'episode/make.mjs', 'episodes/broken', 'render')), '"who": "nobody" is not in the cast');
+    });
+    rmSync(BOX, { recursive: true, force: true });
   },
 };
 

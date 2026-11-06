@@ -112,7 +112,8 @@ Lemo-Opuscar asset release by LemoLab; they are not in the zip.
 | Font | Where | Licence |
 |---|---|---|
 | Fredoka (The Fredoka Project Authors) | `styles/kai-hand-draw/engine/fonts/` | SIL Open Font License 1.1 (`OFL-Fredoka.txt`) |
-| JetBrains Mono (The JetBrains Mono Project Authors) | `styles/kai-hand-draw/engine/fonts/` | SIL Open Font License 1.1 (`OFL-JetBrainsMono.txt`) |
+| JetBrains Mono (The JetBrains Mono Project Authors) | `episode/fonts/` | SIL Open Font License 1.1 (`OFL-jetbrainsmono.txt`) |
+| Inter Tight (The Inter Project Authors) | `episode/fonts/` | SIL Open Font License 1.1 (`OFL-intertight.txt`) |
 | Shantell Sans (The Shantell Sans Project Authors) | `styles/kai-hand-draw/engine/fonts/` | SIL Open Font License 1.1 (`OFL-ShantellSans.txt`) |
 | Permanent Marker | `styles/kai-hand-draw/engine/fonts/` | Apache License 2.0 (`LICENSE-PermanentMarker.txt`) |
 | ZCOOL KuaiLe, Fredoka, Lilita One, IM Fell English (subsets) | `core/fonts/` | SIL Open Font License 1.1 (`core/fonts/OFL.md`) |

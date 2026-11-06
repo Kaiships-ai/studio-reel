@@ -1,0 +1,58 @@
+[
+ {
+  "id": "b01",
+  "who": "nova",
+  "text": "I shipped my app today. Two hundred views.",
+  "voice": "af_heart",
+  "speed": 1
+ },
+ {
+  "id": "b02",
+  "who": "rook",
+  "text": "Two hundred? My launch ad hit forty thousand by lunch.",
+  "voice": "am_michael",
+  "speed": 1.02
+ },
+ {
+  "id": "b03",
+  "who": "nova",
+  "text": "His app does half of what mine does.",
+  "voice": "af_heart",
+  "speed": 1
+ },
+ {
+  "id": "b04",
+  "who": "blip",
+  "text": "Beep. People don't share apps. They share stories.",
+  "voice": "am_puck",
+  "speed": 1.08
+ },
+ {
+  "id": "b05",
+  "who": "nova",
+  "text": "So I show the bug that almost killed it?",
+  "voice": "af_heart",
+  "speed": 1
+ },
+ {
+  "id": "b06",
+  "who": "rook",
+  "text": "Or post a clean demo. Nobody cares about your bugs.",
+  "voice": "am_michael",
+  "speed": 1.02
+ },
+ {
+  "id": "b07",
+  "who": "blip",
+  "text": "One post tonight. Tomorrow, we count.",
+  "voice": "am_puck",
+  "speed": 1.08
+ },
+ {
+  "id": "b08",
+  "who": "nova",
+  "text": "Comment A for the demo, or B for the story.",
+  "voice": "af_heart",
+  "speed": 1
+ }
+]
