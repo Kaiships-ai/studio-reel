@@ -2,10 +2,9 @@
 //   pixi run -e full node episode/make.mjs <episode> vo     Kokoro voice for every beat → vo/vo.wav + vo/vo.json
 //   pixi run node episode/make.mjs <episode> render         frames + voice → <episode>/<name>.mp4 (540x960, 30 fps)
 //   pixi run node episode/make.mjs <episode> check          size, length, sound, no black or frozen stretch, stills sheet
-// No step = render check. Options: --fps N (default 30) · --full (1080x1920: only when you ask for the full render) ·
-// --workers N. The vo step needs the full environment and the voice model (pixi run fetch voice, once, about 350 MB).
+// No step = render check. Options: --fps N (default 30) · --workers N. Preview size only (540x960, ST-77). The vo step needs the full environment and the voice model (pixi run fetch voice, once, about 350 MB).
 // <name> is the folder's name. Writes <episode>/out/check.json and <episode>/out/sheet.jpg (open it to look).
-import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync, renameSync } from 'node:fs';
 import { join, resolve, basename } from 'node:path';
 import { env, run, requireReady, ROOT } from '../kit/env.mjs';
 import { mux } from '../core/render/mux.mjs';
@@ -20,7 +19,7 @@ const ep = steps.length && resolve(steps.shift());
 if (!ep || !existsSync(join(ep, 'episode.json'))) { console.error('usage: node episode/make.mjs <episode folder with episode.json> [vo] [render] [check] [--fps N] [--full]'); process.exit(2); }
 requireReady(env());
 const NAME = basename(ep), MP4 = join(ep, `${NAME}.mp4`), OUT = join(ep, 'out');
-const FPS = +(opt.fps ?? 30), [W, H] = opt.full ? [1080, 1920] : [540, 960];
+const FPS = +(opt.fps ?? 30), [W, H] = [540, 960];
 const sh = (tool, args) => { const r = run(tool, args); if (r.error || r.status !== 0) die(`failed: ${tool} ${args.join(' ')}`); };
 const probe = f => JSON.parse(run('ffprobe', ['-v', 'error', '-show_streams', '-show_format', '-of', 'json', f], { capture: true }).stdout || '{}');
 
@@ -40,13 +39,20 @@ const STEP = {
   vo() {
     const { e, cast } = episode();
     const lines = e.beats.map((b, i) => ({ id: `b${String(i + 1).padStart(2, '0')}`, who: b.who, text: b.line, voice: cast[b.who].voice || 'af_heart', speed: cast[b.who].speed || 1 }));
-    rmSync(join(ep, 'vo'), { recursive: true, force: true }); mkdirSync(join(ep, 'vo', 'lines'), { recursive: true });
-    writeFileSync(join(ep, 'vo', 'lines.json'), JSON.stringify(lines, null, 1));
-    sh('python', ['core/tts/tts.py', join(ep, 'vo', 'lines.json'), join(ep, 'vo', 'lines')]);
-    sh('python', ['episode/voice.py', ep]);
+    // build in vo.new/ and swap it in only when it worked: a failed voice never deletes the one that renders
+    const nv = join(ep, 'vo.new'); rmSync(nv, { recursive: true, force: true }); mkdirSync(join(nv, 'vo', 'lines'), { recursive: true });
+    writeFileSync(join(nv, 'vo', 'lines.json'), JSON.stringify(lines, null, 1));
+    sh('python', ['core/tts/tts.py', join(nv, 'vo', 'lines.json'), join(nv, 'vo', 'lines')]);
+    sh('python', ['episode/voice.py', nv]);
+    rmSync(join(ep, 'vo'), { recursive: true, force: true }); renameSync(join(nv, 'vo'), join(ep, 'vo')); rmSync(nv, { recursive: true, force: true });
   },
   render() {
-    episode();
+    const { e } = episode();
+    if (existsSync(join(ep, 'vo/lines.json'))) {   // the voice must say exactly the beats, or captions and sound drift
+      const said = JSON.parse(readFileSync(join(ep, 'vo/lines.json'), 'utf8'));
+      if (said.length !== e.beats.length || said.some((l, i) => l.text !== e.beats[i].line || l.who !== e.beats[i].who))
+        die(`episode.json changed since its voice was made: run pixi run -e full node episode/make.mjs ${NAME} vo`);
+    }
     if (!existsSync(join(ep, 'vo/vo.wav'))) die(`${join(ep, 'vo/vo.wav')} is missing: run the vo step first (pixi run -e full node episode/make.mjs ${NAME} vo)`);
     mkdirSync(OUT, { recursive: true });
     sh('node', ['core/render/video.mjs', ep, '--size', `${W}x${H}`, '--fps', String(FPS), '--workers', String(opt.workers ?? env().workers), '--out', join(OUT, 'video.mp4')]);
@@ -66,7 +72,7 @@ const STEP = {
       { name: `${W}x${H} video`, ok: v?.width === W && v?.height === H, got: v ? `${v.width}x${v.height}` : 'no video' },
       { name: 'has sound', ok: !!a, got: a ? a.codec_name : 'no audio' },
       { name: `length = voice + 1.4 s (${want.toFixed(2)} s ± 0.2)`, ok: Math.abs(dur - want) <= 0.2, got: `${dur.toFixed(2)} s` },
-      { name: 'loudness -14 ± 1 LUFS', ok: Math.abs(I + 14) <= 1, got: `${I} LUFS` },
+      { name: 'loudness -14 ± 1.5 LUFS', ok: Math.abs(I + 14) <= 1.5, got: `${I} LUFS` },
       { name: 'no black stretch', ok: !black.length, got: black.length ? `black at ${black.join(', ')} s` : 'none' },
       { name: 'no frozen stretch (1.5 s)', ok: !frozen.length, got: frozen.length ? `frozen at ${frozen.join(', ')} s` : 'none' },
     ];

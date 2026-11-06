@@ -104,14 +104,14 @@
   }
 
   // word-by-word captions: the line's words appear as they are said, the word being said is in the accent
-  function captions(b, t) {
+  function captions(b, t, base) {
     const ws = wordsOf(b).filter(w => t >= w.s - 0.05); if (!ws.length) return;
     const size = SIZE.mid, rows = [[]]; let rowW = 0;
     for (const w of wordsOf(b)) {   // wrap on the whole line so words never jump between rows
       const ww = measure(w.w + ' ', size); if (rowW + ww > 900 && rows[rows.length - 1].length) { rows.push([]); rowW = 0; }
       rows[rows.length - 1].push(w); rowW += ww;
     }
-    const y0 = 1390 - (rows.length - 1) * 38;
+    const y0 = base - (rows.length - 1) * 38;
     text(cast[b.who]?.name?.toUpperCase() || '', 540, y0 - 74, SIZE.small, ACCENT, { mono: true, w: 600, ls: 4 });
     rows.forEach((row, r) => {
       const full = row.reduce((a, w) => a + measure(w.w + ' ', size), 0) - measure(' ', size);
@@ -167,8 +167,8 @@
     actors(b, t);
     hud(beats.indexOf(b), t);
     titleCard(t);
-    if (b !== beats[beats.length - 1]) captions(b, t);
     voteFrame(t);
+    captions(b, t, b === beats[beats.length - 1] ? 860 : 1390);
   };
   window.render(0);
   window.READY = true;

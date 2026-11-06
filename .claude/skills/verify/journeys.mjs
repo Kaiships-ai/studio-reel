@@ -200,8 +200,13 @@ const JOURNEYS = {
     });
     await step('planted break: a beat for someone not in the cast fails with its own message', () => {
       const bad = join(KIT, 'episodes/broken'); cpSync(join(KIT, 'episodes/sample'), bad, { recursive: true });
-      const f = join(bad, 'episode.json'); writeFileSync(f, readFileSync(f, 'utf8').replace('"who": "rook"', '"who": "nobody"'));
+      const f = join(bad, 'episode.json'); writeFileSync(f, readFileSync(f, 'utf8').replace(/"who": "rook"/g, '"who": "nobody"'));
       has(no(pixi(KIT, 'run', 'node', 'episode/make.mjs', 'episodes/broken', 'render')), '"who": "nobody" is not in the cast');
+    });
+    await step('planted break: a changed line without a new voice fails and names the vo step', () => {
+      const f = join(KIT, 'episodes/broken/episode.json'); cpSync(join(KIT, 'episodes/sample/episode.json'), f);
+      writeFileSync(f, readFileSync(f, 'utf8').replace('Two hundred views.', 'Three hundred views.'));
+      has(no(pixi(KIT, 'run', 'node', 'episode/make.mjs', 'episodes/broken', 'render')), 'changed since its voice was made');
     });
     rmSync(BOX, { recursive: true, force: true });
   },
