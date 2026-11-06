@@ -50,5 +50,11 @@ support contacts in `AGENTS.md`. Never print or commit keys.
    pixi run node episode/series.mjs next episodes/my-show --winner B
    ```
 
-   then write episode 2's story in `episodes/my-show/ep2/episode.json` and run the two step 5 commands on
-   `episodes/my-show/ep2`. Ep 2 opens on PREVIOUSLY · EP 1 with the winning answer.
+   then write episode 2's story in `episodes/my-show/ep2/episode.json` (replace every WRITE ... placeholder) and:
+
+   ```
+   pixi run -e full node episode/make.mjs episodes/my-show/ep2 vo
+   pixi run node episode/make.mjs episodes/my-show/ep2
+   ```
+
+   Ep 2 opens on PREVIOUSLY · EP 1 with the winning answer. Use the buyer's own show name instead of `my-show`.

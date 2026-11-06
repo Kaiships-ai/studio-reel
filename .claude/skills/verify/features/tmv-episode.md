@@ -29,3 +29,7 @@ names the vo step). Evidence: `tmv-sample.mp4`, `tmv-sheet.jpg`, `tmv-char-*.png
 - `series` (slice 4): `episode/series.mjs new|next|status`; `series.json` holds series, cast, palette, texts (make.mjs and
   main.js merge it under each episode); `next --winner X` writes `previously` + the PREVIOUSLY card beat; the journey
   renders Ep2 from `features/tmv-series-ep2.json` with its own voice. Evidence: `tmv-series-ep1.mp4`, `tmv-series-ep2.mp4`, `tmv-series.json`.
+- `one-prompt` (slice 5): `START.md` + the `/studio`, `/episode`, `/series` skills + `.claude/settings.json` (allows
+  `pixi run *` and the episode scripts; buyer kit only) + `make.mjs new <name>`. Journey `tmv-one-prompt`: a fresh
+  unzip, then every fenced command in START.md in order, as written; the two places Claude writes a story use the sample
+  (retitled) and `features/tmv-series-ep2.json`. Ends with ep1 and the linked ep2, every check ✓. Evidence: `prompt-ep1.mp4`, `prompt-ep2.mp4`.

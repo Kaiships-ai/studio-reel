@@ -237,6 +237,42 @@ const JOURNEYS = {
     });
     rmSync(BOX, { recursive: true, force: true });
   },
+  // Slice 5, the one-prompt path: a fresh unzip, then every command START.md tells Claude to run, in its order, exactly as
+  // written (Claude itself cannot run in CI: no login). Where START.md has Claude write a story, the fixture does.
+  async 'tmv-one-prompt'() {
+    const BOX = join(process.platform === 'win32' ? tmpdir() : '/tmp', `tmv prompt ${RUN}`), KIT = join(BOX, 'tmv-studio');
+    let zip = flag('zip');
+    await step('a fresh unzip has START.md, the /studio /episode /series skills and an allow-list for every START.md command', () => {
+      if (!zip) zip = /→ (.*tmv-studio-.*\.zip)/.exec(ok(node('release/build.mjs', '--tier', 'tmv', '--out', join(EV, 'dist'))).out)[1];
+      rmSync(BOX, { recursive: true, force: true }); mkdirSync(BOX, { recursive: true });
+      ok(node('-e', `const z=require('node:child_process').spawnSync('python3',['-m','zipfile','-e',process.argv[1],process.argv[2]],{stdio:'inherit'});process.exit(z.status)`, zip, BOX));
+      for (const f of ['START.md', '.claude/skills/studio/SKILL.md', '.claude/skills/episode/SKILL.md', '.claude/skills/series/SKILL.md', '.claude/settings.json'])
+        if (!existsSync(join(KIT, f))) throw new Error(`${f} missing`);
+      const allow = JSON.parse(readFileSync(join(KIT, '.claude/settings.json'), 'utf8')).permissions.allow;
+      if (!allow.includes('Bash(pixi run *)')) throw new Error('settings.json does not allow pixi run');
+    });
+    const cmds = [...readFileSync(join(KIT, 'START.md'), 'utf8').matchAll(/```\n([\s\S]*?)```/g)].flatMap(m => m[1].split('\n').map(l => l.trim()).filter(Boolean));
+    const kt = (...a) => node('test/kit-pixi.mjs', KIT, ...a);
+    await step(`START.md has ${cmds.length} commands, every one a pixi run`, () => { if (cmds.length < 8 || cmds.some(c => !c.startsWith('pixi run '))) throw new Error(cmds.join(' | ')); });
+    const model = () => { if (!existsSync(join(KIT, 'core/tts/kokoro-v1.0.onnx')) && existsSync('core/tts/kokoro-v1.0.onnx'))
+      for (const f of ['kokoro-v1.0.onnx', 'voices-v1.0.bin']) cpSync(join('core/tts', f), join(KIT, 'core/tts', f)); };   // instead of the 350 MB fetch
+    for (const c of cmds) await step(`START.md: ${c}`, () => {
+      if (/ vo$/.test(c)) model();
+      ok(kt(...c.replace(/^pixi run /, '').split(' ')));
+      if (c.endsWith('make.mjs new ep1')) {   // Claude writes the buyer's episode 1 here; the sample's story stands in, retitled
+        const f = join(KIT, 'episodes/ep1/episode.json'); writeFileSync(f, readFileSync(f, 'utf8').replace('"Two hundred views"', '"Day one"'));
+      }
+      if (/--winner B$/.test(c)) { const f = join(KIT, 'episodes/my-show/ep2/episode.json'), e2 = JSON.parse(readFileSync(f, 'utf8'));
+        writeFileSync(f, JSON.stringify({ ...JSON.parse(readFileSync('.claude/skills/verify/features/tmv-series-ep2.json', 'utf8')), previously: e2.previously }, null, 2)); }
+    });
+    await step('the documented path ends in two linked episodes, every check ✓', () => {
+      if (!cmds.some(c => c.includes('my-show/ep2'))) throw new Error('START.md never renders episode 2');
+      for (const d of ['episodes/ep1', 'episodes/my-show/ep2']) { const r = JSON.parse(readFileSync(join(KIT, d, 'out/check.json'), 'utf8')); if (r.checks.some(c => !c.ok)) throw new Error(`${d} failed a check`); }
+      const sj = JSON.parse(readFileSync(join(KIT, 'episodes/my-show/series.json'), 'utf8')); if (sj.episodes[0].winner !== 'B') throw new Error('winner not recorded');
+      cpSync(join(KIT, 'episodes/ep1/ep1.mp4'), join(EV, 'prompt-ep1.mp4')); cpSync(join(KIT, 'episodes/my-show/ep2/ep2.mp4'), join(EV, 'prompt-ep2.mp4'));
+    });
+    rmSync(BOX, { recursive: true, force: true });
+  },
 };
 
 const only = flag('only')?.split(','), order = Object.keys(JOURNEYS).filter(j => !only || only.includes(j));
