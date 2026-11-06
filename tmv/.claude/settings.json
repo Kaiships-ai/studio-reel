@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pixi run *)",
+      "PowerShell(pixi run *)",
+      "Bash(node episode/make.mjs:*)",
+      "Bash(node episode/series.mjs:*)",
+      "Bash(node kit/studio.mjs:*)"
+    ]
+  }
+}

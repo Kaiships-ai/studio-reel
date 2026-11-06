@@ -28,13 +28,27 @@ support contacts in `AGENTS.md`. Never print or commit keys.
    - Voice: the offline voice (Kokoro, free, needs `pixi run fetch voice` once, about 350 MB; not on Intel Macs), or
      record the lines themselves.
 
-5. Make their episode 1: copy `episodes/sample` to `episodes/<name>`, rewrite its `episode.json` from the answers
-   (`README.md` lists every field), then:
+5. Make their episode 1 with `/episode` (the skill in `.claude/skills/episode`):
 
    ```
-   pixi run -e full node episode/make.mjs episodes/<name> vo
-   pixi run node episode/make.mjs episodes/<name>
+   pixi run node episode/make.mjs new ep1
    ```
 
-   The last beat's line says the two vote words; the vote is the last frame. For episode 2, copy the folder again, set
-   `"ep": 2`, and write the story that follows the winning comment.
+   rewrite `episodes/ep1/episode.json` from the answers (`README.md` lists every field), then:
+
+   ```
+   pixi run -e full node episode/make.mjs episodes/ep1 vo
+   pixi run node episode/make.mjs episodes/ep1
+   ```
+
+   The last beat's line says the two vote words; the vote is the last frame.
+
+6. Turn it into a series with `/series` (`.claude/skills/series`). When the buyer says which answer won:
+
+   ```
+   pixi run node episode/series.mjs new episodes/my-show --from episodes/ep1
+   pixi run node episode/series.mjs next episodes/my-show --winner B
+   ```
+
+   then write episode 2's story in `episodes/my-show/ep2/episode.json` and run the two step 5 commands on
+   `episodes/my-show/ep2`. Ep 2 opens on PREVIOUSLY · EP 1 with the winning answer.

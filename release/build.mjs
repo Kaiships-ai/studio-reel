@@ -50,8 +50,8 @@ export function classify(files, m) {
 const TEXT = /\.(md|mjs|js|cjs|json|html|css|py|txt|toml|ya?ml|srt|sh|ps1)$|(^|\/)(LICENSE|CLAUDE\.md|AGENTS\.md)$/;
 const EXEMPT = new Set(['LICENSE', 'THIRD_PARTY_NOTICES.md']);
 const BUYER_DOC = f => /^[^/]+\.md$/.test(f) || /^\.claude\/skills\/[^/]+\/.*\.md$/.test(f) || f === 'workspace/README.md' || f === 'styles/README.md' || f === 'styles/catalog.md' || /^content-types\/.*\.md$/.test(f) || /^styles\/[^/]+\/(STYLE|DEMO|WORKFLOW|README)\.md$/.test(f);
-const SKILL_REF = /(^|[\s`("'])\/(ig-[a-z]+|make-reel|studio|crowsnest|verify)\b/g;
-const TMV_SKILLS = ['studio'];
+const SKILL_REF = /(^|[\s`("'])\/(ig-[a-z]+|make-reel|studio|crowsnest|verify|episode|series)\b/g;
+const TMV_SKILLS = ['episode', 'series', 'studio'];
 const PRO_SKILLS = ['ig-plan', 'ig-reel', 'ig-human', 'ig-viral', 'ig-dm', 'ig-caption'];
 
 // A style's page that names a font file the zip lacks renders in a browser fallback font, silently.

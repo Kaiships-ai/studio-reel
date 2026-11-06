@@ -1,6 +1,7 @@
 // make.mjs: one episode folder (episode.json + index.html) to a preview MP4. Run from the library root:
 //   pixi run -e full node episode/make.mjs <episode> vo     Kokoro voice for every beat → vo/vo.wav + vo/vo.json
 //   pixi run node episode/make.mjs <episode> render         frames + voice + bed (room tone, music, hits) → <episode>/<name>.mp4 (720x1280, 30 fps)
+//   pixi run node episode/make.mjs new <name>             episodes/<name> from the sample (episode.json + page), ready to rewrite
 //   pixi run node episode/make.mjs <episode> check          size, length, sound, no black or frozen stretch, faces not blown out, stills sheet
 // No step = render check. Options: --fps N (default 30) · --workers N. Preview size only (720x1280, ST-77). The vo step needs the full environment and the voice model (pixi run fetch voice, once, about 350 MB).
 // <name> is the folder's name. Writes <episode>/out/check.json and <episode>/out/sheet.jpg (open it to look).
@@ -15,6 +16,14 @@ for (let i = 0; i < argv.length; i++) {
   const [k, v] = argv[i].slice(2).split('='); opt[k] = v ?? (['fps', 'workers'].includes(k) ? argv[++i] : true);
 }
 const die = m => { console.error('✗ ' + m); process.exit(1); };
+// new <name>: episodes/<name> = the sample's episode.json and page, no voice yet (write the story, then vo and render)
+if (steps[0] === 'new') {
+  const name = steps[1]; if (!name || !/^[\w-]+$/.test(name)) die('usage: node episode/make.mjs new <name>   (letters, digits, - and _)');
+  const to = join(ROOT, 'episodes', name); if (existsSync(to)) die(`${to} already exists`);
+  mkdirSync(to, { recursive: true });
+  for (const f of ['episode.json', 'index.html']) writeFileSync(join(to, f), readFileSync(join(ROOT, 'episodes', 'sample', f)));
+  console.log(`✓ ${to}: write its story in episode.json (README.md lists every field), then vo and render`); process.exit(0);
+}
 const ep = steps.length && (p => existsSync(p) ? realpathSync(p) : p)(resolve(steps.shift()));   // real path: /tmp is /private/tmp on macOS, and the server needs the episode under the library root
 if (!ep || !existsSync(join(ep, 'episode.json'))) { console.error('usage: node episode/make.mjs <episode folder with episode.json> [vo] [render] [check] [--fps N] [--full]'); process.exit(2); }
 requireReady(env());
