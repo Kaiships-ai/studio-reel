@@ -50,6 +50,7 @@ function episode() {
   for (const [k, v] of Object.entries(e.palette ?? {})) { if (!['neon', 'left', 'right', 'card'].includes(k)) err(`palette "${k}" is unknown (neon, left, right, card)`); else if (!HEX.test(v)) err(`palette "${k}": "${v}" is not a colour like "#FF3D8B"`); }
   const TXK = ['handle', 'sign', 'kicker', 'phoneLabel', 'phoneHud', 'phoneFoot', 'or', 'voteFooter', 'previously', 'youPicked'];
   for (const [k, v] of Object.entries(e.texts ?? {})) { if (!TXK.includes(k)) err(`texts "${k}" is unknown (${TXK.join(', ')})`); else if (typeof v !== 'string') err(`texts "${k}" must be a text`); }
+  if (JSON.stringify(e).includes('WRITE THE')) err('episode.json still has a WRITE ... placeholder (from series.mjs next): write the title, the recap line and the vote');
   if (!Array.isArray(e.cast) || !e.cast.length) err('"cast" must list at least one character');
   const cast = {};
   for (const [i, m] of (Array.isArray(e.cast) ? e.cast : []).entries()) {

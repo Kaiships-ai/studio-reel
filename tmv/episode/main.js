@@ -362,7 +362,7 @@ function title(t) {   // the kicker and the episode title over the first shot
   const a = ss(seg(t, T0 + 0.1, T0 + 0.4)) * (1 - ss(seg(t, T0 + 2.0, T0 + 2.4))); if (a <= 0) return;
   // over the establishing shot's ceiling, under the HUD: no band, the type carries its own dark edge
   H2.txt(KICKER, 540, 380, 30, NEON, { w: 700, mono: true, ls: 8, alpha: a, stroke: 6 });
-  wipeText(EP.title.toUpperCase(), 540, 480, fitSize(EP.title.toUpperCase(), 100, 940), WHITE, seg(t, 0.2, 0.55), { alpha: a, stroke: 10 });
+  wipeText(EP.title.toUpperCase(), 540, 480, fitSize(EP.title.toUpperCase(), 100, 940), WHITE, seg(t, T0 + 0.2, T0 + 0.55), { alpha: a, stroke: 10 });
 }
 const LAST = SHOTS[SHOTS.length - 1];
 const wordAt = (re, d) => WORDS.find(w => w.line === LINES[LAST.i].id && re.test(w.w.replace(/[^\w]/g, '')))?.s ?? LAST.ls + d;

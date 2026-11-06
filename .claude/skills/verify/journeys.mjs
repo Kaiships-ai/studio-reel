@@ -218,6 +218,7 @@ const JOURNEYS = {
       has(ok(node(join(KIT, 'episode/series.mjs'), 'new', SD, '--from', join(KIT, 'episodes/sample'))), 'series.json');
       has(ok(node(join(KIT, 'episode/series.mjs'), 'next', SD, '--winner', 'B')), 'ep1 winner: B · the story');
       has(no(node(join(KIT, 'episode/series.mjs'), 'next', SD, '--winner', 'C')), '--winner must be A or B');
+      has(no(node(join(KIT, 'episode/series.mjs'), 'next', SD, '--winner', 'A')), 'still has WRITE');   // re-running next never skips ahead
       const e2 = JSON.parse(readFileSync(join(SD, 'ep2/episode.json'), 'utf8')), sj = JSON.parse(readFileSync(join(SD, 'series.json'), 'utf8'));
       if (e2.previously?.winner?.text !== 'the story' || e2.beats[0].shot !== 'previously' || sj.episodes[0].winner !== 'B' || e2.cast) throw new Error('ep2 is not linked to ep1');
       const fx = JSON.parse(readFileSync('.claude/skills/verify/features/tmv-series-ep2.json', 'utf8'));

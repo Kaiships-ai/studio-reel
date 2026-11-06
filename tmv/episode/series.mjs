@@ -6,7 +6,8 @@
 // `next` writes the PREVIOUSLY opening (ST-79: the card "PREVIOUSLY · EP N" with the winning answer, then the recap beat)
 // and leaves "beats" after it for you (Claude) to write: the story that follows the winning comment.
 import { existsSync, readFileSync, writeFileSync, mkdirSync, cpSync, readdirSync } from 'node:fs';
-import { join, resolve, basename } from 'node:path';
+import { join, resolve, basename, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const [cmd, dirArg, ...rest] = process.argv.slice(2), opt = (k) => { const i = rest.indexOf(k); return i >= 0 ? rest[i + 1] : undefined; };
 const die = (m) => { console.error('✗ ' + m); process.exit(1); };
@@ -31,6 +32,9 @@ if (cmd === 'new') {
 
 if (cmd === 'next') {
   const S = read(SJ), last = S.episodes.at(-1), le = read(join(dir, last.dir, 'episode.json')), v = le.vote;
+  // the vote can only be in for an episode that was finished and rendered (re-running next must not skip ahead)
+  if (JSON.stringify(le).includes('WRITE THE')) die(`ep${last.ep} still has WRITE ... placeholders: write its story and render it first`);
+  if (!existsSync(join(dir, last.dir, `${last.dir}.mp4`))) die(`ep${last.ep} is not rendered yet (${join(dir, last.dir, last.dir + '.mp4')}): render it, post it, then give its winner`);
   const tags = [v.tagA ?? 'A', v.tagB ?? 'B'], w = opt('--winner');
   if (!tags.includes(w)) die(`--winner must be ${tags.join(' or ')} (the vote of ep${last.ep}: "${v.question}")`);
   const win = w === tags[0] ? { tag: tags[0], text: v.a } : { tag: tags[1], text: v.b }, lose = w === tags[0] ? { tag: tags[1], text: v.b } : { tag: tags[0], text: v.a };
@@ -38,7 +42,10 @@ if (cmd === 'next') {
   if (existsSync(join(nd, 'episode.json'))) die(`${nd} already has an episode.json`);
   mkdirSync(nd, { recursive: true }); cpSync(join(dir, last.dir, 'index.html'), join(nd, 'index.html'));
   last.winner = w; S.episodes.push({ ep: n, dir: `ep${n}` }); write(SJ, S);
-  const lead = (S.cast ?? le.cast ?? []).find(c => c.role !== 'rival' && c.place !== 'corner')?.id ?? (S.cast ?? le.cast)[0].id;
+  // the lead = the first human in the room, with the seed's own role and kind (as episode/main.js places them)
+  const W = {}; new Function('window', readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'characters', 'cast.js'), 'utf8'))(W);
+  const cast = (le.cast ?? S.cast ?? []).map(c => ({ ...(W.TMV_SEEDS[c.seed] ?? {}), ...c }));
+  const lead = (cast.find(c => c.kind === 'human' && (c.place ?? (c.role === 'rival' ? 'corner' : 'room')) === 'room') ?? cast[0]).id;
   write(join(nd, 'episode.json'), {
     ep: n, title: 'WRITE THE TITLE',
     previously: { ep: last.ep, question: v.question, winner: win, loser: lose },
