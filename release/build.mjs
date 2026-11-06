@@ -108,7 +108,7 @@ export function check(tier, files, blob, m) {
   }
   if (tier === 'tmv') for (const p of m.tmv_forbid) {
     const re = new RegExp(p, 'i');
-    for (const f of files) if (!EXEMPT.has(f) && (re.test(f) || (TEXT.test(f) && re.test(blob(f).toString('utf8'))))) errors.push(`${f}: not ours to sell ("${p}")`);
+    for (const f of files) if (!EXEMPT.has(f) && (re.test(f) || re.test(blob(f).toString('latin1')))) errors.push(`${f}: not ours to sell ("${p}")`);
   }
   errors.push(...missingFonts(files, blob), ...repoLinks(files, blob, m.identity));
   return { errors, warns: [...new Set(warns)] };
@@ -123,7 +123,11 @@ export function tmvFiles(by, overlay, m, blobs) {
   for (const f of overlay) { const to = f.slice(4); own.set(to, blobs.get(f)); out.add(to); }
   return { list: [...out].sort(), blob: f => own.get(f) };
 }
-const tmvVersion = (blob, tag, commit) => tag ? tag.replace(/^v/, '') : `${JSON.parse(blob('product.json').toString()).version}-dev+${commit.slice(0, 7)}`;
+const tmvVersion = (blob, tag, commit) => {
+  const v = JSON.parse(blob('product.json').toString()).version;
+  if (tag && v !== tag.replace(/^v/, '')) { console.error(`✗ tmv/product.json says version ${v}, the tag is ${tag}`); process.exit(1); }
+  return tag ? v : `${v}-dev+${commit.slice(0, 7)}`;
+};
 
 // ---------- zip (stored or deflated, deterministic) ----------
 export function zip(entries, date) {
@@ -169,7 +173,7 @@ if (import.meta.url === `file://${process.argv[1]}` || fileURLToPath(import.meta
   const baseBlob = f => blobs.get(f), blob = baseBlob;
   const product = JSON.parse(blob('product.json')?.toString() || '{}');
   const version = TAG ? TAG.replace(/^v/, '') : `${product.version || '0'}-dev+${commit.slice(0, 7)}`;
-  if (TAG && product.version !== TAG.replace(/^v/, '')) { console.error(`✗ product.json says version ${product.version}, the tag is ${TAG}`); process.exit(1); }
+  if (TAG && !tiers.includes('tmv') && product.version !== TAG.replace(/^v/, '')) { console.error(`✗ product.json says version ${product.version}, the tag is ${TAG}`); process.exit(1); }
   console.log(`Kaiships Studio ${version} from ${commit.slice(0, 10)} (${date})\n  tracked ${files.length}: starter ${by.starter.length}, pro ${by.pro.length}, dev ${by.dev.length}`);
   let failed = false; const sums = [];
   for (const tier of tiers) {
