@@ -112,6 +112,14 @@ const BACK = new THREE.Group(); R.add(BACK);
   for (let i = 0; i < 6; i++) { const bk = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.14 + 0.06 * hsh(i, 4), 0.12), new THREE.MeshStandardMaterial({ color: ['#c9663a', '#29506e', '#e2a23b', '#6d3a5a', '#2f6b5a', '#d8d2c4'][i], roughness: 0.8 }));
     bk.position.set(0.25 + i * 0.05, 1.04 + 0.03 * hsh(i, 4), 0.92); BACK.add(bk); }
   const poster = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.56), new THREE.MeshStandardMaterial({ color: PAL.right, emissive: new THREE.Color(PAL.right), emissiveIntensity: 0.25, roughness: 0.8 })); poster.rotation.y = Math.PI; poster.position.set(-0.55, 1.05, 0.985); BACK.add(poster);
+  // a plant on the shelf, a note board with pinned cards, a desk lamp's warm wash: the wall reads as a lived-in room
+  const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.04, 0.09, 16), new THREE.MeshStandardMaterial({ color: '#e7dccb', roughness: 0.7 })); pot.position.set(0.88, 1.01, 0.92); BACK.add(pot);
+  for (let i = 0; i < 7; i++) { const lf = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 8), new THREE.MeshStandardMaterial({ color: ['#3f8a5a', '#2f6b47', '#57a06c'][i % 3], roughness: 0.8 }));
+    lf.scale.set(0.6, 1.6, 0.6); lf.position.set(0.88 + 0.05 * Math.cos(i * 0.9), 1.1 + 0.03 * hsh(i, 6), 0.92 + 0.04 * Math.sin(i * 0.9)); lf.rotation.z = 0.5 * Math.cos(i * 0.9); BACK.add(lf); }
+  const board = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.4), new THREE.MeshStandardMaterial({ color: '#7a5a40', roughness: 0.95 })); board.rotation.y = Math.PI; board.position.set(-0.05, 1.12, 0.99); BACK.add(board);
+  for (let i = 0; i < 6; i++) { const n = new THREE.Mesh(new THREE.PlaneGeometry(0.11, 0.09), new THREE.MeshStandardMaterial({ color: ['#f4efe6', '#ffd36b', '#ff9cc0', '#9fe3ff'][i % 4], roughness: 0.9 }));
+    n.rotation.set(0, Math.PI, 0.15 * (hsh(i, 8) - 0.5)); n.position.set(-0.25 + 0.14 * (i % 3) + 0.03 * hsh(i, 9), 1.2 - 0.15 * Math.floor(i / 3), 0.985); BACK.add(n); }
+  const wash = new THREE.SpotLight('#ffb070', 1.1, 2.6, 0.9, 0.8, 1.4); wash.position.set(0.1, 1.9, 0.5); wash.target.position.set(0.1, 1.0, 1.0); BACK.add(wash, wash.target);
   const glow = new THREE.PointLight('#ffb070', 1.4, 2.2, 1.6); glow.position.set(0, 1.3, 0.75); BACK.add(glow);
   const glow2 = new THREE.PointLight(PAL.left, 0.9, 2.0, 1.6); glow2.position.set(-0.9, 1.2, 0.7); BACK.add(glow2);
 }
@@ -237,12 +245,13 @@ const F3D = {
     const ch = CAST[sh.who];
     if (inCorner(ch)) return corner(t, sh, ch, false);
     typing(LEAD, t, { exp: expOf(t, LEAD, sh), pitch: -6 }); PH.visible = false; poseBots(t, sh);
-    for (const m of WILD) if (/Laptop|Mon/.test(m.name)) m.visible = false;
+    for (const m of WILD) if (/Mon/.test(m.name)) m.visible = false;
     const k = lin(seg(t, sh.a, sh.b)), ld = LEAD.head();
-    faceLight(ld.clone().add(V(0, 0.05, -0.05)), { key: 2.4, rim: 2.4, fill: 1.2 });
-    rig.hemi.intensity = 0.8;
-    const pos = V(lerp(0.36, 0.3, k), lerp(0.98, 0.95, k), lerp(-1.16, -1.12, k)).add(drift(t, 0.003)), tgt = ld.clone().add(V(-0.04, -0.12, 0.3));
-    return camLook(pos, tgt, lerp(62, 58, k), { focus: pos.distanceTo(ld), aperture: 0.35 });
+    faceLight(ld.clone().add(V(0, 0.05, -0.05)), { kp: ld.clone().add(V(-0.35, 0.3, -0.6)), key: 1.0, keyCol: '#ffe6d2', rim: 2.4, fill: 0.5 });
+    rig.screenKey.intensity *= 0.35; rig.hemi.intensity = 0.8;
+    // from the window over the laptop (Ep1's opening): the lead at her desk, the lit back wall (string lights, shelf, plant, notes) behind
+    const pos = V(lerp(0.5, 0.46, k), lerp(0.9, 0.88, k), -1.27).add(drift(t, 0.002)), tgt = V(0.2, 0.6, 0.6);
+    return camLook(pos, tgt, lerp(70, 64, k), { focus: pos.distanceTo(ld), aperture: 0.2 });
   },
   card(t, sh) { typing(LEAD, t, {}); return camLook(V(0, 1, 2), V(0, 1, 0), 40); },   // the 2D card covers the frame
   stats(t, sh) { return F3D.card(t, sh); },
@@ -251,7 +260,9 @@ function face(t, sh, ch, c) {
   const k = lin(seg(t, sh.a, sh.b)), r = holdPhone(ch, t, { pitch: -2, lean: 6, curl: 4, dp: V(0, -0.2, 0.04), exp: expOf(t, ch, sh) }); poseBots(t, sh);
   wild(true);
   const f = r.hd.clone().add(V(0, 0.075, -0.04));
-  faceLight(f, { kp: PH.position.clone().add(V(0, 0.02, -0.02)), key: 1.5 });
+  // key from the side and above, a step back (not the phone under the chin): the face keeps its shape, eyes and brows read
+  faceLight(f, { kp: f.clone().add(V(0.32 * ALT(sh.i), 0.22, -0.55)), key: 0.9, keyCol: '#ffe6d2', fill: 0.35, rim: 2.2 });
+  rig.screenKey.intensity *= 0.3;
   const pos = f.clone().add(V(...c.p0).lerp(V(...c.p1), k)).add(drift(t, 0.003)); pos.z = Math.max(pos.z, -1.16);
   const tgt = f.clone().add(V(...c.tg)).add(drift(t + 5, 0.0015));
   return camLook(pos, tgt, lerp(c.fov0, c.fov1, k), { roll: 0.03 * ALT(sh.i), focus: pos.distanceTo(f), aperture: 0.9 });
@@ -264,7 +275,7 @@ function corner(t, sh, ch, close) {
   const k = lin(seg(t, sh.a, sh.b)), f = hd.clone().add(V(0, 0.11, 0.03));
   const n = SHOTS.filter(s => s.i < sh.i && CAST[s.who] === ch && s.shot === sh.shot).length, al = n % 2 ? -1 : 1;   // his next shot of the same kind mirrors
   const [p0, p1] = close ? [[0.18 * al, -0.04, 0.9 + (0.12 * n) % 0.24], [0.12 * al, -0.03, 0.72 + (0.12 * n) % 0.24]] : [[0.5 * al, 0.05, 1.7], [0.42 * al, 0.04, 1.5]];
-  CORNER.sign.position.set(hd.x - (close ? 0.2 : 0.04) * al, hd.y + (close ? 0.36 : 0.2), -0.68);
+  CORNER.sign.position.set(hd.x - (close ? 0.14 : 0.04) * al, hd.y + (close ? 0.36 : 0.2), -0.68);
   const pos = f.clone().add(V(...p0).lerp(V(...p1), k)).add(drift(t, 0.003)), tgt = f.clone().add(V(0, close ? -0.03 : -0.25, 0));
   return camLook(pos, tgt, close ? 34 : 38, { roll: lerp(0.03, 0, k), focus: pos.distanceTo(f), aperture: 0.9 });
 }
@@ -346,7 +357,10 @@ function vote(t) {
     H2.txt(label, 0, 4, fitSize(label, 64, w - 80), fg, { w: 900, ls: 2 }); g.restore(); };
   btn(500, 1135, 760, `${TAG_A} · ${EP.vote.a.toUpperCase()}`, PAL.left, WHITE, T_A); btn(500, 1355, 760, `${TAG_B} · ${EP.vote.b.toUpperCase()}`, PAL.right, '#062030', T_B);
   if (t > T_B + 0.2) H2.txt(TX.or, 500, 1245, 36, WHITE, { w: 800, alpha: eout(seg(t, T_B + 0.2, T_B + 0.4)), stroke: 6 });
-  const d2 = eout(seg(t, LAST.le, LAST.le + 0.3)); H2.txt(fill(TX.voteFooter).toUpperCase(), 500, 1485, 30, NEON, { w: 800, mono: true, ls: 4, alpha: d2, stroke: 6 });
+  // the footer on its own dark pill in white: readable over a pink-lit sweater (it was neon on pink)
+  const d2 = eout(seg(t, LAST.le, LAST.le + 0.3)), ft = fill(TX.voteFooter).toUpperCase(), fw = Math.min(800, H2.measure(ft, 30, 800, true) + 4 * ft.length) + 56;
+  if (d2 > 0) { g.save(); g.globalAlpha = d2; H2.rr(500 - fw / 2, 1458, fw, 56, 28); g.fillStyle = 'rgba(6,7,12,.85)'; g.fill(); g.restore(); }
+  H2.txt(ft, 500, 1487, 30, WHITE, { w: 800, mono: true, ls: 4, alpha: d2 });
   if (t > T_A) H2.veil(0.25 * Math.exp(-(t - T_A) * 10), '255,61,139');
 }
 function overlay(t) {
@@ -356,7 +370,7 @@ function overlay(t) {
   else H2.chips(t, hudAt(t).items, { accent: NEON, alpha: ss(seg(t, 0.3, 0.6)) });
   title(t);
   const paperShot = sh.shot === 'card' || sh.shot === 'stats';
-  if (sh !== LAST || t < LAST.le + 0.3) H2.captions(t, WORDS, paperShot ? 1620 : sh === LAST ? 1590 : 1560, { paper: paperShot, size: 62, cut: sh.a });
+  if (sh !== LAST || t < LAST.le + 0.3) H2.captions(t, WORDS, paperShot ? 1620 : 1560, { paper: paperShot, size: 62, cut: sh.a });
   vote(t);
 }
 S.run({ prep, overlay, T_END: DUR });

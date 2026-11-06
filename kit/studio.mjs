@@ -62,6 +62,7 @@ async function install() {
   ok('browser', `GPU: ${gpuName(r)}`);
 
   if (!force && existsSync(installMarker()) && readFileSync(installMarker(), 'utf8').trim() === lockHash()) { ok('test render', 'passed before with these versions'); return done(); }
+  rmSync(installMarker(), { force: true });   // an old marker would make the test render itself refuse as "tool versions changed"
   // The TMV kit has no check reel: its test render is the sample episode itself (preview, 720x1280), which the buyer keeps
   if (!existsSync(join(ROOT, 'kit', 'check-reel')) && existsSync(join(ROOT, 'episodes', 'sample', 'episode.json'))) {
     console.log('  … test render: the sample episode (preview 720x1280, a minute or two)');

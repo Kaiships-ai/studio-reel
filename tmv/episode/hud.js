@@ -28,10 +28,11 @@ export function createHud(g, W, H) {
     for (let i = 0; i < n; i++) {
       const cx = x0 + cw * (i + 0.5);
       if (a[i] === b[i] || k >= 1) txt(k >= 1 ? b[i] : a[i], cx, y, size, col, { ...o, mono: true, align: 'center' });
-      else {   // the old digit leaves upward, then the new one arrives: never both on the same frame
-        const e1 = eout(seg(k, 0, 0.45)), e2 = eout(seg(k, 0.45, 1));
-        if (e1 < 1) txt(a[i], cx, y - size * 1.3 * e1, size, col, { ...o, mono: true, align: 'center', alpha: 1 - e1 });
-        if (k > 0.45) txt(b[i], cx, y + size * 1.3 * (1 - e2), size, col, { ...o, mono: true, align: 'center', alpha: e2 }); }
+      else {   // a slot reel: the old digit leaves upward as the new one pushes in from below, one digit-height apart (the clip
+        // shows one at a time, so they never overprint, and some digit is always on screen: no blank frame)
+        const e = sio(k);
+        txt(a[i], cx, y - size * 1.3 * e, size, col, { ...o, mono: true, align: 'center' });
+        txt(b[i], cx, y + size * 1.3 * (1 - e), size, col, { ...o, mono: true, align: 'center' }); }
     }
     g.restore();
   }
