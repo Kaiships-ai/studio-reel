@@ -194,7 +194,7 @@ const JOURNEYS = {
       await p.click('[data-testid=copy]'); await p.waitForTimeout(200);
       const txt = await p.textContent('[data-testid=json]'), st = await p.textContent('#status'); await b.close();
       if (errs.length) throw new Error(errs.join('; '));
-      const c = JSON.parse(txt.slice(txt.indexOf('{')));
+      const c = JSON.parse(txt.slice(txt.indexOf('\n\n') + 2));
       if (c.id !== 'juno' || c.hair !== 'curly' || !c.voice) throw new Error('copied cast entry is wrong');
       if (!/Copied Juno|copy it by hand/.test(st)) throw new Error(`status: ${st}`);
     });
