@@ -4,7 +4,7 @@
 //   pixi run node episode/make.mjs <episode> check          size, length, sound, no black or frozen stretch, faces not blown out, stills sheet
 // No step = render check. Options: --fps N (default 30) · --workers N. Preview size only (720x1280, ST-77). The vo step needs the full environment and the voice model (pixi run fetch voice, once, about 350 MB).
 // <name> is the folder's name. Writes <episode>/out/check.json and <episode>/out/sheet.jpg (open it to look).
-import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync, renameSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync, renameSync, realpathSync } from 'node:fs';
 import { join, resolve, basename } from 'node:path';
 import { env, run, requireReady, ROOT } from '../kit/env.mjs';
 import { mux } from '../core/render/mux.mjs';
@@ -15,7 +15,7 @@ for (let i = 0; i < argv.length; i++) {
   const [k, v] = argv[i].slice(2).split('='); opt[k] = v ?? (['fps', 'workers'].includes(k) ? argv[++i] : true);
 }
 const die = m => { console.error('✗ ' + m); process.exit(1); };
-const ep = steps.length && resolve(steps.shift());
+const ep = steps.length && (p => existsSync(p) ? realpathSync(p) : p)(resolve(steps.shift()));   // real path: /tmp is /private/tmp on macOS, and the server needs the episode under the library root
 if (!ep || !existsSync(join(ep, 'episode.json'))) { console.error('usage: node episode/make.mjs <episode folder with episode.json> [vo] [render] [check] [--fps N] [--full]'); process.exit(2); }
 requireReady(env());
 const NAME = basename(ep), MP4 = join(ep, `${NAME}.mp4`), OUT = join(ep, 'out');
