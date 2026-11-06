@@ -4,9 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Character designer · How we make Ten Million Views</title>
-<!-- Open by double-click: no network. Start from a seeded character or from scratch, pick parts, press
-     "Copy for Claude", paste into Claude Code. The preview is drawn by characters/figure.js, the same code the
-     episode renders with, in the episode's neon light. -->
+<!-- Open it with `pixi run designer` (3D pages need the local server; no network). Start from a seeded character,
+     pick parts, press "Copy for Claude", paste into Claude Code. The preview is built by characters/rig.js, the same
+     3D figure the episode renders, in the episode's neon rim light. -->
+<script type="importmap">{ "imports": { "three": "/node_modules/three/build/three.module.js", "three/addons/": "/node_modules/three/examples/jsm/" } }</script>
 <style>
 :root { --bg: #F4EFE6; --panel: #FFFCF6; --ink: #15120F; --muted: #6B645C; --line: #E2D9CB; --accent: #E2457A; color-scheme: light; }
 @media (prefers-color-scheme: dark) { :root { --bg: #15120F; --panel: #1F1B17; --ink: #F4EFE6; --muted: #A69D92; --line: #3A332C; color-scheme: dark; } }
@@ -43,34 +44,58 @@ pre { margin: 14px 0 0; background: var(--bg); border: 1px solid var(--line); bo
   </section>
 </main>
 <script src="characters/cast.js"></script>
-<script src="characters/figure.js"></script>
-<script>
+<script type="module">
+import * as THREE from 'three';
+import { makeCharacter } from './characters/rig.js';
 const P = window.TMV_PARTS, SEEDS = window.TMV_SEEDS, COLORS = ['skin', 'hairColor', 'topColor', 'legs'];
 let c = { ...SEEDS.nova }, seed = 'nova';
 const $ = id => document.getElementById(id), form = $('form');
 const slug = s => (s || 'character').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'character';
+
+// the stage: navy, the two neon rims of the episode, a soft key from the front
+const cv = $('view'), renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(cv.width, cv.height, false); renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.1;
+renderer.shadowMap.enabled = true;
+const scene = new THREE.Scene(); scene.background = new THREE.Color('#0B1230');
+const cam = new THREE.PerspectiveCamera(30, cv.width / cv.height, 0.01, 50);
+scene.add(new THREE.HemisphereLight('#4a4f8a', '#20121c', 0.9));
+const key = new THREE.DirectionalLight('#dfe6ff', 2.2); key.position.set(0.6, 1.6, 2.2); scene.add(key);
+const rimL = new THREE.DirectionalLight('#FF3D8B', 3.2); rimL.position.set(-2, 1.4, -1.6); scene.add(rimL);
+const rimR = new THREE.DirectionalLight('#29E0FF', 2.6); rimR.position.set(2, 1.2, -1.4); scene.add(rimR);
+const floor = new THREE.Mesh(new THREE.CircleGeometry(1.2, 48), new THREE.MeshStandardMaterial({ color: '#141a3a', roughness: 0.9 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+let ch = null, token = 0;
+async function rebuild() {
+  const my = ++token, next = await makeCharacter({ ...c });
+  if (my !== token) return;
+  if (ch) scene.remove(ch.root);
+  ch = next; scene.add(ch.root);
+  ch.pose({ at: [0, 0], yaw: 0.25, t: 0 });
+  const box = new THREE.Box3().setFromObject(ch.root), h = box.max.y, mid = h * 0.55;
+  cam.position.set(0, mid, h * 2.6 + 0.3); cam.lookAt(0, mid, 0);
+}
 
 for (const k of Object.keys(SEEDS)) {
   const b = document.createElement('button'); b.textContent = SEEDS[k].name; b.dataset.seed = k; b.dataset.testid = 'seed-' + k;
   b.onclick = () => { c = { ...SEEDS[k] }; seed = k; build(); }; $('seeds').append(b);
 }
 function field(label, el, k) { const l = document.createElement('label'); l.textContent = label; el.dataset.testid = 'field-' + k; l.append(el); form.append(l); }
+const changed = (look) => { seed = null; text(); if (look) rebuild(); };
 function build() {
   form.textContent = '';
   const name = Object.assign(document.createElement('input'), { type: 'text', value: c.name });
-  name.oninput = () => { c.name = name.value; seed = null; draw(); }; field('Name', name, 'name');
+  name.oninput = () => { c.name = name.value; changed(false); }; field('Name', name, 'name');
   const role = document.createElement('select');
   for (const r of ['lead', 'rival', 'mascot', 'friend', 'boss']) role.add(new Option(r, r, false, r === c.role));
-  role.onchange = () => { c.role = role.value; seed = null; draw(); }; field('Role', role, 'role');
+  role.onchange = () => { c.role = role.value; changed(false); }; field('Role', role, 'role');
   for (const k of Object.keys(P)) {
     const s = document.createElement('select'); for (const v of P[k]) s.add(new Option(v, v, false, v === c[k]));
-    s.onchange = () => { c[k] = s.value; seed = null; draw(); }; field(k[0].toUpperCase() + k.slice(1), s, k);
+    s.onchange = () => { c[k] = s.value; changed(k !== 'voice'); }; field(k[0].toUpperCase() + k.slice(1), s, k);
   }
   for (const k of COLORS) {
     const i = Object.assign(document.createElement('input'), { type: 'color', value: c[k] });
-    i.oninput = () => { c[k] = i.value; seed = null; draw(); }; field({ skin: 'Skin / shell', hairColor: 'Hair', topColor: 'Top', legs: 'Legs' }[k], i, k);
+    i.oninput = () => { c[k] = i.value; changed(true); }; field({ skin: 'Skin / shell', hairColor: 'Hair', topColor: 'Top', legs: 'Legs' }[k], i, k);
   }
-  draw();
+  text(); rebuild();
 }
 function prompt() {
   const id = slug(c.name);
@@ -78,17 +103,8 @@ function prompt() {
     + `give it lines in "beats" with "who": "${id}", then re-render the episode preview.\n\n`
     + JSON.stringify({ id, ...c }, null, 2);
 }
-function draw() {
+function text() {
   for (const b of $('seeds').children) b.setAttribute('aria-pressed', String(b.dataset.seed === seed));
-  const cv = $('view'), g = cv.getContext('2d'), W = cv.width, H = cv.height, k = W / 1080;
-  g.setTransform(1, 0, 0, 1, 0, 0);
-  const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#0B1230'); bg.addColorStop(1, '#161C44'); g.fillStyle = bg; g.fillRect(0, 0, W, H);
-  for (const [x, col] of [[0, 'rgba(255,61,139,0.35)'], [W, 'rgba(41,224,255,0.30)']]) {
-    const r = g.createRadialGradient(x, H * 0.35, 0, x, H * 0.35, W * 0.9); r.addColorStop(0, col); r.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = r; g.fillRect(0, 0, W, H);
-  }
-  g.scale(k, k);
-  const s = Math.min(1.25, 1600 / window.TMV_FIGURE_HEIGHT(c));
-  window.TMV_FIGURE(g, c, { x: 540, y: 1700, s, t: performance.now() / 1000, rim: ['#FF3D8B', '#29E0FF'] });
   const txt = prompt(); if ($('out').textContent !== txt) $('out').textContent = txt;
 }
 $('copy').onclick = async () => {
@@ -99,7 +115,12 @@ $('copy').onclick = async () => {
   $('status').textContent = ok ? `Copied ${c.name}. Paste it into Claude Code.` : 'This browser blocked copying: select the text below and copy it by hand.';
 };
 build();
-(function loop() { draw(); requestAnimationFrame(loop); })();
+renderer.setAnimationLoop((ms) => {
+  const t = ms / 1000;
+  if (ch) ch.pose({ at: [0, 0], yaw: 0.25 + 0.25 * Math.sin(t * 0.5), t, talk: 0, blink: 0, exp: { exp_blink: (t % 3.1) < 0.15 ? 1 : 0 } });
+  renderer.render(scene, cam);
+  window.READY = !!ch;
+});
 </script>
 </body>
 </html>

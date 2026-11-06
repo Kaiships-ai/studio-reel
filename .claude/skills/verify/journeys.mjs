@@ -9,6 +9,7 @@ import { join, resolve } from 'node:path';
 import { chromium } from 'playwright-core';
 import { run, start } from '../../../kit/env.mjs';
 import { EXE, ARGS } from '../../../core/render/browser.mjs';
+import { serve } from '../../../core/render/serve.mjs';
 
 const argv = process.argv.slice(2), pos = argv.filter(a => !a.startsWith('--'));
 const flag = k => argv.find(a => a.startsWith(`--${k}=`))?.split('=')[1];
@@ -183,15 +184,17 @@ const JOURNEYS = {
       for (const f of ['sample.mp4', 'out/sheet.jpg', 'out/check.json']) cpSync(join(KIT, 'episodes/sample', f), join(EV, 'tmv-' + f.split('/').pop()));
     });
     await step('doctor is all ✓ in the unzipped kit', () => has(ok(node(join(KIT, 'kit/studio.mjs'), 'doctor')), 'All good.'));
-    await step('the character designer opens offline and copies a cast entry', async () => {
+    await step('the character designer (served from the kit, no network) drives the 3D figures and copies a cast entry', async () => {
+      const { server, port } = await serve(KIT);   // what pixi run designer does (episode/designer.mjs)
       const b = await chromium.launch({ executablePath: EXE, args: ARGS }), p = await b.newPage({ viewport: { width: 1100, height: 900 } }), errs = [];
       p.on('pageerror', e => errs.push(e.message));
-      await p.goto('file://' + join(KIT, 'character-designer.html'));
-      for (const s of ['nova', 'rook', 'blip']) { await p.click(`[data-testid=seed-${s}]`); await p.locator('[data-testid=preview]').screenshot({ path: join(EV, `tmv-char-${s}.png`) }); }
-      await p.fill('[data-testid=field-name]', 'Juno'); await p.selectOption('[data-testid=field-hair]', 'curly');
-      await p.locator('[data-testid=preview]').screenshot({ path: join(EV, 'tmv-char-designed.png') });
+      await p.goto(`http://127.0.0.1:${port}/character-designer.html`); await p.waitForFunction(() => window.READY === true, null, { timeout: 60000 });
+      const shot = async (name) => { await p.waitForTimeout(600); await p.locator('[data-testid=preview]').screenshot({ path: join(EV, `tmv-char-${name}.png`) }); };
+      for (const s of ['nova', 'theo', 'blip']) { await p.click(`[data-testid=seed-${s}]`); await shot(s); }
+      await p.click('[data-testid=seed-nova]'); await p.fill('[data-testid=field-name]', 'Juno'); await p.selectOption('[data-testid=field-hair]', 'curly');
+      await p.selectOption('[data-testid=field-extra]', 'glasses'); await shot('designed');
       await p.click('[data-testid=copy]'); await p.waitForTimeout(200);
-      const txt = await p.textContent('[data-testid=json]'), st = await p.textContent('#status'); await b.close();
+      const txt = await p.textContent('[data-testid=json]'), st = await p.textContent('#status'); await b.close(); server.close();
       if (errs.length) throw new Error(errs.join('; '));
       const c = JSON.parse(txt.slice(txt.indexOf('\n\n') + 2));
       if (c.id !== 'juno' || c.hair !== 'curly' || !c.voice) throw new Error('copied cast entry is wrong');
@@ -199,7 +202,7 @@ const JOURNEYS = {
     });
     await step('planted break: a beat for someone not in the cast fails with its own message', () => {
       const bad = join(KIT, 'episodes/broken'); cpSync(join(KIT, 'episodes/sample'), bad, { recursive: true });
-      const f = join(bad, 'episode.json'); writeFileSync(f, readFileSync(f, 'utf8').replace(/"who": "rook"/g, '"who": "nobody"'));
+      const f = join(bad, 'episode.json'); writeFileSync(f, readFileSync(f, 'utf8').replace(/"who": "theo"/g, '"who": "nobody"'));
       has(no(node(join(KIT, 'episode/make.mjs'), join(KIT, 'episodes/broken'), 'render')), '"who": "nobody" is not in the cast');
     });
     await step('planted break: a changed line without a new voice fails and names the vo step', () => {

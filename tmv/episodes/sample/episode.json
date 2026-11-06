@@ -2,21 +2,122 @@
   "series": "Ten Million Views",
   "ep": 1,
   "title": "Two hundred views",
-  "palette": { "bg": "#0B1230", "bg2": "#1A2150", "left": "#FF3D8B", "right": "#29E0FF" },
+  "palette": {
+    "neon": "#FF3D8B",
+    "left": "#FF3D8B",
+    "right": "#29E0FF",
+    "card": "#EFE9DE"
+  },
+  "texts": {
+    "handle": "@nova.builds",
+    "rivalHandle": "@theo.ships",
+    "sign": "SPEED WINS"
+  },
   "cast": [
-    { "id": "nova", "seed": "nova" },
-    { "id": "rook", "seed": "rook" },
-    { "id": "blip", "seed": "blip" }
+    {
+      "id": "nova",
+      "seed": "nova"
+    },
+    {
+      "id": "theo",
+      "seed": "theo"
+    },
+    {
+      "id": "blip",
+      "seed": "blip"
+    }
   ],
   "beats": [
-    { "who": "nova", "shot": "close", "line": "I shipped my app today. Two hundred views.", "hud": { "DAY": "1", "VIEWS": "212" } },
-    { "who": "rook", "shot": "two", "line": "Two hundred? My launch ad hit forty thousand by lunch.", "hud": { "RIVAL": "40,000" } },
-    { "who": "nova", "shot": "close", "line": "His app does half of what mine does." },
-    { "who": "blip", "shot": "wide", "line": "Beep. People don't share apps. They share stories." },
-    { "who": "nova", "shot": "two", "with": "blip", "line": "So I show the bug that almost killed it?", "hud": { "VIEWS": "236" } },
-    { "who": "rook", "shot": "close", "line": "Or post a clean demo. Nobody cares about your bugs." },
-    { "who": "blip", "shot": "two", "with": "nova", "line": "One post tonight. Tomorrow, we count.", "hud": { "DAY": "2" } },
-    { "who": "nova", "shot": "wide", "line": "Comment A for the demo, or B for the story." }
+    {
+      "who": "nova",
+      "shot": "phone",
+      "line": "I shipped my app today. Two hundred views.",
+      "hud": {
+        "DAY": "1",
+        "VIEWS": "212"
+      },
+      "exp": "tired"
+    },
+    {
+      "who": "theo",
+      "shot": "close",
+      "line": "Two hundred? My launch ad hit forty thousand by lunch.",
+      "hud": {
+        "RIVAL": "40,000"
+      },
+      "exp": "smirk"
+    },
+    {
+      "who": "nova",
+      "shot": "close",
+      "line": "His app does half of what mine does.",
+      "exp": "angry"
+    },
+    {
+      "who": "theo",
+      "shot": "two",
+      "line": "Views are views, Nova. Speed wins.",
+      "hud": {
+        "RIVAL": "52,000"
+      },
+      "exp": "grin"
+    },
+    {
+      "who": "blip",
+      "shot": "two",
+      "line": "Beep. People don't share apps. They share stories.",
+      "exp": "proud"
+    },
+    {
+      "who": "nova",
+      "shot": "card",
+      "card": [
+        "APPS DON'T SPREAD.",
+        "STORIES DO."
+      ],
+      "line": "So my story is the bug that almost killed it?",
+      "exp": "thinking"
+    },
+    {
+      "who": "theo",
+      "shot": "close",
+      "line": "Or post a clean demo. Nobody cares about your bugs.",
+      "exp": "doubt"
+    },
+    {
+      "who": "nova",
+      "shot": "wide",
+      "line": "Three nights. One bug. I almost quit.",
+      "hud": {
+        "VIEWS": "236"
+      },
+      "exp": "sad"
+    },
+    {
+      "who": "blip",
+      "shot": "two",
+      "line": "That is the story. Show the night you almost quit.",
+      "exp": "proud"
+    },
+    {
+      "who": "blip",
+      "shot": "close",
+      "line": "One post tonight. Tomorrow, we count.",
+      "hud": {
+        "DAY": "2"
+      },
+      "exp": "excited"
+    },
+    {
+      "who": "nova",
+      "shot": "close",
+      "line": "Comment A for the demo, or B for the story.",
+      "exp": "determined"
+    }
   ],
-  "vote": { "question": "What does Nova post tonight?", "a": "the demo", "b": "the story" }
+  "vote": {
+    "question": "What does Nova post tonight?",
+    "a": "the demo",
+    "b": "the story"
+  }
 }

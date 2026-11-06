@@ -8,7 +8,7 @@
  },
  {
   "id": "b02",
-  "who": "rook",
+  "who": "theo",
   "text": "Two hundred? My launch ad hit forty thousand by lunch.",
   "voice": "am_michael",
   "speed": 1.02
@@ -22,34 +22,55 @@
  },
  {
   "id": "b04",
+  "who": "theo",
+  "text": "Views are views, Nova. Speed wins.",
+  "voice": "am_michael",
+  "speed": 1.02
+ },
+ {
+  "id": "b05",
   "who": "blip",
   "text": "Beep. People don't share apps. They share stories.",
   "voice": "am_puck",
   "speed": 1.08
  },
  {
-  "id": "b05",
+  "id": "b06",
   "who": "nova",
-  "text": "So I show the bug that almost killed it?",
+  "text": "So my story is the bug that almost killed it?",
   "voice": "af_heart",
   "speed": 1
  },
  {
-  "id": "b06",
-  "who": "rook",
+  "id": "b07",
+  "who": "theo",
   "text": "Or post a clean demo. Nobody cares about your bugs.",
   "voice": "am_michael",
   "speed": 1.02
  },
  {
-  "id": "b07",
+  "id": "b08",
+  "who": "nova",
+  "text": "Three nights. One bug. I almost quit.",
+  "voice": "af_heart",
+  "speed": 1
+ },
+ {
+  "id": "b09",
+  "who": "blip",
+  "text": "That is the story. Show the night you almost quit.",
+  "voice": "am_puck",
+  "speed": 1.08
+ },
+ {
+  "id": "b10",
   "who": "blip",
   "text": "One post tonight. Tomorrow, we count.",
   "voice": "am_puck",
   "speed": 1.08
  },
  {
-  "id": "b08",
+  "id": "b11",
   "who": "nova",
   "text": "Comment A for the demo, or B for the story.",
   "voice": "af_heart",

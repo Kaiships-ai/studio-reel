@@ -3,18 +3,18 @@
 <head>
 <meta charset="utf-8">
 <title>episode</title>
-<!-- Every episode folder holds a copy of this page. It draws episode.json with episode/engine.js. -->
+<!-- Every episode folder holds a copy of this page. It plays episode.json + vo/vo.json in 3D with episode/main.js. -->
+<script type="importmap">{ "imports": { "three": "/node_modules/three/build/three.module.js", "three/addons/": "/node_modules/three/examples/jsm/" } }</script>
 <style>
 @font-face { font-family: 'Inter Tight'; src: url(/episode/fonts/InterTight-var.woff2) format('woff2'); font-weight: 100 900; }
 @font-face { font-family: 'JetBrains Mono'; src: url(/episode/fonts/JetBrainsMono-var.ttf) format('truetype'); font-weight: 100 900; }
-html, body { margin: 0; background: #0B1230; overflow: hidden; }
-canvas { display: block; width: 100vw; height: 100vh; }
+html, body { margin: 0; overflow: hidden; background: #000; }
+canvas { position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; }
 </style>
 </head>
 <body>
-<canvas id="c"></canvas>
+<canvas id="gl"></canvas><canvas id="fx"></canvas>
 <script src="/characters/cast.js"></script>
-<script src="/characters/figure.js"></script>
-<script src="/episode/engine.js"></script>
+<script type="module" src="/episode/main.js"></script>
 </body>
 </html>

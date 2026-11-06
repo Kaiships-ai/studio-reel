@@ -25,6 +25,7 @@ faster-whisper = "==1.2.1"
 
 [tasks]
 studio = "node kit/studio.mjs"
+designer = "node episode/designer.mjs"
 fetch = "python kit/fetch.py"
 
 # Optional extras some styles use: the offline Kokoro voice (core/tts/tts.py) and plucked strings (core/audio/pluck.py).
