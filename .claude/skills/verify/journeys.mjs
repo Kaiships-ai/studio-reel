@@ -210,6 +210,29 @@ const JOURNEYS = {
       writeFileSync(f, readFileSync(f, 'utf8').replace('Two hundred views.', 'Three hundred views.'));
       has(no(node(join(KIT, 'episode/make.mjs'), join(KIT, 'episodes/broken'), 'render')), 'changed since its voice was made');
     });
+    // slice 4: a series. Ep1 = the sample; the vote winner B writes Ep2's PREVIOUSLY opening; Ep2's story is the fixture
+    // tmv-series-ep2.json (what /series has Claude write); Ep2 gets its own voice and renders with every check ✓
+    await step('series: new from the sample, next --winner B writes ep2 with the PREVIOUSLY · EP 1 opening', () => {
+      const SD = join(KIT, 'episodes/night-build');
+      has(ok(node(join(KIT, 'episode/series.mjs'), 'new', SD, '--from', join(KIT, 'episodes/sample'))), 'series.json');
+      has(ok(node(join(KIT, 'episode/series.mjs'), 'next', SD, '--winner', 'B')), 'ep1 winner: B · the story');
+      has(no(node(join(KIT, 'episode/series.mjs'), 'next', SD, '--winner', 'C')), '--winner must be A or B');
+      const e2 = JSON.parse(readFileSync(join(SD, 'ep2/episode.json'), 'utf8')), sj = JSON.parse(readFileSync(join(SD, 'series.json'), 'utf8'));
+      if (e2.previously?.winner?.text !== 'the story' || e2.beats[0].shot !== 'previously' || sj.episodes[0].winner !== 'B' || e2.cast) throw new Error('ep2 is not linked to ep1');
+      const fx = JSON.parse(readFileSync('.claude/skills/verify/features/tmv-series-ep2.json', 'utf8'));
+      writeFileSync(join(SD, 'ep2/episode.json'), JSON.stringify({ ...fx, previously: e2.previously }, null, 2));
+    });
+    await step('series: ep2 gets its own voice and renders, every check ✓ (faces included)', () => {
+      const M = join(KIT, 'core/tts/kokoro-v1.0.onnx');
+      if (!existsSync(M)) { if (existsSync('core/tts/kokoro-v1.0.onnx')) for (const f of ['kokoro-v1.0.onnx', 'voices-v1.0.bin']) cpSync(join('core/tts', f), join(KIT, 'core/tts', f));
+        else ok(run('pixi', ['run', '--manifest-path', join(KIT, 'pixi.toml'), 'fetch', 'voice'], { capture: true, cwd: KIT })); }
+      const SD = join(KIT, 'episodes/night-build');
+      ok(run('pixi', ['run', '--manifest-path', join(KIT, 'pixi.toml'), '-e', 'full', 'node', 'episode/make.mjs', join(SD, 'ep2'), 'vo'], { capture: true, cwd: KIT }));
+      ok(run('pixi', ['run', '--manifest-path', join(KIT, 'pixi.toml'), 'node', 'episode/make.mjs', join(SD, 'ep2'), 'render', 'check'], { capture: true, cwd: KIT }));
+      const rep = JSON.parse(readFileSync(join(SD, 'ep2/out/check.json'), 'utf8')), bad = rep.checks.filter(c => !c.ok);
+      if (bad.length) throw new Error(bad.map(c => c.name).join(', '));
+      cpSync(join(SD, 'ep1/ep1.mp4'), join(EV, 'tmv-series-ep1.mp4')); cpSync(join(SD, 'ep2/ep2.mp4'), join(EV, 'tmv-series-ep2.mp4')); cpSync(join(SD, 'series.json'), join(EV, 'tmv-series.json'));
+    });
     rmSync(BOX, { recursive: true, force: true });
   },
 };

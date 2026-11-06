@@ -26,6 +26,14 @@ Claude plan. Licence: `LICENSE`. Help: Discord (Buyer role) or kaiships.ai@gmail
 - `character-designer.html`: run `pixi run designer`, open the address it prints, design your own character on the same
   3D figures, press "Copy for Claude", paste into Claude Code.
 
+## A series
+
+`node episode/series.mjs new episodes/<show> --from episodes/sample` makes `episodes/<show>/series.json` (the show's
+name, cast, palette and texts, shared by every episode) and `ep1/`. When the vote is in,
+`node episode/series.mjs next episodes/<show> --winner B` records it and writes `ep2/episode.json` with the opening
+(a `"shot": "previously"` card: PREVIOUSLY · EP 1, the question, the winning answer) and a recap beat; write the rest of
+the story, then `vo` and render it like any episode. `node episode/series.mjs status episodes/<show>` lists them.
+
 ## episode.json
 
 `make.mjs` checks the fields below and names the beat or cast entry to fix.

@@ -25,3 +25,7 @@ minutes): builds the zip, unzips into a fresh folder with a space in its path, `
 episode, every check ✓), doctor, second install no-op, designer served from the kit (3D screenshots of each seed + one
 designed) and copied JSON, planted breaks (a beat for `nobody` → `"who": "nobody" is not in the cast`; a changed line →
 names the vo step). Evidence: `tmv-sample.mp4`, `tmv-sheet.jpg`, `tmv-char-*.png`.
+
+- `series` (slice 4): `episode/series.mjs new|next|status`; `series.json` holds series, cast, palette, texts (make.mjs and
+  main.js merge it under each episode); `next --winner X` writes `previously` + the PREVIOUSLY card beat; the journey
+  renders Ep2 from `features/tmv-series-ep2.json` with its own voice. Evidence: `tmv-series-ep1.mp4`, `tmv-series-ep2.mp4`, `tmv-series.json`.

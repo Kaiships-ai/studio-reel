@@ -24,18 +24,22 @@ const sh = (tool, args) => { const r = run(tool, args); if (r.error || r.status 
 const probe = f => JSON.parse(run('ffprobe', ['-v', 'error', '-show_streams', '-show_format', '-of', 'json', f], { capture: true }).stdout || '{}');
 
 // every field the engine reads is checked here, so a typo in episode.json stops with its own line instead of a broken frame
-const SHOTS = ['room', 'close', 'two', 'wide', 'phone', 'card', 'stats'];
+const SHOTS = ['room', 'close', 'two', 'wide', 'phone', 'card', 'stats', 'previously'];
 const EXPS = ['angry', 'determined', 'doubt', 'excited', 'grin', 'guilty', 'laugh', 'nervous', 'proud', 'relieved', 'sad', 'shock', 'smirk', 'surprise', 'teary', 'thinking', 'tired', 'worried'];
 const HEX = /^#[0-9a-fA-F]{6}$/;
 function episode() {
   let e; try { e = JSON.parse(readFileSync(join(ep, 'episode.json'), 'utf8')); } catch (x) { die(`episode.json is not valid JSON: ${x.message}`); }
+  // in a series (episode/series.mjs) the show's name, cast, palette and texts come from ../series.json unless the episode sets them
+  const sf = join(ep, '..', 'series.json');
+  if (existsSync(sf)) { let s; try { s = JSON.parse(readFileSync(sf, 'utf8')); } catch (x) { die(`${sf} is not valid JSON: ${x.message}`); }
+    e = { ...e, series: e.series ?? s.series, cast: e.cast ?? s.cast, palette: { ...(s.palette ?? {}), ...(e.palette ?? {}) }, texts: { ...(s.texts ?? {}), ...(e.texts ?? {}) } }; }
   const window = {}; new Function('window', readFileSync(join(ROOT, 'characters/cast.js'), 'utf8'))(window);
   const P = window.TMV_PARTS, errs = [], err = m => errs.push(m), str = v => typeof v === 'string' && v.trim() !== '';
   if (!str(e.series)) err('"series" must be a text (the show name, in the kicker)');
   if (!Number.isInteger(e.ep) || e.ep < 1) err('"ep" must be a whole number from 1');
   if (!str(e.title)) err('"title" must be a text (the episode title over the first shot)');
   for (const [k, v] of Object.entries(e.palette ?? {})) { if (!['neon', 'left', 'right', 'card'].includes(k)) err(`palette "${k}" is unknown (neon, left, right, card)`); else if (!HEX.test(v)) err(`palette "${k}": "${v}" is not a colour like "#FF3D8B"`); }
-  const TXK = ['handle', 'sign', 'kicker', 'phoneLabel', 'phoneHud', 'phoneFoot', 'or', 'voteFooter'];
+  const TXK = ['handle', 'sign', 'kicker', 'phoneLabel', 'phoneHud', 'phoneFoot', 'or', 'voteFooter', 'previously', 'youPicked'];
   for (const [k, v] of Object.entries(e.texts ?? {})) { if (!TXK.includes(k)) err(`texts "${k}" is unknown (${TXK.join(', ')})`); else if (typeof v !== 'string') err(`texts "${k}" must be a text`); }
   if (!Array.isArray(e.cast) || !e.cast.length) err('"cast" must list at least one character');
   const cast = {};
@@ -67,6 +71,9 @@ function episode() {
     for (const [k, v] of Object.entries(b.hud ?? {})) if (!(typeof v === 'string' || typeof v === 'number' || (v && typeof v === 'object' && v.value != null && (v.bar === undefined || (typeof v.bar === 'number' && v.bar >= 0 && v.bar <= 1)))))
       err(`${at}: hud "${k}" must be "212" or {"value": "212", "bar": 0..1, "style": "danger"}`);
   });
+  if ((e.beats ?? []).some(b => b?.shot === 'previously')) { const p = e.previously;
+    if (!p || !Number.isInteger(p.ep) || !str(p.question) || !str(p.winner?.tag) || !str(p.winner?.text) || !str(p.loser?.tag) || !str(p.loser?.text))
+      err('a "previously" beat needs "previously": {"ep": 1, "question", "winner": {"tag", "text"}, "loser": {"tag", "text"}} (episode/series.mjs next writes it)'); }
   const ph = e.texts?.phoneHud ?? 'VIEWS';
   if ((e.beats ?? []).some(b => b?.shot === 'phone') && !(e.beats ?? []).some(b => b?.hud && ph in b.hud)) err(`a phone shot shows the HUD label "${ph}" (texts.phoneHud), but no beat sets it in "hud"`);
   const v = e.vote ?? {};
@@ -123,12 +130,12 @@ const STEP = {
     ];
     // faces not blown out: frames at 2 per second from every shot with people (not cards), the vote frame only above its buttons;
     // fail when more than 2 % of the skin pixels are washed to a pale blank (faceluma.py, the show's rule)
-    const e = JSON.parse(readFileSync(join(ep, 'episode.json'), 'utf8')), FD = join(OUT, 'faces'), lastS = vo.lines.at(-1).s;
+    const { e } = episode(), FD = join(OUT, 'faces'), lastS = vo.lines.at(-1).s;
     rmSync(FD, { recursive: true, force: true }); mkdirSync(FD, { recursive: true });
     const ft = [];
     for (let t = 0.25; t < dur - 0.1; t += 0.5) {
       const i = vo.lines.findLastIndex(l => l.s - 0.12 <= t), shot = e.beats[Math.max(i, 0)]?.shot;
-      if (shot === 'card' || shot === 'stats') continue;
+      if (shot === 'card' || shot === 'stats' || shot === 'previously') continue;
       const f = join(FD, `f${ft.length}.png`);
       run('ffmpeg', ['-v', 'error', '-y', '-ss', t.toFixed(2), '-i', MP4, '-frames:v', '1', '-vf', t >= lastS ? 'crop=iw:ih*0.5:0:0,scale=360:-2' : 'scale=360:-2', f]); ft.push(f);
     }

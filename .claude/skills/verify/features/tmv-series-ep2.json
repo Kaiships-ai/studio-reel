@@ -1,0 +1,97 @@
+{
+  "ep": 2,
+  "title": "The night I almost quit",
+  "previously": {
+    "ep": 1,
+    "question": "What does Nova post tonight?",
+    "winner": {
+      "tag": "B",
+      "text": "the story"
+    },
+    "loser": {
+      "tag": "A",
+      "text": "the demo"
+    }
+  },
+  "beats": [
+    {
+      "who": "nova",
+      "shot": "previously",
+      "line": "Last time, you picked the story."
+    },
+    {
+      "who": "nova",
+      "shot": "room",
+      "line": "So I posted the night I almost quit.",
+      "exp": "nervous",
+      "hud": {
+        "DAY": "2",
+        "VIEWS": "236",
+        "GOAL": {
+          "value": "2%",
+          "bar": 0.024
+        }
+      }
+    },
+    {
+      "who": "blip",
+      "shot": "close",
+      "line": "Beep. Look at the count.",
+      "exp": "excited"
+    },
+    {
+      "who": "nova",
+      "shot": "phone",
+      "line": "Four thousand views. In one night.",
+      "exp": "surprise",
+      "hud": {
+        "VIEWS": "4,100",
+        "GOAL": {
+          "value": "41%",
+          "bar": 0.41
+        }
+      }
+    },
+    {
+      "who": "theo",
+      "shot": "close",
+      "line": "Lucky. Bugs don't go viral twice.",
+      "exp": "smirk",
+      "hud": {
+        "RIVAL": {
+          "value": "55,000",
+          "style": "danger"
+        }
+      }
+    },
+    {
+      "who": "nova",
+      "shot": "close",
+      "line": "Then tomorrow I show how I fixed it.",
+      "exp": "determined"
+    },
+    {
+      "who": "blip",
+      "shot": "card",
+      "line": "People came for the fall. They stay for the fix.",
+      "exp": "proud",
+      "card": [
+        "THEY CAME FOR THE FALL.",
+        "THEY STAY FOR THE FIX."
+      ]
+    },
+    {
+      "who": "nova",
+      "shot": "close",
+      "line": "Comment A for the fix, or B for a live build.",
+      "exp": "grin"
+    }
+  ],
+  "vote": {
+    "question": "What does Nova show next?",
+    "a": "the fix",
+    "b": "a live build",
+    "tagA": "A",
+    "tagB": "B"
+  }
+}

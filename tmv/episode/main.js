@@ -10,7 +10,10 @@ import { buildWorld } from './world.js';
 import { createHud, WHITE } from './hud.js';
 import { makeCharacter } from '../characters/rig.js';
 
-const EP = await (await fetch('episode.json')).json();
+// an episode of a series (episode/series.mjs) shares the show's name, cast, palette and texts from ../series.json
+const SER = await fetch('../series.json').then(r => r.ok ? r.json() : {}).catch(() => ({}));
+const EP0 = await (await fetch('episode.json')).json();
+const EP = { ...EP0, series: EP0.series ?? SER.series, cast: EP0.cast ?? SER.cast, palette: { ...(SER.palette ?? {}), ...(EP0.palette ?? {}) }, texts: { ...(SER.texts ?? {}), ...(EP0.texts ?? {}) } };
 const VO = await (await fetch('vo/vo.json')).json();
 const PAL = { neon: '#FF3D8B', left: '#FF3D8B', right: '#29E0FF', card: '#EFE9DE', ...(EP.palette ?? {}) };
 // every word the frame shows comes from episode.json (texts); these are only the fallbacks. {series} {ep} {next} fill in.
@@ -76,7 +79,8 @@ function drawPhone(t) {
   G.fillStyle = '#0b0d14'; G.fillRect(0, 0, W_, H_);
   HP.txt(TX.handle, 540, 230, 44, 'rgba(247,245,242,.7)', { w: 700, mono: true });
   HP.txt(TX.phoneLabel, 540, 560, 44, 'rgba(247,245,242,.55)', { w: 700, mono: true, ls: 8 });
-  if (v && v.from != null && v.k < 1) HP.roll(v.from, v.val, v.k, 540, 760, 220, WHITE, { w: 800 }); else HP.txt(v ? v.val : '0', 540, 760, 220, WHITE, { w: 800, mono: true });
+  const nz = Math.min(220, 660 / Math.max(3, String(v?.val ?? '0').length));   // a long count ("4,100") shrinks to stay on the screen
+  if (v && v.from != null && v.k < 1) HP.roll(v.from, v.val, v.k, 540, 760, nz, WHITE, { w: 800 }); else HP.txt(v ? v.val : '0', 540, 760, nz, WHITE, { w: 800, mono: true });
   G.save(); G.strokeStyle = NEON; G.lineWidth = HP.P(10); G.lineJoin = 'round'; G.beginPath();
   for (let i = 0; i <= 24; i++) { const x = 140 + i * 33.3, y = 1340 - 260 * Math.pow(i / 24, 2.2) * (0.85 + 0.15 * hsh(i, 2)); i ? G.lineTo(HP.P(x), HP.P(y)) : G.moveTo(HP.P(x), HP.P(y)); }
   G.stroke(); G.restore(); HP.txt(TX.phoneFoot, 540, 1460, 36, 'rgba(247,245,242,.45)', { w: 600 });
@@ -255,6 +259,7 @@ const F3D = {
   },
   card(t, sh) { typing(LEAD, t, {}); return camLook(V(0, 1, 2), V(0, 1, 0), 40); },   // the 2D card covers the frame
   stats(t, sh) { return F3D.card(t, sh); },
+  previously(t, sh) { return F3D.card(t, sh); },
 };
 function face(t, sh, ch, c) {
   const k = lin(seg(t, sh.a, sh.b)), r = holdPhone(ch, t, { pitch: -2, lean: 6, curl: 4, dp: V(0, -0.2, 0.04), exp: expOf(t, ch, sh) }); poseBots(t, sh);
@@ -336,8 +341,25 @@ function stats(t, sh) {
   H2.txt(KICKER, 540, 1800, 24, 'rgba(17,17,17,.42)', { w: 600, mono: true, ls: 6 });
   g.restore();
 }
+const T0 = (SHOTS.find(s => s.shot !== 'previously') ?? SHOTS[0]).a;   // Ep 2+: the title waits for the first scene after PREVIOUSLY
+// Ep 2+ opens on this card (ST-79): PREVIOUSLY · EP N, last episode's question, the winning answer lit, the other one struck
+function previously(t, sh) {
+  paper(CREAM); const P_ = EP.previously, k = lin(seg(t, sh.a, sh.b)), s = lerp(1, 1.04, k);
+  g.save(); g.translate(P(540), P(960)); g.scale(s, s); g.translate(-P(540), -P(960));
+  H2.txt(fill(TX.previously ?? 'PREVIOUSLY · EP {prev}').replace(/\{prev\}/g, P_.ep).toUpperCase(), 540, 430, 34, INKP, { w: 800, mono: true, ls: 8, alpha: eout(seg(t, sh.a, sh.a + 0.25)) });
+  wipeText(P_.question.toUpperCase(), 540, 560, fitSize(P_.question.toUpperCase(), 64, 900), INKC, seg(t, sh.a + 0.1, sh.a + 0.45));
+  const pill = (y, tag, text, win, t0) => { const kk = eout(seg(t, t0, t0 + 0.3)); if (kk <= 0) return; const lab = `${tag} · ${String(text).toUpperCase()}`;
+    g.save(); g.globalAlpha = kk * (win ? 1 : 0.4); H2.rr(160, y - 62, 760, 124, 62); g.fillStyle = win ? INKP : 'rgba(17,17,17,.18)'; g.fill();
+    H2.txt(lab, 540, y + 3, fitSize(lab, 56, 680), win ? WHITE : INKC, { w: 900, ls: 2 });
+    if (!win) { g.fillStyle = INKC; g.fillRect(P(200), P(y - 2), P(680 * eout(seg(t, t0 + 0.4, t0 + 0.7))), P(5)); }
+    g.restore(); };
+  pill(760, P_.winner.tag, P_.winner.text, true, sh.a + 0.5); pill(930, P_.loser.tag, P_.loser.text, false, sh.a + 0.6);
+  H2.txt(fill(TX.youPicked ?? 'YOU PICKED {tag}').replace(/\{tag\}/g, P_.winner.tag).toUpperCase(), 540, 1120, 40, INKC, { w: 800, mono: true, ls: 6, alpha: eout(seg(t, sh.a + 1.0, sh.a + 1.3)) });
+  H2.txt(KICKER, 540, 1800, 24, 'rgba(17,17,17,.42)', { w: 600, mono: true, ls: 6 });
+  g.restore();
+}
 function title(t) {   // the kicker and the episode title over the first shot
-  const a = ss(seg(t, 0.1, 0.4)) * (1 - ss(seg(t, 2.0, 2.4))); if (a <= 0) return;
+  const a = ss(seg(t, T0 + 0.1, T0 + 0.4)) * (1 - ss(seg(t, T0 + 2.0, T0 + 2.4))); if (a <= 0) return;
   // over the establishing shot's ceiling, under the HUD: no band, the type carries its own dark edge
   H2.txt(KICKER, 540, 380, 30, NEON, { w: 700, mono: true, ls: 8, alpha: a, stroke: 6 });
   wipeText(EP.title.toUpperCase(), 540, 480, fitSize(EP.title.toUpperCase(), 100, 940), WHITE, seg(t, 0.2, 0.55), { alpha: a, stroke: 10 });
@@ -366,10 +388,11 @@ function vote(t) {
 function overlay(t) {
   const sh = shotOf(t);
   if (sh.shot === 'card') card(t, sh);
+  else if (sh.shot === 'previously') previously(t, sh);
   else if (sh.shot === 'stats') stats(t, sh);
   else H2.chips(t, hudAt(t).items, { accent: NEON, alpha: ss(seg(t, 0.3, 0.6)) });
   title(t);
-  const paperShot = sh.shot === 'card' || sh.shot === 'stats';
+  const paperShot = sh.shot === 'card' || sh.shot === 'stats' || sh.shot === 'previously';
   if (sh !== LAST || t < LAST.le + 0.3) H2.captions(t, WORDS, paperShot ? 1620 : 1560, { paper: paperShot, size: 62, cut: sh.a });
   vote(t);
 }
