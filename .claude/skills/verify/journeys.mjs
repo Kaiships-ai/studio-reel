@@ -1,4 +1,3 @@
-import { spawnSync } from 'node:child_process';
 // journeys.mjs: every feature in features/ driven for real, one after another, on throwaway films/verify-run*. Run from the library root:
 //   node .claude/skills/verify/journeys.mjs [run-id] [--only=new-film,voice,...] [--full] [--any=<finished reel in another style>]
 // Each step prints `ok:` or `FAIL:`; exit 1 when any failed. Writes films/verify-evidence/<run-id>/: transcript.txt,
@@ -224,14 +223,14 @@ const JOURNEYS = {
       const fx = JSON.parse(readFileSync('.claude/skills/verify/features/tmv-series-ep2.json', 'utf8'));
       writeFileSync(join(SD, 'ep2/episode.json'), JSON.stringify({ ...fx, previously: e2.previously }, null, 2));
     });
-    const px = (...a) => { const r = spawnSync('pixi', ['run', ...a], { cwd: KIT, encoding: 'utf8' }); log(r.stdout + r.stderr); return { code: r.status, out: r.stdout + r.stderr }; };
+    const kt = (...a) => node('test/kit-pixi.mjs', KIT, ...a);   // pixi run in the kit, as a buyer types it
     await step('series: ep2 gets its own voice and renders, every check ✓ (faces included)', () => {
       const M = join(KIT, 'core/tts/kokoro-v1.0.onnx');
       if (!existsSync(M)) { if (existsSync('core/tts/kokoro-v1.0.onnx')) for (const f of ['kokoro-v1.0.onnx', 'voices-v1.0.bin']) cpSync(join('core/tts', f), join(KIT, 'core/tts', f));
-        else ok(px('fetch', 'voice')); }
+        else throw new Error('no Kokoro model: run pixi run fetch voice in the kit (about 350 MB)'); }
       const SD = join(KIT, 'episodes/night-build');
-      ok(px('-e', 'full', 'node', 'episode/make.mjs', join(SD, 'ep2'), 'vo'));
-      ok(px('node', 'episode/make.mjs', join(SD, 'ep2'), 'render', 'check'));
+      ok(kt('-e', 'full', 'node', 'episode/make.mjs', join(SD, 'ep2'), 'vo'));
+      ok(kt('node', 'episode/make.mjs', join(SD, 'ep2'), 'render', 'check'));
       const rep = JSON.parse(readFileSync(join(SD, 'ep2/out/check.json'), 'utf8')), bad = rep.checks.filter(c => !c.ok);
       if (bad.length) throw new Error(bad.map(c => c.name).join(', '));
       cpSync(join(SD, 'ep1/ep1.mp4'), join(EV, 'tmv-series-ep1.mp4')); cpSync(join(SD, 'ep2/ep2.mp4'), join(EV, 'tmv-series-ep2.mp4')); cpSync(join(SD, 'series.json'), join(EV, 'tmv-series.json'));

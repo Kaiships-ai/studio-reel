@@ -1,6 +1,6 @@
 # caption-sync.py (dev only, not shipped): compare an episode's caption word times (vo/vo.json) with whisper.cpp word
 # times measured on its voice. Needs whisper-cli and a ggml model on this machine.
-#   python3 dev/caption-sync.py <episode folder> [--model ~/.cache/whisper/ggml-large-v3-turbo.bin]
+#   pixi run python dev/caption-sync.py <episode folder> [--model ~/.cache/whisper/ggml-large-v3-turbo.bin]
 # whisper's DTW word times sit a steady ~0.2 s late, so that bias (the median signed gap) is taken out first. Prints each word
 # whose caption start is more than 0.15 s off after that, the bias and the max; exit 1 when any word is off by more than 0.3 s.
 import json, os, re, statistics, subprocess, sys, tempfile
