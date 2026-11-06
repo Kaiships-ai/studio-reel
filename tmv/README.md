@@ -15,7 +15,7 @@ Claude plan. Licence: `LICENSE`. Help: Discord (Buyer role) or kaiships.ai@gmail
 
 - `episodes/sample/`: the sample episode, in 3D (a room at night with neon through the curtain, a rival's corner, a
   phone, cream cards, a data card, HUD chips with meters, word-by-word captions, a code-made sound bed, the vote as the
-  last frame). `episode.json` is the whole story; every word on screen comes from it. Setup renders it to
+  last frame). `episode.json` is the whole story; every word on screen comes from it (the engine has English fallbacks only for `texts` you leave out). Setup renders it to
   `episodes/sample/sample.mp4` (preview, 720x1280).
 - `episode/`: the 3D engine the episodes play in (`main.js`, `stage.js`, `world.js`, `hud.js`, the room in `assets/`) and
   `bed.py` (room tone, music bed and hits under the voice, made in code, no samples).
@@ -28,7 +28,7 @@ Claude plan. Licence: `LICENSE`. Help: Discord (Buyer role) or kaiships.ai@gmail
 
 ## episode.json
 
-`make.mjs` checks every field below and names the line to fix.
+`make.mjs` checks the fields below and names the beat or cast entry to fix.
 
 | Field | What it is |
 |---|---|

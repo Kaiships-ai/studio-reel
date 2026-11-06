@@ -41,6 +41,7 @@ function episode() {
   const cast = {};
   for (const [i, m] of (Array.isArray(e.cast) ? e.cast : []).entries()) {
     const at = `cast ${i + 1}`;
+    if (!m || typeof m !== 'object') { err(`${at} must be an object like {"id": "nova", "seed": "nova"}`); continue; }
     if (!str(m.id)) { err(`${at} has no "id"`); continue; }
     if (cast[m.id]) err(`${at}: "id": "${m.id}" is used twice`);
     if (m.seed !== undefined && !window.TMV_SEEDS[m.seed]) err(`${at}: "seed": "${m.seed}" is not a seed (${Object.keys(window.TMV_SEEDS).join(', ')})`);
@@ -55,20 +56,23 @@ function episode() {
   if (!Array.isArray(e.beats) || !e.beats.length) err('"beats" must list at least one beat');
   (Array.isArray(e.beats) ? e.beats : []).forEach((b, i) => {
     const at = `beat ${i + 1}`;
+    if (!b || typeof b !== 'object') return err(`${at} must be an object`);
     if (!cast[b.who]) err(`${at}: "who": "${b.who}" is not in the cast (${Object.keys(cast).join(', ')})`);
     if (!str(b.line)) err(`${at} has no "line"`);
     if (b.shot !== undefined && !SHOTS.includes(b.shot)) err(`${at}: "shot": "${b.shot}" is not one of ${SHOTS.join(', ')}`);
     if (b.exp !== undefined && !EXPS.includes(b.exp)) err(`${at}: "exp": "${b.exp}" is not a face (${EXPS.join(', ')})`);
     if (b.shot === 'card' && (!Array.isArray(b.card) || !b.card.length || !b.card.every(str))) err(`${at} is a card: it needs "card": ["LINE ONE", "LINE TWO"]`);
-    if (b.shot === 'stats' && (!Array.isArray(b.stats) || !b.stats.length || !b.stats.every(r => str(r.label) && r.value !== undefined))) err(`${at} is a stats card: it needs "stats": [{"label": "views", "value": "212"}]`);
+    if (b.shot === 'stats' && (!Array.isArray(b.stats) || !b.stats.length || !b.stats.every(r => r && str(r.label) && r.value != null && (r.bar === undefined || (typeof r.bar === 'number' && r.bar >= 0 && r.bar <= 1))))) err(`${at} is a stats card: it needs "stats": [{"label": "views", "value": "212"}]`);
     if (b.hot !== undefined && !(Array.isArray(b.hot) && b.hot.every(str))) err(`${at}: "hot" must be a list of words`);
-    for (const [k, v] of Object.entries(b.hud ?? {})) if (!(typeof v === 'string' || typeof v === 'number' || (v && typeof v === 'object' && v.value !== undefined && (v.bar === undefined || (v.bar >= 0 && v.bar <= 1)))))
+    for (const [k, v] of Object.entries(b.hud ?? {})) if (!(typeof v === 'string' || typeof v === 'number' || (v && typeof v === 'object' && v.value != null && (v.bar === undefined || (typeof v.bar === 'number' && v.bar >= 0 && v.bar <= 1)))))
       err(`${at}: hud "${k}" must be "212" or {"value": "212", "bar": 0..1, "style": "danger"}`);
   });
+  const ph = e.texts?.phoneHud ?? 'VIEWS';
+  if ((e.beats ?? []).some(b => b?.shot === 'phone') && !(e.beats ?? []).some(b => b?.hud && ph in b.hud)) err(`a phone shot shows the HUD label "${ph}" (texts.phoneHud), but no beat sets it in "hud"`);
   const v = e.vote ?? {};
   if (!str(v.question) || !str(v.a) || !str(v.b)) err('"vote" needs "question", "a" and "b" (the vote is the last frame)');
   const last = (e.beats ?? []).at(-1)?.line ?? '', words = last.split(/\s+/).map(w => w.replace(/[^\w]/g, ''));
-  for (const tag of [v.tagA ?? 'A', v.tagB ?? 'B']) if (!words.includes(String(tag).replace(/[^\w]/g, ''))) err(`the last beat's line must say the vote word "${tag}" (its button lands on that word)`);
+  for (const tag of [v.tagA ?? 'A', v.tagB ?? 'B']) if (!String(tag).replace(/[^\w]/g, '')) err(`vote tag "${tag}" needs a letter or digit (A-Z, 0-9)`); else if (!words.includes(String(tag).replace(/[^\w]/g, ''))) err(`the last beat's line must say the vote word "${tag}" (its button lands on that word)`);
   if (errs.length) die(`episode.json has ${errs.length} problem${errs.length > 1 ? 's' : ''}:\n  - ${errs.join('\n  - ')}`);
   return { e, cast };
 }

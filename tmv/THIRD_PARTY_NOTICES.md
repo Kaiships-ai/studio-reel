@@ -6,7 +6,7 @@ licence in [`LICENSE`](LICENSE).
 
 ## Lemo-Opuscar (MIT)
 
-Kaiships Studio is derived from Lemo-Opuscar by LemoLab: the shared toolkit in `core/`, the guides
+This kit is derived from Lemo-Opuscar by LemoLab: the shared toolkit in `core/`, the guides
 (`AGENTS.md`) and every style in `styles/`.
 
 ```text
@@ -47,7 +47,7 @@ each demo keep their own licences, listed in that demo's `CREDITS` file.
 - `jay.glb`'s skeleton uses Mixamo's bone names (`mixamorig:Hips`, ...). It has no animation clips; the kit poses it in
   code (`characters/rig.js`).
 
-## Components installed or downloaded with Kaiships Studio
+## Components installed or downloaded with this kit
 
 `pixi run studio install` puts these into this folder (`.pixi/`, `node_modules/`); each keeps its own licence,
 which you can read in its installed package.

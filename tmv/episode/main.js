@@ -174,7 +174,7 @@ function cornerPose(ch, t, o = {}) {   // standing, phone up, talking to it (sel
 }
 const yawTo = (p, q) => Math.atan2(q.x - p.x, q.z - p.z);
 function poseBots(t, sh, lookAt) {
-  EXTRA.forEach((h, i) => { const [x, z] = STAND_AT[i]; h.pose({ at: [x, z], yaw: yawTo(V(x, 0, z), V(SEAT[0], 0, SEAT[1])), sit: 0, lean: 3, head: [4, 0, 0], exp: expOf(t, h, sh) }); });
+  EXTRA.forEach((h, i) => { if (CAST[sh.who] === h && sh.shot !== 'wide' && sh.shot !== 'room') return; const [x, z] = STAND_AT[i]; h.pose({ at: [x, z], yaw: yawTo(V(x, 0, z), V(SEAT[0], 0, SEAT[1])), sit: 0, lean: 3, head: [4, 0, 0], exp: expOf(t, h, sh) }); });
   BOTS.forEach((b, i) => { const [x, z] = BOT_AT[i], p = V(x, DESK_Y, z);
     const speaking = talking(t, b), ex = EP.beats[sh.i].exp;
     b.pose({ at: [x, z], y: DESK_Y, yaw: yawTo(p, lookAt ?? V(SEAT[0], 0, SEAT[1])), t: t + i, talk: speaking, blink: blink(t, 1.3 + i), hop: speaking && /excited|proud/.test(ex ?? '') ? 1 : 0, wave: speaking ? 0.4 : 0, look: [-8, 0] }); });
@@ -263,7 +263,7 @@ function corner(t, sh, ch, close) {
   CORNER.ring.position.copy(hd).add(V(-0.2, -0.02, 0.5)); CORNER.ring.lookAt(hd); CORNER.pole.position.copy(CORNER.ring.position).add(V(0, -0.62, 0));
   const k = lin(seg(t, sh.a, sh.b)), f = hd.clone().add(V(0, 0.11, 0.03));
   const n = SHOTS.filter(s => s.i < sh.i && CAST[s.who] === ch && s.shot === sh.shot).length, al = n % 2 ? -1 : 1;   // his next shot of the same kind mirrors
-  const [p0, p1] = close ? [[0.18 * al, -0.04, 0.9 + 0.12 * n % 0.24], [0.12 * al, -0.03, 0.72 + 0.12 * n % 0.24]] : [[0.5 * al, 0.05, 1.7], [0.42 * al, 0.04, 1.5]];
+  const [p0, p1] = close ? [[0.18 * al, -0.04, 0.9 + (0.12 * n) % 0.24], [0.12 * al, -0.03, 0.72 + (0.12 * n) % 0.24]] : [[0.5 * al, 0.05, 1.7], [0.42 * al, 0.04, 1.5]];
   CORNER.sign.position.set(hd.x - (close ? 0.2 : 0.04) * al, hd.y + (close ? 0.36 : 0.2), -0.68);
   const pos = f.clone().add(V(...p0).lerp(V(...p1), k)).add(drift(t, 0.003)), tgt = f.clone().add(V(0, close ? -0.03 : -0.25, 0));
   return camLook(pos, tgt, close ? 34 : 38, { roll: lerp(0.03, 0, k), focus: pos.distanceTo(f), aperture: 0.9 });
