@@ -5,7 +5,6 @@
 // In a worktree the evidence is also copied to ~/.claude/orchestrate/proof/evidence/<branch>/<run-id>/.
 import { appendFileSync, cpSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
-import { spawnSync } from 'node:child_process';
 import { join, resolve } from 'node:path';
 import { chromium } from 'playwright-core';
 import { run, start } from '../../../kit/env.mjs';
@@ -164,7 +163,6 @@ const JOURNEYS = {
   // The paid TMV kit, as a buyer gets it: build the zip, unzip into a fresh folder (a space in its path), install,
   // which renders the sample episode as its test render; then the character designer and a planted break.
   async 'tmv-episode'() {
-    const pixi = (cwd, ...a) => { log(`$ (${cwd}) pixi ${a.join(' ')}`); const r = spawnSync('pixi', a, { cwd, encoding: 'utf8', env: { ...process.env, PIXI_NO_TELEMETRY: '1' } }); const out = (r.stdout || '') + (r.stderr || ''); log(out); return { code: r.status, out }; };
     const BOX = join(tmpdir(), `tmv verify ${RUN}`), KIT = join(BOX, 'tmv-studio');
     let zip = flag('zip');
     await step('the tmv zip builds and passes its gate', () => {
@@ -178,12 +176,13 @@ const JOURNEYS = {
       if (!existsSync(join(KIT, 'episodes/sample/episode.json')) || existsSync(join(KIT, 'kit/check-reel'))) throw new Error('not the tmv layout');
     });
     await step('install renders the sample episode as its test render, every check ✓', () => {
-      has(ok(pixi(KIT, 'run', 'studio', 'install')), '✓ test render  episodes/sample/sample.mp4');
+      // test/clean-install.mjs = what a buyer types: pixi run studio install, doctor, install again (a no-op)
+      has(ok(node('test/clean-install.mjs', KIT)), '✓ clean install passed');
       const rep = JSON.parse(readFileSync(join(KIT, 'episodes/sample/out/check.json'), 'utf8'));
       const bad = rep.checks.filter(c => !c.ok); if (bad.length) throw new Error(bad.map(c => c.name).join(', '));
       for (const f of ['sample.mp4', 'out/sheet.jpg', 'out/check.json']) cpSync(join(KIT, 'episodes/sample', f), join(EV, 'tmv-' + f.split('/').pop()));
     });
-    await step('doctor is all ✓ and a second install is a no-op', () => { has(ok(pixi(KIT, 'run', 'studio', 'doctor')), 'All good.'); has(ok(pixi(KIT, 'run', 'studio', 'install')), 'passed before'); });
+    await step('doctor is all ✓ in the unzipped kit', () => has(ok(node(join(KIT, 'kit/studio.mjs'), 'doctor')), 'All good.'));
     await step('the character designer opens offline and copies a cast entry', async () => {
       const b = await chromium.launch({ executablePath: EXE, args: ARGS }), p = await b.newPage({ viewport: { width: 1100, height: 900 } }), errs = [];
       p.on('pageerror', e => errs.push(e.message));
@@ -201,12 +200,12 @@ const JOURNEYS = {
     await step('planted break: a beat for someone not in the cast fails with its own message', () => {
       const bad = join(KIT, 'episodes/broken'); cpSync(join(KIT, 'episodes/sample'), bad, { recursive: true });
       const f = join(bad, 'episode.json'); writeFileSync(f, readFileSync(f, 'utf8').replace(/"who": "rook"/g, '"who": "nobody"'));
-      has(no(pixi(KIT, 'run', 'node', 'episode/make.mjs', 'episodes/broken', 'render')), '"who": "nobody" is not in the cast');
+      has(no(node(join(KIT, 'episode/make.mjs'), join(KIT, 'episodes/broken'), 'render')), '"who": "nobody" is not in the cast');
     });
     await step('planted break: a changed line without a new voice fails and names the vo step', () => {
       const f = join(KIT, 'episodes/broken/episode.json'); cpSync(join(KIT, 'episodes/sample/episode.json'), f);
       writeFileSync(f, readFileSync(f, 'utf8').replace('Two hundred views.', 'Three hundred views.'));
-      has(no(pixi(KIT, 'run', 'node', 'episode/make.mjs', 'episodes/broken', 'render')), 'changed since its voice was made');
+      has(no(node(join(KIT, 'episode/make.mjs'), join(KIT, 'episodes/broken'), 'render')), 'changed since its voice was made');
     });
     rmSync(BOX, { recursive: true, force: true });
   },

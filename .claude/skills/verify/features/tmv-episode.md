@@ -17,7 +17,7 @@ episode as its test render (`kit/studio.mjs`).
 
 ## Driving it
 
-`node .claude/skills/verify/journeys.mjs --only=tmv-episode [--zip=<built tmv zip>]` (needs `pixi` on PATH, a few
+`node .claude/skills/verify/journeys.mjs --only=tmv-episode [--zip=<built tmv zip>]` (needs `pixi` on PATH; the install step is `test/clean-install.mjs`; a few
 minutes): builds the zip, unzips into a fresh folder with a space in its path, `pixi run studio install` (sample
 episode, every check ✓), doctor, second install no-op, designer screenshots + copied JSON, planted break (a beat for
 `nobody` → `"who": "nobody" is not in the cast`). Evidence: `tmv-sample.mp4`, `tmv-sheet.jpg`, `tmv-char-*.png`.
