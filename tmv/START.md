@@ -11,7 +11,8 @@ support contacts in `AGENTS.md`. Never print or commit keys.
    pixi run studio install
    ```
 
-   No `pixi`? Install it from https://pixi.sh (one command on macOS, Linux and Windows), then run the step again.
+   No `pixi`? Ask the buyer to install it in their own terminal, then open a new terminal and run the step again:
+   macOS and Linux `curl -fsSL https://pixi.sh/install.sh | sh`, Windows PowerShell `powershell -ExecutionPolicy ByPass -c "irm -useb https://pixi.sh/install.ps1 | iex"`.
 
 2. Check:
 
@@ -25,8 +26,11 @@ support contacts in `AGENTS.md`. Never print or commit keys.
    - Your story: what is your app or project, and what happens in episode 1?
    - Your characters: keep the seeded cast (Nova, Theo, Blip), or design your own (`pixi run designer`, open the
      address it prints, press "Copy for Claude", paste it here)?
-   - Voice: the offline voice (Kokoro, free, needs `pixi run fetch voice` once, about 350 MB; not on Intel Macs), or
-     record the lines themselves.
+   - Voice: the offline voice (Kokoro, free, not on Intel Macs). Download it once (about 350 MB):
+
+     ```
+     pixi run fetch voice
+     ```
 
 5. Make their episode 1 with `/episode` (the skill in `.claude/skills/episode`):
 

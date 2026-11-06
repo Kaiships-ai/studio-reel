@@ -5,8 +5,9 @@ Make a whole series of short vertical episodes with your own characters and stor
 1. Unzip `tmv-studio`, open Claude Code in the folder, and trust it once.
 2. Paste the one prompt from your receipt. Claude reads `START.md`, installs everything inside this
    folder, renders the sample episode (`episodes/sample/sample.mp4`), and asks you three questions.
-3. Then make your episodes: copy the sample folder, write your story in its `episode.json`, render. Each episode ends
-   in a vote; the next one follows the winning comment.
+3. Then make your episodes with `/episode` (`pixi run node episode/make.mjs new <name>`, write the story in its
+   `episode.json`, render) and turn them into a series with `/series`. Each episode ends in a vote; the next one follows
+   the winning comment.
 
 Runs on macOS 14+ (Apple Silicon), Windows 10/11 x64 and Linux x64. Needs Claude Code with your own
 Claude plan. Licence: `LICENSE`. Help: Discord (Buyer role) or kaiships.ai@gmail.com.
@@ -28,11 +29,11 @@ Claude plan. Licence: `LICENSE`. Help: Discord (Buyer role) or kaiships.ai@gmail
 
 ## A series
 
-`node episode/series.mjs new episodes/<show> --from episodes/sample` makes `episodes/<show>/series.json` (the show's
+`pixi run node episode/series.mjs new episodes/<show> --from episodes/<episode 1>` makes `episodes/<show>/series.json` (the show's
 name, cast, palette and texts, shared by every episode) and `ep1/`. When the vote is in,
-`node episode/series.mjs next episodes/<show> --winner B` records it and writes `ep2/episode.json` with the opening
+`pixi run node episode/series.mjs next episodes/<show> --winner B` records it and writes `ep2/episode.json` with the opening
 (a `"shot": "previously"` card: PREVIOUSLY · EP 1, the question, the winning answer) and a recap beat; write the rest of
-the story, then `vo` and render it like any episode. `node episode/series.mjs status episodes/<show>` lists them.
+the story, then `vo` and render it like any episode. `pixi run node episode/series.mjs status episodes/<show>` lists them.
 
 ## episode.json
 

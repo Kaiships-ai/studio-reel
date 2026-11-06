@@ -216,8 +216,8 @@ const JOURNEYS = {
     await step('series: new from the sample, next --winner B writes ep2 with the PREVIOUSLY · EP 1 opening', () => {
       const SD = join(KIT, 'episodes/night-build');
       has(ok(node(join(KIT, 'episode/series.mjs'), 'new', SD, '--from', join(KIT, 'episodes/sample'))), 'series.json');
-      has(ok(node(join(KIT, 'episode/series.mjs'), 'next', SD, '--winner', 'B')), 'ep1 winner: B · the story');
       has(no(node(join(KIT, 'episode/series.mjs'), 'next', SD, '--winner', 'C')), '--winner must be A or B');
+      has(ok(node(join(KIT, 'episode/series.mjs'), 'next', SD, '--winner', 'B')), 'ep1 winner: B · the story');
       has(no(node(join(KIT, 'episode/series.mjs'), 'next', SD, '--winner', 'A')), 'still has WRITE');   // re-running next never skips ahead
       const e2 = JSON.parse(readFileSync(join(SD, 'ep2/episode.json'), 'utf8')), sj = JSON.parse(readFileSync(join(SD, 'series.json'), 'utf8'));
       if (e2.previously?.winner?.text !== 'the story' || e2.beats[0].shot !== 'previously' || sj.episodes[0].winner !== 'B' || e2.cast) throw new Error('ep2 is not linked to ep1');
@@ -249,8 +249,13 @@ const JOURNEYS = {
       ok(node('-e', `const z=require('node:child_process').spawnSync('python3',['-m','zipfile','-e',process.argv[1],process.argv[2]],{stdio:'inherit'});process.exit(z.status)`, zip, BOX));
       for (const f of ['START.md', '.claude/skills/studio/SKILL.md', '.claude/skills/episode/SKILL.md', '.claude/skills/series/SKILL.md', '.claude/settings.json'])
         if (!existsSync(join(KIT, f))) throw new Error(`${f} missing`);
+      // every fenced START.md command must match an allow rule, for Bash and for PowerShell (a rule's * = any text)
       const allow = JSON.parse(readFileSync(join(KIT, '.claude/settings.json'), 'utf8')).permissions.allow;
-      if (!allow.includes('Bash(pixi run *)')) throw new Error('settings.json does not allow pixi run');
+      const fenced = [...readFileSync(join(KIT, 'START.md'), 'utf8').matchAll(/```\n([\s\S]*?)```/g)].flatMap(m => m[1].split('\n').map(l => l.trim()).filter(Boolean));
+      const okBy = (shell, c) => allow.some(r => { const m = new RegExp(`^${shell}\\((.*)\\)$`).exec(r); return m && new RegExp('^' + m[1].replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') + '$').test(c); });
+      const miss = fenced.flatMap(c => ['Bash', 'PowerShell'].filter(sh => !okBy(sh, c)).map(sh => `${sh}: ${c}`));
+      if (miss.length) throw new Error(`not in the allow-list: ${miss.join(' | ')}`);
+      if (allow.some(r => /pixi run \*\)$/.test(r))) throw new Error('allow-list too broad: pixi run *');
     });
     const cmds = [...readFileSync(join(KIT, 'START.md'), 'utf8').matchAll(/```\n([\s\S]*?)```/g)].flatMap(m => m[1].split('\n').map(l => l.trim()).filter(Boolean));
     const kt = (...a) => node('test/kit-pixi.mjs', KIT, ...a);
@@ -258,7 +263,8 @@ const JOURNEYS = {
     const model = () => { if (!existsSync(join(KIT, 'core/tts/kokoro-v1.0.onnx')) && existsSync('core/tts/kokoro-v1.0.onnx'))
       for (const f of ['kokoro-v1.0.onnx', 'voices-v1.0.bin']) cpSync(join('core/tts', f), join(KIT, 'core/tts', f)); };   // instead of the 350 MB fetch
     for (const c of cmds) await step(`START.md: ${c}`, () => {
-      if (/ vo$/.test(c)) model();
+      if (/ vo$|fetch voice$/.test(c)) model();
+      if (/fetch voice$/.test(c) && existsSync(join(KIT, 'core/tts/kokoro-v1.0.onnx'))) return log('skipped: the model was copied from this checkout (fetch.py downloads 350 MB every time)');
       ok(kt(...c.replace(/^pixi run /, '').split(' ')));
       if (c.endsWith('make.mjs new ep1')) {   // Claude writes the buyer's episode 1 here; the sample's story stands in, retitled
         const f = join(KIT, 'episodes/ep1/episode.json'); writeFileSync(f, readFileSync(f, 'utf8').replace('"Two hundred views"', '"Day one"'));

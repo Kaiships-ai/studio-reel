@@ -1,11 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "Bash(pixi run *)",
-      "PowerShell(pixi run *)",
-      "Bash(node episode/make.mjs:*)",
-      "Bash(node episode/series.mjs:*)",
-      "Bash(node kit/studio.mjs:*)"
+      "Bash(pixi run studio *)",
+      "Bash(pixi run fetch voice)",
+      "Bash(pixi run designer)",
+      "Bash(pixi run node episode/*)",
+      "Bash(pixi run -e full node episode/*)",
+      "PowerShell(pixi run studio *)",
+      "PowerShell(pixi run fetch voice)",
+      "PowerShell(pixi run designer)",
+      "PowerShell(pixi run node episode/*)",
+      "PowerShell(pixi run -e full node episode/*)"
     ]
   }
 }

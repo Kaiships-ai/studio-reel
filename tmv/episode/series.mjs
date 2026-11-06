@@ -33,7 +33,7 @@ if (cmd === 'new') {
 if (cmd === 'next') {
   const S = read(SJ), last = S.episodes.at(-1), le = read(join(dir, last.dir, 'episode.json')), v = le.vote;
   // the vote can only be in for an episode that was finished and rendered (re-running next must not skip ahead)
-  if (JSON.stringify(le).includes('WRITE THE')) die(`ep${last.ep} still has WRITE ... placeholders: write its story and render it first`);
+  if (/WRITE THE (TITLE|RECAP LINE|NEXT QUESTION)/.test(JSON.stringify(le))) die(`ep${last.ep} still has WRITE ... placeholders: write its story and render it first`);
   if (!existsSync(join(dir, last.dir, `${last.dir}.mp4`))) die(`ep${last.ep} is not rendered yet (${join(dir, last.dir, last.dir + '.mp4')}): render it, post it, then give its winner`);
   const tags = [v.tagA ?? 'A', v.tagB ?? 'B'], w = opt('--winner');
   if (!tags.includes(w)) die(`--winner must be ${tags.join(' or ')} (the vote of ep${last.ep}: "${v.question}")`);
