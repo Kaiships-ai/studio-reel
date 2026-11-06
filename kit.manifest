@@ -28,6 +28,8 @@ styles/kai-reel-3d/
 .claude/skills/make-reel-3d/
 AGENT_LEARNING.md
 PLAN.md
+# The paid TMV kit's own files: tmv/<path> replaces or adds <path> in the tmv zip only
+tmv/
 
 [pro]
 .claude/skills/ig-plan/
@@ -90,3 +92,21 @@ make_vo_local|\bsay -v
 edge.tts
 kai-v3|blocky.kai|char-kai
 ninjago|daymond
+
+[tmv_exclude]
+# Starter files the paid TMV kit leaves out (globs). Kai's house style and everything built on it:
+styles/kai-hand-draw/
+kit/check-reel/
+.claude/skills/make-reel/
+# Clawd or a voice that is not ours; back in slice 7 with the seeded mascot and Kokoro
+styles/living-screencast/
+styles/paper-lantern/
+styles/game-show/
+core/tts/tts_zh.py
+# Starter docs that describe the house style; the TMV kit has its own in tmv/
+CHANGELOG.md
+DIRECTOR.md
+TECHNIQUE.md
+MY-STYLES.md
+character-designer.html
+core/README.md
