@@ -30,10 +30,11 @@ function makeHuman(c, base) {
   const mats = {};   // one copy per material name, so two characters never share a colour
   root.traverse(o => { if (o.isMesh) o.material = [].concat(o.material).map(m => (mats[m.name] ??= m.clone()))[0]; });
   const tint = (re, col, k = 1) => { for (const [n, m] of Object.entries(mats)) if (re.test(n) && m.color) m.color.set(col).multiplyScalar(k); };
-  if (c.hair !== 'jay') {
-    tint(/Skin/, c.skin); tint(/Hoodie|Hood$/, c.topColor); tint(/B_Rib/, c.topColor, 0.55); tint(/Pants/, c.legs); tint(/HairFade|HairTop/, c.hairColor);
-    tint(/BrowInk/, c.hairColor, 0.5);
-  }
+  // every colour applies to every figure; hair "jay" only keeps the base figure's hair shape
+  if (c.skin) tint(/Skin/, c.skin);
+  if (c.topColor) { tint(/Hoodie|Hood$/, c.topColor); tint(/B_Rib/, c.topColor, 0.55); }
+  if (c.legs) tint(/Pants/, c.legs);
+  if (c.hairColor) { tint(/HairFade|HairTop|HairLocks/, c.hairColor); tint(/BrowInk/, c.hairColor, 0.5); }
   // the hair and the extras hang on the head bone, sized from the head's own vertices (the ones the Head bone moves)
   const B = {}; root.traverse(o => { if (o.isBone) B[o.name.replace(/^mixamorig:?/, '')] = o; });
   root.updateMatrixWorld(true);
@@ -58,7 +59,12 @@ function makeHuman(c, base) {
   if (c.extra === 'headset') {
     const band = new THREE.Mesh(new THREE.TorusGeometry(r * 1.13, r * 0.07, 8, 32, Math.PI), ex); band.position.y = hs.y * 0.05; acc.add(band);
     for (const s of [-1, 1]) { const cup = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.32, r * 0.32, r * 0.2, 20), ex); cup.rotation.z = Math.PI / 2; cup.position.set(s * r * 1.1, 0, 0); acc.add(cup); }
-    const mic = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.035, r * 0.035, r * 1.1, 6), ex); mic.rotation.set(Math.PI / 2.3, 0, 0.5); mic.position.set(r * 0.85, -hs.y * 0.3, hs.z * 0.32); acc.add(mic);
+    // the boom runs outside the cheek: ear cup → forward along the jaw (clear of the face) → in to the mouth corner
+    const pts = [V(r * 1.2, -hs.y * 0.02, 0), V(r * 1.18, -hs.y * 0.3, hs.z * 0.42), V(r * 0.62, -hs.y * 0.36, hs.z * 0.66)];
+    for (let i = 0; i < 2; i++) { const a = pts[i], b = pts[i + 1], d = b.clone().sub(a);
+      const seg_ = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.035, r * 0.035, d.length(), 6), ex);
+      seg_.position.copy(a).add(b).multiplyScalar(0.5); seg_.quaternion.setFromUnitVectors(V(0, 1, 0), d.normalize()); acc.add(seg_); }
+    const tip = new THREE.Mesh(new THREE.SphereGeometry(r * 0.08, 10, 8), ex); tip.position.copy(pts[2]); acc.add(tip);
   }
   if (c.extra === 'glasses') {
     for (const s of [-1, 1]) { const g = new THREE.Mesh(new THREE.TorusGeometry(r * 0.3, r * 0.05, 8, 24), ex); g.position.set(s * r * 0.4, hs.y * 0.02, hs.z * 0.52); acc.add(g); }

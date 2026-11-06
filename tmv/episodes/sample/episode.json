@@ -1,5 +1,5 @@
 {
-  "series": "Ten Million Views",
+  "series": "Night Build",
   "ep": 1,
   "title": "Two hundred views",
   "palette": {
@@ -10,8 +10,13 @@
   },
   "texts": {
     "handle": "@nova.builds",
-    "rivalHandle": "@theo.ships",
-    "sign": "SPEED WINS"
+    "sign": "SPEED WINS",
+    "kicker": "{series} · EP {ep}",
+    "phoneLabel": "VIEWS",
+    "phoneHud": "VIEWS",
+    "phoneFoot": "last 24 h",
+    "or": "or",
+    "voteFooter": "COMMENT {a} OR {b} · EP {next} FOLLOWS"
   },
   "cast": [
     {
@@ -30,22 +35,48 @@
   "beats": [
     {
       "who": "nova",
-      "shot": "phone",
+      "shot": "room",
       "line": "I shipped my app today. Two hundred views.",
       "hud": {
         "DAY": "1",
-        "VIEWS": "212"
+        "VIEWS": "212",
+        "GOAL": {
+          "value": "2%",
+          "bar": 0.02
+        }
       },
       "exp": "tired"
     },
     {
       "who": "theo",
-      "shot": "close",
+      "shot": "stats",
       "line": "Two hundred? My launch ad hit forty thousand by lunch.",
       "hud": {
-        "RIVAL": "40,000"
+        "RIVAL": {
+          "value": "40,000",
+          "style": "danger"
+        }
       },
-      "exp": "smirk"
+      "exp": "smirk",
+      "head": "Day 1 · where you stand",
+      "stats": [
+        {
+          "label": "@nova.builds · views",
+          "value": "212",
+          "extra": "/ 10,000"
+        },
+        {
+          "label": "@theo.ships · views",
+          "value": "40,000",
+          "style": "danger"
+        },
+        {
+          "label": "Nova's goal",
+          "value": "2%",
+          "bar": 0.02
+        }
+      ],
+      "source": "source: each post's insights, first 24 h"
     },
     {
       "who": "nova",
@@ -58,23 +89,26 @@
       "shot": "two",
       "line": "Views are views, Nova. Speed wins.",
       "hud": {
-        "RIVAL": "52,000"
+        "RIVAL": {
+          "value": "52,000",
+          "style": "danger"
+        }
       },
       "exp": "grin"
     },
     {
       "who": "blip",
-      "shot": "two",
-      "line": "Beep. People don't share apps. They share stories.",
-      "exp": "proud"
-    },
-    {
-      "who": "nova",
       "shot": "card",
+      "line": "Beep. People don't share apps. They share stories.",
+      "exp": "proud",
       "card": [
         "APPS DON'T SPREAD.",
         "STORIES DO."
-      ],
+      ]
+    },
+    {
+      "who": "nova",
+      "shot": "close",
       "line": "So my story is the bug that almost killed it?",
       "exp": "thinking"
     },
@@ -86,10 +120,14 @@
     },
     {
       "who": "nova",
-      "shot": "wide",
+      "shot": "phone",
       "line": "Three nights. One bug. I almost quit.",
       "hud": {
-        "VIEWS": "236"
+        "VIEWS": "236",
+        "GOAL": {
+          "value": "2%",
+          "bar": 0.024
+        }
       },
       "exp": "sad"
     },
@@ -118,6 +156,8 @@
   "vote": {
     "question": "What does Nova post tonight?",
     "a": "the demo",
-    "b": "the story"
+    "b": "the story",
+    "tagA": "A",
+    "tagB": "B"
   }
 }

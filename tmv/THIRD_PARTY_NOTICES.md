@@ -1,14 +1,13 @@
 # Third-party notices
 
-Kaiships Studio is built on open-source work. This file lists the code it is derived from, the components that ship
-in the zip or are downloaded when you install it, and their licences. Kaiships Studio's own code is under the MIT
+How we make Ten Million Views is built on open-source work. This file lists the code it is derived from, the components that ship
+in the zip or are downloaded when you install it, and their licences. This kit's own code is under the MIT
 licence in [`LICENSE`](LICENSE).
 
 ## Lemo-Opuscar (MIT)
 
 Kaiships Studio is derived from Lemo-Opuscar by LemoLab: the shared toolkit in `core/`, the guides
-(`AGENTS.md`, `DIRECTOR.md`, `TECHNIQUE.md`, `MY-STYLES.md`) and every style in `styles/` except
-`styles/kai-hand-draw/`.
+(`AGENTS.md`) and every style in `styles/`.
 
 ```text
 MIT License
@@ -38,38 +37,15 @@ The demo films of the Lemo-Opuscar styles and their stills (posters in `styles/<
 under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/): demo films by LemoLab. Third-party assets inside
 each demo keep their own licences, listed in that demo's `CREDITS` file.
 
-## ClaudeAnimationBase (MIT)
+## The 3D room and base figure (`episode/assets/room.glb`, `characters/jay.glb`)
 
-The drawing engine of `styles/kai-hand-draw/` (`engine/core.js`, `engine/timeline.js`) and its
-`ANIMATION_GUIDE.md` come from ClaudeAnimationBase by John Heibel. The notice in the source files reads:
-
-```text
-From ClaudeAnimationBase (MIT, (c) 2026 John Heibel).
-```
-
-```text
-MIT License
-
-Copyright (c) 2026 John Heibel
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
+- Both files were made for the Ten Million Views episode 1 film by Kaiships and exported from Blender (each file's
+  `asset.generator` reads "Khronos glTF Blender I/O v5.2.41"). Neither contains an image or texture: every surface is a
+  plain colour material. They ship under this kit's `LICENSE`.
+- `room.glb` still holds that film's story props (pinned notes, a framed photo, a badge, a pizza box logo, the scene
+  `World_Jay`); the episode engine hides them (`episode/main.js`).
+- `jay.glb`'s skeleton uses Mixamo's bone names (`mixamorig:Hips`, ...). It has no animation clips; the kit poses it in
+  code (`characters/rig.js`).
 
 ## Components installed or downloaded with Kaiships Studio
 
@@ -111,11 +87,8 @@ Lemo-Opuscar asset release by LemoLab; they are not in the zip.
 
 | Font | Where | Licence |
 |---|---|---|
-| Fredoka (The Fredoka Project Authors) | `styles/kai-hand-draw/engine/fonts/` | SIL Open Font License 1.1 (`OFL-Fredoka.txt`) |
 | JetBrains Mono (The JetBrains Mono Project Authors) | `episode/fonts/` | SIL Open Font License 1.1 (`OFL-jetbrainsmono.txt`) |
 | Inter Tight (The Inter Project Authors) | `episode/fonts/` | SIL Open Font License 1.1 (`OFL-intertight.txt`) |
-| Shantell Sans (The Shantell Sans Project Authors) | `styles/kai-hand-draw/engine/fonts/` | SIL Open Font License 1.1 (`OFL-ShantellSans.txt`) |
-| Permanent Marker | `styles/kai-hand-draw/engine/fonts/` | Apache License 2.0 (`LICENSE-PermanentMarker.txt`) |
 | ZCOOL KuaiLe, Fredoka, Lilita One, IM Fell English (subsets) | `core/fonts/` | SIL Open Font License 1.1 (`core/fonts/OFL.md`) |
 
 Fonts and other assets used by individual style demos are listed in each demo's `CREDITS` file.

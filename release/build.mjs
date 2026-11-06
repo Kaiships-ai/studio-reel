@@ -89,7 +89,8 @@ export function check(tier, files, blob, m) {
     if (!set.has(f)) errors.push(`${f} is missing`);
   if (set.has('THIRD_PARTY_NOTICES.md')) {
     const n = blob('THIRD_PARTY_NOTICES.md').toString('utf8');
-    for (const who of ['LemoLab', 'John Heibel']) if (!n.includes(who)) errors.push(`THIRD_PARTY_NOTICES.md does not credit ${who}`);
+    const owed = ['LemoLab', ...(files.some(f => f.startsWith('styles/kai-hand-draw/')) ? ['John Heibel'] : [])];   // his engine ships only inside kai-hand-draw
+    for (const who of owed) if (!n.includes(who)) errors.push(`THIRD_PARTY_NOTICES.md does not credit ${who}`);
   }
   const forbid = m.forbid.map(p => [p, new RegExp(p)]);
   for (const f of files) {

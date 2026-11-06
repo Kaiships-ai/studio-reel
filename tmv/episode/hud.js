@@ -28,8 +28,10 @@ export function createHud(g, W, H) {
     for (let i = 0; i < n; i++) {
       const cx = x0 + cw * (i + 0.5);
       if (a[i] === b[i] || k >= 1) txt(k >= 1 ? b[i] : a[i], cx, y, size, col, { ...o, mono: true, align: 'center' });
-      else { const e = eout(k); txt(a[i], cx, y - size * 1.1 * e, size, col, { ...o, mono: true, align: 'center', alpha: 1 - e });
-        txt(b[i], cx, y + size * 1.1 * (1 - e), size, col, { ...o, mono: true, align: 'center', alpha: e }); }
+      else {   // the old digit leaves upward, then the new one arrives: never both on the same frame
+        const e1 = eout(seg(k, 0, 0.45)), e2 = eout(seg(k, 0.45, 1));
+        if (e1 < 1) txt(a[i], cx, y - size * 1.3 * e1, size, col, { ...o, mono: true, align: 'center', alpha: 1 - e1 });
+        if (k > 0.45) txt(b[i], cx, y + size * 1.3 * (1 - e2), size, col, { ...o, mono: true, align: 'center', alpha: e2 }); }
     }
     g.restore();
   }
@@ -38,7 +40,7 @@ export function createHud(g, W, H) {
   function chips(t, items, st = {}) {
     const a = st.alpha ?? 1; if (a <= 0 || !items.length) return;
     const ACC = st.accent ?? PINK, y = st.y ?? 150, h = 112, gap = 16;
-    for (const it of items) it.w = Math.max(measure(it.label, 21, 700) + 3 * it.label.length + 40, measure(it.val, 46, 800, true) + 44, 170);
+    for (const it of items) it.w = Math.max(measure(it.label, 21, 700) + 3 * it.label.length + 40, measure(it.val, 46, 800, true) + 44, measure(it.from ?? '', 46, 800, true) + 44, 170);
     const tot = items.reduce((s_, it) => s_ + it.w, 0) + gap * (items.length - 1), sc = Math.min(1, 1000 / tot);
     g.save(); g.globalAlpha = a; g.translate(P(540), P(y)); g.scale(sc, sc); g.translate(-P(540), -P(y));
     let x = 540 - tot / 2;
@@ -49,6 +51,8 @@ export function createHud(g, W, H) {
       txt(it.label, x + 20, y + 30, 21, dz > 0 ? ACC : 'rgba(247,245,242,.6)', { align: 'left', w: 700, ls: 3 });
       if (fl > 0) roll(it.from, it.val, it.k, x + 20, y + 76, 46, WHITE, { align: 'left', w: 800, glow: ACC, glowR: 18 });
       else txt(it.val, x + 20, y + 76, 46, dz > 0 ? ACC : WHITE, { align: 'left', mono: true, w: 800 });
+      if (it.bar !== undefined) { rr(x + 20, y + h - 14, it.w - 40, 6, 3); g.fillStyle = 'rgba(255,255,255,.14)'; g.fill();   // a meter (Ep1's attention bar)
+        if (it.bar > 0) { rr(x + 20, y + h - 14, Math.max(6, (it.w - 40) * Math.min(1, it.bar)), 6, 3); g.fillStyle = dz > 0 ? ACC : 'rgba(247,245,242,.85)'; g.fill(); } }
       x += it.w + gap;
     }
     g.restore();

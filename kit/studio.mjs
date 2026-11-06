@@ -62,9 +62,9 @@ async function install() {
   ok('browser', `GPU: ${gpuName(r)}`);
 
   if (!force && existsSync(installMarker()) && readFileSync(installMarker(), 'utf8').trim() === lockHash()) { ok('test render', 'passed before with these versions'); return done(); }
-  // The TMV kit has no check reel: its test render is the sample episode itself (preview, 540x960), which the buyer keeps
+  // The TMV kit has no check reel: its test render is the sample episode itself (preview, 720x1280), which the buyer keeps
   if (!existsSync(join(ROOT, 'kit', 'check-reel')) && existsSync(join(ROOT, 'episodes', 'sample', 'episode.json'))) {
-    console.log('  … test render: the sample episode (preview 540x960, about a minute)');
+    console.log('  … test render: the sample episode (preview 720x1280, a minute or two)');
     if (run('node', ['episode/make.mjs', 'episodes/sample', 'render', 'check']).status !== 0) return bad('test render', 'the sample episode did not render (message above)', 'pixi run studio doctor');
     ok('test render', 'episodes/sample/sample.mp4');
     writeFileSync(installMarker(), lockHash());

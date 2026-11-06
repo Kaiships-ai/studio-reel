@@ -13,13 +13,19 @@ import { makeCharacter } from '../characters/rig.js';
 const EP = await (await fetch('episode.json')).json();
 const VO = await (await fetch('vo/vo.json')).json();
 const PAL = { neon: '#FF3D8B', left: '#FF3D8B', right: '#29E0FF', card: '#EFE9DE', ...(EP.palette ?? {}) };
-const TX = { handle: '@you', rivalHandle: '@rival', sign: 'SPEED WINS', ...(EP.texts ?? {}) };
+// every word the frame shows comes from episode.json (texts); these are only the fallbacks. {series} {ep} {next} fill in.
+const TX = { handle: '@you', sign: 'SPEED WINS', kicker: '{series} · EP {ep}', phoneLabel: 'VIEWS', phoneHud: 'VIEWS', phoneFoot: 'last 24 h',
+  or: 'or', voteFooter: 'COMMENT {a} OR {b} · EP {next} FOLLOWS', ...(EP.texts ?? {}) };
+const fill = (s) => String(s).replace(/\{series\}/g, EP.series).replace(/\{ep\}/g, EP.ep).replace(/\{next\}/g, EP.ep + 1)
+  .replace(/\{a\}/g, EP.vote.tagA ?? 'A').replace(/\{b\}/g, EP.vote.tagB ?? 'B');
 const NEON = PAL.neon, CREAM = PAL.card, INKC = '#111111', INKP = '#E8226F';
-const KICKER = `${EP.series} · EP ${EP.ep}`.toUpperCase();
+const KICKER = fill(TX.kicker).toUpperCase();
 
 const S = createStage();
 const Wd = await buildWorld(S, { neon: NEON });
 const { R, RN, rig } = Wd;
+// Ep1's story props in the room file stay hidden: the pinned buyer notes, the framed photo, the badge, the pizza logo
+R.traverse(o => { if (/Buyer|Pin_Note|Photo_Pic|Badge|Pizza_Logo|^SM_Jay_/.test(o.name)) o.visible = false; });
 const H2 = createHud(S.g2, S.fx.width, S.fx.height), g = S.g2, P = H2.P;
 
 // ------------------------------------------------------------ cast
@@ -29,9 +35,11 @@ for (const m of EP.cast) CAST[m.id] = await makeCharacter({ ...(SEEDS[m.seed] ??
 for (const ch of Object.values(CAST)) S.scene.add(ch.root);
 const inCorner = (ch) => (ch.c.place ?? (ch.c.role === 'rival' ? 'corner' : 'room')) === 'corner';
 const roomHumans = Object.values(CAST).filter(ch => !inCorner(ch) && ch.kind === 'human');
-const LEAD = roomHumans[0], BOTS = Object.values(CAST).filter(ch => !inCorner(ch) && ch.kind === 'bot');
+const LEAD = roomHumans[0], EXTRA = roomHumans.slice(1), BOTS = Object.values(CAST).filter(ch => !inCorner(ch) && ch.kind === 'bot');
 const SEAT = [0.28, -0.55], DESK_Y = 0.425, CX = 6;
-const BOT_AT = [[0.66, -0.86], [-0.08, -0.88]];
+// bots stand along the desk top (x -0.1..0.7), the lead's left and right first; other humans in the room stand behind the lead
+const BOT_AT = BOTS.map((_, i) => i < 2 ? [[0.66, -0.86], [-0.08, -0.88]][i] : [0.05 + 0.5 * hsh(i, 7), -1.05]);
+const STAND_AT = EXTRA.map((_, i) => [-0.35 - 0.45 * i, -0.05 - 0.15 * (i % 2)]);
 
 // ------------------------------------------------------------ timeline: one shot per voiced line, the vote holds 1.4 s after the last
 const LINES = VO.lines, DUR = VO.duration + 1.4;
@@ -64,14 +72,14 @@ const PH = new THREE.Group(); S.scene.add(PH);
   for (const m of [body, scr]) { m.castShadow = true; m.receiveShadow = false; } PH.add(body, scr); }
 // the phone screen: the lead's post insights, the views count rolls when the HUD's VIEWS changes
 function drawPhone(t) {
-  const G = phTex.g, W_ = 756, H_ = 1512, h = hudAt(t), v = h.items.find(it => /VIEW/i.test(it.label));
+  const G = phTex.g, W_ = 756, H_ = 1512, h = hudAt(t), v = h.items.find(it => it.label === TX.phoneHud);
   G.fillStyle = '#0b0d14'; G.fillRect(0, 0, W_, H_);
   HP.txt(TX.handle, 540, 230, 44, 'rgba(247,245,242,.7)', { w: 700, mono: true });
-  HP.txt('VIEWS', 540, 560, 44, 'rgba(247,245,242,.55)', { w: 700, mono: true, ls: 8 });
+  HP.txt(TX.phoneLabel, 540, 560, 44, 'rgba(247,245,242,.55)', { w: 700, mono: true, ls: 8 });
   if (v && v.from != null && v.k < 1) HP.roll(v.from, v.val, v.k, 540, 760, 220, WHITE, { w: 800 }); else HP.txt(v ? v.val : '0', 540, 760, 220, WHITE, { w: 800, mono: true });
   G.save(); G.strokeStyle = NEON; G.lineWidth = HP.P(10); G.lineJoin = 'round'; G.beginPath();
   for (let i = 0; i <= 24; i++) { const x = 140 + i * 33.3, y = 1340 - 260 * Math.pow(i / 24, 2.2) * (0.85 + 0.15 * hsh(i, 2)); i ? G.lineTo(HP.P(x), HP.P(y)) : G.moveTo(HP.P(x), HP.P(y)); }
-  G.stroke(); G.restore(); HP.txt('last 24 h', 540, 1460, 36, 'rgba(247,245,242,.45)', { w: 600 });
+  G.stroke(); G.restore(); HP.txt(TX.phoneFoot, 540, 1460, 36, 'rgba(247,245,242,.45)', { w: 600 });
   phTex.tex.needsUpdate = true;
 }
 
@@ -84,13 +92,28 @@ const CORNER = new THREE.Group(); S.scene.add(CORNER);
   sg.fillStyle = '#000'; sg.fillRect(0, 0, 1024, 256); sg.font = '900 150px "Inter Tight", Arial'; sg.textAlign = 'center'; sg.textBaseline = 'middle'; sg.shadowColor = PAL.right; sg.shadowBlur = 30; sg.fillStyle = '#d8f7ff';
   sg.fillText(TX.sign, 512, 132, 980);
   const stex = new THREE.CanvasTexture(signC); stex.colorSpace = THREE.SRGBColorSpace;
-  const sign = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.225), new THREE.MeshBasicMaterial({ map: stex, color: new THREE.Color(2.2, 2.2, 2.2), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false }));
-  sign.position.set(CX + 0.42, 1.28, -0.68); CORNER.add(sign);
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(0.44, 0.11), new THREE.MeshBasicMaterial({ map: stex, color: new THREE.Color(2.2, 2.2, 2.2), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false }));
+  CORNER.sign = sign; CORNER.add(sign);   // placed per shot in corner(), inside the frame above the head
   for (let i = 0; i < 9; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.018 + 0.01 * hsh(i, 2), 12, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(...(hsh(i, 5) > 0.5 ? [3.2, 1.9, 0.9] : [0.9, 1.6, 3.0])) }));
     b.position.set(CX - 1.0 + 2.1 * hsh(i, 1), 0.75 + 0.75 * hsh(i, 3), -0.62); CORNER.add(b); }
   const shelf = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.03, 0.18), new THREE.MeshStandardMaterial({ color: '#2a3344', roughness: 0.7 })); shelf.position.set(CX - 0.55, 0.92, -0.6); CORNER.add(shelf);
   const ring = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.012, 16, 80), new THREE.MeshBasicMaterial({ color: new THREE.Color(4, 4, 4.2) })); CORNER.ring = ring; CORNER.add(ring);
   const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.9, 8), new THREE.MeshStandardMaterial({ color: '#222', roughness: 0.5 })); CORNER.pole = pole; CORNER.add(pole);
+}
+
+// ------------------------------------------------------------ the room's open side (behind the lead in her close-ups): a wall with string lights
+const BACK = new THREE.Group(); R.add(BACK);
+{
+  const wall = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 2.1), new THREE.MeshStandardMaterial({ color: '#232a44', roughness: 0.9 })); wall.rotation.y = Math.PI; wall.position.set(0, 1.05, 1.0); wall.receiveShadow = true; BACK.add(wall);
+  const side = new THREE.Mesh(new THREE.PlaneGeometry(2.3, 2.1), new THREE.MeshStandardMaterial({ color: '#1e2540', roughness: 0.9 })); side.rotation.y = -Math.PI / 2; side.position.set(1.5, 1.05, -0.15); BACK.add(side);
+  for (let i = 0; i < 22; i++) { const x = -1.3 + i * 0.12, y = 1.45 - 0.1 * Math.sin(i * 0.55) ** 2, warm = i % 3 !== 1;
+    const b = new THREE.Mesh(new THREE.SphereGeometry(0.016, 10, 8), new THREE.MeshBasicMaterial({ color: warm ? new THREE.Color(3.4, 2.0, 0.9) : new THREE.Color(PAL.left).multiplyScalar(2.6) })); b.position.set(x, y, 0.97); BACK.add(b); }
+  const shelf = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.03, 0.16), new THREE.MeshStandardMaterial({ color: '#3a3346', roughness: 0.7 })); shelf.position.set(0.55, 0.95, 0.92); BACK.add(shelf);
+  for (let i = 0; i < 6; i++) { const bk = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.14 + 0.06 * hsh(i, 4), 0.12), new THREE.MeshStandardMaterial({ color: ['#c9663a', '#29506e', '#e2a23b', '#6d3a5a', '#2f6b5a', '#d8d2c4'][i], roughness: 0.8 }));
+    bk.position.set(0.25 + i * 0.05, 1.04 + 0.03 * hsh(i, 4), 0.92); BACK.add(bk); }
+  const poster = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.56), new THREE.MeshStandardMaterial({ color: PAL.right, emissive: new THREE.Color(PAL.right), emissiveIntensity: 0.25, roughness: 0.8 })); poster.rotation.y = Math.PI; poster.position.set(-0.55, 1.05, 0.985); BACK.add(poster);
+  const glow = new THREE.PointLight('#ffb070', 1.4, 2.2, 1.6); glow.position.set(0, 1.3, 0.75); BACK.add(glow);
+  const glow2 = new THREE.PointLight(PAL.left, 0.9, 2.0, 1.6); glow2.position.set(-0.9, 1.2, 0.7); BACK.add(glow2);
 }
 
 // ------------------------------------------------------------ light looks
@@ -140,7 +163,7 @@ function holdPhone(ch, t, o = {}) {   // the lead at the desk, the phone in both
 }
 function typing(ch, t, o = {}) {
   const a = Math.abs(Math.sin(t * 19)), b = Math.abs(Math.sin(t * 17 + 1));
-  ch.pose({ at: SEAT, yaw: Math.PI, sit: 1, lean: 9, head: [8, 2 * Math.sin(t * 0.7), 0],
+  ch.pose({ at: SEAT, yaw: Math.PI, sit: 1, lean: 9, head: [o.pitch ?? 8, 2 * Math.sin(t * 0.7), 0],
     armL: { ik: V(0.2, DESK_Y + 0.03 + 0.012 * a, -0.9), pole: ch.rootDir(0.9, -0.6, 0) }, armR: { ik: V(0.37, DESK_Y + 0.03 + 0.012 * b, -0.9), pole: ch.rootDir(-0.9, -0.6, 0) }, exp: o.exp });
 }
 function cornerPose(ch, t, o = {}) {   // standing, phone up, talking to it (selfie)
@@ -151,7 +174,8 @@ function cornerPose(ch, t, o = {}) {   // standing, phone up, talking to it (sel
 }
 const yawTo = (p, q) => Math.atan2(q.x - p.x, q.z - p.z);
 function poseBots(t, sh, lookAt) {
-  BOTS.forEach((b, i) => { const [x, z] = BOT_AT[i % BOT_AT.length], p = V(x, DESK_Y, z);
+  EXTRA.forEach((h, i) => { const [x, z] = STAND_AT[i]; h.pose({ at: [x, z], yaw: yawTo(V(x, 0, z), V(SEAT[0], 0, SEAT[1])), sit: 0, lean: 3, head: [4, 0, 0], exp: expOf(t, h, sh) }); });
+  BOTS.forEach((b, i) => { const [x, z] = BOT_AT[i], p = V(x, DESK_Y, z);
     const speaking = talking(t, b), ex = EP.beats[sh.i].exp;
     b.pose({ at: [x, z], y: DESK_Y, yaw: yawTo(p, lookAt ?? V(SEAT[0], 0, SEAT[1])), t: t + i, talk: speaking, blink: blink(t, 1.3 + i), hop: speaking && /excited|proud/.test(ex ?? '') ? 1 : 0, wave: speaking ? 0.4 : 0, look: [-8, 0] }); });
 }
@@ -186,7 +210,7 @@ const F3D = {
       return camLook(pos, hd.clone().add(V(0, -0.03, 0)), 34, { roll: 0.03 * ALT(sh.i), focus: pos.distanceTo(hd), aperture: 1.0 });
     }
     if (inCorner(ch)) return corner(t, sh, ch, true);
-    return face(t, sh, ch, { p0: [0.24 * ALT(sh.i), -0.02, -0.5], p1: [0.2 * ALT(sh.i), -0.02, -0.46], fov0: 52, fov1: 47, tg: [0, -0.03, 0] });
+    return face(t, sh, ch, { p0: [0.24 * ALT(sh.i), -0.02, -0.5], p1: [0.2 * ALT(sh.i), -0.02, -0.46], fov0: 52, fov1: 47, tg: [0, sh === LAST ? -0.17 : -0.11, 0] });
   },
   two(t, sh) {
     const ch = CAST[sh.who];
@@ -208,10 +232,23 @@ const F3D = {
     const pos = V(lerp(-0.55, -0.45, k), 1.05, lerp(0.75, 0.6, k)).add(drift(t, 0.004)), tgt = V(0.3, 0.55, -0.75);
     return camLook(pos, tgt, 46, { focus: pos.distanceTo(ld), aperture: 0.4 });
   },
+  // the establishing shot: the lit room, the lead at the laptop from the front, the bots on the desk, string lights behind
+  room(t, sh) {
+    const ch = CAST[sh.who];
+    if (inCorner(ch)) return corner(t, sh, ch, false);
+    typing(LEAD, t, { exp: expOf(t, LEAD, sh), pitch: -6 }); PH.visible = false; poseBots(t, sh);
+    for (const m of WILD) if (/Laptop|Mon/.test(m.name)) m.visible = false;
+    const k = lin(seg(t, sh.a, sh.b)), ld = LEAD.head();
+    faceLight(ld.clone().add(V(0, 0.05, -0.05)), { key: 2.4, rim: 2.4, fill: 1.2 });
+    rig.hemi.intensity = 0.8;
+    const pos = V(lerp(0.36, 0.3, k), lerp(0.98, 0.95, k), lerp(-1.16, -1.12, k)).add(drift(t, 0.003)), tgt = ld.clone().add(V(-0.04, -0.12, 0.3));
+    return camLook(pos, tgt, lerp(62, 58, k), { focus: pos.distanceTo(ld), aperture: 0.35 });
+  },
   card(t, sh) { typing(LEAD, t, {}); return camLook(V(0, 1, 2), V(0, 1, 0), 40); },   // the 2D card covers the frame
+  stats(t, sh) { return F3D.card(t, sh); },
 };
 function face(t, sh, ch, c) {
-  const k = lin(seg(t, sh.a, sh.b)), r = holdPhone(ch, t, { pitch: 8, lean: 6, curl: 4, dp: V(0, -0.2, 0.04), exp: expOf(t, ch, sh) }); poseBots(t, sh);
+  const k = lin(seg(t, sh.a, sh.b)), r = holdPhone(ch, t, { pitch: -2, lean: 6, curl: 4, dp: V(0, -0.2, 0.04), exp: expOf(t, ch, sh) }); poseBots(t, sh);
   wild(true);
   const f = r.hd.clone().add(V(0, 0.075, -0.04));
   faceLight(f, { kp: PH.position.clone().add(V(0, 0.02, -0.02)), key: 1.5 });
@@ -225,7 +262,9 @@ function corner(t, sh, ch, close) {
   const hd = cornerPose(ch, t, { exp: expOf(t, ch, sh) }); cornerLights(hd);
   CORNER.ring.position.copy(hd).add(V(-0.2, -0.02, 0.5)); CORNER.ring.lookAt(hd); CORNER.pole.position.copy(CORNER.ring.position).add(V(0, -0.62, 0));
   const k = lin(seg(t, sh.a, sh.b)), f = hd.clone().add(V(0, 0.11, 0.03));
-  const [p0, p1] = close ? [[0.18, -0.04, 0.9], [0.12, -0.03, 0.72]] : [[0.5, 0.05, 1.7], [0.42, 0.04, 1.5]];
+  const n = SHOTS.filter(s => s.i < sh.i && CAST[s.who] === ch && s.shot === sh.shot).length, al = n % 2 ? -1 : 1;   // his next shot of the same kind mirrors
+  const [p0, p1] = close ? [[0.18 * al, -0.04, 0.9 + 0.12 * n % 0.24], [0.12 * al, -0.03, 0.72 + 0.12 * n % 0.24]] : [[0.5 * al, 0.05, 1.7], [0.42 * al, 0.04, 1.5]];
+  CORNER.sign.position.set(hd.x - (close ? 0.2 : 0.04) * al, hd.y + (close ? 0.36 : 0.2), -0.68);
   const pos = f.clone().add(V(...p0).lerp(V(...p1), k)).add(drift(t, 0.003)), tgt = f.clone().add(V(0, close ? -0.03 : -0.25, 0));
   return camLook(pos, tgt, close ? 34 : 38, { roll: lerp(0.03, 0, k), focus: pos.distanceTo(f), aperture: 0.9 });
 }
@@ -240,9 +279,12 @@ function prep(t, tf) {
 // ------------------------------------------------------------ 2D: HUD chips, captions, the title, cards, the vote
 function hudAt(t) {   // every HUD label seen so far, in order; a value that changed in this beat rolls in
   const sh = shotOf(t), cur = {}, prev = {}, order = [];
-  for (const b of SHOTS) { if (b.i > sh.i) break; for (const [k, v] of Object.entries(b.hud ?? {})) { if (!order.includes(k)) order.push(k); prev[k] = cur[k]; cur[k] = String(v); } }
-  const changed = new Set(Object.keys(EP.beats[sh.i].hud ?? {}));
-  return { items: order.map(k => ({ label: k, val: cur[k], from: changed.has(k) ? (prev[k] ?? null) : null, k: ss(seg(t, sh.ls, sh.ls + 0.5)), danger: /RIVAL/i.test(k) ? 1 : 0 })) };
+  // a HUD value is "212" or { "value": "212", "bar": 0.02 (a meter under it, 0..1), "style": "danger" (the accent colour) }
+  const norm = (v) => typeof v === 'object' && v !== null ? { val: String(v.value), bar: v.bar, danger: v.style === 'danger' ? 1 : 0 } : { val: String(v) };
+  for (const b of SHOTS) { if (b.i > sh.i) break; for (const [k, v] of Object.entries(b.hud ?? {})) { if (!order.includes(k)) order.push(k); prev[k] = cur[k]; cur[k] = norm(v); } }
+  const changed = new Set(Object.keys(EP.beats[sh.i].hud ?? {})), k_ = ss(seg(t, sh.ls, sh.ls + 0.5));
+  return { items: order.map(k => ({ label: k, val: cur[k].val, from: changed.has(k) && prev[k] && prev[k].val !== cur[k].val ? prev[k].val : null, k: k_, danger: cur[k].danger ?? 0,
+    bar: cur[k].bar == null ? undefined : (changed.has(k) && prev[k]?.bar != null ? lerp(prev[k].bar, cur[k].bar, k_) : cur[k].bar) })) };
 }
 function wipeText(s, x, y, size, col, k, o = {}) {
   if (k <= 0) return; const w = H2.measure(s, size, o.w ?? 900);
@@ -265,34 +307,56 @@ function card(t, sh) {
   H2.txt(KICKER, 540, 1800, 24, 'rgba(17,17,17,.42)', { w: 600, mono: true, ls: 6 });
   g.restore();
 }
+// a data card (Ep1's "WHERE YOU STAND"): "stats": [{ "label", "value", "extra", "bar" }], optional "head" and "source" lines
+function stats(t, sh) {
+  paper(CREAM); const k = lin(seg(t, sh.a, sh.b)), s = lerp(1, 1.04, k);
+  g.save(); g.translate(P(540), P(960)); g.scale(s, s); g.translate(-P(540), -P(960));
+  if (sh.head) H2.txt(sh.head.toUpperCase(), 540, 330, 34, 'rgba(17,17,17,.6)', { w: 700, mono: true, ls: 6, alpha: eout(seg(t, sh.a, sh.a + 0.25)) });
+  const rows = sh.stats ?? [], gap = Math.min(250, 1000 / Math.max(rows.length, 1));
+  rows.forEach((r, i) => { const y = 450 + i * gap, kk = eout(seg(t, sh.a + 0.15 + i * 0.35, sh.a + 0.4 + i * 0.35)); if (kk <= 0) return;
+    g.save(); g.globalAlpha = kk; g.translate(P(-40 * (1 - kk)), 0);
+    H2.txt(String(r.label).toUpperCase(), 130, y, 30, 'rgba(17,17,17,.55)', { align: 'left', w: 700, mono: true, ls: 4 });
+    const v = String(r.value), vs = fitSize(v, 120, 560);
+    H2.txt(v, 130, y + 95, vs, r.style === 'danger' ? INKP : INKC, { align: 'left', w: 900 });
+    if (r.extra) H2.txt(String(r.extra), 130 + H2.measure(v, vs, 900) + 14, y + 108, 44, 'rgba(17,17,17,.45)', { align: 'left', w: 700 });
+    if (r.bar != null) { H2.rr(130, y + 165, 820, 18, 9); g.fillStyle = 'rgba(17,17,17,.12)'; g.fill(); H2.rr(130, y + 165, Math.max(18, 820 * clamp(r.bar) * eout(seg(t, sh.a + 0.4 + i * 0.35, sh.a + 1.1 + i * 0.35))), 18, 9); g.fillStyle = r.style === 'danger' ? INKP : INKC; g.fill(); }
+    g.fillStyle = 'rgba(17,17,17,.14)'; g.fillRect(P(130), P(y + gap - 40), P(820), P(3)); g.restore(); });
+  if (sh.source) H2.txt(sh.source, 540, 1470, 28, 'rgba(17,17,17,.55)', { w: 600, alpha: eout(seg(t, sh.a + 0.3, sh.a + 0.6)) });
+  H2.txt(KICKER, 540, 1800, 24, 'rgba(17,17,17,.42)', { w: 600, mono: true, ls: 6 });
+  g.restore();
+}
 function title(t) {   // the kicker and the episode title over the first shot
   const a = ss(seg(t, 0.1, 0.4)) * (1 - ss(seg(t, 2.0, 2.4))); if (a <= 0) return;
-  band(620, 1080, 0.7 * a);
-  H2.txt(KICKER, 540, 760, 30, NEON, { w: 700, mono: true, ls: 8, alpha: a });
-  wipeText(EP.title.toUpperCase(), 540, 900, fitSize(EP.title.toUpperCase(), 110, 960), WHITE, seg(t, 0.2, 0.55), { alpha: a });
+  // over the establishing shot's ceiling, under the HUD: no band, the type carries its own dark edge
+  H2.txt(KICKER, 540, 380, 30, NEON, { w: 700, mono: true, ls: 8, alpha: a, stroke: 6 });
+  wipeText(EP.title.toUpperCase(), 540, 480, fitSize(EP.title.toUpperCase(), 100, 940), WHITE, seg(t, 0.2, 0.55), { alpha: a, stroke: 10 });
 }
 const LAST = SHOTS[SHOTS.length - 1];
 const wordAt = (re, d) => WORDS.find(w => w.line === LINES[LAST.i].id && re.test(w.w.replace(/[^\w]/g, '')))?.s ?? LAST.ls + d;
-const T_A = wordAt(/^A$/, 0.5), T_B = wordAt(/^B$/, 1.6);
+const TAG_A = EP.vote.tagA ?? 'A', TAG_B = EP.vote.tagB ?? 'B', esc = (x) => x.replace(/[^\w]/g, '');
+const T_A = wordAt(new RegExp(`^${esc(TAG_A)}$`), 0.5), T_B = wordAt(new RegExp(`^${esc(TAG_B)}$`), 1.6);
 function vote(t) {
   if (t < LAST.ls - 0.1) return;
-  const top = eout(seg(t, LAST.ls - 0.1, LAST.ls + 0.25)); band(1120, 1860, 0.6 * top);
-  H2.txt(EP.vote.question.toUpperCase(), 540, 1190, fitSize(EP.vote.question.toUpperCase(), 40, 960), 'rgba(247,245,242,.9)', { w: 800, mono: true, ls: 4, alpha: top });
+  // everything sits inside the Reels/TikTok safe zone (y 250..1500, x 80..920): the bottom 20 % and the right edge carry the app's own UI
+  const top = eout(seg(t, LAST.ls - 0.1, LAST.ls + 0.25)); band(940, 1520, 0.6 * top);
+  H2.txt(EP.vote.question.toUpperCase(), 500, 1010, fitSize(EP.vote.question.toUpperCase(), 40, 820), 'rgba(247,245,242,.95)', { w: 800, mono: true, ls: 4, alpha: top, stroke: 6 });
   const glow = 0.5 + 0.5 * Math.sin(t * 6);
   const btn = (x, y, w, label, col, fg, t0) => { const k = seg(t, t0 - 0.03, t0 + 0.12); if (k <= 0) return; const s = k < 1 ? lerp(1.9, 1, eout(k)) : 1 + 0.025 * glow;
-    g.save(); g.translate(P(x), P(y)); g.scale(s, s); g.save(); g.shadowColor = col; g.shadowBlur = P(50); H2.rr(-w / 2, -95, w, 190, 95); g.fillStyle = col; g.fill(); g.restore();
-    H2.txt(label, 0, 4, fitSize(label, 84, w - 70), fg, { w: 900, ls: 2 }); g.restore(); };
-  btn(300, 1380, 480, 'A · ' + EP.vote.a.toUpperCase(), PAL.left, WHITE, T_A); btn(780, 1560, 480, 'B · ' + EP.vote.b.toUpperCase(), PAL.right, '#062030', T_B);
-  if (t > T_B + 0.2) H2.txt('or', 545, 1470, 46, WHITE, { w: 800, alpha: eout(seg(t, T_B + 0.2, T_B + 0.4)), stroke: 6 });
-  const d2 = eout(seg(t, LAST.le, LAST.le + 0.3)); H2.txt(`COMMENT A OR B · EP ${EP.ep + 1} FOLLOWS`, 540, 1760, 34, NEON, { w: 800, mono: true, ls: 4, alpha: d2, stroke: 6 });
+    g.save(); g.translate(P(x), P(y)); g.scale(s, s); g.save(); g.shadowColor = col; g.shadowBlur = P(50); H2.rr(-w / 2, -70, w, 140, 70); g.fillStyle = col; g.fill(); g.restore();
+    H2.txt(label, 0, 4, fitSize(label, 64, w - 80), fg, { w: 900, ls: 2 }); g.restore(); };
+  btn(500, 1135, 760, `${TAG_A} · ${EP.vote.a.toUpperCase()}`, PAL.left, WHITE, T_A); btn(500, 1355, 760, `${TAG_B} · ${EP.vote.b.toUpperCase()}`, PAL.right, '#062030', T_B);
+  if (t > T_B + 0.2) H2.txt(TX.or, 500, 1245, 36, WHITE, { w: 800, alpha: eout(seg(t, T_B + 0.2, T_B + 0.4)), stroke: 6 });
+  const d2 = eout(seg(t, LAST.le, LAST.le + 0.3)); H2.txt(fill(TX.voteFooter).toUpperCase(), 500, 1485, 30, NEON, { w: 800, mono: true, ls: 4, alpha: d2, stroke: 6 });
   if (t > T_A) H2.veil(0.25 * Math.exp(-(t - T_A) * 10), '255,61,139');
 }
 function overlay(t) {
   const sh = shotOf(t);
   if (sh.shot === 'card') card(t, sh);
+  else if (sh.shot === 'stats') stats(t, sh);
   else H2.chips(t, hudAt(t).items, { accent: NEON, alpha: ss(seg(t, 0.3, 0.6)) });
   title(t);
-  if (sh !== LAST || t < LAST.le + 0.3) H2.captions(t, WORDS, sh.shot === 'card' ? 1560 : sh === LAST ? 1830 : 1560, { paper: sh.shot === 'card', size: 62, cut: sh.a });
+  const paperShot = sh.shot === 'card' || sh.shot === 'stats';
+  if (sh !== LAST || t < LAST.le + 0.3) H2.captions(t, WORDS, paperShot ? 1620 : sh === LAST ? 1590 : 1560, { paper: paperShot, size: 62, cut: sh.a });
   vote(t);
 }
 S.run({ prep, overlay, T_END: DUR });
