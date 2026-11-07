@@ -9,6 +9,7 @@ import { join, resolve } from 'node:path';
 import { chromium } from 'playwright-core';
 import { run, start } from '../../../kit/env.mjs';
 import { EXE, ARGS } from '../../../core/render/browser.mjs';
+import { serve } from '../../../core/render/serve.mjs';
 
 const argv = process.argv.slice(2), pos = argv.filter(a => !a.startsWith('--'));
 const flag = k => argv.find(a => a.startsWith(`--${k}=`))?.split('=')[1];
@@ -159,6 +160,119 @@ const JOURNEYS = {
       for (const row of ['✓ 1080×1920 at 30 fps', '✓ BT.709 limited range', '✓ loudness −14 ± 1 LUFS']) has(r, row);
       if (!existsSync(`${COPY}/verify-run-copy.mp4`) || !existsSync(`${COPY}/verify-run-copy-cover.png`)) throw new Error('no mp4 or cover');
     });
+  },
+  // The paid TMV kit, as a buyer gets it: build the zip, unzip into a fresh folder (a space in its path), install,
+  // which renders the sample episode as its test render; then the character designer and a planted break.
+  async 'tmv-episode'() {
+    const BOX = join(process.platform === 'win32' ? tmpdir() : '/tmp', `tmv verify ${RUN}`), KIT = join(BOX, 'tmv-studio');
+    let zip = flag('zip');
+    process.env.TMV_VO_TAKE = join(KIT, 'episodes/sample/vo/take.wav');   // CI has no Gemini key: vo cuts the sample's recorded take
+    await step('the tmv zip builds and passes its gate', () => {
+      if (zip) return;
+      const r = has(ok(node('release/build.mjs', '--tier', 'tmv', '--out', join(EV, 'dist'))), /✓ tmv: .* every check passed/);
+      zip = /→ (.*tmv-studio-.*\.zip)/.exec(r.out)[1];
+    });
+    await step('it unzips into a fresh folder with a space in its path', () => {
+      rmSync(BOX, { recursive: true, force: true }); mkdirSync(BOX, { recursive: true });
+      ok(node('-e', `const z=require('node:child_process').spawnSync('python3',['-m','zipfile','-e',process.argv[1],process.argv[2]],{stdio:'inherit'});process.exit(z.status)`, zip, BOX));
+      if (!existsSync(join(KIT, 'episodes/sample/episode.json')) || existsSync(join(KIT, 'kit/check-reel'))) throw new Error('not the tmv layout');
+    });
+    await step('install renders the sample episode as its test render, every check ✓', () => {
+      // test/clean-install.mjs = what a buyer types: pixi run studio install, doctor, install again (a no-op)
+      has(ok(node('test/clean-install.mjs', KIT)), '✓ clean install passed');
+      const rep = JSON.parse(readFileSync(join(KIT, 'episodes/sample/out/check.json'), 'utf8'));
+      const bad = rep.checks.filter(c => !c.ok); if (bad.length) throw new Error(bad.map(c => c.name).join(', '));
+      for (const f of ['sample.mp4', 'out/sheet.jpg', 'out/check.json']) cpSync(join(KIT, 'episodes/sample', f), join(EV, 'tmv-' + f.split('/').pop()));
+    });
+    await step('doctor is all ✓ in the unzipped kit', () => has(ok(node(join(KIT, 'kit/studio.mjs'), 'doctor')), 'All good.'));
+    await step('the character designer (served from the kit, no network) drives the 3D figures and copies a cast entry', async () => {
+      const { server, port } = await serve(KIT);   // what pixi run designer does (episode/designer.mjs)
+      const b = await chromium.launch({ executablePath: EXE, args: ARGS }), p = await b.newPage({ viewport: { width: 1100, height: 900 } }), errs = [];
+      p.on('pageerror', e => errs.push(e.message));
+      await p.goto(`http://127.0.0.1:${port}/character-designer.html`); await p.waitForFunction(() => window.READY === true, null, { timeout: 60000 });
+      const shot = async (name) => { await p.waitForTimeout(600); await p.locator('[data-testid=preview]').screenshot({ path: join(EV, `tmv-char-${name}.png`) }); };
+      for (const s of ['nova', 'theo', 'blip']) { await p.click(`[data-testid=seed-${s}]`); await shot(s); }
+      await p.click('[data-testid=seed-nova]'); await p.fill('[data-testid=field-name]', 'Juno'); await p.selectOption('[data-testid=field-hair]', 'curly');
+      await p.selectOption('[data-testid=field-extra]', 'glasses'); await shot('designed');
+      await p.click('[data-testid=copy]'); await p.waitForTimeout(200);
+      const txt = await p.textContent('[data-testid=json]'), st = await p.textContent('#status'); await b.close(); server.close();
+      if (errs.length) throw new Error(errs.join('; '));
+      const c = JSON.parse(txt.slice(txt.indexOf('\n\n') + 2));
+      if (c.id !== 'juno' || c.hair !== 'curly' || 'voice' in c) throw new Error('copied cast entry is wrong');
+      if (!/Copied Juno|copy it by hand/.test(st)) throw new Error(`status: ${st}`);
+    });
+    await step('planted break: a beat for someone not in the cast fails with its own message', () => {
+      const bad = join(KIT, 'episodes/broken'); cpSync(join(KIT, 'episodes/sample'), bad, { recursive: true });
+      const f = join(bad, 'episode.json'); writeFileSync(f, readFileSync(f, 'utf8').replace(/"who": "theo"/g, '"who": "nobody"'));
+      has(no(node(join(KIT, 'episode/make.mjs'), join(KIT, 'episodes/broken'), 'render')), '"who": "nobody" is not in the cast');
+    });
+    await step('planted break: a changed line without a new voice fails and names the vo step', () => {
+      const f = join(KIT, 'episodes/broken/episode.json'); cpSync(join(KIT, 'episodes/sample/episode.json'), f);
+      writeFileSync(f, readFileSync(f, 'utf8').replace('Two hundred views.', 'Three hundred views.'));
+      has(no(node(join(KIT, 'episode/make.mjs'), join(KIT, 'episodes/broken'), 'render')), 'changed since its voice was made');
+    });
+    // slice 4: a series. Ep1 = the sample; the vote winner B writes Ep2's PREVIOUSLY opening; Ep2's story is the fixture
+    // tmv-series-ep2.json (what /series has Claude write); Ep2 gets its own voice and renders with every check ✓
+    await step('series: new from the sample, next --winner B writes ep2 with the PREVIOUSLY · EP 1 opening', () => {
+      const SD = join(KIT, 'episodes/night-build');
+      has(ok(node(join(KIT, 'episode/series.mjs'), 'new', SD, '--from', join(KIT, 'episodes/sample'))), 'series.json');
+      has(no(node(join(KIT, 'episode/series.mjs'), 'next', SD, '--winner', 'C')), '--winner must be A or B');
+      has(ok(node(join(KIT, 'episode/series.mjs'), 'next', SD, '--winner', 'B')), 'ep1 winner: B · the story');
+      has(no(node(join(KIT, 'episode/series.mjs'), 'next', SD, '--winner', 'A')), 'still has WRITE');   // re-running next never skips ahead
+      const e2 = JSON.parse(readFileSync(join(SD, 'ep2/episode.json'), 'utf8')), sj = JSON.parse(readFileSync(join(SD, 'series.json'), 'utf8'));
+      if (e2.previously?.winner?.text !== 'the story' || e2.beats[0].shot !== 'previously' || sj.episodes[0].winner !== 'B' || e2.cast) throw new Error('ep2 is not linked to ep1');
+      const fx = JSON.parse(readFileSync('.claude/skills/verify/features/tmv-series-ep2.json', 'utf8'));
+      writeFileSync(join(SD, 'ep2/episode.json'), JSON.stringify({ ...fx, previously: e2.previously }, null, 2));
+    });
+    const kt = (...a) => node('test/kit-pixi.mjs', KIT, ...a);   // pixi run in the kit, as a buyer types it
+    await step('series: ep2 gets its own voice and renders, every check ✓ (faces included)', () => {
+      const SD = join(KIT, 'episodes/night-build');
+      has(ok(kt('node', 'episode/make.mjs', join(SD, 'ep2'), 'vo')), 'test take');
+      ok(kt('node', 'episode/make.mjs', join(SD, 'ep2'), 'render', 'check'));
+      const rep = JSON.parse(readFileSync(join(SD, 'ep2/out/check.json'), 'utf8')), bad = rep.checks.filter(c => !c.ok);
+      if (bad.length) throw new Error(bad.map(c => c.name).join(', '));
+      cpSync(join(SD, 'ep1/ep1.mp4'), join(EV, 'tmv-series-ep1.mp4')); cpSync(join(SD, 'ep2/ep2.mp4'), join(EV, 'tmv-series-ep2.mp4')); cpSync(join(SD, 'series.json'), join(EV, 'tmv-series.json'));
+    });
+    rmSync(BOX, { recursive: true, force: true });
+  },
+  // Slice 5, the one-prompt path: a fresh unzip, then every command START.md tells Claude to run, in its order, exactly as
+  // written (Claude itself cannot run in CI: no login). Where START.md has Claude write a story, the fixture does.
+  async 'tmv-one-prompt'() {
+    const BOX = join(process.platform === 'win32' ? tmpdir() : '/tmp', `tmv prompt ${RUN}`), KIT = join(BOX, 'tmv-studio');
+    let zip = flag('zip');
+    process.env.TMV_VO_TAKE = join(KIT, 'episodes/sample/vo/take.wav');   // CI has no Gemini key: every vo step cuts the sample's recorded take
+    await step('a fresh unzip has START.md, the /studio /episode /series skills and an allow-list for every START.md command', () => {
+      if (!zip) zip = /→ (.*tmv-studio-.*\.zip)/.exec(ok(node('release/build.mjs', '--tier', 'tmv', '--out', join(EV, 'dist'))).out)[1];
+      rmSync(BOX, { recursive: true, force: true }); mkdirSync(BOX, { recursive: true });
+      ok(node('-e', `const z=require('node:child_process').spawnSync('python3',['-m','zipfile','-e',process.argv[1],process.argv[2]],{stdio:'inherit'});process.exit(z.status)`, zip, BOX));
+      for (const f of ['START.md', '.claude/skills/studio/SKILL.md', '.claude/skills/episode/SKILL.md', '.claude/skills/series/SKILL.md', '.claude/settings.json'])
+        if (!existsSync(join(KIT, f))) throw new Error(`${f} missing`);
+      // every fenced START.md command must match an allow rule, for Bash and for PowerShell (a rule's * = any text)
+      const allow = JSON.parse(readFileSync(join(KIT, '.claude/settings.json'), 'utf8')).permissions.allow;
+      const fenced = [...readFileSync(join(KIT, 'START.md'), 'utf8').matchAll(/```\n([\s\S]*?)```/g)].flatMap(m => m[1].split('\n').map(l => l.trim()).filter(Boolean));
+      const okBy = (shell, c) => allow.some(r => { const m = new RegExp(`^${shell}\\((.*)\\)$`).exec(r); return m && new RegExp('^' + m[1].replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') + '$').test(c); });
+      const miss = fenced.flatMap(c => ['Bash', 'PowerShell'].filter(sh => !okBy(sh, c)).map(sh => `${sh}: ${c}`));
+      if (miss.length) throw new Error(`not in the allow-list: ${miss.join(' | ')}`);
+      if (allow.some(r => /pixi run \*\)$/.test(r))) throw new Error('allow-list too broad: pixi run *');
+    });
+    const cmds = [...readFileSync(join(KIT, 'START.md'), 'utf8').matchAll(/```\n([\s\S]*?)```/g)].flatMap(m => m[1].split('\n').map(l => l.trim()).filter(Boolean));
+    const kt = (...a) => node('test/kit-pixi.mjs', KIT, ...a);
+    await step(`START.md has ${cmds.length} commands, every one a pixi run`, () => { if (cmds.length < 8 || cmds.some(c => !c.startsWith('pixi run '))) throw new Error(cmds.join(' | ')); });
+    for (const c of cmds) await step(`START.md: ${c}`, () => {
+      ok(kt(...c.replace(/^pixi run /, '').split(' ')));
+      if (c.endsWith('make.mjs new ep1')) {   // Claude writes the buyer's episode 1 here; the sample's story stands in, retitled
+        const f = join(KIT, 'episodes/ep1/episode.json'); writeFileSync(f, readFileSync(f, 'utf8').replace('"Two hundred views"', '"Day one"'));
+      }
+      if (/--winner B$/.test(c)) { const f = join(KIT, 'episodes/my-show/ep2/episode.json'), e2 = JSON.parse(readFileSync(f, 'utf8'));
+        writeFileSync(f, JSON.stringify({ ...JSON.parse(readFileSync('.claude/skills/verify/features/tmv-series-ep2.json', 'utf8')), previously: e2.previously }, null, 2)); }
+    });
+    await step('the documented path ends in two linked episodes, every check ✓', () => {
+      if (!cmds.some(c => c.includes('my-show/ep2'))) throw new Error('START.md never renders episode 2');
+      for (const d of ['episodes/ep1', 'episodes/my-show/ep2']) { const r = JSON.parse(readFileSync(join(KIT, d, 'out/check.json'), 'utf8')); if (r.checks.some(c => !c.ok)) throw new Error(`${d} failed a check`); }
+      const sj = JSON.parse(readFileSync(join(KIT, 'episodes/my-show/series.json'), 'utf8')); if (sj.episodes[0].winner !== 'B') throw new Error('winner not recorded');
+      cpSync(join(KIT, 'episodes/ep1/ep1.mp4'), join(EV, 'prompt-ep1.mp4')); cpSync(join(KIT, 'episodes/my-show/ep2/ep2.mp4'), join(EV, 'prompt-ep2.mp4'));
+    });
+    rmSync(BOX, { recursive: true, force: true });
   },
 };
 

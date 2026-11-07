@@ -17,8 +17,9 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const argv = process.argv.slice(2);
 const opt = (k, d) => { const i = argv.indexOf(`--${k}`); return i >= 0 ? argv[i + 1] : d; };
 const REF = opt('ref', opt('tag', 'HEAD')), TAG = opt('tag', ''), OUT = resolve(opt('out', join(ROOT, 'dist')));
-const TIERS = { starter: ['starter'], pro: ['starter', 'pro'] };
-const tiers = opt('tier', 'all') === 'all' ? Object.keys(TIERS) : [opt('tier')];
+// tmv = the paid "How we make Ten Million Views" kit (PLAN.md); it also refuses everything in [tmv_forbid]
+const TIERS = { starter: ['starter'], pro: ['starter', 'pro'], tmv: ['starter'] };
+const tiers = opt('tier', 'all') === 'all' ? ['starter', 'pro'] : [opt('tier')];
 const DRY = argv.includes('--dry-run');
 const git = (args, input) => {
   const r = spawnSync('git', args, { cwd: ROOT, input, maxBuffer: 1 << 30 });
@@ -28,7 +29,7 @@ const git = (args, input) => {
 
 // ---------- the manifest ----------
 export function parseManifest(text) {
-  const m = { dev: [], pro: [], starter: [], forbid: [], identity: [] }; let sec = null;
+  const m = { dev: [], pro: [], starter: [], forbid: [], identity: [], tmv_forbid: [], tmv_exclude: [] }; let sec = null;
   for (const raw of text.split('\n')) {
     const line = raw.trim(); if (!line || line.startsWith('#')) continue;
     const s = /^\[(\w+)\]$/.exec(line); if (s) { sec = s[1]; if (!m[sec]) throw new Error(`kit.manifest: unknown section [${sec}]`); continue; }
@@ -49,7 +50,8 @@ export function classify(files, m) {
 const TEXT = /\.(md|mjs|js|cjs|json|html|css|py|txt|toml|ya?ml|srt|sh|ps1)$|(^|\/)(LICENSE|CLAUDE\.md|AGENTS\.md)$/;
 const EXEMPT = new Set(['LICENSE', 'THIRD_PARTY_NOTICES.md']);
 const BUYER_DOC = f => /^[^/]+\.md$/.test(f) || /^\.claude\/skills\/[^/]+\/.*\.md$/.test(f) || f === 'workspace/README.md' || f === 'styles/README.md' || f === 'styles/catalog.md' || /^content-types\/.*\.md$/.test(f) || /^styles\/[^/]+\/(STYLE|DEMO|WORKFLOW|README)\.md$/.test(f);
-const SKILL_REF = /(^|[\s`("'])\/(ig-[a-z]+|make-reel|studio|crowsnest|verify)\b/g;
+const SKILL_REF = /(^|[\s`("'])\/(ig-[a-z]+|make-reel|studio|crowsnest|verify|episode|series)\b/g;
+const TMV_SKILLS = ['episode', 'series', 'studio'];
 const PRO_SKILLS = ['ig-plan', 'ig-reel', 'ig-human', 'ig-viral', 'ig-dm', 'ig-caption'];
 
 // A style's page that names a font file the zip lacks renders in a browser fallback font, silently.
@@ -81,13 +83,14 @@ export function repoLinks(files, blob, patterns) {
 export function check(tier, files, blob, m) {
   const errors = [], warns = [], set = new Set(files);
   const skills = [...new Set(files.map(f => /^\.claude\/skills\/([^/]+)\//.exec(f)?.[1]).filter(Boolean))].sort();
-  const want = tier === 'pro' ? ['make-reel', 'studio', ...PRO_SKILLS].sort() : ['make-reel', 'studio'];
+  const want = tier === 'tmv' ? TMV_SKILLS : tier === 'pro' ? ['make-reel', 'studio', ...PRO_SKILLS].sort() : ['make-reel', 'studio'];
   if (skills.join() !== want.join()) errors.push(`skills are [${skills}] but ${tier} must have exactly [${want}]`);
   for (const f of ['LICENSE', 'THIRD_PARTY_NOTICES.md', 'README.md', 'pixi.toml', 'pixi.lock', 'kit/env.mjs', 'kit/studio.mjs', '.claude/skills/studio/SKILL.md'])
     if (!set.has(f)) errors.push(`${f} is missing`);
   if (set.has('THIRD_PARTY_NOTICES.md')) {
     const n = blob('THIRD_PARTY_NOTICES.md').toString('utf8');
-    for (const who of ['LemoLab', 'John Heibel']) if (!n.includes(who)) errors.push(`THIRD_PARTY_NOTICES.md does not credit ${who}`);
+    const owed = ['LemoLab', ...(files.some(f => f.startsWith('styles/kai-hand-draw/')) ? ['John Heibel'] : [])];   // his engine ships only inside kai-hand-draw
+    for (const who of owed) if (!n.includes(who)) errors.push(`THIRD_PARTY_NOTICES.md does not credit ${who}`);
   }
   const forbid = m.forbid.map(p => [p, new RegExp(p)]);
   for (const f of files) {
@@ -99,14 +102,33 @@ export function check(tier, files, blob, m) {
       const cjk = (t.replace(/`[^`\n]*`/g, '').match(/\p{Script=Han}/gu) || []).length; if (cjk) errors.push(`${f}: ${cjk} Chinese characters outside inline code in a buyer document`);
       for (const [, , s] of t.matchAll(SKILL_REF)) {
         if (skills.includes(s)) continue;
-        if (tier === 'starter' && PRO_SKILLS.includes(s)) warns.push(`${f}: names /${s} (Pro only)`);
+        if ((tier === 'starter' || tier === 'tmv') && PRO_SKILLS.includes(s)) warns.push(`${f}: names /${s} (Pro only)`);
         else errors.push(`${f}: names /${s}, which this edition does not have`);
       }
     }
   }
+  if (tier === 'tmv') for (const p of m.tmv_forbid) {
+    const re = new RegExp(p, 'i');
+    for (const f of files) if (!EXEMPT.has(f) && (re.test(f) || re.test(blob(f).toString('latin1')))) errors.push(`${f}: not ours to sell ("${p}")`);
+  }
   errors.push(...missingFonts(files, blob), ...repoLinks(files, blob, m.identity));
   return { errors, warns: [...new Set(warns)] };
 }
+
+// The tmv zip = Starter minus [tmv_exclude], with every tmv/<path> replacing or adding <path>.
+export function tmvFiles(by, overlay, m, blobs) {
+  const ex = m.tmv_exclude.map(globRe), out = new Set(by.starter.filter(f => !ex.some(r => r.test(f))));
+  const own = new Map(blobs), gone = m.tmv_exclude.map(g => /^styles\/([^/]+)\/$/.exec(g)?.[1]).filter(Boolean);
+  for (const f of ['styles/README.md', 'styles/catalog.md']) if (out.has(f))
+    own.set(f, Buffer.from(blobs.get(f).toString('utf8').split('\n').filter(l => !gone.some(g => l.includes(`\`${g}\``) || l.includes(`(${g}/`))).join('\n')));
+  for (const f of overlay) { const to = f.slice(4); own.set(to, blobs.get(f)); out.add(to); }
+  return { list: [...out].sort(), blob: f => own.get(f) };
+}
+const tmvVersion = (blob, tag, commit) => {
+  const v = JSON.parse(blob('product.json').toString()).version;
+  if (tag && v !== tag.replace(/^v/, '')) { console.error(`✗ tmv/product.json says version ${v}, the tag is ${tag}`); process.exit(1); }
+  return tag ? v : `${v}-dev+${commit.slice(0, 7)}`;
+};
 
 // ---------- zip (stored or deflated, deterministic) ----------
 export function zip(entries, date) {
@@ -141,30 +163,32 @@ if (import.meta.url === `file://${process.argv[1]}` || fileURLToPath(import.meta
   const { by, none } = classify(files, m);
   if (none.length) { console.error(`✗ ${none.length} tracked file(s) match no section of kit.manifest:\n  ${none.slice(0, 30).join('\n  ')}`); process.exit(1); }
   // read every shipped blob once
-  const ship = [...by.starter, ...by.pro];
+  const overlay = by.dev.filter(f => f.startsWith('tmv/'));
+  const ship = [...by.starter, ...by.pro, ...overlay];
   const out = git(['cat-file', '--batch'], ship.map(f => `${commit}:${f}`).join('\n') + '\n');
   const blobs = new Map(); let p = 0;
   for (const f of ship) {
     const nl = out.indexOf(10, p), head = out.subarray(p, nl).toString(), size = +head.split(' ')[2];
     blobs.set(f, out.subarray(nl + 1, nl + 1 + size)); p = nl + 1 + size + 1;
   }
-  const blob = f => blobs.get(f);
+  const baseBlob = f => blobs.get(f), blob = baseBlob;
   const product = JSON.parse(blob('product.json')?.toString() || '{}');
   const version = TAG ? TAG.replace(/^v/, '') : `${product.version || '0'}-dev+${commit.slice(0, 7)}`;
-  if (TAG && product.version !== TAG.replace(/^v/, '')) { console.error(`✗ product.json says version ${product.version}, the tag is ${TAG}`); process.exit(1); }
+  if (TAG && !tiers.includes('tmv') && product.version !== TAG.replace(/^v/, '')) { console.error(`✗ product.json says version ${product.version}, the tag is ${TAG}`); process.exit(1); }
   console.log(`Kaiships Studio ${version} from ${commit.slice(0, 10)} (${date})\n  tracked ${files.length}: starter ${by.starter.length}, pro ${by.pro.length}, dev ${by.dev.length}`);
   let failed = false; const sums = [];
   for (const tier of tiers) {
     if (!TIERS[tier]) { console.error(`✗ unknown tier ${tier}`); process.exit(2); }
-    const list = TIERS[tier].flatMap(s => by[s]).sort();
+    const { list, blob } = tier === 'tmv' ? tmvFiles(by, overlay, m, blobs) : { list: TIERS[tier].flatMap(s => by[s]).sort(), blob: baseBlob };
     const { errors, warns } = check(tier, list, blob, m);
     for (const w of warns) console.log(`  ! ${tier}: ${w}`);
     if (errors.length) { failed = true; console.error(`✗ ${tier}: ${errors.length} problem(s)\n  ${errors.join('\n  ')}`); continue; }
     const bytes = list.reduce((n, f) => n + blob(f).length, 0);
     console.log(`  ✓ ${tier}: ${list.length} files, ${(bytes / 1e6).toFixed(1)} MB before compression, every check passed`);
     if (DRY) continue;
-    const name = `kaiships-studio-${tier}-${version}.zip`;
-    const z = zip(list.map(f => ({ name: `kaiships-studio/${f}`, data: blob(f) })), date);
+    const dir = tier === 'tmv' ? 'tmv-studio' : 'kaiships-studio';
+    const name = tier === 'tmv' ? `tmv-studio-${tmvVersion(blob, TAG, commit)}.zip` : `${dir}-${tier}-${version}.zip`;
+    const z = zip(list.map(f => ({ name: `${dir}/${f}`, data: blob(f) })), date);
     mkdirSync(OUT, { recursive: true }); writeFileSync(join(OUT, name), z);
     sums.push(`${createHash('sha256').update(z).digest('hex')}  ${name}`);
     console.log(`  → ${join(OUT, name)} (${(z.length / 1e6).toFixed(1)} MB)`);

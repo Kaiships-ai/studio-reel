@@ -1,10 +1,12 @@
 // kit/studio.mjs: set up and check this Kaiships Studio folder. Buyers run it through pixi (the `studio` task):
 //   pixi run studio install      first-time setup; safe to run again (finished steps are skipped)
 //   pixi run studio doctor       read-only check, a few seconds: ✓/✗ per item, one fix line per ✗
+//   pixi run studio key          TMV kit only: opens .env (GOOGLE_API_KEY=) in a text editor for the voice key
 //   pixi run studio linux-deps   Linux only: the system libraries the headless browser needs (asks for your password)
 // `pixi run` itself installs node, python and ffmpeg from pixi.lock before this file runs.
-import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync, cpSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync, cpSync, realpathSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { spawn } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { env, run, ROOT, lockHash, installMarker } from './env.mjs';
 
@@ -46,11 +48,27 @@ function ensureNpm() {
   writeFileSync(mark, hash(lock)); ok('drawing packages', 'installed'); return true;
 }
 
+
+// The offline voice (espeak-ng inside the full environment) cannot open its data under a real path of 160+ bytes
+// (core/tts/tts.py). Say so at install, before minutes of downloads, not first at the voice step.
+function pathCheck() {
+  const toml = existsSync(join(ROOT, 'pixi.toml')) ? readFileSync(join(ROOT, 'pixi.toml'), 'utf8') : '';
+  if (!toml.includes('[feature.full]')) return true;
+  const py = /^python = "(\d+\.\d+)/m.exec(toml)?.[1] ?? '3.12';
+  const tail = process.platform === 'win32' ? '\\.pixi\\envs\\full\\Lib\\site-packages\\espeakng_loader\\espeak-ng-data'
+    : `/.pixi/envs/full/lib/python${py}/site-packages/espeakng_loader/espeak-ng-data`;
+  const root = realpathSync(ROOT), max = 159 - Buffer.byteLength(tail), n = Buffer.byteLength(root);
+  if (n <= max) { ok('folder path', `${n} of ${max} characters`); return true; }
+  return bad('folder path', `this folder's path is ${n} characters, the offline voice allows ${max}: ${root}`,
+    'unzip the studio again into a short folder (for example ~/tmv-studio), then run pixi run studio install there (a moved folder does not work)');
+}
+
 async function install() {
   console.log('Kaiships Studio · setup (first time about 5 minutes; everything stays inside this folder)');
   const E = env();
   for (const t of ['python', 'ffmpeg', 'ffprobe']) if (!E.tools[t]) return bad(t, 'missing from the pixi environment', 'pixi install   then   pixi run studio install');
   ok(`node ${process.versions.node} · python · ffmpeg`, 'locked versions from pixi.lock');
+  if (!pathCheck()) return false;
 
   if (!ensureNpm()) return false;
 
@@ -62,6 +80,15 @@ async function install() {
   ok('browser', `GPU: ${gpuName(r)}`);
 
   if (!force && existsSync(installMarker()) && readFileSync(installMarker(), 'utf8').trim() === lockHash()) { ok('test render', 'passed before with these versions'); return done(); }
+  rmSync(installMarker(), { force: true });   // an old marker would make the test render itself refuse as "tool versions changed"
+  // The TMV kit has no check reel: its test render is the sample episode itself (preview, 720x1280), which the buyer keeps
+  if (!existsSync(join(ROOT, 'kit', 'check-reel')) && existsSync(join(ROOT, 'episodes', 'sample', 'episode.json'))) {
+    console.log('  … test render: the sample episode (preview 720x1280, a minute or two)');
+    if (run('node', ['episode/make.mjs', 'episodes/sample', 'render', 'check']).status !== 0) return bad('test render', 'the sample episode did not render (message above)', 'pixi run studio doctor');
+    ok('test render', 'episodes/sample/sample.mp4');
+    writeFileSync(installMarker(), lockHash());
+    return done();
+  }
   const tmp = join(ROOT, 'films', '_studio-check');
   rmSync(tmp, { recursive: true, force: true }); mkdirSync(join(ROOT, 'films'), { recursive: true });
   cpSync(join(ROOT, 'kit', 'check-reel'), tmp, { recursive: true });
@@ -82,22 +109,49 @@ async function install() {
   writeFileSync(installMarker(), lockHash());
   return done();
 }
-function done() { console.log('\nReady. Next: /make-reel <your topic>'); return true; }
+// The TMV kit (sample episode, no check reel) voices with Gemini: its key lives in .env, never in git, the zip or the chat
+const TMV = existsSync(join(ROOT, 'episodes', 'sample', 'episode.json')) && !existsSync(join(ROOT, 'kit', 'check-reel'));
+function key() {
+  if (!TMV) { console.log('Nothing to do: only the TMV kit needs a voice key.'); return true; }
+  const f = join(ROOT, '.env');
+  if (!existsSync(f) || !/^GOOGLE_API_KEY=/m.test(readFileSync(f, 'utf8'))) {
+    const old = existsSync(f) ? readFileSync(f, 'utf8') : '# Paste your Google AI Studio key after the = sign, then save (Cmd+S or Ctrl+S)\n';
+    writeFileSync(f, old + (old && !old.endsWith('\n') ? '\n' : '') + 'GOOGLE_API_KEY=\n', { mode: 0o600 });
+  }
+  console.log(`Opening ${f}: paste the key from https://aistudio.google.com/apikey after GOOGLE_API_KEY=, save, then say "xong" (done).`);
+  if (process.env.TMV_VO_TAKE) return true;   // tests: no editor
+  const [cmd, args] = process.platform === 'darwin' ? ['open', ['-e', f]] : process.platform === 'win32' ? ['notepad', [f]] : ['xdg-open', [f]];
+  const r = spawn(cmd, args, { detached: true, stdio: 'ignore' }); r.on('error', () => console.log(`Could not open an editor: open ${f} yourself.`)); r.unref();
+  return true;
+}
+async function voiceKey() {
+  if (process.env.TMV_VO_TAKE) return ok('voice key', 'skipped: TMV_VO_TAKE test take');
+  const { speak } = await import('../episode/gemini.mjs');
+  try { const r = await speak(['Hi.']); return ok('voice key', `Gemini TTS answered (Achird, ${r.seconds.toFixed(1)} s)`); }
+  catch (e) {
+    // a used-up daily quota means the key itself works: not a ✗ (re-pasting the key would not help)
+    if (/Gemini 429/.test(e.message)) return ok('voice key', "valid; today's free voice quota is used up (resets about 14:00-15:00 Vietnam time)");
+    console.log(`  ✗ ${e.message.replace(/\n  fix:/, '\n    fix:').replace(/\n  \(/g, '\n    (')}`); return false; }
+}
+const NEXT = () => existsSync(join(ROOT, 'kit', 'check-reel')) ? '/make-reel <your topic>' : 'open episodes/sample/sample.mp4';
+function done() { console.log(`\nReady. Next: ${NEXT()}`); return true; }
 
 async function doctor() {
   console.log('Kaiships Studio · check');
   const E = env(); let good = true;
   const tool = t => E.tools?.[t] ? ok(t) : (good = bad(t, 'not installed in this folder', 'pixi run studio install'));
   ['python', 'ffmpeg', 'ffprobe'].forEach(tool);
+  if (!pathCheck()) good = false;
   if (existsSync(join(ROOT, 'node_modules/p5.brush/package.json'))) ok('drawing packages'); else good = bad('drawing packages', 'not installed', 'pixi run studio install');
   if (good) {
     try { const r = await browserCheck(); if (r) ok('browser', `GPU: ${gpuName(r)}`); else good = bad('browser', 'WebGL is not available', browserFix()); }
     catch (e) { good = bad('browser', `it does not start (${String(e.message).split('\n')[0].slice(0, 120)})`, browserFix()); }
   }
+  if (TMV && !(await voiceKey())) good = false;
   const marker = existsSync(installMarker()) ? readFileSync(installMarker(), 'utf8').trim() : '';
   if (marker === lockHash()) ok('setup finished', 'test render passed with these versions');
   else good = bad('setup finished', marker ? 'the tool versions changed (normal after an update)' : 'setup has not finished yet', 'pixi run studio install');
-  console.log(good ? '\nAll good. Next: /make-reel <your topic>' : '\nFix the ✗ lines above, then run this check again.');
+  console.log(good ? `\nAll good. Next: ${NEXT()}` : '\nFix the ✗ lines above, then run this check again.');
   return good;
 }
 
@@ -108,6 +162,6 @@ function linuxDeps() {
   return run('node', ['node_modules/playwright-core/cli.js', 'install-deps', 'chromium-headless-shell']).status === 0;
 }
 
-const verbs = { install, doctor, 'linux-deps': linuxDeps };
-if (!verbs[verb]) { console.log('usage: pixi run studio install | doctor | linux-deps'); process.exit(2); }
+const verbs = { install, doctor, key, 'linux-deps': linuxDeps };
+if (!verbs[verb]) { console.log('usage: pixi run studio install | doctor | key | linux-deps'); process.exit(2); }
 process.exit((await verbs[verb]()) ? 0 : 1);

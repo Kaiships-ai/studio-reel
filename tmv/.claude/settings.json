@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pixi run studio *)",
+      "Bash(pixi run studio key)",
+      "Bash(pixi run designer)",
+      "Bash(pixi run node episode/*)",
+      "PowerShell(pixi run studio *)",
+      "PowerShell(pixi run studio key)",
+      "PowerShell(pixi run designer)",
+      "PowerShell(pixi run node episode/*)",
+      "Bash(~/.pixi/bin/pixi run studio *)",
+      "Bash(~/.pixi/bin/pixi run studio key)",
+      "Bash(~/.pixi/bin/pixi run designer)",
+      "Bash(~/.pixi/bin/pixi run node episode/*)",
+      "Edit(episodes/**)",
+      "Write(episodes/**)"
+    ]
+  }
+}

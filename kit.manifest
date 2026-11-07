@@ -27,6 +27,11 @@ styles/kai-hand-draw/engine/kai-v3.js
 styles/kai-reel-3d/
 .claude/skills/make-reel-3d/
 AGENT_LEARNING.md
+PLAN.md
+# The paid TMV kit's own files: tmv/<path> replaces or adds <path> in the tmv zip only
+tmv/
+# Ep1 parts copied read-only from the Pro (no Mixkit, no char-kai, no Clawd cast): port source for slice 3, never shipped as is
+dev/
 
 [pro]
 .claude/skills/ig-plan/
@@ -79,3 +84,36 @@ OpenMontage
 kaiships-ai
 studio-reel
 kinebeo
+
+[tmv_forbid]
+# Not ours to sell in the paid TMV kit (spec section 4.1): Anthropic's mascot, Mixkit sounds, Apple's say voice,
+# Microsoft's online voice, Kai's likeness, third-party IP from the roles files. Ignoring case, names and text.
+clawd
+mixkit
+make_vo_local|\bsay -v
+edge.tts
+kai-v3|blocky.kai|char-kai
+ninjago|daymond
+# never ship a buyer's or our Gemini key: a .env file, or a key string in any file
+(^|/)\.env$
+AIza[0-9A-Za-z_-]{35}
+
+[tmv_exclude]
+# Starter files the paid TMV kit leaves out (globs). Kai's house style and everything built on it:
+styles/kai-hand-draw/
+kit/check-reel/
+.claude/skills/make-reel/
+# Clawd or a voice that is not ours; back in slice 7 with the seeded mascot and Kokoro
+styles/living-screencast/
+styles/paper-lantern/
+styles/game-show/
+core/tts/tts_zh.py
+# Starter docs that describe the house style; the TMV kit has its own in tmv/
+CHANGELOG.md
+DIRECTOR.md
+TECHNIQUE.md
+MY-STYLES.md
+character-designer.html
+core/README.md
+workspace/README.md
+content-types/

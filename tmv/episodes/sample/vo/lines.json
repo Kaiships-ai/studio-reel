@@ -1,0 +1,57 @@
+[
+ {
+  "id": "b01",
+  "who": "nova",
+  "text": "Nova shipped her app today. Two hundred views."
+ },
+ {
+  "id": "b02",
+  "who": "theo",
+  "text": "Across town, Theo's launch ad hit forty thousand by lunch."
+ },
+ {
+  "id": "b03",
+  "who": "nova",
+  "text": "His app does half of what hers does."
+ },
+ {
+  "id": "b04",
+  "who": "theo",
+  "text": "Theo just grins. Views are views, he says. Speed wins."
+ },
+ {
+  "id": "b05",
+  "who": "blip",
+  "text": "Then Blip beeps. People don't share apps. They share stories."
+ },
+ {
+  "id": "b06",
+  "who": "nova",
+  "text": "So her story is the bug that almost killed it?"
+ },
+ {
+  "id": "b07",
+  "who": "theo",
+  "text": "Theo says post a clean demo. Nobody cares about bugs."
+ },
+ {
+  "id": "b08",
+  "who": "nova",
+  "text": "Three nights. One bug. Nova almost quit."
+ },
+ {
+  "id": "b09",
+  "who": "blip",
+  "text": "Blip is sure. That is the story. Show the night she almost quit."
+ },
+ {
+  "id": "b10",
+  "who": "blip",
+  "text": "One post tonight. Tomorrow, they count."
+ },
+ {
+  "id": "b11",
+  "who": "nova",
+  "text": "Comment A for the demo, or B for the story."
+ }
+]

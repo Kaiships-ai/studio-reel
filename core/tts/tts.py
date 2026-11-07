@@ -6,7 +6,7 @@ Model: kokoro-v1.0.onnx / voices-v1.0.bin in this folder; download with pixi run
 Path limit: the data folder of espeak-ng (which Kokoro uses to turn text into phonemes) must have a real path, after symlinks, shorter than
          160 bytes (a CJK character counts 3), or it is not found and the error names a path on someone else's machine (the one espeak-ng was
          built on). A library under a short path such as ~/kaiships-studio is fine; this script checks before it starts and explains.
-More natural Chinese, Japanese and other voices: core/tts/tts_zh.py (Microsoft edge-tts, online), same interface and output layout.
+More natural Chinese, Japanese and other voices: core/tts/tts_zh.py (an online voice), same interface and output layout.
 """
 import sys, json, os, re
 if len(sys.argv) < 3 or sys.argv[1] in ('-h', '--help'):
