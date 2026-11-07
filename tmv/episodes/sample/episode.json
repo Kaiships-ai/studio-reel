@@ -18,6 +18,10 @@
     "or": "or",
     "voteFooter": "COMMENT {a} OR {b} · EP {next} FOLLOWS"
   },
+  "narrator": {
+    "voice": "Achird",
+    "style": "warm storyteller, a little wry"
+  },
   "cast": [
     {
       "id": "nova",
@@ -36,7 +40,7 @@
     {
       "who": "nova",
       "shot": "room",
-      "line": "I shipped my app today. Two hundred views.",
+      "line": "Nova shipped her app today. Two hundred views.",
       "hud": {
         "DAY": "1",
         "VIEWS": "212",
@@ -50,7 +54,7 @@
     {
       "who": "theo",
       "shot": "stats",
-      "line": "Two hundred? My launch ad hit forty thousand by lunch.",
+      "line": "Across town, Theo's launch ad hit forty thousand by lunch.",
       "hud": {
         "RIVAL": {
           "value": "40,000",
@@ -81,13 +85,13 @@
     {
       "who": "nova",
       "shot": "close",
-      "line": "His app does half of what mine does.",
+      "line": "His app does half of what hers does.",
       "exp": "angry"
     },
     {
       "who": "theo",
       "shot": "two",
-      "line": "Views are views, Nova. Speed wins.",
+      "line": "Theo just grins. Views are views, he says. Speed wins.",
       "hud": {
         "RIVAL": {
           "value": "52,000",
@@ -99,7 +103,7 @@
     {
       "who": "blip",
       "shot": "card",
-      "line": "Beep. People don't share apps. They share stories.",
+      "line": "Then Blip beeps. People don't share apps. They share stories.",
       "exp": "proud",
       "card": [
         "APPS DON'T SPREAD.",
@@ -109,19 +113,19 @@
     {
       "who": "nova",
       "shot": "close",
-      "line": "So my story is the bug that almost killed it?",
+      "line": "So her story is the bug that almost killed it?",
       "exp": "thinking"
     },
     {
       "who": "theo",
       "shot": "close",
-      "line": "Or post a clean demo. Nobody cares about your bugs.",
+      "line": "Theo says post a clean demo. Nobody cares about bugs.",
       "exp": "doubt"
     },
     {
       "who": "nova",
       "shot": "phone",
-      "line": "Three nights. One bug. I almost quit.",
+      "line": "Three nights. One bug. Nova almost quit.",
       "hud": {
         "VIEWS": "236",
         "GOAL": {
@@ -134,13 +138,13 @@
     {
       "who": "blip",
       "shot": "two",
-      "line": "That is the story. Show the night you almost quit.",
+      "line": "Blip is sure. That is the story. Show the night she almost quit.",
       "exp": "proud"
     },
     {
       "who": "blip",
       "shot": "close",
-      "line": "One post tonight. Tomorrow, we count.",
+      "line": "One post tonight. Tomorrow, they count.",
       "hud": {
         "DAY": "2"
       },

@@ -23,15 +23,16 @@ export async function speak(texts, { voice = VOICE, style = '', model = MODEL, w
   const k = key(), t = Date.now();
   for (const m of [model, ...FALLBACKS.filter(x => x !== model)]) {
     const body = { model: m, response_format: { type: 'audio' },
-      input: [{ type: 'user_input', content: texts.map(text => ({ type: 'text', text, annotations: [{ type: 'speech_metadata', speaker: 'narrator', style }] })) }],
-      generation_config: { speech_config: { speakers: [{ speaker: 'narrator', voice }] } } };
+      input: [{ type: 'user_input', content: texts.map(text => ({ type: 'text', text, ...(style ? { annotations: [{ type: 'speech_metadata', style }] } : {}) })) }],
+      generation_config: { speech_config: [{ voice }] } };   // one voice: a list of one (a speakers list must name two)
     let r;
     try { r = await fetch(`https://${HOST}/v1beta/interactions`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': k }, body: JSON.stringify(body), signal: AbortSignal.timeout(300e3) }); }
     catch { throw new VoiceError(`voice: could not reach ${HOST}`, 'check the internet connection, then run the vo step again\n  (the last voice that worked is kept; render still works offline)'); }
     if (r.status === 429) continue;
     const txt = await r.text();
     if (r.status === 400 || r.status === 401 || r.status === 403) {
-      const why = /API_KEY_INVALID|API key not valid|PERMISSION_DENIED/.exec(txt)?.[0] ?? `HTTP ${r.status}`;
+      const why = /API_KEY_INVALID|API key not valid|PERMISSION_DENIED/.exec(txt)?.[0];
+      if (!why) throw new VoiceError(`voice: Gemini ${r.status}: ${(/"message":\s*"([^"]{0,300})/.exec(txt)?.[1] ?? '').trim()}`, `check "narrator" and "model" in ${where}, then run the vo step again`);
       throw new VoiceError(`voice key: Google said ${r.status} ${why}`, KEYFIX);
     }
     if (!r.ok) throw new VoiceError(`voice: Gemini HTTP ${r.status} (${m})`, 'run the vo step again in a minute');

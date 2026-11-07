@@ -2,78 +2,56 @@
  {
   "id": "b01",
   "who": "nova",
-  "text": "I shipped my app today. Two hundred views.",
-  "voice": "af_heart",
-  "speed": 1
+  "text": "Nova shipped her app today. Two hundred views."
  },
  {
   "id": "b02",
   "who": "theo",
-  "text": "Two hundred? My launch ad hit forty thousand by lunch.",
-  "voice": "af_heart",
-  "speed": 1.02
+  "text": "Across town, Theo's launch ad hit forty thousand by lunch."
  },
  {
   "id": "b03",
   "who": "nova",
-  "text": "His app does half of what mine does.",
-  "voice": "af_heart",
-  "speed": 1
+  "text": "His app does half of what hers does."
  },
  {
   "id": "b04",
   "who": "theo",
-  "text": "Views are views, Nova. Speed wins.",
-  "voice": "af_heart",
-  "speed": 1.02
+  "text": "Theo just grins. Views are views, he says. Speed wins."
  },
  {
   "id": "b05",
   "who": "blip",
-  "text": "Beep. People don't share apps. They share stories.",
-  "voice": "af_heart",
-  "speed": 1.08
+  "text": "Then Blip beeps. People don't share apps. They share stories."
  },
  {
   "id": "b06",
   "who": "nova",
-  "text": "So my story is the bug that almost killed it?",
-  "voice": "af_heart",
-  "speed": 1
+  "text": "So her story is the bug that almost killed it?"
  },
  {
   "id": "b07",
   "who": "theo",
-  "text": "Or post a clean demo. Nobody cares about your bugs.",
-  "voice": "af_heart",
-  "speed": 1.02
+  "text": "Theo says post a clean demo. Nobody cares about bugs."
  },
  {
   "id": "b08",
   "who": "nova",
-  "text": "Three nights. One bug. I almost quit.",
-  "voice": "af_heart",
-  "speed": 1
+  "text": "Three nights. One bug. Nova almost quit."
  },
  {
   "id": "b09",
   "who": "blip",
-  "text": "That is the story. Show the night you almost quit.",
-  "voice": "af_heart",
-  "speed": 1.08
+  "text": "Blip is sure. That is the story. Show the night she almost quit."
  },
  {
   "id": "b10",
   "who": "blip",
-  "text": "One post tonight. Tomorrow, we count.",
-  "voice": "af_heart",
-  "speed": 1.08
+  "text": "One post tonight. Tomorrow, they count."
  },
  {
   "id": "b11",
   "who": "nova",
-  "text": "Comment A for the demo, or B for the story.",
-  "voice": "af_heart",
-  "speed": 1
+  "text": "Comment A for the demo, or B for the story."
  }
 ]

@@ -1,7 +1,7 @@
 """Cut the narrator's one take into the beats' lines and join them into the voice track with timings (episode/make.mjs vo runs this).
   python episode/voice.py <episode folder>
 Reads <ep>/vo/lines.json (in beat order) and <ep>/vo/take.wav (the whole narration, one Gemini call). The take is cut at
-the pauses between lines: the N-1 quiet stretches that are long and sit nearest where each line should end by its letters.
+the pauses between lines: its stretches of voice are grouped so each line's length best matches its share by letters.
 Writes <ep>/vo/vo.wav (mono 24 kHz) and <ep>/vo/vo.json: {duration, lines: [{id, who, text, s, e}], words: [{w, s, e, line}]}.
 Gemini gives no word timings. The line is cut where the voice pauses (quiet 0.12 s+); when the pauses match the line's
 phrases (split at . , ? !), each phrase gets its own stretch of sound, so a caption never runs ahead through a pause.
@@ -46,28 +46,22 @@ def timed(text, a):
     return share(ws, segs[0][0], segs[-1][1])
 
 def cuts(a, texts):
-    """[(s, e)] seconds of each line inside the take: boundaries at the longest pauses near each line's letter-share end."""
-    segs = spoken(a, gap=0.12); n = len(texts)
-    gaps = [(segs[i][1], segs[i + 1][0]) for i in range(len(segs) - 1)]
-    if len(gaps) < n - 1: sys.exit(f'voice.py: the take has {len(segs)} stretches of voice for {n} lines: make a new take (run the vo step again)')
-    s0, e0 = segs[0][0], segs[-1][1]; w = np.cumsum([len(t) for t in texts]); want = [s0 + (e0 - s0) * x / w[-1] for x in w[:-1]]
-    # dp over gaps in order: score = pause length - 0.15 * distance from where the line should end
-    G, K = len(gaps), n - 1
-    score = lambda g, k: (gaps[g][1] - gaps[g][0]) - 0.15 * abs((gaps[g][0] + gaps[g][1]) / 2 - want[k])
-    best = [[-1e9] * G for _ in range(K)]; back = [[-1] * G for _ in range(K)]
-    for g in range(G): best[0][g] = score(g, 0)
-    for k in range(1, K):
-        run_, arg = -1e9, -1
-        for g in range(G):
-            if g > 0 and best[k - 1][g - 1] > run_: run_, arg = best[k - 1][g - 1], g - 1
-            if arg >= 0: best[k][g] = run_ + score(g, k); back[k][g] = arg
-    pick = []
-    if K:
-        g = max(range(G), key=lambda x: best[K - 1][x])
-        for k in range(K - 1, -1, -1): pick.append(g); g = back[k][g]
-        pick.reverse()
-    bounds = [s0] + [x for g in pick for x in gaps[g]] + [e0]
-    return [(max(bounds[2 * i] - 0.04, 0), min(bounds[2 * i + 1] + 0.06, len(a) / SR)) for i in range(n)]
+    """[(s, e)] seconds of each text inside the take. The take's stretches of voice are grouped in order, one group per
+    text, so each group's length is closest to its share by letters (dynamic programming) and each cut sits on a pause."""
+    segs = spoken(a); n, m = len(texts), len(segs)
+    if m < n: sys.exit(f'voice.py: the take has {m} stretches of voice for {n} lines: make a new take (run the vo step again)')
+    L = [len(t) for t in texts]; r = (segs[-1][1] - segs[0][0]) / sum(L)   # seconds per letter, over the whole take
+    INF = float('inf'); best = [[INF] * (m + 1) for _ in range(n + 1)]; back = [[0] * (m + 1) for _ in range(n + 1)]; best[0][0] = 0
+    for i in range(1, n + 1):
+        for j in range(i, m - (n - i) + 1):
+            for k in range(i - 1, j):
+                if best[i - 1][k] == INF: continue
+                gap = segs[j][0] - segs[j - 1][1] if j < m else 1.0   # the pause after this text: longer is a likelier cut
+                c = best[i - 1][k] + (segs[j - 1][1] - segs[k][0] - r * L[i - 1]) ** 2 / (r * L[i - 1]) - min(gap, 1.0)
+                if c < best[i][j]: best[i][j], back[i][j] = c, k
+    out, j = [], m
+    for i in range(n, 0, -1): k = back[i][j]; out.append((max(segs[k][0] - 0.04, 0), min(segs[j - 1][1] + 0.06, len(a) / SR))); j = k
+    return out[::-1]
 
 if __name__ == '__main__' and sys.argv[1:2] == ['--self-check']:
     t_ = np.arange(int(2.0 * SR)) / SR; tone = 0.3 * np.sin(2 * np.pi * 220 * t_)
