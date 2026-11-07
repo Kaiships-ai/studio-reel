@@ -114,7 +114,10 @@ const TMV = existsSync(join(ROOT, 'episodes', 'sample', 'episode.json')) && !exi
 function key() {
   if (!TMV) { console.log('Nothing to do: only the TMV kit needs a voice key.'); return true; }
   const f = join(ROOT, '.env');
-  if (!existsSync(f) || !/^GOOGLE_API_KEY=/m.test(readFileSync(f, 'utf8'))) writeFileSync(f, (existsSync(f) ? readFileSync(f, 'utf8') : '# Paste your Google AI Studio key after the = sign, then save (Cmd+S or Ctrl+S)\n') + 'GOOGLE_API_KEY=\n');
+  if (!existsSync(f) || !/^GOOGLE_API_KEY=/m.test(readFileSync(f, 'utf8'))) {
+    const old = existsSync(f) ? readFileSync(f, 'utf8') : '# Paste your Google AI Studio key after the = sign, then save (Cmd+S or Ctrl+S)\n';
+    writeFileSync(f, old + (old && !old.endsWith('\n') ? '\n' : '') + 'GOOGLE_API_KEY=\n', { mode: 0o600 });
+  }
   console.log(`Opening ${f}: paste the key from https://aistudio.google.com/apikey after GOOGLE_API_KEY=, save, then say "xong" (done).`);
   if (process.env.TMV_VO_TAKE) return true;   // tests: no editor
   const [cmd, args] = process.platform === 'darwin' ? ['open', ['-e', f]] : process.platform === 'win32' ? ['notepad', [f]] : ['xdg-open', [f]];
@@ -125,7 +128,10 @@ async function voiceKey() {
   if (process.env.TMV_VO_TAKE) return ok('voice key', 'skipped: TMV_VO_TAKE test take');
   const { speak } = await import('../episode/gemini.mjs');
   try { const r = await speak(['Hi.']); return ok('voice key', `Gemini TTS answered (Achird, ${r.seconds.toFixed(1)} s)`); }
-  catch (e) { console.log(`  ✗ ${e.message.replace(/\n  fix:/, '\n    fix:').replace(/\n  \(/g, '\n    (')}`); return false; }
+  catch (e) {
+    // a used-up daily quota means the key itself works: not a ✗ (re-pasting the key would not help)
+    if (/Gemini 429/.test(e.message)) return ok('voice key', "valid; today's free voice quota is used up (resets about 14:00-15:00 Vietnam time)");
+    console.log(`  ✗ ${e.message.replace(/\n  fix:/, '\n    fix:').replace(/\n  \(/g, '\n    (')}`); return false; }
 }
 const NEXT = () => existsSync(join(ROOT, 'kit', 'check-reel')) ? '/make-reel <your topic>' : 'open episodes/sample/sample.mp4';
 function done() { console.log(`\nReady. Next: ${NEXT()}`); return true; }

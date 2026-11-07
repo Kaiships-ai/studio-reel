@@ -94,6 +94,9 @@ make_vo_local|\bsay -v
 edge.tts
 kai-v3|blocky.kai|char-kai
 ninjago|daymond
+# never ship a buyer's or our Gemini key: a .env file, or a key string in any file
+(^|/)\.env$
+AIza[0-9A-Za-z_-]{35}
 
 [tmv_exclude]
 # Starter files the paid TMV kit leaves out (globs). Kai's house style and everything built on it:

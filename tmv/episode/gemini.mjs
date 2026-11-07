@@ -31,7 +31,10 @@ export async function speak(texts, { voice = VOICE, style = '', model = MODEL, w
     if (r.status === 429) continue;
     const txt = await r.text();
     if (r.status === 400 || r.status === 401 || r.status === 403) {
-      const why = /API_KEY_INVALID|API key not valid|PERMISSION_DENIED/.exec(txt)?.[0];
+      if (r.status === 403 && /PERMISSION_DENIED/.test(txt) && !/API_KEY_INVALID|API key not valid/.test(txt))
+        throw new VoiceError('voice key: Google said 403 PERMISSION_DENIED: the key is real but may not use Gemini TTS here',
+          'open aistudio.google.com/apikey and make a new key in a project with the Gemini API on (Google blocks some countries)');
+      const why = /API_KEY_INVALID|API key not valid/.exec(txt)?.[0];
       if (!why) throw new VoiceError(`voice: Gemini ${r.status}: ${(/"message":\s*"([^"]{0,300})/.exec(txt)?.[1] ?? '').trim()}`, `check "narrator" and "model" in ${where}, then run the vo step again`);
       throw new VoiceError(`voice key: Google said ${r.status} ${why}`, KEYFIX);
     }
@@ -42,8 +45,9 @@ export async function speak(texts, { voice = VOICE, style = '', model = MODEL, w
     const raw = Buffer.from(a, 'base64');
     return { wav: raw.subarray(0, 4).toString() === 'RIFF' ? raw : wavOf(raw), model: m, seconds: (Date.now() - t) / 1000 };
   }
-  throw new VoiceError("voice: Gemini 429, today's free quota is used up",
-    `wait for the reset (about 14:00-15:00 Vietnam time), or set\n  "model": "${FALLBACKS.at(-1)}" in ${where}`);
+  // every model was tried above, so suggesting another one would not help: only the daily reset does
+  throw new VoiceError(`voice: Gemini 429, today's free quota is used up (tried ${[model, ...FALLBACKS.filter(x => x !== model)].join(', ')})`,
+    'wait for the reset (about 14:00-15:00 Vietnam time), then run the vo step again');
 }
 
 function wavOf(pcm, sr = 24000) {
