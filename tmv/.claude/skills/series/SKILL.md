@@ -6,6 +6,10 @@ description: Make a series of linked episodes where each one follows the comment
 # /series <show> [winner]
 
 Run from this folder. A series is `episodes/<show>/series.json` (show name, cast, palette, texts, shared by every
+
+Type each command exactly as written (no `cd`, `export`, `2>&1` or pipes; if `pixi` is not found use `~/.pixi/bin/pixi`):
+the allow-list only matches the plain command, and anything else makes Claude Code ask the user.
+
 episode) plus `ep1/`, `ep2/`, ...
 
 - Start: make episode 1 with `/episode` (or use the sample), then

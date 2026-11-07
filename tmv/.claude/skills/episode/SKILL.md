@@ -7,6 +7,9 @@ description: Make one episode of the user's show (3D, vertical, ends in a vote) 
 
 Run from this folder. `README.md` lists every `episode.json` field; `episodes/sample/episode.json` is a full example.
 
+Type each command exactly as written (no `cd`, `export`, `2>&1` or pipes; if `pixi` is not found use `~/.pixi/bin/pixi`):
+the allow-list only matches the plain command, and anything else makes Claude Code ask the user.
+
 1. `pixi run node episode/make.mjs new <name>` (copies the sample's page and `episode.json` into `episodes/<name>`).
 2. Rewrite `episodes/<name>/episode.json` from the user's story: `series`, `ep`, `title`, `cast` (seeds `nova`, `theo`,
    `blip`, or entries pasted from the character designer), 8-12 `beats` (one voiced line each, 30-45 s in all), HUD

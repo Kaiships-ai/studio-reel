@@ -98,12 +98,12 @@ export function createHud(g, W, H) {
       const on = t >= w.s - 0.03, k = ss(seg(t, w.s - 0.03, w.s + 0.08));
       const s = 1 + 0.08 * k * (1 - ss(seg(t, w.s + 0.08, w.s + 0.25)));
       g.save(); g.translate(P(x + w.wd / 2), P(y)); g.scale(s, s);
-      if (o.paper) {   // on the cream/white cards: black ink, no pill; words not yet spoken in light grey, hot words pink
-        const col = on ? (w.hot ? '#E8226F' : '#111111') : 'rgba(17,17,17,0.28)';
+      if (o.paper) {   // on the cream/white cards: black ink, no pill; words not yet spoken in light grey, hot words in o.ink (pink by default)
+        const col = on ? (w.hot ? (o.ink ?? '#E8226F') : '#111111') : 'rgba(17,17,17,0.28)';
         txt(w.w, 0, 0, size, col, { w: 900 });
       } else {
-        const col = on ? (w.hot ? PINK : WHITE) : 'rgba(247,245,242,0.72)';
-        txt(w.w, 0, 0, size, col, { w: 800, stroke: 10, strokeCol: 'rgba(0,0,0,.8)', glow: on && w.hot ? PINK : null, glowR: 24 });
+        const acc = o.accent ?? PINK, col = on ? (w.hot ? acc : WHITE) : 'rgba(247,245,242,0.72)';
+        txt(w.w, 0, 0, size, col, { w: 800, stroke: 10, strokeCol: 'rgba(0,0,0,.8)', glow: on && w.hot ? acc : null, glowR: 24 });
       }
       g.restore(); x += w.wd + gap;
     }

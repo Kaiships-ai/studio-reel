@@ -4,6 +4,11 @@ Claude: the buyer pasted one prompt that sent you here. Run each step from this 
 with the fix; on a ✗ do the fix and run the step again. If a step fails twice, show the buyer the exact line and the
 support contacts in `AGENTS.md`. Never print or commit keys.
 
+Type every command exactly as written here: no `cd`, no `export`, no `2>&1`, no `| tail` or `| grep`. The folder's
+allow-list (`.claude/settings.json`) only matches the plain command, so anything added makes Claude Code stop and ask
+the buyer. If `pixi` is not found by name, use `~/.pixi/bin/pixi` in its place (same words after it), which is also
+allowed. Edit files only under `episodes/`.
+
 1. Install (safe to run again; it skips what is done; a few minutes the first time). It also renders the sample
    episode as its test render:
 

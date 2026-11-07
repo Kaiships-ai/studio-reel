@@ -2,10 +2,20 @@
 
 Make a whole series of short vertical episodes with your own characters and story, in Claude Code.
 
-1. Unzip `tmv-studio`, open Claude Code in the folder, and trust it once.
-2. Paste the one prompt from your receipt. Claude reads `START.md`, installs everything inside this
-   folder, renders the sample episode (`episodes/sample/sample.mp4`), and asks you three questions.
-3. Then make your episodes with `/episode` (`pixi run node episode/make.mjs new <name>`, write the story in its
+1. Unzip `tmv-studio` to a short path (for example `~/tmv-studio`; the offline voice needs the folder's full path to
+   stay under about 80 characters), open a terminal there and start Claude Code (`claude`).
+2. Claude Code asks once whether you trust the folder, with "No, exit" selected (it does that for every new folder):
+   press ↓ to pick **Yes, I trust this folder**, then Enter. The folder pre-approves only its own setup and episode
+   commands (`.claude/settings.json`), so Claude does not stop to ask you before each one.
+3. Paste the one prompt (it is also on your receipt):
+
+   ```text
+   Set up How we make Ten Million Views in this folder: read START.md and follow it step by step.
+   ```
+
+   Claude reads `START.md`, installs everything inside this folder, renders the sample episode
+   (`episodes/sample/sample.mp4`), and asks you three questions.
+4. Then make your episodes with `/episode` (`pixi run node episode/make.mjs new <name>`, write the story in its
    `episode.json`, render) and turn them into a series with `/series`. Each episode ends in a vote; the next one follows
    the winning comment.
 
@@ -42,7 +52,7 @@ the story, then `vo` and render it like any episode. `pixi run node episode/seri
 | Field | What it is |
 |---|---|
 | `series`, `ep`, `title` | Show name, episode number (1, 2, ...), the title over the first shot |
-| `palette` | Colours `neon` (accents), `left` (vote A, room lights), `right` (vote B, the rival's sign), `card` (card paper), as `#RRGGBB` |
+| `palette` | Colours `neon` (accents: highlighted caption words, HUD meters, the room's neon), `left` (vote A, room lights), `right` (vote B, the rival's sign), `card` (card paper), `ink` (highlighted words on the cards; defaults to `neon`, set it when `neon` is too light to read on `card`), as `#RRGGBB` |
 | `texts` | Every other word on screen: `handle` (the lead's phone), `sign` (the rival's neon sign), `kicker` (`{series} · EP {ep}`), `phoneLabel`, `phoneHud` (which HUD label the phone shows), `phoneFoot`, `or`, `voteFooter` (`{a}`, `{b}`, `{next}` fill in) |
 | `cast` | `[{ "id", "seed" }]` or the entry the designer copies. The first human in the room is the lead at the desk; `"role": "rival"` or `"place": "corner"` puts a character in the corner across town; bots stand on the desk; more humans stand in the room |
 | `beats` | One per voiced line: `who`, `line`, `shot`, `exp`, `hud`, `hot`, and `card` or `stats` |

@@ -21,7 +21,8 @@ const TX = { handle: '@you', sign: 'SPEED WINS', kicker: '{series} · EP {ep}', 
   or: 'or', voteFooter: 'COMMENT {a} OR {b} · EP {next} FOLLOWS', ...(EP.texts ?? {}) };
 const fill = (s) => String(s).replace(/\{series\}/g, EP.series).replace(/\{ep\}/g, EP.ep).replace(/\{next\}/g, EP.ep + 1)
   .replace(/\{a\}/g, EP.vote.tagA ?? 'A').replace(/\{b\}/g, EP.vote.tagB ?? 'B');
-const NEON = PAL.neon, CREAM = PAL.card, INKC = '#111111', INKP = '#E8226F';
+// INKP = the accent on cream paper: palette.ink, else the neon, except the default pink neon, too light on cream, which inks deep pink
+const NEON = PAL.neon, CREAM = PAL.card, INKC = '#111111', INKP = PAL.ink ?? (NEON.toUpperCase() === '#FF3D8B' ? '#E8226F' : NEON);
 const KICKER = fill(TX.kicker).toUpperCase();
 
 const S = createStage();
@@ -393,7 +394,7 @@ function overlay(t) {
   else H2.chips(t, hudAt(t).items, { accent: NEON, alpha: ss(seg(t, 0.3, 0.6)) });
   title(t);
   const paperShot = sh.shot === 'card' || sh.shot === 'stats' || sh.shot === 'previously';
-  if (sh !== LAST || t < LAST.le + 0.3) H2.captions(t, WORDS, paperShot ? 1620 : 1560, { paper: paperShot, size: 62, cut: sh.a });
+  if (sh !== LAST || t < LAST.le + 0.3) H2.captions(t, WORDS, paperShot ? 1620 : 1560, { paper: paperShot, size: 62, cut: sh.a, accent: NEON, ink: INKP });
   vote(t);
 }
 S.run({ prep, overlay, T_END: DUR });

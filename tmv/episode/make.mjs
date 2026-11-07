@@ -47,7 +47,7 @@ function episode() {
   if (!str(e.series)) err('"series" must be a text (the show name, in the kicker)');
   if (!Number.isInteger(e.ep) || e.ep < 1) err('"ep" must be a whole number from 1');
   if (!str(e.title)) err('"title" must be a text (the episode title over the first shot)');
-  for (const [k, v] of Object.entries(e.palette ?? {})) { if (!['neon', 'left', 'right', 'card'].includes(k)) err(`palette "${k}" is unknown (neon, left, right, card)`); else if (!HEX.test(v)) err(`palette "${k}": "${v}" is not a colour like "#FF3D8B"`); }
+  for (const [k, v] of Object.entries(e.palette ?? {})) { if (!['neon', 'left', 'right', 'card', 'ink'].includes(k)) err(`palette "${k}" is unknown (neon, left, right, card, ink)`); else if (!HEX.test(v)) err(`palette "${k}": "${v}" is not a colour like "#FF3D8B"`); }
   const TXK = ['handle', 'sign', 'kicker', 'phoneLabel', 'phoneHud', 'phoneFoot', 'or', 'voteFooter', 'previously', 'youPicked'];
   for (const [k, v] of Object.entries(e.texts ?? {})) { if (!TXK.includes(k)) err(`texts "${k}" is unknown (${TXK.join(', ')})`); else if (typeof v !== 'string') err(`texts "${k}" must be a text`); }
   if (/WRITE THE (TITLE|RECAP LINE|NEXT QUESTION)/.test(JSON.stringify(e))) err('episode.json still has a WRITE ... placeholder (from series.mjs next): write the title, the recap line and the vote');
@@ -144,8 +144,10 @@ const STEP = {
     rmSync(FD, { recursive: true, force: true }); mkdirSync(FD, { recursive: true });
     const ft = [];
     for (let t = 0.25; t < dur - 0.1; t += 0.5) {
-      const i = vo.lines.findLastIndex(l => l.s - 0.12 <= t), shot = e.beats[Math.max(i, 0)]?.shot;
-      if (shot === 'card' || shot === 'stats' || shot === 'previously') continue;
+      // a sample a frame or two from a cut can land on the other shot (16.25 s vs a cut at 16.37 - 0.12 hit a blank card):
+      // skip it when the shot 0.1 s either side is a paper one
+      const shotAt = x => e.beats[Math.max(vo.lines.findLastIndex(l => l.s - 0.12 <= x), 0)]?.shot;
+      if ([t - 0.1, t, t + 0.1].some(x => ['card', 'stats', 'previously'].includes(shotAt(x)))) continue;
       const f = join(FD, `f${ft.length}.png`);
       run('ffmpeg', ['-v', 'error', '-y', '-ss', t.toFixed(2), '-i', MP4, '-frames:v', '1', '-vf', t >= lastS ? 'crop=iw:ih*0.5:0:0,scale=360:-2' : 'scale=360:-2', f]); ft.push(f);
     }

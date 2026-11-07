@@ -3,7 +3,7 @@
 //   pixi run studio doctor       read-only check, a few seconds: ✓/✗ per item, one fix line per ✗
 //   pixi run studio linux-deps   Linux only: the system libraries the headless browser needs (asks for your password)
 // `pixi run` itself installs node, python and ffmpeg from pixi.lock before this file runs.
-import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync, cpSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync, cpSync, realpathSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { dirname, join } from 'node:path';
 import { env, run, ROOT, lockHash, installMarker } from './env.mjs';
@@ -46,11 +46,27 @@ function ensureNpm() {
   writeFileSync(mark, hash(lock)); ok('drawing packages', 'installed'); return true;
 }
 
+
+// The offline voice (espeak-ng inside the full environment) cannot open its data under a real path of 160+ bytes
+// (core/tts/tts.py). Say so at install, before minutes of downloads, not first at the voice step.
+function pathCheck() {
+  const toml = existsSync(join(ROOT, 'pixi.toml')) ? readFileSync(join(ROOT, 'pixi.toml'), 'utf8') : '';
+  if (!toml.includes('[feature.full]')) return true;
+  const py = /^python = "(\d+\.\d+)/m.exec(toml)?.[1] ?? '3.12';
+  const tail = process.platform === 'win32' ? '\\.pixi\\envs\\full\\Lib\\site-packages\\espeakng_loader\\espeak-ng-data'
+    : `/.pixi/envs/full/lib/python${py}/site-packages/espeakng_loader/espeak-ng-data`;
+  const root = realpathSync(ROOT), max = 159 - Buffer.byteLength(tail), n = Buffer.byteLength(root);
+  if (n <= max) { ok('folder path', `${n} of ${max} characters`); return true; }
+  return bad('folder path', `this folder's path is ${n} characters, the offline voice allows ${max}: ${root}`,
+    'unzip the studio again into a short folder (for example ~/tmv-studio), then run pixi run studio install there (a moved folder does not work)');
+}
+
 async function install() {
   console.log('Kaiships Studio · setup (first time about 5 minutes; everything stays inside this folder)');
   const E = env();
   for (const t of ['python', 'ffmpeg', 'ffprobe']) if (!E.tools[t]) return bad(t, 'missing from the pixi environment', 'pixi install   then   pixi run studio install');
   ok(`node ${process.versions.node} · python · ffmpeg`, 'locked versions from pixi.lock');
+  if (!pathCheck()) return false;
 
   if (!ensureNpm()) return false;
 
@@ -99,6 +115,7 @@ async function doctor() {
   const E = env(); let good = true;
   const tool = t => E.tools?.[t] ? ok(t) : (good = bad(t, 'not installed in this folder', 'pixi run studio install'));
   ['python', 'ffmpeg', 'ffprobe'].forEach(tool);
+  if (!pathCheck()) good = false;
   if (existsSync(join(ROOT, 'node_modules/p5.brush/package.json'))) ok('drawing packages'); else good = bad('drawing packages', 'not installed', 'pixi run studio install');
   if (good) {
     try { const r = await browserCheck(); if (r) ok('browser', `GPU: ${gpuName(r)}`); else good = bad('browser', 'WebGL is not available', browserFix()); }

@@ -7,6 +7,9 @@ description: Install or check the How we make Ten Million Views studio in this f
 
 Run from this folder. Each step prints one ✓ or ✗ line with the fix.
 
+Type each command exactly as written (no `cd`, `export`, `2>&1` or pipes; if `pixi` is not found use `~/.pixi/bin/pixi`):
+the allow-list only matches the plain command, and anything else makes Claude Code ask the user.
+
 - Install (safe to run again, it skips what is done): `pixi run studio install`
 - Check: `pixi run studio doctor`
 
