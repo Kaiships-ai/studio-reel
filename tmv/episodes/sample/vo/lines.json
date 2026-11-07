@@ -10,7 +10,7 @@
   "id": "b02",
   "who": "theo",
   "text": "Two hundred? My launch ad hit forty thousand by lunch.",
-  "voice": "am_michael",
+  "voice": "af_heart",
   "speed": 1.02
  },
  {
@@ -24,14 +24,14 @@
   "id": "b04",
   "who": "theo",
   "text": "Views are views, Nova. Speed wins.",
-  "voice": "am_michael",
+  "voice": "af_heart",
   "speed": 1.02
  },
  {
   "id": "b05",
   "who": "blip",
   "text": "Beep. People don't share apps. They share stories.",
-  "voice": "am_puck",
+  "voice": "af_heart",
   "speed": 1.08
  },
  {
@@ -45,7 +45,7 @@
   "id": "b07",
   "who": "theo",
   "text": "Or post a clean demo. Nobody cares about your bugs.",
-  "voice": "am_michael",
+  "voice": "af_heart",
   "speed": 1.02
  },
  {
@@ -59,14 +59,14 @@
   "id": "b09",
   "who": "blip",
   "text": "That is the story. Show the night you almost quit.",
-  "voice": "am_puck",
+  "voice": "af_heart",
   "speed": 1.08
  },
  {
   "id": "b10",
   "who": "blip",
   "text": "One post tonight. Tomorrow, we count.",
-  "voice": "am_puck",
+  "voice": "af_heart",
   "speed": 1.08
  },
  {
