@@ -1,14 +1,15 @@
 // make.mjs: one episode folder (episode.json + index.html) to a preview MP4. Run from the library root:
-//   pixi run -e full node episode/make.mjs <episode> vo     Kokoro voice for every beat → vo/vo.wav + vo/vo.json
+//   pixi run node episode/make.mjs <episode> vo     one Gemini call, the narrator reads every beat → vo/take.wav, cut into vo/vo.wav + vo/vo.json
 //   pixi run node episode/make.mjs <episode> render         frames + voice + bed (room tone, music, hits) → <episode>/<name>.mp4 (720x1280, 30 fps)
 //   pixi run node episode/make.mjs new <name>             episodes/<name> from the sample (episode.json + page), ready to rewrite
 //   pixi run node episode/make.mjs <episode> check          size, length, sound, no black or frozen stretch, faces not blown out, stills sheet
-// No step = render check. Options: --fps N (default 30) · --workers N. Preview size only (720x1280, ST-77). The vo step needs the full environment and the voice model (pixi run fetch voice, once, about 350 MB).
+// No step = render check. Options: --fps N (default 30) · --workers N. Preview size only (720x1280, ST-77). The vo step needs GOOGLE_API_KEY in .env (pixi run studio key) and the internet; TMV_VO_TAKE=<wav> cuts that take instead (tests).
 // <name> is the folder's name. Writes <episode>/out/check.json and <episode>/out/sheet.jpg (open it to look).
-import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync, renameSync, realpathSync } from 'node:fs';
-import { join, resolve, basename } from 'node:path';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync, renameSync, realpathSync, cpSync } from 'node:fs';
+import { join, resolve, basename, relative } from 'node:path';
 import { env, run, requireReady, ROOT } from '../kit/env.mjs';
 import { mux } from '../core/render/mux.mjs';
+import { speak, VOICE } from './gemini.mjs';
 
 const argv = process.argv.slice(2), steps = [], opt = {};
 for (let i = 0; i < argv.length; i++) {
@@ -51,6 +52,7 @@ function episode() {
   const TXK = ['handle', 'sign', 'kicker', 'phoneLabel', 'phoneHud', 'phoneFoot', 'or', 'voteFooter', 'previously', 'youPicked'];
   for (const [k, v] of Object.entries(e.texts ?? {})) { if (!TXK.includes(k)) err(`texts "${k}" is unknown (${TXK.join(', ')})`); else if (typeof v !== 'string') err(`texts "${k}" must be a text`); }
   if (/WRITE THE (TITLE|RECAP LINE|NEXT QUESTION)/.test(JSON.stringify(e))) err('episode.json still has a WRITE ... placeholder (from series.mjs next): write the title, the recap line and the vote');
+  if (e.narrator !== undefined && (typeof e.narrator !== 'object' || (e.narrator.voice !== undefined && !str(e.narrator.voice)) || (e.narrator.style !== undefined && typeof e.narrator.style !== 'string'))) err('"narrator" must be like {"voice": "Achird", "style": "warm, a little wry"}');
   if (!Array.isArray(e.cast) || !e.cast.length) err('"cast" must list at least one character');
   const cast = {};
   for (const [i, m] of (Array.isArray(e.cast) ? e.cast : []).entries()) {
@@ -60,7 +62,7 @@ function episode() {
     if (cast[m.id]) err(`${at}: "id": "${m.id}" is used twice`);
     if (m.seed !== undefined && !window.TMV_SEEDS[m.seed]) err(`${at}: "seed": "${m.seed}" is not a seed (${Object.keys(window.TMV_SEEDS).join(', ')})`);
     const c = { ...(window.TMV_SEEDS[m.seed] || {}), ...m }; cast[m.id] = c;
-    for (const k of ['kind', 'build', 'hair', 'top', 'eyes', 'extra', 'voice']) if (c[k] !== undefined && !P[k].includes(c[k])) err(`${at} (${m.id}): "${k}": "${c[k]}" is not one of ${P[k].join(', ')}`);
+    for (const k of ['kind', 'build', 'hair', 'top', 'eyes', 'extra']) if (c[k] !== undefined && !P[k].includes(c[k])) err(`${at} (${m.id}): "${k}": "${c[k]}" is not one of ${P[k].join(', ')}`);
     if (!c.kind) err(`${at} (${m.id}) needs a "seed" or "kind" (human or bot)`);
     for (const k of ['skin', 'hairColor', 'topColor', 'legs']) if (c[k] !== undefined && !HEX.test(c[k])) err(`${at} (${m.id}): "${k}": "${c[k]}" is not a colour like "#C9663A"`);
     if (c.place !== undefined && !['room', 'corner'].includes(c.place)) err(`${at} (${m.id}): "place" must be "room" or "corner"`);
@@ -95,13 +97,20 @@ function episode() {
 }
 
 const STEP = {
-  vo() {
-    const { e, cast } = episode();
-    const lines = e.beats.map((b, i) => ({ id: `b${String(i + 1).padStart(2, '0')}`, who: b.who, text: b.line, voice: cast[b.who].voice || 'af_heart', speed: cast[b.who].speed || 1 }));
+  async vo() {
+    const { e } = episode();
+    const lines = e.beats.map((b, i) => ({ id: `b${String(i + 1).padStart(2, '0')}`, who: b.who, text: b.line }));
+    const n = e.narrator ?? {}, voice = n.voice || VOICE;
     // build in vo.new/ and swap it in only when it worked: a failed voice never deletes the one that renders
-    const nv = join(ep, 'vo.new'); rmSync(nv, { recursive: true, force: true }); mkdirSync(join(nv, 'vo', 'lines'), { recursive: true });
+    const nv = join(ep, 'vo.new'); rmSync(nv, { recursive: true, force: true }); mkdirSync(join(nv, 'vo'), { recursive: true });
     writeFileSync(join(nv, 'vo', 'lines.json'), JSON.stringify(lines, null, 1));
-    sh('python', ['core/tts/tts.py', join(nv, 'vo', 'lines.json'), join(nv, 'vo', 'lines')]);
+    if (process.env.TMV_VO_TAKE) { cpSync(process.env.TMV_VO_TAKE, join(nv, 'vo', 'take.wav')); console.log(`✓ test take ${process.env.TMV_VO_TAKE} (no Gemini call)`); }
+    else {
+      let r; try { r = await speak(lines.map(l => l.text), { voice, style: n.style ?? '', model: e.model, where: relative(ROOT, join(ep, 'episode.json')).replaceAll('\\', '/') }); }
+      catch (x) { rmSync(nv, { recursive: true, force: true }); die(x.message); }
+      writeFileSync(join(nv, 'vo', 'take.wav'), r.wav);
+      console.log(`✓ Gemini ${voice} · 1 call · ${r.model} · ${r.seconds.toFixed(1)} s · ${lines.length} lines`);
+    }
     sh('python', ['episode/voice.py', nv]);
     rmSync(join(ep, 'vo'), { recursive: true, force: true }); renameSync(join(nv, 'vo'), join(ep, 'vo')); rmSync(nv, { recursive: true, force: true });
   },
@@ -110,9 +119,9 @@ const STEP = {
     if (existsSync(join(ep, 'vo/lines.json'))) {   // the voice must say exactly the beats, or captions and sound drift
       const said = JSON.parse(readFileSync(join(ep, 'vo/lines.json'), 'utf8'));
       if (said.length !== e.beats.length || said.some((l, i) => l.text !== e.beats[i].line || l.who !== e.beats[i].who))
-        die(`episode.json changed since its voice was made: run pixi run -e full node episode/make.mjs ${NAME} vo`);
+        die(`episode.json changed since its voice was made: run pixi run node episode/make.mjs ${NAME} vo`);
     }
-    if (!existsSync(join(ep, 'vo/vo.wav'))) die(`${join(ep, 'vo/vo.wav')} is missing: run the vo step first (pixi run -e full node episode/make.mjs ${NAME} vo)`);
+    if (!existsSync(join(ep, 'vo/vo.wav'))) die(`${join(ep, 'vo/vo.wav')} is missing: run the vo step first (pixi run node episode/make.mjs ${NAME} vo)`);
     mkdirSync(OUT, { recursive: true });
     sh('node', ['core/render/video.mjs', ep, '--size', `${W}x${H}`, '--fps', String(FPS), '--workers', String(opt.workers ?? env().workers), '--out', join(OUT, 'video.mp4')]);
     sh('python', ['episode/bed.py', ep]);   // room tone + music bed + hits under the voice, all code-made
@@ -167,5 +176,5 @@ const STEP = {
 for (const s of steps.length ? steps : ['render', 'check']) {
   if (!STEP[s]) die(`unknown step "${s}": use vo, render or check`);
   console.log(`\n=== ${s} · ${ep} ===`);
-  STEP[s]();
+  await STEP[s]();
 }

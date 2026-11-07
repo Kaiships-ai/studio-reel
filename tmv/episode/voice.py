@@ -1,8 +1,9 @@
-"""Join the Kokoro line takes of an episode into one voice track with timings (episode/make.mjs vo runs this).
+"""Cut the narrator's one take into the beats' lines and join them into the voice track with timings (episode/make.mjs vo runs this).
   python episode/voice.py <episode folder>
-Reads <ep>/vo/lines.json (the tts.py input, in beat order) and <ep>/vo/lines/<id>.wav.
+Reads <ep>/vo/lines.json (in beat order) and <ep>/vo/take.wav (the whole narration, one Gemini call). The take is cut at
+the pauses between lines: the N-1 quiet stretches that are long and sit nearest where each line should end by its letters.
 Writes <ep>/vo/vo.wav (mono 24 kHz) and <ep>/vo/vo.json: {duration, lines: [{id, who, text, s, e}], words: [{w, s, e, line}]}.
-Kokoro gives no word timings. The line is cut where the voice pauses (quiet 0.12 s+); when the pauses match the line's
+Gemini gives no word timings. The line is cut where the voice pauses (quiet 0.12 s+); when the pauses match the line's
 phrases (split at . , ? !), each phrase gets its own stretch of sound, so a caption never runs ahead through a pause.
 Inside a stretch each word gets a share by its letters."""
 import sys, os, json
@@ -44,19 +45,51 @@ def timed(text, a):
         return [x for ph, (s, e) in zip(phrases, segs) for x in share(ph, s, e)]
     return share(ws, segs[0][0], segs[-1][1])
 
+def cuts(a, texts):
+    """[(s, e)] seconds of each line inside the take: boundaries at the longest pauses near each line's letter-share end."""
+    segs = spoken(a, gap=0.12); n = len(texts)
+    gaps = [(segs[i][1], segs[i + 1][0]) for i in range(len(segs) - 1)]
+    if len(gaps) < n - 1: sys.exit(f'voice.py: the take has {len(segs)} stretches of voice for {n} lines: make a new take (run the vo step again)')
+    s0, e0 = segs[0][0], segs[-1][1]; w = np.cumsum([len(t) for t in texts]); want = [s0 + (e0 - s0) * x / w[-1] for x in w[:-1]]
+    # dp over gaps in order: score = pause length - 0.15 * distance from where the line should end
+    G, K = len(gaps), n - 1
+    score = lambda g, k: (gaps[g][1] - gaps[g][0]) - 0.15 * abs((gaps[g][0] + gaps[g][1]) / 2 - want[k])
+    best = [[-1e9] * G for _ in range(K)]; back = [[-1] * G for _ in range(K)]
+    for g in range(G): best[0][g] = score(g, 0)
+    for k in range(1, K):
+        run_, arg = -1e9, -1
+        for g in range(G):
+            if g > 0 and best[k - 1][g - 1] > run_: run_, arg = best[k - 1][g - 1], g - 1
+            if arg >= 0: best[k][g] = run_ + score(g, k); back[k][g] = arg
+    pick = []
+    if K:
+        g = max(range(G), key=lambda x: best[K - 1][x])
+        for k in range(K - 1, -1, -1): pick.append(g); g = back[k][g]
+        pick.reverse()
+    bounds = [s0] + [x for g in pick for x in gaps[g]] + [e0]
+    return [(max(bounds[2 * i] - 0.04, 0), min(bounds[2 * i + 1] + 0.06, len(a) / SR)) for i in range(n)]
+
 if __name__ == '__main__' and sys.argv[1:2] == ['--self-check']:
     t_ = np.arange(int(2.0 * SR)) / SR; tone = 0.3 * np.sin(2 * np.pi * 220 * t_)
     tone[int(0.8 * SR):int(1.2 * SR)] = 0   # "One, two" spoken 0-0.8 s and 1.2-2.0 s
     r = timed('Hello there, friend', tone.astype(np.float32))
     assert abs(r[2][1] - 1.2) < 0.03 and r[1][2] <= 0.81, r   # "friend" starts after the pause, "there," ends before it
+    two = np.concatenate([tone, np.zeros(int(0.6 * SR)), tone]).astype(np.float32)   # line 1 has a 0.4 s inner pause, 0.6 s between lines
+    c = cuts(two, ['One, two', 'Three, four'])
+    assert len(c) == 2 and 2.5 < c[1][0] <= 2.6 and 2.0 <= c[0][1] < 2.1, c
     print('voice.py self-check ok'); sys.exit(0)
 
 ep = sys.argv[1]
 lines = json.load(open(os.path.join(ep, 'vo', 'lines.json'), encoding='utf-8'))
+take, tsr = sf.read(os.path.join(ep, 'vo', 'take.wav'), dtype='float32')
+if take.ndim > 1: take = take.mean(axis=1)
+if tsr != SR:
+    from scipy.signal import resample_poly
+    take = resample_poly(take, SR, tsr).astype(np.float32)
+pieces = {L['id']: take[int(s * SR):int(e * SR)] for L, (s, e) in zip(lines, cuts(take, [L['text'] for L in lines]))}
 parts, out_lines, words, t = [np.zeros(int(LEAD * SR), dtype=np.float32)], [], [], LEAD
 for L in lines:
-    a, sr = sf.read(os.path.join(ep, 'vo', 'lines', L['id'] + '.wav'), dtype='float32')
-    if sr != SR: sys.exit(f'voice.py: {L["id"]}.wav is {sr} Hz, expected {SR}')
+    a = pieces[L['id']]
     d = len(a) / SR
     out_lines.append({'id': L['id'], 'who': L.get('who'), 'text': L['text'], 's': round(t, 3), 'e': round(t + d, 3)})
     for w, s, e in timed(L['text'], a):
