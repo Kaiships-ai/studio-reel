@@ -1,10 +1,12 @@
 // kit/studio.mjs: set up and check this Kaiships Studio folder. Buyers run it through pixi (the `studio` task):
 //   pixi run studio install      first-time setup; safe to run again (finished steps are skipped)
 //   pixi run studio doctor       read-only check, a few seconds: ✓/✗ per item, one fix line per ✗
+//   pixi run studio key          TMV kit only: opens .env (GOOGLE_API_KEY=) in a text editor for the voice key
 //   pixi run studio linux-deps   Linux only: the system libraries the headless browser needs (asks for your password)
 // `pixi run` itself installs node, python and ffmpeg from pixi.lock before this file runs.
 import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync, cpSync, realpathSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { spawn } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { env, run, ROOT, lockHash, installMarker } from './env.mjs';
 
@@ -107,6 +109,24 @@ async function install() {
   writeFileSync(installMarker(), lockHash());
   return done();
 }
+// The TMV kit (sample episode, no check reel) voices with Gemini: its key lives in .env, never in git, the zip or the chat
+const TMV = existsSync(join(ROOT, 'episodes', 'sample', 'episode.json')) && !existsSync(join(ROOT, 'kit', 'check-reel'));
+function key() {
+  if (!TMV) { console.log('Nothing to do: only the TMV kit needs a voice key.'); return true; }
+  const f = join(ROOT, '.env');
+  if (!existsSync(f) || !/^GOOGLE_API_KEY=/m.test(readFileSync(f, 'utf8'))) writeFileSync(f, (existsSync(f) ? readFileSync(f, 'utf8') : '# Paste your Google AI Studio key after the = sign, then save (Cmd+S or Ctrl+S)\n') + 'GOOGLE_API_KEY=\n');
+  console.log(`Opening ${f}: paste the key from https://aistudio.google.com/apikey after GOOGLE_API_KEY=, save, then say "xong" (done).`);
+  if (process.env.TMV_VO_TAKE) return true;   // tests: no editor
+  const [cmd, args] = process.platform === 'darwin' ? ['open', ['-e', f]] : process.platform === 'win32' ? ['notepad', [f]] : ['xdg-open', [f]];
+  const r = spawn(cmd, args, { detached: true, stdio: 'ignore' }); r.on('error', () => console.log(`Could not open an editor: open ${f} yourself.`)); r.unref();
+  return true;
+}
+async function voiceKey() {
+  if (process.env.TMV_VO_TAKE) return ok('voice key', 'skipped: TMV_VO_TAKE test take');
+  const { speak } = await import('../episode/gemini.mjs');
+  try { const r = await speak(['Hi.']); return ok('voice key', `Gemini TTS answered (Achird, ${r.seconds.toFixed(1)} s)`); }
+  catch (e) { console.log(`  ✗ ${e.message.replace(/\n  fix:/, '\n    fix:').replace(/\n  \(/g, '\n    (')}`); return false; }
+}
 const NEXT = () => existsSync(join(ROOT, 'kit', 'check-reel')) ? '/make-reel <your topic>' : 'open episodes/sample/sample.mp4';
 function done() { console.log(`\nReady. Next: ${NEXT()}`); return true; }
 
@@ -121,6 +141,7 @@ async function doctor() {
     try { const r = await browserCheck(); if (r) ok('browser', `GPU: ${gpuName(r)}`); else good = bad('browser', 'WebGL is not available', browserFix()); }
     catch (e) { good = bad('browser', `it does not start (${String(e.message).split('\n')[0].slice(0, 120)})`, browserFix()); }
   }
+  if (TMV && !(await voiceKey())) good = false;
   const marker = existsSync(installMarker()) ? readFileSync(installMarker(), 'utf8').trim() : '';
   if (marker === lockHash()) ok('setup finished', 'test render passed with these versions');
   else good = bad('setup finished', marker ? 'the tool versions changed (normal after an update)' : 'setup has not finished yet', 'pixi run studio install');
@@ -135,6 +156,6 @@ function linuxDeps() {
   return run('node', ['node_modules/playwright-core/cli.js', 'install-deps', 'chromium-headless-shell']).status === 0;
 }
 
-const verbs = { install, doctor, 'linux-deps': linuxDeps };
-if (!verbs[verb]) { console.log('usage: pixi run studio install | doctor | linux-deps'); process.exit(2); }
+const verbs = { install, doctor, key, 'linux-deps': linuxDeps };
+if (!verbs[verb]) { console.log('usage: pixi run studio install | doctor | key | linux-deps'); process.exit(2); }
 process.exit((await verbs[verb]()) ? 0 : 1);

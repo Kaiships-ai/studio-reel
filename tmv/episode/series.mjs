@@ -15,7 +15,7 @@ if (!['new', 'next', 'status'].includes(cmd) || !dirArg) { console.error('usage:
 const dir = resolve(dirArg), SJ = join(dir, 'series.json');
 const read = (f) => { try { return JSON.parse(readFileSync(f, 'utf8')); } catch (x) { die(`${f}: ${x.message}`); } };
 const write = (f, o) => writeFileSync(f, JSON.stringify(o, null, 2) + '\n');
-const SHARED = ['series', 'cast', 'palette', 'texts'];
+const SHARED = ['series', 'cast', 'palette', 'texts', 'narrator'];   // one narrator voice for the whole show
 
 if (cmd === 'new') {
   const from = resolve(opt('--from') ?? 'episodes/sample');

@@ -42,7 +42,7 @@ function episode() {
   // in a series (episode/series.mjs) the show's name, cast, palette and texts come from ../series.json unless the episode sets them
   const sf = join(ep, '..', 'series.json');
   if (existsSync(sf)) { let s; try { s = JSON.parse(readFileSync(sf, 'utf8')); } catch (x) { die(`${sf} is not valid JSON: ${x.message}`); }
-    e = { ...e, series: e.series ?? s.series, cast: e.cast ?? s.cast, palette: { ...(s.palette ?? {}), ...(e.palette ?? {}) }, texts: { ...(s.texts ?? {}), ...(e.texts ?? {}) } }; }
+    e = { ...e, series: e.series ?? s.series, cast: e.cast ?? s.cast, narrator: e.narrator ?? s.narrator, palette: { ...(s.palette ?? {}), ...(e.palette ?? {}) }, texts: { ...(s.texts ?? {}), ...(e.texts ?? {}) } }; }
   const window = {}; new Function('window', readFileSync(join(ROOT, 'characters/cast.js'), 'utf8'))(window);
   const P = window.TMV_PARTS, errs = [], err = m => errs.push(m), str = v => typeof v === 'string' && v.trim() !== '';
   if (!str(e.series)) err('"series" must be a text (the show name, in the kicker)');

@@ -67,17 +67,15 @@ which you can read in its installed package.
 | [soundfile](https://github.com/bastibe/python-soundfile) | reading and writing WAV/FLAC | BSD-3-Clause |
 | [soxr](https://github.com/dofuuz/python-soxr) | resampling | LGPL-2.1-or-later |
 | [Pillow](https://python-pillow.org) | contact sheets and images | MIT-CMU (HPND) |
+| Gemini TTS (Google, `generativelanguage.googleapis.com`) | the narrator's voice, called with your own AI Studio key | Google's Gemini API terms |
 | [faster-whisper](https://github.com/SYSTRAN/faster-whisper) | the speech-to-text voice check | MIT |
-| [kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx) | offline Kokoro voice; optional, `full` environment | MIT |
-| [Numba](https://numba.pydata.org) | plucked-string synthesis; optional, `full` environment | BSD-2-Clause |
 
 ### Asset packs (`pixi run fetch …`)
 
-The packs listed in [`kit/assets.json`](kit/assets.json) (`voice`, `hdri`, `instruments-freepats`,
+The packs listed in [`kit/assets.json`](kit/assets.json) (`hdri`, `instruments-freepats`,
 `instruments-karoryfer`, `instruments-salamander`, `instruments-vcsl`, `instruments-vsco2ce`) are downloaded from the
 Lemo-Opuscar asset release by LemoLab; they are not in the zip.
 
-- `voice`: the Kokoro v1.0 model files (`kokoro-v1.0.onnx`, `voices-v1.0.bin`), under the licence of the Kokoro-82M model.
 - `hdri`: HDRIs from [Poly Haven](https://polyhaven.com), CC0 (sources in `core/assets/polyhaven/SOURCES.md`).
 - `instruments-*`: free sample libraries (VSCO 2 CE, VCSL, Salamander, FreePats, Karoryfer). Each library keeps its
   own `LICENSE`/`README` inside `core/audio/instruments/<lib>/`; follow those when you use a sample in a film

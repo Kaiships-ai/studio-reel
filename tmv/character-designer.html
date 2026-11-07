@@ -89,7 +89,7 @@ function build() {
   role.onchange = () => { c.role = role.value; changed(false); }; field('Role', role, 'role');
   for (const k of Object.keys(P)) {
     const s = document.createElement('select'); for (const v of P[k]) s.add(new Option(v, v, false, v === c[k]));
-    s.onchange = () => { c[k] = s.value; changed(k !== 'voice'); }; field(k[0].toUpperCase() + k.slice(1), s, k);
+    s.onchange = () => { c[k] = s.value; changed(true); }; field(k[0].toUpperCase() + k.slice(1), s, k);
   }
   for (const k of COLORS) {
     const i = Object.assign(document.createElement('input'), { type: 'color', value: c[k] });
@@ -100,7 +100,7 @@ function build() {
 function prompt() {
   const id = slug(c.name);
   return `Add this character to my episode's cast. In episode.json, put it in "cast" as {"id": "${id}", ...the parameters below}, `
-    + `give it lines in "beats" with "who": "${id}", then re-render the episode preview.\n\n`
+    + `put it on screen in "beats" with "who": "${id}" (the narrator tells what it does), then re-voice and re-render the episode preview.\n\n`
     + JSON.stringify({ id, ...c }, null, 2);
 }
 function text() {

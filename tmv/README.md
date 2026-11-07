@@ -2,8 +2,7 @@
 
 Make a whole series of short vertical episodes with your own characters and story, in Claude Code.
 
-1. Unzip `tmv-studio` to a short path (for example `~/tmv-studio`; the offline voice needs the folder's full path to
-   stay under about 80 characters), open a terminal there and start Claude Code (`claude`).
+1. Unzip `tmv-studio` to a short path (for example `~/tmv-studio`), open a terminal there and start Claude Code (`claude`).
 2. Claude Code asks once whether you trust the folder, with "No, exit" selected (it does that for every new folder):
    press ↓ to pick **Yes, I trust this folder**, then Enter. The folder pre-approves only its own setup and episode
    commands (`.claude/settings.json`), so Claude does not stop to ask you before each one.
@@ -14,13 +13,14 @@ Make a whole series of short vertical episodes with your own characters and stor
    ```
 
    Claude reads `START.md`, installs everything inside this folder, renders the sample episode
-   (`episodes/sample/sample.mp4`), and asks you three questions.
+   (`episodes/sample/sample.mp4`), helps you make a free Google AI Studio key for the narrator's voice
+   (`pixi run studio key` opens `.env`; paste the key there, never in the chat), and asks you three questions.
 4. Then make your episodes with `/episode` (`pixi run node episode/make.mjs new <name>`, write the story in its
    `episode.json`, render) and turn them into a series with `/series`. Each episode ends in a vote; the next one follows
    the winning comment.
 
 Runs on macOS 14+ (Apple Silicon), Windows 10/11 x64 and Linux x64. Needs Claude Code with your own
-Claude plan. Licence: `LICENSE`. Help: Discord (Buyer role) or kaiships.ai@gmail.com.
+Claude plan, a Google account (the voice key is free) and the internet for the voice step. Licence: `LICENSE`. Help: Discord (Buyer role) or kaiships.ai@gmail.com.
 
 ## What is in the folder
 
@@ -30,8 +30,8 @@ Claude plan. Licence: `LICENSE`. Help: Discord (Buyer role) or kaiships.ai@gmail
   `episodes/sample/sample.mp4` (preview, 720x1280).
 - `episode/`: the 3D engine the episodes play in (`main.js`, `stage.js`, `world.js`, `hud.js`, the room in `assets/`) and
   `bed.py` (room tone, music bed and hits under the voice, made in code, no samples).
-- `episode/make.mjs`: voice (`pixi run -e full node episode/make.mjs <episode> vo`, offline Kokoro voice, after
-  `pixi run fetch voice` once), then `pixi run node episode/make.mjs <episode>` for the preview MP4 and its checks.
+- `episode/make.mjs`: voice (`pixi run node episode/make.mjs <episode> vo`: one Gemini TTS call reads the whole episode
+  in the narrator's voice; the key is `GOOGLE_API_KEY` in `.env`), then `pixi run node episode/make.mjs <episode>` for the preview MP4 and its checks.
 - `characters/cast.js`: the three seeded characters, Nova (lead), Theo (rival) and Blip (mascot, a robot);
   `characters/rig.js` builds each one in 3D from those parameters.
 - `character-designer.html`: run `pixi run designer`, open the address it prints, design your own character on the same
@@ -55,9 +55,13 @@ the story, then `vo` and render it like any episode. `pixi run node episode/seri
 | `palette` | Colours `neon` (accents: highlighted caption words, HUD meters, the room's neon), `left` (vote A, room lights), `right` (vote B, the rival's sign), `card` (card paper), `ink` (highlighted words on the cards; defaults to `neon`, set it when `neon` is too light to read on `card`), as `#RRGGBB` |
 | `texts` | Every other word on screen: `handle` (the lead's phone), `sign` (the rival's neon sign), `kicker` (`{series} · EP {ep}`), `phoneLabel`, `phoneHud` (which HUD label the phone shows), `phoneFoot`, `or`, `voteFooter` (`{a}`, `{b}`, `{next}` fill in) |
 | `cast` | `[{ "id", "seed" }]` or the entry the designer copies. The first human in the room is the lead at the desk; `"role": "rival"` or `"place": "corner"` puts a character in the corner across town; bots stand on the desk; more humans stand in the room |
-| `beats` | One per voiced line: `who`, `line`, `shot`, `exp`, `hud`, `hot`, and `card` or `stats` |
+| `narrator` | The one voice that tells the story: `{"voice": "Achird", "style": "warm storyteller, a little wry"}`. `voice` is a Gemini voice (default `Achird`; others e.g. `Puck`, `Kore`, `Charon`), `style` a few words of delivery (optional) |
+| `model` | Optional Gemini TTS model (default `gemini-3.8-flash-tts`; on a 429 the vo step tries `gemini-3.8-flash-lite-tts`, then `gemini-3.1-flash-tts-preview`) |
+| `beats` | One per narrated line: `who`, `line`, `shot`, `exp`, `hud`, `hot`, and `card` or `stats` |
+| `beats[].who` | Who is on screen (a cast `id`). Characters never speak; the narrator tells the story |
+| `beats[].line` | What the narrator says, in the third person ("Nova shipped her app today."). Quotes become reported speech ("Views are views, he says.") |
 | `beats[].shot` | `room` (establishing), `close`, `two`, `wide`, `phone`, `card` (2 lines on paper: `"card": ["LINE", "LINE"]`), `stats` (a data card: `"head"`, `"stats": [{"label", "value", "extra", "bar": 0..1, "style": "danger"}]`, `"source"`) |
-| `beats[].exp` | A face for the speaker: angry, determined, doubt, excited, grin, guilty, laugh, nervous, proud, relieved, sad, shock, smirk, surprise, teary, thinking, tired, worried |
+| `beats[].exp` | A face for the character on screen: angry, determined, doubt, excited, grin, guilty, laugh, nervous, proud, relieved, sad, shock, smirk, surprise, teary, thinking, tired, worried |
 | `beats[].hud` | HUD chips from this beat on: `{"VIEWS": "212"}` or `{"GOAL": {"value": "2%", "bar": 0.02, "style": "danger"}}` (a meter; `danger` = accent colour). A changed value rolls in |
 | `beats[].hot` | Extra caption words to colour (numbers and the vote words already are) |
 | `vote` | `question`, `a`, `b`, and the spoken tags `tagA`, `tagB` (default `A`, `B`): the last line must say them |

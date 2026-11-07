@@ -19,7 +19,17 @@ allowed. Edit files only under `episodes/`.
    No `pixi`? Ask the buyer to install it in their own terminal, then open a new terminal and run the step again:
    macOS and Linux `curl -fsSL https://pixi.sh/install.sh | sh`, Windows PowerShell `powershell -ExecutionPolicy ByPass -c "irm -useb https://pixi.sh/install.ps1 | iex"`.
 
-2. Check:
+2. The voice key. The narrator's voice is Gemini TTS from Google (free with an AI Studio key). Tell the buyer:
+   1. open https://aistudio.google.com/apikey and sign in with Google,
+   2. press "Create API key", then Copy,
+   3. paste it after `GOOGLE_API_KEY=` in the `.env` file this opens, save it, and say "xong" (done):
+
+   ```
+   pixi run studio key
+   ```
+
+   Never ask for the key in the chat and never print it. When they say "xong", check (its `voice key` line makes one
+   tiny real call; on a ✗ do its fix):
 
    ```
    pixi run studio doctor
@@ -31,11 +41,8 @@ allowed. Edit files only under `episodes/`.
    - Your story: what is your app or project, and what happens in episode 1?
    - Your characters: keep the seeded cast (Nova, Theo, Blip), or design your own (`pixi run designer`, open the
      address it prints, press "Copy for Claude", paste it here)?
-   - Voice: the offline voice (Kokoro, free, not on Intel Macs). Download it once (about 350 MB):
-
-     ```
-     pixi run fetch voice
-     ```
+   - The narrator's voice: Achird (the default, the sample's voice), or hear 3 others first (Puck, Kore, Charon: make
+     the episode with each in `narrator.voice` and let them pick)? Characters never speak; one narrator tells the story.
 
 5. Make their episode 1 with `/episode` (the skill in `.claude/skills/episode`):
 
@@ -43,10 +50,10 @@ allowed. Edit files only under `episodes/`.
    pixi run node episode/make.mjs new ep1
    ```
 
-   rewrite `episodes/ep1/episode.json` from the answers (`README.md` lists every field), then:
+   rewrite `episodes/ep1/episode.json` from the answers as third-person narration (`README.md` lists every field), then:
 
    ```
-   pixi run -e full node episode/make.mjs episodes/ep1 vo
+   pixi run node episode/make.mjs episodes/ep1 vo
    pixi run node episode/make.mjs episodes/ep1
    ```
 
@@ -62,7 +69,7 @@ allowed. Edit files only under `episodes/`.
    then write episode 2's story in `episodes/my-show/ep2/episode.json` (replace every WRITE ... placeholder) and:
 
    ```
-   pixi run -e full node episode/make.mjs episodes/my-show/ep2 vo
+   pixi run node episode/make.mjs episodes/my-show/ep2 vo
    pixi run node episode/make.mjs episodes/my-show/ep2
    ```
 

@@ -164,9 +164,9 @@ const JOURNEYS = {
   // The paid TMV kit, as a buyer gets it: build the zip, unzip into a fresh folder (a space in its path), install,
   // which renders the sample episode as its test render; then the character designer and a planted break.
   async 'tmv-episode'() {
-    // under /tmp: the macOS tmpdir is too long for espeak-ng's 159-byte data path (the offline voice)
     const BOX = join(process.platform === 'win32' ? tmpdir() : '/tmp', `tmv verify ${RUN}`), KIT = join(BOX, 'tmv-studio');
     let zip = flag('zip');
+    process.env.TMV_VO_TAKE = join(KIT, 'episodes/sample/vo/take.wav');   // CI has no Gemini key: vo cuts the sample's recorded take
     await step('the tmv zip builds and passes its gate', () => {
       if (zip) return;
       const r = has(ok(node('release/build.mjs', '--tier', 'tmv', '--out', join(EV, 'dist'))), /✓ tmv: .* every check passed/);
@@ -198,7 +198,7 @@ const JOURNEYS = {
       const txt = await p.textContent('[data-testid=json]'), st = await p.textContent('#status'); await b.close(); server.close();
       if (errs.length) throw new Error(errs.join('; '));
       const c = JSON.parse(txt.slice(txt.indexOf('\n\n') + 2));
-      if (c.id !== 'juno' || c.hair !== 'curly' || !c.voice) throw new Error('copied cast entry is wrong');
+      if (c.id !== 'juno' || c.hair !== 'curly' || 'voice' in c) throw new Error('copied cast entry is wrong');
       if (!/Copied Juno|copy it by hand/.test(st)) throw new Error(`status: ${st}`);
     });
     await step('planted break: a beat for someone not in the cast fails with its own message', () => {
@@ -226,11 +226,8 @@ const JOURNEYS = {
     });
     const kt = (...a) => node('test/kit-pixi.mjs', KIT, ...a);   // pixi run in the kit, as a buyer types it
     await step('series: ep2 gets its own voice and renders, every check ✓ (faces included)', () => {
-      const M = join(KIT, 'core/tts/kokoro-v1.0.onnx');
-      if (!existsSync(M)) { if (existsSync('core/tts/kokoro-v1.0.onnx')) for (const f of ['kokoro-v1.0.onnx', 'voices-v1.0.bin']) cpSync(join('core/tts', f), join(KIT, 'core/tts', f));
-        else throw new Error('no Kokoro model: run pixi run fetch voice in the kit (about 350 MB)'); }
       const SD = join(KIT, 'episodes/night-build');
-      ok(kt('-e', 'full', 'node', 'episode/make.mjs', join(SD, 'ep2'), 'vo'));
+      has(ok(kt('node', 'episode/make.mjs', join(SD, 'ep2'), 'vo')), 'test take');
       ok(kt('node', 'episode/make.mjs', join(SD, 'ep2'), 'render', 'check'));
       const rep = JSON.parse(readFileSync(join(SD, 'ep2/out/check.json'), 'utf8')), bad = rep.checks.filter(c => !c.ok);
       if (bad.length) throw new Error(bad.map(c => c.name).join(', '));
@@ -243,6 +240,7 @@ const JOURNEYS = {
   async 'tmv-one-prompt'() {
     const BOX = join(process.platform === 'win32' ? tmpdir() : '/tmp', `tmv prompt ${RUN}`), KIT = join(BOX, 'tmv-studio');
     let zip = flag('zip');
+    process.env.TMV_VO_TAKE = join(KIT, 'episodes/sample/vo/take.wav');   // CI has no Gemini key: every vo step cuts the sample's recorded take
     await step('a fresh unzip has START.md, the /studio /episode /series skills and an allow-list for every START.md command', () => {
       if (!zip) zip = /→ (.*tmv-studio-.*\.zip)/.exec(ok(node('release/build.mjs', '--tier', 'tmv', '--out', join(EV, 'dist'))).out)[1];
       rmSync(BOX, { recursive: true, force: true }); mkdirSync(BOX, { recursive: true });
@@ -260,11 +258,7 @@ const JOURNEYS = {
     const cmds = [...readFileSync(join(KIT, 'START.md'), 'utf8').matchAll(/```\n([\s\S]*?)```/g)].flatMap(m => m[1].split('\n').map(l => l.trim()).filter(Boolean));
     const kt = (...a) => node('test/kit-pixi.mjs', KIT, ...a);
     await step(`START.md has ${cmds.length} commands, every one a pixi run`, () => { if (cmds.length < 8 || cmds.some(c => !c.startsWith('pixi run '))) throw new Error(cmds.join(' | ')); });
-    const model = () => { if (!existsSync(join(KIT, 'core/tts/kokoro-v1.0.onnx')) && existsSync('core/tts/kokoro-v1.0.onnx'))
-      for (const f of ['kokoro-v1.0.onnx', 'voices-v1.0.bin']) cpSync(join('core/tts', f), join(KIT, 'core/tts', f)); };   // instead of the 350 MB fetch
     for (const c of cmds) await step(`START.md: ${c}`, () => {
-      if (/ vo$|fetch voice$/.test(c)) model();
-      if (/fetch voice$/.test(c) && existsSync(join(KIT, 'core/tts/kokoro-v1.0.onnx'))) return log('skipped: the model was copied from this checkout (fetch.py downloads 350 MB every time)');
       ok(kt(...c.replace(/^pixi run /, '').split(' ')));
       if (c.endsWith('make.mjs new ep1')) {   // Claude writes the buyer's episode 1 here; the sample's story stands in, retitled
         const f = join(KIT, 'episodes/ep1/episode.json'); writeFileSync(f, readFileSync(f, 'utf8').replace('"Two hundred views"', '"Day one"'));
