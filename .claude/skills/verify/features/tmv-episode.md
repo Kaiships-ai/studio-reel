@@ -18,6 +18,11 @@ render, then deletes it (`kit/studio.mjs`); it renders the whole sample only if 
   and `studio doctor` then skips its `voice key` call; the journeys set it to the sample's `vo/take.wav`. Dev-only sync check on a Mac with whisper.cpp: `pixi run python dev/caption-sync.py <ep>` (not shipped). `core/render/reel.mjs vo` uses the same path when kai-hand-draw is absent.
 - `episode.render`: `make.mjs <ep> render check` → `<ep>/<name>.mp4` at 720x1280 30 fps with the code-made bed (room tone, music, hits; `bed.py`) (ST-77 preview; `--full` only on
   request), checks size, sound, length = voice + 1.4 s, -14 LUFS, no black, no silent gap, no 1.5 s freeze, faces not blown out (`faceluma.py`: under 2 % of skin pixels washed out, frames at 2/s outside cards); `out/sheet.jpg`.
+- `episode.gates`: `make.mjs <ep> gates` → `episode/gates.py`, the 11 gates the real season's episode 1 passed 11/11 (size
+  and 80-90 s, −14 LUFS, a cut every ≤ 3 s, no shot over 4.5 s, a cut by 1.5 s, cream explain cards with nothing faint
+  behind, 15 s of faces with 3+ expressions, each idea once, voice that runs on, voice under every shot) → `out/gates.json`,
+  exit 1 on a fail. A gate it cannot measure prints `–` (G6 needs an `idea` tag per beat). The shipped sample reads 4/10
+  with G6 not measured: the baseline the engine work raises.
 - `episode.look` (ST-79): the Ep1 room at night (neon through the curtain, screen key, rim light, bloom, DOF, grain), the
   rival's corner (ring light, neon sign from `texts.sign`), shots close / two / wide / phone / card, cream cards, kicker
   `<SERIES> · EP N`, word-by-word captions, HUD chips that roll on change, no end card: the vote is the last frame.
