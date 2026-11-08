@@ -72,7 +72,9 @@ built style; else 3d), the full episode every built style (`builtStyles`), one L
   `kaip.js` (paper grain, 12 fps boil) and `handdraw.js`, which draws each cast card as its `toHandDraw` presenter in the
   timeline's shots. `framing.js` (pure) picks who and how big: close = the speaker's bust with the beat's `exp`; two = the
   speaker and the lead (the lead with the first bot); wide/room = the room on its feet; phone = the lead with the phone;
-  the rival's corner holds only him. A bot card is drawn as a person (`toHandDraw` lists it as lost). The speaker's mouth moves while their line's words play (`VO_WORDS`). `lettering.js`
+  the rival's corner holds only him (close = his bust under the sign; his other shots alternate a small wide and a
+  medium). The side a shot leans to alternates shot by shot (`frameOf(sh, t, roster, exp, n)`, n = the shot's index), so
+  every timeline cut changes the picture enough for G3b (the sample: 43 of 43 cuts seen at 8 fps, weakest scene 0.26). A bot card is drawn as a person (`toHandDraw` lists it as lost). The speaker's mouth moves while their line's words play (`VO_WORDS`). `lettering.js`
   draws the type in the style's look: `card`, `stats` and `previously` as a paper index card on a cream ground to the
   frame's edges (G4 luma > 180, G4b no faint ground), lettered in Permanent Marker and Shantell Sans (the page loads both
   from `styles/kai-hand-draw/engine/fonts/`, kept in the tmv zip by `!` lines and checked by `missingFonts`); the HUD as a
@@ -83,7 +85,7 @@ built style; else 3d), the full episode every built style (`builtStyles`), one L
   speaker is in the corner, the rival's corner (his `texts.sign` as a neon sign, ring light, bulbs). `settingOf` (pure)
   takes its colours from `palette` (`neon`, `left` = room lights, `right` = poster and the rival's glow, `card` = notes)
   with main.js's fallbacks; `viewOf` (pure) picks the part of the set each shot sees (close-ups look at one side of the
-  room, alternating). Each element calls `boilSeed('set:…')`, so the set boils at 12 fps and holds between boil steps.
+  room, following the shot's side). Each element calls `boilSeed('set:…')`, so the set boils at 12 fps and holds between boil steps.
   Unit test: `test/unit/tmv-handdraw.test.mjs`. Stills, no video:
   `node core/render/still.mjs <ep> <t...> --size 1080x1920` after copying the page in as `make.mjs render` does; gates.py's
   `luma(png, 0)` and `faint(png, 0)` measure G4/G4b on a single still.
