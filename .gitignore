@@ -1,4 +1,4 @@
-node_modules/
+node_modules
 .venv/
 __pycache__/
 .DS_Store
@@ -102,7 +102,7 @@ styles/kai-hand-draw/demo/assets/
 styles/kai-hand-draw/demo/vo/lines/
 
 # pixi environment (installed per machine by /studio)
-.pixi/
+.pixi
 dist/
 
 # API keys stay on this machine
