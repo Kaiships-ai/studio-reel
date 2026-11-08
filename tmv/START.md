@@ -30,8 +30,9 @@ background while you ask the questions and they make the key: do not wait for it
    No `pixi`? Ask the buyer to install it in their own terminal, then open a new terminal and run the step again:
    macOS and Linux `curl -fsSL https://pixi.sh/install.sh | sh`, Windows PowerShell `powershell -ExecutionPolicy ByPass -c "irm -useb https://pixi.sh/install.ps1 | iex"`.
 
-2. Ask the buyer the first question now (the install is still running): **Your story**: what is your app or project,
-   and what happens in episode 1?
+2. Ask the buyer the first questions now (the install is still running), one at a time:
+   - **Cook or step?** Cook: you run the whole story and ask only for the idea. Step: you stop at each choice.
+   - **Your story**: what is your app or project, and what happens in episode 1?
 
 3. The voice key. The narrator's voice is Gemini TTS from Google (free with an AI Studio key). Tell the buyer:
    1. open https://aistudio.google.com/apikey and sign in with Google,
@@ -45,12 +46,8 @@ background while you ask the questions and they make the key: do not wait for it
    (It may wait a minute while the install sets up the tools; that is normal.) Never ask for the key in the chat and
    never print it.
 
-4. Ask the other two questions, one at a time:
-   - The narrator's voice: Achird (the default, the sample's voice), or hear 3 others first (Puck, Kore, Charon: make
-     the episode with each in `narrator.voice` and let them pick)? Characters never speak; one narrator tells the story.
-   - Your characters: keep the seeded cast (Nova, Theo, Blip), or design your own? The designer needs the install to
-     have finished (it uses the 3D packages the install puts in this folder): then run `pixi run designer` in the
-     background, give the buyer the address it prints, and they press "Copy for Claude" and paste it here.
+4. Ask the narrator's voice: Achird (the default, the sample's voice), or hear 3 others first (Puck, Kore, Charon: make
+   the episode with each in `narrator.voice` and let them pick)? Characters never speak; one narrator tells the story.
 
    When they say "xong" for the key **and** the install has finished, check (its `voice key` line makes one tiny real
    call; on a ✗ do its fix):
@@ -59,29 +56,39 @@ background while you ask the questions and they make the key: do not wait for it
    pixi run studio doctor
    ```
 
-5. Make their episode 1 with `/episode` (the skill in `.claude/skills/episode`):
+5. Build the show with `/story cook <show>` or `/story step <show>` (`.claude/skills/story`), using the buyer's answers.
+   It makes the premise, the characters (the seeded cast is Nova, Theo and Blip; a buyer who wants their own runs
+   `pixi run designer` in the background, after the install has finished, and pastes what "Copy for Claude" gives),
+   the three-style picture of their lead (3D, hand-draw, paper), the style they pick (written as `style` in `story.md`),
+   the world and a season of votes. Show the picture and let them choose in step mode.
+
+6. Make their episode 1 with `/episode` (the skill in `.claude/skills/episode`), in the style `/story` picked:
 
    ```
    pixi run node episode/make.mjs new ep1
    ```
 
-   rewrite `episodes/ep1/episode.json` from the answers as narration, "You" for the lead (`README.md` lists every field), then:
+   rewrite `episodes/ep1/episode.json` from chapter 1 as narration, "You" for the lead, with at least 2 explain cards
+   (`README.md` lists every field), then:
 
    ```
    pixi run node episode/make.mjs episodes/ep1 script
    pixi run node episode/make.mjs episodes/ep1 vo
    pixi run node episode/make.mjs episodes/ep1
+   pixi run node episode/make.mjs episodes/ep1 gates
    ```
+
+   Run the reader panel on the script before `vo`, and fix any failed gate as `/episode` says.
 
    The last beat's line says the two vote words; the vote is the last frame.
 
-   When `episodes/ep1/ep1.mp4` exists and its check is all ✓, tell the buyer in one short block: **you did it**:
+   When `episodes/ep1/ep1.mp4` exists, its check is all ✓ and the 11 gates pass, tell the buyer in one short block: **you did it**:
    the sample (`episodes/sample/sample.mp4`) and their own episode 1 (`episodes/ep1/ep1.mp4`) are made, `pixi run studio
    doctor` shows all ✓, and the next step is posting episode 1 and waiting for the vote. If anything failed on the way,
    the README's "If something goes wrong" table has the three common fixes; support is Discord (Buyer role) or
    kaiships.ai@gmail.com.
 
-6. Turn it into a series with `/series` (`.claude/skills/series`). When the buyer says which answer won:
+7. Turn it into a series with `/series` (`.claude/skills/series`). When the buyer says which answer won:
 
    ```
    pixi run node episode/series.mjs new episodes/my-show --from episodes/ep1
