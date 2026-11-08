@@ -32,7 +32,7 @@ export function zipEntries(buf) {
 export const fullEpisode = ({ event, ref = '', labels = [], base = '' }) => event === 'schedule' ? ref === 'refs/heads/main'
   : event === 'workflow_dispatch' || ref.startsWith('refs/tags/v') || (event === 'pull_request' && !base.startsWith('lane/') && labels.includes('full-episode'));
 
-// The full episode renders in every style whose engine is built (a lane's engine reaches main only when it is)
+// The full episode renders in every style whose engine is built
 export const builtStyles = root => Object.keys(ENGINES).filter(k => existsSync(join(root, 'tmv', ENGINES[k].page)));
 
 // A PR's tmv smoke renders in each built style whose engine folder it touches (tmv/episode/paper/, tmv/episode/handdraw/),

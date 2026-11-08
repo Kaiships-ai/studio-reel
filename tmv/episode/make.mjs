@@ -200,7 +200,7 @@ const STEP = {
     for (const c of checks) console.log(`  ${c.ok ? '✓' : c.ok === null ? '–' : '✗'} ${c.name}: ${c.got}`);
     writeFileSync(join(OUT, 'check.json'), JSON.stringify({ mp4: MP4, checks }, null, 1));
     console.log(`  stills: ${join(OUT, 'sheet.jpg')}`);
-    if (checks.some(c => c.ok === false)) die('a check failed (above)');
+    if (checks.some(c => c.ok !== true && c.ok !== null)) die('a check failed (above)');
   },
 };
 for (const s of steps.length ? steps : ['render', 'check']) {

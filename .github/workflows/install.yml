@@ -13,7 +13,8 @@
 # main (only when the tmv zip changed that day), for a v* tag, by hand, or when the PR gets the label `full-episode`.
 # The smoke renders in the style whose engine the PR touches (tmv/episode/paper/ → paper, tmv/episode/handdraw/ →
 # handdraw, tmv/episode/engines.mjs → every built style, else 3d), one Linux tmv leg per style; the full episode runs one
-# Linux leg per style whose engine is built (release/install-needed.mjs smokeStyles, builtStyles).
+# Linux leg per style whose engine is built (release/install-needed.mjs smokeStyles, builtStyles). A PR that changes only
+# shared tmv code (make.mjs, timeline.js, core/) smokes 3d: paper and hand-draw see it nightly, or with `full-episode`.
 # A newer push to the same PR cancels the older run.
 name: install
 on:

@@ -186,7 +186,7 @@ const JOURNEYS = {
       // test/clean-install.mjs = what a buyer types (pixi run studio install, doctor, install again), then it makes episodes/ci-smoke (test/tmv-smoke.mjs)
       has(ok(node('test/clean-install.mjs', KIT)), '✓ clean install passed');
       const rep = JSON.parse(readFileSync(join(KIT, 'episodes/ci-smoke/out/check.json'), 'utf8'));
-      const bad = rep.checks.filter(c => !c.ok); if (bad.length) throw new Error(bad.map(c => c.name).join(', '));
+      const bad = rep.checks.filter(c => c.ok !== true && c.ok !== null); if (bad.length) throw new Error(bad.map(c => c.name).join(', '));
       cpSync(join(KIT, 'episodes/sample/sample.mp4'), join(EV, 'tmv-sample.mp4'));
       for (const f of ['ci-smoke.mp4', 'out/sheet.jpg', 'out/check.json']) cpSync(join(KIT, 'episodes/ci-smoke', f), join(EV, 'tmv-' + f.split('/').pop()));
     });
@@ -245,7 +245,7 @@ const JOURNEYS = {
       const SD = join(KIT, 'episodes/night-build');
       has(ok(kt('node', 'episode/make.mjs', join(SD, 'ep2'), 'vo')), 'test take');
       ok(kt('node', 'episode/make.mjs', join(SD, 'ep2'), 'render', 'check'));
-      const rep = JSON.parse(readFileSync(join(SD, 'ep2/out/check.json'), 'utf8')), bad = rep.checks.filter(c => !c.ok);
+      const rep = JSON.parse(readFileSync(join(SD, 'ep2/out/check.json'), 'utf8')), bad = rep.checks.filter(c => c.ok !== true && c.ok !== null);
       if (bad.length) throw new Error(bad.map(c => c.name).join(', '));
       cpSync(join(SD, 'ep1/ep1.mp4'), join(EV, 'tmv-series-ep1.mp4')); cpSync(join(SD, 'ep2/ep2.mp4'), join(EV, 'tmv-series-ep2.mp4')); cpSync(join(SD, 'series.json'), join(EV, 'tmv-series.json'));
     });
@@ -284,7 +284,7 @@ const JOURNEYS = {
     });
     await step('the documented path ends in two linked episodes, every check ✓', () => {
       if (!cmds.some(c => c.includes('my-show/ep2'))) throw new Error('START.md never renders episode 2');
-      for (const d of ['episodes/ep1', 'episodes/my-show/ep2']) { const r = JSON.parse(readFileSync(join(KIT, d, 'out/check.json'), 'utf8')); if (r.checks.some(c => !c.ok)) throw new Error(`${d} failed a check`); }
+      for (const d of ['episodes/ep1', 'episodes/my-show/ep2']) { const r = JSON.parse(readFileSync(join(KIT, d, 'out/check.json'), 'utf8')); if (r.checks.some(c => c.ok !== true && c.ok !== null)) throw new Error(`${d} failed a check`); }
       const sj = JSON.parse(readFileSync(join(KIT, 'episodes/my-show/series.json'), 'utf8')); if (sj.episodes[0].winner !== 'B') throw new Error('winner not recorded');
       cpSync(join(KIT, 'episodes/ep1/ep1.mp4'), join(EV, 'prompt-ep1.mp4')); cpSync(join(KIT, 'episodes/my-show/ep2/ep2.mp4'), join(EV, 'prompt-ep2.mp4'));
     });

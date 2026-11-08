@@ -53,7 +53,7 @@ if (!existsSync(join(dir, 'kit', 'check-reel'))) {
     step('make the ci-smoke episode (vo, render, check)', make(['vo', 'render', 'check']), { env: { TMV_VO_TAKE: smoke.take } });
   }
   const rep = JSON.parse(readFileSync(join(ep, 'out', 'check.json'), 'utf8'));
-  const bad = rep.checks.filter(c => c.ok === false);
+  const bad = rep.checks.filter(c => c.ok !== true && c.ok !== null);
   if (bad.length || !existsSync(rep.mp4)) fail(`episode: ${bad.map(c => c.name).join(', ') || 'no MP4'}`);
   console.log(`\n✓ clean install passed in ${dir}: ${rep.mp4}`);
   process.exit(0);
