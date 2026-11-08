@@ -2,9 +2,8 @@
 # make a reel (test/clean-install.mjs). Minutes are a monthly budget (macOS counts x10, Windows x2), so:
 #   - a PR that changes only docs or content runs nothing;
 #   - unit, lint and release checks run on every PR in checks.yml (~1 min);
-#   - a PR that changes the install path (kit/, core/render/, pixi.*, package*.json, release/, the test, this file)
-#     also runs the clean install on Linux (~15 min); a kit.manifest edit counts only when it moves an existing file in
-#     or out of a zip (release/install-needed.mjs), so a new [dev] entry runs nothing;
+#   - a PR on the paths below runs a tier's clean install on Linux only when its zip differs in more than .md and
+#     LICENSE files, or this file or the test changed (release/install-needed.mjs builds both zips at base and head);
 #   - all five machines (Linux, Windows pwsh + Git Bash, macOS arm64 + Intel) run only for a v* tag, by hand
 #     (Actions > install > Run workflow), or when the PR gets the label `test-all-os`.
 # Two zips are tested: Pro (the check reel) and tmv (How we make Ten Million Views: the sample episode, voiced from the
@@ -51,16 +50,18 @@ jobs:
         shell: bash
         run: |
           base=${{ github.event.pull_request.base.sha || github.event.before }}
-          if [ -z "$base" ] || ! git cat-file -e "$base" 2>/dev/null; then echo install=true >> "$GITHUB_OUTPUT"; exit 0; fi
-          echo "install=$(node release/install-needed.mjs "$base")" >> "$GITHUB_OUTPUT"
+          if [ -n "$base" ] && git cat-file -e "$base" 2>/dev/null && out=$(node release/install-needed.mjs "$base"); then echo "$out" >> "$GITHUB_OUTPUT"
+          else echo "::warning::no tier decision (base '$base'): both tiers run"; printf 'pro=true\ntmv=true\n' >> "$GITHUB_OUTPUT"; fi
       - id: m
         shell: bash
         env:
-          INSTALL: ${{ steps.f.outputs.install }}
+          PRO: ${{ steps.f.outputs.pro }}
+          TMV: ${{ steps.f.outputs.tmv }}
           FULL: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'test-all-os') }}
         run: |
           m=''
-          if [ "$INSTALL" = true ] || [ "$FULL" = true ]; then m='{"os":"ubuntu-24.04","shell":"bash","tier":"pro"},{"os":"ubuntu-24.04","shell":"bash","tier":"tmv"}'; fi
+          if [ "$PRO" = true ] || [ "$FULL" = true ]; then m='{"os":"ubuntu-24.04","shell":"bash","tier":"pro"}'; fi
+          if [ "$TMV" = true ] || [ "$FULL" = true ]; then m="${m:+$m,}"'{"os":"ubuntu-24.04","shell":"bash","tier":"tmv"}'; fi
           if [ "$FULL" = true ]; then m="$m"',{"os":"windows-2025","shell":"pwsh","tier":"pro"},{"os":"windows-2025","shell":"bash","tier":"pro"},{"os":"macos-15","shell":"bash","tier":"pro"},{"os":"macos-15-intel","shell":"bash","tier":"pro"}'; fi
           if [ "$FULL" = true ]; then m="$m"',{"os":"windows-2025","shell":"pwsh","tier":"tmv"},{"os":"macos-15","shell":"bash","tier":"tmv"}'; fi
           echo "matrix={\"include\":[$m]}" >> "$GITHUB_OUTPUT"

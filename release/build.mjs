@@ -127,6 +127,10 @@ export function tmvFiles(by, overlay, m, blobs) {
   for (const f of overlay) { const to = f.slice(4); own.set(to, blobs.get(f)); out.add(to); }
   return { list: [...out].sort(), blob: f => own.get(f) };
 }
+export function tierFiles(tier, by, m, blobs) {
+  if (tier === 'tmv') return tmvFiles(by, by.dev.filter(f => f.startsWith('tmv/')), m, blobs);
+  return { list: TIERS[tier].flatMap(s => by[s]).sort(), blob: f => blobs.get(f) };
+}
 const tmvVersion = (blob, tag, commit) => {
   const v = JSON.parse(blob('product.json').toString()).version;
   if (tag && v !== tag.replace(/^v/, '')) { console.error(`✗ tmv/product.json says version ${v}, the tag is ${tag}`); process.exit(1); }
@@ -182,7 +186,7 @@ if (import.meta.url === `file://${process.argv[1]}` || fileURLToPath(import.meta
   let failed = false; const sums = [];
   for (const tier of tiers) {
     if (!TIERS[tier]) { console.error(`✗ unknown tier ${tier}`); process.exit(2); }
-    const { list, blob } = tier === 'tmv' ? tmvFiles(by, overlay, m, blobs) : { list: TIERS[tier].flatMap(s => by[s]).sort(), blob: baseBlob };
+    const { list, blob } = tierFiles(tier, by, m, blobs);
     const { errors, warns } = check(tier, list, blob, m);
     for (const w of warns) console.log(`  ! ${tier}: ${w}`);
     if (errors.length) { failed = true; console.error(`✗ ${tier}: ${errors.length} problem(s)\n  ${errors.join('\n  ')}`); continue; }
