@@ -93,7 +93,7 @@ kinebeo
 clawd
 mixkit
 # `say -v <voice>` narrates with Apple's voice; `say -v '?'` (line-editing's read-aloud check lists voices) is allowed
-make_vo_local|\bsay -v ["$\w]
+make_vo_local|\bsay -v(?! *'\?')
 edge.tts
 kai-v3|blocky.kai|char-kai
 ninjago|daymond
