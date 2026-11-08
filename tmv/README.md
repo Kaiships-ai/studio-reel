@@ -19,7 +19,8 @@ Make a whole series of short vertical episodes with your own characters and stor
    you the sample episode (`episodes/sample/sample.mp4`, it ships ready) and, while the install runs, asks you three
    questions and helps you make a free Google AI Studio key for the narrator's voice (`pixi run studio key` opens
    `.env`; paste the key there, never in the chat). Then it makes your episode 1 (about 3 minutes).
-4. Then make your episodes with `/episode` (`pixi run node episode/make.mjs new <name>`, write the story in its
+4. To make your own show, start with `/story`: premise, characters, your character drawn in three styles to pick from, the
+   world, a season of votes. Then make your episodes with `/episode` (`pixi run node episode/make.mjs new <name>`, write the story in its
    `episode.json`, render) and turn them into a series with `/series`. Each episode ends in a vote; the next one follows
    the winning comment.
 
