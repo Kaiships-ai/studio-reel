@@ -1,6 +1,6 @@
 // make.mjs: one episode folder (episode.json + index.html) to a preview MP4. Run from the library root:
 //   pixi run node episode/make.mjs <episode> vo     one Gemini call, the narrator reads every beat → vo/take.wav, cut into vo/vo.wav + vo/vo.json
-//   pixi run node episode/make.mjs <episode> render         frames + voice + bed (room tone, music, hits) → <episode>/<name>.mp4 (720x1280, 30 fps)
+//   pixi run node episode/make.mjs <episode> render         frames in its style (episode/engines.mjs) + voice + bed (room tone, music, hits) → <episode>/<name>.mp4 (720x1280, 30 fps)
 //   pixi run node episode/make.mjs new <name>             episodes/<name> from the sample (episode.json + page), ready to rewrite
 //   pixi run node episode/make.mjs styles <card>          the card's character in 3D, hand-draw and paper side by side → workspace/<name>-styles.png (1280 wide)
 //                                                         <card> = a seed (nova, theo, blip) or a .json file: a cast entry, {"seed": ...} or every part; --out <file.png>
@@ -16,6 +16,7 @@ import { mux } from '../core/render/mux.mjs';
 import { speak, VOICE } from './gemini.mjs';
 import { checkCard } from '../core/character-card.mjs';
 import { shapeErrors, checkScript, RULES } from './script.mjs';
+import { enginePage } from './engines.mjs';
 
 const argv = process.argv.slice(2), steps = [], opt = {};
 for (let i = 0; i < argv.length; i++) {
@@ -66,10 +67,10 @@ const probe = f => JSON.parse(run('ffprobe', ['-v', 'error', '-show_streams', '-
 // every field the engine reads is checked here, so a typo in episode.json stops with its own line instead of a broken frame
 function episode() {
   let e; try { e = JSON.parse(readFileSync(join(ep, 'episode.json'), 'utf8')); } catch (x) { die(`episode.json is not valid JSON: ${x.message}`); }
-  // in a series (episode/series.mjs) the show's name, cast, palette and texts come from ../series.json unless the episode sets them
+  // in a series (episode/series.mjs) the show's name, cast, style, palette and texts come from ../series.json unless the episode sets them
   const sf = join(ep, '..', 'series.json');
   if (existsSync(sf)) { let s; try { s = JSON.parse(readFileSync(sf, 'utf8')); } catch (x) { die(`${sf} is not valid JSON: ${x.message}`); }
-    e = { ...e, series: e.series ?? s.series, cast: e.cast ?? s.cast, narrator: e.narrator ?? s.narrator, model: e.model ?? s.model, palette: { ...(s.palette ?? {}), ...(e.palette ?? {}) }, texts: { ...(s.texts ?? {}), ...(e.texts ?? {}) } }; }
+    e = { ...e, series: e.series ?? s.series, cast: e.cast ?? s.cast, style: e.style ?? s.style, narrator: e.narrator ?? s.narrator, model: e.model ?? s.model, palette: { ...(s.palette ?? {}), ...(e.palette ?? {}) }, texts: { ...(s.texts ?? {}), ...(e.texts ?? {}) } }; }
   const window = castJs();
   const shape = shapeErrors(e);
   if (shape.length) die(`episode.json has ${shape.length} problem${shape.length > 1 ? 's' : ''}:\n  - ${shape.join('\n  - ')}`);
@@ -134,12 +135,14 @@ const STEP = {
   },
   render() {
     const { e } = episode();
+    let page; try { page = enginePage(e.style, ROOT); } catch (x) { die(x.message); }
     if (existsSync(join(ep, 'vo/lines.json'))) {   // the voice must say exactly the beats, or captions and sound drift
       const said = JSON.parse(readFileSync(join(ep, 'vo/lines.json'), 'utf8'));
       if (said.length !== e.beats.length || said.some((l, i) => l.text !== e.beats[i].line || l.who !== e.beats[i].who))
         die(`episode.json changed since its voice was made: run pixi run node episode/make.mjs ${NAME} vo`);
     }
     if (!existsSync(join(ep, 'vo/vo.wav'))) die(`${join(ep, 'vo/vo.wav')} is missing: run the vo step first (pixi run node episode/make.mjs ${NAME} vo)`);
+    cpSync(page, join(ep, 'index.html'));   // the style's page plays this folder's episode.json and voice
     mkdirSync(OUT, { recursive: true });
     sh('node', ['core/render/video.mjs', ep, '--size', `${W}x${H}`, '--fps', String(FPS), '--workers', String(opt.workers ?? env().workers), '--out', join(OUT, 'video.mp4')]);
     sh('python', ['episode/bed.py', ep]);   // room tone + music bed + hits under the voice, all code-made
