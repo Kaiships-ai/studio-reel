@@ -96,6 +96,7 @@
       "shot": "phone",
       "idea": "a-job-and-an-idea",
       "line": "Three months ago, you had a job and an idea.",
+      "link": "but",
       "exp": "thinking"
     },
     {
@@ -103,6 +104,7 @@
       "shot": "room",
       "idea": "nights-after-work",
       "line": "Every night after work, you coded until two.",
+      "link": "so",
       "exp": "tired"
     },
     {
@@ -110,6 +112,7 @@
       "shot": "close",
       "idea": "you-quit-to-ship",
       "line": "Until one night, you quit the job to ship it.",
+      "link": "but",
       "exp": "determined"
     },
     {
@@ -189,11 +192,11 @@
       "head": "Problem 2 · nobody shares a demo",
       "stats": [
         {
-          "label": "a like reaches",
+          "label": "likes weigh most with",
           "value": "your followers"
         },
         {
-          "label": "a send (a share) reaches",
+          "label": "sends (shares) weigh most with",
           "value": "new people",
           "style": "danger"
         }
@@ -229,6 +232,7 @@
       "shot": "phone",
       "idea": "three-nights-almost-quit",
       "line": "Three nights. One bug. You almost quit.",
+      "link": "but",
       "exp": "sad",
       "hud": {
         "VIEWS": "236",
@@ -257,6 +261,7 @@
       "shot": "close",
       "idea": "demo-is-safe",
       "line": "The demo is safe. It looks pro. Nobody shares it.",
+      "link": "so",
       "exp": "worried"
     },
     {

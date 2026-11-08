@@ -78,7 +78,8 @@ function split(b) {
   let from = b.a;
   for (let k = 1; k < n; k++) {
     const want = b.i || k > 1 ? b.a + (b.b - b.a) * k / n : Math.min(b.a + FIRSTCUT, b.a + (b.b - b.a) / n);
-    const at = starts.filter(x => x > from + 0.9 && x < b.b - 0.9 && (b.i || k > 1 || x <= b.a + FIRSTCUT)).sort((x, y) => Math.abs(x - want) - Math.abs(y - want))[0];
+    const room = starts.filter(x => x > from + 0.9 && x < b.b - 0.9), early = room.filter(x => b.i || k > 1 || x <= b.a + FIRSTCUT);
+    const at = (early.length ? early : room).sort((x, y) => Math.abs(x - want) - Math.abs(y - want))[0];
     if (at !== undefined) { cuts.push(at); from = at; }
   }
   return [b.a, ...cuts].map((a, j, all) => ({ ...b, j, shot: j % 2 ? cover : b.shot, a, b: all[j + 1] ?? b.b }));
