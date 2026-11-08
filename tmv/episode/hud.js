@@ -1,6 +1,6 @@
 // hud.js (from Ten Million Views Ep1): the 2D layer on #fx. Layout in 1080×1920 units (PX scales to the real canvas).
 // HUD chip row, word-by-word captions, slam titles. Every function is a pure function of t.
-import { clamp, seg, ss, sio, eout, lerp, hsh } from './stage.js';
+import { seg, ss, sio, eout, lerp } from './stage.js';
 
 export const PINK = '#FF3D8B', WHITE = '#F7F5F2', DIM = 'rgba(247,245,242,0.32)', INK = '#0B0D14';
 const SANS = '"Inter Tight", Arial, sans-serif', MONO = '"JetBrains Mono", Menlo, monospace';

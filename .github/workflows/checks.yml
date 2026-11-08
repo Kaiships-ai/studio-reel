@@ -24,6 +24,8 @@ jobs:
         run: node release/build.mjs --dry-run
       - name: Typecheck core/, kit/ and release/ (JSDoc, dev-only TypeScript in tools/typecheck)
         run: node tools/typecheck/run.mjs
+      - name: Lint core/, kit/, release/, test/ and tmv/episode/ (oxlint correctness rules, dev-only in tools/lint)
+        run: node tools/lint/run.mjs
       - name: A change to what a reel does updates the verify feature map
         if: github.event_name == 'pull_request'
         run: git diff --name-only "origin/${{ github.base_ref }}...HEAD" | node .claude/skills/verify/check-coverage.mjs

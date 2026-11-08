@@ -10,6 +10,7 @@ const CI = {
   release: 'node release/build.mjs --dry-run',
   coverage: 'node .claude/skills/verify/check-coverage.mjs',
   typecheck: 'node tools/typecheck/run.mjs',
+  lint: 'node tools/lint/run.mjs',
 };
 const BASE = 'origin/main';
 
@@ -50,6 +51,7 @@ const steps = [
   ['unit tests', CI.unit],
   ['release dry-run', CI.release],
   ['typecheck', CI.typecheck],
+  ['lint', CI.lint],
   ...(changed ? [['feature-map coverage', CI.coverage, changed.join('\n')]] : []),
   ...(changed || []).filter(f => /^tmv\/episodes\/.+\/episode\.json$/.test(f)).map(f =>
     [`script rules ${dirname(f)}`, null, null, () => scriptRules(dirname(f))]),

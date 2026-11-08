@@ -1,0 +1,8 @@
+{
+  "name": "kaiships-studio-lint",
+  "private": true,
+  "description": "Dev-only: the oxlint linter that checks core/, kit/, release/, test/ and tmv/episode/. Kept out of the root package.json so buyers' npm ci never downloads it.",
+  "devDependencies": {
+    "oxlint": "1.92.0"
+  }
+}
