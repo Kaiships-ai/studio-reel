@@ -16,6 +16,7 @@
     "ep": { "type": "integer", "minimum": 1, "description": "the episode number, a whole number from 1" },
     "title": { "$ref": "#/$defs/text", "description": "the episode title over the first shot" },
     "model": { "type": "string", "description": "the Gemini voice model" },
+    "style": { "enum": ["3d", "paper", "handdraw"], "description": "the look the episode renders in (episode/engines.mjs), 3d when left out" },
     "palette": {
       "type": "object", "additionalProperties": false,
       "properties": { "neon": { "$ref": "#/$defs/colour" }, "left": { "$ref": "#/$defs/colour" }, "right": { "$ref": "#/$defs/colour" }, "card": { "$ref": "#/$defs/colour" }, "ink": { "$ref": "#/$defs/colour" } }

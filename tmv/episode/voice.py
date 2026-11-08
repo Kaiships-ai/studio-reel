@@ -14,8 +14,9 @@ from scipy.fft import dct
 
 LEAD, PAUSE, CAP, SR = 0.25, 0.32, 0.34, 24000
 
-def spoken(a, hop=0.01, gap=0.12):
-    """[(s, e)] stretches of voice in a line take: 10 ms frames over -38 dB of the take's peak, quiet gaps under `gap` merged."""
+def spoken(a, hop=0.01, gap=0.12, click=0.06):
+    """[(s, e)] stretches of voice in a line take: 10 ms frames over -38 dB of the take's peak, quiet gaps under `gap` merged,
+    stretches under `click` dropped (no word is that short; a click would take a phrase's place in timed())."""
     n = int(hop * SR); f = len(a) // n
     if f == 0: return [(0.0, len(a) / SR)]
     rms = np.sqrt(np.mean(a[:f * n].reshape(f, n) ** 2, axis=1)) + 1e-9
@@ -29,7 +30,7 @@ def spoken(a, hop=0.01, gap=0.12):
     for s_, e_ in seg:
         if out and s_ - out[-1][1] < gap: out[-1][1] = e_
         else: out.append([s_, e_])
-    return [tuple(x) for x in out] or [(0.0, len(a) / SR)]
+    return [tuple(x) for x in out if x[1] - x[0] >= click] or [(0.0, len(a) / SR)]
 
 def tighten(a):
     """The line take with every pause in it over CAP cut to CAP: the pause's middle goes, joined with a 12 ms crossfade."""
@@ -134,6 +135,9 @@ if __name__ == '__main__' and sys.argv[1:2] == ['--self-check']:
     r = repeated(np.concatenate([A, pause, B, pause, B, pause, C]).astype(np.float32))   # B read twice: found at B, again a reading later
     assert r and 2.6 < r[0] < 4.82 and abs(r[1] - r[0] - 2.66) < 0.1, r
     assert said_twice(['One more time, again.', 'One more time, again.']) and not said_twice(['Three nights.', 'Show the night you almost quit.'])
+    clicked = np.concatenate([np.zeros(int(0.04 * SR)), tone[:int(0.01 * SR)], np.zeros(int(0.16 * SR)), tone]).astype(np.float32)
+    r = timed('Hello there, friend', clicked)   # a 10 ms click before the line is not a phrase: "friend" still starts after the pause
+    assert abs(r[2][1] - 1.41) < 0.03, r
     print('voice.py self-check ok'); sys.exit(0)
 
 ep = sys.argv[1]

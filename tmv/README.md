@@ -59,7 +59,7 @@ Claude plan, a Google account (the voice key is free) and the internet for the v
 ## A series
 
 `pixi run node episode/series.mjs new episodes/<show> --from episodes/<episode 1>` makes `episodes/<show>/series.json` (the show's
-name, cast, palette and texts, shared by every episode) and `ep1/`. When the vote is in,
+name, cast, style, palette and texts, shared by every episode) and `ep1/`. When the vote is in,
 `pixi run node episode/series.mjs next episodes/<show> --winner B` records it and writes `ep2/episode.json` with the opening
 (a `"shot": "previously"` card: PREVIOUSLY · EP 1, the question, the winning answer) and a recap beat; write the rest of
 the story, then `vo` and render it like any episode. `pixi run node episode/series.mjs status episodes/<show>` lists them.
@@ -75,6 +75,7 @@ beat, a vote with exactly two tags, and the lead called "you". Each ✗ names th
 | Field | What it is |
 |---|---|
 | `series`, `ep`, `title` | Show name, episode number (1, 2, ...), the title over the first shot |
+| `style` | The look: `3d` (the default when left out), `paper` or `handdraw`, the one `/story` picked. A series sets it once in `series.json`. A style whose engine is not in this kit yet stops the render and says so |
 | `palette` | Colours `neon` (accents: highlighted caption words, HUD meters, the room's neon), `left` (vote A, room lights), `right` (vote B, the rival's sign), `card` (card paper), `ink` (highlighted words on the cards; defaults to `neon`, set it when `neon` is too light to read on `card`), as `#RRGGBB` |
 | `texts` | Every other word on screen: `handle` (the lead's phone), `sign` (the rival's neon sign), `kicker` (`{series} · EP {ep}`), `phoneLabel`, `phoneHud` (which HUD label the phone shows), `phoneFoot`, `or`, `voteFooter` (`{a}`, `{b}`, `{next}` fill in) |
 | `cast` | `[{ "id", "seed" }]` or the entry the designer copies. The first human in the room is the lead at the desk; `"role": "rival"` or `"place": "corner"` puts a character in the corner across town; bots stand on the desk; more humans stand in the room |
@@ -82,7 +83,7 @@ beat, a vote with exactly two tags, and the lead called "you". Each ✗ names th
 | `model` | Optional Gemini TTS model (default `gemini-3.8-flash-tts`; on a 429 the vo step tries `gemini-3.8-flash-lite-tts`, then `gemini-3.1-flash-tts-preview`) |
 | `beats` | One per narrated line: `who`, `line`, `shot`, `idea`, `exp`, `hud`, `hot`, and `card` or `stats` |
 | `beats[].who` | Who is on screen (a cast `id`). Characters never speak; the narrator tells the story |
-| `beats[].line` | What the narrator says: "you" for the lead ("You shipped your app today."), the third person for everyone else. Quotes become reported speech ("Views are views, he says.") |
+| `beats[].line` | What the narrator says: "You" for the lead ("You shipped your app today."), the third person for everyone else. Quotes become reported speech ("Views are views, he says.") |
 | `beats[].link` | `but` or `so`: how the beat follows the one before when its line does not open with But or So (cards and the vote need none) |
 | `beats[].source` | Where a card's or stats card's fact comes from; a stats card shows it under the numbers |
 | `beats[].shot` | `room` (establishing), `close`, `two`, `wide`, `phone`, `card` (2 lines on paper: `"card": ["LINE", "LINE"]`), `stats` (a data card: `"head"`, `"stats": [{"label", "value", "extra", "bar": 0..1, "style": "danger"}]`, `"source"`). A card beat over 4 s opens on its `who` in close-up, then the card |

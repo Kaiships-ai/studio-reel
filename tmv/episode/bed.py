@@ -53,7 +53,7 @@ env = lp(np.abs(vv), 6, 1); env = env / (env.max() + 1e-9)
 duck = 1 - 0.55 * np.clip(env * 4, 0, 1)
 music *= duck
 
-# hits on the timeline (the same times episode/main.js uses)
+# hits on the timeline (the same times episode/timeline.js gives every engine)
 fx = np.zeros(N)
 def add(i0, x):
     i0 = int(i0 * SR); n = min(N - i0, len(x))

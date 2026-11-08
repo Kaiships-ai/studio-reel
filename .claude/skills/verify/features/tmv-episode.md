@@ -1,12 +1,15 @@
 # TMV episode (the paid kit's sample episode, cast and character designer)
 
 Files ship from `tmv/`: `episode/` (the 3D engine ported from Ep1: main.js, stage.js, world.js, hud.js, assets/room.glb;
-make.mjs, voice.py, designer.mjs, index.html, fonts), `episodes/sample/` (episode.json as narration, index.html, the Gemini narrator's take
+the style registry engines.mjs and the shared timeline.js; make.mjs, voice.py, designer.mjs, index.html, fonts), `episodes/sample/` (episode.json: 24 beats, about 83 s, narrated in "You" with two sourced Problems, index.html, the Gemini narrator's take
 `vo/take.wav` and its cut `vo/vo.wav` + `vo/vo.json`), `characters/` (cast.js = the three seeds Nova, Theo, Blip; rig.js builds them in 3D: humans from jay.glb
 recoloured and restyled, Blip from primitives) and `character-designer.html`. In the tmv zip there is no `kit/check-reel`: the sample ships rendered
 (`episodes/sample/sample.mp4`) and `studio install` draws only its first 2 s (720x1280, 10 fps, 20 frames) as its test
 render, then deletes it (`kit/studio.mjs`); it renders the whole sample only if `sample.mp4` is gone.
-`test/clean-install.mjs` then renders a copy, `episodes/ci-ep`, with every check ✓.
+`test/clean-install.mjs` then makes `episodes/ci-smoke` (`test/tmv-smoke.mjs`: the sample's first beat, first stats card,
+first card and vote beat, 13-17 s, voiced through the `vo` step from a take cut out of the sample's `vo/vo.wav`) with
+every check ✓; `--full-episode` renders a copy of the whole sample as `episodes/ci-full` and runs its 11 gates (CI: nightly
+on main, `v*` tags, by hand, the PR label `full-episode`).
 
 ## Sub-features
 
@@ -14,7 +17,7 @@ render, then deletes it (`kit/studio.mjs`); it renders the whole sample only if 
   default Achird; `GOOGLE_API_KEY` in `.env`, `pixi run studio key`), `vo/take.wav`, cut by `voice.py` (stretches of voice
   grouped so each line's length matches its letters) into `vo/vo.wav`, `vo/vo.json` (lines; word times at the voice's
   own pauses, letter-weighted inside a phrase). Each line's pauses over 0.34 s are cut to 0.34 s before its words are
-  timed (`tighten`, from Ep1's `tighten.py`), so the voice runs on (G8) and the captions and cuts follow the tightened audio. A take that reads one line twice (a Gemini glitch seen in PR #41) stops the step with one line naming that line, its two times and "re-run vo for a new take" (`repeated`: 1.2 s windows of speech matched by DTW on cepstra inside the next 6 s; real takes: twice 0.20-0.24, good 0.39-0.45, limit 0.30; skipped when the script itself repeats 4 words). `voice.py --self-check` (synthetic doubled line) runs in the tmv clean install. Errors: no key / 400 key / 429 (tries the fallback models) / no network
+  timed (`tighten`, from Ep1's `tighten.py`), so the voice runs on (G8) and the captions and cuts follow the tightened audio. A stretch of sound under 60 ms is a click, not a word: `spoken` drops it, so it never takes a phrase's place. A take that reads one line twice (a Gemini glitch seen in PR #41) stops the step with one line naming that line, its two times and "re-run vo for a new take" (`repeated`: 1.2 s windows of speech matched by DTW on cepstra inside the next 6 s; real takes: twice 0.20-0.24, good 0.39-0.45, limit 0.30; skipped when the script itself repeats 4 words). `voice.py --self-check` (synthetic doubled line) runs in the tmv clean install. Errors: no key / 400 key / 429 (tries the fallback models) / no network
   (`GEMINI_HOST` points it elsewhere to test). Test-only: `TMV_VO_TAKE=<wav>` cuts that take instead of calling Gemini,
   and `studio doctor` then skips its `voice key` call; the journeys set it to the sample's `vo/take.wav`. Dev-only sync check on a Mac with whisper.cpp: `pixi run python dev/caption-sync.py <ep>` (not shipped). `core/render/reel.mjs vo` uses the same path when kai-hand-draw is absent.
 - `episode.render`: `make.mjs <ep> render check` → `<ep>/<name>.mp4` at 720x1280 30 fps with the code-made bed (room tone, music, hits; `bed.py`) (ST-77 preview; `--full` only on
@@ -34,9 +37,16 @@ render, then deletes it (`kit/studio.mjs`); it renders the whole sample only if 
   behind (G4b: the share of the band in 3x3 faint patches under the paper's 90th percentile, on the beat's paper frames,
   the luma > 180 ones of 25/50/75/90 %; the card's own type is thinner than a patch; G4 takes the brightest of those frames), 15 s of faces with 3+ expressions, each idea once, voice that runs on, voice under every shot) → `out/gates.json`,
   exit 1 on a fail. A gate it cannot measure prints `–` (G6 needs an `idea` tag per beat; `make.mjs` refuses an empty one).
-- `episode.cuts`: one beat per voiced line, cut every 2.6 s at most: a longer story beat splits on word starts into
+- `episode.style`: `"style"` in `episode.json` or `series.json` (`3d` | `paper` | `handdraw`, schema enum, `3d` when left
+  out; `series.mjs new` moves it to `series.json`). `episode/engines.mjs` maps each style to its page (`episode/index.html`,
+  `episode/paper/index.html`, `episode/handdraw/index.html`); `make.mjs render` copies that page into the episode folder,
+  then renders it. A style whose page is missing stops before the browser with `the paper engine is not built yet (no
+  episode/paper/index.html): ...`. A new engine imports `episode/timeline.js` (`loadEpisode`, `cardsOf`, `timeline`) for the
+  episode, its voice, the cast cards (draw them with `toPaper` / `toHandDraw` from `core/character-card.mjs`), the shots,
+  caption words and HUD, so the cuts below and the gates hold in every style. Unit test: `test/unit/tmv-engines.test.mjs`.
+- `episode.cuts` (`episode/timeline.js`, shared by every engine): one beat per voiced line, cut every 2.6 s at most: a longer story beat splits on word starts into
   sub-shots that alternate its own angle and a cover angle (the lead: close ↔ phone; a bot: close ↔ two; the rival's
-  corner: close ↔ wide), the first beat cuts by 1.5 s, the vote holds, a card holds up to 4 s: a longer `card` or
+  corner: close ↔ wide), the first beat cuts by 1.5 s (on a word start no later than that, when there is one), the vote holds, a card holds up to 4 s: a longer `card` or
   `stats` beat opens on its `who` in close-up and the card lands on the first sentence that leaves it 2-4 s. Gates G3a, G3b, G7 read it.
 - `episode.look` (ST-79): the Ep1 room at night (neon through the curtain, screen key, rim light, bloom, DOF, grain), the
   rival's corner (ring light, neon sign from `texts.sign`), shots close / two / wide / phone / card, cream cards, kicker
