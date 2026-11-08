@@ -7,12 +7,9 @@ import { toPaper } from '/core/character-card.mjs';
 import { drawPaperFigure, FIGURE_W, SOLE_Y } from '/core/paper-figure.js';
 import { createPaperCards, isCardShot } from './cards.js';
 import { createPaperSet } from './set.js';
+import { framingFor, popAt, W, BOT_SCALE, PUSH, seg, lerp } from './framing.js';
 
-const W = 1080, H = 1920;
-const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
-const seg = (t, a, b) => clamp((t - a) / (b - a));
-const lerp = (x, y, k) => x + (y - x) * k;
-const backOut = (x) => 1 + 2.7 * (x - 1) ** 3 + 1.7 * (x - 1) ** 2;
+const H = 1920;
 
 const { EP, VO } = await loadEpisode();
 const CARDS = cardsOf(EP, window.TMV_SEEDS);
@@ -20,27 +17,8 @@ const { LINES, DUR, shotOf, WORDS, hudAt, LAST, lead } = timeline(EP, VO, CARDS)
 const FIG = Object.fromEntries(Object.entries(CARDS).map(([id, c]) => [id, drawPaperFigure(toPaper({ ...c, name: c.name ?? id }).figure, 'front')]));
 const ROOM = Object.keys(CARDS).filter(id => !inCorner(CARDS[id]));
 const isBot = (id) => CARDS[id].kind === 'bot';
-
-// who stands where in each shot: { id, x, sole (feet y on the 1080x1920 frame), k (figure scale), delay (pop order) }
-const side = (sh) => ((sh.i + sh.j) % 2 ? -1 : 1);
-const partnerOf = (who) => who === lead ? ROOM.find(id => id !== lead && isBot(id)) ?? ROOM.find(id => id !== lead) : lead;
-const close = (sh, who = sh.who) => [{ id: who, x: W / 2 + 70 * side(sh), sole: 2160, k: 2.3, delay: 0 }];
-const medium = (sh) => [{ id: sh.who, x: W / 2 + 90 * side(sh), sole: 1900, k: 1.45, delay: 0 }];
-const FRAMING = {
-  close,
-  phone: (sh) => close(sh, lead),
-  two(sh) {
-    const other = !inCorner(CARDS[sh.who]) && partnerOf(sh.who);
-    if (!other) return medium(sh);
-    const s = side(sh);
-    return [{ id: other, x: W / 2 - 250 * s, sole: 1760, k: 1.2, delay: 0 }, { id: sh.who, x: W / 2 + 190 * s, sole: 1960, k: 1.5, delay: 0.08 }];
-  },
-  wide(sh) {
-    if (inCorner(CARDS[sh.who])) return medium(sh);
-    return ROOM.map((id, n) => ({ id, x: W * (n + 1) / (ROOM.length + 1), sole: 1560 + 40 * (n % 2), k: 0.95, delay: 0.07 * n }));
-  },
-};
-FRAMING.room = FRAMING.wide;
+const FRAMING = framingFor(CARDS, lead);
+const peopleOf = (sh) => (FRAMING[sh.shot] ?? FRAMING.close)(sh);
 
 function talking(t, id) {
   const sh = shotOf(t);
@@ -64,10 +42,10 @@ function camOf(people, push) {
 }
 // the set pops up when it comes on screen: the first shot, or a cut from a card or from the other place
 const setOf = (sh) => isCardShot(sh) ? 'card' : inCorner(CARDS[sh.who]) ? 'corner' : 'room';
-function figure(p, t, sh) {
-  const pop = lerp(0.3, 1, backOut(seg(t, sh.a + p.delay, sh.a + p.delay + 0.4)));
+function figure(p, t, sh, stayed) {
+  const pop = popAt(t, sh, p, stayed);
   const talk = talking(t, p.id), bob = talk * Math.abs(Math.sin(t * 9)), squash = 1 + 0.03 * talk * Math.sin(t * 18);
-  const push = lerp(1, 1.04, seg(t, sh.a, sh.b)), k = p.k * push * (isBot(p.id) ? 0.82 : 1);
+  const push = lerp(1, PUSH, seg(t, sh.a, sh.b)), k = p.k * push * (isBot(p.id) ? BOT_SCALE : 1);
   if (p.sole < H) { g.fillStyle = 'rgba(58,42,36,.16)'; g.beginPath(); g.ellipse(p.x, p.sole, 150 * k, 22 * k, 0, 0, Math.PI * 2); g.fill(); }
   g.save(); g.translate(p.x, p.sole - 22 * k * bob); g.rotate(0.012 * Math.sin(t * 1.3 + p.x));
   g.scale(k / squash, k * pop * squash);
@@ -79,9 +57,10 @@ window.render = (t) => {
   g.setTransform(PX, 0, 0, PX, 0, 0);
   if (onCard) PAPER.cardShot(t, sh);
   else {
-    const people = (FRAMING[sh.shot] ?? FRAMING.close)(sh), fresh = sh.a <= 0 || setOf(shotOf(sh.a - 0.02)) !== setOf(sh);
-    SET(t, camOf(people, lerp(1, 1.04, seg(t, sh.a, sh.b))), inCorner(CARDS[sh.who]), fresh ? t - sh.a : undefined);
-    for (const p of people) figure(p, t, sh);
+    const people = peopleOf(sh), prev = sh.a > 0 && shotOf(sh.a - 0.02), fresh = !prev || setOf(prev) !== setOf(sh);
+    const before = fresh ? [] : peopleOf(prev).map(p => p.id);
+    SET(t, camOf(people, lerp(1, PUSH, seg(t, sh.a, sh.b))), inCorner(CARDS[sh.who]), fresh ? t - sh.a : undefined);
+    for (const p of people) figure(p, t, sh, before.includes(p.id));
     PAPER.hud(t);
   }
   PAPER.vote(t, sh);

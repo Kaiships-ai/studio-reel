@@ -1,6 +1,7 @@
 // paper/cards.js: the paper engine's type layer in the Paper Pop-up Book look (styles/paper-popup): explain cards,
 // the HUD, captions and the vote, each a pure function of t on the 1080x1920 frame. On a card the sheet is the brightest
 // tone and everything else is thin or 60+ levels darker, so gates G4 and G4b (episode/gates.py) hold.
+import { CAPTION_Y } from './framing.js';
 const W = 1080, H = 1920;
 const INK = '#3A2A24', MUTED = 'rgba(58,42,36,.6)', UNSAID = 'rgba(58,42,36,.28)';
 const SHEET = '#FFFAF0', BORDER = '#FFFDF7', EDGE = '#B9AD9C', KRAFT = '#BFA67E', RED = '#D8423A', TEAL = '#24807A', GOLD = '#FFCF3F';
@@ -154,7 +155,7 @@ export function createPaperCards(g, { EP, WORDS, LINES, LAST, hudAt }) {
     const P = phraseAt(t); if (!P || P[P.length - 1].e < sh.a) return;
     const size = onCard ? 58 : 64, gap = size * 0.3, ws = P.map(w => ({ ...w, wd: measure(w.w, size, { w: 600 }) }));
     let x = W / 2 - (ws.reduce((s, w) => s + w.wd, 0) + gap * (ws.length - 1)) / 2;
-    const y = onCard ? 1600 : 1590;
+    const y = onCard ? 1600 : CAPTION_Y;
     for (const w of ws) {
       const on = t >= w.s - 0.03, k = seg(t, w.s - 0.03, w.s + 0.08), s = 1 + 0.1 * k * (1 - seg(t, w.s + 0.08, w.s + 0.25));
       g.save(); g.translate(x + w.wd / 2, y); g.scale(s, s);

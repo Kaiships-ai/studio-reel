@@ -1,5 +1,5 @@
 // character-card.mjs: one character, every style. A card is the TMV cast format (tmv/characters/cast.js, TMV_SEEDS):
-//   { name, role, kind: human|bot, build, skin, hair, hairColor, top, topColor, legs, eyes, extra }
+//   { name, role, kind: human|bot, build, skin, hair, hairColor, top, topColor, legs, eyes, extra, extraColor? }
 // The 3D episode engine reads a card as it is; lost3D(card) names what it draws differently. toHandDraw(card) gives the
 // kai-hand-draw presenter (the CHARACTER block of a film's src/character.js, the keys of styles/kai-hand-draw/engine/kaip.js)
 // that looks the most like it, and lists what that style cannot show, so the buyer sees the same character whichever style they pick.
@@ -12,7 +12,7 @@ export const CARD = {
   eyes: ['dot', 'wide', 'sleepy', 'visor'],
   extra: ['none', 'headset', 'glasses', 'cap', 'scarf', 'antenna'],
 };
-const COLOURS = ['skin', 'hairColor', 'topColor', 'legs'];
+const COLOURS = ['skin', 'hairColor', 'topColor', 'legs', 'extraColor'];
 const HEX = /^#[0-9A-Fa-f]{6}$/;
 
 /** The card's problems, one sentence each; an empty list is a valid card. */
@@ -29,6 +29,9 @@ const HAIR = { short: 'short', bun: 'bun', spiky: 'spiky', long: 'long', curly: 
 const TOP = { hoodie: 'hoodie', jacket: 'jacket', tee: 'tee', vest: 'sweater' };
 const EYES = { dot: 'classic', wide: 'big', sleepy: 'sleepy', visor: 'classic' };
 const up = (c) => c && c.toUpperCase();
+
+/** The colour of the card's extra (cap, scarf, headset) in every style, with the 3D engine's defaults (tmv/characters/rig.js). */
+export const extraColour = (card) => up(card.extraColor ?? { cap: card.topColor ?? '#2B2733', scarf: '#C8412F' }[card.extra] ?? '#20242E');
 
 /** The hand-draw presenter for a card: { character, lost } — lost names what this style draws differently. */
 export function toHandDraw(card) {
@@ -50,7 +53,7 @@ export function toHandDraw(card) {
     facial_hair: 'none',
     glasses: card.extra === 'glasses' ? 'round' : 'none',
     accessory: card.extra === 'headset' ? 'headphones' : card.extra === 'cap' ? 'cap' : 'none',
-    accessory_color: '#2B2733',
+    accessory_color: extraColour(card),
     top: TOP[card.top] ?? 'tee',
     top_color: up(card.topColor) ?? '#2B2733',
     pants_color: up(card.legs) ?? '#1F1B26',
@@ -67,6 +70,7 @@ export function lost3D(card) {
     if (card.hair && card.hair !== 'none') lost.push(`hair "${card.hair}": a robot has none`);
     if (card.top && card.top !== 'vest') lost.push(`top "${card.top}": a robot wears a vest band`);
   } else {
+    if (card.build === 'round') lost.push('build "round": only a little wider in 3D');
     if (card.eyes && card.eyes !== 'dot') lost.push(`eyes "${card.eyes}": the 3D figure's own eyes`);
     if (['tee', 'vest'].includes(card.top)) lost.push(`top "${card.top}": a sweater`);
     if (card.extra === 'antenna') lost.push('extra "antenna": not on a person');
@@ -102,6 +106,7 @@ export function toPaper(card) {
       hair: pair(card.hairColor ?? '#261E2B'),
       top: pair(card.topColor ?? '#2B2733'),
       legs: pair(card.legs ?? '#1F1B26'),
+      extra: pair(extraColour(card)),
     },
   };
   return { figure, lost };
