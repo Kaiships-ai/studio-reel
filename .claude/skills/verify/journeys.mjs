@@ -55,7 +55,7 @@ const clean = () => { for (const f of [FILM, TEST, COPY]) rmSync(f, { recursive:
 
 const JOURNEYS = {
   async setup() {
-    await step('doctor is six ✓, exit 0', () => has(ok(node('kit/studio.mjs', 'doctor')), 'All good.'));
+    await step('doctor is all ✓, exit 0', () => has(ok(node('kit/studio.mjs', 'doctor')), 'All good.'));
     await step('a second install keeps the test render and the packages', () => has(has(ok(node('kit/studio.mjs', 'install')), 'already installed'), 'passed before'));
     await step('the verify doctor sees the tools and a GPU', () => has(ok(node(DRAFT, 'doctor')), 'page opens, READY, GPU:'));
   },
@@ -162,7 +162,7 @@ const JOURNEYS = {
     });
   },
   // The paid TMV kit, as a buyer gets it: build the zip, unzip into a fresh folder (a space in its path), install,
-  // which renders the sample episode as its test render; then the character designer and a planted break.
+  // whose test render draws 2 s of the sample, then a full render of a copy; then the character designer and planted breaks.
   async 'tmv-episode'() {
     const BOX = join(process.platform === 'win32' ? tmpdir() : '/tmp', `tmv verify ${RUN}`), KIT = join(BOX, 'tmv-studio');
     let zip = flag('zip');
@@ -177,12 +177,13 @@ const JOURNEYS = {
       ok(node('-e', `const z=require('node:child_process').spawnSync('python3',['-m','zipfile','-e',process.argv[1],process.argv[2]],{stdio:'inherit'});process.exit(z.status)`, zip, BOX));
       if (!existsSync(join(KIT, 'episodes/sample/episode.json')) || existsSync(join(KIT, 'kit/check-reel'))) throw new Error('not the tmv layout');
     });
-    await step('install renders the sample episode as its test render, every check ✓', () => {
-      // test/clean-install.mjs = what a buyer types: pixi run studio install, doctor, install again (a no-op)
+    await step('install passes its 2 s test render, and a copy of the sample renders with every check ✓', () => {
+      // test/clean-install.mjs = what a buyer types (pixi run studio install, doctor, install again), then it renders episodes/ci-ep
       has(ok(node('test/clean-install.mjs', KIT)), '✓ clean install passed');
-      const rep = JSON.parse(readFileSync(join(KIT, 'episodes/sample/out/check.json'), 'utf8'));
+      const rep = JSON.parse(readFileSync(join(KIT, 'episodes/ci-ep/out/check.json'), 'utf8'));
       const bad = rep.checks.filter(c => !c.ok); if (bad.length) throw new Error(bad.map(c => c.name).join(', '));
-      for (const f of ['sample.mp4', 'out/sheet.jpg', 'out/check.json']) cpSync(join(KIT, 'episodes/sample', f), join(EV, 'tmv-' + f.split('/').pop()));
+      cpSync(join(KIT, 'episodes/sample/sample.mp4'), join(EV, 'tmv-sample.mp4'));
+      for (const f of ['ci-ep.mp4', 'out/sheet.jpg', 'out/check.json']) cpSync(join(KIT, 'episodes/ci-ep', f), join(EV, 'tmv-' + f.split('/').pop()));
     });
     await step('doctor is all ✓ in the unzipped kit', () => has(ok(node(join(KIT, 'kit/studio.mjs'), 'doctor')), 'All good.'));
     await step('the character designer (served from the kit, no network) drives the 3D figures and copies a cast entry', async () => {

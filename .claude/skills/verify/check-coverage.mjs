@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 
-const COVERED = /^(kit\/|core\/(job|preset)\.mjs$|core\/render\/|core\/tts\/|core\/audio\/|styles\/kai-hand-draw\/(engine|tools|starter)\/|character-designer\.html$)/;
+const COVERED = /^(kit\/|tmv\/|core\/(job|preset)\.mjs$|core\/render\/|core\/tts\/|core\/audio\/|styles\/kai-hand-draw\/(engine|tools|starter)\/|character-designer\.html$)/;
 const FEATURE = /^\.claude\/skills\/verify\/features\/(?!README\.md$).+\.md$/;
 
 export function uncovered(paths) {

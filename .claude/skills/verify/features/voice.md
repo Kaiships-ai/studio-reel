@@ -6,8 +6,9 @@ checked against the voice rules and transcribed back by Whisper.
 ## Sub-features
 
 - `vo.tts`: edge-tts per line, joined into `vo/vo.wav`, `vo/vo.json` (`duration`, `lines`, `words`).
-- `vo.rules`: `check_vo.py` (rate, ≤ 28 words a line, CTA in one breath). Warnings only: pace outside 5.0–6.4 syl/s,
-  over 5 s of speech without a pause, a hook line ending after 3.5 s, no "Comment <KEYWORD>" in the last line.
+- `vo.rules`: `check_vo.py`. Exit 1 (`✗ …`) on a rate over +25 %, a line over 28 words, or a CTA with a gap over 0.05 s
+  between words. Warnings only (`⚠ …`): pace outside 5.0–6.4 syl/s, over 5 s of speech without a pause, a hook line
+  ending after 3.5 s, no "Comment <KEYWORD>" in the last line.
 - `vo.asr`: every line transcribes back to its words (or its `asr` field); a mismatch makes the step exit non-zero.
 
 ## How to get to it (user POV)
@@ -20,7 +21,8 @@ Preconditions: network (edge-tts; the first Whisper run also downloads its model
 doctor` all ✓: edge-tts and faster-whisper come from the pixi env).
 
 - Run: `make.mjs films/verify-smoke vo` → `✓ voice rules pass`, one `OK` per line (a `DIFF` line names a mismatch), `mismatches: 0`.
-  `--no-asr` skips the Whisper check; that is not a pass.
+  `--no-asr` skips the Whisper check; that is not a pass. Without faster-whisper installed the step prints
+  `⚠ Whisper check skipped` and still exits 0: that is not a pass either.
 - Timings reach the page: `draft.mjs films/verify-smoke` → "picture length = voiceover ± 1/30 s" ✓ and no
   `vo(): … not in the voiceover` warning.
 - A word the chapters cue but the script no longer says: change it in the script, run `vo`, run the draft →

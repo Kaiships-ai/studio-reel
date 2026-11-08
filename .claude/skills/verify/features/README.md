@@ -41,3 +41,5 @@ Each feature file: H1 title, one paragraph, then `Sub-features`, `How to get to 
 - [Progress file](./job-json.md): `films/<name>/job.json` after every step, for Lead Studio.
 - [Reel in another style](./any-style.md): `core/render/reel.mjs` builds and checks a reel made with `--style <slug>`.
 - [Presenter](./presenter.md): `character-designer.html` → a `character-spec v1` block → `src/character.js`.
+- [TMV episode](./tmv-episode.md): the paid TMV kit unzipped fresh installs, renders an episode, drives the cast designer and a two-episode series.
+- [TMV release](./tmv-release.md): `release/build.mjs --tier tmv` builds the TMV zip and gates it.

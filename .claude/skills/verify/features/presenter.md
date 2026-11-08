@@ -24,7 +24,7 @@ exactly as before the feature existed.
 Preconditions: a film with voice and mix done.
 
 - Page: load it headless with Playwright from `node_modules` (`page.goto('file://…/character-designer.html')`),
-  click "Randomize", read the `textarea` → starts with `character-spec v1`; 0 page errors; no horizontal scroll at
+  click "Randomize", read the `textarea` → holds a `character-spec v1` block (after one line asking Claude to use it); 0 page errors; no horizontal scroll at
   390 px.
 - Spec in a film: change values in `films/<name>/src/character.js` (e.g. `hair: 'long', glasses: 'square'`), run
   `draft.mjs films/<name>` → PASSED, and the sheet shows the new presenter.
