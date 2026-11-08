@@ -44,6 +44,13 @@ on main, `v*` tags, by hand, the PR label `full-episode`).
   episode/paper/index.html): ...`. A new engine imports `episode/timeline.js` (`loadEpisode`, `cardsOf`, `timeline`) for the
   episode, its voice, the cast cards (draw them with `toPaper` / `toHandDraw` from `core/character-card.mjs`), the shots,
   caption words and HUD, so the cuts below and the gates hold in every style. Unit test: `test/unit/tmv-engines.test.mjs`.
+- `episode.handdraw` (`"style": "handdraw"`): `episode/handdraw/index.html` loads `styles/kai-hand-draw/engine/core.js` +
+  `kaip.js` (paper grain, 12 fps boil) and `handdraw.js`, which draws each cast card as its `toHandDraw` presenter in the
+  timeline's shots. `framing.js` (pure) picks who and how big: close = the speaker's bust with the beat's `exp`; two = the
+  speaker and the lead (the lead with the first bot); wide/room = the room on its feet; phone = the lead with the phone;
+  the rival's corner holds only him. The speaker's mouth moves while their line's words play (`VO_WORDS`). Cards, stats,
+  captions, HUD and the vote are plain type for now. Unit test: `test/unit/tmv-handdraw.test.mjs`. Stills, no video:
+  `node core/render/still.mjs <ep> <t...> --size 720x1280` after copying the page in as `make.mjs render` does.
 - `episode.cuts` (`episode/timeline.js`, shared by every engine): one beat per voiced line, cut every 2.6 s at most: a longer story beat splits on word starts into
   sub-shots that alternate its own angle and a cover angle (the lead: close ↔ phone; a bot: close ↔ two; the rival's
   corner: close ↔ wide), the first beat cuts by 1.5 s (on a word start no later than that, when there is one), the vote holds, a card holds up to 4 s: a longer `card` or
