@@ -118,7 +118,7 @@ function key() {
     writeFileSync(f, old + (old && !old.endsWith('\n') ? '\n' : '') + 'GOOGLE_API_KEY=\n', { mode: 0o600 });
   }
   console.log(`Opening ${f}: paste the key from https://aistudio.google.com/apikey after GOOGLE_API_KEY=, save, then say "xong" (done).`);
-  if (process.env.TMV_VO_TAKE) return true;   // tests: no editor
+  if (process.env.TMV_VO_TAKE || process.env.STUDIO_NO_EDITOR) return true;   // tests: no editor (a buyer-run driver writes .env itself)
   openInEditor(f, () => console.log(`Could not open an editor: open ${f} yourself.`));
   return true;
 }
