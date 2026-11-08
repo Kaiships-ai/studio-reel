@@ -1,12 +1,6 @@
-// paper/cards.js: the paper engine's type layer, in the Paper Pop-up Book look (styles/paper-popup): cut-paper sheets
-// with an off-white border, a grey cardboard edge and a soft shadow, a red ribbon, Lilita One for display and Fredoka
-// for everything read, dark-brown ink. Explain cards, stats and previously are a sheet popping up on kraft board; the
-// HUD is a row of paper tags; captions pop word by word with the words not yet spoken in grey; the vote is a sheet with
-// the two tags. Every function is a pure function of t on the 1080x1920 frame.
-//
-// The gates read the explain cards (episode/gates.py G4, G4b): the sheet is the brightest tone of the frame and every
-// other area is either thinner than a 3x3 patch at 1/10 scale or more than 60 levels darker (kraft, the ribbon, the A/B
-// tags), so nothing on a card reads as a faint picture behind it.
+// paper/cards.js: the paper engine's type layer in the Paper Pop-up Book look (styles/paper-popup): explain cards,
+// the HUD, captions and the vote, each a pure function of t on the 1080x1920 frame. On a card the sheet is the brightest
+// tone and everything else is thin or 60+ levels darker, so gates G4 and G4b (episode/gates.py) hold.
 const W = 1080, H = 1920;
 const INK = '#3A2A24', MUTED = 'rgba(58,42,36,.6)', UNSAID = 'rgba(58,42,36,.28)';
 const SHEET = '#FFFAF0', BORDER = '#FFFDF7', EDGE = '#B9AD9C', KRAFT = '#BFA67E', RED = '#D8423A', TEAL = '#24807A', GOLD = '#FFCF3F';
@@ -108,7 +102,7 @@ export function createPaperCards(g, { EP, WORDS, LINES, LAST, hudAt }) {
       g.fillStyle = 'rgba(58,42,36,.18)'; g.fillRect(150, y + gap - 40, 780, 3);
       g.restore();
     });
-    if (sh.source) txt(sh.source, W / 2, 1470, 28, MUTED, { w: 500 });
+    if (sh.source) txt(sh.source, W / 2, 1470, 28, MUTED);
   }
   function previously(t, sh) {
     const P = EP.previously;
@@ -122,7 +116,7 @@ export function createPaperCards(g, { EP, WORDS, LINES, LAST, hudAt }) {
     });
     tag(780, P.winner, true, sh.a + 0.5); tag(960, P.loser, false, sh.a + 0.65);
     const k = eout(seg(t, sh.a + 1.0, sh.a + 1.3));
-    if (k > 0) { g.save(); g.globalAlpha = k; txt(fill(TX.youPicked ?? 'YOU PICKED {tag}').replace(/\{tag\}/g, P.winner.tag).toUpperCase(), W / 2, 1140, 42, INK, { w: 700, ls: 4 }); g.restore(); }
+    if (k > 0) { g.save(); g.globalAlpha = k; txt(fill(TX.youPicked ?? 'YOU PICKED {tag}').replace(/\{tag\}/g, P.winner.tag).toUpperCase(), W / 2, 1140, 42, INK, { ls: 4 }); g.restore(); }
   }
   const CONTENT = { card, stats, previously };
   // a card shot; the last card gives its sheet to the vote once the vote starts
@@ -174,27 +168,27 @@ export function createPaperCards(g, { EP, WORDS, LINES, LAST, hudAt }) {
   }
 
   // ------------------------------------------------------------ the vote: the question and the two tags, each popping on its word
-  // y = the top of the block: the question, A, "or", B, then the footer once the line is said
+  // y = the top of the block: the question, A, "or", B, then the footer once the line is said, all within 560
   function voteOn(t, y) {
     const q = EP.vote.question;
-    pop(t, VOTE_AT, W / 2, y + 90, () => txt(q, 0, 0, fit(q, 58, 740, { display: true }), INK, { display: true }));
+    pop(t, VOTE_AT, W / 2, y + 80, () => txt(q, 0, 0, fit(q, 58, 740, { display: true }), INK, { display: true }));
     const tag = (dy, label, face, t0) => pop(t, t0, W / 2, y + dy, () => {
       piece(-350, -64, 700, 128, 64, face, 6);
       txt(label, 0, 4, fit(label, 60, 600, { display: true }), '#FFF4D6', { display: true, ls: 1 });
     });
-    tag(225, `${TAG_A} · ${EP.vote.a.toUpperCase()}`, RED, T_A);
-    if (t > T_B + 0.2) { g.save(); g.globalAlpha = eout(seg(t, T_B + 0.2, T_B + 0.4)); txt(TX.or, W / 2, y + 332, 36, MUTED); g.restore(); }
-    tag(440, `${TAG_B} · ${EP.vote.b.toUpperCase()}`, TEAL, T_B);
+    tag(200, `${TAG_A} · ${EP.vote.a.toUpperCase()}`, RED, T_A);
+    if (t > T_B + 0.2) { g.save(); g.globalAlpha = eout(seg(t, T_B + 0.2, T_B + 0.4)); txt(TX.or, W / 2, y + 293, 34, MUTED); g.restore(); }
+    tag(385, `${TAG_B} · ${EP.vote.b.toUpperCase()}`, TEAL, T_B);
     const d = eout(seg(t, LAST.le, LAST.le + 0.3)); if (d <= 0) return;
-    const ft = fill(TX.voteFooter).toUpperCase(), fw = Math.min(840, measure(ft, 28, { w: 600 }) + 3 * ft.length + 60);
-    g.save(); g.globalAlpha = d; rr(W / 2 - fw / 2, y + 576, fw, 58, 29); g.fillStyle = INK; g.fill();
-    txt(ft, W / 2, y + 606, 28, SHEET, { ls: 3 }); g.restore();
+    const ft = fill(TX.voteFooter).toUpperCase(), fw = Math.min(760, measure(ft, 28, { w: 600 }) + 3 * ft.length + 60);
+    g.save(); g.globalAlpha = d; rr(W / 2 - fw / 2, y + 470, fw, 58, 29); g.fillStyle = INK; g.fill();
+    txt(ft, W / 2, y + 500, 28, SHEET, { ls: 3 }); g.restore();
   }
   // over a story shot the vote gets its own sheet under the HUD, above a close-up's face (the Reels safe zone starts
   // at y 250); a last card already gave it the page
   function vote(t, sh) {
     if (t < VOTE_AT || isCardShot(sh)) return;
-    const k = back(seg(t, VOTE_AT, VOTE_AT + 0.35)), top = 250, foot = top + 550;
+    const k = back(seg(t, VOTE_AT, VOTE_AT + 0.35)), top = 250, foot = top + 560;
     g.save(); g.translate(W / 2, top); g.scale(1, lerp(0.25, 1, k)); g.translate(-W / 2, -top);
     piece(130, top, W - 260, foot - top, 30); g.restore();
     voteOn(t, top);
