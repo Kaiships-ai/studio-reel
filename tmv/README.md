@@ -19,6 +19,20 @@ Make a whole series of short vertical episodes with your own characters and stor
    `episode.json`, render) and turn them into a series with `/series`. Each episode ends in a vote; the next one follows
    the winning comment.
 
+**You did it** when these two files exist and play: `episodes/sample/sample.mp4` (the sample, about 8-9 minutes after
+you paste the prompt) and `episodes/<your episode>/<your episode>.mp4` (your own episode 1, about 4 minutes later plus the
+time you spend on the key and your characters). `pixi run studio doctor` then shows only ✓ lines, ending in "All good".
+
+**If something goes wrong** (the three problems seen in real runs):
+
+| You see | Fix |
+|---|---|
+| `pixi: command not found` | pixi was just installed: open a new terminal in this folder and start `claude` again, or let Claude use `~/.pixi/bin/pixi` (it is allowed too) |
+| `✗ voice key: no key in .env` | run `pixi run studio key`, paste the key right after `GOOGLE_API_KEY=` on the same line, **save the file**, say "xong". A `429` line means today's free voice quota is used up: the key is fine, try again after it resets |
+| The test render says "no GPU found" and takes 15-20 minutes | the browser found no graphics card (some Linux and Windows machines, virtual machines): it still works, only slower. Episodes take about an hour each there; use a Mac or a PC with a GPU if you can |
+
+Still stuck: Discord (Buyer role) or kaiships.ai@gmail.com, with the ✗ line you see.
+
 Runs on macOS 14+ (Apple Silicon), Windows 10/11 x64 and Linux x64. Needs Claude Code with your own
 Claude plan, a Google account (the voice key is free) and the internet for the voice step. Licence: `LICENSE`. Help: Discord (Buyer role) or kaiships.ai@gmail.com.
 

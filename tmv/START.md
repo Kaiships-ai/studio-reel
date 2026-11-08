@@ -59,6 +59,12 @@ allowed. Edit files only under `episodes/`.
 
    The last beat's line says the two vote words; the vote is the last frame.
 
+   When `episodes/ep1/ep1.mp4` exists and its check is all ✓, tell the buyer in one short block: **you did it**:
+   the sample (`episodes/sample/sample.mp4`) and their own episode 1 (`episodes/ep1/ep1.mp4`) are made, `pixi run studio
+   doctor` shows all ✓, and the next step is posting episode 1 and waiting for the vote. If anything failed on the way,
+   the README's "If something goes wrong" table has the three common fixes; support is Discord (Buyer role) or
+   kaiships.ai@gmail.com.
+
 6. Turn it into a series with `/series` (`.claude/skills/series`). When the buyer says which answer won:
 
    ```
