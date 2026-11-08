@@ -1,0 +1,27 @@
+<!doctype html>
+<meta charset="utf-8">
+<!-- The card in the 3D episode engine: characters/rig.js on the designer's stage (navy, two neon rims). -->
+<script type="importmap">{ "imports": { "three": "/node_modules/three/build/three.module.js", "three/addons/": "/node_modules/three/examples/jsm/" } }</script>
+<style>html, body { margin: 0; overflow: hidden; } canvas { width: 100vw; height: 100vh; display: block; }</style>
+<canvas id="view" width="720" height="1280"></canvas>
+<script type="module">
+import * as THREE from 'three';
+import { makeCharacter } from '/characters/rig.js';
+const card = JSON.parse(new URLSearchParams(location.search).get('card'));
+const cv = document.getElementById('view'), renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(cv.width, cv.height, false); renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.1; renderer.shadowMap.enabled = true;
+const scene = new THREE.Scene(); scene.background = new THREE.Color('#0B1230');
+scene.add(new THREE.HemisphereLight('#4a4f8a', '#20121c', 0.9));
+for (const [col, k, p] of [['#dfe6ff', 2.2, [0.6, 1.6, 2.2]], ['#FF3D8B', 3.2, [-2, 1.4, -1.6]], ['#29E0FF', 2.6, [2, 1.2, -1.4]]]) {
+  const l = new THREE.DirectionalLight(col, k); l.position.set(...p); scene.add(l);
+}
+const floor = new THREE.Mesh(new THREE.CircleGeometry(1.2, 48), new THREE.MeshStandardMaterial({ color: '#141a3a', roughness: 0.9 }));
+floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+const ch = await makeCharacter({ ...card }); scene.add(ch.root);
+ch.pose({ at: [0, 0], yaw: 0.25, t: 0 });
+const h = new THREE.Box3().setFromObject(ch.root).max.y, mid = h * 0.5;
+const cam = new THREE.PerspectiveCamera(30, cv.width / cv.height, 0.01, 50); cam.position.set(0, mid, h * 2.5 + 0.3); cam.lookAt(0, mid, 0);
+renderer.render(scene, cam);
+window.SHOT = true;
+</script>

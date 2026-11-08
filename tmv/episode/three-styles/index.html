@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Your character in three styles</title>
+<!-- `node episode/make.mjs styles <card>` opens this page with ?card=<the card as JSON> and saves it as one PNG.
+     Each panel is its own page (3d.html, hand.html, paper.html) that sets window.SHOT once its picture is drawn. -->
+<style>
+body { margin: 0; width: 1280px; background: #FFFDF9; color: #15120F; font: 16px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { padding: 34px 32px 30px; }
+h1 { margin: 0 0 4px; font-size: 30px; letter-spacing: -0.01em; }
+p.sub { margin: 0 0 22px; color: #6B645C; font-size: 17px; }
+.row { display: flex; gap: 32px; }
+figure { margin: 0; width: 384px; }
+iframe { width: 384px; height: 683px; border: 0; border-radius: 18px; display: block; background: #EEE6DA; }
+figcaption { margin-top: 12px; font-weight: 650; font-size: 22px; }
+.note { margin-top: 4px; color: #6B645C; font-size: 15px; min-height: 21px; }
+</style>
+<main>
+  <h1 id="title"></h1>
+  <p class="sub" id="sub"></p>
+  <div class="row" id="row"></div>
+</main>
+<script type="module">
+import { checkCard, toHandDraw, toPaper } from '/core/character-card.mjs';
+const q = new URLSearchParams(location.search), card = JSON.parse(q.get('card'));
+const errs = checkCard(card); if (errs.length) throw new Error(`character card: ${errs.join('; ')}`);
+const STYLES = [
+  ['3d.html', '3D', 'The episode engine', []],
+  ['hand.html', 'Hand-draw', 'Watercolour and ink', toHandDraw(card).lost],
+  ['paper.html', 'Paper pop-up', 'A cut-paper sticker', toPaper(card).lost],
+];
+document.getElementById('title').textContent = `${card.name.trim()} in three styles`;
+document.getElementById('sub').textContent = [card.kind, card.build, card.hair && card.hair !== 'none' && `${card.hair} hair`, card.top, card.extra !== 'none' && card.extra].filter(Boolean).join(' · ') + '. Pick one: the world is built in that style.';
+const frames = STYLES.map(([src, label, what, lost]) => {
+  const f = document.createElement('figure'), fr = Object.assign(document.createElement('iframe'), { src: `${src}?card=${encodeURIComponent(JSON.stringify(card))}` });
+  const note = lost.length ? `Drawn differently: ${lost.join('; ')}` : what;
+  f.append(fr, Object.assign(document.createElement('figcaption'), { textContent: label }), Object.assign(document.createElement('div'), { className: 'note', textContent: note }));
+  document.getElementById('row').append(f);
+  return fr;
+});
+const t0 = Date.now();
+while (!frames.every(f => f.contentWindow?.SHOT)) {
+  if (Date.now() - t0 > 120000) throw new Error(`a panel never finished drawing: ${frames.filter(f => !f.contentWindow?.SHOT).map(f => f.src.split('?')[0]).join(', ')}`);
+  await new Promise(r => setTimeout(r, 100));
+}
+window.READY = true;
+</script>
+</html>

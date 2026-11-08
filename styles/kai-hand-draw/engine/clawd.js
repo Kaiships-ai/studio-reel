@@ -64,7 +64,7 @@ function tintCols(o) {
 //   boil:   boilKey (a stable id for its boil seeds; defaults to call order, so set it if characters come and go mid-shot)
 function clawd(x, y, u, o = {}) {
   // each part boils from its own seed (see boilSeed), so a moving arm never re-boils the body, or the next character
-  const id = o.boilKey ?? ++CLAWD_N, rs = part => boilSeed(`clawd ${id} ${part}`);
+  const id = o.boilKey ?? ++FIG_N, rs = part => boilSeed(`clawd ${id} ${part}`);
   x += (o.dx || 0) * u;
   const V = VIEWS[o.view] || VIEWS.front;
   const dy = (o.dy || 0) * u, sq = (o.sq || 0) + (o.take || 0), sm = clamp(o.smear || 0);

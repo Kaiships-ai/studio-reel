@@ -1,0 +1,18 @@
+<!doctype html>
+<meta charset="utf-8">
+<!-- The card as a Paper Pop-up figure (core/character-card.mjs toPaper, core/paper-figure.js) on a cream page. -->
+<style>html, body { margin: 0; overflow: hidden; } canvas { width: 100vw; height: 100vh; display: block; }</style>
+<canvas id="view" width="720" height="1280"></canvas>
+<script type="module">
+import { toPaper } from '/core/character-card.mjs';
+import { drawPaperFigure, FIGURE_W, FIGURE_H, SOLE_Y } from '/core/paper-figure.js';
+const card = JSON.parse(new URLSearchParams(location.search).get('card'));
+const cv = document.getElementById('view'), x = cv.getContext('2d'), W = cv.width, H = cv.height;
+const sky = x.createLinearGradient(0, 0, 0, H); sky.addColorStop(0, '#F6EFE2'); sky.addColorStop(1, '#E9DCC6');
+x.fillStyle = sky; x.fillRect(0, 0, W, H);
+x.fillStyle = '#D8C7A8'; x.fillRect(0, H * 0.78, W, H * 0.22);
+x.fillStyle = 'rgba(58,42,36,.16)'; x.beginPath(); x.ellipse(W / 2, H * 0.8, 170, 26, 0, 0, Math.PI * 2); x.fill();
+const fig = drawPaperFigure(toPaper(card).figure, 'front'), k = H * 0.68 / SOLE_Y;
+x.drawImage(fig, W / 2 - FIGURE_W * k / 2, H * 0.8 - SOLE_Y * k, FIGURE_W * k, FIGURE_H * k);
+window.SHOT = true;
+</script>
