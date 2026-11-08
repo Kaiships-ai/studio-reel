@@ -14,7 +14,7 @@ function grainTile() {
   x.putImageData(img, 0, 0);
   return (grain = c);
 }
-function finishCut(art, border = 16) {
+export function finishCut(art, border = 16) {
   const w = art.width, h = art.height, out = cv(w, h), x = out.getContext('2d');
   const dil = (r, col) => {
     const c = cv(w, h), y = c.getContext('2d'), n = Math.max(16, Math.round(r * 1.2));
@@ -29,7 +29,7 @@ function sh(x, fill, lw = LW, stroke = INK) {
   if (fill) { x.fillStyle = fill; x.fill(); }
   if (lw > 0) { x.lineWidth = lw; x.strokeStyle = stroke; x.lineJoin = 'round'; x.lineCap = 'round'; x.stroke(); }
 }
-function blob(x, cx, cy, rx, ry, wob = .03, seed = 1) {
+export function blob(x, cx, cy, rx, ry, wob = .03, seed = 1) {
   const R = mulberry(seed), ph = [R() * TAU, R() * TAU, R() * TAU], n = 28, pts = [];
   for (let i = 0; i < n; i++) { const a = i / n * TAU, k = 1 + wob * (Math.sin(a * 3 + ph[0]) * .5 + Math.sin(a * 5 + ph[1]) * .3 + Math.sin(a * 2 + ph[2]) * .4); pts.push([cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k]); }
   const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];

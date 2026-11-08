@@ -1,11 +1,12 @@
 // paper/main.js: the paper episode engine. Each shot of episode/timeline.js shows its cast as cut-paper stickers
-// (core/character-card.mjs toPaper, core/paper-figure.js) on a cream paper backdrop: a figure pops up from its feet
+// (core/character-card.mjs toPaper, core/paper-figure.js) in front of a pop-up set of its place (paper/set.js): a figure pops up from its feet
 // when the shot opens and bobs while its words play. Cards, the HUD, captions and the vote are paper/cards.js.
 // Contract with core/render/video.mjs: window.render(t), window.DUR, window.READY.
 import { loadEpisode, cardsOf, timeline, inCorner } from '../timeline.js';
 import { toPaper } from '/core/character-card.mjs';
 import { drawPaperFigure, FIGURE_W, SOLE_Y } from '/core/paper-figure.js';
 import { createPaperCards, isCardShot } from './cards.js';
+import { createPaperSet } from './set.js';
 
 const W = 1080, H = 1920;
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
@@ -50,13 +51,19 @@ const cv = document.getElementById('paper'), g = cv.getContext('2d');
 cv.width = Math.round(innerWidth * devicePixelRatio); cv.height = Math.round(innerHeight * devicePixelRatio);
 const PX = cv.width / W;
 const PAPER = createPaperCards(g, { EP, WORDS, LINES, LAST, hudAt });
+await Promise.all(['400 40px "Lilita One"', '600 40px Fredoka'].map(f => document.fonts.load(f)));
+const SET = createPaperSet(g, EP);
 
-function backdrop(corner) {
-  const sky = g.createLinearGradient(0, 0, 0, H);
-  sky.addColorStop(0, corner ? '#E7E8EC' : '#F6EFE2'); sky.addColorStop(1, corner ? '#D2D5DE' : '#E9DCC6');
-  g.fillStyle = sky; g.fillRect(0, 0, W, H);
-  g.fillStyle = corner ? '#BFC3CE' : '#D8C7A8'; g.fillRect(0, 1500, W, H - 1500);
+// the camera on the set for a shot's figures: zoom with the biggest figure, floor line just above the highest feet, and
+// each figure in front of its own place in the room (its spot in the wide shot; the corner has one, its middle)
+const home = (id) => inCorner(CARDS[id]) ? W / 2 : W * (ROOM.indexOf(id) + 1) / (ROOM.length + 1);
+function camOf(people, push) {
+  const z = (1 + (Math.max(...people.map(p => p.k)) - 0.95) * 0.75) * push;
+  const cx = people.reduce((s, p) => s + home(p.id) - (p.x - W / 2) / z, 0) / people.length;
+  return { z, cx, floor: Math.min(...people.map(p => p.sole)) - 60 * z };
 }
+// the set pops up when it comes on screen: the first shot, or a cut from a card or from the other place
+const setOf = (sh) => isCardShot(sh) ? 'card' : inCorner(CARDS[sh.who]) ? 'corner' : 'room';
 function figure(p, t, sh) {
   const pop = lerp(0.3, 1, backOut(seg(t, sh.a + p.delay, sh.a + p.delay + 0.4)));
   const talk = talking(t, p.id), bob = talk * Math.abs(Math.sin(t * 9)), squash = 1 + 0.03 * talk * Math.sin(t * 18);
@@ -72,13 +79,13 @@ window.render = (t) => {
   g.setTransform(PX, 0, 0, PX, 0, 0);
   if (onCard) PAPER.cardShot(t, sh);
   else {
-    backdrop(inCorner(CARDS[sh.who]));
-    for (const p of (FRAMING[sh.shot] ?? FRAMING.close)(sh)) figure(p, t, sh);
+    const people = (FRAMING[sh.shot] ?? FRAMING.close)(sh), fresh = sh.a <= 0 || setOf(shotOf(sh.a - 0.02)) !== setOf(sh);
+    SET(t, camOf(people, lerp(1, 1.04, seg(t, sh.a, sh.b))), inCorner(CARDS[sh.who]), fresh ? t - sh.a : undefined);
+    for (const p of people) figure(p, t, sh);
     PAPER.hud(t);
   }
   PAPER.vote(t, sh);
   PAPER.captions(t, sh, onCard);
 };
-await Promise.all(['400 40px "Lilita One"', '600 40px Fredoka'].map(f => document.fonts.load(f)));
 window.render(Number(new URLSearchParams(location.search).get('t') || 0));
 window.READY = true;
