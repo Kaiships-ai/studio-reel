@@ -1,7 +1,7 @@
 # TMV episode (the paid kit's sample episode, cast and character designer)
 
 Files ship from `tmv/`: `episode/` (the 3D engine ported from Ep1: main.js, stage.js, world.js, hud.js, assets/room.glb;
-make.mjs, voice.py, designer.mjs, index.html, fonts), `episodes/sample/` (episode.json as narration, index.html, the Gemini narrator's take
+the style registry engines.mjs and the shared timeline.js; make.mjs, voice.py, designer.mjs, index.html, fonts), `episodes/sample/` (episode.json as narration, index.html, the Gemini narrator's take
 `vo/take.wav` and its cut `vo/vo.wav` + `vo/vo.json`), `characters/` (cast.js = the three seeds Nova, Theo, Blip; rig.js builds them in 3D: humans from jay.glb
 recoloured and restyled, Blip from primitives) and `character-designer.html`. In the tmv zip there is no `kit/check-reel`: the sample ships rendered
 (`episodes/sample/sample.mp4`) and `studio install` draws only its first 2 s (720x1280, 10 fps, 20 frames) as its test
@@ -34,7 +34,14 @@ render, then deletes it (`kit/studio.mjs`); it renders the whole sample only if 
   behind (G4b: the share of the band in 3x3 faint patches under the paper's 90th percentile, on the beat's paper frames,
   the luma > 180 ones of 25/50/75/90 %; the card's own type is thinner than a patch; G4 takes the brightest of those frames), 15 s of faces with 3+ expressions, each idea once, voice that runs on, voice under every shot) → `out/gates.json`,
   exit 1 on a fail. A gate it cannot measure prints `–` (G6 needs an `idea` tag per beat; `make.mjs` refuses an empty one).
-- `episode.cuts`: one beat per voiced line, cut every 2.6 s at most: a longer story beat splits on word starts into
+- `episode.style`: `"style"` in `episode.json` or `series.json` (`3d` | `paper` | `handdraw`, schema enum, `3d` when left
+  out; `series.mjs new` moves it to `series.json`). `episode/engines.mjs` maps each style to its page (`episode/index.html`,
+  `episode/paper/index.html`, `episode/handdraw/index.html`); `make.mjs render` copies that page into the episode folder,
+  then renders it. A style whose page is missing stops before the browser with `the paper engine is not built yet (no
+  episode/paper/index.html): ...`. A new engine imports `episode/timeline.js` (`loadEpisode`, `cardsOf`, `timeline`) for the
+  episode, its voice, the cast cards (draw them with `toPaper` / `toHandDraw` from `core/character-card.mjs`), the shots,
+  caption words and HUD, so the cuts below and the gates hold in every style. Unit test: `test/unit/tmv-engines.test.mjs`.
+- `episode.cuts` (`episode/timeline.js`, shared by every engine): one beat per voiced line, cut every 2.6 s at most: a longer story beat splits on word starts into
   sub-shots that alternate its own angle and a cover angle (the lead: close ↔ phone; a bot: close ↔ two; the rival's
   corner: close ↔ wide), the first beat cuts by 1.5 s, the vote holds, a card holds up to 4 s: a longer `card` or
   `stats` beat opens on its `who` in close-up and the card lands on the first sentence that leaves it 2-4 s. Gates G3a, G3b, G7 read it.

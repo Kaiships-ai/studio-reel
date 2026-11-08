@@ -73,7 +73,7 @@ pixi run node episode/make.mjs styles episodes/<show>/cards/you.json --out episo
 It draws You in 3D, hand-draw and paper side by side in about a second. Open `styles.png` with the Read tool and show
 it; under each panel is what that style draws differently.
 
-- ◆ Pick one. Write `style: 3d`, `style: hand-draw` or `style: paper` in the `story.md` frontmatter. In cook mode, pick
+- ◆ Pick one. Write `style: 3d`, `style: handdraw` or `style: paper` in the `story.md` frontmatter. In cook mode, pick
   the panel with the fewest differences listed.
 - A panel fails: fix what the error names and run it again. After a second failure, offer the styles that drew.
 - It prints `usage: node episode/make.mjs <episode folder ...>`: this kit has no style picture yet. Say so, write
@@ -84,7 +84,7 @@ it; under each panel is what that style draws differently.
 Follow `worldbuilding` and `research`. Everything here is described as the chosen style draws it.
 
 - ◆ Two or three places: `story add location '<Place>' --path episodes/<show>/story`, each with a `## Look` section in
-  the style's terms (3D: the room, the light, the props on the desk; hand-draw: the line and the paper; paper: the cut
+  the style's terms (3d: the room, the light, the props on the desk; handdraw: the line and the paper; paper: the cut
   layers).
 - The real rules of the user's field (their platform, market or trade) that the story leans on:
   `story add research '<rule>' --source '<url>' --path episodes/<show>/story`, one per rule, with a source you opened.
@@ -115,5 +115,6 @@ End with `story check` passing (warnings are fine) and the line
 
 ## Hand-off
 
-Make episode 1 with `/episode` from chapter 1. Each card in `cards/` is one `cast` entry as it is. The narrator says
+Make episode 1 with `/episode` from chapter 1. Each card in `cards/` is one `cast` entry as it is, and the `style` from
+`story.md` goes in its `episode.json` as `"style"` (`series.mjs new` moves it to `series.json` for every episode). The narrator says
 "You" for the lead and the third person for everyone else, as `/episode` says. When its vote is in, `/series` makes the next one from the matching chapter.

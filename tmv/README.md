@@ -59,7 +59,7 @@ Claude plan, a Google account (the voice key is free) and the internet for the v
 ## A series
 
 `pixi run node episode/series.mjs new episodes/<show> --from episodes/<episode 1>` makes `episodes/<show>/series.json` (the show's
-name, cast, palette and texts, shared by every episode) and `ep1/`. When the vote is in,
+name, cast, style, palette and texts, shared by every episode) and `ep1/`. When the vote is in,
 `pixi run node episode/series.mjs next episodes/<show> --winner B` records it and writes `ep2/episode.json` with the opening
 (a `"shot": "previously"` card: PREVIOUSLY · EP 1, the question, the winning answer) and a recap beat; write the rest of
 the story, then `vo` and render it like any episode. `pixi run node episode/series.mjs status episodes/<show>` lists them.
@@ -75,6 +75,7 @@ beat, a vote with exactly two tags, and the lead called "you". Each ✗ names th
 | Field | What it is |
 |---|---|
 | `series`, `ep`, `title` | Show name, episode number (1, 2, ...), the title over the first shot |
+| `style` | The look: `3d` (the default when left out), `paper` or `handdraw`, the one `/story` picked. A series sets it once in `series.json`. A style whose engine is not in this kit yet stops the render and says so |
 | `palette` | Colours `neon` (accents: highlighted caption words, HUD meters, the room's neon), `left` (vote A, room lights), `right` (vote B, the rival's sign), `card` (card paper), `ink` (highlighted words on the cards; defaults to `neon`, set it when `neon` is too light to read on `card`), as `#RRGGBB` |
 | `texts` | Every other word on screen: `handle` (the lead's phone), `sign` (the rival's neon sign), `kicker` (`{series} · EP {ep}`), `phoneLabel`, `phoneHud` (which HUD label the phone shows), `phoneFoot`, `or`, `voteFooter` (`{a}`, `{b}`, `{next}` fill in) |
 | `cast` | `[{ "id", "seed" }]` or the entry the designer copies. The first human in the room is the lead at the desk; `"role": "rival"` or `"place": "corner"` puts a character in the corner across town; bots stand on the desk; more humans stand in the room |
