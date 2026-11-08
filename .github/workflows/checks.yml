@@ -22,6 +22,8 @@ jobs:
         run: node --test test/unit/*.test.mjs
       - name: Release checks without writing zips (manifest coverage, forbidden strings, Chinese in buyer docs, licences, skill sets)
         run: node release/build.mjs --dry-run
+      - name: Install the root packages the typecheck resolves (three, playwright-core; no browser download)
+        run: npm ci --no-audit --no-fund --loglevel=error
       - name: Typecheck core/, kit/ and release/ (JSDoc, dev-only TypeScript in tools/typecheck)
         run: node tools/typecheck/run.mjs
       - name: Lint core/, kit/, release/, test/ and tmv/episode/ (oxlint correctness rules, dev-only in tools/lint)
