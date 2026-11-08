@@ -16,7 +16,7 @@ import { mux } from '../core/render/mux.mjs';
 import { speak, VOICE } from './gemini.mjs';
 import { checkCard } from '../core/character-card.mjs';
 import { shapeErrors, checkScript, RULES } from './script.mjs';
-import { enginePage } from './engines.mjs';
+import { DEFAULT_STYLE, ENGINES, enginePage } from './engines.mjs';
 
 const argv = process.argv.slice(2), steps = [], opt = {};
 for (let i = 0; i < argv.length; i++) {
@@ -174,29 +174,33 @@ const STEP = {
       { name: 'no frozen stretch (1.5 s)', ok: !frozen.length, got: frozen.length ? `frozen at ${frozen.join(', ')} s` : 'none' },
     ];
     // faces not blown out: frames at 2 per second from every shot with people (not cards), the vote frame only above its buttons;
-    // fail when more than 2 % of the skin pixels are washed to a pale blank (faceluma.py, the show's rule)
-    const { e } = episode(), FD = join(OUT, 'faces'), lastS = vo.lines.at(-1).s;
-    rmSync(FD, { recursive: true, force: true }); mkdirSync(FD, { recursive: true });
-    const ft = [];
-    for (let t = 0.25; t < dur - 0.1; t += 0.5) {
-      // a sample a frame or two from a cut can land on the other shot (16.25 s vs a cut at 16.37 - 0.12 hit a blank card):
-      // skip it when the shot 0.1 s either side is a paper one
-      const shotAt = x => e.beats[Math.max(vo.lines.findLastIndex(l => l.s - 0.12 <= x), 0)]?.shot;
-      if ([t - 0.1, t, t + 0.1].some(x => ['card', 'stats', 'previously'].includes(shotAt(x)))) continue;
-      const f = join(FD, `f${ft.length}.png`);
-      run('ffmpeg', ['-v', 'error', '-y', '-ss', t.toFixed(2), '-i', MP4, '-frames:v', '1', '-vf', t >= lastS ? 'crop=iw:ih*0.5:0:0,scale=360:-2' : 'scale=360:-2', f]); ft.push(f);
+    // fail when more than 2 % of the skin pixels are washed to a pale blank (faceluma.py, the show's rule). Only 3D lights faces.
+    const { e } = episode(), FACES = 'faces not blown out (< 2 % of skin clipped)', flat = ENGINES[e.style ?? DEFAULT_STYLE].skip.faces;
+    if (flat) checks.push({ name: FACES, ok: null, got: `skipped: ${flat}` });
+    else {
+      const FD = join(OUT, 'faces'), lastS = vo.lines.at(-1).s;
+      rmSync(FD, { recursive: true, force: true }); mkdirSync(FD, { recursive: true });
+      const ft = [];
+      for (let t = 0.25; t < dur - 0.1; t += 0.5) {
+        // a sample a frame or two from a cut can land on the other shot (16.25 s vs a cut at 16.37 - 0.12 hit a blank card):
+        // skip it when the shot 0.1 s either side is a paper one
+        const shotAt = x => e.beats[Math.max(vo.lines.findLastIndex(l => l.s - 0.12 <= x), 0)]?.shot;
+        if ([t - 0.1, t, t + 0.1].some(x => ['card', 'stats', 'previously'].includes(shotAt(x)))) continue;
+        const f = join(FD, `f${ft.length}.png`);
+        run('ffmpeg', ['-v', 'error', '-y', '-ss', t.toFixed(2), '-i', MP4, '-frames:v', '1', '-vf', t >= lastS ? 'crop=iw:ih*0.5:0:0,scale=360:-2' : 'scale=360:-2', f]); ft.push(f);
+      }
+      const fl = JSON.parse(run('python', ['episode/faceluma.py', ...ft], { capture: true }).stdout || '{}');
+      checks.push({ name: FACES, ok: fl.pct < 2, got: `${fl.pct}% of ${fl.skin} skin px over ${ft.length} frames (worst ${fl.worstPct}%)` });
     }
-    const fl = JSON.parse(run('python', ['episode/faceluma.py', ...ft], { capture: true }).stdout || '{}');
-    checks.push({ name: 'faces not blown out (< 2 % of skin clipped)', ok: fl.pct < 2, got: `${fl.pct}% of ${fl.skin} skin px over ${ft.length} frames (worst ${fl.worstPct}%)` });
     // six stills spread over the episode, to look at
     const stills = [0.1, 0.25, 0.4, 0.55, 0.75, 0.97].map((k, i) => {
       const f = join(OUT, `still-${i}.jpg`); run('ffmpeg', ['-v', 'error', '-y', '-ss', (dur * k).toFixed(2), '-i', MP4, '-frames:v', '1', f]); return f;
     });
     run('python', ['core/render/sheet.py', join(OUT, 'sheet.jpg'), ...stills, '--cols', '6', '--w', '270'], { capture: true });
-    for (const c of checks) console.log(`  ${c.ok ? '✓' : '✗'} ${c.name}: ${c.got}`);
+    for (const c of checks) console.log(`  ${c.ok ? '✓' : c.ok === null ? '–' : '✗'} ${c.name}: ${c.got}`);
     writeFileSync(join(OUT, 'check.json'), JSON.stringify({ mp4: MP4, checks }, null, 1));
     console.log(`  stills: ${join(OUT, 'sheet.jpg')}`);
-    if (checks.some(c => !c.ok)) die('a check failed (above)');
+    if (checks.some(c => c.ok !== true && c.ok !== null)) die('a check failed (above)');
   },
 };
 for (const s of steps.length ? steps : ['render', 'check']) {

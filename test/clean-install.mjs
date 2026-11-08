@@ -1,5 +1,5 @@
 // test/clean-install.mjs: what a buyer does, start to finish, in a folder that came out of a zip.
-//   node test/clean-install.mjs <unzipped folder> [--full-episode]
+//   node test/clean-install.mjs <unzipped folder> [--full-episode] [--style 3d|paper|handdraw]
 // The folder must not be a git checkout (the bug this test exists for: an installer that only trusted git).
 // Needs `pixi` on PATH, nothing else. Runs: studio install → studio doctor (twice; the second must change nothing)
 // → make.mjs on a copy of the check reel (audio, render, verify; no network). Exit 0 only if every step passes.
@@ -38,21 +38,23 @@ if (existsSync(join(dir, 'episode', 'voice.py'))) step('voice.py self-check (cut
 if (!existsSync(join(dir, 'kit', 'check-reel'))) {
   const sample = join(dir, 'episodes', 'sample');
   if (!existsSync(join(sample, 'sample.mp4'))) fail('the zip has no episodes/sample/sample.mp4 (the buyer must see the sample at once)');
-  const full = process.argv.includes('--full-episode'), fps = process.platform === 'linux' ? ['--fps', full ? '8' : '4'] : [];
+  const full = process.argv.includes('--full-episode'), si = process.argv.indexOf('--style'), style = si > 1 ? process.argv[si + 1] : undefined, fps = process.platform === 'linux' ? ['--fps', full ? '8' : '4'] : [];
   const name = full ? 'ci-full' : 'ci-smoke', ep = join(dir, 'episodes', name);
   const make = steps => ['run', 'node', 'episode/make.mjs', `episodes/${name}`, ...steps, ...fps];
   rmSync(ep, { recursive: true, force: true });
   if (full) {
     cpSync(sample, ep, { recursive: true, filter: f => !/[\\/](out|sample\.mp4)$/.test(f) });
+    const ej = join(ep, 'episode.json');
+    if (style) writeFileSync(ej, JSON.stringify({ ...JSON.parse(readFileSync(ej, 'utf8')), style }, null, 1));
     // ubuntu-24.04 draws 3.9-4.4 s a frame: the 83 s sample at 8 fps (~680 frames) is ~45-50 min, so 80 min leaves 1.6x
     step('make the full sample episode (render, check, gates)', make(['render', 'check', 'gates']), { timeout: 80 * 60e3 });
   } else {
-    const smoke = smokeEpisode(sample, ep);
-    console.log(`ci-smoke: beats ${smoke.beats.join(', ')} of the sample, ${smoke.seconds.toFixed(1)} s take`);
+    const smoke = smokeEpisode(sample, ep, style);
+    console.log(`ci-smoke: beats ${smoke.beats.join(', ')} of the sample, ${smoke.seconds.toFixed(1)} s take, style ${style ?? 'of the sample'}`);
     step('make the ci-smoke episode (vo, render, check)', make(['vo', 'render', 'check']), { env: { TMV_VO_TAKE: smoke.take } });
   }
   const rep = JSON.parse(readFileSync(join(ep, 'out', 'check.json'), 'utf8'));
-  const bad = rep.checks.filter(c => !c.ok);
+  const bad = rep.checks.filter(c => c.ok !== true && c.ok !== null);
   if (bad.length || !existsSync(rep.mp4)) fail(`episode: ${bad.map(c => c.name).join(', ') || 'no MP4'}`);
   console.log(`\n✓ clean install passed in ${dir}: ${rep.mp4}`);
   process.exit(0);

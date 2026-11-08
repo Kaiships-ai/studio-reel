@@ -7,7 +7,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { ROOT } from '../../kit/env.mjs';
-import { TIERS, fullEpisode, tierNeeded, zipEntries } from '../../release/install-needed.mjs';
+import { TIERS, builtStyles, fullEpisode, smokeStyles, tierNeeded, zipEntries } from '../../release/install-needed.mjs';
 import { classify, parseManifest, tierFiles, zip } from '../../release/build.mjs';
 
 const WF = join(ROOT, '.github', 'workflows');
@@ -85,4 +85,21 @@ test('lane/** PRs: checks run, never the five machines, main PRs unchanged', () 
   assert.match(full, /startsWith\(github\.ref, 'refs\/tags\/v'\)/, 'tags stay FULL');
   assert.match(full, /workflow_dispatch/, 'manual runs stay FULL');
   assert.match(full, /'test-all-os'\) && !startsWith\(github\.base_ref, 'lane\/'\)/, 'the test-all-os label never makes a lane PR FULL');
+});
+
+test('the tmv smoke renders in the style a PR touches; the full episode in every built style', () => {
+  const built = ['3d', 'paper', 'handdraw'];
+  assert.deepEqual(smokeStyles(['tmv/episode/paper/main.js'], built), ['paper']);
+  assert.deepEqual(smokeStyles(['tmv/episode/handdraw/main.js'], built), ['handdraw']);
+  assert.deepEqual(smokeStyles(['tmv/episode/paper/cards.js', 'tmv/episode/handdraw/index.html'], built), ['paper', 'handdraw']);
+  assert.deepEqual(smokeStyles(['tmv/episode/make.mjs', 'core/render/mux.mjs'], built), ['3d'], 'any other change smokes 3d');
+  assert.deepEqual(smokeStyles(['tmv/episode/engines.mjs'], ['3d', 'paper']), ['3d', 'paper'], 'the registry change smokes every built style');
+  assert.deepEqual(smokeStyles(['tmv/episode/handdraw/x.js'], ['3d', 'paper']), ['3d'], 'a style not built here falls back to 3d');
+  assert.ok(builtStyles(ROOT).includes('3d'));
+  const y = read('install.yml');
+  assert.match(y, /STYLES: \$\{\{ steps\.f\.outputs\.styles \}\}/, 'the matrix step reads the smoke styles the changes step decided');
+  assert.match(y, /\[ "\$full" = true \] && node release\/install-needed\.mjs --built-styles/, 'the full episode takes every built style');
+  assert.match(y, /for st in \$\{styles\/\/,\/ \}; do m=.*"style":"'\$st'"/, 'one Linux tmv leg per style');
+  assert.match(y, /test\/clean-install\.mjs .*format\('--style \{0\}', matrix\.style\)/, 'the leg passes its style to the install test');
+  assert.match(y, /format\('tmv-\{0\}-episode-\{1\}-\{2\}-\{3\}', matrix\.episode \|\| 'smoke', matrix\.style \|\| '3d'/, 'each style uploads its own episode');
 });

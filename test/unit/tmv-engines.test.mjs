@@ -22,6 +22,18 @@ test('the registry has the three styles the schema allows, and a missing style i
   assert.equal(enginePage('3d', TMV), join(TMV, 'episode/index.html'));
 });
 
+test('the paper engine is built: its page is registered, loads its module, and paper no longer stops', () => {
+  assert.equal(enginePage('paper', TMV), join(TMV, 'episode/paper/index.html'));
+  const page = readFileSync(join(TMV, 'episode/paper/index.html'), 'utf8');
+  assert.match(page, /<script src="\/characters\/cast.js"><\/script>/);
+  assert.match(page, /<script type="module" src="\/episode\/paper\/main.js"><\/script>/);
+});
+
+test('only 3D lights faces, so only 3D runs the blown-out faces check; flat styles say why they skip it', () => {
+  assert.deepEqual(ENGINES['3d'].skip, {});
+  for (const style of ['paper', 'handdraw']) assert.match(ENGINES[style].skip.faces, /no lighting/);
+});
+
 test('the schema refuses an unknown style and takes the three', () => {
   assert.deepEqual(shapeErrors({ ...sample, style: 'clay' }), ['"style": "clay" is not one of 3d, paper, handdraw']);
   for (const style of Object.keys(ENGINES)) assert.deepEqual(shapeErrors({ ...sample, style }), []);
@@ -30,7 +42,6 @@ test('the schema refuses an unknown style and takes the three', () => {
 test('a style whose page is not built stops with one line naming the page', () => {
   const empty = mkdtempSync(join(tmpdir(), 'tmv-engines-'));
   try {
-    assert.throws(() => enginePage('paper', empty), { message: 'the paper engine is not built yet (no episode/paper/index.html): set "style": "3d" to render this episode now' });
     assert.throws(() => enginePage('handdraw', empty), { message: 'the hand-draw engine is not built yet (no episode/handdraw/index.html): set "style": "3d" to render this episode now' });
     assert.throws(() => enginePage('clay', empty), /"style": "clay" is not one of 3d, paper, handdraw/);
   } finally { rmSync(empty, { recursive: true, force: true }); }

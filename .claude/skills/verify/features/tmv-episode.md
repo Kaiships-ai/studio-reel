@@ -8,8 +8,10 @@ recoloured and restyled, Blip from primitives) and `character-designer.html`. In
 render, then deletes it (`kit/studio.mjs`); it renders the whole sample only if `sample.mp4` is gone.
 `test/clean-install.mjs` then makes `episodes/ci-smoke` (`test/tmv-smoke.mjs`: the sample's first beat, first stats card,
 first card and vote beat, 13-17 s, drawn at 4 fps on Linux CI (8 fps for the full sample), voiced through the `vo` step from a take cut out of the sample's `vo/vo.wav`) with
-every check ✓; `--full-episode` renders a copy of the whole sample as `episodes/ci-full` and runs its 11 gates (CI: nightly
-on main, `v*` tags, by hand, the PR label `full-episode`).
+every check ✓ or `–` skipped; `--full-episode` renders a copy of the whole sample as `episodes/ci-full` and runs its 11 gates (CI: nightly
+on main, `v*` tags, by hand, the PR label `full-episode`). `--style paper|handdraw` renders either in that style: CI's smoke
+takes the style whose engine folder the PR touches (`smokeStyles` in `release/install-needed.mjs`; `engines.mjs` → every
+built style; else 3d), the full episode every built style (`builtStyles`), one Linux leg each.
 
 ## Sub-features
 
@@ -21,7 +23,7 @@ on main, `v*` tags, by hand, the PR label `full-episode`).
   (`GEMINI_HOST` points it elsewhere to test). Test-only: `TMV_VO_TAKE=<wav>` cuts that take instead of calling Gemini,
   and `studio doctor` then skips its `voice key` call; the journeys set it to the sample's `vo/take.wav`. Dev-only sync check on a Mac with whisper.cpp: `pixi run python dev/caption-sync.py <ep>` (not shipped). `core/render/reel.mjs vo` uses the same path when kai-hand-draw is absent.
 - `episode.render`: `make.mjs <ep> render check` → `<ep>/<name>.mp4` at 720x1280 30 fps with the code-made bed (room tone, music, hits; `bed.py`) (ST-77 preview; `--full` only on
-  request), checks size, sound, length = voice + 1.4 s, -14 LUFS, no black, no silent gap, no 1.5 s freeze, faces not blown out (`faceluma.py`: under 2 % of skin pixels washed out, frames at 2/s outside cards); `out/sheet.jpg`.
+  request), checks size, sound, length = voice + 1.4 s, -14 LUFS, no black, no silent gap, no 1.5 s freeze, faces not blown out (`faceluma.py`: under 2 % of skin pixels washed out, frames at 2/s outside cards; 3D only: paper and hand-draw print `–` skipped with the reason from `skip.faces` in `engines.mjs`, since flat colour has no light to wash a face out and their cream paper reads as clipped skin); `out/sheet.jpg`.
 - `episode.script`: `make.mjs <ep> script` (no tools needed, runs before `requireReady`) → the shape check, then the
   rule table in `episode/script.mjs` (`RULES`: id, what, check, fix), from the real season's script-v4: `short` (≤ 12 words a
   sentence), `link` (BUT/SO: a line opening with But/So or `"link"`; card, stats, previously and the last beat exempt;
@@ -44,6 +46,28 @@ on main, `v*` tags, by hand, the PR label `full-episode`).
   episode/paper/index.html): ...`. A new engine imports `episode/timeline.js` (`loadEpisode`, `cardsOf`, `timeline`) for the
   episode, its voice, the cast cards (draw them with `toPaper` / `toHandDraw` from `core/character-card.mjs`), the shots,
   caption words and HUD, so the cuts below and the gates hold in every style. Unit test: `test/unit/tmv-engines.test.mjs`.
+- `episode.paper` (`"style": "paper"`): `episode/paper/index.html` + `episode/paper/main.js`.
+  Each shot of the shared timeline shows its cast as `toPaper` → `drawPaperFigure(…, 'front')` stickers in front of a
+  pop-up set (`episode/paper/set.js`): the room is a printed back board (night window with the sign across the street,
+  string lights, a poster with the show's name) and cut-paper pieces (a shelf, the desk with the screen showing
+  `texts.handle`) that throw cut-out shadows; the rival's corner is its own set (panelled wall, `texts.sign` on a sign, a
+  ring light, a shelf). The room's hue comes from `palette.neon`, the lights from `palette.left`, the poster and the corner
+  from `palette.right`, so a buyer's palette and texts change the scenery. The set pops up (board, then pieces back to
+  front) on the first shot and after a cut from a card or the other place; the camera zooms and pans with the shot's
+  figures, the board moving less than the pieces, and a close-up shows a soft (blurred) copy. Cards keep their kraft
+  ground. Everything is drawn once at start, so a frame is two to four image draws: `close` and `phone` (the lead) = one figure in close-up, cut at the waist, `two` = the speaker
+  in front of a partner (the lead's partner is the first bot in the room, anyone else's is the lead), `wide` / `room` =
+  the whole room on the floor; the corner's `two`, `wide` and `room` show its speaker alone, mid-shot. A beat with no
+  `shot` is a close-up, as in 3D. A figure pops up from its feet as the shot opens (back-out ease,
+  partners staggered) and bobs while its line's words play. `episode/paper/cards.js` draws the type in the Paper Pop-up
+  Book look (`core/fonts/fonts.css`: Lilita One, Fredoka): `card`, `stats` and `previously` are a cut-paper sheet (off-white
+  border, cardboard edge, shadow, grain) that pops up from its foot on kraft board, with a red ribbon for the first card
+  line, the stats head or PREVIOUSLY; the sheet is the frame's brightest tone and everything else on it is thin or 60+
+  levels darker, so G4 and G4b hold. The HUD is a row of paper tags over story shots only, as in 3D (a changed value pops). Captions pop word by word, the
+  words not yet said in grey: in ink inside a card's sheet, cream with an ink outline and no bar over a story shot. The
+  vote is a sheet under the HUD (above a close-up's face) with the A and B tags popping on their words; when the last beat
+  is a card, the card shows first and its sheet turns into the vote just before the A word. Proof: `node core/render/still.mjs <ep> <t…> --size 720x1280` on a copy
+  of the sample with `"style": "paper"` after `make.mjs`'s page copy (stills only on the MacBook Air).
 - `episode.handdraw` (`"style": "handdraw"`): `episode/handdraw/index.html` loads `styles/kai-hand-draw/engine/core.js` +
   `kaip.js` (paper grain, 12 fps boil) and `handdraw.js`, which draws each cast card as its `toHandDraw` presenter in the
   timeline's shots. `framing.js` (pure) picks who and how big: close = the speaker's bust with the beat's `exp`; two = the

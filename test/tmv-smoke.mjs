@@ -2,6 +2,7 @@
 // Beats: the sample's first beat, its first stats card, its first card (or, when it has none, its shortest middle beat
 // drawn as a card) and its vote beat. Their voice is cut from the sample's vo/vo.wav into one take with long pauses
 // between lines, so `make.mjs <ep> vo` with TMV_VO_TAKE=<take> runs the real voice step on it, with no Gemini call.
+// `style` renders it in that engine instead of the sample's.
 import { cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -35,7 +36,7 @@ export function pickBeats(beats, spoken) {
   });
 }
 
-export function smokeEpisode(sample, to) {
+export function smokeEpisode(sample, to, style) {
   const e = JSON.parse(readFileSync(join(sample, 'episode.json'), 'utf8'));
   const vo = JSON.parse(readFileSync(join(sample, 'vo', 'vo.json'), 'utf8'));
   const { fmt, data, rate, block } = wav(readFileSync(join(sample, 'vo', 'vo.wav')));
@@ -44,7 +45,7 @@ export function smokeEpisode(sample, to) {
   const gap = Buffer.alloc(Math.round(GAP * rate) * block);
   const take = Buffer.concat(picked.flatMap(({ i }) => [gap, data.subarray(byte(vo.lines[i].s - 0.04), byte(vo.lines[i].e + 0.06))]).concat(gap));
   mkdirSync(to, { recursive: true });
-  writeFileSync(join(to, 'episode.json'), JSON.stringify({ ...e, beats: picked.map(p => p.beat) }, null, 1));
+  writeFileSync(join(to, 'episode.json'), JSON.stringify({ ...e, style: style ?? e.style, beats: picked.map(p => p.beat) }, null, 1));
   cpSync(join(sample, 'index.html'), join(to, 'index.html'));
   writeFileSync(join(to, 'take.wav'), wavFile(fmt, take));
   return { take: join(to, 'take.wav'), beats: picked.map(p => p.i + 1), seconds: take.length / block / rate };

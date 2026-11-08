@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>episode</title>
+<!-- The paper engine's page (episode/engines.mjs "paper"). make.mjs render copies it into the episode folder; it plays episode.json + vo/vo.json with episode/paper/main.js. -->
+<link rel="stylesheet" href="/core/fonts/fonts.css">
+<style>
+html, body { margin: 0; overflow: hidden; background: #F3EEE4; }
+canvas { position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; }
+</style>
+</head>
+<body>
+<canvas id="paper"></canvas>
+<script src="/characters/cast.js"></script>
+<script type="module" src="/episode/paper/main.js"></script>
+</body>
+</html>

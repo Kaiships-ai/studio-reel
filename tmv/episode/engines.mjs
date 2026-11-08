@@ -6,14 +6,16 @@
 // episode/timeline.js (loadEpisode, cardsOf, timeline: shots cut on word starts, caption words, the HUD), draws
 // each cast card in its own style (core/character-card.mjs: toPaper, toHandDraw; 3D reads the card as it is), and
 // keeps the contract of core/render/video.mjs: window.render(t), window.DUR, window.READY.
+// `skip` names the make.mjs checks that cannot apply to a style, each with the reason `check` prints in its place.
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
+const FLAT = "flat colour with no lighting: a face is drawn in its card's skin colour, so no light can wash it out";
 export const DEFAULT_STYLE = '3d';
 export const ENGINES = {
-  '3d': { name: '3D', page: 'episode/index.html' },
-  paper: { name: 'paper', page: 'episode/paper/index.html' },
-  handdraw: { name: 'hand-draw', page: 'episode/handdraw/index.html' },
+  '3d': { name: '3D', page: 'episode/index.html', skip: {} },
+  paper: { name: 'paper', page: 'episode/paper/index.html', skip: { faces: FLAT } },
+  handdraw: { name: 'hand-draw', page: 'episode/handdraw/index.html', skip: { faces: FLAT } },
 };
 
 /** The page that renders `style` (undefined = 3d), as a path under `root`; throws one line when it is not built. */
