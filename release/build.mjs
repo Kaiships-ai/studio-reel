@@ -115,9 +115,10 @@ export function check(tier, files, blob, m) {
   return { errors, warns: [...new Set(warns)] };
 }
 
-// The tmv zip = Starter minus [tmv_exclude], with every tmv/<path> replacing or adding <path>.
+// The tmv zip = Starter minus [tmv_exclude] (a !glob line keeps what an earlier glob left out), with every tmv/<path> replacing or adding <path>.
 export function tmvFiles(by, overlay, m, blobs) {
-  const ex = m.tmv_exclude.map(globRe), out = new Set(by.starter.filter(f => !ex.some(r => r.test(f))));
+  const ex = m.tmv_exclude.filter(g => !g.startsWith('!')).map(globRe), keep = m.tmv_exclude.filter(g => g.startsWith('!')).map(g => globRe(g.slice(1)));
+  const out = new Set(by.starter.filter(f => !ex.some(r => r.test(f)) || keep.some(r => r.test(f))));
   const own = new Map(blobs), gone = m.tmv_exclude.map(g => /^styles\/([^/]+)\/$/.exec(g)?.[1]).filter(Boolean);
   for (const f of ['styles/README.md', 'styles/catalog.md']) if (out.has(f))
     own.set(f, Buffer.from(blobs.get(f).toString('utf8').split('\n').filter(l => !gone.some(g => l.includes(`\`${g}\``) || l.includes(`(${g}/`))).join('\n')));

@@ -31,14 +31,22 @@ render, then deletes it (`kit/studio.mjs`); it renders the whole sample only if 
   `<SERIES> · EP N`, word-by-word captions, HUD chips that roll on change, no end card: the vote is the last frame.
 - `cast.designer`: `pixi run designer` serves the page; seeds, parts, colours rebuild the same 3D figure the episode uses;
   "Copy for Claude" copies one sentence plus a cast JSON entry.
+- `cast.styles`: `pixi run node episode/make.mjs styles <card>` (`<card>` = a seed, or a `.json` card: a cast entry, `{"seed": …}`
+  plus overrides, or every part; `--out <file.png>`, default `workspace/<name>-styles.png`) → one 1280-wide PNG, the
+  card's character side by side in 3D (`characters/rig.js` on the designer's stage), hand-draw (`toHandDraw` →
+  `styles/kai-hand-draw/engine/kaip.js` on `core.js`, the only two hand-draw files the tmv zip keeps: `!` lines in
+  `[tmv_exclude]`) and paper (`toPaper` → `core/paper-figure.js`), each labelled with what that style draws differently.
+  Pages: `episode/three-styles/` (index.html composes 3d/hand/paper.html, one iframe each; a panel sets `window.SHOT`,
+  or `window.FAIL` on an error, which fails the command). A card that breaks `checkCard` or an unknown seed stops before
+  the browser starts.
 
 ## Driving it
 
 `node .claude/skills/verify/journeys.mjs --only=tmv-episode [--zip=<built tmv zip>]` (needs `pixi` on PATH; the install step is `test/clean-install.mjs`; a few
 minutes): builds the zip, unzips into a fresh folder with a space in its path, `pixi run studio install` (sample
 episode, every check ✓), doctor, second install no-op, designer served from the kit (3D screenshots of each seed + one
-designed) and copied JSON (no `voice` field), planted breaks (a beat for `nobody` → `"who": "nobody" is not in the cast`; a changed line →
-names the vo step). Evidence: `tmv-sample.mp4`, `tmv-sheet.jpg`, `tmv-char-*.png`.
+designed) and copied JSON (no `voice` field), `make.mjs styles nova` and a made-up card (two 1280-wide PNGs), planted breaks (a beat for `nobody` → `"who": "nobody" is not in the cast`; a changed line →
+names the vo step). Evidence: `tmv-sample.mp4`, `tmv-sheet.jpg`, `tmv-char-*.png`, `tmv-styles-*.png`.
 
 - `series` (slice 4): `episode/series.mjs new|next|status`; `series.json` holds series, cast, palette, texts (make.mjs and
   main.js merge it under each episode); `next --winner X` writes `previously` + the PREVIOUSLY card beat; the journey

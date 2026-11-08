@@ -1,7 +1,8 @@
 const TAU = Math.PI * 2, INK = '#3A2A24', CREAM = '#F3EEE4', CREAM_S = '#D9D2C2', ACCENT = '#EC5A4B', GOLD = '#FFD766';
 const LW = 9, LW2 = 5;
 export const FIGURE_W = 640, FIGURE_H = 1080;
-const CX = 320, FOOT = 1000;
+const CX = 320;
+export const SOLE_Y = 1000;
 
 function mulberry(seed) { return () => { seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 function cv(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
@@ -45,7 +46,7 @@ const solid = (base, shade = base) => ({ base, shade });
 
 function layout(body) {
   const legH = 250 * body.bodyHeight, torsoH = 270 * body.bodyHeight, tw = 118 * body.torsoWidth, R = 120 * body.headScale;
-  const hip = FOOT - legH, sho = hip - torsoH;
+  const hip = SOLE_Y - legH, sho = hip - torsoH;
   return { legH, torsoH, tw, R, hip, sho, headY: sho - R * .82 };
 }
 
@@ -53,7 +54,7 @@ function legs(x, f, L) {
   for (const s of [-1, 1]) {
     const lx = CX + s * L.tw * .42;
     shaded(x, rr(x, lx - 32, L.hip - 10, 64, L.legH - 24, 26), f.paint.legs, -14);
-    shaded(x, () => blob(x, lx + s * 10, FOOT - 16, 46, 24, .03, s + 3), solid(CREAM, CREAM_S), 0, -10, LW2 + 2);
+    shaded(x, () => blob(x, lx + s * 10, SOLE_Y - 16, 46, 24, .03, s + 3), solid(CREAM, CREAM_S), 0, -10, LW2 + 2);
   }
 }
 function arms(x, f, L) {

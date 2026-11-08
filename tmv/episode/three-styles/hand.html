@@ -1,0 +1,21 @@
+<!doctype html>
+<meta charset="utf-8">
+<script>addEventListener('error', e => { window.FAIL = e.message; }); addEventListener('unhandledrejection', e => { window.FAIL = String(e.reason); });</script>
+<!-- The card as the kai-hand-draw presenter (core/character-card.mjs toHandDraw, styles/kai-hand-draw/engine/kaip.js). -->
+<style>html, body { margin: 0; overflow: hidden; } #out { width: 100vw; height: 100vh; display: block; } .p5Canvas { display: none !important; }</style>
+<canvas id="out" width="1080" height="1920"></canvas>
+<script src="/node_modules/p5/lib/p5.min.js"></script>
+<script src="/node_modules/p5.brush/dist/p5.brush.js"></script>
+<script type="module">
+import { toHandDraw } from '/core/character-card.mjs';
+window.CHARACTER = toHandDraw(JSON.parse(new URLSearchParams(location.search).get('card'))).character;
+</script>
+<script>
+const PROJECT = { bpm: 120, duration: 1 }, LOOPS = {};
+function drawWorld() { kai('front', W / 2, H * 0.8, H * 0.6); }
+</script>
+<script src="/styles/kai-hand-draw/engine/core.js"></script>
+<script src="/styles/kai-hand-draw/engine/kaip.js"></script>
+<script>
+(async () => { while (!window.READY) await new Promise(r => setTimeout(r, 50)); await window.render(0); window.SHOT = true; })();
+</script>

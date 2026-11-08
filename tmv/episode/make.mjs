@@ -2,22 +2,26 @@
 //   pixi run node episode/make.mjs <episode> vo     one Gemini call, the narrator reads every beat → vo/take.wav, cut into vo/vo.wav + vo/vo.json
 //   pixi run node episode/make.mjs <episode> render         frames + voice + bed (room tone, music, hits) → <episode>/<name>.mp4 (720x1280, 30 fps)
 //   pixi run node episode/make.mjs new <name>             episodes/<name> from the sample (episode.json + page), ready to rewrite
+//   pixi run node episode/make.mjs styles <card>          the card's character in 3D, hand-draw and paper side by side → workspace/<name>-styles.png (1280 wide)
+//                                                         <card> = a seed (nova, theo, blip) or a .json file: a cast entry, {"seed": ...} or every part; --out <file.png>
 //   pixi run node episode/make.mjs <episode> check          size, length, sound, no black or frozen stretch, faces not blown out, stills sheet
 //   pixi run node episode/make.mjs <episode> gates          the 11 gates the real season passed (episode/gates.py) → out/gates.json
 // No step = render check. Options: --fps N (default 30) · --workers N. Preview size only (720x1280, ST-77). The vo step needs GOOGLE_API_KEY in .env (pixi run studio key) and the internet; TMV_VO_TAKE=<wav> cuts that take instead (tests).
 // <name> is the folder's name. Writes <episode>/out/check.json and <episode>/out/sheet.jpg (open it to look).
 import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync, renameSync, realpathSync, cpSync } from 'node:fs';
-import { join, resolve, basename, relative } from 'node:path';
+import { join, resolve, basename, relative, dirname } from 'node:path';
 import { env, run, requireReady, ROOT } from '../kit/env.mjs';
 import { mux } from '../core/render/mux.mjs';
 import { speak, VOICE } from './gemini.mjs';
+import { checkCard } from '../core/character-card.mjs';
 
 const argv = process.argv.slice(2), steps = [], opt = {};
 for (let i = 0; i < argv.length; i++) {
   if (!argv[i].startsWith('--')) { steps.push(argv[i]); continue; }
-  const [k, v] = argv[i].slice(2).split('='); opt[k] = v ?? (['fps', 'workers'].includes(k) ? argv[++i] : true);
+  const [k, v] = argv[i].slice(2).split('='); opt[k] = v ?? (['fps', 'workers', 'out'].includes(k) ? argv[++i] : true);
 }
 const die = m => { console.error('✗ ' + m); process.exit(1); };
+const castJs = () => { const window = {}; new Function('window', readFileSync(join(ROOT, 'characters/cast.js'), 'utf8'))(window); return window; };
 // new <name>: episodes/<name> = the sample's episode.json and page, no voice yet (write the story, then vo and render)
 if (steps[0] === 'new') {
   const name = steps[1]; if (!name || !/^[\w-]+$/.test(name)) die('usage: node episode/make.mjs new <name>   (letters, digits, - and _)');
@@ -25,6 +29,23 @@ if (steps[0] === 'new') {
   mkdirSync(to, { recursive: true });
   for (const f of ['episode.json', 'index.html']) writeFileSync(join(to, f), readFileSync(join(ROOT, 'episodes', 'sample', f)));
   console.log(`✓ ${to}: write its story in episode.json (README.md lists every field), then vo and render`); process.exit(0);
+}
+if (steps[0] === 'styles') {
+  const arg = steps[1]; if (!arg) die('usage: node episode/make.mjs styles <seed or card.json> [--out <file.png>]');
+  const SEEDS = castJs().TMV_SEEDS, seeds = Object.keys(SEEDS).join(', ');
+  let c = SEEDS[arg];
+  if (!c) { if (!existsSync(arg)) die(`"${arg}" is not a seed (${seeds}) or a card file`);
+    try { c = JSON.parse(readFileSync(arg, 'utf8')); } catch (x) { die(`${arg} is not valid JSON: ${x.message}`); }
+    if (c?.seed !== undefined && !SEEDS[c.seed]) die(`"seed": "${c.seed}" is not a seed (${seeds})`);
+    if (c && typeof c === 'object') c = { ...SEEDS[c.seed], ...c, name: c.name ?? c.id }; }
+  const errs = checkCard(c); if (errs.length) die(`the card has ${errs.length} problem${errs.length > 1 ? 's' : ''}:\n  - ${errs.join('\n  - ')}`);
+  requireReady(env());
+  const out = resolve(typeof opt.out === 'string' ? opt.out : join(ROOT, 'workspace', `${c.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'character'}-styles.png`));
+  const { openDemo, closeServer } = await import('../core/render/page.mjs');
+  const { browser, page } = await openDemo(join(ROOT, 'episode', 'three-styles'), { w: 1280, h: 860, q: 'card=' + encodeURIComponent(JSON.stringify(c)) });
+  mkdirSync(dirname(out), { recursive: true }); await page.screenshot({ path: out, fullPage: true });
+  await browser.close(); closeServer();
+  console.log(`✓ ${out}: ${c.name.trim()} in 3D, hand-draw and paper. Open it and pick a style.`); process.exit(0);
 }
 const ep = steps.length && (p => existsSync(p) ? realpathSync(p) : p)(resolve(steps.shift()));   // real path: /tmp is /private/tmp on macOS, and the server needs the episode under the library root
 if (!ep || !existsSync(join(ep, 'episode.json'))) { console.error('usage: node episode/make.mjs <episode folder with episode.json> [vo] [render] [check] [gates] [--fps N] [--full]'); process.exit(2); }
@@ -48,7 +69,7 @@ function episode() {
   const sf = join(ep, '..', 'series.json');
   if (existsSync(sf)) { let s; try { s = JSON.parse(readFileSync(sf, 'utf8')); } catch (x) { die(`${sf} is not valid JSON: ${x.message}`); }
     e = { ...e, series: e.series ?? s.series, cast: e.cast ?? s.cast, narrator: e.narrator ?? s.narrator, model: e.model ?? s.model, palette: { ...(s.palette ?? {}), ...(e.palette ?? {}) }, texts: { ...(s.texts ?? {}), ...(e.texts ?? {}) } }; }
-  const window = {}; new Function('window', readFileSync(join(ROOT, 'characters/cast.js'), 'utf8'))(window);
+  const window = castJs();
   const P = window.TMV_PARTS, errs = [], err = m => errs.push(m), str = v => typeof v === 'string' && v.trim() !== '';
   if (!str(e.series)) err('"series" must be a text (the show name, in the kicker)');
   if (!Number.isInteger(e.ep) || e.ep < 1) err('"ep" must be a whole number from 1');

@@ -101,6 +101,9 @@ AIza[0-9A-Za-z_-]{35}
 [tmv_exclude]
 # Starter files the paid TMV kit leaves out (globs). Kai's house style and everything built on it:
 styles/kai-hand-draw/
+# but its presenter, which `episode/make.mjs styles` draws the buyer's character with
+!styles/kai-hand-draw/engine/core.js
+!styles/kai-hand-draw/engine/kaip.js
 kit/check-reel/
 .claude/skills/make-reel/
 # Clawd or a voice that is not ours; back in slice 7 with the seeded mascot and Kokoro

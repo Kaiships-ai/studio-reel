@@ -207,6 +207,16 @@ const JOURNEYS = {
       if (c.id !== 'juno' || c.hair !== 'curly' || 'voice' in c) throw new Error('copied cast entry is wrong');
       if (!/Copied Juno|copy it by hand/.test(st)) throw new Error(`status: ${st}`);
     });
+    await step('styles: a seed and a made-up card, each drawn in 3D, hand-draw and paper as one 1280-wide PNG', () => {
+      const card = join(KIT, 'workspace/mai.json'), pngW = f => readFileSync(f).readUInt32BE(16);
+      writeFileSync(card, JSON.stringify({ id: 'mai', kind: 'human', build: 'tall', skin: '#E8B48F', hair: 'long', hairColor: '#6B3A1F', top: 'jacket', topColor: '#2F6DB5', legs: '#2B2F3A', eyes: 'wide', extra: 'glasses' }));
+      for (const [arg, png] of [['nova', 'nova-styles.png'], [card, 'mai-styles.png']]) {
+        has(ok(node(join(KIT, 'episode/make.mjs'), 'styles', arg)), png);
+        const f = join(KIT, 'workspace', png); if (pngW(f) !== 1280) throw new Error(`${png} is ${pngW(f)} wide`);
+        cpSync(f, join(EV, 'tmv-styles-' + png.replace('-styles', '')));
+      }
+      has(no(node(join(KIT, 'episode/make.mjs'), 'styles', 'zorro')), '"zorro" is not a seed');
+    });
     await step('planted break: a beat for someone not in the cast fails with its own message', () => {
       const bad = join(KIT, 'episodes/broken'); cpSync(join(KIT, 'episodes/sample'), bad, { recursive: true });
       const f = join(bad, 'episode.json'); writeFileSync(f, readFileSync(f, 'utf8').replace(/"who": "theo"/g, '"who": "nobody"'));

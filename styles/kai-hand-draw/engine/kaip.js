@@ -1,4 +1,4 @@
-// kaip.js: the presenter, painted in the same watercolour + ink as Clawd (replaces the pixel sprite).
+// kaip.js: the presenter, painted in the same watercolour + ink as the mascot (replaces the pixel sprite).
 // Same call as before: kai(pose, x, y, h, o). Feet at (x, y), height h px (poses 'exp-*' = head-and-shoulders
 // bust whose bottom edge sits at y). o: { flip, rot, sq, alpha (ignored), shadow:false, face, talk:false }.
 // Default look: curly black hair, round black glasses, warm tan skin, black tee, black pants, black/white sneakers.
