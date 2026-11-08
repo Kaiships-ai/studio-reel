@@ -4,17 +4,20 @@
 #   - unit, lint and release checks run on every PR in checks.yml (~1 min);
 #   - a PR on the paths below runs a tier's clean install on Linux only when its zip differs in more than .md and
 #     LICENSE files, or this file or the test changed (release/install-needed.mjs builds both zips at base and head);
+#   - a PR into a lane/** branch gets the same per-tier selection and never the five machines, label or not;
 #   - all five machines (Linux, Windows pwsh + Git Bash, macOS arm64 + Intel) run only for a v* tag, by hand
 #     (Actions > install > Run workflow), or when the PR gets the label `test-all-os`.
-# Two zips are tested: Pro (the check reel) and tmv (How we make Ten Million Views: the sample episode, voiced from the
-# shipped take, so no Gemini key is needed). tmv runs on Linux with Pro, and on Windows pwsh + macOS arm64 when FULL.
+# Two zips are tested: Pro (the check reel) and tmv (How we make Ten Million Views, voiced from the shipped take, so no
+# Gemini key is needed). tmv runs on Linux with Pro, and on Windows pwsh + macOS arm64 when FULL. A PR's tmv run makes
+# ci-smoke, 13-17 s cut from the sample (test/tmv-smoke.mjs); the whole sample and its 11 gates run on Linux nightly on
+# main (only when the tmv zip changed that day), for a v* tag, by hand, or when the PR gets the label `full-episode`.
 # A newer push to the same PR cancels the older run.
 name: install
 on:
   push:
     tags: ['v*']
   pull_request:
-    branches: [main]
+    branches: [main, 'lane/**']
     types: [opened, synchronize, reopened, labeled]
     paths:
       - 'kit/**'
@@ -32,9 +35,11 @@ on:
       - '.github/workflows/install.yml'
       - '!**/*.md'
   workflow_dispatch:
+  schedule:
+    - cron: '0 19 * * *'
 
 concurrency:
-  group: install-${{ github.ref }}
+  group: install-${{ github.ref }}${{ github.event_name != 'pull_request' && format('-{0}', github.event_name) || '' }}
   cancel-in-progress: true
 
 jobs:
@@ -50,6 +55,7 @@ jobs:
         shell: bash
         run: |
           base=${{ github.event.pull_request.base.sha || github.event.before }}
+          if [ "${{ github.event_name }}" = schedule ]; then base=$(git rev-list -1 --before='24 hours ago' HEAD); fi
           if [ -n "$base" ] && git cat-file -e "$base" 2>/dev/null && out=$(node release/install-needed.mjs "$base"); then echo "$out" >> "$GITHUB_OUTPUT"
           else echo "::warning::no tier decision (base '$base'): both tiers run"; printf 'pro=true\ntmv=true\n' >> "$GITHUB_OUTPUT"; fi
       - id: m
@@ -57,11 +63,16 @@ jobs:
         env:
           PRO: ${{ steps.f.outputs.pro }}
           TMV: ${{ steps.f.outputs.tmv }}
-          FULL: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'test-all-os') }}
+          FULL: ${{ startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch' || (contains(github.event.pull_request.labels.*.name, 'test-all-os') && !startsWith(github.base_ref, 'lane/')) }}
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+          BASE_REF: ${{ github.base_ref }}
         run: |
+          full=$(node release/install-needed.mjs --full-episode); full=${full#full=}
+          if [ "$GITHUB_EVENT_NAME" = schedule ]; then PRO=false; elif [ "$full" = true ]; then TMV=true; fi
+          ep=$([ "$full" = true ] && echo full || echo smoke)
           m=''
           if [ "$PRO" = true ] || [ "$FULL" = true ]; then m='{"os":"ubuntu-24.04","shell":"bash","tier":"pro"}'; fi
-          if [ "$TMV" = true ] || [ "$FULL" = true ]; then m="${m:+$m,}"'{"os":"ubuntu-24.04","shell":"bash","tier":"tmv"}'; fi
+          if [ "$TMV" = true ] || [ "$FULL" = true ]; then m="${m:+$m,}"'{"os":"ubuntu-24.04","shell":"bash","tier":"tmv","episode":"'$ep'"}'; fi
           if [ "$FULL" = true ]; then m="$m"',{"os":"windows-2025","shell":"pwsh","tier":"pro"},{"os":"windows-2025","shell":"bash","tier":"pro"},{"os":"macos-15","shell":"bash","tier":"pro"},{"os":"macos-15-intel","shell":"bash","tier":"pro"}'; fi
           if [ "$FULL" = true ]; then m="$m"',{"os":"windows-2025","shell":"pwsh","tier":"tmv"},{"os":"macos-15","shell":"bash","tier":"tmv"}'; fi
           echo "matrix={\"include\":[$m]}" >> "$GITHUB_OUTPUT"
@@ -74,7 +85,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJSON(needs.changes.outputs.matrix) }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 45
+    timeout-minutes: ${{ matrix.episode == 'full' && 90 || 45 }}
     defaults:
       run:
         shell: ${{ matrix.shell }}
@@ -130,7 +141,16 @@ jobs:
         shell: bash
         run: cd "$KIT" && pixi run studio linux-deps
       - name: Clean install and one reel
-        run: node test/clean-install.mjs "${{ env.KIT }}"
+        run: node test/clean-install.mjs "${{ env.KIT }}" ${{ matrix.episode == 'full' && '--full-episode' || '' }}
+      - name: The episode's checks and gates, on the run page
+        if: always() && matrix.tier == 'tmv'
+        shell: bash
+        run: |
+          node -e 'const fs = require("fs"), d = process.argv[1] + "/out/";
+            for (const [f, k] of [["check.json", "checks"], ["gates.json", "gates"]]) if (fs.existsSync(d + f)) {
+              console.log(`\n| ${f} | | |\n|---|---|---|`);
+              for (const c of JSON.parse(fs.readFileSync(d + f))[k]) console.log(`| ${c.id ? c.id + " " + c.gate : c.name} | ${c.ok ? "✓" : c.ok === null ? "–" : "✗"} | ${JSON.stringify(c.got).replace(/[|]/g, "/")} |`);
+            }' "$KIT/episodes/ci-${{ matrix.episode || 'smoke' }}" >> "$GITHUB_STEP_SUMMARY"
       - name: 'Series: ep1 from the sample, the vote picks A, ep2 opens with PREVIOUSLY'
         if: matrix.tier == 'tmv'
         shell: bash
@@ -145,12 +165,14 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: clean-install-${{ matrix.tier }}-${{ matrix.os }}-${{ matrix.shell }}
+          name: ${{ matrix.tier == 'tmv' && format('tmv-{0}-episode-{1}-{2}', matrix.episode || 'smoke', matrix.os, matrix.shell) || format('clean-install-{0}-{1}-{2}', matrix.tier, matrix.os, matrix.shell) }}
           path: |
             ${{ env.KIT }}/films/ci-reel/out/check/
             ${{ env.KIT }}/films/ci-reel/*.mp4
-            ${{ env.KIT }}/episodes/sample/out/check.json
-            ${{ env.KIT }}/episodes/sample/*.mp4
+            ${{ env.KIT }}/episodes/ci-*/*.mp4
+            ${{ env.KIT }}/episodes/ci-*/out/check.json
+            ${{ env.KIT }}/episodes/ci-*/out/gates.json
+            ${{ env.KIT }}/episodes/ci-*/out/sheet.jpg
           if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
         if: always()

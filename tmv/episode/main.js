@@ -9,12 +9,9 @@ import { createStage, V, clamp, seg, ss, eout, lerp, hsh } from './stage.js';
 import { buildWorld } from './world.js';
 import { createHud, WHITE } from './hud.js';
 import { makeCharacter } from '../characters/rig.js';
+import { loadEpisode, cardsOf, timeline } from './timeline.js';
 
-// an episode of a series (episode/series.mjs) shares the show's name, cast, palette and texts from ../series.json
-const SER = await fetch('../series.json').then(r => r.ok ? r.json() : {}).catch(() => ({}));
-const EP0 = await (await fetch('episode.json')).json();
-const EP = { ...EP0, series: EP0.series ?? SER.series, cast: EP0.cast ?? SER.cast, palette: { ...(SER.palette ?? {}), ...(EP0.palette ?? {}) }, texts: { ...(SER.texts ?? {}), ...(EP0.texts ?? {}) } };
-const VO = await (await fetch('vo/vo.json')).json();
+const { EP, VO } = await loadEpisode();
 const PAL = { neon: '#FF3D8B', left: '#FF3D8B', right: '#29E0FF', card: '#EFE9DE', ...(EP.palette ?? {}) };
 // every word the frame shows comes from episode.json (texts); these are only the fallbacks. {series} {ep} {next} fill in.
 const TX = { handle: '@you', sign: 'SPEED WINS', kicker: '{series} · EP {ep}', phoneLabel: 'VIEWS', phoneHud: 'VIEWS', phoneFoot: 'last 24 h',
@@ -33,9 +30,9 @@ R.traverse(o => { if (/Buyer|Pin_Note|Photo_Pic|Badge|Pizza_Logo|^SM_Jay_/.test(
 const H2 = createHud(S.g2, S.fx.width, S.fx.height), g = S.g2, P = H2.P;
 
 // ------------------------------------------------------------ cast
-const SEEDS = window.TMV_SEEDS;
+const SEEDS = window.TMV_SEEDS, CARDS = cardsOf(EP, SEEDS);
 const CAST = {};
-for (const m of EP.cast) CAST[m.id] = await makeCharacter({ ...(SEEDS[m.seed] ?? {}), ...m });
+for (const m of EP.cast) CAST[m.id] = await makeCharacter(CARDS[m.id]);
 for (const ch of Object.values(CAST)) S.scene.add(ch.root);
 const inCorner = (ch) => (ch.c.place ?? (ch.c.role === 'rival' ? 'corner' : 'room')) === 'corner';
 const roomHumans = Object.values(CAST).filter(ch => !inCorner(ch) && ch.kind === 'human');
@@ -45,49 +42,7 @@ const SEAT = [0.28, -0.55], DESK_Y = 0.425, CX = 6;
 const BOT_AT = BOTS.map((_, i) => i < 2 ? [[0.66, -0.86], [-0.08, -0.88]][i] : [0.05 + 0.5 * hsh(i, 7), -1.05]);
 const STAND_AT = EXTRA.map((_, i) => [-0.35 - 0.45 * i, -0.05 - 0.15 * (i % 2)]);
 
-// ------------------------------------------------------------ timeline: one beat per voiced line, the vote holds 1.4 s after the last
-const LINES = VO.lines, DUR = VO.duration + 1.4;
-const BEATS = EP.beats.map((b, i) => ({ ...b, i, j: 0, a: i ? LINES[i].s - 0.12 : 0, b: i + 1 < LINES.length ? LINES[i + 1].s - 0.12 : DUR, ls: LINES[i].s, le: LINES[i].e }));
-// A cut every 2.6 s at most (the real season cut every 2 s): a story beat longer than that splits on word starts into
-// sub-shots that cut between its own angle and a cover angle, and the first beat cuts by 1.5 s. The vote card lies
-// over the last beat's shots.
-const MAXSHOT = 2.6, FIRSTCUT = 1.5;
-const coverOf = (b) => { const ch = CAST[b.who];
-  if (!['close', 'two', 'wide', 'room', 'phone'].includes(b.shot)) return undefined;
-  if (ch && inCorner(ch)) return { close: 'wide', two: 'close', wide: 'close' }[b.shot];
-  if (ch?.kind === 'bot') return b.shot === 'close' ? 'two' : 'close';
-  if (ch && ch !== LEAD) return b.shot === 'wide' ? 'two' : 'wide';
-  return { close: 'phone', phone: 'close', two: 'close', wide: 'close', room: 'close' }[b.shot]; };
-// A card holds up to 4 s (the season's cards held 2.5-3.6 s); a longer card beat opens on its speaker's close (cut like
-// any story shot) and the card lands on the first sentence that leaves it 2-4 s, else 2.6 s before the beat ends.
-const CARDMAX = 4.0;
-function cardSplit(b) {
-  const ws = VO.words.filter(w => w.line === LINES[b.i].id), ok = x => x > b.a + 0.9 && x < b.b - 0.9;
-  const at = ws.map((w, k) => ({ x: w.s - 0.12, sentence: k > 0 && /[.!?]$/.test(ws[k - 1].w) })).filter(c => ok(c.x));
-  const cut = at.find(c => c.sentence && b.b - c.x >= 2 && b.b - c.x <= CARDMAX)?.x ?? at.sort((p, q) => Math.abs(p.x - b.b + MAXSHOT) - Math.abs(q.x - b.b + MAXSHOT))[0]?.x;
-  if (cut === undefined) return [b];
-  const lead = split({ ...b, shot: 'close', b: cut });
-  return [...lead, { ...b, j: lead.length, a: cut }];
-}
-function split(b) {
-  if (['card', 'stats'].includes(b.shot) && b.b - b.a > CARDMAX) return cardSplit(b);
-  const cover = coverOf(b);
-  if (!cover || b.b - b.a <= (b.i ? MAXSHOT : FIRSTCUT)) return [b];
-  const starts = VO.words.filter(w => w.line === LINES[b.i].id).map(w => w.s - 0.12);
-  const n = Math.ceil((b.b - b.a) / MAXSHOT), cuts = [];
-  let from = b.a;
-  for (let k = 1; k < n; k++) {
-    const want = b.i || k > 1 ? b.a + (b.b - b.a) * k / n : Math.min(b.a + FIRSTCUT, b.a + (b.b - b.a) / n);
-    const at = starts.filter(x => x > from + 0.9 && x < b.b - 0.9).sort((x, y) => Math.abs(x - want) - Math.abs(y - want))[0];
-    if (at !== undefined) { cuts.push(at); from = at; }
-  }
-  return [b.a, ...cuts].map((a, j, all) => ({ ...b, j, shot: j % 2 ? cover : b.shot, a, b: all[j + 1] ?? b.b }));
-}
-const SHOTS = BEATS.flatMap(split);
-const shotOf = (t) => SHOTS.find(s => t >= s.a && t < s.b) ?? SHOTS[SHOTS.length - 1];
-const NUM = /^(\d[\d,.]*|one|two|three|four|five|six|seven|eight|nine|ten|hundred|thousand|million|half|zero)$/i;
-const WORDS = VO.words.map(w => { const bi = LINES.findIndex(l => l.id === w.line), hot = (EP.beats[bi]?.hot ?? []).map(s => s.toLowerCase());
-  const bare = w.w.replace(/[^\w'-]/g, '').toLowerCase(); return { ...w, hot: NUM.test(bare) || /^[AB]$/.test(w.w.replace(/[^\w]/g, '')) || hot.includes(bare) }; });
+const { LINES, DUR, SHOTS, shotOf, WORDS, hudAt, LAST } = timeline(EP, VO, CARDS);
 const talking = (t, ch) => { const sh = shotOf(t); if (CAST[sh.who] !== ch) return 0;
   return WORDS.some(w => w.line === LINES[sh.i].id && t >= w.s && t < w.e) ? 0.35 + 0.65 * Math.abs(Math.sin(t * 15.5)) * (0.6 + 0.4 * Math.sin(t * 4.1)) : 0; };
 function blink(t, o = 0) { const p = (t + 0.37 + o) % 3.1; return p < 0.16 ? Math.sin(p / 0.16 * Math.PI) : 0; }
@@ -330,15 +285,6 @@ function prep(t, tf) {
 }
 
 // ------------------------------------------------------------ 2D: HUD chips, captions, the title, cards, the vote
-function hudAt(t) {   // every HUD label seen so far, in order; a value that changed in this beat rolls in
-  const sh = shotOf(t), cur = {}, prev = {}, order = [];
-  // a HUD value is "212" or { "value": "212", "bar": 0.02 (a meter under it, 0..1), "style": "danger" (the accent colour) }
-  const norm = (v) => typeof v === 'object' && v !== null ? { val: String(v.value), bar: v.bar, danger: v.style === 'danger' ? 1 : 0 } : { val: String(v) };
-  for (const b of BEATS) { if (b.i > sh.i) break; for (const [k, v] of Object.entries(b.hud ?? {})) { if (!order.includes(k)) order.push(k); prev[k] = cur[k]; cur[k] = norm(v); } }
-  const changed = new Set(Object.keys(EP.beats[sh.i].hud ?? {})), k_ = ss(seg(t, sh.ls, sh.ls + 0.5));
-  return { items: order.map(k => ({ label: k, val: cur[k].val, from: changed.has(k) && prev[k] && prev[k].val !== cur[k].val ? prev[k].val : null, k: k_, danger: cur[k].danger ?? 0,
-    bar: cur[k].bar == null ? undefined : (changed.has(k) && prev[k]?.bar != null ? lerp(prev[k].bar, cur[k].bar, k_) : cur[k].bar) })) };
-}
 function wipeText(s, x, y, size, col, k, o = {}) {
   if (k <= 0) return; const w = H2.measure(s, size, o.w ?? 900);
   g.save(); g.beginPath(); g.rect(P(x - w / 2 - 20), P(y - size), P((w + 40) * eout(k)), P(size * 2)); g.clip(); H2.txt(s, x + 30 * (1 - eout(k)), y, size, col, { w: 900, ...o }); g.restore();
@@ -401,7 +347,6 @@ function title(t) {   // the kicker and the episode title over the first shot
   H2.txt(KICKER, 540, 380, 30, NEON, { w: 700, mono: true, ls: 8, alpha: a, stroke: 6 });
   wipeText(EP.title.toUpperCase(), 540, 480, fitSize(EP.title.toUpperCase(), 100, 940), WHITE, seg(t, T0 + 0.2, T0 + 0.55), { alpha: a, stroke: 10 });
 }
-const LAST = SHOTS[SHOTS.length - 1];
 const wordAt = (re, d) => WORDS.find(w => w.line === LINES[LAST.i].id && re.test(w.w.replace(/[^\w]/g, '')))?.s ?? LAST.ls + d;
 const TAG_A = EP.vote.tagA ?? 'A', TAG_B = EP.vote.tagB ?? 'B', esc = (x) => x.replace(/[^\w]/g, '');
 const T_A = wordAt(new RegExp(`^${esc(TAG_A)}$`), 0.5), T_B = wordAt(new RegExp(`^${esc(TAG_B)}$`), 1.6);

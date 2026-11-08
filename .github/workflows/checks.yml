@@ -3,7 +3,7 @@
 name: checks
 on:
   pull_request:
-    branches: [main]
+    branches: [main, 'lane/**']
   workflow_dispatch:
 
 concurrency:
