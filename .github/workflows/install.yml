@@ -8,7 +8,7 @@
 #     (Actions > install > Run workflow), or when the PR gets the label `test-all-os`.
 # Two zips are tested: Pro (the check reel) and tmv (How we make Ten Million Views, voiced from the shipped take, so no
 # Gemini key is needed). tmv runs on Linux with Pro, and on Windows pwsh + macOS arm64 when FULL. A PR's tmv run makes
-# ci-smoke, about 13 s cut from the sample (test/tmv-smoke.mjs); the whole sample and its 11 gates run on Linux nightly on
+# ci-smoke, 13-17 s cut from the sample (test/tmv-smoke.mjs); the whole sample and its 11 gates run on Linux nightly on
 # main (only when the tmv zip changed that day), for a v* tag, by hand, or when the PR gets the label `full-episode`.
 # A newer push to the same PR cancels the older run.
 name: install
@@ -38,7 +38,7 @@ on:
     - cron: '0 19 * * *'
 
 concurrency:
-  group: install-${{ github.ref }}
+  group: install-${{ github.ref }}${{ github.event_name != 'pull_request' && format('-{0}', github.event_name) || '' }}
   cancel-in-progress: true
 
 jobs:
@@ -62,10 +62,10 @@ jobs:
         env:
           PRO: ${{ steps.f.outputs.pro }}
           TMV: ${{ steps.f.outputs.tmv }}
-          FULL: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'test-all-os') }}
+          FULL: ${{ startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'test-all-os') }}
           LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
         run: |
-          eval "$(node release/install-needed.mjs --full-episode)"
+          full=$(node release/install-needed.mjs --full-episode); full=${full#full=}
           if [ "$GITHUB_EVENT_NAME" = schedule ]; then PRO=false; elif [ "$full" = true ]; then TMV=true; fi
           ep=$([ "$full" = true ] && echo full || echo smoke)
           m=''

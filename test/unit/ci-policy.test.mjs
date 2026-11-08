@@ -67,7 +67,7 @@ test('the whole tmv sample runs nightly on main, for a tag, by hand or with the 
   assert.equal(fullEpisode({ event: 'push', ref: 'refs/tags/v1.6.0' }), true);
   assert.equal(fullEpisode({ event: 'workflow_dispatch', ref: 'refs/heads/main' }), true);
   const y = read('install.yml');
-  assert.match(y, /eval "\$\(node release\/install-needed\.mjs --full-episode\)"/, 'the matrix step decides the episode with fullEpisode()');
+  assert.match(y, /full=\$\(node release\/install-needed\.mjs --full-episode\); full=\$\{full#full=\}/, 'the matrix step decides the episode with fullEpisode()');
   assert.deepEqual(y.match(/--full-episode/g).length, 2, 'the clean-install run passes --full-episode only from matrix.episode');
   assert.match(y, /test\/clean-install\.mjs "[^"]+" \$\{\{ matrix\.episode == 'full' && '--full-episode' \|\| '' \}\}/);
   assert.deepEqual(y.split('\n').filter(l => /"episode":/.test(l)).map(l => /ubuntu/.test(l) && !/windows|macos/.test(l)), [true], 'the full episode runs on the Linux tmv leg only');

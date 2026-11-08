@@ -29,7 +29,7 @@ const again = step('install again (must be a no-op)', ['run', 'studio', 'install
 if (again > 60) fail(`the second install took ${again} s: it should skip everything`);
 
 // The TMV kit: the sample ships rendered and install only draws 2 s of it, so CI makes an episode itself, with its voice
-// cut from the shipped take (no Gemini key), and its check report must be all ✓. A PR makes ci-smoke, about 13 s cut from
+// cut from the shipped take (no Gemini key), and its check report must be all ✓. A PR makes ci-smoke, 13-17 s cut from
 // the sample at test time (test/tmv-smoke.mjs): the vo step, a stats card, a card and the vote. --full-episode makes the
 // whole sample and its 11 gates (install.yml: nightly on main, v* tags, by hand, the PR label full-episode).
 // Linux CI has no GPU (software WebGL, seconds a frame): 8 fps there keeps it to minutes, as on a buyer's machine without one.
@@ -42,6 +42,7 @@ if (!existsSync(join(dir, 'kit', 'check-reel'))) {
   rmSync(ep, { recursive: true, force: true });
   if (full) {
     cpSync(sample, ep, { recursive: true, filter: f => !/[\\/](out|sample\.mp4)$/.test(f) });
+    // ubuntu-24.04 draws 3.9-4.4 s a frame: the 83 s sample at 8 fps (~680 frames) is ~45-50 min, so 80 min leaves 1.6x
     step('make the full sample episode (render, check, gates)', make(['render', 'check', 'gates']), { timeout: 80 * 60e3 });
   } else {
     const smoke = smokeEpisode(sample, ep);

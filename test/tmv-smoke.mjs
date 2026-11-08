@@ -1,4 +1,4 @@
-// test/tmv-smoke.mjs: the ci-smoke episode, about 13 s, cut from the shipped sample at test time so it cannot drift from it.
+// test/tmv-smoke.mjs: the ci-smoke episode, 13-17 s, cut from the shipped sample at test time so it cannot drift from it.
 // Beats: the sample's first beat, its first stats card, its first card (or, when it has none, its shortest middle beat
 // drawn as a card) and its vote beat. Their voice is cut from the sample's vo/vo.wav into one take with long pauses
 // between lines, so `make.mjs <ep> vo` with TMV_VO_TAKE=<take> runs the real voice step on it, with no Gemini call.
