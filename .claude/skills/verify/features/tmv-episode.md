@@ -23,6 +23,9 @@ render, then deletes it (`kit/studio.mjs`); it renders the whole sample only if 
   behind, 15 s of faces with 3+ expressions, each idea once, voice that runs on, voice under every shot) → `out/gates.json`,
   exit 1 on a fail. A gate it cannot measure prints `–` (G6 needs an `idea` tag per beat). The shipped sample reads 4/10
   with G6 not measured: the baseline the engine work raises.
+- `episode.cuts`: one beat per voiced line, cut every 2.6 s at most: a longer story beat splits on word starts into
+  sub-shots that alternate its own angle and a cover angle (the lead: close ↔ phone; a bot: close ↔ two; the rival's
+  corner: close ↔ wide), the first beat cuts by 1.5 s, cards and the vote hold. Gates G3a, G3b, G7 read it.
 - `episode.look` (ST-79): the Ep1 room at night (neon through the curtain, screen key, rim light, bloom, DOF, grain), the
   rival's corner (ring light, neon sign from `texts.sign`), shots close / two / wide / phone / card, cream cards, kicker
   `<SERIES> · EP N`, word-by-word captions, HUD chips that roll on change, no end card: the vote is the last frame.
