@@ -1,5 +1,5 @@
 // release/build.mjs: the release zips, straight from git (uncommitted changes never ship).
-//   node release/build.mjs [--ref HEAD] [--tag v1.6] [--tier starter|pro|all] [--out dist] [--dry-run]
+//   node release/build.mjs [--ref HEAD] [--tag v1.6] [--tier starter|pro|tmv|all] [--out dist] [--dry-run]
 // kit.manifest decides what ships. Writes dist/kaiships-studio-<tier>-<version>.zip (every entry under
 // kaiships-studio/) and dist/SHA256SUMS. Same ref = same bytes (sorted entries, the commit's time on every file).
 // Refuses to write anything when a check fails: unclassified files, a Pro or dev file in Starter, a forbidden string,
@@ -19,7 +19,7 @@ const opt = (k, d) => { const i = argv.indexOf(`--${k}`); return i >= 0 ? argv[i
 const REF = opt('ref', opt('tag', 'HEAD')), TAG = opt('tag', ''), OUT = resolve(opt('out', join(ROOT, 'dist')));
 // tmv = the paid "How we make Ten Million Views" kit (PLAN.md); it also refuses everything in [tmv_forbid]
 const TIERS = { starter: ['starter'], pro: ['starter', 'pro'], tmv: ['starter'] };
-const tiers = opt('tier', 'all') === 'all' ? ['starter', 'pro'] : [opt('tier')];
+const tiers = opt('tier', 'all') === 'all' ? ['starter', 'pro', 'tmv'] : [opt('tier')];
 const DRY = argv.includes('--dry-run');
 const git = (args, input) => {
   const r = spawnSync('git', args, { cwd: ROOT, input, maxBuffer: 1 << 30 });
