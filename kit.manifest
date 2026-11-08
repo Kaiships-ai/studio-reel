@@ -6,6 +6,8 @@
 # (LICENSE and THIRD_PARTY_NOTICES.md are exempt, they carry the credits on purpose).
 # [identity] = regexes, ignoring case, that must not appear in any shipped file at all, binaries and those two included:
 # what would lead a buyer from the zip to this repository.
+# [vendored] = globs (paths inside the zip) of third-party files shipped verbatim: the English-only buyer-doc check skips
+# them, every other check still applies.
 
 [dev]
 .claude/CLAUDE.md
@@ -117,3 +119,15 @@ character-designer.html
 core/README.md
 workspace/README.md
 content-types/
+
+[vendored]
+# story-skills 0.24.1 by Daniel Dewhurst (MIT), from tmv/.claude/skills/: English, with CJK only in word-count and name examples
+.claude/skills/chapter-writing/
+.claude/skills/character-management/
+.claude/skills/interactive-fiction/
+.claude/skills/premise-workshop/
+.claude/skills/reader-panel/
+.claude/skills/research/
+.claude/skills/story-init/
+.claude/skills/story-maintenance/
+.claude/skills/worldbuilding/

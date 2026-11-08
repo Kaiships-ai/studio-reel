@@ -29,7 +29,7 @@ const git = (args, input) => {
 
 // ---------- the manifest ----------
 export function parseManifest(text) {
-  const m = { dev: [], pro: [], starter: [], forbid: [], identity: [], tmv_forbid: [], tmv_exclude: [] }; let sec = null;
+  const m = { dev: [], pro: [], starter: [], forbid: [], identity: [], tmv_forbid: [], tmv_exclude: [], vendored: [] }; let sec = null;
   for (const raw of text.split('\n')) {
     const line = raw.trim(); if (!line || line.startsWith('#')) continue;
     const s = /^\[(\w+)\]$/.exec(line); if (s) { sec = s[1]; if (!m[sec]) throw new Error(`kit.manifest: unknown section [${sec}]`); continue; }
@@ -51,7 +51,8 @@ const TEXT = /\.(md|mjs|js|cjs|json|html|css|py|txt|toml|ya?ml|srt|sh|ps1)$|(^|\
 const EXEMPT = new Set(['LICENSE', 'THIRD_PARTY_NOTICES.md']);
 const BUYER_DOC = f => /^[^/]+\.md$/.test(f) || /^\.claude\/skills\/[^/]+\/.*\.md$/.test(f) || f === 'workspace/README.md' || f === 'styles/README.md' || f === 'styles/catalog.md' || /^content-types\/.*\.md$/.test(f) || /^styles\/[^/]+\/(STYLE|DEMO|WORKFLOW|README)\.md$/.test(f);
 const SKILL_REF = /(^|[\s`("'])\/(ig-[a-z]+|make-reel|studio|crowsnest|verify|episode|series)\b/g;
-const TMV_SKILLS = ['episode', 'series', 'studio'];
+const STORY_SKILLS = ['chapter-writing', 'character-management', 'interactive-fiction', 'premise-workshop', 'reader-panel', 'research', 'story-init', 'story-maintenance', 'worldbuilding'];
+const TMV_SKILLS = ['episode', 'series', 'studio', ...STORY_SKILLS].sort();
 const PRO_SKILLS = ['ig-plan', 'ig-reel', 'ig-human', 'ig-viral', 'ig-dm', 'ig-caption'];
 
 // A style's page that names a font file the zip lacks renders in a browser fallback font, silently.
@@ -89,17 +90,18 @@ export function check(tier, files, blob, m) {
     if (!set.has(f)) errors.push(`${f} is missing`);
   if (set.has('THIRD_PARTY_NOTICES.md')) {
     const n = blob('THIRD_PARTY_NOTICES.md').toString('utf8');
-    const owed = ['LemoLab', ...(files.some(f => f.startsWith('styles/kai-hand-draw/')) ? ['John Heibel'] : [])];   // his engine ships only inside kai-hand-draw
+    const owed = ['LemoLab', ...(files.some(f => f.startsWith('styles/kai-hand-draw/')) ? ['John Heibel'] : []),   // his engine ships only inside kai-hand-draw
+      ...(files.some(f => f.startsWith('.claude/skills/story-maintenance/')) ? ['Daniel Dewhurst'] : [])];
     for (const who of owed) if (!n.includes(who)) errors.push(`THIRD_PARTY_NOTICES.md does not credit ${who}`);
   }
-  const forbid = m.forbid.map(p => [p, new RegExp(p)]);
+  const forbid = m.forbid.map(p => [p, new RegExp(p)]), vendored = m.vendored.map(globRe);
   for (const f of files) {
     if (!TEXT.test(f) || EXEMPT.has(f)) continue;
     const t = blob(f).toString('utf8');
     for (const [p, re] of forbid) if (re.test(t)) errors.push(`${f}: contains forbidden "${p}"`);
     if (BUYER_DOC(f)) {
       // Chinese is allowed only as a quoted term of art in inline code (`留白` = empty space), never as running text
-      const cjk = (t.replace(/`[^`\n]*`/g, '').match(/\p{Script=Han}/gu) || []).length; if (cjk) errors.push(`${f}: ${cjk} Chinese characters outside inline code in a buyer document`);
+      const cjk = vendored.some(r => r.test(f)) ? 0 : (t.replace(/`[^`\n]*`/g, '').match(/\p{Script=Han}/gu) || []).length; if (cjk) errors.push(`${f}: ${cjk} Chinese characters outside inline code in a buyer document`);
       for (const [, , s] of t.matchAll(SKILL_REF)) {
         if (skills.includes(s)) continue;
         if ((tier === 'starter' || tier === 'tmv') && PRO_SKILLS.includes(s)) warns.push(`${f}: names /${s} (Pro only)`);
