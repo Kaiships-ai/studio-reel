@@ -116,5 +116,4 @@ End with `story check` passing (warnings are fine) and the line
 ## Hand-off
 
 Make episode 1 with `/episode` from chapter 1. Each card in `cards/` is one `cast` entry as it is. The narrator says
-"You" for the lead and the third person for everyone else; for the lead this replaces the third-person example in
-`/episode`. When its vote is in, `/series` makes the next one from the matching chapter.
+"You" for the lead and the third person for everyone else, as `/episode` says. When its vote is in, `/series` makes the next one from the matching chapter.

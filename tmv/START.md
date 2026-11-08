@@ -65,7 +65,7 @@ background while you ask the questions and they make the key: do not wait for it
    pixi run node episode/make.mjs new ep1
    ```
 
-   rewrite `episodes/ep1/episode.json` from the answers as third-person narration (`README.md` lists every field), then:
+   rewrite `episodes/ep1/episode.json` from the answers as narration that calls the lead "you" (`README.md` lists every field), then:
 
    ```
    pixi run node episode/make.mjs episodes/ep1 vo

@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "episode.schema.json",
+  "title": "One TMV episode (episodes/<name>/episode.json, after series.json is merged under it)",
+  "type": "object",
+  "required": ["series", "ep", "title", "cast", "beats", "vote"],
+  "additionalProperties": false,
+  "$defs": {
+    "text": { "type": "string", "minLength": 1 },
+    "colour": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$", "description": "a colour like \"#FF3D8B\"" },
+    "meter": { "type": "number", "minimum": 0, "maximum": 1, "description": "a meter from 0 to 1" }
+  },
+  "properties": {
+    "$schema": { "type": "string" },
+    "series": { "$ref": "#/$defs/text", "description": "the show name, in the kicker" },
+    "ep": { "type": "integer", "minimum": 1, "description": "the episode number, a whole number from 1" },
+    "title": { "$ref": "#/$defs/text", "description": "the episode title over the first shot" },
+    "model": { "type": "string", "description": "the Gemini voice model" },
+    "palette": {
+      "type": "object", "additionalProperties": false,
+      "properties": { "neon": { "$ref": "#/$defs/colour" }, "left": { "$ref": "#/$defs/colour" }, "right": { "$ref": "#/$defs/colour" }, "card": { "$ref": "#/$defs/colour" }, "ink": { "$ref": "#/$defs/colour" } }
+    },
+    "texts": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "handle": { "type": "string" }, "sign": { "type": "string" }, "kicker": { "type": "string" }, "phoneLabel": { "type": "string" },
+        "phoneHud": { "type": "string" }, "phoneFoot": { "type": "string" }, "or": { "type": "string" }, "voteFooter": { "type": "string" },
+        "previously": { "type": "string" }, "youPicked": { "type": "string" }
+      }
+    },
+    "narrator": {
+      "type": "object", "additionalProperties": false, "description": "like {\"voice\": \"Achird\", \"style\": \"warm, a little wry\"}",
+      "properties": { "voice": { "$ref": "#/$defs/text" }, "style": { "type": "string" } }
+    },
+    "cast": {
+      "type": "array", "minItems": 1, "description": "the characters, like [{\"id\": \"nova\", \"seed\": \"nova\"}]",
+      "items": {
+        "type": "object", "required": ["id"],
+        "properties": {
+          "id": { "$ref": "#/$defs/text" }, "seed": { "type": "string" }, "name": { "type": "string" }, "role": { "type": "string" },
+          "skin": { "$ref": "#/$defs/colour" }, "hairColor": { "$ref": "#/$defs/colour" }, "topColor": { "$ref": "#/$defs/colour" }, "legs": { "$ref": "#/$defs/colour" },
+          "place": { "enum": ["room", "corner"] }
+        }
+      }
+    },
+    "beats": {
+      "type": "array", "minItems": 1, "description": "one beat per narrated line",
+      "items": {
+        "type": "object", "required": ["who", "line"], "additionalProperties": false,
+        "properties": {
+          "who": { "type": "string", "description": "a cast id: who is on screen" },
+          "line": { "$ref": "#/$defs/text", "description": "what the narrator says" },
+          "link": { "enum": ["but", "so"], "description": "how this beat follows the one before (Story Spine: never \"and then\")" },
+          "shot": { "enum": ["room", "close", "two", "wide", "phone", "card", "stats", "previously"] },
+          "exp": { "enum": ["angry", "determined", "doubt", "excited", "grin", "guilty", "laugh", "nervous", "proud", "relieved", "sad", "shock", "smirk", "surprise", "teary", "thinking", "tired", "worried"] },
+          "idea": { "$ref": "#/$defs/text", "description": "a short tag, like \"theo-ad-hits-40k\"" },
+          "hot": { "type": "array", "items": { "$ref": "#/$defs/text" }, "description": "a list of words" },
+          "card": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/text" }, "description": "like [\"LINE ONE\", \"LINE TWO\"]" },
+          "head": { "type": "string" },
+          "stats": {
+            "type": "array", "minItems": 1, "description": "like [{\"label\": \"views\", \"value\": \"212\"}]",
+            "items": {
+              "type": "object", "required": ["label", "value"], "additionalProperties": false,
+              "properties": { "label": { "$ref": "#/$defs/text" }, "value": { "type": ["string", "number"] }, "extra": { "type": "string" }, "bar": { "$ref": "#/$defs/meter" }, "style": { "enum": ["danger"] } }
+            }
+          },
+          "source": { "$ref": "#/$defs/text", "description": "where the beat's fact comes from" },
+          "hud": {
+            "type": "object", "description": "chips like {\"VIEWS\": \"212\"} or {\"GOAL\": {\"value\": \"2%\", \"bar\": 0.02, \"style\": \"danger\"}}",
+            "additionalProperties": {
+              "type": ["string", "number", "object"], "required": ["value"], "additionalProperties": false,
+              "properties": { "value": { "type": ["string", "number"] }, "bar": { "$ref": "#/$defs/meter" }, "style": { "enum": ["danger"] } }
+            }
+          }
+        }
+      }
+    },
+    "vote": {
+      "type": "object", "required": ["question", "a", "b"], "additionalProperties": false, "description": "the vote, the last frame",
+      "properties": { "question": { "$ref": "#/$defs/text" }, "a": { "$ref": "#/$defs/text" }, "b": { "$ref": "#/$defs/text" }, "tagA": { "type": "string" }, "tagB": { "type": "string" } }
+    },
+    "previously": {
+      "type": "object", "required": ["ep", "question", "winner", "loser"], "description": "written by episode/series.mjs next",
+      "properties": {
+        "ep": { "type": "integer", "minimum": 1 }, "question": { "$ref": "#/$defs/text" },
+        "winner": { "type": "object", "required": ["tag", "text"], "properties": { "tag": { "$ref": "#/$defs/text" }, "text": { "$ref": "#/$defs/text" } } },
+        "loser": { "type": "object", "required": ["tag", "text"], "properties": { "tag": { "$ref": "#/$defs/text" }, "text": { "$ref": "#/$defs/text" } } }
+      }
+    }
+  }
+}
