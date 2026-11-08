@@ -44,6 +44,25 @@ on main, `v*` tags, by hand, the PR label `full-episode`).
   episode/paper/index.html): ...`. A new engine imports `episode/timeline.js` (`loadEpisode`, `cardsOf`, `timeline`) for the
   episode, its voice, the cast cards (draw them with `toPaper` / `toHandDraw` from `core/character-card.mjs`), the shots,
   caption words and HUD, so the cuts below and the gates hold in every style. Unit test: `test/unit/tmv-engines.test.mjs`.
+- `episode.handdraw` (`"style": "handdraw"`): `episode/handdraw/index.html` loads `styles/kai-hand-draw/engine/core.js` +
+  `kaip.js` (paper grain, 12 fps boil) and `handdraw.js`, which draws each cast card as its `toHandDraw` presenter in the
+  timeline's shots. `framing.js` (pure) picks who and how big: close = the speaker's bust with the beat's `exp`; two = the
+  speaker and the lead (the lead with the first bot); wide/room = the room on its feet; phone = the lead with the phone;
+  the rival's corner holds only him. A bot card is drawn as a person (`toHandDraw` lists it as lost). The speaker's mouth moves while their line's words play (`VO_WORDS`). `lettering.js`
+  draws the type in the style's look: `card`, `stats` and `previously` as a paper index card on a cream ground to the
+  frame's edges (G4 luma > 180, G4b no faint ground), lettered in Permanent Marker and Shantell Sans (the page loads both
+  from `styles/kai-hand-draw/engine/fonts/`, kept in the tmv zip by `!` lines and checked by `missingFonts`); the HUD as a
+  paper tag; the vote high in the frame (the HUD hides) as the question strip and one paper card per answer, each popping in on its spoken tag; captions
+  (`phrases`/`phraseAt`, pure: up to 3 words / 18 characters of one line) on a painted ink plate at y 1580, spoken words
+  cream, the live word ochre, words not yet spoken grey. `set.js` paints the world behind every story shot (never behind a card):
+  the lead's room (window with the neon, string lights, desk, monitor, lamp, shelf, poster, note board) or, when the
+  speaker is in the corner, the rival's corner (his `texts.sign` as a neon sign, ring light, bulbs). `settingOf` (pure)
+  takes its colours from `palette` (`neon`, `left` = room lights, `right` = poster and the rival's glow, `card` = notes)
+  with main.js's fallbacks; `viewOf` (pure) picks the part of the set each shot sees (close-ups look at one side of the
+  room, alternating). Each element calls `boilSeed('set:…')`, so the set boils at 12 fps and holds between boil steps.
+  Unit test: `test/unit/tmv-handdraw.test.mjs`. Stills, no video:
+  `node core/render/still.mjs <ep> <t...> --size 1080x1920` after copying the page in as `make.mjs render` does; gates.py's
+  `luma(png, 0)` and `faint(png, 0)` measure G4/G4b on a single still.
 - `episode.cuts` (`episode/timeline.js`, shared by every engine): one beat per voiced line, cut every 2.6 s at most: a longer story beat splits on word starts into
   sub-shots that alternate its own angle and a cover angle (the lead: close ↔ phone; a bot: close ↔ two; the rival's
   corner: close ↔ wide), the first beat cuts by 1.5 s (on a word start no later than that, when there is one), the vote holds, a card holds up to 4 s: a longer `card` or
@@ -57,7 +76,7 @@ on main, `v*` tags, by hand, the PR label `full-episode`).
   plus overrides, or every part; `--out <file.png>`, default `workspace/<name>-styles.png`) → one 1280-wide PNG, the
   card's character side by side in 3D (`characters/rig.js` on the designer's stage, `lost3D`; top "jacket" = the hoodie
   opened over a white shirt, a shader on the hoodie material; both stages carry a low front fill so the jaw is not black), hand-draw (`toHandDraw` →
-  `styles/kai-hand-draw/engine/kaip.js` on `core.js`, the only two hand-draw files the tmv zip keeps: `!` lines in
+  `styles/kai-hand-draw/engine/kaip.js` on `core.js`, the only two hand-draw scripts the tmv zip keeps, with two fonts: `!` lines in
   `[tmv_exclude]`) and paper (`toPaper` → `core/paper-figure.js`), each labelled with what that style draws differently.
   Pages: `episode/three-styles/` (index.html composes 3d/hand/paper.html, one iframe each; a panel sets `window.SHOT`
   once drawn; an error in any panel fails the command through `openDemo`). A card that breaks `checkCard` or an unknown seed stops before
