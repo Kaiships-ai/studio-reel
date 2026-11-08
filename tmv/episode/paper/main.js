@@ -41,8 +41,10 @@ const FRAMING = {
 FRAMING.room = FRAMING.wide;
 const CARD_SHOTS = new Set(['card', 'stats', 'previously']);
 
-const talking = (t, id) => { const sh = shotOf(t); if (sh.who !== id) return 0;
-  return WORDS.some(w => w.line === LINES[sh.i].id && t >= w.s && t < w.e) ? 1 : 0; };
+function talking(t, id) {
+  const sh = shotOf(t);
+  return sh.who === id && WORDS.some(w => w.line === LINES[sh.i].id && t >= w.s && t < w.e) ? 1 : 0;
+}
 
 const cv = document.getElementById('paper'), g = cv.getContext('2d');
 cv.width = Math.round(innerWidth * devicePixelRatio); cv.height = Math.round(innerHeight * devicePixelRatio);
@@ -77,7 +79,8 @@ function placeholderCard(sh) {
 }
 function hud(t) {
   const items = hudAt(t).items;
-  items.forEach((it, n) => text(`${it.label} ${it.val}`, 60 + n * 250, 130, 34, { align: 'left', max: 240 }));
+  const step = (W - 120) / Math.max(items.length, 1);
+  items.forEach((it, n) => text(`${it.label} ${it.val}`, 60 + n * step, 130, 34, { align: 'left', max: step - 10 }));
 }
 function captions(t, sh) {
   const said = WORDS.filter(w => w.line === LINES[sh.i].id && w.s <= t && w.s >= sh.a - 0.05).slice(-6).map(w => w.w).join(' ');
@@ -99,7 +102,7 @@ window.render = (t) => {
   g.setTransform(PX, 0, 0, PX, 0, 0);
   backdrop(inCorner(CARDS[sh.who]) && !CARD_SHOTS.has(sh.shot));
   if (CARD_SHOTS.has(sh.shot)) placeholderCard(sh);
-  else for (const p of FRAMING[sh.shot](sh)) figure(p, t, sh);
+  else for (const p of (FRAMING[sh.shot] ?? FRAMING.close)(sh)) figure(p, t, sh);
   hud(t);
   if (sh.i === LAST.i) vote(t);
   captions(t, sh);

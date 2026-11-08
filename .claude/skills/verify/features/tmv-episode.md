@@ -46,9 +46,10 @@ on main, `v*` tags, by hand, the PR label `full-episode`).
   caption words and HUD, so the cuts below and the gates hold in every style. Unit test: `test/unit/tmv-engines.test.mjs`.
 - `episode.paper` (P1 of the paper lane): `episode/paper/index.html` + `episode/paper/main.js`, the `"style": "paper"` engine.
   Each shot of the shared timeline shows its cast as `toPaper` → `drawPaperFigure(…, 'front')` stickers on a cream paper
-  backdrop (the rival's corner a grey-blue one): `close` and `phone` = one figure cropped at the chest, `two` = the speaker
-  in front of a partner (the lead's partner is the first bot in the room, anyone else's is the lead; the corner stays
-  alone), `wide` / `room` = the whole room on the floor. A figure pops up from its feet as the shot opens (back-out ease,
+  backdrop (the rival's corner a grey-blue one): `close` and `phone` (the lead) = one figure in close-up, cut at the waist, `two` = the speaker
+  in front of a partner (the lead's partner is the first bot in the room, anyone else's is the lead), `wide` / `room` =
+  the whole room on the floor; the corner's `two`, `wide` and `room` show its speaker alone, mid-shot. A beat with no
+  `shot` is a close-up, as in 3D. A figure pops up from its feet as the shot opens (back-out ease,
   partners staggered) and bobs while its line's words play. Cards, stats, previously, the HUD, captions and the vote are
   plain placeholder type (P2 makes them paper). Proof: `node core/render/still.mjs <ep> <t…> --size 720x1280` on a copy
   of the sample with `"style": "paper"` after `make.mjs`'s page copy (stills only on the MacBook Air).

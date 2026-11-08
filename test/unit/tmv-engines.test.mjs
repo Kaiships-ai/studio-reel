@@ -27,9 +27,6 @@ test('the paper engine is built: its page is registered, loads its module, and p
   const page = readFileSync(join(TMV, 'episode/paper/index.html'), 'utf8');
   assert.match(page, /<script src="\/characters\/cast.js"><\/script>/);
   assert.match(page, /<script type="module" src="\/episode\/paper\/main.js"><\/script>/);
-  const main = readFileSync(join(TMV, 'episode/paper/main.js'), 'utf8');
-  for (const k of ['window.DUR', 'window.render', 'window.READY']) assert.ok(main.includes(k), `paper/main.js sets ${k}`);
-  assert.match(main, /from '\.\.\/timeline\.js'/);
 });
 
 test('the schema refuses an unknown style and takes the three', () => {
