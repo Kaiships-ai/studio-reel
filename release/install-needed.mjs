@@ -27,8 +27,8 @@ export function zipEntries(buf) {
 }
 
 // The whole tmv sample (and its 11 gates) is slow on CI: a PR makes the short ci-smoke episode unless it has the label
-export const fullEpisode = ({ event, ref = '', labels = [] }) => event === 'schedule' ? ref === 'refs/heads/main'
-  : event === 'workflow_dispatch' || ref.startsWith('refs/tags/v') || (event === 'pull_request' && labels.includes('full-episode'));
+export const fullEpisode = ({ event, ref = '', labels = [], base = '' }) => event === 'schedule' ? ref === 'refs/heads/main'
+  : event === 'workflow_dispatch' || ref.startsWith('refs/tags/v') || (event === 'pull_request' && !base.startsWith('lane/') && labels.includes('full-episode'));
 
 export function tierNeeded(changed, before, after) {
   const list = fs => fs.slice(0, 8).join(', ') + (fs.length > 8 ? `, … (${fs.length})` : '');
@@ -70,8 +70,8 @@ async function decide(base, head) {
 
 const cli = fileURLToPath(import.meta.url) === resolve(process.argv[1] || '');
 if (cli && process.argv[2] === '--full-episode') {
-  const { GITHUB_EVENT_NAME: event, GITHUB_REF: ref, LABELS: labels = '' } = process.env;
-  console.log(`full=${fullEpisode({ event, ref, labels: labels.split(',') })}`);
+  const { GITHUB_EVENT_NAME: event, GITHUB_REF: ref, LABELS: labels = '', BASE_REF: base = '' } = process.env;
+  console.log(`full=${fullEpisode({ event, ref, labels: labels.split(','), base })}`);
 } else if (cli) {
   const [base, head = 'HEAD'] = process.argv.slice(2);
   const need = await decide(base, head).catch(e => Object.fromEntries(TIERS.map(t => [t, unsure(e)])));
