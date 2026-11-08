@@ -32,7 +32,7 @@ export function freePct() {
     if (process.platform === 'darwin') return +(/free percentage:\s*(\d+)/.exec(execFileSync('memory_pressure', { encoding: 'utf8' }))?.[1] ?? 100);
     if (process.platform === 'linux') {
       const m = fs.readFileSync('/proc/meminfo', 'utf8'), avail = /MemAvailable:\s*(\d+)/.exec(m)?.[1], total = /MemTotal:\s*(\d+)/.exec(m)?.[1];
-      if (avail && total) return 100 * avail / total;
+      if (avail && total) return 100 * +avail / +total;
     }
     return 100 * os.freemem() / os.totalmem();
   } catch { return 100; }
@@ -74,6 +74,7 @@ export function tryTake(slots, free, minFree) {   // 导出仅供测试
   });
 }
 
+/** @param {{ slots?: number, minFree?: number }} [o] */
 export async function acquire({ slots, minFree } = {}) {
   if (process.env.RENDER_SLOT_HELD === '1') return () => {};
   slots ??= envNum('RENDER_SLOTS', 3, n => Number.isInteger(n) && n >= 1 && n <= 256);
@@ -102,7 +103,7 @@ if (process.argv[1] && real(process.argv[1]) === real(fileURLToPath(import.meta.
   if (!cmd.length) { console.error('usage: node core/render/slot.mjs -- <command…>'); process.exit(2); }
   const release = await acquire();
   const child = spawn(cmd[0], cmd.slice(1), { stdio: 'inherit', env: { ...process.env, RENDER_SLOT_HELD: '1' } });
-  for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => child.kill(sig));
+  for (const sig of /** @type {const} */ (['SIGINT', 'SIGTERM'])) process.on(sig, () => child.kill(sig));
   child.on('error', e => { console.error(`cannot run ${cmd[0]}: ${e.message}`); release(); process.exit(127); });
   child.on('exit', (code, sig) => { release(); process.exit(code ?? (sig ? 128 + (os.constants.signals[sig] || 1) : 0)); });
 }

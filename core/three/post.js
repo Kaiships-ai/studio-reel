@@ -51,13 +51,13 @@ const gatherShader = {
 
 class DofScenePass extends Pass {
   constructor(scene, camera, w, h, o = {}) {
-    super(); this.scene = scene; this.camera = camera; this.needsSwap = true; this.s = o.ssaa || 1;
+    super(); this.scene = scene; this.camera = camera; this.needsSwap = true; this.renderToScreen = false; this.s = o.ssaa || 1;
     this.rt = new THREE.WebGLRenderTarget(w, h, { samples: 4, type: THREE.HalfFloatType, depthTexture: new THREE.DepthTexture(w, h, THREE.FloatType) });
     this.rtC = new THREE.WebGLRenderTarget(w, h, { type: THREE.HalfFloatType });
     this.coc = new FullScreenQuad(new THREE.ShaderMaterial(cocShader));
     this.gat = new FullScreenQuad(new THREE.ShaderMaterial(gatherShader));
     this.gat.material.uniforms.res.value.set(w, h);
-    this.focus = .3; this.aper = 4; this.maxCoc = 16; this.aoAmt = 0;
+    this.focus = .3; this.aper = 4; this.maxCoc = 16; this.aoAmt = 0; this.aoDebug = false;
     if (o.ao) {
       this.ao = new GTAOPass(scene, camera, w, h);
       this.ao.output = GTAOPass.OUTPUT.Off;
