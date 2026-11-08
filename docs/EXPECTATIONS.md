@@ -41,3 +41,4 @@ Crowsnest (waitlist), DM (waitlist), reel 3D cho khách (dev only), đổi giá.
 
 ## Cách Kai thêm một kỳ vọng
 `Kỳ vọng: <khách thấy gì>. Xong khi: <cái gì kiểm được, nếu nghĩ ra>. Không muốn: <điều Kai ghét, nếu có>.`
+<!-- lane proof -->

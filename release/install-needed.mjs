@@ -68,3 +68,4 @@ if (fileURLToPath(import.meta.url) === resolve(process.argv[1] || '')) {
   const need = await decide(base, head).catch(e => Object.fromEntries(TIERS.map(t => [t, unsure(e)])));
   for (const t of TIERS) { console.error(`${t}: ${need[t].run ? 'run' : 'skip'} · ${need[t].why}`); console.log(`${t}=${need[t].run}`); }
 }
+
