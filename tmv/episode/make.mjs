@@ -33,14 +33,16 @@ if (steps[0] === 'new') {
 if (steps[0] === 'styles') {
   const arg = steps[1]; if (!arg) die('usage: node episode/make.mjs styles <seed or card.json> [--out <file.png>]');
   const SEEDS = castJs().TMV_SEEDS, seeds = Object.keys(SEEDS).join(', ');
-  let c = SEEDS[arg];
+  const seed = k => Object.hasOwn(SEEDS, k) ? SEEDS[k] : undefined;
+  if (argv.some(a => a === '--out' || a.startsWith('--out=')) && !String(opt.out ?? '').endsWith('.png')) die('--out needs a file name ending in .png');
+  let c = seed(arg);
   if (!c) { if (!existsSync(arg)) die(`"${arg}" is not a seed (${seeds}) or a card file`);
     try { c = JSON.parse(readFileSync(arg, 'utf8')); } catch (x) { die(`${arg} is not valid JSON: ${x.message}`); }
-    if (c?.seed !== undefined && !SEEDS[c.seed]) die(`"seed": "${c.seed}" is not a seed (${seeds})`);
-    if (c && typeof c === 'object') c = { ...SEEDS[c.seed], ...c, name: c.name ?? c.id }; }
+    if (c?.seed !== undefined && !seed(c.seed)) die(`"seed": "${c.seed}" is not a seed (${seeds})`);
+    if (c && typeof c === 'object') { const { seed: s, ...own } = c; c = { ...seed(s), ...own, name: c.name ?? c.id }; } }
   const errs = checkCard(c); if (errs.length) die(`the card has ${errs.length} problem${errs.length > 1 ? 's' : ''}:\n  - ${errs.join('\n  - ')}`);
   requireReady(env());
-  const out = resolve(typeof opt.out === 'string' ? opt.out : join(ROOT, 'workspace', `${c.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'character'}-styles.png`));
+  const out = resolve(opt.out ?? join(ROOT, 'workspace', `${c.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'character'}-styles.png`));
   const { openDemo, closeServer } = await import('../core/render/page.mjs');
   const { browser, page } = await openDemo(join(ROOT, 'episode', 'three-styles'), { w: 1280, h: 860, q: 'card=' + encodeURIComponent(JSON.stringify(c)) });
   mkdirSync(dirname(out), { recursive: true }); await page.screenshot({ path: out, fullPage: true });

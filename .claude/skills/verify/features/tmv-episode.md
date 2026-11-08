@@ -36,8 +36,8 @@ render, then deletes it (`kit/studio.mjs`); it renders the whole sample only if 
   card's character side by side in 3D (`characters/rig.js` on the designer's stage), hand-draw (`toHandDraw` →
   `styles/kai-hand-draw/engine/kaip.js` on `core.js`, the only two hand-draw files the tmv zip keeps: `!` lines in
   `[tmv_exclude]`) and paper (`toPaper` → `core/paper-figure.js`), each labelled with what that style draws differently.
-  Pages: `episode/three-styles/` (index.html composes 3d/hand/paper.html, one iframe each; a panel sets `window.SHOT`,
-  or `window.FAIL` on an error, which fails the command). A card that breaks `checkCard` or an unknown seed stops before
+  Pages: `episode/three-styles/` (index.html composes 3d/hand/paper.html, one iframe each; a panel sets `window.SHOT`
+  once drawn; an error in any panel fails the command through `openDemo`). A card that breaks `checkCard` or an unknown seed stops before
   the browser starts.
 
 ## Driving it
