@@ -73,7 +73,7 @@ const STEP = {
     const audio = join(film, 'assets/reel-audio.wav');
     if (!existsSync(audio)) die(`${audio} is missing: run the audio step first`);
     mkdirSync(join(film, 'out'), { recursive: true });
-    if (P) console.log(`preset ${P.name}: ${P.w}×${P.h} at ${P.fps} fps, at most ${P.maxDur} s, fast encode (not for posting)`);
+    if (P) console.log(`preset ${P.name}: ${P.w}×${P.h} at ${FPS} fps${P.maxDur ? `, at most ${P.maxDur} s` : ''}, fast encode (not for posting; full needs the user's go)`);
     sh('node', ['core/render/video.mjs', film, '--size', '1080x1920', '--fps', String(FPS), '--workers', String(flag('workers', env().workers)), ...(P ? ['--preset', P.name] : []), '--out', join(film, 'out/video.mp4')]);
     // grain 0: the page paints its own paper grain. BT.709 limited range, as the published reels.
     try { mux({ video: join(film, 'out/video.mp4'), audio, out: MP4, fps: FPS, grain: 0, color: 'bt709', ...(P && { crf: P.crf, speed: P.x264 }) }); } catch (e) { die(e.message); }
@@ -86,8 +86,8 @@ const STEP = {
     if (!existsSync(MP4)) die(`${MP4} does not exist: run the render step first`);
     mkdirSync(CHECK, { recursive: true });
     const vo = JSON.parse(readFileSync(join(film, 'vo/vo.json'), 'utf8'));
-    const { checks, dur } = mp4Checks(MP4, { fps: FPS, length: P ? Math.min(vo.duration, P.maxDur) : vo.duration, ...(P && { w: P.w, h: P.h }) });
-    if (P) console.log(`preset ${P.name}: camera scan skipped (it measures the real reel)`);
+    const { checks, dur } = mp4Checks(MP4, { fps: FPS, length: P?.maxDur ? Math.min(vo.duration, P.maxDur) : vo.duration, ...(P && { w: P.w, h: P.h }) });
+    if (P?.maxDur) console.log(`preset ${P.name}: camera scan skipped (it measures the real reel)`);
     else if (!flag('no-camscan')) {
       sh('node', [join(TOOLS, 'look.mjs'), film, '--camscan', `--workers=${flag('workers', env().workers)}`, `--out=${join(CHECK, 'camscan.json')}`]);
       const cs = JSON.parse(readFileSync(join(CHECK, 'camscan.json'), 'utf8'));
@@ -96,7 +96,7 @@ const STEP = {
     // the keyword must be heard: Whisper on the final mix, around the last line
     const last = vo.lines[vo.lines.length - 1], lw = vo.words.filter(w => w.line === last.id);
     const k = lw.findIndex(w => /^comment\b/i.test(w.w)), keyword = k >= 0 && lw[k + 1] ? lw[k + 1].w.replace(/[^\w-]/g, '') : null;
-    if (P && keyword && last.e > dur) checks.push(['keyword heard in the CTA', null, `skipped (the ${P.name} preset cut the reel at ${dur.toFixed(1)} s)`]);
+    if (P?.maxDur && keyword && last.e > dur) checks.push(['keyword heard in the CTA', null, `skipped (the ${P.name} preset cut the reel at ${dur.toFixed(1)} s)`]);
     else if (keyword && !flag('no-asr') && hasWhisper()) {
       checks.push(keywordCheck(MP4, keyword, last.s - .6, last.e + .6, join(CHECK, 'cta.wav')));
     } else checks.push(['keyword heard in the CTA', null, keyword ? 'skipped (no Whisper or --no-asr)' : 'no "Comment <KEYWORD>" in the last line']);

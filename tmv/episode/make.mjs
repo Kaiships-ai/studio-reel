@@ -30,6 +30,10 @@ if (!ep || !existsSync(join(ep, 'episode.json'))) { console.error('usage: node e
 requireReady(env());
 const NAME = basename(ep), MP4 = join(ep, `${NAME}.mp4`), OUT = join(ep, 'out');
 const FPS = +(opt.fps ?? 30), [W, H] = [720, 1280];
+// every render is the 720x1280 review copy; a full-quality render needs the buyer's go (APPROVED-FULL, core/approve-full.mjs)
+if (opt.full) die(existsSync(join(ep, 'APPROVED-FULL'))
+  ? 'the full-quality render of an episode is not in this kit yet: the 720x1280 MP4 is the one to post'
+  : `the full render needs the buyer's go: ask them, then run pixi run node core/approve-full.mjs ${ep} --by "<who asked, when>"`);
 const sh = (tool, args) => { const r = run(tool, args); if (r.error || r.status !== 0) die(`failed: ${tool} ${args.join(' ')}`); };
 const probe = f => JSON.parse(run('ffprobe', ['-v', 'error', '-show_streams', '-show_format', '-of', 'json', f], { capture: true }).stdout || '{}');
 

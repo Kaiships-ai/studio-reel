@@ -1,5 +1,5 @@
 // reelcheck.mjs: the delivery checks for a finished vertical reel, in any style. Run from the library root.
-//   node core/render/reelcheck.mjs <film> [--mp4 file] [--length s] [--keyword WORD] [--fps 30] [--n 6] [--no-files] [--no-asr]
+//   node core/render/reelcheck.mjs <film> [--mp4 file] [--length s] [--keyword WORD] [--fps 30] [--size 1080x1920] [--n 6] [--no-files] [--no-asr]
 // <film> is the project folder (films/<name>/); the MP4 defaults to <film>/<name>.mp4. Checks, each ✓ / ✗ / – (not run):
 //   1080×1920 at the fps · BT.709 limited range · an audio stream · length = --length ± 1 frame (else 15–90 s) ·
 //   −14 ± 1 LUFS and peak ≤ −1 dBTP · no frozen stretch · no black frames · the CTA keyword heard by Whisper in the final
@@ -177,6 +177,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   const argv = process.argv.slice(2), opt = k => { const i = argv.indexOf(`--${k}`); return i >= 0 ? argv.splice(i, 2)[1] : null; };
   const has = k => { const i = argv.indexOf(`--${k}`); return i >= 0 && !!argv.splice(i, 1); };
   const mp4Opt = opt('mp4'), lenOpt = opt('length'), fps = +(opt('fps') || 30), n = +(opt('n') || 6);
+  const [w, h] = (opt('size') || '1080x1920').split('x').map(Number);
   let keyword = opt('keyword');
   const noFiles = has('no-files'), noAsr = has('no-asr');
   const film = argv[0] && resolve(argv[0]);
@@ -188,7 +189,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   const vo = existsSync(voJson) ? JSON.parse(readFileSync(voJson, 'utf8')) : null, last = vo && vo.lines && vo.lines[vo.lines.length - 1];
   const length = lenOpt != null ? +lenOpt : vo ? vo.duration : null;
   keyword ??= last && ((last.text.match(/\bcomment\s+([\w-]+)/i) || [])[1] || null);
-  const { checks, dur } = mp4Checks(mp4, { fps, length });
+  const { checks, dur } = mp4Checks(mp4, { fps, length, w, h });
   if (!keyword) checks.push(['keyword heard in the CTA', null, 'no --keyword given and no "Comment <KEYWORD>" in the last voice line']);
   else if (noAsr || !hasWhisper()) checks.push([`keyword "${keyword.toUpperCase()}" heard in the CTA`, null, 'skipped (no Whisper or --no-asr)']);
   else checks.push(keywordCheck(mp4, keyword, last ? last.s - .6 : dur - 4, last ? last.e + .6 : dur, join(check, 'cta.wav')));

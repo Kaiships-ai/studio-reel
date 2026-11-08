@@ -115,8 +115,13 @@ const JOURNEYS = {
     });
     await step('test preset: 270×480 at 12 fps, verified', () => has(has(ok(node(MAKE, TEST, 'render', 'verify')), 'preset test: 270×480 at 12 fps'), '✓ 270×480 at 12 fps'));
     await step('ffprobe agrees', () => { const r = run('ffprobe', ['-v', 'error', '-select_streams', 'v', '-show_entries', 'stream=width,height,r_frame_rate', '-of', 'csv=p=0', `${TEST}/verify-run-test.mp4`], { capture: true }); log(r.stdout); eq(r.stdout.trim(), '270,480,12/1', 'ffprobe'); });
-    if (!argv.includes('--full')) return SKIP('full 1080×1920 render', 'only with --full');
-    await step('full: 1080×1920 MP4 and cover, every check ✓', () => { ok(node(MAKE, FILM, 'render', 'verify')); for (const f of ['verify-run.mp4', 'verify-run-cover.png']) if (!existsSync(join(FILM, f))) throw new Error(`${f} missing`); });
+    await step('no preset: medium 720×1280 MP4 and cover, every check ✓', () => { if (!existsSync(join(FILM, 'assets/reel-audio.wav'))) ok(node(MAKE, FILM, 'vo', 'audio')); has(ok(node(MAKE, FILM, 'render', 'verify')), '✓ 720×1280 at'); for (const f of ['verify-run.mp4', 'verify-run-cover.png']) if (!existsSync(join(FILM, f))) throw new Error(`${f} missing`); });
+    await step('full without the user\'s go is refused', () => {
+      const saved = process.env.REEL_PRESET; process.env.REEL_PRESET = 'full';
+      try { has(no(node(MAKE, FILM, 'render')), "needs the user's go"); } finally { if (saved === undefined) delete process.env.REEL_PRESET; else process.env.REEL_PRESET = saved; }
+    });
+    if (!argv.includes('--full')) return SKIP('full 1080×1920 render', 'only with --full and the user\'s go');
+    await step('full: 1080×1920 MP4 and cover, every check ✓', () => { ok(node('core/approve-full.mjs', FILM, '--by', 'journeys --full')); process.env.REEL_PRESET = 'full'; try { ok(node(MAKE, FILM, 'render', 'verify')); } finally { delete process.env.REEL_PRESET; } for (const f of ['verify-run.mp4', 'verify-run-cover.png']) if (!existsSync(join(FILM, f))) throw new Error(`${f} missing`); });
   },
   async presenter() {
     const dir = join(EV, 'designer-frames'); mkdirSync(dir, { recursive: true });
