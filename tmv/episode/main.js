@@ -49,16 +49,28 @@ const STAND_AT = EXTRA.map((_, i) => [-0.35 - 0.45 * i, -0.05 - 0.15 * (i % 2)])
 const LINES = VO.lines, DUR = VO.duration + 1.4;
 const BEATS = EP.beats.map((b, i) => ({ ...b, i, j: 0, a: i ? LINES[i].s - 0.12 : 0, b: i + 1 < LINES.length ? LINES[i + 1].s - 0.12 : DUR, ls: LINES[i].s, le: LINES[i].e }));
 // A cut every 2.6 s at most (the real season cut every 2 s): a story beat longer than that splits on word starts into
-// sub-shots that cut between its own angle and a cover angle, and the first beat cuts by 1.5 s. Cards hold; the vote
-// card lies over the last beat's shots.
+// sub-shots that cut between its own angle and a cover angle, and the first beat cuts by 1.5 s. The vote card lies
+// over the last beat's shots.
 const MAXSHOT = 2.6, FIRSTCUT = 1.5;
 const coverOf = (b) => { const ch = CAST[b.who];
-  if (!['close', 'two', 'wide', 'room', 'phone'].includes(b.shot)) return undefined;   // cards hold
+  if (!['close', 'two', 'wide', 'room', 'phone'].includes(b.shot)) return undefined;
   if (ch && inCorner(ch)) return { close: 'wide', two: 'close', wide: 'close' }[b.shot];
   if (ch?.kind === 'bot') return b.shot === 'close' ? 'two' : 'close';
   if (ch && ch !== LEAD) return b.shot === 'wide' ? 'two' : 'wide';
   return { close: 'phone', phone: 'close', two: 'close', wide: 'close', room: 'close' }[b.shot]; };
+// A card holds up to 4 s (the season's cards held 2.5-3.6 s); a longer card beat opens on its speaker's close (cut like
+// any story shot) and the card lands on the first sentence that leaves it 2-4 s, else 2.6 s before the beat ends.
+const CARDMAX = 4.0;
+function cardSplit(b) {
+  const ws = VO.words.filter(w => w.line === LINES[b.i].id), ok = x => x > b.a + 0.9 && x < b.b - 0.9;
+  const at = ws.map((w, k) => ({ x: w.s - 0.12, sentence: k > 0 && /[.!?]$/.test(ws[k - 1].w) })).filter(c => ok(c.x));
+  const cut = at.find(c => c.sentence && b.b - c.x >= 2 && b.b - c.x <= CARDMAX)?.x ?? at.sort((p, q) => Math.abs(p.x - b.b + MAXSHOT) - Math.abs(q.x - b.b + MAXSHOT))[0]?.x;
+  if (cut === undefined) return [b];
+  const lead = split({ ...b, shot: 'close', b: cut });
+  return [...lead, { ...b, j: lead.length, a: cut }];
+}
 function split(b) {
+  if (['card', 'stats'].includes(b.shot) && b.b - b.a > CARDMAX) return cardSplit(b);
   const cover = coverOf(b);
   if (!cover || b.b - b.a <= (b.i ? MAXSHOT : FIRSTCUT)) return [b];
   const starts = VO.words.filter(w => w.line === LINES[b.i].id).map(w => w.s - 0.12);

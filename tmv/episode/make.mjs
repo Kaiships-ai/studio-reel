@@ -85,6 +85,7 @@ function episode() {
     if (b.shot === 'card' && (!Array.isArray(b.card) || !b.card.length || !b.card.every(str))) err(`${at} is a card: it needs "card": ["LINE ONE", "LINE TWO"]`);
     if (b.shot === 'stats' && (!Array.isArray(b.stats) || !b.stats.length || !b.stats.every(r => r && str(r.label) && r.value != null && (r.bar === undefined || (typeof r.bar === 'number' && r.bar >= 0 && r.bar <= 1))))) err(`${at} is a stats card: it needs "stats": [{"label": "views", "value": "212"}]`);
     if (b.hot !== undefined && !(Array.isArray(b.hot) && b.hot.every(str))) err(`${at}: "hot" must be a list of words`);
+    if (b.idea !== undefined && !str(b.idea)) err(`${at}: "idea" must be a short text, like "theo-ad-hits-40k"`);
     for (const [k, v] of Object.entries(b.hud ?? {})) if (!(typeof v === 'string' || typeof v === 'number' || (v && typeof v === 'object' && v.value != null && (v.bar === undefined || (typeof v.bar === 'number' && v.bar >= 0 && v.bar <= 1)))))
       err(`${at}: hud "${k}" must be "212" or {"value": "212", "bar": 0..1, "style": "danger"}`);
   });

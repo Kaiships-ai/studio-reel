@@ -50,14 +50,19 @@ def luma(v, t):
 
 
 def faint(v, t, y0=0.40, y1=0.88):
-    # share of faint grey pixels in the middle band: a ghost picture behind a card reads 0.07-0.08, a plain card <= 0.045
+    # share of the middle band covered by faint patches: 3x3 blocks all 6-60 levels under the paper (the 90th percentile).
+    # The card's own type, rules and grey caption words are thinner than a block; a picture showing through at about 15 %
+    # or more fills the band with patches (fainter ones pass). The paper is not the median: a ghost darkens the median too.
     w, h = 108, 192
     out = gray(v, t, w, h)
-    px = [out[y * w + x] for y in range(int(h * y0), int(h * y1)) for x in range(w)]
-    if not px:
+    r0, r1 = int(h * y0), int(h * y1)
+    band = sorted(out[y * w + x] for y in range(r0, r1) for x in range(w))
+    if not band:
         return 1.0
-    bg = sorted(px)[len(px) // 2]
-    return sum(1 for q in px if bg - 60 < q < bg - 6) / len(px)
+    bg = band[int(len(band) * 0.9)]
+    f = [[bg - 60 < out[y * w + x] < bg - 6 for x in range(w)] for y in range(h)]
+    patch = sum(1 for y in range(r0, r1) for x in range(1, w - 1) if all(f[y + dy][x + dx] for dy in (-1, 0, 1) for dx in (-1, 0, 1)))
+    return patch / len(band)
 
 
 def speech(wav):
@@ -118,10 +123,12 @@ def main():
     g("G7", "movement in the first second (a cut by 1.5 s)", bool(c) and c[0] <= 1.5, f"first cut {c[0]:.2f} s" if c else "no cut")
     shots = shots_of(ep, vo, d)
     ex = [s for s in shots if s["kind"] == "explain"]
-    whites = [(s["id"], round(luma(v, (s["a"] + s["b"]) / 2))) for s in ex]
+    # a card beat longer than 4 s opens on its speaker and ends on the card: the beat's paper frames are the card
+    lum = {s["id"]: [(t, luma(v, t)) for t in (s["a"] + (s["b"] - s["a"]) * k for k in (0.25, 0.5, 0.75, 0.9))] for s in ex}
+    whites = [(s["id"], round(max(l for _, l in lum[s["id"]]))) for s in ex]
     g("G4", "at least 2 explain cards, each on a white or cream ground (luma > 180)", len(ex) >= 2 and all(l > 180 for _, l in whites),
       whites or "no explain card")
-    ghost = [(s["id"], round(max(faint(v, s["a"] + (s["b"] - s["a"]) * k) for k in (0.25, 0.5, 0.75)), 3)) for s in ex]
+    ghost = [(s["id"], round(max((faint(v, t) for t, l in lum[s["id"]] if l > 180), default=1.0), 3)) for s in ex]
     g("G4b", "explain cards on a plain ground, no faint picture behind (< 6 %)", bool(ex) and all(f < 0.06 for _, f in ghost), ghost or "no explain card")
     fs = [s for s in shots if s["face"]]
     fsec = sum(s["b"] - s["a"] for s in fs)
