@@ -27,6 +27,21 @@ step('doctor', ['run', 'studio', 'doctor']);
 const again = step('install again (must be a no-op)', ['run', 'studio', 'install']);
 if (again > 60) fail(`the second install took ${again} s: it should skip everything`);
 
+// The TMV kit: the sample ships rendered and install only draws 2 s of it, so CI renders a whole episode itself, on a
+// copy of the sample (its voice is the shipped take: no Gemini key), and its check report must be all ✓.
+// Linux CI has no GPU (software WebGL, seconds a frame): 8 fps there keeps it to minutes, as on a buyer's machine without one.
+if (!existsSync(join(dir, 'kit', 'check-reel'))) {
+  if (!existsSync(join(dir, 'episodes', 'sample', 'sample.mp4'))) fail('the zip has no episodes/sample/sample.mp4 (the buyer must see the sample at once)');
+  const ep = join(dir, 'episodes', 'ci-ep');
+  rmSync(ep, { recursive: true, force: true });
+  cpSync(join(dir, 'episodes', 'sample'), ep, { recursive: true, filter: f => !/[\\/](out|sample\.mp4)$/.test(f) });
+  step('make an episode (render, check)', ['run', 'node', 'episode/make.mjs', 'episodes/ci-ep', 'render', 'check', ...(process.platform === 'linux' ? ['--fps', '8'] : [])]);
+  const rep = JSON.parse(readFileSync(join(ep, 'out', 'check.json'), 'utf8'));
+  const bad = rep.checks.filter(c => !c.ok);
+  if (bad.length || !existsSync(rep.mp4)) fail(`episode: ${bad.map(c => c.name).join(', ') || 'no MP4'}`);
+  console.log(`\n✓ clean install passed in ${dir}: ${rep.mp4}`);
+  process.exit(0);
+}
 const film = join(dir, 'films', 'ci-reel');
 rmSync(film, { recursive: true, force: true });
 cpSync(join(dir, 'kit', 'check-reel'), film, { recursive: true });

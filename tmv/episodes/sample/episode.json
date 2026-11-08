@@ -1,0 +1,167 @@
+{
+  "series": "Night Build",
+  "ep": 1,
+  "title": "Two hundred views",
+  "palette": {
+    "neon": "#FF3D8B",
+    "left": "#FF3D8B",
+    "right": "#29E0FF",
+    "card": "#EFE9DE"
+  },
+  "texts": {
+    "handle": "@nova.builds",
+    "sign": "SPEED WINS",
+    "kicker": "{series} · EP {ep}",
+    "phoneLabel": "VIEWS",
+    "phoneHud": "VIEWS",
+    "phoneFoot": "last 24 h",
+    "or": "or",
+    "voteFooter": "COMMENT {a} OR {b} · EP {next} FOLLOWS"
+  },
+  "narrator": {
+    "voice": "Achird",
+    "style": "warm storyteller, a little wry"
+  },
+  "cast": [
+    {
+      "id": "nova",
+      "seed": "nova"
+    },
+    {
+      "id": "theo",
+      "seed": "theo"
+    },
+    {
+      "id": "blip",
+      "seed": "blip"
+    }
+  ],
+  "beats": [
+    {
+      "who": "nova",
+      "shot": "room",
+      "line": "Nova shipped her app today. Two hundred views.",
+      "hud": {
+        "DAY": "1",
+        "VIEWS": "212",
+        "GOAL": {
+          "value": "2%",
+          "bar": 0.02
+        }
+      },
+      "exp": "tired"
+    },
+    {
+      "who": "theo",
+      "shot": "stats",
+      "line": "Across town, Theo's launch ad hit forty thousand by lunch.",
+      "hud": {
+        "RIVAL": {
+          "value": "40,000",
+          "style": "danger"
+        }
+      },
+      "exp": "smirk",
+      "head": "Day 1 · where you stand",
+      "stats": [
+        {
+          "label": "@nova.builds · views",
+          "value": "212",
+          "extra": "/ 10,000"
+        },
+        {
+          "label": "@theo.ships · views",
+          "value": "40,000",
+          "style": "danger"
+        },
+        {
+          "label": "Nova's goal",
+          "value": "2%",
+          "bar": 0.02
+        }
+      ],
+      "source": "source: each post's insights, first 24 h"
+    },
+    {
+      "who": "nova",
+      "shot": "close",
+      "line": "His app does half of what hers does.",
+      "exp": "angry"
+    },
+    {
+      "who": "theo",
+      "shot": "two",
+      "line": "Theo just grins. Views are views, he says. Speed wins.",
+      "hud": {
+        "RIVAL": {
+          "value": "52,000",
+          "style": "danger"
+        }
+      },
+      "exp": "grin"
+    },
+    {
+      "who": "blip",
+      "shot": "card",
+      "line": "Then Blip beeps. People don't share apps. They share stories.",
+      "exp": "proud",
+      "card": [
+        "APPS DON'T SPREAD.",
+        "STORIES DO."
+      ]
+    },
+    {
+      "who": "nova",
+      "shot": "close",
+      "line": "So her story is the bug that almost killed it?",
+      "exp": "thinking"
+    },
+    {
+      "who": "theo",
+      "shot": "close",
+      "line": "Theo says post a clean demo. Nobody cares about bugs.",
+      "exp": "doubt"
+    },
+    {
+      "who": "nova",
+      "shot": "phone",
+      "line": "Three nights. One bug. Nova almost quit.",
+      "hud": {
+        "VIEWS": "236",
+        "GOAL": {
+          "value": "2%",
+          "bar": 0.024
+        }
+      },
+      "exp": "sad"
+    },
+    {
+      "who": "blip",
+      "shot": "two",
+      "line": "Blip is sure. That is the story. Show the night she almost quit.",
+      "exp": "proud"
+    },
+    {
+      "who": "blip",
+      "shot": "close",
+      "line": "One post tonight. Tomorrow, they count.",
+      "hud": {
+        "DAY": "2"
+      },
+      "exp": "excited"
+    },
+    {
+      "who": "nova",
+      "shot": "close",
+      "line": "Comment A for the demo, or B for the story.",
+      "exp": "determined"
+    }
+  ],
+  "vote": {
+    "question": "What does Nova post tonight?",
+    "a": "the demo",
+    "b": "the story",
+    "tagA": "A",
+    "tagB": "B"
+  }
+}

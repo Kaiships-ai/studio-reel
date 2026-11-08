@@ -1,0 +1,39 @@
+# TMV episode (the paid kit's sample episode, cast and character designer)
+
+Files ship from `tmv/`: `episode/` (the 3D engine ported from Ep1: main.js, stage.js, world.js, hud.js, assets/room.glb;
+make.mjs, voice.py, designer.mjs, index.html, fonts), `episodes/sample/` (episode.json as narration, index.html, the Gemini narrator's take
+`vo/take.wav` and its cut `vo/vo.wav` + `vo/vo.json`), `characters/` (cast.js = the three seeds Nova, Theo, Blip; rig.js builds them in 3D: humans from jay.glb
+recoloured and restyled, Blip from primitives) and `character-designer.html`. In the tmv zip there is no `kit/check-reel`: `studio install` renders the sample
+episode as its test render (`kit/studio.mjs`).
+
+## Sub-features
+
+- `episode.vo`: `pixi run node episode/make.mjs <ep> vo` → one Gemini TTS call (`episode/gemini.mjs`; `narrator.voice`,
+  default Achird; `GOOGLE_API_KEY` in `.env`, `pixi run studio key`), `vo/take.wav`, cut by `voice.py` (stretches of voice
+  grouped so each line's length matches its letters) into `vo/vo.wav`, `vo/vo.json` (lines; word times at the voice's
+  own pauses, letter-weighted inside a phrase). Errors: no key / 400 key / 429 (tries the fallback models) / no network
+  (`GEMINI_HOST` points it elsewhere to test). Test-only: `TMV_VO_TAKE=<wav>` cuts that take instead of calling Gemini,
+  and `studio doctor` then skips its `voice key` call; the journeys set it to the sample's `vo/take.wav`. Dev-only sync check on a Mac with whisper.cpp: `pixi run python dev/caption-sync.py <ep>` (not shipped). `core/render/reel.mjs vo` uses the same path when kai-hand-draw is absent.
+- `episode.render`: `make.mjs <ep> render check` → `<ep>/<name>.mp4` at 720x1280 30 fps with the code-made bed (room tone, music, hits; `bed.py`) (ST-77 preview; `--full` only on
+  request), checks size, sound, length = voice + 1.4 s, -14 LUFS, no black, no silent gap, no 1.5 s freeze, faces not blown out (`faceluma.py`: under 2 % of skin pixels washed out, frames at 2/s outside cards); `out/sheet.jpg`.
+- `episode.look` (ST-79): the Ep1 room at night (neon through the curtain, screen key, rim light, bloom, DOF, grain), the
+  rival's corner (ring light, neon sign from `texts.sign`), shots close / two / wide / phone / card, cream cards, kicker
+  `<SERIES> · EP N`, word-by-word captions, HUD chips that roll on change, no end card: the vote is the last frame.
+- `cast.designer`: `pixi run designer` serves the page; seeds, parts, colours rebuild the same 3D figure the episode uses;
+  "Copy for Claude" copies one sentence plus a cast JSON entry.
+
+## Driving it
+
+`node .claude/skills/verify/journeys.mjs --only=tmv-episode [--zip=<built tmv zip>]` (needs `pixi` on PATH; the install step is `test/clean-install.mjs`; a few
+minutes): builds the zip, unzips into a fresh folder with a space in its path, `pixi run studio install` (sample
+episode, every check ✓), doctor, second install no-op, designer served from the kit (3D screenshots of each seed + one
+designed) and copied JSON (no `voice` field), planted breaks (a beat for `nobody` → `"who": "nobody" is not in the cast`; a changed line →
+names the vo step). Evidence: `tmv-sample.mp4`, `tmv-sheet.jpg`, `tmv-char-*.png`.
+
+- `series` (slice 4): `episode/series.mjs new|next|status`; `series.json` holds series, cast, palette, texts (make.mjs and
+  main.js merge it under each episode); `next --winner X` writes `previously` + the PREVIOUSLY card beat; the journey
+  renders Ep2 from `features/tmv-series-ep2.json`, voiced from the sample's recorded take (no key in CI). Evidence: `tmv-series-ep1.mp4`, `tmv-series-ep2.mp4`, `tmv-series.json`.
+- `one-prompt` (slice 5): `START.md` + the `/studio`, `/episode`, `/series` skills + `.claude/settings.json` (allows
+  `pixi run *` and the episode scripts; buyer kit only) + `make.mjs new <name>`. Journey `tmv-one-prompt`: a fresh
+  unzip, then every fenced command in START.md in order, as written; the two places Claude writes a story use the sample
+  (retitled) and `features/tmv-series-ep2.json`. Ends with ep1 and the linked ep2, every check ✓. Evidence: `prompt-ep1.mp4`, `prompt-ep2.mp4`.

@@ -38,4 +38,6 @@ test('install test: a new [dev] manifest entry skips it, moving a shipped file i
   assert.equal(installNeeded(['kit.manifest'], files, base, m('[dev]\nstyles/a/b.js\n[starter]\ncore/\nstyles/\n')), true);
   assert.equal(installNeeded(['styles/a/STYLE.md'], files, base, base), false);
   assert.equal(installNeeded(['kit/env.mjs'], files, base, base), true);
+  assert.equal(installNeeded(['tmv/episode/make.mjs'], files, base, base), true, 'the tmv zip is on the install path');
+  assert.equal(installNeeded(['tmv/README.md'], files, base, base), false, 'tmv docs do not run the install test');
 });

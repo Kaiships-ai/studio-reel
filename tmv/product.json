@@ -1,0 +1,7 @@
+{
+  "name": "How we make Ten Million Views",
+  "version": "1.0",
+  "platforms": ["macOS 14+ (Apple Silicon)", "Windows 10/11 x64", "Linux x64 (Ubuntu 22.04+, Debian 12+)"],
+  "requires": ["Claude Code", "internet for the first setup"],
+  "support": ["Discord: Buyer role", "kaiships.ai@gmail.com"]
+}

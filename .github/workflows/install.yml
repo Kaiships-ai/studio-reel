@@ -7,6 +7,8 @@
 #     or out of a zip (release/install-needed.mjs), so a new [dev] entry runs nothing;
 #   - all five machines (Linux, Windows pwsh + Git Bash, macOS arm64 + Intel) run only for a v* tag, by hand
 #     (Actions > install > Run workflow), or when the PR gets the label `test-all-os`.
+# Two zips are tested: Pro (the check reel) and tmv (How we make Ten Million Views: the sample episode, voiced from the
+# shipped take, so no Gemini key is needed). tmv runs on Linux with Pro, and on Windows pwsh + macOS arm64 when FULL.
 # A newer push to the same PR cancels the older run.
 name: install
 on:
@@ -27,6 +29,7 @@ on:
       - 'kit.manifest'
       - 'release/**'
       - 'test/**'
+      - 'tmv/**'
       - '.github/workflows/install.yml'
       - '!**/*.md'
   workflow_dispatch:
@@ -57,8 +60,9 @@ jobs:
           FULL: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'test-all-os') }}
         run: |
           m=''
-          if [ "$INSTALL" = true ] || [ "$FULL" = true ]; then m='{"os":"ubuntu-24.04","shell":"bash"}'; fi
-          if [ "$FULL" = true ]; then m="$m"',{"os":"windows-2025","shell":"pwsh"},{"os":"windows-2025","shell":"bash"},{"os":"macos-15","shell":"bash"},{"os":"macos-15-intel","shell":"bash"}'; fi
+          if [ "$INSTALL" = true ] || [ "$FULL" = true ]; then m='{"os":"ubuntu-24.04","shell":"bash","tier":"pro"},{"os":"ubuntu-24.04","shell":"bash","tier":"tmv"}'; fi
+          if [ "$FULL" = true ]; then m="$m"',{"os":"windows-2025","shell":"pwsh","tier":"pro"},{"os":"windows-2025","shell":"bash","tier":"pro"},{"os":"macos-15","shell":"bash","tier":"pro"},{"os":"macos-15-intel","shell":"bash","tier":"pro"}'; fi
+          if [ "$FULL" = true ]; then m="$m"',{"os":"windows-2025","shell":"pwsh","tier":"tmv"},{"os":"macos-15","shell":"bash","tier":"tmv"}'; fi
           echo "matrix={\"include\":[$m]}" >> "$GITHUB_OUTPUT"
           echo "run=$([ -n "$m" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
@@ -73,20 +77,31 @@ jobs:
     defaults:
       run:
         shell: ${{ matrix.shell }}
+    name: clean-install (${{ matrix.tier }}, ${{ matrix.os }}, ${{ matrix.shell }})
     env:
       PIXI_NO_TELEMETRY: '1'
+      # tmv: the voice step cuts the shipped sample take instead of calling Gemini (no key in CI)
+      TMV_VO_TAKE: ${{ matrix.tier == 'tmv' && 'episodes/sample/vo/take.wav' || '' }}
     steps:
       - uses: actions/checkout@v4
-      - name: Build the Pro zip exactly as buyers get it
+      - name: Build the ${{ matrix.tier }} zip exactly as buyers get it
         shell: bash
-        run: node release/build.mjs --tier pro --out "$RUNNER_TEMP/dist"
+        run: node release/build.mjs --tier ${{ matrix.tier }} --out "$RUNNER_TEMP/dist"
+      - name: The zip's checksum and file list (what the buyer gets)
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP/dist"
+          cat SHA256SUMS
+          if command -v sha256sum >/dev/null; then sha256sum -c SHA256SUMS; else shasum -a 256 -c SHA256SUMS; fi
+          zip=$(ls *.zip | head -1); unzip -Z1 "$zip" > files.txt
+          echo "files: $(wc -l < files.txt) · styles: $(grep -c '^[^/]*/styles/[^/]*/STYLE.md$' files.txt)"
       - name: Unzip it into a folder with a space in its name (no .git), as a buyer would
         shell: bash
         run: |
           dest="$RUNNER_TEMP/Kaiships Studio"; mkdir -p "$dest"
-          zip=$(ls "$RUNNER_TEMP"/dist/kaiships-studio-pro-*.zip)
+          if [ "${{ matrix.tier }}" = tmv ]; then zip=$(ls "$RUNNER_TEMP"/dist/tmv-studio-*.zip); top=tmv-studio; else zip=$(ls "$RUNNER_TEMP"/dist/kaiships-studio-pro-*.zip); top=kaiships-studio; fi
           if [ "$RUNNER_OS" = Windows ]; then pwsh -NoProfile -Command "Expand-Archive -LiteralPath '$zip' -DestinationPath '$dest'"; else unzip -q "$zip" -d "$dest"; fi
-          echo "KIT=$dest/kaiships-studio" >> "$GITHUB_ENV"
+          echo "KIT=$dest/$top" >> "$GITHUB_ENV"
       - name: Install pixi (PowerShell, as a Windows buyer would)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -108,18 +123,41 @@ jobs:
             ~/.cache/ms-playwright
             ~/AppData/Local/ms-playwright
             ~/Library/Caches/ms-playwright
-          key: kit-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pixi.lock', 'package-lock.json') }}
+          key: kit-${{ matrix.tier }}-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pixi.lock', 'tmv/pixi.lock', 'package-lock.json') }}
       - name: Linux browser libraries (the one step that needs sudo)
         if: runner.os == 'Linux'
         shell: bash
         run: cd "$KIT" && pixi run studio linux-deps
       - name: Clean install and one reel
         run: node test/clean-install.mjs "${{ env.KIT }}"
+      - name: 'Series: ep1 from the sample, the vote picks A, ep2 opens with PREVIOUSLY'
+        if: matrix.tier == 'tmv'
+        shell: bash
+        run: |
+          cd "$KIT"; s="$RUNNER_TEMP/series"
+          node episode/series.mjs new "$s" --from episodes/sample
+          node episode/series.mjs next "$s" --winner A
+          node episode/series.mjs status "$s"
+          cat "$s/ep2/episode.json"
+          node -e 'const e=require(process.argv[1]); if(e.ep!==2||!e.previously||e.previously.winner.tag!=="A"||e.beats[0].shot!=="previously") process.exit(1); console.log("✓ ep2 follows the vote of ep1: " + e.previously.winner.text)' "$s/ep2/episode.json"
+          cp "$s/series.json" "$s/ep2/episode.json" "$RUNNER_TEMP/dist/" 2>/dev/null || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: clean-install-${{ matrix.os }}-${{ matrix.shell }}
+          name: clean-install-${{ matrix.tier }}-${{ matrix.os }}-${{ matrix.shell }}
           path: |
             ${{ env.KIT }}/films/ci-reel/out/check/
             ${{ env.KIT }}/films/ci-reel/*.mp4
+            ${{ env.KIT }}/episodes/sample/out/check.json
+            ${{ env.KIT }}/episodes/sample/*.mp4
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zip-${{ matrix.tier }}-${{ matrix.os }}-${{ matrix.shell }}
+          path: |
+            ${{ runner.temp }}/dist/SHA256SUMS
+            ${{ runner.temp }}/dist/files.txt
+            ${{ runner.temp }}/dist/series.json
+            ${{ runner.temp }}/dist/episode.json
           if-no-files-found: ignore

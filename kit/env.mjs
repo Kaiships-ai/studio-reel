@@ -111,6 +111,13 @@ export function start(tool, args, opts = {}) {
   return spawn(cmd, args, { cwd: ROOT, shell: false, windowsHide: true, env: childEnv(extra), ...rest });
 }
 
+/** Opens a file in the OS text editor, detached (TextEdit, Notepad, xdg-open). Calls onError if none starts. */
+export function openInEditor(f, onError = () => {}) {
+  const [cmd, args] = process.platform === 'darwin' ? ['open', ['-e', f]] : process.platform === 'win32' ? ['notepad', [f]] : ['xdg-open', [f]];
+  const r = spawn(cmd, args, { detached: true, stdio: 'ignore', shell: false, windowsHide: false });
+  r.on('error', onError); r.unref();
+}
+
 /** process.env plus the pixi PATH and UTF-8 settings. Windows spells PATH "Path": keep exactly one key. */
 export function childEnv(extra = {}) {
   const base = { ...process.env };
