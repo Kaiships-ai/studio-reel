@@ -18,8 +18,8 @@ built style; else 3d), the full episode every built style (`builtStyles`), one L
 - `episode.vo`: `pixi run node episode/make.mjs <ep> vo` → one Gemini TTS call (`episode/gemini.mjs`; `narrator.voice`,
   default Achird; `GOOGLE_API_KEY` in `.env`, `pixi run studio key`), `vo/take.wav`, cut by `voice.py` (stretches of voice
   grouped so each line's length matches its letters) into `vo/vo.wav`, `vo/vo.json` (lines; word times at the voice's
-  own pauses, letter-weighted inside a phrase). Each line's pauses over 0.34 s are cut to 0.34 s before its words are
-  timed (`tighten`, from Ep1's `tighten.py`), so the voice runs on (G8) and the captions and cuts follow the tightened audio. A stretch of sound under 60 ms is a click, not a word: `spoken` drops it, so it never takes a phrase's place. Errors: no key / 400 key / 429 (tries the fallback models) / no network
+  own pauses: the words split into one run per stretch of voice, preferring runs that end on . ? ! then , ; :, letter-weighted inside a run). Each line's pauses over 0.34 s are cut to 0.34 s before its words are
+  timed (`tighten`, from Ep1's `tighten.py`), so the voice runs on (G8) and the captions and cuts follow the tightened audio. A stretch of sound under 60 ms is a click, not a word: `spoken` drops it, so it never takes a phrase's place. A stretch of noise is a breath, not a word: `spoken` drops a stretch whose median spectral flatness (100 Hz-4 kHz) is 0.28 or more (real takes: breaths 0.34-0.50, words up to 0.21), so an inhale never pulls a caption early. Inside a line, a frame that is not noise counts as voice down to -50 dB (else -38 dB), so a soft word is kept by `tighten` and gets its own stretch; `cuts` keeps -38 dB. A take that reads one line twice (a Gemini glitch seen in PR #41) stops the step with one line naming that line, its two times and "re-run vo for a new take" (`repeated`: 1.2 s windows of speech matched by DTW on cepstra inside the next 6 s; real takes: twice 0.20-0.24, good 0.39-0.45, limit 0.30; skipped when the script itself repeats 4 words). `voice.py --self-check` (synthetic doubled line, soft word, breath) runs in the tmv clean install. Errors: no key / 400 key / 429 (tries the fallback models) / no network
   (`GEMINI_HOST` points it elsewhere to test). Test-only: `TMV_VO_TAKE=<wav>` cuts that take instead of calling Gemini,
   and `studio doctor` then skips its `voice key` call; the journeys set it to the sample's `vo/take.wav`. Dev-only sync check on a Mac with whisper.cpp: `pixi run python dev/caption-sync.py <ep>` (not shipped). `core/render/reel.mjs vo` uses the same path when kai-hand-draw is absent.
 - `episode.render`: `make.mjs <ep> render check` → `<ep>/<name>.mp4` at 720x1280 30 fps with the code-made bed (room tone, music, hits; `bed.py`) (ST-77 preview; `--full` only on
@@ -46,7 +46,7 @@ built style; else 3d), the full episode every built style (`builtStyles`), one L
   episode/paper/index.html): ...`. A new engine imports `episode/timeline.js` (`loadEpisode`, `cardsOf`, `timeline`) for the
   episode, its voice, the cast cards (draw them with `toPaper` / `toHandDraw` from `core/character-card.mjs`), the shots,
   caption words and HUD, so the cuts below and the gates hold in every style. Unit test: `test/unit/tmv-engines.test.mjs`.
-- `episode.paper` (P1 of the paper lane): `episode/paper/index.html` + `episode/paper/main.js`, the `"style": "paper"` engine.
+- `episode.paper` (`"style": "paper"`): `episode/paper/index.html` + `episode/paper/main.js`.
   Each shot of the shared timeline shows its cast as `toPaper` → `drawPaperFigure(…, 'front')` stickers in front of a
   pop-up set (`episode/paper/set.js`): the room is a printed back board (night window with the sign across the street,
   string lights, a poster with the show's name) and cut-paper pieces (a shelf, the desk with the screen showing
@@ -68,6 +68,25 @@ built style; else 3d), the full episode every built style (`builtStyles`), one L
   vote is a sheet under the HUD (above a close-up's face) with the A and B tags popping on their words; when the last beat
   is a card, the card shows first and its sheet turns into the vote just before the A word. Proof: `node core/render/still.mjs <ep> <t…> --size 720x1280` on a copy
   of the sample with `"style": "paper"` after `make.mjs`'s page copy (stills only on the MacBook Air).
+- `episode.handdraw` (`"style": "handdraw"`): `episode/handdraw/index.html` loads `styles/kai-hand-draw/engine/core.js` +
+  `kaip.js` (paper grain, 12 fps boil) and `handdraw.js`, which draws each cast card as its `toHandDraw` presenter in the
+  timeline's shots. `framing.js` (pure) picks who and how big: close = the speaker's bust with the beat's `exp`; two = the
+  speaker and the lead (the lead with the first bot); wide/room = the room on its feet; phone = the lead with the phone;
+  the rival's corner holds only him. A bot card is drawn as a person (`toHandDraw` lists it as lost). The speaker's mouth moves while their line's words play (`VO_WORDS`). `lettering.js`
+  draws the type in the style's look: `card`, `stats` and `previously` as a paper index card on a cream ground to the
+  frame's edges (G4 luma > 180, G4b no faint ground), lettered in Permanent Marker and Shantell Sans (the page loads both
+  from `styles/kai-hand-draw/engine/fonts/`, kept in the tmv zip by `!` lines and checked by `missingFonts`); the HUD as a
+  paper tag; the vote high in the frame (the HUD hides) as the question strip and one paper card per answer, each popping in on its spoken tag; captions
+  (`phrases`/`phraseAt`, pure: up to 3 words / 18 characters of one line) on a painted ink plate at y 1580, spoken words
+  cream, the live word ochre, words not yet spoken grey. `set.js` paints the world behind every story shot (never behind a card):
+  the lead's room (window with the neon, string lights, desk, monitor, lamp, shelf, poster, note board) or, when the
+  speaker is in the corner, the rival's corner (his `texts.sign` as a neon sign, ring light, bulbs). `settingOf` (pure)
+  takes its colours from `palette` (`neon`, `left` = room lights, `right` = poster and the rival's glow, `card` = notes)
+  with main.js's fallbacks; `viewOf` (pure) picks the part of the set each shot sees (close-ups look at one side of the
+  room, alternating). Each element calls `boilSeed('set:…')`, so the set boils at 12 fps and holds between boil steps.
+  Unit test: `test/unit/tmv-handdraw.test.mjs`. Stills, no video:
+  `node core/render/still.mjs <ep> <t...> --size 1080x1920` after copying the page in as `make.mjs render` does; gates.py's
+  `luma(png, 0)` and `faint(png, 0)` measure G4/G4b on a single still.
 - `episode.cuts` (`episode/timeline.js`, shared by every engine): one beat per voiced line, cut every 2.6 s at most: a longer story beat splits on word starts into
   sub-shots that alternate its own angle and a cover angle (the lead: close ↔ phone; a bot: close ↔ two; the rival's
   corner: close ↔ wide), the first beat cuts by 1.5 s (on a word start no later than that, when there is one), the vote holds, a card holds up to 4 s: a longer `card` or
@@ -79,8 +98,9 @@ built style; else 3d), the full episode every built style (`builtStyles`), one L
   "Copy for Claude" copies one sentence plus a cast JSON entry.
 - `cast.styles`: `pixi run node episode/make.mjs styles <card>` (`<card>` = a seed, or a `.json` card: a cast entry, `{"seed": …}`
   plus overrides, or every part; `--out <file.png>`, default `workspace/<name>-styles.png`) → one 1280-wide PNG, the
-  card's character side by side in 3D (`characters/rig.js` on the designer's stage), hand-draw (`toHandDraw` →
-  `styles/kai-hand-draw/engine/kaip.js` on `core.js`, the only two hand-draw files the tmv zip keeps: `!` lines in
+  card's character side by side in 3D (`characters/rig.js` on the designer's stage, `lost3D`; top "jacket" = the hoodie
+  opened over a white shirt, a shader on the hoodie material; both stages carry a low front fill so the jaw is not black), hand-draw (`toHandDraw` →
+  `styles/kai-hand-draw/engine/kaip.js` on `core.js`, the only two hand-draw scripts the tmv zip keeps, with two fonts: `!` lines in
   `[tmv_exclude]`) and paper (`toPaper` → `core/paper-figure.js`), each labelled with what that style draws differently.
   Pages: `episode/three-styles/` (index.html composes 3d/hand/paper.html, one iframe each; a panel sets `window.SHOT`
   once drawn; an error in any panel fails the command through `openDemo`). A card that breaks `checkCard` or an unknown seed stops before

@@ -108,6 +108,11 @@ styles/kai-hand-draw/
 # but its presenter, which `episode/make.mjs styles` draws the buyer's character with
 !styles/kai-hand-draw/engine/core.js
 !styles/kai-hand-draw/engine/kaip.js
+# and the two hand-lettered fonts the hand-draw episode's cards and captions use
+!styles/kai-hand-draw/engine/fonts/PermanentMarker-Regular.ttf
+!styles/kai-hand-draw/engine/fonts/LICENSE-PermanentMarker.txt
+!styles/kai-hand-draw/engine/fonts/ShantellSans.ttf
+!styles/kai-hand-draw/engine/fonts/OFL-ShantellSans.txt
 kit/check-reel/
 .claude/skills/make-reel/
 # Clawd or a voice that is not ours; back in slice 7 with the seeded mascot and Kokoro

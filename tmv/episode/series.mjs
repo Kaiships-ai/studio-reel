@@ -5,7 +5,7 @@
 //   node episode/series.mjs status <series folder>                         every episode, its MP4 and its winner
 // `next` writes the PREVIOUSLY opening (ST-79: the card "PREVIOUSLY · EP N" with the winning answer, then the recap beat)
 // and leaves "beats" after it for you (Claude) to write: the story that follows the winning comment.
-import { existsSync, readFileSync, writeFileSync, mkdirSync, cpSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, cpSync } from 'node:fs';
 import { join, resolve, basename, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 

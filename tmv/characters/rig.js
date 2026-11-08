@@ -55,6 +55,7 @@ function makeHuman(c, base) {
       b.position.set(Math.sin(a) * r * 0.75, hs.y * 0.5, Math.cos(a) * hs.z * 0.15 - hs.z * 0.05); b.rotation.set(-0.3, 0, -a * 0.5); acc.add(b); }
   }
   if (c.top === 'jacket' || c.top === 'tee' || c.top === 'vest') for (const n of ['SM_Char_Jay_B_Hood', 'SM_Char_Jay_B_Strings', 'SM_Char_Jay_B_Pocket']) if (N[n]) N[n].visible = false;
+  if (c.top === 'jacket') { openFront(N.SM_Char_Jay_B_Hoodie.material, c.topColor ?? '#2B2733', '#F2EFE8'); if (N.SM_Char_Jay_B_Hem) N.SM_Char_Jay_B_Hem.visible = false; }
   const ex = std(c.extraColor ?? '#20242e', { roughness: 0.4, metalness: 0.3 });
   if (c.extra === 'headset') {
     const band = new THREE.Mesh(new THREE.TorusGeometry(r * 1.13, r * 0.07, 8, 32, Math.PI), ex); band.position.y = hs.y * 0.05; acc.add(band);
@@ -80,6 +81,18 @@ function makeHuman(c, base) {
   const [hk, gk] = BUILD[c.build] ?? BUILD.average; root.scale.set(gk * hk, hk, gk * hk);
   const P = makePoser(root, B, { sweat: N.SM_Char_Jay_FX_Sweat, tear: N.SM_Char_Jay_FX_Tear });
   return { c, root, kind: 'human', ...P, pose: (o) => P.pose({ ...o, exp: { ...(c.face ?? {}), ...(o.exp ?? {}) } }) };
+}
+// a jacket is the hoodie's body opened down the front over a shirt. The opening is drawn per pixel from the rest-pose
+// position (metres, the base figure faces +z), so its edges stay sharp on the coarse mesh and follow the torso as it bends.
+function openFront(mat, top, shirt) {
+  const lapel = new THREE.Color(top).multiplyScalar(0.5);
+  mat.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, { uShirt: { value: new THREE.Color(shirt) }, uLapel: { value: lapel } });
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vRest;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvRest = position;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vRest;\nuniform vec3 uShirt, uLapel;').replace('#include <color_fragment>', `#include <color_fragment>
+      float x = abs(vRest.x), w = 0.014 + 0.012 * clamp((vRest.y - 0.5) / 0.28, 0.0, 1.0);
+      if (vRest.z > 0.02 && x < 0.1) diffuseColor.rgb = x < w ? uShirt : x < w + 0.005 ? uLapel : diffuseColor.rgb;`);
+  };
 }
 function headBox(mesh, headBone) {
   const sk = mesh.skeleton, hi = sk.bones.indexOf(headBone), g = mesh.geometry, p = g.attributes.position, si = g.attributes.skinIndex, sw = g.attributes.skinWeight;

@@ -30,3 +30,11 @@ test('a TMV episode page is checked like a style page', () => {
   });
   assert.deepEqual(missingFonts(files, blob), ['episode/paper/index.html: font /episode/fonts/B.woff2 is not in the zip']);
 });
+
+test('a tmv episode page is checked too: its fonts resolve from the kit root', () => {
+  const [files, blob] = zip({
+    'episode/handdraw/index.html': '<style>@font-face{src:url(/styles/s/fonts/A.ttf)} @font-face{src:url(/styles/s/fonts/B.ttf)}</style>',
+    'styles/s/fonts/A.ttf': '',
+  });
+  assert.deepEqual(missingFonts(files, blob), ['episode/handdraw/index.html: font /styles/s/fonts/B.ttf is not in the zip']);
+});

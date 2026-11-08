@@ -1,8 +1,8 @@
 // character-card.mjs: one character, every style. A card is the TMV cast format (tmv/characters/cast.js, TMV_SEEDS):
 //   { name, role, kind: human|bot, build, skin, hair, hairColor, top, topColor, legs, eyes, extra }
-// The 3D episode engine reads a card as it is. toHandDraw(card) gives the kai-hand-draw presenter (the CHARACTER block
-// of a film's src/character.js, the keys of styles/kai-hand-draw/engine/kaip.js) that looks the most like it, and
-// lists what that style cannot show, so the buyer sees the same character whichever style they pick.
+// The 3D episode engine reads a card as it is; lost3D(card) names what it draws differently. toHandDraw(card) gives the
+// kai-hand-draw presenter (the CHARACTER block of a film's src/character.js, the keys of styles/kai-hand-draw/engine/kaip.js)
+// that looks the most like it, and lists what that style cannot show, so the buyer sees the same character whichever style they pick.
 
 export const CARD = {
   kind: ['human', 'bot'],
@@ -56,6 +56,22 @@ export function toHandDraw(card) {
     pants_color: up(card.legs) ?? '#1F1B26',
   };
   return { character, lost };
+}
+
+/** What the 3D episode engine (tmv/characters/rig.js) draws differently for a card; it reads the card as it is. */
+export function lost3D(card) {
+  const errs = checkCard(card);
+  if (errs.length) throw new Error(`character card: ${errs.join('; ')}`);
+  const lost = [];
+  if (card.kind === 'bot') {
+    if (card.hair && card.hair !== 'none') lost.push(`hair "${card.hair}": a robot has none`);
+    if (card.top && card.top !== 'vest') lost.push(`top "${card.top}": a robot wears a vest band`);
+  } else {
+    if (card.eyes && card.eyes !== 'dot') lost.push(`eyes "${card.eyes}": the 3D figure's own eyes`);
+    if (['tee', 'vest'].includes(card.top)) lost.push(`top "${card.top}": a sweater`);
+    if (card.extra === 'antenna') lost.push('extra "antenna": not on a person');
+  }
+  return lost;
 }
 
 export const PAPER_BUILD = {
