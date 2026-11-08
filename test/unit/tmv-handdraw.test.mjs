@@ -39,6 +39,27 @@ test('every story shot of the sample frames its speaker (the lead on the phone),
   }
 });
 
+// gates.py sees a cut only when the picture changes (ffmpeg scene > 0.2): the first hand-draw episode on CI lost 9 of
+// its 43 cuts to two shots on the same side (a beat split in two, then the next beat) and to the corner's close-up
+// against a medium shot of the same size
+test('every cut between story shots changes the picture: the other side, and in the corner another size or place', () => {
+  const W = {}; new Function('window', readFileSync(join(TMV, 'characters/cast.js'), 'utf8'))(W);
+  const cards = cardsOf(sample, W.TMV_SEEDS), { SHOTS, lead } = timeline(sample, vo, cards), roster = rosterOf(cards, lead);
+  const frame = (n, t) => frameOf(SHOTS[n], t, roster, sample.beats[SHOTS[n].i].exp, n);
+  let corner = 0;
+  for (let n = 1; n < SHOTS.length; n++) {
+    const a = frame(n - 1, SHOTS[n - 1].b - 0.01), b = frame(n, SHOTS[n].a), where = `cut at ${SHOTS[n].a.toFixed(2)} s`;
+    if (a.paper || b.paper) continue;
+    assert.notEqual(a.side, b.side, `${where}: the picture changes side`);
+    if (roster.corner.includes(SHOTS[n].who) && roster.corner.includes(SHOTS[n - 1].who)) {
+      corner++;
+      const [p, q] = [a.figs[0], b.figs[0]], bust = (g) => g.pose.startsWith('exp-');
+      assert.ok(bust(p) !== bust(q) || Math.max(p.h, q.h) / Math.min(p.h, q.h) >= 1.3, `${where}: the rival changes size (${p.pose} ${p.h} -> ${q.pose} ${q.h})`);
+    }
+  }
+  assert.ok(corner >= 3, 'the sample cuts inside the corner');
+});
+
 test('a buyer cast without a bot, with a lone lead or with a crowded room still frames every speaker', () => {
   const card = (kind, o = {}) => ({ name: 'x', kind, ...o });
   const shot = (who, shot) => ({ who, shot, i: 0, j: 0, a: 0, b: 2 });
