@@ -152,6 +152,8 @@ Lemo-Opuscar asset release by LemoLab; they are not in the zip.
 |---|---|---|
 | JetBrains Mono (The JetBrains Mono Project Authors) | `episode/fonts/` | SIL Open Font License 1.1 (`OFL-jetbrainsmono.txt`) |
 | Inter Tight (The Inter Project Authors) | `episode/fonts/` | SIL Open Font License 1.1 (`OFL-intertight.txt`) |
+| Permanent Marker | `styles/kai-hand-draw/engine/fonts/` | Apache License 2.0 (`LICENSE-PermanentMarker.txt`) |
+| Shantell Sans (The Shantell Sans Project Authors) | `styles/kai-hand-draw/engine/fonts/` | SIL Open Font License 1.1 (`OFL-ShantellSans.txt`) |
 | ZCOOL KuaiLe, Fredoka, Lilita One, IM Fell English (subsets) | `core/fonts/` | SIL Open Font License 1.1 (`core/fonts/OFL.md`) |
 
 Fonts and other assets used by individual style demos are listed in each demo's `CREDITS` file.

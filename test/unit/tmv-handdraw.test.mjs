@@ -8,6 +8,7 @@ import { ROOT } from '../../kit/env.mjs';
 import { enginePage } from '../../tmv/episode/engines.mjs';
 import { timeline, cardsOf } from '../../tmv/episode/timeline.js';
 import { rosterOf, frameOf } from '../../tmv/episode/handdraw/framing.js';
+import { phrases, phraseAt } from '../../tmv/episode/handdraw/lettering.js';
 
 const TMV = join(ROOT, 'tmv'), read = p => JSON.parse(readFileSync(join(TMV, p), 'utf8'));
 const sample = read('episodes/sample/episode.json'), vo = read('episodes/sample/vo/vo.json');
@@ -18,6 +19,7 @@ test('"style": "handdraw" finds its page instead of stopping with "not built yet
   for (const src of ['/styles/kai-hand-draw/engine/core.js', '/styles/kai-hand-draw/engine/kaip.js', '/episode/handdraw/handdraw.js', '/characters/cast.js'])
     assert.ok(page.includes(`src="${src}"`), `the page loads ${src}`);
   assert.doesNotMatch(page, /kai-v3/);
+  for (const f of ['PermanentMarker-Regular.ttf', 'ShantellSans.ttf']) assert.ok(page.includes(`url(/styles/kai-hand-draw/engine/fonts/${f})`), `the page loads ${f}`);
 });
 
 test('every story shot of the sample frames its speaker (the lead on the phone), talking while their words play', () => {
@@ -50,4 +52,18 @@ test('a buyer cast without a bot, with a lone lead or with a crowded room still 
   const room = frameOf(shot('di', 'room'), 1, crowd).figs;
   assert.deepEqual(room.map(g => [g.id, g.talk]), [['ann', false], ['cy', false], ['bo', false], ['di', true]]);
   assert.equal(new Set(room.map(g => g.x)).size, 4, 'nobody stands on anybody');
+});
+
+test('captions: short phrases on the word times, words of one line only, gone after a cut once spoken', () => {
+  const P = phrases(vo.words);
+  assert.deepEqual(new Set(P.flatMap(p => p.words)).size, vo.words.length, 'every word is in one phrase');
+  for (const p of P) {
+    assert.ok(p.words.length <= 3 && (p.words.length === 1 || p.words.map(w => w.w).join(' ').length <= 18), p.words.map(w => w.w).join(' '));
+    assert.equal(new Set(p.words.map(w => w.line)).size, 1);
+    assert.ok(p.a < p.words[0].s && p.b > p.a);
+  }
+  const mid = P[5], w = mid.words[0];
+  assert.equal(phraseAt(P, w.s + 0.01), mid);
+  assert.equal(phraseAt(P, w.s + 0.01, mid.words.at(-1).e + 0.01), undefined, 'a phrase spoken before the cut stays in its shot');
+  assert.equal(phraseAt(P, vo.words.at(-1).e + 1), undefined);
 });

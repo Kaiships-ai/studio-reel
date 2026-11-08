@@ -44,7 +44,7 @@ export function frameOf(sh, t, roster, exp) {
   const fig = (id, pose, x, y, h, o = {}) => ({ id, pose, x, y, h, flip: x > W / 2, face: look(id).face, eyes: look(id).eyes, talk: id === who, ...o });
   const corner = roster.corner.includes(who), shot = sh.shot;
   if (shot === 'close') {
-    return { cam, figs: [fig(who, look(who).bust, W / 2 + side * 50, 1940, 800, { flip: side > 0 })] };
+    return { cam, figs: [fig(who, look(who).bust, W / 2 + side * 50, 1860, 800, { flip: side > 0 })] };
   }
   if (corner) return { cam, figs: [fig(who, 'present', W / 2 + side * 90, 2120, 1500, { flip: side > 0 })] };
   if (shot === 'phone') return { cam, figs: [fig(roster.lead, 'phone', W / 2 + side * 60, 2250, 1600, { talk: roster.lead === who, flip: side > 0 })] };

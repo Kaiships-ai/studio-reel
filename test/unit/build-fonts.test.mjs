@@ -22,3 +22,11 @@ test('relative, parent and root paths resolve; remote fonts, /core/fonts and ima
   });
   assert.deepEqual(missingFonts(files, blob), []);
 });
+
+test('a tmv episode page is checked too: its fonts resolve from the kit root', () => {
+  const [files, blob] = zip({
+    'episode/handdraw/index.html': '<style>@font-face{src:url(/styles/s/fonts/A.ttf)} @font-face{src:url(/styles/s/fonts/B.ttf)}</style>',
+    'styles/s/fonts/A.ttf': '',
+  });
+  assert.deepEqual(missingFonts(files, blob), ['episode/handdraw/index.html: font /styles/s/fonts/B.ttf is not in the zip']);
+});
