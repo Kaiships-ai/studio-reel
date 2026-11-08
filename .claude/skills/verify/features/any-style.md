@@ -26,3 +26,4 @@ Preconditions: a finished reel made with `reel.mjs` in `films/` (git-ignored, so
 - `draft.mjs` is for `kai-hand-draw`: its checks assume that style's ink and caption band.
 - Pacing and reading rows judge the film: an older reel can fail `something new every ≤ 1.5 s` and the tool still works.
 - `reel.mjs` ignores a preset, with a warning: there is no test render for another style.
+
