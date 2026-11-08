@@ -11,7 +11,7 @@ import { env, run, ROOT, lockHash, installMarker, openInEditor } from './env.mjs
 
 const [verb = 'doctor', ...rest] = process.argv.slice(2);
 const force = rest.includes('--force');
-const ok = (n, d = '') => console.log(`  ✓ ${n}${d ? '  ' + d : ''}`);
+const ok = (n, d = '') => { console.log(`  ✓ ${n}${d ? '  ' + d : ''}`); return true; };   // true: callers return ok(...) as a pass
 const bad = (n, what, fix) => { console.log(`  ✗ ${n}: ${what}\n    fix: ${fix}`); return false; };
 const hash = f => { try { return createHash('sha256').update(readFileSync(f)).digest('hex').slice(0, 16); } catch { return ''; } };
 
