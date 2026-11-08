@@ -47,6 +47,7 @@ async function decide(base, head) {
   const diff = base && git('diff', '--name-only', base, head);
   if (!diff || diff.status !== 0) throw new Error(`no usable base ref "${base}"`);
   const changed = diff.stdout.split('\n').filter(Boolean);
+  if (changed.some(f => HARNESS.test(f))) return Object.fromEntries(TIERS.map(t => [t, tierNeeded(changed, new Map(), new Map())]));
   const tmp = mkdtempSync(join(tmpdir(), 'install-needed-')), scripts = [];
   const own = ref => {
     const src = git('show', `${ref}:release/build.mjs`);
