@@ -59,7 +59,7 @@ const PRO_SKILLS = ['ig-plan', 'ig-reel', 'ig-human', 'ig-viral', 'ig-dm', 'ig-c
 export function missingFonts(files, blob) {
   const set = new Set(files), out = [];
   for (const f of files) {
-    if (!/^styles\/.*\.(css|html)$/.test(f)) continue;
+    if (!/^(styles|episode)\/.*\.(css|html)$/.test(f)) continue;
     for (const [, raw] of blob(f).toString('utf8').matchAll(/url\(\s*['"]?([^'")]+?)['"]?\s*\)/g)) {
       const url = raw.replace(/[?#].*$/, '');
       if (!/\.(woff2?|ttf|otf)$/i.test(url) || /^[a-z]+:/i.test(url) || url.startsWith('/core/fonts/')) continue;
