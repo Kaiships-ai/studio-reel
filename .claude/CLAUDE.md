@@ -17,9 +17,11 @@ a build check, a manifest entry) in the same change. Drop a row once its mistake
 | Starter ships exactly `studio` + `make-reel`, Pro adds the six `ig-*` skills; `verify` never ships | `release/build.mjs` |
 | Kai's own likeness (`engine/kai-v3.js`) never ships; buyers design their presenter | `[dev]` in `kit.manifest`; no shipped page loads it |
 | Actions minutes: work that runs on every PR lives in `checks.yml` (Linux, ~1 min); install tests are path-filtered; the five-machine matrix runs only for a `v*` tag, a manual run or the `test-all-os` label | `test/unit/ci-policy.test.mjs` |
+| A PR's tmv install renders the short ci-smoke episode; the whole sample and its 11 gates run only nightly on `main`, for a `v*` tag, by hand or with the PR label `full-episode` | `fullEpisode` tests in `test/unit/ci-policy.test.mjs` |
 | Before a release zip goes to Polar, the `v*` tag's install run is green on all five machines | judgment: check Actions before uploading |
 | A change to what a reel does (core tools, the engine, `kit/`, the designer) updates its file in `.claude/skills/verify/features/` | `check-coverage.mjs` (checks.yml, every PR); `test/unit/verify-coverage.test.mjs` |
 | Work follows `.agents/playbooks/studio-reel.md`: risk tiers, one heavy run at a time | machine lock in `journeys.mjs`; the rest is judgment |
+| A worktree's linked `node_modules` and `.pixi` never get committed | `.gitignore` names them without a trailing slash, so it matches the links too |
 | A change to rendering keeps `node .claude/skills/verify/draft.mjs films/verify-smoke` and `films/rea-xray` passing | judgment: CI has no GPU, so run them locally (seconds each) |
 | `core/` and `styles/` are never edited for one film; a film's changes stay in `films/<name>/` | judgment (AGENTS.md) |
 
