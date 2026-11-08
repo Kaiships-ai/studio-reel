@@ -1,0 +1,11 @@
+{
+  "series": "Night Build", "ep": 1, "title": "Two hundred views",
+  "cast": [{ "id": "nova", "seed": "nova" }, { "id": "theo", "seed": "theo" }],
+  "beats": [
+    { "who": "nova", "shot": "room", "line": "Nova shipped her app today and it got only two hundred views from strangers online." },
+    { "who": "theo", "shot": "stats", "link": "but", "line": "But Theo's ad hit forty thousand by lunch.", "stats": [{ "label": "views", "value": "40,000" }] },
+    { "who": "nova", "shot": "close", "line": "Then she posts again." },
+    { "who": "nova", "shot": "close", "line": "Comment A, B or C." }
+  ],
+  "vote": { "question": "Pick one", "a": "the demo", "b": "the story", "tagA": "A", "tagB": "B" }
+}

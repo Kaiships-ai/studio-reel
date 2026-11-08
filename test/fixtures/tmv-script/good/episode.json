@@ -1,0 +1,15 @@
+{
+  "series": "Night Build", "ep": 1, "title": "Two hundred views",
+  "cast": [{ "id": "nova", "seed": "nova" }, { "id": "theo", "seed": "theo" }, { "id": "blip", "seed": "blip" }],
+  "beats": [
+    { "who": "nova", "shot": "room", "line": "You shipped your app today. Two hundred views." },
+    { "who": "theo", "shot": "stats", "link": "but", "line": "But across town, Theo's ad hit forty thousand by lunch.",
+      "stats": [{ "label": "@theo.ships · views", "value": "40,000" }], "source": "source: each post's insights, first 24 h" },
+    { "who": "nova", "shot": "close", "link": "so", "line": "So you post again. Still two hundred." },
+    { "who": "blip", "shot": "card", "line": "Blip beeps. People don't share apps. They share stories.",
+      "card": ["APPS DON'T SPREAD.", "STORIES DO."], "source": "Jonah Berger, Contagious (2013)" },
+    { "who": "nova", "shot": "close", "link": "so", "line": "So your story is the bug that almost killed it?" },
+    { "who": "nova", "shot": "close", "line": "Comment A for the demo, or B for the story." }
+  ],
+  "vote": { "question": "What do you post tonight?", "a": "the demo", "b": "the story", "tagA": "A", "tagB": "B" }
+}
