@@ -87,6 +87,14 @@ jobs:
       - name: Build the ${{ matrix.tier }} zip exactly as buyers get it
         shell: bash
         run: node release/build.mjs --tier ${{ matrix.tier }} --out "$RUNNER_TEMP/dist"
+      - name: The zip's checksum and file list (what the buyer gets)
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP/dist"
+          cat SHA256SUMS
+          if command -v sha256sum >/dev/null; then sha256sum -c SHA256SUMS; else shasum -a 256 -c SHA256SUMS; fi
+          zip=$(ls *.zip | head -1); unzip -Z1 "$zip" > files.txt
+          echo "files: $(wc -l < files.txt) · styles: $(grep -c '^[^/]*/styles/[^/]*/STYLE.md$' files.txt)"
       - name: Unzip it into a folder with a space in its name (no .git), as a buyer would
         shell: bash
         run: |
@@ -122,6 +130,17 @@ jobs:
         run: cd "$KIT" && pixi run studio linux-deps
       - name: Clean install and one reel
         run: node test/clean-install.mjs "${{ env.KIT }}"
+      - name: 'Series: ep1 from the sample, the vote picks A, ep2 opens with PREVIOUSLY'
+        if: matrix.tier == 'tmv'
+        shell: bash
+        run: |
+          cd "$KIT"; s="$RUNNER_TEMP/series"
+          node episode/series.mjs new "$s" --from episodes/sample
+          node episode/series.mjs next "$s" --winner A
+          node episode/series.mjs status "$s"
+          cat "$s/ep2/episode.json"
+          node -e 'const e=require(process.argv[1]); if(e.ep!==2||!e.previously||e.previously.winner.tag!=="A"||e.beats[0].shot!=="previously") process.exit(1); console.log("✓ ep2 follows the vote of ep1: " + e.previously.winner.text)' "$s/ep2/episode.json"
+          cp "$s/series.json" "$s/ep2/episode.json" "$RUNNER_TEMP/dist/" 2>/dev/null || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -131,4 +150,14 @@ jobs:
             ${{ env.KIT }}/films/ci-reel/*.mp4
             ${{ env.KIT }}/episodes/sample/out/check.json
             ${{ env.KIT }}/episodes/sample/*.mp4
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zip-${{ matrix.tier }}-${{ matrix.os }}-${{ matrix.shell }}
+          path: |
+            ${{ runner.temp }}/dist/SHA256SUMS
+            ${{ runner.temp }}/dist/files.txt
+            ${{ runner.temp }}/dist/series.json
+            ${{ runner.temp }}/dist/episode.json
           if-no-files-found: ignore
