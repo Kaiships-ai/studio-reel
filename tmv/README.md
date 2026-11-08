@@ -91,3 +91,4 @@ beat, a vote with exactly two tags, and the lead called "you". Each ✗ names th
 | `beats[].hot` | Extra caption words to colour (numbers and the vote words already are) |
 | `beats[].idea` | The beat's one idea, a short tag (`"theo-ad-hits-40k"`). No two beats share one; `make.mjs <ep> gates` checks it (G6) once every beat has a tag |
 | `vote` | `question`, `a`, `b`, and the spoken tags `tagA`, `tagB` (default `A`, `B`): the last line must say them |
+<!-- lane proof -->
