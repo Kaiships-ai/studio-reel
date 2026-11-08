@@ -64,8 +64,8 @@ function figure(p, t, sh) {
   g.drawImage(FIG[p.id], -FIGURE_W / 2, -SOLE_Y); g.restore();
 }
 function text(s, x, y, size, o = {}) {
-  g.font = `${o.w ?? 700} ${size}px ${SANS}`; g.textAlign = o.align ?? 'center'; g.textBaseline = 'middle';
-  g.fillStyle = o.col ?? INK; g.fillText(s, x, y, o.max ?? W - 120);
+  g.font = `700 ${size}px ${SANS}`; g.textAlign = o.align ?? 'center'; g.textBaseline = 'middle';
+  g.fillStyle = INK; g.fillText(s, x, y, o.max ?? W - 120);
 }
 function placeholderCard(sh) {
   const b = EP.beats[sh.i];
@@ -99,7 +99,7 @@ window.render = (t) => {
   g.setTransform(PX, 0, 0, PX, 0, 0);
   backdrop(inCorner(CARDS[sh.who]) && !CARD_SHOTS.has(sh.shot));
   if (CARD_SHOTS.has(sh.shot)) placeholderCard(sh);
-  else for (const p of (FRAMING[sh.shot] ?? close)(sh)) figure(p, t, sh);
+  else for (const p of FRAMING[sh.shot](sh)) figure(p, t, sh);
   hud(t);
   if (sh.i === LAST.i) vote(t);
   captions(t, sh);
