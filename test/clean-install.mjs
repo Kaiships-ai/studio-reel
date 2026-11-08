@@ -32,11 +32,12 @@ if (again > 60) fail(`the second install took ${again} s: it should skip everyth
 // cut from the shipped take (no Gemini key), and its check report must be all ✓. A PR makes ci-smoke, 13-17 s cut from
 // the sample at test time (test/tmv-smoke.mjs): the vo step, a stats card, a card and the vote. --full-episode makes the
 // whole sample and its 11 gates (install.yml: nightly on main, v* tags, by hand, the PR label full-episode).
-// Linux CI has no GPU (software WebGL, seconds a frame): 8 fps there keeps it to minutes, as on a buyer's machine without one.
+// Linux CI has no GPU (software WebGL, 2-4 s a frame): the full sample draws at 8 fps, the smoke at 4 (~68 frames), so a slow
+// runner still ends under 10 min. The checks are in seconds (length ±0.2 s vs a 0.125 s half-frame at 4 fps, freezedetect 1.5 s).
 if (!existsSync(join(dir, 'kit', 'check-reel'))) {
   const sample = join(dir, 'episodes', 'sample');
   if (!existsSync(join(sample, 'sample.mp4'))) fail('the zip has no episodes/sample/sample.mp4 (the buyer must see the sample at once)');
-  const full = process.argv.includes('--full-episode'), fps = process.platform === 'linux' ? ['--fps', '8'] : [];
+  const full = process.argv.includes('--full-episode'), fps = process.platform === 'linux' ? ['--fps', full ? '8' : '4'] : [];
   const name = full ? 'ci-full' : 'ci-smoke', ep = join(dir, 'episodes', name);
   const make = steps => ['run', 'node', 'episode/make.mjs', `episodes/${name}`, ...steps, ...fps];
   rmSync(ep, { recursive: true, force: true });
