@@ -56,3 +56,14 @@ test('zipEntries reads back what zip wrote, stored and deflated', () => {
   const big = Buffer.alloc(4096, 'a'), z = zip([{ name: 'k/a.txt', data: Buffer.from('hi') }, { name: 'k/d/b.bin', data: big }], '2026-01-01T00:00:00Z');
   assert.deepEqual([...zipEntries(z)], [['a.txt', `${zlib.crc32(Buffer.from('hi')) >>> 0}:2`], ['d/b.bin', `${zlib.crc32(big) >>> 0}:4096`]]);
 });
+
+test('lane/** PRs: checks run, never the five machines, main PRs unchanged', () => {
+  for (const f of ['checks.yml', 'install.yml']) {
+    const y = read(f);
+    assert.match(section(y.replace(/^on:\n/m, ''), 'pull_request'), /branches: \[main, 'lane\/\*\*'\]/, `${f} runs for PRs into main and lane/**`);
+  }
+  const full = read('install.yml').match(/^ {10}FULL: (.*)$/m)[1];
+  assert.match(full, /startsWith\(github\.ref, 'refs\/tags\/'\)/, 'tags stay FULL');
+  assert.match(full, /workflow_dispatch/, 'manual runs stay FULL');
+  assert.match(full, /'test-all-os'\) && !startsWith\(github\.base_ref, 'lane\/'\)/, 'the test-all-os label never makes a lane PR FULL');
+});
