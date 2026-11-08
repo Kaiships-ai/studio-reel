@@ -58,8 +58,10 @@ built style; else 3d), the full episode every built style (`builtStyles`), one L
   ground. Everything is drawn once at start, so a frame is two to four image draws: `close` and `phone` (the lead) = one figure in close-up, cut at the waist, `two` = the speaker
   in front of a partner (the lead's partner is the first bot in the room, anyone else's is the lead), `wide` / `room` =
   the whole room on the floor; the corner's `two`, `wide` and `room` show its speaker alone, mid-shot. A beat with no
-  `shot` is a close-up, as in 3D. A figure pops up from its feet as the shot opens (back-out ease,
-  partners staggered) and bobs while its line's words play. `episode/paper/cards.js` draws the type in the Paper Pop-up
+  `shot` is a close-up, as in 3D. A figure pops up from its feet when it arrives (back-out ease,
+  partners staggered); one already on screen before a cut in the same set stays up, so a close-up's face never sinks under
+  the captions. Framing numbers live in `episode/paper/framing.js`; `test/unit/tmv-paper-framing.test.mjs` keeps every
+  build's chin above the captions in every shot. It bobs while its line's words play. `episode/paper/cards.js` draws the type in the Paper Pop-up
   Book look (`core/fonts/fonts.css`: Lilita One, Fredoka): `card`, `stats` and `previously` are a cut-paper sheet (off-white
   border, cardboard edge, shadow, grain) that pops up from its foot on kraft board, with a red ribbon for the first card
   line, the stats head or PREVIOUSLY; the sheet is the frame's brightest tone and everything else on it is thin or 60+
@@ -101,7 +103,9 @@ built style; else 3d), the full episode every built style (`builtStyles`), one L
   card's character side by side in 3D (`characters/rig.js` on the designer's stage, `lost3D`; top "jacket" = the hoodie
   opened over a white shirt, a shader on the hoodie material; both stages carry a low front fill so the jaw is not black), hand-draw (`toHandDraw` →
   `styles/kai-hand-draw/engine/kaip.js` on `core.js`, the only two hand-draw scripts the tmv zip keeps, with two fonts: `!` lines in
-  `[tmv_exclude]`) and paper (`toPaper` → `core/paper-figure.js`), each labelled with what that style draws differently.
+  `[tmv_exclude]`) and paper (`toPaper` → `core/paper-figure.js`), each labelled with every way that style draws the card differently (3D: a `round` build is only a little
+  wider). The cap, scarf and headset take one colour in all three (`extraColour`: the card's `extraColor`, else rig.js's
+  default: the top's for a cap).
   Pages: `episode/three-styles/` (index.html composes 3d/hand/paper.html, one iframe each; a panel sets `window.SHOT`
   once drawn; an error in any panel fails the command through `openDemo`). A card that breaks `checkCard` or an unknown seed stops before
   the browser starts.

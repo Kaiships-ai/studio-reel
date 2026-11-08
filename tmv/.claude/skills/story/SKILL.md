@@ -61,8 +61,9 @@ Follow `character-management`. The lead is **You**: the narrator says "You" ("Yo
 Add each one with `story add character '<Name>' --role <role> --path episodes/<show>/story`: You is `protagonist`, the
 rival `antagonist`, the others `supporting`. Then write its card to `cards/<id>.json`: `"id"` plus the fields of one
 `TMV_SEEDS` entry in `characters/cast.js`. `CARD` in `core/character-card.mjs` lists every allowed value; colours are
-`#RRGGBB`. You's card starts `"id": "you", "name": "You"`. The user may design a card instead: `pixi run designer` in
-the background, they press "Copy for Claude" and paste it. End with `story check` passing.
+`#RRGGBB`; `extraColor` colours the cap or scarf (a cap defaults to the top's colour). You's card starts `"id": "you",
+"name": "You"`. The user may design a card instead: `pixi run designer` in the background, they press "Copy for
+Claude" and paste it. End with `story check` passing.
 
 ## 3. Style
 
@@ -73,8 +74,10 @@ pixi run node episode/make.mjs styles episodes/<show>/cards/you.json --out episo
 It draws You in 3D, hand-draw and paper side by side in about a second. Open `styles.png` with the Read tool and show
 it; under each panel is what that style draws differently.
 
-- ◆ Pick one. Write `style: 3d`, `style: handdraw` or `style: paper` in the `story.md` frontmatter. In cook mode, pick
-  the panel with the fewest differences listed.
+- ◆ Pick one. Write `style: 3d`, `style: handdraw` or `style: paper` in the `story.md` frontmatter. In cook mode, rule
+  out a panel that draws You as something else (a robot as a person); the other notes are small. Then pick the look
+  that fits the premise: 3d for screens, tech and neon nights, handdraw for warm, personal stories, paper for playful,
+  crafty ones. Say why in one line; the user can switch. Never pick by counting the notes.
 - A panel fails: fix what the error names and run it again. After a second failure, offer the styles that drew.
 - It prints `usage: node episode/make.mjs <episode folder ...>`: this kit has no style picture yet. Say so, write
   `style: 3d` (the sample's style) and go on.

@@ -44,7 +44,7 @@ function shaded(x, path, { base, shade }, dx = -24, dy = 0, lw = LW) {
 const rr = (x, px, py, w, h, r) => () => { x.beginPath(); x.roundRect(px, py, w, h, r); };
 const solid = (base, shade = base) => ({ base, shade });
 
-function layout(body) {
+export function layout(body) {
   const legH = 250 * body.bodyHeight, torsoH = 270 * body.bodyHeight, tw = 118 * body.torsoWidth, R = 120 * body.headScale;
   const hip = SOLE_Y - legH, sho = hip - torsoH;
   return { legH, torsoH, tw, R, hip, sho, headY: sho - R * .82 };
@@ -140,7 +140,7 @@ function face(x, f, { R, headY }, ink) {
   x.beginPath(); x.moveTo(CX - R * .16, headY + R * .5); x.quadraticCurveTo(CX, headY + R * .64, CX + R * .16, headY + R * .5); sh(x, null, LW2, ink);
 }
 function extra(x, f, L, view) {
-  const { R, headY, sho } = L, back = view === 'back', dark = solid('#2B2733', '#1C1922');
+  const { R, headY, sho } = L, back = view === 'back', dark = f.paint.extra;
   if (f.extra === 'headset') {
     x.beginPath(); x.ellipse(CX, headY, R * 1.06, R * 1.12, 0, Math.PI * 1.04, Math.PI * 1.96); x.lineWidth = 26; x.strokeStyle = INK; x.stroke(); x.lineWidth = 14; x.strokeStyle = dark.base; x.stroke();
     for (const s of [-1, 1]) shaded(x, rr(x, CX + s * R * 1.02 - 26, headY - R * .2, 52, R * .7, 20), dark, 0, 0, LW);
@@ -148,11 +148,11 @@ function extra(x, f, L, view) {
     for (const s of [-1, 1]) { x.beginPath(); x.arc(CX + s * R * .36, headY + R * .14, R * .24, 0, TAU); sh(x, null, 7); }
     x.beginPath(); x.moveTo(CX - R * .12, headY + R * .1); x.lineTo(CX + R * .12, headY + R * .1); sh(x, null, 7);
   } else if (f.extra === 'cap') {
-    shaded(x, () => { x.beginPath(); x.ellipse(CX, headY - R * .35, R * 1.02, R * .78, 0, Math.PI, 0); x.closePath(); }, solid(ACCENT, '#B8402F'), -20, 0);
-    if (!back) shaded(x, () => blob(x, CX, headY - R * .36, R * 1.2, R * .16, .02, 3), solid('#B8402F'), 0, 0, LW2 + 2);
+    shaded(x, () => { x.beginPath(); x.ellipse(CX, headY - R * .35, R * 1.02, R * .78, 0, Math.PI, 0); x.closePath(); }, f.paint.extra, -20, 0);
+    if (!back) shaded(x, () => blob(x, CX, headY - R * .36, R * 1.2, R * .16, .02, 3), solid(f.paint.extra.shade), 0, 0, LW2 + 2);
   } else if (f.extra === 'scarf') {
-    shaded(x, rr(x, CX - R * .8, sho - 34, R * 1.6, 58, 28), solid(ACCENT, '#B8402F'), -14);
-    shaded(x, rr(x, CX + (back ? -R * .1 : R * .25), sho + 10, 46, 130, 16), solid(ACCENT, '#B8402F'), -10);
+    shaded(x, rr(x, CX - R * .8, sho - 34, R * 1.6, 58, 28), f.paint.extra, -14);
+    shaded(x, rr(x, CX + (back ? -R * .1 : R * .25), sho + 10, 46, 130, 16), f.paint.extra, -10);
   } else if (f.extra === 'antenna') {
     const top = headY - R * (f.kind === 'bot' ? .9 : 1.02);
     x.beginPath(); x.moveTo(CX, top); x.lineTo(CX, top - 90); sh(x, null, 8);
