@@ -3,8 +3,10 @@
 Files ship from `tmv/`: `episode/` (the 3D engine ported from Ep1: main.js, stage.js, world.js, hud.js, assets/room.glb;
 make.mjs, voice.py, designer.mjs, index.html, fonts), `episodes/sample/` (episode.json as narration, index.html, the Gemini narrator's take
 `vo/take.wav` and its cut `vo/vo.wav` + `vo/vo.json`), `characters/` (cast.js = the three seeds Nova, Theo, Blip; rig.js builds them in 3D: humans from jay.glb
-recoloured and restyled, Blip from primitives) and `character-designer.html`. In the tmv zip there is no `kit/check-reel`: `studio install` renders the sample
-episode as its test render (`kit/studio.mjs`).
+recoloured and restyled, Blip from primitives) and `character-designer.html`. In the tmv zip there is no `kit/check-reel`: the sample ships rendered
+(`episodes/sample/sample.mp4`) and `studio install` draws only its first 2 s (720x1280, 10 fps, 20 frames) as its test
+render, then deletes it (`kit/studio.mjs`); it renders the whole sample only if `sample.mp4` is gone.
+`test/clean-install.mjs` then renders a copy, `episodes/ci-ep`, with every check ✓.
 
 ## Sub-features
 
