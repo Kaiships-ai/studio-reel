@@ -26,7 +26,7 @@ Preconditions: `pixi` installed (`~/.pixi/bin/pixi`), internet for a first insta
 
 - Install: `pixi run studio install` → ✓ for tools, drawing packages, `browser  GPU: …`, `test render  1080x1920,
   5.0 s, sound -13.9 LUFS`, then `Ready.`; run it again → `drawing packages  already installed`, `test render  passed before`, and the browser line again.
-- Check: `pixi run studio doctor` → every line ✓ (seven in this repo: python, ffmpeg, ffprobe, folder path, drawing packages, browser, setup finished) and `All good.`, exit 0.
+- Check: `pixi run studio doctor` → every line ✓ (seven in this repo: python, ffmpeg, ffprobe, folder path, drawing packages, browser, setup finished) and `All good.`, exit 0. In the TMV kit the line ends `Next: /story (your show, characters, style), then /episode`.
 - As a buyer, on a built zip (slow, minutes): `node release/build.mjs --tier starter`, unzip
   `dist/kaiships-studio-starter-*.zip` into a folder whose name has a space, then
   `node test/clean-install.mjs "<that folder>/kaiships-studio"` → `✓ clean install passed`. CI runs the same script

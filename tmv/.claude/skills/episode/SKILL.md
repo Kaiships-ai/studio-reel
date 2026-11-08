@@ -17,11 +17,19 @@ the allow-list only matches the plain command, and anything else makes Claude Co
    saying "You" for the lead ("You shipped your app today.") and the third person for everyone else; characters never talk, so what they say becomes reported
    speech ("Views are views, he says."); `who` is the character on screen, `idea` a short tag for the beat's one idea (no two alike), HUD
    numbers that change only when a line says why, and a `vote` whose two tags the last line says ("Comment A for ..., or B for ...").
-3. Script, voice, then video and checks:
+   At least 2 beats are explain cards (`"shot": "card"`, with a `source`): a real rule of the user's field, from the
+   research in `story/`. Gate G4 fails without them.
+3. Script, then the reader panel, then voice:
    `pixi run node episode/make.mjs episodes/<name> script` (every rule ✓ before the voice: on a ✗, rewrite what it names)
+   Then follow `reader-panel` on the script (a quick simulated read: would a viewer keep watching, where do they lose
+   the thread?) and fix what it finds, then run `script` again. Only then:
    `pixi run node episode/make.mjs episodes/<name> vo` (one Gemini call; a ✗ on the key means `pixi run studio key`)
    `pixi run node episode/make.mjs episodes/<name>`
 4. Every check must be ✓ (size, length, sound, no black or frozen stretch, faces not blown out). On a ✗, fix what it names
    and run step 3 again. Open `episodes/<name>/out/sheet.jpg` and look at it before telling the user the MP4 path.
+5. Gates: `pixi run node episode/make.mjs episodes/<name> gates` (the 11 gates; it writes `out/gates.json`). All 11 must
+   pass before you say the episode is done: the checks above can be all ✓ while a gate fails. On a ✗ gate, fix what it
+   names (G1 is 22-26 beats; G4 is the 2 explain cards) and run step 3 and this step again, up to twice. If it still
+   fails, tell the user which gate and why instead of calling the episode done.
 
 For a series (episode 2 follows the vote), use `/series` instead.

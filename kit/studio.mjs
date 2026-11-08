@@ -167,7 +167,7 @@ async function doctor() {
   const marker = existsSync(installMarker()) ? readFileSync(installMarker(), 'utf8').trim() : '';
   if (marker === lockHash()) ok('setup finished', 'test render passed with these versions');
   else good = bad('setup finished', marker ? 'the tool versions changed (normal after an update)' : 'setup has not finished yet', 'pixi run studio install');
-  console.log(good ? `\nAll good. Next: ${NEXT()}` : '\nFix the ✗ lines above, then run this check again.');
+  console.log(good ? `\nAll good. Next: ${TMV ? '/story (your show, characters, style), then /episode' : NEXT()}` : '\nFix the ✗ lines above, then run this check again.');
   return good;
 }
 
