@@ -1,0 +1,51 @@
+#!/usr/bin/env node
+// Dev-only pre-push hook: the cheap checks of .github/workflows/checks.yml, run here in seconds instead of 20 minutes later in CI.
+// Install once per clone: git config core.hooksPath .githooks      Skip once: git push --no-verify
+import { spawnSync } from 'node:child_process';
+import { readdirSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+
+const CI = {
+  unit: 'node --test test/unit/*.test.mjs',
+  release: 'node release/build.mjs --dry-run',
+  coverage: 'node .claude/skills/verify/check-coverage.mjs',
+};
+const BASE = 'origin/main';
+
+const root = spawnSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).stdout.trim();
+process.chdir(root);
+
+const pushes = readFileSync(0, 'utf8').split('\n').filter(Boolean);
+if (pushes.length && pushes.every(l => /^\S+ 0{40,} /.test(l))) process.exit(0);
+
+const expand = tok => {
+  if (!tok.includes('*')) return [tok];
+  const dir = dirname(tok), re = new RegExp(`^${tok.slice(dir.length + 1).replace(/[.]/g, '\\.').replace(/\*/g, '.*')}$`);
+  return readdirSync(dir).filter(f => re.test(f)).sort().map(f => join(dir, f));
+};
+const exec = (cmd, input) => {
+  const [bin, ...args] = cmd.split(' ').flatMap(expand);
+  const nodeArgs = bin === 'node' && args[0] === '--test' ? [args[0], '--test-concurrency=2', ...args.slice(1)] : args;
+  const r = spawnSync(bin === 'node' ? process.execPath : bin, nodeArgs, { encoding: 'utf8', input });
+  return { ok: r.status === 0, out: `${r.stdout || ''}${r.stderr || ''}` };
+};
+
+const diff = spawnSync('git', ['diff', '--name-only', `${BASE}...HEAD`], { encoding: 'utf8' });
+const changed = diff.status === 0 ? diff.stdout.split('\n').filter(Boolean) : null;
+
+const steps = [
+  ['unit tests', CI.unit],
+  ['release dry-run', CI.release],
+  ...(changed ? [['feature-map coverage', CI.coverage, changed.join('\n')]] : []),
+  ...(changed || []).filter(f => /^tmv\/episodes\/.+\/episode\.json$/.test(f)).map(f =>
+    [`script rules ${dirname(f)}`, `node tmv/episode/make.mjs ${dirname(f)} script`]),
+];
+if (!changed) console.log(`pre-push: ${BASE} not found locally, skipping the coverage and script checks (CI runs them)`);
+
+const t0 = Date.now();
+for (const [name, cmd, input] of steps) {
+  const t = Date.now(), r = exec(cmd, input);
+  console.log(`${r.ok ? '✓' : '✗'} ${name} (${((Date.now() - t) / 1000).toFixed(1)}s)`);
+  if (!r.ok) { console.error(`\n${cmd}\n${r.out}\npre-push: blocked. Fix it, or push anyway with: git push --no-verify`); process.exit(1); }
+}
+console.log(`pre-push: all green in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
