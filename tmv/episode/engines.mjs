@@ -6,7 +6,6 @@
 // episode/timeline.js (loadEpisode, cardsOf, timeline: shots cut on word starts, caption words, the HUD), draws
 // each cast card in its own style (core/character-card.mjs: toPaper, toHandDraw; 3D reads the card as it is), and
 // keeps the contract of core/render/video.mjs: window.render(t), window.DUR, window.READY.
-// A style whose page is not there yet stops the render with one line that names the page to build.
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 

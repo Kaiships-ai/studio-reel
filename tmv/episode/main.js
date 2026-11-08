@@ -42,7 +42,6 @@ const SEAT = [0.28, -0.55], DESK_Y = 0.425, CX = 6;
 const BOT_AT = BOTS.map((_, i) => i < 2 ? [[0.66, -0.86], [-0.08, -0.88]][i] : [0.05 + 0.5 * hsh(i, 7), -1.05]);
 const STAND_AT = EXTRA.map((_, i) => [-0.35 - 0.45 * i, -0.05 - 0.15 * (i % 2)]);
 
-// ------------------------------------------------------------ timeline (episode/timeline.js): shots cut on word starts, caption words, the HUD
 const { LINES, DUR, SHOTS, shotOf, WORDS, hudAt, LAST } = timeline(EP, VO, CARDS);
 const talking = (t, ch) => { const sh = shotOf(t); if (CAST[sh.who] !== ch) return 0;
   return WORDS.some(w => w.line === LINES[sh.i].id && t >= w.s && t < w.e) ? 0.35 + 0.65 * Math.abs(Math.sin(t * 15.5)) * (0.6 + 0.4 * Math.sin(t * 4.1)) : 0; };
