@@ -90,6 +90,14 @@ if __name__ == '__main__' and sys.argv[1:2] == ['--self-check']:
     assert abs(len(t2) / SR - (1.6 + CAP - 0.012)) < 0.02 and abs(r[2][1] - (0.8 + CAP - 0.012)) < 0.03, (len(t2) / SR, r)
     short = np.concatenate([tone[:int(0.8 * SR)], np.zeros(int(0.3 * SR), np.float32), tone[int(1.2 * SR):]]).astype(np.float32)
     assert len(tighten(short)) == len(short)   # a pause under CAP stays as it is
+    rng = np.random.default_rng(7); fq = np.fft.rfftfreq(int(0.08 * SR), 1 / SR)   # a line: 27 sounds of 80 ms, each noise
+    sound = lambda: np.fft.irfft(np.fft.rfft(rng.standard_normal(len(fq) * 2 - 2)) * sum(np.exp(-((fq - rng.uniform(200, 6000)) / 300) ** 2) for _ in range(3)))
+    line = lambda: np.concatenate([sound() for _ in range(27)])   # through three random formants, so no two lines sound alike
+    pause = np.zeros(int(0.5 * SR)); A, B, C = line(), line(), line()
+    assert repeated(np.concatenate([A, pause, B, pause, C]).astype(np.float32)) is None
+    r = repeated(np.concatenate([A, pause, B, pause, B, pause, C]).astype(np.float32))   # B read twice: found at B, again a reading later
+    assert r and 2.6 < r[0] < 4.82 and abs(r[1] - r[0] - 2.66) < 0.1, r
+    assert said_twice(['One more time, again.', 'One more time, again.']) and not said_twice(['Three nights.', 'Show the night you almost quit.'])
     print('voice.py self-check ok'); sys.exit(0)
 
 ep = sys.argv[1]
