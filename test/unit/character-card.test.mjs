@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { checkCard, toHandDraw, CARD } from '../../core/character-card.mjs';
+import { checkCard, toHandDraw, toPaper, PAPER_BUILD, CARD } from '../../core/character-card.mjs';
 
 const window = {};
 new Function('window', readFileSync(new URL('../../tmv/characters/cast.js', import.meta.url), 'utf8'))(window);
@@ -36,4 +36,31 @@ test('Nova in hand-draw: bun, orange hoodie, headphones, her colours, every valu
 test('what hand-draw cannot show is listed, never silently dropped', () => {
   assert.ok(toHandDraw(window.TMV_SEEDS.blip).lost.some((l) => /robot/.test(l)));
   assert.ok(toHandDraw(window.TMV_SEEDS.theo).lost.some((l) => /jay/.test(l)));
+});
+
+test('Nova in paper: bun, orange hoodie, headset, small build, a darker shade for every colour, nothing lost', () => {
+  const { figure, lost } = toPaper(window.TMV_SEEDS.nova);
+  assert.deepEqual([figure.kind, figure.hair, figure.top, figure.eyes, figure.extra], ['human', 'bun', 'hoodie', 'dot', 'headset']);
+  assert.deepEqual(figure.body, PAPER_BUILD.small);
+  assert.deepEqual(figure.paint.top, { base: '#C9663A', shade: '#9D502D' });
+  for (const { base, shade } of Object.values(figure.paint)) {
+    const sum = (h) => [1, 3, 5].reduce((n, i) => n + parseInt(h.slice(i, i + 2), 16), 0);
+    assert.ok(sum(shade) < sum(base), `${shade} darker than ${base}`);
+  }
+  assert.deepEqual(lost, []);
+});
+
+test('paper draws a robot as a robot, and lists the hair it cannot cut', () => {
+  const blip = toPaper(window.TMV_SEEDS.blip);
+  assert.deepEqual([blip.figure.kind, blip.figure.eyes, blip.figure.extra, blip.lost], ['bot', 'visor', 'antenna', []]);
+  const theo = toPaper(window.TMV_SEEDS.theo);
+  assert.equal(theo.figure.hair, 'short');
+  assert.match(theo.lost[0], /jay/);
+  assert.throws(() => toPaper({ name: 'X', build: 'huge' }), /character card: "build"/);
+});
+
+test('every build has paper proportions, and a bare card gets defaults', () => {
+  assert.deepEqual(Object.keys(PAPER_BUILD), CARD.build);
+  const { figure } = toPaper({ name: ' Ana ' });
+  assert.deepEqual([figure.name, figure.kind, figure.hair, figure.top, figure.body], ['Ana', 'human', 'short', 'tee', PAPER_BUILD.average]);
 });
