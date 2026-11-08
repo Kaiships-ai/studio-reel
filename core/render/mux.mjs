@@ -16,7 +16,7 @@
 // Colour: by default unchanged from video.mjs (full-range yuvj420p / bt470bg tags); STUDIO_COLOR=bt709 makes standard
 // limited-range yuv420p / bt709.
 // Same ffmpeg arguments, in the same order, as the former core/render/mux.sh.
-import { existsSync, readFileSync, statSync, rmSync, openSync, readSync, closeSync } from 'node:fs';
+import { existsSync, statSync, rmSync, openSync, readSync, closeSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { run } from '../../kit/env.mjs';
 
