@@ -91,7 +91,7 @@ export function check(tier, files, blob, m) {
   if (set.has('THIRD_PARTY_NOTICES.md')) {
     const n = blob('THIRD_PARTY_NOTICES.md').toString('utf8');
     const owed = ['LemoLab', ...(files.some(f => f.startsWith('styles/kai-hand-draw/')) ? ['John Heibel'] : []),   // his engine ships only inside kai-hand-draw
-      ...(files.some(f => f.startsWith('.claude/skills/story-maintenance/')) ? ['Daniel Dewhurst'] : [])];
+      ...(files.some(f => STORY_SKILLS.some(k => f.startsWith(`.claude/skills/${k}/`))) ? ['Daniel Dewhurst'] : [])];
     for (const who of owed) if (!n.includes(who)) errors.push(`THIRD_PARTY_NOTICES.md does not credit ${who}`);
   }
   const forbid = m.forbid.map(p => [p, new RegExp(p)]), vendored = m.vendored.map(globRe);

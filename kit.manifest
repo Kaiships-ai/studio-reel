@@ -121,7 +121,7 @@ workspace/README.md
 content-types/
 
 [vendored]
-# story-skills 0.24.1 by Daniel Dewhurst (MIT), from tmv/.claude/skills/: English, with CJK only in word-count and name examples
+# story-skills 0.24.1 by Daniel Dewhurst (MIT), from tmv/.claude/skills/
 .claude/skills/chapter-writing/
 .claude/skills/character-management/
 .claude/skills/interactive-fiction/
