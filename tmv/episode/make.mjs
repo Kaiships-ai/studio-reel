@@ -3,6 +3,7 @@
 //   pixi run node episode/make.mjs <episode> render         frames + voice + bed (room tone, music, hits) → <episode>/<name>.mp4 (720x1280, 30 fps)
 //   pixi run node episode/make.mjs new <name>             episodes/<name> from the sample (episode.json + page), ready to rewrite
 //   pixi run node episode/make.mjs <episode> check          size, length, sound, no black or frozen stretch, faces not blown out, stills sheet
+//   pixi run node episode/make.mjs <episode> gates          the 11 gates the real season passed (episode/gates.py) → out/gates.json
 // No step = render check. Options: --fps N (default 30) · --workers N. Preview size only (720x1280, ST-77). The vo step needs GOOGLE_API_KEY in .env (pixi run studio key) and the internet; TMV_VO_TAKE=<wav> cuts that take instead (tests).
 // <name> is the folder's name. Writes <episode>/out/check.json and <episode>/out/sheet.jpg (open it to look).
 import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync, renameSync, realpathSync, cpSync } from 'node:fs';
@@ -26,7 +27,7 @@ if (steps[0] === 'new') {
   console.log(`✓ ${to}: write its story in episode.json (README.md lists every field), then vo and render`); process.exit(0);
 }
 const ep = steps.length && (p => existsSync(p) ? realpathSync(p) : p)(resolve(steps.shift()));   // real path: /tmp is /private/tmp on macOS, and the server needs the episode under the library root
-if (!ep || !existsSync(join(ep, 'episode.json'))) { console.error('usage: node episode/make.mjs <episode folder with episode.json> [vo] [render] [check] [--fps N] [--full]'); process.exit(2); }
+if (!ep || !existsSync(join(ep, 'episode.json'))) { console.error('usage: node episode/make.mjs <episode folder with episode.json> [vo] [render] [check] [gates] [--fps N] [--full]'); process.exit(2); }
 // every render is the 720x1280 review copy; a full-quality render needs the buyer's go (APPROVED-FULL, core/approve-full.mjs)
 if (opt.full) die(existsSync(join(ep, 'APPROVED-FULL'))
   ? 'the full-quality render of an episode is not in this kit yet: the 720x1280 MP4 is the one to post'
@@ -133,6 +134,11 @@ const STEP = {
     writeFileSync(join(OUT, 'loudness.json'), JSON.stringify({ I: m.I }));
     console.log(`✓ ${MP4}`);
   },
+  gates() {
+    if (!existsSync(MP4)) die(`${MP4} is missing: run the render step first`);
+    const r = run('python', ['episode/gates.py', ep]);   // prints its own lines, writes out/gates.json
+    if (r.error || r.status !== 0) die('a gate failed (above): out/gates.json lists each one');
+  },
   check() {
     if (!existsSync(MP4)) die(`${MP4} is missing: run the render step first`);
     const vo = JSON.parse(readFileSync(join(ep, 'vo/vo.json'), 'utf8')), want = vo.duration + 1.4;
@@ -178,7 +184,7 @@ const STEP = {
   },
 };
 for (const s of steps.length ? steps : ['render', 'check']) {
-  if (!STEP[s]) die(`unknown step "${s}": use vo, render or check`);
+  if (!STEP[s]) die(`unknown step "${s}": use vo, render, check or gates`);
   console.log(`\n=== ${s} · ${ep} ===`);
   await STEP[s]();
 }
