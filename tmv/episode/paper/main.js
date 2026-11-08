@@ -1,12 +1,13 @@
 // paper/main.js: the paper episode engine. Each shot of episode/timeline.js shows its cast as cut-paper stickers
 // (core/character-card.mjs toPaper, core/paper-figure.js) on a cream paper backdrop: a figure pops up from its feet
-// when the shot opens and bobs while its words play. Cards, captions, the HUD and the vote are plain type for now.
+// when the shot opens and bobs while its words play. Cards, the HUD, captions and the vote are paper/cards.js.
 // Contract with core/render/video.mjs: window.render(t), window.DUR, window.READY.
 import { loadEpisode, cardsOf, timeline, inCorner } from '../timeline.js';
 import { toPaper } from '/core/character-card.mjs';
 import { drawPaperFigure, FIGURE_W, SOLE_Y } from '/core/paper-figure.js';
+import { createPaperCards, isCardShot } from './cards.js';
 
-const W = 1080, H = 1920, INK = '#3A2A24', SANS = '"Inter Tight", Arial, sans-serif';
+const W = 1080, H = 1920;
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
 const seg = (t, a, b) => clamp((t - a) / (b - a));
 const lerp = (x, y, k) => x + (y - x) * k;
@@ -39,7 +40,6 @@ const FRAMING = {
   },
 };
 FRAMING.room = FRAMING.wide;
-const CARD_SHOTS = new Set(['card', 'stats', 'previously']);
 
 function talking(t, id) {
   const sh = shotOf(t);
@@ -49,6 +49,7 @@ function talking(t, id) {
 const cv = document.getElementById('paper'), g = cv.getContext('2d');
 cv.width = Math.round(innerWidth * devicePixelRatio); cv.height = Math.round(innerHeight * devicePixelRatio);
 const PX = cv.width / W;
+const PAPER = createPaperCards(g, { EP, WORDS, LINES, LAST, hudAt });
 
 function backdrop(corner) {
   const sky = g.createLinearGradient(0, 0, 0, H);
@@ -65,48 +66,19 @@ function figure(p, t, sh) {
   g.scale(k / squash, k * pop * squash);
   g.drawImage(FIG[p.id], -FIGURE_W / 2, -SOLE_Y); g.restore();
 }
-function text(s, x, y, size, o = {}) {
-  g.font = `700 ${size}px ${SANS}`; g.textAlign = o.align ?? 'center'; g.textBaseline = 'middle';
-  g.fillStyle = INK; g.fillText(s, x, y, o.max ?? W - 120);
-}
-function placeholderCard(sh) {
-  const b = EP.beats[sh.i];
-  g.fillStyle = '#FFFDF7'; g.strokeStyle = INK; g.lineWidth = 6; g.beginPath(); g.roundRect(90, 420, W - 180, 980, 28); g.fill(); g.stroke();
-  const rows = sh.shot === 'card' ? b.card ?? []
-    : sh.shot === 'stats' ? [b.head, ...(b.stats ?? []).map(s => `${s.label}: ${s.value}`)].filter(Boolean)
-      : [`EP ${EP.previously?.ep ?? ''}`, EP.previously?.question ?? '', EP.previously?.winner?.text ?? ''];
-  rows.forEach((r, n) => text(String(r), W / 2, 560 + n * 120, n ? 52 : 64));
-}
-function hud(t) {
-  const items = hudAt(t).items;
-  const step = (W - 120) / Math.max(items.length, 1);
-  items.forEach((it, n) => text(`${it.label} ${it.val}`, 60 + n * step, 130, 34, { align: 'left', max: step - 10 }));
-}
-function captions(t, sh) {
-  const said = WORDS.filter(w => w.line === LINES[sh.i].id && w.s <= t && w.s >= sh.a - 0.05).slice(-6).map(w => w.w).join(' ');
-  if (!said) return;
-  g.fillStyle = 'rgba(255,253,247,.9)'; g.fillRect(60, 1640, W - 120, 120);
-  text(said, W / 2, 1700, 56);
-}
-function vote(t) {
-  if (t < LAST.ls) return;
-  const v = EP.vote;
-  g.fillStyle = 'rgba(255,253,247,.94)'; g.fillRect(60, 300, W - 120, 420);
-  text(v.question, W / 2, 380, 56);
-  text(`${v.tagA ?? 'A'}  ${v.a}`, W / 2, 500, 50); text(`${v.tagB ?? 'B'}  ${v.b}`, W / 2, 610, 50);
-}
-
 window.DUR = DUR;
 window.render = (t) => {
-  const sh = shotOf(t);
+  const sh = shotOf(t), onCard = isCardShot(sh);
   g.setTransform(PX, 0, 0, PX, 0, 0);
-  backdrop(inCorner(CARDS[sh.who]) && !CARD_SHOTS.has(sh.shot));
-  if (CARD_SHOTS.has(sh.shot)) placeholderCard(sh);
-  else for (const p of (FRAMING[sh.shot] ?? FRAMING.close)(sh)) figure(p, t, sh);
-  hud(t);
-  if (sh.i === LAST.i) vote(t);
-  captions(t, sh);
+  if (onCard) PAPER.cardShot(t, sh);
+  else {
+    backdrop(inCorner(CARDS[sh.who]));
+    for (const p of (FRAMING[sh.shot] ?? FRAMING.close)(sh)) figure(p, t, sh);
+    PAPER.hud(t);
+  }
+  PAPER.vote(t, sh);
+  PAPER.captions(t, sh, onCard);
 };
-await document.fonts.load(`700 40px ${SANS}`);
+await Promise.all(['400 40px "Lilita One"', '600 40px Fredoka'].map(f => document.fonts.load(f)));
 window.render(Number(new URLSearchParams(location.search).get('t') || 0));
 window.READY = true;
