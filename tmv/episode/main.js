@@ -1,7 +1,7 @@
 // main.js: the episode engine. It plays one episode folder (episode.json + vo/vo.json) in 3D, the Ten Million Views Ep1 way:
 // the room at night (neon through the curtain, screen key, rim light), the cast from characters/rig.js, the rival in his own
 // corner, the hand phone, cream cards, the HUD chip row, word-by-word captions, and the vote as the last frame (no end card).
-// One shot per beat. "shot": close | two | wide | phone | card. Who stands where: the first human of the room sits at the desk,
+// One beat per voiced line, cut every 2.6 s at most on word starts (its angle, then a cover angle). "shot": close | two | wide | phone | card. Who stands where: the first human of the room sits at the desk,
 // bots stand on the desk, a cast entry with "role": "rival" (or "place": "corner") has the corner across town.
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
@@ -45,9 +45,33 @@ const SEAT = [0.28, -0.55], DESK_Y = 0.425, CX = 6;
 const BOT_AT = BOTS.map((_, i) => i < 2 ? [[0.66, -0.86], [-0.08, -0.88]][i] : [0.05 + 0.5 * hsh(i, 7), -1.05]);
 const STAND_AT = EXTRA.map((_, i) => [-0.35 - 0.45 * i, -0.05 - 0.15 * (i % 2)]);
 
-// ------------------------------------------------------------ timeline: one shot per voiced line, the vote holds 1.4 s after the last
+// ------------------------------------------------------------ timeline: one beat per voiced line, the vote holds 1.4 s after the last
 const LINES = VO.lines, DUR = VO.duration + 1.4;
-const SHOTS = EP.beats.map((b, i) => ({ ...b, i, a: i ? LINES[i].s - 0.12 : 0, b: i + 1 < LINES.length ? LINES[i + 1].s - 0.12 : DUR, ls: LINES[i].s, le: LINES[i].e }));
+const BEATS = EP.beats.map((b, i) => ({ ...b, i, j: 0, a: i ? LINES[i].s - 0.12 : 0, b: i + 1 < LINES.length ? LINES[i + 1].s - 0.12 : DUR, ls: LINES[i].s, le: LINES[i].e }));
+// A cut every 2.6 s at most (the real season cut every 2 s): a story beat longer than that splits on word starts into
+// sub-shots that cut between its own angle and a cover angle, and the first beat cuts by 1.5 s. Cards hold; the vote
+// card lies over the last beat's shots.
+const MAXSHOT = 2.6, FIRSTCUT = 1.5;
+const coverOf = (b) => { const ch = CAST[b.who];
+  if (!['close', 'two', 'wide', 'room', 'phone'].includes(b.shot)) return undefined;   // cards hold
+  if (ch && inCorner(ch)) return { close: 'wide', two: 'close', wide: 'close' }[b.shot];
+  if (ch?.kind === 'bot') return b.shot === 'close' ? 'two' : 'close';
+  if (ch && ch !== LEAD) return b.shot === 'wide' ? 'two' : 'wide';
+  return { close: 'phone', phone: 'close', two: 'close', wide: 'close', room: 'close' }[b.shot]; };
+function split(b) {
+  const cover = coverOf(b);
+  if (!cover || b.b - b.a <= (b.i ? MAXSHOT : FIRSTCUT)) return [b];
+  const starts = VO.words.filter(w => w.line === LINES[b.i].id).map(w => w.s - 0.12);
+  const n = Math.ceil((b.b - b.a) / MAXSHOT), cuts = [];
+  let from = b.a;
+  for (let k = 1; k < n; k++) {
+    const want = b.i || k > 1 ? b.a + (b.b - b.a) * k / n : Math.min(b.a + FIRSTCUT, b.a + (b.b - b.a) / n);
+    const at = starts.filter(x => x > from + 0.9 && x < b.b - 0.9).sort((x, y) => Math.abs(x - want) - Math.abs(y - want))[0];
+    if (at !== undefined) { cuts.push(at); from = at; }
+  }
+  return [b.a, ...cuts].map((a, j, all) => ({ ...b, j, shot: j % 2 ? cover : b.shot, a, b: all[j + 1] ?? b.b }));
+}
+const SHOTS = BEATS.flatMap(split);
 const shotOf = (t) => SHOTS.find(s => t >= s.a && t < s.b) ?? SHOTS[SHOTS.length - 1];
 const NUM = /^(\d[\d,.]*|one|two|three|four|five|six|seven|eight|nine|ten|hundred|thousand|million|half|zero)$/i;
 const WORDS = VO.words.map(w => { const bi = LINES.findIndex(l => l.id === w.line), hot = (EP.beats[bi]?.hot ?? []).map(s => s.toLowerCase());
@@ -217,13 +241,13 @@ const F3D = {
     if (ch.kind === 'bot') {   // the bot's close-up, on the desk, the lead soft behind it
       holdPhone(LEAD, t, { exp: expOf(t, LEAD, sh), dp: V(0, -0.2, 0.04), pitch: 8, lean: 6 }); PH.visible = false; poseBots(t, sh);
       const hd = ch.head(), k = lin(seg(t, sh.a, sh.b)), ld = LEAD.head(), dir = ld.clone().sub(hd).setY(0).normalize();
-      const side = V(dir.z, 0, -dir.x).multiplyScalar(ALT(sh.i));
+      const side = V(dir.z, 0, -dir.x).multiplyScalar(ALT(sh.i + sh.j));
       faceLight(hd, { kp: hd.clone().add(dir.clone().multiplyScalar(0.3)).add(V(0, -0.05, 0)), key: 2.6, rim: 2.4 });
       const pos = hd.clone().addScaledVector(dir, lerp(0.8, 0.68, k)).addScaledVector(side, 0.18).add(V(0, 0.02, 0)).add(drift(t, 0.002));
-      return camLook(pos, hd.clone().add(V(0, -0.03, 0)), 34, { roll: 0.03 * ALT(sh.i), focus: pos.distanceTo(hd), aperture: 1.0 });
+      return camLook(pos, hd.clone().add(V(0, -0.03, 0)), 34, { roll: 0.03 * ALT(sh.i + sh.j), focus: pos.distanceTo(hd), aperture: 1.0 });
     }
     if (inCorner(ch)) return corner(t, sh, ch, true);
-    return face(t, sh, ch, { p0: [0.24 * ALT(sh.i), -0.02, -0.5], p1: [0.2 * ALT(sh.i), -0.02, -0.46], fov0: 52, fov1: 47, tg: [0, sh === LAST ? -0.17 : -0.11, 0] });
+    return face(t, sh, ch, { p0: [0.24 * ALT(sh.i + sh.j), -0.02, -0.5], p1: [0.2 * ALT(sh.i + sh.j), -0.02, -0.46], fov0: 52, fov1: 47, tg: [0, sh.i === LAST.i ? -0.17 : -0.11, 0] });
   },
   two(t, sh) {
     const ch = CAST[sh.who];
@@ -267,11 +291,11 @@ function face(t, sh, ch, c) {
   wild(true);
   const f = r.hd.clone().add(V(0, 0.075, -0.04));
   // key from the side and above, a step back (not the phone under the chin): the face keeps its shape, eyes and brows read
-  faceLight(f, { kp: f.clone().add(V(0.32 * ALT(sh.i), 0.22, -0.55)), key: 0.9, keyCol: '#ffe6d2', fill: 0.35, rim: 2.2 });
+  faceLight(f, { kp: f.clone().add(V(0.32 * ALT(sh.i + sh.j), 0.22, -0.55)), key: 0.9, keyCol: '#ffe6d2', fill: 0.35, rim: 2.2 });
   rig.screenKey.intensity *= 0.3;
   const pos = f.clone().add(V(...c.p0).lerp(V(...c.p1), k)).add(drift(t, 0.003)); pos.z = Math.max(pos.z, -1.16);
   const tgt = f.clone().add(V(...c.tg)).add(drift(t + 5, 0.0015));
-  return camLook(pos, tgt, lerp(c.fov0, c.fov1, k), { roll: 0.03 * ALT(sh.i), focus: pos.distanceTo(f), aperture: 0.9 });
+  return camLook(pos, tgt, lerp(c.fov0, c.fov1, k), { roll: 0.03 * ALT(sh.i + sh.j), focus: pos.distanceTo(f), aperture: 0.9 });
 }
 function corner(t, sh, ch, close) {
   R.visible = false; CORNER.visible = true; PH.visible = false;
@@ -279,7 +303,7 @@ function corner(t, sh, ch, close) {
   const hd = cornerPose(ch, t, { exp: expOf(t, ch, sh) }); cornerLights(hd);
   CORNER.ring.position.copy(hd).add(V(-0.2, -0.02, 0.5)); CORNER.ring.lookAt(hd); CORNER.pole.position.copy(CORNER.ring.position).add(V(0, -0.62, 0));
   const k = lin(seg(t, sh.a, sh.b)), f = hd.clone().add(V(0, 0.11, 0.03));
-  const n = SHOTS.filter(s => s.i < sh.i && CAST[s.who] === ch && s.shot === sh.shot).length, al = n % 2 ? -1 : 1;   // his next shot of the same kind mirrors
+  const n = SHOTS.filter(s => (s.i < sh.i || (s.i === sh.i && s.j < sh.j)) && CAST[s.who] === ch && s.shot === sh.shot).length, al = n % 2 ? -1 : 1;   // his next shot of the same kind mirrors
   const [p0, p1] = close ? [[0.18 * al, -0.04, 0.9 + (0.12 * n) % 0.24], [0.12 * al, -0.03, 0.72 + (0.12 * n) % 0.24]] : [[0.5 * al, 0.05, 1.7], [0.42 * al, 0.04, 1.5]];
   CORNER.sign.position.set(hd.x - (close ? 0.14 : 0.04) * al, hd.y + (close ? 0.36 : 0.2), -0.68);
   const pos = f.clone().add(V(...p0).lerp(V(...p1), k)).add(drift(t, 0.003)), tgt = f.clone().add(V(0, close ? -0.03 : -0.25, 0));
@@ -298,7 +322,7 @@ function hudAt(t) {   // every HUD label seen so far, in order; a value that cha
   const sh = shotOf(t), cur = {}, prev = {}, order = [];
   // a HUD value is "212" or { "value": "212", "bar": 0.02 (a meter under it, 0..1), "style": "danger" (the accent colour) }
   const norm = (v) => typeof v === 'object' && v !== null ? { val: String(v.value), bar: v.bar, danger: v.style === 'danger' ? 1 : 0 } : { val: String(v) };
-  for (const b of SHOTS) { if (b.i > sh.i) break; for (const [k, v] of Object.entries(b.hud ?? {})) { if (!order.includes(k)) order.push(k); prev[k] = cur[k]; cur[k] = norm(v); } }
+  for (const b of BEATS) { if (b.i > sh.i) break; for (const [k, v] of Object.entries(b.hud ?? {})) { if (!order.includes(k)) order.push(k); prev[k] = cur[k]; cur[k] = norm(v); } }
   const changed = new Set(Object.keys(EP.beats[sh.i].hud ?? {})), k_ = ss(seg(t, sh.ls, sh.ls + 0.5));
   return { items: order.map(k => ({ label: k, val: cur[k].val, from: changed.has(k) && prev[k] && prev[k].val !== cur[k].val ? prev[k].val : null, k: k_, danger: cur[k].danger ?? 0,
     bar: cur[k].bar == null ? undefined : (changed.has(k) && prev[k]?.bar != null ? lerp(prev[k].bar, cur[k].bar, k_) : cur[k].bar) })) };
@@ -394,7 +418,7 @@ function overlay(t) {
   else H2.chips(t, hudAt(t).items, { accent: NEON, alpha: ss(seg(t, 0.3, 0.6)) });
   title(t);
   const paperShot = sh.shot === 'card' || sh.shot === 'stats' || sh.shot === 'previously';
-  if (sh !== LAST || t < LAST.le + 0.3) H2.captions(t, WORDS, paperShot ? 1620 : 1560, { paper: paperShot, size: 62, cut: sh.a, accent: NEON, ink: INKP });
+  if (sh.i !== LAST.i || t < LAST.le + 0.3) H2.captions(t, WORDS, paperShot ? 1620 : 1560, { paper: paperShot, size: 62, cut: sh.a, accent: NEON, ink: INKP });
   vote(t);
 }
 S.run({ prep, overlay, T_END: DUR });
