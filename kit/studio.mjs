@@ -6,9 +6,8 @@
 // `pixi run` itself installs node, python and ffmpeg from pixi.lock before this file runs.
 import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync, cpSync, realpathSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { spawn } from 'node:child_process';
 import { dirname, join } from 'node:path';
-import { env, run, ROOT, lockHash, installMarker } from './env.mjs';
+import { env, run, ROOT, lockHash, installMarker, openInEditor } from './env.mjs';
 
 const [verb = 'doctor', ...rest] = process.argv.slice(2);
 const force = rest.includes('--force');
@@ -120,8 +119,7 @@ function key() {
   }
   console.log(`Opening ${f}: paste the key from https://aistudio.google.com/apikey after GOOGLE_API_KEY=, save, then say "xong" (done).`);
   if (process.env.TMV_VO_TAKE) return true;   // tests: no editor
-  const [cmd, args] = process.platform === 'darwin' ? ['open', ['-e', f]] : process.platform === 'win32' ? ['notepad', [f]] : ['xdg-open', [f]];
-  const r = spawn(cmd, args, { detached: true, stdio: 'ignore' }); r.on('error', () => console.log(`Could not open an editor: open ${f} yourself.`)); r.unref();
+  openInEditor(f, () => console.log(`Could not open an editor: open ${f} yourself.`));
   return true;
 }
 async function voiceKey() {

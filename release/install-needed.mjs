@@ -7,7 +7,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseManifest, classify } from './build.mjs';
 
-export const INSTALL_PATH = /^(kit\/|core\/render\/|styles\/kai-hand-draw\/tools\/|pixi\.(toml|lock)|package(-lock)?\.json|release\/|test\/clean-install\.mjs|\.github\/workflows\/install\.yml)/;
+export const INSTALL_PATH = /^(kit\/|core\/render\/|styles\/kai-hand-draw\/tools\/|pixi\.(toml|lock)|package(-lock)?\.json|release\/|test\/clean-install\.mjs|tmv\/(?!.*\.md$)|\.github\/workflows\/install\.yml)/;
 
 /** Pure. changed = files the diff touches; files = files in both refs; before/after = parsed manifests. */
 export function installNeeded(changed, files, before, after) {
