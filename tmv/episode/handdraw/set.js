@@ -5,6 +5,8 @@
 // neon, room lights, the rival's colour and sign, and the card paper come from palette and texts, with main.js's
 // fallbacks. settingOf and viewOf are pure; paintSet uses core.js's globals.
 
+import { cornerShotOf } from './framing.js';
+
 const MC = typeof document === 'undefined' ? null : document.createElement('canvas').getContext('2d');
 const DEFAULTS = { neon: '#FF3D8B', left: '#FF3D8B', right: '#29E0FF', card: '#EFE9DE' };
 
@@ -17,15 +19,14 @@ export function settingOf(EP) {
   };
 }
 
-/** Which part of the set a shot sees: the world point (x, y) at the frame's centre and the set's zoom k. Close shots
- * look past the speaker's shoulder at one side of the room, so cutting between them changes the background; the
- * corner's close-up looks up at the sign, its other shots alternate wide and medium (framing.js). */
+const CORNER_VIEW = { bust: { x: 620, dx: -60, y: 760, k: 2 }, medium: { x: 540, dx: -140, y: 900, k: 1.4 }, wide: { x: 540, dx: -140, y: 900, k: 1 } };
+
 export function viewOf(shot, side, corner) {
-  if (corner) return shot === 'close' ? { x: 620 - side * 60, y: 760, k: 2 } : { x: 540 - side * 140, y: 900, k: side > 0 ? 1.4 : 1 };
+  if (corner) { const v = CORNER_VIEW[cornerShotOf(shot, side)]; return { x: v.x + side * v.dx, y: v.y, k: v.k }; }
   if (shot === 'close') return side > 0 ? { x: 360, y: 760, k: 1.6 } : { x: 760, y: 820, k: 1.6 };
   if (shot === 'phone') return { x: 700 - side * 90, y: 860, k: 1.4 };
   if (shot === 'two') return { x: 540 - side * 60, y: 860, k: 1.25 };
-  return { x: 540, y: 960, k: 1 };
+  return { x: 540 - side * 110, y: 960, k: 1 };
 }
 
 const WALL = 1440;   // where the room's back wall meets the floor, in the wide view; the cast stands on the floor below it
@@ -78,7 +79,7 @@ function corner(S) {
   boilSeed('set:pole'); inkLine([[870, 910], [880, 1600]], 1.4, PAL.cream);
   glow(620, 540, 360, S.glow, 1);
   MC.font = '84px "Permanent Marker", cursive';
-  const size = Math.min(84, 84 * 660 / MC.measureText(S.sign).width);   // a long sign shrinks to fit the wide shot (the close-up crops it)
+  const SIGN_FITS_WIDE_SHOT = 660, size = Math.min(84, 84 * SIGN_FITS_WIDE_SHOT / MC.measureText(S.sign).width);
   letter(S.sign, 620, 540, size, mixCol(PAL.cream, S.glow, .35), { font: `${size}px "Permanent Marker", cursive`, stroke: S.glow, ink: false, rot: -.03 });
 }
 
