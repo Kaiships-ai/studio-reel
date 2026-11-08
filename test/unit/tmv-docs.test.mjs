@@ -15,8 +15,10 @@ test('tmv quickstart ends in a "you did it" step that names the files the buyer 
 });
 
 test('tmv quickstart has fixes for at least three common problems, and says where to ask', () => {
-  const table = readme.split('**If something goes wrong**')[1] ?? '';
-  const rows = table.split('\n').filter(l => /^\| [^-|]/.test(l) && !/^\| You see/.test(l));
+  // only the table right under the heading: it ends at the first line that is not a table row
+  const after = (readme.split('**If something goes wrong**')[1] ?? '').split('\n').slice(1).join('\n').trimStart().split('\n');
+  const end = after.findIndex(l => !l.startsWith('|'));
+  const rows = after.slice(0, end < 0 ? after.length : end).filter(l => /^\| [^-|]/.test(l) && !/^\| You see/.test(l));
   assert.ok(rows.length >= 3, `only ${rows.length} problem rows`);
   for (const doc of [readme, start]) { assert.match(doc, /Discord/); assert.match(doc, /kaiships\.ai@gmail\.com/); }
 });

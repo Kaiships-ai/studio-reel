@@ -20,7 +20,7 @@ Make a whole series of short vertical episodes with your own characters and stor
    the winning comment.
 
 **You did it** when these two files exist and play: `episodes/sample/sample.mp4` (the sample, about 8-9 minutes after
-you paste the prompt) and `episodes/<your episode>/<your episode>.mp4` (your own episode 1, about 4 minutes later plus the
+you paste the prompt) and `episodes/ep1/ep1.mp4` (your own episode 1; after `/series` it is copied to `episodes/<show>/ep1/ep1.mp4`, about 4 minutes later plus the
 time you spend on the key and your characters). `pixi run studio doctor` then shows only ✓ lines, ending in "All good".
 
 **If something goes wrong** (the three problems seen in real runs):
