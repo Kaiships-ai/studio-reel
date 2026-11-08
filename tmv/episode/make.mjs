@@ -5,6 +5,7 @@
 //   pixi run node episode/make.mjs styles <card>          the card's character in 3D, hand-draw and paper side by side → workspace/<name>-styles.png (1280 wide)
 //                                                         <card> = a seed (nova, theo, blip) or a .json file: a cast entry, {"seed": ...} or every part; --out <file.png>
 //   pixi run node episode/make.mjs <episode> check          size, length, sound, no black or frozen stretch, faces not blown out, stills sheet
+//   pixi run node episode/make.mjs <episode> script         the script rules of the real season (episode/script.mjs): 12 words a sentence, BUT/SO, sources, the vote, "you"
 //   pixi run node episode/make.mjs <episode> gates          the 11 gates the real season passed (episode/gates.py) → out/gates.json
 // No step = render check. Options: --fps N (default 30) · --workers N. Preview size only (720x1280, ST-77). The vo step needs GOOGLE_API_KEY in .env (pixi run studio key) and the internet; TMV_VO_TAKE=<wav> cuts that take instead (tests).
 // <name> is the folder's name. Writes <episode>/out/check.json and <episode>/out/sheet.jpg (open it to look).
@@ -14,6 +15,7 @@ import { env, run, requireReady, ROOT } from '../kit/env.mjs';
 import { mux } from '../core/render/mux.mjs';
 import { speak, VOICE } from './gemini.mjs';
 import { checkCard } from '../core/character-card.mjs';
+import { shapeErrors, checkScript, RULES } from './script.mjs';
 
 const argv = process.argv.slice(2), steps = [], opt = {};
 for (let i = 0; i < argv.length; i++) {
@@ -50,21 +52,18 @@ if (steps[0] === 'styles') {
   console.log(`✓ ${out}: ${c.name.trim()} in 3D, hand-draw and paper. Open it and pick a style.`); process.exit(0);
 }
 const ep = steps.length && (p => existsSync(p) ? realpathSync(p) : p)(resolve(steps.shift()));   // real path: /tmp is /private/tmp on macOS, and the server needs the episode under the library root
-if (!ep || !existsSync(join(ep, 'episode.json'))) { console.error('usage: node episode/make.mjs <episode folder with episode.json> [vo] [render] [check] [gates] [--fps N] [--full]'); process.exit(2); }
+if (!ep || !existsSync(join(ep, 'episode.json'))) { console.error('usage: node episode/make.mjs <episode folder with episode.json> [script] [vo] [render] [check] [gates] [--fps N] [--full]'); process.exit(2); }
 // every render is the 720x1280 review copy; a full-quality render needs the buyer's go (APPROVED-FULL, core/approve-full.mjs)
 if (opt.full) die(existsSync(join(ep, 'APPROVED-FULL'))
   ? 'the full-quality render of an episode is not in this kit yet: the 720x1280 MP4 is the one to post'
   : `the full render needs the buyer's go: ask them, then run pixi run node core/approve-full.mjs ${ep} --by "<who asked, when>"`);
-requireReady(env());
+if (steps.join() !== 'script') requireReady(env());
 const NAME = basename(ep), MP4 = join(ep, `${NAME}.mp4`), OUT = join(ep, 'out');
 const FPS = +(opt.fps ?? 30), [W, H] = [720, 1280];
 const sh = (tool, args) => { const r = run(tool, args); if (r.error || r.status !== 0) die(`failed: ${tool} ${args.join(' ')}`); };
 const probe = f => JSON.parse(run('ffprobe', ['-v', 'error', '-show_streams', '-show_format', '-of', 'json', f], { capture: true }).stdout || '{}');
 
 // every field the engine reads is checked here, so a typo in episode.json stops with its own line instead of a broken frame
-const SHOTS = ['room', 'close', 'two', 'wide', 'phone', 'card', 'stats', 'previously'];
-const EXPS = ['angry', 'determined', 'doubt', 'excited', 'grin', 'guilty', 'laugh', 'nervous', 'proud', 'relieved', 'sad', 'shock', 'smirk', 'surprise', 'teary', 'thinking', 'tired', 'worried'];
-const HEX = /^#[0-9a-fA-F]{6}$/;
 function episode() {
   let e; try { e = JSON.parse(readFileSync(join(ep, 'episode.json'), 'utf8')); } catch (x) { die(`episode.json is not valid JSON: ${x.message}`); }
   // in a series (episode/series.mjs) the show's name, cast, palette and texts come from ../series.json unless the episode sets them
@@ -72,60 +71,50 @@ function episode() {
   if (existsSync(sf)) { let s; try { s = JSON.parse(readFileSync(sf, 'utf8')); } catch (x) { die(`${sf} is not valid JSON: ${x.message}`); }
     e = { ...e, series: e.series ?? s.series, cast: e.cast ?? s.cast, narrator: e.narrator ?? s.narrator, model: e.model ?? s.model, palette: { ...(s.palette ?? {}), ...(e.palette ?? {}) }, texts: { ...(s.texts ?? {}), ...(e.texts ?? {}) } }; }
   const window = castJs();
-  const P = window.TMV_PARTS, errs = [], err = m => errs.push(m), str = v => typeof v === 'string' && v.trim() !== '';
-  if (!str(e.series)) err('"series" must be a text (the show name, in the kicker)');
-  if (!Number.isInteger(e.ep) || e.ep < 1) err('"ep" must be a whole number from 1');
-  if (!str(e.title)) err('"title" must be a text (the episode title over the first shot)');
-  for (const [k, v] of Object.entries(e.palette ?? {})) { if (!['neon', 'left', 'right', 'card', 'ink'].includes(k)) err(`palette "${k}" is unknown (neon, left, right, card, ink)`); else if (!HEX.test(v)) err(`palette "${k}": "${v}" is not a colour like "#FF3D8B"`); }
-  const TXK = ['handle', 'sign', 'kicker', 'phoneLabel', 'phoneHud', 'phoneFoot', 'or', 'voteFooter', 'previously', 'youPicked'];
-  for (const [k, v] of Object.entries(e.texts ?? {})) { if (!TXK.includes(k)) err(`texts "${k}" is unknown (${TXK.join(', ')})`); else if (typeof v !== 'string') err(`texts "${k}" must be a text`); }
+  const shape = shapeErrors(e);
+  if (shape.length) die(`episode.json has ${shape.length} problem${shape.length > 1 ? 's' : ''}:\n  - ${shape.join('\n  - ')}`);
+  const P = window.TMV_PARTS, errs = [], err = m => errs.push(m);
   if (/WRITE THE (TITLE|RECAP LINE|NEXT QUESTION)/.test(JSON.stringify(e))) err('episode.json still has a WRITE ... placeholder (from series.mjs next): write the title, the recap line and the vote');
-  if (e.narrator !== undefined && (typeof e.narrator !== 'object' || (e.narrator.voice !== undefined && !str(e.narrator.voice)) || (e.narrator.style !== undefined && typeof e.narrator.style !== 'string'))) err('"narrator" must be like {"voice": "Achird", "style": "warm, a little wry"}');
-  if (!Array.isArray(e.cast) || !e.cast.length) err('"cast" must list at least one character');
   const cast = {};
-  for (const [i, m] of (Array.isArray(e.cast) ? e.cast : []).entries()) {
+  for (const [i, m] of e.cast.entries()) {
     const at = `cast ${i + 1}`;
-    if (!m || typeof m !== 'object') { err(`${at} must be an object like {"id": "nova", "seed": "nova"}`); continue; }
-    if (!str(m.id)) { err(`${at} has no "id"`); continue; }
     if (cast[m.id]) err(`${at}: "id": "${m.id}" is used twice`);
     if (m.seed !== undefined && !window.TMV_SEEDS[m.seed]) err(`${at}: "seed": "${m.seed}" is not a seed (${Object.keys(window.TMV_SEEDS).join(', ')})`);
     const c = { ...(window.TMV_SEEDS[m.seed] || {}), ...m }; cast[m.id] = c;
     for (const k of ['kind', 'build', 'hair', 'top', 'eyes', 'extra']) if (c[k] !== undefined && !P[k].includes(c[k])) err(`${at} (${m.id}): "${k}": "${c[k]}" is not one of ${P[k].join(', ')}`);
     if (!c.kind) err(`${at} (${m.id}) needs a "seed" or "kind" (human or bot)`);
-    for (const k of ['skin', 'hairColor', 'topColor', 'legs']) if (c[k] !== undefined && !HEX.test(c[k])) err(`${at} (${m.id}): "${k}": "${c[k]}" is not a colour like "#C9663A"`);
-    if (c.place !== undefined && !['room', 'corner'].includes(c.place)) err(`${at} (${m.id}): "place" must be "room" or "corner"`);
   }
   const room = Object.values(cast).filter(c => c.kind === 'human' && (c.place ?? (c.role === 'rival' ? 'corner' : 'room')) === 'room');
   if (Object.keys(cast).length && !room.length) err('the cast needs one human in the room (not "role": "rival" or "place": "corner"): the lead who sits at the desk');
-  if (!Array.isArray(e.beats) || !e.beats.length) err('"beats" must list at least one beat');
-  (Array.isArray(e.beats) ? e.beats : []).forEach((b, i) => {
+  e.beats.forEach((b, i) => {
     const at = `beat ${i + 1}`;
-    if (!b || typeof b !== 'object') return err(`${at} must be an object`);
     if (!cast[b.who]) err(`${at}: "who": "${b.who}" is not in the cast (${Object.keys(cast).join(', ')})`);
-    if (!str(b.line)) err(`${at} has no "line"`);
-    if (b.shot !== undefined && !SHOTS.includes(b.shot)) err(`${at}: "shot": "${b.shot}" is not one of ${SHOTS.join(', ')}`);
-    if (b.exp !== undefined && !EXPS.includes(b.exp)) err(`${at}: "exp": "${b.exp}" is not a face (${EXPS.join(', ')})`);
-    if (b.shot === 'card' && (!Array.isArray(b.card) || !b.card.length || !b.card.every(str))) err(`${at} is a card: it needs "card": ["LINE ONE", "LINE TWO"]`);
-    if (b.shot === 'stats' && (!Array.isArray(b.stats) || !b.stats.length || !b.stats.every(r => r && str(r.label) && r.value != null && (r.bar === undefined || (typeof r.bar === 'number' && r.bar >= 0 && r.bar <= 1))))) err(`${at} is a stats card: it needs "stats": [{"label": "views", "value": "212"}]`);
-    if (b.hot !== undefined && !(Array.isArray(b.hot) && b.hot.every(str))) err(`${at}: "hot" must be a list of words`);
-    if (b.idea !== undefined && !str(b.idea)) err(`${at}: "idea" must be a short text, like "theo-ad-hits-40k"`);
-    for (const [k, v] of Object.entries(b.hud ?? {})) if (!(typeof v === 'string' || typeof v === 'number' || (v && typeof v === 'object' && v.value != null && (v.bar === undefined || (typeof v.bar === 'number' && v.bar >= 0 && v.bar <= 1)))))
-      err(`${at}: hud "${k}" must be "212" or {"value": "212", "bar": 0..1, "style": "danger"}`);
+    if (b.shot === 'card' && !b.card) err(`${at} is a card: it needs "card": ["LINE ONE", "LINE TWO"]`);
+    if (b.shot === 'stats' && !b.stats) err(`${at} is a stats card: it needs "stats": [{"label": "views", "value": "212"}]`);
   });
-  if ((e.beats ?? []).some(b => b?.shot === 'previously')) { const p = e.previously;
-    if (!p || !Number.isInteger(p.ep) || !str(p.question) || !str(p.winner?.tag) || !str(p.winner?.text) || !str(p.loser?.tag) || !str(p.loser?.text))
-      err('a "previously" beat needs "previously": {"ep": 1, "question", "winner": {"tag", "text"}, "loser": {"tag", "text"}} (episode/series.mjs next writes it)'); }
+  if (e.beats.some(b => b.shot === 'previously') && !e.previously)
+    err('a "previously" beat needs "previously": {"ep": 1, "question", "winner": {"tag", "text"}, "loser": {"tag", "text"}} (episode/series.mjs next writes it)');
   const ph = e.texts?.phoneHud ?? 'VIEWS';
-  if ((e.beats ?? []).some(b => b?.shot === 'phone') && !(e.beats ?? []).some(b => b?.hud && ph in b.hud)) err(`a phone shot shows the HUD label "${ph}" (texts.phoneHud), but no beat sets it in "hud"`);
-  const v = e.vote ?? {};
-  if (!str(v.question) || !str(v.a) || !str(v.b)) err('"vote" needs "question", "a" and "b" (the vote is the last frame)');
-  const last = (e.beats ?? []).at(-1)?.line ?? '', words = last.split(/\s+/).map(w => w.replace(/[^\w]/g, ''));
+  if (e.beats.some(b => b.shot === 'phone') && !e.beats.some(b => b.hud && ph in b.hud)) err(`a phone shot shows the HUD label "${ph}" (texts.phoneHud), but no beat sets it in "hud"`);
+  const v = e.vote, last = e.beats.at(-1).line, words = last.split(/\s+/).map(w => w.replace(/[^\w]/g, ''));
   for (const tag of [v.tagA ?? 'A', v.tagB ?? 'B']) if (!String(tag).replace(/[^\w]/g, '')) err(`vote tag "${tag}" needs a letter or digit (A-Z, 0-9)`); else if (!words.includes(String(tag).replace(/[^\w]/g, ''))) err(`the last beat's line must say the vote word "${tag}" (its button lands on that word)`);
   if (errs.length) die(`episode.json has ${errs.length} problem${errs.length > 1 ? 's' : ''}:\n  - ${errs.join('\n  - ')}`);
-  return { e, cast };
+  return { e, cast, lead: [room[0].id, room[0].name].filter(Boolean) };
 }
 
 const STEP = {
+  script() {
+    const { e, lead } = episode(), found = checkScript(e, { lead });
+    for (const r of RULES) {
+      const mine = found.filter(f => f.rule === r.id);
+      console.log(`  ${mine.length ? '✗' : '✓'} ${r.id}: ${r.what}`);
+      for (const f of mine) console.log(`      ${f.beat ? `beat ${f.beat}: ` : ''}${f.got}`);
+      if (mine.length) console.log(`      fix: ${r.fix}`);
+    }
+    const bad = new Set(found.map(f => f.rule)).size;
+    if (bad) die(`${bad} of ${RULES.length} script rules failed (above)`);
+    console.log(`✓ ${RULES.length} of ${RULES.length} script rules pass`);
+  },
   async vo() {
     const { e } = episode();
     const lines = e.beats.map((b, i) => ({ id: `b${String(i + 1).padStart(2, '0')}`, who: b.who, text: b.line }));
@@ -208,7 +197,7 @@ const STEP = {
   },
 };
 for (const s of steps.length ? steps : ['render', 'check']) {
-  if (!STEP[s]) die(`unknown step "${s}": use vo, render, check or gates`);
+  if (!STEP[s]) die(`unknown step "${s}": use script, vo, render, check or gates`);
   console.log(`\n=== ${s} · ${ep} ===`);
   await STEP[s]();
 }

@@ -68,6 +68,7 @@ background while you ask the questions and they make the key: do not wait for it
    rewrite `episodes/ep1/episode.json` from the answers as narration, "You" for the lead (`README.md` lists every field), then:
 
    ```
+   pixi run node episode/make.mjs episodes/ep1 script
    pixi run node episode/make.mjs episodes/ep1 vo
    pixi run node episode/make.mjs episodes/ep1
    ```

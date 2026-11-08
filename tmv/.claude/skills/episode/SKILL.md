@@ -16,7 +16,8 @@ the allow-list only matches the plain command, and anything else makes Claude Co
    saying "You" for the lead ("You shipped your app today.") and the third person for everyone else; characters never talk, so what they say becomes reported
    speech ("Views are views, he says."); `who` is the character on screen, `idea` a short tag for the beat's one idea (no two alike), HUD
    numbers that change only when a line says why, and a `vote` whose two tags the last line says ("Comment A for ..., or B for ...").
-3. Voice, then video and checks:
+3. Script, voice, then video and checks:
+   `pixi run node episode/make.mjs episodes/<name> script` (every rule ✓ before the voice: on a ✗, rewrite what it names)
    `pixi run node episode/make.mjs episodes/<name> vo` (one Gemini call; a ✗ on the key means `pixi run studio key`)
    `pixi run node episode/make.mjs episodes/<name>`
 4. Every check must be ✓ (size, length, sound, no black or frozen stretch, faces not blown out). On a ✗, fix what it names

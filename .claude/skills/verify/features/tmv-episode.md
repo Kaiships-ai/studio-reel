@@ -19,6 +19,16 @@ render, then deletes it (`kit/studio.mjs`); it renders the whole sample only if 
   and `studio doctor` then skips its `voice key` call; the journeys set it to the sample's `vo/take.wav`. Dev-only sync check on a Mac with whisper.cpp: `pixi run python dev/caption-sync.py <ep>` (not shipped). `core/render/reel.mjs vo` uses the same path when kai-hand-draw is absent.
 - `episode.render`: `make.mjs <ep> render check` → `<ep>/<name>.mp4` at 720x1280 30 fps with the code-made bed (room tone, music, hits; `bed.py`) (ST-77 preview; `--full` only on
   request), checks size, sound, length = voice + 1.4 s, -14 LUFS, no black, no silent gap, no 1.5 s freeze, faces not blown out (`faceluma.py`: under 2 % of skin pixels washed out, frames at 2/s outside cards); `out/sheet.jpg`.
+- `episode.script`: `make.mjs <ep> script` (no tools needed, runs before `requireReady`) → the shape check, then the
+  rule table in `episode/script.mjs` (`RULES`: id, what, check, fix), from the real season's script-v4: `short` (≤ 12 words a
+  sentence), `link` (BUT/SO: a line opening with But/So or `"link"`; card, stats, previously and the last beat exempt;
+  "and then" fails), `source` (every card and stats beat), `vote` (a question, two distinct tags, the last line says
+  exactly those), `you` (the lead's id or name never in a line, a third of lines say you). ✓/✗ per rule with each beat's
+  line and the fix; exit 1 on a ✗. The shipped sample fails link, source and you (third-person, pre plan item 7).
+  Every step first checks `episode.json` against `episode/episode.schema.json` (`shapeErrors`: one line per field,
+  unknown keys at the top, in beats, palette, texts and vote are errors); cross-field checks (who in cast, seeds and
+  parts, the lead in the room, card/stats fields by shot, the phone HUD, the vote words in the last line) stay in `episode()`.
+  Unit test: `test/unit/tmv-script.test.mjs` with `test/fixtures/tmv-script/{good,bad}`.
 - `episode.gates`: `make.mjs <ep> gates` → `episode/gates.py`, the 11 gates the real season's episode 1 passed 11/11 (size
   and 80-90 s, −14 LUFS, a cut every ≤ 3 s, no shot over 4.5 s, a cut by 1.5 s, cream explain cards with nothing faint
   behind (G4b: the share of the band in 3x3 faint patches under the paper's 90th percentile, on the beat's paper frames,
