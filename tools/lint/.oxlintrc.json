@@ -1,0 +1,15 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": { "correctness": "error" },
+  "rules": {
+    "no-unused-expressions": "off",
+    "no-new-array": "off",
+    "unicorn/no-useless-fallback-in-spread": "off",
+    "unicorn/no-useless-spread": "off",
+    "unicorn/prefer-string-starts-ends-with": "off",
+    "no-unused-vars": ["error", { "ignoreRestSiblings": true }]
+  },
+  "overrides": [
+    { "files": ["**/tmv/episode/stage.js", "**/tmv/episode/world.js", "**/tmv/episode/main.js"], "rules": { "no-unused-vars": "off" } }
+  ]
+}

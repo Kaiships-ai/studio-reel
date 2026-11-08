@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "target": "es2023",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "lib": [
+      "es2023",
+      "dom"
+    ],
+    "types": [
+      "node"
+    ],
+    "typeRoots": [
+      "./node_modules/@types"
+    ],
+    "skipLibCheck": true,
+    "strict": false,
+    "rootDirs": [
+      "../..",
+      "../../tmv"
+    ]
+  },
+  "include": [
+    "page.d.ts",
+    "../../core/**/*.js",
+    "../../core/**/*.mjs",
+    "../../kit/**/*.js",
+    "../../kit/**/*.mjs",
+    "../../release/**/*.mjs"
+  ],
+  "exclude": [
+    "../../kit/check-reel/**"
+  ]
+}

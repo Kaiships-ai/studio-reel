@@ -16,7 +16,7 @@
 // Colour: by default unchanged from video.mjs (full-range yuvj420p / bt470bg tags); STUDIO_COLOR=bt709 makes standard
 // limited-range yuv420p / bt709.
 // Same ffmpeg arguments, in the same order, as the former core/render/mux.sh.
-import { existsSync, readFileSync, statSync, rmSync, openSync, readSync, closeSync } from 'node:fs';
+import { existsSync, statSync, rmSync, openSync, readSync, closeSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { run } from '../../kit/env.mjs';
 
@@ -43,7 +43,10 @@ export function wavTruncated(file) {
 const probeDur = f => parseFloat((run('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', f], { capture: true }).stdout || '').split('\n')[0]);
 const hms = s => { if (!s || s.startsWith('-') || !s.includes(':')) return 0; const [h, m, x] = s.split(':'); return +h * 3600 + +m * 60 + +x; };
 
-/** Mux one film. Returns { out, I, LRA, TP }. Throws MuxError with a readable message. */
+/**
+ * Mux one film. Returns { out, I, LRA, TP }. Throws MuxError with a readable message.
+ * @param {{ video: string, audio: string, out: string, fps?: number | string, grain?: number | string, color?: string, crf?: number, speed?: string }} o
+ */
 export function mux({ video, audio, out, fps = 24, grain = 2, color = process.env.STUDIO_COLOR || '', crf = 19, speed = 'slow' }) {
   if (!video || !audio || !out) die('usage: node core/render/mux.mjs video.mp4 mix.wav out.mp4 [fps=24] [grain=2]');
   if (!existsSync(video)) die(`video not found: ${video}`);
