@@ -54,7 +54,13 @@ on main, `v*` tags, by hand, the PR label `full-episode`).
   from `styles/kai-hand-draw/engine/fonts/`, kept in the tmv zip by `!` lines and checked by `missingFonts`); the HUD as a
   paper tag; the vote high in the frame (the HUD hides) as the question strip and one paper card per answer, each popping in on its spoken tag; captions
   (`phrases`/`phraseAt`, pure: up to 3 words / 18 characters of one line) on a painted ink plate at y 1580, spoken words
-  cream, the live word ochre, words not yet spoken grey. Unit test: `test/unit/tmv-handdraw.test.mjs`. Stills, no video:
+  cream, the live word ochre, words not yet spoken grey. `set.js` paints the world behind every story shot (never behind a card):
+  the lead's room (window with the neon, string lights, desk, monitor, lamp, shelf, poster, note board) or, when the
+  speaker is in the corner, the rival's corner (his `texts.sign` as a neon sign, ring light, bulbs). `settingOf` (pure)
+  takes its colours from `palette` (`neon`, `left` = room lights, `right` = poster and the rival's glow, `card` = notes)
+  with main.js's fallbacks; `viewOf` (pure) picks the part of the set each shot sees (close-ups look at one side of the
+  room, alternating). Each element calls `boilSeed('set:…')`, so the set boils at 12 fps and holds between boil steps.
+  Unit test: `test/unit/tmv-handdraw.test.mjs`. Stills, no video:
   `node core/render/still.mjs <ep> <t...> --size 1080x1920` after copying the page in as `make.mjs render` does; gates.py's
   `luma(png, 0)` and `faint(png, 0)` measure G4/G4b on a single still.
 - `episode.cuts` (`episode/timeline.js`, shared by every engine): one beat per voiced line, cut every 2.6 s at most: a longer story beat splits on word starts into

@@ -67,3 +67,17 @@ test('captions: short phrases on the word times, words of one line only, gone af
   assert.equal(phraseAt(P, w.s + 0.01, mid.words.at(-1).e + 0.01), undefined, 'a phrase spoken before the cut stays in its shot');
   assert.equal(phraseAt(P, vo.words.at(-1).e + 1), undefined);
 });
+
+test('the set behind the story shots is the episode\'s own: its palette and the rival\'s sign, the corner for the corner', async () => {
+  const { settingOf, viewOf } = await import('../../tmv/episode/handdraw/set.js');
+  assert.deepEqual(settingOf(sample).corner.sign, 'SPEED WINS');
+  const buyer = settingOf({ palette: { neon: '#3FD07A', left: '#E8AA38', right: '#C77DFF' }, texts: { sign: 'Big budget' } });
+  assert.deepEqual(buyer, { room: { neon: '#3FD07A', lights: '#E8AA38', poster: '#C77DFF', notes: '#EFE9DE' },
+    corner: { sign: 'BIG BUDGET', glow: '#C77DFF' } });
+  assert.deepEqual(settingOf({}).room, { neon: '#FF3D8B', lights: '#FF3D8B', poster: '#29E0FF', notes: '#EFE9DE' }, 'main.js fallbacks');
+  assert.notDeepEqual(viewOf('close', 1, false), viewOf('close', -1, false), 'cutting between close-ups changes the background');
+  for (const shot of ['room', 'wide', 'two', 'phone', 'close']) for (const side of [1, -1]) for (const corner of [false, true]) {
+    const v = viewOf(shot, side, corner), hw = 540 / v.k, hh = 960 / v.k;
+    assert.ok(v.x - hw * 1.1 > -200 && v.x + hw * 1.1 < 1280 && v.y - hh * 1.1 > -200 && v.y + hh * 1.1 < 2200, `${shot} ${side} ${corner}: the set covers the frame`);
+  }
+});
