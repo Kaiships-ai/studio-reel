@@ -27,6 +27,7 @@ step('install', ['run', 'studio', 'install']);
 step('doctor', ['run', 'studio', 'doctor']);
 const again = step('install again (must be a no-op)', ['run', 'studio', 'install']);
 if (again > 60) fail(`the second install took ${again} s: it should skip everything`);
+if (existsSync(join(dir, 'episode', 'voice.py'))) step('voice.py self-check (cuts, pauses, a line read twice)', ['run', 'python', 'episode/voice.py', '--self-check']);
 
 // The TMV kit: the sample ships rendered and install only draws 2 s of it, so CI makes an episode itself, with its voice
 // cut from the shipped take (no Gemini key), and its check report must be all ✓. A PR makes ci-smoke, 13-17 s cut from
