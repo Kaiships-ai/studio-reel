@@ -1,5 +1,6 @@
 // release/install-needed.mjs: which zips' clean-install test a change needs (install.yml's `changes` job).
 //   node release/install-needed.mjs <base ref> [head ref]
+//   node release/install-needed.mjs --full-episode    full=true when this run makes the whole tmv sample and its gates
 import { spawn, spawnSync } from 'node:child_process';
 import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -8,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { crc32, inflateRawSync } from 'node:zlib';
 
 export const TIERS = ['pro', 'tmv'];
-const HARNESS = /^(test\/clean-install\.mjs|\.github\/workflows\/install\.yml)$/;
+const HARNESS = /^(test\/(clean-install|tmv-smoke)\.mjs|\.github\/workflows\/install\.yml)$/;
 const DOC = /(\.md|(^|\/)LICENSE)$/;
 const unsure = e => ({ run: true, why: `${e.message}: test to be safe` });
 
@@ -24,6 +25,10 @@ export function zipEntries(buf) {
   }
   return out;
 }
+
+// The whole tmv sample (and its 11 gates) is slow on CI: a PR makes the short ci-smoke episode unless it has the label
+export const fullEpisode = ({ event, ref = '', labels = [] }) => event === 'schedule' ? ref === 'refs/heads/main'
+  : event === 'workflow_dispatch' || ref.startsWith('refs/tags/v') || (event === 'pull_request' && labels.includes('full-episode'));
 
 export function tierNeeded(changed, before, after) {
   const list = fs => fs.slice(0, 8).join(', ') + (fs.length > 8 ? `, … (${fs.length})` : '');
@@ -63,7 +68,11 @@ async function decide(base, head) {
   } finally { for (const f of scripts) rmSync(f, { force: true }); rmSync(tmp, { recursive: true, force: true }); }
 }
 
-if (fileURLToPath(import.meta.url) === resolve(process.argv[1] || '')) {
+const cli = fileURLToPath(import.meta.url) === resolve(process.argv[1] || '');
+if (cli && process.argv[2] === '--full-episode') {
+  const { GITHUB_EVENT_NAME: event, GITHUB_REF: ref, LABELS: labels = '' } = process.env;
+  console.log(`full=${fullEpisode({ event, ref, labels: labels.split(',') })}`);
+} else if (cli) {
   const [base, head = 'HEAD'] = process.argv.slice(2);
   const need = await decide(base, head).catch(e => Object.fromEntries(TIERS.map(t => [t, unsure(e)])));
   for (const t of TIERS) { console.error(`${t}: ${need[t].run ? 'run' : 'skip'} · ${need[t].why}`); console.log(`${t}=${need[t].run}`); }

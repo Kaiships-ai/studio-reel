@@ -58,7 +58,8 @@ export function timeline(EP, VO, cards) {
     let from = b.a;
     for (let k = 1; k < n; k++) {
       const want = b.i || k > 1 ? b.a + (b.b - b.a) * k / n : Math.min(b.a + FIRSTCUT, b.a + (b.b - b.a) / n);
-      const at = starts.filter(x => x > from + 0.9 && x < b.b - 0.9).sort((x, y) => Math.abs(x - want) - Math.abs(y - want))[0];
+      const room = starts.filter(x => x > from + 0.9 && x < b.b - 0.9), early = room.filter(x => b.i || k > 1 || x <= b.a + FIRSTCUT);
+      const at = (early.length ? early : room).sort((x, y) => Math.abs(x - want) - Math.abs(y - want))[0];
       if (at !== undefined) { cuts.push(at); from = at; }
     }
     return [b.a, ...cuts].map((a, j, all) => ({ ...b, j, shot: j % 2 ? cover : b.shot, a, b: all[j + 1] ?? b.b }));
@@ -67,7 +68,7 @@ export function timeline(EP, VO, cards) {
   const shotOf = (t) => SHOTS.find(s => t >= s.a && t < s.b) ?? SHOTS[SHOTS.length - 1];
   // caption words; a number, a vote tag or a beat's "hot" word is drawn in the accent
   const WORDS = VO.words.map(w => { const bi = LINES.findIndex(l => l.id === w.line), hot = (EP.beats[bi]?.hot ?? []).map(s => s.toLowerCase());
-    const bare = w.w.replace(/[^\w'-]/g, '').toLowerCase(); return { ...w, hot: NUM.test(bare) || /^[AB]$/.test(w.w.replace(/[^\w]/g, '')) || hot.includes(bare) }; });
+    const bare = w.w.replace(/[^\w'-]/g, '').toLowerCase(); return { ...w, hot: NUM.test(bare) || (bi === LINES.length - 1 && /^[AB]$/.test(w.w.replace(/[^\w]/g, ''))) || hot.includes(bare) }; });
   function hudAt(t) {   // every HUD label seen so far, in order; a value that changed in this beat rolls in
     const sh = shotOf(t), cur = {}, prev = {}, order = [];
     // a HUD value is "212" or { "value": "212", "bar": 0.02 (a meter under it, 0..1), "style": "danger" (the accent colour) }
