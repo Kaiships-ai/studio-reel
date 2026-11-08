@@ -36,11 +36,15 @@ export const fullEpisode = ({ event, ref = '', labels = [], base = '' }) => even
 // The full episode renders in every style whose engine is built
 export const builtStyles = root => Object.keys(ENGINES).filter(k => existsSync(join(root, 'tmv', ENGINES[k].page)));
 
-// A PR's tmv smoke renders in each built style whose engine folder it touches (tmv/episode/paper/, tmv/episode/handdraw/),
-// in every built style when it changes the engine registry (what each style renders and checks), else in 3d
+// A PR's tmv smoke renders in the union of the built styles whose engine folder it touches (tmv/episode/paper/, tmv/episode/handdraw/),
+// and in every built style when it touches shared code: any tmv/ or core/ file outside the style folders (character-card, make.mjs, the
+// registry, fonts). Docs are not code. With neither, 3d.
 export function smokeStyles(changed, built = Object.keys(ENGINES)) {
-  if (changed.includes('tmv/episode/engines.mjs')) return built;
-  const own = built.filter(k => k !== DEFAULT_STYLE && changed.some(f => f.startsWith(`tmv/${dirname(ENGINES[k].page)}/`)));
+  const dirOf = k => `tmv/${dirname(ENGINES[k].page)}/`;
+  const styleDirs = Object.keys(ENGINES).filter(k => k !== DEFAULT_STYLE).map(dirOf);
+  const shared = changed.some(f => /^(tmv|core)\//.test(f) && !DOC.test(f) && !styleDirs.some(d => f.startsWith(d)));
+  if (shared) return built;
+  const own = built.filter(k => k !== DEFAULT_STYLE && changed.some(f => f.startsWith(dirOf(k))));
   return own.length ? own : [DEFAULT_STYLE];
 }
 

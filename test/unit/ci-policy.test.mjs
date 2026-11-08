@@ -87,12 +87,18 @@ test('lane/** PRs: checks run, never the five machines, main PRs unchanged', () 
   assert.match(full, /'test-all-os'\) && !startsWith\(github\.base_ref, 'lane\/'\)/, 'the test-all-os label never makes a lane PR FULL');
 });
 
-test('the tmv smoke renders in the style a PR touches; the full episode in every built style', () => {
+test('the tmv smoke renders in the styles a PR touches (all of them for shared code); the full episode in every built style', () => {
   const built = ['3d', 'paper', 'handdraw'];
   assert.deepEqual(smokeStyles(['tmv/episode/paper/main.js'], built), ['paper']);
   assert.deepEqual(smokeStyles(['tmv/episode/handdraw/main.js'], built), ['handdraw']);
   assert.deepEqual(smokeStyles(['tmv/episode/paper/cards.js', 'tmv/episode/handdraw/index.html'], built), ['paper', 'handdraw']);
-  assert.deepEqual(smokeStyles(['tmv/episode/make.mjs', 'core/render/mux.mjs'], built), ['3d'], 'any other change smokes 3d');
+  assert.deepEqual(smokeStyles(['core/character-card.mjs'], built), built, 'shared code smokes every built style');
+  assert.deepEqual(smokeStyles(['core/character-card.mjs', 'tmv/episode/paper/cards.js'], built), built, 'shared code plus one style dir still smokes all');
+  for (const f of ['tmv/episode/make.mjs', 'tmv/episode/timeline.js', 'core/paper-figure.js', 'tmv/episode/voice.py', 'tmv/episode/gates.py', 'tmv/episode/fonts/InterTight-var.woff2', 'core/render/mux.mjs'])
+    assert.deepEqual(smokeStyles([f], built), built, `${f} is shared code`);
+  assert.deepEqual(smokeStyles(['tmv/README.md', 'core/README.md', 'docs/x.md'], built), ['3d'], 'docs touch no engine');
+  assert.deepEqual(smokeStyles(['test/unit/x.test.mjs'], built), ['3d'], 'tests-only changes name no style');
+  assert.deepEqual(smokeStyles(['tmv/episode/paper/main.js', 'tmv/episode/paper/README.md'], built), ['paper'], 'a doc beside a style file does not widen it');
   assert.deepEqual(smokeStyles(['tmv/episode/engines.mjs'], ['3d', 'paper']), ['3d', 'paper'], 'the registry change smokes every built style');
   assert.deepEqual(smokeStyles(['tmv/episode/handdraw/x.js'], ['3d', 'paper']), ['3d'], 'a style not built here falls back to 3d');
   assert.ok(builtStyles(ROOT).includes('3d'));
