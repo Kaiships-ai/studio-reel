@@ -57,3 +57,36 @@ export function toHandDraw(card) {
   };
   return { character, lost };
 }
+
+export const PAPER_BUILD = {
+  average: { torsoWidth: 1, bodyHeight: 1, headScale: 1 },
+  tall: { torsoWidth: 0.92, bodyHeight: 1.14, headScale: 0.94 },
+  small: { torsoWidth: 0.94, bodyHeight: 0.84, headScale: 1.1 },
+  round: { torsoWidth: 1.24, bodyHeight: 0.96, headScale: 1.04 },
+};
+const shade = (hex) => '#' + [1, 3, 5].map((i) => Math.round(parseInt(hex.slice(i, i + 2), 16) * 0.78).toString(16).padStart(2, '0')).join('').toUpperCase();
+const pair = (hex) => ({ base: hex.toUpperCase(), shade: shade(hex) });
+
+/** The cut-paper figure for a card: { figure, lost }. Every colour comes as { base, shade }: one hard crescent shade. */
+export function toPaper(card) {
+  const errs = checkCard(card);
+  if (errs.length) throw new Error(`character card: ${errs.join('; ')}`);
+  const lost = [];
+  if (card.hair === 'jay') lost.push('hair "jay" (the 3D base figure\'s own hair): short hair');
+  const figure = {
+    name: card.name.trim(),
+    kind: card.kind ?? 'human',
+    body: PAPER_BUILD[card.build ?? 'average'],
+    hair: card.hair === 'jay' ? 'short' : card.hair ?? 'short',
+    top: card.top ?? 'tee',
+    eyes: card.eyes ?? 'dot',
+    extra: card.extra ?? 'none',
+    paint: {
+      skin: pair(card.skin ?? '#E4AE84'),
+      hair: pair(card.hairColor ?? '#261E2B'),
+      top: pair(card.topColor ?? '#2B2733'),
+      legs: pair(card.legs ?? '#1F1B26'),
+    },
+  };
+  return { figure, lost };
+}
