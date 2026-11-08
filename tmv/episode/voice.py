@@ -6,9 +6,11 @@ Writes <ep>/vo/vo.wav (mono 24 kHz) and <ep>/vo/vo.json: {duration, lines: [{id,
 Gemini gives no word timings. The line is cut where the voice pauses (quiet 0.12 s+); when the pauses match the line's
 phrases (split at . , ? !), each phrase gets its own stretch of sound, so a caption never runs ahead through a pause.
 Inside a stretch each word gets a share by its letters. Before the words are timed, every pause inside a line longer than
-CAP is cut to CAP (the middle of the pause goes, never a word), so the voice runs on and the word times follow the tightened audio."""
+CAP is cut to CAP (the middle of the pause goes, never a word), so the voice runs on and the word times follow the tightened audio.
+A take that says one line twice (a Gemini glitch) stops it before anything is written: every caption after that line would drift."""
 import sys, os, json
 import numpy as np, soundfile as sf
+from scipy.fft import dct
 
 LEAD, PAUSE, CAP, SR = 0.25, 0.32, 0.34, 24000
 
@@ -77,6 +79,40 @@ def cuts(a, texts):
     for i in range(n, 0, -1): k = back[i][j]; out.append((max(segs[k][0] - 0.04, 0), min(segs[j - 1][1] + 0.06, len(a) / SR))); j = k
     return out[::-1]
 
+def cepstra(a, hop=0.02, win=0.04, bands=40):
+    """13 cepstra (c1-c13 of 40 log-mel bands, 40 ms frames every 20 ms), each normalised over the take."""
+    n, h = int(win * SR), int(hop * SR); f = 1 + max(0, (len(a) - n) // h)
+    X = np.abs(np.fft.rfft(a[np.arange(n)[None] + h * np.arange(f)[:, None]] * np.hanning(n), 1024)) ** 2
+    mel = lambda x: 2595 * np.log10(1 + x / 700)
+    b = np.floor(1025 * 700 * (10 ** (np.linspace(mel(80), mel(7600), bands + 2) / 2595) - 1) / SR).astype(int)
+    fb = np.zeros((bands, 513))
+    for i in range(bands):
+        fb[i, b[i]:b[i + 1]] = np.linspace(0, 1, b[i + 1] - b[i], endpoint=False)
+        fb[i, b[i + 1]:b[i + 2]] = np.linspace(1, 0, b[i + 2] - b[i + 1], endpoint=False)
+    C = dct(np.log(X @ fb.T + 1e-8), norm='ortho', axis=1)[:, 1:14]
+    return (C - C.mean(0)) / (C.std(0) + 1e-9)
+
+def repeated(a, win=1.2, reach=6.0, limit=0.30):
+    """(s, t): the voice says the same `win` seconds at s and again at t, within `reach` seconds of speech, or None.
+    Each window of speech is matched (DTW, cosine distance) inside the next `reach` seconds of speech. Measured on real Gemini
+    takes: a line read twice scores 0.20-0.24, the closest pair in a good take 0.39-0.45."""
+    C = cepstra(a); on = np.zeros(len(C), bool)
+    for s, e in spoken(a): on[int(s * 50):int(e * 50)] = True
+    at = np.flatnonzero(on); V = C[at]; V = V / (np.linalg.norm(V, axis=1, keepdims=True) + 1e-9)
+    W, gap, best = int(win * 50), 10, (limit, None)
+    for q in range(0, len(V) - 2 * W - gap, W // 5):
+        T = V[q + W + gap:q + W + gap + int(reach * 50)]; D = 1 - V[q:q + W] @ T.T; acc = D[0].copy()
+        for row in D[1:]:
+            acc = row + np.minimum(acc, np.minimum(np.r_[np.inf, acc[:-1]], np.r_[np.inf, np.inf, acc[:-2]]))
+        if acc.min() / W < best[0]: best = (acc.min() / W, (at[q] / 50, at[q + gap + acc.argmin()] / 50))
+    return best[1]
+
+def said_twice(texts, n=4):
+    """True when the script itself repeats a run of `n` words: then the take may too."""
+    w = [x.strip('.,?!;:"\'').lower() for t in texts for x in t.split()]
+    runs = [tuple(w[i:i + n]) for i in range(len(w) - n + 1)]
+    return len(set(runs)) < len(runs)
+
 if __name__ == '__main__' and sys.argv[1:2] == ['--self-check']:
     t_ = np.arange(int(2.0 * SR)) / SR; tone = 0.3 * np.sin(2 * np.pi * 220 * t_)
     tone[int(0.8 * SR):int(1.2 * SR)] = 0   # "One, two" spoken 0-0.8 s and 1.2-2.0 s
@@ -107,6 +143,11 @@ if take.ndim > 1: take = take.mean(axis=1)
 if tsr != SR:
     from scipy.signal import resample_poly
     take = resample_poly(take, SR, tsr).astype(np.float32)
+texts = [L['text'] for L in lines]; twice = None if said_twice(texts) else repeated(take)
+if twice:
+    once = np.concatenate([take[:int(twice[0] * SR)], take[int(twice[1] * SR):]])   # s to t is one reading: cut it, then find s
+    L = lines[max(i for i, (s, _) in enumerate(cuts(once, texts)) if s <= twice[0])]
+    sys.exit(f'voice.py: the take says {L["id"]} twice ("{L["text"]}" at {twice[0]:.1f} s and {twice[1]:.1f} s), so every caption after it would drift: re-run vo for a new take')
 pieces = {L['id']: take[int(s * SR):int(e * SR)] for L, (s, e) in zip(lines, cuts(take, [L['text'] for L in lines]))}
 parts, out_lines, words, t = [np.zeros(int(LEAD * SR), dtype=np.float32)], [], [], LEAD
 for L in lines:
