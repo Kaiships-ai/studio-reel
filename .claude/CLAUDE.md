@@ -17,6 +17,7 @@ a build check, a manifest entry) in the same change. Drop a row once its mistake
 | Starter ships exactly `studio` + `make-reel`, Pro adds the six `ig-*` skills; `verify` never ships | `release/build.mjs` |
 | Kai's own likeness (`engine/kai-v3.js`) never ships; buyers design their presenter | `[dev]` in `kit.manifest`; no shipped page loads it |
 | Actions minutes: work that runs on every PR lives in `checks.yml` (Linux, ~1 min); install tests are path-filtered; the five-machine matrix runs only for a `v*` tag, a manual run or the `test-all-os` label | `test/unit/ci-policy.test.mjs` |
+| A PR's tmv install renders the short ci-smoke episode; the whole sample and its 11 gates run only nightly on `main`, for a `v*` tag, by hand or with the PR label `full-episode` | `fullEpisode` tests in `test/unit/ci-policy.test.mjs` |
 | Before a release zip goes to Polar, the `v*` tag's install run is green on all five machines | judgment: check Actions before uploading |
 | A change to what a reel does (core tools, the engine, `kit/`, the designer) updates its file in `.claude/skills/verify/features/` | `check-coverage.mjs` (checks.yml, every PR); `test/unit/verify-coverage.test.mjs` |
 | Code mistakes oxlint's correctness rules find (unused imports, constant conditions, `debugger`, const reassignment) fail before CI; the linter and its config live in `tools/lint/`, never in the root `package.json` | `node tools/lint/run.mjs` (pre-push hook and checks.yml) |

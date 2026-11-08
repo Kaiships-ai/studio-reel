@@ -182,13 +182,13 @@ const JOURNEYS = {
       ok(node('-e', `const z=require('node:child_process').spawnSync('python3',['-m','zipfile','-e',process.argv[1],process.argv[2]],{stdio:'inherit'});process.exit(z.status)`, zip, BOX));
       if (!existsSync(join(KIT, 'episodes/sample/episode.json')) || existsSync(join(KIT, 'kit/check-reel'))) throw new Error('not the tmv layout');
     });
-    await step('install passes its 2 s test render, and a copy of the sample renders with every check ✓', () => {
-      // test/clean-install.mjs = what a buyer types (pixi run studio install, doctor, install again), then it renders episodes/ci-ep
+    await step('install passes its 2 s test render, and the ci-smoke episode cut from the sample renders with every check ✓', () => {
+      // test/clean-install.mjs = what a buyer types (pixi run studio install, doctor, install again), then it makes episodes/ci-smoke (test/tmv-smoke.mjs)
       has(ok(node('test/clean-install.mjs', KIT)), '✓ clean install passed');
-      const rep = JSON.parse(readFileSync(join(KIT, 'episodes/ci-ep/out/check.json'), 'utf8'));
+      const rep = JSON.parse(readFileSync(join(KIT, 'episodes/ci-smoke/out/check.json'), 'utf8'));
       const bad = rep.checks.filter(c => !c.ok); if (bad.length) throw new Error(bad.map(c => c.name).join(', '));
       cpSync(join(KIT, 'episodes/sample/sample.mp4'), join(EV, 'tmv-sample.mp4'));
-      for (const f of ['ci-ep.mp4', 'out/sheet.jpg', 'out/check.json']) cpSync(join(KIT, 'episodes/ci-ep', f), join(EV, 'tmv-' + f.split('/').pop()));
+      for (const f of ['ci-smoke.mp4', 'out/sheet.jpg', 'out/check.json']) cpSync(join(KIT, 'episodes/ci-smoke', f), join(EV, 'tmv-' + f.split('/').pop()));
     });
     await step('doctor is all ✓ in the unzipped kit', () => has(ok(node(join(KIT, 'kit/studio.mjs'), 'doctor')), 'All good.'));
     await step('the character designer (served from the kit, no network) drives the 3D figures and copies a cast entry', async () => {

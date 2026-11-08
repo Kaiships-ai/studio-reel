@@ -37,6 +37,6 @@ test('the bad fixture breaks every rule, each on its own beat', () => {
   assert.deepEqual([...new Set(checkScript(bad, { lead }).map(f => f.rule))], RULES.map(r => r.id));
 });
 
-test('the shipped sample still breaks link, source and you: the 80-90 s rewrite (plan item 7) makes this empty', () => {
-  assert.deepEqual([...new Set(checkScript(sample, { lead }).map(f => f.rule))], ['link', 'source', 'you']);
+test('the shipped sample passes every script rule', () => {
+  assert.deepEqual(checkScript(sample, { lead }), []);
 });

@@ -82,7 +82,7 @@ beat, a vote with exactly two tags, and the lead called "you". Each ✗ names th
 | `model` | Optional Gemini TTS model (default `gemini-3.8-flash-tts`; on a 429 the vo step tries `gemini-3.8-flash-lite-tts`, then `gemini-3.1-flash-tts-preview`) |
 | `beats` | One per narrated line: `who`, `line`, `shot`, `idea`, `exp`, `hud`, `hot`, and `card` or `stats` |
 | `beats[].who` | Who is on screen (a cast `id`). Characters never speak; the narrator tells the story |
-| `beats[].line` | What the narrator says: "you" for the lead ("You shipped your app today."), the third person for everyone else. Quotes become reported speech ("Views are views, he says.") |
+| `beats[].line` | What the narrator says: "You" for the lead ("You shipped your app today."), the third person for everyone else. Quotes become reported speech ("Views are views, he says.") |
 | `beats[].link` | `but` or `so`: how the beat follows the one before when its line does not open with But or So (cards and the vote need none) |
 | `beats[].source` | Where a card's or stats card's fact comes from; a stats card shows it under the numbers |
 | `beats[].shot` | `room` (establishing), `close`, `two`, `wide`, `phone`, `card` (2 lines on paper: `"card": ["LINE", "LINE"]`), `stats` (a data card: `"head"`, `"stats": [{"label", "value", "extra", "bar": 0..1, "style": "danger"}]`, `"source"`). A card beat over 4 s opens on its `who` in close-up, then the card |
