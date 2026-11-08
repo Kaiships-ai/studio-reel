@@ -5,14 +5,17 @@
       "Bash(pixi run studio key)",
       "Bash(pixi run designer)",
       "Bash(pixi run node episode/*)",
+      "Bash(pixi run node .claude/skills/story-maintenance/scripts/story.js *)",
       "PowerShell(pixi run studio *)",
       "PowerShell(pixi run studio key)",
       "PowerShell(pixi run designer)",
       "PowerShell(pixi run node episode/*)",
+      "PowerShell(pixi run node .claude/skills/story-maintenance/scripts/story.js *)",
       "Bash(~/.pixi/bin/pixi run studio *)",
       "Bash(~/.pixi/bin/pixi run studio key)",
       "Bash(~/.pixi/bin/pixi run designer)",
       "Bash(~/.pixi/bin/pixi run node episode/*)",
+      "Bash(~/.pixi/bin/pixi run node .claude/skills/story-maintenance/scripts/story.js *)",
       "Edit(episodes/**)",
       "Write(episodes/**)"
     ]

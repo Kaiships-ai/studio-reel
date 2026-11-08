@@ -22,3 +22,10 @@ test('shipping any story skill without crediting its author fails', () => {
   const files = { 'THIRD_PARTY_NOTICES.md': 'LemoLab', '.claude/skills/research/SKILL.md': '' };
   assert.equal(errorsFor(files, 'Daniel Dewhurst').length, 1);
 });
+
+test("narrating with Apple's say voice fails the tmv zip; listing its voices does not", () => {
+  const files = { 'a.sh': 'say -v "$VOICE" -o out.aiff', 'b.md': 'say -v Samantha hi', 'c.md': "say -v 'Samantha' hi", 'd.md': 'say -vSamantha',
+    '.claude/skills/line-editing/SKILL.md': "`say -v '?'` lists them" };
+  for (const f of ['a.sh', 'b.md', 'c.md', 'd.md']) assert.equal(errorsFor(files, f).length, 1, f);
+  assert.deepEqual(errorsFor(files, 'line-editing/SKILL.md'), []);
+});

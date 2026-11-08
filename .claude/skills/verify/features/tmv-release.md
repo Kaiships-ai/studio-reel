@@ -10,9 +10,12 @@ files minus `[tmv_exclude]`, with each `tmv/<path>` replacing or adding `<path>`
   to sell: Clawd, Mixkit, macOS `say`, edge-tts, Kai's likeness, Ninjago/real-person roles. `core/tts/tts.py` names the
   online voice generically so the shared file passes.
 - `tmv.overlay`: `tmv/LICENSE` (ST-81 terms), `tmv/product.json`, docs, `tmv/pixi.toml` + `tmv/pixi.lock` without edge-tts.
-- `tmv.story-skills`: nine story-skills 0.24.1 skills (MIT, Daniel Dewhurst) shipped unchanged from `tmv/.claude/skills/`,
+- `tmv.story-skills`: fifteen story-skills 0.24.1 skills (MIT, Daniel Dewhurst) shipped unchanged from `tmv/.claude/skills/`,
   each with its `LICENSE`, credited in `tmv/THIRD_PARTY_NOTICES.md` (the build refuses a zip with any of them and without the credit).
   `[vendored]` exempts them from the English-only check only. Their CLI is `story-maintenance/scripts/story.js` (Node).
+- `tmv.story`: `/story` (ours, `tmv/.claude/skills/story/`) drives them in five phases (premise, characters with a card
+  each in `cards/`, the style from `make.mjs styles`, world, a six-episode season) into `episodes/<show>/`, in cook or
+  step mode. `.claude/settings.json` allows `pixi run node .claude/skills/story-maintenance/scripts/story.js *`.
 
 ## Driving it
 
@@ -22,3 +25,5 @@ files minus `[tmv_exclude]`, with each `tmv/<path>` replacing or adding `<path>`
   problem(s)`, `… not ours to sell ("clawd")`.
 - Story CLI from the built zip, in an empty folder: `node <unzipped>/tmv-studio/.claude/skills/story-maintenance/scripts/story.js
   init "Test" --dir t`, then in `t/`: `… add character "Mara Voss"`, `… reindex .`, `… check .` → `Checks passed: 0 errors`.
+- `/story step` in an unzipped kit with a throwaway idea: after phase 2, `episodes/<show>/story` passes `story check`,
+  `characters/you.md` has `lie` and `truth`, and each character has a `cards/<id>.json`.
