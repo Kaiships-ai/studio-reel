@@ -5,11 +5,12 @@
 // neon, room lights, the rival's colour and sign, and the card paper come from palette and texts, with main.js's
 // fallbacks. settingOf and viewOf are pure; paintSet uses core.js's globals.
 
+const MC = typeof document === 'undefined' ? null : document.createElement('canvas').getContext('2d');
 const DEFAULTS = { neon: '#FF3D8B', left: '#FF3D8B', right: '#29E0FF', card: '#EFE9DE' };
 
 /** What the episode says about its places: { room: {...}, corner: {...} }, colours as #RRGGBB. */
 export function settingOf(EP) {
-  const P = { ...DEFAULTS, ...(EP.palette ?? {}) };
+  const P = Object.fromEntries(Object.entries(DEFAULTS).map(([k, d]) => [k, /^#[0-9a-f]{6}$/i.test(EP.palette?.[k]) ? EP.palette[k] : d]));
   return {
     room: { neon: P.neon, lights: P.left, poster: P.right, notes: P.card },
     corner: { sign: String(EP.texts?.sign ?? 'SPEED WINS').toUpperCase(), glow: P.right },
@@ -34,7 +35,7 @@ function room(S) {
   for (let i = 0; i < 4; i++) { boilSeed('set:plank' + i); inkLine([[-200, WALL + 70 + i * 110], [W + 200, WALL + 60 + i * 118]], .7, PAL.ink, 'inkfine', .2); }
   boilSeed('set:skirting'); inkLine([[-200, WALL], [W + 200, WALL + 4]], 1.4);
   // the window, the neon sign across the street in it, curtains in the room lights' colour
-  boilSeed('set:window'); paint(rrPts(70, 300, 380, 520, 14, 2), { wash: PAL.night, washOp: 255, ink: PAL.ink, sw: 1.4 });
+  boilSeed('set:window'); paint(rrPts(70, 300, 380, 520, 14, 2), { wash: mixCol(PAL.night, PAL.sky, .35), washOp: 255, ink: PAL.ink, sw: 1.4 });
   for (let i = 0; i < 6; i++) { boilSeed('set:far' + i); paint(rectPts(100 + 300 * hash(i + 1), 600 + 180 * hash(i + 7), 22, 30, 1), { wash: i % 3 ? PAL.ochre : PAL.sky, washOp: 150, ink: null }); }
   boilSeed('set:neon'); paint(rrPts(120, 452, 280, 20, 10, 1.5), { wash: S.neon, washOp: 255, ink: null }); glow(260, 462, 190, S.neon, .9);
   boilSeed('set:bars'); inkLine([[260, 300], [258, 820]], 1.2); inkLine([[70, 560], [450, 556]], 1.2);
@@ -75,7 +76,9 @@ function corner(S) {
   boilSeed('set:ring'); paint(ellPts(870, 760, 150, 150, 32, 1.5), { ink: PAL.cream, sw: 2.6 }); glow(870, 760, 260, PAL.cream, .6);
   boilSeed('set:pole'); inkLine([[870, 910], [880, 1600]], 1.4, PAL.cream);
   glow(620, 540, 360, S.glow, 1);
-  letter(S.sign, 620, 540, 84, mixCol(PAL.cream, S.glow, .35), { font: `84px "Permanent Marker", cursive`, stroke: S.glow, ink: false, rot: -.03 });
+  MC.font = '84px "Permanent Marker", cursive';
+  const size = Math.min(84, 84 * 660 / MC.measureText(S.sign).width);   // a long sign shrinks to stay in the frame at close zoom
+  letter(S.sign, 620, 540, size, mixCol(PAL.cream, S.glow, .35), { font: `${size}px "Permanent Marker", cursive`, stroke: S.glow, ink: false, rot: -.03 });
 }
 
 const SETS = { room, corner };
