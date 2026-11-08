@@ -1,5 +1,4 @@
-// paper/framing.js: who stands where in each story shot of the paper episode, and how far each figure has popped up.
-// Pure numbers on the 1080x1920 frame, so test/unit/tmv-paper-framing.test.mjs checks every build against the captions.
+// paper/framing.js: who stands where in each story shot of the paper episode, and when each figure pops up.
 import { inCorner } from '../timeline.js';
 
 export const W = 1080, CAPTION_Y = 1590, BOT_SCALE = 0.82, PUSH = 1.04;
@@ -8,7 +7,7 @@ export const seg = (t, a, b) => clamp((t - a) / (b - a));
 export const lerp = (x, y, k) => x + (y - x) * k;
 const backOut = (x) => 1 + 2.7 * (x - 1) ** 3 + 1.7 * (x - 1) ** 2;
 
-// FRAMING[shot](sh) → [{ id, x, sole (feet y), k (figure scale), delay (pop order) }]
+// framingFor(cards, lead)[shot](sh) → [{ id, x, sole (feet y), k (figure scale), delay (pop order) }]
 export function framingFor(cards, lead) {
   const room = Object.keys(cards).filter(id => !inCorner(cards[id]));
   const isBot = (id) => cards[id].kind === 'bot';
@@ -27,6 +26,5 @@ export function framingFor(cards, lead) {
   return { close, phone: (sh) => close(sh, lead), two, wide, room: wide };
 }
 
-// A figure pops up from its feet when it arrives. One already on screen before the cut stays up: popping it again sank
-// a close-up's face under the captions on every cut of a long line.
+// A figure already on screen before the cut stays up: re-popping it sank a close-up's face under the captions.
 export const popAt = (t, sh, p, stayed) => stayed ? 1 : lerp(0.3, 1, backOut(seg(t, sh.a + p.delay, sh.a + p.delay + 0.4)));

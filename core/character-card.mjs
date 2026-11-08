@@ -30,7 +30,7 @@ const TOP = { hoodie: 'hoodie', jacket: 'jacket', tee: 'tee', vest: 'sweater' };
 const EYES = { dot: 'classic', wide: 'big', sleepy: 'sleepy', visor: 'classic' };
 const up = (c) => c && c.toUpperCase();
 
-/** The colour of the card's extra (cap, scarf, headset) in every style, with the 3D engine's defaults (tmv/characters/rig.js). */
+/** The card's extra colour (cap, scarf, headset) in every style; defaults match the 3D rig (tmv/characters/rig.js). */
 export const extraColour = (card) => up(card.extraColor ?? { cap: card.topColor ?? '#2B2733', scarf: '#C8412F' }[card.extra] ?? '#20242E');
 
 /** The hand-draw presenter for a card: { character, lost } — lost names what this style draws differently. */
