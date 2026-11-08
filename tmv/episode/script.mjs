@@ -68,6 +68,7 @@ export const RULES = [
     fix: 'end on one beat like "Comment A for the demo, or B for the story." with "vote": {"question": "...?", "tagA": "A", "tagB": "B"}' },
   { id: 'you', what: 'the narrator tells it to "you": the lead is never named, and a third of the lines or more say you',
     check: (e, { lead = [] } = {}) => {
+      lead = lead.filter(n => !/^you$/i.test(n));   // a lead card called You (as /story writes it) is the second person itself
       const named = lead.length ? new RegExp(`(?<![\\p{L}\\p{N}])(${lead.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})(?![\\p{L}\\p{N}])`, 'iu') : null;
       const you = e.beats.filter(b => /\b(you|your|you're|yours)\b/i.test(b.line)).length;
       return [...beatsOf(e, (b, i) => named?.test(b.line) ? { beat: i + 1, got: `names the lead (${b.line.match(named)[0]}): "${b.line}"` } : null),

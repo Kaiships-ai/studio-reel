@@ -51,7 +51,7 @@ if (cmd === 'next') {
     previously: { ep: last.ep, question: v.question, winner: win, loser: lose },
     beats: [
       { who: lead, shot: 'previously', line: `Last time, you picked ${win.text}.` },
-      { who: lead, shot: 'room', line: 'WRITE THE RECAP LINE: what happened because of that choice.', exp: 'determined' },
+      { who: lead, shot: 'room', link: 'so', line: 'WRITE THE RECAP LINE: what happened because of that choice.', exp: 'determined' },
     ],
     vote: { question: 'WRITE THE NEXT QUESTION', a: 'option a', b: 'option b', tagA: 'A', tagB: 'B' },
   });
