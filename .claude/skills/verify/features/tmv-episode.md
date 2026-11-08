@@ -6,7 +6,10 @@ make.mjs, voice.py, designer.mjs, index.html, fonts), `episodes/sample/` (episod
 recoloured and restyled, Blip from primitives) and `character-designer.html`. In the tmv zip there is no `kit/check-reel`: the sample ships rendered
 (`episodes/sample/sample.mp4`) and `studio install` draws only its first 2 s (720x1280, 10 fps, 20 frames) as its test
 render, then deletes it (`kit/studio.mjs`); it renders the whole sample only if `sample.mp4` is gone.
-`test/clean-install.mjs` then renders a copy, `episodes/ci-ep`, with every check ✓.
+`test/clean-install.mjs` then makes `episodes/ci-smoke` (`test/tmv-smoke.mjs`: the sample's first beat, first stats card,
+first card and vote beat, 13-17 s, voiced through the `vo` step from a take cut out of the sample's `vo/vo.wav`) with
+every check ✓; `--full-episode` renders a copy of the whole sample as `episodes/ci-full` and runs its 11 gates (CI: nightly
+on main, `v*` tags, by hand, the PR label `full-episode`).
 
 ## Sub-features
 
