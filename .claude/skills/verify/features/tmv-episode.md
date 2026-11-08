@@ -52,7 +52,7 @@ on main, `v*` tags, by hand, the PR label `full-episode`).
   draws the type in the style's look: `card`, `stats` and `previously` as a paper index card on a cream ground to the
   frame's edges (G4 luma > 180, G4b no faint ground), lettered in Permanent Marker and Shantell Sans (the page loads both
   from `styles/kai-hand-draw/engine/fonts/`, kept in the tmv zip by `!` lines and checked by `missingFonts`); the HUD as a
-  paper tag; the vote as the question strip and one paper card per answer, each popping in on its spoken tag; captions
+  paper tag; the vote high in the frame (the HUD hides) as the question strip and one paper card per answer, each popping in on its spoken tag; captions
   (`phrases`/`phraseAt`, pure: up to 3 words / 18 characters of one line) on a painted ink plate at y 1580, spoken words
   cream, the live word ochre, words not yet spoken grey. Unit test: `test/unit/tmv-handdraw.test.mjs`. Stills, no video:
   `node core/render/still.mjs <ep> <t...> --size 1080x1920` after copying the page in as `make.mjs render` does; gates.py's

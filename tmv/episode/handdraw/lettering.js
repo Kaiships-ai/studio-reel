@@ -31,7 +31,7 @@ export const phraseAt = (P, t, cut = -Infinity) => P.find(p => t >= p.a && t < p
 
 export function lettering({ EP, WORDS, LAST, hudAt, ACCENT }) {
   const INK = PAL.ink, TX = EP.texts ?? {}, P = phrases(WORDS);
-  const vote = EP.vote, wordAt = (tag, d) => WORDS.find(w => w.s >= LAST.ls && w.w.replace(/[^\w]/g, '') === tag)?.s ?? LAST.ls + d;
+  const vote = EP.vote, wordAt = (tag, d) => WORDS.findLast(w => w.s >= LAST.ls && w.w.replace(/[^\w]/g, '').toLowerCase() === tag.toLowerCase())?.s ?? LAST.ls + d;
   const tagA = vote.tagA ?? 'A', tagB = vote.tagB ?? 'B', T_A = wordAt(tagA, 0.5), T_B = wordAt(tagB, 1.6);
   const pop = (t, t0) => (t - t0) * 4;
 
@@ -60,14 +60,14 @@ export function lettering({ EP, WORDS, LAST, hudAt, ACCENT }) {
       letter(s, 540, 350, size, INK, { font: MARKER(size), pop: pop(t, sh.a), rot: -.015 });
       underline(540, 350 + size * .6, Math.min(840, width(s, MARKER(size))), clamp((t - sh.a - .15) / .35), ACCENT);
     }
-    const rows = sh.stats ?? [], gap = Math.min(250, 760 / Math.max(rows.length, 1));
+    const rows = sh.stats ?? [], gap = Math.min(250, 820 / Math.max(rows.length, 1)), k = Math.min(1, gap / 210);
     rows.forEach((r, i) => {
       const y = 500 + i * gap, t0 = sh.a + 0.15 + i * 0.35; if (t < t0) return;
-      letter(String(r.label).toUpperCase(), 150, y, 36, INK, { font: HAND(36), align: 'left', ink: false, alpha: clamp(pop(t, t0)) * .8 });
-      const v = String(r.value), vs = fit(v, 116, 780, MARKER);
-      letter(v, 150, y + 92, vs, r.style === 'danger' ? ACCENT : INK, { font: MARKER(vs), align: 'left', pop: pop(t, t0 + .05) });
-      if (r.extra) letter(String(r.extra), 170 + width(v, MARKER(vs)), y + 100, 42, INK, { font: HAND(42), align: 'left', ink: false });
-      if (r.bar != null) { boilSeed('bar' + i); paint(rectPts(150, y + 160, 780, 22, 1.5), { ink: INK, sw: .6 }); paint(rectPts(150, y + 160, Math.max(24, 780 * clamp(r.bar) * clamp((t - t0) / .7)), 22, 1.5), { wash: r.style === 'danger' ? ACCENT : INK, ink: null }); }
+      letter(String(r.label).toUpperCase(), 150, y, 36 * k, INK, { font: HAND(36 * k), align: 'left', ink: false, alpha: clamp(pop(t, t0)) * .8 });
+      const v = String(r.value), vs = fit(v, 116 * k, 780, MARKER);
+      letter(v, 150, y + 92 * k, vs, r.style === 'danger' ? ACCENT : INK, { font: MARKER(vs), align: 'left', pop: pop(t, t0 + .05) });
+      if (r.extra) letter(String(r.extra), 170 + width(v, MARKER(vs)), y + 100 * k, 42 * k, INK, { font: HAND(42 * k), align: 'left', ink: false });
+      if (r.bar != null) { boilSeed('bar' + i); paint(rectPts(150, y + 160 * k, 780, 22 * k, 1.5), { ink: INK, sw: .6 }); paint(rectPts(150, y + 160 * k, Math.max(24, 780 * clamp(r.bar) * clamp((t - t0) / .7)), 22 * k, 1.5), { wash: r.style === 'danger' ? ACCENT : INK, ink: null }); }
     });
     if (sh.source) { const ss = fit(String(sh.source), 30, 840, HAND); letter(String(sh.source), 540, 1400, ss, INK, { font: HAND(ss), ink: false, alpha: .75 * clamp(pop(t, sh.a + .3)) }); }
   }
@@ -88,7 +88,7 @@ export function lettering({ EP, WORDS, LAST, hudAt, ACCENT }) {
     const you = String(TX.youPicked ?? 'YOU PICKED {tag}').replace(/\{tag\}/g, p.winner.tag).toUpperCase();
     if (t > sh.a + 1) letter(you, 540, 1160, 52, INK, { font: HAND(52), ink: false, pop: pop(t, sh.a + 1) });
   }
-  // the HUD as a paper tag pinned top left; a value in its "danger" style takes the accent
+  // a HUD value in its "danger" style takes the accent
   function hud(t) {
     const items = hudAt(t).items; if (!items.length) return;
     const lab = items.map(it => `${String(it.label).toUpperCase()} ${it.val}`), w = Math.max(...lab.map(s => width(s, HAND(38)))) + 64, h = 56 * items.length + 36;
@@ -99,15 +99,15 @@ export function lettering({ EP, WORDS, LAST, hudAt, ACCENT }) {
     if (t >= 2.4) return; const s = String(EP.title).toUpperCase(), size = fit(s, 96, 900, MARKER);
     letter(s, 540, 470, size, INK, { font: MARKER(size), stroke: PAL.cream, pop: pop(t, 0.1), rot: -.03, alpha: clamp((2.4 - t) / .3) });
   }
-  // the vote: the question on a paper strip, then each answer's card pops in on its spoken tag
+  // high in the frame, above the speaker's face, each answer popping in on its spoken tag
   function voteCards(t) {
     if (t < LAST.ls - 0.1) return;
     const q = String(vote.question).toUpperCase(), qs = fit(q, 52, 820, HAND);
-    sheet('voteq', 110, 760, 860, 120, PAL.cream, { fillOp: 0 });
-    letter(q, 540, 820, qs, INK, { font: HAND(qs), ink: false, pop: pop(t, LAST.ls - .1) });
-    [[tagA, vote.a, ACCENT, 990, T_A], [tagB, vote.b, PAL.teal, 1190, T_B]].forEach(([tag, text, col, y, t0]) => {
-      if (t < t0 - .03) return; const lab = `${tag} · ${String(text).toUpperCase()}`, ls = fit(lab, 72, 660, MARKER);
-      sheet('vote' + tag, 150, y - 80, 780, 160, col, { fillOp: 110 });
+    sheet('voteq', 110, 500, 860, 100, PAL.cream, { fillOp: 0 });
+    letter(q, 540, 550, qs, INK, { font: HAND(qs), ink: false, pop: pop(t, LAST.ls - .1) });
+    [[tagA, vote.a, ACCENT, 690, T_A], [tagB, vote.b, PAL.teal, 840, T_B]].forEach(([tag, text, col, y, t0]) => {
+      if (t < t0 - .03) return; const lab = `${tag} · ${String(text).toUpperCase()}`, ls = fit(lab, 64, 660, MARKER);
+      sheet('vote' + tag, 150, y - 65, 780, 130, col, { fillOp: 110 });
       letter(lab, 540, y, ls, INK, { font: MARKER(ls), pop: pop(t, t0 - .03), rot: -.02, ink: false });
     });
   }
@@ -129,7 +129,7 @@ export function lettering({ EP, WORDS, LAST, hudAt, ACCENT }) {
     PAPER[sh.shot](t, sh);
   }
   function screen(t, sh) {
-    if (!PAPER[sh.shot]) hud(t);
+    if (!PAPER[sh.shot] && t < LAST.ls - 0.1) hud(t);
     title(t); voteCards(t); plate(t, sh);
   }
   // the caption words, after the grain: spoken words cream and popping in, the live word ochre, words not yet spoken grey
