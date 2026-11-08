@@ -20,6 +20,7 @@ a build check, a manifest entry) in the same change. Drop a row once its mistake
 | A PR's tmv install renders the short ci-smoke episode; the whole sample and its 11 gates run only nightly on `main`, for a `v*` tag, by hand or with the PR label `full-episode` | `fullEpisode` tests in `test/unit/ci-policy.test.mjs` |
 | Before a release zip goes to Polar, the `v*` tag's install run is green on all five machines | judgment: check Actions before uploading |
 | A change to what a reel does (core tools, the engine, `kit/`, the designer) updates its file in `.claude/skills/verify/features/` | `check-coverage.mjs` (checks.yml, every PR); `test/unit/verify-coverage.test.mjs` |
+| Code mistakes oxlint's correctness rules find (unused imports, constant conditions, `debugger`, const reassignment) fail before CI; the linter and its config live in `tools/lint/`, never in the root `package.json` | `node tools/lint/run.mjs` (pre-push hook and checks.yml) |
 | Work follows `.agents/playbooks/studio-reel.md`: risk tiers, one heavy run at a time | machine lock in `journeys.mjs`; the rest is judgment |
 | A worktree's linked `node_modules` and `.pixi` never get committed | `.gitignore` names them without a trailing slash, so it matches the links too |
 | A change to rendering keeps `node .claude/skills/verify/draft.mjs films/verify-smoke` and `films/rea-xray` passing | judgment: CI has no GPU, so run them locally (seconds each) |

@@ -36,6 +36,6 @@ export function serve(root, port = 0) {
         });
       } catch { send(400, 'bad request'); }
     });
-    s.listen(port, '127.0.0.1', () => res({ server: s, port: s.address().port }));
+    s.listen(port, '127.0.0.1', () => res({ server: s, port: /** @type {import('node:net').AddressInfo} */ (s.address()).port }));
   });
 }

@@ -7,7 +7,7 @@
 // Chinese text in a buyer document, a skill a document names that the edition lacks, missing licences,
 // a font a style's css/html loads that is not in the zip.
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { deflateRawSync, crc32 } from 'node:zlib';
 import { join, resolve, dirname } from 'node:path';

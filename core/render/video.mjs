@@ -17,6 +17,7 @@ const dir = args[0]; requireDemo(dir);
 let P; try { P = preset(opt('--preset')); } catch (e) { console.error(e.message); process.exit(2); }
 const FPS = +opt('--fps', P?.fps ?? 24), WK = +opt('--workers', 3), Q = opt('--q', ''), LOSSLESS = args.includes('--lossless') && !P;
 const SCALE = P ? P.w / W : 1, MAXDUR = Math.min(P?.maxDur ?? Infinity, +opt('--seconds', Infinity));   // --seconds N: only the first N seconds (a quick tools check)
+/** @type {import('playwright-core').PageScreenshotOptions} */
 const SHOT = LOSSLESS ? { type: 'png' } : { type: 'jpeg', quality: P?.jpeg ?? 95 };
 // full range (yuvj), like the JPEG path: mux.mjs reads the frames as full range; plain yuv444p would be limited and
 // come out grey after the BT.709 conversion
@@ -63,7 +64,7 @@ try { await Promise.all([...Array(WK)].map(async (_, w) => {
   procs.add(ff); ff.on('close', () => procs.delete(ff));
   let dead = null;   // ffmpeg 提前退出（缺编码器、磁盘满…）：它自己的报错已打到 stderr，这里只记一笔并停止喂帧
   let done; const closed = new Promise(r => { done = r; }); ff.on('close', code => done(code));
-  ff.on('error', e => { dead = e.code === 'ENOENT' ? 'ffmpeg is not installed (or not on PATH)' : e.message; done(-1); });
+  ff.on('error', (/** @type {NodeJS.ErrnoException} */ e) => { dead = e.code === 'ENOENT' ? 'ffmpeg is not installed (or not on PATH)' : e.message; done(-1); });
   ff.stdin.on('error', () => { dead ??= 'ffmpeg closed its input early'; });
   for (let f = a; f < b && !dead; f++) {
     await page.evaluate(t => window.render(t), f / FPS);

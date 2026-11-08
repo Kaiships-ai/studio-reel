@@ -1,0 +1,9 @@
+{
+  "name": "kaiships-studio-typecheck",
+  "private": true,
+  "description": "Dev-only: the TypeScript compiler that type-checks core/, kit/ and release/. Kept out of the root package.json so buyers' npm ci never downloads it.",
+  "devDependencies": {
+    "@types/node": "20.19.43",
+    "typescript": "7.0.2"
+  }
+}

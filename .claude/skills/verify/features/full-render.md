@@ -44,3 +44,6 @@ Preconditions: the draft verify passes (don't spend minutes on a film that fails
   costs as much as before: the time saved is the lower fps, the 15 s cap and the encode.
 - `--no-asr` (or no faster-whisper in the pixi env) makes the keyword check `–` (skipped), which is not a pass;
   `--no-camscan` drops the camera row.
+- Before any render, `node tools/typecheck/run.mjs` (pre-push and `checks`) type-checks `core/`, `kit/` and
+  `release/` from their JSDoc in about a second: a misspelt option to `run()`, `mux()`, `acquire()` or `step()`, or a
+  `window.DUR` / `TEXTS` / `READY` name that is not the page contract (`tools/typecheck/page.d.ts`), fails there.

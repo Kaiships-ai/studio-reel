@@ -30,8 +30,15 @@ const scriptOf = film => {
 };
 
 const CLI = !!process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+/** @type {[string, string] | null} */
 let running = null, hooked = false;   // [film, step] this process last marked running
 
+/**
+ * @param {string} film
+ * @param {string} name
+ * @param {string} status
+ * @param {{ files?: string[], pct?: number | string, qa?: unknown, style?: string, type?: string, preset?: string, change?: unknown }} [opts]
+ */
 export function step(film, name, status, { files, pct, ...top } = {}) {
   if (!STAGES.includes(name)) throw new Error(`unknown step "${name}": use ${STAGES.join(', ')}`);
   if (!STATUSES.includes(status)) throw new Error(`unknown status "${status}": use ${STATUSES.join(', ')}`);
