@@ -28,7 +28,7 @@ built style; else 3d), the full episode every built style (`builtStyles`), one L
   rule table in `episode/script.mjs` (`RULES`: id, what, check, fix), from the real season's script-v4: `short` (≤ 12 words a
   sentence), `link` (BUT/SO: a line opening with But/So or `"link"`; card, stats, previously and the last beat exempt;
   "and then" fails), `source` (every card and stats beat), `vote` (a question, two distinct tags, the last line says
-  exactly those), `you` (the lead's id or name never in a line, a third of lines say you). ✓/✗ per rule with each beat's
+  exactly those), `you` (the lead's id or name never in a line, except a lead called You, as /story writes it; a third of lines say you). ✓/✗ per rule with each beat's
   line and the fix; exit 1 on a ✗. The shipped sample fails link, source and you (third-person, pre plan item 7).
   Every step first checks `episode.json` against `episode/episode.schema.json` (`shapeErrors`: one line per field,
   unknown keys at the top, in beats, palette, texts and vote are errors); cross-field checks (who in cast, seeds and
@@ -115,7 +115,7 @@ designed) and copied JSON (no `voice` field), `make.mjs styles nova` and a made-
 names the vo step). Evidence: `tmv-sample.mp4`, `tmv-sheet.jpg`, `tmv-char-*.png`, `tmv-styles-*.png`.
 
 - `series` (slice 4): `episode/series.mjs new|next|status`; `series.json` holds series, cast, palette, texts (make.mjs and
-  main.js merge it under each episode); `next --winner X` writes `previously` + the PREVIOUSLY card beat; the journey
+  main.js merge it under each episode); `next --winner X` writes `previously` + the PREVIOUSLY card beat and the recap beat with `"link": "so"` (what the choice caused); the journey
   renders Ep2 from `features/tmv-series-ep2.json`, voiced from the sample's recorded take (no key in CI). Evidence: `tmv-series-ep1.mp4`, `tmv-series-ep2.mp4`, `tmv-series.json`.
 - `one-prompt` (slice 5): `START.md` + the `/studio`, `/episode`, `/series` skills + `.claude/settings.json` (allows
   `pixi run *` and the episode scripts; buyer kit only) + `make.mjs new <name>`. Journey `tmv-one-prompt`: a fresh
