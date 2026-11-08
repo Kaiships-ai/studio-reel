@@ -4,8 +4,8 @@
 // across the street, string lights, a poster, a shelf and the desk with its screen. It takes its colours and words from
 // the episode: palette.neon gives the room its hue, palette.left the string lights, palette.right the poster and the
 // rival's corner, series the poster, texts.handle the screen, texts.sign the corner's sign.
-// Everything is drawn once at start; a frame draws the floor, the board and the front pieces (one image each, or one per
-// piece while they pop), so a CPU-only runner stays fast.
+// Everything is drawn once at start; a frame fills the wall and floor, then draws the board and the front pieces as one
+// image each (each piece and its shadow while they pop), so a CPU-only runner stays fast.
 import { finishCut, blob } from '/core/paper-figure.js';
 
 const W = 1080, H = 1920, FLOOR = 1500, M = 300, SW = W + 2 * M;   // set px: x from -M to W + M, the floor line at y 1500
@@ -29,7 +29,8 @@ function ink(x, fill, lw = 7) {
 }
 const box = (x, px, py, w, h, r, fill, lw) => { x.beginPath(); x.roundRect(px, py, w, h, r); ink(x, fill, lw); };
 function label(x, s, cx, cy, size, col, maxW, font = DISPLAY) {
-  x.font = `400 ${size}px ${font}`; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.font = `${font === ROUND ? 600 : 400} ${size}px ${font}`;   // the faces main.js loads before the set is drawn
+  x.textAlign = 'center'; x.textBaseline = 'middle';
   x.fillStyle = col; x.fillText(s, cx, cy, maxW);
 }
 
@@ -131,7 +132,7 @@ function room(EP) {
     x.beginPath(); x.moveTo(330, 70); x.lineTo(430, 20); x.lineTo(450, 100); x.closePath(); ink(x, GOLD, 6);
     box(x, 40, 210, 50, 60, 10, RED, 5);
   });
-  return { floor: tone(28, 38, 40), board: wall, pieces: [shelf, desk] };
+  return { wall: tone(h, 28, 33), floor: tone(28, 38, 40), board: wall, pieces: [shelf, desk] };
 }
 
 // the rival's corner, far from the room: panelled wall in palette.right's hue, warm and cool bulbs, the sign (texts.sign),
@@ -146,7 +147,7 @@ function corner(EP) {
   const sign = piece(330, 330, 420, 190, (x) => {
     box(x, 0, 0, 420, 190, 18, '#1E2230', 7);
     x.shadowColor = tone(hr, 85, 60); x.shadowBlur = 20;
-    label(x, String(EP.texts?.sign ?? '').toUpperCase(), 210, 100, 84, tone(hr, 80, 72), 370); x.shadowBlur = 0;
+    label(x, String(EP.texts?.sign ?? EP.series ?? '').toUpperCase(), 210, 100, 84, tone(hr, 80, 72), 370); x.shadowBlur = 0;
   });
   const ring = piece(800, 520, 260, 980, (x) => {
     x.beginPath(); x.moveTo(130, 250); x.lineTo(130, 940); ink(x, null, 12);
@@ -158,7 +159,7 @@ function corner(EP) {
     x.beginPath(); x.moveTo(60, 10); x.lineTo(150, 10); x.lineTo(130, 70); x.lineTo(80, 70); x.closePath(); ink(x, GOLD, 6); box(x, 92, 70, 26, 30, 3, GOLD, 5); box(x, 70, 98, 70, 22, 4, '#8A6A50', 5);
     box(x, 200, 40, 120, 80, 8, RED, 6);
   });
-  return { floor: tone(hr, 14, 21), board: wall, pieces: [sign, shelf, ring] };
+  return { wall: tone(hr, 16, 30), floor: tone(hr, 14, 21), board: wall, pieces: [sign, shelf, ring] };
 }
 
 export function createPaperSet(g, EP) {
@@ -172,10 +173,11 @@ export function createPaperSet(g, EP) {
   }
   // cam = { z, cx, floor } from the shot's framing; popT = seconds since the set came on screen (undefined: already up)
   return function draw(t, cam, inCorner, popT) {
-    const S = SETS[inCorner ? 1 : 0], blur = cam.z > 1.7;
+    const S = SETS[inCorner ? 1 : 0], blur = cam.z > 1.7;   // close and phone shots: the set is out of focus
+    const up = popT === undefined ? 1 : back(seg(popT, 0, 0.35)), top = cam.floor - FLOOR * (1 + (cam.z - 1) * 0.55) * Math.max(0.05, up);
+    if (top > 0) { g.fillStyle = S.wall; g.fillRect(0, 0, W, top + 2); }   // above the board while it stands up
     g.fillStyle = S.floor; g.fillRect(0, cam.floor - 4, W, H);
     g.fillStyle = 'rgba(30,18,24,.25)'; g.fillRect(0, cam.floor - 4, W, 26);
-    const up = popT === undefined ? 1 : back(seg(popT, 0, 0.35));
     if (up > 0) layer(blur ? S.boardSoft : S.board, 0.55, cam, 0, 0, SW, FLOOR, Math.max(0.05, up));
     if (popT === undefined || popT > 0.9) { layer(blur ? S.frontSoft : S.front, 0.8, cam, 0, 0, SW, FLOOR + 60); return; }
     S.pieces.forEach((p, i) => {
