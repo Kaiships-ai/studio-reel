@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { checkCard, lost3D, toHandDraw, toPaper, PAPER_BUILD, CARD } from '../../core/character-card.mjs';
+import { checkCard, lost3D, toHandDraw, toPaper, extraColour, PAPER_BUILD, CARD } from '../../core/character-card.mjs';
 
 const window = {};
 new Function('window', readFileSync(new URL('../../tmv/characters/cast.js', import.meta.url), 'utf8'))(window);
@@ -72,4 +72,19 @@ test('3D draws the seeds as they are, and names what it draws differently for a 
   assert.deepEqual(lost3D({ ...mai, eyes: 'dot', top: 'tee', extra: 'antenna' }), ['top "tee": a sweater', 'extra "antenna": not on a person']);
   assert.deepEqual(lost3D({ name: 'R', kind: 'bot', hair: 'curly', top: 'hoodie' }), ['hair "curly": a robot has none', 'top "hoodie": a robot wears a vest band']);
   assert.throws(() => lost3D({ name: 'X', top: 'cape' }), /character card: "top"/);
+});
+
+test('the cap is one colour in all three styles: the card\'s extraColor, else the top\'s', () => {
+  const baker = { name: 'You', kind: 'human', build: 'round', hair: 'curly', top: 'tee', topColor: '#F2EDE4', extra: 'cap' };
+  const each = (c) => [toHandDraw(c).character.accessory_color, toPaper(c).figure.paint.extra.base, extraColour(c)];
+  assert.deepEqual(each(baker), ['#F2EDE4', '#F2EDE4', '#F2EDE4']);
+  assert.deepEqual(each({ ...baker, extraColor: '#c8412f' }), ['#C8412F', '#C8412F', '#C8412F']);
+  assert.match(checkCard({ ...baker, extraColor: 'red' })[0], /"extraColor": "red" is not a colour/);
+});
+
+test('each panel lists every way it draws the card differently, so no style looks better by saying less', () => {
+  const round = { name: 'You', kind: 'human', build: 'round', hair: 'curly', top: 'hoodie', eyes: 'dot', extra: 'cap' };
+  assert.deepEqual(lost3D(round), ['build "round": only a little wider in 3D']);
+  assert.deepEqual(toHandDraw(round).lost, ['build "round": one body size in hand-draw']);
+  assert.deepEqual(toPaper(round).lost, []);
 });
