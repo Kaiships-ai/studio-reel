@@ -40,6 +40,7 @@
     {
       "who": "nova",
       "shot": "room",
+      "idea": "nova-ships-212-views",
       "line": "Nova shipped her app today. Two hundred views.",
       "hud": {
         "DAY": "1",
@@ -54,6 +55,7 @@
     {
       "who": "theo",
       "shot": "stats",
+      "idea": "theo-ad-hits-40k",
       "line": "Across town, Theo's launch ad hit forty thousand by lunch.",
       "hud": {
         "RIVAL": {
@@ -85,12 +87,14 @@
     {
       "who": "nova",
       "shot": "close",
+      "idea": "his-app-does-half",
       "line": "His app does half of what hers does.",
       "exp": "angry"
     },
     {
       "who": "theo",
       "shot": "two",
+      "idea": "theo-says-speed-wins",
       "line": "Theo just grins. Views are views, he says. Speed wins.",
       "hud": {
         "RIVAL": {
@@ -103,6 +107,7 @@
     {
       "who": "blip",
       "shot": "card",
+      "idea": "stories-spread-not-apps",
       "line": "Then Blip beeps. People don't share apps. They share stories.",
       "exp": "proud",
       "card": [
@@ -113,18 +118,21 @@
     {
       "who": "nova",
       "shot": "close",
+      "idea": "the-bug-is-her-story",
       "line": "So her story is the bug that almost killed it?",
       "exp": "thinking"
     },
     {
       "who": "theo",
       "shot": "close",
+      "idea": "theo-says-clean-demo",
       "line": "Theo says post a clean demo. Nobody cares about bugs.",
       "exp": "doubt"
     },
     {
       "who": "nova",
       "shot": "phone",
+      "idea": "three-nights-almost-quit",
       "line": "Three nights. One bug. Nova almost quit.",
       "hud": {
         "VIEWS": "236",
@@ -138,12 +146,14 @@
     {
       "who": "blip",
       "shot": "two",
+      "idea": "show-the-night-she-quit",
       "line": "Blip is sure. That is the story. Show the night she almost quit.",
       "exp": "proud"
     },
     {
       "who": "blip",
       "shot": "close",
+      "idea": "one-post-tonight",
       "line": "One post tonight. Tomorrow, they count.",
       "hud": {
         "DAY": "2"
@@ -153,6 +163,7 @@
     {
       "who": "nova",
       "shot": "close",
+      "idea": "vote-demo-or-story",
       "line": "Comment A for the demo, or B for the story.",
       "exp": "determined"
     }
