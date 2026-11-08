@@ -2,11 +2,13 @@
 // install tests". These checks fail when a workflow change would spend minutes on every PR again.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import zlib from 'node:zlib';
 import { readFileSync, readdirSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { ROOT } from '../../kit/env.mjs';
-import { installNeeded } from '../../release/install-needed.mjs';
-import { parseManifest } from '../../release/build.mjs';
+import { TIERS, tierNeeded, zipEntries } from '../../release/install-needed.mjs';
+import { classify, parseManifest, tierFiles, zip } from '../../release/build.mjs';
 
 const WF = join(ROOT, '.github', 'workflows');
 const read = f => readFileSync(join(WF, f), 'utf8');
@@ -30,14 +32,27 @@ test('only checks.yml runs on every PR, and only on Linux', () => {
   }
 });
 
-test('install test: a new [dev] manifest entry skips it, moving a shipped file in or out of a zip runs it', () => {
-  const files = ['core/x.js', 'styles/a/STYLE.md', 'styles/a/b.js'];
-  const m = t => parseManifest(t);
-  const base = m('[dev]\n[starter]\ncore/\nstyles/\n');
-  assert.equal(installNeeded(['kit.manifest', 'styles/new3d/x.js'], files, base, m('[dev]\nstyles/new3d/\n[starter]\ncore/\nstyles/\n')), false);
-  assert.equal(installNeeded(['kit.manifest'], files, base, m('[dev]\nstyles/a/b.js\n[starter]\ncore/\nstyles/\n')), true);
-  assert.equal(installNeeded(['styles/a/STYLE.md'], files, base, base), false);
-  assert.equal(installNeeded(['kit/env.mjs'], files, base, base), true);
-  assert.equal(installNeeded(['tmv/episode/make.mjs'], files, base, base), true, 'the tmv zip is on the install path');
-  assert.equal(installNeeded(['tmv/README.md'], files, base, base), false, 'tmv docs do not run the install test');
+const FILES = execFileSync('git', ['ls-files'], { cwd: ROOT, encoding: 'utf8' }).split('\n').filter(Boolean);
+const MANIFEST = parseManifest(readFileSync(join(ROOT, 'kit.manifest'), 'utf8'));
+const zips = (edited = []) => {
+  const blobs = new Map(FILES.map(f => [f, Buffer.from(edited.includes(f) ? `${f} edited` : f)])), { by } = classify(FILES, MANIFEST);
+  return Object.fromEntries(TIERS.map(t => {
+    const { list, blob } = tierFiles(t, by, MANIFEST, blobs);
+    return [t, zipEntries(zip(list.map(f => ({ name: `kit/${f}`, data: blob(f) })), '2026-01-01T00:00:00Z'))];
+  }));
+};
+const BASE = zips();
+const tiers = edited => { const head = zips(edited); return TIERS.filter(t => tierNeeded(edited, BASE[t], head[t]).run); };
+
+test('install test runs exactly the tiers whose zip a change reaches', () => {
+  assert.deepEqual(tiers(['tmv/episode/make.mjs']), ['tmv'], 'a tmv engine change runs tmv and only tmv');
+  assert.deepEqual(tiers(['tmv/README.md', 'core/README.md']), [], 'docs that ship change no install');
+  assert.deepEqual(tiers(['core/render/mux.mjs']), ['pro', 'tmv'], 'core code ships in both zips');
+  assert.deepEqual(tiers(['.claude/skills/verify/SKILL.md', 'test/unit/ci-policy.test.mjs']), [], 'dev-only files are in no zip');
+  assert.deepEqual(tiers(['test/clean-install.mjs']), ['pro', 'tmv'], 'a change to the test itself runs both');
+});
+
+test('zipEntries reads back what zip wrote, stored and deflated', () => {
+  const big = Buffer.alloc(4096, 'a'), z = zip([{ name: 'k/a.txt', data: Buffer.from('hi') }, { name: 'k/d/b.bin', data: big }], '2026-01-01T00:00:00Z');
+  assert.deepEqual([...zipEntries(z)], [['a.txt', `${zlib.crc32(Buffer.from('hi')) >>> 0}:2`], ['d/b.bin', `${zlib.crc32(big) >>> 0}:4096`]]);
 });
