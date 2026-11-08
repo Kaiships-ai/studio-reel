@@ -63,7 +63,7 @@ const FPS = +(opt.fps ?? 30), [W, H] = [720, 1280];
 const sh = (tool, args) => { const r = run(tool, args); if (r.error || r.status !== 0) die(`failed: ${tool} ${args.join(' ')}`); };
 const probe = f => JSON.parse(run('ffprobe', ['-v', 'error', '-show_streams', '-show_format', '-of', 'json', f], { capture: true }).stdout || '{}');
 
-// every field the engine reads is checked here (its shape by episode/episode.schema.json), so a typo in episode.json stops with its own line instead of a broken frame
+// every field the engine reads is checked here, so a typo in episode.json stops with its own line instead of a broken frame
 function episode() {
   let e; try { e = JSON.parse(readFileSync(join(ep, 'episode.json'), 'utf8')); } catch (x) { die(`episode.json is not valid JSON: ${x.message}`); }
   // in a series (episode/series.mjs) the show's name, cast, palette and texts come from ../series.json unless the episode sets them
@@ -99,7 +99,7 @@ function episode() {
   const v = e.vote, last = e.beats.at(-1).line, words = last.split(/\s+/).map(w => w.replace(/[^\w]/g, ''));
   for (const tag of [v.tagA ?? 'A', v.tagB ?? 'B']) if (!String(tag).replace(/[^\w]/g, '')) err(`vote tag "${tag}" needs a letter or digit (A-Z, 0-9)`); else if (!words.includes(String(tag).replace(/[^\w]/g, ''))) err(`the last beat's line must say the vote word "${tag}" (its button lands on that word)`);
   if (errs.length) die(`episode.json has ${errs.length} problem${errs.length > 1 ? 's' : ''}:\n  - ${errs.join('\n  - ')}`);
-  return { e, cast, lead: room.flatMap(c => [c.id, c.name].filter(Boolean)) };
+  return { e, cast, lead: [room[0].id, room[0].name].filter(Boolean) };
 }
 
 const STEP = {

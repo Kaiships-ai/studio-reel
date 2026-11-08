@@ -67,7 +67,7 @@ the story, then `vo` and render it like any episode. `pixi run node episode/seri
 ## episode.json
 
 `make.mjs` checks the fields below against `episode/episode.schema.json` and names the beat or cast entry to fix (with
-`"$schema": "../../episode/episode.schema.json"` at the top, an editor checks the file as you type).
+`"$schema": "../../episode/episode.schema.json"` at the top, `../../../` in a series episode, an editor checks the file as you type).
 `pixi run node episode/make.mjs <episode> script` checks the script against the real season's rules: every sentence 12
 words or fewer, each beat follows the one before with BUT or SO (never "and then"), a `source` on every card and stats
 beat, a vote with exactly two tags, and the lead called "you". Each ✗ names the beat and the fix.

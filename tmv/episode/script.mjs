@@ -1,5 +1,4 @@
 // script.mjs: the shape of episode.json (episode.schema.json) and the script rules of the real season's script-v4.
-// shapeErrors(e) → one line per field that breaks the schema; checkScript(e, { lead }) → one row per rule broken.
 import { readFileSync } from 'node:fs';
 
 export const SCHEMA = JSON.parse(readFileSync(new URL('./episode.schema.json', import.meta.url), 'utf8'));
@@ -40,12 +39,11 @@ export function shapeErrors(e) {
   return errs;
 }
 
-const sentences = line => line.split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(Boolean);
+const sentences = line => line.split(/(?<=[.!?]["”']?)\s+/).map(s => s.trim()).filter(Boolean);
 const words = s => s.split(/\s+/).filter(w => /[\p{L}\p{N}]/u.test(w));
 const PAPER = ['card', 'stats', 'previously'];
 const beatsOf = (e, f) => e.beats.flatMap((b, i) => f(b, i) ?? []);
 
-// One row per rule of the real season's script (script-v4: ST-52, the Story Spine, sourced rules, the A-or-B vote).
 export const RULES = [
   { id: 'short', what: 'every sentence is 12 words or fewer',
     check: e => beatsOf(e, (b, i) => sentences(b.line).filter(s => words(s).length > 12).map(s => ({ beat: i + 1, got: `${words(s).length} words: "${s}"` }))),
@@ -60,11 +58,11 @@ export const RULES = [
   { id: 'vote', what: 'the episode closes on a vote: one question, exactly 2 tags, both said in the last line',
     check: e => {
       const v = e.vote, tags = [v.tagA ?? 'A', v.tagB ?? 'B'], last = e.beats.at(-1).line, n = e.beats.length;
-      const said = [...new Set(words(last).map(w => w.replace(/[^\p{L}\p{N}]/gu, '')).filter(w => w !== 'I' && /^[\p{Lu}\p{N}]+$/u.test(w)))];
+      const said = [...new Set(words(last).map(w => w.replace(/[^\p{L}\p{N}]/gu, '')).filter(w => w !== 'I' && /^\p{Lu}+$/u.test(w)))];
       const bad = [];
       if (tags[0] === tags[1]) bad.push(`both tags are "${tags[0]}"`);
       if (!v.question.trim().endsWith('?')) bad.push(`the question "${v.question}" is not a question`);
-      if (said.length !== 2 || !tags.every(t => said.includes(t))) bad.push(`the last line says ${said.join(', ') || 'no tag'}, not just ${tags.join(' and ')}: "${last}"`);
+      if (!tags.every(t => words(last).some(w => w.replace(/[^\p{L}\p{N}]/gu, '') === String(t))) || said.some(w => !tags.includes(w))) bad.push(`the last line says ${said.join(', ') || 'no tag'}, not just ${tags.join(' and ')}: "${last}"`);
       return bad.map(got => ({ beat: n, got }));
     },
     fix: 'end on one beat like "Comment A for the demo, or B for the story." with "vote": {"question": "...?", "tagA": "A", "tagB": "B"}' },

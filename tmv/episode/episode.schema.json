@@ -61,7 +61,7 @@
             "type": "array", "minItems": 1, "description": "like [{\"label\": \"views\", \"value\": \"212\"}]",
             "items": {
               "type": "object", "required": ["label", "value"], "additionalProperties": false,
-              "properties": { "label": { "$ref": "#/$defs/text" }, "value": { "type": ["string", "number"] }, "extra": { "type": "string" }, "bar": { "$ref": "#/$defs/meter" }, "style": { "enum": ["danger"] } }
+              "properties": { "label": { "$ref": "#/$defs/text" }, "value": { "type": ["string", "number"] }, "extra": { "type": ["string", "number"] }, "bar": { "$ref": "#/$defs/meter" }, "style": { "enum": ["danger"] } }
             }
           },
           "source": { "$ref": "#/$defs/text", "description": "where the beat's fact comes from" },
@@ -77,7 +77,7 @@
     },
     "vote": {
       "type": "object", "required": ["question", "a", "b"], "additionalProperties": false, "description": "the vote, the last frame",
-      "properties": { "question": { "$ref": "#/$defs/text" }, "a": { "$ref": "#/$defs/text" }, "b": { "$ref": "#/$defs/text" }, "tagA": { "type": "string" }, "tagB": { "type": "string" } }
+      "properties": { "question": { "$ref": "#/$defs/text" }, "a": { "$ref": "#/$defs/text" }, "b": { "$ref": "#/$defs/text" }, "tagA": { "type": ["string", "number"] }, "tagB": { "type": ["string", "number"] } }
     },
     "previously": {
       "type": "object", "required": ["ep", "question", "winner", "loser"], "description": "written by episode/series.mjs next",
