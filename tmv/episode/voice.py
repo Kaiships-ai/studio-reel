@@ -3,24 +3,31 @@
 Reads <ep>/vo/lines.json (in beat order) and <ep>/vo/take.wav (the whole narration, one Gemini call). The take is cut at
 the pauses between lines: its stretches of voice are grouped so each line's length best matches its share by letters.
 Writes <ep>/vo/vo.wav (mono 24 kHz) and <ep>/vo/vo.json: {duration, lines: [{id, who, text, s, e}], words: [{w, s, e, line}]}.
-Gemini gives no word timings. The line is cut where the voice pauses (quiet 0.12 s+); when the pauses match the line's
-phrases (split at . , ? !), each phrase gets its own stretch of sound, so a caption never runs ahead through a pause.
-Inside a stretch each word gets a share by its letters. Before the words are timed, every pause inside a line longer than
-CAP is cut to CAP (the middle of the pause goes, never a word), so the voice runs on and the word times follow the tightened audio.
+Gemini gives no word timings. The line is cut where the voice pauses (quiet 0.12 s+), and its words are split into one run
+per stretch of sound, so a caption never runs ahead through a pause. Inside a stretch each word gets a share by its letters.
+A breath is not a stretch (it is noise, flat across the spectrum); a soft word is (it has harmonics), even 50 dB down.
+Before the words are timed, every pause inside a line longer than CAP is cut to CAP (the middle of the pause goes, never a
+word), so the voice runs on and the word times follow the tightened audio.
 A take that says one line twice (a Gemini glitch) stops it before anything is written: every caption after that line would drift."""
 import sys, os, json
 import numpy as np, soundfile as sf
 from scipy.fft import dct
 
 LEAD, PAUSE, CAP, SR = 0.25, 0.32, 0.34, 24000
+BREATH, SOFT = 0.28, -50
 
-def spoken(a, hop=0.01, gap=0.12, click=0.06):
-    """[(s, e)] stretches of voice in a line take: 10 ms frames over -38 dB of the take's peak, quiet gaps under `gap` merged,
-    stretches under `click` dropped (no word is that short; a click would take a phrase's place in timed())."""
+def spoken(a, hop=0.01, gap=0.12, click=0.06, soft=-38):
+    """[(s, e)] stretches of voice in a line take: 10 ms frames over -38 dB of the take's peak, or over `soft` dB when the frame
+    is not noise (spectral flatness over 100 Hz-4 kHz under BREATH), quiet gaps under `gap` merged, stretches under `click`
+    dropped (no word is that short; a click would take a phrase's place in timed()), and stretches of noise dropped (median
+    flatness BREATH or more: a breath). Measured on 5 Gemini takes: breaths 0.34-0.50, words up to 0.21.
+    cuts() keeps soft=-38: over a whole take a lower floor moved line cuts by up to 2 s."""
     n = int(hop * SR); f = len(a) // n
     if f == 0: return [(0.0, len(a) / SR)]
-    rms = np.sqrt(np.mean(a[:f * n].reshape(f, n) ** 2, axis=1)) + 1e-9
-    on = 20 * np.log10(rms / rms.max()) > -38
+    fr = a[:f * n].reshape(f, n); rms = np.sqrt(np.mean(fr ** 2, axis=1)) + 1e-9
+    P = np.abs(np.fft.rfft(fr * np.hanning(n), axis=1))[:, 1:41] ** 2 + 1e-12
+    flat = np.exp(np.log(P).mean(1)) / P.mean(1); db = 20 * np.log10(rms / rms.max())
+    on = (db > -38) | ((db > soft) & (flat < BREATH))
     seg, start = [], None
     for i, v in enumerate(on):
         if v and start is None: start = i
@@ -30,11 +37,11 @@ def spoken(a, hop=0.01, gap=0.12, click=0.06):
     for s_, e_ in seg:
         if out and s_ - out[-1][1] < gap: out[-1][1] = e_
         else: out.append([s_, e_])
-    return [tuple(x) for x in out if x[1] - x[0] >= click] or [(0.0, len(a) / SR)]
+    return [tuple(x) for x in out if x[1] - x[0] >= click and np.median(flat[round(x[0] / hop):round(x[1] / hop)]) < BREATH] or [(0.0, len(a) / SR)]
 
 def tighten(a):
     """The line take with every pause in it over CAP cut to CAP: the pause's middle goes, joined with a 12 ms crossfade."""
-    segs, xf, keep, pos = spoken(a), int(0.012 * SR), [], 0
+    segs, xf, keep, pos = spoken(a, soft=SOFT), int(0.012 * SR), [], 0
     for (_, e0), (s1, _) in zip(segs, segs[1:]):
         if s1 - e0 > CAP: keep.append((pos, int((e0 + CAP / 2) * SR))); pos = int((s1 - CAP / 2) * SR)
     out = a[:0]
@@ -51,16 +58,23 @@ def share(ws, s, e):
     return out
 
 def timed(text, a):
-    """[(word, s, e)] inside one line take: phrases on the voice's own stretches when they match, else letters over the take."""
-    ws = text.split(); segs = spoken(a)
-    phrases, cur = [], []
-    for w in ws:
-        cur.append(w)
-        if w[-1] in '.,?!;:': phrases.append(cur); cur = []
-    if cur: phrases.append(cur)
-    if len(segs) == len(phrases) > 1:
-        return [x for ph, (s, e) in zip(phrases, segs) for x in share(ph, s, e)]
-    return share(ws, segs[0][0], segs[-1][1])
+    """[(word, s, e)] inside one line take. The words are split into one run per stretch of voice, so each run's letters best
+    match its stretch's length (dynamic programming, as in cuts()); a run that ends inside a phrase costs 1, at , ; : 0.3, at
+    . ? ! nothing. With one stretch, or more stretches than words, the words share the whole take by letters."""
+    ws = text.split(); segs = spoken(a, soft=SOFT); n, m = len(ws), len(segs)
+    if not 1 < m <= n: return share(ws, segs[0][0], segs[-1][1])
+    W = np.cumsum([0] + [len(w) + 2 for w in ws]); r = sum(e - s for s, e in segs) / W[-1]
+    stop = lambda w: 0 if w[-1] in '.?!' else 0.3 if w[-1] in ',;:' else 1.0
+    INF = float('inf'); best = [[INF] * (n + 1) for _ in range(m + 1)]; back = [[0] * (n + 1) for _ in range(m + 1)]; best[0][0] = 0
+    for i in range(1, m + 1):
+        d = segs[i - 1][1] - segs[i - 1][0]
+        for j in range(i, n - (m - i) + 1):
+            for k in range(i - 1, j):
+                c = best[i - 1][k] + (d - r * (W[j] - W[k])) ** 2 / (r * (W[j] - W[k])) + (stop(ws[j - 1]) if j < n else 0)
+                if c < best[i][j]: best[i][j], back[i][j] = c, k
+    out, j = [], n
+    for i in range(m, 0, -1): k = back[i][j]; out = share(ws[k:j], *segs[i - 1]) + out; j = k
+    return out
 
 def cuts(a, texts):
     """[(s, e)] seconds of each text inside the take. The take's stretches of voice are grouped in order, one group per
@@ -138,6 +152,13 @@ if __name__ == '__main__' and sys.argv[1:2] == ['--self-check']:
     clicked = np.concatenate([np.zeros(int(0.04 * SR)), tone[:int(0.01 * SR)], np.zeros(int(0.16 * SR)), tone]).astype(np.float32)
     r = timed('Hello there, friend', clicked)   # a 10 ms click before the line is not a phrase: "friend" still starts after the pause
     assert abs(r[2][1] - 1.41) < 0.03, r
+    quiet = tone[int(1.2 * SR):int(1.6 * SR)] * 10 ** (-42 / 20)   # "two," 42 dB down, with 0.4 s pauses around it
+    soft = np.concatenate([tone[:int(0.8 * SR)], np.zeros(int(0.4 * SR)), quiet, np.zeros(int(0.4 * SR)), tone[int(1.2 * SR):]]).astype(np.float32)
+    t3 = tighten(soft); r = timed('One, two, three', t3)   # the soft word is kept: each pause goes to CAP, not one 1.2 s pause
+    assert abs(len(t3) / SR - (2.0 + 2 * (CAP - 0.012))) < 0.02 and abs(r[1][1] - (0.8 + CAP - 0.012)) < 0.03, (len(t3) / SR, r)
+    breath = np.concatenate([0.3 * 10 ** (-25 / 20) * rng.standard_normal(int(0.3 * SR)), np.zeros(int(0.2 * SR)), tone]).astype(np.float32)
+    r = timed('Hello there, friend', breath)   # a breath (white noise, 25 dB down) is not a word: "Hello" starts with the voice
+    assert abs(r[0][1] - 0.5) < 0.03 and abs(r[2][1] - 1.7) < 0.03, r
     print('voice.py self-check ok'); sys.exit(0)
 
 ep = sys.argv[1]
