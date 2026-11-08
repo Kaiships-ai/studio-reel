@@ -35,7 +35,7 @@ export function toHandDraw(card) {
   const errs = checkCard(card);
   if (errs.length) throw new Error(`character card: ${errs.join('; ')}`);
   const lost = [];
-  if (card.kind === 'bot') lost.push('a robot: hand-draw draws a person (Clawd is the show\'s robot there)');
+  if (card.kind === 'bot') lost.push('a robot: hand-draw draws a person');
   if (card.build && card.build !== 'average') lost.push(`build "${card.build}": one body size in hand-draw`);
   if (card.hair === 'jay') lost.push('hair "jay" (the 3D base figure\'s own hair): short hair');
   if (card.top === 'vest') lost.push('top "vest": a sweater');
