@@ -13,10 +13,11 @@ the allow-list only matches the plain command, and anything else makes Claude Co
 
 - Start: make episode 1 with `/episode` (or use the sample), then
   `pixi run node episode/series.mjs new episodes/<show> --from episodes/<episode 1 folder>`.
+  It copies episode 1 into `episodes/<show>/ep1`: work there from now on, and tell the buyer the original folder is a duplicate they can delete (do not delete it yourself).
 - The vote is in (the user tells you A or B):
   `pixi run node episode/series.mjs next episodes/<show> --winner <A|B>`.
   It writes `ep<N+1>/episode.json` with the opening: a PREVIOUSLY · EP N card (the question, the winning answer) and
-  one recap line. Replace the WRITE ... placeholders: the title, the recap (what the winning choice caused), the other beats up to 22-26 in all
+  one recap line ("Last time, you chose A: <the answer>."). Replace the WRITE ... placeholders: the title, the recap (what the winning choice caused), the other beats up to 22-26 in all
   (80-90 s, as in `/episode`) of narration ("You" for the lead, the third person for everyone else; the same narrator; characters never talk) that follow it, and a new vote. Leave out `series`, `cast` and `style`: they come from `series.json`.
 - Reader panel, voice, render and gates as in `/episode` steps 3-5, with `episodes/<show>/ep<N+1>`.
 - `pixi run node episode/series.mjs status episodes/<show>` lists every episode, its MP4 and its winner.

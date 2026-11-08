@@ -4,8 +4,8 @@
 
 // an episode of a series (episode/series.mjs) shares the show's name, cast, palette and texts from ../series.json
 export async function loadEpisode() {
-  const SER = await fetch('../series.json').then(r => r.ok ? r.json() : {}).catch(() => ({}));
   const EP0 = await (await fetch('episode.json')).json();
+  const SER = EP0.series !== undefined && EP0.cast !== undefined ? {} : await fetch('../series.json').then(r => r.ok ? r.json() : {}).catch(() => ({}));
   const EP = { ...EP0, series: EP0.series ?? SER.series, cast: EP0.cast ?? SER.cast, style: EP0.style ?? SER.style ?? '3d',
     palette: { ...(SER.palette ?? {}), ...(EP0.palette ?? {}) }, texts: { ...(SER.texts ?? {}), ...(EP0.texts ?? {}) } };
   const VO = await (await fetch('vo/vo.json')).json();

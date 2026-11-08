@@ -15,6 +15,10 @@ if (!['new', 'next', 'status'].includes(cmd) || !dirArg) { console.error('usage:
 const dir = resolve(dirArg), SJ = join(dir, 'series.json');
 const read = (f) => { try { return JSON.parse(readFileSync(f, 'utf8')); } catch (x) { die(`${f}: ${x.message}`); } };
 const write = (f, o) => writeFileSync(f, JSON.stringify(o, null, 2) + '\n');
+const previouslyLine = ({ tag, text }) => {
+  const t = String(text ?? '').trim().replace(/[.!?]+$/, '');
+  return !t || t.toLowerCase() === tag.toLowerCase() || /^option [ab]$/i.test(t) ? `Last time, you chose ${tag}.` : `Last time, you chose ${tag}: ${t}.`;
+};
 const SHARED = ['series', 'cast', 'style', 'palette', 'texts', 'narrator', 'model'];   // one narrator voice (and model) for the whole show
 
 if (cmd === 'new') {
@@ -27,7 +31,7 @@ if (cmd === 'new') {
   if (existsSync(join(from, `${basename(from)}.mp4`))) cpSync(join(from, `${basename(from)}.mp4`), join(ep1, 'ep1.mp4'));
   write(SJ, { ...Object.fromEntries(SHARED.filter(k => e[k] !== undefined).map(k => [k, e[k]])), episodes: [{ ep: 1, dir: 'ep1' }] });
   write(join(ep1, 'episode.json'), { ...Object.fromEntries(Object.entries(e).filter(([k]) => !SHARED.includes(k))), ep: 1 });
-  console.log(`✓ ${SJ}\n✓ ${ep1} (from ${from})`);
+  console.log(`✓ ${SJ}\n✓ ${ep1} (from ${from})\nwork in ${dir} from here on; ${from} is now a duplicate of ep1 and may be deleted once the buyer agrees`);
 }
 
 if (cmd === 'next') {
@@ -50,7 +54,7 @@ if (cmd === 'next') {
     ep: n, title: 'WRITE THE TITLE',
     previously: { ep: last.ep, question: v.question, winner: win, loser: lose },
     beats: [
-      { who: lead, shot: 'previously', line: `Last time, you picked ${win.text}.` },
+      { who: lead, shot: 'previously', line: previouslyLine(win) },
       { who: lead, shot: 'room', link: 'so', line: 'WRITE THE RECAP LINE: what happened because of that choice.', exp: 'determined' },
     ],
     vote: { question: 'WRITE THE NEXT QUESTION', a: 'option a', b: 'option b', tagA: 'A', tagB: 'B' },

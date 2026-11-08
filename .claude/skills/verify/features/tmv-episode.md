@@ -115,7 +115,7 @@ designed) and copied JSON (no `voice` field), `make.mjs styles nova` and a made-
 names the vo step). Evidence: `tmv-sample.mp4`, `tmv-sheet.jpg`, `tmv-char-*.png`, `tmv-styles-*.png`.
 
 - `series` (slice 4): `episode/series.mjs new|next|status`; `series.json` holds series, cast, palette, texts (make.mjs and
-  main.js merge it under each episode); `next --winner X` writes `previously` + the PREVIOUSLY card beat and the recap beat with `"link": "so"` (what the choice caused); the journey
+  main.js merge it under each episode; the page fetches `../series.json` only when the episode lacks `series` or `cast`); `next --winner X` writes `previously` + the PREVIOUSLY card beat (spoken line "Last time, you chose A: <answer>.", or "you chose A." for a tag-only answer) and the recap beat with `"link": "so"` (what the choice caused); the journey
   renders Ep2 from `features/tmv-series-ep2.json`, voiced from the sample's recorded take (no key in CI). Evidence: `tmv-series-ep1.mp4`, `tmv-series-ep2.mp4`, `tmv-series.json`.
 - `one-prompt` (slice 5): `START.md` + the `/studio`, `/episode`, `/series` skills + `.claude/settings.json` (allows
   `pixi run *` and the episode scripts; buyer kit only) + `make.mjs new <name>`. Journey `tmv-one-prompt`: a fresh

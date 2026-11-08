@@ -83,3 +83,27 @@ test('the ep2 that series.mjs next writes passes the script rules once its story
     assert.deepEqual(checkScript(e, { lead: leadOf(s) }), []);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('the previously line that series.mjs next speaks reads right for a verb phrase, a noun phrase and a tag-only answer', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'tmv-prev-'));
+  try {
+    const cases = [
+      [{ a: 'cut the price', b: 'call Mara', tagA: 'A', tagB: 'B' }, 'A', 'Last time, you chose A: cut the price.'],
+      [{ a: 'cut the price', b: 'the half-price sign.', tagA: 'A', tagB: 'B' }, 'B', 'Last time, you chose B: the half-price sign.'],
+      [{ a: 'option a', b: 'option b', tagA: 'A', tagB: 'B' }, 'A', 'Last time, you chose A.'],
+    ];
+    cases.forEach(([vote, winner, line], i) => {
+      const from = join(dir, `ep-${i}`), show = join(dir, `show-${i}`);
+      mkdirSync(from);
+      writeFileSync(join(from, 'episode.json'), JSON.stringify({ series: 'Night Oven', ep: 1, title: 'Sold out by six', ...baker({ id: 'you', name: 'You' }, 'You bake two hundred loaves by six.'), vote: { question: 'Which?', ...vote } }));
+      writeFileSync(join(from, 'index.html'), ''); writeFileSync(join(from, `ep-${i}.mp4`), '');
+      for (const args of [['new', show, '--from', from], ['next', show, '--winner', winner]]) {
+        const r = run('node', [join(ROOT, 'tmv/episode/series.mjs'), ...args], { capture: true });
+        assert.equal(r.status, 0, r.stderr);
+      }
+      const beats = JSON.parse(readFileSync(join(show, 'ep2/episode.json'), 'utf8')).beats;
+      assert.equal(beats[0].line, line);
+      assert.equal(beats[1].link, 'so');
+    });
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
