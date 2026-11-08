@@ -40,8 +40,9 @@ each demo keep their own licences, listed in that demo's `CREDITS` file.
 ## story-skills (MIT)
 
 The writing skills in `.claude/skills/` named `premise-workshop`, `character-management`, `worldbuilding`,
-`interactive-fiction`, `research`, `reader-panel`, `chapter-writing`, `story-init` and `story-maintenance` (with its
-bundled `story` CLI, `scripts/story.js`) are story-skills 0.24.1 by Daniel Dewhurst, shipped unchanged. Each of those
+`interactive-fiction`, `research`, `reader-panel`, `chapter-writing`, `theme-craft`, `plot-structure`, `genre-craft`,
+`submission`, `line-editing`, `feedback-triage`, `story-init` and `story-maintenance` (with its bundled `story` CLI,
+`scripts/story.js`) are story-skills 0.24.1 by Daniel Dewhurst, shipped unchanged. Each of those
 folders carries a copy of its `LICENSE`.
 
 ```text

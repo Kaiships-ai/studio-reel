@@ -51,7 +51,7 @@ const TEXT = /\.(md|mjs|js|cjs|json|html|css|py|txt|toml|ya?ml|srt|sh|ps1)$|(^|\
 const EXEMPT = new Set(['LICENSE', 'THIRD_PARTY_NOTICES.md']);
 const BUYER_DOC = f => /^[^/]+\.md$/.test(f) || /^\.claude\/skills\/[^/]+\/.*\.md$/.test(f) || f === 'workspace/README.md' || f === 'styles/README.md' || f === 'styles/catalog.md' || /^content-types\/.*\.md$/.test(f) || /^styles\/[^/]+\/(STYLE|DEMO|WORKFLOW|README)\.md$/.test(f);
 const SKILL_REF = /(^|[\s`("'])\/(ig-[a-z]+|make-reel|studio|crowsnest|verify|episode|series)\b/g;
-const STORY_SKILLS = ['chapter-writing', 'character-management', 'interactive-fiction', 'premise-workshop', 'reader-panel', 'research', 'story-init', 'story-maintenance', 'worldbuilding'];
+const STORY_SKILLS = ['chapter-writing', 'character-management', 'feedback-triage', 'genre-craft', 'interactive-fiction', 'line-editing', 'plot-structure', 'premise-workshop', 'reader-panel', 'research', 'story-init', 'story-maintenance', 'submission', 'theme-craft', 'worldbuilding'];
 const TMV_SKILLS = ['episode', 'series', 'studio', ...STORY_SKILLS].sort();
 const PRO_SKILLS = ['ig-plan', 'ig-reel', 'ig-human', 'ig-viral', 'ig-dm', 'ig-caption'];
 

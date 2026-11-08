@@ -92,7 +92,8 @@ kinebeo
 # Microsoft's online voice, Kai's likeness, third-party IP from the roles files. Ignoring case, names and text.
 clawd
 mixkit
-make_vo_local|\bsay -v
+# `say -v <voice>` narrates with Apple's voice; `say -v '?'` (line-editing's read-aloud check lists voices) is allowed
+make_vo_local|\bsay -v ["$\w]
 edge.tts
 kai-v3|blocky.kai|char-kai
 ninjago|daymond
@@ -124,10 +125,16 @@ content-types/
 # story-skills 0.24.1 by Daniel Dewhurst (MIT), from tmv/.claude/skills/
 .claude/skills/chapter-writing/
 .claude/skills/character-management/
+.claude/skills/feedback-triage/
+.claude/skills/genre-craft/
 .claude/skills/interactive-fiction/
+.claude/skills/line-editing/
+.claude/skills/plot-structure/
 .claude/skills/premise-workshop/
 .claude/skills/reader-panel/
 .claude/skills/research/
 .claude/skills/story-init/
 .claude/skills/story-maintenance/
+.claude/skills/submission/
+.claude/skills/theme-craft/
 .claude/skills/worldbuilding/
