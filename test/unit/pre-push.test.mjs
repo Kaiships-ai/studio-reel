@@ -23,7 +23,7 @@ test('the hook files are dev-only, never in a zip', () => {
 });
 
 test('the hook runs the same commands as checks.yml', () => {
-  assert.equal(hookCommands.length, 3, 'unit, release and coverage');
+  assert.equal(hookCommands.length, 4, 'unit, release, coverage and typecheck');
   for (const cmd of hookCommands)
     assert.ok(ciRuns.some(r => r.includes(cmd)), `checks.yml has no step running "${cmd}"`);
 });

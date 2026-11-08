@@ -89,6 +89,10 @@ export function requireReady(E = env(), only = null) {
  * The only way to start a tool. `tool` is 'node', 'python', 'ffmpeg' or 'ffprobe', never a path.
  * Runs without a shell (paths with spaces are safe), from the library root, with the pixi tools first on PATH.
  * opts: { capture: true } returns stdout/stderr as text; otherwise output is shown. Returns the spawnSync result.
+ * @param {string} tool
+ * @param {string[]} args
+ * @param {{ capture?: boolean, env?: Record<string, string> } & import('node:child_process').SpawnSyncOptions} [opts]
+ * @returns {import('node:child_process').SpawnSyncReturns<any>} stdout is a string with capture, a Buffer with encoding: 'buffer'
  */
 export function run(tool, args, opts = {}) {
   const E = env();
