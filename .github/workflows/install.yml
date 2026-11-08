@@ -11,10 +11,10 @@
 # Gemini key is needed). tmv runs on Linux with Pro, and on Windows pwsh + macOS arm64 when FULL. A PR's tmv run makes
 # ci-smoke, 13-17 s cut from the sample (test/tmv-smoke.mjs), drawn at 4 fps on Linux (~68 frames); the whole sample and its 11 gates run on Linux nightly on
 # main (only when the tmv zip changed that day), for a v* tag, by hand, or when the PR gets the label `full-episode`.
-# The smoke renders in the style whose engine the PR touches (tmv/episode/paper/ → paper, tmv/episode/handdraw/ →
-# handdraw, tmv/episode/engines.mjs → every built style, else 3d), one Linux tmv leg per style; the full episode runs one
-# Linux leg per style whose engine is built (release/install-needed.mjs smokeStyles, builtStyles). A PR that changes only
-# shared tmv code (make.mjs, timeline.js, core/) smokes 3d: paper and hand-draw see it nightly, or with `full-episode`.
+# The smoke renders in each built style whose engine folder the PR touches (tmv/episode/paper/ → paper, tmv/episode/handdraw/
+# → handdraw), and in every built style when it touches shared code (any tmv/ or core/ file outside those folders), else 3d.
+# One Linux tmv leg per style, in parallel, so wall time is the slowest leg (~7 min, 3d). The full episode runs one Linux leg
+# per style whose engine is built (release/install-needed.mjs smokeStyles, builtStyles).
 # A newer push to the same PR cancels the older run.
 name: install
 on:
