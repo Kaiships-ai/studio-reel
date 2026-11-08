@@ -63,7 +63,7 @@ function pathCheck() {
 }
 
 async function install() {
-  console.log('Kaiships Studio · setup (first time about 5 minutes; everything stays inside this folder)');
+  console.log(`Kaiships Studio · setup (first time ${TMV ? '2-4' : 'about 5'} minutes; everything stays inside this folder)`);
   const E = env();
   for (const t of ['python', 'ffmpeg', 'ffprobe']) if (!E.tools[t]) return bad(t, 'missing from the pixi environment', 'pixi install   then   pixi run studio install');
   ok(`node ${process.versions.node} · python · ffmpeg`, 'locked versions from pixi.lock');
@@ -80,15 +80,29 @@ async function install() {
 
   if (!force && existsSync(installMarker()) && readFileSync(installMarker(), 'utf8').trim() === lockHash()) { ok('test render', 'passed before with these versions'); return done(); }
   rmSync(installMarker(), { force: true });   // an old marker would make the test render itself refuse as "tool versions changed"
-  // The TMV kit has no check reel: its test render is the sample episode itself (preview, 720x1280), which the buyer keeps
+  // The TMV kit has no check reel. The sample episode ships rendered (episodes/sample/sample.mp4), so the buyer sees it at
+  // once; the test render draws its first 2 seconds (about 20 s) to prove the browser, ffmpeg and the Python audio tools
+  // work, instead of the whole 44 s (4-5 minutes, the slowest part of the first install in P16's buyer run)
   if (!existsSync(join(ROOT, 'kit', 'check-reel')) && existsSync(join(ROOT, 'episodes', 'sample', 'episode.json'))) {
-    // No GPU (software WebGL): 30 fps takes about 100 minutes for the 44 s sample (Linux CI: 4.5 s a frame), so the
-    // tools check runs at 8 fps there and says what that means for the buyer's own episodes
     const soft = /swiftshader|llvmpipe|software/i.test(r);
-    console.log(soft ? '  … test render: the sample episode at 8 frames a second (no GPU found, so this machine renders slowly: about 20 minutes)'
-      : '  … test render: the sample episode (preview 720x1280, 2-5 minutes with a GPU)');
-    if (run('node', ['episode/make.mjs', 'episodes/sample', 'render', 'check', ...(soft ? ['--fps', '8'] : [])]).status !== 0) return bad('test render', 'the sample episode did not render (message above)', 'pixi run studio doctor');
-    ok('test render', `episodes/sample/sample.mp4${soft ? '  (8 fps: no GPU here; a 40 s episode at 30 fps takes over an hour on this machine)' : ''}`);
+    console.log('  … test render (the first 2 s of the sample episode: it checks the tools, about 20 seconds)');
+    const tmp = join(ROOT, 'episodes', 'sample', 'out', '_test'), mp4 = join(tmp, 'test.mp4');
+    rmSync(tmp, { recursive: true, force: true }); mkdirSync(tmp, { recursive: true });
+    if (run('node', ['core/render/video.mjs', join(ROOT, 'episodes', 'sample'), '--size', '720x1280', '--fps', '10', '--seconds', '2', '--workers', '1', '--out', mp4]).status !== 0)
+      return bad('test render', 'the drawing step failed (message above)', 'pixi run studio doctor');
+    const pr = JSON.parse(run('ffprobe', ['-v', 'error', '-count_frames', '-show_streams', '-of', 'json', mp4], { capture: true }).stdout || '{}');
+    const v = (pr.streams || []).find(s => s.codec_type === 'video');
+    if (!(v && v.width === 720 && v.height === 1280 && +v.nb_read_frames === 20))
+      return bad('test render', `unexpected result (${v ? `${v.width}x${v.height}, ${v.nb_read_frames} frames` : 'no video'})`, 'pixi run studio doctor');
+    if (run('python', ['-c', 'import numpy, scipy, soundfile, soxr, PIL']).status !== 0)
+      return bad('audio tools', 'the Python audio packages do not load (message above)', 'pixi install   then   pixi run studio install');
+    rmSync(tmp, { recursive: true, force: true });
+    ok('test render', `720x1280, 20 frames${soft ? '  (no GPU found: this machine renders slowly, a 40 s episode takes about an hour)' : ''}`);
+    if (!existsSync(join(ROOT, 'episodes', 'sample', 'sample.mp4'))) {   // only if the buyer deleted the shipped one
+      console.log('  … the sample episode is missing: rendering it again (2-5 minutes with a GPU)');
+      if (run('node', ['episode/make.mjs', 'episodes/sample', 'render', 'check', ...(soft ? ['--fps', '8'] : [])]).status !== 0) return bad('sample episode', 'it did not render (message above)', 'pixi run studio doctor');
+    }
+    ok('sample episode', 'episodes/sample/sample.mp4');
     writeFileSync(installMarker(), lockHash());
     return done();
   }

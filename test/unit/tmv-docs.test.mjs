@@ -22,3 +22,10 @@ test('tmv quickstart has fixes for at least three common problems, and says wher
   assert.ok(rows.length >= 3, `only ${rows.length} problem rows`);
   for (const doc of [readme, start]) { assert.match(doc, /Discord/); assert.match(doc, /kaiships\.ai@gmail\.com/); }
 });
+
+test('tmv quickstart reaches episode 1 fast: pixi first, the install in the background, the sample ships ready', () => {
+  assert.match(readme, /^0\. Once per computer, install pixi/m);   // no "pixi: command not found" as the buyer's first line
+  assert.match(start, /in the background/);
+  assert.match(start, /under 10 minutes/);
+  assert.match(start, /episodes\/sample\/sample\.mp4/);
+});

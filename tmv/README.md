@@ -2,7 +2,10 @@
 
 Make a whole series of short vertical episodes with your own characters and story, in Claude Code.
 
-1. Unzip `tmv-studio` to a short path (for example `~/tmv-studio`), open a terminal there and start Claude Code (`claude`).
+0. Once per computer, install pixi (it installs everything else inside the folder) in a terminal, then close it:
+   macOS and Linux `curl -fsSL https://pixi.sh/install.sh | sh`, Windows PowerShell
+   `powershell -ExecutionPolicy ByPass -c "irm -useb https://pixi.sh/install.ps1 | iex"` (about 15 seconds).
+1. Unzip `tmv-studio` to a short path (for example `~/tmv-studio`), open a **new** terminal there and start Claude Code (`claude`).
 2. Claude Code asks once whether you trust the folder, with "No, exit" selected (it does that for every new folder):
    press ↓ to pick **Yes, I trust this folder**, then Enter. The folder pre-approves only its own setup and episode
    commands (`.claude/settings.json`), so Claude does not stop to ask you before each one.
@@ -12,24 +15,25 @@ Make a whole series of short vertical episodes with your own characters and stor
    Set up How we make Ten Million Views in this folder: read START.md and follow it step by step.
    ```
 
-   Claude reads `START.md`, installs everything inside this folder, renders the sample episode
-   (`episodes/sample/sample.mp4`), helps you make a free Google AI Studio key for the narrator's voice
-   (`pixi run studio key` opens `.env`; paste the key there, never in the chat), and asks you three questions.
+   Claude reads `START.md`, starts the install inside this folder in the background (2-4 minutes the first time), shows
+   you the sample episode (`episodes/sample/sample.mp4`, it ships ready) and, while the install runs, asks you three
+   questions and helps you make a free Google AI Studio key for the narrator's voice (`pixi run studio key` opens
+   `.env`; paste the key there, never in the chat). Then it makes your episode 1 (about 3 minutes).
 4. Then make your episodes with `/episode` (`pixi run node episode/make.mjs new <name>`, write the story in its
    `episode.json`, render) and turn them into a series with `/series`. Each episode ends in a vote; the next one follows
    the winning comment.
 
-**You did it** when these two files exist and play: `episodes/sample/sample.mp4` (the sample, about 8-9 minutes after
-you paste the prompt) and `episodes/ep1/ep1.mp4` (your own episode 1; after `/series` it is copied to `episodes/<show>/ep1/ep1.mp4`, about 4 minutes later plus the
-time you spend on the key and your characters). `pixi run studio doctor` then shows only ✓ lines, ending in "All good".
+**You did it** when these two files exist and play: `episodes/sample/sample.mp4` (the sample, there from the start) and
+`episodes/ep1/ep1.mp4` (your own episode 1, under 10 minutes after you paste the prompt on a machine with a GPU; after
+`/series` it is copied to `episodes/<show>/ep1/ep1.mp4`). `pixi run studio doctor` then shows only ✓ lines, ending in "All good".
 
 **If something goes wrong** (the three problems seen in real runs):
 
 | You see | Fix |
 |---|---|
-| `pixi: command not found` | pixi was just installed: open a new terminal in this folder and start `claude` again, or let Claude use `~/.pixi/bin/pixi` (it is allowed too) |
+| `pixi: command not found` | pixi is not installed yet (step 0), or was just installed: open a new terminal in this folder and start `claude` again, or let Claude use `~/.pixi/bin/pixi` (it is allowed too) |
 | `✗ voice key: no key in .env` | run `pixi run studio key`, paste the key right after `GOOGLE_API_KEY=` on the same line, **save the file**, say "xong". A `429` line means today's free voice quota is used up: the key is fine, try again after it resets |
-| The test render says "no GPU found" and takes 15-20 minutes | the browser found no graphics card (some Linux and Windows machines, virtual machines): it still works, only slower. Episodes take about an hour each there; use a Mac or a PC with a GPU if you can |
+| The install's test render says "no GPU found" | the browser found no graphics card (some Linux and Windows machines, virtual machines): it still works, only slower. Episodes take about an hour each there; use a Mac or a PC with a GPU if you can |
 
 Still stuck: Discord (Buyer role) or kaiships.ai@gmail.com, with the ✗ line you see.
 
@@ -40,8 +44,8 @@ Claude plan, a Google account (the voice key is free) and the internet for the v
 
 - `episodes/sample/`: the sample episode, in 3D (a room at night with neon through the curtain, a rival's corner, a
   phone, cream cards, a data card, HUD chips with meters, word-by-word captions, a code-made sound bed, the vote as the
-  last frame). `episode.json` is the whole story; every word on screen comes from it (the engine has English fallbacks only for `texts` you leave out). Setup renders it to
-  `episodes/sample/sample.mp4` (preview, 720x1280).
+  last frame). `episode.json` is the whole story; every word on screen comes from it (the engine has English fallbacks only for `texts` you leave out). It ships rendered as
+  `episodes/sample/sample.mp4` (preview, 720x1280); `pixi run node episode/make.mjs episodes/sample` renders it again.
 - `episode/`: the 3D engine the episodes play in (`main.js`, `stage.js`, `world.js`, `hud.js`, the room in `assets/`) and
   `bed.py` (room tone, music bed and hits under the voice, made in code, no samples).
 - `episode/make.mjs`: voice (`pixi run node episode/make.mjs <episode> vo`: one Gemini TTS call reads the whole episode

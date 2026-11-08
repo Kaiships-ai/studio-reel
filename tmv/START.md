@@ -1,6 +1,6 @@
-# START: set up this studio and show the sample episode
+# START: set up this studio, show the sample, make the buyer's episode 1
 
-Claude: the buyer pasted one prompt that sent you here. Run each step from this folder, one at a time. Each prints ✓ or ✗
+Claude: the buyer pasted one prompt that sent you here. Run the steps from this folder, in order. Each command prints ✓ or ✗
 with the fix; on a ✗ do the fix and run the step again. If a step fails twice, show the buyer the exact line and the
 support contacts in `AGENTS.md`. Never print or commit keys.
 
@@ -9,17 +9,26 @@ allow-list (`.claude/settings.json`) only matches the plain command, so anything
 the buyer. If `pixi` is not found by name, use `~/.pixi/bin/pixi` in its place (same words after it), which is also
 allowed. Edit files only under `episodes/`.
 
-1. Install (safe to run again; it skips what is done; a few minutes the first time). It also renders the sample
-   episode as its test render:
+The buyer should reach their own episode 1 in under 10 minutes. The install (2-4 minutes the first time) runs in the
+background while you ask the questions and they make the key: do not wait for it before step 2.
+
+1. Install, **in the background** (Claude Code's `run_in_background`; safe to run again, it skips what is done). It ends
+   with a 2-second test render; you are told when it finishes:
 
    ```
    pixi run studio install
    ```
 
+   While it runs, show the buyer the sample, which ships ready: `episodes/sample/sample.mp4` (preview, 720x1280, 44 s).
+   Say where it is and ask them to open it.
+
    No `pixi`? Ask the buyer to install it in their own terminal, then open a new terminal and run the step again:
    macOS and Linux `curl -fsSL https://pixi.sh/install.sh | sh`, Windows PowerShell `powershell -ExecutionPolicy ByPass -c "irm -useb https://pixi.sh/install.ps1 | iex"`.
 
-2. The voice key. The narrator's voice is Gemini TTS from Google (free with an AI Studio key). Tell the buyer:
+2. Ask the buyer the first question now (the install is still running): **Your story**: what is your app or project,
+   and what happens in episode 1?
+
+3. The voice key. The narrator's voice is Gemini TTS from Google (free with an AI Studio key). Tell the buyer:
    1. open https://aistudio.google.com/apikey and sign in with Google,
    2. press "Create API key", then Copy,
    3. paste it after `GOOGLE_API_KEY=` in the `.env` file this opens, save it, and say "xong" (done):
@@ -28,21 +37,21 @@ allowed. Edit files only under `episodes/`.
    pixi run studio key
    ```
 
-   Never ask for the key in the chat and never print it. When they say "xong", check (its `voice key` line makes one
-   tiny real call; on a ✗ do its fix):
+   (It may wait a minute while the install sets up the tools; that is normal.) Never ask for the key in the chat and
+   never print it.
+
+4. Ask the other two questions, one at a time, while they work on the key or after it:
+   - Your characters: keep the seeded cast (Nova, Theo, Blip), or design your own (`pixi run designer`, in the
+     background; open the address it prints, press "Copy for Claude", paste it here)?
+   - The narrator's voice: Achird (the default, the sample's voice), or hear 3 others first (Puck, Kore, Charon: make
+     the episode with each in `narrator.voice` and let them pick)? Characters never speak; one narrator tells the story.
+
+   When they say "xong" for the key **and** the install has finished, check (its `voice key` line makes one tiny real
+   call; on a ✗ do its fix):
 
    ```
    pixi run studio doctor
    ```
-
-3. Show the buyer the sample: `episodes/sample/sample.mp4` (preview, 720x1280). Say where it is and ask them to open it.
-
-4. Ask the buyer three questions, one at a time:
-   - Your story: what is your app or project, and what happens in episode 1?
-   - Your characters: keep the seeded cast (Nova, Theo, Blip), or design your own (`pixi run designer`, open the
-     address it prints, press "Copy for Claude", paste it here)?
-   - The narrator's voice: Achird (the default, the sample's voice), or hear 3 others first (Puck, Kore, Charon: make
-     the episode with each in `narrator.voice` and let them pick)? Characters never speak; one narrator tells the story.
 
 5. Make their episode 1 with `/episode` (the skill in `.claude/skills/episode`):
 

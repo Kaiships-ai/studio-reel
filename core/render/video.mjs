@@ -3,6 +3,7 @@
 // 每个 worker 独立浏览器，JPEG 截图经管道交给 ffmpeg；最后无损拼接
 // --lossless: PNG screenshots into lossless 4:4:4 segments, so fine coloured dots (halftone, riso, dither) are
 // subsampled once, at the mux, instead of twice. About 3× the disk and somewhat slower.
+// --seconds N: render only the first N seconds (studio install's quick test render)
 // --preset test (core/preset.mjs): the page still lays out at --size, the frames come out at the preset's size
 // (deviceScaleFactor), at most its maxDur seconds, as low-quality JPEGs in a fast encode. --fps defaults to its fps.
 // 设了环境变量 RENDER_SLOTS（整数）时，整机最多同时这么多个整片渲染（slot.mjs）；不设就不限。分段文件放在 --out 旁边各自独有的隐藏目录，渲完（或失败、被中断）就删。
@@ -15,7 +16,7 @@ const args = process.argv.slice(2), { w: W, h: H } = takeSize(args), opt = (k, d
 const dir = args[0]; requireDemo(dir);
 let P; try { P = preset(opt('--preset')); } catch (e) { console.error(e.message); process.exit(2); }
 const FPS = +opt('--fps', P?.fps ?? 24), WK = +opt('--workers', 3), Q = opt('--q', ''), LOSSLESS = args.includes('--lossless') && !P;
-const SCALE = P ? P.w / W : 1, MAXDUR = P?.maxDur ?? Infinity;
+const SCALE = P ? P.w / W : 1, MAXDUR = Math.min(P?.maxDur ?? Infinity, +opt('--seconds', Infinity));   // --seconds N: only the first N seconds (a quick tools check)
 const SHOT = LOSSLESS ? { type: 'png' } : { type: 'jpeg', quality: P?.jpeg ?? 95 };
 // full range (yuvj), like the JPEG path: mux.mjs reads the frames as full range; plain yuv444p would be limited and
 // come out grey after the BT.709 conversion
