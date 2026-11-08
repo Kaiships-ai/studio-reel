@@ -45,7 +45,8 @@ render, then deletes it (`kit/studio.mjs`); it renders the whole sample only if 
   "Copy for Claude" copies one sentence plus a cast JSON entry.
 - `cast.styles`: `pixi run node episode/make.mjs styles <card>` (`<card>` = a seed, or a `.json` card: a cast entry, `{"seed": …}`
   plus overrides, or every part; `--out <file.png>`, default `workspace/<name>-styles.png`) → one 1280-wide PNG, the
-  card's character side by side in 3D (`characters/rig.js` on the designer's stage), hand-draw (`toHandDraw` →
+  card's character side by side in 3D (`characters/rig.js` on the designer's stage, `lost3D`; top "jacket" = the hoodie
+  opened over a white shirt, a shader on the hoodie material; both stages carry a low front fill so the jaw is not black), hand-draw (`toHandDraw` →
   `styles/kai-hand-draw/engine/kaip.js` on `core.js`, the only two hand-draw files the tmv zip keeps: `!` lines in
   `[tmv_exclude]`) and paper (`toPaper` → `core/paper-figure.js`), each labelled with what that style draws differently.
   Pages: `episode/three-styles/` (index.html composes 3d/hand/paper.html, one iframe each; a panel sets `window.SHOT`
