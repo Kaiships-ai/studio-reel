@@ -7,7 +7,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { ROOT } from '../../kit/env.mjs';
-import { TIERS, tierNeeded, zipEntries } from '../../release/install-needed.mjs';
+import { TIERS, fullEpisode, tierNeeded, zipEntries } from '../../release/install-needed.mjs';
 import { classify, parseManifest, tierFiles, zip } from '../../release/build.mjs';
 
 const WF = join(ROOT, '.github', 'workflows');
@@ -50,9 +50,25 @@ test('install test runs exactly the tiers whose zip a change reaches', () => {
   assert.deepEqual(tiers(['core/render/mux.mjs']), ['pro', 'tmv'], 'core code ships in both zips');
   assert.deepEqual(tiers(['.claude/skills/verify/SKILL.md', 'test/unit/ci-policy.test.mjs']), [], 'dev-only files are in no zip');
   assert.deepEqual(tiers(['test/clean-install.mjs']), ['pro', 'tmv'], 'a change to the test itself runs both');
+  assert.deepEqual(tiers(['test/tmv-smoke.mjs']), ['pro', 'tmv'], 'so does a change to the ci-smoke episode');
 });
 
 test('zipEntries reads back what zip wrote, stored and deflated', () => {
   const big = Buffer.alloc(4096, 'a'), z = zip([{ name: 'k/a.txt', data: Buffer.from('hi') }, { name: 'k/d/b.bin', data: big }], '2026-01-01T00:00:00Z');
   assert.deepEqual([...zipEntries(z)], [['a.txt', `${zlib.crc32(Buffer.from('hi')) >>> 0}:2`], ['d/b.bin', `${zlib.crc32(big) >>> 0}:4096`]]);
+});
+
+test('the whole tmv sample runs nightly on main, for a tag, by hand or with the PR label full-episode; a plain PR makes ci-smoke', () => {
+  assert.equal(fullEpisode({ event: 'schedule', ref: 'refs/heads/main' }), true);
+  assert.equal(fullEpisode({ event: 'schedule', ref: 'refs/heads/ci/x' }), false, 'a schedule runs the full episode only on main');
+  assert.equal(fullEpisode({ event: 'pull_request', ref: 'refs/pull/9/merge', labels: [] }), false, 'a plain PR never runs the full episode');
+  assert.equal(fullEpisode({ event: 'pull_request', ref: 'refs/pull/9/merge', labels: ['test-all-os'] }), false);
+  assert.equal(fullEpisode({ event: 'pull_request', ref: 'refs/pull/9/merge', labels: ['full-episode'] }), true);
+  assert.equal(fullEpisode({ event: 'push', ref: 'refs/tags/v1.6.0' }), true);
+  assert.equal(fullEpisode({ event: 'workflow_dispatch', ref: 'refs/heads/main' }), true);
+  const y = read('install.yml');
+  assert.match(y, /full=\$\(node release\/install-needed\.mjs --full-episode\); full=\$\{full#full=\}/, 'the matrix step decides the episode with fullEpisode()');
+  assert.deepEqual(y.match(/--full-episode/g).length, 2, 'the clean-install run passes --full-episode only from matrix.episode');
+  assert.match(y, /test\/clean-install\.mjs "[^"]+" \$\{\{ matrix\.episode == 'full' && '--full-episode' \|\| '' \}\}/);
+  assert.deepEqual(y.split('\n').filter(l => /"episode":/.test(l)).map(l => /ubuntu/.test(l) && !/windows|macos/.test(l)), [true], 'the full episode runs on the Linux tmv leg only');
 });
