@@ -45,8 +45,15 @@ on main, `v*` tags, by hand, the PR label `full-episode`).
   episode, its voice, the cast cards (draw them with `toPaper` / `toHandDraw` from `core/character-card.mjs`), the shots,
   caption words and HUD, so the cuts below and the gates hold in every style. Unit test: `test/unit/tmv-engines.test.mjs`.
 - `episode.paper` (P1 of the paper lane): `episode/paper/index.html` + `episode/paper/main.js`, the `"style": "paper"` engine.
-  Each shot of the shared timeline shows its cast as `toPaper` → `drawPaperFigure(…, 'front')` stickers on a cream paper
-  backdrop (the rival's corner a grey-blue one): `close` and `phone` (the lead) = one figure in close-up, cut at the waist, `two` = the speaker
+  Each shot of the shared timeline shows its cast as `toPaper` → `drawPaperFigure(…, 'front')` stickers in front of a
+  pop-up set (`episode/paper/set.js`): the room is a printed back board (night window with the sign across the street,
+  string lights, a poster with the show's name) and cut-paper pieces (a shelf, the desk with the screen showing
+  `texts.handle`) that throw cut-out shadows; the rival's corner is its own set (panelled wall, `texts.sign` on a sign, a
+  ring light, a shelf). The room's hue comes from `palette.neon`, the lights from `palette.left`, the poster and the corner
+  from `palette.right`, so a buyer's palette and texts change the scenery. The set pops up (board, then pieces back to
+  front) on the first shot and after a cut from a card or the other place; the camera zooms and pans with the shot's
+  figures, the board moving less than the pieces, and a close-up shows a soft (blurred) copy. Cards keep their kraft
+  ground. Everything is drawn once at start, so a frame is two to four image draws: `close` and `phone` (the lead) = one figure in close-up, cut at the waist, `two` = the speaker
   in front of a partner (the lead's partner is the first bot in the room, anyone else's is the lead), `wide` / `room` =
   the whole room on the floor; the corner's `two`, `wide` and `room` show its speaker alone, mid-shot. A beat with no
   `shot` is a close-up, as in 3D. A figure pops up from its feet as the shot opens (back-out ease,
