@@ -78,7 +78,7 @@ function split(b) {
   let from = b.a;
   for (let k = 1; k < n; k++) {
     const want = b.i || k > 1 ? b.a + (b.b - b.a) * k / n : Math.min(b.a + FIRSTCUT, b.a + (b.b - b.a) / n);
-    const at = starts.filter(x => x > from + 0.9 && x < b.b - 0.9).sort((x, y) => Math.abs(x - want) - Math.abs(y - want))[0];
+    const at = starts.filter(x => x > from + 0.9 && x < b.b - 0.9 && (b.i || k > 1 || x <= b.a + FIRSTCUT)).sort((x, y) => Math.abs(x - want) - Math.abs(y - want))[0];
     if (at !== undefined) { cuts.push(at); from = at; }
   }
   return [b.a, ...cuts].map((a, j, all) => ({ ...b, j, shot: j % 2 ? cover : b.shot, a, b: all[j + 1] ?? b.b }));
@@ -87,7 +87,7 @@ const SHOTS = BEATS.flatMap(split);
 const shotOf = (t) => SHOTS.find(s => t >= s.a && t < s.b) ?? SHOTS[SHOTS.length - 1];
 const NUM = /^(\d[\d,.]*|one|two|three|four|five|six|seven|eight|nine|ten|hundred|thousand|million|half|zero)$/i;
 const WORDS = VO.words.map(w => { const bi = LINES.findIndex(l => l.id === w.line), hot = (EP.beats[bi]?.hot ?? []).map(s => s.toLowerCase());
-  const bare = w.w.replace(/[^\w'-]/g, '').toLowerCase(); return { ...w, hot: NUM.test(bare) || /^[AB]$/.test(w.w.replace(/[^\w]/g, '')) || hot.includes(bare) }; });
+  const bare = w.w.replace(/[^\w'-]/g, '').toLowerCase(); return { ...w, hot: NUM.test(bare) || (bi === LINES.length - 1 && /^[AB]$/.test(w.w.replace(/[^\w]/g, ''))) || hot.includes(bare) }; });
 const talking = (t, ch) => { const sh = shotOf(t); if (CAST[sh.who] !== ch) return 0;
   return WORDS.some(w => w.line === LINES[sh.i].id && t >= w.s && t < w.e) ? 0.35 + 0.65 * Math.abs(Math.sin(t * 15.5)) * (0.6 + 0.4 * Math.sin(t * 4.1)) : 0; };
 function blink(t, o = 0) { const p = (t + 0.37 + o) % 3.1; return p < 0.16 ? Math.sin(p / 0.16 * Math.PI) : 0; }

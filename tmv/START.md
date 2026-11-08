@@ -24,7 +24,7 @@ background while you ask the questions and they make the key: do not wait for it
    pixi run studio install
    ```
 
-   While it runs, show the buyer the sample, which ships ready: `episodes/sample/sample.mp4` (preview, 720x1280, 44 s).
+   While it runs, show the buyer the sample, which ships ready: `episodes/sample/sample.mp4` (preview, 720x1280, 83 s).
    Say where it is and ask them to open it.
 
    No `pixi`? Ask the buyer to install it in their own terminal, then open a new terminal and run the step again:
@@ -65,7 +65,7 @@ background while you ask the questions and they make the key: do not wait for it
    pixi run node episode/make.mjs new ep1
    ```
 
-   rewrite `episodes/ep1/episode.json` from the answers as third-person narration (`README.md` lists every field), then:
+   rewrite `episodes/ep1/episode.json` from the answers as narration, "You" for the lead (`README.md` lists every field), then:
 
    ```
    pixi run node episode/make.mjs episodes/ep1 vo

@@ -78,7 +78,7 @@ the story, then `vo` and render it like any episode. `pixi run node episode/seri
 | `model` | Optional Gemini TTS model (default `gemini-3.8-flash-tts`; on a 429 the vo step tries `gemini-3.8-flash-lite-tts`, then `gemini-3.1-flash-tts-preview`) |
 | `beats` | One per narrated line: `who`, `line`, `shot`, `idea`, `exp`, `hud`, `hot`, and `card` or `stats` |
 | `beats[].who` | Who is on screen (a cast `id`). Characters never speak; the narrator tells the story |
-| `beats[].line` | What the narrator says, in the third person ("Nova shipped her app today."). Quotes become reported speech ("Views are views, he says.") |
+| `beats[].line` | What the narrator says: "You" for the lead ("You shipped your app today."), the third person for everyone else. Quotes become reported speech ("Views are views, he says.") |
 | `beats[].shot` | `room` (establishing), `close`, `two`, `wide`, `phone`, `card` (2 lines on paper: `"card": ["LINE", "LINE"]`), `stats` (a data card: `"head"`, `"stats": [{"label", "value", "extra", "bar": 0..1, "style": "danger"}]`, `"source"`). A card beat over 4 s opens on its `who` in close-up, then the card |
 | `beats[].exp` | A face for the character on screen: angry, determined, doubt, excited, grin, guilty, laugh, nervous, proud, relieved, sad, shock, smirk, surprise, teary, thinking, tired, worried |
 | `beats[].hud` | HUD chips from this beat on: `{"VIEWS": "212"}` or `{"GOAL": {"value": "2%", "bar": 0.02, "style": "danger"}}` (a meter; `danger` = accent colour). A changed value rolls in |
