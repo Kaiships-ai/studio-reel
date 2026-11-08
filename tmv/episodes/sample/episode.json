@@ -40,8 +40,9 @@
     {
       "who": "nova",
       "shot": "room",
-      "idea": "nova-ships-212-views",
-      "line": "Nova shipped her app today. Two hundred views.",
+      "idea": "you-ship-212-views",
+      "line": "You shipped your app today. Two hundred views.",
+      "exp": "tired",
       "hud": {
         "DAY": "1",
         "VIEWS": "212",
@@ -49,14 +50,13 @@
           "value": "2%",
           "bar": 0.02
         }
-      },
-      "exp": "tired"
+      }
     },
     {
       "who": "theo",
       "shot": "stats",
       "idea": "theo-ad-hits-40k",
-      "line": "Across town, Theo's launch ad hit forty thousand by lunch.",
+      "line": "But Theo's launch ad hit forty thousand by lunch.",
       "hud": {
         "RIVAL": {
           "value": "40,000",
@@ -88,77 +88,198 @@
       "who": "nova",
       "shot": "close",
       "idea": "his-app-does-half",
-      "line": "His app does half of what hers does.",
+      "line": "So you open his app. It does half of yours.",
       "exp": "angry"
+    },
+    {
+      "who": "nova",
+      "shot": "phone",
+      "idea": "a-job-and-an-idea",
+      "line": "Three months ago, you had a job and an idea.",
+      "link": "but",
+      "exp": "thinking"
+    },
+    {
+      "who": "nova",
+      "shot": "room",
+      "idea": "nights-after-work",
+      "line": "Every night after work, you coded until two.",
+      "link": "so",
+      "exp": "tired"
+    },
+    {
+      "who": "nova",
+      "shot": "close",
+      "idea": "you-quit-to-ship",
+      "line": "Until one night, you quit the job to ship it.",
+      "link": "but",
+      "exp": "determined"
     },
     {
       "who": "theo",
       "shot": "two",
       "idea": "theo-says-speed-wins",
-      "line": "Theo just grins. Views are views, he says. Speed wins.",
+      "line": "But Theo just grins. Views are views, he says. Speed wins.",
+      "exp": "grin",
       "hud": {
         "RIVAL": {
           "value": "52,000",
           "style": "danger"
         }
-      },
-      "exp": "grin"
+      }
+    },
+    {
+      "who": "nova",
+      "shot": "close",
+      "idea": "you-think-ad-too",
+      "line": "So you think about an ad too.",
+      "exp": "doubt"
     },
     {
       "who": "blip",
-      "shot": "card",
+      "shot": "close",
+      "idea": "problem-1-a-view",
+      "line": "But Blip beeps. Problem one. A view is not a person.",
+      "exp": "surprise"
+    },
+    {
+      "who": "blip",
+      "shot": "stats",
+      "idea": "views-count-replays",
+      "line": "Instagram counts a view each time a reel starts. Replays too.",
+      "exp": "thinking",
+      "head": "Problem 1 · a view is not a person",
+      "stats": [
+        {
+          "label": "a reel starts playing",
+          "value": "1 view"
+        },
+        {
+          "label": "it plays again",
+          "value": "+1 view",
+          "style": "danger"
+        }
+      ],
+      "source": "source: Instagram Insights, Views (Plays renamed Views, 2025)"
+    },
+    {
+      "who": "theo",
+      "shot": "close",
+      "idea": "views-not-people",
+      "line": "So forty thousand views might be a few thousand people.",
+      "exp": "smirk"
+    },
+    {
+      "who": "theo",
+      "shot": "wide",
+      "idea": "ad-zero-comments",
+      "line": "But his ad has zero comments.",
+      "exp": "doubt"
+    },
+    {
+      "who": "blip",
+      "shot": "two",
+      "idea": "problem-2-shares",
+      "line": "So, problem two. Nobody shares a demo.",
+      "exp": "proud"
+    },
+    {
+      "who": "blip",
+      "shot": "stats",
+      "idea": "sends-reach-new-people",
+      "line": "Instagram's boss says sends beat likes for reaching new people.",
+      "exp": "excited",
+      "head": "Problem 2 · nobody shares a demo",
+      "stats": [
+        {
+          "label": "likes weigh most with",
+          "value": "your followers"
+        },
+        {
+          "label": "sends (shares) weigh most with",
+          "value": "new people",
+          "style": "danger"
+        }
+      ],
+      "source": "source: Adam Mosseri, head of Instagram, Jan 2025"
+    },
+    {
+      "who": "blip",
+      "shot": "two",
       "idea": "stories-spread-not-apps",
-      "line": "Then Blip beeps. People don't share apps. They share stories.",
+      "line": "So people don't share apps. They share stories.",
       "exp": "proud",
-      "card": [
-        "APPS DON'T SPREAD.",
-        "STORIES DO."
+      "hot": [
+        "stories"
       ]
     },
     {
       "who": "nova",
       "shot": "close",
-      "idea": "the-bug-is-her-story",
-      "line": "So her story is the bug that almost killed it?",
+      "idea": "the-bug-is-your-story",
+      "line": "So your story is the bug that almost killed it?",
       "exp": "thinking"
     },
     {
       "who": "theo",
       "shot": "close",
       "idea": "theo-says-clean-demo",
-      "line": "Theo says post a clean demo. Nobody cares about bugs.",
+      "line": "But Theo says post a clean demo. Nobody cares about bugs.",
       "exp": "doubt"
     },
     {
       "who": "nova",
       "shot": "phone",
       "idea": "three-nights-almost-quit",
-      "line": "Three nights. One bug. Nova almost quit.",
+      "line": "Three nights. One bug. You almost quit.",
+      "link": "but",
+      "exp": "sad",
       "hud": {
         "VIEWS": "236",
         "GOAL": {
           "value": "2%",
           "bar": 0.024
         }
-      },
-      "exp": "sad"
+      }
     },
     {
       "who": "blip",
       "shot": "two",
-      "idea": "show-the-night-she-quit",
-      "line": "Blip is sure. That is the story. Show the night she almost quit.",
+      "idea": "show-the-night",
+      "line": "So Blip is sure. Show the night you almost quit.",
       "exp": "proud"
+    },
+    {
+      "who": "nova",
+      "shot": "phone",
+      "idea": "a-comment-from-theo",
+      "line": "But one new comment sits under your post. It's from Theo.",
+      "exp": "shock"
+    },
+    {
+      "who": "nova",
+      "shot": "close",
+      "idea": "demo-is-safe",
+      "line": "The demo is safe. It looks pro. Nobody shares it.",
+      "link": "so",
+      "exp": "worried"
+    },
+    {
+      "who": "nova",
+      "shot": "close",
+      "idea": "story-is-scary",
+      "line": "But the story is scary. Everyone sees you almost failed.",
+      "exp": "nervous"
     },
     {
       "who": "blip",
       "shot": "close",
       "idea": "one-post-tonight",
-      "line": "One post tonight. Tomorrow, they count.",
+      "line": "So, one post tonight. Tomorrow, they count.",
+      "exp": "excited",
       "hud": {
         "DAY": "2"
-      },
-      "exp": "excited"
+      }
     },
     {
       "who": "nova",
@@ -169,7 +290,7 @@
     }
   ],
   "vote": {
-    "question": "What does Nova post tonight?",
+    "question": "What do you post tonight?",
     "a": "the demo",
     "b": "the story",
     "tagA": "A",

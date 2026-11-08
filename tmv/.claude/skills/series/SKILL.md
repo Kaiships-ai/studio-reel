@@ -18,6 +18,6 @@ episode) plus `ep1/`, `ep2/`, ...
   `pixi run node episode/series.mjs next episodes/<show> --winner <A|B>`.
   It writes `ep<N+1>/episode.json` with the opening: a PREVIOUSLY · EP N card (the question, the winning answer) and
   one recap line. Replace the WRITE ... placeholders: the title, the recap (what the winning choice caused), 6-10 beats
-  of narration (the same narrator, "you" for the lead; characters never talk) that follow it, and a new vote. Leave out `series` and `cast`: they come from `series.json`.
+  of narration ("You" for the lead, the third person for everyone else; the same narrator; characters never talk) that follow it, and a new vote. Leave out `series` and `cast`: they come from `series.json`.
 - Voice and render as in `/episode` step 3, with `episodes/<show>/ep<N+1>`.
 - `pixi run node episode/series.mjs status episodes/<show>` lists every episode, its MP4 and its winner.

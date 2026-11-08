@@ -1,7 +1,7 @@
 # TMV episode (the paid kit's sample episode, cast and character designer)
 
 Files ship from `tmv/`: `episode/` (the 3D engine ported from Ep1: main.js, stage.js, world.js, hud.js, assets/room.glb;
-make.mjs, voice.py, designer.mjs, index.html, fonts), `episodes/sample/` (episode.json as narration, index.html, the Gemini narrator's take
+make.mjs, voice.py, designer.mjs, index.html, fonts), `episodes/sample/` (episode.json: 24 beats, about 83 s, narrated in "You" with two sourced Problems, index.html, the Gemini narrator's take
 `vo/take.wav` and its cut `vo/vo.wav` + `vo/vo.json`), `characters/` (cast.js = the three seeds Nova, Theo, Blip; rig.js builds them in 3D: humans from jay.glb
 recoloured and restyled, Blip from primitives) and `character-designer.html`. In the tmv zip there is no `kit/check-reel`: the sample ships rendered
 (`episodes/sample/sample.mp4`) and `studio install` draws only its first 2 s (720x1280, 10 fps, 20 frames) as its test
@@ -17,7 +17,7 @@ on main, `v*` tags, by hand, the PR label `full-episode`).
   default Achird; `GOOGLE_API_KEY` in `.env`, `pixi run studio key`), `vo/take.wav`, cut by `voice.py` (stretches of voice
   grouped so each line's length matches its letters) into `vo/vo.wav`, `vo/vo.json` (lines; word times at the voice's
   own pauses, letter-weighted inside a phrase). Each line's pauses over 0.34 s are cut to 0.34 s before its words are
-  timed (`tighten`, from Ep1's `tighten.py`), so the voice runs on (G8) and the captions and cuts follow the tightened audio. Errors: no key / 400 key / 429 (tries the fallback models) / no network
+  timed (`tighten`, from Ep1's `tighten.py`), so the voice runs on (G8) and the captions and cuts follow the tightened audio. A stretch of sound under 60 ms is a click, not a word: `spoken` drops it, so it never takes a phrase's place. Errors: no key / 400 key / 429 (tries the fallback models) / no network
   (`GEMINI_HOST` points it elsewhere to test). Test-only: `TMV_VO_TAKE=<wav>` cuts that take instead of calling Gemini,
   and `studio doctor` then skips its `voice key` call; the journeys set it to the sample's `vo/take.wav`. Dev-only sync check on a Mac with whisper.cpp: `pixi run python dev/caption-sync.py <ep>` (not shipped). `core/render/reel.mjs vo` uses the same path when kai-hand-draw is absent.
 - `episode.render`: `make.mjs <ep> render check` → `<ep>/<name>.mp4` at 720x1280 30 fps with the code-made bed (room tone, music, hits; `bed.py`) (ST-77 preview; `--full` only on
@@ -39,7 +39,7 @@ on main, `v*` tags, by hand, the PR label `full-episode`).
   exit 1 on a fail. A gate it cannot measure prints `–` (G6 needs an `idea` tag per beat; `make.mjs` refuses an empty one).
 - `episode.cuts`: one beat per voiced line, cut every 2.6 s at most: a longer story beat splits on word starts into
   sub-shots that alternate its own angle and a cover angle (the lead: close ↔ phone; a bot: close ↔ two; the rival's
-  corner: close ↔ wide), the first beat cuts by 1.5 s, the vote holds, a card holds up to 4 s: a longer `card` or
+  corner: close ↔ wide), the first beat cuts by 1.5 s (on a word start no later than that, when there is one), the vote holds, a card holds up to 4 s: a longer `card` or
   `stats` beat opens on its `who` in close-up and the card lands on the first sentence that leaves it 2-4 s. Gates G3a, G3b, G7 read it.
 - `episode.look` (ST-79): the Ep1 room at night (neon through the curtain, screen key, rim light, bloom, DOF, grain), the
   rival's corner (ring light, neon sign from `texts.sign`), shots close / two / wide / phone / card, cream cards, kicker

@@ -2,55 +2,120 @@
  {
   "id": "b01",
   "who": "nova",
-  "text": "Nova shipped her app today. Two hundred views."
+  "text": "You shipped your app today. Two hundred views."
  },
  {
   "id": "b02",
   "who": "theo",
-  "text": "Across town, Theo's launch ad hit forty thousand by lunch."
+  "text": "But Theo's launch ad hit forty thousand by lunch."
  },
  {
   "id": "b03",
   "who": "nova",
-  "text": "His app does half of what hers does."
+  "text": "So you open his app. It does half of yours."
  },
  {
   "id": "b04",
-  "who": "theo",
-  "text": "Theo just grins. Views are views, he says. Speed wins."
+  "who": "nova",
+  "text": "Three months ago, you had a job and an idea."
  },
  {
   "id": "b05",
-  "who": "blip",
-  "text": "Then Blip beeps. People don't share apps. They share stories."
+  "who": "nova",
+  "text": "Every night after work, you coded until two."
  },
  {
   "id": "b06",
   "who": "nova",
-  "text": "So her story is the bug that almost killed it?"
+  "text": "Until one night, you quit the job to ship it."
  },
  {
   "id": "b07",
   "who": "theo",
-  "text": "Theo says post a clean demo. Nobody cares about bugs."
+  "text": "But Theo just grins. Views are views, he says. Speed wins."
  },
  {
   "id": "b08",
   "who": "nova",
-  "text": "Three nights. One bug. Nova almost quit."
+  "text": "So you think about an ad too."
  },
  {
   "id": "b09",
   "who": "blip",
-  "text": "Blip is sure. That is the story. Show the night she almost quit."
+  "text": "But Blip beeps. Problem one. A view is not a person."
  },
  {
   "id": "b10",
   "who": "blip",
-  "text": "One post tonight. Tomorrow, they count."
+  "text": "Instagram counts a view each time a reel starts. Replays too."
  },
  {
   "id": "b11",
+  "who": "theo",
+  "text": "So forty thousand views might be a few thousand people."
+ },
+ {
+  "id": "b12",
+  "who": "theo",
+  "text": "But his ad has zero comments."
+ },
+ {
+  "id": "b13",
+  "who": "blip",
+  "text": "So, problem two. Nobody shares a demo."
+ },
+ {
+  "id": "b14",
+  "who": "blip",
+  "text": "Instagram's boss says sends beat likes for reaching new people."
+ },
+ {
+  "id": "b15",
+  "who": "blip",
+  "text": "So people don't share apps. They share stories."
+ },
+ {
+  "id": "b16",
+  "who": "nova",
+  "text": "So your story is the bug that almost killed it?"
+ },
+ {
+  "id": "b17",
+  "who": "theo",
+  "text": "But Theo says post a clean demo. Nobody cares about bugs."
+ },
+ {
+  "id": "b18",
+  "who": "nova",
+  "text": "Three nights. One bug. You almost quit."
+ },
+ {
+  "id": "b19",
+  "who": "blip",
+  "text": "So Blip is sure. Show the night you almost quit."
+ },
+ {
+  "id": "b20",
+  "who": "nova",
+  "text": "But one new comment sits under your post. It's from Theo."
+ },
+ {
+  "id": "b21",
+  "who": "nova",
+  "text": "The demo is safe. It looks pro. Nobody shares it."
+ },
+ {
+  "id": "b22",
+  "who": "nova",
+  "text": "But the story is scary. Everyone sees you almost failed."
+ },
+ {
+  "id": "b23",
+  "who": "blip",
+  "text": "So, one post tonight. Tomorrow, they count."
+ },
+ {
+  "id": "b24",
   "who": "nova",
   "text": "Comment A for the demo, or B for the story."
  }
