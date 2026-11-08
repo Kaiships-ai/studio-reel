@@ -1,4 +1,4 @@
-// series.mjs: a series = one folder with series.json (the show's name, cast, palette, texts: shared by every episode)
+// series.mjs: a series = one folder with series.json (the show's name, cast, style, palette, texts: shared by every episode)
 // and one folder per episode (ep1, ep2, ...). Ep N+1 starts from Ep N and the vote that won. Run from the library root:
 //   node episode/series.mjs new <series folder> [--from episodes/sample]   ep1 = a copy of that episode (voice and MP4 too)
 //   node episode/series.mjs next <series folder> --winner A               records the winner, writes ep<N+1>/episode.json
@@ -15,7 +15,7 @@ if (!['new', 'next', 'status'].includes(cmd) || !dirArg) { console.error('usage:
 const dir = resolve(dirArg), SJ = join(dir, 'series.json');
 const read = (f) => { try { return JSON.parse(readFileSync(f, 'utf8')); } catch (x) { die(`${f}: ${x.message}`); } };
 const write = (f, o) => writeFileSync(f, JSON.stringify(o, null, 2) + '\n');
-const SHARED = ['series', 'cast', 'palette', 'texts', 'narrator', 'model'];   // one narrator voice (and model) for the whole show
+const SHARED = ['series', 'cast', 'style', 'palette', 'texts', 'narrator', 'model'];   // one narrator voice (and model) for the whole show
 
 if (cmd === 'new') {
   const from = resolve(opt('--from') ?? 'episodes/sample');

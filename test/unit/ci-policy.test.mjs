@@ -66,9 +66,22 @@ test('the whole tmv sample runs nightly on main, for a tag, by hand or with the 
   assert.equal(fullEpisode({ event: 'pull_request', ref: 'refs/pull/9/merge', labels: ['full-episode'] }), true);
   assert.equal(fullEpisode({ event: 'push', ref: 'refs/tags/v1.6.0' }), true);
   assert.equal(fullEpisode({ event: 'workflow_dispatch', ref: 'refs/heads/main' }), true);
+  assert.equal(fullEpisode({ event: 'pull_request', ref: 'refs/pull/9/merge', labels: ['full-episode'], base: 'lane/paper' }), false, 'a lane PR never runs the full episode');
+  assert.equal(fullEpisode({ event: 'pull_request', ref: 'refs/pull/9/merge', labels: ['full-episode'], base: 'main' }), true, 'a lane to main PR with the label does');
   const y = read('install.yml');
   assert.match(y, /full=\$\(node release\/install-needed\.mjs --full-episode\); full=\$\{full#full=\}/, 'the matrix step decides the episode with fullEpisode()');
   assert.deepEqual(y.match(/--full-episode/g).length, 2, 'the clean-install run passes --full-episode only from matrix.episode');
   assert.match(y, /test\/clean-install\.mjs "[^"]+" \$\{\{ matrix\.episode == 'full' && '--full-episode' \|\| '' \}\}/);
   assert.deepEqual(y.split('\n').filter(l => /"episode":/.test(l)).map(l => /ubuntu/.test(l) && !/windows|macos/.test(l)), [true], 'the full episode runs on the Linux tmv leg only');
+});
+
+test('lane/** PRs: checks run, never the five machines, main PRs unchanged', () => {
+  for (const f of ['checks.yml', 'install.yml']) {
+    const y = read(f);
+    assert.match(section(y.replace(/^on:\n/m, ''), 'pull_request'), /branches: \[main, 'lane\/\*\*'\]/, `${f} runs for PRs into main and lane/**`);
+  }
+  const full = read('install.yml').match(/^ {10}FULL: (.*)$/m)[1];
+  assert.match(full, /startsWith\(github\.ref, 'refs\/tags\/v'\)/, 'tags stay FULL');
+  assert.match(full, /workflow_dispatch/, 'manual runs stay FULL');
+  assert.match(full, /'test-all-os'\) && !startsWith\(github\.base_ref, 'lane\/'\)/, 'the test-all-os label never makes a lane PR FULL');
 });
