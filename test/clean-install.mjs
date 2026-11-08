@@ -7,6 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, cpSync, rmSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { smokeEpisode } from './tmv-smoke.mjs';
+import { ciFps } from '../release/install-needed.mjs';
 
 const dir = resolve(process.argv[2] || '');
 const fail = m => { console.error(`✗ ${m}`); process.exit(1); };
@@ -33,12 +34,13 @@ if (existsSync(join(dir, 'episode', 'voice.py'))) step('voice.py self-check (cut
 // cut from the shipped take (no Gemini key), and its check report must be all ✓. A PR makes ci-smoke, 13-17 s cut from
 // the sample at test time (test/tmv-smoke.mjs): the vo step, a stats card, a card and the vote. --full-episode makes the
 // whole sample and its 11 gates (install.yml: nightly on main, v* tags, by hand, the PR label full-episode).
-// Linux CI has no GPU (software WebGL, 2-4 s a frame): the full sample draws at 8 fps, the smoke at 4 (~68 frames), so a slow
-// runner still ends under 10 min. The checks are in seconds (length ±0.2 s vs a 0.125 s half-frame at 4 fps, freezedetect 1.5 s).
+// Linux CI has no GPU: ciFps picks the fps (the smoke at 4, ~68 frames, so a slow runner still ends under 10 min).
+// The checks are in seconds (length ±0.2 s vs a 0.125 s half-frame at 4 fps, freezedetect 1.5 s).
 if (!existsSync(join(dir, 'kit', 'check-reel'))) {
   const sample = join(dir, 'episodes', 'sample');
   if (!existsSync(join(sample, 'sample.mp4'))) fail('the zip has no episodes/sample/sample.mp4 (the buyer must see the sample at once)');
-  const full = process.argv.includes('--full-episode'), si = process.argv.indexOf('--style'), style = si > 1 ? process.argv[si + 1] : undefined, fps = process.platform === 'linux' ? ['--fps', full ? '8' : '4'] : [];
+  const full = process.argv.includes('--full-episode'), si = process.argv.indexOf('--style'), style = si > 1 ? process.argv[si + 1] : undefined;
+  const f = ciFps({ platform: process.platform, full, style }), fps = f ? ['--fps', String(f)] : [];
   const name = full ? 'ci-full' : 'ci-smoke', ep = join(dir, 'episodes', name);
   const make = steps => ['run', 'node', 'episode/make.mjs', `episodes/${name}`, ...steps, ...fps];
   rmSync(ep, { recursive: true, force: true });
@@ -46,7 +48,7 @@ if (!existsSync(join(dir, 'kit', 'check-reel'))) {
     cpSync(sample, ep, { recursive: true, filter: f => !/[\\/](out|sample\.mp4)$/.test(f) });
     const ej = join(ep, 'episode.json');
     if (style) writeFileSync(ej, JSON.stringify({ ...JSON.parse(readFileSync(ej, 'utf8')), style }, null, 1));
-    // ubuntu-24.04 draws 3.9-4.4 s a frame: the 83 s sample at 8 fps (~680 frames) is ~45-50 min, so 80 min leaves 1.6x
+    // ubuntu-24.04: 3d and paper at 8 fps (~680 frames) take ~45-50 min, hand-draw at 4 fps (~330 frames) ~30-35 min
     step('make the full sample episode (render, check, gates)', make(['render', 'check', 'gates']), { timeout: 80 * 60e3 });
   } else {
     const smoke = smokeEpisode(sample, ep, style);

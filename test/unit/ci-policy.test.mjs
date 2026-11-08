@@ -7,7 +7,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { ROOT } from '../../kit/env.mjs';
-import { TIERS, builtStyles, fullEpisode, smokeStyles, tierNeeded, zipEntries } from '../../release/install-needed.mjs';
+import { TIERS, builtStyles, ciFps, fullEpisode, smokeStyles, tierNeeded, zipEntries } from '../../release/install-needed.mjs';
 import { classify, parseManifest, tierFiles, zip } from '../../release/build.mjs';
 
 const WF = join(ROOT, '.github', 'workflows');
@@ -57,6 +57,15 @@ test('zipEntries reads back what zip wrote, stored and deflated', () => {
   const big = Buffer.alloc(4096, 'a'), z = zip([{ name: 'k/a.txt', data: Buffer.from('hi') }, { name: 'k/d/b.bin', data: big }], '2026-01-01T00:00:00Z');
   const sha = d => createHash('sha256').update(d).digest('hex');
   assert.deepEqual([...zipEntries(z)], [['a.txt', sha(Buffer.from('hi'))], ['d/b.bin', sha(big)]]);
+});
+
+test('Linux CI draws the smoke at 4 fps and the full sample at 8, hand-draw at 4 (its software render ran past 80 min at 8)', () => {
+  assert.equal(ciFps({ platform: 'linux', full: false, style: 'handdraw' }), 4);
+  assert.equal(ciFps({ platform: 'linux', full: false }), 4);
+  assert.equal(ciFps({ platform: 'linux', full: true }), 8);
+  assert.equal(ciFps({ platform: 'linux', full: true, style: 'paper' }), 8);
+  assert.equal(ciFps({ platform: 'linux', full: true, style: 'handdraw' }), 4);
+  assert.equal(ciFps({ platform: 'darwin', full: true, style: 'handdraw' }), undefined, 'machines with a GPU render at the episode fps');
 });
 
 test('the whole tmv sample runs nightly on main, for a tag, by hand or with the PR label full-episode; a plain PR makes ci-smoke', () => {

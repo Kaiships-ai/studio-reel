@@ -33,6 +33,12 @@ export function zipEntries(buf) {
 export const fullEpisode = ({ event, ref = '', labels = [], base = '' }) => event === 'schedule' ? ref === 'refs/heads/main'
   : event === 'workflow_dispatch' || ref.startsWith('refs/tags/v') || (event === 'pull_request' && !base.startsWith('lane/') && labels.includes('full-episode'));
 
+// The fps of the episode a Linux CI leg draws (no GPU, software WebGL): the smoke at 4, the full sample at 8, except
+// hand-draw at 4: its watercolor fill costs ~11 s a frame a worker, so 8 fps (~664 frames) ran past the 80 min timeout.
+// Every gate holds at 4 fps: G3a/G3b/G7 cut times land on a 0.25 s grid (limits 3.0 s, 4.5 s, 1.5 s), the G4/G4b
+// points move under 0.25 s inside cards of 3.4 s or more, and G1, G2, G5, G6, G8, G9 read the container, audio and beats.
+export const ciFps = ({ platform, full, style }) => platform !== 'linux' ? undefined : full && style !== 'handdraw' ? 8 : 4;
+
 // The full episode renders in every style whose engine is built
 export const builtStyles = root => Object.keys(ENGINES).filter(k => existsSync(join(root, 'tmv', ENGINES[k].page)));
 
