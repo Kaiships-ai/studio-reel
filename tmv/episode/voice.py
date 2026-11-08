@@ -5,11 +5,12 @@ the pauses between lines: its stretches of voice are grouped so each line's leng
 Writes <ep>/vo/vo.wav (mono 24 kHz) and <ep>/vo/vo.json: {duration, lines: [{id, who, text, s, e}], words: [{w, s, e, line}]}.
 Gemini gives no word timings. The line is cut where the voice pauses (quiet 0.12 s+); when the pauses match the line's
 phrases (split at . , ? !), each phrase gets its own stretch of sound, so a caption never runs ahead through a pause.
-Inside a stretch each word gets a share by its letters."""
+Inside a stretch each word gets a share by its letters. Before the words are timed, every pause inside a line longer than
+CAP is cut to CAP (the middle of the pause goes, never a word), so the voice runs on and the word times follow the tightened audio."""
 import sys, os, json
 import numpy as np, soundfile as sf
 
-LEAD, PAUSE, SR = 0.25, 0.32, 24000
+LEAD, PAUSE, CAP, SR = 0.25, 0.32, 0.34, 24000
 
 def spoken(a, hop=0.01, gap=0.12):
     """[(s, e)] stretches of voice in a line take: 10 ms frames over -38 dB of the take's peak, quiet gaps under `gap` merged."""
@@ -27,6 +28,19 @@ def spoken(a, hop=0.01, gap=0.12):
         if out and s_ - out[-1][1] < gap: out[-1][1] = e_
         else: out.append([s_, e_])
     return [tuple(x) for x in out] or [(0.0, len(a) / SR)]
+
+def tighten(a):
+    """The line take with every pause in it over CAP cut to CAP: the pause's middle goes, joined with a 12 ms crossfade."""
+    segs, xf, keep, pos = spoken(a), int(0.012 * SR), [], 0
+    for (_, e0), (s1, _) in zip(segs, segs[1:]):
+        if s1 - e0 > CAP: keep.append((pos, int((e0 + CAP / 2) * SR))); pos = int((s1 - CAP / 2) * SR)
+    out = a[:0]
+    for s, e in keep + [(pos, len(a))]:
+        x = a[s:e].copy()
+        if len(out) >= xf and len(x) >= xf:
+            r = np.linspace(0, 1, xf, dtype=np.float32); x[:xf] = out[-xf:] * (1 - r) + x[:xf] * r; out = out[:-xf]
+        out = np.concatenate([out, x])
+    return out
 
 def share(ws, s, e):
     w8 = [len(w) + 2 for w in ws]; tot, acc, out = sum(w8), 0, []
@@ -71,6 +85,11 @@ if __name__ == '__main__' and sys.argv[1:2] == ['--self-check']:
     two = np.concatenate([tone, np.zeros(int(0.6 * SR)), tone]).astype(np.float32)   # line 1 has a 0.4 s inner pause, 0.6 s between lines
     c = cuts(two, ['One, two', 'Three, four'])
     assert len(c) == 2 and 2.5 < c[1][0] <= 2.6 and 2.0 <= c[0][1] < 2.1, c
+    long_ = np.concatenate([tone[:int(0.8 * SR)], np.zeros(int(1.0 * SR), np.float32), tone[int(1.2 * SR):]]).astype(np.float32)
+    t2 = tighten(long_); r = timed('Hello there, friend', t2)   # a 1.0 s pause inside the line becomes CAP, "friend" moves with it
+    assert abs(len(t2) / SR - (1.6 + CAP - 0.012)) < 0.02 and abs(r[2][1] - (0.8 + CAP - 0.012)) < 0.03, (len(t2) / SR, r)
+    short = np.concatenate([tone[:int(0.8 * SR)], np.zeros(int(0.3 * SR), np.float32), tone[int(1.2 * SR):]]).astype(np.float32)
+    assert len(tighten(short)) == len(short)   # a pause under CAP stays as it is
     print('voice.py self-check ok'); sys.exit(0)
 
 ep = sys.argv[1]
@@ -83,7 +102,7 @@ if tsr != SR:
 pieces = {L['id']: take[int(s * SR):int(e * SR)] for L, (s, e) in zip(lines, cuts(take, [L['text'] for L in lines]))}
 parts, out_lines, words, t = [np.zeros(int(LEAD * SR), dtype=np.float32)], [], [], LEAD
 for L in lines:
-    a = pieces[L['id']]
+    a = tighten(pieces[L['id']])
     d = len(a) / SR
     out_lines.append({'id': L['id'], 'who': L.get('who'), 'text': L['text'], 's': round(t, 3), 'e': round(t + d, 3)})
     for w, s, e in timed(L['text'], a):

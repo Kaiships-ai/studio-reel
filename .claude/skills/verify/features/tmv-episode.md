@@ -13,7 +13,8 @@ render, then deletes it (`kit/studio.mjs`); it renders the whole sample only if 
 - `episode.vo`: `pixi run node episode/make.mjs <ep> vo` → one Gemini TTS call (`episode/gemini.mjs`; `narrator.voice`,
   default Achird; `GOOGLE_API_KEY` in `.env`, `pixi run studio key`), `vo/take.wav`, cut by `voice.py` (stretches of voice
   grouped so each line's length matches its letters) into `vo/vo.wav`, `vo/vo.json` (lines; word times at the voice's
-  own pauses, letter-weighted inside a phrase). Errors: no key / 400 key / 429 (tries the fallback models) / no network
+  own pauses, letter-weighted inside a phrase). Each line's pauses over 0.34 s are cut to 0.34 s before its words are
+  timed (`tighten`, from Ep1's `tighten.py`), so the voice runs on (G8) and the captions and cuts follow the tightened audio. Errors: no key / 400 key / 429 (tries the fallback models) / no network
   (`GEMINI_HOST` points it elsewhere to test). Test-only: `TMV_VO_TAKE=<wav>` cuts that take instead of calling Gemini,
   and `studio doctor` then skips its `voice key` call; the journeys set it to the sample's `vo/take.wav`. Dev-only sync check on a Mac with whisper.cpp: `pixi run python dev/caption-sync.py <ep>` (not shipped). `core/render/reel.mjs vo` uses the same path when kai-hand-draw is absent.
 - `episode.render`: `make.mjs <ep> render check` → `<ep>/<name>.mp4` at 720x1280 30 fps with the code-made bed (room tone, music, hits; `bed.py`) (ST-77 preview; `--full` only on
