@@ -11,6 +11,9 @@
 # Gemini key is needed). tmv runs on Linux with Pro, and on Windows pwsh + macOS arm64 when FULL. A PR's tmv run makes
 # ci-smoke, 13-17 s cut from the sample (test/tmv-smoke.mjs), drawn at 4 fps on Linux (~68 frames); the whole sample and its 11 gates run on Linux nightly on
 # main (only when the tmv zip changed that day), for a v* tag, by hand, or when the PR gets the label `full-episode`.
+# The smoke renders in the style whose engine the PR touches (tmv/episode/paper/ → paper, tmv/episode/handdraw/ →
+# handdraw, tmv/episode/engines.mjs → every built style, else 3d), one Linux tmv leg per style; the full episode runs one
+# Linux leg per style whose engine is built (release/install-needed.mjs smokeStyles, builtStyles).
 # A newer push to the same PR cancels the older run.
 name: install
 on:
@@ -57,12 +60,13 @@ jobs:
           base=${{ github.event.pull_request.base.sha || github.event.before }}
           if [ "${{ github.event_name }}" = schedule ]; then base=$(git rev-list -1 --before='24 hours ago' HEAD); fi
           if [ -n "$base" ] && git cat-file -e "$base" 2>/dev/null && out=$(node release/install-needed.mjs "$base"); then echo "$out" >> "$GITHUB_OUTPUT"
-          else echo "::warning::no tier decision (base '$base'): both tiers run"; printf 'pro=true\ntmv=true\n' >> "$GITHUB_OUTPUT"; fi
+          else echo "::warning::no tier decision (base '$base'): both tiers run"; printf 'pro=true\ntmv=true\nstyles=3d\n' >> "$GITHUB_OUTPUT"; fi
       - id: m
         shell: bash
         env:
           PRO: ${{ steps.f.outputs.pro }}
           TMV: ${{ steps.f.outputs.tmv }}
+          STYLES: ${{ steps.f.outputs.styles }}
           FULL: ${{ startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch' || (contains(github.event.pull_request.labels.*.name, 'test-all-os') && !startsWith(github.base_ref, 'lane/')) }}
           LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
           BASE_REF: ${{ github.base_ref }}
@@ -70,9 +74,10 @@ jobs:
           full=$(node release/install-needed.mjs --full-episode); full=${full#full=}
           if [ "$GITHUB_EVENT_NAME" = schedule ]; then PRO=false; elif [ "$full" = true ]; then TMV=true; fi
           ep=$([ "$full" = true ] && echo full || echo smoke)
+          styles=$([ "$full" = true ] && node release/install-needed.mjs --built-styles || echo "styles=${STYLES:-3d}"); styles=${styles#styles=}
           m=''
           if [ "$PRO" = true ] || [ "$FULL" = true ]; then m='{"os":"ubuntu-24.04","shell":"bash","tier":"pro"}'; fi
-          if [ "$TMV" = true ] || [ "$FULL" = true ]; then m="${m:+$m,}"'{"os":"ubuntu-24.04","shell":"bash","tier":"tmv","episode":"'$ep'"}'; fi
+          if [ "$TMV" = true ] || [ "$FULL" = true ]; then for st in ${styles//,/ }; do m="${m:+$m,}"'{"os":"ubuntu-24.04","shell":"bash","tier":"tmv","episode":"'$ep'","style":"'$st'"}'; done; fi
           if [ "$FULL" = true ]; then m="$m"',{"os":"windows-2025","shell":"pwsh","tier":"pro"},{"os":"windows-2025","shell":"bash","tier":"pro"},{"os":"macos-15","shell":"bash","tier":"pro"},{"os":"macos-15-intel","shell":"bash","tier":"pro"}'; fi
           if [ "$FULL" = true ]; then m="$m"',{"os":"windows-2025","shell":"pwsh","tier":"tmv"},{"os":"macos-15","shell":"bash","tier":"tmv"}'; fi
           echo "matrix={\"include\":[$m]}" >> "$GITHUB_OUTPUT"
@@ -89,7 +94,7 @@ jobs:
     defaults:
       run:
         shell: ${{ matrix.shell }}
-    name: clean-install (${{ matrix.tier }}, ${{ matrix.os }}, ${{ matrix.shell }})
+    name: clean-install (${{ matrix.tier }}${{ matrix.style && format(' {0}', matrix.style) || '' }}, ${{ matrix.os }}, ${{ matrix.shell }})
     env:
       PIXI_NO_TELEMETRY: '1'
       # tmv: the voice step cuts the shipped sample take instead of calling Gemini (no key in CI)
@@ -141,7 +146,7 @@ jobs:
         shell: bash
         run: cd "$KIT" && pixi run studio linux-deps
       - name: Clean install and one reel
-        run: node test/clean-install.mjs "${{ env.KIT }}" ${{ matrix.episode == 'full' && '--full-episode' || '' }}
+        run: node test/clean-install.mjs "${{ env.KIT }}" ${{ matrix.episode == 'full' && '--full-episode' || '' }} ${{ matrix.style && format('--style {0}', matrix.style) || '' }}
       - name: The episode's checks and gates, on the run page
         if: always() && matrix.tier == 'tmv'
         shell: bash
@@ -165,7 +170,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ${{ matrix.tier == 'tmv' && format('tmv-{0}-episode-{1}-{2}', matrix.episode || 'smoke', matrix.os, matrix.shell) || format('clean-install-{0}-{1}-{2}', matrix.tier, matrix.os, matrix.shell) }}
+          name: ${{ matrix.tier == 'tmv' && format('tmv-{0}-episode-{1}-{2}-{3}', matrix.episode || 'smoke', matrix.style || '3d', matrix.os, matrix.shell) || format('clean-install-{0}-{1}-{2}', matrix.tier, matrix.os, matrix.shell) }}
           path: |
             ${{ env.KIT }}/films/ci-reel/out/check/
             ${{ env.KIT }}/films/ci-reel/*.mp4
@@ -177,7 +182,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: zip-${{ matrix.tier }}-${{ matrix.os }}-${{ matrix.shell }}
+          name: zip-${{ matrix.tier }}${{ matrix.style && format('-{0}', matrix.style) || '' }}-${{ matrix.os }}-${{ matrix.shell }}
           path: |
             ${{ runner.temp }}/dist/SHA256SUMS
             ${{ runner.temp }}/dist/files.txt

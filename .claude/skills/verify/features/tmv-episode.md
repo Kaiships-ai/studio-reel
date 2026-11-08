@@ -8,8 +8,10 @@ recoloured and restyled, Blip from primitives) and `character-designer.html`. In
 render, then deletes it (`kit/studio.mjs`); it renders the whole sample only if `sample.mp4` is gone.
 `test/clean-install.mjs` then makes `episodes/ci-smoke` (`test/tmv-smoke.mjs`: the sample's first beat, first stats card,
 first card and vote beat, 13-17 s, drawn at 4 fps on Linux CI (8 fps for the full sample), voiced through the `vo` step from a take cut out of the sample's `vo/vo.wav`) with
-every check ✓; `--full-episode` renders a copy of the whole sample as `episodes/ci-full` and runs its 11 gates (CI: nightly
-on main, `v*` tags, by hand, the PR label `full-episode`).
+every check ✓ or `–` skipped; `--full-episode` renders a copy of the whole sample as `episodes/ci-full` and runs its 11 gates (CI: nightly
+on main, `v*` tags, by hand, the PR label `full-episode`). `--style paper|handdraw` renders either in that style: CI's smoke
+takes the style whose engine folder the PR touches (`smokeStyles` in `release/install-needed.mjs`; `engines.mjs` → every
+built style; else 3d), the full episode every built style (`builtStyles`), one Linux leg each.
 
 ## Sub-features
 
@@ -21,7 +23,7 @@ on main, `v*` tags, by hand, the PR label `full-episode`).
   (`GEMINI_HOST` points it elsewhere to test). Test-only: `TMV_VO_TAKE=<wav>` cuts that take instead of calling Gemini,
   and `studio doctor` then skips its `voice key` call; the journeys set it to the sample's `vo/take.wav`. Dev-only sync check on a Mac with whisper.cpp: `pixi run python dev/caption-sync.py <ep>` (not shipped). `core/render/reel.mjs vo` uses the same path when kai-hand-draw is absent.
 - `episode.render`: `make.mjs <ep> render check` → `<ep>/<name>.mp4` at 720x1280 30 fps with the code-made bed (room tone, music, hits; `bed.py`) (ST-77 preview; `--full` only on
-  request), checks size, sound, length = voice + 1.4 s, -14 LUFS, no black, no silent gap, no 1.5 s freeze, faces not blown out (`faceluma.py`: under 2 % of skin pixels washed out, frames at 2/s outside cards); `out/sheet.jpg`.
+  request), checks size, sound, length = voice + 1.4 s, -14 LUFS, no black, no silent gap, no 1.5 s freeze, faces not blown out (`faceluma.py`: under 2 % of skin pixels washed out, frames at 2/s outside cards; 3D only: paper and hand-draw print `–` skipped with the reason from `skip.faces` in `engines.mjs`, since flat colour has no light to wash a face out and their cream paper reads as clipped skin); `out/sheet.jpg`.
 - `episode.script`: `make.mjs <ep> script` (no tools needed, runs before `requireReady`) → the shape check, then the
   rule table in `episode/script.mjs` (`RULES`: id, what, check, fix), from the real season's script-v4: `short` (≤ 12 words a
   sentence), `link` (BUT/SO: a line opening with But/So or `"link"`; card, stats, previously and the last beat exempt;
