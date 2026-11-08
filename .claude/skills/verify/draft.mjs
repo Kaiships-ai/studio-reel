@@ -54,8 +54,8 @@ process.on('exit', code => { if (code === 1 && !finished) err(`✗ draft verify 
 const dataURL = u => Buffer.from(u.slice(u.indexOf(',') + 1), 'base64');
 const probe = await open(), DUR = await probe.page.evaluate(() => window.DUR);
 if (!(DUR > 0)) { console.error(`window.DUR must be a positive number (got ${DUR})`); process.exit(1); }
-const LEN = P ? Math.min(DUR, P.maxDur) : DUR;   // the seconds drafted
-if (P) console.log(`preset ${P.name}: drafting ${LEN.toFixed(2)} of ${DUR.toFixed(2)} s`);
+const LEN = P?.maxDur ? Math.min(DUR, P.maxDur) : DUR;   // the seconds drafted
+if (P?.maxDur) console.log(`preset ${P.name}: drafting ${LEN.toFixed(2)} of ${DUR.toFixed(2)} s`);
 const times = [...Array(N)].map((_, i) => +((i + .5) / N * LEN).toFixed(2));
 const sheet = await probe.page.evaluate(([ts, c]) => window.renderSheet(ts, c, 270), [times, Math.ceil(N / 2)]).catch(e => threw(`the stills sheet (${times.join(', ')} s)`, e));
 writeFileSync(join(OUT, 'sheet.jpg'), dataURL(sheet.url));
@@ -91,7 +91,7 @@ const hasAudio = existsSync(AUDIO);
 await new Promise((ok, no) => {
   const ff = start('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'mjpeg', '-i', '-',
     ...(hasAudio ? ['-i', AUDIO, '-map', '0:v', '-map', '1:a', '-c:a', 'aac', '-b:a', '96k'] : []),
-    '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '28', '-pix_fmt', 'yuv420p', ...(P ? ['-t', String(LEN)] : []), MP4], { stdio: ['pipe', 'inherit', 'inherit'] });
+    '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '28', '-pix_fmt', 'yuv420p', ...(P?.maxDur ? ['-t', String(LEN)] : []), MP4], { stdio: ['pipe', 'inherit', 'inherit'] });
   ff.on('close', c => c === 0 ? ok() : no(new Error('ffmpeg exit ' + c)));
   for (const f of frames) ff.stdin.write(f);
   ff.stdin.end();
@@ -115,7 +115,7 @@ const checks = [
   ['no page errors', !pageErrors.length, pageErrors.length ? pageErrors.slice(0, 5).join(' | ') : 'none'],
   [`draft video ${W}×${H} @ ${FPS} fps`, !!v && v.width === W && v.height === H, v ? `${v.width}×${v.height} ${v.r_frame_rate}` : 'no video stream'],
   ['has an audio stream', !!au, au ? `${au.codec_name} ${adur.toFixed(2)} s` : hasAudio ? 'none' : `none: ${AUDIO} missing (make.mjs <film> audio)`],
-  [P ? `video length = min(window.DUR, ${P.maxDur} s) ± 1 frame` : `video length = window.DUR ± 1 frame`, Math.abs(vdur - LEN) <= 1 / FPS + 1e-3, `${vdur.toFixed(3)} s vs ${LEN.toFixed(3)} s`],
+  [P?.maxDur ? `video length = min(window.DUR, ${P.maxDur} s) ± 1 frame` : `video length = window.DUR ± 1 frame`, Math.abs(vdur - LEN) <= 1 / FPS + 1e-3, `${vdur.toFixed(3)} s vs ${LEN.toFixed(3)} s`],
   ['picture length = voiceover ± 1/30 s', !!vo && Math.abs(DUR - vo.duration) <= 1 / 30 + 1e-3, vo ? `${DUR.toFixed(3)} s vs vo ${vo.duration.toFixed(3)} s` : 'vo/vo.json missing (make.mjs <film> vo)'],
   ['audio length = picture ± 0.1 s', !!au && Math.abs(adur - LEN) <= .1, au ? `${adur.toFixed(3)} s vs ${LEN.toFixed(3)} s` : 'no audio'],
   ['no frozen stretch (freezedetect n=0.003 d=0.7)', !freezes.length, freezes.join(', ') || 'none'],

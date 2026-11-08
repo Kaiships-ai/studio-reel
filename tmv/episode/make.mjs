@@ -27,6 +27,10 @@ if (steps[0] === 'new') {
 }
 const ep = steps.length && (p => existsSync(p) ? realpathSync(p) : p)(resolve(steps.shift()));   // real path: /tmp is /private/tmp on macOS, and the server needs the episode under the library root
 if (!ep || !existsSync(join(ep, 'episode.json'))) { console.error('usage: node episode/make.mjs <episode folder with episode.json> [vo] [render] [check] [--fps N] [--full]'); process.exit(2); }
+// every render is the 720x1280 review copy; a full-quality render needs the buyer's go (APPROVED-FULL, core/approve-full.mjs)
+if (opt.full) die(existsSync(join(ep, 'APPROVED-FULL'))
+  ? 'the full-quality render of an episode is not in this kit yet: the 720x1280 MP4 is the one to post'
+  : `the full render needs the buyer's go: ask them, then run pixi run node core/approve-full.mjs ${ep} --by "<who asked, when>"`);
 requireReady(env());
 const NAME = basename(ep), MP4 = join(ep, `${NAME}.mp4`), OUT = join(ep, 'out');
 const FPS = +(opt.fps ?? 30), [W, H] = [720, 1280];

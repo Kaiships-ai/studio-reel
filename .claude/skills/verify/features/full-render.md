@@ -1,18 +1,25 @@
 # Full render and delivery
 
-The deliverable: `films/<name>/<name>.mp4` (1080x1920 @ 30 fps, BT.709, −14 LUFS) and `<name>-cover.png`, checked
-by `make.mjs verify`. Slow (minutes); run only when the user says "full" or the reel is being handed over.
+The deliverable: `films/<name>/<name>.mp4` (720×1280 medium by default; 1080×1920 only after the user's go, BT.709,
+−14 LUFS) and `<name>-cover.png`, checked by `make.mjs verify`. The full render is slow (minutes): only when the user
+says "full".
 
 ## Sub-features
 
 - `full.render`: frames via `core/render/video.mjs`, mux and loudness via `core/render/mux.mjs`, cover frame.
 - `full.verify`: size, fps, BT.709, audio, length, LUFS/peak, freeze, black, camera ≤ 20 px/frame, CTA keyword heard.
 - `full.preset-test`: a film with `"preset": "test"` in `job.json` (or `REEL_PRESET=test`) renders 270×480 at 12 fps,
-  at most 15 s, fast encode; verify checks that size and skips the camera scan. No preset: unchanged 1080×1920.
+  at most 15 s, fast encode; verify checks that size and skips the camera scan.
+- `full.medium-default`: no preset renders `medium`, 720×1280 at the film's fps, the whole film, a fast encode; verify
+  checks 720×1280 and still runs the camera scan. `reel.mjs` (any style) renders medium too.
+- `full.gate`: `full` (1080×1920, lossless frames) renders only when the film has `APPROVED-FULL`, written by
+  `node core/approve-full.mjs <film> --by "<who asked, when>"` after the user asks for it; without it every render
+  tool stops with "needs the user's go". The TMV kit's `episode/make.mjs --full` stops the same way.
 
 ## How to get to it (user POV)
 
-- "full" → `node styles/kai-hand-draw/tools/make.mjs films/<name> render verify` (buyers: `pixi run make …`).
+- "render" → `node styles/kai-hand-draw/tools/make.mjs films/<name> render verify` (buyers: `pixi run make …`), medium.
+- "full" (the user's own words) → `node core/approve-full.mjs films/<name> --by "…"`, then `REEL_PRESET=full make.mjs films/<name> render verify`.
   `/make-reel` runs it in step 9–10.
 
 ## Driving it with draft.mjs / make.mjs

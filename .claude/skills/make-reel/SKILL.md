@@ -111,6 +111,13 @@ fix; its step goes back to `running`, then `done`. `job.mjs` stamps each step's 
 A feedback round re-runs only the steps the note changes, draft before final, and ends with `deliver done` plus
 what changed, in a few words: `node core/job.mjs films/<name> deliver done --files=… --change="hook 2.6 s -> 2.1 s"`.
 
+## Render quality: medium by default, full only on the user's go
+
+Every render is `medium`: 720×1280 at the reel's fps, the whole reel, a fast encode. It is the copy the user reviews.
+The full-quality 1080×1920 render costs minutes, heat and battery, so it happens only when the user asks for it in
+their own words: then `node core/approve-full.mjs films/<name> --by "<who asked, when>"` and run the render step with
+`REEL_PRESET=full`. Never write the approval on your own; without it every render tool stops.
+
 ## Test preset (`preset: test`)
 
 A test cook proves the pipeline, not the reel: the render is 270×480 at 12 fps, at most 15 s, in a fast low-quality
@@ -118,8 +125,8 @@ encode, so it takes seconds and the machine stays cool. Never post it. A cook as
 front matter of `workspace/scripts/<slug>.md`, or with `--preset=test` on `make.mjs new <name>` (or on any
 `node core/job.mjs` call); it lands in `job.json` as `"preset": "test"`. `REEL_PRESET=test` in the environment does
 the same for one command. From then on `make.mjs render` and `verify` and the draft verify use it by themselves:
-run the same steps, with no extra flag. `verify` then checks 270×480 at 12 fps and skips the camera scan. Only
-`kai-hand-draw` films have it (`core/render/reel.mjs` warns and renders the full reel). The presets live in
+run the same steps, with no extra flag. `verify` then checks 270×480 at 12 fps and skips the camera scan. `core/render/reel.mjs`
+honours the presets too. The presets live in
 `core/preset.mjs`. A preset stays in `job.json` once set, even if the front matter later drops it (a cook started
 with `--preset=test` has no `preset:` line to keep it); a real render of a test film is a new film.
 

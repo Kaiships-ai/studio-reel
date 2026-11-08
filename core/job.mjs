@@ -55,7 +55,7 @@ export function step(film, name, status, { files, pct, ...top } = {}) {
   Object.assign(job, top);
   const script = scriptOf(film), fm = field(script, 'preset');
   job.campaign = field(script, 'campaign') ?? job.campaign;
-  if (fm) job.preset = preset(fm).name;
+  if (fm) { preset(fm); job.preset = fm; }
   job.outputs = job.steps.filter(x => OUTPUT_STEPS.includes(x.name) && x.status === 'done').flatMap(x => x.files || []);
   const tmp = `${file}.${process.pid}.tmp`;
   writeFileSync(tmp, JSON.stringify(job, null, 1) + '\n');
