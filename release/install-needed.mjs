@@ -1,12 +1,14 @@
 // release/install-needed.mjs: which zips' clean-install test a change needs (install.yml's `changes` job).
 //   node release/install-needed.mjs <base ref> [head ref]
 //   node release/install-needed.mjs --full-episode    full=true when this run makes the whole tmv sample and its gates
+//   node release/install-needed.mjs --built-styles    styles=<every tmv style whose engine page is in this checkout>
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { crc32, inflateRawSync } from 'node:zlib';
+import { DEFAULT_STYLE, ENGINES } from '../tmv/episode/engines.mjs';
 
 export const TIERS = ['pro', 'tmv'];
 const HARNESS = /^(test\/(clean-install|tmv-smoke)\.mjs|\.github\/workflows\/install\.yml)$/;
@@ -29,6 +31,17 @@ export function zipEntries(buf) {
 // The whole tmv sample (and its 11 gates) is slow on CI: a PR makes the short ci-smoke episode unless it has the label
 export const fullEpisode = ({ event, ref = '', labels = [], base = '' }) => event === 'schedule' ? ref === 'refs/heads/main'
   : event === 'workflow_dispatch' || ref.startsWith('refs/tags/v') || (event === 'pull_request' && !base.startsWith('lane/') && labels.includes('full-episode'));
+
+// The full episode renders in every style whose engine is built
+export const builtStyles = root => Object.keys(ENGINES).filter(k => existsSync(join(root, 'tmv', ENGINES[k].page)));
+
+// A PR's tmv smoke renders in each built style whose engine folder it touches (tmv/episode/paper/, tmv/episode/handdraw/),
+// in every built style when it changes the engine registry (what each style renders and checks), else in 3d
+export function smokeStyles(changed, built = Object.keys(ENGINES)) {
+  if (changed.includes('tmv/episode/engines.mjs')) return built;
+  const own = built.filter(k => k !== DEFAULT_STYLE && changed.some(f => f.startsWith(`tmv/${dirname(ENGINES[k].page)}/`)));
+  return own.length ? own : [DEFAULT_STYLE];
+}
 
 export function tierNeeded(changed, before, after) {
   const list = fs => fs.slice(0, 8).join(', ') + (fs.length > 8 ? `, … (${fs.length})` : '');
@@ -72,8 +85,12 @@ const cli = fileURLToPath(import.meta.url) === resolve(process.argv[1] || '');
 if (cli && process.argv[2] === '--full-episode') {
   const { GITHUB_EVENT_NAME: event, GITHUB_REF: ref, LABELS: labels = '', BASE_REF: base = '' } = process.env;
   console.log(`full=${fullEpisode({ event, ref, labels: labels.split(','), base })}`);
+} else if (cli && process.argv[2] === '--built-styles') {
+  console.log(`styles=${builtStyles(ROOT).join(',')}`);
 } else if (cli) {
   const [base, head = 'HEAD'] = process.argv.slice(2);
   const need = await decide(base, head).catch(e => Object.fromEntries(TIERS.map(t => [t, unsure(e)])));
   for (const t of TIERS) { console.error(`${t}: ${need[t].run ? 'run' : 'skip'} · ${need[t].why}`); console.log(`${t}=${need[t].run}`); }
+  const diff = git('diff', '--name-only', base, head), styles = smokeStyles(diff.status === 0 ? diff.stdout.split('\n').filter(Boolean) : [], builtStyles(ROOT));
+  console.error(`tmv smoke style: ${styles.join(', ')}`); console.log(`styles=${styles.join(',')}`);
 }

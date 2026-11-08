@@ -29,6 +29,11 @@ test('the paper engine is built: its page is registered, loads its module, and p
   assert.match(page, /<script type="module" src="\/episode\/paper\/main.js"><\/script>/);
 });
 
+test('only 3D lights faces, so only 3D runs the blown-out faces check; flat styles say why they skip it', () => {
+  assert.deepEqual(ENGINES['3d'].skip, {});
+  for (const style of ['paper', 'handdraw']) assert.match(ENGINES[style].skip.faces, /no lighting/);
+});
+
 test('the schema refuses an unknown style and takes the three', () => {
   assert.deepEqual(shapeErrors({ ...sample, style: 'clay' }), ['"style": "clay" is not one of 3d, paper, handdraw']);
   for (const style of Object.keys(ENGINES)) assert.deepEqual(shapeErrors({ ...sample, style }), []);
