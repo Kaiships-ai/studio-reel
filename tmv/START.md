@@ -9,6 +9,11 @@ allow-list (`.claude/settings.json`) only matches the plain command, so anything
 the buyer. If `pixi` is not found by name, use `~/.pixi/bin/pixi` in its place (same words after it), which is also
 allowed. Edit files only under `episodes/`.
 
+Background commands (the install, the designer): start them with `run_in_background` and wait for Claude Code's
+notice that they finished. Never check on them with a shell loop, `tail`, `grep`, `ls` or `sleep`: each of those makes
+Claude Code stop and ask the buyer. If you need a line one printed (the designer's address), open its output file with
+the Read tool.
+
 The buyer should reach their own episode 1 in under 10 minutes. The install (2-4 minutes the first time) runs in the
 background while you ask the questions and they make the key: do not wait for it before step 2.
 
@@ -40,11 +45,12 @@ background while you ask the questions and they make the key: do not wait for it
    (It may wait a minute while the install sets up the tools; that is normal.) Never ask for the key in the chat and
    never print it.
 
-4. Ask the other two questions, one at a time, while they work on the key or after it:
-   - Your characters: keep the seeded cast (Nova, Theo, Blip), or design your own (`pixi run designer`, in the
-     background; open the address it prints, press "Copy for Claude", paste it here)?
+4. Ask the other two questions, one at a time:
    - The narrator's voice: Achird (the default, the sample's voice), or hear 3 others first (Puck, Kore, Charon: make
      the episode with each in `narrator.voice` and let them pick)? Characters never speak; one narrator tells the story.
+   - Your characters: keep the seeded cast (Nova, Theo, Blip), or design your own? The designer needs the install to
+     have finished (it uses the 3D packages the install puts in this folder): then run `pixi run designer` in the
+     background, give the buyer the address it prints, and they press "Copy for Claude" and paste it here.
 
    When they say "xong" for the key **and** the install has finished, check (its `voice key` line makes one tiny real
    call; on a ✗ do its fix):
