@@ -2,7 +2,7 @@
 // install tests". These checks fail when a workflow change would spend minutes on every PR again.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import zlib from 'node:zlib';
+import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
@@ -55,7 +55,8 @@ test('install test runs exactly the tiers whose zip a change reaches', () => {
 
 test('zipEntries reads back what zip wrote, stored and deflated', () => {
   const big = Buffer.alloc(4096, 'a'), z = zip([{ name: 'k/a.txt', data: Buffer.from('hi') }, { name: 'k/d/b.bin', data: big }], '2026-01-01T00:00:00Z');
-  assert.deepEqual([...zipEntries(z)], [['a.txt', `${zlib.crc32(Buffer.from('hi')) >>> 0}:2`], ['d/b.bin', `${zlib.crc32(big) >>> 0}:4096`]]);
+  const sha = d => createHash('sha256').update(d).digest('hex');
+  assert.deepEqual([...zipEntries(z)], [['a.txt', sha(Buffer.from('hi'))], ['d/b.bin', sha(big)]]);
 });
 
 test('the whole tmv sample runs nightly on main, for a tag, by hand or with the PR label full-episode; a plain PR makes ci-smoke', () => {

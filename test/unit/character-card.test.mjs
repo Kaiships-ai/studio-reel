@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { checkCard, toHandDraw, toPaper, PAPER_BUILD, CARD } from '../../core/character-card.mjs';
+import { checkCard, lost3D, toHandDraw, toPaper, PAPER_BUILD, CARD } from '../../core/character-card.mjs';
 
 const window = {};
 new Function('window', readFileSync(new URL('../../tmv/characters/cast.js', import.meta.url), 'utf8'))(window);
@@ -63,4 +63,13 @@ test('every build has paper proportions, and a bare card gets defaults', () => {
   assert.deepEqual(Object.keys(PAPER_BUILD), CARD.build);
   const { figure } = toPaper({ name: ' Ana ' });
   assert.deepEqual([figure.name, figure.kind, figure.hair, figure.top, figure.body], ['Ana', 'human', 'short', 'tee', PAPER_BUILD.average]);
+});
+
+test('3D draws the seeds as they are, and names what it draws differently for a made-up card', () => {
+  for (const seed of Object.values(window.TMV_SEEDS)) assert.deepEqual(lost3D(seed), []);
+  const mai = { name: 'Mai', kind: 'human', hair: 'long', top: 'jacket', eyes: 'wide', extra: 'glasses' };
+  assert.deepEqual(lost3D(mai), ['eyes "wide": the 3D figure\'s own eyes']);
+  assert.deepEqual(lost3D({ ...mai, eyes: 'dot', top: 'tee', extra: 'antenna' }), ['top "tee": a sweater', 'extra "antenna": not on a person']);
+  assert.deepEqual(lost3D({ name: 'R', kind: 'bot', hair: 'curly', top: 'hoodie' }), ['hair "curly": a robot has none', 'top "hoodie": a robot wears a vest band']);
+  assert.throws(() => lost3D({ name: 'X', top: 'cape' }), /character card: "top"/);
 });

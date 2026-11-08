@@ -1,6 +1,6 @@
 <!doctype html>
 <meta charset="utf-8">
-<!-- The card in the 3D episode engine: characters/rig.js on the designer's stage (navy, two neon rims). -->
+<!-- The card in the 3D episode engine: characters/rig.js on the designer's stage (navy, two neon rims, a low fill so the jaw is not black). -->
 <script type="importmap">{ "imports": { "three": "/node_modules/three/build/three.module.js", "three/addons/": "/node_modules/three/examples/jsm/" } }</script>
 <style>html, body { margin: 0; overflow: hidden; } canvas { width: 100vw; height: 100vh; display: block; }</style>
 <canvas id="view" width="720" height="1280"></canvas>
@@ -13,7 +13,7 @@ renderer.setSize(cv.width, cv.height, false); renderer.outputColorSpace = THREE.
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.1; renderer.shadowMap.enabled = true;
 const scene = new THREE.Scene(); scene.background = new THREE.Color('#0B1230');
 scene.add(new THREE.HemisphereLight('#4a4f8a', '#20121c', 0.9));
-for (const [col, k, p] of [['#dfe6ff', 2.2, [0.6, 1.6, 2.2]], ['#FF3D8B', 3.2, [-2, 1.4, -1.6]], ['#29E0FF', 2.6, [2, 1.2, -1.4]]]) {
+for (const [col, k, p] of [['#dfe6ff', 2.2, [0.6, 1.6, 2.2]], ['#FF3D8B', 3.2, [-2, 1.4, -1.6]], ['#29E0FF', 2.6, [2, 1.2, -1.4]], ['#ffe6d2', 1.0, [0.2, -0.6, 2]]]) {
   const l = new THREE.DirectionalLight(col, k); l.position.set(...p); scene.add(l);
 }
 const floor = new THREE.Mesh(new THREE.CircleGeometry(1.2, 48), new THREE.MeshStandardMaterial({ color: '#141a3a', roughness: 0.9 }));

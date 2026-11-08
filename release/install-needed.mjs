@@ -6,7 +6,8 @@ import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'n
 import { tmpdir } from 'node:os';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { crc32, inflateRawSync } from 'node:zlib';
+import { createHash } from 'node:crypto';
+import { inflateRawSync } from 'node:zlib';
 
 export const TIERS = ['pro', 'tmv'];
 const HARNESS = /^(test\/(clean-install|tmv-smoke)\.mjs|\.github\/workflows\/install\.yml)$/;
@@ -20,7 +21,7 @@ export function zipEntries(buf) {
     const name = buf.toString('utf8', c + 46, c + 46 + nl), at = buf.readUInt32LE(c + 42);
     const start = at + 30 + buf.readUInt16LE(at + 26) + buf.readUInt16LE(at + 28), raw = buf.subarray(start, start + csize);
     const data = method === 8 ? inflateRawSync(raw) : raw;
-    out.set(name.replace(/^[^/]+\//, ''), `${crc32(data) >>> 0}:${data.length}`);
+    out.set(name.replace(/^[^/]+\//, ''), createHash('sha256').update(data).digest('hex'));
     c += 46 + nl + buf.readUInt16LE(c + 30) + buf.readUInt16LE(c + 32);
   }
   return out;

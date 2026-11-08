@@ -21,11 +21,11 @@ figcaption { margin-top: 12px; font-weight: 650; font-size: 22px; }
   <div class="row" id="row"></div>
 </main>
 <script type="module">
-import { checkCard, toHandDraw, toPaper } from '/core/character-card.mjs';
+import { checkCard, lost3D, toHandDraw, toPaper } from '/core/character-card.mjs';
 const q = new URLSearchParams(location.search), card = JSON.parse(q.get('card'));
 const errs = checkCard(card); if (errs.length) throw new Error(`character card: ${errs.join('; ')}`);
 const STYLES = [
-  ['3d.html', '3D', 'The episode engine', []],
+  ['3d.html', '3D', 'The episode engine', lost3D(card)],
   ['hand.html', 'Hand-draw', 'Watercolour and ink', toHandDraw(card).lost],
   ['paper.html', 'Paper pop-up', 'A cut-paper sticker', toPaper(card).lost],
 ];
