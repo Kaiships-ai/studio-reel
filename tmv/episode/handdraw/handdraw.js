@@ -1,7 +1,7 @@
 // handdraw.js: the hand-draw episode engine. It plays one episode folder on the kai-hand-draw paper: every shot of
 // episode/timeline.js shows its cast as their cards' hand-drawn presenters (core/character-card.mjs toHandDraw,
 // styles/kai-hand-draw/engine/kaip.js), framed by framing.js, boiling at the engine's 12 drawings a second, the speaker's
-// mouth moving while the words of their line play. Cards, captions, the HUD and the vote are plain type for now.
+// mouth moving while the words of their line play. Cards, captions, the HUD and the vote are plain type.
 // The page (index.html) loads core.js and kaip.js first; their globals (paint, kai, camBegin, boilSeed...) are used here.
 import { loadEpisode, cardsOf, timeline } from '../timeline.js';
 import { toHandDraw } from '../../core/character-card.mjs';
@@ -11,6 +11,7 @@ const { EP, VO } = await loadEpisode();
 const CARDS = cardsOf(EP, window.TMV_SEEDS);
 const LOOK = Object.fromEntries(Object.entries(CARDS).map(([id, c]) => [id, toHandDraw(c).character]));
 const { lead, LINES, DUR, shotOf, WORDS, hudAt, LAST } = timeline(EP, VO, CARDS);
+if (!lead) throw new Error('the hand-draw engine needs a human in the room: a cast entry that is not a bot and not in the corner');
 const ROSTER = rosterOf(CARDS, lead);
 const CREAM = '#FFF5E2', INK = '#2B2233', ACCENT = EP.palette?.ink ?? '#E8226F';
 
@@ -26,7 +27,7 @@ function world(t) {
   camEnd();
 }
 
-// ------------------------------------------------------------ plain type over the paper (H2 draws these by hand)
+// ------------------------------------------------------------ type over the paper
 function text(c, s, x, y, size, col = INK, o = {}) {
   c.save(); c.font = `${o.weight ?? 800} ${size}px "Inter Tight", sans-serif`; c.textAlign = o.align ?? 'center'; c.textBaseline = 'middle';
   c.lineJoin = 'round'; c.lineWidth = size * 0.18; c.strokeStyle = PAL.paper; c.strokeText(String(s), x, y, o.w ?? 960);
@@ -55,5 +56,6 @@ function overlay(c, t) {
   }
 }
 
+await Promise.all([500, 600, 800].map(w => document.fonts.load(`${w} 40px "Inter Tight"`)));
 window.HD = { world, overlay, DUR };
 window.HD_RESOLVE(window.HD);

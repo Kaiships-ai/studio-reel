@@ -36,3 +36,18 @@ test('every story shot of the sample frames its speaker (the lead on the phone),
     if (sh.shot === 'two' && !roster.corner.includes(sh.who)) assert.equal(f.figs.length, 2, where);
   }
 });
+
+test('a buyer cast without a bot, with a lone lead or with a crowded room still frames every speaker', () => {
+  const card = (kind, o = {}) => ({ name: 'x', kind, ...o });
+  const shot = (who, shot) => ({ who, shot, i: 0, j: 0, a: 0, b: 2 });
+  const pairs = rosterOf({ ann: card('human'), bo: card('human') }, 'ann');
+  assert.deepEqual(frameOf(shot('ann', 'two'), 1, pairs).figs.map(g => g.id), ['ann', 'bo']);
+  assert.deepEqual(frameOf(shot('bo', 'two'), 1, pairs).figs.map(g => g.id), ['bo', 'ann']);
+  const alone = rosterOf({ ann: card('human') }, 'ann');
+  assert.deepEqual(frameOf(shot('ann', 'two'), 1, alone).figs.map(g => g.id), ['ann']);
+  const crowd = rosterOf({ ann: card('human'), bo: card('human'), cy: card('bot'), di: card('human'), ed: card('human', { role: 'rival' }) }, 'ann');
+  assert.deepEqual(crowd, { lead: 'ann', room: ['ann', 'cy', 'bo', 'di'], corner: ['ed'] });
+  const room = frameOf(shot('di', 'room'), 1, crowd).figs;
+  assert.deepEqual(room.map(g => [g.id, g.talk]), [['ann', false], ['cy', false], ['bo', false], ['di', true]]);
+  assert.equal(new Set(room.map(g => g.x)).size, 4, 'nobody stands on anybody');
+});

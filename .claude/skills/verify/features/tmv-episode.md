@@ -48,7 +48,7 @@ on main, `v*` tags, by hand, the PR label `full-episode`).
   `kaip.js` (paper grain, 12 fps boil) and `handdraw.js`, which draws each cast card as its `toHandDraw` presenter in the
   timeline's shots. `framing.js` (pure) picks who and how big: close = the speaker's bust with the beat's `exp`; two = the
   speaker and the lead (the lead with the first bot); wide/room = the room on its feet; phone = the lead with the phone;
-  the rival's corner holds only him. The speaker's mouth moves while their line's words play (`VO_WORDS`). Cards, stats,
+  the rival's corner holds only him. A bot card is drawn as a person (`toHandDraw` lists it as lost). The speaker's mouth moves while their line's words play (`VO_WORDS`). Cards, stats,
   captions, HUD and the vote are plain type for now. Unit test: `test/unit/tmv-handdraw.test.mjs`. Stills, no video:
   `node core/render/still.mjs <ep> <t...> --size 720x1280` after copying the page in as `make.mjs render` does.
 - `episode.cuts` (`episode/timeline.js`, shared by every engine): one beat per voiced line, cut every 2.6 s at most: a longer story beat splits on word starts into

@@ -53,7 +53,7 @@ export function frameOf(sh, t, roster, exp) {
     if (!mate) return { cam, figs: [fig(who, 'present', W / 2, 2120, 1500)] };
     return { cam, figs: [fig(who, 'present', W / 2 + side * 250, 2080, 1350), fig(mate, 'front', W / 2 - side * 260, 2040, 1250)] };
   }
-  // room and wide: everyone in the room on their feet, the lead in the middle
+  // room and wide: everyone in the room on their feet, the group centred
   const n = roster.room.length, gap = Math.min(330, 900 / n), order = roster.room.map((id, i) => i ? (i % 2 ? -1 : 1) * Math.ceil(i / 2) : 0);
   const mid = order.reduce((m, o) => m + o / n, 0);
   return { cam, figs: roster.room.map((id, i) => fig(id, id === who ? 'present' : 'front', W / 2 + (order[i] - mid) * gap, 1560 + (i ? 30 : 0), i ? 860 : 1000)) };
