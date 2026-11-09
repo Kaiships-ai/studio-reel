@@ -3,6 +3,9 @@
 // From ClaudeAnimationBase (MIT, (c) 2026 John Heibel). Changed for kai-hand-draw: vertical 1080x1920 canvas, extra
 // fonts, a caption hook in composite(), and the core/render page contract (window.READY, DUR, render(t)).
 const W = 1080, H = 1920;
+// PROJECT.drawScale (default 1): the brush canvas's pixel density, so 2/3 paints it at 720x1280 for a 720x1280 render.
+// The world stays W × H, and so do stroke widths in it.
+const DS = PROJECT.drawScale || 1;
 const BPM = PROJECT.bpm, BEAT = 60 / BPM, OFF = PROJECT.offset || 0, BOIL = 12, DUR = PROJECT.duration;
 const TAU = Math.PI * 2;
 const PAL = {
@@ -275,7 +278,7 @@ function defineBrushes() {
 
 // ---------- frame ----------
 async function setup() {
-  createCanvas(W, H, WEBGL); pixelDensity(1); noLoop();
+  createCanvas(W, H, WEBGL); pixelDensity(DS); noLoop();
   brush.scaleBrushes(5); defineBrushes();
   paperG = makePaper(); grainC = makeGrain(); glowTex = makeGlowTex(); letG = createGraphics(W, H); letG.pixelDensity(1);
   outC = document.getElementById('out'); outX = outC.getContext('2d');
