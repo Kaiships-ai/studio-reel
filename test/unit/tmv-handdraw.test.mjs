@@ -39,6 +39,32 @@ test('every story shot of the sample frames its speaker (the lead on the phone),
   }
 });
 
+// two story frames in a row draw a different picture: the set seen from elsewhere, someone moved or resized
+async function changed(a, b, shotA, shotB, corner) {
+  const { viewOf } = await import('../../tmv/episode/handdraw/set.js');
+  const va = viewOf(shotA, a.side, corner[0]), vb = viewOf(shotB, b.side, corner[1]);
+  if (corner[0] !== corner[1] || Math.abs(va.x - vb.x) * Math.min(va.k, vb.k) >= 150 || Math.max(va.k, vb.k) / Math.min(va.k, vb.k) >= 1.3) return true;
+  return a.figs.some(p => { const q = b.figs.find(g => g.id === p.id);
+    return !q || Math.abs(p.x - q.x) >= 150 || Math.max(p.h, q.h) / Math.min(p.h, q.h) >= 1.3 || p.pose.startsWith('exp-') !== q.pose.startsWith('exp-'); });
+}
+
+test('every cut between story shots changes the picture, in the sample and when a buyer repeats a shot', async () => {
+  const W = {}; new Function('window', readFileSync(join(TMV, 'characters/cast.js'), 'utf8'))(W);
+  const cards = cardsOf(sample, W.TMV_SEEDS), { SHOTS, lead } = timeline(sample, vo, cards), roster = rosterOf(cards, lead);
+  for (let n = 1; n < SHOTS.length; n++) {
+    const [p, q] = [SHOTS[n - 1], SHOTS[n]], a = frameOf(p, p.b - 0.01, roster, sample.beats[p.i].exp, n - 1), b = frameOf(q, q.a, roster, sample.beats[q.i].exp, n);
+    if (a.paper || b.paper) continue;
+    assert.ok(await changed(a, b, p.shot, q.shot, [p, q].map(s => roster.corner.includes(s.who))), `cut at ${q.a.toFixed(2)} s: ${p.shot} -> ${q.shot}`);
+  }
+  const card = (kind, o = {}) => ({ name: 'x', kind, ...o });
+  const casts = { sample: roster, alone: rosterOf({ ann: card('human') }, 'ann'),
+    pair: rosterOf({ ann: card('human'), bo: card('human'), ed: card('human', { role: 'rival' }) }, 'ann') };
+  for (const [name, r] of Object.entries(casts)) for (const who of [...r.room, ...r.corner]) for (const kind of ['close', 'two', 'wide', 'room', 'phone']) {
+    const sh = { who, shot: kind, i: 0, j: 0, a: 0, b: 2 }, a = frameOf(sh, 2, r, undefined, 4), b = frameOf(sh, 0, r, undefined, 5);
+    assert.ok(await changed(a, b, kind, kind, [r.corner.includes(who), r.corner.includes(who)]), `${name}: ${who} ${kind} -> ${kind}`);
+  }
+});
+
 test('a buyer cast without a bot, with a lone lead or with a crowded room still frames every speaker', () => {
   const card = (kind, o = {}) => ({ name: 'x', kind, ...o });
   const shot = (who, shot) => ({ who, shot, i: 0, j: 0, a: 0, b: 2 });

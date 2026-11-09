@@ -33,28 +33,31 @@ export function rosterOf(cards, lead) {
 }
 
 const PAPER = new Set(['card', 'stats', 'previously']);
+const sideOf = (n) => n % 2 ? 1 : -1;
+const RIVAL = { bust: { y: 1990, h: 1150 }, wide: { y: 1700, h: 1000 }, medium: { y: 1950, h: 1450 } };
+export const cornerShotOf = (shot, side) => shot === 'close' ? 'bust' : side > 0 ? 'medium' : 'wide';
 
-/** What frame t of shot `sh` shows: { paper, cam: { zoom, cx }, figs: [{ id, pose, x, y, h, flip, face, eyes, talk }] }. */
-export function frameOf(sh, t, roster, exp) {
-  const k = seg(t, sh.a, sh.b), side = (sh.i + sh.j) % 2 ? 1 : -1;
+export function frameOf(sh, t, roster, exp, n = 0) {
+  const k = seg(t, sh.a, sh.b), side = sideOf(n);
   // every shot pushes in slowly and drifts toward its speaker's side, like the 3D camera's dolly
   const cam = { zoom: lerp(1, 1.06, k), cx: W / 2 + side * 24 * k };
-  if (PAPER.has(sh.shot)) return { paper: sh.shot, cam: { zoom: lerp(1, 1.04, k), cx: W / 2 }, figs: [] };
+  if (PAPER.has(sh.shot)) return { paper: sh.shot, side, cam: { zoom: lerp(1, 1.04, k), cx: W / 2 }, figs: [] };
   const who = sh.who, look = (id) => id === who ? lookOf(exp) : NEUTRAL;
   const fig = (id, pose, x, y, h, o = {}) => ({ id, pose, x, y, h, flip: x > W / 2, face: look(id).face, eyes: look(id).eyes, talk: id === who, ...o });
   const corner = roster.corner.includes(who), shot = sh.shot;
-  if (shot === 'close') {
-    return { cam, figs: [fig(who, look(who).bust, W / 2 + side * 50, 1860, 800, { flip: side > 0 })] };
+  if (corner) {
+    const kind = cornerShotOf(shot, side), { y, h } = RIVAL[kind];
+    return { side, cam, figs: [kind === 'bust' ? fig(who, look(who).bust, W / 2 + side * 50, y, h, { flip: side > 0 }) : fig(who, 'present', W / 2 + side * 210, y, h, { flip: side > 0 })] };
   }
-  if (corner) return { cam, figs: [fig(who, 'present', W / 2 + side * 90, 2120, 1500, { flip: side > 0 })] };
-  if (shot === 'phone') return { cam, figs: [fig(roster.lead, 'phone', W / 2 + side * 60, 2250, 1600, { talk: roster.lead === who, flip: side > 0 })] };
+  if (shot === 'close') return { side, cam, figs: [fig(who, look(who).bust, W / 2 + side * 50, 1860, 800, { flip: side > 0 })] };
+  if (shot === 'phone') return { side, cam, figs: [fig(roster.lead, 'phone', W / 2 + side * 60, 2250, 1600, { talk: roster.lead === who, flip: side > 0 })] };
   if (shot === 'two') {
     const mate = who === roster.lead ? roster.room[1] : roster.lead;
-    if (!mate) return { cam, figs: [fig(who, 'present', W / 2, 2120, 1500)] };
-    return { cam, figs: [fig(who, 'present', W / 2 + side * 250, 2080, 1350), fig(mate, 'front', W / 2 - side * 260, 2040, 1250)] };
+    if (!mate) return { side, cam, figs: [fig(who, 'present', W / 2 + side * 120, 2120, 1500, { flip: side > 0 })] };
+    return { side, cam, figs: [fig(who, 'present', W / 2 + side * 250, 2080, 1350), fig(mate, 'front', W / 2 - side * 260, 2040, 1250)] };
   }
   // room and wide: everyone in the room on their feet, the group centred
-  const n = roster.room.length, gap = Math.min(330, 900 / n), order = roster.room.map((id, i) => i ? (i % 2 ? -1 : 1) * Math.ceil(i / 2) : 0);
-  const mid = order.reduce((m, o) => m + o / n, 0);
-  return { cam, figs: roster.room.map((id, i) => fig(id, id === who ? 'present' : 'front', W / 2 + (order[i] - mid) * gap, 1560 + (i ? 30 : 0), i ? 860 : 1000)) };
+  const many = roster.room.length, gap = Math.min(330, 900 / many), order = roster.room.map((id, i) => i ? (i % 2 ? -1 : 1) * Math.ceil(i / 2) : 0);
+  const mid = order.reduce((m, o) => m + o / many, 0);
+  return { side, cam, figs: roster.room.map((id, i) => fig(id, id === who ? 'present' : 'front', W / 2 + side * 110 + (order[i] - mid) * gap, 1560 + (i ? 30 : 0), i ? 860 : 1000)) };
 }
