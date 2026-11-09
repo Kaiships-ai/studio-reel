@@ -88,6 +88,11 @@ built style; else 3d), the full episode every built style (`builtStyles`), one L
   takes its colours from `palette` (`neon`, `left` = room lights, `right` = poster and the rival's glow, `card` = notes)
   with main.js's fallbacks; `viewOf` (pure) picks the part of the set each shot sees (close-ups look at one side of the
   room, following the shot's side). Each element calls `boilSeed('set:…')`, so the set boils at 12 fps and holds between boil steps.
+  The page paints the brush canvas at the render's output size: `PROJECT.drawScale` = viewport width × devicePixelRatio /
+  1080, at most 1, which `core.js` applies as the canvas's `pixelDensity` (720x1280 for the review copy, 1080x1920 for a
+  full render; world coordinates and stroke widths stay 1080-based). About 1.7× faster a frame in software WebGL; ink
+  reads a little crisper than the 1080 canvas scaled down (SSIM 0.99). Not a `scale()` transform: p5.brush's in-canvas
+  test ignores it and drops strokes that start near an edge (the string lights' wire on a close-up).
   Unit test: `test/unit/tmv-handdraw.test.mjs`. Stills, no video:
   `node core/render/still.mjs <ep> <t...> --size 1080x1920` after copying the page in as `make.mjs render` does; gates.py's
   `luma(png, 0)` and `faint(png, 0)` measure G4/G4b on a single still.

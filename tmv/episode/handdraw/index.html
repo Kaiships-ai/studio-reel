@@ -20,7 +20,8 @@ html, body { margin: 0; overflow: hidden; background: #F3EBDC; }
 <script src="/node_modules/p5.brush/dist/p5.brush.js"></script>
 <script>
 // core.js reads PROJECT and LOOPS and calls drawWorld(t) and drawCaptions(c, t); handdraw.js fills HD once the episode is loaded
-const PROJECT = { bpm: 120, duration: 1 }, LOOPS = {};
+// the brush canvas is painted at the render's output size (720x1280 for the review copy), never above 1080x1920
+const PROJECT = { bpm: 120, duration: 1, drawScale: Math.min(1, innerWidth * devicePixelRatio / 1080) }, LOOPS = {};
 const HD_LOADED = new Promise(r => { window.HD_RESOLVE = r; });
 function drawWorld(t) { window.HD.world(t); }
 function drawCaptions(c, t) { window.HD.overlay(c, t); }
