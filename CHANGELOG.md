@@ -2,7 +2,7 @@
 
 Every release of Kaiships Studio. Newest first.
 
-## v1.7 · unreleased
+## v1.7 · 2026-11-09
 
 - **How we make Ten Million Views, the series kit (first release).** Pick a style for your show after you make your
   characters: 3D, cut paper or hand-drawn. Every episode renders in that style, with your own character and a world
