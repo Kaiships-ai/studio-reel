@@ -1,5 +1,5 @@
 // release/build.mjs: the release zips, straight from git (uncommitted changes never ship).
-//   node release/build.mjs [--ref HEAD] [--tag v1.6] [--tier starter|pro|tmv|all] [--out dist] [--dry-run]
+//   node release/build.mjs [--ref HEAD] [--tag v1.7] [--tier starter|pro|tmv|all] [--out dist] [--dry-run]
 // kit.manifest decides what ships. Writes dist/kaiships-studio-<tier>-<version>.zip (every entry under
 // kaiships-studio/) and dist/SHA256SUMS. Same ref = same bytes (sorted entries, the commit's time on every file).
 // Refuses to write anything when a check fails: unclassified files, a Pro or dev file in Starter, a forbidden string,

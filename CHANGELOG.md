@@ -2,6 +2,21 @@
 
 Every release of Kaiships Studio. Newest first.
 
+## v1.7 · unreleased
+
+- **How we make Ten Million Views, the series kit (first release).** Pick a style for your show after you make your
+  characters: 3D, cut paper or hand-drawn. Every episode renders in that style, with your own character and a world
+  built from your colours and texts.
+- **From an idea to a season.** The story skill takes a rough idea to a premise, characters, a style, a world and a
+  season. The episode skill writes an 80-90 s script, checks it against the season's script rules (12 words a
+  sentence, BUT/SO links, a source on every claim, a two-way vote, the lead as "you"), voices it, renders it and runs
+  the 11 gates. The series skill asks which answer won the vote and opens the next episode with it.
+- **A voice you can trust.** The voice step stops a take that reads one line twice, drops breaths from the word
+  timings and keeps soft words, so captions sit on the words.
+- **A fair style picture.** `make.mjs styles <card>` draws your character in all three styles, with the same accent
+  colour in each and an honest list of what each style draws differently.
+- Starter and Pro: shared fixes only (the character card, the paper figure, the install output is quieter).
+
 ## v1.6 · 2026-10-23
 
 - **Every style makes reels.** All 52 styles now lay out natively at 9:16: `/make-reel <topic> --style <style>`
