@@ -1,6 +1,6 @@
 # TMV release (the paid "How we make Ten Million Views" zip)
 
-`node release/build.mjs --tier tmv` writes `tmv-studio-<version>.zip` (every entry under `tmv-studio/`): the Starter
+`node release/build.mjs --tier tmv` writes `tmv-studio-<version>.zip` (`<version>` from `tmv/product.json`, which must equal a `--tag`; v1.7 is the first release) (every entry under `tmv-studio/`): the Starter
 files minus `[tmv_exclude]`, with each `tmv/<path>` replacing or adding `<path>`, and `styles/README.md` /
 `styles/catalog.md` without the rows of excluded styles. Starter and Pro are unchanged.
 
