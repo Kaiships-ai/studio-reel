@@ -1,0 +1,43 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Stick-man reel</title>
+<style>
+@font-face { font-family: 'InterReel'; src: url('/dev/ep01-src/fonts/Inter.ttf') format('truetype'); font-weight: 100 900; }
+html, body { margin: 0; background: #000; overflow: hidden; height: 100%; }
+#view { position: relative; margin: 0 auto; }
+#view canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; }
+#scrub { position: fixed; left: 16px; right: 16px; bottom: 10px; width: calc(100% - 32px); }
+body.capture #scrub { display: none; }
+body.capture #view { margin: 0; }
+</style>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+</head><body>
+<div id="view"></div><input id="scrub" type="range" min="0" max="0" value="0">
+<script type="module">
+// ?film=films/<name> picks the reel. &capture=1 (set by tools/shot.mjs): frame-exact, page size = frame size.
+// Otherwise it plays in real time with the voice: space = play/pause, left/right = one frame, the bar scrubs.
+import { boot } from './engine/play.js';
+const Q = new URLSearchParams(location.search), capture = Q.get('capture') === '1';
+if (capture) document.body.classList.add('capture');
+const width = capture ? innerWidth : Number(Q.get('w') || 540), height = capture ? innerHeight : Number(Q.get('h') || 960);
+const view = document.getElementById('view');
+const fit = () => { const k = capture ? 1 : Math.min((innerHeight - 40) / height, innerWidth / width); view.style.width = width * k + 'px'; view.style.height = height * k + 'px'; };
+fit(); addEventListener('resize', fit);
+const reel = await boot({ film: Q.get('film') || 'films/stick01-dye-pack', width, height });
+view.appendChild(reel.stage.renderer.domElement); view.appendChild(reel.captions.canvas);
+if (!capture) {
+  const audio = new Audio(reel.audio), bar = document.getElementById('scrub');
+  bar.min = reel.F0; bar.max = reel.F1;
+  let f = reel.F0, shown = -1, playing = false;
+  const show = n => { f = Math.max(reel.F0, Math.min(reel.F1, n)); if (f !== shown) { window.__frame(f); shown = f; bar.value = f; } };
+  const tick = () => { if (!playing) return; const n = Math.floor(audio.currentTime * reel.fps); if (n > reel.F1) { pause(); return; } show(n); requestAnimationFrame(tick); };
+  const pause = () => { playing = false; audio.pause(); };
+  const play = () => { if (f >= reel.F1) f = reel.F0; audio.currentTime = f / reel.fps; audio.play(); playing = true; requestAnimationFrame(tick); };
+  addEventListener('keydown', e => {
+    if (e.code === 'Space') { e.preventDefault(); playing ? pause() : play(); }
+    else if (e.code === 'ArrowRight' || e.code === 'ArrowLeft') { pause(); show(f + (e.code === 'ArrowRight' ? 1 : -1)); }
+  });
+  bar.addEventListener('input', () => { pause(); show(Number(bar.value)); });
+  show(reel.F0);
+}
+</script>
+</body></html>

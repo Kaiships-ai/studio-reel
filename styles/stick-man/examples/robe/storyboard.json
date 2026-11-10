@@ -1,0 +1,126 @@
+{
+ "film": "stick03-robe",
+ "note": "Robe reel (Shkolnik et al., Nature 1980). Sets: park (l01-l03, l07-l09), lab (l04-l05), cutaway (l06).",
+ "lines": [
+  {
+   "id": "l01",
+   "see": "Under a blazing sun in the park, Wren in all white and Bram in all black stand side by side; heat shimmers off the path and a WHITE vs BLACK split pops between them.",
+   "shot": "two",
+   "set": "park",
+   "props": [],
+   "fx": [
+    "haze",
+    "vs"
+   ],
+   "on": "cooks"
+  },
+  {
+   "id": "l02",
+   "see": "Wren and Bram side by side; sun rays bounce off Wren's white shirt (BOUNCES) but sink into Bram's black one with an orange hot spot (SOAKS UP).",
+   "shot": "wide",
+   "set": "park",
+   "props": [],
+   "fx": [
+    "bounce",
+    "soak",
+    "wcall",
+    "bcall"
+   ],
+   "on": "up"
+  },
+  {
+   "id": "l03",
+   "see": "Close on Bram, heat lines rising off his black shirt and a +6 C stamp slamming in beside him.",
+   "shot": "cu",
+   "set": "park",
+   "props": [],
+   "fx": [
+    "heat",
+    "plus6",
+    "outside"
+   ],
+   "on": "six"
+  },
+  {
+   "id": "l04",
+   "see": "In a lab a 1980 stamp slams in, a thermometer pops up beside Wren and Bram, and heat arrows flow down into each body.",
+   "shot": "wide",
+   "set": "lab",
+   "props": [],
+   "fx": [
+    "year",
+    "thermoW",
+    "thermoB",
+    "hW",
+    "hB",
+    "bodyheat"
+   ],
+   "on": "body"
+  },
+  {
+   "id": "l05",
+   "see": "Both thermometers read exactly the same level and a big SAME stamp slams in between Wren and Bram.",
+   "shot": "two",
+   "set": "lab",
+   "props": [],
+   "fx": [
+    "thermoW",
+    "thermoB",
+    "same"
+   ],
+   "on": "same"
+  },
+  {
+   "id": "l06",
+   "see": "Cutaway: a black robe cylinder swings open to show the body inside with a wide air gap round it, labelled LOOSE: AIR GAP.",
+   "shot": "insert",
+   "set": "cutaway",
+   "props": [],
+   "fx": [
+    "robe",
+    "gap"
+   ],
+   "on": "loose"
+  },
+  {
+   "id": "l07",
+   "see": "Back in the sun, heat shimmers off Bram's black shirt; a HOT AIR arrow starts inside his chest and rises up out of his neck.",
+   "shot": "ms",
+   "set": "park",
+   "props": [],
+   "fx": [
+    "heat",
+    "rise",
+    "hotair"
+   ],
+   "on": "rises"
+  },
+  {
+   "id": "l08",
+   "see": "Big blue COOL AIR IN arrows curl in from below at his feet and up under his shirt; Bram smiles in the breeze.",
+   "shot": "ms",
+   "set": "park",
+   "props": [],
+   "fx": [
+    "inL",
+    "inR",
+    "coolin"
+   ],
+   "on": "breeze"
+  },
+  {
+   "id": "l09",
+   "see": "A TIGHT callout rings Bram's shirt, a NO BREEZE stamp slams in, the thermometer shoots to 400 and Bram cooks in heat lines.",
+   "shot": "cu",
+   "set": "park",
+   "props": [],
+   "fx": [
+    "tight",
+    "nobreeze",
+    "thermoC",
+    "heat"
+   ],
+   "on": "cooks"
+  }
+ ]
+}
