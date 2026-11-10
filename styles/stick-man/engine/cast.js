@@ -379,16 +379,26 @@ export function legReach(flex) {
 }
 const ROUND = { leg: 0.40, arm: 0.50 };                          // bend roundness: control-point reach as a share of the bone
 const V = (a) => new THREE.Vector3(a[0], a[1], a[2] || 0);
-// Two equal bones root -> joint -> end; pole = the side the joint points to. Returns the joint and the flex (deg, 0 = straight).
+// Arms never rubber-hose: exact two-bone geometry down to an elbow of ARM_MIN_FLEX; past that the bones stretch at most
+// ARM_STRETCH and the hand stops short of its target (the body's reach assist in pose() keeps targets inside reach).
+const ARM_MIN_FLEX = 15, ARM_STRETCH = 1.03;
+// Two equal bones root -> joint -> end; pole = the side the joint points to. Returns the joint, the flex (deg, 0 = straight)
+// and the end actually reached (an arm target past its reach is pulled in).
 function ik(root, end, l, pole, soft, arm = false) {
-  const ax = end.clone().sub(root), d = Math.max(1e-6, ax.length()); ax.divideScalar(d);
+  const ax = end.clone().sub(root); let d = Math.max(1e-6, ax.length()); ax.divideScalar(d);
+  const rs = Math.cos(ARM_MIN_FLEX / 2 * DEG);
+  if (arm && d > 2 * l * rs * ARM_STRETCH) { d = 2 * l * rs * ARM_STRETCH; end = root.clone().addScaledVector(ax, d); }
   const r = d / (2 * l), full = rr => 2 * Math.acos(Math.min(1, rr));
-  const half = r <= soft ? full(r) / 2 : arm ? full(soft) / 2 + (6 * DEG - full(soft) / 2) * sm(soft, 1.5, r) : full(soft) / 2 * (1 - sm(soft, 1, r));
-  const perp = pole.clone().addScaledVector(ax, -pole.dot(ax));
+  const half = arm ? (r <= rs ? full(r) / 2 : ARM_MIN_FLEX / 2 * DEG) : r <= soft ? full(r) / 2 : full(soft) / 2 * (1 - sm(soft, 1, r));
+  const perp = pole.clone().normalize(); perp.addScaledVector(ax, -perp.dot(ax));
+  if (arm) {                                                       // pole near the arm's axis: blend toward down-and-out
+    const fb = new THREE.Vector3(Math.sign(pole.x || 1) * 0.5, -1, -0.2).normalize(); fb.addScaledVector(ax, -fb.dot(ax));
+    const w = Math.max(0, 1 - perp.length() / 0.45); perp.multiplyScalar(1 - w).addScaledVector(fb, w);
+  }
   if (perp.lengthSq() < 1e-8) perp.set(0, 0, 1).addScaledVector(ax, -ax.z);
   perp.normalize();
   const joint = root.clone().addScaledVector(ax, d / 2).addScaledVector(perp, d / 2 * Math.tan(half));
-  return { joint, flex: 2 * half / DEG };
+  return { joint, flex: 2 * half / DEG, end };
 }
 // One smooth tube through root, joint and end: two quadratic arcs sharing the chord direction as tangent at the joint,
 // resampled to n points evenly by arc length (W units in, metres out).
@@ -424,6 +434,49 @@ function contactTex() {
   const cv = document.createElement('canvas'); cv.width = cv.height = 128; const g = cv.getContext('2d');
   const gr = g.createRadialGradient(64, 64, 6, 64, 64, 64); gr.addColorStop(0, '#fff'); gr.addColorStop(1, '#000');
   g.fillStyle = gr; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(cv);
+}
+
+// ------------------------------------------------------------------ reach assist
+// When a hand target lies past REACH of the full arm, the body takes it there: the pelvis shifts toward it (weight onto
+// the near leg), the torso rolls and pitches toward it, the shoulders twist, the knees give for a low target. A few
+// damped Gauss-Newton steps on the over-reach, each parameter weighted by how readily a body uses it and held inside
+// LIMITS of the pose it was given. Continuous in the targets, so a moving target never makes the body jump.
+const REACH = 0.92;
+const LIMITS = { dx: 0.28, lean: 20, pitch: [-12, 46], bob: [-0.18, 0.03], shTwist: 36 };
+// how readily the body uses each (pitch 3 : lean 2 : pelvis shift 1.5 : twist 1.5 : knees 0.6), times the square of a
+// natural step (0.1 W, 10 deg), so the shares do not depend on the units
+const WEIGHT = { dx: 1.5 * 0.01, lean: 2 * 100, pitch: 3 * 100, bob: 0.6 * 0.01, shTwist: 1.5 * 100 };
+const shoulderOf = (q, sg) => {
+  const L = (q.lean || 0) * DEG, c = Math.cos(L), s = Math.sin(L), pt = (q.pitch || 0) * DEG, dx = q.dx || 0;
+  const u = sg * TORSO.w * 0.40, y = SHOULDER_V + (q.shrug || 0) - HIP_V, yy = -u * s + y * c;
+  const x = u * c + y * s + dx, a = (q.shTwist || 0) * DEG, uu = x - dx;
+  return [dx + uu * Math.cos(a), yy * Math.cos(pt) + HIP_V + (q.bob || 0), yy * Math.sin(pt) + uu * Math.sin(a)];
+};
+export function reachAssist(P) {
+  const front = new Set(P.front || []), T = [];
+  for (const [side, sg] of [['L', -1], ['R', 1]]) {
+    const h0 = P['hand' + side]; if (!h0) continue;
+    const fk = P['armFK' + side], fw = fk ? Math.max(0, Math.min(1, fk.w ?? 1)) : 0;
+    if (fw > 0.999) continue;
+    T.push({ sg, w: 1 - fw, hand: [h0[0], h0[1], h0.length > 2 ? h0[2] : (front.has('arm' + side) ? 0.16 : 0.0)] });
+  }
+  if (!T.length) return P;
+  const K = Object.keys(WEIGHT), q0 = Object.fromEntries(K.map(k => [k, P[k] || 0])), q = { ...q0, shrug: P.shrug || 0 };
+  const lim = (k, x) => { const L = LIMITS[k], b = q0[k]; return Array.isArray(L) ? Math.max(Math.min(b, b + L[0]), Math.min(Math.max(b, b + L[1]), x)) : Math.max(b - L, Math.min(b + L, x)); };
+  const over = (t, qq) => { const sh = shoulderOf(qq, t.sg); return Math.hypot(t.hand[0] - sh[0], t.hand[1] - sh[1], t.hand[2] - sh[2]) - REACH * 2 * LIMB.upper; };
+  let moved = false;
+  for (let it = 0; it < 6; it++) {
+    for (const t of T) {
+      const e = over(t, q); if (e <= 1e-5) continue;
+      const g = {}; let gg = 0;
+      for (const k of K) { const h = k === 'dx' || k === 'bob' ? 0.005 : 0.25, qq = { ...q, [k]: q[k] + h }; g[k] = (over(t, qq) - e) / h; gg += WEIGHT[k] * g[k] * g[k]; }
+      if (gg < 1e-9) continue;
+      for (const k of K) q[k] = lim(k, q[k] - 0.8 * t.w * e * WEIGHT[k] * g[k] / gg);   // a half-busy hand gets half the help
+      moved = true;
+    }
+  }
+  if (!moved) return P;
+  return { ...P, ...Object.fromEntries(K.map(k => [k, q[k]])), assist: +Math.abs(q.pitch - q0.pitch + q.lean - q0.lean).toFixed(2) };
 }
 
 // ------------------------------------------------------------------ the figure
@@ -480,6 +533,7 @@ export function makeStick(spec) {
   // third number = depth toward where the figure faces (W), kneeF{L,R} = knee pushed forward (W), toeF = toe reach.
   S.pose = (P = {}) => {
     S.place(P);
+    P = reachAssist(P);
     const dx = P.dx || 0, dz = P.bob || 0, lean = (P.lean || 0) * DEG, c = Math.cos(lean), s = Math.sin(lean);
     const pt = (P.pitch || 0) * DEG, pc = Math.cos(pt), ps = Math.sin(pt);
     const bt = (u, v) => { const y = v - HIP_V, yy = -u * s + y * c; return [u * c + y * s + dx, yy * pc + HIP_V + dz, yy * ps]; };
@@ -491,10 +545,10 @@ export function makeStick(spec) {
     // Limbs. Extra keys: elbow{L,R} / kneeDir (or kneeDir{L,R}) = pole vectors (figure-local), armFK{L,R} =
     // {fwd, out, flex, w} swing the arm from the shoulder (w blends it over the hand target), footPitch{L,R} (deg,
     // + = toe up), shTwist / hipTwist (deg, + = the right shoulder / hip forward). Legacy bend{L,R} only picks a side.
-    const front = new Set(P.front || []), rig = { pitch: P.pitch || 0, roll: P.lean || 0 };
+    const front = new Set(P.front || []), rig = { pitch: P.pitch || 0, roll: P.lean || 0, assist: P.assist || 0, body: [P.dx || 0, P.bob || 0, P.shTwist || 0].map(x => +x.toFixed(3)) };
     const twist = (q, deg) => { const a = (deg || 0) * DEG, u = q[0] - dx; return [dx + u * Math.cos(a), q[1], q[2] + u * Math.sin(a)]; };
     for (const [side, sg] of [['L', -1], ['R', 1]]) {
-      const sh = V(twist(bt(sg * TORSO.w * 0.40, SHOULDER_V), P.shTwist)), h0 = P['hand' + side];
+      const sh = V(twist(bt(sg * TORSO.w * 0.40, SHOULDER_V + (P.shrug || 0) + (P['shrug' + side] || 0)), P.shTwist)), h0 = P['hand' + side];
       let hand = V(h0 ? [h0[0], h0[1], h0.length > 2 ? h0[2] : (front.has('arm' + side) ? 0.16 : 0.0)] : bt(sg * 0.41, 1.22));
       let pole;
       if (P['elbow' + side]) pole = V(P['elbow' + side]);
@@ -509,6 +563,7 @@ export function makeStick(spec) {
         hand.lerp(k.hand, fw); pole.normalize().lerp(k.elbow.clone().sub(mid).normalize(), fw);
       }
       const arm = ik(sh, hand, LIMB.upper, pole, SOFT.arm, true);
+      hand = arm.end;
       const pts = hose(sh, arm.joint, hand, ROUND.arm, 16);
       limbs['arm' + side].set(pts); hands[side].position.copy(pts[15]); S.hand[side] = hand.toArray();
       const hb = bt(sg * 0.14, HIP_V + 0.04), hip = V(twist([hb[0], hb[1], 0], P.hipTwist));
@@ -534,7 +589,7 @@ export function makeStick(spec) {
   // the last pose's joints in Blender world metres (y = depth), flexes and pitches in degrees, for __dbg
   S.rigWorld = () => {
     const w = q => { const v = q.clone().multiplyScalar(W).applyMatrix4(root.matrixWorld); return [v.x, -v.z, v.y].map(x => +x.toFixed(4)); };
-    const o = { torsoLean: +S.rig.pitch.toFixed(2), torsoRoll: +S.rig.roll.toFixed(2) };
+    const o = { torsoLean: +S.rig.pitch.toFixed(2), torsoRoll: +S.rig.roll.toFixed(2), assist: S.rig.assist, body: S.rig.body };
     for (const s of ['L', 'R']) {
       const r = S.rig[s];
       o[s] = { hip: w(r.hip), knee: w(r.knee), ankle: w(r.ankle), toe: w(r.toe), shoulder: w(r.shoulder), elbow: w(r.elbow), hand: w(r.hand),

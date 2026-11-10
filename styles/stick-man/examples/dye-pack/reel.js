@@ -31,7 +31,7 @@ export default {
     { line: 'l02', on: 'twenties', who: 'teller', expr: 'closed', do: 'gesture', kind: 'nod' },
     { line: 'l02', on: 'plate', who: 'plate', do: 'glint' },
     { line: 'l02', on: 'plate', who: 'teller', expr: 'happy', look: 'kai' },
-    { line: 'l02', on: 'drops', offset: -4, who: 'teller', do: 'drop_in', prop: 'stack', hand: 'L', strength: 1.0 },
+    { line: 'l02', on: 'drops', offset: -4, who: 'teller', do: 'drop_in', prop: 'stack', hand: 'L', strength: 0.8 },
     { line: 'l02', on: 'drops', who: 'kai', expr: 'grin' },
     // l03 "Have a lovely day."
     { line: 'l03', on: 'have', who: 'teller', expr: 'happy', do: 'talk', look: 'kai' },
@@ -51,10 +51,10 @@ export default {
   ],
   shots: [
     { f: 0, shot: 'two', of: ['kai', 'teller'], angle: -26 },
-    { line: 'l02', on: 'she', shot: 'cu', of: ['teller'], with: ['plate', 'stack'], angle: 30 },
-    { line: 'l02', on: 'drops', offset: -6, shot: 'cu', of: ['teller'], with: ['plate', 'bag'], angle: 22 },
-    { line: 'l03', on: 'have', offset: -10, shot: 'cu', of: ['teller'], angle: 16, head: 0.16, lens: 40 },
-    { line: 'l03', on: 'lovely', shot: 'ms', of: ['kai'], angle: 45, heading: -90, glide: 40, size: 0.42 },
-    { line: 'l04', on: 'strolls', shot: 'follow', of: ['kai'], angle: 40, size: 0.41, heading: -90 },
+    { line: 'l02', on: 'she', shot: 'cu', of: ['teller'], with: ['plate', 'stack'], angle: 30, head: 0.21, kx: 0.60 },
+    { line: 'l02', on: 'drops', offset: -6, shot: 'two', of: ['kai', 'teller'], angle: -14 },
+    { line: 'l03', on: 'have', offset: -4, shot: 'cu', of: ['teller'], angle: 28, head: 0.16, lens: 40 },
+    // the walk out: the camera keeps only part of his travel at first, so he crosses the frame and the floor slides by
+    { line: 'l03', on: 'lovely', shot: 'ms', of: ['kai'], angle: 84, heading: -90, glide: 40, size: 0.42, push: 0.0012, kx: 0.62, track: { s: 0.40, delay: 44, ramp: 50 } },
   ],
 };

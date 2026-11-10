@@ -9,18 +9,18 @@ export const ROOM = { X0: -3.6, X1: 5.0, Y0: -8.0, Y1: 7.0, H: 6.2 };
 export const COUNTER = { CX0: 1.3, CX1: 2.0, CY0: -0.5, CH: 0.98 };   // low enough that props on top read from 1.1-1.4 m
 const CT = COUNTER.CH + 0.07;                                    // counter top surface
 export const STACK = [1.72, 0.62, CT + 0.016];                   // the twenties, sitting on the metal plate
-export const TELLER_SPOT = [2.25, 1.00, 0.33];                   // on the raised floor behind the counter
+export const TELLER_SPOT = [2.18, 1.00, 0.33];                   // on the raised floor behind the counter
 // the entrance: double doors in the left wall between the first two windows, daylight and street outside
 export const DOOR = { x: ROOM.X0, y0: 0.50, y1: 2.04, h: 2.75 };
 // named marks (where a figure's root stands) and places (props, hand targets); Blender metres
 export const MARKS = {
-  customer: [0.95, 1.30, 0], teller: TELLER_SPOT, bench: [-1.20, 4.20, 0],
+  customer: [1.04, 1.30, 0], teller: TELLER_SPOT, bench: [-1.20, 4.20, 0],
   door: [DOOR.x - 0.2, (DOOR.y0 + DOOR.y1) / 2, 0], street: [-6.2, (DOOR.y0 + DOOR.y1) / 2, 0],
 };
 export const PLACES = {
   plate: [1.72, 0.62, CT], stack: STACK, b1: [1.84, 1.10, CT], b2: [1.86, 1.30, CT],
-  note: [1.28, 0.95, CT], note_end: [1.58, 0.92, CT], bag_on_counter: [1.42, 1.18, CT + 0.03],
-  bag_grip: [1.31, 1.20, CT + 0.40],                            // Kai's hand on the near rim of the open bag
+  note: [1.28, 0.95, CT], note_end: [1.58, 0.92, CT], bag_on_counter: [1.58, 1.18, CT + 0.03],
+  bag_grip: [1.47, 1.20, CT + 0.40],                            // Kai's hand on the near rim of the open bag
   sensor: [DOOR.x + 0.06, DOOR.y1 + 0.06, DOOR.h - 0.16],          // on the lobby-side casing, top of the north jamb
 };
 export const BENCH_YAW = -100;                                    // the bench (and its sleeper) faces the door

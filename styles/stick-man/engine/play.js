@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { createStage } from './look.js';
 import { makeStick, KAI, TELLER, GUARD, EXPR, HEAD_C } from './cast.js';
 import { VERBS, STAND, SIT, REST_ARM, W, lerp, lerp3, add3, angDiff, toLocal, smoother, hash, handEase } from './verbs.js';
-import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs } from './acting.js';
+import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, exprAccent, bodyFollow, LATE } from './acting.js';
 import { createCamera } from './camera.js';
 import { createCaptions } from './captions.js';
 import { ACT, PROPV, MAKE, keyTracks } from './verbs_fx.js';
@@ -59,9 +59,11 @@ function mixHand(a, b, x) {
 }
 // owners sorted by start; the newest started owner wins, cross-faded from the one before it over its fade
 // (hands: over the fade plus a 35 % settle tail, see mixHand)
+const HAND_FADE = 9, HAND_FIR = [0.28, 0.24, 0.20, 0.16, 0.12];
 function chain(list, f, val, env, hand = false) {
   let i = list.length - 1; while (i > 0 && list[i].start > f) i--;
-  const go = j => { const v = val(list[j].fn(f, env), j); const o = list[j]; const fd = o.fade || 0;
+  // a hand never changes owner in under HAND_FADE frames (a fade of 0 is a cut-in and stays one)
+  const go = j => { const v = val(list[j].fn(f, env), j); const o = list[j]; const fd = hand && o.fade ? Math.max(HAND_FADE, o.fade) : o.fade || 0;
     if (j > 0 && fd > 0 && hand && f - o.start < fd * 1.35 + 1) return mixHand(go(j - 1), v, (f - o.start + 1) / (fd + 1));
     if (j > 0 && fd > 0 && f - o.start < fd) return mixObj(go(j - 1), v, smoother((f - o.start + 1) / (fd + 1))); return v; };
   return go(i);
@@ -182,7 +184,12 @@ async function buildAct(R, X) {
       pos = add3(hw, ow);
       if (!s.keepRot) rot = (body.yaw + (s.yaw || 0)) * Math.PI / 180;
       tilt = s.tilt || [0, 0];
-      if (s.swing && body.walking != null) tilt = [tilt[0] + 0.10 * Math.sin(2 * Math.PI * body.walking), tilt[1] + 0.06 * Math.cos(2 * Math.PI * body.walking)];
+      // a slung bag swings and bounces on the back two frames behind the steps
+      if (s.swing && body.walking != null) {
+        const ph = 2 * Math.PI * (body.walking - 1 / (body.walkT || 10));
+        tilt = [tilt[0] + 0.16 * Math.sin(ph), tilt[1] + 0.10 * Math.cos(ph)];
+        pos = [pos[0], pos[1], pos[2] + 0.024 * Math.cos(2 * ph) - 0.008];
+      }
     }
     if (n === 'bag' || impacts[n]) {                                // swells a little with every bundle, pops on impact
       const imp = impacts[n] || [], k = imp.filter(e => e.f <= f).length;
@@ -203,31 +210,54 @@ async function buildAct(R, X) {
     const id = idle(a.seed, f, a.posture);
     const add = {};
     for (const o of a.owners.add) if (o.start <= f + 30) { const r = o.fn(f); for (const k in r) add[k] = (add[k] || 0) + r[k]; }
-    const base = a.posture === 'sit' ? SIT : STAND, hands = {}, bends = {}, elbows = {}, fks = {};
+    const base = a.posture === 'sit' ? SIT : STAND, hands = {}, bends = {}, elbows = {}, fks = {}, off = {}, late = {};
+    // the body acting layer: idle beats between actions, accents on expression changes, the body following the hands
+    const stand = a.posture !== 'sit', walking = body.walking != null;
+    // the idle channels run staggered (body now, arms 3 frames behind, head 6): one of them is always on the move
+    const ib = stand ? idleBeats(a.seed, f) : null, ibA = stand ? idleBeats(a.seed, f - 3) : null, ibH = stand ? idleBeats(a.seed, f - 6) : null, acc = stand ? exprAccent(a.exprs, f, a.seed) : {};
+    const handAt = (side, g) => chain(a.owners['hand' + side], g, spec => {
+      const sg = side === 'L' ? -1 : 1, s = spec.w || spec.prop || spec.mouth ? env.resolve(spec, g) : spec;
+      let l;
+      if (s.rest) l = base['hand' + side].slice();
+      else if (s.w) l = toLocal(s.w, root); else l = s.l.slice();
+      if (s.dv) l[1] += s.dv;
+      // a standing figure's resting arm hangs from the shoulder (FK, swung by the body verbs); fk blends it in
+      return { l, bend: spec.bend ?? s.bend ?? 0.10 * sg, elbow: spec.elbow ?? s.elbow ?? [sg * 0.6, -0.2, -0.75], fk: s.rest && stand ? 1 : 0 };
+    }, env, true);
+    const busy = (side, v) => { const r = base['hand' + side]; return stand && !walking ? v.l.map((x, i) => (x - r[i]) * (1 - v.fk)) : [0, 0, 0]; };
+    // hand targets pass a short pure FIR over the last frames: a fast hand move keeps its shape but loses its spike, so a
+    // joint never snaps (one frame of an arm is the weighted mean of where the verbs put the hand over 5 frames)
+    const fir = (side, g) => {
+      let o = null, ws = 0;
+      HAND_FIR.forEach((w, j) => { const x = handAt(side, Math.max(X.F0, g - j)); ws += w;
+        o = o ? mixObj(o, x, w / ws) : x; });
+      return o;
+    };
+    const vs = {};
+    for (const side of ['L', 'R']) { vs[side] = fir(side, f); off[side] = busy(side, vs[side]); late[side] = busy(side, handAt(side, f - LATE)); }
+    const bf = stand && !walking ? bodyFollow(off, late) : { arm: {} }, iw = walking ? 0.2 : 1;
     for (const side of ['L', 'R']) {
-      const sg = side === 'L' ? -1 : 1;
-      const v = chain(a.owners['hand' + side], f, spec => {
-        const s = spec.w || spec.prop || spec.mouth ? env.resolve(spec, f) : spec;
-        let l;
-        if (s.rest) l = base['hand' + side].slice();
-        else if (s.w) l = toLocal(s.w, root); else l = s.l.slice();
-        if (s.dv) l[1] += s.dv;
-        // a standing figure's resting arm hangs from the shoulder (FK, swung by the body verbs); fk blends it in
-        return { l, bend: spec.bend ?? s.bend ?? 0.10 * sg, elbow: spec.elbow ?? s.elbow ?? [sg * 0.6, -0.2, -0.75], fk: s.rest && a.posture !== 'sit' ? 1 : 0 };
-      }, env, true);
-      hands[side] = add3(v.l, id.hand.map(x => x * sg)); bends[side] = v.bend; elbows[side] = v.elbow;
-      const fk = body.arm?.[side] || REST_ARM;
-      fks[side] = { fwd: fk.fwd + 60 * id.hand[2], out: fk.out + 40 * id.hand[0], flex: fk.flex + 40 * id.hand[1], w: v.fk };
+      const sg = side === 'L' ? -1 : 1, v = vs[side];
+      const im = ibA ? ibA[side] : [0, 0, 0];
+      // a busy hand keeps a third of the idle move (a prop in it drifts a little, never slides)
+      hands[side] = add3(v.l, add3(id.hand.map(x => x * sg), [sg * 0.003 * im[1], 0.002 * im[0], 0.002 * im[2]].map(x => x * (1 - v.fk))));
+      bends[side] = v.bend; elbows[side] = v.elbow;
+      const fk = body.arm?.[side] || REST_ARM, ca = bf.arm[side] || { fwd: 0, out: 0, flex: 0 };
+      fks[side] = { fwd: fk.fwd + 60 * id.hand[2] + iw * im[0] + ca.fwd, out: fk.out + 40 * id.hand[0] + iw * im[1] + ca.out,
+        flex: fk.flex + 40 * id.hand[1] + iw * im[2] + ca.flex, w: v.fk };
     }
-    const bob = (body.bob || 0) + id.bob, P = {
-      pos: root.pos, yaw: root.yaw, bob, lean: (body.lean || 0) + (add.lean || 0), pitch: (body.pitch || 0) + (add.pitch || 0),
-      head_tilt: id.head_tilt + (add.head_tilt || 0) + (a.c.head_tilt || 0), head_dv: id.head_dv + (add.head_dv || 0),
-      head_dx: id.head_dx + (add.head_dx || 0), head_pitch: add.head_pitch || 0,
+    const k = n => (ib ? iw * ((n.startsWith('head') ? ibH : ib)[n] || 0) : 0) + (acc[n] || 0) + (bf[n] || 0);
+    const bob = (body.bob || 0) + id.bob + k('bob'), P = {
+      pos: root.pos, yaw: root.yaw, bob, lean: (body.lean || 0) + (add.lean || 0) + k('lean'), pitch: (body.pitch || 0) + (add.pitch || 0) + k('pitch'),
+      head_tilt: id.head_tilt + (add.head_tilt || 0) + (a.c.head_tilt || 0) + k('head_tilt'), head_dv: id.head_dv + (add.head_dv || 0) + k('head_dv'),
+      head_dx: id.head_dx + (add.head_dx || 0) + k('head_dx'), head_pitch: (add.head_pitch || 0) + k('head_pitch'), shrug: k('shrug'),
       footL: body.footL, footR: body.footR, toeL: body.toeL, toeR: body.toeR, toeF: body.toeF,
       handL: hands.L, handR: hands.R, bendL: bends.L, bendR: bends.R, expr: a.lastExpr || a.c.expr,
       elbowL: elbows.L, elbowR: elbows.R, armFKL: fks.L, armFKR: fks.R,
     };
-    for (const k of ['dx', 'footPitchL', 'footPitchR', 'footYawL', 'footYawR', 'kneeDir', 'shTwist', 'hipTwist']) if (body[k] != null) P[k] = body[k];
+    for (const n of ['dx', 'footPitchL', 'footPitchR', 'footYawL', 'footYawR', 'kneeDir', 'shTwist', 'hipTwist']) if (body[n] != null) P[n] = body[n];
+    for (const n of ['dx', 'shTwist', 'hipTwist']) { const x = k(n); if (x) P[n] = (P[n] || 0) + x; }
+    a.idleLook = ibH ? iw * ibH.look : 0;
     a.S.pose(P); F.posed.add(a.name); a.P = P;
   }
 
@@ -245,7 +275,7 @@ async function buildAct(R, X) {
     if (d < 3) g = lerp3(gz(focusAt(a, f - d - 1, a.focusSegs, active)), g, smoother((d + 1) / 4));
     const sc = saccade(a.seed, f);
     const blink = a.blinks.at(f);
-    const P = { expr: e, blink, look: g[0] + sc[0], look_v: g[1] + sc[1] };
+    const P = { expr: e, blink, look: g[0] + sc[0] + (cur.prop ? 0 : a.idleLook || 0), look_v: g[1] + sc[1] };
     a.S.face(P); a.face = P; a.lastExpr = e;
   }
 
@@ -306,12 +336,14 @@ async function buildAct(R, X) {
     for (const a of actors) {
       const c = a.S.parts.head.getWorldPosition(new THREE.Vector3());
       const xs = [-1, 1].map(s => toPx(c.clone().addScaledVector(Rv, 0.5 * W * s))[0]), ys = [1, -1].map(s => toPx(c.clone().addScaledVector(Uv, 0.47 * W * s))[1]);
-      v.copy(c).project(stage.camera);
+      v.copy(c).project(stage.camera); const vz = v.z;
       const feet = {}; for (const s of ['L', 'R']) feet[s] = toB(a.S.parts.ankles[s].getWorldPosition(new THREE.Vector3())).map(x => +x.toFixed(4));
       const box = [xs[0], ys[0], xs[1], ys[1]].map(x => +x.toFixed(1));
+      const sole = Math.max(...['L', 'R'].flatMap(s => [a.S.parts.ankles[s], a.S.parts.toes[s]].map(o => toPx(o.getWorldPosition(new THREE.Vector3()))[1])));
       out.actors[a.name] = { pos: F.bodies[a.name].pos.map(x => +x.toFixed(4)), yaw: +F.bodies[a.name].yaw.toFixed(2), expr: a.face.expr, blink: a.face.blink,
         verb: a.verbs.filter(x => x.start <= f && f < x.end).map(x => x.name), head: box, feet, limbs: a.S.rigWorld(),
-        inFrame: v.z < 1 && box[2] > 0 && box[0] < width && box[3] > 0 && box[1] < height };
+        headW: toB(c).map(x => +x.toFixed(4)), figH: +((sole - ys[0]) / height).toFixed(3),
+        inFrame: a.S.root.visible && vz < 1 && box[2] > 0 && box[0] < width && box[3] > 0 && box[1] < height };
     }
     return out;
   }

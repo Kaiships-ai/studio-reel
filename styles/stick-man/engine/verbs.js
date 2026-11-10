@@ -42,7 +42,7 @@ export const STAND = { footL: [-0.22, 0.022, 0], footR: [0.22, 0.022, 0], handL:
 // support would straighten the rear leg), lift = swing-foot clearance (W), heel / toe = foot pitch at heel strike / toe-off (deg), hoff = how early
 // the heel peels (steps), sway = pelvis shift over the stance foot (W), twist = shoulder counter-rotation (deg).
 export const GAIT = {
-  stroll: { T: 11, L: 0.92, lean: 5, arm: 26, elbow: [20, 22], ds: 0.54, lift: 0.21, heel: 18, toe: 34, hoff: 0.55, sway: 0.05, twist: 7 },
+  stroll: { T: 11, L: 0.92, lean: 5, arm: 40, elbow: [22, 30], ds: 0.54, lift: 0.22, heel: 18, toe: 34, hoff: 0.55, sway: 0.06, twist: 11, out: 10, stanceFlex: [[0, 15], [0.1, 20], [0.45, 5]] },
   walk: { T: 9, L: 0.98, lean: 7, arm: 22, elbow: [26, 26], ds: 0.52, lift: 0.21, heel: 22, toe: 38, hoff: 0.55, sway: 0.045, twist: 8 },
   brisk: { T: 7, L: 1.04, lean: 10, arm: 28, elbow: [34, 26], ds: 0.51, lift: 0.22, heel: 24, toe: 42, hoff: 0.55, sway: 0.04, twist: 10 },
   run: { T: 6, L: 1.45, lean: 17, arm: 40, elbow: [80, 12], ds: 0.38, lift: 0.24, heel: 8, toe: 46, hoff: 0.30, sway: 0.03, twist: 12, run: true },
@@ -106,7 +106,7 @@ export const VERBS = {
   // carry a prop (grab it first if it is not in the hand) over the bag, let go: it falls in, the bag dips and swells
   drop_in(p, st, C) {
     const hand = p.hand || 'R', bag = p.into || 'bag', held = st.hold[hand] === p.prop, th = C.thick(p.prop);
-    const r = held ? 0 : 7, carry = p.carry ?? 13, fall = 5;
+    const r = held ? 0 : 9, carry = p.carry ?? 16, fall = 5;
     const tg = p.at + r, tr = tg + carry, ti = tr + fall;
     const rest = held ? null : C.rest(p.prop);
     const grab = held ? st.handW[hand] : [rest[0], rest[1], rest[2] + th + 0.03];
@@ -278,7 +278,7 @@ export const VERBS = {
       const hs = G.run ? smooth(x) : smoother(x), lift = G.lift * (nx.soft ? 0.75 : 1);
       return { xy: [lerp(A.xy[0], nx.p[0], hs), lerp(A.xy[1], nx.p[1], hs)],
         z: A.z * (1 - x) + lift * Math.pow(Math.sin(Math.PI * Math.pow(x, G.run ? 0.9 : 0.75)), G.run ? 1.5 : 1.2),
-        pitch: lerp(-G.toe, nx.heel, smooth(x)), a: lerp(A.a, nx.a, hs), swing: true };
+        pitch: lerp(-G.toe, nx.heel, smooth(x)), a: lerp(A.a, nx.a, hs), swing: true, x };
     };
     // hip height (walk): from the stance leg, so its knee follows a set flex through the step: near straight at
     // contact, gives at "down", straight through passing and "up", the heel then peels. Keys -> periodic spline.
@@ -321,7 +321,9 @@ export const VERBS = {
         const ft = footAt(side, tau), q = toLocal([ft.xy[0], ft.xy[1], from[2] + ft.z * W], root);
         q[1] += 0.022;
         if (ft.swing) {                                           // a swinging leg reaches forward but never locks straight in the air
-          const hip = [SIDE[side] * 0.14 + o.dx, 1.38 + o.bob, 0], v = q.map((x, i) => x - hip[i]), d = Math.hypot(...v), mx = (G.run ? 0.95 : 0.97) * l2;
+          // (the clamp lets go over the last part of the swing, so the heel reaches the floor without a drop)
+          const hip = [SIDE[side] * 0.14 + o.dx, 1.38 + o.bob, 0], v = q.map((x, i) => x - hip[i]), d = Math.hypot(...v),
+            mx = lerp((G.run ? 0.95 : 0.97) * l2, 1.02 * l2, smooth((ft.x - 0.25) / 0.75));
           if (d > mx) for (let i = 0; i < 3; i++) q[i] = hip[i] + v[i] * mx / d;
         }
         o['foot' + side] = q; o['footPitch' + side] = ft.pitch; o['footYaw' + side] = ft.a;
@@ -334,10 +336,10 @@ export const VERBS = {
         const sg = SIDE[side], amp = G.arm * (p.carry && p.carry !== side ? 1.3 : 1);
         const fr = s => sg * -legFrontR(s);
         const fe2 = Math.max(0, fr(tau - 2.5 / T));                // the forearm folds as the arm comes forward, late
-        o.arm[side] = { fwd: REST_ARM.fwd + amp * fr(tau - 1 / T) * envA + 6 * stop, out: REST_ARM.out + (G.run ? 10 : 6) * envA,   // a little wider while walking: the swing reads outside the torso
+        o.arm[side] = { fwd: REST_ARM.fwd + amp * fr(tau - 1 / T) * envA + 6 * stop, out: REST_ARM.out + (G.out ?? (G.run ? 10 : 6)) * envA,   // a little wider while walking: the swing reads outside the torso
           flex: lerp(REST_ARM.flex, G.elbow[0] + G.elbow[1] * fe2, envA) };
       }
-      o.walking = tau > 0 && tau < n + 1 ? (tau / 2) % 1 : null;
+      o.walking = tau > 0 && tau < n + 1 ? (tau / 2) % 1 : null; o.walkT = T;
       return o;
     };
     const cues = [];
@@ -349,12 +351,14 @@ export const VERBS = {
 
   // swing the held bag up and over the shoulder; it then hangs behind the back
   sling(p, st, C) {
-    const hand = p.hand || 'R', prop = p.prop || st.hold[hand], T = p.dur ?? 12, t0 = p.at, s = SIDE[hand];
+    const hand = p.hand || 'R', prop = p.prop || st.hold[hand], T = p.dur ?? 18, t0 = p.at, s = SIDE[hand];
     const owners = [{ chan: 'hand' + hand, start: t0, fade: T, fn: f => {
-      const u = smoother((f - t0) / T), a = Math.sin(Math.PI * u);   // up and over on an arc, the elbow out and forward
-      return { l: [s * (0.30 + 0.12 * a), 2.06 + 0.45 * a, -0.10 + 0.25 * a], elbow: [s * 0.5, -0.6, 0.6] };
+      // up and over on an arc, then the fist rests above the shoulder on the strap (never folded onto the shoulder: the
+      // elbow would flip), the elbow forward
+      const u = smoother((f - t0) / T), a = Math.sin(Math.PI * u);
+      return { l: [s * (0.34 + 0.30 * a), 2.34 + 0.20 * a, -0.06 + 0.42 * a], elbow: [s * 0.9, -0.3, 0.2] };
     } }];
-    const off = [0.03 * s, -0.03, -0.32];
+    const off = [0.03 * s, -0.20, -0.34];
     const segs = [{ prop, start: t0 + 3, mode: 'hand', actor: st.name, side: hand, off, offFrom: C.lastOff(prop), blend: T - 3, tilt: [0, 0], swing: true }];
     C.setOff(prop, off);
     st.hold[hand] = prop; st.sling = hand;
@@ -374,12 +378,12 @@ function turnBody(f, f0, T, pos, y0, d, posture) {
     return { pos, yaw: yawAt(t), bob: base.bob || 0, pitch: base.pitch || 0, footL: base.footL, footR: base.footR };
   }
   const yaw = t >= T ? y0 + d : yawAt(t), om = yawAt(t - 2) - yawAt(t - 3);   // deg / frame, two frames late
-  const out = { pos, yaw, bob: -0.03 * Math.sin(Math.PI * clamp(t / T, 0, 1)) ** 2, lean: -1.5 * Math.sign(d) * Math.sin(Math.PI * clamp(t / T, 0, 1)), pitch: 0, arm: {} };
+  const out = { pos, yaw, bob: -0.06 * smooth(t / (0.3 * T)) * (1 - smooth((t - 0.72 * T) / (0.28 * T))), lean: -1.5 * Math.sign(d) * Math.sin(Math.PI * clamp(t / T, 0, 1)), pitch: 0, arm: {} };
   const lead = d > 0 ? 'R' : 'L';
   for (const side of ['L', 'R']) {
-    const [a, b] = side === lead ? [0, T * 0.6] : [T * 0.4, T], x = clamp((t - a) / (b - a), 0, 1), yf = y0 + d * smoother(x);
+    const [a, b] = side === lead ? [T * 0.2, T * 0.7] : [T * 0.5, T], x = clamp((t - a) / (b - a), 0, 1), yf = y0 + d * smoother(x);   // the knees give before a foot lifts
     const l = toLocal(toWorld(base['foot' + side], { pos, yaw: yf }), { pos, yaw });
-    l[1] += 0.07 * Math.sin(Math.PI * x) ** 2; out['foot' + side] = l; out['footYaw' + side] = yf - yaw;
+    l[1] += 0.05 * Math.sin(Math.PI * x) ** 2; out['foot' + side] = l; out['footYaw' + side] = yf - yaw;
     out.arm[side] = { fwd: REST_ARM.fwd + 0.9 * SIDE[side] * om, out: REST_ARM.out + 0.6 * Math.abs(om), flex: REST_ARM.flex + 0.8 * Math.abs(om) };
   }
   return out;

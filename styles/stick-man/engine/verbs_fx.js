@@ -4,7 +4,7 @@
 // effect object; MAKE builds the effect objects named in an act's `make` table and maps those values onto them.
 import * as THREE from 'three';
 import { STAND, W, clamp, smooth, smoother, lerp, lerp3, add3, fwdB, rightB, toLocal, toWorld, settle, angDiff } from './verbs.js';
-import { makePowderBurst, makeFlyingBills, makeDyeSpray, makeRadioRings, makeBagGlow, makeArm, makeBill, flashAt } from '../lib/props/fx.js';
+import { makePowderBurst, makeFlyingBills, makeDyeSpray, makeRadioRings, makeBagGlow, makeArm, makeBill, flashAt, makeStarBurst, makeDroplets, makeCountdown } from '../lib/props/fx.js';
 import { makeDyePack, makeThermometer, snoreAt } from '../lib/props/dyepack.js';
 
 const SIDE = { L: -1, R: 1 };
@@ -33,14 +33,14 @@ export const ACT = {
     const feet = { footL: [-0.32, 0.022, 0.04], footR: [0.30, 0.022, -0.06] };
     const owners = [{ chan: 'body', start: t0, fade: 2, fn: f => {
       const t = f - t0, u = smoother(t / 5), pos = lerp3(p0, p1, u);
-      const hop = t < 9 ? 0.16 * Math.sin(Math.PI * clamp(t / 9, 0, 1)) : -0.07 * settle(t - 9);
+      const hop = t < 11 ? 0.09 * Math.sin(Math.PI * clamp(t / 11, 0, 1)) : -0.04 * settle((t - 11) * 0.7);
       const pitch = -11 * smooth(t / 3) * (1 - 0.6 * smooth((t - 10) / 14));
       return stand(pos, yaw, { bob: hop, pitch, lean: 3 * Math.sin(t * 0.9) * Math.exp(-t / 8), ...feet });
     } }];
     for (const s of ['L', 'R']) {
       const sg = SIDE[s], held = st.hold[s];
-      owners.push({ chan: 'hand' + s, start: t0, fade: 2, fn: f => {
-        const t = f - t0, up = held ? [sg * 0.62, 2.45, 0.05] : [sg * 0.86, 2.95, 0.22], half = held ? [sg * 0.55, 2.1, 0.18] : [sg * 0.74, 2.05, 0.42];
+      owners.push({ chan: 'hand' + s, start: t0, fade: 10, fn: f => {
+        const t = f - t0, up = held ? [sg * 0.58, 2.42, 0.08] : [sg * 0.66, 2.60, 0.18], half = held ? [sg * 0.55, 2.1, 0.18] : [sg * 0.74, 2.05, 0.42];
         const u = smoother((t - hold) / 10), j = 0.03 * Math.sin(t * 2.1 + sg) * Math.exp(-t / 10);
         const l = lerp3(up, half, u); l[1] += j; return { l, bend: -0.25 * sg };
       } });
@@ -65,39 +65,40 @@ export const ACT = {
 
   // turn to face `from` and back off two steps, hands up; then hold the guard for `hold` frames
   step_back(p, st, C) {
-    const t0 = p.at, T = p.step ?? 7, D = p.dist ?? 0.45, tgt = C.point(p.from);
+    const t0 = p.at, T = p.step ?? 10, D = p.dist ?? 0.45, tgt = C.point(p.from);
     const y0 = st.yaw, y1 = y0 + angDiff(y0, C.yawTo(st.pos, tgt)), F = fwdB(y1), p0 = st.pos.slice();
     const p1 = [p0[0] - F[0] * D, p0[1] - F[1] * D, p0[2]];
     st.pos = p1; st.yaw = y1;
     const foot = (side, a, t) => {
       const h0 = toWorld(STAND['foot' + side], { pos: p0, yaw: y0 }), h1 = toWorld(STAND['foot' + side], { pos: p1, yaw: y1 });
-      const u = smoother((t - a) / T); const q = lerp3(h0, h1, u); q[2] = p0[2] + 0.09 * Math.sin(Math.PI * clamp((t - a) / T, 0, 1)); return q;
+      const u = smoother((t - a) / T); const q = lerp3(h0, h1, u); q[2] = p0[2] + 0.09 * Math.sin(Math.PI * clamp((t - a) / T, 0, 1)) ** 2; return q;
     };
     const lead = p.lead || 'R', other = lead === 'R' ? 'L' : 'R';
     const owners = [{ chan: 'body', start: t0, fade: 2, fn: f => {
-      const t = f - t0, yaw = y0 + angDiff(y0, y1) * smoother(t / 6), pos = lerp3(p0, p1, smoother(t / (2 * T + 2)));
+      const t = f - t0, yaw = y0 + angDiff(y0, y1) * smoother(t / 6), pos = lerp3(p0, p1, smoother((t - 6) / (2 * T + 3)));
       const root = { pos, yaw }, ft = {};
-      for (const [side, a] of [[lead, 1], [other, T + 1]]) { ft[side] = toLocal(foot(side, a, t), root); ft[side][1] += 0.022; }
-      return { pos, yaw, bob: -0.05 * Math.sin(Math.PI * clamp(t / (2 * T), 0, 1)), lean: 0, pitch: -6 * smooth(t / 4) * (1 - smooth((t - 2 * T - 8) / 10)),
+      for (const [side, a] of [[lead, 7], [other, T + 7]]) { ft[side] = toLocal(foot(side, a, t), root); ft[side][1] += 0.022; }
+      // the knees give first (a straight leg would snap bent as the foot leaves), then the two steps
+      return { pos, yaw, bob: -0.08 * smooth(t / 7) * (1 - smooth((t - 2 * T - 7) / 9)), lean: 0, pitch: -6 * smooth(t / 4) * (1 - smooth((t - 2 * T - 8) / 10)),
         footL: ft.L, footR: ft.R };
     } }];
     const hold = p.hold ?? 26;
     for (const s of ['L', 'R']) if (!st.hold[s]) {
       const sg = SIDE[s];
-      owners.push({ chan: 'hand' + s, start: t0, fade: 4, fn: f => ({ l: [sg * 0.50, 2.18 + 0.03 * Math.sin((f - t0) * 0.7), 0.40], bend: -0.3 * sg }) });
-      owners.push(rest('hand' + s, t0 + hold, 10));
+      owners.push({ chan: 'hand' + s, start: t0, fade: 10, fn: f => ({ l: [sg * 0.50, 2.18 + 0.03 * Math.sin((f - t0) * 0.7), 0.40], bend: -0.3 * sg }) });
+      owners.push(rest('hand' + s, t0 + hold, 15));
     }
-    return { end: t0 + 2 * T + 2, owners, cues: [{ f: t0 + T, name: 'step', strength: 0.3 }, { f: t0 + 2 * T, name: 'step', strength: 0.3 }] };
+    return { end: t0 + 2 * T + 9, owners, cues: [{ f: t0 + T + 7, name: 'step', strength: 0.3 }, { f: t0 + 2 * T + 7, name: 'step', strength: 0.3 }] };
   },
 
   // point at a place with a straight arm, small jabs
   point(p, st, C) {
     const hand = p.hand || 'R', s = SIDE[hand], t0 = p.at, hold = p.hold ?? 40;
     const l = toLocal(C.point(p.to), { pos: st.pos, yaw: st.yaw }), n = Math.hypot(l[0], l[2]) || 1, d = [l[0] / n, l[2] / n];
-    const owners = [{ chan: 'hand' + hand, start: t0, fade: 5, fn: f => {
+    const owners = [{ chan: 'hand' + hand, start: t0, fade: 9, fn: f => {
       const t = f - t0, jab = 0.06 * Math.max(0, Math.sin(2 * Math.PI * t / 9)) * (t < 27 ? 1 : 0);
-      return { l: [s * 0.22 + d[0] * (0.95 + jab), 2.30, d[1] * (0.95 + jab)], bend: -0.05 * s };
-    } }, rest('hand' + hand, t0 + hold, 10)];
+      return { l: [s * 0.22 + d[0] * (0.70 + jab), 2.22, d[1] * (0.70 + jab)], bend: -0.05 * s, elbow: [s * 0.7, -0.7, -0.1] };
+    } }, rest('hand' + hand, t0 + hold, 12)];
     return { end: t0 + hold + 10, owners };
   },
 
@@ -122,13 +123,14 @@ export const ACT = {
 
   // pull a prop out of a bag (or off a place) and raise it to `to` (figure-local hand target)
   pluck(p, st, C) {
-    const hand = p.hand || 'L', s = SIDE[hand], t0 = p.at, r = p.reach ?? 6, tg = t0 + r, up = p.dur ?? 10;
-    const to = p.to || [s * 0.34, 2.42, 0.55];
+    const hand = p.hand || 'L', s = SIDE[hand], t0 = p.at, r = p.reach ?? 8, tg = t0 + r, up = Math.max(12, p.dur ?? 12);
+    const to = p.to || [s * 0.26, 2.12, 0.74];
     st.hold[hand] = p.prop; st.handL_to = to;
-    const grab = p.grab || [0.22, 1.32, 0.22];                     // figure-local: the mouth of a bag hanging from the other hand
+    const grab = p.grab || [0.16, 1.42, 0.44];                     // figure-local: the mouth of a bag hanging from the other hand
+    const elbow = [s * 0.8, -0.6, 0.1];                             // the elbow stays out and down as the hand crosses the body
     const owners = [{ chan: 'hand' + hand, start: t0, fade: r, fn: f => {
-      if (f < tg) return { l: grab, bend: -0.2 * s };
-      const u = smoother((f - tg) / up), l = lerp3(grab, to, u); l[1] += 0.12 * Math.sin(Math.PI * u); return { l, bend: -0.2 * s };
+      if (f < tg) return { l: grab, bend: -0.2 * s, elbow };
+      const u = smoother((f - tg) / up), l = lerp3(grab, to, u); l[2] += 0.10 * Math.sin(Math.PI * u); return { l, bend: -0.2 * s, elbow };
     } }];
     const segs = [{ prop: p.prop, start: -1e8, mode: 'bag', bag: p.from || 'bag' },
       { prop: p.prop, start: tg, mode: 'hand', actor: st.name, side: hand, off: [0, 0.02, 0], tilt: [1.2, 0], yaw: 90 }];
@@ -221,19 +223,41 @@ export function keyTracks(fps) {
 //   v(key, dflt) = keyed value at f; env.at(spec) resolves a place / prop / {prop|head, off} to a Blender point
 const tB = p => new THREE.Vector3(p[0], p[2], -p[1]);
 const tSec = (v, f, fps) => { const t0 = v('t0'); return t0 == null ? -1 : (f - t0) / fps; };
+const toCam = (o, camPos) => tB(camPos).sub(o.position).normalize();
 function faceCam(o, camPos, extra = 0) { const p = o.position; o.rotation.set(0, Math.atan2(camPos[0] - p.x, -camPos[1] - p.z) + extra, 0); }
 export const MAKE = {
   bagGlow: (stage, o, ctx) => { const g = makeBagGlow(stage, ctx.props[o.bag || 'bag']); return { obj: null, apply: v => g.userData.set(v('glow', 0)) }; },
+  // the cloud; clear (m) = puffs on the camera side step aside so it rings the subject and the face stays readable
   burst: (stage, o, ctx) => {
-    const g = makePowderBurst(stage, o); ctx.group.add(g);
-    return { obj: g, apply: (v, f, env) => { g.position.copy(tB(env.at(o.at))); g.userData.set(tSec(v, f, ctx.fps), { up: o.up ?? 0.10 }); } };
+    const g = makePowderBurst(stage, o); ctx.group.add(g); let t = -1;
+    return { obj: g, apply: (v, f, env) => { g.position.copy(tB(env.at(o.at))); t = tSec(v, f, ctx.fps); g.userData.set(t, { up: o.up ?? 0.10 }); },
+      post: cam => { if (o.clear && t >= 0) g.userData.set(t, { up: o.up ?? 0.10, face: toCam(g, cam), clear: o.clear }); } };
   },
+  // push (m/s) > 0: the bills are flung at the lens instead of landing
   bills: (stage, o, ctx) => {
-    const g = makeFlyingBills(stage, o); ctx.group.add(g); const n = g.userData.count;
+    const g = makeFlyingBills(stage, o); ctx.group.add(g); const n = g.userData.count; let a = null;
     return { obj: g, apply: (v, f, env) => {
       const p = env.at(o.at); g.position.copy(tB(p)); const red = v('red', 0);
-      g.userData.set(tSec(v, f, ctx.fps), { ground: -p[2] + 0.003 + (o.ground ?? 0), dyed: i => clamp((red * (n + 3) - i) / 3, 0, 1) });
-    } };
+      a = [tSec(v, f, ctx.fps), { ground: -p[2] + 0.003 + (o.ground ?? 0), dyed: i => clamp((red * (n + 3) - i) / 3, 0, 1) }];
+      g.userData.set(...a);
+    }, post: cam => { if (o.push && a) g.userData.set(a[0], { ...a[1], toward: toCam(g, cam).toArray(), push: o.push }); } };
+  },
+  // the pow star, set back behind the burst (away from the camera) and turned to face it
+  star: (stage, o, ctx) => {
+    const g = makeStarBurst(stage, o); ctx.group.add(g); let t = -1, p0 = null;
+    return { obj: g, apply: (v, f, env) => { p0 = tB(env.at(o.at)); t = tSec(v, f, ctx.fps); g.userData.set(t, { life: (o.frames ?? 8) / ctx.fps }); },
+      post: cam => { if (!p0) return; const d = toCam({ position: p0 }, cam); g.position.copy(p0).addScaledVector(d, -(o.back ?? 0.9)); g.lookAt(tB(cam)); } };
+  },
+  drops: (stage, o, ctx) => {
+    const g = makeDroplets(stage, o); ctx.group.add(g); let t = -1, gr = -1.5;
+    return { obj: g, apply: (v, f, env) => { const p = env.at(o.at); g.position.copy(tB(p)); gr = -p[2] + 0.02; t = tSec(v, f, ctx.fps); g.userData.set(t, { ground: gr }); },
+      post: cam => { if (t >= 0) g.userData.set(t, { ground: gr, toward: toCam(g, cam).toArray() }); } };
+  },
+  // floating countdown clock: keys show, count, tick
+  dial: (stage, o, ctx) => {
+    const g = makeCountdown(stage, o); ctx.group.add(g);
+    return { obj: g, apply: (v, f, env) => { g.position.copy(tB(env.at(o.at))); g.userData.set({ show: v('show', 0), count: v('count', 3), tick: v('tick', 0) }); },
+      post: cam => g.lookAt(tB(cam)) };
   },
   spray: (stage, o, ctx) => {
     const g = makeDyeSpray(stage, o); ctx.group.add(g); const aim = new THREE.Vector3();

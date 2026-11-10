@@ -107,6 +107,12 @@ export function createCamera({ aspect, side = [0, -1], bounds = null, zRange = [
       const yaw = S.opt.heading ?? a.yaw;                            // heading: frame from where he is about to face, not mid-turn
       const dir = rot([Math.sin(yaw * DEG), -Math.cos(yaw * DEG)], (S.opt.angle ?? (S.kind === 'cu' ? -18 : 12)) + drift);
       const key = a.head.slice();
+      // track: { s, delay, ramp } = the camera follows only a share s of the subject's travel since the shot began, rising
+      // to all of it over `ramp` frames after `delay`: he walks across the frame and the floor slides by under him
+      if (S.opt.track && S.a0) {
+        const T = S.opt.track, u = (T.s ?? 0.45) + (1 - (T.s ?? 0.45)) * smoother((t - (T.delay || 0)) / (T.ramp || 40));
+        for (let j = 0; j < 2; j++) key[j] = S.a0[j] + (a.head[j] - S.a0[j]) * u;
+      }
       const metric = S.kind === 'cu' ? () => { const p = proj([a.head[0], a.head[1], a.head[2] + 0.30]), q = proj([a.head[0], a.head[1], a.head[2] - 0.30]); return q[1] - p[1]; } : figFrac(a);
       c = fit({ dir, h: K.h, lens: K.lens, key, kx: S.opt.kx ?? 0.5, ky: K.headY, target: (S.kind === 'cu' ? (S.opt.head ?? K.head) : S.size0) * k,
         keepIn: [a.head], extras, metric, D0: S.kind === 'cu' ? 2 : 3 });
@@ -142,6 +148,7 @@ export function createCamera({ aspect, side = [0, -1], bounds = null, zRange = [
   // shots: [{f, kind, subjects, opt}] sorted. Push rate and glide length are fixed here, once.
   function compile(shots, A, fEnd) {
     shots.forEach((S, i) => {
+      if (S.opt.track) S.a0 = A(S.subjects[0], S.f).head.slice();
       S.i = i; const len = (shots[i + 1]?.f ?? fEnd) - S.f;
       const base = S.kind === 'wide' ? 0.0017 : (S.kind === 'two' || S.kind === 'ms') ? clamp(Math.log(1.13) / Math.max(1, len), 0.0019, 0.0035) : 0.0025;
       S.push = S.opt.push ?? base;

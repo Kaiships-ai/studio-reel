@@ -11,14 +11,19 @@ const street = {
   cast: {
     kai: { spec: 'KAI', at: 'door', yaw: 0, expr: 'smug', focus: 'camera' },
     mabel: { spec: 'MABEL', at: [-3.6, -2.8, 0], yaw: 92, expr: 'happy', focus: 'camera' },
-    otis: { spec: 'OTIS', at: [2.3, -0.95, 0], yaw: -60, expr: 'neutral', focus: 'camera' },
+    otis: { spec: 'OTIS', at: [1.95, -0.35, 0], yaw: -60, expr: 'neutral', focus: 'camera' },
     june: { spec: 'JUNE', at: [-5.6, -1.15, 0], yaw: 90, expr: 'calm', focus: 'camera' },
     officer: { spec: 'OFFICER', at: [0.5, -4.25, -0.16], yaw: 40, expr: 'stern', focus: 'kai', watch: false },
   },
   make: {
     glow: { kind: 'bagGlow', bag: 'bag' },
-    burst: { kind: 'burst', at: [1.02, -1.22, 1.72], size: 0.55, count: 18, life: 1.6 },
-    bills: { kind: 'bills', at: [1.05, -1.3, 1.7], n: 18, scale: 1.4, seed: 5 },
+    // the burst rings Kai and the bag: cloud round the bag, a pow star behind it, big bills and dye drops at the lens
+    burst: { kind: 'burst', at: { prop: 'bag', off: [0, 0, 0.10] }, size: 0.95, count: 24, life: 1.6, clear: 0.55 },
+    star: { kind: 'star', at: { prop: 'bag', off: [0, 0, 0.25] }, r: 1.35, back: 1.0, frames: 8 },
+    bigbills: { kind: 'bills', at: { prop: 'bag', off: [0, 0, 0.1] }, n: 9, scale: 4.2, seed: 21, push: 3.6 },
+    drops: { kind: 'drops', at: { prop: 'bag', off: [0, 0, 0.1] }, n: 16, seed: 13 },
+    dial: { kind: 'dial', at: { prop: 'bag', off: [-0.40, -0.60, 0.35] }, r: 0.20, of: 3 },
+    bills: { kind: 'bills', at: [1.05, -1.3, 1.7], n: 18, scale: 2.0, seed: 5 },
     bills2: { kind: 'bills', at: [1.1, -1.95, 1.7], n: 14, scale: 1.3, seed: 11 },
     puff: { kind: 'burst', at: { head: 'kai', fwd: 0.34, up: -0.14 }, size: 0.13, count: 7, life: 0.45, seed: 8 },
     spray: { kind: 'spray', at: { prop: 'bag', off: [0, 0, -0.05] }, dir: [-0.5, -0.7, 0.5], n: 16, reach: 1.2 },
@@ -29,12 +34,23 @@ const street = {
   beats: [
     // set-up before the dissolve: bag over the shoulder, already walking out of the bank door
     { f: 300, who: 'kai', do: 'sling', prop: 'bag', hand: 'R', dur: 4 },
-    { f: 328, who: 'kai', do: 'walk_to', to: 'burst', stride: 0.6, step: 10, cheat: -25 },
-    { f: 330, who: 'mabel', do: 'walk_to', to: 'crowd_1', stride: 0.6, step: 10 },
+    { f: 328, who: 'kai', do: 'walk_to', to: 'burst', stride: 0.6, step: 10, cheat: -25, gait: { stanceFlex: [[0, 16], [0.1, 20], [0.45, 5]] } },
+    { f: 330, who: 'mabel', do: 'walk_to', to: [-0.35, -2.65, 0], stride: 0.6, step: 10 },
     { f: 335, who: 'june', do: 'walk_to', to: [-2.2, -1.15, 0], stride: 0.6, step: 10 },
     { f: 338, who: 'kai', expr: 'grin', look: 'camera' },
     // l05 About ten seconds later, his bag EXPLODES.
     { ...at('l05', 'about'), who: 'kai', expr: 'smug' },
+    // time passing: the countdown clock floats up by his bag and ticks 3, 2, 1 on "ten", "seconds", "later"
+    { ...at('l05', 'about', -4), who: 'dial', do: 'set', key: 'show', to: 1, dur: 7, from: 0, ease: 'back' },
+    { ...at('l05', 'ten'), who: 'dial', do: 'set', key: 'count', to: 3, dur: 0, from: 3 },
+    { ...at('l05', 'ten'), who: 'dial', do: 'pulse', key: 'tick', amp: 1, dur: 6 },
+    { ...at('l05', 'seconds'), who: 'dial', do: 'set', key: 'count', to: 2, dur: 0 },
+    { ...at('l05', 'seconds'), who: 'dial', do: 'pulse', key: 'tick', amp: 1, dur: 6 },
+    { ...at('l05', 'later'), who: 'dial', do: 'set', key: 'count', to: 1, dur: 0 },
+    { ...at('l05', 'later'), who: 'dial', do: 'pulse', key: 'tick', amp: 1, dur: 6 },
+    { ...at('l05', 'bag'), who: 'dial', do: 'set', key: 'count', to: 0, dur: 0 },
+    { ...at('l05', 'bag'), who: 'dial', do: 'pulse', key: 'tick', amp: 1.3, dur: 8 },
+    { ...at('l05', 'explodes'), who: 'dial', do: 'set', key: 'show', to: 0, dur: 0 },
     { ...at('l05', 'ten'), who: 'glow', do: 'pulse', key: 'glow', amp: 0.8, dur: 9, sound: 'tick', strength: 0.5 },
     { ...at('l05', 'ten', 2), who: 'otis', expr: 'calm', look: 'kai' },
     { ...at('l05', 'seconds'), who: 'glow', do: 'pulse', key: 'glow', amp: 0.9, dur: 9, sound: 'tick', strength: 0.5 },
@@ -49,10 +65,13 @@ const street = {
     { ...at('l05', 'explodes'), who: 'screen', do: 'flash', frames: 3 },
     { ...at('l05', 'explodes'), who: 'burst', do: 'fire', sound: 'poof', strength: 1.0 },
     { ...at('l05', 'explodes'), who: 'bills', do: 'fire', sound: 'hiss', strength: 0.5 },
+    { ...at('l05', 'explodes'), who: 'star', do: 'fire' },
+    { ...at('l05', 'explodes'), who: 'bigbills', do: 'fire' },
+    { ...at('l05', 'explodes', 1), who: 'drops', do: 'fire' },
     { ...at('l05', 'explodes'), who: 'kai', do: 'startle', expr: 'shock', look: 'camera', hold: 20 },
     { ...at('l05', 'explodes'), who: 'kai', do: 'set', key: 'dye', to: 0.3, dur: 4 },
     { ...at('l05', 'explodes', 8), who: 'kai', do: 'set', key: 'dye', to: 0.5, dur: 22 },
-    { ...at('l05', 'explodes', 3), who: 'otis', do: 'turn_to', to: 'burst', expr: 'shock', dur: 8 },
+    { ...at('l05', 'explodes', 3), who: 'otis', do: 'turn_to', to: 'burst', expr: 'shock', dur: 11 },
     { ...at('l05', 'explodes', 5), who: 'mabel', do: 'turn_to', to: 'burst', expr: 'shock', dur: 9 },
     { ...at('l05', 'explodes', 9), who: 'june', do: 'turn_to', to: 'burst', expr: 'shock', dur: 10 },
     { ...at('l05', 'explodes', 14), who: 'kai', expr: 'worried', look: 'bag' },
@@ -120,19 +139,19 @@ const street = {
   ],
   shots: [
     { f: 336, shot: 'wide', of: ['kai'], dir: [0.3, -1], size: 0.30 },
-    { ...at('l05', 'later', -4), shot: 'ms', of: ['kai'], with: ['bag'], angle: 8, size: 0.40 },
+    { ...at('l05', 'later', -4), shot: 'ms', of: ['kai'], with: ['bag', 'dial'], angle: 8, size: 0.40 },
     { ...at('l05', 'explodes'), shot: 'cu', of: ['kai'], angle: -10, head: 0.15, cut: true },   // cut hidden in the white flash
     { ...at('l06', 'wait', -6), shot: 'cu', of: ['kai'], angle: -16, head: 0.26 },
     { f: 626, shot: 'ms', of: ['kai'], angle: -12, size: 0.38 },
     { ...at('l09', 'burning'), shot: 'ms', of: ['kai'], with: ['thermo'], angle: 10, size: 0.40 },
     { ...at('l09', 'four', -1), shot: 'cu', of: ['kai'], with: ['thermo'], angle: 8, head: 0.13 },
-    { ...at('l09', 'spraying', -3), shot: 'ms', of: ['kai'], angle: -10, size: 0.30 },
-    { ...at('l09', 'every', -3), shot: 'wide', of: ['kai', 'otis'], size: 0.27 },
+    { ...at('l09', 'spraying', -3), shot: 'ms', of: ['kai'], angle: -10, size: 0.36 },
+    { ...at('l09', 'every', -3), shot: 'wide', of: ['kai', 'otis'], size: 0.32 },
     { ...at('l09', 'on', -4, 2), shot: 'ms', of: ['kai'], angle: 49, size: 0.42 },
     // l10 is one composition: Kai, the spot where the car pulls up, the officer; it pushes in slowly to the last word
-    { ...at('l10', 'so', -2), shot: 'insert', of: ['kai'], at: [0.10, -0.30, -0.45], from: [1, -0.40], dist: 5.6, z: 1.4, lens: 24, dof: 0, push: 0.0024 },
+    { ...at('l10', 'so', -2), shot: 'insert', of: ['kai'], at: [-0.02, -0.62, -0.45], from: [1, -0.40], dist: 4.2, z: 1.4, lens: 30, dof: 0, push: 0.0024 },
     // on "the only" the camera comes round to face him for the last beat
-    { ...at('l10', 'only', -4), shot: 'insert', of: ['kai'], at: [-0.15, -0.20, -0.40], from: [0.6, -1], dist: 4.8, z: 1.4, lens: 26, dof: 0, push: 0.0028, glide: 36 },
+    { ...at('l10', 'only', -4), shot: 'insert', of: ['kai'], at: [-0.15, -0.20, -0.40], from: [0.6, -1], dist: 4.6, z: 1.4, lens: 27, dof: 0, push: 0.0028, glide: 36 },
   ],
 };
 
@@ -179,8 +198,8 @@ const door = {
   },
   beats: [
     { f: 540, who: 'kai', do: 'sling', prop: 'bag', hand: 'R', dur: 4 },
-    { f: 545, who: 'kai', do: 'walk_to', to: [0.0, -0.95, 0], stride: 0.62, step: 9 },
-    { ...at('l08', 'door', 4), who: 'kai', do: 'walk_to', to: [-2.2, -1.5, 0], stride: 0.62, step: 9, turn: 10 },
+    { f: 545, who: 'kai', do: 'walk_to', to: [0.0, -0.95, 0], stride: 0.62, step: 9, gait: { stanceFlex: [[0, 16], [0.1, 20], [0.45, 5]] } },
+    { ...at('l08', 'door', 4), who: 'kai', do: 'walk_to', to: [-2.2, -1.5, 0], stride: 0.62, step: 9, turn: 12, gait: { stanceFlex: [[0, 16], [0.1, 20], [0.45, 5]] } },
     { f: 0, who: 'pack2', do: 'set', key: 'awake', to: 1, dur: 0 },
     { f: 0, who: 'pack2', do: 'set', key: 'alarm', to: 1, dur: 0 },
     // l08 The door started its timer.
@@ -193,7 +212,7 @@ const door = {
   ],
   shots: [
     { f: 588, shot: 'ms', of: ['kai'], angle: 40, size: 0.40, heading: 0 },
-    { ...at('l08', 'started', -2), shot: 'insert', of: ['pack2'], from: [1, -0.45], dist: 1.3, z: 1.85, at: [0, 0, 0.03], lens: 34 },
+    { ...at('l08', 'started', -2), shot: 'insert', of: ['pack2'], from: [1, -0.45], dist: 1.55, z: 1.85, at: [0, 0, 0.03], lens: 34 },
   ],
 };
 
@@ -203,5 +222,7 @@ export default {
   lines: ['l05', 'l06', 'l07', 'l08', 'l09', 'l10'],
   acts: [street, cutaway, door],
   // first-half framing fix: the plate gets its own insert while it is named
-  amend: [{ act: 'lobby', shots: [{ line: 'l02', on: 'of', offset: -2, shot: 'insert', of: ['plate'], from: [-0.1, -1], dist: 0.9, rise: 0.2, lens: 34, at: [0, 0, 0.02] }] }],
+  // (the plate insert that used to sit on "of twenties" is gone: its push cut her head and the lifted stack at the top
+  // edge; the close-up on "She" already holds her, the plate and the stack)
+  amend: [],
 };

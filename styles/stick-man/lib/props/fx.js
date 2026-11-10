@@ -42,14 +42,22 @@ export function makePowderBurst(stage, { seed = 3, count = 18, size = 0.9, life 
     const h = new THREE.Mesh(hull, hullMat); h.scale.setScalar(1 + 0.05 / Math.max(0.2, r)); m.add(h);
     g.add(m); puffs.push({ m, dir, dist, r, lag: 0.12 * hash(i, 5, seed), spin: hash(i, 6, seed) });
   }
-  const set = (t, { up = 0.10, out = 0.05 } = {}) => {
+  const tmp = new THREE.Vector3();
+  const set = (t, { up = 0.10, out = 0.05, face = null, clear = 0 } = {}) => {
     g.visible = t >= 0;
     if (t < 0) return;
     for (const p of puffs) {
       const tt = t - p.lag, gr = easeOut(tt / 1.2), fade = 1 - ease((t - life) / 2.0);
       p.m.visible = tt > 0 && fade > 0.01;
       const d = p.dist * gr + out * Math.max(0, tt);
-      p.m.position.copy(p.dir).multiplyScalar(d); p.m.position.y += up * Math.max(0, tt) + 0.02 * Math.sin(1.3 * tt + p.spin * 6);
+      p.m.position.copy(p.dir).multiplyScalar(d);
+      if (face && clear > 0) {                                     // face = unit vector to the camera (group-local)
+        const k = p.m.position.dot(face);
+        if (k > 0) { tmp.copy(face).multiplyScalar(k); p.m.position.sub(tmp.multiplyScalar(0.75));
+          tmp.copy(p.m.position).addScaledVector(face, -p.m.position.dot(face)); const l = tmp.length() || 1e-3;
+          p.m.position.addScaledVector(tmp, clear * Math.max(0, 1 - l / clear) / l); }
+      }
+      p.m.position.y += up * Math.max(0, tt) + 0.02 * Math.sin(1.3 * tt + p.spin * 6);
       p.m.scale.setScalar(Math.max(1e-3, p.r * (0.12 + 0.88 * gr) * (1 + 0.04 * Math.max(0, tt)) * fade));
     }
   };
@@ -78,10 +86,17 @@ export function makeFlyingBills(stage, { seed = 5, n = 16, scale = 1 } = {}) {
       w: [6 * (hash(i, 4, seed) - 0.5), 8 * (hash(i, 5, seed) - 0.5), 10 * (hash(i, 6, seed) - 0.5)], ph: 6 * hash(i, 7, seed) });
   }
   const K = 1.4, GR = 4.5;                                       // drag, gravity (paper falls at ~3 m/s at most)
-  const set = (t, { dyed = 0, ground = -1.6 } = {}) => {
+  const set = (t, { dyed = 0, ground = -1.6, toward = null, push = 0 } = {}) => {
     g.visible = t >= 0;
     if (t < 0) return;
     bills.forEach((b, i) => {
+      if (toward && push) {                                        // flung at the lens: no landing, they leave the frame
+        const tt = t, e = (1 - Math.exp(-K * tt)) / K, sp = push * (0.7 + 0.6 * hash(i, 8, seed));
+        // spread wide (they pass the lens to the sides, not over the face), a low arc that sinks as they come
+        b.m.position.set(b.v[0] * 0.9 * e + toward[0] * sp * tt, 0.10 * b.v[1] * e - 0.9 * tt * tt + toward[1] * sp * tt, b.v[2] * 0.9 * e + toward[2] * sp * tt);
+        b.m.rotation.set(b.w[0] * tt * 1.6 + b.ph, b.w[1] * tt, b.w[2] * tt * 1.6);
+        const d = typeof dyed === 'function' ? dyed(i) : dyed; b.mat.color.copy(G).lerp(R, clamp01(d)); return;
+      }
       // time of landing: march (pure, fixed steps) until y < ground
       const y = tt => (b.v[1] + GR / K) * (1 - Math.exp(-K * tt)) / K - GR * tt / K;
       let tl = Infinity;
@@ -216,5 +231,103 @@ export function makeBill(stage, { scale = 1.3 } = {}) {
   const m = new THREE.Mesh(new THREE.BoxGeometry(0.155 * scale, 0.002 * scale, 0.066 * scale), mat); m.castShadow = m.receiveShadow = true;
   const g = new THREE.Group(); g.add(m);
   g.userData.set = ({ red = 0 } = {}) => { mat.color.copy(G).lerp(R, clamp01(red)); };
+  return g;
+}
+
+// ---------------------------------------------------------------- cartoon pow: a spiky star behind the burst
+// set(t, { life }): t in s. Pops to full in 2 frames, holds, shrinks away by `life` s (8 frames at 30 fps). Flat,
+// unlit, three layers (ink rim, yellow, white core) on the group's XY plane: the caller turns the group to the camera.
+export function makeStarBurst(stage, { spikes = 12, r = 1.0, seed = 4 } = {}) {
+  const g = new THREE.Group();
+  const star = (ro, ri) => {
+    const s = new THREE.Shape(), n = spikes * 2;
+    for (let i = 0; i <= n; i++) {
+      const a = Math.PI * 2 * i / n + 0.1, k = i % 2 ? ri : ro * (0.82 + 0.36 * hash(i >> 1, 1, seed));
+      const p = [Math.cos(a) * k, Math.sin(a) * k]; i ? s.lineTo(...p) : s.moveTo(...p);
+    }
+    return new THREE.ShapeGeometry(s);
+  };
+  const layer = (geo, rgb, z, glowK = 0) => {
+    const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: lin(...rgb), depthWrite: false, transparent: true, side: THREE.DoubleSide }));
+    m.position.z = z; m.castShadow = false; m.userData.noPrepass = true; m.renderOrder = 1; g.add(m);
+    if (glowK) stage.glow(m, glowK);
+    return m;
+  };
+  const ink = layer(star(r * 1.07, r * 0.50), INK_RGB, 0), yel = layer(star(r, r * 0.44), [1.0, 0.80, 0.12], 0.004, 0.25),
+    core = layer(star(r * 0.55, r * 0.26), [1.0, 0.98, 0.86], 0.008, 0.4);
+  const mats = [ink, yel, core].map(m => m.material);
+  const set = (t, { life = 8 / 30 } = {}) => {
+    g.visible = t >= 0 && t < life;
+    if (!g.visible) return;
+    const f = t * 30, pop = f < 2 ? 0.55 + 0.45 * f / 2 : 1 + 0.08 * Math.sin(f * 1.7), out = 1 - ease((t - life * 0.6) / (life * 0.4));
+    g.scale.setScalar(Math.max(1e-3, pop * (0.7 + 0.3 * out)));
+    g.rotation.z = 0.05 * f;
+    for (const m of mats) m.opacity = out;
+  };
+  set(-1); g.userData.set = set;
+  return g;
+}
+
+// ---------------------------------------------------------------- dye droplets: outlined red drops thrown out
+// set(t, { toward, ground }): ballistic, a bias `toward` (unit vector, group-local) for the drops that fly at the lens.
+export function makeDroplets(stage, { seed = 13, n = 14, speed = 3.2 } = {}) {
+  const g = new THREE.Group(), drops = [];
+  const mat = toon(DYE_RGB, { shade: [0.75, 0.48, 0.58], sheen: 0.5, rim: 0.2 }), geo = new THREE.SphereGeometry(1, 20, 14), hull = new THREE.SphereGeometry(1, 20, 14);
+  for (let i = 0; i < n; i++) {
+    const m = new THREE.Mesh(geo, mat); m.castShadow = true; g.add(m);
+    const h = new THREE.Mesh(hull, hullMat); h.scale.setScalar(1.16); m.add(h);
+    const az = 2 * Math.PI * hash(i, 1, seed), el = 0.25 + 0.9 * hash(i, 2, seed), sp = speed * (0.6 + 0.6 * hash(i, 3, seed));
+    drops.push({ m, v: [Math.cos(el) * Math.cos(az) * sp, Math.sin(el) * sp, Math.cos(el) * Math.sin(az) * sp], r: 0.035 + 0.03 * hash(i, 4, seed),
+      lens: hash(i, 5, seed) < 0.45, lag: 0.04 * hash(i, 6, seed) });
+  }
+  const set = (t, { toward = [0, 0, 1], ground = -1.5 } = {}) => {
+    g.visible = t >= 0; if (t < 0) return;
+    for (const d of drops) {
+      const tt = Math.max(0, t - d.lag), v = d.lens ? d.v.map((x, k) => 0.4 * x + toward[k] * speed * 1.2) : d.v;
+      const y = v[1] * tt - 4.9 * tt * tt;
+      d.m.visible = t > d.lag && y > ground;
+      d.m.position.set(v[0] * tt, y, v[2] * tt);
+      const sq = 1 + 0.35 * Math.min(1, Math.hypot(v[0], v[1] - 9.8 * tt, v[2]) / 4);   // stretched along the flight a little
+      d.m.scale.set(d.r, d.r * sq, d.r);
+    }
+  };
+  set(-1); g.userData.set = set;
+  return g;
+}
+
+// ---------------------------------------------------------------- floating countdown dial (time passing)
+// set({ show 0..1, count, tick 0..1 }): an outlined clock disk that pops in, shows `count` (the red arc = count / of),
+// jumps a little on each tick. Faces +z: the caller turns it to the camera.
+export function makeCountdown(stage, { r = 0.15, of = 3 } = {}) {
+  const g = new THREE.Group(), body = new THREE.Group(); g.add(body);
+  const cv = document.createElement('canvas'); cv.width = cv.height = 256;
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+  const draw = n => {
+    const c = cv.getContext('2d'), W = 256;
+    c.clearRect(0, 0, W, W);
+    c.fillStyle = 'rgb(252,250,242)'; c.beginPath(); c.arc(W / 2, W / 2, 124, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = 'rgb(222,40,36)'; c.lineWidth = 26; c.lineCap = 'round';
+    if (n > 0) { c.beginPath(); c.arc(W / 2, W / 2, 98, -Math.PI / 2, -Math.PI / 2 + 2 * Math.PI * n / of); c.stroke(); }
+    c.fillStyle = 'rgb(20,20,24)'; c.font = '900 150px InterReel, Arial, Helvetica, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText(String(n), W / 2, W / 2 + 8);
+    tex.needsUpdate = true;
+  };
+  const rim = new THREE.Mesh(new THREE.CylinderGeometry(r * 1.10, r * 1.10, r * 0.16, 48), new THREE.MeshBasicMaterial({ color: lin(...INK_RGB) }));
+  rim.rotation.x = Math.PI / 2; rim.userData.noPrepass = true; body.add(rim);
+  const face = new THREE.Mesh(new THREE.CircleGeometry(r, 48), new THREE.MeshBasicMaterial({ map: tex, transparent: true }));
+  face.position.z = r * 0.085; face.userData.noPrepass = true; body.add(face);
+  for (const s of [-1, 1]) {                                     // two little bells on top: it reads as a clock
+    const b = new THREE.Mesh(new THREE.SphereGeometry(r * 0.24, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2), toon([0.85, 0.12, 0.10], { sheen: 0.4 }));
+    b.position.set(s * r * 0.62, r * 0.86, 0); b.rotation.z = -s * 0.55; b.castShadow = false; body.add(b);
+    const h = new THREE.Mesh(b.geometry, hullMat); h.scale.setScalar(1.14); b.add(h);
+  }
+  let last = null;
+  const set = ({ show = 0, count = 3, tick = 0 } = {}) => {
+    g.visible = show > 0.01; if (!g.visible) return;
+    const n = Math.max(0, Math.round(count)); if (n !== last) { draw(n); last = n; }
+    body.scale.setScalar(Math.max(1e-3, show * (1 + 0.18 * tick)));
+    body.rotation.z = 0.20 * tick * Math.sin(tick * 9);
+  };
+  set({}); g.userData.set = set;
   return g;
 }

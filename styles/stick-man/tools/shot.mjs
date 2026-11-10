@@ -59,6 +59,36 @@ const compress = list => {
   return o.join(', ');
 };
 
+// Acting numbers for one actor from __dbg rows (frames where it is in frame, cut frames left out):
+// frozen = longest run of frames with every joint within 2 mm and every angle within 0.5 deg of the frame before;
+// ratio = (shoulder-elbow + elbow-hand) / rest arm length; jump = largest one-frame change of a flex, a foot pitch,
+// the torso lean or roll, or a limb segment's direction (deg).
+const JOINTS = ['hip', 'knee', 'ankle', 'toe', 'shoulder', 'elbow', 'hand'], ANG = ['kneeFlex', 'elbowFlex', 'footPitch'];
+const SEGS = [['shoulder', 'elbow'], ['elbow', 'hand'], ['hip', 'knee'], ['knee', 'ankle']], ARM = 2 * 0.41 * 0.60;
+const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+const dirAng = (a0, b0, a1, b1) => { const u = b0.map((x, i) => x - a0[i]), v = b1.map((x, i) => x - a1[i]), lu = Math.hypot(...u), lv = Math.hypot(...v);
+  return lu < 1e-6 || lv < 1e-6 ? 0 : Math.acos(Math.max(-1, Math.min(1, u.reduce((s, x, i) => s + x * v[i], 0) / (lu * lv)))) * 180 / Math.PI; };
+function acting(rows, n) {
+  let run = 1, frozen = 0, frozenAt = null, ratio = 0, ratioAt = null, jump = 0, jumpAt = null;
+  for (let i = 0; i < rows.length; i++) {
+    const a = rows[i].actors[n], l = a.limbs; if (!a.inFrame || !l) { run = 1; continue; }
+    for (const s of ['L', 'R']) { const q = (dist(l[s].shoulder, l[s].elbow) + dist(l[s].elbow, l[s].hand)) / ARM; if (q > ratio) { ratio = q; ratioAt = rows[i].f; } }
+    const p = rows[i - 1]?.actors[n];
+    if (!p || !p.inFrame || !p.limbs || rows[i].motion.cut || rows[i].act !== rows[i - 1].act) { run = 1; continue; }
+    const m = p.limbs; let moved = dist(a.headW, p.headW) > 0.002 || Math.abs(l.torsoLean - m.torsoLean) > 0.5 || Math.abs(l.torsoRoll - m.torsoRoll) > 0.5;
+    const chg = [['torsoLean', Math.abs(l.torsoLean - m.torsoLean)], ['torsoRoll', Math.abs(l.torsoRoll - m.torsoRoll)]];
+    for (const s of ['L', 'R']) {
+      for (const j of JOINTS) if (dist(l[s][j], m[s][j]) > 0.002) moved = true;
+      for (const k of ANG) { const d = Math.abs(l[s][k] - m[s][k]); if (d > 0.5) moved = true; chg.push([k + s, d]); }
+      for (const [x, y] of SEGS) chg.push([x + '-' + y + s, dirAng(m[s][x], m[s][y], l[s][x], l[s][y])]);
+    }
+    for (const [k, d] of chg) if (d > jump) { jump = d; jumpAt = `frame ${rows[i].f}, ${k}`; }
+    run = moved ? 1 : run + 1;
+    if (run > frozen) { frozen = run; frozenAt = rows[i].f; }
+  }
+  return { frozen: frozen > 1 ? frozen : 0, frozenAt, ratio, ratioAt, jump, jumpAt };
+}
+
 if (A.speed && !REEL) {
   const n = Number(A.speed), r = await speed(Array.from({ length: n }, (_, i) => i));
   const txt = `view ${A.view || 'a'}, ${W}x${H}, ${n} frames, 1 worker: page-side render ${r.page.toFixed(1)} ms/frame (mean), render + JPEG q92 capture ${r.jpeg.toFixed(1)} ms/frame\n`;
@@ -96,7 +126,8 @@ if (A.speed && !REEL) {
   console.log(`${A.mp4}  ${n} frames ${W}x${H}  page ${(ms / n).toFixed(1)} ms/frame, with JPEG ${((Date.now() - t0) / n).toFixed(1)} ms/frame`);
 } else if (A.report) {
   const L = [], pct = (a, b) => (100 * a / b).toFixed(1) + ' %';
-  // (a) clear / small / still frames, measured on the mp4 exactly as specified
+  // (a) clear / small / still frames, measured on the mp4 exactly as specified (skipped without --in)
+  if (A.in) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'stick-diff-')), dtxt = path.join(tmp, 'd.txt');
   run('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-i', path.resolve(A.in), '-vf',
     `crop=iw:ih*0.6:0:0,scale=270:288,tblend=all_mode=difference,signalstats,metadata=print:file=${dtxt.replace(/\\/g, '/').replace(/:/g, '\\:')}`, '-f', 'null', '-']);
@@ -108,6 +139,7 @@ if (A.speed && !REEL) {
     `    YAVG median ${[...yavg].sort((a, b) => a - b)[yavg.length >> 1].toFixed(2)}, min ${Math.min(...yavg).toFixed(2)}`);
   const weak = yavg.map((y, i) => [i + 1 + frames[0], y]).filter(([, y]) => y < 1.0).map(([f]) => f);
   L.push(`    frames not clear: ${compress(weak) || 'none'}`);
+  }
   // (b) from __dbg
   const rows = await dbgAll();
   let run0 = 0, best = 0, bestAt = 0; const camPx = rows.map(r => r.motion.cut ? NaN : r.motion.cam);
@@ -127,7 +159,20 @@ if (A.speed && !REEL) {
     L.push(`    ${n}: blinks ${starts.length}, gaps ${gaps.length ? Math.min(...gaps) + '-' + Math.max(...gaps) : '-'} frames (${gaps.join(' ')}); in frame ${rows.filter(r => r.actors[n].inFrame).length}/${rows.length}`,
       `      largest stance-foot slide ${slide.toFixed(2)} px/frame at 720p${slideAt != null ? ' (frame ' + slideAt + ')' : ''}`,
       `      head box in caption band 66-78 %: ${compress(band) || 'never'}; head box outside x 8-92 %: ${compress(out) || 'never'}`);
+    const ac = acting(rows, n);
+    L.push(`      acting: longest frozen run ${ac.frozen} frames${ac.frozen ? ' (ends ' + ac.frozenAt + ')' : ''}; largest arm length ratio ${ac.ratio.toFixed(3)}${ac.ratioAt != null ? ' (frame ' + ac.ratioAt + ')' : ''}; largest one-frame joint change ${ac.jump.toFixed(1)} deg${ac.jumpAt ? ' (' + ac.jumpAt + ')' : ''}`,
+      `      head cut by the top edge: ${compress(rows.filter(r => { const a = r.actors[n]; return a.inFrame && a.head[1] < 0; }).map(r => r.f)) || 'never'}`);
   }
+  // the largest figure in frame under 30 % of the frame height (sole to head top), longest run over --small (default all)
+  const [s0, s1] = (A.small || `${frames[0]}-${frames[frames.length - 1]}`).split('-').map(Number);
+  let sr = 0, sBest = 0, sAt = null; const smallF = [];
+  for (const r of rows) {
+    if (r.f < s0 || r.f > s1) continue;
+    const big = Math.max(0, ...Object.values(r.actors).filter(a => a.inFrame && a.figH != null).map(a => a.figH));
+    if (big < 0.30) { sr++; smallF.push(r.f); if (sr > sBest) { sBest = sr; sAt = r.f; } } else sr = 0;
+  }
+  L.push(`    largest figure under 30 % of frame height in ${s0}-${s1}: longest run ${sBest} frames${sAt != null ? ' (ends ' + sAt + ')' : ''}; frames: ${compress(smallF) || 'none'}`);
+  if (A.fast) { fs.mkdirSync(path.dirname(A.report), { recursive: true }); fs.writeFileSync(A.report, L.join('\n') + '\n'); console.log(L.join('\n')); await browser.close(); server.close(); process.exit(0); }
   // (c) speed
   const sp = await speed(frames.filter((_, i) => i % Math.max(1, Math.floor(frames.length / 60)) === 0).slice(0, 60));
   L.push(`(c) speed, ${W}x${H}, 1 worker: page-side render ${sp.page.toFixed(1)} ms/frame, render + JPEG q92 capture ${sp.jpeg.toFixed(1)} ms/frame`);
