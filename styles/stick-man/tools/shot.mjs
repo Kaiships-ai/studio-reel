@@ -10,6 +10,7 @@
 //   --film ... --serve 1                                               keep a server up and print the URL
 //   --film ... --cues audio/cues.json                                  sound cues from the picture: [{t, name, strength}]
 //   --mp4 ... --audio films/x/audio/mix.wav                           mux this track instead of vo/vo.wav
+//   --fast 1 (report without the frame-difference pass), --w/--h (default 1080x1920), --query k=v (page flags); --help
 import { chromium } from 'playwright-core';
 import http from 'node:http'; import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -17,7 +18,17 @@ import { start, run } from '../../../kit/env.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '../../..');                     // repo root: serves the page and node_modules/three
+if (process.argv.length < 3 || process.argv.includes('--help')) {
+  console.log(fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').filter(l => l.startsWith('//')).map(l => l.slice(3)).join('\n'));
+  process.exit(process.argv.includes('--help') ? 0 : 2);
+}
 const A = {}; for (let i = 2; i < process.argv.length; i += 2) A[process.argv[i].replace(/^--/, '')] = process.argv[i + 1];
+// a syntax error in the reel data shows in the page only as "pageerror" with no line: check the files first
+if (A.film) for (const f of ['reel.js', 'reel2.js']) {
+  const fp = path.join(ROOT, A.film, f); if (!fs.existsSync(fp)) continue;
+  const c = run('node', ['--check', fp], { capture: true });
+  if (c.status) { console.error(`${A.film}/${f} does not parse:\n${(c.stderr || '').trim()}`); process.exit(1); }
+}
 const W = Number(A.w || 1080), H = Number(A.h || 1920);
 const REEL = !!A.film, page = A.page || (REEL ? 'styles/stick-man/reel.html' : 'styles/stick-man/p0.html');
 const frames = (A.frames || '0').split(',').flatMap(s => { const [a, b] = s.split('-').map(Number); return b == null ? [a] : Array.from({ length: b - a + 1 }, (_, i) => a + i); });
@@ -36,7 +47,7 @@ const url = REEL ? `${base}?film=${A.film}&capture=1${A.query ? '&' + A.query : 
 const browser = await chromium.launch({ args: ['--use-angle=metal', '--ignore-gpu-blocklist', '--enable-gpu-rasterization'] });
 const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
 const p = await ctx.newPage();
-p.on('pageerror', e => { console.error('pageerror', e.stack); process.exit(1); });
+p.on('pageerror', e => { console.error('pageerror:', e.message, '\n', e.stack || ''); process.exit(1); });
 p.on('console', m => { if (m.type() === 'error') console.error('console', m.text()); });
 await p.goto(url); await p.waitForFunction(() => window.__ready === true, null, { timeout: 180000 });
 const shot = file => p.screenshot(/\.png$/i.test(file) ? { path: file } : { path: file, type: 'jpeg', quality: 92 });

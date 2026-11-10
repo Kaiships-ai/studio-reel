@@ -17,7 +17,8 @@ import * as EXTRAS from '../lib/cast/extras.js';
 const dye = EXTRAS.dye;
 const SPECS = { KAI, TELLER, GUARD, ...Object.fromEntries(Object.entries(EXTRAS).filter(([, v]) => v && typeof v === 'object' && !Array.isArray(v) && v.name && v.shirt)) };
 const SETS = { 'bank-lobby': () => import('../lib/sets/bank-lobby.js'), street: () => import('../lib/sets/street.js'),
-  cutaway: () => import('../lib/sets/cutaway.js'), park: () => import('../lib/sets/park.js'), lab: () => import('../lib/sets/lab.js') };
+  cutaway: () => import('../lib/sets/cutaway.js'), park: () => import('../lib/sets/park.js'), lab: () => import('../lib/sets/lab.js'),
+  'halden-street': () => import('../lib/sets/halden-street.js'), 'halden-plaza': () => import('../lib/sets/halden-plaza.js') };
 const KEYV = new Set(['set', 'pulse', 'shake', 'fire', 'flash', 'sound']);
 const HAND_R = 0.040 * W;                                        // the hand dot's radius (cast.js)
 const THICK = { b1: 0.045, b2: 0.045, stack: 0.07, note: 0.003 };
@@ -88,7 +89,13 @@ async function buildAct(R, X) {
   const point = s => Array.isArray(s) ? s : SET.PLACES[s] || SET.MARKS[s] || (props[s] && props[s].userData.rest.pos) ||
     (() => { throw new Error(`unknown place ${s}`); })();
   const KT = keyTracks(fps), fxo = {};                              // keyed values and the act's effect objects
-  for (const [name, o] of Object.entries(R.make || {})) fxo[name] = MAKE[o.kind](stage, { ...o, name }, { props, group, fps, point });
+  // a flow / rays anchored on the body (head anchor 0.3 m or more below the head) with no `fwd` gets fwd 0.2: at fwd 0 it
+  // sits inside the torso and the body hides it (stick03 gap 6)
+  const onBody = a => a && a.head && a.fwd == null && (a.up ?? 0) <= -0.3 ? { ...a, fwd: 0.2 } : a;
+  for (const [name, o0] of Object.entries(R.make || {})) {
+    const o = ['flow', 'rays'].includes(o0.kind) ? { ...o0, at: onBody(o0.at), hit: onBody(o0.hit) } : o0;
+    fxo[name] = MAKE[o.kind](stage, { ...o, name }, { props, group, fps, point });
+  }
   const rest = {}, offs = {}, impacts = {};
   for (const [n, o] of Object.entries(props)) if (o.userData?.rest) rest[n] = { ...o.userData.rest };
   const C = {
@@ -96,7 +103,8 @@ async function buildAct(R, X) {
     point,
     target: (s, st) => s == null ? { rest: true } : typeof s === 'string' && props[s] ? { prop: s } : typeof s === 'string' ? { w: point(s) }
       : Array.isArray(s) ? { w: s } : s,
-    rest: n => rest[n].pos, restRot: n => rest[n].rot, setRest: (n, p, r) => { rest[n] = { pos: p, rot: r }; },
+    rest: n => { if (!rest[n]) throw new Error(`prop "${n}" has no rest pose (a child of another prop, e.g. cutaway pack inside stack): move its parent, or key its parts with a \`prop\` effect`); return rest[n].pos; },
+    restRot: n => rest[n]?.rot ?? 0, setRest: (n, p, r) => { rest[n] = { pos: p, rot: r }; },
     thick: n => THICK[n] ?? 0.04,
     lastOff: n => offs[n], setOff: (n, o) => { offs[n] = o; },
     impact: (bag, f, s) => (impacts[bag] ||= []).push({ f, amp: s }),
@@ -300,7 +308,7 @@ async function buildAct(R, X) {
     if (Array.isArray(spec)) return spec;
     if (typeof spec === 'string') return livePos(spec);
     if (spec.head) { const a = byName[spec.head], h = toB(a.S.parts.head.getWorldPosition(hv)), y = F.bodies[spec.head].yaw * Math.PI / 180;
-      const fw = spec.fwd || 0, sd = spec.side || 0;                // fwd: where he faces, side: toward his right
+      const fw = spec.fwd || 0, sd = spec.side || 0;                // fwd: where he faces; side: toward his LEFT (screen right when he faces the camera)
       return [h[0] + Math.sin(y) * fw + Math.cos(y) * sd, h[1] - Math.cos(y) * fw + Math.sin(y) * sd, h[2] + (spec.up || 0)]; }
     return add3(livePos(spec.prop), spec.off || [0, 0, 0]);
   } };

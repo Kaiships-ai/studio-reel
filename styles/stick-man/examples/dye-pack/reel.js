@@ -10,6 +10,9 @@ export default {
     teller: { spec: 'TELLER', at: 'teller', yaw: -35, expr: 'calm', focus: 'kai' },
     guard: { spec: 'GUARD', at: 'bench', yaw: -100, posture: 'sit', expr: 'sleep', watch: false, focus: 'camera', head_tilt: 14 },
   },
+  make: {
+    bye: { kind: 'stamp', at: [1.86, 0.84, 2.12], text: 'LOVELY DAY!', h: 0.24, color: [0.93, 0.30, 0.55], tilt: 0, tail: 'right', life: 1.3 },
+  },
   beats: [
     // frame 0 is already mid-action: bag held open on the counter, left hand pinning the note
     { f: 0, who: 'kai', do: 'hold', prop: 'bag', hand: 'R', to: 'bag_grip', offW: [0.10, -0.03, -0.01], fade: 0 },
@@ -38,6 +41,8 @@ export default {
     { line: 'l03', on: 'have', offset: -6, who: 'teller', do: 'turn_to', yaw: -80 },
     { line: 'l03', on: 'lovely', who: 'teller', do: 'gesture', kind: 'finger_wave', hand: 'R' },
     { line: 'l03', on: 'day', who: 'teller', expr: 'closed' },
+    // her goodbye, drawn: a pink LOVELY DAY! speech bubble pops by her head for the line (board: l03 was "teller smiling, no goodbye")
+    { line: 'l03', on: 'have', who: 'bye', do: 'fire' },
     // he lifts the bag clear of the counter top by its rim, then lets it hang at his side once he has turned away
     { line: 'l03', on: 'day', who: 'kai', do: 'hold', prop: 'bag', hand: 'R', to: { l: [0.40, 1.45, 0.06] }, fade: 12 },
     // l04 Easiest money he's ever made. He strolls out the door.
@@ -54,7 +59,7 @@ export default {
     { f: 0, shot: 'two', of: ['kai', 'teller'], angle: -26 },
     { line: 'l02', on: 'she', shot: 'cu', of: ['teller'], angle: 8, head: 0.27, push: 0.0010, live: 0.35, kx: 0.52 },
     { line: 'l02', on: 'drops', offset: -6, shot: 'two', of: ['kai', 'teller'], angle: -14 },
-    { line: 'l03', on: 'have', offset: -4, shot: 'cu', of: ['teller'], angle: 50, head: 0.20, lens: 40, cut: true, live: 0.35 },
+    { line: 'l03', on: 'have', offset: -4, shot: 'cu', of: ['teller'], angle: 50, head: 0.20, lens: 40, cut: true, live: 0.35, dof: 0 },
     // the walk out: the camera keeps only part of his travel at first, so he crosses the frame and the floor slides by
     { line: 'l03', on: 'lovely', shot: 'ms', of: ['kai'], angle: 84, heading: -90, glide: 40, size: 0.42, push: 0.0012, kx: 0.62, track: { s: 0.40, delay: 44, ramp: 50 } },
   ],
