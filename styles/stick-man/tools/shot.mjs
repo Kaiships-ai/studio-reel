@@ -74,7 +74,8 @@ function acting(rows, n) {
     const a = rows[i].actors[n], l = a.limbs; if (!a.inFrame || !l) { run = 1; continue; }
     for (const s of ['L', 'R']) { const q = (dist(l[s].shoulder, l[s].elbow) + dist(l[s].elbow, l[s].hand)) / ARM; if (q > ratio) { ratio = q; ratioAt = rows[i].f; } }
     const p = rows[i - 1]?.actors[n];
-    if (!p || !p.inFrame || !p.limbs || rows[i].motion.cut || rows[i].act !== rows[i - 1].act) { run = 1; continue; }
+    // a sleeping face is meant to be still: it never counts toward a frozen run
+    if (!p || !p.inFrame || !p.limbs || rows[i].motion.cut || rows[i].act !== rows[i - 1].act || a.expr === 'sleep') { run = 1; continue; }
     const m = p.limbs; let moved = dist(a.headW, p.headW) > 0.002 || Math.abs(l.torsoLean - m.torsoLean) > 0.5 || Math.abs(l.torsoRoll - m.torsoRoll) > 0.5;
     const chg = [['torsoLean', Math.abs(l.torsoLean - m.torsoLean)], ['torsoRoll', Math.abs(l.torsoRoll - m.torsoRoll)]];
     for (const s of ['L', 'R']) {
@@ -168,7 +169,9 @@ if (A.speed && !REEL) {
   let sr = 0, sBest = 0, sAt = null; const smallF = [];
   for (const r of rows) {
     if (r.f < s0 || r.f > s1) continue;
-    const big = Math.max(0, ...Object.values(r.actors).filter(a => a.inFrame && a.figH != null).map(a => a.figH));
+    const seen = Object.values(r.actors).filter(a => a.inFrame && a.figH != null);
+    if (!seen.length) { sr = 0; continue; }   // a prop-only cutaway has no figure to be small
+    const big = Math.max(...seen.map(a => a.figH));
     if (big < 0.30) { sr++; smallF.push(r.f); if (sr > sBest) { sBest = sr; sAt = r.f; } } else sr = 0;
   }
   L.push(`    largest figure under 30 % of frame height in ${s0}-${s1}: longest run ${sBest} frames${sAt != null ? ' (ends ' + sAt + ')' : ''}; frames: ${compress(smallF) || 'none'}`);

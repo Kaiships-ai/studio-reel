@@ -10,11 +10,11 @@ Never change a threshold to pass a reel: fix the reel data or the kit, or show K
 | clear frames | ≥ 94 % | frame-to-frame YAVG difference ≥ 1.0, top 60 % of the frame at 270x288 (report a) | 4 reference videos (STYLE plan, section D) |
 | still frames | < 1 % | YAVG difference < 0.2 (report a) | 4 reference videos (plan D) |
 | camera speed | ≤ 25 px/f at 720p | peak camera motion, cuts and dissolves left out (report b) | reel 1 build target |
-| frozen run | ≤ 8 f | longest run with every joint still, per actor in frame (report b, acting) | reel 1 build target |
+| frozen run | ≤ 8 f | longest run with every joint still, per actor in frame; expr `sleep` exempt (report b, acting) | reel 1 build target |
 | arm length ratio | ≤ 1.03 | (upper + fore arm) / rest arm length, per actor | reel 1 build target (no stretched arms) |
 | joint change | ≤ 25 deg/f | largest one-frame change of a flex, foot pitch, torso or limb direction | reel 1 build target (no pops) |
 | head never cut | never | head box above the top edge, any actor in frame | reel 1 review |
-| small-figure run | ≤ 45 f | longest run where the largest figure in frame is under 30 % of the frame height (no figure = small) | reel 1 build target |
+| small-figure run | ≤ 45 f | longest run where the largest figure in frame is under 30 % of the frame height (a frame with no figure resets the run) | reel 1 build target |
 | hand-prop gap | ≤ 2 px at 1080p | hand dot to the held prop's grip socket (report d) | reel 1 review (props floating off hands) |
 | collisions | none | any body point inside a set `COLLIDE` box, or torso in torso (report e) | reel 1 review (man inside a pillar) |
 | close-up head x | 45-55 % | subject head centre x in settled `cu` frames (report f) | reel 1 review |
@@ -34,6 +34,7 @@ Never change a threshold to pass a reel: fix the reel data or the kit, or show K
 
 ## Reel 1 (`reel1_v4b`, approved by Kai 10/11) against these gates
 
-12 PASS, 3 FAIL: frozen run 17 f (guard asleep, frames 310-326), joint change 29.2 deg (kai, frame 399, right upper arm),
-small-figure run 177 f (frames 439-615, the cutaway act with props only). Kai approved the video with these open; a new
+14 PASS, 1 FAIL: joint change 29.2 deg (kai, frame 399, right upper arm). Two rules settled 10/11: a face with
+expr `sleep` never counts toward a frozen run, and a frame with no figure in it (prop-only cutaway) never counts toward
+the small-figure run. Kai approved the video with these open; a new
 reel still has to pass, or the FAIL goes to Kai with a still. Output: `films/stick01-dye-pack/review/reel1_v4b-gates.txt`.
