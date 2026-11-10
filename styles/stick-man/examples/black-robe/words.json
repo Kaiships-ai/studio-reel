@@ -1,0 +1,890 @@
+[
+{
+"line": "l01",
+"i": 0,
+"word": "Two",
+"t0": 0.0,
+"t1": 0.26,
+"est": false
+},
+{
+"line": "l01",
+"i": 1,
+"word": "friends,",
+"t0": 0.26,
+"t1": 0.56,
+"est": false
+},
+{
+"line": "l01",
+"i": 2,
+"word": "one",
+"t0": 0.92,
+"t1": 1.2,
+"est": false
+},
+{
+"line": "l01",
+"i": 3,
+"word": "blazing",
+"t0": 1.2,
+"t1": 1.7,
+"est": false
+},
+{
+"line": "l01",
+"i": 4,
+"word": "summer",
+"t0": 1.7,
+"t1": 2.02,
+"est": false
+},
+{
+"line": "l01",
+"i": 5,
+"word": "day.",
+"t0": 2.02,
+"t1": 2.24,
+"est": false
+},
+{
+"line": "l01",
+"i": 6,
+"word": "Who",
+"t0": 2.52,
+"t1": 2.7,
+"est": false
+},
+{
+"line": "l01",
+"i": 7,
+"word": "stays",
+"t0": 2.7,
+"t1": 2.92,
+"est": false
+},
+{
+"line": "l01",
+"i": 8,
+"word": "cooler:",
+"t0": 2.92,
+"t1": 3.26,
+"est": false
+},
+{
+"line": "l01",
+"i": 9,
+"word": "the",
+"t0": 3.62,
+"t1": 3.72,
+"est": false
+},
+{
+"line": "l01",
+"i": 10,
+"word": "one",
+"t0": 3.72,
+"t1": 3.86,
+"est": false
+},
+{
+"line": "l01",
+"i": 11,
+"word": "in",
+"t0": 3.86,
+"t1": 3.98,
+"est": false
+},
+{
+"line": "l01",
+"i": 12,
+"word": "white,",
+"t0": 3.98,
+"t1": 4.22,
+"est": false
+},
+{
+"line": "l01",
+"i": 13,
+"word": "or",
+"t0": 4.22,
+"t1": 4.66,
+"est": false
+},
+{
+"line": "l01",
+"i": 14,
+"word": "the",
+"t0": 4.66,
+"t1": 4.8,
+"est": false
+},
+{
+"line": "l01",
+"i": 15,
+"word": "one",
+"t0": 4.8,
+"t1": 4.96,
+"est": false
+},
+{
+"line": "l01",
+"i": 16,
+"word": "in",
+"t0": 4.96,
+"t1": 5.1,
+"est": false
+},
+{
+"line": "l01",
+"i": 17,
+"word": "black?",
+"t0": 5.1,
+"t1": 5.34,
+"est": false
+},
+{
+"line": "l02",
+"i": 0,
+"word": "Everyone",
+"t0": 5.94,
+"t1": 6.3,
+"est": false
+},
+{
+"line": "l02",
+"i": 1,
+"word": "picks",
+"t0": 6.3,
+"t1": 6.54,
+"est": false
+},
+{
+"line": "l02",
+"i": 2,
+"word": "white.",
+"t0": 6.54,
+"t1": 6.78,
+"est": false
+},
+{
+"line": "l02",
+"i": 3,
+"word": "White",
+"t0": 7.16,
+"t1": 7.34,
+"est": false
+},
+{
+"line": "l02",
+"i": 4,
+"word": "throws",
+"t0": 7.34,
+"t1": 7.58,
+"est": false
+},
+{
+"line": "l02",
+"i": 5,
+"word": "the",
+"t0": 7.58,
+"t1": 7.74,
+"est": false
+},
+{
+"line": "l02",
+"i": 6,
+"word": "sunlight",
+"t0": 7.74,
+"t1": 7.94,
+"est": false
+},
+{
+"line": "l02",
+"i": 7,
+"word": "back.",
+"t0": 7.94,
+"t1": 8.34,
+"est": false
+},
+{
+"line": "l03",
+"i": 0,
+"word": "Black",
+"t0": 8.84,
+"t1": 8.92,
+"est": false
+},
+{
+"line": "l03",
+"i": 1,
+"word": "drinks",
+"t0": 8.92,
+"t1": 9.22,
+"est": false
+},
+{
+"line": "l03",
+"i": 2,
+"word": "it",
+"t0": 9.22,
+"t1": 9.36,
+"est": false
+},
+{
+"line": "l03",
+"i": 3,
+"word": "in.",
+"t0": 9.36,
+"t1": 9.58,
+"est": false
+},
+{
+"line": "l03",
+"i": 4,
+"word": "His",
+"t0": 9.98,
+"t1": 10.08,
+"est": false
+},
+{
+"line": "l03",
+"i": 5,
+"word": "shirt",
+"t0": 10.08,
+"t1": 10.34,
+"est": false
+},
+{
+"line": "l03",
+"i": 6,
+"word": "gets",
+"t0": 10.34,
+"t1": 10.54,
+"est": false
+},
+{
+"line": "l03",
+"i": 7,
+"word": "way",
+"t0": 10.54,
+"t1": 10.88,
+"est": false
+},
+{
+"line": "l03",
+"i": 8,
+"word": "hotter",
+"t0": 10.88,
+"t1": 11.1,
+"est": false
+},
+{
+"line": "l03",
+"i": 9,
+"word": "on",
+"t0": 11.1,
+"t1": 11.28,
+"est": false
+},
+{
+"line": "l03",
+"i": 10,
+"word": "the",
+"t0": 11.28,
+"t1": 11.36,
+"est": false
+},
+{
+"line": "l03",
+"i": 11,
+"word": "outside.",
+"t0": 11.36,
+"t1": 11.64,
+"est": false
+},
+{
+"line": "l04",
+"i": 0,
+"word": "So",
+"t0": 12.44,
+"t1": 12.62,
+"est": false
+},
+{
+"line": "l04",
+"i": 1,
+"word": "he",
+"t0": 12.62,
+"t1": 12.84,
+"est": false
+},
+{
+"line": "l04",
+"i": 2,
+"word": "should",
+"t0": 12.84,
+"t1": 12.96,
+"est": false
+},
+{
+"line": "l04",
+"i": 3,
+"word": "be",
+"t0": 12.96,
+"t1": 13.1,
+"est": false
+},
+{
+"line": "l04",
+"i": 4,
+"word": "cooking,",
+"t0": 13.1,
+"t1": 13.24,
+"est": false
+},
+{
+"line": "l04",
+"i": 5,
+"word": "right?",
+"t0": 13.32,
+"t1": 13.5,
+"est": false
+},
+{
+"line": "l05",
+"i": 0,
+"word": "In",
+"t0": 14.22,
+"t1": 14.42,
+"est": false
+},
+{
+"line": "l05",
+"i": 1,
+"word": "nineteen",
+"t0": 14.42,
+"t1": 14.74,
+"est": true
+},
+{
+"line": "l05",
+"i": 2,
+"word": "eighty,",
+"t0": 14.74,
+"t1": 15.06,
+"est": true
+},
+{
+"line": "l05",
+"i": 3,
+"word": "scientists",
+"t0": 15.06,
+"t1": 15.32,
+"est": false
+},
+{
+"line": "l05",
+"i": 4,
+"word": "tested",
+"t0": 15.32,
+"t1": 15.6,
+"est": false
+},
+{
+"line": "l05",
+"i": 5,
+"word": "this",
+"t0": 15.6,
+"t1": 15.84,
+"est": false
+},
+{
+"line": "l05",
+"i": 6,
+"word": "in",
+"t0": 15.84,
+"t1": 15.94,
+"est": false
+},
+{
+"line": "l05",
+"i": 7,
+"word": "the",
+"t0": 15.94,
+"t1": 16.06,
+"est": false
+},
+{
+"line": "l05",
+"i": 8,
+"word": "desert,",
+"t0": 16.06,
+"t1": 16.3,
+"est": false
+},
+{
+"line": "l05",
+"i": 9,
+"word": "with",
+"t0": 16.3,
+"t1": 16.54,
+"est": false
+},
+{
+"line": "l05",
+"i": 10,
+"word": "loose",
+"t0": 16.54,
+"t1": 16.84,
+"est": false
+},
+{
+"line": "l05",
+"i": 11,
+"word": "black",
+"t0": 16.84,
+"t1": 17.12,
+"est": false
+},
+{
+"line": "l05",
+"i": 12,
+"word": "and",
+"t0": 17.12,
+"t1": 17.26,
+"est": false
+},
+{
+"line": "l05",
+"i": 13,
+"word": "white",
+"t0": 17.26,
+"t1": 17.42,
+"est": false
+},
+{
+"line": "l05",
+"i": 14,
+"word": "robes.",
+"t0": 17.42,
+"t1": 17.74,
+"est": false
+},
+{
+"line": "l06",
+"i": 0,
+"word": "They",
+"t0": 18.32,
+"t1": 18.38,
+"est": false
+},
+{
+"line": "l06",
+"i": 1,
+"word": "measured",
+"t0": 18.38,
+"t1": 18.6,
+"est": false
+},
+{
+"line": "l06",
+"i": 2,
+"word": "the",
+"t0": 18.6,
+"t1": 18.76,
+"est": false
+},
+{
+"line": "l06",
+"i": 3,
+"word": "heat",
+"t0": 18.76,
+"t1": 18.96,
+"est": false
+},
+{
+"line": "l06",
+"i": 4,
+"word": "that",
+"t0": 18.96,
+"t1": 19.16,
+"est": false
+},
+{
+"line": "l06",
+"i": 5,
+"word": "actually",
+"t0": 19.16,
+"t1": 19.6,
+"est": false
+},
+{
+"line": "l06",
+"i": 6,
+"word": "reached",
+"t0": 19.6,
+"t1": 19.86,
+"est": false
+},
+{
+"line": "l06",
+"i": 7,
+"word": "the",
+"t0": 19.86,
+"t1": 20.04,
+"est": false
+},
+{
+"line": "l06",
+"i": 8,
+"word": "body.",
+"t0": 20.04,
+"t1": 20.28,
+"est": false
+},
+{
+"line": "l07",
+"i": 0,
+"word": "Same.",
+"t0": 21.22,
+"t1": 21.42,
+"est": false
+},
+{
+"line": "l07",
+"i": 1,
+"word": "A",
+"t0": 21.92,
+"t1": 21.98,
+"est": false
+},
+{
+"line": "l07",
+"i": 2,
+"word": "tie.",
+"t0": 21.98,
+"t1": 22.14,
+"est": false
+},
+{
+"line": "l08",
+"i": 0,
+"word": "Here's",
+"t0": 22.72,
+"t1": 23.04,
+"est": false
+},
+{
+"line": "l08",
+"i": 1,
+"word": "the",
+"t0": 23.04,
+"t1": 23.14,
+"est": true
+},
+{
+"line": "l08",
+"i": 2,
+"word": "twist.",
+"t0": 23.14,
+"t1": 23.36,
+"est": false
+},
+{
+"line": "l08",
+"i": 3,
+"word": "The",
+"t0": 23.76,
+"t1": 23.9,
+"est": false
+},
+{
+"line": "l08",
+"i": 4,
+"word": "black",
+"t0": 23.9,
+"t1": 24.16,
+"est": false
+},
+{
+"line": "l08",
+"i": 5,
+"word": "cloth",
+"t0": 24.16,
+"t1": 24.48,
+"est": false
+},
+{
+"line": "l08",
+"i": 6,
+"word": "heats",
+"t0": 24.48,
+"t1": 24.78,
+"est": false
+},
+{
+"line": "l08",
+"i": 7,
+"word": "the",
+"t0": 24.78,
+"t1": 25.0,
+"est": false
+},
+{
+"line": "l08",
+"i": 8,
+"word": "air",
+"t0": 25.0,
+"t1": 25.14,
+"est": false
+},
+{
+"line": "l08",
+"i": 9,
+"word": "inside",
+"t0": 25.14,
+"t1": 25.52,
+"est": false
+},
+{
+"line": "l08",
+"i": 10,
+"word": "it,",
+"t0": 25.52,
+"t1": 25.9,
+"est": false
+},
+{
+"line": "l08",
+"i": 11,
+"word": "that",
+"t0": 26.16,
+"t1": 26.24,
+"est": false
+},
+{
+"line": "l08",
+"i": 12,
+"word": "warm",
+"t0": 26.24,
+"t1": 26.5,
+"est": false
+},
+{
+"line": "l08",
+"i": 13,
+"word": "air",
+"t0": 26.5,
+"t1": 26.72,
+"est": false
+},
+{
+"line": "l08",
+"i": 14,
+"word": "rises",
+"t0": 26.72,
+"t1": 27.1,
+"est": false
+},
+{
+"line": "l08",
+"i": 15,
+"word": "out",
+"t0": 27.1,
+"t1": 27.3,
+"est": false
+},
+{
+"line": "l08",
+"i": 16,
+"word": "the",
+"t0": 27.3,
+"t1": 27.44,
+"est": false
+},
+{
+"line": "l08",
+"i": 17,
+"word": "top,",
+"t0": 27.44,
+"t1": 27.66,
+"est": false
+},
+{
+"line": "l08",
+"i": 18,
+"word": "and",
+"t0": 27.66,
+"t1": 27.88,
+"est": false
+},
+{
+"line": "l08",
+"i": 19,
+"word": "a",
+"t0": 27.88,
+"t1": 28.0,
+"est": false
+},
+{
+"line": "l08",
+"i": 20,
+"word": "breeze",
+"t0": 28.0,
+"t1": 28.28,
+"est": false
+},
+{
+"line": "l08",
+"i": 21,
+"word": "pulls",
+"t0": 28.28,
+"t1": 28.54,
+"est": false
+},
+{
+"line": "l08",
+"i": 22,
+"word": "in",
+"t0": 28.54,
+"t1": 28.7,
+"est": false
+},
+{
+"line": "l08",
+"i": 23,
+"word": "underneath.",
+"t0": 28.7,
+"t1": 29.02,
+"est": false
+},
+{
+"line": "l09",
+"i": 0,
+"word": "So",
+"t0": 29.8,
+"t1": 30.16,
+"est": false
+},
+{
+"line": "l09",
+"i": 1,
+"word": "it's",
+"t0": 30.16,
+"t1": 30.46,
+"est": false
+},
+{
+"line": "l09",
+"i": 2,
+"word": "not",
+"t0": 30.46,
+"t1": 30.56,
+"est": false
+},
+{
+"line": "l09",
+"i": 3,
+"word": "the",
+"t0": 30.56,
+"t1": 30.68,
+"est": false
+},
+{
+"line": "l09",
+"i": 4,
+"word": "color,",
+"t0": 30.68,
+"t1": 30.86,
+"est": false
+},
+{
+"line": "l09",
+"i": 5,
+"word": "it's",
+"t0": 31.2,
+"t1": 31.3,
+"est": false
+},
+{
+"line": "l09",
+"i": 6,
+"word": "the",
+"t0": 31.3,
+"t1": 31.4,
+"est": false
+},
+{
+"line": "l09",
+"i": 7,
+"word": "loose",
+"t0": 31.4,
+"t1": 31.54,
+"est": false
+},
+{
+"line": "l09",
+"i": 8,
+"word": "fit.",
+"t0": 31.54,
+"t1": 31.8,
+"est": false
+},
+{
+"line": "l09",
+"i": 9,
+"word": "In",
+"t0": 32.24,
+"t1": 32.36,
+"est": false
+},
+{
+"line": "l09",
+"i": 10,
+"word": "a",
+"t0": 32.36,
+"t1": 32.46,
+"est": false
+},
+{
+"line": "l09",
+"i": 11,
+"word": "tight",
+"t0": 32.46,
+"t1": 32.62,
+"est": false
+},
+{
+"line": "l09",
+"i": 12,
+"word": "black",
+"t0": 32.62,
+"t1": 32.82,
+"est": false
+},
+{
+"line": "l09",
+"i": 13,
+"word": "shirt?",
+"t0": 32.82,
+"t1": 33.1,
+"est": false
+},
+{
+"line": "l09",
+"i": 14,
+"word": "He",
+"t0": 33.5,
+"t1": 33.64,
+"est": false
+},
+{
+"line": "l09",
+"i": 15,
+"word": "cooks.",
+"t0": 33.64,
+"t1": 33.82,
+"est": false
+}
+]
