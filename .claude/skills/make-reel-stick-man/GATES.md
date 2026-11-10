@@ -115,7 +115,7 @@ not be generous"). Writes `review/judge.json` / `judge.txt` (scores per review, 
 | Gate | Threshold | Measured as |
 |---|---|---|
 | style judge | mean overall ≥ 8.5 and no category mean < 8 | mean of the 2 reviews |
-| blind test | ≤ 8 / 12 told apart | 6 reference + 6 ours tiles shuffled (seeded), one more review labels each original / imitation; tiles labelled right (6 = chance) |
+| blind test | ≤ 8 / 12 told apart | 6 reference + 6 ours tiles shuffled (seeded), one more review labels each original / imitation; tiles labelled right, or wrong when the reviewer swapped the names (max of the two; 6 = chance, 12 = fully told apart) |
 
 Cost: ~4 images a review; tokens per review are in `judge.json`.
 

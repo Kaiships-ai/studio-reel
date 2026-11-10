@@ -10,7 +10,8 @@
 // Judge: 2 independent reviews, each sees both reference sheets and both of ours; gate value = mean of the 2.
 // PASS = mean overall >= 8.5 and no category mean < 8.
 // Blind test: 6 reference + 6 ours tiles, shuffled, one reviewer labels each original / imitation; separation = tiles
-// labelled right (12 = fully told apart, 6 = chance). Target <= 8 / 12.
+// labelled right, or wrong if the reviewer swapped the two names (max of the two: 12 = fully told apart, 6 = chance).
+// Target <= 8 / 12.
 import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -113,13 +114,16 @@ const low = CATS.filter(c => !(cats[c] >= PASS.cat));
 const pass = overall >= PASS.overall && !low.length;
 let sep = null;
 if (blind) {
-  sep = order.reduce((n, [side], j) => n + ((String(blind.tiles?.[String(j + 1)] || '').toLowerCase().startsWith('orig') ? 'ref' : 'ours') === side ? 1 : 0), 0);
+  // separation = how well the two groups are told apart, whichever way round the reviewer named them (labelling all 12
+  // backwards still separates them: 1 right = 11 told apart); 6 = chance
+  const right = order.reduce((n, [side], j) => n + ((String(blind.tiles?.[String(j + 1)] || '').toLowerCase().startsWith('orig') ? 'ref' : 'ours') === side ? 1 : 0), 0);
+  sep = Math.max(right, 12 - right); blind.right = right;
 }
 const out = { film, mp4: path.relative(ROOT, path.resolve(A.in)), when: new Date().toISOString().slice(0, 16),
   reviewer: `${nRev} x headless sonnet (effort medium), judge.mjs`, rule: `PASS = mean overall >= ${PASS.overall} and no category mean < ${PASS.cat}`,
   frames: pick.map(m => ({ t: +m.t.toFixed(2), line: m.line, word: m.word })), ref_tiles: refPick,
   categories: cats, overall, pass, low, reviews,
-  blind: blind ? { separation: sep, of: 12, target: '<= 8', order: order.map(([s, k]) => `${s}:${k}`), answer: blind.tiles, tells: blind.tells, tokens: blind.tokens, cost_usd: blind.cost_usd } : null,
+  blind: blind ? { separation: sep, right: blind.right, of: 12, target: '<= 8', order: order.map(([s, k]) => `${s}:${k}`), answer: blind.tiles, tells: blind.tells, tokens: blind.tokens, cost_usd: blind.cost_usd } : null,
   tokens: { reviews: reviews.map(r => r.tokens), blind: blind?.tokens ?? 0, total: R.reduce((n, r) => n + r.tokens, 0) },
   cost_usd: +R.reduce((n, r) => n + (r.cost_usd || 0), 0).toFixed(4) };
 fs.writeFileSync(F(`review/judge${tag}.json`), JSON.stringify(out, null, 1) + '\n');
