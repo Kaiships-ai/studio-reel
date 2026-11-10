@@ -133,3 +133,84 @@ export function bodyFollow(off, late) {
 export const springs = (events, f) => events.reduce((s, e) => s + e.amp * settle(f - e.f), 0);
 
 export { angDiff };
+
+// ---------------------------------------------------------------- faces lead the voice, marks, body acting (q2)
+// An expression change lands EXPR_LEAD frames before its word (the face reads first, then the sound): a beat's expr
+// frame = min(beat frame, word start - EXPR_LEAD). Gate: GATES.md "Acting gates" (>= 3 frames before the word).
+export const EXPR_LEAD = 4;
+// the expression key in force at f, with when it began and the word it belongs to
+export const exprKeyAt = (track, f) => { let k = track[0] || { f: -1e9, expr: 'neutral' }; for (const x of track) if (x.f <= f) k = x; else break; return k; };
+
+// a beat's `mark: 'question'` (or [kind, frames]) shows a head-attached emotion mark (faces.js MARK_NAMES) for `dur` frames
+export function markOwner(b) {
+  const [kind, dur] = Array.isArray(b.mark) ? b.mark : [b.mark, b.markDur ?? 36], t0 = b.at;
+  return { chan: 'add', start: t0, verb: 'mark', fn: f => (f >= t0 && f < t0 + dur ? { ['x_mark_' + kind]: f - t0 + 1 } : {}) };
+}
+
+// Which verbs count as the body acting (the acting gate: >= 70 % of a lead's on-screen frames). Head-only and set-up
+// verbs do not: idle, talk, look_at, place, hold, mark, and the nod / tilt gestures.
+const NOT_BODY = new Set(['idle', 'talk', 'look_at', 'place', 'hold', 'mark', 'stand']);
+export const isBodyVerb = v => !NOT_BODY.has(v.name) && !(v.name === 'gesture' && (v.kind === 'nod' || v.kind === 'tilt'));
+
+// Auto-acting: every lead's frames that no body verb covers get key poses picked from the words spoken there (then the
+// face in force, then a default rotation), one pose per ~1.3 s, each one released as the next one rises. Explicit beats
+// always win: a gap is the time between them. A lead = cast `lead: true`, or a `talk` beat, or a shot subject
+// (`lead: false` opts out). Turn it off per act with `auto: false`.
+const TEXT_POSES = [
+  [/^(whisper\w*|quiet\w*|secret\w*|hush|soft\w*|barely|tickle\w*|shh)$/, ['lean_in', 'shush', 'tiptoe']],
+  [/^(hear|heard|hears|listen\w*|ears?|sound\w*|hearing)$/, ['cup_ear', 'lean_in']],
+  [/^(loud\w*|boom\w*|bang|blast\w*|explod\w*|roar\w*|honk\w*|nois\w*|scream\w*|yell\w*)$/, ['cover_ears', 'recoil', 'brace', 'cower']],
+  [/^(threshold|pain\w*|hurt\w*|damag\w*|ouch|ache)$/, ['clutch', 'cover_ears', 'facepalm']],
+  [/^(rock|concert\w*|party|cheer\w*|win\w*|yes|best|fun)$/, ['celebrate']],
+  [/^(think\w*|thought|wonder\w*|idea|why|how|maybe|guess\w*)$/, ['think']],
+  [/^(big|bigger|huge|massive|ten|times|power\w*|every|more|levels?|five|whole)$/, ['arms_wide', 'present']],
+  [/^(miles?|away|far|distance|across|world|island|volcano\w*|sea)$/, ['shade_eyes', 'point_lean']],
+  [/^(police|chief|officer|boss|guard\w*|cannons?|fire)$/, ['hands_on_hips', 'arms_crossed']],
+  [/^(talk\w*|say\w*|said|tell\w*|told|ask\w*|chat\w*|conversation)$/, ['present', 'lean_in']],
+  [/^(decibels?|db|hundred|thousand|eighty\S*|sixty|thirty|seventy|twenty|forty|fifty|ninety|number\w*)$/, ['present', 'point_lean', 'arms_wide']],
+  [/^(city|traffic|cars?|streets?|hours?)$/, ['hands_on_hips', 'brace']],
+];
+const EXPR_POSES = { panic: ['flail', 'cower'], scream: ['flail', 'cower'], angry: ['hands_on_hips', 'arms_crossed'], furious: ['hands_on_hips'],
+  shock: ['recoil', 'lean_away'], worried: ['brace', 'shrug'], smug: ['arms_crossed', 'hands_on_hips'], sly: ['lean_in', 'arms_crossed'],
+  happy: ['present', 'shrug'], grin: ['present', 'hands_on_hips'], excited: ['celebrate'], dizzy: ['wobble'], pain: ['clutch', 'cover_ears'],
+  sad: ['shrug'], cry: ['facepalm'], confused: ['think', 'shrug'], blush: ['shrug'], proud: ['hands_on_hips'], nervous: ['shrug', 'lean_away'],
+  suspicious: ['arms_crossed', 'think'], deadpan: ['arms_crossed'], manic: ['flail', 'laugh'], closed: ['laugh', 'shrug'] };
+const DEFAULT_POSES = ['hands_on_hips', 'present', 'arms_crossed', 'shrug', 'think', 'lean_in'];
+const norm = w => w.toLowerCase().replace(/[^a-z0-9'-]/g, '');
+export function autoActing({ R, actors, words, fps, win }) {
+  if (R.auto === false) return [];
+  const out = [], subj = new Set((R.shots || []).flatMap(s => s.of || []));
+  for (const a of actors) {
+    a.lead = a.c.lead ?? (a.verbs.some(v => v.name === 'talk') || subj.has(a.name));
+    if (!a.lead) continue;
+    const busy = a.verbs.filter(isBodyVerb).map(v => [v.start, v.end]).sort((x, y) => x[0] - y[0]);
+    for (const [wa, wb] of win) {
+      let cur = wa - 12, prevPose = null, i = 0;
+      const gaps = [];
+      for (const [s, e] of busy) { if (e <= cur) continue; if (s > cur) gaps.push([cur, Math.min(s, wb), s < wb]); cur = Math.max(cur, e); if (cur >= wb) break; }
+      if (cur < wb) gaps.push([cur, wb, false]);
+      for (const [g0, g1, closes] of gaps) {
+        const len = g1 - g0; if (len < 18) continue;
+        const n = Math.max(1, Math.round(len / 40)), L = len / n;
+        for (let k = 0; k < n; k++) {
+          const s = Math.round(g0 + k * L), e = Math.round(g0 + (k + 1) * L);
+          const said = words.filter(w => w.t1 * fps > s && w.t0 * fps < e + 6).map(w => norm(w.word));
+          const ex = exprKeyAt(a.exprs, s + 10).expr, cand = [];
+          for (const w of said) for (const [re, ps] of TEXT_POSES) if (re.test(w)) cand.push(...ps);
+          cand.push(...(EXPR_POSES[ex] || []), ...DEFAULT_POSES.slice((a.seed + i) % DEFAULT_POSES.length), ...DEFAULT_POSES);
+          const pose = cand.find(c => c !== prevPose) || DEFAULT_POSES[0];
+          const A = 3, T = 9, last = k === n - 1, Rl = 10;
+          // the last pose before an explicit verb releases 3 frames before it: that verb's hands then take over from the
+          // pose (never from a hand already on its way down, which would reverse the arm)
+          const hold = Math.max(4, (e - s) - A - T - (last && closes ? 3 : 0));
+          const hl = (a.holdLog || []).filter(h => h.f <= s).pop() || { L: null, R: null };
+          const other = actors.find(o => o !== a);
+          out.push({ f: s, who: a.name, do: pose, hold, dur: T, antic: A, out: Rl, hand: hash(a.seed, i, 91) < 0.3 ? 'L' : 'R',
+            busy: { L: !!hl.L, R: !!hl.R }, ...(pose === 'point_lean' ? { to: other ? other.st0 : [a.st0[0] + 1, a.st0[1] - 2, 1.5] } : {}), auto: true });
+          prevPose = pose; i++;
+        }
+      }
+    }
+  }
+  return out;
+}

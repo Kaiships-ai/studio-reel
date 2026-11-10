@@ -50,6 +50,19 @@ if (actors.length) {
   perActor('joint change', joint, 25, ' deg', '<= 25 deg/f');
   const cut = actors.filter(([, , b]) => !/head cut by the top edge: never/.test(b)).map(([, n, b]) => `${n} ${/head cut by the top edge: (.*)/.exec(b)?.[1]}`);
   gate('head never cut', !cut.length, cut.length ? cut.join('; ') : 'never', 'never');
+  // acting gates (GATES.md): every lead acts with the body >= 70 % of its in-frame frames
+  const ba = actors.map(([, n, b]) => { const m = /body acting: ([\d.]+) % of (\d+) lead frames/.exec(b); return m && +m[2] > 0 ? [n, +m[1], +m[2]] : null; }).filter(Boolean);
+  if (!actors.some(([, , b]) => /body acting:/.test(b))) missing('body acting');
+  else if (!ba.length) gate('body acting', false, 'no lead in frame', '>= 70 % per lead');
+  else { const low = ba.filter(x => x[1] < 70), w = ba.reduce((a, b) => (b[1] < a[1] ? b : a));
+    gate('body acting', !low.length, `lowest ${w[1]} % (${w[0]}, ${w[2]} f)${low.length ? '; under: ' + low.map(x => x[0]).join(', ') : ''}; ${ba.map(x => x[0] + ' ' + x[1]).join(', ')}`, '>= 70 % per lead'); }
+}
+const fg = /\(g\) faces: (\d+) distinct expressions on screen over ([\d.]+) s \(([^)]*)\); expression lead before its word: worst (-?\d+|-)(?: f \(([^)]*)\))?/.exec(R);
+if (!fg) { missing('expressions'); missing('expression lead'); }
+else {
+  const need = Math.ceil(5 * Math.max(30, +fg[2]) / 30);
+  gate('expressions', +fg[1] >= need, `${fg[1]} (${fg[3]})`, `>= ${need} per reel (5 / 30 s)`);
+  gate('expression lead', fg[4] === '-' || +fg[4] >= 3, fg[4] === '-' ? 'no worded changes' : `worst ${fg[4]} f before its word (${fg[5]})`, '>= 3 f before the word');
 }
 
 // small figures
@@ -154,6 +167,16 @@ async function story(film) {
   const share = using.length / ids.length;
   sg('props / fx used', share >= 0.4, `${Math.round(100 * share)} % (${using.length}/${ids.length}: ${using.join(' ') || '-'})`, '>= 40 % of lines');
   sg('props / fx seen', !unseen.length, unseen.length ? 'not on screen: ' + unseen.join('; ') : 'every listed prop / fx on screen in its line', 'listed = in __dbg seen');
+  // director rule: every line with a character on screen names its body action(s) in `act` (a known verb, never talk)
+  const known = new Set(fs.readFileSync(path.join(ROOT, 'styles/stick-man/engine/poses.js'), 'utf8').match(/^  (\w+): \{/gm).map(x => x.trim().slice(0, -3))
+    .concat(['walk_to', 'turn_to', 'startle', 'step_back', 'cough', 'point', 'wave_small', 'slump', 'pluck', 'let_fall', 'lift', 'drop_in', 'slide', 'sling', 'gesture', 'stand_up']));
+  const noAct = [];
+  for (const w of win) {
+    const e = E[w.id]; if (!e) continue; const people = inWin(w).filter(r => Object.values(r.actors).some(a => a.inFrame)).length >= 15;   // a character on screen >= 0.5 s of the line
+    const acts = Object.values(e.act || {}).flat().map(x => String(x).split(/[\s@]/)[0]);
+    if (people && (!acts.length || acts.some(v => !known.has(v)))) noAct.push(w.id + (acts.length ? ' (' + acts.filter(v => !known.has(v)).join(' ') + ')' : ''));
+  }
+  sg('acting plan', !noAct.length, noAct.length ? 'no body action named: ' + noAct.join(', ') : 'every line with a character names its body action', 'storyboard act per line');
   // 6 judged: the board reviewer's verdict (GATES.md, reviewer prompt)
   const vf = F('review/board-verdict.json');
   if (!fs.existsSync(vf)) sg('board shown', false, 'no review/board-verdict.json: run board.mjs, then the reviewer (GATES.md)', '>= 85 % shown');

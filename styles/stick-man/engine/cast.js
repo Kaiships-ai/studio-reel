@@ -4,6 +4,8 @@
 import * as THREE from 'three';
 import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { toon, lin, css, B, INK_RGB } from './look.js';
+import { EXPR, faceRig } from './faces.js';
+import { makeHandProp } from '../lib/cast/handprops.js';
 
 export const W_M = 0.60;                     // head width in metres
 const W = W_M;
@@ -15,27 +17,8 @@ const HA = 0.5 * W, HB = 0.5 * HEAD_H * W;   // head half width / half height (m
 const DEG = Math.PI / 180;
 const LOOK_RAD = 0.36;                       // face slide per unit of `look`
 
-// eye rx, ry, lid (0 open .. 1 shut), brow tilt (deg, inner end down +), brow height, mouth
-export const EXPR = {
-  neutral: [0.050, 0.060, 0.0, 0, 0.165, 'flat'],
-  smug: [0.052, 0.056, 0.45, 12, 0.150, 'smirk'],
-  stern: [0.050, 0.055, 0.35, 20, 0.140, 'frown'],
-  shock: [0.062, 0.078, 0.0, -8, 0.215, 'o'],
-  happy: [0.050, 0.060, 0.0, -6, 0.175, 'smile'],
-  closed: [0.055, 0.050, 1.0, -4, 0.150, 'smile'],
-  worried: [0.050, 0.062, 0.0, -18, 0.190, 'wobble'],
-  sly: [0.054, 0.052, 0.55, 6, 0.135, 'grin'],
-  sleep: [0.055, 0.050, 1.0, 0, 0.140, 'flat'],
-  grin: [0.050, 0.060, 0.0, -4, 0.180, 'grin'],
-  calm: [0.050, 0.058, 0.32, -2, 0.158, 'smile'],
-  // open-mouth twins: `<expr>_o` is shown while a word is being said (and for the sleeper's snore)
-  happy_o: [0.050, 0.060, 0.0, -6, 0.180, 'open'],
-  closed_o: [0.055, 0.050, 1.0, -4, 0.155, 'open'],
-  calm_o: [0.050, 0.058, 0.32, -2, 0.162, 'open'],
-  grin_o: [0.050, 0.060, 0.0, -4, 0.185, 'open'],
-  sleep_o: [0.055, 0.050, 1.0, 0, 0.140, 'o'],
-};
-const EXPR_KEYS = Object.keys(EXPR);
+// Faces (expressions, skin marks, head-attached emotion marks): faces.js. Hand props: lib/cast/handprops.js.
+export { EXPR, EXPR_NAMES, MARK_NAMES, baseExpr } from './faces.js';
 
 const inkMat = new THREE.MeshBasicMaterial({ color: lin(...INK_RGB) });
 const hullMat = new THREE.MeshBasicMaterial({ color: lin(...INK_RGB), side: THREE.BackSide });
@@ -198,73 +181,6 @@ function glasses() {
   return g;
 }
 
-// ------------------------------------------------------------------ face atlas (drawn in code, one cell per expression x blink)
-const CELL = 512, COLS = 6;
-let ATLAS = null;
-function bez(p0, p1, p2, p3, n = 16) {
-  const o = [];
-  for (let i = 0; i <= n; i++) { const t = i / n, a = (1 - t) ** 3, b = 3 * (1 - t) ** 2 * t, c = 3 * (1 - t) * t * t, d = t ** 3;
-    o.push([a * p0[0] + b * p1[0] + c * p2[0] + d * p3[0], a * p0[1] + b * p1[1] + c * p2[1] + d * p3[1]]); }
-  return o;
-}
-function drawFace(g, expr, blink) {
-  const INK = css(INK_RGB), ey = 0.02, dx = 0.150;
-  let [rx, ry, lid, tilt, bh, mouth] = EXPR[expr];
-  rx *= 1.30; ry *= 1.30; bh += 0.018;
-  if (blink === 1 && lid < 1) { lid = Math.max(lid, 0.62); bh -= 0.012; }
-  const line = (pts, w) => { g.lineWidth = w; g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(...p) : g.moveTo(...p)); g.stroke(); };
-  g.strokeStyle = g.fillStyle = INK; g.lineCap = g.lineJoin = 'round';
-  for (const s of [-1, 1]) {
-    const ex = s * dx;
-    if (blink === 2 && lid < 1) line([[ex - rx * 1.15, ey - 0.004], [ex + rx * 1.15, ey - 0.004]], 0.030);
-    else if (lid >= 1) {
-      const arc = [];
-      for (let i = 0; i <= 14; i++) { const t = Math.PI * (0.08 + 0.84 * i / 14);
-        arc.push(expr === 'closed' ? [ex + rx * 1.1 * Math.cos(t), ey - 0.01 + ry * 0.9 * Math.sin(t)] : [ex + rx * 1.1 * Math.cos(t), ey + 0.012 - ry * 0.45 * Math.sin(t)]); }
-      line(arc, 0.030);
-    } else {
-      const top = ey + ry * (1 - 2 * lid * 0.62);
-      g.save(); g.beginPath(); g.rect(ex - 0.2, top - 0.4, 0.4, 0.4); g.clip();
-      g.beginPath(); g.ellipse(ex, ey, rx, ry, 0, 0, Math.PI * 2); g.fill(); g.restore();
-      if (lid > 0) line([[ex - rx * 1.25, top], [ex + rx * 1.25, top]], 0.026);
-    }
-    const bl = 0.118, a = tilt * DEG * -s, bx = ex + s * 0.004, by = ey + bh - (blink === 2 ? 0.014 : 0);
-    const p0 = [bx - bl * Math.cos(a), by - bl * Math.sin(a)], p1 = [bx + bl * Math.cos(a), by + bl * Math.sin(a)], mid = [bx, by + 0.012];
-    line(bez(p0, mid, mid, p1, 10), 0.064);
-  }
-  const mx = 0, my = ey - 0.20;
-  if (mouth === 'flat') line([[mx - 0.045, my], [mx + 0.045, my]], 0.028);
-  else if (mouth === 'smirk') line(bez([mx - 0.05, my - 0.005], [mx - 0.01, my - 0.02], [mx + 0.03, my - 0.01], [mx + 0.065, my + 0.03]), 0.028);
-  else if (mouth === 'frown') line(bez([mx - 0.055, my - 0.02], [mx - 0.02, my + 0.02], [mx + 0.02, my + 0.02], [mx + 0.055, my - 0.02]), 0.028);
-  else if (mouth === 'smile') line(bez([mx - 0.075, my + 0.02], [mx - 0.03, my - 0.035], [mx + 0.03, my - 0.035], [mx + 0.075, my + 0.02]), 0.028);
-  else if (mouth === 'wobble') line(bez([mx - 0.06, my], [mx - 0.03, my + 0.03], [mx, my - 0.03], [mx + 0.06, my + 0.005]), 0.026);
-  else if (mouth === 'o') { g.beginPath(); g.ellipse(mx, my - 0.01, 0.036, 0.048, 0, 0, Math.PI * 2); g.fill(); }
-  else if (mouth === 'open') {
-    const top = bez([mx - 0.062, my + 0.018], [mx - 0.03, my + 0.004], [mx + 0.03, my + 0.004], [mx + 0.062, my + 0.018], 12);
-    const bot = bez([mx + 0.062, my + 0.018], [mx + 0.05, my - 0.075], [mx - 0.05, my - 0.075], [mx - 0.062, my + 0.018], 14);
-    g.beginPath(); [...top, ...bot].forEach((p, i) => i ? g.lineTo(...p) : g.moveTo(...p)); g.closePath(); g.fill();
-    g.fillStyle = css([0.85, 0.22, 0.26]); g.beginPath(); g.ellipse(mx, my - 0.040, 0.030, 0.013, 0, 0, Math.PI * 2); g.fill(); g.fillStyle = INK;
-  }
-  else if (mouth === 'grin') {
-    const pts = bez([mx - 0.085, my + 0.025], [mx - 0.04, my - 0.06], [mx + 0.04, my - 0.06], [mx + 0.085, my + 0.025], 18);
-    const shape = () => { g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(...p) : g.moveTo(...p)); g.lineTo(mx - 0.085, my + 0.025); g.closePath(); };
-    shape(); g.lineWidth = 0.028; g.stroke(); g.fillStyle = css([0.98, 0.98, 0.96]); g.fill(); g.fillStyle = INK;
-  }
-}
-function atlas() {
-  if (ATLAS) return ATLAS;
-  const n = EXPR_KEYS.length * 3, rows = Math.ceil(n / COLS);
-  const cv = document.createElement('canvas'); cv.width = COLS * CELL; cv.height = rows * CELL;
-  const g = cv.getContext('2d');
-  EXPR_KEYS.forEach((e, ei) => [0, 1, 2].forEach(b => {
-    const i = ei * 3 + b, col = i % COLS, row = Math.floor(i / COLS);
-    g.save(); g.translate(col * CELL + CELL / 2, row * CELL + CELL / 2); g.scale(CELL, -CELL);  // draw in W units, v up
-    drawFace(g, e, b); g.restore();
-  }));
-  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
-  ATLAS = { tex, cols: COLS, rows };
-  return ATLAS;
-}
 // spherical patch just above the head; UVs are the straight-on projection, so from the front it reads as the flat 2D face
 function facePatch() {
   const R = 1.012, g = new THREE.SphereGeometry(HA * R, 48, 36, Math.PI / 2 - 0.95, 1.9, Math.PI / 2 - 0.80, 1.6);
@@ -491,10 +407,11 @@ export function makeStick(spec) {
   const headSolid = solid(hg, toon(spec.skin || [1, 1, 1], { shade: [0.88, 0.82, 0.98], rim: 0.42, sheen: 0.30, broad: 0.18, rough: 0.3 }));
   head.add(headSolid);
   const rig = new THREE.Group(); head.add(rig);
-  const A = atlas(), map = A.tex.clone(); map.repeat.set(1 / A.cols, 1 / A.rows);
-  const face = new THREE.Mesh(facePatch(), new THREE.MeshBasicMaterial({ map, transparent: true, depthWrite: false,
+  const FR = faceRig(W);
+  const face = new THREE.Mesh(facePatch(), new THREE.MeshBasicMaterial({ map: FR.tex, transparent: true, depthWrite: false,
     polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
-  face.userData.noPrepass = true; face.renderOrder = 2; rig.add(face);
+  face.userData.noPrepass = true; face.renderOrder = 2; rig.add(face); head.add(FR.group);
+  const skin0 = headSolid.material.color.clone(), tintC = new THREE.Color();
   if (spec.glasses) rig.add(glasses());
   for (const f of spec.hair || []) head.add(f());
 
@@ -509,7 +426,7 @@ export function makeStick(spec) {
   contact.rotation.x = -Math.PI / 2; contact.scale.set(0.48 * W, 0.24 * W, 1); contact.position.set(0.03 * W, 0.004, 0);
   contact.userData.noPrepass = true; root.add(contact);
 
-  const S = { root, yaw: 0, hand: {}, parts: { head: headSolid, torso, toes, ankles, hands } };
+  const S = { root, yaw: 0, hand: {}, parts: { head: headSolid, torso, toes, ankles, hands, face, marks: FR.group }, xmarks: [], props: {} };
   const inv = new THREE.Matrix4();
 
   // pos (Blender metres), and either yaw (deg, 0 = facing Blender -Y) or face (a Blender point to turn toward)
@@ -524,11 +441,43 @@ export function makeStick(spec) {
   S.toLocal = pB => { inv.copy(root.matrixWorld).invert(); const v = B(...pB).applyMatrix4(inv); return [v.x / W, v.y / W]; };
 
   // face only (expression cell, blink, eye slide): the reel runtime sets it after every prop has moved this frame
+  // Extra keys: t (frame), age (frames since this expression began), cam (camera, Blender metres: mark cards face it),
+  // marks ([[kind, age]] on top of the expression's own; verbs add them through the pose keys x_mark_<kind> = age + 1).
   S.face = (P = {}) => {
-    const e = EXPR[P.expr] ? P.expr : 'neutral', cell = EXPR_KEYS.indexOf(e) * 3 + (P.blink || 0);
-    map.offset.set((cell % A.cols) / A.cols, 1 - (Math.floor(cell / A.cols) + 1) / A.rows);
+    const e = EXPR[P.expr] ? P.expr : 'neutral', E = EXPR[e], t = P.t || 0, age = P.age ?? 99;
+    const marks = (E.marks || []).filter(([, life]) => !life || age < life).map(([k]) => [k, age]);
+    for (const m of [...(P.marks || []), ...S.xmarks]) if (!marks.some(q => q[0] === m[0])) marks.push(m);
+    FR.draw(e, P.blink || 0, t, marks, P.cam ? B(...P.cam) : null);
+    const tk = E.tint ? Math.min(1, age / 6) : 0;               // a furious face flushes over 6 frames
+    headSolid.material.color.copy(skin0); if (tk) headSolid.material.color.lerp(tintC.setRGB(...E.tint), tk);
     rig.rotation.set(-(P.look_v || 0) * 0.12, (P.look || 0) * LOOK_RAD, 0);
   };
+  // Hand props: pose key x_hp<L|R>_<kind> > 0.5 shows that prop in that hand (x_hpB_<kind> = between both hands);
+  // x_tilt<L|R> (deg) tilts it (a cup pours toward the figure's right for +, an 'along' prop pitches about the fist).
+  const up = new THREE.Vector3(0, 1, 0), qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), ax = new THREE.Vector3();
+  function handProps(P, r) {
+    for (const o of Object.values(S.props)) o.visible = false;
+    for (const k of Object.keys(P)) {
+      const m = /^x_hp([LRB])_(\w+)$/.exec(k); if (!m || !(P[k] > 0.5)) continue;
+      const side = m[1], kind = m[2], id = side + kind;
+      const o = S.props[id] ||= (() => { const g = makeHandProp(kind); root.add(g); return g; })();
+      o.visible = true;
+      const tilt = (P['x_tilt' + (side === 'B' ? 'L' : side)] || 0) * DEG, U = o.userData, gp = new THREE.Vector3(...(U.grip || [0, 0, 0]));
+      let hand;
+      if (side === 'B') { hand = r.L.hand.clone().add(r.R.hand).multiplyScalar(0.5 * W); o.quaternion.setFromAxisAngle(ax.set(1, 0, 0), tilt); }
+      else {
+        hand = r[side].hand.clone().multiplyScalar(W);
+        if (U.mode === 'along') {                                 // +y out of the fist along the forearm, then pitched by tilt
+          const d = r[side].hand.clone().sub(r[side].elbow).normalize(); if (U.flip) d.negate();
+          qa.setFromUnitVectors(up, d); qb.setFromAxisAngle(ax.set(1, 0, 0), tilt); o.quaternion.copy(qa).multiply(qb);
+        } else {
+          const t0 = U.tilt0 || [0, 0];
+          qa.setFromAxisAngle(ax.set(0, 0, 1), -tilt + t0[1] * DEG); qb.setFromAxisAngle(ax.set(1, 0, 0), t0[0] * DEG); o.quaternion.copy(qa).multiply(qb);
+        }
+      }
+      o.position.copy(hand).sub(gp.applyQuaternion(o.quaternion));
+    }
+  }
   // Extra keys for the reel runtime: pitch (deg, upper body forward about the hip), hands and feet may carry a
   // third number = depth toward where the figure faces (W), kneeF{L,R} = knee pushed forward (W), toeF = toe reach.
   S.pose = (P = {}) => {
@@ -581,6 +530,8 @@ export function makeStick(spec) {
         kneeFlex: leg.flex, elbowFlex: arm.flex, footPitch: P['footPitch' + side] || 0 };
     }
     S.rig = rig;
+    handProps(P, rig);
+    S.xmarks = Object.keys(P).filter(k => k.startsWith('x_mark_') && P[k] >= 1).map(k => [k.slice(7), Math.floor(P[k] - 1)]);
     contact.visible = P.contact !== false;
     contact.position.y = 0.004 + (P.ground || 0) * W;
     root.updateMatrixWorld(true);

@@ -7,10 +7,11 @@ import * as THREE from 'three';
 import { createStage } from './look.js';
 import { makeStick, KAI, TELLER, GUARD, EXPR, HEAD_C } from './cast.js';
 import { VERBS, STAND, SIT, REST_ARM, W, lerp, lerp3, add3, angDiff, toLocal, smoother, hash, handEase } from './verbs.js';
-import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, exprAccent, bodyFollow, LATE } from './acting.js';
+import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, exprAccent, bodyFollow, LATE, EXPR_LEAD, exprKeyAt, markOwner, isBodyVerb, autoActing } from './acting.js';
 import { createCamera } from './camera.js';
 import { createCaptions } from './captions.js';
 import { ACT, PROPV, MAKE, keyTracks } from './verbs_fx.js';
+import { POSE_VERBS } from './poses.js';
 import * as EXTRAS from '../lib/cast/extras.js';
 
 // every cast spec exported by lib/cast/extras.js (an object with a name and a shirt) registers itself by its export name
@@ -36,12 +37,14 @@ export function resolveBeatFrame(b, words, fps) {
   return Math.max(0, Math.round(w.t0 * fps) + (b.offset ?? -2));
 }
 
+const ZERO_KEY = /^(head_|shrug|x_|f[LR][xyz]$)/;
 function mixObj(a, b, w) {
   if (w >= 1 || a == null) return b; if (w <= 0 || b == null) return a;
   const o = {};
   for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) {
     const x = a[k], y = b[k];
-    if (x == null || y == null) o[k] = w < 0.5 ? (x ?? y) : (y ?? x);
+    if ((x == null) !== (y == null) && ZERO_KEY.test(k) && typeof (x ?? y) === 'number') o[k] = lerp(x ?? 0, y ?? 0, w);
+    else if (x == null || y == null) o[k] = w < 0.5 ? (x ?? y) : (y ?? x);
     else if (k === 'yaw') o[k] = x + angDiff(x, y) * w;
     else if (typeof x === 'number' && typeof y === 'number') o[k] = lerp(x, y, w);
     else if (Array.isArray(x) && Array.isArray(y)) o[k] = lerp3(x, y, w);
@@ -65,6 +68,9 @@ function mixHand(a, b, x) {
 // owners sorted by start; the newest started owner wins, cross-faded from the one before it over its fade
 // (hands: over the fade plus a 35 % settle tail, see mixHand)
 const HAND_FADE = 9, HAND_FIR = [0.28, 0.24, 0.20, 0.16, 0.12];
+// body-acting poses move a hand far and fast (ear, hip, over the head): their hand owners (and the release after them)
+// take a longer filter, so the forearm never swings more than the joint gate allows (poses.js `smooth`)
+const HAND_FIR_POSE = [0.15, 0.15, 0.14, 0.13, 0.12, 0.10, 0.09, 0.07, 0.05];
 function chain(list, f, val, env, hand = false) {
   let i = list.length - 1; while (i > 0 && list[i].start > f) i--;
   // a hand never changes owner in under HAND_FADE frames (a fade of 0 is a cut-in and stays one)
@@ -122,7 +128,7 @@ async function buildAct(R, X) {
     const st = { name, pos, yaw: c.yaw ?? 0, posture, hold: { L: null, R: null }, handW: {}, sling: null };
     const a = { name, S, c, st, posture, seed: Math.round(hash(name.length, name.charCodeAt(0), name.charCodeAt(1)) * 1e6),
       focus: c.focus, watch: c.watch, owners: { body: [], handL: [], handR: [], add: [] }, verbs: [], exprs: [{ f: -1e9, expr: c.expr || 'neutral' }],
-      focusSegs: [], mouth: [] };
+      focusSegs: [], mouth: [], holdLog: [], st0: pos.slice() };
     const p0 = pos.slice(), y0 = st.yaw;
     a.owners.body.push({ start: -1e9, fade: 0, verb: 'stand', fn: () => ({ pos: p0, yaw: y0, bob: base.bob || 0, lean: 0, pitch: base.pitch || 0, footL: base.footL, footR: base.footR }) });
     for (const s of ['L', 'R']) a.owners['hand' + s].push({ start: -1e9, fade: 0, verb: 'rest', fn: () => ({ rest: true }) });
@@ -130,17 +136,22 @@ async function buildAct(R, X) {
   }
   const beats = R.beats.map((b, i) => ({ ...b, at: frameOf(b), i })).sort((x, y) => x.at - y.at || x.i - y.i);
   const segs = {}, active = [], cues = [], fx = [];
-  for (const b of beats) {
+  const compile = b => {
     const a = byName[b.who];
     if (KEYV.has(b.do)) for (const q of KT.add(b)) cues.push({ fr: q.f, name: q.name, strength: q.strength });
-    if (!a && PROPV[b.do]) { const out = PROPV[b.do](b, C); for (const s of out.segs) (segs[s.prop] ||= []).push(s); for (const q of out.cues || []) cues.push({ fr: q.f, name: q.name, strength: q.strength }); continue; }
-    if (!a) { if (!KEYV.has(b.do)) fx.push(b); if (b.do === 'blink') cues.push({ fr: b.at, name: 'sensor_beep', strength: 0.4 }); if (b.do === 'glint') cues.push({ fr: b.at, name: 'glint', strength: 0.4 }); continue; }
-    if (b.expr) a.exprs.push({ f: b.at, expr: b.expr });
+    if (!a && PROPV[b.do]) { const out = PROPV[b.do](b, C); for (const s of out.segs) (segs[s.prop] ||= []).push(s); for (const q of out.cues || []) cues.push({ fr: q.f, name: q.name, strength: q.strength }); return; }
+    if (!a) { if (!KEYV.has(b.do)) fx.push(b); if (b.do === 'blink') cues.push({ fr: b.at, name: 'sensor_beep', strength: 0.4 }); if (b.do === 'glint') cues.push({ fr: b.at, name: 'glint', strength: 0.4 }); return; }
+    // the face leads its word by EXPR_LEAD frames (acting.js); `word` is kept for the expression-lead gate
+    if (b.expr) { const word = typeof b.f === 'number' ? null : frameOf({ ...b, offset: 0 }); a.exprs.push({ f: word == null ? b.at : Math.min(b.at, word - EXPR_LEAD), expr: b.expr, word }); }
     if (b.look) a.focusSegs.push({ from: b.at, target: b.look });
-    if (!b.do || KEYV.has(b.do)) continue;
+    if (b.mark) a.owners.add.push(markOwner(b));
+    if (!b.do || KEYV.has(b.do)) return;
     const V = VERBS[b.do] || ACT[b.do]; if (!V) throw new Error(`unknown verb ${b.do}`);
+    // any other body verb releases the pose being held (poses.js): the new action takes over from it
+    if (a.st.pose && !POSE_VERBS[b.do] && a.st.pose.t0 < b.at && a.st.pose.rel > b.at && isBodyVerb({ name: b.do, kind: b.kind })) a.st.pose.release(b.at);
     const out = V(b, a.st, C);
-    a.verbs.push({ name: b.do, start: b.at, end: out.end });
+    a.verbs.push({ name: b.do, kind: b.kind, start: b.at, end: out.end, auto: !!b.auto, pose: out.pose });
+    a.holdLog.push({ f: b.at, L: a.st.hold.L, R: a.st.hold.R });
     for (const o of out.owners || []) {
       o.verb = b.do;
       a.owners[o.chan].push(o);
@@ -150,7 +161,14 @@ async function buildAct(R, X) {
     for (const q of out.active || []) active.push(q);
     if (out.focus) a.focusSegs.push(out.focus);
     if (out.mouth) a.mouth.push(...out.mouth);
-  }
+  };
+  for (const b of beats) compile(b);
+  // a pose's end moves when a later pose (or stand_up) releases it
+  const poseEnds = () => { for (const a of actors) for (const v of a.verbs) if (v.pose) v.end = Math.min(v.end, v.pose.rel + v.pose.R + 4); };
+  poseEnds();
+  // auto-acting: key poses for every lead's frames no body verb covers (acting.js), picked from the words said there
+  for (const b of autoActing({ R, actors, words, fps, win: R.win || [[F0, F1 + 1]] })) compile({ ...b, at: b.f });
+  poseEnds();
   for (const a of actors) {
     for (const k of Object.keys(a.owners)) a.owners[k].sort((x, y) => x.start - y.start);
     a.exprs.sort((x, y) => x.f - y.f);
@@ -251,10 +269,12 @@ async function buildAct(R, X) {
     // hand targets pass a short pure FIR over the last frames: a fast hand move keeps its shape but loses its spike, so a
     // joint never snaps (one frame of an arm is the weighted mean of where the verbs put the hand over 5 frames)
     const fir = (side, g) => {
-      let o = null, ws = 0;
-      HAND_FIR.forEach((w, j) => { const x = handAt(side, Math.max(X.F0, g - j)); ws += w;
-        o = o ? mixObj(o, x, w / ws) : x; });
-      return o;
+      const L = a.owners['hand' + side], smoothAt = h => { let q = L.length - 1; while (q > 0 && L[q].start > h) q--; return L[q].smooth ? 1 : 0; };
+      let k = 0; for (let j = 0; j < 10; j++) k += smoothAt(g - j) / 10;            // share of pose hands over the last 10 frames
+      const xs = HAND_FIR_POSE.map((_, j) => handAt(side, Math.max(X.F0, g - j)));
+      const avg = taps => { let o = null, ws = 0; taps.forEach((w, j) => { ws += w; o = o ? mixObj(o, xs[j], w / ws) : xs[j]; }); return o; };
+      const o = avg(HAND_FIR);
+      return k > 0 ? mixObj(o, avg(HAND_FIR_POSE), k) : o;
     };
     const vs = {};
     for (const side of ['L', 'R']) { vs[side] = fir(side, f); off[side] = busy(side, vs[side]); late[side] = busy(side, handAt(side, f - LATE)); }
@@ -279,13 +299,18 @@ async function buildAct(R, X) {
       elbowL: elbows.L, elbowR: elbows.R, armFKL: fks.L, armFKR: fks.R,
     };
     for (const n of ['dx', 'footPitchL', 'footPitchR', 'footYawL', 'footYawR', 'kneeDir', 'shTwist', 'hipTwist']) if (body[n] != null) P[n] = body[n];
-    for (const n of ['dx', 'shTwist', 'hipTwist']) { const x = k(n); if (x) P[n] = (P[n] || 0) + x; }
+    for (const n of ['dx', 'shTwist', 'hipTwist', 'footPitchL', 'footPitchR']) { const x = k(n) + (add[n] || 0); if (x) P[n] = (P[n] || 0) + x; }
+    // body-acting poses (poses.js) add bob, shrug and feet moves; x_ keys (hand props, marks) go straight to the figure
+    P.bob += add.bob || 0; P.shrug += add.shrug || 0;
+    for (const s of ['L', 'R']) if (add['f' + s + 'x'] || add['f' + s + 'y'] || add['f' + s + 'z']) { const q = P['foot' + s] || base['foot' + s];
+      P['foot' + s] = [q[0] + (add['f' + s + 'x'] || 0), q[1] + (add['f' + s + 'y'] || 0), (q[2] || 0) + (add['f' + s + 'z'] || 0)]; }
+    for (const n in add) if (n.startsWith('x_')) P[n] = add[n];
     a.idleLook = ibH ? iw * ibH.look : 0;
     a.S.pose(P); F.posed.add(a.name); a.P = P;
   }
 
   function faceActor(a, f, camPos) {
-    let e = exprAt(a.exprs, f);
+    const ek = exprKeyAt(a.exprs, f); let e = ek.expr; a.exprKey = ek;
     const talking = a.mouth.some(([s, t]) => f >= s && f < t);
     const id = idle(a.seed, f, a.posture);
     if (talking && EXPR[e + '_o']) e += '_o';
@@ -298,7 +323,7 @@ async function buildAct(R, X) {
     if (d < 3) g = lerp3(gz(focusAt(a, f - d - 1, a.focusSegs, active)), g, smoother((d + 1) / 4));
     const sc = saccade(a.seed, f);
     const blink = a.blinks.at(f);
-    const P = { expr: e, blink, look: g[0] + sc[0] + (cur.prop ? 0 : a.idleLook || 0), look_v: g[1] + sc[1] };
+    const P = { expr: e, blink, look: g[0] + sc[0] + (cur.prop ? 0 : a.idleLook || 0), look_v: g[1] + sc[1], t: f, age: f - ek.f, cam: camPos };
     a.S.face(P); a.face = P; a.lastExpr = e;
   }
 
@@ -366,6 +391,8 @@ async function buildAct(R, X) {
       const sole = Math.max(...['L', 'R'].flatMap(s => [a.S.parts.ankles[s], a.S.parts.toes[s]].map(o => toPx(o.getWorldPosition(new THREE.Vector3()))[1])));
       out.actors[a.name] = { pos: F.bodies[a.name].pos.map(x => +x.toFixed(4)), yaw: +F.bodies[a.name].yaw.toFixed(2), expr: a.face.expr, blink: a.face.blink,
         verb: a.verbs.filter(x => x.start <= f && f < x.end).map(x => x.name), head: box, feet, limbs: a.S.rigWorld(),
+        body: a.verbs.filter(x => x.start <= f && f < x.end && isBodyVerb(x)).map(x => x.name).pop() || null, lead: !!a.lead,
+        exprFrom: a.exprKey?.f > -1e8 ? a.exprKey.f : null, exprWord: a.exprKey?.word ?? null,
         headW: toB(c).map(x => +x.toFixed(4)), figH: +((sole - ys[0]) / height).toFixed(3),
         inFrame: a.S.root.visible && vz < 1 && box[2] > 0 && box[0] < width && box[3] > 0 && box[1] < height };
     }
@@ -475,6 +502,10 @@ export async function boot({ film, width, height }) {
   const X = { stage, words, fps, F0, F1, width, height, cap }, bg0 = stage.scene.background;
   const defs = [{ ...R1, name: R1.name || 'lobby', show: R1.show || [{ from: R1.frames[0] }] }, ...(R2?.acts || [])];
   for (const am of R2?.amend || []) { const d = defs.find(x => x.name === am.act); d.shots = [...d.shots, ...(am.shots || [])]; d.beats = [...d.beats, ...(am.beats || [])]; }
+  // each act's on-screen windows (auto-acting fills them): from each `show` to the next act's
+  const fr0 = x => typeof x === 'number' ? x : resolveBeatFrame(x, words, fps);
+  const starts = defs.flatMap((d, k) => d.show.map(w => [fr0(w.from), k])).sort((x, y) => x[0] - y[0]);
+  defs.forEach((d, k) => { d.win = starts.map(([a], i) => [a, i + 1 < starts.length ? starts[i + 1][0] : F1 + 1]).filter((_, i) => starts[i][1] === k); });
   const acts = [];
   for (const d of defs) acts.push(await buildAct(d, X));
   // windows: act k is on screen from its `from`; a dissolve of n frames is centred on that frame
