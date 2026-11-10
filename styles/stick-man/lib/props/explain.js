@@ -283,9 +283,10 @@ export function makeSplit(stage, { h = 2.2, gap = 1.3, labels = ['WHITE', 'BLACK
 }
 
 // ---------------------------------------------------------------- big number / stamp pop
-// build { text ('SAME', '0 °F', '{n}%' counts with the keyed n), h (m), color, tilt (deg), frame (stamp border) }.
+// build { text ('SAME', '0 °F', '{n}%' counts with the keyed n), h (m), color, tilt (deg), frame (stamp border),
+// tail ('left' / 'right': a speech-bubble tail under the frame, toward the speaker; quoted lines) }.
 // set(t, { n, life }): slams in from 1.8x in 4 frames with a small overshoot and a shake, holds, gone after `life` s.
-export function makeStamp(stage, { text = 'SAME', h = 0.32, color = [0.88, 0.10, 0.10], tilt = -8, frame = true, px = 150 } = {}) {
+export function makeStamp(stage, { text = 'SAME', h = 0.32, color = [0.88, 0.10, 0.10], tilt = -8, frame = true, px = 150, tail = null } = {}) {
   const cv = document.createElement('canvas'), c = cv.getContext('2d'), tex = new THREE.CanvasTexture(cv);
   tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
   const mesh = overlay(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: tex }), 9);
@@ -293,13 +294,17 @@ export function makeStamp(stage, { text = 'SAME', h = 0.32, color = [0.88, 0.10,
   const draw = t => {
     const font = `900 ${px}px InterReel, Arial, Helvetica, sans-serif`; c.font = font;
     const tw = Math.ceil(c.measureText(t).width), pad = frame ? px * 0.5 : px * 0.2, H = Math.round(px * 1.45 + pad), Wd = Math.round(tw + 2 * pad);
-    cv.width = Wd; cv.height = H; c.font = font; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
-    c.clearRect(0, 0, Wd, H);
+    const TH = tail && frame ? Math.round(px * 0.6) : 0;                     // tail height under the bubble
+    cv.width = Wd; cv.height = H + TH; c.font = font; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
+    c.clearRect(0, 0, Wd, H + TH);
     if (frame) { const lw = px * 0.12; c.beginPath(); c.roundRect(lw, lw, Wd - 2 * lw, H - 2 * lw, px * 0.22);
-      c.fillStyle = 'rgba(255,252,240,0.92)'; c.fill(); c.lineWidth = lw * 2.2; c.strokeStyle = css(INK_RGB); c.stroke(); c.lineWidth = lw; c.strokeStyle = css(color); c.stroke(); }
+      if (TH) { const x0 = tail === 'left' ? Wd * 0.22 : Wd * 0.78, d = tail === 'left' ? -1 : 1;
+        c.moveTo(x0 - px * 0.22, H - lw * 1.5); c.lineTo(x0 + d * px * 0.30, H + TH - lw * 1.5); c.lineTo(x0 + px * 0.22, H - lw * 1.5); }
+      c.fillStyle = 'rgba(255,252,240,0.92)'; c.fill('nonzero'); c.lineWidth = lw * 2.2; c.strokeStyle = css(INK_RGB); c.stroke(); c.lineWidth = lw; c.strokeStyle = css(color); c.stroke();
+      if (TH) { const x0 = tail === 'left' ? Wd * 0.22 : Wd * 0.78; c.fillStyle = 'rgb(255,252,240)'; c.fillRect(x0 - px * 0.17, H - lw * 3.2, px * 0.34, lw * 2.6); } }
     c.lineWidth = px * 0.20; c.strokeStyle = css(INK_RGB); c.strokeText(t, Wd / 2, H / 2 + px * 0.05);
     c.fillStyle = css(color); c.fillText(t, Wd / 2, H / 2 + px * 0.05);
-    tex.needsUpdate = true; mesh.scale.set(h * Wd / H, h, 1);
+    tex.needsUpdate = true; mesh.scale.set(h * Wd / H, h * (H + TH) / H, 1);
   };
   const g = new THREE.Group(), pop = new THREE.Group(); pop.add(mesh); g.add(pop); pop.rotation.z = tilt * Math.PI / 180;
   const set = (t, { n = 0, life = Infinity } = {}) => {

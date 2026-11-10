@@ -1,0 +1,118 @@
+{
+ "film": "stick04-levels-of-loud",
+ "note": "Levels shape: every level is its own place and gets a LEVEL n stamp plus a counting dB stamp, louder each time; level 5 (Krakatoa) is a prop-only island set; the payoff pays off the hook (3,000 miles, a police chief).",
+ "lines": [
+  {
+   "id": "l01",
+   "see": "On a Halden City street a five-bar LEVELS chart shoots up beside Kai as a LOUD! stamp slams in, then 3,000 MILES AWAY pops up by his head.",
+   "shot": "ms",
+   "set": "halden-street",
+   "props": [],
+   "fx": [
+    "loud",
+    "levels",
+    "five",
+    "miles"
+   ],
+   "still": "miles"
+  },
+  {
+   "id": "l02",
+   "see": "In the sunny park Wren whispers into Kai's ear, tiny sound rings pass between them, a LEVEL 1 \u00b7 30 dB stamp, Kai giggles.",
+   "shot": "two",
+   "set": "park",
+   "props": [],
+   "fx": [
+    "lvl",
+    "db",
+    "hush"
+   ],
+   "still": "whisper"
+  },
+  {
+   "id": "l03",
+   "see": "In the classroom Kai and Bram talk under a 60 dB stamp, then a bar chart shows 70 dB ten times taller than 60 dB and 10x POWER slams in.",
+   "shot": "two",
+   "set": "lab",
+   "props": [],
+   "fx": [
+    "db",
+    "chart",
+    "tenx"
+   ],
+   "still": "times"
+  },
+  {
+   "id": "l04",
+   "see": "Back on the Halden street cars roar past, sound rings hit Kai, an 85 dB stamp, and a callout rings his sore ear.",
+   "shot": "wide",
+   "set": "halden-street",
+   "props": [],
+   "fx": [
+    "db",
+    "honk",
+    "ear"
+   ],
+   "still": "traffic"
+  },
+  {
+   "id": "l05",
+   "see": "In Halden plaza a crowd fist-pumps at a ROCK! concert, a 120 dB stamp slams in, and Kai is blasted back by PAIN!",
+   "shot": "wide",
+   "set": "halden-plaza",
+   "props": [],
+   "fx": [
+    "rock",
+    "db",
+    "pain",
+    "waves"
+   ],
+   "still": "concert"
+  },
+  {
+   "id": "l06",
+   "see": "A lone volcano island at sea under a 1883 stamp; the volcano explodes in a white flash, a smoke cloud and a pow star.",
+   "shot": "wide",
+   "set": "island",
+   "props": [
+    "volcano"
+   ],
+   "fx": [
+    "year",
+    "blast",
+    "pow"
+   ],
+   "still": "exploded"
+  },
+  {
+   "id": "l07",
+   "see": "Closer on the erupting volcano, huge sound rings roll out over the sea while a 170 dB stamp counts up, then 100 MILES.",
+   "shot": "insert",
+   "set": "island",
+   "props": [
+    "volcano"
+   ],
+   "fx": [
+    "db",
+    "waves",
+    "far"
+   ],
+   "still": "decibels"
+  },
+  {
+   "id": "l08",
+   "see": "On a quiet street the police chief beside his car jumps as rings arrive, 3,000 MILES, and he says CANNONS?! in a speech bubble.",
+   "shot": "ms",
+   "set": "street",
+   "props": [
+    "police"
+   ],
+   "fx": [
+    "miles",
+    "waves",
+    "bubble"
+   ],
+   "still": "cannon"
+  }
+ ]
+}

@@ -15,17 +15,17 @@ Goal: a fresh agent turns `$ARGUMENTS` into `films/<slug>/renders/<slug>_vN.mp4`
 | 2 | voice | `python styles/stick-man/tools/voice.py films/<slug> --samples Achird`, then `--take Achird` → `vo/vo.wav`; takes vary ±2 s: re-take up to 3 times, keep the shortest with no ❌ | |
 | | **gate: Kai approves the voice** | | |
 | 3 | align | `python styles/stick-man/tools/align.py films/<slug>` → `vo/words.json`, `vo/voice-qa.md` (❌ = re-take) | |
-| 4 | storyboard | `storyboard.json`: per line what the viewer must SEE, shot, set, props / fx; ≥ 3 sets or cutaways, ≤ 2 lines alike, ≥ 40 % with props / fx | REEL_DATA.md (Storyboard) |
-| 5 | reel data | `reel.js` (+ `reel2.js` for more acts) built to the storyboard; missing set, prop or fx → SETS.md, VERBS.md | REEL_DATA.md, VERBS.md, SETS.md |
-| 6 | board | `node styles/stick-man/tools/board.mjs films/<slug>` → `review/board.jpg`; spawn the board reviewer (GATES.md, sonnet, medium) → `review/board-verdict.json` | GATES.md (judged gate) |
-| 7 | preview | `node styles/stick-man/tools/shot.mjs --film films/<slug> --frames 0-<last> --report films/<slug>/review/pre-stats.txt --fast 1` (top 5 joint pops per actor) | GATES.md |
+| 4 | storyboard | `storyboard.json`: per line what the viewer must SEE, shot, set, props / fx, `still` word; ≥ 3 sets or cutaways, ≤ 2 lines alike, ≥ 40 % with props / fx | REEL_DATA.md (Storyboard) |
+| 5 | reel data | `reel.js` (+ `reel2.js` for more acts) built to the storyboard; missing set, prop or fx → SETS.md, VERBS.md; check stills with `shot.mjs --frames a,b --out <dir>/f_%d.jpg --w 540 --h 960` (`--help`) | REEL_DATA.md, VERBS.md, SETS.md |
+| 6 | preview | `node styles/stick-man/tools/shot.mjs --film films/<slug> --frames 0-<last> --report films/<slug>/review/pre-stats.txt --fast 1` (top 5 joint pops per actor); fix before the board | GATES.md |
+| 7 | board | once, after preview: `node styles/stick-man/tools/board.mjs films/<slug> --judge 3` → `review/board.jpg`, `review/board-verdict.json` (3 headless Sonnet reviews, 2 of 3 = shown, ~4.5k tokens each) | GATES.md (judged gate) |
 | 8 | sound | `node styles/stick-man/tools/shot.mjs --film films/<slug> --cues films/<slug>/audio/cues.json`, write `audio/music.json` (REEL_DATA.md), then `python styles/stick-man/tools/sound.py films/<slug>` | |
 | 9 | render | `node styles/stick-man/tools/shot.mjs --film films/<slug> --frames 0-<last> --mp4 films/<slug>/renders/<slug>_vN.mp4 --audio films/<slug>/audio/mix.wav` | |
 | 10 | gates | `shot.mjs ... --report films/<slug>/review/<slug>_vN-stats.txt --in <mp4>`, then `node styles/stick-man/tools/gates.mjs --report <stats> --in <mp4> --film films/<slug> --out films/<slug>/review/<slug>_vN-gates.txt` | GATES.md |
 | 11 | deliver | `node styles/stick-man/tools/sheet.mjs --in <mp4> --n 30 --out films/<slug>/review/<slug>_vN-sheet.jpg` (one tile a second); fill `LEDGER.md`; send Kai mp4, sheet, board, gates | |
 | | **gate: Kai watches the video** | | |
 
-Board before render: a line the reviewer marks "not shown" is fixed in the storyboard and reel data, not at the end.
+Board before render: a line marked "not shown" is fixed in the storyboard (`still` word) and reel data (a visible fx on the key word), then the board is judged again.
 
 | Rule | Why |
 |---|---|

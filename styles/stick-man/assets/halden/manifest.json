@@ -1,0 +1,331 @@
+{
+ "source": "city-export.blend",
+ "pieces": {
+  "corner_shop": {
+   "from": "facades_corner_shop",
+   "bytes": 223136,
+   "tris": 2561,
+   "materials": 14,
+   "lo": [
+    -5.1,
+    -1.24,
+    0
+   ],
+   "hi": [
+    5.1,
+    10.1,
+    5.55
+   ],
+   "decimate": 1,
+   "sec": 0.15
+  },
+  "brick_walkup": {
+   "from": "facades_brick_walkup",
+   "bytes": 370688,
+   "tris": 4940,
+   "materials": 18,
+   "lo": [
+    -5.3,
+    -1.24,
+    0
+   ],
+   "hi": [
+    5.3,
+    12.3,
+    20.1
+   ],
+   "decimate": 1,
+   "sec": 0.17
+  },
+  "stone_bank": {
+   "from": "facades_stone_bank",
+   "bytes": 325028,
+   "tris": 3969,
+   "materials": 18,
+   "lo": [
+    -12.4,
+    -3.2,
+    0
+   ],
+   "hi": [
+    12.4,
+    20.4,
+    13.2
+   ],
+   "decimate": 1,
+   "sec": 0.16
+  },
+  "diner": {
+   "from": "facades_diner",
+   "bytes": 618760,
+   "tris": 11884,
+   "materials": 11,
+   "lo": [
+    -8.2,
+    -3.1,
+    0
+   ],
+   "hi": [
+    8.2,
+    6.2,
+    6.8
+   ],
+   "decimate": 1,
+   "sec": 0.1
+  },
+  "police_station": {
+   "from": "facades_police_station",
+   "bytes": 248460,
+   "tris": 3975,
+   "materials": 16,
+   "lo": [
+    -13.1,
+    -4.07,
+    0
+   ],
+   "hi": [
+    13.1,
+    18.1,
+    12.5
+   ],
+   "decimate": 1,
+   "sec": 0.08
+  },
+  "glass_tower": {
+   "from": "facades_glass_tower",
+   "bytes": 74424,
+   "tris": 348,
+   "materials": 9,
+   "lo": [
+    -8.5,
+    -2.5,
+    0
+   ],
+   "hi": [
+    8.5,
+    16.5,
+    64.8
+   ],
+   "decimate": 1,
+   "sec": 0.05
+  },
+  "street_lamp": {
+   "from": "street_street_lamp",
+   "bytes": 16248,
+   "tris": 212,
+   "materials": 2,
+   "lo": [
+    -0.18,
+    -0.08,
+    0
+   ],
+   "hi": [
+    0.18,
+    2.1,
+    6.447
+   ],
+   "decimate": 1,
+   "sec": 0.01
+  },
+  "tree": {
+   "from": "street_tree",
+   "bytes": 24308,
+   "tris": 280,
+   "materials": 3,
+   "lo": [
+    -1.598,
+    -1.5,
+    0
+   ],
+   "hi": [
+    1.545,
+    1.5,
+    5.1
+   ],
+   "decimate": 1,
+   "sec": 0.02
+  },
+  "bench": {
+   "from": "street_bench",
+   "bytes": 50952,
+   "tris": 588,
+   "materials": 2,
+   "lo": [
+    -0.9,
+    -0.25,
+    0
+   ],
+   "hi": [
+    0.9,
+    0.3,
+    0.95
+   ],
+   "decimate": 1,
+   "sec": 0.02
+  },
+  "hydrant": {
+   "from": "street_hydrant",
+   "bytes": 31096,
+   "tris": 464,
+   "materials": 2,
+   "lo": [
+    -0.25,
+    -0.27,
+    0
+   ],
+   "hi": [
+    0.2,
+    0.27,
+    0.8
+   ],
+   "decimate": 1,
+   "sec": 0.02
+  },
+  "mailbox": {
+   "from": "street_mailbox",
+   "bytes": 38112,
+   "tris": 475,
+   "materials": 6,
+   "lo": [
+    -0.28,
+    -0.273,
+    0
+   ],
+   "hi": [
+    0.28,
+    0.25,
+    1.35
+   ],
+   "decimate": 1,
+   "sec": 0.03
+  },
+  "trash_can": {
+   "from": "street_trash_can",
+   "bytes": 27020,
+   "tris": 272,
+   "materials": 4,
+   "lo": [
+    -0.31,
+    -0.31,
+    0
+   ],
+   "hi": [
+    0.31,
+    0.31,
+    1.074
+   ],
+   "decimate": 1,
+   "sec": 0.02
+  },
+  "bus_stop": {
+   "from": "street_bus_stop",
+   "bytes": 149396,
+   "tris": 2418,
+   "materials": 13,
+   "lo": [
+    -2.757,
+    -0.308,
+    0
+   ],
+   "hi": [
+    2,
+    1.6,
+    3
+   ],
+   "decimate": 1,
+   "sec": 0.09
+  },
+  "newsbox": {
+   "from": "street_newsbox",
+   "bytes": 50568,
+   "tris": 741,
+   "materials": 5,
+   "lo": [
+    -0.25,
+    -0.242,
+    0
+   ],
+   "hi": [
+    0.25,
+    0.22,
+    1.05
+   ],
+   "decimate": 1,
+   "sec": 0.03
+  },
+  "sedan": {
+   "from": "vehicles_sedan",
+   "bytes": 74744,
+   "tris": 1012,
+   "materials": 8,
+   "lo": [
+    -2.3,
+    -0.965,
+    0.01
+   ],
+   "hi": [
+    2.3,
+    0.965,
+    1.42
+   ],
+   "decimate": 1,
+   "sec": 0.04
+  },
+  "taxi": {
+   "from": "vehicles_taxi",
+   "bytes": 174872,
+   "tris": 2461,
+   "materials": 14,
+   "lo": [
+    -2.3,
+    -0.965,
+    0.01
+   ],
+   "hi": [
+    2.3,
+    0.965,
+    1.756
+   ],
+   "decimate": 1,
+   "sec": 0.08
+  },
+  "sidewalk": {
+   "from": "street_sidewalk_0e7e2",
+   "bytes": 37376,
+   "tris": 108,
+   "materials": 5,
+   "lo": [
+    -11.2,
+    -0.7,
+    0
+   ],
+   "hi": [
+    11.2,
+    4,
+    0.16
+   ],
+   "decimate": 1,
+   "sec": 0.04
+  },
+  "road_straight": {
+   "from": "street_road_straight_0a81b",
+   "bytes": 14960,
+   "tris": 12,
+   "materials": 1,
+   "lo": [
+    -12,
+    -7,
+    -0.06
+   ],
+   "hi": [
+    12,
+    7,
+    0
+   ],
+   "decimate": 1,
+   "sec": 0.03
+  }
+ },
+ "total_bytes": 2550148,
+ "sec": 1.17
+}

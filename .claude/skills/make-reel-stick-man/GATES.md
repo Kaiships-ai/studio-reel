@@ -39,28 +39,21 @@ itself, or takes `--dbg <jsonl>`.
 | props / fx seen | all | every listed prop / fx seen ≥ 3 frames in its line's window | the plan is really on screen |
 | board shown | ≥ 85 % | judged: `review/board-verdict.json` from the reviewer below | every spoken line illustrated |
 
-### The judged gate: board reviewer (spawn it, never judge your own board)
+### The judged gate: board reviewers (never judge your own board)
 
-Run `node styles/stick-man/tools/board.mjs films/<slug>` (writes `review/board.jpg`, no plan text on it), then spawn one
-sub-agent with **model `sonnet`, effort `medium`** and exactly this prompt (fill `<slug>`). Save its JSON reply as
-`films/<slug>/review/board-verdict.json`; gates.mjs reads it. A board changes (new reel data) = a new reviewer.
+Run it once, after preview (stage 7): `node styles/stick-man/tools/board.mjs films/<slug> --judge 3`. It renders
+`review/board.jpg` (one image ≤ 1560 px: two stills per line, A on the entry's `still` word, B at the line's fx peak, the
+spoken words burned under each pair, no plan text) and sends it inline to 3 independent headless `claude -p` reviews
+(sonnet, effort medium, no tools, no settings, empty cwd); a line is shown when 2 of 3 say shown. Writes
+`review/board-verdict.json` (votes, reasons, tokens per review); gates.mjs reads it. New reel data = run it again.
+The prompt lives in `board.mjs` (`prompt()`); `--prompt 1` prints it with the absolute board path, for an Agent-tool
+reviewer when `claude` is not on PATH (that route measured ~80k tokens a review, the headless one ~4.1-4.7k).
 
-```text
-You are an independent storyboard reviewer for a 30-second vertical explainer reel. You did not make it and you have no
-other context. Open the image films/<slug>/review/board.jpg with the Read tool (absolute path under the library root).
-It holds one still per spoken line; under each still are the line id and the words spoken on that line. The big white
-words burned into each still are captions: ignore them as evidence.
-For each line decide whether the still SHOWS what the words say, so a viewer with the sound off would get that line:
-- shown = the key thing the words name is visible: the object, the action, the process (light bouncing, air rising, heat
-  flowing), the number, the place, or the comparison.
-- not shown = people standing or talking while the words describe something else; a thing named but not on screen;
-  a process described but not drawn. A face reacting counts only when the words are about that reaction.
-Be strict: if you have to guess or be generous, it is not shown.
-Reply with JSON only, no prose, one entry per line on the board in order:
-{"lines":[{"id":"l01","shown":true,"why":"what you see, 12 words or fewer"}]}
-```
+Measured 10/11 (`films/*/review/board-verdict-*.json`): robe board 100 % in 3 of 3 gates (15 reviews, 1 split vote);
+reel 1 board, 15 single reviews 90-100 %, both-of-2 pairs 80-100 %, 2-of-3 gates 100, 100, 100 % → 2 of 3 is the rule.
+The old one-still board with one reviewer scored the same robe content 89 % then 56 %.
 
-## Not scripted (eyes, on the 24-tile sheet and stills)
+## Not scripted (eyes, on the 30-tile sheet and stills)
 
 | Check | Pass when |
 |---|---|
@@ -72,8 +65,11 @@ Reply with JSON only, no prose, one entry per line on the board in order:
 ## Reel 1 (`reel1_v4b`, approved by Kai 10/11) against these gates
 
 14 PASS, 1 FAIL: joint change 29.2 deg (kai, frame 399, right upper arm). Story gates (storyboard written 10/11 after the
-cut, `films/stick01-dye-pack/storyboard.json`): 6 computed PASS, board shown FAIL 70 % (l02, l03, l05 not shown in their one still; `review/board-verdict.json`).
+cut, `films/stick01-dye-pack/storyboard.json`): 6 computed PASS, board shown FAIL 70 % (one still). `reel1_v5` (10/11, p7):
+same picture plus a LOVELY DAY! speech bubble (l03, `dof: 0` on that close-up) and a ?! stamp (l06), l05 still word
+`explodes`; board 100 % (3 of 3 gates), all 7 story gates PASS; joint change still the one FAIL (29.9 deg, kai f401: the
+same on the data without the stamps, engine drift since v4b). Output: `films/stick01-dye-pack/review/reel1_v5-gates.txt`.
 Reel 2 (`stick02-black-robe`): duration 33.9 s, 1 set, 3 lines alike, board shown 33 % FAIL (`review/reel2-story-gates.txt`). Two rules settled 10/11: a face with
 expr `sleep` never counts toward a frozen run, and a frame with no figure in it (prop-only cutaway) never counts toward
 the small-figure run. Kai approved the video with these open; a new
-reel still has to pass, or the FAIL goes to Kai with a still. Output: `films/stick01-dye-pack/review/reel1_v4b-gates.txt`.
+reel still has to pass, or the FAIL goes to Kai with a still.

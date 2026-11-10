@@ -1,6 +1,6 @@
 {
  "film": "stick01-dye-pack",
- "note": "Reel 1 storyboard, written after the approved cut (v4b) as the example of the storyboard stage: one entry per spoken line. Checked against __dbg: the note, the door sensor LED and the coughed puff are too small to count as seen, and the police car is only heard.",
+ "note": "Reel 1 storyboard, written after the approved cut (v4b) as the example of the storyboard stage: one entry per spoken line. Checked against __dbg: the note, the door sensor LED and the coughed puff are too small to count as seen, and the police car is only heard. 10/11 (p7): l03 got a LOVELY DAY! stamp (her goodbye, drawn), l06 a ?! stamp, and l05 its still word 'explodes'; the board shows the still word and the fx peak.",
  "lines": [
   {
    "id": "l01",
@@ -28,12 +28,15 @@
   },
   {
    "id": "l03",
-   "see": "Close on the teller turning to wave him off, all smiles.",
+   "see": "Close on the teller turning to wave him off, all smiles, a pink LOVELY DAY! popping by her head.",
    "shot": "cu",
    "set": "bank-lobby",
    "props": [],
-   "fx": [],
-   "on": "lovely"
+   "fx": [
+    "bye"
+   ],
+   "on": "lovely",
+   "still": "day"
   },
   {
    "id": "l04",
@@ -59,15 +62,18 @@
     "glow",
     "burst"
    ],
-   "on": "later"
+   "on": "later",
+   "still": "explodes"
   },
   {
    "id": "l06",
-   "see": "Close on Kai, shocked, a puff of smoke at his mouth.",
+   "see": "Close on Kai, shocked, a ?! popping over his head and a puff of smoke at his mouth.",
    "shot": "cu",
    "set": "street",
    "props": [],
-   "fx": [],
+   "fx": [
+    "huh"
+   ],
    "on": "wait"
   },
   {

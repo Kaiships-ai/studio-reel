@@ -44,6 +44,9 @@ A beat may carry only `expr` / `look` (no `do`).
 | `pluck` | `prop, from, hand, to, dur`: pull a prop out of a bag | `{ who: 'kai', do: 'pluck', prop: 'bill', from: 'bag', hand: 'L', dur: 9 }` |
 | `let_fall` | `prop, hand, dur, ground`: open the hand, paper flutters down | `{ who: 'kai', do: 'let_fall', prop: 'bill', hand: 'L', dur: 40 }` |
 
+Walks: start a walk at `f: -14` (frame 0 lands mid-stride; `f: 0` pops the knees, 32.6 deg/f); while walking only
+`wave_small` (a `gesture wave` popped 38.7 deg/f).
+
 Joint gate (≤ 25 deg/f): nod, tilt, shrug, wave, finger_wave, slump, idle, talk, look_at, turn_to are safe. fist_pump,
 point, cough, startle, wave_small used to pop 26-52 deg/f; they now carry the built-in ease above and pass (worst 24.4 deg/f,
 `films/stick-fxkit/review/verbs-after.txt`). Keep two body verbs of one hand ≥ their ease apart; a FAIL line lists the top 5
@@ -71,8 +74,9 @@ frames.
 
 ## Effects (`make: { name: { kind, ... } }` in an act)
 
-`at` = a place, `[x,y,z]`, `{ prop, off }` (m) or `{ head: actor, side, up, fwd }` (m from his head: side = toward his right,
-fwd = where he faces). Sizes are metres; a standing figure is ~1.75 m, so 0.3 m reads at phone size in a two-shot.
+`at` = a place, `[x,y,z]`, `{ prop, off }` (m) or `{ head: actor, side, up, fwd }` (m from his head: side = toward his LEFT,
+so + is screen right when he faces the camera; fwd = where he faces). A `flow` / `rays` anchor 0.3 m or more below the head
+with no `fwd` gets `fwd: 0.2` (at 0 the torso hides it); a `shimmer` behind him takes `fwd: -0.18`. Sizes are metres; a standing figure is ~1.75 m, so 0.3 m reads at phone size in a two-shot.
 
 | Kind | Keys / params (units) | Starts with |
 |---|---|---|
@@ -90,6 +94,9 @@ fwd = where he faces). Sizes are metres; a standing figure is ~1.75 m, so 0.3 m 
 ## Explainer effects (`lib/props/explain.js`; proof sheet `films/stick-fxkit/review/fxkit_sheet.jpg`)
 
 Use one on the key word of every line that describes a process, a number or a comparison. All are toon with an ink outline.
+Defaults when a key is left out: rays `n 3, r 0.035, spread 0.22, grow 0.35 s, life ∞`; flow `r 0.035, pips 4, grow 0.7 s,
+life ∞`; shimmer `w 0.5, h 0.7, n 3`; cutbox `r 0.28, h 0.8, th 0.035`; callout `r 0.22, h 0.15 (label), dir [1.6, 1.3]`;
+bars `h 0.6, w 0.16`; split `h 2.2, gap 1.3, lh 0.26`; stamp `h 0.32, tilt -8, life ∞` (always give a stamp a `life`).
 
 | Kind | Verb (what it shows) | Params (m, s) | Example (`make` entry, then the beat) |
 |---|---|---|---|
@@ -100,7 +107,7 @@ Use one on the key word of every line that describes a process, a number or a co
 | `callout` | a zoom ring round a detail with a leader and a label | `at, r, text, dir` ([x,y] in units of r), `h`; key `show` | `look: { kind: 'callout', at: [0.17, 0.85, 1.22], r: 0.11, text: 'AIR GAP', dir: [-2.4, 2] }` · `set show to 1, ease 'back'` |
 | `bars` | a bar chart grows, values count up with the bars | `at, values, labels, colors, max, h, w, unit`; keys `show, grow, v0, v1...` | `chart: { kind: 'bars', at: 'bench_top', values: [41, 12], labels: ['TIGHT', 'LOOSE'], unit: '°' }` · `set show 1, then grow 1 (dur 24)` |
 | `split` | two sides compared: an ink bar wipes in between them, a VS badge pops, labels slide in | `at, h, gap, labels, colors, lh, badge`; key `show` 0..1 | `vs: { kind: 'split', at: [0, -0.15, 0], h: 2.3, gap: 1.7, labels: ['WHITE', 'BLACK'] }` · `set show to 1, dur 24, ease 'linear'` |
-| `stamp` | a big word or number slams in (`{n}` counts with key `n`) | `at, text, h, color, tilt, frame, life` | `same: { kind: 'stamp', at: [0, -0.5, 1.15], text: 'SAME', h: 0.55 }` · `do: 'fire'` |
+| `stamp` | a big word or number slams in (`{n}` counts with key `n`); `tail: 'left'/'right'` makes it a speech bubble (quoted lines) | `at, text, h, color, tilt, frame, tail, life` | `same: { kind: 'stamp', at: [0, -0.5, 1.15], text: 'SAME', h: 0.55 }` · `do: 'fire'` |
 
 Sound names (`styles/stick-man/tools/sound_bank.py` BANK): slide thud rustle ting ding whoosh step_l step_r step beep tick poof
 hiss scratch pop snore clunk blip ping sizzle slide_whistle_up flutter wah siren sting.
@@ -114,6 +121,7 @@ hiss scratch pop snore clunk blip ping sizzle slide_whistle_up flutter wah siren
 | `of`, `with` | subjects; extra things to keep in frame |
 | `angle`, `heading` | degrees around the subject; frame from the yaw he is about to face |
 | `size`, `head`, `lens`, `kx` | figure height fraction; cu head size; mm; key x (cu: keep 0.5 so head x stays 45-55 %) |
+| `dof` | depth of field 0-1 (defaults: cu 0.6, insert 1, others 0); stamps, callouts and labels blur under it: a close-up that shows one takes `dof: 0` |
 | `push`, `drift`, `live` | slow push-in per frame; side drift; follow the live head (0-1) |
 | `glide`, `cut` | frames to glide from the last shot (0 = cut); hard cut |
 | `track: { s, delay, ramp }` | keep only part of the subject's travel, then catch up |

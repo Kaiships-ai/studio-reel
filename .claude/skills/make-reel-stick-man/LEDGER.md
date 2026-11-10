@@ -14,8 +14,8 @@ mark the number "(est.)"); minutes = wall clock. Budget per reel:
 | 3 | align | | | | vo/words.json, vo/voice-qa.md | last frame |
 | 4 | storyboard | | | | storyboard.json | sets, % lines with props/fx |
 | 5 | reel data | | | | reel.js, reel2.js | new sets/props/fx |
-| 6 | board | | | | review/board.jpg, review/board-verdict.json | % shown |
-| 7 | preview | | | | review/pre-stats.txt | joint top 5 |
+| 6 | preview | | | | review/pre-stats.txt | joint top 5 |
+| 7 | board | | | | review/board.jpg, review/board-verdict.json | % shown; reviewer tokens = `tokens` in the verdict (measured) |
 | 8 | sound | | | | audio/music.json, audio/mix.wav, audio/levels.txt | |
 | 9 | render | | | | renders/<slug>_vN.mp4 | ms/frame |
 | 10 | gates | | | | review/<slug>_vN-gates.txt | PASS count (15 + 7 story) |
