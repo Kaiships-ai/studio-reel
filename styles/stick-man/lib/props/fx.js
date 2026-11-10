@@ -186,3 +186,35 @@ export function makeBagGlow(stage, bag = null) {
   return g;
 }
 export const pulseAt = (t, { count = 3, period = 0.7 } = {}) => (t < 0 || t > count * period ? 0 : Math.pow(Math.sin(Math.PI * t / period), 2));
+
+// ---------------------------------------------------------------- a bare stick arm reaching into a tabletop shot
+// set({ shoulder, hand, bend }): Blender points (metres); bend lifts the elbow (fraction of the reach). No hand = hidden.
+export function makeArm(stage, { r = 0.016, hand = 0.024 } = {}) {
+  const g = new THREE.Group(), ink = new THREE.MeshBasicMaterial({ color: lin(...INK_RGB) });
+  const seg = () => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 1, 14), ink); m.castShadow = true; g.add(m); return m; };
+  const ball = rr => { const m = new THREE.Mesh(new THREE.SphereGeometry(rr, 16, 10), ink); m.castShadow = true; g.add(m); return m; };
+  const up = seg(), lo = seg(), el = ball(r * 1.02), hd = ball(hand);
+  const Bv = p => new THREE.Vector3(p[0], p[2], -p[1]), Y = new THREE.Vector3(0, 1, 0), d = new THREE.Vector3();
+  const place = (m, a, b) => { d.subVectors(b, a); const L = d.length() || 1e-4; m.position.copy(a).add(b).multiplyScalar(0.5); m.scale.set(1, L, 1); m.quaternion.setFromUnitVectors(Y, d.normalize()); };
+  const set = ({ shoulder, hand: h, bend = 0.12 } = {}) => {
+    g.visible = !!(h && shoulder); if (!g.visible) return;
+    const S = Bv(shoulder), H = Bv(h), M = S.clone().lerp(H, 0.5); M.y += bend * S.distanceTo(H);
+    place(up, S, M); place(lo, M, H); el.position.copy(M); hd.position.copy(H);
+  };
+  set({}); g.userData.set = set;
+  return g;
+}
+
+// ---------------------------------------------------------------- one bill (hand prop): origin at its centre; set({ red })
+export function makeBill(stage, { scale = 1.3 } = {}) {
+  const cv = document.createElement('canvas'); cv.width = 256; cv.height = 112; const c = cv.getContext('2d');
+  c.fillStyle = '#fff'; c.fillRect(0, 0, 256, 112); c.strokeStyle = 'rgb(150,150,150)'; c.lineWidth = 7; c.strokeRect(8, 8, 240, 96);
+  c.fillStyle = 'rgb(200,200,200)'; c.beginPath(); c.ellipse(128, 56, 26, 34, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = 'rgb(120,120,120)'; c.font = 'bold 30px Georgia, serif'; c.fillText('20', 22, 44); c.fillText('20', 196, 96);
+  const map = new THREE.CanvasTexture(cv); map.colorSpace = THREE.SRGBColorSpace;
+  const G = lin(...BILL_GREEN), R = lin(...DYE_RGB), mat = new THREE.MeshStandardMaterial({ map, color: G.clone(), roughness: 0.75, side: THREE.DoubleSide });
+  const m = new THREE.Mesh(new THREE.BoxGeometry(0.155 * scale, 0.002 * scale, 0.066 * scale), mat); m.castShadow = m.receiveShadow = true;
+  const g = new THREE.Group(); g.add(m);
+  g.userData.set = ({ red = 0 } = {}) => { mat.color.copy(G).lerp(R, clamp01(red)); };
+  return g;
+}

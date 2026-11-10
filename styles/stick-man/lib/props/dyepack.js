@@ -98,7 +98,17 @@ export function makePlate({ w = 0.46, d = 0.30 } = {}) {
     for (const s of [-1, 1]) { c.beginPath(); c.moveTo(cx + r * 1.25, cy + s * r * 0.7); c.lineTo(cx + r * 1.65, cy + s * r * 0.95); c.stroke(); }
   });
   decal(g, w * 0.985, d * 0.985, map, 0, 0.0102, 0);
-  g.userData.set = () => {};
+  // magnet pulse: two red rings round the emblem that swell and glow; set({ pulse }) 0..1
+  const ex = -w / 2 + 0.06, ez = d / 2 - 0.05, rings = [0.034, 0.050].map((r, i) => {
+    const mat = new THREE.MeshBasicMaterial({ color: lin(1.0, 0.12, 0.08), transparent: true, opacity: 0, depthWrite: false });
+    const m = new THREE.Mesh(new THREE.TorusGeometry(r, 0.0032, 8, 48), mat); m.rotation.x = -Math.PI / 2; m.position.set(ex, 0.0115 + 0.001 * i, ez);
+    m.castShadow = false; m.userData.noPrepass = true; m.userData.glow = new THREE.MeshBasicMaterial({ color: lin(0, 0, 0) }); m.visible = false; g.add(m); return m;
+  });
+  g.userData.set = ({ pulse = 0 } = {}) => {
+    const k = clamp01(pulse);
+    rings.forEach((m, i) => { m.visible = k > 0.02; m.scale.setScalar(1 + (0.25 + 0.5 * i) * k); m.material.opacity = Math.min(1, 1.4 * k);
+      m.material.color.setRGB(1.0, 0.12, 0.08).multiplyScalar(1 + 2 * k); m.userData.glow.color.setRGB(1.0, 0.10, 0.06).multiplyScalar(2.5 * k); });
+  };
   g.userData.top = 0.0102;
   return g;
 }

@@ -363,12 +363,62 @@ class Tube {
     P.needsUpdate = N.needsUpdate = true;
   }
 }
-const quadThrough = (a, m, b, n) => {                           // quadratic bezier that passes through m at t = 0.5
-  const c = [2 * m[0] - (a[0] + b[0]) / 2, 2 * m[1] - (a[1] + b[1]) / 2, 2 * m[2] - (a[2] + b[2]) / 2], o = [];
-  for (let i = 0; i < n; i++) { const t = i / (n - 1), u = 1 - t;
-    o.push(new THREE.Vector3((u * u * a[0] + 2 * u * t * c[0] + t * t * b[0]) * W, (u * u * a[1] + 2 * u * t * c[1] + t * t * b[1]) * W, (u * u * a[2] + 2 * u * t * c[2] + t * t * b[2]) * W)); }
-  return o;
-};
+// Bone lengths (W). Leg = hip (v 1.38) to ankle (v 0.022) when straight; the arm hangs in a soft ~25 deg arc at rest.
+export const LIMB = { thigh: 0.679, shin: 0.679, upper: 0.41, fore: 0.41, stub: 0.122 };
+// Above this share of full reach the joint eases toward straight and the hose stretches (rubber hose), so a target is
+// always reached exactly (feet never slide, props stay in the hand). Legs straighten fully (a standing leg never
+// flickers bent); arms keep a soft 12 deg bend and stretch, easing over a wide range so a fast reach never snaps.
+const SOFT = { leg: 0.965, arm: 0.96 };
+// the hip-to-ankle distance (share of full leg length) at which the leg shows a knee flex of `flex` deg
+export function legReach(flex) {
+  const s = SOFT.leg, fs = 2 * Math.acos(s) / DEG;
+  if (flex >= fs) return Math.cos(flex / 2 * DEG);
+  let a = s, b = 1;
+  for (let i = 0; i < 30; i++) { const m = (a + b) / 2; if (fs * (1 - sm(s, 1, m)) > flex) a = m; else b = m; }
+  return (a + b) / 2;
+}
+const ROUND = { leg: 0.40, arm: 0.50 };                          // bend roundness: control-point reach as a share of the bone
+const V = (a) => new THREE.Vector3(a[0], a[1], a[2] || 0);
+// Two equal bones root -> joint -> end; pole = the side the joint points to. Returns the joint and the flex (deg, 0 = straight).
+function ik(root, end, l, pole, soft, arm = false) {
+  const ax = end.clone().sub(root), d = Math.max(1e-6, ax.length()); ax.divideScalar(d);
+  const r = d / (2 * l), full = rr => 2 * Math.acos(Math.min(1, rr));
+  const half = r <= soft ? full(r) / 2 : arm ? full(soft) / 2 + (6 * DEG - full(soft) / 2) * sm(soft, 1.5, r) : full(soft) / 2 * (1 - sm(soft, 1, r));
+  const perp = pole.clone().addScaledVector(ax, -pole.dot(ax));
+  if (perp.lengthSq() < 1e-8) perp.set(0, 0, 1).addScaledVector(ax, -ax.z);
+  perp.normalize();
+  const joint = root.clone().addScaledVector(ax, d / 2).addScaledVector(perp, d / 2 * Math.tan(half));
+  return { joint, flex: 2 * half / DEG };
+}
+// One smooth tube through root, joint and end: two quadratic arcs sharing the chord direction as tangent at the joint,
+// resampled to n points evenly by arc length (W units in, metres out).
+function hose(a, k, e, round, n) {
+  const t = e.clone().sub(a).normalize(), l1 = a.distanceTo(k), l2 = k.distanceTo(e);
+  const c1 = k.clone().addScaledVector(t, -round * l1), c2 = k.clone().addScaledVector(t, round * l2), dense = [];
+  const q = (p0, c, p1, s) => new THREE.Vector3().copy(p0).multiplyScalar((1 - s) ** 2).addScaledVector(c, 2 * (1 - s) * s).addScaledVector(p1, s * s);
+  for (let i = 0; i <= 24; i++) dense.push(q(a, c1, k, i / 24));
+  for (let i = 1; i <= 24; i++) dense.push(q(k, c2, e, i / 24));
+  const cum = [0]; for (let i = 1; i < dense.length; i++) cum.push(cum[i - 1] + dense[i].distanceTo(dense[i - 1]));
+  const out = [], tot = cum[cum.length - 1] || 1e-6; let j = 0;
+  for (let i = 0; i < n; i++) {
+    const s = tot * i / (n - 1); while (j < dense.length - 2 && cum[j + 1] < s) j++;
+    const u = (s - cum[j]) / Math.max(1e-9, cum[j + 1] - cum[j]);
+    out.push(dense[j].clone().lerp(dense[j + 1], Math.min(1, u)).multiplyScalar(W));
+  }
+  return out;
+}
+// FK arm in the figure's frame (gravity frame, not the leaning torso): fwd = upper arm swung forward (deg),
+// out = away from the body (deg), flex = elbow bend (deg), the forearm folding forward and a little inward.
+function armFK(sh, sg, a) {
+  const f = (a.fwd || 0) * DEG, o = (a.out ?? 10) * DEG;
+  const d = new THREE.Vector3(sg * Math.sin(o), -Math.cos(o) * Math.cos(f), Math.cos(o) * Math.sin(f)).normalize();
+  const elbow = sh.clone().addScaledVector(d, LIMB.upper);
+  const n = new THREE.Vector3(-sg * 0.25, 0, 1).addScaledVector(d, -new THREE.Vector3(-sg * 0.25, 0, 1).dot(d));
+  if (n.lengthSq() < 1e-6) n.set(0, 1, 0);
+  n.normalize();
+  const fl = (a.flex ?? 25) * DEG, fd = d.clone().multiplyScalar(Math.cos(fl)).addScaledVector(n, Math.sin(fl));
+  return { elbow, hand: elbow.clone().addScaledVector(fd, LIMB.fore) };
+}
 
 function contactTex() {
   const cv = document.createElement('canvas'); cv.width = cv.height = 128; const g = cv.getContext('2d');
@@ -438,27 +488,59 @@ export function makeStick(spec) {
     head.position.set(hc[0] * W, hc[1] * W, hc[2] * W);
     head.rotation.set(pt * 0.6 + (P.head_pitch || 0) * DEG, 0, -(lean + (P.head_tilt || 0) * DEG));
     S.face(P);
-    const front = new Set(P.front || []);
+    // Limbs. Extra keys: elbow{L,R} / kneeDir (or kneeDir{L,R}) = pole vectors (figure-local), armFK{L,R} =
+    // {fwd, out, flex, w} swing the arm from the shoulder (w blends it over the hand target), footPitch{L,R} (deg,
+    // + = toe up), shTwist / hipTwist (deg, + = the right shoulder / hip forward). Legacy bend{L,R} only picks a side.
+    const front = new Set(P.front || []), rig = { pitch: P.pitch || 0, roll: P.lean || 0 };
+    const twist = (q, deg) => { const a = (deg || 0) * DEG, u = q[0] - dx; return [dx + u * Math.cos(a), q[1], q[2] + u * Math.sin(a)]; };
     for (const [side, sg] of [['L', -1], ['R', 1]]) {
-      const sh = bt(sg * TORSO.w * 0.40, SHOULDER_V), h0 = P['hand' + side];
-      const hand = h0 ? [h0[0], h0[1], h0.length > 2 ? h0[2] : (front.has('arm' + side) ? 0.16 : 0.0)] : bt(sg * 0.41, 1.30);
-      const bend = P['bend' + side] ?? 0.10 * sg, ex = hand[0] - sh[0], ey = hand[1] - sh[1], ln = Math.hypot(ex, ey) || 1;
-      const elbow = [(sh[0] + hand[0]) / 2 - ey / ln * bend, (sh[1] + hand[1]) / 2 + ex / ln * bend, sh[2] * 0.4 + hand[2] * 0.6];
-      const pts = quadThrough(sh, elbow, hand, 16);
-      limbs['arm' + side].set(pts); hands[side].position.copy(pts[15]); S.hand[side] = hand;
-      const hb = bt(sg * 0.14, HIP_V + 0.04), hip = [hb[0], hb[1], 0], f0 = P['foot' + side] || [sg * 0.22, 0.022];
-      const foot = [f0[0], f0[1], f0[2] || 0];
-      const kb = P['knee' + side] || 0, fx = foot[0] - hip[0], fy = foot[1] - hip[1], fl = Math.hypot(fx, fy) || 1;
-      const knee = [(hip[0] + foot[0]) / 2 - fy / fl * kb, (hip[1] + foot[1]) / 2 + fx / fl * kb, foot[2] / 2 + (P['kneeF' + side] || 0)];
-      const leg = quadThrough(hip, knee, foot, 13);
-      const td = P['toe' + side] ?? sg, toe = new THREE.Vector3((foot[0] + 0.10 * td) * W, (foot[1] - 0.004) * W, (foot[2] + (P.toeF ?? 0.07)) * W);
-      for (let i = 1; i <= 5; i++) leg.push(leg[12].clone().lerp(toe, i / 5));
-      limbs['leg' + side].set(leg); ankles[side].position.copy(leg[12]); toes[side].position.copy(toe);
+      const sh = V(twist(bt(sg * TORSO.w * 0.40, SHOULDER_V), P.shTwist)), h0 = P['hand' + side];
+      let hand = V(h0 ? [h0[0], h0[1], h0.length > 2 ? h0[2] : (front.has('arm' + side) ? 0.16 : 0.0)] : bt(sg * 0.41, 1.22));
+      let pole;
+      if (P['elbow' + side]) pole = V(P['elbow' + side]);
+      else {
+        pole = new THREE.Vector3(sg * 0.6, -0.2, -0.75);
+        const b = P['bend' + side];
+        if (b) { const ex = hand.x - sh.x, ey = hand.y - sh.y, ln = Math.hypot(ex, ey) || 1, k = Math.max(-1, Math.min(1, b / 0.1)); pole.multiplyScalar(0.4).add(new THREE.Vector3(-ey / ln * k, ex / ln * k, 0)); }
+      }
+      const fk = P['armFK' + side], fw = fk ? Math.max(0, Math.min(1, fk.w ?? 1)) : 0;
+      if (fw > 0) {
+        const k = armFK(sh, sg, fk), mid = sh.clone().lerp(k.hand, 0.5);
+        hand.lerp(k.hand, fw); pole.normalize().lerp(k.elbow.clone().sub(mid).normalize(), fw);
+      }
+      const arm = ik(sh, hand, LIMB.upper, pole, SOFT.arm, true);
+      const pts = hose(sh, arm.joint, hand, ROUND.arm, 16);
+      limbs['arm' + side].set(pts); hands[side].position.copy(pts[15]); S.hand[side] = hand.toArray();
+      const hb = bt(sg * 0.14, HIP_V + 0.04), hip = V(twist([hb[0], hb[1], 0], P.hipTwist));
+      const f0 = P['foot' + side] || [sg * 0.22, 0.022], foot = V(f0);
+      const kp = P['kneeDir' + side] || P.kneeDir || [sg * 0.15, 0, 1];
+      const leg = ik(hip, foot, LIMB.thigh, V(kp), SOFT.leg);
+      const lp = hose(hip, leg.joint, foot, ROUND.leg, 13);
+      const td = P['toe' + side] ?? sg, h = new THREE.Vector3(0.10 * td, 0, P.toeF ?? 0.07).normalize(), pt = (P['footPitch' + side] || 0) * DEG;
+      h.applyAxisAngle(new THREE.Vector3(0, 1, 0), (P['footYaw' + side] ?? P.footYaw ?? 0) * DEG);   // + turns the toe toward the figure's right
+      const toeL = foot.clone().addScaledVector(h, LIMB.stub * Math.cos(pt)); toeL.y += LIMB.stub * Math.sin(pt) - 0.004;
+      const toe = toeL.clone().multiplyScalar(W);
+      for (let i = 1; i <= 5; i++) lp.push(lp[12].clone().lerp(toe, i / 5));
+      limbs['leg' + side].set(lp); ankles[side].position.copy(lp[12]); toes[side].position.copy(toe);
+      rig[side] = { hip, knee: leg.joint, ankle: foot, toe: toeL, shoulder: sh, elbow: arm.joint, hand,
+        kneeFlex: leg.flex, elbowFlex: arm.flex, footPitch: P['footPitch' + side] || 0 };
     }
+    S.rig = rig;
     contact.visible = P.contact !== false;
     contact.position.y = 0.004 + (P.ground || 0) * W;
     root.updateMatrixWorld(true);
     return S;
+  };
+  // the last pose's joints in Blender world metres (y = depth), flexes and pitches in degrees, for __dbg
+  S.rigWorld = () => {
+    const w = q => { const v = q.clone().multiplyScalar(W).applyMatrix4(root.matrixWorld); return [v.x, -v.z, v.y].map(x => +x.toFixed(4)); };
+    const o = { torsoLean: +S.rig.pitch.toFixed(2), torsoRoll: +S.rig.roll.toFixed(2) };
+    for (const s of ['L', 'R']) {
+      const r = S.rig[s];
+      o[s] = { hip: w(r.hip), knee: w(r.knee), ankle: w(r.ankle), toe: w(r.toe), shoulder: w(r.shoulder), elbow: w(r.elbow), hand: w(r.hand),
+        kneeFlex: +r.kneeFlex.toFixed(2), elbowFlex: +r.elbowFlex.toFixed(2), footPitch: +r.footPitch.toFixed(2) };
+    }
+    return o;
   };
   S.pose({});
   return S;

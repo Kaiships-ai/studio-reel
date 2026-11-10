@@ -39,15 +39,18 @@ export default {
     { line: 'l03', on: 'lovely', who: 'teller', do: 'gesture', kind: 'finger_wave', hand: 'R' },
     { line: 'l03', on: 'day', who: 'teller', expr: 'closed' },
     { line: 'l03', on: 'day', who: 'kai', do: 'hold', prop: 'bag', hand: 'R', to: { l: [0.50, 1.45, 0.30] }, off: [0, -0.02, 0], fade: 12 },
-    { line: 'l03', on: 'day', offset: -5, who: 'kai', do: 'walk_to', to: 'street', stride: 0.67, step: 9, cheat: 35 },
     // l04 Easiest money he's ever made. He strolls out the door.
     { line: 'l04', on: 'easiest', who: 'kai', expr: 'grin', look: 'camera' },
+    // he strolls off on "Easiest": the bag in his right hand, slung over the shoulder a step later
+    { line: 'l04', on: 'easiest', who: 'kai', do: 'walk_to', to: 'street', style: 'stroll', carry: 'R', cheat: 35 },
     { line: 'l04', on: 'money', who: 'kai', do: 'sling', prop: 'bag', hand: 'R' },
-    { line: 'l04', on: 'easiest', who: 'teller', expr: 'happy', do: 'gesture', kind: 'wave', hand: 'R' },
+    { line: 'l04', on: 'easiest', who: 'teller', expr: 'happy' },
+    // the wave waits for the finger-wave hand to come down first (on "Easiest" its rest move would cut the wave short)
+    { line: 'l04', on: 'money', who: 'teller', do: 'gesture', kind: 'wave', hand: 'R' },
     { line: 'l04', on: 'door', who: 'sensor', do: 'blink' },
   ],
   shots: [
-    { f: 0, shot: 'two', of: ['kai', 'teller'], angle: -2 },
+    { f: 0, shot: 'two', of: ['kai', 'teller'], angle: -26 },
     { line: 'l02', on: 'she', shot: 'cu', of: ['teller'], with: ['plate', 'stack'], angle: 30 },
     { line: 'l02', on: 'drops', offset: -6, shot: 'cu', of: ['teller'], with: ['plate', 'bag'], angle: 22 },
     { line: 'l03', on: 'have', offset: -10, shot: 'cu', of: ['teller'], angle: 16, head: 0.16, lens: 40 },

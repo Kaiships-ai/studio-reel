@@ -212,9 +212,9 @@ export function createStage({ width, height, exposure = 1.0, ink = 2.6, sat = 1.
 
   const gradePass = new ShaderPass({
     uniforms: { tDiffuse: { value: null }, sat: { value: sat }, con: { value: con }, vig: { value: vig }, split: { value: split },
-      aspect: { value: width / height } },
+      aspect: { value: width / height }, tPrev: { value: null }, uPrev: { value: 0 }, uFlash: { value: 0 } },
     vertexShader: FS_QUAD_V,
-    fragmentShader: `uniform sampler2D tDiffuse; uniform float sat, con, vig, split, aspect; varying vec2 vUv;
+    fragmentShader: `uniform sampler2D tDiffuse, tPrev; uniform float sat, con, vig, split, aspect, uPrev, uFlash; varying vec2 vUv;
       void main(){ vec3 c = texture2D(tDiffuse, vUv).rgb; float l = dot(c, vec3(0.2126,0.7152,0.0722));
         c = mix(vec3(l), c, sat);
         // split tone: shade leans blue-lilac, light leans warm, like the sunlit reference sets
@@ -222,7 +222,14 @@ export function createStage({ width, height, exposure = 1.0, ink = 2.6, sat = 1.
         c *= mix(vec3(1.0), vec3(0.93, 0.92, 1.10), sh*split) * mix(vec3(1.0), vec3(1.03, 1.0, 0.95), hi*split);
         c = (c - 0.5)*con + 0.5;
         vec2 d = (vUv - 0.5)*vec2(aspect, 1.0); c *= 1.0 - vig*smoothstep(0.25, 0.75, length(d)*1.25);
-        gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0); }` });
+        c = clamp(c, 0.0, 1.0);
+        if (uPrev > 0.0) c = mix(c, texture2D(tPrev, vUv).rgb, uPrev);       // dissolve: the other act's finished frame on top
+        c = mix(c, vec3(1.0, 0.99, 0.96), uFlash);                           // full-frame white flash
+        gl_FragColor = vec4(c, 1.0); }` });
+  // dissolves: grab() keeps the finished frame on the canvas; the next render(o) lays it over at o.prev (0..1)
+  const prevTex = new THREE.FramebufferTexture(width, height);
+  gradePass.uniforms.tPrev.value = prevTex;
+  function grab() { renderer.setRenderTarget(null); renderer.copyFramebufferToTexture(prevTex); }
   const crt = new THREE.WebGLRenderTarget(width, height, { type: THREE.HalfFloatType, samples: 4 });
   const composer = new EffectComposer(renderer, crt);
   composer.setPixelRatio(1);
@@ -234,8 +241,9 @@ export function createStage({ width, height, exposure = 1.0, ink = 2.6, sat = 1.
   composer.addPass(gradePass);
 
   const one = new Uint8Array(4);
-  function render() {
+  function render(o = {}) {
     const t0 = performance.now();
+    gradePass.uniforms.uPrev.value = o.prev || 0; gradePass.uniforms.uFlash.value = Math.min(1, o.flash || 0);
     camera.updateMatrixWorld();
     prepass();
     swap(m => m.userData.glow || (m.userData.noPrepass ? null : black), grt, new THREE.Color(0, 0, 0));
@@ -245,6 +253,6 @@ export function createStage({ width, height, exposure = 1.0, ink = 2.6, sat = 1.
     gl.finish(); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, one);
     return performance.now() - t0;
   }
-  return { THREE, renderer, scene, camera, sun, hemi, fill, px, setSun, addBounce, setCamera, setDof, prop, glow, render,
+  return { THREE, renderer, scene, camera, sun, hemi, fill, px, setSun, addBounce, setCamera, setDof, prop, glow, render, grab,
     passes: { ink: inkPass, grade: gradePass, dof: dofPass } };
 }

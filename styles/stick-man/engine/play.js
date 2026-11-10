@@ -1,16 +1,22 @@
 // Reel runtime: one reel DATA module (plain object) + words.json -> every frame, as a pure function of its number.
 // Beats name a word (`on`, nth occurrence in `line`, `offset` frames, default -2); verbs, acting, camera and captions
 // do the rest. Exposes window.__frame / __dbg / __cues / __T_END / __ready (see boot()).
+// A reel is one or more ACTS (reel.js is the first; reel2.js, when present, adds more): each act builds its own set,
+// cast, beats and camera; boot() shows the act whose window holds the frame and dissolves between them.
 import * as THREE from 'three';
 import { createStage } from './look.js';
 import { makeStick, KAI, TELLER, GUARD, EXPR, HEAD_C } from './cast.js';
-import { VERBS, STAND, SIT, W, lerp, lerp3, add3, angDiff, toLocal, smoother, hash } from './verbs.js';
+import { VERBS, STAND, SIT, REST_ARM, W, lerp, lerp3, add3, angDiff, toLocal, smoother, hash, handEase } from './verbs.js';
 import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs } from './acting.js';
 import { createCamera } from './camera.js';
 import { createCaptions } from './captions.js';
+import { ACT, PROPV, MAKE, keyTracks } from './verbs_fx.js';
+import { MABEL, OTIS, JUNE, OFFICER, dye } from '../lib/cast/extras.js';
 
-const SPECS = { KAI, TELLER, GUARD };
-const SETS = { 'bank-lobby': () => import('../lib/sets/bank-lobby.js') };
+const SPECS = { KAI, TELLER, GUARD, MABEL, OTIS, JUNE, OFFICER };
+const SETS = { 'bank-lobby': () => import('../lib/sets/bank-lobby.js'), street: () => import('../lib/sets/street.js'),
+  cutaway: () => import('../lib/sets/cutaway.js') };
+const KEYV = new Set(['set', 'pulse', 'shake', 'fire', 'flash', 'sound']);
 const THICK = { b1: 0.045, b2: 0.045, stack: 0.07, note: 0.003 };
 const toB = v => [v.x, -v.z, v.y];
 const norm = w => w.toLowerCase().replace(/[^a-z0-9']/g, '');
@@ -39,28 +45,44 @@ function mixObj(a, b, w) {
   }
   return o;
 }
+// hand hand-over: wind-up, an arc that bows up and out (never a straight line), ease out, small settle
+function mixHand(a, b, x) {
+  const w = handEase(x), o = mixObj(a, b, Math.min(1, Math.max(0, w)));
+  const d = b.l.map((q, i) => q - a.l[i]), len = Math.hypot(...d);
+  o.l = lerp3(a.l, b.l, w);
+  if (len > 1e-4) {
+    const up = [0.25 * Math.sign(a.l[0] + b.l[0] || 1), 1, 0.35], k = up.reduce((s, q, i) => s + q * d[i], 0) / (len * len);
+    const n = up.map((q, i) => q - k * d[i]), nl = Math.hypot(...n) || 1, bow = 0.16 * len * Math.sin(Math.PI * Math.min(1, Math.max(0, x)));
+    o.l = o.l.map((q, i) => q + n[i] / nl * bow);
+  }
+  return o;
+}
 // owners sorted by start; the newest started owner wins, cross-faded from the one before it over its fade
-function chain(list, f, val, env) {
+// (hands: over the fade plus a 35 % settle tail, see mixHand)
+function chain(list, f, val, env, hand = false) {
   let i = list.length - 1; while (i > 0 && list[i].start > f) i--;
   const go = j => { const v = val(list[j].fn(f, env), j); const o = list[j]; const fd = o.fade || 0;
+    if (j > 0 && fd > 0 && hand && f - o.start < fd * 1.35 + 1) return mixHand(go(j - 1), v, (f - o.start + 1) / (fd + 1));
     if (j > 0 && fd > 0 && f - o.start < fd) return mixObj(go(j - 1), v, smoother((f - o.start + 1) / (fd + 1))); return v; };
   return go(i);
 }
 
-export async function boot({ film, width, height }) {
-  const R = (await import(`/${film}/reel.js`)).default;
-  const words = (await getJSON(`/${film}/vo/words.json`)) || (await getJSON(`/${film}/words.json`));
-  if (!words) throw new Error(`no words.json in ${film}/vo or ${film}`);
-  const fps = R.fps || 30, [F0, F1] = R.frames;
-  const stage = createStage({ width, height, ...(R.look || {}) });
+async function buildAct(R, X) {
+  const { stage, words, fps, F0, F1, width, height } = X;
   const SET = await SETS[R.set]();
+  // the set's meshes and lights go into this act's group (shown only while the act is on screen)
+  const group = new THREE.Group(), before = new Set(stage.scene.children), bg0 = stage.scene.background;
   const built = await SET.build(stage);
+  for (const c of [...stage.scene.children]) if (!before.has(c)) group.add(c);
+  const background = stage.scene.background; stage.scene.background = bg0; stage.scene.add(group); group.visible = false;
   const props = built.props;
-  stage.setSun(SET.SUN_DIR, SET.SUN_CENTER, SET.SUN_HALF);
+  const sun = () => stage.setSun(SET.SUN_DIR, R.sun?.center || SET.SUN_CENTER, R.sun?.half || SET.SUN_HALF);
 
   // ---------------------------------------------------------------- compile
   const point = s => Array.isArray(s) ? s : SET.PLACES[s] || SET.MARKS[s] || (props[s] && props[s].userData.rest.pos) ||
     (() => { throw new Error(`unknown place ${s}`); })();
+  const KT = keyTracks(fps), fxo = {};                              // keyed values and the act's effect objects
+  for (const [name, o] of Object.entries(R.make || {})) fxo[name] = MAKE[o.kind](stage, { ...o, name }, { props, group, fps, point });
   const rest = {}, offs = {}, impacts = {};
   for (const [n, o] of Object.entries(props)) if (o.userData?.rest) rest[n] = { ...o.userData.rest };
   const C = {
@@ -78,7 +100,7 @@ export async function boot({ film, width, height }) {
   const frameOf = b => resolveBeatFrame(b, words, fps);
   const actors = [], byName = {};
   for (const [name, c] of Object.entries(R.cast)) {
-    const S = makeStick(SPECS[c.spec]); stage.scene.add(S.root);
+    const S = makeStick(SPECS[c.spec]); group.add(S.root);
     const posture = c.posture || 'stand', base = posture === 'sit' ? SIT : STAND;
     const pos = point(c.at).slice(); pos[2] = pos[2] || 0;
     const st = { name, pos, yaw: c.yaw ?? 0, posture, hold: { L: null, R: null }, handW: {}, sling: null };
@@ -94,11 +116,13 @@ export async function boot({ film, width, height }) {
   const segs = {}, active = [], cues = [], fx = [];
   for (const b of beats) {
     const a = byName[b.who];
-    if (!a) { fx.push(b); if (b.do === 'blink') cues.push({ fr: b.at, name: 'sensor_beep', strength: 0.4 }); continue; }
+    if (KEYV.has(b.do)) for (const q of KT.add(b)) cues.push({ fr: q.f, name: q.name, strength: q.strength });
+    if (!a && PROPV[b.do]) { const out = PROPV[b.do](b, C); for (const s of out.segs) (segs[s.prop] ||= []).push(s); for (const q of out.cues || []) cues.push({ fr: q.f, name: q.name, strength: q.strength }); continue; }
+    if (!a) { if (!KEYV.has(b.do)) fx.push(b); if (b.do === 'blink') cues.push({ fr: b.at, name: 'sensor_beep', strength: 0.4 }); if (b.do === 'glint') cues.push({ fr: b.at, name: 'glint', strength: 0.4 }); continue; }
     if (b.expr) a.exprs.push({ f: b.at, expr: b.expr });
     if (b.look) a.focusSegs.push({ from: b.at, target: b.look });
-    if (!b.do) continue;
-    const V = VERBS[b.do]; if (!V) throw new Error(`unknown verb ${b.do}`);
+    if (!b.do || KEYV.has(b.do)) continue;
+    const V = VERBS[b.do] || ACT[b.do]; if (!V) throw new Error(`unknown verb ${b.do}`);
     const out = V(b, a.st, C);
     a.verbs.push({ name: b.do, start: b.at, end: out.end });
     for (const o of out.owners || []) {
@@ -173,25 +197,27 @@ export async function boot({ film, width, height }) {
     resolve: (t, f) => t.prop ? { w: add3(propWorld(t.prop), [0, 0, t.up ?? (C.thick(t.prop) + 0.035)]), bend: t.bend } : t.mouth ? { w: add3(propWorld(t.mouth), [0, 0, t.up ?? 0.12]) } : t,
   };
 
-  const LEG = 1.358;                                                // hip-to-sole length (W)
   function poseActor(a, f) {
     const body = bodyAt(a, f), root = { pos: body.pos, yaw: body.yaw };
     F.bodies[a.name] = body;
     const id = idle(a.seed, f, a.posture);
     const add = {};
     for (const o of a.owners.add) if (o.start <= f + 30) { const r = o.fn(f); for (const k in r) add[k] = (add[k] || 0) + r[k]; }
-    const base = a.posture === 'sit' ? SIT : STAND, hands = {}, bends = {};
+    const base = a.posture === 'sit' ? SIT : STAND, hands = {}, bends = {}, elbows = {}, fks = {};
     for (const side of ['L', 'R']) {
       const sg = side === 'L' ? -1 : 1;
       const v = chain(a.owners['hand' + side], f, spec => {
         const s = spec.w || spec.prop || spec.mouth ? env.resolve(spec, f) : spec;
         let l;
-        if (s.rest) { l = base['hand' + side].slice(); if (body.swing) l[2] += body.swing[side] * 0.9; }
+        if (s.rest) l = base['hand' + side].slice();
         else if (s.w) l = toLocal(s.w, root); else l = s.l.slice();
         if (s.dv) l[1] += s.dv;
-        return { l, bend: spec.bend ?? s.bend ?? 0.10 * sg };
-      }, env);
-      hands[side] = add3(v.l, id.hand.map(x => x * sg)); bends[side] = v.bend;
+        // a standing figure's resting arm hangs from the shoulder (FK, swung by the body verbs); fk blends it in
+        return { l, bend: spec.bend ?? s.bend ?? 0.10 * sg, elbow: spec.elbow ?? s.elbow ?? [sg * 0.6, -0.2, -0.75], fk: s.rest && a.posture !== 'sit' ? 1 : 0 };
+      }, env, true);
+      hands[side] = add3(v.l, id.hand.map(x => x * sg)); bends[side] = v.bend; elbows[side] = v.elbow;
+      const fk = body.arm?.[side] || REST_ARM;
+      fks[side] = { fwd: fk.fwd + 60 * id.hand[2], out: fk.out + 40 * id.hand[0], flex: fk.flex + 40 * id.hand[1], w: v.fk };
     }
     const bob = (body.bob || 0) + id.bob, P = {
       pos: root.pos, yaw: root.yaw, bob, lean: (body.lean || 0) + (add.lean || 0), pitch: (body.pitch || 0) + (add.pitch || 0),
@@ -199,12 +225,9 @@ export async function boot({ film, width, height }) {
       head_dx: id.head_dx + (add.head_dx || 0), head_pitch: add.head_pitch || 0,
       footL: body.footL, footR: body.footR, toeL: body.toeL, toeR: body.toeR, toeF: body.toeF,
       handL: hands.L, handR: hands.R, bendL: bends.L, bendR: bends.R, expr: a.lastExpr || a.c.expr,
+      elbowL: elbows.L, elbowR: elbows.R, armFKL: fks.L, armFKR: fks.R,
     };
-    for (const side of ['L', 'R']) {                                // knees fold forward so a lowered hip never stretches a leg
-      const ft = P['foot' + side], hip = [side === 'L' ? -0.14 : 0.14, 1.38 + bob, 0];
-      const c = Math.hypot(ft[0] - hip[0], ft[1] - hip[1], (ft[2] || 0) - hip[2]);
-      P['kneeF' + side] = Math.sqrt(Math.max(0, (LEG / 2) ** 2 - (c / 2) ** 2)) * 0.95;
-    }
+    for (const k of ['dx', 'footPitchL', 'footPitchR', 'footYawL', 'footYawR', 'kneeDir', 'shTwist', 'hipTwist']) if (body[k] != null) P[k] = body[k];
     a.S.pose(P); F.posed.add(a.name); a.P = P;
   }
 
@@ -214,7 +237,7 @@ export async function boot({ film, width, height }) {
     const id = idle(a.seed, f, a.posture);
     if (talking && EXPR[e + '_o']) e += '_o';
     else if (e === 'sleep' && id.snore) e = 'sleep_o';
-    const tgtPos = t => t === 'camera' ? camPos : byName[t] ? toB(byName[t].S.parts.head.getWorldPosition(hv)) : t ? propWorld(t) : camPos;
+    const tgtPos = t => t === 'camera' ? camPos : byName[t] ? toB(byName[t].S.parts.head.getWorldPosition(hv)) : Array.isArray(t) ? t : t ? livePos(t) : camPos;
     const cur = focusAt(a, f, a.focusSegs, active), head = toB(a.S.parts.head.getWorldPosition(new THREE.Vector3()));
     const yaw = F.bodies[a.name].yaw, gz = x => gaze(head, yaw, tgtPos(x.prop || x.target));
     let g = gz(cur), d = 0;
@@ -226,15 +249,24 @@ export async function boot({ film, width, height }) {
     a.S.face(P); a.face = P; a.lastExpr = e;
   }
 
-  const camera = createCamera({ aspect: width / height, side: SET.CAMERA_SIDE, bounds: SET.CAMERA_ROOM });
+  // where a named thing is right now: effect objects and set props by their world position, places by name
+  const livePos = n => fxo[n]?.obj ? toB(fxo[n].obj.getWorldPosition(hv)) : props[n] && segs[n] ? propWorld(n)
+    : props[n]?.getWorldPosition ? toB(props[n].getWorldPosition(hv)) : point(n);
+  const fenv = { at: spec => {
+    if (Array.isArray(spec)) return spec;
+    if (typeof spec === 'string') return livePos(spec);
+    if (spec.head) { const a = byName[spec.head], h = toB(a.S.parts.head.getWorldPosition(hv)), y = F.bodies[spec.head].yaw * Math.PI / 180;
+      return [h[0] + Math.sin(y) * (spec.fwd || 0), h[1] - Math.cos(y) * (spec.fwd || 0), h[2] + (spec.up || 0)]; }
+    return add3(livePos(spec.prop), spec.off || [0, 0, 0]);
+  } };
+  const camera = createCamera({ aspect: width / height, side: SET.CAMERA_SIDE, bounds: R.cameraRoom || SET.CAMERA_ROOM, zRange: R.zRange, actors: actors.map(a => a.name) });
+  // compile sees the real scene at each shot change (everything is a pure function of the frame)
   const shots = camera.compile(R.shots.map(s => ({ f: frameOf(s), kind: s.shot, subjects: s.of, opt: s })).sort((x, y) => x.f - y.f),
-    (n, f) => anchor(n, f), F1 + 1);
+    (n, f) => { if (F.f !== f) poseAll(f); return anchor(n, f, livePos); }, F1 + 1);
 
-  try { await document.fonts.load('900 100px InterReel'); } catch { /* falls back to the system sans */ }
-  const cap = createCaptions({ words, lines: R.lines, fps, width, height });
   let cam = null, caption = null;
 
-  function update(f) {
+  function poseAll(f) {
     F = { f, posed: new Set(), cache: new Map(), handWorld: {}, bodies: {} };
     for (const a of actors) {
       poseActor(a, f);
@@ -246,14 +278,23 @@ export async function boot({ film, width, height }) {
       if (b.do === 'blink') props[b.who].set(d >= 0 && d < 4 ? 1 : d >= 4 && d < 8 ? 1 - (d - 3) / 5 : 0);
       if (b.do === 'glint') { const k = d >= 0 && d < 14 ? Math.sin(Math.PI * d / 14) : 0; props[b.who].userData.top.material.emissive.setRGB(0.9 * k, 0.95 * k, 1.0 * k); }
     }
-    cam = camera.at(shots, f, n => anchor(n, f, propWorld), cues);
+    for (const a of actors) {                                       // keyed: dye level 0..1, shown / hidden
+      if (KT.has(a.name, 'dye')) dye(a.S, KT.at(a.name, 'dye', f, 0));
+      if (KT.has(a.name, 'show')) a.S.root.visible = KT.at(a.name, 'show', f, 1) > 0.5;
+    }
+    for (const [n, h] of Object.entries(fxo)) h.apply((k, d) => KT.at(n, k, f, d), f, fenv);
+  }
+  function update(f) {
+    sun(); poseAll(f);
+    cam = camera.at(shots, f, n => anchor(n, f, livePos), cues);
     const px = height / 1920;
     stage.camera.setViewOffset(width, height, cam.offset[0] * px, cam.offset[1] * px, width, height);
     stage.setCamera(cam.pos, cam.aim, cam.lens);
     if (cam.dof > 0.02) { const d = Math.hypot(...cam.pos.map((x, i) => x - cam.focus[i])); stage.setDof({ near: d * 0.86, far: d * 1.22, gain: 2.4 * cam.dof, px: 14 }); }
     else stage.setDof(null);
+    for (const h of Object.values(fxo)) h.post?.(cam.pos);
     for (const a of actors) faceActor(a, f, cam.pos);
-    caption = cap.draw(f);
+    caption = X.cap.chunkAt(f)?.text ?? null;
   }
 
   const v = new THREE.Vector3();
@@ -261,7 +302,7 @@ export async function boot({ film, width, height }) {
   function dbg(f) {
     update(f);
     const camM = stage.camera.matrixWorld, Rv = new THREE.Vector3().setFromMatrixColumn(camM, 0), Uv = new THREE.Vector3().setFromMatrixColumn(camM, 1);
-    const out = { f, camera: { pos: cam.pos, target: cam.aim, fov: +stage.camera.fov.toFixed(3), lens: +cam.lens.toFixed(2), shot: cam.shot, offset: cam.offset }, actors: {}, caption };
+    const out = { f, camera: { pos: cam.pos, target: cam.aim, fov: +stage.camera.fov.toFixed(3), lens: +cam.lens.toFixed(2), shot: cam.shot, offset: cam.offset, glide: cam.u ?? null }, actors: {}, caption };
     for (const a of actors) {
       const c = a.S.parts.head.getWorldPosition(new THREE.Vector3());
       const xs = [-1, 1].map(s => toPx(c.clone().addScaledVector(Rv, 0.5 * W * s))[0]), ys = [1, -1].map(s => toPx(c.clone().addScaledVector(Uv, 0.47 * W * s))[1]);
@@ -269,7 +310,7 @@ export async function boot({ film, width, height }) {
       const feet = {}; for (const s of ['L', 'R']) feet[s] = toB(a.S.parts.ankles[s].getWorldPosition(new THREE.Vector3())).map(x => +x.toFixed(4));
       const box = [xs[0], ys[0], xs[1], ys[1]].map(x => +x.toFixed(1));
       out.actors[a.name] = { pos: F.bodies[a.name].pos.map(x => +x.toFixed(4)), yaw: +F.bodies[a.name].yaw.toFixed(2), expr: a.face.expr, blink: a.face.blink,
-        verb: a.verbs.filter(x => x.start <= f && f < x.end).map(x => x.name), head: box, feet,
+        verb: a.verbs.filter(x => x.start <= f && f < x.end).map(x => x.name), head: box, feet, limbs: a.S.rigWorld(),
         inFrame: v.z < 1 && box[2] > 0 && box[0] < width && box[3] > 0 && box[1] < height };
     }
     return out;
@@ -279,7 +320,7 @@ export async function boot({ film, width, height }) {
   // (camPeak = the worst of the nine, i.e. the frame corners during a zoom);
   // foot slide = how far a planted foot moves in the world between frames, seen through this frame's camera
   const feetW = () => Object.fromEntries(actors.map(a => [a.name, Object.fromEntries(['L', 'R'].map(s => [s, toB(a.S.parts.ankles[s].getWorldPosition(new THREE.Vector3()))]))]));
-  window.__motion = f => {
+  const motion = f => {
     update(Math.max(F0, f - 1)); const c0 = { ...cam }, ft0 = feetW();
     update(f); const ft1 = feetW();
     const px = (c, p) => { const q = camera.project(c, p); return [q[0] * 720 + c.offset[0] * 720 / 1080, q[1] * 1280 + c.offset[1] * 720 / 1080]; };
@@ -297,11 +338,64 @@ export async function boot({ film, width, height }) {
       feet[n][s] = { planted: p0[2] < 0.014 && p1[2] < 0.014, px: +Math.hypot(q1[0] - q0[0], q1[1] - q0[1]).toFixed(3) }; } }
     return { cam: f === F0 ? 0 : +camPx.toFixed(3), camPeak: f === F0 ? 0 : +camPeak.toFixed(3), feet };
   };
+  return { name: R.name || R.set, R, group, background, update, dbg, motion, cues, actors, frameOf, flash: f => KT.at('screen', 'flash', f, 0) || 0 };
+}
+
+// internal cue names -> the sound bank (tools/sound_bank.py); steps alternate left / right
+const SOUND = { cash_lift: 'rustle', bundle_drop: 'thud', paper_slide: 'slide', swoosh: 'whoosh', sensor_beep: 'beep', glint: 'ting' };
+const BANK = new Set(['slide', 'thud', 'rustle', 'ting', 'ding', 'whoosh', 'step_l', 'step_r', 'beep', 'tick', 'poof', 'hiss', 'scratch', 'pop', 'snore',
+  'clunk', 'blip', 'ping', 'sizzle', 'slide_whistle_up', 'flutter', 'wah', 'siren', 'sting']);
+
+export async function boot({ film, width, height }) {
+  const R1 = (await import(`/${film}/reel.js`)).default;
+  let R2 = null;
+  try { R2 = (await import(`/${film}/reel2.js`)).default; } catch (e) { if (e instanceof SyntaxError || !/fetch|module|404/i.test(String(e))) throw e; }
+  const words = (await getJSON(`/${film}/vo/words.json`)) || (await getJSON(`/${film}/words.json`));
+  if (!words) throw new Error(`no words.json in ${film}/vo or ${film}`);
+  const fps = R1.fps || 30, F0 = R1.frames[0], F1 = R2 ? R2.frames[1] : R1.frames[1];
+  const stage = createStage({ width, height, ...(R1.look || {}) });
+  try { await document.fonts.load('900 100px InterReel'); } catch { /* falls back to the system sans */ }
+  const cap = createCaptions({ words, lines: [...R1.lines, ...(R2?.lines || [])], fps, width, height });
+  const X = { stage, words, fps, F0, F1, width, height, cap }, bg0 = stage.scene.background;
+  const defs = [{ ...R1, name: R1.name || 'lobby', show: R1.show || [{ from: R1.frames[0] }] }, ...(R2?.acts || [])];
+  for (const am of R2?.amend || []) { const d = defs.find(x => x.name === am.act); d.shots = [...d.shots, ...(am.shots || [])]; d.beats = [...d.beats, ...(am.beats || [])]; }
+  const acts = [];
+  for (const d of defs) acts.push(await buildAct(d, X));
+  // windows: act k is on screen from its `from`; a dissolve of n frames is centred on that frame
+  const fr = x => typeof x === 'number' ? x : resolveBeatFrame(x, words, fps);
+  const wins = acts.flatMap((A, k) => defs[k].show.map(w => ({ A, a: fr(w.from), n: w.dissolve ?? (A === acts[0] && w.from === F0 ? 0 : 7) }))).sort((x, y) => x.a - y.a);
+  const at = f => {
+    for (let k = 1; k < wins.length; k++) { const w = wins[k], h = w.n / 2; if (w.n && f >= w.a - h && f < w.a + h) return { cur: w.A, prev: wins[k - 1].A, u: (f - (w.a - h) + 0.5) / w.n }; }
+    let k = 0; while (k + 1 < wins.length && wins[k + 1].a <= f) k++; return { cur: wins[k].A };
+  };
+  const show = A => { for (const x of acts) x.group.visible = x === A; stage.scene.background = A.background ?? bg0; };
+  function frame(f) {
+    const s = at(f); let ms = 0;
+    if (s.prev) { show(s.prev); s.prev.update(f); ms += stage.render({ flash: s.prev.flash(f) }); stage.grab(); }
+    show(s.cur); s.cur.update(f); ms += stage.render({ prev: s.prev ? 1 - s.u : 0, flash: s.cur.flash(f) });
+    cap.draw(f); return ms;
+  }
+  window.__motion = f => { const s = at(f), p = at(Math.max(F0, f - 1)); show(s.cur); return { ...s.cur.motion(f), cut: !!s.prev || p.cur !== s.cur || !!p.prev || s.cur.flash(f) > 0.3 }; };   // dissolves and flash cuts
+  window.__dbg = f => {
+    const s = at(f); show(s.cur); const out = s.cur.dbg(f); out.act = s.cur.name; out.mix = s.prev ? +s.u.toFixed(2) : null;
+    for (const A of acts) for (const a of A.actors) if (!out.actors[a.name]) out.actors[a.name] = { blink: 0, head: [0, 0, 0, 0], inFrame: false, verb: [] };
+    return JSON.stringify(out);
+  };
+  // sound from the picture: every act's cues while that act is on screen, renamed to the sound bank
+  window.__cues = () => {
+    const out = []; let step = 0;
+    for (const A of acts) for (const q of A.cues) {
+      const s = at(q.fr); if (s.cur !== A && s.prev !== A) continue;
+      if (q.fr > F1 - 2) continue;
+      let name = SOUND[q.name] || q.name; if (name === 'step') { if (q.strength < 0.2 || (q.who && q.who !== 'kai')) continue; name = step++ % 2 ? 'step_r' : 'step_l'; }   // the hero's feet only
+      if (!BANK.has(name)) continue;
+      out.push({ t: +(q.fr / fps).toFixed(4), name, strength: +Math.min(1, Math.max(0.55, 0.55 + 0.6 * q.strength)).toFixed(2) });
+    }
+    return out.sort((a, b) => a.t - b.t);
+  };
   window.__T_END = (F1 + 1) / fps;
-  window.__cues = () => cues.map(q => ({ t: +(q.fr / fps).toFixed(4), name: q.name, strength: q.strength }));
-  window.__frame = f => { update(f); return stage.render(); };
-  window.__dbg = f => JSON.stringify(dbg(f));
-  update(F0); stage.render();
+  window.__frame = f => frame(f);
+  frame(F0);
   window.__ready = true;
-  return { R, fps, F0, F1, stage, captions: cap, audio: `/${film}/vo/vo.wav` };
+  return { R: R1, fps, F0, F1, stage, captions: cap, audio: `/${film}/vo/vo.wav` };
 }

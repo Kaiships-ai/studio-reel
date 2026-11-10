@@ -8,6 +8,8 @@
 //   --film ... --frames 0-344 --dbg dbg.jsonl                          __dbg + motion per frame, no render
 //   --film ... --frames 0-344 --report review/p1-stats.txt --in renders/p1.mp4
 //   --film ... --serve 1                                               keep a server up and print the URL
+//   --film ... --cues audio/cues.json                                  sound cues from the picture: [{t, name, strength}]
+//   --mp4 ... --audio films/x/audio/mix.wav                           mux this track instead of vo/vo.wav
 import { chromium } from 'playwright-core';
 import http from 'node:http'; import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -65,13 +67,18 @@ if (A.speed && !REEL) {
 } else if (A.probe) {                                           // --probe 1: print the page's measurements, no file
   await render(frames[0]);
   console.log(await p.evaluate(f => window.__probe ? JSON.stringify(window.__probe()) : window.__dbg(f), frames[0]));
+} else if (A.cues) {
+  const c = await p.evaluate(() => window.__cues());
+  fs.mkdirSync(path.dirname(path.resolve(A.cues)), { recursive: true });
+  fs.writeFileSync(A.cues, '[\n' + c.map(x => JSON.stringify(x)).join(',\n') + '\n]\n');
+  console.log(`${A.cues}  ${c.length} cues`);
 } else if (A.dbg) {
   const rows = await dbgAll();
   fs.mkdirSync(path.dirname(A.dbg), { recursive: true });
   fs.writeFileSync(A.dbg, rows.map(r => JSON.stringify(r)).join('\n') + '\n');
   console.log(`${A.dbg}  ${rows.length} frames`);
 } else if (A.mp4) {
-  const fps = 30, f0 = frames[0], n = frames.length, wav = path.join(ROOT, A.film, 'vo', 'vo.wav');
+  const fps = 30, f0 = frames[0], n = frames.length, wav = A.audio ? path.resolve(A.audio) : path.join(ROOT, A.film, 'vo', 'vo.wav');
   fs.mkdirSync(path.dirname(path.resolve(A.mp4)), { recursive: true });
   const ff = start('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'mjpeg', '-i', '-',
     '-ss', (f0 / fps).toFixed(4), '-t', (n / fps).toFixed(4), '-i', wav, '-map', '0:v', '-map', '1:a',
@@ -103,11 +110,13 @@ if (A.speed && !REEL) {
   L.push(`    frames not clear: ${compress(weak) || 'none'}`);
   // (b) from __dbg
   const rows = await dbgAll();
-  let run0 = 0, best = 0, bestAt = 0; const camPx = rows.map(r => r.motion.cam);
-  camPx.forEach((v, i) => { if (i === 0) return; if (v < 0.01) { run0++; if (run0 > best) { best = run0; bestAt = rows[i].f; } } else run0 = 0; });
-  const peak = Math.max(...camPx.slice(1)), peakAt = rows[camPx.indexOf(peak)].f;
+  let run0 = 0, best = 0, bestAt = 0; const camPx = rows.map(r => r.motion.cut ? NaN : r.motion.cam);
+  camPx.forEach((v, i) => { if (i === 0 || Number.isNaN(v)) return; if (v < 0.01) { run0++; if (run0 > best) { best = run0; bestAt = rows[i].f; } } else run0 = 0; });
+  const live = camPx.slice(1).filter(x => !Number.isNaN(x)), peak = Math.max(...live), peakAt = rows[camPx.indexOf(peak)].f;
+  const fast = rows.filter((r, i) => i > 0 && camPx[i] > 25).map(r => r.f), cuts = rows.filter(r => r.motion.cut).map(r => r.f);
   L.push(`(b) from __dbg over frames ${frames[0]}-${frames[frames.length - 1]}:`,
-    `    longest run with no camera motion: ${best} frames${best ? ' (ends ' + bestAt + ')' : ''}; camera speed at 720p: peak ${peak.toFixed(1)} px/frame (frame ${peakAt}), median ${[...camPx].sort((a, b) => a - b)[camPx.length >> 1].toFixed(2)}`);
+    `    longest run with no camera motion: ${best} frames${best ? ' (ends ' + bestAt + ')' : ''}; camera speed at 720p: peak ${peak.toFixed(1)} px/frame (frame ${peakAt}), median ${[...live].sort((a, b) => a - b)[live.length >> 1].toFixed(2)}`,
+    `    (dissolve and flash-cut frames left out of the camera numbers: ${compress(cuts) || 'none'}; frames over 25 px/frame: ${compress(fast) || 'none'})`);
   for (const n of Object.keys(rows[0].actors)) {
     const starts = rows.filter((r, i) => i > 0 && r.actors[n].blink === 1 && rows[i - 1].actors[n].blink === 0).map(r => r.f);
     const gaps = starts.slice(1).map((s, i) => s - starts[i]);

@@ -18,7 +18,7 @@ export const MARKS = {
 export const PLACES = {
   sensor: [DOOR.x1 + 0.20, -0.07, DOOR.h - 0.12],                // street-side casing, top of the right jamb
   bag_burst: [1.2, -1.9, 1.55], bag_rest: [0.35, -0.9, 0.36],
-  lamp: [-6.2, -3.55, 0], hydrant: [5.3, -3.5, 0], mailbox: [-2.9, -3.45, 0], tree: [7.9, -2.9, 0],
+  lamp: [-6.2, -3.55, 0], hydrant: [-4.4, -3.5, 0], mailbox: [-2.9, -3.45, 0], tree: [7.9, -2.9, 0],
 };
 export const CAMERA_SIDE = [0, -1];
 // the wide shot looks down the pavement toward -x (road on the left, buildings on the right)
