@@ -1,53 +1,133 @@
 // Frame capture for the stick-man pages: headless Chromium (Metal ANGLE), one worker, JPEG q92 or PNG by extension.
-//   node styles/stick-man/tools/shot.mjs --view a --frames 0 --out films/stick-p0/out/a.png
-//   node styles/stick-man/tools/shot.mjs --view turn --frames 0-3 --out films/stick-p0/out/turn_%d.jpg
+//   node styles/stick-man/tools/shot.mjs --view a --frames 0 --out films/stick-p0/out/a.png          (p0 page)
 //   node styles/stick-man/tools/shot.mjs --view front --probe 1
 //   node styles/stick-man/tools/shot.mjs --view a --speed 60 --stats films/stick-p0/out/speed.txt
+// Reel page (styles/stick-man/reel.html) when --film is given:
+//   --film films/stick01-dye-pack --frames 0-344 --out f_%d.jpg        stills
+//   --film ... --frames 0-344 --mp4 renders/p1.mp4 [--w 540 --h 960]    mp4 with the voice from the right offset
+//   --film ... --frames 0-344 --dbg dbg.jsonl                          __dbg + motion per frame, no render
+//   --film ... --frames 0-344 --report review/p1-stats.txt --in renders/p1.mp4
+//   --film ... --serve 1                                               keep a server up and print the URL
 import { chromium } from 'playwright-core';
 import http from 'node:http'; import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os';
 import { fileURLToPath } from 'node:url';
+import { start, run } from '../../../kit/env.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '../../..');                     // repo root: serves the page and node_modules/three
 const A = {}; for (let i = 2; i < process.argv.length; i += 2) A[process.argv[i].replace(/^--/, '')] = process.argv[i + 1];
-const W = Number(A.w || 1080), H = Number(A.h || 1920), page = A.page || 'styles/stick-man/p0.html';
+const W = Number(A.w || 1080), H = Number(A.h || 1920);
+const REEL = !!A.film, page = A.page || (REEL ? 'styles/stick-man/reel.html' : 'styles/stick-man/p0.html');
 const frames = (A.frames || '0').split(',').flatMap(s => { const [a, b] = s.split('-').map(Number); return b == null ? [a] : Array.from({ length: b - a + 1 }, (_, i) => a + i); });
 
-const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript' };
+const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json', '.wav': 'audio/wav',
+  '.ttf': 'font/ttf', '.woff2': 'font/woff2' };
 const server = http.createServer((req, res) => {
   const f = path.join(ROOT, decodeURIComponent(new URL(req.url, 'http://x').pathname));
   if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404).end(); return; }
   res.writeHead(200, { 'Content-Type': MIME[path.extname(f)] || 'application/octet-stream' }); fs.createReadStream(f).pipe(res);
 });
-await new Promise(r => server.listen(0, '127.0.0.1', r));
-const url = `http://127.0.0.1:${server.address().port}/${page}?view=${A.view || 'a'}${A.query ? '&' + A.query : ''}`;
+await new Promise(r => server.listen(Number(A.port || 0), '127.0.0.1', r));
+const base = `http://127.0.0.1:${server.address().port}/${page}`;
+if (A.serve) { console.log(`${base}?film=${A.film}`); await new Promise(() => {}); }
+const url = REEL ? `${base}?film=${A.film}&capture=1${A.query ? '&' + A.query : ''}` : `${base}?view=${A.view || 'a'}${A.query ? '&' + A.query : ''}`;
 const browser = await chromium.launch({ args: ['--use-angle=metal', '--ignore-gpu-blocklist', '--enable-gpu-rasterization'] });
 const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
 const p = await ctx.newPage();
 p.on('pageerror', e => { console.error('pageerror', e.stack); process.exit(1); });
 p.on('console', m => { if (m.type() === 'error') console.error('console', m.text()); });
-await p.goto(url); await p.waitForFunction(() => window.__ready === true, null, { timeout: 120000 });
+await p.goto(url); await p.waitForFunction(() => window.__ready === true, null, { timeout: 180000 });
 const shot = file => p.screenshot(/\.png$/i.test(file) ? { path: file } : { path: file, type: 'jpeg', quality: 92 });
+const render = f => p.evaluate(f => window.__frame(f), f);
 
-if (A.speed) {
-  const n = Number(A.speed), tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'stick-shot-'));
-  for (let f = 0; f < 5; f++) await p.evaluate(f => window.__frame(f), f);              // warm-up
+async function speed(list) {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'stick-shot-'));
+  for (const f of list.slice(0, 5)) await render(f);                                       // warm-up
   const pageMs = [];
-  for (let f = 0; f < n; f++) pageMs.push(await p.evaluate(f => window.__frame(f), f));
+  for (const f of list) pageMs.push(await render(f));
   const t0 = Date.now();
-  for (let f = 0; f < n; f++) { await p.evaluate(f => window.__frame(f), f); await shot(path.join(tmp, `${f}.jpg`)); }
-  const withJpeg = (Date.now() - t0) / n, mean = pageMs.reduce((a, b) => a + b, 0) / n;
+  for (const f of list) { await render(f); await shot(path.join(tmp, `${f}.jpg`)); }
   fs.rmSync(tmp, { recursive: true, force: true });
-  const txt = `view ${A.view || 'a'}, ${W}x${H}, ${n} frames, 1 worker: page-side render ${mean.toFixed(1)} ms/frame (mean), render + JPEG q92 capture ${withJpeg.toFixed(1)} ms/frame\n`;
+  return { page: pageMs.reduce((a, b) => a + b, 0) / list.length, jpeg: (Date.now() - t0) / list.length };
+}
+// __dbg plus the page's motion numbers (camera px/frame at 720 wide, foot slide px/frame under the same camera)
+const dbgAll = () => p.evaluate(fr => fr.map(f => ({ ...JSON.parse(window.__dbg(f)), motion: window.__motion(f) })), frames);
+const compress = list => {
+  const o = []; for (let i = 0; i < list.length; i++) { let j = i; while (j + 1 < list.length && list[j + 1] === list[j] + 1) j++; o.push(i === j ? `${list[i]}` : `${list[i]}-${list[j]}`); i = j; }
+  return o.join(', ');
+};
+
+if (A.speed && !REEL) {
+  const n = Number(A.speed), r = await speed(Array.from({ length: n }, (_, i) => i));
+  const txt = `view ${A.view || 'a'}, ${W}x${H}, ${n} frames, 1 worker: page-side render ${r.page.toFixed(1)} ms/frame (mean), render + JPEG q92 capture ${r.jpeg.toFixed(1)} ms/frame\n`;
   if (A.stats) fs.appendFileSync(A.stats, txt);
   process.stdout.write(txt);
 } else if (A.probe) {                                           // --probe 1: print the page's measurements, no file
-  await p.evaluate(f => window.__frame(f), frames[0]);
-  console.log(JSON.stringify(await p.evaluate(() => window.__probe())));
+  await render(frames[0]);
+  console.log(await p.evaluate(f => window.__probe ? JSON.stringify(window.__probe()) : window.__dbg(f), frames[0]));
+} else if (A.dbg) {
+  const rows = await dbgAll();
+  fs.mkdirSync(path.dirname(A.dbg), { recursive: true });
+  fs.writeFileSync(A.dbg, rows.map(r => JSON.stringify(r)).join('\n') + '\n');
+  console.log(`${A.dbg}  ${rows.length} frames`);
+} else if (A.mp4) {
+  const fps = 30, f0 = frames[0], n = frames.length, wav = path.join(ROOT, A.film, 'vo', 'vo.wav');
+  fs.mkdirSync(path.dirname(path.resolve(A.mp4)), { recursive: true });
+  const ff = start('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'mjpeg', '-i', '-',
+    '-ss', (f0 / fps).toFixed(4), '-t', (n / fps).toFixed(4), '-i', wav, '-map', '0:v', '-map', '1:a',
+    '-c:v', 'libx264', '-preset', 'medium', '-crf', '17', '-pix_fmt', 'yuv420p', '-r', String(fps), '-c:a', 'aac', '-b:a', '192k',
+    '-shortest', '-movflags', '+faststart', path.resolve(A.mp4)], { stdio: ['pipe', 'inherit', 'inherit'] });
+  const done = new Promise((res, rej) => ff.on('close', c => (c ? rej(new Error('ffmpeg ' + c)) : res())));
+  const t0 = Date.now(); let ms = 0;
+  for (const f of frames) {
+    ms += await render(f);
+    const buf = await p.screenshot({ type: 'jpeg', quality: 92 });
+    if (!ff.stdin.write(buf)) await new Promise(r => ff.stdin.once('drain', r));
+    if (f % 60 === 0) process.stdout.write(`frame ${f}\n`);
+  }
+  ff.stdin.end(); await done;
+  console.log(`${A.mp4}  ${n} frames ${W}x${H}  page ${(ms / n).toFixed(1)} ms/frame, with JPEG ${((Date.now() - t0) / n).toFixed(1)} ms/frame`);
+} else if (A.report) {
+  const L = [], pct = (a, b) => (100 * a / b).toFixed(1) + ' %';
+  // (a) clear / small / still frames, measured on the mp4 exactly as specified
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'stick-diff-')), dtxt = path.join(tmp, 'd.txt');
+  run('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-i', path.resolve(A.in), '-vf',
+    `crop=iw:ih*0.6:0:0,scale=270:288,tblend=all_mode=difference,signalstats,metadata=print:file=${dtxt.replace(/\\/g, '/').replace(/:/g, '\\:')}`, '-f', 'null', '-']);
+  const yavg = fs.readFileSync(dtxt, 'utf8').split('\n').filter(l => l.includes('YAVG=')).map(l => Number(l.split('=')[1]));
+  fs.rmSync(tmp, { recursive: true, force: true });
+  const still = yavg.filter(y => y < 0.2).length, small = yavg.filter(y => y >= 0.2 && y < 1.0).length, clear = yavg.length - still - small;
+  L.push(`(a) frame-to-frame difference on ${path.basename(A.in)} (${yavg.length} diffs, top 60 %, 270x288, YAVG):`,
+    `    clear (>= 1.0) ${clear}  ${pct(clear, yavg.length)}   small (0.2-1.0) ${small}  ${pct(small, yavg.length)}   still (< 0.2) ${still}  ${pct(still, yavg.length)}`,
+    `    YAVG median ${[...yavg].sort((a, b) => a - b)[yavg.length >> 1].toFixed(2)}, min ${Math.min(...yavg).toFixed(2)}`);
+  const weak = yavg.map((y, i) => [i + 1 + frames[0], y]).filter(([, y]) => y < 1.0).map(([f]) => f);
+  L.push(`    frames not clear: ${compress(weak) || 'none'}`);
+  // (b) from __dbg
+  const rows = await dbgAll();
+  let run0 = 0, best = 0, bestAt = 0; const camPx = rows.map(r => r.motion.cam);
+  camPx.forEach((v, i) => { if (i === 0) return; if (v < 0.01) { run0++; if (run0 > best) { best = run0; bestAt = rows[i].f; } } else run0 = 0; });
+  const peak = Math.max(...camPx.slice(1)), peakAt = rows[camPx.indexOf(peak)].f;
+  L.push(`(b) from __dbg over frames ${frames[0]}-${frames[frames.length - 1]}:`,
+    `    longest run with no camera motion: ${best} frames${best ? ' (ends ' + bestAt + ')' : ''}; camera speed at 720p: peak ${peak.toFixed(1)} px/frame (frame ${peakAt}), median ${[...camPx].sort((a, b) => a - b)[camPx.length >> 1].toFixed(2)}`);
+  for (const n of Object.keys(rows[0].actors)) {
+    const starts = rows.filter((r, i) => i > 0 && r.actors[n].blink === 1 && rows[i - 1].actors[n].blink === 0).map(r => r.f);
+    const gaps = starts.slice(1).map((s, i) => s - starts[i]);
+    let slide = 0, slideAt = null;
+    rows.forEach(r => { for (const s of ['L', 'R']) { const m = r.motion.feet[n]?.[s]; if (m && m.planted && m.px > slide) { slide = m.px; slideAt = r.f; } } });
+    const out = rows.filter(r => { const a = r.actors[n]; return a.inFrame && (a.head[0] < 0.08 * W || a.head[2] > 0.92 * W); }).map(r => r.f);
+    const band = rows.filter(r => { const a = r.actors[n]; return a.inFrame && a.head[3] > 0.66 * H && a.head[1] < 0.78 * H; }).map(r => r.f);
+    L.push(`    ${n}: blinks ${starts.length}, gaps ${gaps.length ? Math.min(...gaps) + '-' + Math.max(...gaps) : '-'} frames (${gaps.join(' ')}); in frame ${rows.filter(r => r.actors[n].inFrame).length}/${rows.length}`,
+      `      largest stance-foot slide ${slide.toFixed(2)} px/frame at 720p${slideAt != null ? ' (frame ' + slideAt + ')' : ''}`,
+      `      head box in caption band 66-78 %: ${compress(band) || 'never'}; head box outside x 8-92 %: ${compress(out) || 'never'}`);
+  }
+  // (c) speed
+  const sp = await speed(frames.filter((_, i) => i % Math.max(1, Math.floor(frames.length / 60)) === 0).slice(0, 60));
+  L.push(`(c) speed, ${W}x${H}, 1 worker: page-side render ${sp.page.toFixed(1)} ms/frame, render + JPEG q92 capture ${sp.jpeg.toFixed(1)} ms/frame`);
+  fs.mkdirSync(path.dirname(A.report), { recursive: true });
+  fs.writeFileSync(A.report, L.join('\n') + '\n'); console.log(L.join('\n'));
 } else {
   const out = A.out || 'shot.jpg'; fs.mkdirSync(path.dirname(out), { recursive: true });
   for (const f of frames) {
-    const ms = await p.evaluate(f => window.__frame(f), f);
+    const ms = await render(f);
     const file = out.replace('%d', String(f)); await shot(file);
     console.log(`${file}  frame ${f}  ${ms.toFixed(1)} ms`);
   }

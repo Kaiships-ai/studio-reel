@@ -7,8 +7,8 @@ import { toon, lin, css, B, INK_RGB } from './look.js';
 
 export const W_M = 0.60;                     // head width in metres
 const W = W_M;
-const INK_T = 0.036 * W;                     // outline width and limb thickness
-const LIMB_R = INK_T / 2;
+const INK_T = 0.050 * W;                     // outline width: the reference measures 5.4-6.4 % of head width
+const LIMB_R = 0.038 * W / 2;                // limbs stay a thinner line than the outline
 export const HEAD_C = [0.0, 2.43], HEAD_H = 0.94, HIP_V = 1.34, SHOULDER_V = 2.00;
 export const TORSO = { cx: 0.0, cy: 1.72, w: 0.57, h: 0.90, depth: 0.80 };
 const HA = 0.5 * W, HB = 0.5 * HEAD_H * W;   // head half width / half height (m)
@@ -27,6 +27,13 @@ export const EXPR = {
   sly: [0.054, 0.052, 0.55, 6, 0.135, 'grin'],
   sleep: [0.055, 0.050, 1.0, 0, 0.140, 'flat'],
   grin: [0.050, 0.060, 0.0, -4, 0.180, 'grin'],
+  calm: [0.050, 0.058, 0.32, -2, 0.158, 'smile'],
+  // open-mouth twins: `<expr>_o` is shown while a word is being said (and for the sleeper's snore)
+  happy_o: [0.050, 0.060, 0.0, -6, 0.180, 'open'],
+  closed_o: [0.055, 0.050, 1.0, -4, 0.155, 'open'],
+  calm_o: [0.050, 0.058, 0.32, -2, 0.162, 'open'],
+  grin_o: [0.050, 0.060, 0.0, -4, 0.185, 'open'],
+  sleep_o: [0.055, 0.050, 1.0, 0, 0.140, 'o'],
 };
 const EXPR_KEYS = Object.keys(EXPR);
 
@@ -203,7 +210,7 @@ function bez(p0, p1, p2, p3, n = 16) {
 function drawFace(g, expr, blink) {
   const INK = css(INK_RGB), ey = 0.02, dx = 0.150;
   let [rx, ry, lid, tilt, bh, mouth] = EXPR[expr];
-  rx *= 1.18; ry *= 1.18; bh += 0.012;
+  rx *= 1.30; ry *= 1.30; bh += 0.018;
   if (blink === 1 && lid < 1) { lid = Math.max(lid, 0.62); bh -= 0.012; }
   const line = (pts, w) => { g.lineWidth = w; g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(...p) : g.moveTo(...p)); g.stroke(); };
   g.strokeStyle = g.fillStyle = INK; g.lineCap = g.lineJoin = 'round';
@@ -221,9 +228,9 @@ function drawFace(g, expr, blink) {
       g.beginPath(); g.ellipse(ex, ey, rx, ry, 0, 0, Math.PI * 2); g.fill(); g.restore();
       if (lid > 0) line([[ex - rx * 1.25, top], [ex + rx * 1.25, top]], 0.026);
     }
-    const bl = 0.1035, a = tilt * DEG * -s, bx = ex + s * 0.004, by = ey + bh - (blink === 2 ? 0.014 : 0);
+    const bl = 0.118, a = tilt * DEG * -s, bx = ex + s * 0.004, by = ey + bh - (blink === 2 ? 0.014 : 0);
     const p0 = [bx - bl * Math.cos(a), by - bl * Math.sin(a)], p1 = [bx + bl * Math.cos(a), by + bl * Math.sin(a)], mid = [bx, by + 0.012];
-    line(bez(p0, mid, mid, p1, 10), 0.050);
+    line(bez(p0, mid, mid, p1, 10), 0.064);
   }
   const mx = 0, my = ey - 0.20;
   if (mouth === 'flat') line([[mx - 0.045, my], [mx + 0.045, my]], 0.028);
@@ -232,6 +239,12 @@ function drawFace(g, expr, blink) {
   else if (mouth === 'smile') line(bez([mx - 0.075, my + 0.02], [mx - 0.03, my - 0.035], [mx + 0.03, my - 0.035], [mx + 0.075, my + 0.02]), 0.028);
   else if (mouth === 'wobble') line(bez([mx - 0.06, my], [mx - 0.03, my + 0.03], [mx, my - 0.03], [mx + 0.06, my + 0.005]), 0.026);
   else if (mouth === 'o') { g.beginPath(); g.ellipse(mx, my - 0.01, 0.036, 0.048, 0, 0, Math.PI * 2); g.fill(); }
+  else if (mouth === 'open') {
+    const top = bez([mx - 0.062, my + 0.018], [mx - 0.03, my + 0.004], [mx + 0.03, my + 0.004], [mx + 0.062, my + 0.018], 12);
+    const bot = bez([mx + 0.062, my + 0.018], [mx + 0.05, my - 0.075], [mx - 0.05, my - 0.075], [mx - 0.062, my + 0.018], 14);
+    g.beginPath(); [...top, ...bot].forEach((p, i) => i ? g.lineTo(...p) : g.moveTo(...p)); g.closePath(); g.fill();
+    g.fillStyle = css([0.85, 0.22, 0.26]); g.beginPath(); g.ellipse(mx, my - 0.040, 0.030, 0.013, 0, 0, Math.PI * 2); g.fill(); g.fillStyle = INK;
+  }
   else if (mouth === 'grin') {
     const pts = bez([mx - 0.085, my + 0.025], [mx - 0.04, my - 0.06], [mx + 0.04, my - 0.06], [mx + 0.085, my + 0.025], 18);
     const shape = () => { g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(...p) : g.moveTo(...p)); g.lineTo(mx - 0.085, my + 0.025); g.closePath(); };
@@ -372,7 +385,7 @@ export function makeStick(spec) {
 
   const head = new THREE.Group(); root.add(head);
   const hg = new THREE.SphereGeometry(HA, 64, 40); hg.scale(1, HEAD_H, 1);
-  const headSolid = solid(hg, toon(spec.skin || [1, 1, 1], { shade: [0.76, 0.74, 0.95], rim: 0.40, sheen: 0.10, broad: 0.10, rough: 0.4 }));
+  const headSolid = solid(hg, toon(spec.skin || [1, 1, 1], { shade: [0.88, 0.82, 0.98], rim: 0.42, sheen: 0.30, broad: 0.18, rough: 0.3 }));
   head.add(headSolid);
   const rig = new THREE.Group(); head.add(rig);
   const A = atlas(), map = A.tex.clone(); map.repeat.set(1 / A.cols, 1 / A.rows);
@@ -393,7 +406,7 @@ export function makeStick(spec) {
   contact.rotation.x = -Math.PI / 2; contact.scale.set(0.48 * W, 0.24 * W, 1); contact.position.set(0.03 * W, 0.004, 0);
   contact.userData.noPrepass = true; root.add(contact);
 
-  const S = { root, yaw: 0, hand: {}, parts: { head: headSolid, torso, toes } };
+  const S = { root, yaw: 0, hand: {}, parts: { head: headSolid, torso, toes, ankles, hands } };
   const inv = new THREE.Matrix4();
 
   // pos (Blender metres), and either yaw (deg, 0 = facing Blender -Y) or face (a Blender point to turn toward)
@@ -407,29 +420,38 @@ export function makeStick(spec) {
   // a Blender world point -> this figure's (u, v) in W units
   S.toLocal = pB => { inv.copy(root.matrixWorld).invert(); const v = B(...pB).applyMatrix4(inv); return [v.x / W, v.y / W]; };
 
-  S.pose = (P = {}) => {
-    S.place(P);
-    const dx = P.dx || 0, dz = P.bob || 0, lean = (P.lean || 0) * DEG, c = Math.cos(lean), s = Math.sin(lean);
-    const bt = (u, v) => { const y = v - HIP_V; return [u * c + y * s + dx, -u * s + y * c + HIP_V + dz]; };
-    body.position.set(dx * W, (HIP_V + dz) * W, 0); body.rotation.z = -lean;
-    const hc = bt(HEAD_C[0] + (P.head_dx || 0), HEAD_C[1] + (P.head_dv || 0));
-    head.position.set(hc[0] * W, hc[1] * W, 0); head.rotation.z = -(lean + (P.head_tilt || 0) * DEG);
+  // face only (expression cell, blink, eye slide): the reel runtime sets it after every prop has moved this frame
+  S.face = (P = {}) => {
     const e = EXPR[P.expr] ? P.expr : 'neutral', cell = EXPR_KEYS.indexOf(e) * 3 + (P.blink || 0);
     map.offset.set((cell % A.cols) / A.cols, 1 - (Math.floor(cell / A.cols) + 1) / A.rows);
     rig.rotation.set(-(P.look_v || 0) * 0.12, (P.look || 0) * LOOK_RAD, 0);
+  };
+  // Extra keys for the reel runtime: pitch (deg, upper body forward about the hip), hands and feet may carry a
+  // third number = depth toward where the figure faces (W), kneeF{L,R} = knee pushed forward (W), toeF = toe reach.
+  S.pose = (P = {}) => {
+    S.place(P);
+    const dx = P.dx || 0, dz = P.bob || 0, lean = (P.lean || 0) * DEG, c = Math.cos(lean), s = Math.sin(lean);
+    const pt = (P.pitch || 0) * DEG, pc = Math.cos(pt), ps = Math.sin(pt);
+    const bt = (u, v) => { const y = v - HIP_V, yy = -u * s + y * c; return [u * c + y * s + dx, yy * pc + HIP_V + dz, yy * ps]; };
+    body.position.set(dx * W, (HIP_V + dz) * W, 0); body.rotation.set(pt, 0, -lean);
+    const hc = bt(HEAD_C[0] + (P.head_dx || 0), HEAD_C[1] + (P.head_dv || 0));
+    head.position.set(hc[0] * W, hc[1] * W, hc[2] * W);
+    head.rotation.set(pt * 0.6 + (P.head_pitch || 0) * DEG, 0, -(lean + (P.head_tilt || 0) * DEG));
+    S.face(P);
     const front = new Set(P.front || []);
     for (const [side, sg] of [['L', -1], ['R', 1]]) {
-      const sh = bt(sg * TORSO.w * 0.40, SHOULDER_V), hand = P['hand' + side] || bt(sg * 0.41, 1.30);
+      const sh = bt(sg * TORSO.w * 0.40, SHOULDER_V), h0 = P['hand' + side];
+      const hand = h0 ? [h0[0], h0[1], h0.length > 2 ? h0[2] : (front.has('arm' + side) ? 0.16 : 0.0)] : bt(sg * 0.41, 1.30);
       const bend = P['bend' + side] ?? 0.10 * sg, ex = hand[0] - sh[0], ey = hand[1] - sh[1], ln = Math.hypot(ex, ey) || 1;
-      const z = front.has('arm' + side) ? 0.16 : 0.0;
-      const elbow = [(sh[0] + hand[0]) / 2 - ey / ln * bend, (sh[1] + hand[1]) / 2 + ex / ln * bend, z * 0.6];
-      const pts = quadThrough([sh[0], sh[1], 0], elbow, [hand[0], hand[1], z], 16);
+      const elbow = [(sh[0] + hand[0]) / 2 - ey / ln * bend, (sh[1] + hand[1]) / 2 + ex / ln * bend, sh[2] * 0.4 + hand[2] * 0.6];
+      const pts = quadThrough(sh, elbow, hand, 16);
       limbs['arm' + side].set(pts); hands[side].position.copy(pts[15]); S.hand[side] = hand;
-      const hip = bt(sg * 0.14, HIP_V + 0.04), foot = P['foot' + side] || [sg * 0.22, 0.022];
+      const hb = bt(sg * 0.14, HIP_V + 0.04), hip = [hb[0], hb[1], 0], f0 = P['foot' + side] || [sg * 0.22, 0.022];
+      const foot = [f0[0], f0[1], f0[2] || 0];
       const kb = P['knee' + side] || 0, fx = foot[0] - hip[0], fy = foot[1] - hip[1], fl = Math.hypot(fx, fy) || 1;
-      const knee = [(hip[0] + foot[0]) / 2 - fy / fl * kb, (hip[1] + foot[1]) / 2 + fx / fl * kb, 0];
-      const leg = quadThrough([hip[0], hip[1], 0], knee, [foot[0], foot[1], 0], 13);
-      const td = P['toe' + side] ?? sg, toe = new THREE.Vector3((foot[0] + 0.10 * td) * W, (foot[1] - 0.004) * W, 0.07 * W);
+      const knee = [(hip[0] + foot[0]) / 2 - fy / fl * kb, (hip[1] + foot[1]) / 2 + fx / fl * kb, foot[2] / 2 + (P['kneeF' + side] || 0)];
+      const leg = quadThrough(hip, knee, foot, 13);
+      const td = P['toe' + side] ?? sg, toe = new THREE.Vector3((foot[0] + 0.10 * td) * W, (foot[1] - 0.004) * W, (foot[2] + (P.toeF ?? 0.07)) * W);
       for (let i = 1; i <= 5; i++) leg.push(leg[12].clone().lerp(toe, i / 5));
       limbs['leg' + side].set(leg); ankles[side].position.copy(leg[12]); toes[side].position.copy(toe);
     }

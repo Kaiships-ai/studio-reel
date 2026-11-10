@@ -74,7 +74,7 @@ export function createStage({ width, height, exposure = 1.0, ink = 2.6, sat = 1.
   sun.castShadow = true; sun.shadow.mapSize.set(4096, 4096);
   sun.shadow.bias = -0.0002; sun.shadow.normalBias = 0.006; sun.shadow.radius = 1.6;
   scene.add(sun, sun.target);
-  const hemi = new THREE.HemisphereLight(lin(0.52, 0.62, 1.0), lin(0.95, 0.66, 0.42), 1.0);
+  const hemi = new THREE.HemisphereLight(lin(0.44, 0.60, 1.0), lin(0.80, 0.68, 0.58), 1.15);
   scene.add(hemi);
   const fill = new THREE.DirectionalLight(lin(0.80, 0.84, 1.0), 0.45);
   scene.add(fill, fill.target);
