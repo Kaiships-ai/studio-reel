@@ -4,7 +4,7 @@
 //   node styles/stick-man/tools/gates.mjs --report films/x/review/x-stats.txt --in films/x/renders/x.mp4 [--out films/x/review/x-gates.txt]
 //     [--film films/x [--dbg films/x/review/x-dbg.jsonl]]
 // The report comes from: node styles/stick-man/tools/shot.mjs --film films/x --frames 0-<last> --report <stats.txt> --in <mp4>
-// --film adds the story gates (storyboard.json against __dbg: duration, sets, shot variety, props / fx use and presence,
+// --film adds the story gates (storyboard.json against __dbg: duration, sets, shot variety, shot grammar, props / fx use and presence,
 // and the judged board verdict review/board-verdict.json). Without --dbg it runs shot.mjs --dbg itself (~1 min).
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -199,6 +199,18 @@ async function story(film) {
   let run1 = 1, worst = 1, at = main[0]?.[0];
   for (let i = 1; i < main.length; i++) { run1 = main[i][1] === main[i - 1][1] ? run1 + 1 : 1; if (run1 > worst) { worst = run1; at = `${main[i - run1 + 1][0]}-${main[i][0]} ${main[i][1]}`; } }
   sg('shot variety', worst <= 2, `longest run ${worst} line(s) alike${worst > 1 ? ' (' + at + ')' : ''}`, '<= 2 lines same set + shot');
+  // 3b shot grammar (camera.js kinds): how many kinds, no run of 3 lines in one kind, an establishing and an insert shot
+  const kindOf = r => (r.camera?.shot || '?').split('(')[0], kindN = {};
+  for (const r of rows) kindN[kindOf(r)] = (kindN[kindOf(r)] || 0) + 1;
+  const kinds = Object.entries(kindN).filter(([k, n]) => n >= 15 && k !== '?').map(([k]) => k), needK = Math.max(4, Math.round(4 * dur / 30));
+  sg('shot types', kinds.length >= needK, `${kinds.length}: ${kinds.join(', ')}`, `>= ${needK} kinds (>= 15 f each)`);
+  const lk = win.map(w => { const c = {}; for (const r of inWin(w)) c[kindOf(r)] = (c[kindOf(r)] || 0) + 1; return [w.id, Object.entries(c).sort((x, y) => y[1] - x[1])[0]?.[0] || '?']; });
+  let kr = 1, kw = 1, kat = lk[0]?.[0];
+  for (let i = 1; i < lk.length; i++) { kr = lk[i][1] === lk[i - 1][1] ? kr + 1 : 1; if (kr > kw) { kw = kr; kat = `${lk[i - kr + 1][0]}-${lk[i][0]} ${lk[i][1]}`; } }
+  sg('shot type run', kw <= 2, `longest run ${kw} line(s)${kw > 1 ? ' (' + kat + ')' : ''}; lines: ${lk.map(x => x[1]).join(' ')}`, '<= 2 lines same shot kind');
+  const est = kinds.filter(k => ['est', 'aerial'].includes(k)), ins = kinds.filter(k => ['insert', 'macro', 'top'].includes(k));
+  sg('establishing shot', est.length > 0, est.join(', ') || 'none', '>= 1 est / aerial');
+  sg('insert shot', ins.length > 0, ins.join(', ') || 'none', '>= 1 insert / macro / top');
   // 4 + 5 every line has an entry; its props / fx are seen (>= 3 frames in its window); >= 40 % of lines use one
   const noEntry = ids.filter(id => !E[id]), unseen = [], using = [];
   for (const w of win) {
