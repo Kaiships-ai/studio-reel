@@ -18,7 +18,8 @@ const dye = EXTRAS.dye;
 const SPECS = { KAI, TELLER, GUARD, ...Object.fromEntries(Object.entries(EXTRAS).filter(([, v]) => v && typeof v === 'object' && !Array.isArray(v) && v.name && v.shirt)) };
 const SETS = { 'bank-lobby': () => import('../lib/sets/bank-lobby.js'), street: () => import('../lib/sets/street.js'),
   cutaway: () => import('../lib/sets/cutaway.js'), park: () => import('../lib/sets/park.js'), lab: () => import('../lib/sets/lab.js'),
-  'halden-street': () => import('../lib/sets/halden-street.js'), 'halden-plaza': () => import('../lib/sets/halden-plaza.js') };
+  'halden-street': () => import('../lib/sets/halden-street.js'), 'halden-plaza': () => import('../lib/sets/halden-plaza.js'),
+  island: () => import('../lib/sets/island.js') };
 const KEYV = new Set(['set', 'pulse', 'shake', 'fire', 'flash', 'sound']);
 const HAND_R = 0.040 * W;                                        // the hand dot's radius (cast.js)
 const THICK = { b1: 0.045, b2: 0.045, stack: 0.07, note: 0.003 };

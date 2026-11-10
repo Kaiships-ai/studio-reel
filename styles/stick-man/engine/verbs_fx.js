@@ -34,7 +34,7 @@ export const ACT = {
     const feet = { footL: [-0.32, 0.022, 0.04], footR: [0.30, 0.022, -0.06] };
     const owners = [{ chan: 'body', start: t0, fade: 2, fn: f => {
       const t = f - t0, u = smoother(t / 5), pos = lerp3(p0, p1, u);
-      const hop = t < 11 ? 0.09 * Math.sin(Math.PI * clamp(t / 11, 0, 1)) : -0.04 * settle((t - 11) * 0.7);
+      const hop = t < 11 ? 0.09 * Math.sin(Math.PI * clamp(t / 11, 0, 1)) : -0.04 * settle((t - 11) * 0.7) * smooth((t - 11) / 5);   // eased in: the landing dip used to start at full depth (knee pop 26-32 deg/f, stick04)
       const pitch = -11 * smooth(t / 3) * (1 - 0.6 * smooth((t - 10) / 14));
       return stand(pos, yaw, { bob: hop, pitch, lean: 3 * Math.sin(t * 0.9) * Math.exp(-t / 8), ...feet });
     } }];
