@@ -277,5 +277,13 @@ async function story(film) {
     const cover = ids.every(id => L.some(x => x.id === id)), pct = L.length ? ok.length / ids.length : 0;
     sg('board shown', cover && pct >= 0.85, `${Math.round(100 * pct)} % (${ok.length}/${ids.length})${no.length ? '; not shown: ' + no.join(', ') : ''}${cover ? '' : '; verdict misses lines'}`, '>= 85 % shown');
   }
+  // judged: style judge + blind test against the reference (tools/judge.mjs, GATES.md "Style judge"); --judge picks the file
+  const jf = A.judge ? path.resolve(A.judge) : F('review/judge.json');
+  if (!fs.existsSync(jf)) { sg('style judge', false, 'no review/judge.json: run judge.mjs (GATES.md)', 'mean >= 8.5, no category < 8'); sg('blind test', false, 'no review/judge.json', '<= 8 / 12 told apart'); }
+  else {
+    const J = JSON.parse(fs.readFileSync(jf, 'utf8')), low = Object.entries(J.categories).sort((a, b) => a[1] - b[1]);
+    sg('style judge', J.overall >= 8.5 && low[0][1] >= 8, `overall ${J.overall}, lowest ${low.slice(0, 3).map(([c, v]) => `${c} ${v}`).join(', ')}`, 'mean >= 8.5, no category < 8');
+    sg('blind test', !!J.blind && J.blind.separation <= 8, J.blind ? `${J.blind.separation}/12 told apart` : 'not run', '<= 8 / 12 told apart');
+  }
   return T;
 }

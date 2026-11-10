@@ -232,13 +232,15 @@ function skin(g, S, ey, t) {
   }
 }
 
-export function drawFace(g, expr, blink = 0, t = 0) {
+// o.glasses: the rims circle the eyes, so the brows sit higher (clear of the rim) and tilt 1.4x so the expression still reads
+export function drawFace(g, expr, blink = 0, t = 0, o = {}) {
   const E = EXPR[expr] || EXPR.neutral, ey = 0.02, dx = 0.150, S = E.skin || {};
   g.lineCap = g.lineJoin = 'round';
   skin(g, S, ey, t);
   g.save(); g.scale(FEATURE, FEATURE);                                                   // features a little larger than the
   // reference: at phone size (and on a contact sheet) a face must still read from across the room
-  const [tilt, bh, arch = 0, liftL = 0, liftR = 0] = E.brow;
+  const [tilt0, bh0, arch = 0, liftL = 0, liftR = 0] = E.brow;
+  const tilt = o.glasses ? tilt0 * 1.4 : tilt0, bh = o.glasses ? Math.max(bh0, 0.150) + 0.022 : bh0;
   for (const s of [-1, 1]) {
     const ex = s * dx;
     eye(g, E, ex, s, ey, blink, t);
@@ -308,7 +310,7 @@ const MARKS = {
 export const MARK_NAMES = Object.keys(MARKS);
 
 // One figure's face: its own canvas (redrawn only when what it shows changes) and its mark cards.
-export function faceRig(headW) {
+export function faceRig(headW, opt = {}) {
   const cv = document.createElement('canvas'); cv.width = cv.height = 512; const g = cv.getContext('2d');
   const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
   const group = new THREE.Group(), cards = {};
@@ -323,7 +325,7 @@ export function faceRig(headW) {
       const k = `${expr}|${blink}|${live ? Math.floor(t / 2) : 0}`;
       if (k !== key) {
         key = k; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 512, 512);
-        g.setTransform(512, 0, 0, -512, 256, 256); drawFace(g, expr, blink, t); tex.needsUpdate = true;
+        g.setTransform(512, 0, 0, -512, 256, 256); drawFace(g, expr, blink, t, opt); tex.needsUpdate = true;
       }
       for (const list of Object.values(cards)) for (const m of list) m.visible = false;
       for (const [kind, age] of marks) {

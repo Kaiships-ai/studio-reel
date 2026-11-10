@@ -4,7 +4,7 @@
 // A reel is one or more ACTS (reel.js is the first; reel2.js, when present, adds more): each act builds its own set,
 // cast, beats and camera; boot() shows the act whose window holds the frame and dissolves between them.
 import * as THREE from 'three';
-import { createStage } from './look.js';
+import { createStage, SET_GRADE } from './look.js';
 import { makeStick, KAI, TELLER, GUARD, EXPR, HEAD_C } from './cast.js';
 import { VERBS, STAND, SIT, REST_ARM, W, lerp, lerp3, add3, angDiff, toLocal, smoother, hash, handEase } from './verbs.js';
 import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, exprAccent, bodyFollow, LATE, EXPR_LEAD, exprKeyAt, markOwner, isBodyVerb, autoActing } from './acting.js';
@@ -126,7 +126,8 @@ async function buildAct(R, X) {
   const actors = [], byName = {};
   for (const [name, c] of Object.entries(R.cast)) {
     if (!SPECS[c.spec]) throw new Error(`unknown cast spec ${c.spec} (SETS.md, Cast)`);
-    const S = makeStick(SPECS[c.spec]); group.add(S.root);
+    // glasses: per cast entry, else per reel (R1.glasses), else the spec's own (Q2: rims make every face read as round eyes)
+    const gl = c.glasses ?? X.glasses, S = makeStick(gl == null ? SPECS[c.spec] : { ...SPECS[c.spec], glasses: gl }); group.add(S.root);
     const posture = c.posture || 'stand', base = posture === 'sit' ? SIT : STAND;
     const pos = point(c.at).slice(); pos[2] = pos[2] || 0;
     const st = { name, pos, yaw: c.yaw ?? 0, posture, hold: { L: null, R: null }, handW: {}, sling: null };
@@ -489,7 +490,7 @@ async function buildAct(R, X) {
     const shotCut = cam.shotIndex !== i0 && shots[cam.shotIndex].glide === 0;
     return { cam: f === F0 ? 0 : +camPx.toFixed(3), camPeak: f === F0 ? 0 : +camPeak.toFixed(3), feet, shotCut };
   };
-  return { name: R.name || R.set, R, group, background, update, dbg, motion, cues, actors, frameOf, flash: f => KT.at('screen', 'flash', f, 0) || 0 };
+  return { name: R.name || R.set, R, grade: { ...(SET_GRADE[R.set] || {}), ...(R.grade || {}) }, group, background, update, dbg, motion, cues, actors, frameOf, flash: f => KT.at('screen', 'flash', f, 0) || 0 };
 }
 
 // storyboard lines the reel data does not shoot get planned shots (shotplan.js): each line goes to the act on screen at
@@ -533,7 +534,7 @@ export async function boot({ film, width, height }) {
   const stage = createStage({ width, height, ...(R1.look || {}) });
   try { await document.fonts.load('900 100px InterReel'); } catch { /* falls back to the system sans */ }
   const cap = createCaptions({ words, lines: [...R1.lines, ...(R2?.lines || [])], fps, width, height });
-  const X = { stage, words, fps, F0, F1, width, height, cap }, bg0 = stage.scene.background;
+  const X = { stage, words, fps, F0, F1, width, height, cap, glasses: R1.glasses }, bg0 = stage.scene.background;
   const defs = [{ ...R1, name: R1.name || 'lobby', show: R1.show || [{ from: R1.frames[0] }] }, ...(R2?.acts || [])];
   for (const am of R2?.amend || []) { const d = defs.find(x => x.name === am.act); d.shots = [...d.shots, ...(am.shots || [])]; d.beats = [...d.beats, ...(am.beats || [])]; }
   autoShots(defs, await getJSON(`/${film}/storyboard.json`), words, fps, F1, [...R1.lines, ...(R2?.lines || [])]);
@@ -553,8 +554,8 @@ export async function boot({ film, width, height }) {
   const show = A => { for (const x of acts) x.group.visible = x === A; stage.scene.background = A.background ?? bg0; };
   function frame(f) {
     const s = at(f); let ms = 0;
-    if (s.prev) { show(s.prev); s.prev.update(f); ms += stage.render({ flash: s.prev.flash(f) }); stage.grab(); }
-    show(s.cur); s.cur.update(f); ms += stage.render({ prev: s.prev ? 1 - s.u : 0, flash: s.cur.flash(f) });
+    if (s.prev) { show(s.prev); s.prev.update(f); ms += stage.render({ flash: s.prev.flash(f), grade: s.prev.grade }); stage.grab(); }
+    show(s.cur); s.cur.update(f); ms += stage.render({ prev: s.prev ? 1 - s.u : 0, flash: s.cur.flash(f), grade: s.cur.grade });
     cap.draw(f); return ms;
   }
   window.__motion = f => { const s = at(f), p = at(Math.max(F0, f - 1)); show(s.cur); const m = s.cur.motion(f); return { ...m, cut: !!s.prev || p.cur !== s.cur || !!p.prev || s.cur.flash(f) > 0.3 || m.shotCut }; };   // dissolves, act cuts, flash cuts, shot cuts

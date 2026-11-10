@@ -407,7 +407,7 @@ export function makeStick(spec) {
   const headSolid = solid(hg, toon(spec.skin || [1, 1, 1], { shade: [0.74, 0.74, 0.92], rim: 0.12, sheen: 0.55, broad: 0.30, rough: 0.25, soft: 0.6, rimLit: 0.45 }));
   head.add(headSolid);
   const rig = new THREE.Group(); head.add(rig);
-  const FR = faceRig(W);
+  const FR = faceRig(W, { glasses: !!spec.glasses });
   const face = new THREE.Mesh(facePatch(), new THREE.MeshBasicMaterial({ map: FR.tex, transparent: true, depthWrite: false,
     polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
   face.userData.noPrepass = true; face.renderOrder = 2; rig.add(face); head.add(FR.group);

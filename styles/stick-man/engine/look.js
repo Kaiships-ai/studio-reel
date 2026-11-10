@@ -69,6 +69,16 @@ export function toonify(m, o = {}) {
 // set-surface defaults for toonify (every MeshStandardMaterial a set or prop makes without toon()); SET_LOOK is the
 // one place to tune them for all sets at once
 export const SET_LOOK = { soft: 1.0, gain: 1.0, shade: [0.36, 0.43, 0.72], sheen: 0.45, rim: 0.0 };
+// per-set grade (colour per shot gate, GATES.md "Look gates"): exp scales the finished frame, lift raises the shadows
+// toward white (lift * (1 - c)), gam < 1 brightens the mids. Tuned per set against the reference tiles p10-p90
+// (YAVG 84-158, YLOW 36-101); an act can override with `grade: {exp, lift, gam}`.
+export const SET_GRADE = {
+  park: { exp: 0.86, lift: 0.0, gam: 1.06 },
+  lab: { exp: 0.86, lift: 0.0, gam: 1.06 },
+  'bank-lobby': { exp: 1.0, lift: 0.06, gam: 0.96 },
+  street: { exp: 0.90, lift: 0.0, gam: 1.04 },
+  cutaway: { exp: 0.86, lift: 0.0, gam: 1.06 },
+};
 
 export function std(rgb, rough, o = {}) {
   return new THREE.MeshStandardMaterial({ color: lin(...rgb), roughness: rough, metalness: 0, ...o });
@@ -309,9 +319,10 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.6, sat = 1
 
   const gradePass = new ShaderPass({
     uniforms: { tDiffuse: { value: null }, sat: { value: sat }, con: { value: con }, vig: { value: vig }, split: { value: split },
-      aspect: { value: width / height }, tPrev: { value: null }, uPrev: { value: 0 }, uFlash: { value: 0 } },
+      aspect: { value: width / height }, tPrev: { value: null }, uPrev: { value: 0 }, uFlash: { value: 0 },
+      uExp: { value: 1 }, uLift: { value: 0 }, uGam: { value: 1 } },
     vertexShader: FS_QUAD_V,
-    fragmentShader: `uniform sampler2D tDiffuse, tPrev; uniform float sat, con, vig, split, aspect, uPrev, uFlash; varying vec2 vUv;
+    fragmentShader: `uniform sampler2D tDiffuse, tPrev; uniform float sat, con, vig, split, aspect, uPrev, uFlash, uExp, uLift, uGam; varying vec2 vUv;
       void main(){ vec3 c = texture2D(tDiffuse, vUv).rgb; float l = dot(c, vec3(0.2126,0.7152,0.0722));
         c = mix(vec3(l), c, sat);
         // split tone: shade leans blue-lilac, light leans warm, like the sunlit reference sets
@@ -320,6 +331,7 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.6, sat = 1
         c = (c - 0.5)*con + 0.5;
         vec2 d = (vUv - 0.5)*vec2(aspect, 1.0); c *= 1.0 - vig*smoothstep(0.25, 0.75, length(d)*1.25);
         c = clamp(c, 0.0, 1.0);
+        c = pow(c, vec3(uGam)) * uExp; c += uLift * (1.0 - c);               // per-set grade (SET_GRADE)
         if (uPrev > 0.0) c = mix(c, texture2D(tPrev, vUv).rgb, uPrev);       // dissolve: the other act's finished frame on top
         c = mix(c, vec3(1.0, 0.99, 0.96), uFlash);                           // full-frame white flash
         gl_FragColor = vec4(c, 1.0); }` });
@@ -348,6 +360,7 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.6, sat = 1
   function render(o = {}) {
     const t0 = performance.now();
     gradePass.uniforms.uPrev.value = o.prev || 0; gradePass.uniforms.uFlash.value = Math.min(1, o.flash || 0);
+    const gr = o.grade || {}; gradePass.uniforms.uExp.value = gr.exp ?? 1; gradePass.uniforms.uLift.value = gr.lift ?? 0; gradePass.uniforms.uGam.value = gr.gam ?? 1;
     camera.updateMatrixWorld();
     autoToon();
     prepass();

@@ -137,7 +137,7 @@ export function createCamera({ aspect, side = [0, -1], bounds = null, zRange = [
   function solve(S, f, A) {
     const K = { ...KIND[S.kind], ...S.opt }, t = f - S.f, k = Math.pow(1 + S.push, Math.max(0, t));   // push in = a growing size target,
     // so the framing rules (margins, extras) still hold while it pushes
-    const drift = (S.drift ?? 0.05) * (S.i % 2 ? -1 : 1) * t;
+    const drift = (S.opt.drift ?? S.drift ?? 0.05) * (S.i % 2 ? -1 : 1) * t;
     let c;
     if (S.kind === 'two' || S.kind === 'wide') {
       const subs = S.subjects.map(A), a = subs[0], b = subs[subs.length - 1];

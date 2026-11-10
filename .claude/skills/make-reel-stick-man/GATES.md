@@ -97,6 +97,25 @@ Measured 10/11 (`films/*/review/board-verdict-*.json`): robe board 100 % in 3 of
 reel 1 board, 15 single reviews 90-100 %, both-of-2 pairs 80-100 %, 2-of-3 gates 100, 100, 100 % → 2 of 3 is the rule.
 The old one-still board with one reviewer scored the same robe content 89 % then 56 %.
 
+### The judged gate: style judge + blind test (Q5, against the reference)
+
+After the render: `node styles/stick-man/tools/judge.mjs films/<slug> --in <mp4> --ref <ref-private dir> [--tag r1]`.
+The reference images stay private: the tool reads `ref_sheet30_pink.jpg` and `ref_sheet30_rail.jpg` (10 x 3 tiles of
+270 x 480, JPEG q90 4:2:0) from that path, refuses a path inside the repo, and builds the reference sheets in a tmp dir it
+deletes. Fair comparison, same pipeline both sides (`judge_sheets.py`): 12 reference tiles from each sheet (evenly spread)
+and 24 of our frames (evenly spread over the reel, each the middle of a spoken word, every line at least once), our frames
+scaled to 270 x 480 (Lanczos), every tile one JPEG pass at q90 4:2:0, sheets of 6 x 2 tiles saved at q90 4:2:0. Two
+independent headless `claude -p --model sonnet` reviews (as board.mjs) each see both reference sheets and both of ours,
+with the fixed prompt in `judge.mjs` (10 categories 0-10, overall, one line per category on the biggest difference, "Do
+not be generous"). Writes `review/judge.json` / `judge.txt` (scores per review, mean, tokens, cost) and our two sheets.
+
+| Gate | Threshold | Measured as |
+|---|---|---|
+| style judge | mean overall ≥ 8.5 and no category mean < 8 | mean of the 2 reviews |
+| blind test | ≤ 8 / 12 told apart | 6 reference + 6 ours tiles shuffled (seeded), one more review labels each original / imitation; tiles labelled right (6 = chance) |
+
+Cost: ~4 images a review; tokens per review are in `judge.json`.
+
 ## Acting gates: how to fix a FAIL
 
 Body acting under 70 %: name a body verb for that lead in the storyboard `act` and the beats (VERBS.md "Body acting"),
