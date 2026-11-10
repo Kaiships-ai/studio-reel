@@ -6,6 +6,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
 
 export const PROPS = 1;                                            // layer that gets the ink line
 export const B = (x, y, z) => new THREE.Vector3(x, z, -y);         // Blender Z-up -> three Y-up
@@ -17,38 +18,57 @@ export const INK_RGB = [0.006, 0.006, 0.009];
 // Toon-leaning material. Only the SUN (light 0, with its shadow) picks the point on the ramp, so window bars and
 // prop shadows fall across a head as a cool lilac patch; the other lights just lift the shade a little.
 // sheen = tight specular, broad = wide soft highlight on the sunlit side.
+// soft (0..1): 0 = two-tone cel ramp (characters, props); 1 = set surfaces: a form gradient from the sun angle, while the
+// cast shadow stays a hard edge in the blue shade tone (reference: sunlit floors with crisp blue-grey shadows).
 export function toon(rgb, o = {}) {
   const m = new THREE.MeshStandardMaterial({ color: lin(...rgb), roughness: o.rough ?? 0.45, metalness: 0, map: o.map || null });
+  return toonify(m, o);
+}
+
+// turns any MeshStandardMaterial into the toon ramp in place (createStage does this to every set material it meets)
+export function toonify(m, o = {}) {
   const U = {
     uShade: { value: lin(...(o.shade || [0.66, 0.64, 0.90])) }, uGain: { value: o.gain ?? 1.0 },
-    uSheen: { value: o.sheen ?? 0.15 }, uBroad: { value: o.broad ?? 0.0 }, uRim: { value: o.rim ?? 0.35 },
+    uSheen: { value: o.sheen ?? 0.15 }, uBroad: { value: o.broad ?? 0.0 }, uRim: { value: o.rim ?? 0.35 }, uSoft: { value: o.soft ?? 0.0 }, uRimLit: { value: o.rimLit ?? 0.0 },
   };
   m.userData.toon = U;
   m.onBeforeCompile = sh => {
     Object.assign(sh.uniforms, U);
-    sh.fragmentShader = 'uniform vec3 uShade; uniform float uGain, uSheen, uBroad, uRim;\n' + sh.fragmentShader.replace('#include <opaque_fragment>', `
-      float sunL = 0.0; vec3 sunD = vec3(0.0, 1.0, 0.0);
+    sh.fragmentShader = 'uniform vec3 uShade; uniform float uGain, uSheen, uBroad, uRim, uSoft, uRimLit;\n' + sh.fragmentShader.replace('#include <opaque_fragment>', `
+      float ndl = 0.0, shw = 1.0; vec3 sunD = vec3(0.0, 1.0, 0.0);
       #if NUM_DIR_LIGHTS > 0
         sunD = directionalLights[ 0 ].direction;
-        sunL = saturate(dot(geometryNormal, sunD));
+        ndl = dot(geometryNormal, sunD);
         #if defined( USE_SHADOWMAP ) && NUM_DIR_LIGHT_SHADOWS > 0
           DirectionalLightShadow dls = directionalLightShadows[ 0 ];
-          sunL *= getShadow( directionalShadowMap[ 0 ], dls.shadowMapSize, dls.shadowIntensity, dls.shadowBias, dls.shadowRadius, vDirectionalShadowCoord[ 0 ] );
+          shw = getShadow( directionalShadowMap[ 0 ], dls.shadowMapSize, dls.shadowIntensity, dls.shadowBias, dls.shadowRadius, vDirectionalShadowCoord[ 0 ] );
         #endif
       #endif
-      float k = smoothstep(0.02, 0.22, sunL);
+      float sunL = saturate(ndl) * shw;
+      float k = mix(smoothstep(0.02, 0.22, sunL), smoothstep(-0.10, 0.75, ndl) * smoothstep(0.35, 0.65, shw), uSoft);
       vec3 dif = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse;
       float alb = max(dot(diffuseColor.rgb, vec3(0.3333)), 1e-3);
       float amb = clamp(dot(dif, vec3(0.3333)) / alb * 3.14159 / 3.0, 0.0, 1.0);
       float fr = pow(1.0 - saturate(dot(geometryNormal, geometryViewDir)), 2.2) * uRim;
       vec3 shade = uShade * (0.88 + 0.12 * amb);
-      vec3 col = diffuseColor.rgb * mix(shade, vec3(uGain), k * (1.0 - fr));
-      col += reflectedLight.directSpecular * uSheen + totalEmissiveRadiance;
+      vec3 sunC = vec3(1.0);
+      #if NUM_DIR_LIGHTS > 0
+        sunC = directionalLights[ 0 ].color / max(max(directionalLights[ 0 ].color.r, directionalLights[ 0 ].color.g), max(directionalLights[ 0 ].color.b, 1e-3));
+      #endif
+      vec3 col = diffuseColor.rgb * mix(shade, uGain * mix(vec3(1.0), sunC, 0.7 * uSoft), k * (1.0 - fr));
+      col += reflectedLight.directSpecular * uSheen * mix(1.0, shw, uSoft) + totalEmissiveRadiance;
       col += vec3(1.0, 0.97, 0.92) * uBroad * k * pow(saturate(dot(geometryNormal, normalize(sunD + geometryViewDir))), 5.0);
+      // rimLit: a bright back-light edge on the sun side (the glossy reference heads), never in cast shadow
+      col += vec3(1.0, 0.97, 0.92) * uRimLit * pow(1.0 - saturate(dot(geometryNormal, geometryViewDir)), 3.0) * smoothstep(-0.3, 0.4, ndl) * shw;
       gl_FragColor = vec4(col, diffuseColor.a);`);
   };
+  m.needsUpdate = true;
   return m;
 }
+
+// set-surface defaults for toonify (every MeshStandardMaterial a set or prop makes without toon()); SET_LOOK is the
+// one place to tune them for all sets at once
+export const SET_LOOK = { soft: 1.0, gain: 1.0, shade: [0.36, 0.43, 0.72], sheen: 0.45, rim: 0.0 };
 
 export function std(rgb, rough, o = {}) {
   return new THREE.MeshStandardMaterial({ color: lin(...rgb), roughness: rough, metalness: 0, ...o });
@@ -56,7 +76,62 @@ export function std(rgb, rough, o = {}) {
 
 const FS_QUAD_V = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }';
 
-export function createStage({ width, height, exposure = 1.0, ink = 2.6, sat = 1.0, con = 1.06, vig = 0.24, split = 0.5, bloom = 0.9 } = {}) {
+// light shafts: in-scatter of the sun, ray-marched through the sun's shadow map at half size, so light through windows,
+// bars and leaves shows as beams in the air (reference sets). density per metre; phase g leans the glow toward the sun.
+const SHAFT_V = FS_QUAD_V;
+const SHAFT_F = `#include <packing>
+  uniform sampler2D tD, tS; uniform mat4 invProj, camWorld, sMat; uniform vec3 camPos, sunDir, sCol; uniform float cNear, cFar, dens, maxD, g, on;
+  varying vec2 vUv;
+  float ign(vec2 p){ return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715)))); }
+  void main(){
+    if (on < 0.5) { gl_FragColor = vec4(0.0); return; }
+    float d = texture2D(tD, vUv).x;
+    vec4 vp = invProj * vec4(vUv*2.0 - 1.0, d*2.0 - 1.0, 1.0); vp /= vp.w;
+    vec3 wp = (camWorld * vp).xyz, rd = wp - camPos; float L = d > 0.9999 ? 0.45*maxD : min(length(rd), maxD); rd = normalize(rd);   // sky: short haze only
+    const int N = 28; float lit = 0.0, j = ign(gl_FragCoord.xy);
+    for (int i = 0; i < N; i++) {
+      vec3 p = camPos + rd * L * (float(i) + j) / float(N);
+      vec4 sc = sMat * vec4(p, 1.0); sc.xyz /= sc.w;
+      float v = 1.0;
+      if (sc.x > 0.0 && sc.x < 1.0 && sc.y > 0.0 && sc.y < 1.0 && sc.z < 1.0) v = step(sc.z - 0.002, unpackRGBAToDepth(texture2D(tS, sc.xy)));
+      lit += v;
+    }
+    lit *= L / float(N);
+    float c = dot(rd, sunDir), ph = (1.0 - g*g) / pow(1.0 + g*g - 2.0*g*c, 1.5) * pow(1.0 + g*g, 1.5) / (1.0 - g*g);
+    gl_FragColor = vec4(sCol * (1.0 - exp(-dens * lit)) * ph, 1.0);
+  }`;
+class ShaftPass extends Pass {
+  constructor(width, height, camera, sun, depthTex, o) {
+    super();
+    this.camera = camera; this.sun = sun;
+    this.rt = new THREE.WebGLRenderTarget(Math.round(width / 2), Math.round(height / 2), { type: THREE.HalfFloatType });
+    this.march = new FullScreenQuad(new THREE.ShaderMaterial({ vertexShader: SHAFT_V, fragmentShader: SHAFT_F, uniforms: {
+      tD: { value: depthTex }, tS: { value: null }, invProj: { value: new THREE.Matrix4() }, camWorld: { value: new THREE.Matrix4() },
+      sMat: { value: new THREE.Matrix4() }, camPos: { value: new THREE.Vector3() }, sunDir: { value: new THREE.Vector3() },
+      sCol: { value: lin(1.0, 0.88, 0.70) }, cNear: { value: camera.near }, cFar: { value: camera.far },
+      dens: { value: o.dens }, maxD: { value: o.maxD }, g: { value: o.g }, on: { value: 1 } } }));
+    this.mix = new FullScreenQuad(new THREE.ShaderMaterial({ vertexShader: FS_QUAD_V, uniforms: { tDiffuse: { value: null }, tS: { value: this.rt.texture },
+      texel: { value: new THREE.Vector2(2 / width, 2 / height) }, k: { value: o.k } },
+      fragmentShader: `uniform sampler2D tDiffuse, tS; uniform vec2 texel; uniform float k; varying vec2 vUv;
+        void main(){ vec3 s = vec3(0.0);
+          for (int y = -2; y <= 2; y++) for (int x = -2; x <= 2; x++) s += texture2D(tS, vUv + vec2(x, y)*texel).rgb;
+          vec4 c = texture2D(tDiffuse, vUv); gl_FragColor = vec4(c.rgb + k*s/25.0, c.a); }` }));
+  }
+  render(renderer, writeBuffer, readBuffer) {
+    const U = this.march.material.uniforms, sh = this.sun.shadow;
+    U.on.value = sh.map ? 1 : 0; U.tS.value = sh.map ? sh.map.texture : null;
+    U.invProj.value.copy(this.camera.projectionMatrixInverse); U.camWorld.value.copy(this.camera.matrixWorld);
+    U.camPos.value.setFromMatrixPosition(this.camera.matrixWorld); U.sMat.value.copy(sh.matrix);
+    U.sunDir.value.copy(this.sun.position).sub(this.sun.target.position).normalize();
+    renderer.setRenderTarget(this.rt); this.march.render(renderer);
+    this.mix.material.uniforms.tDiffuse.value = readBuffer.texture;
+    renderer.setRenderTarget(this.renderToScreen ? null : writeBuffer); this.mix.render(renderer);
+  }
+}
+
+export function createStage({ width, height, exposure = 0.88, ink = 2.6, sat = 1.25, con = 1.12, vig = 0.28, split = 0.7, bloom = 1.1,
+  hot = 0.38, shafts = 0.032, shaftK = 1.6, dofK = 0.55 } = {}) {
+  const stage = {};                                               // late-bound parts (setSun runs before the passes exist)
   const px = height / 1920;                                       // every pixel-size number scales with this
   const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: true });
   renderer.setPixelRatio(1); renderer.setSize(width, height);
@@ -72,7 +147,7 @@ export function createStage({ width, height, exposure = 1.0, ink = 2.6, sat = 1.
   // sun: 4096 map fitted tight round what the shot sees; PCF with a small radius keeps bar edges straight, not stepped
   const sun = new THREE.DirectionalLight(lin(1.0, 0.93, 0.80), 6.0);
   sun.castShadow = true; sun.shadow.mapSize.set(4096, 4096);
-  sun.shadow.bias = -0.0002; sun.shadow.normalBias = 0.006; sun.shadow.radius = 1.6;
+  sun.shadow.bias = -0.0002; sun.shadow.normalBias = 0.006; sun.shadow.radius = 1.0;   // hard-edged cast shadows (reference)
   scene.add(sun, sun.target);
   const hemi = new THREE.HemisphereLight(lin(0.44, 0.60, 1.0), lin(0.80, 0.68, 0.58), 1.15);
   scene.add(hemi);
@@ -81,10 +156,13 @@ export function createStage({ width, height, exposure = 1.0, ink = 2.6, sat = 1.
 
   function setSun(dirB, centerB, half = 6) {
     const d = B(...dirB).normalize();
+    // a high sun (over ~50 deg) is lowered toward 40 deg: longer cast shadows that read on the ground, as in the reference
+    if (-d.y > 0.77) { const h = Math.hypot(d.x, d.z) || 1; d.set(d.x / h * 0.77, -0.64, d.z / h * 0.77).normalize(); }
     sun.target.position.copy(B(...centerB));
     sun.position.copy(sun.target.position).addScaledVector(d, -30);
     Object.assign(sun.shadow.camera, { left: -half, right: half, top: half, bottom: -half, near: 10, far: 50 });
     sun.shadow.camera.updateProjectionMatrix();
+    if (stage.shafts) stage.shafts.march.material.uniforms.maxD.value = Math.min(22, 3 * half);   // haze length follows the set's scale
     fill.position.copy(B(...centerB)).add(new THREE.Vector3(-2, 8, 10)); fill.target.position.copy(B(...centerB));
   }
 
@@ -130,7 +208,26 @@ export function createStage({ width, height, exposure = 1.0, ink = 2.6, sat = 1.
     list.forEach((m, i) => { m.material = saved[i]; });
     hidden.forEach(m => { m.visible = true; });
   }
-  const prepass = () => swap(m => m.userData.noPrepass ? null : (m.layers.isEnabled(PROPS) ? idMat(m) : NM[0]), nrt, null);
+  // ink on every set and prop mesh: props (layer PROPS) always; any other opaque front-faced mesh unless it belongs to a
+  // stick figure (cast.js marks the root userData.stick; figures carry their own inverted-hull outline) or says noInk
+  const inkable = m => {
+    if (m.userData.inkable !== undefined) return m.userData.inkable;
+    let ok = m.layers.isEnabled(PROPS);
+    if (!ok) {
+      const mt = Array.isArray(m.material) ? m.material[0] : m.material;
+      ok = !!mt && mt.side !== THREE.BackSide && !mt.transparent && !m.userData.noInk;
+      for (let p = m; ok && p; p = p.parent) if (p.userData.stick || p.userData.noInk) ok = false;
+    }
+    return (m.userData.inkable = ok);
+  };
+  const prepass = () => swap(m => m.userData.noPrepass ? null : (inkable(m) ? idMat(m) : NM[0]), nrt, null);
+  // every plain MeshStandardMaterial (sets, glb dressing without toon, props) gets the set toon ramp once
+  const seen = new WeakSet();
+  const autoToon = () => scene.traverseVisible(o => { if (!o.isMesh) return;
+    for (const mt of Array.isArray(o.material) ? o.material : [o.material]) {
+      if (!mt || seen.has(mt)) continue; seen.add(mt);
+      if (mt.isMeshStandardMaterial && !mt.userData.toon && !mt.userData.noToon) toonify(mt, SET_LOOK);
+    } });
 
   const inkPass = new ShaderPass({
     uniforms: { tDiffuse: { value: null }, tN: { value: null }, tD: { value: null }, texel: { value: new THREE.Vector2(1 / width, 1 / height) },
@@ -166,7 +263,7 @@ export function createStage({ width, height, exposure = 1.0, ink = 2.6, sat = 1.
         vec4 c = texture2D(tDiffuse, vUv);
         float a = 0.25*mask(vUv) + 0.125*(mask(vUv+vec2(texel.x,0.0)) + mask(vUv-vec2(texel.x,0.0)) + mask(vUv+vec2(0.0,texel.y)) + mask(vUv-vec2(0.0,texel.y)))
                 + 0.0625*(mask(vUv+texel) + mask(vUv-texel) + mask(vUv+vec2(texel.x,-texel.y)) + mask(vUv+vec2(-texel.x,texel.y)));
-        gl_FragColor = vec4(mix(c.rgb, vec3(0.0008, 0.0008, 0.0012), clamp(a*1.1, 0.0, 1.0)), c.a);
+        gl_FragColor = vec4(mix(c.rgb, vec3(0.0008, 0.0008, 0.0012), clamp(a*1.3, 0.0, 1.0)), c.a);   // solid, not grey: bold ink
       }` });
   inkPass.uniforms.tN.value = nrt.texture; inkPass.uniforms.tD.value = nrt.depthTexture;   // ShaderPass clones uniforms
 
@@ -194,7 +291,7 @@ export function createStage({ width, height, exposure = 1.0, ink = 2.6, sat = 1.
   function setDof(o) {
     if (!o) { dofPass.enabled = false; return; }
     Object.assign(dofPass.uniforms.near, { value: o.near }); dofPass.uniforms.far.value = o.far;
-    dofPass.uniforms.maxR.value = (o.px ?? 14) * px; dofPass.uniforms.gain.value = o.gain ?? 2.0; dofPass.enabled = true;
+    dofPass.uniforms.maxR.value = (o.px ?? 14) * px * 0.75; dofPass.uniforms.gain.value = (o.gain ?? 2.0) * dofK; dofPass.enabled = true;   // lighter lens blur: the reference keeps the set readable
   }
 
   // ---- glow: only meshes marked glow() feed the bloom; everything else renders black but still hides them
@@ -234,9 +331,16 @@ export function createStage({ width, height, exposure = 1.0, ink = 2.6, sat = 1.
   const composer = new EffectComposer(renderer, crt);
   composer.setPixelRatio(1);
   composer.addPass(new RenderPass(scene, camera));
+  const shaftPass = stage.shafts = new ShaftPass(width, height, camera, sun, nrt.depthTexture, { dens: shafts, maxD: 22, g: 0.35, k: shaftK });
+  shaftPass.enabled = shafts > 0;
+  composer.addPass(shaftPass);
   composer.addPass(inkPass);
   composer.addPass(dofPass);
   composer.addPass(mixPass);
+  // highlights bloom too (lamps, sunlit white, specular), not only meshes marked glow()
+  const hotPass = new UnrealBloomPass(new THREE.Vector2(gw, gh), hot, 0.5, 1.4);
+  hotPass.enabled = hot > 0;
+  composer.addPass(hotPass);
   composer.addPass(new OutputPass());
   composer.addPass(gradePass);
 
@@ -245,6 +349,7 @@ export function createStage({ width, height, exposure = 1.0, ink = 2.6, sat = 1.
     const t0 = performance.now();
     gradePass.uniforms.uPrev.value = o.prev || 0; gradePass.uniforms.uFlash.value = Math.min(1, o.flash || 0);
     camera.updateMatrixWorld();
+    autoToon();
     prepass();
     swap(m => m.userData.glow || (m.userData.noPrepass ? null : black), grt, new THREE.Color(0, 0, 0));
     bloomComposer.render();
@@ -254,5 +359,5 @@ export function createStage({ width, height, exposure = 1.0, ink = 2.6, sat = 1.
     return performance.now() - t0;
   }
   return { THREE, renderer, scene, camera, sun, hemi, fill, px, setSun, addBounce, setCamera, setDof, prop, glow, render, grab,
-    passes: { ink: inkPass, grade: gradePass, dof: dofPass } };
+    passes: { ink: inkPass, grade: gradePass, dof: dofPass, shafts: shaftPass, hot: hotPass } };
 }

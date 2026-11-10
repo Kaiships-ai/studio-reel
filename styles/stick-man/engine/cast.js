@@ -7,7 +7,7 @@ import { toon, lin, css, B, INK_RGB } from './look.js';
 
 export const W_M = 0.60;                     // head width in metres
 const W = W_M;
-const INK_T = 0.050 * W;                     // outline width: the reference measures 5.4-6.4 % of head width
+const INK_T = 0.054 * W;                     // outline width: the reference measures 5.4-6.4 % of head width
 const LIMB_R = 0.038 * W / 2;                // limbs stay a thinner line than the outline
 export const HEAD_C = [0.0, 2.43], HEAD_H = 0.94, HIP_V = 1.34, SHOULDER_V = 2.00;
 export const TORSO = { cx: 0.0, cy: 1.72, w: 0.57, h: 0.90, depth: 0.80 };
@@ -481,14 +481,14 @@ export function reachAssist(P) {
 
 // ------------------------------------------------------------------ the figure
 export function makeStick(spec) {
-  const root = new THREE.Group(); root.name = spec.name || 'stick';
+  const root = new THREE.Group(); root.name = spec.name || 'stick'; root.userData.stick = true;   // look.js: no screen ink (own hull)
   const body = new THREE.Group(); root.add(body);
-  const torso = solid(torsoGeo(), toon([1, 1, 1], { map: clothesCanvas(spec), sheen: 0.35, rough: 0.32, rim: 0.25 }));
+  const torso = solid(torsoGeo(), toon([1, 1, 1], { map: clothesCanvas(spec), sheen: 0.45, rough: 0.30, rim: 0.12, soft: 0.6, shade: [0.62, 0.64, 0.88], rimLit: 0.30 }));
   torso.position.y = (TORSO.cy - TORSO.h / 2 - HIP_V) * W; body.add(torso);
 
   const head = new THREE.Group(); root.add(head);
   const hg = new THREE.SphereGeometry(HA, 64, 40); hg.scale(1, HEAD_H, 1);
-  const headSolid = solid(hg, toon(spec.skin || [1, 1, 1], { shade: [0.88, 0.82, 0.98], rim: 0.42, sheen: 0.30, broad: 0.18, rough: 0.3 }));
+  const headSolid = solid(hg, toon(spec.skin || [1, 1, 1], { shade: [0.74, 0.74, 0.92], rim: 0.12, sheen: 0.55, broad: 0.30, rough: 0.25, soft: 0.6, rimLit: 0.45 }));
   head.add(headSolid);
   const rig = new THREE.Group(); head.add(rig);
   const A = atlas(), map = A.tex.clone(); map.repeat.set(1 / A.cols, 1 / A.rows);
