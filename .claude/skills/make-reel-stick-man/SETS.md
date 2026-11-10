@@ -11,7 +11,15 @@ prop spot or hand target. `at` / `to` take a mark or place name, a prop name, or
 | `street` | pavement in front of a bank facade with columns, two shops | door, stroll_start, burst, crowd_1-3, officer, police_stop, hatchback | sensor, bag_burst, bag_rest, lamp, hydrant, mailbox, tree | sensor; opt-in with act `use`: police, bag | facade, columns, door leaves, mailbox, hydrant, planter |
 | `cutaway` | marble counter top close up (tabletop scale) | stack, hand, lifter | stack, plate, thermo, hand_grip | plate, stack, pack, thermo | none (tabletop, no cast) |
 | `park` | sunny park: grass, sandy path, hedge, round trees, bench, lamp, big sun up left | left, right, center, bench, walk_start, tree | sun, sky, bench_seat, lamp, ground | none | bench, tree-trunk, lamp |
-| `lab` | lab / classroom: chalkboard, window, long lab bench with two flasks, shelf | left, right, center, board, door | bench_top, board, flask_l, flask_r, window | none | bench, back-wall, shelf |
+| `lab` | school science lab: chalkboard with notes, clock, conduit, projector, bench with flasks / burner / microscope, stools, sink, skeleton, lockers, fish tank, ceiling beams and lights | left, right, center, board, door | bench_top, board, flask_l, flask_r, window | none | bench, back-wall, shelf + dressing |
+| `diner` (.glb) | 1950s diner inside: checker floor, red counter with stools, booths, jukebox, neon DINER, menu board, pendant lamps, fans | left, right, center, counter, booth, door | counter_top, pie, sign, menu, jukebox | none | from the pieces |
+| `workshop` (.glb) | garage workshop: roller door, pegboard, blue car with bonnet up, workbench, tool chest, drums, tyres, ladder | left, right, center, car, bench | bonnet, bench_top, door, pegboard | none | from the pieces |
+| `classroom` (.glb) | primary classroom: plank floor, blackboard (middle kept clean for a reel's `chalk`), alphabet strip, clock, windows with plants, pinboard, cubbies, teacher's desk, pupils' desks, bookcase | same as `lab` | board, board_l, board_r, desk_top, window | none | from the pieces |
+| `harbour` (.glb) | fishing pier: plank deck on piles, PIER 9 warehouse, moored boat, dock crane, fish stall, cargo, bollards, sea | left, right, center, edge, stall | boat, crane, sea, door | none | from the pieces |
+
+Every set above is dressed with 25-60 registered pieces (`lib/sets/dress.js`); `halden-plaza` takes `use: ['concert']` for a
+rock stage behind the fountain (`PLACES.speakers`, `PLACES.stage`). Proof sheet of all 11 sets: `films/stick05-q4-levels/review/sets_sheet.jpg`
+(clip `films/stick05-q4-sets`, `--query set=<name>`).
 
 Mark and place coordinates (`[x, y, z]` m, from each set's `MARKS` / `PLACES`; the source wins if they drift):
 
@@ -28,6 +36,42 @@ rides along) or key the pack's parts (`{ kind: 'prop', prop: 'pack', keys: ['awa
 on `pack` stops with "prop pack has no rest pose". Move unused props out of shot at `f: 0` (`to: [0.22, 6, 0], dur: 1`).
 `cutaway` is the explainer table: tabletop scale, `zRange: [0.08, 1.2]`. People sets use `zRange: [1.1, 1.9]` (camera height);
 `lab` inserts on the bench work with `zRange: [1.0, 1.9]`. Street's police car and bag exist only when an act lists them in `use`.
+
+## Dressing (the dressing gate: ≥ 16 pieces seen in 85 % of non-cu frames, GATES.md)
+
+`const D = dressKit(stage, COLLIDE)` then `D.put(kind, [x, y, z], rotDeg, { solid: true, ...opts })`: ~90 kit pieces in
+`PIECES` (bench, bin, pot, planter, tree, pine, palm, lamp, bollard, cone, crate(s), barrel, sign, aboard, poster, shelf,
+desk, lockers, clock, noticeboard, kiosk, cafetable, picnic, busstop, phonebooth, adcolumn, bike, swing, slide, speaker,
+truss, stage, banner, flasks, microscope, skeleton, sink, fishtank, boat, hut, dock, lighthouse, islet, cloud, pigeons,
+hopscotch, puddle, zebra, scatter ...). `solid` pieces push their own COLLIDE box; `D.mark()` / `D.since(s, name)` registers
+meshes a set built by hand. A code set's COLLIDE starts from `resetCollide(COLLIDE, BASE)` (two acts can build one set).
+
+| Rule | Why |
+|---|---|
+| Dress in clusters that tell a story (cafe tables + A-board + bin with bags; bench + bikes + rack) | the reference reads as a real place |
+| Dress what the camera sees: behind the marks at head height, and the near floor with LOW pieces (≤ 0.5 m: papers, pigeons, hopscotch, puddles, bags) | a two-shot's lower half is floor; low pieces never cover a body |
+| Keep the cast's floor and walk paths clear (each set's comment names them); `collisions none` on the proof | gate |
+| Ground-level pieces on a .glb pavement sit at z 0.012 | the kit pavement top is a few mm over 0 |
+
+## Physical effects (`lib/props/physfx.js`, MAKE kinds; the "fx in world" gate)
+
+| Kind | What happens | Keys |
+|---|---|---|
+| `smoke` | outlined puffs swell and drift (`column: true` = a rising ash / steam stem) | fire |
+| `explosion` | fireball (glows) → smoke, debris boxes thrown and landing on `ground` | fire |
+| `crack` | zig-zag fractures race out over a `wall` or the `ground`, dust and chips; `glowK` + a hot colour = lava / rage cracks | fire |
+| `shatter` | a glass pane bursts into shards that fly, fall and lie flat | fire, show (pane before) |
+| `sparks` / `splash` / `shock` | hot streaks; a crown of drops and a ripple; a dust ring racing over the ground with flying bits | fire |
+| `steam` | puffs while `on` (ear steam, breath of a whisper, a volcano's plume) | on |
+| `fall` | any dress piece drops from `height`, squashes, dust | fire |
+| `flock` | birds flapping across the sky (always on) | - |
+| `meter` | a real instrument: `db` tripod meter, `gauge`, `lcd` timer, `thermo`; needle + LCD show `n` | show, n |
+| `sign` | a real sign arrives: `post` rises from the ground, `hang` drops on chains, `board`, `plaque`; text may hold `{n}` | show, fire (dust) |
+| `chalk` | writing and a chalk bar chart drawn on a real board | draw, grow, n |
+| `speakers` | a row of speaker stacks rising one after another, cones pumping | grow, pump |
+
+Floating text (`stamp`, `callout`, `bars`, `split`) is the label budget: ≤ 3 per 30 s, listed in the storyboard entry's
+`labels`, never in `fx`. Turn a stamp into a sign, a meter or chalk; turn rings / arrows into a shock, steam or a crack.
 
 ## Cast (`spec:` in `cast`)
 
@@ -57,7 +101,7 @@ engine edit). A pure-black shirt renders dark grey under the toon shade: fine fo
 
 ## Add a new set in 15 minutes
 
-A topic set (kitchen, desert, office) is a floor, a back wall, 2-3 dressing pieces, COLLIDE boxes and marks. Never reword a
+A topic set (kitchen, desert, office) is a floor, a back wall, 25+ dressing pieces (`dress.js`), COLLIDE boxes and marks. Never reword a
 script to dodge a missing set. `park.js` and `lab.js` were built from this file.
 
 1. Copy the template below to `lib/sets/<name>.js` (`lib/sets/kit.js` gives `box, cyl, sphere, card, sky, mat`).

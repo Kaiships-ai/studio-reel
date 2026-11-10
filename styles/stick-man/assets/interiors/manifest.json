@@ -1,0 +1,889 @@
+{
+ "source": "",
+ "pieces": {
+  "classroom_alphabet": {
+   "from": "classroom_alphabet",
+   "bytes": 39600,
+   "tris": 740,
+   "materials": 5,
+   "lo": [
+    -4.2,
+    3.106,
+    2.8
+   ],
+   "hi": [
+    4.0,
+    3.16,
+    3.2
+   ],
+   "decimate": 1.0,
+   "sec": 0.04
+  },
+  "classroom_board": {
+   "from": "classroom_board",
+   "bytes": 34368,
+   "tris": 640,
+   "materials": 3,
+   "lo": [
+    -2.2,
+    2.98,
+    1.1
+   ],
+   "hi": [
+    2.2,
+    3.2,
+    2.6
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "classroom_bookcase": {
+   "from": "classroom_bookcase",
+   "bytes": 55148,
+   "tris": 684,
+   "materials": 7,
+   "lo": [
+    -0.8,
+    -0.025,
+    0.0
+   ],
+   "hi": [
+    0.8,
+    0.365,
+    2.0
+   ],
+   "decimate": 1.0,
+   "sec": 0.02
+  },
+  "classroom_clock": {
+   "from": "classroom_clock",
+   "bytes": 10692,
+   "tris": 144,
+   "materials": 2,
+   "lo": [
+    2.9,
+    3.11,
+    2.2
+   ],
+   "hi": [
+    3.5,
+    3.18,
+    2.8
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "classroom_cubbies": {
+   "from": "classroom_cubbies",
+   "bytes": 37112,
+   "tris": 416,
+   "materials": 6,
+   "lo": [
+    4.169,
+    0.0,
+    0.0
+   ],
+   "hi": [
+    4.6,
+    2.35,
+    1.2
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "classroom_desk": {
+   "from": "classroom_desk",
+   "bytes": 16864,
+   "tris": 176,
+   "materials": 5,
+   "lo": [
+    -0.4,
+    -0.74,
+    0.0
+   ],
+   "hi": [
+    0.4,
+    0.25,
+    0.8
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "classroom_lights": {
+   "from": "classroom_lights",
+   "bytes": 11708,
+   "tris": 144,
+   "materials": 2,
+   "lo": [
+    -3.1,
+    -3.15,
+    3.47
+   ],
+   "hi": [
+    3.1,
+    0.75,
+    3.6
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "classroom_pinboard": {
+   "from": "classroom_pinboard",
+   "bytes": 53852,
+   "tris": 564,
+   "materials": 10,
+   "lo": [
+    4.43,
+    -4.0,
+    1.3
+   ],
+   "hi": [
+    4.61,
+    -1.0,
+    2.6
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "classroom_room": {
+   "from": "classroom_room",
+   "bytes": 31344,
+   "tris": 366,
+   "materials": 6,
+   "lo": [
+    -4.8,
+    -7.0,
+    -0.02
+   ],
+   "hi": [
+    4.8,
+    3.4,
+    3.75
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "classroom_teacher": {
+   "from": "classroom_teacher",
+   "bytes": 25384,
+   "tris": 260,
+   "materials": 8,
+   "lo": [
+    -0.8,
+    -0.4,
+    0.0
+   ],
+   "hi": [
+    0.8,
+    0.4,
+    1.18
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "classroom_windows": {
+   "from": "classroom_windows",
+   "bytes": 50072,
+   "tris": 636,
+   "materials": 4,
+   "lo": [
+    -4.62,
+    -4.6,
+    1.1
+   ],
+   "hi": [
+    -4.314,
+    2.2,
+    2.8
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "diner_beams": {
+   "from": "diner_beams",
+   "bytes": 3760,
+   "tris": 36,
+   "materials": 1,
+   "lo": [
+    -4.6,
+    -5.12,
+    3.35
+   ],
+   "hi": [
+    4.6,
+    2.72,
+    3.6
+   ],
+   "decimate": 1.0,
+   "sec": 0.0
+  },
+  "diner_booth": {
+   "from": "diner_booth",
+   "bytes": 15492,
+   "tris": 164,
+   "materials": 5,
+   "lo": [
+    -0.62,
+    -1.01,
+    0.0
+   ],
+   "hi": [
+    0.62,
+    1.01,
+    1.28
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "diner_clock": {
+   "from": "diner_clock",
+   "bytes": 4660,
+   "tris": 60,
+   "materials": 1,
+   "lo": [
+    4.525,
+    0.9,
+    2.3
+   ],
+   "hi": [
+    4.575,
+    1.5,
+    2.9
+   ],
+   "decimate": 1.0,
+   "sec": 0.0
+  },
+  "diner_counter": {
+   "from": "diner_counter",
+   "bytes": 46844,
+   "tris": 532,
+   "materials": 10,
+   "lo": [
+    -4.5,
+    1.8,
+    0.0
+   ],
+   "hi": [
+    2.9,
+    2.55,
+    1.7
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "diner_cupshelf": {
+   "from": "diner_cupshelf",
+   "bytes": 36392,
+   "tris": 528,
+   "materials": 4,
+   "lo": [
+    -4.2,
+    3.0,
+    1.55
+   ],
+   "hi": [
+    -0.6,
+    3.2,
+    2.215
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "diner_fans": {
+   "from": "diner_fans",
+   "bytes": 8916,
+   "tris": 104,
+   "materials": 2,
+   "lo": [
+    -2.3,
+    -2.7,
+    3.175
+   ],
+   "hi": [
+    2.9,
+    -1.3,
+    3.425
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "diner_hatch": {
+   "from": "diner_hatch",
+   "bytes": 9692,
+   "tris": 108,
+   "materials": 3,
+   "lo": [
+    0.2,
+    2.93,
+    1.25
+   ],
+   "hi": [
+    2.6,
+    3.21,
+    2.4
+   ],
+   "decimate": 1.0,
+   "sec": 0.0
+  },
+  "diner_jukebox": {
+   "from": "diner_jukebox",
+   "bytes": 12264,
+   "tris": 120,
+   "materials": 5,
+   "lo": [
+    -0.45,
+    -0.33,
+    0.0
+   ],
+   "hi": [
+    0.45,
+    0.3,
+    1.65
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "diner_lamps": {
+   "from": "diner_lamps",
+   "bytes": 41732,
+   "tris": 544,
+   "materials": 3,
+   "lo": [
+    -3.08,
+    1.32,
+    2.4
+   ],
+   "hi": [
+    3.88,
+    1.88,
+    3.55
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "diner_menu": {
+   "from": "diner_menu",
+   "bytes": 73924,
+   "tris": 1680,
+   "materials": 3,
+   "lo": [
+    2.9,
+    3.07,
+    1.4
+   ],
+   "hi": [
+    4.3,
+    3.2,
+    2.6
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "diner_neon": {
+   "from": "diner_neon",
+   "bytes": 13112,
+   "tris": 256,
+   "materials": 2,
+   "lo": [
+    -2.6,
+    3.09,
+    2.55
+   ],
+   "hi": [
+    -0.8,
+    3.2,
+    3.15
+   ],
+   "decimate": 1.0,
+   "sec": 0.0
+  },
+  "diner_photos": {
+   "from": "diner_photos",
+   "bytes": 8544,
+   "tris": 72,
+   "materials": 4,
+   "lo": [
+    4.54,
+    -4.0,
+    1.8
+   ],
+   "hi": [
+    4.6,
+    -0.1,
+    2.5
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "diner_room": {
+   "from": "diner_room",
+   "bytes": 162808,
+   "tris": 2230,
+   "materials": 7,
+   "lo": [
+    -4.8,
+    -7.0,
+    -0.02
+   ],
+   "hi": [
+    4.8,
+    3.4,
+    3.75
+   ],
+   "decimate": 1.0,
+   "sec": 0.07
+  },
+  "diner_stool": {
+   "from": "diner_stool",
+   "bytes": 9428,
+   "tris": 124,
+   "materials": 2,
+   "lo": [
+    -0.22,
+    -0.22,
+    0.0
+   ],
+   "hi": [
+    0.22,
+    0.22,
+    0.8
+   ],
+   "decimate": 1.0,
+   "sec": 0.0
+  },
+  "diner_windows": {
+   "from": "diner_windows",
+   "bytes": 20712,
+   "tris": 252,
+   "materials": 3,
+   "lo": [
+    -4.62,
+    -4.65,
+    1.15
+   ],
+   "hi": [
+    -4.5,
+    1.85,
+    2.65
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "harbour_boat": {
+   "from": "harbour_boat",
+   "bytes": 31724,
+   "tris": 524,
+   "materials": 7,
+   "lo": [
+    -3.0,
+    -1.08,
+    -0.6
+   ],
+   "hi": [
+    3.0,
+    1.02,
+    3.8
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "harbour_cargo": {
+   "from": "harbour_cargo",
+   "bytes": 36736,
+   "tris": 476,
+   "materials": 8,
+   "lo": [
+    -1.892,
+    -0.7,
+    0.0
+   ],
+   "hi": [
+    3.3,
+    0.6,
+    1.6
+   ],
+   "decimate": 1.0,
+   "sec": 0.02
+  },
+  "harbour_crane": {
+   "from": "harbour_crane",
+   "bytes": 23868,
+   "tris": 288,
+   "materials": 4,
+   "lo": [
+    -1.6,
+    -0.65,
+    0.0
+   ],
+   "hi": [
+    5.5,
+    0.6,
+    8.1
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "harbour_deck": {
+   "from": "harbour_deck",
+   "bytes": 43480,
+   "tris": 640,
+   "materials": 3,
+   "lo": [
+    -12.15,
+    -5.25,
+    -2.0
+   ],
+   "hi": [
+    12.15,
+    4.22,
+    0.0
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "harbour_doors": {
+   "from": "harbour_doors",
+   "bytes": 20680,
+   "tris": 264,
+   "materials": 3,
+   "lo": [
+    -7.65,
+    3.86,
+    0.0
+   ],
+   "hi": [
+    6.15,
+    4.0,
+    3.75
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "harbour_lamps": {
+   "from": "harbour_lamps",
+   "bytes": 29552,
+   "tris": 360,
+   "materials": 2,
+   "lo": [
+    -9.15,
+    3.45,
+    3.93
+   ],
+   "hi": [
+    10.15,
+    4.0,
+    4.3
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "harbour_sign": {
+   "from": "harbour_sign",
+   "bytes": 15480,
+   "tris": 320,
+   "materials": 2,
+   "lo": [
+    -2.6,
+    3.83,
+    3.9
+   ],
+   "hi": [
+    1.6,
+    3.95,
+    4.7
+   ],
+   "decimate": 1.0,
+   "sec": 0.0
+  },
+  "harbour_stall": {
+   "from": "harbour_stall",
+   "bytes": 71204,
+   "tris": 958,
+   "materials": 7,
+   "lo": [
+    -1.1,
+    -0.6,
+    0.0
+   ],
+   "hi": [
+    1.1,
+    0.45,
+    2.25
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "harbour_warehouse": {
+   "from": "harbour_warehouse",
+   "bytes": 11976,
+   "tris": 132,
+   "materials": 3,
+   "lo": [
+    -12.2,
+    3.9,
+    0.0
+   ],
+   "hi": [
+    12.2,
+    4.5,
+    5.4
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "harbour_windows": {
+   "from": "harbour_windows",
+   "bytes": 4564,
+   "tris": 48,
+   "materials": 1,
+   "lo": [
+    -10.5,
+    3.8,
+    2.6
+   ],
+   "hi": [
+    11.5,
+    3.9,
+    3.4
+   ],
+   "decimate": 1.0,
+   "sec": 0.0
+  },
+  "workshop_beams": {
+   "from": "workshop_beams",
+   "bytes": 3732,
+   "tris": 36,
+   "materials": 1,
+   "lo": [
+    -5.0,
+    -5.12,
+    3.35
+   ],
+   "hi": [
+    5.0,
+    2.72,
+    3.6
+   ],
+   "decimate": 1.0,
+   "sec": 0.0
+  },
+  "workshop_bench": {
+   "from": "workshop_bench",
+   "bytes": 29712,
+   "tris": 308,
+   "materials": 11,
+   "lo": [
+    -1.2,
+    -0.4,
+    0.0
+   ],
+   "hi": [
+    1.2,
+    0.4,
+    1.525
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "workshop_car": {
+   "from": "workshop_car",
+   "bytes": 37344,
+   "tris": 508,
+   "materials": 7,
+   "lo": [
+    -2.0,
+    -0.977,
+    0.0
+   ],
+   "hi": [
+    2.06,
+    0.977,
+    2.3
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "workshop_chest": {
+   "from": "workshop_chest",
+   "bytes": 14568,
+   "tris": 164,
+   "materials": 4,
+   "lo": [
+    -0.45,
+    -0.34,
+    0.0
+   ],
+   "hi": [
+    0.45,
+    0.3,
+    1.1
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "workshop_door": {
+   "from": "workshop_door",
+   "bytes": 12620,
+   "tris": 144,
+   "materials": 3,
+   "lo": [
+    -0.95,
+    3.05,
+    0.0
+   ],
+   "hi": [
+    2.95,
+    3.2,
+    3.15
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "workshop_drums": {
+   "from": "workshop_drums",
+   "bytes": 85296,
+   "tris": 1294,
+   "materials": 8,
+   "lo": [
+    -1.23,
+    -0.31,
+    0.0
+   ],
+   "hi": [
+    1.714,
+    0.91,
+    1.34
+   ],
+   "decimate": 1.0,
+   "sec": 0.02
+  },
+  "workshop_fusebox": {
+   "from": "workshop_fusebox",
+   "bytes": 3612,
+   "tris": 24,
+   "materials": 2,
+   "lo": [
+    3.4,
+    3.08,
+    1.4
+   ],
+   "hi": [
+    4.2,
+    3.2,
+    2.4
+   ],
+   "decimate": 1.0,
+   "sec": 0.0
+  },
+  "workshop_lights": {
+   "from": "workshop_lights",
+   "bytes": 8440,
+   "tris": 96,
+   "materials": 2,
+   "lo": [
+    -3.3,
+    -3.12,
+    2.99
+   ],
+   "hi": [
+    3.3,
+    0.92,
+    3.08
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "workshop_pegboard": {
+   "from": "workshop_pegboard",
+   "bytes": 25052,
+   "tris": 300,
+   "materials": 5,
+   "lo": [
+    -4.6,
+    3.06,
+    1.2
+   ],
+   "hi": [
+    -1.6,
+    3.2,
+    2.4
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "workshop_pipes": {
+   "from": "workshop_pipes",
+   "bytes": 5480,
+   "tris": 68,
+   "materials": 1,
+   "lo": [
+    -4.86,
+    2.99,
+    0.0
+   ],
+   "hi": [
+    4.86,
+    3.12,
+    3.6
+   ],
+   "decimate": 1.0,
+   "sec": 0.0
+  },
+  "workshop_room": {
+   "from": "workshop_room",
+   "bytes": 74960,
+   "tris": 978,
+   "materials": 7,
+   "lo": [
+    -5.2,
+    -7.0,
+    -0.02
+   ],
+   "hi": [
+    5.2,
+    3.4,
+    3.75
+   ],
+   "decimate": 1.0,
+   "sec": 0.04
+  },
+  "workshop_sign": {
+   "from": "workshop_sign",
+   "bytes": 19384,
+   "tris": 408,
+   "materials": 2,
+   "lo": [
+    0.0,
+    3.08,
+    3.18
+   ],
+   "hi": [
+    2.0,
+    3.16,
+    3.5
+   ],
+   "decimate": 1.0,
+   "sec": 0.01
+  },
+  "workshop_windows": {
+   "from": "workshop_windows",
+   "bytes": 4560,
+   "tris": 48,
+   "materials": 1,
+   "lo": [
+    -4.0,
+    3.1,
+    2.6
+   ],
+   "hi": [
+    5.3,
+    3.15,
+    3.0
+   ],
+   "decimate": 1.0,
+   "sec": 0.0
+  }
+ },
+ "total_bytes": 1448448,
+ "sec": 0.55
+}

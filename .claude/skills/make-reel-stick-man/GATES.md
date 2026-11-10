@@ -1,7 +1,7 @@
 # Gates
 
 `node styles/stick-man/tools/gates.mjs --report <stats.txt> --in <mp4> --film films/<slug> --out <gates.txt>` prints PASS/FAIL
-per gate (15 picture/sound gates, then 7 story gates) and exits 1 on any FAIL. The stats come from `shot.mjs --film films/<slug> --frames 0-<last> --report <stats.txt> --in <mp4>`
+per gate (15 picture/sound gates, then 10 story gates: 7 story + 3 world and fx) and exits 1 on any FAIL. The stats come from `shot.mjs --film films/<slug> --frames 0-<last> --report <stats.txt> --in <mp4>`
 (`--frames` is required; without `--in` the frame-difference lines are missing and those gates FAIL as "not in report").
 Never change a threshold to pass a reel: fix the reel data or the kit, or show Kai the FAIL.
 
@@ -38,6 +38,18 @@ itself, or takes `--dbg <jsonl>`.
 | props / fx used | ≥ 40 % of lines | lines whose entry lists a prop or fx and at least one is seen | beyond standing and talking |
 | props / fx seen | all | every listed prop / fx seen ≥ 3 frames in its line's window | the plan is really on screen |
 | board shown | ≥ 85 % | judged: `review/board-verdict.json` from the reviewer below | every spoken line illustrated |
+| dressing density | ≥ 16 pieces in ≥ 85 % of frames | `dress` in each `__dbg` row: registered set pieces (lib/sets/dress.js, .glb pieces) the camera really sees (shown, ≥ 0.04 % of the frame, one of five sample points not hidden behind another mesh); cu frames, cutaway tables and dissolves left out | reference: 21 distinct objects in `ref_wide`, 16 in `ref_medium` (counted by eye, 10/11); Q4 judge: "bare park and classroom" |
+| floating labels | ≤ 3 per 30 s | `make` entries of kind stamp / callout / bars / split seen ≥ 3 frames | judge: "floating UI labels read like a diagram" |
+| fx in world | every storyboard `fx` | each `fx` name's `make` kind is a physical kind (not stamp, callout, bars, split, rings, flow, rays, star, shimmer); floating text goes in the entry's `labels` (counted by the label budget, checked by props / fx seen) | the reference shows cracks, smoke, timers as things in the room |
+
+### World and fx gates (Q4, 10/11)
+
+How the reference was counted: every distinct physical object in the frame (a bench, a light fixture, a sign, a drain, a
+door, a beam = 1 each; the floor, the walls and the sky do not count). `ref_wide` 21, `ref_medium` 16, so N = 16. Our count
+is the same idea measured: one registered piece = one object (a bench, a bin, a poster, a .glb room part such as a board or
+a window row). `node styles/stick-man/tools/shot.mjs --film <f> --frames <a,b> --dbg <out> --dress 1` lists the pieces seen.
+A low count is fixed by dressing what the camera sees (low pieces on the near floor never cover a body), never by moving
+the camera or lowering N. Proof `films/stick05-q4-levels/review/reel-gates.txt`.
 
 ### The judged gate: board reviewers (never judge your own board)
 

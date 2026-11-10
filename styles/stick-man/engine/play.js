@@ -12,6 +12,8 @@ import { createCamera } from './camera.js';
 import { createCaptions } from './captions.js';
 import { ACT, PROPV, MAKE, keyTracks } from './verbs_fx.js';
 import * as EXTRAS from '../lib/cast/extras.js';
+import { PHYS } from '../lib/props/physfx.js';
+Object.assign(MAKE, PHYS);                                       // physical FX kinds (SETS.md "Physical effects")
 
 // every cast spec exported by lib/cast/extras.js (an object with a name and a shirt) registers itself by its export name
 const dye = EXTRAS.dye;
@@ -19,7 +21,8 @@ const SPECS = { KAI, TELLER, GUARD, ...Object.fromEntries(Object.entries(EXTRAS)
 const SETS = { 'bank-lobby': () => import('../lib/sets/bank-lobby.js'), street: () => import('../lib/sets/street.js'),
   cutaway: () => import('../lib/sets/cutaway.js'), park: () => import('../lib/sets/park.js'), lab: () => import('../lib/sets/lab.js'),
   'halden-street': () => import('../lib/sets/halden-street.js'), 'halden-plaza': () => import('../lib/sets/halden-plaza.js'),
-  island: () => import('../lib/sets/island.js') };
+  island: () => import('../lib/sets/island.js'), diner: () => import('../lib/sets/diner.js'), workshop: () => import('../lib/sets/workshop.js'),
+  classroom: () => import('../lib/sets/classroom.js'), harbour: () => import('../lib/sets/harbour.js') };
 const KEYV = new Set(['set', 'pulse', 'shake', 'fire', 'flash', 'sound']);
 const HAND_R = 0.040 * W;                                        // the hand dot's radius (cast.js)
 const THICK = { b1: 0.045, b2: 0.045, stack: 0.07, note: 0.003 };

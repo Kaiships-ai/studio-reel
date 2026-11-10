@@ -5,7 +5,8 @@
 // Reel page (styles/stick-man/reel.html) when --film is given:
 //   --film films/stick01-dye-pack --frames 0-344 --out f_%d.jpg        stills
 //   --film ... --frames 0-344 --mp4 renders/p1.mp4 [--w 540 --h 960]    mp4 with the voice from the right offset
-//   --film ... --frames 0-344 --dbg dbg.jsonl                          __dbg + motion per frame, no render
+//   --film ... --frames 0-344 --dbg dbg.jsonl                          __dbg + motion per frame, no render (+ dress: pieces seen;
+//                                                                       --dress 1 adds dressList, their names)
 //   --film ... --frames 0-344 --report review/p1-stats.txt --in renders/p1.mp4
 //   --film ... --serve 1                                               keep a server up and print the URL
 //   --film ... --cues audio/cues.json                                  sound cues from the picture: [{t, name, strength}]
@@ -64,7 +65,9 @@ async function speed(list) {
   return { page: pageMs.reduce((a, b) => a + b, 0) / list.length, jpeg: (Date.now() - t0) / list.length };
 }
 // __dbg plus the page's motion numbers (camera px/frame at 720 wide, foot slide px/frame under the same camera)
-const dbgAll = () => p.evaluate(fr => fr.map(f => ({ ...JSON.parse(window.__dbg(f)), motion: window.__motion(f) })), frames);
+// dress = registered set-dressing pieces the camera sees in that frame (lib/sets/dress.js, dressing gate); --dress 1 adds their names
+const dbgAll = () => p.evaluate(([fr, names]) => fr.map(f => { const d = JSON.parse(window.__dbg(f)); const dress = window.__dressCount ? window.__dressCount() : null;
+  const dl = names && window.__dressList ? window.__dressList() : undefined; return { ...d, dress, ...(dl ? { dressList: dl } : {}), motion: window.__motion(f) }; }), [frames, !!A.dress]);
 const compress = list => {
   const o = []; for (let i = 0; i < list.length; i++) { let j = i; while (j + 1 < list.length && list[j + 1] === list[j] + 1) j++; o.push(i === j ? `${list[i]}` : `${list[i]}-${list[j]}`); i = j; }
   return o.join(', ');

@@ -116,9 +116,9 @@ async function story(film) {
   const SB = JSON.parse(fs.readFileSync(F('storyboard.json'), 'utf8')), script = JSON.parse(fs.readFileSync(F('vo/script.json'), 'utf8'));
   const words = JSON.parse(fs.readFileSync(F('vo/words.json'), 'utf8'));
   let dbg = A.dbg;
+  const R1 = (await import(pathToFileURL(F('reel.js')).href)).default;
+  const R2 = fs.existsSync(F('reel2.js')) ? (await import(pathToFileURL(F('reel2.js')).href)).default : null;
   if (!dbg) {
-    const R1 = (await import(pathToFileURL(F('reel.js')).href)).default;
-    const R2 = fs.existsSync(F('reel2.js')) ? (await import(pathToFileURL(F('reel2.js')).href)).default : null;
     const last = (R2 || R1).frames[1];
     dbg = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'stick-story-')), 'dbg.jsonl');
     const r = run('node', [path.join(ROOT, 'styles/stick-man/tools/shot.mjs'), '--film', film, '--frames', `0-${last}`, '--dbg', dbg, '--w', '540', '--h', '960'], { capture: true });
@@ -145,7 +145,7 @@ async function story(film) {
   // 4 + 5 every line has an entry; its props / fx are seen (>= 3 frames in its window); >= 40 % of lines use one
   const noEntry = ids.filter(id => !E[id]), unseen = [], using = [];
   for (const w of win) {
-    const e = E[w.id]; if (!e) continue; const want = [...(e.props || []), ...(e.fx || [])], fr = inWin(w);
+    const e = E[w.id]; if (!e) continue; const want = [...(e.props || []), ...(e.fx || []), ...(e.labels || [])], fr = inWin(w);
     const miss = want.filter(n => fr.filter(r => (r.seen || []).includes(n)).length < 3);
     if (miss.length) unseen.push(`${w.id}: ${miss.join(' ')}`);
     if (want.length && miss.length < want.length) using.push(w.id);
@@ -154,7 +154,30 @@ async function story(film) {
   const share = using.length / ids.length;
   sg('props / fx used', share >= 0.4, `${Math.round(100 * share)} % (${using.length}/${ids.length}: ${using.join(' ') || '-'})`, '>= 40 % of lines');
   sg('props / fx seen', !unseen.length, unseen.length ? 'not on screen: ' + unseen.join('; ') : 'every listed prop / fx on screen in its line', 'listed = in __dbg seen');
-  // 6 judged: the board reviewer's verdict (GATES.md, reviewer prompt)
+  // 6-8 world and fx (GATES.md "World and fx gates"): dressing density, floating-label budget, every storyboard fx in the world
+  const ACTS = [{ ...R1, name: R1.name || 'lobby' }, ...(R2?.acts || [])].map(a => ({ name: a.name || a.set, make: a.make || {} }));
+  const kindOf = (act, n) => ACTS.find(a => a.name === act)?.make?.[n]?.kind;
+  // dressing: registered set pieces the camera sees (dress.js); cu frames, prop-only cutaway tables and dissolves left out
+  const DRESS_N = 16;                                       // distinct objects in the reference medium frame (wide: 21)
+  const dr = rows.filter(r => r.dress != null && r.mix == null && r.set !== 'cutaway' && !/^cu/.test(r.camera?.shot || ''));
+  if (!dr.length) sg('dressing density', false, 'no dress counts in __dbg (re-run shot.mjs --dbg)', `>= ${DRESS_N} pieces in 85 % of frames`);
+  else {
+    const ok = dr.filter(r => r.dress >= DRESS_N).length / dr.length, med = dr.map(r => r.dress).sort((a, b) => a - b)[dr.length >> 1];
+    const per = {}; for (const r of dr) (per[r.act] ||= []).push(r.dress);
+    const low = Object.entries(per).map(([a, v]) => [a, v.sort((x, y) => x - y)[v.length >> 1]]).filter(([, m]) => m < DRESS_N);
+    sg('dressing density', ok >= 0.85, `${Math.round(100 * ok)} % of ${dr.length} non-cu frames >= ${DRESS_N}, median ${med}${low.length ? '; low acts: ' + low.map(([a, m]) => `${a} ${m}`).join(', ') : ''}`, `>= ${DRESS_N} pieces in 85 % of frames`);
+  }
+  // floating labels: stamp / callout / bars / split entries seen >= 3 frames anywhere in the reel
+  const LABELS = ['stamp', 'callout', 'bars', 'split'], DIAGRAM = ['rings', 'flow', 'rays', 'star', 'shimmer'];   // lib/props/physfx.js
+  const lab = {}; for (const r of rows) for (const n of r.seen || []) if (LABELS.includes(kindOf(r.act, n))) lab[`${r.act}.${n}`] = (lab[`${r.act}.${n}`] || 0) + 1;
+  const labs = Object.entries(lab).filter(([, c]) => c >= 3).map(([k]) => k), budget = Math.round(3 * dur / 30);
+  sg('floating labels', labs.length <= budget, `${labs.length} (${labs.join(', ') || '-'})`, `<= ${budget} (3 per 30 s)`);
+  // every storyboard fx is an in-world kind (labels go in the entry's `labels`, never in `fx`)
+  const notWorld = [];
+  for (const w of win) { const e = E[w.id]; if (!e) continue; const acts = [...new Set(inWin(w).map(r => r.act))];
+    for (const n of e.fx || []) { const k = acts.map(a => kindOf(a, n)).find(Boolean); if (!k || LABELS.includes(k) || DIAGRAM.includes(k)) notWorld.push(`${w.id}.${n}${k ? ' (' + k + ')' : ' (no make entry)'}`); } }
+  sg('fx in world', !notWorld.length, notWorld.length ? notWorld.join(', ') : 'every storyboard fx is a physical object or event', 'no label / diagram kinds in fx');
+  // 9 judged: the board reviewer's verdict (GATES.md, reviewer prompt)
   const vf = F('review/board-verdict.json');
   if (!fs.existsSync(vf)) sg('board shown', false, 'no review/board-verdict.json: run board.mjs, then the reviewer (GATES.md)', '>= 85 % shown');
   else {

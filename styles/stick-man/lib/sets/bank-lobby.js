@@ -2,6 +2,7 @@
 // Room x -3.6..5, y -8..7, ceiling 6.2; sun comes through three windows in the left wall.
 import * as THREE from 'three';
 import { B, lin, css, std } from '../../engine/look.js';
+import { dressKit, resetCollide } from './dress.js';
 
 export const SUN_DIR = [0.76, -0.38, -0.53];                    // direction the light travels (Blender)
 export const SUN_CENTER = [0.2, 1.8, 1.0], SUN_HALF = 6.8;     // one fixed shadow fit (room, doorway, pavement): no shimmer as shots move
@@ -29,6 +30,27 @@ export const COLLIDE = [
   { name: 'counter', lo: [COUNTER.CX0 - 0.10, COUNTER.CY0 - 0.10, 0], hi: [COUNTER.CX1 + 0.08, ROOM.Y1, COUNTER.CH + 0.07] },
   { name: 'raised-floor', lo: [COUNTER.CX1, COUNTER.CY0, 0], hi: [ROOM.X1, ROOM.Y1, TELLER_SPOT[2]], grace: 0.03 },
 ];
+const BASE = COLLIDE.slice();
+// dressing (SETS.md "Dressing"): a working bank hall. Kept clear: the customer's floor x -0.6..1.25, y -1..3, the walk
+// from the door (y 0.4..2.2), the bench mark (-1.2, 4.2) and the counter top's prop spots
+export function dress(stage) {
+  const D = dressKit(stage, COLLIDE), S = { solid: true }, CT = COUNTER.CH + 0.07;
+  // the queue: brass posts and a red rope; a sign on a stand
+  D.put('stanchions', [0.25, -2.6, 0], 90, { w: 2.2, ...S }); D.put('sign', [-0.3, -4.2, 0], 0, { text: 'PLEASE WAIT\nHERE', w: 0.6, h: 0.45, bg: [0.02, 0.26, 0.18], fg: [1, 0.9, 0.6], pole: 1.1, ...S });
+  // customer side: an ATM and a water cooler on the left wall, a loans desk with its chair, a coat stand, plants
+  D.put('atm', [-3.25, -2.4, 0], 90, S); D.put('cooler', [-3.3, -4.0, 0], 90, S); D.put('desk', [-1.6, -6.2, 0], 0, { c: 'wood', ...S });
+  D.put('sign', [-1.6, -6.0, 0.74], 0, { text: 'LOANS', w: 0.35, h: 0.12, bg: [0.95, 0.92, 0.86], fg: [0.02, 0.26, 0.18], pole: 0 });
+  D.put('coatstand', [-3.0, 5.2, 0], 0, S); D.put('plantbig', [-3.0, 6.3, 0], 0, S); D.put('plantbig', [0.6, 6.4, 0], 0, S); D.put('plantbig', [-3.0, -7.3, 0], 0, S);
+  D.put('bin', [-2.9, 3.0, 0], 0, { c: 'greyD', ...S }); D.put('rug', [-2.6, 1.27, 0.0], 90, { w: 1.6, d: 1.8, c: 'green' });
+  // the back wall: a clock, framed pictures, savings posters, a brochure rack
+  D.put('clock', [-1.4, ROOM.Y1 - 0.04, 4.3], 0, { r: 0.38 }); D.put('frame', [-2.4, ROOM.Y1 - 0.04, 2.2], 0, { seed: 0, w: 0.8, h: 0.6 }); D.put('frame', [-0.4, ROOM.Y1 - 0.04, 2.2], 0, { seed: 1, w: 0.8, h: 0.6 });
+  D.put('poster', [-1.4, ROOM.Y1 - 0.04, 1.2], 0, { title: 'SAVE 4%', bg: [0.95, 0.80, 0.30], shape: 'bars', w: 0.6, h: 0.85 });
+  D.put('shelf', [-1.4, ROOM.Y1 - 0.4, 0], 0, { w: 0.9, h: 1.0, items: 'books', seed: 12 });
+  // the counter: a cash register, pens, a stack of slips; behind it filing cabinets and a lamp
+  D.put('cashregister', [1.65, 3.6, CT], -90); D.put('book', [1.6, -0.15, CT], 20, { c: 'cream' }); D.put('book', [1.62, 5.2, CT], -10, { c: 'red' });
+  D.put('lockers', [4.75, 4.2, TELLER_SPOT[2]], -90, { n: 3, c: 'grey' }); D.put('lockers', [4.75, -2.2, TELLER_SPOT[2]], -90, { n: 3, c: 'grey' });
+  D.put('wallbox', [-3.55, 6.6, 4.8], 90); D.put('extinguisher', [-3.5, -5.2, 0.0], 90, S);
+}
 export const BENCH_YAW = -100;                                    // the bench (and its sleeper) faces the door
 export const CAMERA_SIDE = [0, -1];                              // default side two-shots are seen from
 // where a camera may go (x, y boxes): the lobby, kept 1.6 m off the entrance wall so the doorway reads at an angle
@@ -69,7 +91,8 @@ function checker(c1, c2, size, line) {
 
 export const build = stage => buildBankLobby(stage);
 export async function buildBankLobby(stage) {
-  const { scene, prop, glow } = stage;
+  resetCollide(COLLIDE, BASE);
+  const { scene, prop, glow } = stage, R = dressKit(stage); let s;
   const T = {
     stone: bricks({ c1: [1.0, 0.72, 0.34], c2: [0.96, 0.64, 0.28], mortar: [0.60, 0.36, 0.16], bw: 1.0, bh: 0.46, gap: 0.012, offset: 0.5, nx: 4, ny: 8 }),
     tile: bricks({ c1: [0.03, 0.46, 0.42], c2: [0.02, 0.38, 0.36], mortar: [0.01, 0.14, 0.15], bw: 0.42, bh: 0.21, gap: 0.02, offset: 0.5, nx: 6, ny: 6, ppm: 400, bevel: 1.2, seed: 11 }),
@@ -154,6 +177,7 @@ export async function buildBankLobby(stage) {
   box([X0, Y1 - 0.18, H - 0.35], [X1, Y1, H], M.marble);
   for (const y of [-4.5, -1.5, 1.5, 4.5]) box([X0, y - 0.14, H - 0.36], [X1, y + 0.14, H], M.beam);
 
+  s = R.mark();
   // ---- pendant lamps
   for (const [x, y] of [[-1.2, 0.0], [-1.2, 4.0], [3.4, 2.2], [3.4, 5.6], [-1.2, -4.0]]) {
     cyl([x, y, H - 0.75], 0.015, 1.5, M.black, 'Z', 10);
@@ -162,6 +186,8 @@ export async function buildBankLobby(stage) {
     const pl = new THREE.PointLight(lin(1.0, 0.80, 0.55), 4.0, 0, 2); pl.position.copy(B(x, y, H - 2.15)); scene.add(pl);
   }
 
+  R.since(s, 'pendant-lamps');
+  s = R.mark();
   // ---- teller counter with raised panels, and the raised floor the tellers stand on
   const { CX0, CX1, CY0, CH } = COUNTER;
   box([CX1, CY0, 0], [X1, Y1, TELLER_SPOT[2]], M.wood_dark);
@@ -181,10 +207,14 @@ export async function buildBankLobby(stage) {
     const sh = glow(cyl([bx - 0.06, sy, CH + 0.37], 0.075, 0.30, M.lampshade, 'Z', 20), 0.6); sh.rotation.set(Math.PI / 2, 0, 0);
     const l = new THREE.PointLight(lin(1.0, 0.9, 0.65), 0.6, 2.5, 2); l.position.copy(B(bx - 0.12, sy, CH + 0.27)); scene.add(l);
   }
+  R.since(s, 'counter');
+  s = R.mark();
   // service bell
   cyl([CX0 + 0.16, -0.22, CH + 0.078], 0.06, 0.016, M.black, 'Z', 24);
   sphere([CX0 + 0.16, -0.22, CH + 0.10], 0.05, M.steel);
 
+  R.since(s, 'bell');
+  s = R.mark();
   // ---- vault on the back wall
   const vx = 3.45, vz = 1.95, vr = 1.45;
   cyl([vx, Y1 - 0.08, vz], vr + 0.22, 0.30, M.steel_dark, 'Y', 64);
@@ -197,6 +227,8 @@ export async function buildBankLobby(stage) {
   for (let i = 0; i < 6; i++) { const a = (i * 60 + 15) * Math.PI / 180; sphere([vx + Math.sin(a) * 0.625, Y1 - 0.58, vz + Math.cos(a) * 0.625], 0.075, M.brass); }
   for (const zz of [vz + 0.75, vz - 0.75]) box([vx + vr - 0.05, Y1 - 0.42, zz - 0.16], [vx + vr + 0.30, Y1 - 0.12, zz + 0.16], M.steel_dark);
 
+  R.since(s, 'vault');
+  s = R.mark();
   // ---- sign band; lettering is a cut-out plane with no ink, like Blender's W_noink
   box([0.2, Y1 - 0.10, 4.05], [X1 - 0.3, Y1, 5.05], M.green);
   box([0.2, Y1 - 0.13, 5.02], [X1 - 0.3, Y1, 5.09], M.brass);
@@ -213,11 +245,15 @@ export async function buildBankLobby(stage) {
     const w = 4.6, m = new THREE.Mesh(new THREE.PlaneGeometry(w, w * 300 / 2400), mat);
     m.position.copy(B(2.45, Y1 - 0.125, 4.55)); m.receiveShadow = true; m.userData.noPrepass = true; scene.add(m);
   }
+  R.since(s, 'sign-band');
+  s = R.mark();
   // ---- door to the back office
   box([-0.95, Y1 - 0.09, 0], [0.15, Y1, 2.55], M.wood_dark);
   box([-0.85, Y1 - 0.11, 0.02], [0.05, Y1 - 0.04, 2.45], M.wood_x);
   box([-0.72, Y1 - 0.125, 1.75], [-0.08, Y1 - 0.11, 1.98], M.brass);
   sphere([-0.05, Y1 - 0.16, 1.1], 0.05, M.brass);
+  R.since(s, 'office-door');
+  s = R.mark();
   // ---- deposit boxes on the right wall
   for (let r = 0; r < 5; r++) for (let c = 0; c < 9; c++) {
     const yy = 0.2 + c * 0.62, zz = 1.45 + r * 0.42;
@@ -225,6 +261,7 @@ export async function buildBankLobby(stage) {
     sphere([X1 - 0.11, yy + 0.28, zz + 0.18], 0.03, M.brass);
   }
 
+  R.since(s, 'deposit-boxes');
   // ---- light: sun, plus warm bounce where each window's sun pool lands (floor and counter front)
   const sd = new THREE.Vector3(...SUN_DIR).normalize();
   for (const [cy] of wins) {
@@ -234,8 +271,9 @@ export async function buildBankLobby(stage) {
   }
   stage.addBounce([X1 - 1.0, 0.5, 2.0], [1.0, 0.75, 0.50], 0.8, 5.0);       // right wall picks up the lit floor
   const props = buildProps(stage, M, box, cyl, sphere);
-  buildEntrance(stage, M, box, sphere, props);
-  buildBench(stage, M);
+  s = R.mark(); buildEntrance(stage, M, box, sphere, props); R.since(s, 'entrance');
+  s = R.mark(); buildBench(stage, M); R.since(s, 'bench');
+  dress(stage);
   return { M, wins, props };
 }
 
