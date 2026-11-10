@@ -127,14 +127,18 @@ def resolve(b, a, last):
     b.add(b.bass(41, 0.45), last, 0.9); b.add(b.glock(77, 0.6), last, 0.35); b.add(b.kick(), last, 0.5)
 
 
-def music(words, n, seed=31):
+# plan (optional, films/<slug>/audio/music.json): section starts as seconds or [line, word]; keys playful_end, build,
+# build_end, wait (full stop), see (music back), urgent, so (resolve). Without it: reel 1's anchors.
+REEL1 = dict(playful_end=11.5, build=11.6, build_end=13.8, wait=['l06', 'Wait'], see=['l07', 'You'], urgent=21.0, so=['l10', 'So'])
+def music(words, n, seed=31, plan=None):
     def at(line, word):
         return next(w['t0'] for w in words if w['line'] == line and w['word'].strip('.,?!"').lower() == word.lower())
+    P = {**REEL1, **(plan or {})}; T = {k: (at(*v) if isinstance(v, list) else float(v)) for k, v in P.items()}
     b = Bed(n, seed)
-    t_build, t_wait, t_see = 11.6, at('l06', 'Wait'), at('l07', 'You')
-    t_urg, t_so, t_last = 21.0, at('l10', 'So'), words[-1]['t0']
-    playful(b, 0.0, 11.5)
-    build(b, t_build, 13.8, t_wait)
+    t_build, t_wait, t_see = T['build'], T['wait'], T['see']
+    t_urg, t_so, t_last = T['urgent'], T['so'], words[-1]['t0']
+    playful(b, 0.0, T['playful_end'])
+    build(b, t_build, T['build_end'], t_wait)
     curious(b, t_see, t_urg)
     urgent(b, t_urg, t_so)
     resolve(b, t_so, t_last)

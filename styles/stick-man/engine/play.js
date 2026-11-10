@@ -11,9 +11,9 @@ import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, e
 import { createCamera } from './camera.js';
 import { createCaptions } from './captions.js';
 import { ACT, PROPV, MAKE, keyTracks } from './verbs_fx.js';
-import { MABEL, OTIS, JUNE, OFFICER, dye } from '../lib/cast/extras.js';
+import { MABEL, OTIS, JUNE, OFFICER, WREN, BRAM, dye } from '../lib/cast/extras.js';
 
-const SPECS = { KAI, TELLER, GUARD, MABEL, OTIS, JUNE, OFFICER };
+const SPECS = { KAI, TELLER, GUARD, MABEL, OTIS, JUNE, OFFICER, WREN, BRAM };
 const SETS = { 'bank-lobby': () => import('../lib/sets/bank-lobby.js'), street: () => import('../lib/sets/street.js'),
   cutaway: () => import('../lib/sets/cutaway.js') };
 const KEYV = new Set(['set', 'pulse', 'shake', 'fire', 'flash', 'sound']);

@@ -124,7 +124,8 @@ def main(film):
     # stereo: each side gets its own pan gain per hit, then its own consonant duck (so each channel passes the check by itself)
     sL, sR = word_duck(render(1), vo, words), word_duck(render(-1), vo, words)
     # ---------------- music, set relative to the voice
-    mL, mR, sec = music(words, N)
+    mp = os.path.join(A, 'music.json')
+    mL, mR, sec = music(words, N, plan=json.load(open(mp)) if os.path.exists(mp) else None)
     v_lu = lufs([vo, vo]); m_lu = lufs([mL, mR]); g_m = 10 ** ((v_lu + MUS_LU - m_lu) / 20); mL, mR = mL * g_m, mR * g_m
     s_lu = lufs([sfx, sfx]); print(f'sfx vs voice: {pre_lu - v_lu:+.1f} LU before the duck, {s_lu - v_lu:+.1f} after (target {SFX_LU})')
     # ---------------- master: gain to -14 LUFS through a true-peak limiter

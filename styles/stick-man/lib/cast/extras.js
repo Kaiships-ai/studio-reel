@@ -72,6 +72,9 @@ export const OTIS = { name: 'Otis', shirt: [0.64, 0.80, 0.96], hair: [beanie([0.
   clothes: [{ tie: [0.08, 0.12, 0.36], stripe: [0.80, 0.86, 1.0] }] };
 export const JUNE = { name: 'June', shirt: [0.74, 0.94, 0.82], glasses: true, hair: [bun()], clothes: [{ vest: [0.44, 0.16, 0.34] }] };
 export const PASSERS = [MABEL, OTIS, JUNE];
+// reel 2 "black robe": two friends compared side by side, one all in white, one all in black (loose shirts)
+export const WREN = { name: 'Wren', shirt: [0.97, 0.97, 0.94], hair: [sunHat([0.98, 0.96, 0.90], [0.85, 0.55, 0.20])] };
+export const BRAM = { name: 'Bram', shirt: [0.13, 0.13, 0.15], hair: [hairCap([0.12, 0.08, 0.05])] };
 export const OFFICER = { name: 'Officer', shirt: [0.44, 0.60, 0.90], hair: [guardCap([0.04, 0.06, 0.16])],
   clothes: [{ tie: [0.04, 0.06, 0.16], stripe: [0.04, 0.06, 0.16] }, { uniform: { seam: [0.16, 0.26, 0.52] } }] };
 // static red versions (when a live recolour is not wanted)
