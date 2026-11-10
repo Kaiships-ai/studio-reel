@@ -1,0 +1,37 @@
+---
+name: make-reel-stick-man
+description: Turn a short script or story idea into one 30-60 s vertical (1080x1920, 30 fps) stick-man 3D reel at the quality of reel 1 "dye pack" - one narrator (Gemini TTS), three.js stick figures acting on spoken words, word-locked captions, SFX and music, measured gates. Use when Kai asks for a stick-man reel, a stickman story reel, or a reel like stick01 / Ricks Clips. Trigger: /make-reel-stick-man
+argument-hint: "<slug> <script or idea>"
+---
+
+# /make-reel-stick-man
+
+Goal: a fresh agent turns `$ARGUMENTS` into `films/<slug>/renders/<slug>_vN.mp4` that passes every gate, in about 170k tokens and under an hour. Dev only (`kit.manifest` [dev]). Run everything from the library root with `.pixi/envs/default/bin/node` and `.pixi/envs/default/bin/python` (`node`/`python` below), never `pixi run`. Example to copy from: `styles/stick-man/examples/dye-pack/` (reel 1, approved).
+
+| # | Stage | Command / output | Read first |
+|---|---|---|---|
+| 1 | script | `node styles/stick-man/tools/new_film.mjs <slug>`, then write `vo/script.json` lines: 1 narrator, ~3.7 words/s (30 s ≈ 110 words), hook in line 1, one visible action per line | `examples/dye-pack/script.json` |
+| | **gate: Kai approves the script** | | |
+| 2 | voice | `python styles/stick-man/tools/voice.py films/<slug> --samples Achird` then `--take Achird` → `vo/vo.wav` | |
+| | **gate: Kai approves the voice** | | |
+| 3 | align | `python styles/stick-man/tools/align.py films/<slug>` → `vo/words.json`, `vo/voice-qa.md` (any ❌ = re-take) | |
+| 4 | reel data | write `films/<slug>/reel.js` (+ `reel2.js` for more acts); missing set or prop → SETS.md | REEL_DATA.md, VERBS.md, SETS.md |
+| 5 | preview stills | `node styles/stick-man/tools/shot.mjs --film films/<slug> --frames 0,90,180 --out films/<slug>/review/f_%d.jpg`; fast numbers: `--frames 0-<last> --report films/<slug>/review/pre-stats.txt --fast 1` | GATES.md |
+| 6 | sound | `node styles/stick-man/tools/shot.mjs --film films/<slug> --cues films/<slug>/audio/cues.json`, then `python styles/stick-man/tools/sound.py films/<slug>` → `audio/mix.wav`, `audio/levels.txt` | |
+| 7 | render | `node styles/stick-man/tools/shot.mjs --film films/<slug> --frames 0-<last> --mp4 films/<slug>/renders/<slug>_vN.mp4 --audio films/<slug>/audio/mix.wav` | |
+| 8 | gates | `node styles/stick-man/tools/shot.mjs --film films/<slug> --frames 0-<last> --report films/<slug>/review/<slug>_vN-stats.txt --in <mp4>`, then `node styles/stick-man/tools/gates.mjs --report <stats> --in <mp4> --out films/<slug>/review/<slug>_vN-gates.txt` | GATES.md |
+| 9 | deliver | `node styles/stick-man/tools/sheet.mjs --in <mp4> --n 24 --out films/<slug>/review/<slug>_vN-sheet.jpg`; fill `LEDGER.md`; send Kai the mp4, sheet, gates file | |
+| | **gate: Kai watches the video** | | |
+
+Sound runs before the render so one render pass carries the final mix (cues come from the reel data, not the pixels).
+
+| Rule | Why |
+|---|---|
+| `<last>` = the "last frame" line of `vo/voice-qa.md` | picture and voice end together |
+| A beat names a spoken word (`line` + `on`); use `f` only for set-up before the first word | timing follows the voice |
+| Held props have `userData.grip`; every set has `COLLIDE` boxes; close-ups keep head x 45-55 % | hand-prop gap, collision, framing gates |
+| Blender = asset workshop only: export a `.glb` when the kit lacks a set or prop, never render frames | speed, one look |
+| Never edit `styles/stick-man/` for one film's taste; a new set, prop or verb goes in the kit with its rule | the next reel reuses it |
+| Never copy frames from `ref-private/`; never post or upload | rights; posting is Kai's call |
+
+**Gate rule:** Kai sees a video only when `gates.mjs` exits 0. A FAIL is fixed in the reel data (or the kit), never by loosening a threshold. After two fix rounds on one gate, stop and show Kai the FAIL line with a still of the frame. Log tokens and minutes per stage in `films/<slug>/LEDGER.md`; over 1.5x the budget there, stop and tell Kai.

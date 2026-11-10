@@ -26,7 +26,8 @@ a build check, a manifest entry) in the same change. Drop a row once its mistake
 | A change to rendering keeps `node .claude/skills/verify/draft.mjs films/verify-smoke` and `films/rea-xray` passing | judgment: CI has no GPU, so run them locally (seconds each) |
 | `core/` and `styles/` are never edited for one film; a film's changes stay in `films/<name>/` | judgment (AGENTS.md) |
 
-Kai's own 3D reels (Blocky Kai skits, 3D listicles) are `/make-reel-3d` → `styles/kai-reel-3d/WORKFLOW.md`, dev only; every other reel request
-stays on `/make-reel`.
+Kai's own 3D reels (Blocky Kai skits, 3D listicles) are `/make-reel-3d` → `styles/kai-reel-3d/WORKFLOW.md`, dev only; stick-man
+story reels (three.js stick figures, like stick01 dye pack) are `/make-reel-stick-man` → `.claude/skills/make-reel-stick-man/SKILL.md`,
+dev only; every other reel request stays on `/make-reel`.
 
 Commands: `node --test test/unit/*.test.mjs` · `node release/build.mjs --dry-run` · `node test/clean-install.mjs <unzipped folder>`.

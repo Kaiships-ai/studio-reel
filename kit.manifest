@@ -31,6 +31,7 @@ styles/kai-reel-3d/
 # Stick-man 3D look (three.js): dev-only P0 slice (stage, cast, bank set) until it is proven
 styles/stick-man/
 .claude/skills/make-reel-3d/
+.claude/skills/make-reel-stick-man/
 AGENT_LEARNING.md
 PLAN.md
 # The paid TMV kit's own files: tmv/<path> replaces or adds <path> in the tmv zip only
