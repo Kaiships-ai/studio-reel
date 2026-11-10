@@ -172,6 +172,31 @@ if (A.speed && !REEL) {
     if (big < 0.30) { sr++; smallF.push(r.f); if (sr > sBest) { sBest = sr; sAt = r.f; } } else sr = 0;
   }
   L.push(`    largest figure under 30 % of frame height in ${s0}-${s1}: longest run ${sBest} frames${sAt != null ? ' (ends ' + sAt + ')' : ''}; frames: ${compress(smallF) || 'none'}`);
+  // (d) contact: hand dot to held prop's grip socket, px at this frame size (on screen only), per actor
+  const k1080 = 1080 / W, gaps = {};
+  for (const r of rows) for (const h of r.held || []) {
+    if (!h.onScreen || r.motion.cut) continue;
+    const g = (gaps[h.actor] ||= { max: 0, at: null, props: new Set(), n: 0 }); g.n++; g.props.add(h.prop);
+    if (h.gapPx * k1080 > g.max) { g.max = h.gapPx * k1080; g.at = `${r.f} ${h.prop}`; }
+  }
+  L.push(`(d) hand to held prop (grip socket), max gap px at 1080p (target <= 2):`);
+  for (const [n, g] of Object.entries(gaps)) L.push(`    ${n}: ${g.max.toFixed(2)} px${g.at ? ' (frame ' + g.at + ')' : ''} over ${g.n} held frames, props ${[...g.props].join(', ')}`);
+  if (!Object.keys(gaps).length) L.push('    no held props on screen');
+  // (e) bodies inside set geometry (and torso in torso)
+  const hits = rows.filter(r => r.collide?.length);
+  const kinds = {}; for (const r of hits) for (const c of r.collide) (kinds[c] ||= []).push(r.f);
+  L.push(`(e) actor body inside set collision boxes (target none): ${hits.length ? hits.length + ' frames' : 'none'}`);
+  for (const [c, fs] of Object.entries(kinds)) L.push(`    ${c}: ${compress(fs)}`);
+  // (f) close-ups: head centre x of the shot's subject (settled frames, glide done), % of the width (target 45-55)
+  const cus = {};
+  for (const r of rows) {
+    const m = /^cu\(([^)]*)\)/.exec(r.camera.shot || ''); if (!m || r.camera.glide != null || r.motion.cut) continue;
+    const a = r.actors[m[1].split(',')[0]]; if (!a?.inFrame) continue;
+    (cus[r.shotI + ' ' + r.act + ' ' + m[1]] ||= []).push([r.f, 100 * (a.head[0] + a.head[2]) / 2 / W]);
+  }
+  L.push(`(f) close-ups, subject head centre x (% of width, settled frames):`);
+  for (const [k, xs] of Object.entries(cus)) { const v = xs.map(x => x[1]).sort((a, b) => a - b);
+    L.push(`    shot ${k}, frames ${xs[0][0]}-${xs[xs.length - 1][0]}: min ${v[0].toFixed(1)}, median ${v[v.length >> 1].toFixed(1)}, max ${v[v.length - 1].toFixed(1)}`); }
   if (A.fast) { fs.mkdirSync(path.dirname(A.report), { recursive: true }); fs.writeFileSync(A.report, L.join('\n') + '\n'); console.log(L.join('\n')); await browser.close(); server.close(); process.exit(0); }
   // (c) speed
   const sp = await speed(frames.filter((_, i) => i % Math.max(1, Math.floor(frames.length / 60)) === 0).slice(0, 60));

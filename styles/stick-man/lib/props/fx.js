@@ -3,7 +3,7 @@
 // a pure function of t and a seed (no Math.random), so any frame can be rendered alone.
 // Groups are positioned by the caller (scene units); sizes are metres.
 import * as THREE from 'three';
-import { lin, toon, INK_RGB } from '../../engine/look.js';
+import { lin, toon, std, INK_RGB } from '../../engine/look.js';
 
 const clamp01 = x => Math.max(0, Math.min(1, x));
 const ease = x => { const t = clamp01(x); return t * t * (3 - 2 * t); };
@@ -30,9 +30,11 @@ export function makeFlash(stage) {
 // ---------------------------------------------------------------- red powder burst
 // opts at build: { seed, count, size } (size = radius of the full cloud, m). set(t): swells to full in ~1.2 s,
 // keeps drifting up and out slowly, lingers; after `life` s it thins away. Puffs are toon balls with their own outline.
-export function makePowderBurst(stage, { seed = 3, count = 18, size = 0.9, life = 7 } = {}) {
+// smoke: true = the bag's burst is pale powder smoke (the red is the dye drops and, later, the spray), not red puffs
+export function makePowderBurst(stage, { seed = 3, count = 18, size = 0.9, life = 7, smoke = false } = {}) {
   const g = new THREE.Group(), puffs = [];
-  const mats = [[0.84, 0.06, 0.07], [0.92, 0.16, 0.14], [0.74, 0.04, 0.08]].map(c => toon(c, { shade: [0.78, 0.52, 0.62], sheen: 0, rim: 0.2, broad: 0.15 }));
+  const cols = smoke ? [[0.97, 0.94, 0.91], [0.90, 0.87, 0.87], [0.99, 0.88, 0.85]] : [[0.84, 0.06, 0.07], [0.92, 0.16, 0.14], [0.74, 0.04, 0.08]];
+  const mats = cols.map(c => toon(c, { shade: smoke ? [0.80, 0.78, 0.86] : [0.78, 0.52, 0.62], sheen: 0, rim: 0.2, broad: 0.15 }));
   const geo = new THREE.SphereGeometry(1, 28, 18), hull = new THREE.SphereGeometry(1, 28, 18);
   for (let i = 0; i < count; i++) {
     const az = 2 * Math.PI * (i / count + 0.3 * hash(i, 1, seed)), el = -0.25 + 1.2 * hash(i, 2, seed);
@@ -230,6 +232,7 @@ export function makeBill(stage, { scale = 1.3 } = {}) {
   const G = lin(...BILL_GREEN), R = lin(...DYE_RGB), mat = new THREE.MeshStandardMaterial({ map, color: G.clone(), roughness: 0.75, side: THREE.DoubleSide });
   const m = new THREE.Mesh(new THREE.BoxGeometry(0.155 * scale, 0.002 * scale, 0.066 * scale), mat); m.castShadow = m.receiveShadow = true;
   const g = new THREE.Group(); g.add(m);
+  g.userData.grip = [0.062 * scale, 0, 0];                       // pinched near one end
   g.userData.set = ({ red = 0 } = {}) => { mat.color.copy(G).lerp(R, clamp01(red)); };
   return g;
 }
@@ -270,15 +273,16 @@ export function makeStarBurst(stage, { spikes = 12, r = 1.0, seed = 4 } = {}) {
 
 // ---------------------------------------------------------------- dye droplets: outlined red drops thrown out
 // set(t, { toward, ground }): ballistic, a bias `toward` (unit vector, group-local) for the drops that fly at the lens.
-export function makeDroplets(stage, { seed = 13, n = 14, speed = 3.2 } = {}) {
+// rs scales the drop size, lens = share of drops thrown at the lens
+export function makeDroplets(stage, { seed = 13, n = 14, speed = 3.2, rs = 1, lens = 0.45 } = {}) {
   const g = new THREE.Group(), drops = [];
   const mat = toon(DYE_RGB, { shade: [0.75, 0.48, 0.58], sheen: 0.5, rim: 0.2 }), geo = new THREE.SphereGeometry(1, 20, 14), hull = new THREE.SphereGeometry(1, 20, 14);
   for (let i = 0; i < n; i++) {
     const m = new THREE.Mesh(geo, mat); m.castShadow = true; g.add(m);
     const h = new THREE.Mesh(hull, hullMat); h.scale.setScalar(1.16); m.add(h);
     const az = 2 * Math.PI * hash(i, 1, seed), el = 0.25 + 0.9 * hash(i, 2, seed), sp = speed * (0.6 + 0.6 * hash(i, 3, seed));
-    drops.push({ m, v: [Math.cos(el) * Math.cos(az) * sp, Math.sin(el) * sp, Math.cos(el) * Math.sin(az) * sp], r: 0.035 + 0.03 * hash(i, 4, seed),
-      lens: hash(i, 5, seed) < 0.45, lag: 0.04 * hash(i, 6, seed) });
+    drops.push({ m, v: [Math.cos(el) * Math.cos(az) * sp, Math.sin(el) * sp, Math.cos(el) * Math.sin(az) * sp], r: rs * (0.035 + 0.03 * hash(i, 4, seed)),
+      lens: hash(i, 5, seed) < lens, lag: 0.04 * hash(i, 6, seed) });
   }
   const set = (t, { toward = [0, 0, 1], ground = -1.5 } = {}) => {
     g.visible = t >= 0; if (t < 0) return;
@@ -298,8 +302,13 @@ export function makeDroplets(stage, { seed = 13, n = 14, speed = 3.2 } = {}) {
 // ---------------------------------------------------------------- floating countdown dial (time passing)
 // set({ show 0..1, count, tick 0..1 }): an outlined clock disk that pops in, shows `count` (the red arc = count / of),
 // jumps a little on each tick. Faces +z: the caller turns it to the camera.
-export function makeCountdown(stage, { r = 0.15, of = 3 } = {}) {
+export function makeCountdown(stage, { r = 0.15, of = 3, mount = false } = {}) {
   const g = new THREE.Group(), body = new THREE.Group(); g.add(body);
+  if (mount) {                                                   // wall bracket behind the face: the clock is fixed, not floating
+    const br = new THREE.Mesh(new THREE.BoxGeometry(r * 1.5, r * 1.5, 0.06), std([0.16, 0.17, 0.20], 0.4)); br.position.z = -0.045;
+    br.castShadow = br.receiveShadow = true; g.add(br);
+    const bh = new THREE.Mesh(br.geometry, hullMat); bh.scale.set(1.06, 1.06, 1.3); br.add(bh);
+  }
   const cv = document.createElement('canvas'); cv.width = cv.height = 256;
   const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
   const draw = n => {

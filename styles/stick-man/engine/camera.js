@@ -106,7 +106,8 @@ export function createCamera({ aspect, side = [0, -1], bounds = null, zRange = [
       const a = A(S.subjects[0]), extras = (S.opt.with || []).map(n => A(n).center);
       const yaw = S.opt.heading ?? a.yaw;                            // heading: frame from where he is about to face, not mid-turn
       const dir = rot([Math.sin(yaw * DEG), -Math.cos(yaw * DEG)], (S.opt.angle ?? (S.kind === 'cu' ? -18 : 12)) + drift);
-      const key = a.head.slice();
+      // live (0..1): follow that share of the posed head's sideways drift (lean, tilts) instead of the body-channel head
+      const lw = S.opt.live === true ? 0.5 : S.opt.live || 0, key = a.live && lw ? [lerp(a.head[0], a.live[0], lw), lerp(a.head[1], a.live[1], lw), a.head[2]] : a.head.slice();
       // track: { s, delay, ramp } = the camera follows only a share s of the subject's travel since the shot began, rising
       // to all of it over `ramp` frames after `delay`: he walks across the frame and the floor slides by under him
       if (S.opt.track && S.a0) {
@@ -175,8 +176,10 @@ export function createCamera({ aspect, side = [0, -1], bounds = null, zRange = [
         v.copy(B(...h)).project(cam); if (v.z >= 1) continue;
         const a = proj([h[0] - R[0] * 0.31, h[1] - R[1] * 0.31, h[2]])[0], b = proj([h[0] + R[0] * 0.31, h[1] + R[1] * 0.31, h[2]])[0];
         const x0 = Math.min(a, b), x1 = Math.max(a, b), xc = (x0 + x1) / 2;
-        if (x0 < 0.085 && x1 > 0) plan.push([n, -1, xc < 0.085 ? 'out' : 'in']);
-        else if (x1 > 0.915 && x0 < 1) plan.push([n, 1, xc > 0.915 ? 'out' : 'in']);
+        // a close-up keeps its subject centred: any other head on an edge is pushed out, never pulled in
+        const cu = S.kind === 'cu';
+        if (x0 < 0.085 && x1 > 0) plan.push([n, -1, cu || xc < 0.085 ? 'out' : 'in']);
+        else if (x1 > 0.915 && x0 < 1) plan.push([n, 1, cu || xc > 0.915 ? 'out' : 'in']);
       }
       S.plan = plan; if (!plan.length) return;
       // the pan they need, frame by frame, then limited to 0.010 of the width per frame (both ways, so it starts early)

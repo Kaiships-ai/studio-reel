@@ -51,7 +51,7 @@ function paper() {
 const stackMats = (topFace = false) => { const P = paper(); return [P.side, P.side, topFace ? P.top : P.plain, P.plain, P.side, P.side]; };
 
 // ---------------------------------------------------------------- (a) the hollow stack, as a cutaway
-// set({ lift }): 0 = closed block, 1 = top layer of bills raised and tipped back on its rear edge, hollow open.
+// set({ lift }): 0 = closed block, 1 = top layer of bills swung open on its rear edge (a hinged lid), hollow open.
 // userData.slot = the local point (bottom of the hollow) where the plate and pack sit.
 export function makeHollowStack() {
   const { x: SX, y: SY, z: SZ } = STACK_SIZE, P = paper(), g = new THREE.Group();
@@ -71,8 +71,8 @@ export function makeHollowStack() {
   g.userData.hollow = { x: SX - 2 * wx, z: SZ - 2 * wz, y: WY };
   const set = ({ lift = 0 } = {}) => {
     const k = ease(lift);
-    pivot.position.y = BOT + WY + 0.07 * k;
-    pivot.rotation.x = -0.95 * k;                                // front edge comes up first
+    pivot.position.y = BOT + WY;                                 // hinged on the rear top edge like a box lid (never floats)
+    pivot.rotation.x = -1.85 * k;                                // front edge comes up and over, resting tipped back
   };
   set({ lift: 0 });
   g.userData.set = set; g.userData.lid = pivot;
@@ -98,6 +98,19 @@ export function makePlate({ w = 0.46, d = 0.30 } = {}) {
     for (const s of [-1, 1]) { c.beginPath(); c.moveTo(cx + r * 1.25, cy + s * r * 0.7); c.lineTo(cx + r * 1.65, cy + s * r * 0.95); c.stroke(); }
   });
   decal(g, w * 0.985, d * 0.985, map, 0, 0.0102, 0);
+  // the magnet itself, standing on the emblem: a red horseshoe with silver pole tips, the classic magnet shape
+  {
+    const mr = 0.026, tube = 0.010, leg = 0.026, red = std([0.86, 0.10, 0.10], 0.35), steel = std([0.86, 0.88, 0.92], 0.2);
+    const hs = new THREE.Group(); hs.position.set(-w / 2 + 0.07, 0.0102, d / 2 - 0.06); g.add(hs);
+    const arc = new THREE.Mesh(new THREE.TorusGeometry(mr, tube, 12, 32, Math.PI), red); arc.position.y = leg + 0.010; hs.add(arc);
+    for (const sx of [-1, 1]) {
+      const a = new THREE.Mesh(new THREE.CylinderGeometry(tube, tube, leg - 0.010, 14), red); a.position.set(sx * mr, 0.020 + (leg - 0.010) / 2, 0); hs.add(a);
+      const t = new THREE.Mesh(new THREE.CylinderGeometry(tube, tube, 0.020, 14), steel); t.position.set(sx * mr, 0.010, 0); hs.add(t);
+    }
+    const ink = new THREE.MeshBasicMaterial({ color: lin(0.03, 0.03, 0.05), side: THREE.BackSide });
+    for (const m of [...hs.children]) { m.castShadow = m.receiveShadow = true; const h = new THREE.Mesh(m.geometry, ink); h.scale.setScalar(1.12); m.add(h); }
+    g.userData.magnet = hs;
+  }
   // magnet pulse: two red rings round the emblem that swell and glow; set({ pulse }) 0..1
   const ex = -w / 2 + 0.06, ez = d / 2 - 0.05, rings = [0.034, 0.050].map((r, i) => {
     const mat = new THREE.MeshBasicMaterial({ color: lin(1.0, 0.12, 0.08), transparent: true, opacity: 0, depthWrite: false });
@@ -155,7 +168,8 @@ function dialTex() {
 }
 export function makeDyePack(stage) {
   const { x: PX, y: PY, z: PZ } = PACK_SIZE, g = new THREE.Group();
-  mesh(g, new THREE.BoxGeometry(PX, PY, PZ), std([0.05, 0.05, 0.06], 0.45), 0, PY / 2, 0);
+  // a red dye canister body (it reads as "dye"), the sleepy face on a dark panel on its lid
+  mesh(g, new THREE.BoxGeometry(PX, PY, PZ), std([0.62, 0.05, 0.06], 0.45), 0, PY / 2, 0);
   const faces = [packFace(false), packFace(true)];
   const face = decal(g, PX * 0.66, PZ * 0.86, faces[0], -PX * 0.15, PY + 0.0006, 0);
   // LED on the right end of the lid

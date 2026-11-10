@@ -126,7 +126,8 @@ export const ACT = {
     const hand = p.hand || 'L', s = SIDE[hand], t0 = p.at, r = p.reach ?? 8, tg = t0 + r, up = Math.max(12, p.dur ?? 12);
     const to = p.to || [s * 0.26, 2.12, 0.74];
     st.hold[hand] = p.prop; st.handL_to = to;
-    const grab = p.grab || [0.16, 1.42, 0.44];                     // figure-local: the mouth of a bag hanging from the other hand
+    // figure-local: the mouth of a bag hanging from the other hand at rest (the rest hand + the bag's rim grip)
+    const grab = p.grab || [-s * 0.50, 1.36, 0.30];
     const elbow = [s * 0.8, -0.6, 0.1];                             // the elbow stays out and down as the hand crosses the body
     const owners = [{ chan: 'hand' + hand, start: t0, fade: r, fn: f => {
       if (f < tg) return { l: grab, bend: -0.2 * s, elbow };
@@ -253,11 +254,12 @@ export const MAKE = {
     return { obj: g, apply: (v, f, env) => { const p = env.at(o.at); g.position.copy(tB(p)); gr = -p[2] + 0.02; t = tSec(v, f, ctx.fps); g.userData.set(t, { ground: gr }); },
       post: cam => { if (t >= 0) g.userData.set(t, { ground: gr, toward: toCam(g, cam).toArray() }); } };
   },
-  // floating countdown clock: keys show, count, tick
+  // countdown clock: keys show, count, tick. mount: bolted flat to a wall facing the street (-y), with a bracket; else it
+  // floats and turns to the camera
   dial: (stage, o, ctx) => {
-    const g = makeCountdown(stage, o); ctx.group.add(g);
-    return { obj: g, apply: (v, f, env) => { g.position.copy(tB(env.at(o.at))); g.userData.set({ show: v('show', 0), count: v('count', 3), tick: v('tick', 0) }); },
-      post: cam => g.lookAt(tB(cam)) };
+    const g = makeCountdown(stage, { ...o, mount: !!o.mount }); ctx.group.add(g);
+    return { obj: g, apply: (v, f, env) => { g.position.copy(tB(env.at(o.at))); g.userData.set({ show: v('show', 0), count: v('count', o.of ?? 3), tick: v('tick', 0) }); },
+      post: cam => { if (!o.mount) g.lookAt(tB(cam)); } };
   },
   spray: (stage, o, ctx) => {
     const g = makeDyeSpray(stage, o); ctx.group.add(g); const aim = new THREE.Vector3();

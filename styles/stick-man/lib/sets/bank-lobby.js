@@ -8,21 +8,27 @@ export const SUN_CENTER = [0.2, 1.8, 1.0], SUN_HALF = 6.8;     // one fixed shad
 export const ROOM = { X0: -3.6, X1: 5.0, Y0: -8.0, Y1: 7.0, H: 6.2 };
 export const COUNTER = { CX0: 1.3, CX1: 2.0, CY0: -0.5, CH: 0.98 };   // low enough that props on top read from 1.1-1.4 m
 const CT = COUNTER.CH + 0.07;                                    // counter top surface
-export const STACK = [1.72, 0.62, CT + 0.016];                   // the twenties, sitting on the metal plate
-export const TELLER_SPOT = [2.18, 1.00, 0.33];                   // on the raised floor behind the counter
+export const STACK = [1.90, 0.70, CT + 0.016];                   // the twenties, sitting on the metal plate
+export const TELLER_SPOT = [2.34, 1.00, 0.33];                   // on the raised floor behind the counter
 // the entrance: double doors in the left wall between the first two windows, daylight and street outside
 export const DOOR = { x: ROOM.X0, y0: 0.50, y1: 2.04, h: 2.75 };
 // named marks (where a figure's root stands) and places (props, hand targets); Blender metres
 export const MARKS = {
-  customer: [1.04, 1.30, 0], teller: TELLER_SPOT, bench: [-1.20, 4.20, 0],
+  customer: [0.92, 1.10, 0], teller: TELLER_SPOT, bench: [-1.20, 4.20, 0],
   door: [DOOR.x - 0.2, (DOOR.y0 + DOOR.y1) / 2, 0], street: [-6.2, (DOOR.y0 + DOOR.y1) / 2, 0],
 };
 export const PLACES = {
-  plate: [1.72, 0.62, CT], stack: STACK, b1: [1.84, 1.10, CT], b2: [1.86, 1.30, CT],
-  note: [1.28, 0.95, CT], note_end: [1.58, 0.92, CT], bag_on_counter: [1.58, 1.18, CT + 0.03],
-  bag_grip: [1.47, 1.20, CT + 0.40],                            // Kai's hand on the near rim of the open bag
+  plate: [1.90, 0.70, CT], stack: STACK, b1: [1.84, 1.10, CT], b2: [1.86, 1.30, CT],
+  note: [1.22, 0.94, CT], note_end: [1.33, 0.90, CT], bag_on_counter: [1.53, 1.30, CT + 0.03],
+  bag_grip: [1.436, 1.246, CT + 0.34],                           // Kai's hand on the near rim of the open bag (centre 1.53, 1.30; he faces yaw 30)
   sensor: [DOOR.x + 0.06, DOOR.y1 + 0.06, DOOR.h - 0.16],          // on the lobby-side casing, top of the north jamb
 };
+// solid set pieces a body must never be inside (Blender boxes, metres; checked by __dbg collide): the counter (top slab
+// included) and the raised floor behind it (a foot standing on it is on its top face, so it gets 3 cm of grace)
+export const COLLIDE = [
+  { name: 'counter', lo: [COUNTER.CX0 - 0.10, COUNTER.CY0 - 0.10, 0], hi: [COUNTER.CX1 + 0.08, ROOM.Y1, COUNTER.CH + 0.07] },
+  { name: 'raised-floor', lo: [COUNTER.CX1, COUNTER.CY0, 0], hi: [ROOM.X1, ROOM.Y1, TELLER_SPOT[2]], grace: 0.03 },
+];
 export const BENCH_YAW = -100;                                    // the bench (and its sleeper) faces the door
 export const CAMERA_SIDE = [0, -1];                              // default side two-shots are seen from
 // where a camera may go (x, y boxes): the lobby, kept 1.6 m off the entrance wall so the doorway reads at an angle
@@ -243,6 +249,7 @@ function cash(M, thick = 0.045) {
   const a = new THREE.Mesh(new THREE.BoxGeometry(0.30, thick, 0.14), M.cash); a.position.y = thick / 2;
   const b = new THREE.Mesh(new THREE.BoxGeometry(0.085, thick + 0.004, 0.146), M.band); b.position.y = thick / 2;
   for (const m of [a, b]) { m.castShadow = m.receiveShadow = true; g.add(m); }
+  g.userData.grip = [0, thick + 0.012, 0];                         // the hand dot sits on the top face, half sunk: held
   return g;
 }
 // the money bag: origin at the centre of its open mouth, body hanging down -Y (three), the $ facing +Z
@@ -265,8 +272,11 @@ function moneyBag(M) {
   rope.rotation.x = Math.PI / 2; rope.position.y = -0.05;
   for (const m of [sack, inner, rope]) { m.castShadow = m.receiveShadow = true; g.add(m); }
   g.userData.H = H; g.userData.sack = sack;
+  g.userData.grip = BAG_GRIP;
   return g;
 }
+// where a hand holds the bag (bag-local, three axes): on the rope rim, on the side toward the holder's body
+export const BAG_GRIP = { R: [-0.108, -0.05, 0], L: [0.108, -0.05, 0] };
 function buildProps(stage, M, box, cyl, sphere) {
   const { scene, prop } = stage;
   const out = {};

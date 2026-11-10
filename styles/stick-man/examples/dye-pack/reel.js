@@ -6,7 +6,7 @@ export default {
   set: 'bank-lobby',
   lines: ['l01', 'l02', 'l03', 'l04'],
   cast: {
-    kai: { spec: 'KAI', at: 'customer', yaw: 20, expr: 'smug', focus: 'teller' },
+    kai: { spec: 'KAI', at: 'customer', yaw: 30, expr: 'smug', focus: 'teller' },
     teller: { spec: 'TELLER', at: 'teller', yaw: -35, expr: 'calm', focus: 'kai' },
     guard: { spec: 'GUARD', at: 'bench', yaw: -100, posture: 'sit', expr: 'sleep', watch: false, focus: 'camera', head_tilt: 14 },
   },
@@ -19,7 +19,7 @@ export default {
     { line: 'l01', on: 'bank', who: 'kai', expr: 'sly' },
     { line: 'l01', on: 'bank', who: 'teller', look: 'note' },
     { line: 'l01', on: 'teller', who: 'teller', expr: 'happy', do: 'gesture', kind: 'tilt', deg: -7, hold: 30 },
-    { line: 'l01', on: 'helps', offset: -8, who: 'teller', do: 'drop_in', prop: 'b1', hand: 'L', look: 'kai' },
+    { line: 'l01', on: 'helps', offset: -8, who: 'teller', do: 'drop_in', prop: 'b1', hand: 'L', look: 'kai', carry: 19 },
     { line: 'l01', on: 'helps', who: 'kai', expr: 'grin' },
     { line: 'l01', on: 'pack', offset: -6, who: 'teller', do: 'drop_in', prop: 'b2', hand: 'L' },
     { line: 'l01', on: 'bag', who: 'kai', do: 'gesture', kind: 'nod' },
@@ -27,7 +27,7 @@ export default {
     { line: 'l02', on: 'scream', who: 'teller', expr: 'calm', look: 'camera' },
     { line: 'l02', on: 'scream', who: 'kai', expr: 'smug' },
     { line: 'l02', on: 'smiles', who: 'teller', expr: 'closed', do: 'gesture', kind: 'tilt', deg: 10, hold: 22 },
-    { line: 'l02', on: 'lifts', who: 'teller', expr: 'happy', do: 'lift', prop: 'stack', hand: 'L', up: 0.26 },
+    { line: 'l02', on: 'lifts', who: 'teller', expr: 'happy', do: 'lift', prop: 'stack', hand: 'L', up: 0.13 },
     { line: 'l02', on: 'twenties', who: 'teller', expr: 'closed', do: 'gesture', kind: 'nod' },
     { line: 'l02', on: 'plate', who: 'plate', do: 'glint' },
     { line: 'l02', on: 'plate', who: 'teller', expr: 'happy', look: 'kai' },
@@ -38,12 +38,13 @@ export default {
     { line: 'l03', on: 'have', offset: -6, who: 'teller', do: 'turn_to', yaw: -80 },
     { line: 'l03', on: 'lovely', who: 'teller', do: 'gesture', kind: 'finger_wave', hand: 'R' },
     { line: 'l03', on: 'day', who: 'teller', expr: 'closed' },
-    { line: 'l03', on: 'day', who: 'kai', do: 'hold', prop: 'bag', hand: 'R', to: { l: [0.50, 1.45, 0.30] }, off: [0, -0.02, 0], fade: 12 },
+    // he lifts the bag clear of the counter top by its rim, then lets it hang at his side once he has turned away
+    { line: 'l03', on: 'day', who: 'kai', do: 'hold', prop: 'bag', hand: 'R', to: { l: [0.40, 1.45, 0.06] }, fade: 12 },
     // l04 Easiest money he's ever made. He strolls out the door.
     { line: 'l04', on: 'easiest', who: 'kai', expr: 'grin', look: 'camera' },
-    // he strolls off on "Easiest": the bag in his right hand, slung over the shoulder a step later
-    { line: 'l04', on: 'easiest', who: 'kai', do: 'walk_to', to: 'street', style: 'stroll', carry: 'R', cheat: 35 },
-    { line: 'l04', on: 'money', who: 'kai', do: 'sling', prop: 'bag', hand: 'R' },
+    // he strolls off on "Easiest": the bag in his right hand, hanging from the rim at his side
+    { line: 'l04', on: 'easiest', who: 'kai', do: 'walk_to', to: 'street', style: 'stroll', carry: 'R', cheat: 35, gait: { stanceFlex: [[0, 34], [0.1, 34], [0.45, 12]] } },
+    { line: 'l04', on: 'easiest', offset: 22, who: 'kai', do: 'hold', prop: 'bag', hand: 'R', fade: 16 },
     { line: 'l04', on: 'easiest', who: 'teller', expr: 'happy' },
     // the wave waits for the finger-wave hand to come down first (on "Easiest" its rest move would cut the wave short)
     { line: 'l04', on: 'money', who: 'teller', do: 'gesture', kind: 'wave', hand: 'R' },
@@ -51,9 +52,9 @@ export default {
   ],
   shots: [
     { f: 0, shot: 'two', of: ['kai', 'teller'], angle: -26 },
-    { line: 'l02', on: 'she', shot: 'cu', of: ['teller'], with: ['plate', 'stack'], angle: 30, head: 0.21, kx: 0.60 },
+    { line: 'l02', on: 'she', shot: 'cu', of: ['teller'], angle: 8, head: 0.27, push: 0.0010, live: 0.35, kx: 0.52 },
     { line: 'l02', on: 'drops', offset: -6, shot: 'two', of: ['kai', 'teller'], angle: -14 },
-    { line: 'l03', on: 'have', offset: -4, shot: 'cu', of: ['teller'], angle: 28, head: 0.16, lens: 40 },
+    { line: 'l03', on: 'have', offset: -4, shot: 'cu', of: ['teller'], angle: 50, head: 0.20, lens: 40, cut: true, live: 0.35 },
     // the walk out: the camera keeps only part of his travel at first, so he crosses the frame and the floor slides by
     { line: 'l03', on: 'lovely', shot: 'ms', of: ['kai'], angle: 84, heading: -90, glide: 40, size: 0.42, push: 0.0012, kx: 0.62, track: { s: 0.40, delay: 44, ramp: 50 } },
   ],

@@ -21,6 +21,18 @@ export const PLACES = {
   lamp: [-6.2, -3.55, 0], hydrant: [-4.4, -3.5, 0], mailbox: [-2.9, -3.45, 0], tree: [7.9, -2.9, 0],
 };
 export const CAMERA_SIDE = [0, -1];
+// solid set pieces a body must never be inside (Blender boxes, metres): facade either side of the door, column bases and
+// shafts, the open door leaves, street furniture. Checked by __dbg (collide) for every shown actor.
+export const COLLIDE = [
+  { name: 'facade-left', lo: [FACADE.X0, -0.08, 0], hi: [DOOR.x0, FACADE.T, FACADE.H] },
+  { name: 'facade-right', lo: [DOOR.x1, -0.08, 0], hi: [FACADE.X1, FACADE.T, FACADE.H] },
+  ...[-1.70, 1.70].flatMap((cx, i) => [{ name: `column-base-${i}`, lo: [cx - 0.38, -0.86, 0], hi: [cx + 0.38, -0.10, 0.42] },
+    { name: `column-${i}`, lo: [cx - 0.25, -0.73, 0.42], hi: [cx + 0.25, -0.23, 4.98] }]),
+  ...[DOOR.x0 + 0.03, DOOR.x1 - 0.03].map((x, i) => ({ name: `door-leaf-${i}`, lo: [x - 0.03, -(DOOR.x1 - DOOR.x0) / 2, 0], hi: [x + 0.03, -0.02, DOOR.h] })),
+  { name: 'mailbox', lo: [PLACES.mailbox[0] - 0.23, PLACES.mailbox[1] - 0.25, 0], hi: [PLACES.mailbox[0] + 0.23, PLACES.mailbox[1] + 0.25, 1.2] },
+  { name: 'hydrant', lo: [PLACES.hydrant[0] - 0.15, PLACES.hydrant[1] - 0.15, 0], hi: [PLACES.hydrant[0] + 0.15, PLACES.hydrant[1] + 0.15, 0.8] },
+  { name: 'planter', lo: [PLACES.tree[0] - 0.55, PLACES.tree[1] - 0.55, 0], hi: [PLACES.tree[0] + 0.55, PLACES.tree[1] + 0.55, 0.5] },
+];
 // the wide shot looks down the pavement toward -x (road on the left, buildings on the right)
 export const CAMERA_WIDE = { cam: [7.2, -3.3, 1.75], tgt: [-0.6, -2.5, 1.25], lens: 24 };
 // where a camera may go (x, y boxes): over the road and the near pavement, never inside a building
@@ -371,5 +383,6 @@ export function moneyBag() {
   rope.rotation.x = Math.PI / 2; rope.position.y = -0.05;
   for (const m of [sack, inner, rope]) { m.castShadow = m.receiveShadow = true; g.add(m); }
   g.userData.H = H; g.userData.sack = sack;
+  g.userData.grip = { R: [-0.108, -0.05, 0], L: [0.108, -0.05, 0] };   // the rope rim, toward the holder (as in the lobby)
   return g;
 }

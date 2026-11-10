@@ -17,6 +17,7 @@ const SPECS = { KAI, TELLER, GUARD, MABEL, OTIS, JUNE, OFFICER };
 const SETS = { 'bank-lobby': () => import('../lib/sets/bank-lobby.js'), street: () => import('../lib/sets/street.js'),
   cutaway: () => import('../lib/sets/cutaway.js') };
 const KEYV = new Set(['set', 'pulse', 'shake', 'fire', 'flash', 'sound']);
+const HAND_R = 0.040 * W;                                        // the hand dot's radius (cast.js)
 const THICK = { b1: 0.045, b2: 0.045, stack: 0.07, note: 0.003 };
 const toB = v => [v.x, -v.z, v.y];
 const norm = w => w.toLowerCase().replace(/[^a-z0-9']/g, '');
@@ -159,7 +160,9 @@ async function buildAct(R, X) {
     const a = byName[n];
     if (a) {
       const b = bodyAt(a, f), h = [b.pos[0], b.pos[1], b.pos[2] + headZ(a)];
-      return { head: h, top: [h[0], h[1], h[2] + 0.36], sole: b.pos, yaw: b.yaw, center: h };
+      // live = where the posed head really is this frame (lean, tilts, idle): a shot with opt.live keys on it
+      const live = F.f === f && F.posed.has(n) ? toB(a.S.parts.head.getWorldPosition(new THREE.Vector3())) : null;
+      return { head: h, top: [h[0], h[1], h[2] + 0.36], sole: b.pos, yaw: b.yaw, center: h, live };
     }
     const p = live ? live(n) : (rest[n]?.pos || point(n));
     return { center: p, head: p };
@@ -172,6 +175,11 @@ async function buildAct(R, X) {
     if (F.cache.has(n)) return F.cache.get(n);
     const o = props[n], L = segs[n]; let i = L.length - 1; while (i > 0 && L[i].start > F.f) i--;
     const s = L[i], f = F.f; let pos, rot = s.rot ?? rest[n]?.rot ?? 0, vis = true, tilt = [0, 0], scale = 1;
+    if (n === 'bag' || impacts[n]) {                                // swells a little with every bundle, pops on impact
+      const imp = impacts[n] || [], k = imp.filter(e => e.f <= f).length;
+      scale = 1 + 0.035 * k + 0.035 * springs(imp, f);
+    }
+    if (KT.has(n, 'swell')) scale *= 1 + KT.at(n, 'swell', f, 0);      // keyed swell (a bag about to burst)
     if (s.mode === 'rest') pos = s.pos;
     else if (s.mode === 'fn') { const r = s.fn(f, env); pos = r.pos; if (r.rot != null) rot = r.rot; if (r.spin) tilt = [r.spin, r.spin * 0.6]; rot = r.rot ?? (L[i - 1]?.rot ?? rot); }
     else if (s.mode === 'bag') { pos = propWorld(s.bag); vis = false; }
@@ -181,19 +189,21 @@ async function buildAct(R, X) {
       const u = s.blend ? smoother((f - s.start) / s.blend) : 1, off = s.offFrom ? lerp3(s.offFrom, s.off, u) : s.off;
       const Rv = [Math.cos(body.yaw * Math.PI / 180), Math.sin(body.yaw * Math.PI / 180)], Fv = [Rv[1], -Rv[0]];
       const ow = s.offW || [Rv[0] * off[0] + Fv[0] * off[2], Rv[1] * off[0] + Fv[1] * off[2], off[1]];
-      pos = add3(hw, ow);
       if (!s.keepRot) rot = (body.yaw + (s.yaw || 0)) * Math.PI / 180;
       tilt = s.tilt || [0, 0];
-      // a slung bag swings and bounces on the back two frames behind the steps
-      if (s.swing && body.walking != null) {
+      // a carried prop swings a little with the steps, about the hand (the grip stays in the hand)
+      if ((s.swing || o.userData.grip) && body.walking != null) {
         const ph = 2 * Math.PI * (body.walking - 1 / (body.walkT || 10));
-        tilt = [tilt[0] + 0.16 * Math.sin(ph), tilt[1] + 0.10 * Math.cos(ph)];
-        pos = [pos[0], pos[1], pos[2] + 0.024 * Math.cos(2 * ph) - 0.008];
+        tilt = [tilt[0] + 0.10 * Math.sin(ph), tilt[1] + 0.06 * Math.cos(ph)];
       }
-    }
-    if (n === 'bag' || impacts[n]) {                                // swells a little with every bundle, pops on impact
-      const imp = impacts[n] || [], k = imp.filter(e => e.f <= f).length;
-      scale = 1 + 0.035 * k + 0.035 * springs(imp, f);
+      // the engine rule for held props: a prop with a grip socket (userData.grip, prop-local, per hand or one for both)
+      // is parented to the hand: its grip point sits on the hand dot's centre whatever the offset asked for
+      const g = o.userData.grip, gl = g && (Array.isArray(g) ? g : g[s.side]);
+      if (gl && !s.free) {
+        o.rotation.set(tilt[0], rot, tilt[1], 'YXZ');
+        const gv = new THREE.Vector3(...gl).multiplyScalar(scale).applyEuler(o.rotation);
+        pos = [hw[0] - gv.x, hw[1] + gv.z, hw[2] - gv.y];
+      } else pos = add3(hw, ow);
     }
     o.position.set(pos[0], pos[2], -pos[1]); o.rotation.set(tilt[0], rot, tilt[1], 'YXZ'); o.scale.setScalar(scale); o.visible = vis;
     o.updateMatrixWorld(true);
@@ -286,7 +296,8 @@ async function buildAct(R, X) {
     if (Array.isArray(spec)) return spec;
     if (typeof spec === 'string') return livePos(spec);
     if (spec.head) { const a = byName[spec.head], h = toB(a.S.parts.head.getWorldPosition(hv)), y = F.bodies[spec.head].yaw * Math.PI / 180;
-      return [h[0] + Math.sin(y) * (spec.fwd || 0), h[1] - Math.cos(y) * (spec.fwd || 0), h[2] + (spec.up || 0)]; }
+      const fw = spec.fwd || 0, sd = spec.side || 0;                // fwd: where he faces, side: toward his right
+      return [h[0] + Math.sin(y) * fw + Math.cos(y) * sd, h[1] - Math.cos(y) * fw + Math.sin(y) * sd, h[2] + (spec.up || 0)]; }
     return add3(livePos(spec.prop), spec.off || [0, 0, 0]);
   } };
   const camera = createCamera({ aspect: width / height, side: SET.CAMERA_SIDE, bounds: R.cameraRoom || SET.CAMERA_ROOM, zRange: R.zRange, actors: actors.map(a => a.name) });
@@ -345,6 +356,42 @@ async function buildAct(R, X) {
         headW: toB(c).map(x => +x.toFixed(4)), figH: +((sole - ys[0]) / height).toFixed(3),
         inFrame: a.S.root.visible && vz < 1 && box[2] > 0 && box[0] < width && box[3] > 0 && box[1] < height };
     }
+    // held props: the gap between the hand dot and the prop's grip socket (or its bounding box), px at this frame size
+    const pxPerM = p => { const d = p.distanceTo(stage.camera.position); return height / 2 / (Math.tan(stage.camera.fov * Math.PI / 360) * d); };
+    out.held = [];
+    for (const n of Object.keys(segs)) {
+      const L = segs[n]; let i = L.length - 1; while (i > 0 && L[i].start > f) i--; const s = L[i];
+      if (s.mode !== 'hand' || !props[n].visible) continue;
+      const a = byName[s.actor]; if (!a?.S.root.visible) continue;
+      const hp = a.S.parts.hands[s.side].getWorldPosition(new THREE.Vector3()), g = props[n].userData.grip, gl = g && (Array.isArray(g) ? g : g[s.side]);
+      let d;
+      if (gl) d = props[n].localToWorld(new THREE.Vector3(...gl)).distanceTo(hp);
+      else { const bb = new THREE.Box3().setFromObject(props[n]); d = bb.clampPoint(hp, new THREE.Vector3()).distanceTo(hp); }
+      v.copy(hp).project(stage.camera);
+      const on = v.z < 1 && Math.abs(v.x) < 1 && Math.abs(v.y) < 1;
+      out.held.push({ actor: s.actor, prop: n, side: s.side, onScreen: on, gapPx: +(Math.max(0, d - HAND_R) * pxPerM(hp)).toFixed(2) });
+    }
+    // bodies inside set geometry: the torso (a box between hips and shoulders) and the knees and ankles of every shown
+    // actor against the set's collision boxes (1 cm grace), and torso against torso
+    const torsoPts = a => { const r = a.S.rig, wq = q => toB(q.clone().multiplyScalar(W).applyMatrix4(a.S.root.matrixWorld));
+      const hip = wq(r.L.hip.clone().add(r.R.hip).multiplyScalar(0.5)), sh = wq(r.L.shoulder.clone().add(r.R.shoulder).multiplyScalar(0.5));
+      const y = F.bodies[a.name].yaw * Math.PI / 180, Rv2 = [Math.cos(y), Math.sin(y)], Fv2 = [Math.sin(y), -Math.cos(y)], pts = [];
+      for (const u of [0, 0.5, 1]) for (const sx of [-1, 0, 1]) for (const sy of [-1, 0, 1]) {
+        const c = lerp3(hip, sh, u); pts.push([c[0] + Rv2[0] * 0.15 * sx + Fv2[0] * 0.11 * sy, c[1] + Rv2[1] * 0.15 * sx + Fv2[1] * 0.11 * sy, c[2] + (u - 0.5) * 0.06]); }
+      return pts; };
+    const inBox = (p, b, e = 0.01) => p[0] > b.lo[0] + e && p[0] < b.hi[0] - e && p[1] > b.lo[1] + e && p[1] < b.hi[1] - e && p[2] > b.lo[2] + e && p[2] < b.hi[2] - e;
+    out.collide = [];
+    const shown = actors.filter(a => a.S.root.visible), T = {};
+    for (const a of shown) {
+      T[a.name] = torsoPts(a);
+      const lim = a.S.rigWorld(), pts = [...T[a.name].map(p => ['torso', p]), ...['L', 'R'].flatMap(s => [['knee' + s, lim[s].knee], ['ankle' + s, lim[s].ankle]])];
+      for (const b of SET.COLLIDE || []) { const hit = pts.find(([, p]) => inBox(p, b, b.grace ?? 0.01)); if (hit) out.collide.push(`${a.name}.${hit[0]} in ${b.name}`); }
+    }
+    for (let i = 0; i < shown.length; i++) for (let j = i + 1; j < shown.length; j++) {
+      const A = shown[i], Bb = shown[j], b = T[Bb.name], lo = [0, 1, 2].map(k => Math.min(...b.map(p => p[k]))), hi = [0, 1, 2].map(k => Math.max(...b.map(p => p[k])));
+      if (T[A.name].some(p => inBox(p, { lo, hi }, 0.01))) out.collide.push(`${A.name}.torso in ${Bb.name}.torso`);
+    }
+    out.shotI = cam.shotIndex;
     return out;
   }
 
@@ -353,7 +400,7 @@ async function buildAct(R, X) {
   // foot slide = how far a planted foot moves in the world between frames, seen through this frame's camera
   const feetW = () => Object.fromEntries(actors.map(a => [a.name, Object.fromEntries(['L', 'R'].map(s => [s, toB(a.S.parts.ankles[s].getWorldPosition(new THREE.Vector3()))]))]));
   const motion = f => {
-    update(Math.max(F0, f - 1)); const c0 = { ...cam }, ft0 = feetW();
+    update(Math.max(F0, f - 1)); const c0 = { ...cam }, ft0 = feetW(), i0 = cam.shotIndex;
     update(f); const ft1 = feetW();
     const px = (c, p) => { const q = camera.project(c, p); return [q[0] * 720 + c.offset[0] * 720 / 1080, q[1] * 1280 + c.offset[1] * 720 / 1080]; };
     const d = Math.hypot(...cam.pos.map((x, i) => x - cam.aim[i])), fw = cam.aim.map((x, i) => (x - cam.pos[i]) / d);
@@ -368,7 +415,9 @@ async function buildAct(R, X) {
     for (const n in ft1) { feet[n] = {}; for (const s of ['L', 'R']) {
       const p0 = ft0[n][s], p1 = ft1[n][s], q0 = px(cam, p0), q1 = px(cam, p1);
       feet[n][s] = { planted: p0[2] < 0.014 && p1[2] < 0.014, px: +Math.hypot(q1[0] - q0[0], q1[1] - q0[1]).toFixed(3) }; } }
-    return { cam: f === F0 ? 0 : +camPx.toFixed(3), camPeak: f === F0 ? 0 : +camPeak.toFixed(3), feet };
+    // a shot asked as a cut (glide 0) is an edit, not camera motion
+    const shotCut = cam.shotIndex !== i0 && shots[cam.shotIndex].glide === 0;
+    return { cam: f === F0 ? 0 : +camPx.toFixed(3), camPeak: f === F0 ? 0 : +camPeak.toFixed(3), feet, shotCut };
   };
   return { name: R.name || R.set, R, group, background, update, dbg, motion, cues, actors, frameOf, flash: f => KT.at('screen', 'flash', f, 0) || 0 };
 }
@@ -407,7 +456,7 @@ export async function boot({ film, width, height }) {
     show(s.cur); s.cur.update(f); ms += stage.render({ prev: s.prev ? 1 - s.u : 0, flash: s.cur.flash(f) });
     cap.draw(f); return ms;
   }
-  window.__motion = f => { const s = at(f), p = at(Math.max(F0, f - 1)); show(s.cur); return { ...s.cur.motion(f), cut: !!s.prev || p.cur !== s.cur || !!p.prev || s.cur.flash(f) > 0.3 }; };   // dissolves and flash cuts
+  window.__motion = f => { const s = at(f), p = at(Math.max(F0, f - 1)); show(s.cur); const m = s.cur.motion(f); return { ...m, cut: !!s.prev || p.cur !== s.cur || !!p.prev || s.cur.flash(f) > 0.3 || m.shotCut }; };   // dissolves, act cuts, flash cuts, shot cuts
   window.__dbg = f => {
     const s = at(f); show(s.cur); const out = s.cur.dbg(f); out.act = s.cur.name; out.mix = s.prev ? +s.u.toFixed(2) : null;
     for (const A of acts) for (const a of A.actors) if (!out.actors[a.name]) out.actors[a.name] = { blink: 0, head: [0, 0, 0, 0], inFrame: false, verb: [] };

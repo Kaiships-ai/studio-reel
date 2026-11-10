@@ -54,6 +54,8 @@ export const SIT = { bob: -0.56, pitch: -7, footL: [-0.26, 0.022, 0.72], footR: 
   handL: [-0.27, 0.90, 0.48], handR: [0.29, 0.92, 0.50] };
 
 const SIDE = { L: -1, R: 1 };
+// a hand-held prop's grip socket sits this far above its top face (the hand dot half sunk in it: held, no gap)
+export const GRIP_UP = 0.012;
 const restOwner = (chan, start, fade = 9) => ({ chan, start, fade, fn: () => ({ rest: true }) });
 
 // ---------------------------------------------------------------- the verbs
@@ -89,7 +91,7 @@ export const VERBS = {
 
   lift(p, st, C) {
     const hand = p.hand || 'R', r = 7, tl = p.dur ?? 9, tg = p.at + r, rest = C.rest(p.prop), th = C.thick(p.prop);
-    const top = [rest[0], rest[1], rest[2] + th + 0.03];
+    const top = [rest[0], rest[1], rest[2] + th + GRIP_UP];          // the hand on the grip socket (top face)
     const up = p.to ? C.point(p.to) : [top[0] + (p.dx || 0), top[1] + (p.dy || 0), top[2] + (p.up ?? 0.22)];
     st.hold[hand] = p.prop; st.handW[hand] = up;
     const owners = [{ chan: 'hand' + hand, start: p.at, fade: r, fn: f => {
@@ -98,7 +100,7 @@ export const VERBS = {
       const t = f - tg, press = t < 3 ? -0.012 * Math.sin(Math.PI * t / 3) : 0, x = (t - 2) / tl, u = handEase(x), a = Math.sin(Math.PI * clamp(x, 0, 1));
       return { w: [lerp(top[0], up[0], u) - 0.03 * a, lerp(top[1], up[1], u), lerp(top[2], up[2], Math.max(0, u)) + 0.05 * a + press] };
     } }];
-    const segs = [{ prop: p.prop, start: tg, mode: 'hand', actor: st.name, side: hand, off: [0, -(0.03 + th), 0], keepRot: true }];
+    const segs = [{ prop: p.prop, start: tg, mode: 'hand', actor: st.name, side: hand, off: [0, -(GRIP_UP + th), 0], keepRot: true }];
     return { end: tg + tl, owners, segs, cues: [{ f: tg, name: 'cash_lift', strength: 0.4 }],
       active: [{ prop: p.prop, from: p.at, to: tg + tl + 4, by: st.name }] };
   },
@@ -109,7 +111,7 @@ export const VERBS = {
     const r = held ? 0 : 9, carry = p.carry ?? 16, fall = 5;
     const tg = p.at + r, tr = tg + carry, ti = tr + fall;
     const rest = held ? null : C.rest(p.prop);
-    const grab = held ? st.handW[hand] : [rest[0], rest[1], rest[2] + th + 0.03];
+    const grab = held ? st.handW[hand] : [rest[0], rest[1], rest[2] + th + GRIP_UP];
     const above = 0.13, owners = [
       { chan: 'hand' + hand, start: p.at, fade: held ? 3 : r, fn: (f, env) => {
         if (f < tg) return { w: grab };
@@ -122,10 +124,10 @@ export const VERBS = {
       restOwner('hand' + hand, tr + 2, 10),
     ];
     const segs = [
-      { prop: p.prop, start: tg, mode: 'hand', actor: st.name, side: hand, off: [0, -(0.03 + th), 0], keepRot: true },
+      { prop: p.prop, start: tg, mode: 'hand', actor: st.name, side: hand, off: [0, -(GRIP_UP + th), 0], keepRot: true },
       { prop: p.prop, start: tr, mode: 'fn', fn: (f, env) => {
         const u = clamp((f - tr) / fall, 0, 1), m = env.mouth(bag);
-        return { pos: [m[0], m[1], m[2] + above - 0.03 - th - 0.24 * u * u], spin: 0.6 * u }; } },
+        return { pos: [m[0], m[1], m[2] + above - GRIP_UP - th - 0.24 * u * u], spin: 0.6 * u }; } },
       { prop: p.prop, start: ti, mode: 'bag', bag },
     ];
     st.hold[hand] = null; st.handW[hand] = null;
