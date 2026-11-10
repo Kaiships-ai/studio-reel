@@ -7,6 +7,7 @@ import { STAND, W, clamp, smooth, smoother, lerp, lerp3, add3, fwdB, rightB, toL
 import { makePowderBurst, makeFlyingBills, makeDyeSpray, makeRadioRings, makeBagGlow, makeArm, makeBill, flashAt, makeStarBurst, makeDroplets, makeCountdown } from '../lib/props/fx.js';
 import { makeDyePack, makeThermometer, snoreAt } from '../lib/props/dyepack.js';
 import { makeRays, makeFlow, makeShimmer, makeCutBox, makeCallout, makeBars, makeSplit, makeStamp } from '../lib/props/explain.js';
+import { POSE_VERBS } from './poses.js';
 
 const SIDE = { L: -1, R: 1 };
 const rest = (chan, start, fade = 9) => ({ chan, start, fade, fn: () => ({ rest: true }) });
@@ -158,6 +159,9 @@ export const ACT = {
     return { end: t0 + fall, owners: [rest('hand' + hand, t0 + 2, 12)], segs, cues: [{ f: t0 + 4, name: 'flutter', strength: 0.3 }],
       active: [{ prop: p.prop, from: t0, to: t0 + fall, by: st.name }] };
   },
+
+  // whole-body acting: key poses with anticipation, overlap and a moving hold (engine/poses.js, VERBS.md "Body acting")
+  ...POSE_VERBS,
 };
 
 // ---------------------------------------------------------------- prop motion (segments)

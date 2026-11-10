@@ -15,7 +15,7 @@ Goal: a fresh agent turns `$ARGUMENTS` into `films/<slug>/renders/<slug>_vN.mp4`
 | 2 | voice | `python styles/stick-man/tools/voice.py films/<slug> --samples Achird`, then `--take Achird` → `vo/vo.wav`; takes vary ±2 s: re-take up to 3 times, keep the shortest with no ❌ | |
 | | **gate: Kai approves the voice** | | |
 | 3 | align | `python styles/stick-man/tools/align.py films/<slug>` → `vo/words.json`, `vo/voice-qa.md` (❌ = re-take) | |
-| 4 | storyboard | `storyboard.json`: per line what the viewer must SEE, shot, set, props / fx, `still` word; ≥ 3 sets or cutaways, ≤ 2 lines alike, ≥ 40 % with props / fx | REEL_DATA.md (Storyboard) |
+| 4 | storyboard | `storyboard.json`: per line what the viewer must SEE, shot, set, props / fx, `still` word, and `act`: each character's body action on a word (`{ "kai": ["cup_ear@heard", "arms_wide@miles"] }`, never "talk"); ≥ 3 sets or cutaways, ≤ 2 lines alike, ≥ 40 % with props / fx | REEL_DATA.md (Storyboard), VERBS.md (Body acting, Faces) |
 | 5 | reel data | `reel.js` (+ `reel2.js` for more acts) built to the storyboard; missing set, prop or fx → SETS.md, VERBS.md; check stills with `shot.mjs --frames a,b --out <dir>/f_%d.jpg --w 540 --h 960` (`--help`) | REEL_DATA.md, VERBS.md, SETS.md |
 | 6 | preview | `node styles/stick-man/tools/shot.mjs --film films/<slug> --frames 0-<last> --report films/<slug>/review/pre-stats.txt --fast 1` (top 5 joint pops per actor); fix before the board | GATES.md |
 | 7 | board | once, after preview: `node styles/stick-man/tools/board.mjs films/<slug> --judge 3` → `review/board.jpg`, `review/board-verdict.json` (3 headless Sonnet reviews, 2 of 3 = shown, ~4.5k tokens each) | GATES.md (judged gate) |
@@ -31,6 +31,7 @@ Board before render: a line marked "not shown" is fixed in the storyboard (`stil
 |---|---|
 | `<last>` = the "last frame" line of `vo/voice-qa.md`; a beat names a spoken word (`line` + `on`), `f` only before the first word | picture follows the voice |
 | A line about a process (light, heat, air, money, inside of a thing) gets an explainer fx or a cutaway on its key word | reel 2: talked about airflow, showed none |
+| Director rule: every character acts with the whole body on every line (a pose from VERBS.md "Body acting" on the key word, a strong face from "Faces" 4 f before it); gaps are filled by auto-acting from the words; a line where someone only stands and talks is a FAIL | judge on stick04: poses 3-4/10, "characters mostly stand still, faces near-neutral" |
 | Held props have `userData.grip`; every set has `COLLIDE` boxes; close-ups keep head x 45-55 % | hand-prop gap, collision, framing gates |
 | Fast verbs (fist_pump, point, cough, startle, wave_small) carry a built-in ease; never shorten their fades | joint gate ≤ 25 deg/f |
 | A new set, prop, fx or verb goes in the kit with its rule (SETS.md template, VERBS.md row); never edit the kit for one film's taste | the next reel reuses it |

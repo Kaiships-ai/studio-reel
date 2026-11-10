@@ -51,6 +51,19 @@ if (actors.length) {
   perActor('joint change', joint, 25, ' deg', '<= 25 deg/f');
   const cut = actors.filter(([, , b]) => !/head cut by the top edge: never/.test(b)).map(([, n, b]) => `${n} ${/head cut by the top edge: (.*)/.exec(b)?.[1]}`);
   gate('head never cut', !cut.length, cut.length ? cut.join('; ') : 'never', 'never');
+  // acting gates (GATES.md): every lead acts with the body >= 70 % of its in-frame frames
+  const ba = actors.map(([, n, b]) => { const m = /body acting: ([\d.]+) % of (\d+) lead frames/.exec(b); return m && +m[2] > 0 ? [n, +m[1], +m[2]] : null; }).filter(Boolean);
+  if (!actors.some(([, , b]) => /body acting:/.test(b))) missing('body acting');
+  else if (!ba.length) gate('body acting', false, 'no lead in frame', '>= 70 % per lead');
+  else { const low = ba.filter(x => x[1] < 70), w = ba.reduce((a, b) => (b[1] < a[1] ? b : a));
+    gate('body acting', !low.length, `lowest ${w[1]} % (${w[0]}, ${w[2]} f)${low.length ? '; under: ' + low.map(x => x[0]).join(', ') : ''}; ${ba.map(x => x[0] + ' ' + x[1]).join(', ')}`, '>= 70 % per lead'); }
+}
+const fg = /\(g\) faces: (\d+) distinct expressions on screen over ([\d.]+) s \(([^)]*)\); expression lead before its word: worst (-?\d+|-)(?: f \(([^)]*)\))?/.exec(R);
+if (!fg) { missing('expressions'); missing('expression lead'); }
+else {
+  const need = Math.ceil(5 * Math.max(30, +fg[2]) / 30);
+  gate('expressions', +fg[1] >= need, `${fg[1]} (${fg[3]})`, `>= ${need} per reel (5 / 30 s)`);
+  gate('expression lead', fg[4] === '-' || +fg[4] >= 3, fg[4] === '-' ? 'no worded changes' : `worst ${fg[4]} f before its word (${fg[5]})`, '>= 3 f before the word');
 }
 
 // small figures
@@ -225,7 +238,7 @@ async function story(film) {
   sg('props / fx seen', !unseen.length, unseen.length ? 'not on screen: ' + unseen.join('; ') : 'every listed prop / fx on screen in its line', 'listed = in __dbg seen');
   // 6-8 world and fx (GATES.md "World and fx gates"): dressing density, floating-label budget, every storyboard fx in the world
   const ACTS = [{ ...R1, name: R1.name || 'lobby' }, ...(R2?.acts || [])].map(a => ({ name: a.name || a.set, make: a.make || {} }));
-  const kindOf = (act, n) => ACTS.find(a => a.name === act)?.make?.[n]?.kind;
+  const makeKind = (act, n) => ACTS.find(a => a.name === act)?.make?.[n]?.kind;
   // dressing: registered set pieces the camera sees (dress.js); cu frames, prop-only cutaway tables and dissolves left out
   const DRESS_N = 16;                                       // distinct objects in the reference medium frame (wide: 21)
   const dr = rows.filter(r => r.dress != null && r.mix == null && r.set !== 'cutaway' && !/^cu/.test(r.camera?.shot || ''));
@@ -238,15 +251,25 @@ async function story(film) {
   }
   // floating labels: stamp / callout / bars / split entries seen >= 3 frames anywhere in the reel
   const LABELS = ['stamp', 'callout', 'bars', 'split'], DIAGRAM = ['rings', 'flow', 'rays', 'star', 'shimmer'];   // lib/props/physfx.js
-  const lab = {}; for (const r of rows) for (const n of r.seen || []) if (LABELS.includes(kindOf(r.act, n))) lab[`${r.act}.${n}`] = (lab[`${r.act}.${n}`] || 0) + 1;
+  const lab = {}; for (const r of rows) for (const n of r.seen || []) if (LABELS.includes(makeKind(r.act, n))) lab[`${r.act}.${n}`] = (lab[`${r.act}.${n}`] || 0) + 1;
   const labs = Object.entries(lab).filter(([, c]) => c >= 3).map(([k]) => k), budget = Math.round(3 * dur / 30);
   sg('floating labels', labs.length <= budget, `${labs.length} (${labs.join(', ') || '-'})`, `<= ${budget} (3 per 30 s)`);
   // every storyboard fx is an in-world kind (labels go in the entry's `labels`, never in `fx`)
   const notWorld = [];
   for (const w of win) { const e = E[w.id]; if (!e) continue; const acts = [...new Set(inWin(w).map(r => r.act))];
-    for (const n of e.fx || []) { const k = acts.map(a => kindOf(a, n)).find(Boolean); if (!k || LABELS.includes(k) || DIAGRAM.includes(k)) notWorld.push(`${w.id}.${n}${k ? ' (' + k + ')' : ' (no make entry)'}`); } }
+    for (const n of e.fx || []) { const k = acts.map(a => makeKind(a, n)).find(Boolean); if (!k || LABELS.includes(k) || DIAGRAM.includes(k)) notWorld.push(`${w.id}.${n}${k ? ' (' + k + ')' : ' (no make entry)'}`); } }
   sg('fx in world', !notWorld.length, notWorld.length ? notWorld.join(', ') : 'every storyboard fx is a physical object or event', 'no label / diagram kinds in fx');
-  // 9 judged: the board reviewer's verdict (GATES.md, reviewer prompt)
+  // director rule: every line with a character on screen names its body action(s) in `act` (a known verb, never talk)
+  const known = new Set(fs.readFileSync(path.join(ROOT, 'styles/stick-man/engine/poses.js'), 'utf8').match(/^  (\w+): \{/gm).map(x => x.trim().slice(0, -3))
+    .concat(['walk_to', 'turn_to', 'startle', 'step_back', 'cough', 'point', 'wave_small', 'slump', 'pluck', 'let_fall', 'lift', 'drop_in', 'slide', 'sling', 'gesture', 'stand_up']));
+  const noAct = [];
+  for (const w of win) {
+    const e = E[w.id]; if (!e) continue; const people = inWin(w).filter(r => Object.values(r.actors).some(a => a.inFrame)).length >= 15;   // a character on screen >= 0.5 s of the line
+    const acts = Object.values(e.act || {}).flat().map(x => String(x).split(/[\s@]/)[0]);
+    if (people && (!acts.length || acts.some(v => !known.has(v)))) noAct.push(w.id + (acts.length ? ' (' + acts.filter(v => !known.has(v)).join(' ') + ')' : ''));
+  }
+  sg('acting plan', !noAct.length, noAct.length ? 'no body action named: ' + noAct.join(', ') : 'every line with a character names its body action', 'storyboard act per line');
+  // judged: the board reviewer's verdict (GATES.md, reviewer prompt)
   const vf = F('review/board-verdict.json');
   if (!fs.existsSync(vf)) sg('board shown', false, 'no review/board-verdict.json: run board.mjs, then the reviewer (GATES.md)', '>= 85 % shown');
   else {

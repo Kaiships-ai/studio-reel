@@ -18,6 +18,9 @@ Never change a threshold to pass a reel: fix the reel data or the kit, or show K
 | hand-prop gap | ≤ 2 px at 1080p | hand dot to the held prop's grip socket (report d) | reel 1 review (props floating off hands) |
 | collisions | none | any body point inside a set `COLLIDE` box, or torso in torso (report e) | reel 1 review (man inside a pillar) |
 | close-up head x | 45-55 % | subject head centre x in settled `cu` frames (report f) | reel 1 review |
+| body acting | ≥ 70 % per lead | share of each lead's in-frame frames with a body verb running (`__dbg` `body`: any verb but idle, talk, look_at, place, hold, mark, nod / tilt); a lead = cast `lead: true`, a `talk` beat or a shot subject (report b, `body acting:`) | judge on stick04: "characters mostly stand still" (poses/acting 3-4/10) |
+| expressions | ≥ 5 per 30 s | distinct faces on screen ≥ 3 frames each, open-mouth twins count as their base (report g) | judge on stick04: "faces near-neutral dots" |
+| expression lead | ≥ 3 f before the word | for every in-frame face change made by a beat with a word: word start − change frame (the engine lands it 4 f early, `EXPR_LEAD`) (report g) | the face reads before the sound |
 | mix loudness | -14 ± 0.5 LUFS | ffmpeg ebur128 integrated, on the mp4 audio | house target (`make-reel`, kai-reel-3d) |
 | true peak | ≤ -1 dBTP | ffmpeg ebur128 true peak, on the mp4 audio | house target |
 | colour YAVG | median 109-163 | signalstats YAVG, 2 frames a second, median | 7 reference frames, `STYLE.md` Màu |
@@ -65,6 +68,7 @@ itself, or takes `--dbg <jsonl>`.
 | storyboard entries | every line | an entry per `vo/script.json` line | the plan exists before reel data |
 | props / fx used | ≥ 40 % of lines | lines whose entry lists a prop or fx and at least one is seen | beyond standing and talking |
 | props / fx seen | all | every listed prop / fx seen ≥ 3 frames in its line's window | the plan is really on screen |
+| acting plan | every line with a character on screen ≥ 15 f | the entry's `act` ({ actor: ['verb@word', ...] }) names known body verbs (poses.js, verbs), never talk | director rule: a line is acted, not said |
 | board shown | ≥ 85 % | judged: `review/board-verdict.json` from the reviewer below | every spoken line illustrated |
 | dressing density | ≥ 16 pieces in ≥ 85 % of frames | `dress` in each `__dbg` row: registered set pieces (lib/sets/dress.js, .glb pieces) the camera really sees (shown, ≥ 0.04 % of the frame, one of five sample points not hidden behind another mesh); cu frames, cutaway tables and dissolves left out | reference: 21 distinct objects in `ref_wide`, 16 in `ref_medium` (counted by eye, 10/11); Q4 judge: "bare park and classroom" |
 | floating labels | ≤ 3 per 30 s | `make` entries of kind stamp / callout / bars / split seen ≥ 3 frames | judge: "floating UI labels read like a diagram" |
@@ -92,6 +96,17 @@ reviewer when `claude` is not on PATH (that route measured ~80k tokens a review,
 Measured 10/11 (`films/*/review/board-verdict-*.json`): robe board 100 % in 3 of 3 gates (15 reviews, 1 split vote);
 reel 1 board, 15 single reviews 90-100 %, both-of-2 pairs 80-100 %, 2-of-3 gates 100, 100, 100 % → 2 of 3 is the rule.
 The old one-still board with one reviewer scored the same robe content 89 % then 56 %.
+
+## Acting gates: how to fix a FAIL
+
+Body acting under 70 %: name a body verb for that lead in the storyboard `act` and the beats (VERBS.md "Body acting"),
+or check it is a lead (auto-acting fills a lead's gaps ≥ 18 f). Expressions under 5: give each line a strong face (the
+29 in VERBS.md "Faces"; neutral / calm count once). Expression lead: put the `expr` on the word itself (the engine leads by
+4 f); a beat at `f` with no word is not checked. A pose that pushes a close-up head out of 45-55 %: a smaller `amp`, or
+mirror it (`hand: 'L'`): a 3/4-turned figure that pitches forward moves sideways on screen.
+
+Proof (q2, 10/11): `films/stick05-q2-levels` (stick04 with new acting only): all gates PASS, `review/reel-gates.txt`;
+judged against the reference in `review/judge.md`.
 
 ## Not scripted (eyes, on the 30-tile sheet and stills)
 

@@ -181,7 +181,19 @@ if (A.speed && !REEL) {
     L.push(`      acting: longest frozen run ${ac.frozen} frames${ac.frozen ? ' (ends ' + ac.frozenAt + ')' : ''}; largest arm length ratio ${ac.ratio.toFixed(3)}${ac.ratioAt != null ? ' (frame ' + ac.ratioAt + ')' : ''}; largest one-frame joint change ${ac.jump.toFixed(1)} deg${ac.jumpAt ? ' (' + ac.jumpAt + ')' : ''}`,
       `      joint change top 5: ${ac.top.map(x => `${x.d.toFixed(1)} (frame ${x.f}, ${x.k})`).join('; ') || '-'}; frames over 25 deg: ${compress(ac.over) || 'none'}`,
       `      head cut by the top edge: ${compress(rows.filter(r => { const a = r.actors[n]; return a.inFrame && a.head[1] < 0; }).map(r => r.f)) || 'never'}`);
+    // body acting: the share of this lead's in-frame frames with a body verb running (GATES.md "Acting gates")
+    const lf = rows.filter(r => r.actors[n].inFrame && r.actors[n].lead), idleF = lf.filter(r => !r.actors[n].body).map(r => r.f);
+    L.push(`      body acting: ${lf.length ? (100 * (lf.length - idleF.length) / lf.length).toFixed(1) : '-'} % of ${lf.length} lead frames in frame; frames without: ${compress(idleF) || 'none'}`);
   }
+  // (g) faces: distinct expressions on screen (>= 3 frames, open-mouth twins count as their base) and how early each change
+  // lands before its word (in-frame changes of a beat with a word)
+  const base = e => String(e || '').replace(/_o$/, ''), seenE = {}, leads = [];
+  for (const r of rows) for (const [n, a] of Object.entries(r.actors)) {
+    if (!a.inFrame || !a.expr) continue; seenE[base(a.expr)] = (seenE[base(a.expr)] || 0) + 1;
+    if (a.exprFrom === r.f && a.exprWord != null) leads.push({ n, f: r.f, lead: a.exprWord - r.f });
+  }
+  const distinct = Object.entries(seenE).filter(([, c]) => c >= 3).map(([k]) => k), wl = leads.reduce((w, x) => (!w || x.lead < w.lead ? x : w), null);
+  L.push(`(g) faces: ${distinct.length} distinct expressions on screen over ${(rows.length / 30).toFixed(1)} s (${distinct.join(' ')}); expression lead before its word: worst ${wl ? wl.lead + ' f (' + wl.n + ', frame ' + wl.f + ')' : '-'} over ${leads.length} changes`);
   // the largest figure in frame under 30 % of the frame height (sole to head top), longest run over --small (default all)
   const [s0, s1] = (A.small || `${frames[0]}-${frames[frames.length - 1]}`).split('-').map(Number);
   let sr = 0, sBest = 0, sAt = null; const smallF = [];
