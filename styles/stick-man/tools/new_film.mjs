@@ -1,4 +1,4 @@
-// Start a stick-man film: films/<slug>/ with vo/, audio/, renders/, review/, an empty vo/script.json, an empty reel.js
+// Start a stick-man film: films/<slug>/ with vo/, audio/, renders/, review/, an empty vo/script.json, storyboard.json, reel.js
 // and the run ledger. Refuses to touch a folder that already exists.
 //   node styles/stick-man/tools/new_film.mjs stick02-<slug>
 import fs from 'node:fs'; import path from 'node:path';
@@ -14,7 +14,7 @@ for (const d of ['vo', 'audio', 'renders', 'review']) fs.mkdirSync(path.join(fil
 const script = {
   model: 'gemini-3.8-flash-tts',
   cast: { nar: 'Achird' },
-  note: `${slug}: one narrator. Styles are plain delivery words ("fast", "fast, smug"). ~3.7 words/s: 30 s = ~110 words.`,
+  note: `${slug}: one narrator. Every style starts with "fast" ("fast", "fast, smug"). Achird ~2.9-3.3 words/s: 30 s = 95-100 words.`,
   say: {},
   lines: [],
 };
@@ -27,7 +27,7 @@ export default {
   title: '${slug}',
   fps: 30,
   frames: [0, 0],          // [first, last]; last = the "last frame" line of vo/voice-qa.md (or the last act's start - 1)
-  set: 'bank-lobby',       // bank-lobby | street | cutaway (SETS.md)
+  set: 'bank-lobby',       // bank-lobby | street | cutaway | park | lab (SETS.md); street props police / bag: use: [...]
   lines: [],               // the vo/script.json line ids this act covers, in order
   cast: {},                // name: { spec, at, yaw, expr, focus, posture, watch, head_tilt }
   beats: [],               // { line, on, offset?, nth?, who, do?, expr?, look?, ... } or { f, who, ... }
@@ -36,8 +36,11 @@ export default {
 `;
 fs.writeFileSync(path.join(film, 'reel.js'), reel);
 
+// the storyboard stage (REEL_DATA.md): one entry per script line, filled after align and before reel data
+fs.writeFileSync(path.join(film, 'storyboard.json'), JSON.stringify({ film: slug, lines: [] }, null, 1) + '\n');
+
 const tpl = path.join(ROOT, '.claude/skills/make-reel-stick-man/LEDGER.md');
 if (fs.existsSync(tpl)) fs.writeFileSync(path.join(film, 'LEDGER.md'), fs.readFileSync(tpl, 'utf8').replace(/<slug>/g, slug));
 
-console.log(`films/${slug}/  vo/script.json (empty lines), reel.js (empty act), LEDGER.md, audio/ renders/ review/`);
+console.log(`films/${slug}/  vo/script.json (empty lines), storyboard.json, reel.js (empty act), LEDGER.md, audio/ renders/ review/`);
 console.log(`next: write vo/script.json lines, show the script to Kai`);

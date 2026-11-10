@@ -1,0 +1,127 @@
+{
+ "film": "stick01-dye-pack",
+ "note": "Reel 1 storyboard, written after the approved cut (v4b) as the example of the storyboard stage: one entry per spoken line. Checked against __dbg: the note, the door sensor LED and the coughed puff are too small to count as seen, and the police car is only heard.",
+ "lines": [
+  {
+   "id": "l01",
+   "see": "At the bank counter Kai hands over a note while the smiling teller drops cash bundles into his open bag.",
+   "shot": "two",
+   "set": "bank-lobby",
+   "props": [
+    "bag",
+    "b1"
+   ],
+   "fx": [],
+   "on": "helps"
+  },
+  {
+   "id": "l02",
+   "see": "Close on the calm teller lifting a stack of twenties off a small metal plate, then dropping it in the bag.",
+   "shot": "cu",
+   "set": "bank-lobby",
+   "props": [
+    "stack",
+    "plate"
+   ],
+   "fx": [],
+   "on": "lifts"
+  },
+  {
+   "id": "l03",
+   "see": "Close on the teller turning to wave him off, all smiles.",
+   "shot": "cu",
+   "set": "bank-lobby",
+   "props": [],
+   "fx": [],
+   "on": "lovely"
+  },
+  {
+   "id": "l04",
+   "see": "Kai strolls across the lobby toward the door, grinning, the bag swinging in his hand.",
+   "shot": "ms",
+   "set": "bank-lobby",
+   "props": [
+    "bag"
+   ],
+   "fx": [],
+   "on": "strolls"
+  },
+  {
+   "id": "l05",
+   "see": "Out on the street a countdown clock ticks beside his bag, the bag glows red, then explodes in a cloud.",
+   "shot": "ms",
+   "set": "street",
+   "props": [
+    "bag"
+   ],
+   "fx": [
+    "dial",
+    "glow",
+    "burst"
+   ],
+   "on": "later"
+  },
+  {
+   "id": "l06",
+   "see": "Close on Kai, shocked, a puff of smoke at his mouth.",
+   "shot": "cu",
+   "set": "street",
+   "props": [],
+   "fx": [],
+   "on": "wait"
+  },
+  {
+   "id": "l07",
+   "see": "Cutaway on the counter: the hollow stack lifts off a sleeping dye pack on its magnet plate, a hand picks it up.",
+   "shot": "insert",
+   "set": "cutaway",
+   "props": [
+    "stack",
+    "pack",
+    "plate"
+   ],
+   "fx": [
+    "arm"
+   ],
+   "on": "hollow"
+  },
+  {
+   "id": "l08",
+   "see": "Kai walks out of the door; radio rings fly from the door sensor to his bag and a timer by the door starts.",
+   "shot": "ms",
+   "set": "street",
+   "props": [],
+   "fx": [
+    "rings",
+    "timer"
+   ],
+   "on": "door"
+  },
+  {
+   "id": "l09",
+   "see": "A thermometer shoots up to 400 degrees, red dye sprays over the bills and over Kai.",
+   "shot": "ms",
+   "set": "street",
+   "props": [
+    "bag"
+   ],
+   "fx": [
+    "thermo",
+    "spray",
+    "bills2"
+   ],
+   "on": "degrees"
+  },
+  {
+   "id": "l10",
+   "see": "Kai stands in the street, bright red, among red worthless bills.",
+   "shot": "insert",
+   "set": "street",
+   "props": [],
+   "fx": [
+    "bills"
+   ],
+   "on": "red"
+  }
+ ]
+}

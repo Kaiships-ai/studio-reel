@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { STAND, W, clamp, smooth, smoother, lerp, lerp3, add3, fwdB, rightB, toLocal, toWorld, settle, angDiff } from './verbs.js';
 import { makePowderBurst, makeFlyingBills, makeDyeSpray, makeRadioRings, makeBagGlow, makeArm, makeBill, flashAt, makeStarBurst, makeDroplets, makeCountdown } from '../lib/props/fx.js';
 import { makeDyePack, makeThermometer, snoreAt } from '../lib/props/dyepack.js';
+import { makeRays, makeFlow, makeShimmer, makeCutBox, makeCallout, makeBars, makeSplit, makeStamp } from '../lib/props/explain.js';
 
 const SIDE = { L: -1, R: 1 };
 const rest = (chan, start, fade = 9) => ({ chan, start, fade, fn: () => ({ rest: true }) });
@@ -39,13 +40,13 @@ export const ACT = {
     } }];
     for (const s of ['L', 'R']) {
       const sg = SIDE[s], held = st.hold[s];
-      owners.push({ chan: 'hand' + s, start: t0, fade: 10, fn: f => {
+      owners.push({ chan: 'hand' + s, start: t0, fade: 18, fn: f => {   // built-in ease: 18-frame fling, 16-frame settle
         const t = f - t0, up = held ? [sg * 0.58, 2.42, 0.08] : [sg * 0.66, 2.60, 0.18], half = held ? [sg * 0.55, 2.1, 0.18] : [sg * 0.74, 2.05, 0.42];
-        const u = smoother((t - hold) / 10), j = 0.03 * Math.sin(t * 2.1 + sg) * Math.exp(-t / 10);
+        const u = smoother((t - hold) / 16), j = 0.03 * Math.sin(t * 2.1 + sg) * Math.exp(-t / 10);
         const l = lerp3(up, half, u); l[1] += j; return { l, bend: -0.25 * sg };
       } });
     }
-    return { end: t0 + hold + 10, owners };
+    return { end: t0 + hold + 16, owners };
   },
 
   // two dry coughs: chest and head jerk forward, the free hand comes up to the mouth
@@ -57,8 +58,9 @@ export const ACT = {
       return { pitch: 7 * k, head_pitch: 12 * k, head_dv: -0.025 * k };
     } }];
     if (!st.hold[hand]) {
-      owners.push({ chan: 'hand' + hand, start: t0 - 2, fade: 5, fn: f => ({ l: [s * 0.16, 2.22 - 0.03 * Math.sin((f - t0) * 0.9), 0.48], bend: -0.3 * s }) });
-      owners.push(rest('hand' + hand, t0 + n * per + 4, 8));
+      // built-in ease: the hand comes up early and slow (12 f), elbow out to the side, and drops over 14 f
+      owners.push({ chan: 'hand' + hand, start: t0 - 8, fade: 12, fn: f => ({ l: [s * 0.18, 2.20 - 0.02 * Math.sin((f - t0) * 0.9), 0.46], bend: -0.3 * s, elbow: [s * 0.9, -0.5, -0.1] }) });
+      owners.push(rest('hand' + hand, t0 + n * per + 4, 14));
     }
     return { end: t0 + n * per, owners, cues: [{ f: t0, name: 'cough', strength: 0.4 }] };
   },
@@ -95,20 +97,21 @@ export const ACT = {
   point(p, st, C) {
     const hand = p.hand || 'R', s = SIDE[hand], t0 = p.at, hold = p.hold ?? 40;
     const l = toLocal(C.point(p.to), { pos: st.pos, yaw: st.yaw }), n = Math.hypot(l[0], l[2]) || 1, d = [l[0] / n, l[2] / n];
-    const owners = [{ chan: 'hand' + hand, start: t0, fade: 9, fn: f => {
-      const t = f - t0, jab = 0.06 * Math.max(0, Math.sin(2 * Math.PI * t / 9)) * (t < 27 ? 1 : 0);
+    // built-in ease: a 20-frame raise, small slow jabs, a 28-frame release
+    const owners = [{ chan: 'hand' + hand, start: t0, fade: 20, fn: f => {
+      const t = f - t0, jab = 0.035 * Math.max(0, Math.sin(2 * Math.PI * (t - 16) / 14)) * (t > 16 && t < 44 ? 1 : 0);
       return { l: [s * 0.22 + d[0] * (0.70 + jab), 2.22, d[1] * (0.70 + jab)], bend: -0.05 * s, elbow: [s * 0.7, -0.7, -0.1] };
-    } }, rest('hand' + hand, t0 + hold, 12)];
-    return { end: t0 + hold + 10, owners };
+    } }, rest('hand' + hand, t0 + hold, 28)];
+    return { end: t0 + hold + 28, owners };
   },
 
   // a small guilty wave at chest height, head tipped
   wave_small(p, st) {
     const hand = p.hand || 'L', s = SIDE[hand], t0 = p.at, per = p.per ?? 7, n = p.n ?? 3;
-    const owners = [{ chan: 'hand' + hand, start: t0, fade: 5, fn: f => {
+    const owners = [{ chan: 'hand' + hand, start: t0, fade: 10, fn: f => {   // built-in ease: 10-frame raise, 14-frame drop
       const t = Math.max(0, f - t0 - 3), ph = Math.sin(2 * Math.PI * t / per) * (t < per * n ? 1 : 0);
       return { l: [s * (0.62 + 0.07 * ph), 2.18 + 0.02 * Math.abs(ph), 0.32], bend: -0.3 * s };
-    } }, rest('hand' + hand, t0 + 3 + per * n + 6, 10),
+    } }, rest('hand' + hand, t0 + 3 + per * n + 6, 14),
     { chan: 'add', start: t0, fn: f => { const e = smoother((f - t0) / 6) * (1 - smoother((f - t0 - per * n - 8) / 10)); return { head_tilt: -7 * e * s, pitch: 3 * e, head_pitch: 5 * e }; } }];
     return { end: t0 + per * n + 16, owners };
   },
@@ -227,7 +230,7 @@ const tSec = (v, f, fps) => { const t0 = v('t0'); return t0 == null ? -1 : (f - 
 const toCam = (o, camPos) => tB(camPos).sub(o.position).normalize();
 function faceCam(o, camPos, extra = 0) { const p = o.position; o.rotation.set(0, Math.atan2(camPos[0] - p.x, -camPos[1] - p.z) + extra, 0); }
 export const MAKE = {
-  bagGlow: (stage, o, ctx) => { const g = makeBagGlow(stage, ctx.props[o.bag || 'bag']); return { obj: null, apply: v => g.userData.set(v('glow', 0)) }; },
+  bagGlow: (stage, o, ctx) => { const g = makeBagGlow(stage, ctx.props[o.bag || 'bag']); return { obj: g, apply: v => g.userData.set(v('glow', 0)) }; },
   // the cloud; clear (m) = puffs on the camera side step aside so it rings the subject and the face stays readable
   burst: (stage, o, ctx) => {
     const g = makePowderBurst(stage, o); ctx.group.add(g); let t = -1;
@@ -296,6 +299,50 @@ export const MAKE = {
   arm: (stage, o, ctx) => {
     const g = makeArm(stage, o); ctx.group.add(g); stage.prop(g);
     return { obj: g, apply: v => g.userData.set({ shoulder: v('shoulder', o.shoulder), hand: v('hand'), bend: v('bend', 0.12) }) };
+  },
+  // ---- explainer kit (lib/props/explain.js); VERBS.md "Explainer effects" has one line and an example each
+  // light rays: fire = shoot from `from` to `hit`; with `out` they bounce on, with absorb: true they sink in
+  rays: (stage, o, ctx) => {
+    const g = makeRays(stage, o); ctx.group.add(g); let a = null;
+    return { obj: g, apply: (v, f, env) => { const t = tSec(v, f, ctx.fps), life = o.life ?? Infinity;
+      a = t >= 0 && t < life ? { t, from: tB(env.at(o.from)).toArray(), hit: tB(env.at(o.hit)).toArray(), out: o.out ? tB(env.at(o.out)).toArray() : null, absorb: !!o.absorb, grow: o.grow ?? 0.35 } : null;
+      g.userData.set(a ? a.t : -1, a || {}); },
+    post: cam => { if (!a) return; g.userData.set(a.t, { ...a, cam: tB(cam).toArray() }); g.userData.spark.lookAt(tB(cam)); } };
+  },
+  // flow arrow along `path` (Blender metres from `at`): fire = draw itself, pips stream, after `life` s it runs out
+  flow: (stage, o, ctx) => {
+    const g = makeFlow(stage, o); ctx.group.add(g);
+    return { obj: g, apply: (v, f, env) => { g.position.copy(tB(env.at(o.at || [0, 0, 0]))); g.userData.set(tSec(v, f, ctx.fps), { grow: o.grow ?? 0.7, life: o.life ?? Infinity }); } };
+  },
+  // heat shimmer card: key `heat` 0..1 (set / pulse); turned to the camera
+  shimmer: (stage, o, ctx) => {
+    const g = makeShimmer(stage, o); ctx.group.add(g);
+    return { obj: g, apply: (v, f, env) => { g.position.copy(tB(env.at(o.at))); g.userData.set({ heat: v('heat', 0), t: f / ctx.fps }); }, post: cam => faceCam(g, cam) };
+  },
+  // cut-away cylinder / box: keys `open` 0..1, `show` 0..1 (default 1); its front turned to the camera
+  cutbox: (stage, o, ctx) => {
+    const g = makeCutBox(stage, o); stage.prop(g); ctx.group.add(g);
+    return { obj: g, apply: (v, f, env) => { g.position.copy(tB(env.at(o.at))); g.userData.set({ open: v('open', 0), show: v('show', o.show ?? 1) }); }, post: cam => faceCam(g, cam, (o.turn ?? 0) * Math.PI / 180) };
+  },
+  // callout ring + label: key `show` 0..1 (set with ease back); always faces the camera, drawn on top
+  callout: (stage, o, ctx) => {
+    const g = makeCallout(stage, o); ctx.group.add(g);
+    return { obj: g, apply: (v, f, env) => { g.position.copy(tB(env.at(o.at))); g.userData.set({ show: v('show', 0), t: f / ctx.fps }); }, post: cam => g.lookAt(tB(cam)) };
+  },
+  // bar chart: keys `show` 0..1, `grow` 0..1, `v0`, `v1`, ... (a bar's value, default from `values`)
+  bars: (stage, o, ctx) => {
+    const g = makeBars(stage, o); stage.prop(g); ctx.group.add(g); const n = (o.values || [3, 7]).length;
+    return { obj: g, apply: (v, f, env) => { g.position.copy(tB(env.at(o.at))); g.userData.set({ show: v('show', 0), grow: v('grow', 0), vals: Array.from({ length: n }, (_, i) => v('v' + i)) }); }, post: cam => faceCam(g, cam) };
+  },
+  // two-sides divider: key `show` 0..1 (bar wipes in, VS pops, labels slide); yaw-turned to the camera
+  split: (stage, o, ctx) => {
+    const g = makeSplit(stage, o); ctx.group.add(g);
+    return { obj: g, apply: (v, f, env) => { g.position.copy(tB(env.at(o.at))); g.userData.set({ show: v('show', 0) }); }, post: cam => faceCam(g, cam) };
+  },
+  // big stamp / number: fire = slam in; key `n` fills {n} in the text; gone after `life` s
+  stamp: (stage, o, ctx) => {
+    const g = makeStamp(stage, o); ctx.group.add(g);
+    return { obj: g, apply: (v, f, env) => { g.position.copy(tB(env.at(o.at))); g.userData.set(tSec(v, f, ctx.fps), { n: v('n', o.n ?? 0), life: o.life ?? Infinity }); }, post: cam => g.lookAt(tB(cam)) };
   },
   // an existing set prop with userData.set(params): every keyed value goes through as a param
   prop: (stage, o, ctx) => {

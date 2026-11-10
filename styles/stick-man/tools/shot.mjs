@@ -69,7 +69,7 @@ const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 const dirAng = (a0, b0, a1, b1) => { const u = b0.map((x, i) => x - a0[i]), v = b1.map((x, i) => x - a1[i]), lu = Math.hypot(...u), lv = Math.hypot(...v);
   return lu < 1e-6 || lv < 1e-6 ? 0 : Math.acos(Math.max(-1, Math.min(1, u.reduce((s, x, i) => s + x * v[i], 0) / (lu * lv)))) * 180 / Math.PI; };
 function acting(rows, n) {
-  let run = 1, frozen = 0, frozenAt = null, ratio = 0, ratioAt = null, jump = 0, jumpAt = null;
+  let run = 1, frozen = 0, frozenAt = null, ratio = 0, ratioAt = null, jump = 0, jumpAt = null; const per = [];   // per = worst joint change of each frame
   for (let i = 0; i < rows.length; i++) {
     const a = rows[i].actors[n], l = a.limbs; if (!a.inFrame || !l) { run = 1; continue; }
     for (const s of ['L', 'R']) { const q = (dist(l[s].shoulder, l[s].elbow) + dist(l[s].elbow, l[s].hand)) / ARM; if (q > ratio) { ratio = q; ratioAt = rows[i].f; } }
@@ -84,10 +84,13 @@ function acting(rows, n) {
       for (const [x, y] of SEGS) chg.push([x + '-' + y + s, dirAng(m[s][x], m[s][y], l[s][x], l[s][y])]);
     }
     for (const [k, d] of chg) if (d > jump) { jump = d; jumpAt = `frame ${rows[i].f}, ${k}`; }
+    const w = chg.reduce((a, b) => (b[1] > a[1] ? b : a), ['', 0]); per.push({ f: rows[i].f, k: w[0], d: w[1] });
     run = moved ? 1 : run + 1;
     if (run > frozen) { frozen = run; frozenAt = rows[i].f; }
   }
-  return { frozen: frozen > 1 ? frozen : 0, frozenAt, ratio, ratioAt, jump, jumpAt };
+  // the five worst frames (not only the max: fixing one pop otherwise reveals the next) and how many frames are over 25 deg
+  const top = [...per].sort((a, b) => b.d - a.d).slice(0, 5), over = per.filter(x => x.d > 25).map(x => x.f);
+  return { frozen: frozen > 1 ? frozen : 0, frozenAt, ratio, ratioAt, jump, jumpAt, top, over };
 }
 
 if (A.speed && !REEL) {
@@ -162,6 +165,7 @@ if (A.speed && !REEL) {
       `      head box in caption band 66-78 %: ${compress(band) || 'never'}; head box outside x 8-92 %: ${compress(out) || 'never'}`);
     const ac = acting(rows, n);
     L.push(`      acting: longest frozen run ${ac.frozen} frames${ac.frozen ? ' (ends ' + ac.frozenAt + ')' : ''}; largest arm length ratio ${ac.ratio.toFixed(3)}${ac.ratioAt != null ? ' (frame ' + ac.ratioAt + ')' : ''}; largest one-frame joint change ${ac.jump.toFixed(1)} deg${ac.jumpAt ? ' (' + ac.jumpAt + ')' : ''}`,
+      `      joint change top 5: ${ac.top.map(x => `${x.d.toFixed(1)} (frame ${x.f}, ${x.k})`).join('; ') || '-'}; frames over 25 deg: ${compress(ac.over) || 'none'}`,
       `      head cut by the top edge: ${compress(rows.filter(r => { const a = r.actors[n]; return a.inFrame && a.head[1] < 0; }).map(r => r.f)) || 'never'}`);
   }
   // the largest figure in frame under 30 % of the frame height (sole to head top), longest run over --small (default all)

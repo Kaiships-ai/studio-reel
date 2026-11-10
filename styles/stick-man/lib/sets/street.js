@@ -103,8 +103,10 @@ function skyTex() {
   });
 }
 
-export const build = stage => buildStreet(stage);
-export async function buildStreet(stage) {
+// opt-in props: an act lists them in `use` ('police', 'bag'); a film that does not name them gets a clear pavement
+export const OPTIONAL = ['police', 'bag'];
+export const build = (stage, opts) => buildStreet(stage, opts);
+export async function buildStreet(stage, { use = [] } = {}) {
   const { scene, prop, glow } = stage;
   const T = {
     stone: blocks({ c1: [0.80, 0.50, 0.26], c2: [0.74, 0.45, 0.23], mortar: [0.42, 0.25, 0.13], bw: 1.0, bh: 0.46, gap: 0.014, offset: 0.5, nx: 4, ny: 8 }),
@@ -344,12 +346,14 @@ export async function buildStreet(stage) {
   {
     const hb = makeHatchback(stage, { body: [0.40, 0.66, 0.78] });
     hb.position.copy(B(...MARKS.hatchback)); hb.position.y += -0.16; scene.add(hb); prop(hb);
-    const pc = makePoliceCar(stage);
-    pc.position.copy(B(...MARKS.police_stop)); pc.position.y += -0.16; pc.rotation.y = Math.PI; scene.add(pc); prop(pc);
-    pc.userData.rest = { pos: [MARKS.police_stop[0], MARKS.police_stop[1], -0.16], rot: Math.PI };
-    props.police = pc;
+    if (use.includes('police')) {
+      const pc = makePoliceCar(stage);
+      pc.position.copy(B(...MARKS.police_stop)); pc.position.y += -0.16; pc.rotation.y = Math.PI; scene.add(pc); prop(pc);
+      pc.userData.rest = { pos: [MARKS.police_stop[0], MARKS.police_stop[1], -0.16], rot: Math.PI };
+      props.police = pc;
+    }
   }
-  {
+  if (use.includes('bag')) {
     const bag = moneyBag();
     bag.position.copy(B(...PLACES.bag_rest)); scene.add(bag); prop(bag);
     bag.userData.rest = { pos: PLACES.bag_rest.slice(), rot: 0 };

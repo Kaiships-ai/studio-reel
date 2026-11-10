@@ -2,8 +2,12 @@
 // per gate and exits 1 on any FAIL. Thresholds and their sources: .claude/skills/make-reel-stick-man/GATES.md.
 // Never loosen a threshold to make a reel pass: fix the reel, or ask Kai.
 //   node styles/stick-man/tools/gates.mjs --report films/x/review/x-stats.txt --in films/x/renders/x.mp4 [--out films/x/review/x-gates.txt]
+//     [--film films/x [--dbg films/x/review/x-dbg.jsonl]]
 // The report comes from: node styles/stick-man/tools/shot.mjs --film films/x --frames 0-<last> --report <stats.txt> --in <mp4>
+// --film adds the story gates (storyboard.json against __dbg: duration, sets, shot variety, props / fx use and presence,
+// and the judged board verdict review/board-verdict.json). Without --dbg it runs shot.mjs --dbg itself (~1 min).
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { run } from '../../../kit/env.mjs';
 
 const A = {}; for (let i = 2; i < process.argv.length; i += 2) A[process.argv[i].replace(/^--/, '')] = process.argv[i + 1];
@@ -36,7 +40,9 @@ const perActor = (label, w, limit, unit, want) => {
   if (!w) return missing(label);
   const bad = actors.map(([, n, b]) => [n, b]).filter(([, b]) => { const v = label === 'frozen run' ? num(/longest frozen run (\d+)/, b)
     : label === 'arm length ratio' ? num(/arm length ratio ([\d.]+)/, b) : num(/joint change ([\d.]+) deg/, b); return v > limit; }).map(([n]) => n);
-  gate(label, w.v <= limit, `${w.v}${unit} (${w.n}${w.at ? ', frame ' + w.at : ''})${bad.length ? '; over: ' + bad.join(', ') : ''}`, want);
+  // joint change: the worst actor's five worst frames, so one fix round can take them all
+  const top = label === 'joint change' ? /joint change top 5: ([^\n]*); frames over/.exec(actors.find(([, n]) => n === w.n)?.[2] || '')?.[1] : null;
+  gate(label, w.v <= limit, `${w.v}${unit} (${w.n}${w.at ? ', frame ' + w.at : ''})${bad.length ? '; over: ' + bad.join(', ') : ''}${top && w.v > limit ? '; top 5: ' + top : ''}`, want);
 };
 if (actors.length) {
   perActor('frozen run', frozen, 8, ' f', '<= 8 f');
@@ -91,10 +97,70 @@ if (!Y.length) missing('colour'); else {
 }
 
 const pad = (s, n) => String(s).padEnd(n);
-const lines = [`gates for ${path.basename(A.in)} (report ${path.basename(A.report)})`,
-  ...G.map(([n, got, ok, want]) => `${ok ? 'PASS' : 'FAIL'}  ${pad(n, 18)} ${pad(want, 20)} ${got}`)];
+const fmt = ([n, got, ok, want]) => `${ok ? 'PASS' : 'FAIL'}  ${pad(n, 18)} ${pad(want, 20)} ${got}`;
+const lines = [`gates for ${path.basename(A.in)} (report ${path.basename(A.report)})`, ...G.map(fmt)];
 const fails = G.filter(g => !g[2]).length;
 lines.push(fails ? `${fails} of ${G.length} gates FAIL` : `all ${G.length} gates PASS`);
+const SG = A.film ? await story(A.film) : [];
+if (SG.length) { const sf = SG.filter(g => !g[2]).length; lines.push('', `story gates (${A.film}/storyboard.json)`, ...SG.map(fmt), sf ? `${sf} of ${SG.length} story gates FAIL` : `all ${SG.length} story gates PASS`); }
 const out = lines.join('\n') + '\n'; process.stdout.write(out);
 if (A.out) { fs.mkdirSync(path.dirname(path.resolve(A.out)), { recursive: true }); fs.writeFileSync(A.out, out); }
-process.exit(fails ? 1 : 0);
+process.exit(fails || SG.some(g => !g[2]) ? 1 : 0);
+
+// ---------------------------------------------------------------- story gates (computed from the storyboard and __dbg)
+// Thresholds: GATES.md "Story gates". A line's window = its first word to the next line's first word.
+async function story(film) {
+  const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..'), F = p => path.join(ROOT, film, p);
+  const T = []; const sg = (name, ok, got, want) => T.push([name, got, ok, want]);
+  if (!fs.existsSync(F('storyboard.json'))) { sg('storyboard', false, `no ${film}/storyboard.json`, 'one entry per line'); return T; }
+  const SB = JSON.parse(fs.readFileSync(F('storyboard.json'), 'utf8')), script = JSON.parse(fs.readFileSync(F('vo/script.json'), 'utf8'));
+  const words = JSON.parse(fs.readFileSync(F('vo/words.json'), 'utf8'));
+  let dbg = A.dbg;
+  if (!dbg) {
+    const R1 = (await import(pathToFileURL(F('reel.js')).href)).default;
+    const R2 = fs.existsSync(F('reel2.js')) ? (await import(pathToFileURL(F('reel2.js')).href)).default : null;
+    const last = (R2 || R1).frames[1];
+    dbg = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'stick-story-')), 'dbg.jsonl');
+    const r = run('node', [path.join(ROOT, 'styles/stick-man/tools/shot.mjs'), '--film', film, '--frames', `0-${last}`, '--dbg', dbg, '--w', '540', '--h', '960'], { capture: true });
+    if (r.status) { sg('story dbg', false, 'shot.mjs --dbg failed: ' + (r.stderr || '').slice(0, 200), 'runs'); return T; }
+  }
+  const rows = fs.readFileSync(dbg, 'utf8').trim().split('\n').map(l => JSON.parse(l)), fps = 30;
+  const ids = script.lines.map(l => l.id), E = Object.fromEntries((SB.lines || []).map(e => [e.id, e]));
+  const t0 = id => words.find(w => w.line === id)?.t0;
+  const win = ids.map((id, i) => { const a = Math.round(t0(id) * fps), b = i + 1 < ids.length ? Math.round(t0(ids[i + 1]) * fps) : rows[rows.length - 1].f + 1; return { id, a, b }; });
+  const inWin = w => rows.filter(r => r.f >= w.a && r.f < w.b);
+  // 1 duration
+  const dur = rows.length / fps;
+  sg('duration', dur >= 27 && dur <= 33, `${dur.toFixed(1)} s (${rows.length} frames)`, '27-33 s');
+  // 2 distinct sets (on screen >= 15 frames each)
+  const setN = {}; for (const r of rows) if (r.set) setN[r.set] = (setN[r.set] || 0) + 1;
+  const sets = Object.entries(setN).filter(([, n]) => n >= 15).map(([k]) => k);
+  sg('distinct sets', sets.length >= 3, `${sets.length}: ${sets.join(', ')}`, '>= 3 sets or cutaways');
+  // 3 shot variety: each line's main set + shot kind (most frames in its window); no run of more than 2 lines alike
+  const kind = r => `${r.set}/${(r.camera?.shot || '?').split('(')[0]}`;
+  const main = win.map(w => { const c = {}; for (const r of inWin(w)) c[kind(r)] = (c[kind(r)] || 0) + 1; return [w.id, Object.entries(c).sort((x, y) => y[1] - x[1])[0]?.[0] || '?']; });
+  let run1 = 1, worst = 1, at = main[0]?.[0];
+  for (let i = 1; i < main.length; i++) { run1 = main[i][1] === main[i - 1][1] ? run1 + 1 : 1; if (run1 > worst) { worst = run1; at = `${main[i - run1 + 1][0]}-${main[i][0]} ${main[i][1]}`; } }
+  sg('shot variety', worst <= 2, `longest run ${worst} line(s) alike${worst > 1 ? ' (' + at + ')' : ''}`, '<= 2 lines same set + shot');
+  // 4 + 5 every line has an entry; its props / fx are seen (>= 3 frames in its window); >= 40 % of lines use one
+  const noEntry = ids.filter(id => !E[id]), unseen = [], using = [];
+  for (const w of win) {
+    const e = E[w.id]; if (!e) continue; const want = [...(e.props || []), ...(e.fx || [])], fr = inWin(w);
+    const miss = want.filter(n => fr.filter(r => (r.seen || []).includes(n)).length < 3);
+    if (miss.length) unseen.push(`${w.id}: ${miss.join(' ')}`);
+    if (want.length && miss.length < want.length) using.push(w.id);
+  }
+  sg('storyboard entries', !noEntry.length, noEntry.length ? 'missing ' + noEntry.join(', ') : `${ids.length}/${ids.length} lines`, 'one entry per spoken line');
+  const share = using.length / ids.length;
+  sg('props / fx used', share >= 0.4, `${Math.round(100 * share)} % (${using.length}/${ids.length}: ${using.join(' ') || '-'})`, '>= 40 % of lines');
+  sg('props / fx seen', !unseen.length, unseen.length ? 'not on screen: ' + unseen.join('; ') : 'every listed prop / fx on screen in its line', 'listed = in __dbg seen');
+  // 6 judged: the board reviewer's verdict (GATES.md, reviewer prompt)
+  const vf = F('review/board-verdict.json');
+  if (!fs.existsSync(vf)) sg('board shown', false, 'no review/board-verdict.json: run board.mjs, then the reviewer (GATES.md)', '>= 85 % shown');
+  else {
+    const V = JSON.parse(fs.readFileSync(vf, 'utf8')), L = V.lines || [], ok = L.filter(x => x.shown === true), no = L.filter(x => x.shown !== true).map(x => x.id);
+    const cover = ids.every(id => L.some(x => x.id === id)), pct = L.length ? ok.length / ids.length : 0;
+    sg('board shown', cover && pct >= 0.85, `${Math.round(100 * pct)} % (${ok.length}/${ids.length})${no.length ? '; not shown: ' + no.join(', ') : ''}${cover ? '' : '; verdict misses lines'}`, '>= 85 % shown');
+  }
+  return T;
+}

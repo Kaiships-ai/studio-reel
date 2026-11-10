@@ -5,14 +5,14 @@
 # writes audio/sfx.wav, audio/music.wav, audio/vo_m.wav, audio/mix.wav (48 kHz stereo, voice + 0.5 s), audio/levels.txt, audio/preview.m4a
 # Targets (Kai-approved, reel63 v2): voice ~-14.6, SFX stem ~-21, music ~-28, mix -14 LUFS; each hit 4-8 dB under the voice around it;
 # duck ONLY the 2-8 kHz consonant band (STFT 1-12 kHz bins) inside words, never full band; true peak <= -1 dBTP.
-import json, os, re, subprocess, sys
+import json, os, re, shutil, subprocess, sys
 import numpy as np, soundfile as sf
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sound_dsp import SR, room, hp, bp, hb, lufs, true_peak, tp_limit, comp
 from sound_bank import BANK, siren
 from sound_music import music
 
-FFMPEG = os.environ.get('FFMPEG', '/opt/homebrew/bin/ffmpeg')
+FFMPEG = os.environ.get('FFMPEG') or shutil.which('ffmpeg') or 'ffmpeg'   # $FFMPEG, else the ffmpeg on PATH
 TAIL = 0.5
 HIT_DB = -4.3                                              # loudest 150 ms of a hit vs the median voice around it (full band)
 LEVEL = {'step_l': -5.0, 'step_r': -5.0, 'tick': -5.0, 'siren': -1.5, 'snore': -5.0, 'blip': -5.0, 'ping': -5.0, 'ting': -5.2}
@@ -152,7 +152,7 @@ def main(film):
            f'mix        {lv["mix"][0]:6.1f} LUFS   target -14 +-0.5 {ok(abs(lv["mix"][0] + 14) <= 0.5)}',
            f'true peak  {lv["mix"][1]:6.1f} dBTP   mix.wav (preview.m4a {tp_pre:.1f})   target <= -1   {ok(lv["mix"][1] <= -1)}',
            f'words with SFX within 6 dB of the voice in 2-8 kHz: {len(hot)} {hot[:10]}   {ok(not hot)}',
-           f'music sections: A 0-11.5, build {sec["build"]:.2f}-13.80, stop {sec["wait"]:.2f} (Wait), B {sec["see"]:.2f}-{sec["urgent"]:.2f}, '
+           f'music sections: A 0-{sec["playful_end"]:.2f}, build {sec["build"]:.2f}-{sec["build_end"]:.2f}, stop {sec["wait"]:.2f} (Wait), B {sec["see"]:.2f}-{sec["urgent"]:.2f}, '
            f'urgent {sec["urgent"]:.2f}-{sec["so"]:.2f}, resolve {sec["so"]:.2f}-{sec["last"]:.2f} (last word)', '',
            '# per cue: loudest 150 ms of the hit (full band, up to the next cue, <= 1 s) vs the median voice within 1.5 s; set = isolated, stem = after the consonant duck',
            f'{"t":>7}  {"name":18} {"str":>4} {"set dB":>7} {"stem dB":>8}  band -8..-4']

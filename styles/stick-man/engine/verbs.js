@@ -174,11 +174,12 @@ export const VERBS = {
       // hand targets inside the arm's reach so the elbow stays bent; elbow = which way it points (figure-local)
       finger_wave: { at: [s * 0.52, 2.22, 0.38], amp: [0.07, 0.02], per: 6, n: 4, elbow: [s * 0.4, -1, 0] },
       wave: { at: [s * 0.62, 2.05, 0.15], arc: 0.40, amp: [24, 0], per: 10, n: 3, elbow: [s * 0.8, -0.6, 0] },
-      fist_pump: { at: [s * 0.40, 2.62, 0.14], amp: [0, -0.20], per: 8, n: 2, elbow: [s * 0.7, -0.7, 0] },
+      // built-in ease (joint gate <= 25 deg/f): a slower pump, an 18-frame lead in and a 20-frame release
+      fist_pump: { at: [s * 0.40, 2.62, 0.14], amp: [0, -0.13], per: 13, n: 2, elbow: [s * 0.7, -0.7, 0], lead: 18, out: 20 },
       shrug: { at: [s * 0.74, 1.80, 0.26], amp: [0, 0.05], per: 18, n: 1, elbow: [s * 0.3, -1, -0.3] },
     }[k];
     if (!spec) throw new Error(`gesture: unknown kind ${k}`);
-    const dur = spec.per * spec.n, lead = 8;
+    const dur = spec.per * spec.n, lead = spec.lead ?? 8;
     // the hand leads the wave and the forearm trails it: the side-to-side motion is on a small arc, not a line
     owners.push({ chan: 'hand' + hand, start: t0, fade: lead, fn: f => {
       const t = Math.max(0, f - t0 - lead * 0.5), on = t < dur ? 1 : 0, ph = Math.sin(2 * Math.PI * t / spec.per) * on;
@@ -191,8 +192,8 @@ export const VERBS = {
       owners.push(restOwner('hand' + (hand === 'R' ? 'L' : 'R'), t0 + lead + dur, 12));
     }
     if (st.hold[hand]) throw new Error(`gesture ${k}: ${st.name}'s ${hand} hand is holding ${st.hold[hand]}`);
-    owners.push(restOwner('hand' + hand, t0 + lead + dur, 12));
-    return { end: t0 + lead + dur + 12, owners };
+    owners.push(restOwner('hand' + hand, t0 + lead + dur, spec.out ?? 12));
+    return { end: t0 + lead + dur + (spec.out ?? 12), owners };
   },
 
   // mouth opens on each spoken word of a line (from words.json); a nod-ish head beat on the stressed ones

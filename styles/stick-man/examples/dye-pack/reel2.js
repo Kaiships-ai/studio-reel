@@ -6,7 +6,7 @@ const W = (line, on, offset = -2, nth) => ({ line, on, offset, ...(nth ? { nth }
 const at = (line, on, offset, nth) => W(line, on, offset, nth);
 
 const street = {
-  name: 'street', set: 'street', zRange: [1.1, 1.9],
+  name: 'street', set: 'street', zRange: [1.1, 1.9], use: ['police', 'bag'],
   show: [{ from: 345, dissolve: 0 }, { from: 631, dissolve: 0 }],   // hard cuts: no double exposure
   cast: {
     kai: { spec: 'KAI', at: 'door', yaw: 0, expr: 'smug', focus: 'camera' },
@@ -190,7 +190,7 @@ const cutaway = {
 };
 
 const door = {
-  name: 'door', set: 'street', zRange: [1.1, 1.9],
+  name: 'door', set: 'street', zRange: [1.1, 1.9], use: ['police', 'bag'],
   show: [{ from: 596, dissolve: 0 }],
   cast: { kai: { spec: 'KAI', at: [0.0, 1.9, 0], yaw: 0, expr: 'grin', focus: 'camera' } },
   make: {

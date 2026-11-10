@@ -149,4 +149,4 @@ def music(words, n, seed=31, plan=None):
     for c in (L, R): c[i - f:i] *= np.linspace(1, 0, f); c[i:int(t_see * SR) - 1] = 0
     fo = int(0.4 * SR)
     for c in (L, R): c[-fo:] *= np.linspace(1, 0, fo) ** 2
-    return L, R, dict(build=t_build, wait=t_wait, see=t_see, urgent=t_urg, so=t_so, last=t_last)
+    return L, R, dict(playful_end=T['playful_end'], build_end=T['build_end'], build=t_build, wait=t_wait, see=t_see, urgent=t_urg, so=t_so, last=t_last)

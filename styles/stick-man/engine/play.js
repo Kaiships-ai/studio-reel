@@ -11,11 +11,13 @@ import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, e
 import { createCamera } from './camera.js';
 import { createCaptions } from './captions.js';
 import { ACT, PROPV, MAKE, keyTracks } from './verbs_fx.js';
-import { MABEL, OTIS, JUNE, OFFICER, WREN, BRAM, dye } from '../lib/cast/extras.js';
+import * as EXTRAS from '../lib/cast/extras.js';
 
-const SPECS = { KAI, TELLER, GUARD, MABEL, OTIS, JUNE, OFFICER, WREN, BRAM };
+// every cast spec exported by lib/cast/extras.js (an object with a name and a shirt) registers itself by its export name
+const dye = EXTRAS.dye;
+const SPECS = { KAI, TELLER, GUARD, ...Object.fromEntries(Object.entries(EXTRAS).filter(([, v]) => v && typeof v === 'object' && !Array.isArray(v) && v.name && v.shirt)) };
 const SETS = { 'bank-lobby': () => import('../lib/sets/bank-lobby.js'), street: () => import('../lib/sets/street.js'),
-  cutaway: () => import('../lib/sets/cutaway.js') };
+  cutaway: () => import('../lib/sets/cutaway.js'), park: () => import('../lib/sets/park.js'), lab: () => import('../lib/sets/lab.js') };
 const KEYV = new Set(['set', 'pulse', 'shake', 'fire', 'flash', 'sound']);
 const HAND_R = 0.040 * W;                                        // the hand dot's radius (cast.js)
 const THICK = { b1: 0.045, b2: 0.045, stack: 0.07, note: 0.003 };
@@ -72,10 +74,11 @@ function chain(list, f, val, env, hand = false) {
 
 async function buildAct(R, X) {
   const { stage, words, fps, F0, F1, width, height } = X;
+  if (!SETS[R.set]) throw new Error(`unknown set ${R.set} (SETS.md)`);
   const SET = await SETS[R.set]();
   // the set's meshes and lights go into this act's group (shown only while the act is on screen)
   const group = new THREE.Group(), before = new Set(stage.scene.children), bg0 = stage.scene.background;
-  const built = await SET.build(stage);
+  const built = await SET.build(stage, { use: R.use || [] });   // act.use: opt-in set props (street: police, bag)
   for (const c of [...stage.scene.children]) if (!before.has(c)) group.add(c);
   const background = stage.scene.background; stage.scene.background = bg0; stage.scene.add(group); group.visible = false;
   const props = built.props;
@@ -103,6 +106,7 @@ async function buildAct(R, X) {
   const frameOf = b => resolveBeatFrame(b, words, fps);
   const actors = [], byName = {};
   for (const [name, c] of Object.entries(R.cast)) {
+    if (!SPECS[c.spec]) throw new Error(`unknown cast spec ${c.spec} (SETS.md, Cast)`);
     const S = makeStick(SPECS[c.spec]); group.add(S.root);
     const posture = c.posture || 'stand', base = posture === 'sit' ? SIT : STAND;
     const pos = point(c.at).slice(); pos[2] = pos[2] || 0;
@@ -391,8 +395,30 @@ async function buildAct(R, X) {
       const A = shown[i], Bb = shown[j], b = T[Bb.name], lo = [0, 1, 2].map(k => Math.min(...b.map(p => p[k]))), hi = [0, 1, 2].map(k => Math.max(...b.map(p => p[k])));
       if (T[A.name].some(p => inBox(p, { lo, hi }, 0.01))) out.collide.push(`${A.name}.torso in ${Bb.name}.torso`);
     }
-    out.shotI = cam.shotIndex;
+    out.shotI = cam.shotIndex; out.set = R.set;
+    // what the viewer can see: every set prop and effect object that is shown, in front of the camera and covers at least
+    // 0.2 % of the frame (the story gates check a line's storyboard props / fx against this list)
+    stage.scene.updateMatrixWorld();
+    out.seen = [...new Set([...Object.keys(props), ...Object.keys(fxo)])].filter(n => onScreen(fxo[n]?.obj || props[n]?.isObject3D && props[n] || props[n]?.mesh));
     return out;
+  }
+  const box3 = new THREE.Box3(), bb = new THREE.Box3(), cv = new THREE.Vector3();
+  function onScreen(o) {
+    if (!o?.isObject3D) return false;
+    for (let q = o; q; q = q.parent) if (!q.visible) return false;
+    box3.makeEmpty();
+    o.traverseVisible(m => { if (!m.isMesh || !m.geometry) return; if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
+      bb.copy(m.geometry.boundingBox).applyMatrix4(m.matrixWorld); box3.union(bb); });
+    if (box3.isEmpty()) return false;
+    let x0 = 1, y0 = 1, x1 = -1, y1 = -1, n = 0;
+    for (let i = 0; i < 8; i++) {
+      cv.set(i & 1 ? box3.max.x : box3.min.x, i & 2 ? box3.max.y : box3.min.y, i & 4 ? box3.max.z : box3.min.z).project(stage.camera);
+      if (cv.z >= 1 || cv.z <= -1) continue; n++;
+      x0 = Math.min(x0, cv.x); x1 = Math.max(x1, cv.x); y0 = Math.min(y0, cv.y); y1 = Math.max(y1, cv.y);
+    }
+    if (!n) return false;
+    const w = Math.min(1, x1) - Math.max(-1, x0), h = Math.min(1, y1) - Math.max(-1, y0);
+    return w > 0 && h > 0 && w * h / 4 >= 0.002;
   }
 
   // camera speed = mean screen move of a 3x3 grid of world points fixed at the aim's depth (0.8 of the half frame), px at 720 wide
