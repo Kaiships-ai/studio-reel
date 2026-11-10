@@ -26,6 +26,12 @@ export function dress(stage) {
   // on the bench: a rack of coloured flasks, a burner, a microscope, a notebook; stools tucked behind
   D.put('flasks', [0.05, 0.72, T], 0, { seed: 3 }); D.put('burner', [-0.42, 0.95, T], 0); D.put('microscope', [0.45, 0.95, T], 20);
   for (const x of [-0.95, 0, 0.95]) D.put('stool', [x, 1.45, 0], 0, { c: 'blue' });
+  // stick06: head-height band behind the cast (close shots measured 7-12 pieces seen on stick06-robe v1): a shelf of jars
+  // over the bench, two hanging lights, a periodic-table poster and a goggles rack on the wall right behind the heads
+  D.put('shelf', [-0.9, WALL_Y - 0.12, 1.75], 0, { w: 1.3, h: 0.5, items: 'jars', seed: 9 }); D.put('shelf', [0.9, WALL_Y - 0.12, 1.75], 0, { w: 1.3, h: 0.5, items: 'jars', seed: 12 });
+  D.put('ceilinglight', [-1.0, 1.2, 3.3], 0); D.put('ceilinglight', [1.0, 1.2, 3.3], 0);
+  D.put('poster', [-1.95, WALL_Y - 0.03, 2.0], 0, { title: 'H He Li', bg: [0.95, 0.55, 0.30], shape: 'grid', seed: 5, w: 0.6, h: 0.8 });
+  D.put('frame', [1.95, WALL_Y - 0.03, 2.1], 0, {}); D.put('flasks', [-0.9, WALL_Y - 0.2, 2.04], 0, { seed: 14 });
   // the back wall: a wall clock over the board, posters (periodic table, safety), a notice board, pipes in the corners
   D.put('clock', [0, WALL_Y - 0.04, 3.05], 0); D.put('poster', [2.55, WALL_Y - 0.03, 2.2], 0, { title: 'ATOMS', bg: [0.35, 0.65, 0.95], shape: 'circle', w: 0.55, h: 0.75 });
   D.put('poster', [3.3, WALL_Y - 0.03, 2.2], 0, { title: 'GOGGLES!', bg: [1.0, 0.80, 0.16], shape: 'star', seed: 3, w: 0.55, h: 0.75 });

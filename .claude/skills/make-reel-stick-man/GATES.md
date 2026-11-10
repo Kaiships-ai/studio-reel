@@ -1,7 +1,7 @@
 # Gates
 
 `node styles/stick-man/tools/gates.mjs --report <stats.txt> --in <mp4> --film films/<slug> --out <gates.txt>` prints PASS/FAIL
-per gate (GATECOUNT) and exits 1 on any FAIL. The stats come from `shot.mjs --film films/<slug> --frames 0-<last> --report <stats.txt> --in <mp4>`
+per gate (22 picture, sound, acting and look gates, then 17 story gates: story, shot grammar, world and fx, acting plan, board, style judge, blind test) and exits 1 on any FAIL. The stats come from `shot.mjs --film films/<slug> --frames 0-<last> --report <stats.txt> --in <mp4>`
 (`--frames` is required; without `--in` the frame-difference lines are missing and those gates FAIL as "not in report").
 Never change a threshold to pass a reel: fix the reel data or the kit, or show Kai the FAIL.
 
@@ -45,6 +45,9 @@ their own hull, 5.4 % of head width); every plain MeshStandardMaterial gets the 
 gradient, hard blue-grey cast shadow, warm sun tint); a sun higher than 50 deg is lowered to 40 deg (longer shadows);
 light shafts ray-marched through the sun's shadow map; bloom on highlights. Captions (engine/captions.js `CAP`): 72 px
 weight 800, 6 px stroke outside, hard drop shadow.
+
+Colour per shot is fixed per set in `SET_GRADE` (engine/look.js: exposure, shadow lift, gamma, saturation after the
+grade pass), measured per set on a render, never by moving the gate. An act can override with `grade`.
 
 Measured 10/11 (Q1, `films/stick05-q1-{robe,dye}/review/*_q1r3-gates.txt`): robe ink median 4 px FAIL, colour per shot
 FAIL (park and lab YAVG 160-186); dye ink 3 px PASS, colour per shot FAIL (bank YLOW 30-33, street YLOW 105-111,

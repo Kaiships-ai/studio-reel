@@ -45,7 +45,12 @@ export function dress(stage) {
   D.put('scatter', [-1.2, -3.0, 0], 0, { w: 5, d: 2.4, kind: 'daisies', n: 26 }); D.put('scatter', [2.0, -4.6, 0], 0, { w: 4, d: 2, kind: 'daisies', n: 18, seed: 9 });
   D.put('ball', [1.3, -2.6, 0], 0, { c: 'red' }); D.put('basket', [-1.6, -1.5, 0], 20); D.put('frisbee', [0.8, -1.6, 0], 0); D.put('kite', [-0.6, -2.2, 0], 40);
   D.put('bucket', [2.0, -1.4, 0], 0, { c: 'blue' }); D.put('pigeons', [-0.3, 0.9, 0], 0, { n: 3, seed: 5 }); D.put('newspaper', [0.9, 0.8, 0], 0); D.put('cup', [-1.0, 0.8, 0], 0);
-  D.put('bikerack', [-2.2, 1.6, 0], 0, S); D.put('bike', [-2.0, 1.4, 0], 0, { c: 'green' }); D.put('scatter', [0, -1.25, 0], 0, { w: 6, d: 0.4, kind: 'leaves', n: 14 });
+  D.put('bikerack', [-2.2, 1.6, 0], 0, S); D.put('bike', [-2.0, 1.4, 0], 0, { c: 'green' });
+  // stick06: the band right behind the cast at head height (punch-ins, ots and low shots frame heads against it, measured
+  // 4-9 pieces seen there on stick06-robe v1): low bunting, two lamps, a big planter, bollards, a tree, a notice sign
+  D.put('bunting', [0, 1.5, 2.75], 0, { w: 5.5, seed: 4 }); D.put('lamp', [-1.75, 1.05, 0], 0, S); D.put('lamp', [1.9, 1.15, 0], 0, S);
+  D.put('plantbig', [-0.75, 1.3, 0], 0, S); D.put('bollard', [0.75, 1.2, 0], 0, S); D.put('bollard', [0.35, 1.25, 0], 0, S); D.put('tree', [2.6, 2.3, 0], 0, { s: 0.8 });
+  D.put('aboard', [-1.15, 1.05, 0], 12, { text: 'SHADE\nTHIS\nWAY', bg: [0.20, 0.55, 0.85], fg: [1, 1, 1], ...S }); D.put('birds', [0.4, 2.4, 3.4], 0, { n: 4, seed: 11 }); D.put('scatter', [0, -1.25, 0], 0, { w: 6, d: 0.4, kind: 'leaves', n: 14 });
 }
 
 export async function build(stage) {

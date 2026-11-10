@@ -41,6 +41,8 @@ Plain data modules, no code beyond small helpers. The runtime (`styles/stick-man
 | `shots` | list | camera, on which word (VERBS.md, Shots) |
 | `make` | `{ name: { kind, ... } }` | effects for this act (optional) |
 | `name`, `show`, `zRange`, `sun` | optional | as in an act below (`name` defaults to `lobby`) |
+| `glasses` | optional bool | every cast member's glasses on / off for the whole reel (a cast entry's own `glasses` wins); `false` = faces read by brows and eye shapes (stick06) |
+| `grade` | optional `{exp, lift, gam, sat}` | this act's colour grade over the set's `SET_GRADE` default (engine/look.js); per act too |
 
 ## `reel2.js`: more acts
 

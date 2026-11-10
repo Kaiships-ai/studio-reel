@@ -70,14 +70,19 @@ export function toonify(m, o = {}) {
 // one place to tune them for all sets at once
 export const SET_LOOK = { soft: 1.0, gain: 1.0, shade: [0.36, 0.43, 0.72], sheen: 0.45, rim: 0.0 };
 // per-set grade (colour per shot gate, GATES.md "Look gates"): exp scales the finished frame, lift raises the shadows
-// toward white (lift * (1 - c)), gam < 1 brightens the mids. Tuned per set against the reference tiles p10-p90
+// toward white (lift * (1 - c)), gam < 1 brightens the mids, sat scales saturation, haze scales the light-shaft density. Tuned per set against the reference tiles p10-p90
 // (YAVG 84-158, YLOW 36-101); an act can override with `grade: {exp, lift, gam}`.
 export const SET_GRADE = {
-  park: { exp: 0.86, lift: 0.0, gam: 1.06 },
-  lab: { exp: 0.86, lift: 0.0, gam: 1.06 },
-  'bank-lobby': { exp: 1.0, lift: 0.06, gam: 0.96 },
-  street: { exp: 0.90, lift: 0.0, gam: 1.04 },
-  cutaway: { exp: 0.86, lift: 0.0, gam: 1.06 },
+  // measured 10/11 on stick06-robe / stick06-levels v1 (per-set median YAVG / YLOW, full range) -> aim YAVG ~140, YLOW ~70
+  park: { exp: 0.86, gam: 1.06, lift: 0.03 },              // v1 129 / 60 (robe), 133 / 45 (levels)
+  lab: { exp: 0.90, gam: 1.0, sat: 1.25 },                 // v1 139 / 65, SAT 18 (low)
+  cutaway: { exp: 0.86, gam: 1.06 },                       // v1 134 / 54
+  'bank-lobby': { exp: 1.0, gam: 0.96, lift: 0.06 },      // Q1: YLOW 30-33 (too dark)
+  street: { exp: 1.0, lift: 0.09, sat: 1.25 },             // v1 117 / 29, SAT 20
+  'halden-street': { exp: 0.80, gam: 1.22, lift: 0.04, sat: 1.15, haze: 0.45 },   // v1 194 / 112; v2 traffic YLOW 21-28, SAT 12-17 (haze)
+  classroom: { exp: 0.86, gam: 1.23 },                     // v1 177 / 101
+  'halden-plaza': { exp: 0.84, gam: 1.13, sat: 1.3 },      // v1 175 / 95, SAT 18
+  island: { exp: 0.79, gam: 1.74 },                        // v1 207 / 139
 };
 
 export function std(rgb, rough, o = {}) {
@@ -139,7 +144,9 @@ class ShaftPass extends Pass {
   }
 }
 
-export function createStage({ width, height, exposure = 0.88, ink = 2.6, sat = 1.25, con = 1.12, vig = 0.28, split = 0.7, bloom = 1.1,
+// stick06 judge round 2 (lighting/shading 4/10 'flat, washed out, evenly lit'): sat 1.25 -> 1.38, con 1.12 -> 1.18, sky fill
+// 1.15 -> 0.85, sun lowered to <= 35 deg; set ink 2.6 -> 2.1 px (ink gate median 4 px; judge: set lines compete with figures)
+export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1.38, con = 1.18, vig = 0.30, split = 0.7, bloom = 1.1,
   hot = 0.38, shafts = 0.032, shaftK = 1.6, dofK = 0.55 } = {}) {
   const stage = {};                                               // late-bound parts (setSun runs before the passes exist)
   const px = height / 1920;                                       // every pixel-size number scales with this
@@ -159,15 +166,15 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.6, sat = 1
   sun.castShadow = true; sun.shadow.mapSize.set(4096, 4096);
   sun.shadow.bias = -0.0002; sun.shadow.normalBias = 0.006; sun.shadow.radius = 1.0;   // hard-edged cast shadows (reference)
   scene.add(sun, sun.target);
-  const hemi = new THREE.HemisphereLight(lin(0.44, 0.60, 1.0), lin(0.80, 0.68, 0.58), 1.15);
+  const hemi = new THREE.HemisphereLight(lin(0.44, 0.60, 1.0), lin(0.80, 0.68, 0.58), 0.85);
   scene.add(hemi);
   const fill = new THREE.DirectionalLight(lin(0.80, 0.84, 1.0), 0.45);
   scene.add(fill, fill.target);
 
   function setSun(dirB, centerB, half = 6) {
     const d = B(...dirB).normalize();
-    // a high sun (over ~50 deg) is lowered toward 40 deg: longer cast shadows that read on the ground, as in the reference
-    if (-d.y > 0.77) { const h = Math.hypot(d.x, d.z) || 1; d.set(d.x / h * 0.77, -0.64, d.z / h * 0.77).normalize(); }
+    // a high sun (over ~35 deg) is lowered to 35 deg: longer cast shadows that read on the ground, as in the reference
+    if (-d.y > 0.57) { const h = Math.hypot(d.x, d.z) || 1; d.set(d.x / h * 0.82, -0.57, d.z / h * 0.82).normalize(); }
     sun.target.position.copy(B(...centerB));
     sun.position.copy(sun.target.position).addScaledVector(d, -30);
     Object.assign(sun.shadow.camera, { left: -half, right: half, top: half, bottom: -half, near: 10, far: 50 });
@@ -320,9 +327,9 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.6, sat = 1
   const gradePass = new ShaderPass({
     uniforms: { tDiffuse: { value: null }, sat: { value: sat }, con: { value: con }, vig: { value: vig }, split: { value: split },
       aspect: { value: width / height }, tPrev: { value: null }, uPrev: { value: 0 }, uFlash: { value: 0 },
-      uExp: { value: 1 }, uLift: { value: 0 }, uGam: { value: 1 } },
+      uExp: { value: 1 }, uLift: { value: 0 }, uGam: { value: 1 }, uSat: { value: 1 } },
     vertexShader: FS_QUAD_V,
-    fragmentShader: `uniform sampler2D tDiffuse, tPrev; uniform float sat, con, vig, split, aspect, uPrev, uFlash, uExp, uLift, uGam; varying vec2 vUv;
+    fragmentShader: `uniform sampler2D tDiffuse, tPrev; uniform float sat, con, vig, split, aspect, uPrev, uFlash, uExp, uLift, uGam, uSat; varying vec2 vUv;
       void main(){ vec3 c = texture2D(tDiffuse, vUv).rgb; float l = dot(c, vec3(0.2126,0.7152,0.0722));
         c = mix(vec3(l), c, sat);
         // split tone: shade leans blue-lilac, light leans warm, like the sunlit reference sets
@@ -332,6 +339,7 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.6, sat = 1
         vec2 d = (vUv - 0.5)*vec2(aspect, 1.0); c *= 1.0 - vig*smoothstep(0.25, 0.75, length(d)*1.25);
         c = clamp(c, 0.0, 1.0);
         c = pow(c, vec3(uGam)) * uExp; c += uLift * (1.0 - c);               // per-set grade (SET_GRADE)
+        c = clamp(mix(vec3(dot(c, vec3(0.2126,0.7152,0.0722))), c, uSat), 0.0, 1.0);
         if (uPrev > 0.0) c = mix(c, texture2D(tPrev, vUv).rgb, uPrev);       // dissolve: the other act's finished frame on top
         c = mix(c, vec3(1.0, 0.99, 0.96), uFlash);                           // full-frame white flash
         gl_FragColor = vec4(c, 1.0); }` });
@@ -360,7 +368,7 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.6, sat = 1
   function render(o = {}) {
     const t0 = performance.now();
     gradePass.uniforms.uPrev.value = o.prev || 0; gradePass.uniforms.uFlash.value = Math.min(1, o.flash || 0);
-    const gr = o.grade || {}; gradePass.uniforms.uExp.value = gr.exp ?? 1; gradePass.uniforms.uLift.value = gr.lift ?? 0; gradePass.uniforms.uGam.value = gr.gam ?? 1;
+    const gr = o.grade || {}; if (stage.shafts) stage.shafts.march.material.uniforms.dens.value = shafts * (gr.haze ?? 1); gradePass.uniforms.uExp.value = gr.exp ?? 1; gradePass.uniforms.uLift.value = gr.lift ?? 0; gradePass.uniforms.uGam.value = gr.gam ?? 1; gradePass.uniforms.uSat.value = gr.sat ?? 1;
     camera.updateMatrixWorld();
     autoToon();
     prepass();
