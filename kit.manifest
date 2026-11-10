@@ -28,6 +28,8 @@ kit.manifest
 styles/kai-hand-draw/engine/kai-v3.js
 # Kai's 3D reels (Blocky Kai, casting book with real people and franchise nods): Kai's own use only
 styles/kai-reel-3d/
+# Stick-man 3D look (three.js): dev-only P0 slice (stage, cast, bank set) until it is proven
+styles/stick-man/
 .claude/skills/make-reel-3d/
 AGENT_LEARNING.md
 PLAN.md
