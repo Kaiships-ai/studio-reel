@@ -4,11 +4,12 @@
 //   node styles/stick-man/tools/gates.mjs --report films/x/review/x-stats.txt --in films/x/renders/x.mp4 [--out films/x/review/x-gates.txt]
 //     [--film films/x [--dbg films/x/review/x-dbg.jsonl]]
 // The report comes from: node styles/stick-man/tools/shot.mjs --film films/x --frames 0-<last> --report <stats.txt> --in <mp4>
-// --film adds the story gates (storyboard.json against __dbg: duration, sets, shot variety, props / fx use and presence,
+// --film adds the story gates (storyboard.json against __dbg: duration, sets, shot variety, shot grammar, props / fx use and presence,
 // and the judged board verdict review/board-verdict.json). Without --dbg it runs shot.mjs --dbg itself (~1 min).
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { run } from '../../../kit/env.mjs';
+import { decode, measure } from './look_measure.mjs';
 
 const A = {}; for (let i = 2; i < process.argv.length; i += 2) A[process.argv[i].replace(/^--/, '')] = process.argv[i + 1];
 if (!A.report || !A.in) { console.error('usage: gates.mjs --report <stats.txt> --in <reel.mp4> [--out <gates.txt>]'); process.exit(2); }
@@ -50,6 +51,19 @@ if (actors.length) {
   perActor('joint change', joint, 25, ' deg', '<= 25 deg/f');
   const cut = actors.filter(([, , b]) => !/head cut by the top edge: never/.test(b)).map(([, n, b]) => `${n} ${/head cut by the top edge: (.*)/.exec(b)?.[1]}`);
   gate('head never cut', !cut.length, cut.length ? cut.join('; ') : 'never', 'never');
+  // acting gates (GATES.md): every lead acts with the body >= 70 % of its in-frame frames
+  const ba = actors.map(([, n, b]) => { const m = /body acting: ([\d.]+) % of (\d+) lead frames/.exec(b); return m && +m[2] > 0 ? [n, +m[1], +m[2]] : null; }).filter(Boolean);
+  if (!actors.some(([, , b]) => /body acting:/.test(b))) missing('body acting');
+  else if (!ba.length) gate('body acting', false, 'no lead in frame', '>= 70 % per lead');
+  else { const low = ba.filter(x => x[1] < 70), w = ba.reduce((a, b) => (b[1] < a[1] ? b : a));
+    gate('body acting', !low.length, `lowest ${w[1]} % (${w[0]}, ${w[2]} f)${low.length ? '; under: ' + low.map(x => x[0]).join(', ') : ''}; ${ba.map(x => x[0] + ' ' + x[1]).join(', ')}`, '>= 70 % per lead'); }
+}
+const fg = /\(g\) faces: (\d+) distinct expressions on screen over ([\d.]+) s \(([^)]*)\); expression lead before its word: worst (-?\d+|-)(?: f \(([^)]*)\))?/.exec(R);
+if (!fg) { missing('expressions'); missing('expression lead'); }
+else {
+  const need = Math.ceil(5 * Math.max(30, +fg[2]) / 30);
+  gate('expressions', +fg[1] >= need, `${fg[1]} (${fg[3]})`, `>= ${need} per reel (5 / 30 s)`);
+  gate('expression lead', fg[4] === '-' || +fg[4] >= 3, fg[4] === '-' ? 'no worded changes' : `worst ${fg[4]} f before its word (${fg[5]})`, '>= 3 f before the word');
 }
 
 // small figures
@@ -96,6 +110,62 @@ if (!Y.length) missing('colour'); else {
   gate('colour SATAVG', med(S) >= 19 && med(S) <= 47, `median ${med(S).toFixed(1)} (range ${S[0].toFixed(0)}-${S[S.length - 1].toFixed(0)})`, 'median 19-47');
 }
 
+// ---------------------------------------------------------------- look gates (GATES.md "Look gates")
+// Reference numbers measured with the same code (tools/look_measure.mjs, ffmpeg signalstats) on ref-private frames:
+// 60 tiles of the two 30-tile reference sheets (colour, contrast) and 3 full-size frames (ink, caption).
+const LOOK = { ink: [2, 3], ratio: [0.235, 0.388], cap: 54, capTol: 0.10,
+  shot: { YAVG: [84, 158], SATAVG: [18.6, 46.4], YLOW: [36, 101] } };
+{
+  // per-sample signalstats (2 a second) in order; mp4 is tv range, the reference stills full range: convert to full
+  const per = []; let cur = null;
+  for (const l of ct.split('\n')) {
+    if (l.startsWith('frame:')) { cur = {}; per.push(cur); continue; }
+    const m = /signalstats\.(\w+)=([\d.]+)/.exec(l); if (m && cur) cur[m[1]] = Number(m[2]);
+  }
+  const fy = v => (v - 16) * 255 / 219, fc = v => v * 255 / 224;
+  const ratios = per.filter(x => x.YHIGH > 16).map(x => (x.YLOW - 16) / (x.YHIGH - 16)).sort((a, b) => a - b);
+  ratios.length ? gate('shadow contrast', med(ratios) >= LOOK.ratio[0] && med(ratios) <= LOOK.ratio[1],
+    `median ${med(ratios).toFixed(3)} (range ${ratios[0].toFixed(2)}-${ratios[ratios.length - 1].toFixed(2)})`, `P10/P90 luma ${LOOK.ratio.join('-')}`) : missing('shadow contrast');
+  // per shot: needs __dbg (shot index per frame)
+  const rows = await lookDbg();
+  if (!rows) { missing('colour per shot'); missing('caption height'); }
+  else {
+    const byF = new Map(rows.map(r => [r.f, r])), shots = new Map();
+    per.forEach((x, i) => { const r = byF.get(Math.round(i * 15)); if (!r) return; const k = `${r.act ?? ''}#${r.shotI} ${r.set}`;
+      (shots.get(k) || shots.set(k, []).get(k)).push(x); });
+    const bad = [];
+    for (const [k, xs] of shots) {
+      if (xs.length < 2) continue;
+      const m3 = { YAVG: med(xs.map(x => fy(x.YAVG)).sort((a, b) => a - b)), SATAVG: med(xs.map(x => fc(x.SATAVG)).sort((a, b) => a - b)), YLOW: med(xs.map(x => fy(x.YLOW)).sort((a, b) => a - b)) };
+      const off = Object.entries(LOOK.shot).filter(([q, [lo, hi]]) => m3[q] < lo || m3[q] > hi).map(([q]) => `${q} ${m3[q].toFixed(0)}`);
+      if (off.length) bad.push(`${k}: ${off.join(', ')}`);
+    }
+    gate('colour per shot', !bad.length, bad.length ? `out: ${bad.join('; ')}` : `${shots.size} shots in range`, 'YAVG 84-158, SAT 19-46, YLOW 36-101');
+    // ink + caption on 1 frame a second at 1080x1920
+    const fr = decode(A.in, 1), ink = [], cap = [];
+    fr.forEach((rgb, i) => { const m = measure(rgb); if (m.inkRuns > 50) ink.push(m.inkPx);
+      const t = byF.get(i * 30)?.caption; if (t && m.capPx > 0 && !/[gjpqy,;]/.test(t) && /[A-Zbdfhiklt]/.test(t)) cap.push(m.capPx); });
+    ink.sort((a, b) => a - b); cap.sort((a, b) => a - b);
+    ink.length ? gate('ink thickness', med(ink) >= LOOK.ink[0] && med(ink) <= LOOK.ink[1], `median ${med(ink)} px (${ink.length} frames, range ${ink[0]}-${ink[ink.length - 1]})`, `${LOOK.ink.join('-')} px at 1080 wide`) : missing('ink thickness');
+    const lo = LOOK.cap * (1 - LOOK.capTol), hi = LOOK.cap * (1 + LOOK.capTol);
+    cap.length ? gate('caption height', med(cap) >= lo && med(cap) <= hi, `median ${med(cap)} px (${cap.length} frames)`, `${lo.toFixed(1)}-${hi.toFixed(1)} px at 1920`) : missing('caption height');
+  }
+}
+// __dbg rows for --film (made once with shot.mjs --dbg at 540x960 and shared with the story gates through A.dbg)
+async function lookDbg() {
+  if (!A.film) return null;
+  if (!A.dbg) {
+    const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..'), F = p => path.join(ROOT, A.film, p);
+    const R1 = (await import(pathToFileURL(F('reel.js')).href)).default;
+    const R2 = fs.existsSync(F('reel2.js')) ? (await import(pathToFileURL(F('reel2.js')).href)).default : null;
+    const d = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'stick-look-')), 'dbg.jsonl');
+    const r = run('node', [path.join(ROOT, 'styles/stick-man/tools/shot.mjs'), '--film', A.film, '--frames', `0-${(R2 || R1).frames[1]}`, '--dbg', d, '--w', '540', '--h', '960'], { capture: true });
+    if (r.status) return null;
+    A.dbg = d;
+  }
+  return fs.readFileSync(A.dbg, 'utf8').trim().split('\n').map(l => JSON.parse(l));
+}
+
 const pad = (s, n) => String(s).padEnd(n);
 const fmt = ([n, got, ok, want]) => `${ok ? 'PASS' : 'FAIL'}  ${pad(n, 18)} ${pad(want, 20)} ${got}`;
 const lines = [`gates for ${path.basename(A.in)} (report ${path.basename(A.report)})`, ...G.map(fmt)];
@@ -116,9 +186,9 @@ async function story(film) {
   const SB = JSON.parse(fs.readFileSync(F('storyboard.json'), 'utf8')), script = JSON.parse(fs.readFileSync(F('vo/script.json'), 'utf8'));
   const words = JSON.parse(fs.readFileSync(F('vo/words.json'), 'utf8'));
   let dbg = A.dbg;
+  const R1 = (await import(pathToFileURL(F('reel.js')).href)).default;
+  const R2 = fs.existsSync(F('reel2.js')) ? (await import(pathToFileURL(F('reel2.js')).href)).default : null;
   if (!dbg) {
-    const R1 = (await import(pathToFileURL(F('reel.js')).href)).default;
-    const R2 = fs.existsSync(F('reel2.js')) ? (await import(pathToFileURL(F('reel2.js')).href)).default : null;
     const last = (R2 || R1).frames[1];
     dbg = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'stick-story-')), 'dbg.jsonl');
     const r = run('node', [path.join(ROOT, 'styles/stick-man/tools/shot.mjs'), '--film', film, '--frames', `0-${last}`, '--dbg', dbg, '--w', '540', '--h', '960'], { capture: true });
@@ -142,10 +212,22 @@ async function story(film) {
   let run1 = 1, worst = 1, at = main[0]?.[0];
   for (let i = 1; i < main.length; i++) { run1 = main[i][1] === main[i - 1][1] ? run1 + 1 : 1; if (run1 > worst) { worst = run1; at = `${main[i - run1 + 1][0]}-${main[i][0]} ${main[i][1]}`; } }
   sg('shot variety', worst <= 2, `longest run ${worst} line(s) alike${worst > 1 ? ' (' + at + ')' : ''}`, '<= 2 lines same set + shot');
+  // 3b shot grammar (camera.js kinds): how many kinds, no run of 3 lines in one kind, an establishing and an insert shot
+  const kindOf = r => (r.camera?.shot || '?').split('(')[0], kindN = {};
+  for (const r of rows) kindN[kindOf(r)] = (kindN[kindOf(r)] || 0) + 1;
+  const kinds = Object.entries(kindN).filter(([k, n]) => n >= 15 && k !== '?').map(([k]) => k), needK = Math.max(4, Math.round(4 * dur / 30));
+  sg('shot types', kinds.length >= needK, `${kinds.length}: ${kinds.join(', ')}`, `>= ${needK} kinds (>= 15 f each)`);
+  const lk = win.map(w => { const c = {}; for (const r of inWin(w)) c[kindOf(r)] = (c[kindOf(r)] || 0) + 1; return [w.id, Object.entries(c).sort((x, y) => y[1] - x[1])[0]?.[0] || '?']; });
+  let kr = 1, kw = 1, kat = lk[0]?.[0];
+  for (let i = 1; i < lk.length; i++) { kr = lk[i][1] === lk[i - 1][1] ? kr + 1 : 1; if (kr > kw) { kw = kr; kat = `${lk[i - kr + 1][0]}-${lk[i][0]} ${lk[i][1]}`; } }
+  sg('shot type run', kw <= 2, `longest run ${kw} line(s)${kw > 1 ? ' (' + kat + ')' : ''}; lines: ${lk.map(x => x[1]).join(' ')}`, '<= 2 lines same shot kind');
+  const est = kinds.filter(k => ['est', 'aerial'].includes(k)), ins = kinds.filter(k => ['insert', 'macro', 'top'].includes(k));
+  sg('establishing shot', est.length > 0, est.join(', ') || 'none', '>= 1 est / aerial');
+  sg('insert shot', ins.length > 0, ins.join(', ') || 'none', '>= 1 insert / macro / top');
   // 4 + 5 every line has an entry; its props / fx are seen (>= 3 frames in its window); >= 40 % of lines use one
   const noEntry = ids.filter(id => !E[id]), unseen = [], using = [];
   for (const w of win) {
-    const e = E[w.id]; if (!e) continue; const want = [...(e.props || []), ...(e.fx || [])], fr = inWin(w);
+    const e = E[w.id]; if (!e) continue; const want = [...(e.props || []), ...(e.fx || []), ...(e.labels || [])], fr = inWin(w);
     const miss = want.filter(n => fr.filter(r => (r.seen || []).includes(n)).length < 3);
     if (miss.length) unseen.push(`${w.id}: ${miss.join(' ')}`);
     if (want.length && miss.length < want.length) using.push(w.id);
@@ -154,13 +236,54 @@ async function story(film) {
   const share = using.length / ids.length;
   sg('props / fx used', share >= 0.4, `${Math.round(100 * share)} % (${using.length}/${ids.length}: ${using.join(' ') || '-'})`, '>= 40 % of lines');
   sg('props / fx seen', !unseen.length, unseen.length ? 'not on screen: ' + unseen.join('; ') : 'every listed prop / fx on screen in its line', 'listed = in __dbg seen');
-  // 6 judged: the board reviewer's verdict (GATES.md, reviewer prompt)
+  // 6-8 world and fx (GATES.md "World and fx gates"): dressing density, floating-label budget, every storyboard fx in the world
+  const ACTS = [{ ...R1, name: R1.name || 'lobby' }, ...(R2?.acts || [])].map(a => ({ name: a.name || a.set, make: a.make || {} }));
+  const makeKind = (act, n) => ACTS.find(a => a.name === act)?.make?.[n]?.kind;
+  // dressing: registered set pieces the camera sees (dress.js); cu frames, prop-only cutaway tables and dissolves left out
+  const DRESS_N = 16;                                       // distinct objects in the reference medium frame (wide: 21)
+  const dr = rows.filter(r => r.dress != null && r.mix == null && r.set !== 'cutaway' && !/^cu/.test(r.camera?.shot || ''));
+  if (!dr.length) sg('dressing density', false, 'no dress counts in __dbg (re-run shot.mjs --dbg)', `>= ${DRESS_N} pieces in 85 % of frames`);
+  else {
+    const ok = dr.filter(r => r.dress >= DRESS_N).length / dr.length, med = dr.map(r => r.dress).sort((a, b) => a - b)[dr.length >> 1];
+    const per = {}; for (const r of dr) (per[r.act] ||= []).push(r.dress);
+    const low = Object.entries(per).map(([a, v]) => [a, v.sort((x, y) => x - y)[v.length >> 1]]).filter(([, m]) => m < DRESS_N);
+    sg('dressing density', ok >= 0.85, `${Math.round(100 * ok)} % of ${dr.length} non-cu frames >= ${DRESS_N}, median ${med}${low.length ? '; low acts: ' + low.map(([a, m]) => `${a} ${m}`).join(', ') : ''}`, `>= ${DRESS_N} pieces in 85 % of frames`);
+  }
+  // floating labels: stamp / callout / bars / split entries seen >= 3 frames anywhere in the reel
+  const LABELS = ['stamp', 'callout', 'bars', 'split'], DIAGRAM = ['rings', 'flow', 'rays', 'star', 'shimmer'];   // lib/props/physfx.js
+  const lab = {}; for (const r of rows) for (const n of r.seen || []) if (LABELS.includes(makeKind(r.act, n))) lab[`${r.act}.${n}`] = (lab[`${r.act}.${n}`] || 0) + 1;
+  const labs = Object.entries(lab).filter(([, c]) => c >= 3).map(([k]) => k), budget = Math.round(3 * dur / 30);
+  sg('floating labels', labs.length <= budget, `${labs.length} (${labs.join(', ') || '-'})`, `<= ${budget} (3 per 30 s)`);
+  // every storyboard fx is an in-world kind (labels go in the entry's `labels`, never in `fx`)
+  const notWorld = [];
+  for (const w of win) { const e = E[w.id]; if (!e) continue; const acts = [...new Set(inWin(w).map(r => r.act))];
+    for (const n of e.fx || []) { const k = acts.map(a => makeKind(a, n)).find(Boolean); if (!k || LABELS.includes(k) || DIAGRAM.includes(k)) notWorld.push(`${w.id}.${n}${k ? ' (' + k + ')' : ' (no make entry)'}`); } }
+  sg('fx in world', !notWorld.length, notWorld.length ? notWorld.join(', ') : 'every storyboard fx is a physical object or event', 'no label / diagram kinds in fx');
+  // director rule: every line with a character on screen names its body action(s) in `act` (a known verb, never talk)
+  const known = new Set(fs.readFileSync(path.join(ROOT, 'styles/stick-man/engine/poses.js'), 'utf8').match(/^  (\w+): \{/gm).map(x => x.trim().slice(0, -3))
+    .concat(['walk_to', 'turn_to', 'startle', 'step_back', 'cough', 'point', 'wave_small', 'slump', 'pluck', 'let_fall', 'lift', 'drop_in', 'slide', 'sling', 'gesture', 'stand_up']));
+  const noAct = [];
+  for (const w of win) {
+    const e = E[w.id]; if (!e) continue; const people = inWin(w).filter(r => Object.values(r.actors).some(a => a.inFrame)).length >= 15;   // a character on screen >= 0.5 s of the line
+    const acts = Object.values(e.act || {}).flat().map(x => String(x).split(/[\s@]/)[0]);
+    if (people && (!acts.length || acts.some(v => !known.has(v)))) noAct.push(w.id + (acts.length ? ' (' + acts.filter(v => !known.has(v)).join(' ') + ')' : ''));
+  }
+  sg('acting plan', !noAct.length, noAct.length ? 'no body action named: ' + noAct.join(', ') : 'every line with a character names its body action', 'storyboard act per line');
+  // judged: the board reviewer's verdict (GATES.md, reviewer prompt)
   const vf = F('review/board-verdict.json');
   if (!fs.existsSync(vf)) sg('board shown', false, 'no review/board-verdict.json: run board.mjs, then the reviewer (GATES.md)', '>= 85 % shown');
   else {
     const V = JSON.parse(fs.readFileSync(vf, 'utf8')), L = V.lines || [], ok = L.filter(x => x.shown === true), no = L.filter(x => x.shown !== true).map(x => x.id);
     const cover = ids.every(id => L.some(x => x.id === id)), pct = L.length ? ok.length / ids.length : 0;
     sg('board shown', cover && pct >= 0.85, `${Math.round(100 * pct)} % (${ok.length}/${ids.length})${no.length ? '; not shown: ' + no.join(', ') : ''}${cover ? '' : '; verdict misses lines'}`, '>= 85 % shown');
+  }
+  // judged: style judge + blind test against the reference (tools/judge.mjs, GATES.md "Style judge"); --judge picks the file
+  const jf = A.judge ? path.resolve(A.judge) : F('review/judge.json');
+  if (!fs.existsSync(jf)) { sg('style judge', false, 'no review/judge.json: run judge.mjs (GATES.md)', 'mean >= 8.5, no category < 8'); sg('blind test', false, 'no review/judge.json', '<= 8 / 12 told apart'); }
+  else {
+    const J = JSON.parse(fs.readFileSync(jf, 'utf8')), low = Object.entries(J.categories).sort((a, b) => a[1] - b[1]);
+    sg('style judge', J.overall >= 8.5 && low[0][1] >= 8, `overall ${J.overall}, lowest ${low.slice(0, 3).map(([c, v]) => `${c} ${v}`).join(', ')}`, 'mean >= 8.5, no category < 8');
+    sg('blind test', !!J.blind && J.blind.separation <= 8, J.blind ? `${J.blind.separation}/12 told apart` : 'not run', '<= 8 / 12 told apart');
   }
   return T;
 }

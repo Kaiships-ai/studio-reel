@@ -9,6 +9,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { B, toon } from '../../engine/look.js';
+import { register } from './dress.js';
 
 export const ASSETS = '/styles/stick-man/assets';
 const SCENES = new Map();                                       // url -> Promise<THREE.Group> (parsed once per page)
@@ -60,9 +61,14 @@ export function glbKit(stage, pack, collide = []) {
   return {
     collide,
     async load(names) { await Promise.all(names.map(async n => { src[n] = await loadGlb(`${ASSETS}/${pack}/${n}.glb`); })); },
+    // the parts of a room modelled in place (tools/interiors.py): each at the origin, not solid, one dressing piece each;
+    // the `<set>_room` part (floor, walls, ceiling) casts no shadow so the ceiling never shades the room
+    decor(names) { return names.map(n => { const o = this.place(n, [0, 0, 0], 0, { solid: false, dressing: !/_room$/.test(n) });
+      if (/_room$/.test(n)) o.traverse(m => { if (m.isMesh) m.castShadow = false; }); return o; }); },
     // put a copy of piece `name` at Blender [x, y, z], turned rot degrees about z. Returns the group.
     // tint = [r, g, b] multiplies the piece's colours (e.g. warm a night-painted texture for a day set)
-    place(name, at, rot = 0, { scale = 1, ink = true, solid = true, band = [0.05, 1.8], grace, tint = null } = {}) {
+    // dressing: false = not a dressing piece for the dressing gate (floors, roads); solid: false pieces never count either
+    place(name, at, rot = 0, { scale = 1, ink = true, solid = true, band = [0.05, 1.8], grace, tint = null, dressing = solid } = {}) {
       if (!src[name]) throw new Error(`glb: ${pack}/${name} not loaded (call load() first)`);
       const g = src[name].clone(true);
       g.traverse(m => {
@@ -74,6 +80,7 @@ export function glbKit(stage, pack, collide = []) {
       scene.add(g); if (ink) prop(g);
       count[name] = (count[name] || 0) + 1;
       g.name = `${name}-${count[name]}`;
+      if (dressing) register(name, [g]);
       if (solid) { const b = bodyBox(g, band); if (b) collide.push({ name: g.name, ...b, ...(grace != null ? { grace } : {}) }); }
       return g;
     },

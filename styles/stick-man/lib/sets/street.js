@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { B, lin, css, std } from '../../engine/look.js';
 import { makeHatchback, makePoliceCar } from '../props/vehicles.js';
+import { dressKit, resetCollide } from './dress.js';
 
 export const SUN_DIR = [0.42, 0.62, -0.66];                     // direction the light travels: falls on the facade from front-left
 export const SUN_CENTER = [0.4, -3.0, 1.0], SUN_HALF = 10.0;    // one fixed shadow fit for the whole pavement
@@ -33,6 +34,34 @@ export const COLLIDE = [
   { name: 'hydrant', lo: [PLACES.hydrant[0] - 0.15, PLACES.hydrant[1] - 0.15, 0], hi: [PLACES.hydrant[0] + 0.15, PLACES.hydrant[1] + 0.15, 0.8] },
   { name: 'planter', lo: [PLACES.tree[0] - 0.55, PLACES.tree[1] - 0.55, 0], hi: [PLACES.tree[0] + 0.55, PLACES.tree[1] + 0.55, 0.5] },
 ];
+const BASE = COLLIDE.slice();
+// dressing (SETS.md "Dressing"): the bank's street on a working morning. Kept clear: the pavement x -3.6..4.2, y -4..-0.9
+// (door, crowd, officer marks) and the road x -4..2, y -7..-4 (police car)
+export function dress(stage) {
+  const D = dressKit(stage, COLLIDE), S = { solid: true };
+  // by the flower shop (left): buckets of flowers, an A-board, a bench, a bike, a news box, a phone booth further on
+  D.put('planter', [-6.2, -0.7, 0], 0, { w: 1.4, flowers: 'pink', ...S }); D.put('pot', [-4.6, -0.55, 0], 0, { c: 'cream', ...S }); D.put('pot', [-8.6, -0.55, 0], 0, { s: 0.8, ...S });
+  D.put('aboard', [-7.6, -1.6, 0], 10, { text: 'TULIPS\n2 FOR $5', bg: [0.12, 0.38, 0.24], ...S }); D.put('bike', [-9.6, -0.9, 0], 0, { c: 'red', solid: true }); D.put('newsbox', [-3.95, -0.45, 0], 0, { c: 'yellow', ...S });
+  D.put('phonebooth', [-11.8, -1.4, 0], 0, S); D.put('bin', [-5.2, -3.4, 0], 0, S);
+  // by the bakery (right): cafe tables, a bench, crates of bread, a bin, an advertising column at the kerb
+  D.put('cafetable', [5.4, -1.6, 0], 10, { c: 'red', ...S }); D.put('cafetable', [9.6, -1.4, 0], -15, { c: 'red', ...S }); D.put('crates', [6.8, -0.6, 0], 0, { c: 'cream', ...S });
+  D.put('aboard', [4.6, -0.7, 0], -10, { text: 'FRESH\nBREAD', bg: [0.20, 0.10, 0.18], fg: [1.0, 0.84, 0.50], ...S }); D.put('bin', [5.0, -3.4, 0], 0, { c: 'blue', ...S });
+  D.put('adcolumn', [11.4, -3.2, 0], 0, S); D.put('bench', [8.2, -0.75, 0], 0, { c: 'wood', ...S });
+  // the kerb: bollards, a bus-stop sign, leaves; across the road a cone pair; birds over the roofs
+  for (const x of [-8.0, -7.0, 6.4, 7.0]) D.put('bollard', [x, -3.8, 0], 0, S);
+  D.put('sign', [9.0, -3.75, 0], 0, { text: 'BUS 12', sub: 'CITY HALL', w: 0.55, h: 0.55, bg: [0.86, 0.16, 0.12], fg: [1, 1, 1], pole: 2.2, ...S });
+  D.put('cone', [4.6, -6.0, -0.16], 0); D.put('cone', [5.4, -6.2, -0.16], 0); D.put('scatter', [0, -2.8, 0.005], 0, { w: 7, d: 2, kind: 'leaves', n: 14 });
+  D.put('birds', [0, 4, 9.5], 0, { n: 6 }); D.put('acunit', [-7.4, -0.32, 4.4], 0); D.put('acunit', [7.2, -0.32, 4.2], 0);
+  // on the bank's own front (what the two-shots see): pots by the columns, wall lamps, plaques, an ATM, a camera, a bench
+  for (const x of [-2.75, 2.75]) D.put('pot', [x, -0.42, 0], 0, { c: 'cream', s: 1.1, ...S });
+  for (const x of [-1.22, 1.22]) D.put('walllamp', [x, -0.02, 2.35], 0);
+  D.put('plaque', [3.45, -0.02, 1.5], 0, { text: 'OPEN', sub: 'MON-FRI 9-5', w: 0.55, h: 0.45 }); D.put('plaque', [-1.25, -0.02, 1.0], 0, { text: 'NO\nDOGS', w: 0.3, h: 0.3, bg: [0.95, 0.92, 0.86], fg: [0.6, 0.1, 0.1] });
+  D.put('atm', [-3.45, -0.32, 0], 0, S); D.put('wallbox', [0.98, -0.02, 3.1], 0); D.put('bench', [3.55, -0.42, 0], 0, { len: 1.2, c: 'woodD', ...S });
+  D.put('manhole', [2.2, -3.4, 0.0], 0); D.put('roadmark', [3.0, -6.0, -0.155], 0, { len: 10 }); D.put('scatter', [5.5, -5.0, -0.155], 0, { w: 4, d: 2, kind: 'litter', n: 6 });
+  D.put('bunting', [-7.4, -1.0, 3.0], 0, { w: 6.2 });
+  D.put('pigeons', [2.6, -2.4, 0], 0, { n: 4 }); D.put('newspaper', [-0.6, -3.1, 0], 0); D.put('cup', [1.7, -2.0, 0], 0); D.put('puddle', [0.0, -3.85, 0], 0, { w: 1.4, d: 0.4 });
+  D.put('meterpost', [3.4, -3.8, 0], 0, S); D.put('shopbag', [-2.2, -1.2, 0], 10); D.put('hangbasket', [-2.75, -0.4, 2.6], 0); D.put('hangbasket', [2.75, -0.4, 2.6], 0); D.put('bunting', [7.4, -1.0, 2.9], 0, { w: 6.2, seed: 3 });
+}
 // the wide shot looks down the pavement toward -x (road on the left, buildings on the right)
 export const CAMERA_WIDE = { cam: [7.2, -3.3, 1.75], tgt: [-0.6, -2.5, 1.25], lens: 24 };
 // where a camera may go (x, y boxes): over the road and the near pavement, never inside a building
@@ -107,7 +136,8 @@ function skyTex() {
 export const OPTIONAL = ['police', 'bag'];
 export const build = (stage, opts) => buildStreet(stage, opts);
 export async function buildStreet(stage, { use = [] } = {}) {
-  const { scene, prop, glow } = stage;
+  resetCollide(COLLIDE, BASE);
+  const { scene, prop, glow } = stage, R = dressKit(stage); let s;
   const T = {
     stone: blocks({ c1: [0.80, 0.50, 0.26], c2: [0.74, 0.45, 0.23], mortar: [0.42, 0.25, 0.13], bw: 1.0, bh: 0.46, gap: 0.014, offset: 0.5, nx: 4, ny: 8 }),
     slab: blocks({ c1: [0.40, 0.33, 0.26], c2: [0.36, 0.29, 0.23], mortar: [0.19, 0.15, 0.13], bw: 0.6, bh: 0.6, gap: 0.016, offset: 0.5, nx: 6, ny: 6, ppm: 200, bevel: 0.6, seed: 13 }),
@@ -187,12 +217,14 @@ export async function buildStreet(stage, { use = [] } = {}) {
   for (let y = KERB_Y - 0.6; y > -19.6; y -= 1.0) box([6.3, y - 0.5, -0.16], [9.3, y, -0.155], M.paint, false);
 
   // ---------------------------------------------------------------- the bank facade
+  s = R.mark();
   const { X0, X1, H, T: FT } = FACADE, { x0, x1, h } = DOOR;
   box([X0, 0, 0], [x0, FT, H], M.stone, false);
   box([x1, 0, 0], [X1, FT, H], M.stone, false);
   box([x0, 0, h], [x1, FT, H], M.stone, false);
   for (const [a, b] of [[X0 - 0.04, x0 - 0.12], [x1 + 0.12, X1 + 0.04]]) box([a, -0.08, 0], [b, 0, 0.45], M.plinth);
   box([X0 - 0.12, -0.12, H], [X1 + 0.12, FT, H + 0.14], M.marble);
+  R.since(s, 'bank-facade'); s = R.mark();
   // columns with base and capital; their shadows fall across the stone
   for (const cx of [-1.70, 1.70]) {
     const cy = -0.48;
@@ -200,6 +232,7 @@ export async function buildStreet(stage, { use = [] } = {}) {
     cyl([cx, cy, 2.70], 0.25, 4.56, M.cream, 'Z', 40, 0.22);
     box([cx - 0.36, cy - 0.36, 4.98], [cx + 0.36, cy + 0.36, 5.20], M.marble);
   }
+  R.since(s, 'columns'); s = R.mark();
   // entablature with the green sign band and brass lettering, cornice above
   box([X0, -0.86, 5.20], [X1, 0, 6.00], M.cream);
   box([X0 - 0.14, -1.00, 6.00], [X1 + 0.14, 0, 6.18], M.marble);
@@ -216,6 +249,7 @@ export async function buildStreet(stage, { use = [] } = {}) {
       emissive: lin(1.0, 0.66, 0.14), emissiveIntensity: 0.12, emissiveMap: t });
     plane([0, -0.915, 5.60], 5.3, 5.3 * 300 / 2400, mat);
   }
+  R.since(s, 'bank-sign'); s = R.mark();
   // windows either side of the columns: glass, green bars like the lobby, marble sill, keystone
   for (const cx of [-3.05, 3.05]) {
     const wx = 0.5, z0 = 1.25, z1 = 4.35;
@@ -225,6 +259,7 @@ export async function buildStreet(stage, { use = [] } = {}) {
     box([cx - 0.62, -0.16, z0 - 0.10], [cx + 0.62, 0, z0], M.marble);
     box([cx - 0.16, -0.06, z1], [cx + 0.16, 0, z1 + 0.34], M.marble);
   }
+  R.since(s, 'bank-windows'); s = R.mark();
   // the doorway: casing, reveal, threshold, the lit lobby glimpsed through it, two leaves swung out onto the pavement
   box([x0 - 0.12, -0.06, 0], [x0, 0, h + 0.12], M.wood_dark);
   box([x1, -0.06, 0], [x1 + 0.12, 0, h + 0.12], M.wood_dark);
@@ -261,6 +296,7 @@ export async function buildStreet(stage, { use = [] } = {}) {
     props.sensor.set(0);
   }
 
+  R.since(s, 'bank-door'); s = R.mark();
   // ---------------------------------------------------------------- two neighbouring shops (invented names)
   const shops = [
     { a: -10.8, b: X0 - 0.05, wall: M.mint, wallY: M.mint_y, h: 5.6, sign: 'PEBBLE & FERN', sub: 'flowers', bg: [0.95, 0.92, 0.82], fg: [0.06, 0.30, 0.20],
@@ -301,14 +337,16 @@ export async function buildStreet(stage, { use = [] } = {}) {
       box([wx - 0.03, -0.06, 4.05], [wx + 0.03, -0.01, s.h - 0.35], s.frame);
     }
   }
+  R.since(s, 'shops'); s = R.mark();
   // further buildings down the street, plain and paler
   for (const [a, b, hh, c] of [[-24, -10.85, 9.0, [0.80, 0.78, 0.86]], [10.85, 16, 7.8, [0.84, 0.80, 0.70]], [16, 24, 10.5, [0.70, 0.78, 0.86]]]) {
     box([a, 0, 0], [b, 0.4, hh], std(c, 0.85), false);
     for (let x = a + 1.0; x + 1.0 < b; x += 2.2) for (let z = 1.2; z + 1.6 < hh; z += 2.4) box([x, -0.03, z], [x + 1.0, 0, z + 1.5], M.glass, false).castShadow = false;
   }
 
+  R.since(s, 'far-buildings');
   // ---------------------------------------------------------------- street furniture
-  {
+  s = R.mark(); {
     const [lx, ly] = PLACES.lamp;
     cyl([lx, ly, 0.25], 0.13, 0.5, M.lamp, 'Z', 24, 0.10);
     cyl([lx, ly, 2.4], 0.055, 3.9, M.lamp, 'Z', 16);
@@ -316,7 +354,7 @@ export async function buildStreet(stage, { use = [] } = {}) {
     cyl([lx, ly, 4.42], 0.20, 0.30, M.lampglass, 'Z', 6, 0.14).castShadow = false;
     cyl([lx, ly, 4.63], 0.03, 0.14, M.lamp, 'Z', 6, 0.24);
     sphere([lx, ly, 4.74], 0.05, M.lamp);
-  }
+  } R.since(s, 'lamp'); s = R.mark();
   {
     const [hx, hy] = PLACES.hydrant;
     cyl([hx, hy, 0.04], 0.17, 0.08, M.hydrant, 'Z', 24);
@@ -326,7 +364,7 @@ export async function buildStreet(stage, { use = [] } = {}) {
     cyl([hx, hy, 0.80], 0.035, 0.06, M.hydrant, 'Z', 12);
     cyl([hx, hy, 0.44], 0.055, 0.40, M.hydrant, 'X', 16);
     cyl([hx, hy - 0.12, 0.42], 0.07, 0.10, M.hydrant, 'Y', 16);
-  }
+  } R.since(s, 'hydrant'); s = R.mark();
   {
     const [mx, my] = PLACES.mailbox;
     for (const [ox, oy] of [[-0.18, -0.18], [0.18, -0.18], [-0.18, 0.18], [0.18, 0.18]]) box([mx + ox - 0.03, my + oy - 0.03, 0], [mx + ox + 0.03, my + oy + 0.03, 0.30], M.black);
@@ -335,17 +373,17 @@ export async function buildStreet(stage, { use = [] } = {}) {
     box([mx - 0.13, my - 0.255, 0.90], [mx + 0.13, my - 0.24, 0.95], M.black);
     const card = signTex('MAIL', { bg: [0.06, 0.20, 0.55], fg: [1, 1, 1], w: 512, h: 256, font: 'bold 150px Georgia, serif' });
     plane([mx, -0.26 + my, 0.62], 0.32, 0.16, new THREE.MeshStandardMaterial({ map: card, roughness: 0.6 }));
-  }
+  } R.since(s, 'mailbox'); s = R.mark();
   {
     const [tx, ty] = PLACES.tree;
     box([tx - 0.55, ty - 0.55, 0], [tx + 0.55, ty + 0.55, 0.50], M.planter);
     box([tx - 0.47, ty - 0.47, 0.50], [tx + 0.47, ty + 0.47, 0.52], M.soil, false);
     cyl([tx, ty, 1.55], 0.07, 2.1, M.bark, 'Z', 12, 0.05);
     for (const [ox, oy, oz, r] of [[0, 0, 3.0, 0.75], [-0.45, 0.1, 2.65, 0.52], [0.48, -0.05, 2.70, 0.55], [0.1, -0.35, 2.55, 0.45], [0.05, 0.2, 3.55, 0.48]]) sphere([tx + ox, ty + oy, oz], r, M.leaf);
-  }
+  } R.since(s, 'tree'); s = R.mark();
   {
     const hb = makeHatchback(stage, { body: [0.40, 0.66, 0.78] });
-    hb.position.copy(B(...MARKS.hatchback)); hb.position.y += -0.16; scene.add(hb); prop(hb);
+    hb.position.copy(B(...MARKS.hatchback)); hb.position.y += -0.16; scene.add(hb); prop(hb); R.register('hatchback', [hb]);
     if (use.includes('police')) {
       const pc = makePoliceCar(stage);
       pc.position.copy(B(...MARKS.police_stop)); pc.position.y += -0.16; pc.rotation.y = Math.PI; scene.add(pc); prop(pc);
@@ -360,6 +398,7 @@ export async function buildStreet(stage, { use = [] } = {}) {
     props.bag = bag;
   }
 
+  dress(stage);
   // ---------------------------------------------------------------- light: warm bounce off the sunlit pavement onto the facade
   stage.addBounce([0, -1.2, 0.4], [1.0, 0.78, 0.55], 1.4, 6.0);
   stage.addBounce([-6.5, -1.2, 0.4], [1.0, 0.78, 0.55], 1.0, 6.0);

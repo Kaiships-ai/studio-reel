@@ -23,6 +23,21 @@ origin stays: buildings face -y with the facade on y = 0, vehicles point +x, the
 high: sink it with the road so the pavement top is z = 0). A procedural (non-image) colour would need a Cycles bake to
 an image first; the Halden kit has none (44 image materials, 93 flat).
 
+## New sets from scratch (Q4: diner, workshop, classroom, harbour)
+
+`tools/interiors.py` models whole places headless from a factory scene (no source .blend): one collection
+`KIT_<set>_<part>` per real object (the room, its beams, the board, the window row, the counter, a stool...), low-poly
+boxes / cylinders / meshed text, flat colours, emissive signs. Export with the stock exporter in the same run:
+
+```
+Blender -b --factory-startup --python styles/stick-man/tools/interiors.py --python styles/stick-man/tools/export_glb.py \
+  -- --out styles/stick-man/assets/interiors --pieces <the INTERIORS line the script prints>
+```
+
+In the set: `g.decor([...parts])` places parts modelled in place (origin, not solid, one dressing piece each; `<set>_room`
+casts no shadow so the ceiling never shades the room); furniture goes through `g.place()` (solid, auto COLLIDE). Pack
+`assets/interiors/`: 49 pieces, 1.45 MB, export 1 s; render 18-48 ms/frame page-side on the proof reel.
+
 ## Framing presets
 
 A set exports `SHOTS = { wide, medium, close }` for an act's `shots` (`{ f, ...SHOTS.wide, of: [...] }`). The wide
