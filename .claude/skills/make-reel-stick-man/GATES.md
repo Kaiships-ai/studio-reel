@@ -1,7 +1,7 @@
 # Gates
 
 `node styles/stick-man/tools/gates.mjs --report <stats.txt> --in <mp4> --film films/<slug> --out <gates.txt>` prints PASS/FAIL
-per gate (15 picture/sound gates, then 7 story gates) and exits 1 on any FAIL. The stats come from `shot.mjs --film films/<slug> --frames 0-<last> --report <stats.txt> --in <mp4>`
+per gate (15 picture/sound gates, then 11 story gates) and exits 1 on any FAIL. The stats come from `shot.mjs --film films/<slug> --frames 0-<last> --report <stats.txt> --in <mp4>`
 (`--frames` is required; without `--in` the frame-difference lines are missing and those gates FAIL as "not in report").
 Never change a threshold to pass a reel: fix the reel data or the kit, or show Kai the FAIL.
 
@@ -34,6 +34,10 @@ itself, or takes `--dbg <jsonl>`.
 | duration | 27-33 s | frames / 30 | 30 s reels; reel 2 ran 33.9 s |
 | distinct sets | ≥ 3 | sets on screen ≥ 15 frames each (a `cutaway` act counts as a set) | reel 2: one street for 34 s |
 | shot variety | ≤ 2 lines alike | each line's main set + shot kind (most frames in its window); longest run of equal lines | no three lines in the same framing |
+| shot types | ≥ 4 kinds (≥ 4 per 30 s) | shot kinds (`camera.shot` before the bracket) on screen ≥ 15 frames each | reference cuts between macro, wide, top-down and aerial; reel 3 judged 2-3/10 on one medium angle |
+| shot type run | ≤ 2 lines | each line's main shot kind (set ignored); longest run of equal lines | same |
+| establishing shot | ≥ 1 | an `est` or `aerial` on screen ≥ 15 f | the reference opens places from above |
+| insert shot | ≥ 1 | an `insert`, `macro` or `top` on screen ≥ 15 f | the reference reads its numbers and props up close |
 | storyboard entries | every line | an entry per `vo/script.json` line | the plan exists before reel data |
 | props / fx used | ≥ 40 % of lines | lines whose entry lists a prop or fx and at least one is seen | beyond standing and talking |
 | props / fx seen | all | every listed prop / fx seen ≥ 3 frames in its line's window | the plan is really on screen |
@@ -69,6 +73,8 @@ cut, `films/stick01-dye-pack/storyboard.json`): 6 computed PASS, board shown FAI
 same picture plus a LOVELY DAY! speech bubble (l03, `dof: 0` on that close-up) and a ?! stamp (l06), l05 still word
 `explodes`; board 100 % (3 of 3 gates), all 7 story gates PASS; joint change still the one FAIL (29.9 deg, kai f401: the
 same on the data without the stamps, engine drift since v4b). Output: `films/stick01-dye-pack/review/reel1_v5-gates.txt`.
+Robe re-shot with the shot grammar (`stick05-q3-robe`, 10/11): 15/15 + 11/11 PASS (11 shot kinds, 31 shots, peak
+camera 22.8 px/f, board 89 %); the style judge still scored shot variety 3/10 (`review/judge.md`).
 Reel 2 (`stick02-black-robe`): duration 33.9 s, 1 set, 3 lines alike, board shown 33 % FAIL (`review/reel2-story-gates.txt`). Two rules settled 10/11: a face with
 expr `sleep` never counts toward a frozen run, and a frame with no figure in it (prop-only cutaway) never counts toward
 the small-figure run. Kai approved the video with these open; a new

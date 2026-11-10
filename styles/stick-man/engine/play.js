@@ -9,6 +9,7 @@ import { makeStick, KAI, TELLER, GUARD, EXPR, HEAD_C } from './cast.js';
 import { VERBS, STAND, SIT, REST_ARM, W, lerp, lerp3, add3, angDiff, toLocal, smoother, hash, handEase } from './verbs.js';
 import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, exprAccent, bodyFollow, LATE } from './acting.js';
 import { createCamera } from './camera.js';
+import { planShots } from './shotplan.js';
 import { createCaptions } from './captions.js';
 import { ACT, PROPV, MAKE, keyTracks } from './verbs_fx.js';
 import * as EXTRAS from '../lib/cast/extras.js';
@@ -313,7 +314,8 @@ async function buildAct(R, X) {
       return [h[0] + Math.sin(y) * fw + Math.cos(y) * sd, h[1] - Math.cos(y) * fw + Math.sin(y) * sd, h[2] + (spec.up || 0)]; }
     return add3(livePos(spec.prop), spec.off || [0, 0, 0]);
   } };
-  const camera = createCamera({ aspect: width / height, side: SET.CAMERA_SIDE, bounds: R.cameraRoom || SET.CAMERA_ROOM, zRange: R.zRange, actors: actors.map(a => a.name) });
+  const camera = createCamera({ aspect: width / height, side: SET.CAMERA_SIDE, bounds: R.cameraRoom || SET.CAMERA_ROOM, zRange: R.zRange,
+    zMax: R.zMax ?? SET.CAMERA_ZMAX, actors: actors.map(a => a.name) });
   // compile sees the real scene at each shot change (everything is a pure function of the frame)
   const shots = camera.compile(R.shots.map(s => ({ f: frameOf(s), kind: s.shot, subjects: s.of, opt: s })).sort((x, y) => x.f - y.f),
     (n, f) => { if (F.f !== f) poseAll(f); return anchor(n, f, livePos); }, F1 + 1);
@@ -344,7 +346,10 @@ async function buildAct(R, X) {
     const px = height / 1920;
     stage.camera.setViewOffset(width, height, cam.offset[0] * px, cam.offset[1] * px, width, height);
     stage.setCamera(cam.pos, cam.aim, cam.lens);
-    if (cam.dof > 0.02) { const d = Math.hypot(...cam.pos.map((x, i) => x - cam.focus[i])); stage.setDof({ near: d * 0.86, far: d * 1.22, gain: 2.4 * cam.dof, px: 14 }); }
+    if (cam.roll) { stage.camera.rotateZ(cam.roll * Math.PI / 180); stage.camera.updateMatrixWorld(); }   // dutch tilt
+    // depth of field: a band round the focus (macro: a thin one, so the prop and its label stay sharp and the room melts)
+    if (cam.dof > 0.02) { const d = Math.hypot(...cam.pos.map((x, i) => x - cam.focus[i])), bd = cam.band || [0.86, 1.22];
+      stage.setDof({ near: d * bd[0], far: d * bd[1], gain: 2.4 * cam.dof, px: cam.band ? 20 : 14 }); }
     else stage.setDof(null);
     for (const h of Object.values(fxo)) h.post?.(cam.pos);
     for (const a of actors) faceActor(a, f, cam.pos);
@@ -457,6 +462,32 @@ async function buildAct(R, X) {
   return { name: R.name || R.set, R, group, background, update, dbg, motion, cues, actors, frameOf, flash: f => KT.at('screen', 'flash', f, 0) || 0 };
 }
 
+// storyboard lines the reel data does not shoot get planned shots (shotplan.js): each line goes to the act on screen at
+// its first word, with that act's cast, the line's fx / props (the one fired first first) and its key word
+function autoShots(defs, SB, words, fps, F1, ids) {
+  if (!SB?.lines) return;
+  const fr = x => typeof x === 'number' ? x : resolveBeatFrame(x, words, fps), E = Object.fromEntries(SB.lines.map(e => [e.id, e]));
+  const starts = defs.flatMap((d, k) => d.show.map(w => ({ k, a: fr(w.from) }))).sort((x, y) => x.a - y.a);
+  const actAt = f => { let j = 0; while (j + 1 < starts.length && starts[j + 1].a <= f) j++; return starts[j]; };
+  const t0 = id => words.find(w => w.line === id)?.t0, A = ids.map(id => Math.round(t0(id) * fps));
+  const lines = ids.map((id, i) => {
+    const a = A[i], s = actAt(a + 3), d = defs[s.k], e = E[id] || {};
+    const cut = starts.find(x => x.a > a + 3 && x.k !== s.k)?.a ?? Infinity, b = Math.min(i + 1 < ids.length ? A[i + 1] : F1 + 1, cut);   // another act cuts in
+    const explicit = (d.shots || []).filter(x => { const f = fr(x); return f >= a - 6 && f < b - 6; }).map(x => x.shot);
+    const kw = e.still || e.on, w = kw && words.find(x => x.line === id && x.word.toLowerCase().replace(/[^a-z0-9']/g, '') === kw.toLowerCase());
+    const beats = (d.beats || []).map(x => { try { return { ...x, at: fr(x) }; } catch { return null; } }).filter(x => x && x.at >= a - 10 && x.at < b);
+    // size = metres a macro takes in across the frame, lift = its centre above the object's origin (a thermometer stands on its bulb)
+    const size = m => m.kind === 'thermo' ? { size: 0.62 * (m.scale ?? 1), lift: 0.26 * (m.scale ?? 1) } : m.kind === 'stamp' ? { size: Math.max(0.45, (m.h ?? 0.3) * (String(m.text || '').length * 0.62 + 0.8)) } : {};
+    const things = [...(e.fx || []).filter(n => d.make?.[n]).map(n => ({ name: n, kind: d.make[n].kind, ...size(d.make[n]) })), ...(e.props || []).map(n => ({ name: n, kind: 'prop' }))]
+      .map(t => ({ ...t, beats: beats.filter(x => x.who === t.name).map(x => x.at).sort((p, q) => p - q) }));
+    const beatsBy = {}; for (const x of beats) if (d.cast?.[x.who]) beatsBy[x.who] = (beatsBy[x.who] || 0) + 1;
+    return { id, a, b, key: w ? Math.round(w.t0 * fps) : null, text: words.filter(x => x.line === id).map(x => x.word).join(' '), entry: e, things, explicit,
+      act: { name: String(s.k), start: s.a, actors: Object.keys(d.cast || {}), beatsBy } };
+  });
+  const out = planShots(lines);
+  for (const [k, list] of Object.entries(out)) defs[+k].shots = [...(defs[+k].shots || []), ...list];
+}
+
 // internal cue names -> the sound bank (tools/sound_bank.py); steps alternate left / right
 const SOUND = { cash_lift: 'rustle', bundle_drop: 'thud', paper_slide: 'slide', swoosh: 'whoosh', sensor_beep: 'beep', glint: 'ting' };
 const BANK = new Set(['slide', 'thud', 'rustle', 'ting', 'ding', 'whoosh', 'step_l', 'step_r', 'beep', 'tick', 'poof', 'hiss', 'scratch', 'pop', 'snore',
@@ -475,6 +506,7 @@ export async function boot({ film, width, height }) {
   const X = { stage, words, fps, F0, F1, width, height, cap }, bg0 = stage.scene.background;
   const defs = [{ ...R1, name: R1.name || 'lobby', show: R1.show || [{ from: R1.frames[0] }] }, ...(R2?.acts || [])];
   for (const am of R2?.amend || []) { const d = defs.find(x => x.name === am.act); d.shots = [...d.shots, ...(am.shots || [])]; d.beats = [...d.beats, ...(am.beats || [])]; }
+  autoShots(defs, await getJSON(`/${film}/storyboard.json`), words, fps, F1, [...R1.lines, ...(R2?.lines || [])]);
   const acts = [];
   for (const d of defs) acts.push(await buildAct(d, X));
   // windows: act k is on screen from its `from`; a dissolve of n frames is centred on that frame
