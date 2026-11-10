@@ -1,6 +1,7 @@
 // Word-by-word captions from words.json: 1-3 words per chunk, swapped on the frame that contains the chunk's first
 // word t0. Drawn on a 2D canvas over the WebGL one (round-joined stroke, which CSS text-stroke cannot do).
 const MAX_WORDS = 3, MAX_CHARS = 14;
+export const CAP = { size: 72, weight: 800, stroke: 6 };   // px at 1080 wide; stroke = px outside the glyph
 const clean = w => w.replace(/^["“]+|["”]+$/g, '').replace(/[.,;:"”]+$/g, '');
 
 export function chunkWords(words, lines) {
@@ -30,13 +31,15 @@ export function createCaptions({ words, lines, fps, width, height, font = 'Inter
     g.clearRect(0, 0, width, height);
     const c = chunkAt(f); if (!c) return null;
     const age = f - Math.ceil(c.t0 * fps - 1e-6), pop = age < 3 ? 1 + 0.06 * (1 - age / 3) : 1;
-    let size = 104 * k;
-    g.font = `900 ${size}px ${font}`;
-    const w = g.measureText(c.text).width; if (w > 940 * k) { size *= 940 * k / w; g.font = `900 ${size}px ${font}`; }
+    // measured on the reference frames (GATES.md "Look gates"): ascender height 54 px at 1920 tall, a ~6 px black
+    // stroke outside the glyph, a hard drop shadow down-right; bold, not black weight; centre at 70 % of the height
+    let size = CAP.size * k;
+    g.font = `${CAP.weight} ${size}px ${font}`;
+    const w = g.measureText(c.text).width; if (w > 940 * k) { size *= 940 * k / w; g.font = `${CAP.weight} ${size}px ${font}`; }
     g.save(); g.translate(width / 2, height * 0.70); g.scale(pop, pop);
     g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.miterLimit = 2;
-    g.shadowColor = 'rgba(0,0,0,0.45)'; g.shadowBlur = 18 * k; g.shadowOffsetY = 6 * k;
-    g.lineWidth = 22 * k; g.strokeStyle = '#000'; g.strokeText(c.text, 0, 0);   // 11 px outside the glyph
+    g.shadowColor = 'rgba(0,0,0,0.85)'; g.shadowBlur = 2 * k; g.shadowOffsetX = 3 * k; g.shadowOffsetY = 4 * k;
+    g.lineWidth = 2 * CAP.stroke * k; g.strokeStyle = '#000'; g.strokeText(c.text, 0, 0);
     g.shadowColor = 'transparent'; g.fillStyle = '#fff'; g.fillText(c.text, 0, 0);
     g.restore();
     return c.text;

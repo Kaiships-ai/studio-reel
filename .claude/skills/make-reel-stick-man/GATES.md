@@ -1,7 +1,7 @@
 # Gates
 
 `node styles/stick-man/tools/gates.mjs --report <stats.txt> --in <mp4> --film films/<slug> --out <gates.txt>` prints PASS/FAIL
-per gate (15 picture/sound gates, then 10 story gates: 7 story + 3 world and fx) and exits 1 on any FAIL. The stats come from `shot.mjs --film films/<slug> --frames 0-<last> --report <stats.txt> --in <mp4>`
+per gate (15 picture/sound gates, 4 look gates, then 10 story gates: 7 story + 3 world and fx) and exits 1 on any FAIL. The stats come from `shot.mjs --film films/<slug> --frames 0-<last> --report <stats.txt> --in <mp4>`
 (`--frames` is required; without `--in` the frame-difference lines are missing and those gates FAIL as "not in report").
 Never change a threshold to pass a reel: fix the reel data or the kit, or show Kai the FAIL.
 
@@ -22,6 +22,30 @@ Never change a threshold to pass a reel: fix the reel data or the kit, or show K
 | true peak | ≤ -1 dBTP | ffmpeg ebur128 true peak, on the mp4 audio | house target |
 | colour YAVG | median 109-163 | signalstats YAVG, 2 frames a second, median | 7 reference frames, `STYLE.md` Màu |
 | colour SATAVG | median 19-47 | signalstats SATAVG, same samples, median | 7 reference frames, `STYLE.md` Màu |
+
+## Look gates (picture style against the reference, measured on the mp4)
+
+Same code on our mp4 and on the reference: `tools/look_measure.mjs` (ink, caption) and ffmpeg signalstats (colour,
+contrast). Reference numbers: 60 tiles of `ref_sheet30_pink.jpg` + `ref_sheet30_rail.jpg` and the 3 full-size frames
+`ref_close/medium/wide.jpg` (ink, caption). The mp4 is tv range, the stills full range: shadow contrast and per-shot
+colour convert to full range first. Per shot and caption need `--film` (shot index and caption text from `__dbg`).
+
+| Gate | Threshold | Measured as | Reference |
+|---|---|---|---|
+| shadow contrast | median 0.235-0.388 | (YLOW-16)/(YHIGH-16) per sample (P10 / P90 luma), 2 a second, median | tiles p25-p75 (median 0.289) |
+| colour per shot | YAVG 84-158, SATAVG 19-46, YLOW 36-101 | per shot (act + shot index, ≥ 2 samples), median of each | tiles p10-p90 |
+| ink thickness | median 2-3 px at 1080 wide | thin dark runs (1-14 px, Y < 72, both sides ≥ 45 brighter and > 90) on rows and columns, caption band 60-80 % left out; median width per frame (frames with > 50 runs), median of 1 frame a second | 3 full frames: 3, 2, 2 px |
+| caption height | 54 px ± 10 % at 1920 tall | white glyph rows next to black stroke in the band 60-80 %, tallest run; only frames whose caption has an ascender or capital and no descender | `ref_wide` "Then" 54 px (tiles x4: 49-51) |
+
+Engine side (engine/look.js, one look for every set): every set and prop mesh gets the screen ink (stick figures keep
+their own hull, 5.4 % of head width); every plain MeshStandardMaterial gets the set toon ramp (`SET_LOOK`: form
+gradient, hard blue-grey cast shadow, warm sun tint); a sun higher than 50 deg is lowered to 40 deg (longer shadows);
+light shafts ray-marched through the sun's shadow map; bloom on highlights. Captions (engine/captions.js `CAP`): 72 px
+weight 800, 6 px stroke outside, hard drop shadow.
+
+Measured 10/11 (Q1, `films/stick05-q1-{robe,dye}/review/*_q1r3-gates.txt`): robe ink median 4 px FAIL, colour per shot
+FAIL (park and lab YAVG 160-186); dye ink 3 px PASS, colour per shot FAIL (bank YLOW 30-33, street YLOW 105-111,
+cutaway YAVG 174-179); shadow contrast and caption height PASS on both.
 
 ## Story gates (`--film`: storyboard.json against `__dbg`, no human)
 

@@ -9,6 +9,7 @@
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { run } from '../../../kit/env.mjs';
+import { decode, measure } from './look_measure.mjs';
 
 const A = {}; for (let i = 2; i < process.argv.length; i += 2) A[process.argv[i].replace(/^--/, '')] = process.argv[i + 1];
 if (!A.report || !A.in) { console.error('usage: gates.mjs --report <stats.txt> --in <reel.mp4> [--out <gates.txt>]'); process.exit(2); }
@@ -94,6 +95,62 @@ const Y = col1('YAVG'), S = col1('SATAVG');
 if (!Y.length) missing('colour'); else {
   gate('colour YAVG', med(Y) >= 109 && med(Y) <=163, `median ${med(Y).toFixed(1)} (range ${Y[0].toFixed(0)}-${Y[Y.length - 1].toFixed(0)}, ${Y.length} samples)`, 'median 109-163');
   gate('colour SATAVG', med(S) >= 19 && med(S) <= 47, `median ${med(S).toFixed(1)} (range ${S[0].toFixed(0)}-${S[S.length - 1].toFixed(0)})`, 'median 19-47');
+}
+
+// ---------------------------------------------------------------- look gates (GATES.md "Look gates")
+// Reference numbers measured with the same code (tools/look_measure.mjs, ffmpeg signalstats) on ref-private frames:
+// 60 tiles of the two 30-tile reference sheets (colour, contrast) and 3 full-size frames (ink, caption).
+const LOOK = { ink: [2, 3], ratio: [0.235, 0.388], cap: 54, capTol: 0.10,
+  shot: { YAVG: [84, 158], SATAVG: [18.6, 46.4], YLOW: [36, 101] } };
+{
+  // per-sample signalstats (2 a second) in order; mp4 is tv range, the reference stills full range: convert to full
+  const per = []; let cur = null;
+  for (const l of ct.split('\n')) {
+    if (l.startsWith('frame:')) { cur = {}; per.push(cur); continue; }
+    const m = /signalstats\.(\w+)=([\d.]+)/.exec(l); if (m && cur) cur[m[1]] = Number(m[2]);
+  }
+  const fy = v => (v - 16) * 255 / 219, fc = v => v * 255 / 224;
+  const ratios = per.filter(x => x.YHIGH > 16).map(x => (x.YLOW - 16) / (x.YHIGH - 16)).sort((a, b) => a - b);
+  ratios.length ? gate('shadow contrast', med(ratios) >= LOOK.ratio[0] && med(ratios) <= LOOK.ratio[1],
+    `median ${med(ratios).toFixed(3)} (range ${ratios[0].toFixed(2)}-${ratios[ratios.length - 1].toFixed(2)})`, `P10/P90 luma ${LOOK.ratio.join('-')}`) : missing('shadow contrast');
+  // per shot: needs __dbg (shot index per frame)
+  const rows = await lookDbg();
+  if (!rows) { missing('colour per shot'); missing('caption height'); }
+  else {
+    const byF = new Map(rows.map(r => [r.f, r])), shots = new Map();
+    per.forEach((x, i) => { const r = byF.get(Math.round(i * 15)); if (!r) return; const k = `${r.act ?? ''}#${r.shotI} ${r.set}`;
+      (shots.get(k) || shots.set(k, []).get(k)).push(x); });
+    const bad = [];
+    for (const [k, xs] of shots) {
+      if (xs.length < 2) continue;
+      const m3 = { YAVG: med(xs.map(x => fy(x.YAVG)).sort((a, b) => a - b)), SATAVG: med(xs.map(x => fc(x.SATAVG)).sort((a, b) => a - b)), YLOW: med(xs.map(x => fy(x.YLOW)).sort((a, b) => a - b)) };
+      const off = Object.entries(LOOK.shot).filter(([q, [lo, hi]]) => m3[q] < lo || m3[q] > hi).map(([q]) => `${q} ${m3[q].toFixed(0)}`);
+      if (off.length) bad.push(`${k}: ${off.join(', ')}`);
+    }
+    gate('colour per shot', !bad.length, bad.length ? `out: ${bad.join('; ')}` : `${shots.size} shots in range`, 'YAVG 84-158, SAT 19-46, YLOW 36-101');
+    // ink + caption on 1 frame a second at 1080x1920
+    const fr = decode(A.in, 1), ink = [], cap = [];
+    fr.forEach((rgb, i) => { const m = measure(rgb); if (m.inkRuns > 50) ink.push(m.inkPx);
+      const t = byF.get(i * 30)?.caption; if (t && m.capPx > 0 && !/[gjpqy,;]/.test(t) && /[A-Zbdfhiklt]/.test(t)) cap.push(m.capPx); });
+    ink.sort((a, b) => a - b); cap.sort((a, b) => a - b);
+    ink.length ? gate('ink thickness', med(ink) >= LOOK.ink[0] && med(ink) <= LOOK.ink[1], `median ${med(ink)} px (${ink.length} frames, range ${ink[0]}-${ink[ink.length - 1]})`, `${LOOK.ink.join('-')} px at 1080 wide`) : missing('ink thickness');
+    const lo = LOOK.cap * (1 - LOOK.capTol), hi = LOOK.cap * (1 + LOOK.capTol);
+    cap.length ? gate('caption height', med(cap) >= lo && med(cap) <= hi, `median ${med(cap)} px (${cap.length} frames)`, `${lo.toFixed(1)}-${hi.toFixed(1)} px at 1920`) : missing('caption height');
+  }
+}
+// __dbg rows for --film (made once with shot.mjs --dbg at 540x960 and shared with the story gates through A.dbg)
+async function lookDbg() {
+  if (!A.film) return null;
+  if (!A.dbg) {
+    const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..'), F = p => path.join(ROOT, A.film, p);
+    const R1 = (await import(pathToFileURL(F('reel.js')).href)).default;
+    const R2 = fs.existsSync(F('reel2.js')) ? (await import(pathToFileURL(F('reel2.js')).href)).default : null;
+    const d = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'stick-look-')), 'dbg.jsonl');
+    const r = run('node', [path.join(ROOT, 'styles/stick-man/tools/shot.mjs'), '--film', A.film, '--frames', `0-${(R2 || R1).frames[1]}`, '--dbg', d, '--w', '540', '--h', '960'], { capture: true });
+    if (r.status) return null;
+    A.dbg = d;
+  }
+  return fs.readFileSync(A.dbg, 'utf8').trim().split('\n').map(l => JSON.parse(l));
 }
 
 const pad = (s, n) => String(s).padEnd(n);
