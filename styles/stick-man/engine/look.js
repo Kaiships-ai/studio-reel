@@ -145,9 +145,10 @@ class ShaftPass extends Pass {
 }
 
 // stick06 judge round 2 (lighting/shading 4/10 'flat, washed out, evenly lit'): sat 1.25 -> 1.38, con 1.12 -> 1.18, sky fill
-// 1.15 -> 0.85, sun lowered to <= 35 deg; set ink 2.6 -> 2.1 px (ink gate median 4 px; judge: set lines compete with figures)
+// 1.15 -> 0.85, sun lowered to <= 35 deg; set ink 2.6 -> 2.1 px (ink gate median 4 px; judge: set lines compete with figures);
+// round 3 ('washed out, hazy overlays'): highlight bloom 0.38 -> 0.28, shafts 0.032 -> 0.024
 export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1.38, con = 1.18, vig = 0.30, split = 0.7, bloom = 1.1,
-  hot = 0.38, shafts = 0.032, shaftK = 1.6, dofK = 0.55 } = {}) {
+  hot = 0.28, shafts = 0.024, shaftK = 1.6, dofK = 0.55 } = {}) {
   const stage = {};                                               // late-bound parts (setSun runs before the passes exist)
   const px = height / 1920;                                       // every pixel-size number scales with this
   const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: true });
