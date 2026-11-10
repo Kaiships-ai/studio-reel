@@ -1,0 +1,77 @@
+// stick03-robe, act 1: the park at noon, lines l01-l03 (frames 0-358). Data only: beats name a word, the runtime does the timing.
+// Schema: .claude/skills/make-reel-stick-man/REEL_DATA.md · verbs: VERBS.md · sets, props, cast: SETS.md.
+const at = (line, on, offset = -2, nth) => ({ line, on, offset, ...(nth ? { nth } : {}) });
+
+export default {
+  title: 'Black robe, white robe',
+  fps: 30,
+  frames: [0, 358],
+  set: 'park',
+  name: 'park',
+  zRange: [1.1, 1.9],
+  lines: ['l01', 'l02', 'l03'],
+  cast: {
+    wren: { spec: 'WREN', at: [-0.62, 0.35, 0], yaw: 20, expr: 'happy', focus: 'camera' },
+    bram: { spec: 'BRAM', at: [0.62, 0.35, 0], yaw: -20, expr: 'smug', focus: 'camera' },
+  },
+  make: {
+    haze: { kind: 'shimmer', at: [0, -0.6, 0.05], w: 2.6, h: 0.7, n: 4 },
+    vs: { kind: 'split', at: [0, -0.25, 0], h: 2.3, gap: 1.2, labels: ['WHITE', 'BLACK'] },
+    bounce: { kind: 'rays', from: 'sun', hit: { head: 'wren', up: -0.42, fwd: 0.12 }, out: [-1.7, -1.6, 2.5], life: 2.4 },
+    wcall: { kind: 'callout', at: { head: 'wren', up: -0.45 }, r: 0.22, text: 'BOUNCES', dir: [0.5, 2.4], h: 0.12 },
+    bcall: { kind: 'callout', at: { head: 'bram', up: -0.45 }, r: 0.22, text: 'SOAKS UP', dir: [-0.5, 2.4], h: 0.12 },
+    soak: { kind: 'rays', from: 'sun', hit: { head: 'bram', up: -0.42, fwd: 0.12 }, absorb: true, life: 3.2 },
+    heat: { kind: 'shimmer', at: { head: 'bram', up: -0.7, fwd: -0.18 }, w: 1.0, h: 1.2 },
+    outside: { kind: 'callout', at: { head: 'bram', up: -0.5 }, r: 0.20, text: 'OUTSIDE', dir: [-1.4, 1.2], h: 0.11 },
+    plus6: { kind: 'stamp', at: { head: 'bram', side: 0.36, up: 0.40, fwd: 0.1 }, text: '+6°C', h: 0.26 },
+  },
+  beats: [
+    // frame 0 is mid-walk: both stride out onto the hot path
+    { f: -14, who: 'wren', do: 'walk_to', to: [-0.62, -0.2, 0], stride: 0.5, step: 10 },
+    { f: -14, who: 'bram', do: 'walk_to', to: [0.62, -0.2, 0], stride: 0.5, step: 10 },
+    // l01 The hottest day of the year. Wren wears white, Bram wears black. Who cooks first?
+    { ...at('l01', 'hottest'), who: 'haze', do: 'set', key: 'heat', to: 1, dur: 12, from: 0, sound: 'sizzle', strength: 0.4 },
+    { ...at('l01', 'year'), who: 'wren', look: 'camera' },
+    { ...at('l01', 'wren', 2), who: 'wren', do: 'wave_small', hand: 'R', n: 3, per: 6, expr: 'happy' },
+    { ...at('l01', 'white'), who: 'bram', look: 'wren' },
+    { ...at('l01', 'bram', 0), who: 'bram', do: 'gesture', kind: 'nod', expr: 'smug', look: 'camera' },
+    { ...at('l01', 'black'), who: 'bram', do: 'gesture', kind: 'shrug' },
+    { ...at('l01', 'black'), who: 'wren', look: 'bram', expr: 'sly' },
+    { ...at('l01', 'black', 2), who: 'vs', do: 'set', key: 'show', to: 1, dur: 16, from: 0, ease: 'linear', sound: 'whoosh', strength: 0.5 },
+    { ...at('l01', 'cooks'), who: 'bram', look: 'sun', expr: 'worried' },
+    { ...at('l01', 'first'), who: 'wren', do: 'gesture', kind: 'tilt', deg: 8, hold: 20 },
+    // l02 Everyone says Bram. White bounces sunlight away; black soaks it up.
+    { ...at('l02', 'everyone'), who: 'vs', do: 'set', key: 'show', to: 0, dur: 8 },
+    { ...at('l02', 'everyone'), who: 'wren', do: 'point', to: [0.62, -0.2, 1.3], hand: 'R', hold: 30, expr: 'grin' },
+    { ...at('l02', 'says'), who: 'bram', look: 'wren', expr: 'worried' },
+    { ...at('l02', 'white', -3), who: 'bounce', do: 'fire', sound: 'ting', strength: 0.5 },
+    { ...at('l02', 'white'), who: 'wren', look: 'sun', expr: 'happy' },
+    { ...at('l02', 'away'), who: 'wren', do: 'gesture', kind: 'nod' },
+    { ...at('l02', 'bounces', -3), who: 'wcall', do: 'set', key: 'show', to: 1, dur: 8, from: 0, ease: 'back' },
+    { ...at('l02', 'soaks', -3), who: 'bcall', do: 'set', key: 'show', to: 1, dur: 8, from: 0, ease: 'back', sound: 'pop', strength: 0.4 },
+    { ...at('l03', 'and', -4), who: 'wcall', do: 'set', key: 'show', to: 0, dur: 0 },
+    { ...at('l03', 'and', -4), who: 'bcall', do: 'set', key: 'show', to: 0, dur: 0 },
+    { ...at('l02', 'away'), who: 'haze', do: 'set', key: 'heat', to: 0, dur: 14 },
+    { ...at('l02', 'black', -10), who: 'soak', do: 'fire', sound: 'sizzle', strength: 0.5 },
+    { ...at('l02', 'black'), who: 'bram', look: 'sun', expr: 'shock' },
+    { ...at('l02', 'soaks', 4), who: 'bram', do: 'gesture', kind: 'tilt', deg: -8, hold: 16 },
+    { ...at('l02', 'up'), who: 'bram', look: 'camera', expr: 'worried' },
+    // l03 And yes, his robe gets six degrees hotter outside.
+    { ...at('l03', 'and'), who: 'heat', do: 'set', key: 'heat', to: 1, dur: 10, from: 0, sound: 'sizzle', strength: 0.4 },
+    { ...at('l03', 'yes'), who: 'bram', do: 'gesture', kind: 'nod', expr: 'closed' },
+    { ...at('l03', 'robe'), who: 'bram', expr: 'worried', look: 'camera' },
+    { ...at('l03', 'six', -3), who: 'plus6', do: 'fire', sound: 'pop', strength: 0.7 },
+    { ...at('l03', 'degrees'), who: 'bram', expr: 'shock' },
+    { ...at('l03', 'robe', -2), who: 'outside', do: 'set', key: 'show', to: 1, dur: 8, from: 0, ease: 'back' },
+    { ...at('l03', 'hotter'), who: 'bram', do: 'gesture', kind: 'shrug' },
+    { ...at('l03', 'outside'), who: 'bram', expr: 'worried' },
+  ],
+  shots: [
+    { f: 0, shot: 'two', of: ['wren', 'bram'], angle: 0, size: 0.40, push: 0.0010 },
+    { ...at('l01', 'wren', -3), shot: 'cu', of: ['wren'], angle: 12, head: 0.24, kx: 0.5, live: 1, cut: true },
+    { ...at('l01', 'bram', -3), shot: 'cu', of: ['bram'], angle: -12, head: 0.24, kx: 0.5, live: 0.35, cut: true },
+    { ...at('l01', 'who', -4), shot: 'two', of: ['wren', 'bram'], angle: -6, size: 0.40, cut: true, push: 0.0012 },
+    { ...at('l02', 'everyone', -4), shot: 'wide', of: ['wren', 'bram'], angle: 0, size: 0.36, cut: true },
+    { ...at('l03', 'and', -3), shot: 'cu', of: ['bram'], angle: -10, head: 0.20, kx: 0.5, live: 0.35, push: 0.0010, dof: 0, cut: true },
+  ],
+};
