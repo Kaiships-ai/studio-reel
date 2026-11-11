@@ -21,7 +21,7 @@ export const B = (x, y, z) => new THREE.Vector3(x, z, -y);         // Blender Z-
 export const lin = (r, g, b) => new THREE.Color(r, g, b);          // colours are linear, like Blender's
 const s8 = c => Math.round(255 * Math.min(1, Math.max(0, c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055)));
 export const css = (c, k = 1) => `rgb(${s8(c[0] * k)},${s8(c[1] * k)},${s8(c[2] * k)})`;
-export const INK_RGB = [0.006, 0.006, 0.009];
+export const INK_RGB = [0.06, 0.035, 0.048];   // the reference ink is a warm dark plum, not black: renders at ~sRGB (30-55, 20-40, 25-45) on lines, eyes, mouths and limbs (QlDPM f180, VS1Z)
 
 // Toon-leaning material. Only the SUN (light 0, with its shadow) picks the point on the ramp, so window bars and
 // prop shadows fall across a head as a cool lilac patch; the other lights just lift the shade a little.

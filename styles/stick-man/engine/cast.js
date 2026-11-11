@@ -12,8 +12,9 @@ export const W_M = 0.60;                     // head width in metres
 const W = W_M;
 const INK_T = 0.046 * W;                     // outline base width; the hull shader scales it 0.35-1.6x by the light (below):
                                              // reference rim 3.8-5.6 % of head width, thick/thin side ratio 1.65-2.47 (FORENSIC.md fix 7)
-const CREAM = [0.90, 0.87, 0.78];             // reference heads and bodies: flat off-white / cream, never pure white or blue-white
-const LIMB_R = 0.038 * W / 2;                // limbs stay a thinner line than the outline
+const CREAM = [0.90, 0.87, 0.78];             // reference bodies: flat cream
+const HEAD_WHITE = [0.985, 0.965, 0.95];      // reference heads are lighter than the body: lit sRGB (251, 246, 243), shade (230, 219, 231)
+const LIMB_R = 0.046 * W / 2;                // limbs: reference legs and arms ~0.045-0.05 W (QlDPM f600), a bold line, not a thread
 export const HEAD_C = [0.0, 2.43], HEAD_H = 0.94, HIP_V = 1.34, SHOULDER_V = 2.00;
 export const TORSO = { cx: 0.0, cy: 1.72, w: 0.57, h: 0.90, depth: 0.80 };
 const HA = 0.5 * W, HB = 0.5 * HEAD_H * W;   // head half width / half height (m)
@@ -32,7 +33,7 @@ hullMat.onBeforeCompile = sh => {
   sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float inkT; uniform vec3 inkSun;')
     .replace('#include <begin_vertex>', `#include <begin_vertex>
       float ndl = dot(normalize(mat3(modelMatrix) * normal), inkSun);
-      transformed += normal * inkT * (clamp(0.95 - 0.75 * ndl, 0.35, 1.6) - 1.0);`);
+      transformed += normal * inkT * (clamp(0.95 - 0.75 * ndl, 0.6, 1.6) - 1.0);   // lit side never under ~0.6x: the reference line stays bold all round (thick/thin ~2)`);
 };
 
 // ------------------------------------------------------------------ outline
@@ -122,7 +123,8 @@ export function curls(col = [0.45, 0.25, 0.12], tilt = 18) {
     const mask = (lat, lon) => { const L = lat / DEG, O = Math.abs(lon) / DEG;
       return Math.max(sm(33, 39, L), sm(88, 102, O) * sm(-48, -40, L), sm(74, 86, O) * sm(2, 9, L)); };
     // hull from rounded valleys: no folds, no inner lines. No received shadow: the bumps would self-shadow into acne.
-    const mop = solid(massGeo(balls, mask, -t), hairMat(col), INK_T, massGeo(balls, mask, -t, 0.012 * W)); mop.receiveShadow = false;
+    // one smooth sculpted mass (reference hair is a clean solid shape, never a pile of balls): a soft union of the curls
+    const mop = solid(massGeo(balls, mask, -t, 0.034 * W), hairMat(col), INK_T, massGeo(balls, mask, -t, 0.040 * W)); mop.receiveShadow = false;
     const g = new THREE.Group(); g.add(mop);
     return g;
   };
@@ -300,6 +302,8 @@ function torsoGeo() {
   const T = TORSO, r = T.w / 2 * W, h = T.h * W, pr = [], n = 14;
   for (let i = 0; i <= n; i++) { const a = -Math.PI / 2 + Math.PI / 2 * i / n; pr.push([r * Math.cos(a), r + r * Math.sin(a)]); }
   for (let i = 0; i <= n; i++) { const a = Math.PI / 2 * i / n; pr.push([r * Math.cos(a), h - r + r * Math.sin(a)]); }
+  // an egg, not a pill: the reference bodies are fuller at the belly and narrower at the shoulders (QlDPM f600, VS1Z)
+  for (const q of pr) { const u = q[1] / h; q[0] *= 1.10 - 0.20 * u * u; }
   const g = lathe(pr, 64); g.scale(1, 1, T.depth);
   const p = g.attributes.position, uv = g.attributes.uv;
   for (let i = 0; i < p.count; i++) uv.setY(i, p.getY(i) / h);
@@ -468,7 +472,8 @@ export function makeStick(spec) {
 
   const head = new THREE.Group(); root.add(head);
   const hg = new THREE.SphereGeometry(HA, 64, 40); hg.scale(1, HEAD_H, 1); shapeHeadGeo(hg);
-  const headSolid = solid(hg, toon(spec.skin || CREAM, { shade: [0.80, 0.79, 0.87], rim: 0, sheen: 0, broad: 0, rough: 1, soft: 0, rimLit: 0, char: 1, rimCool: rc }));
+  const headSolid = solid(hg, toon(spec.skin || HEAD_WHITE, { shade: [0.97, 0.95, 0.98], rim: 0, sheen: 0, broad: 0, rough: 1, soft: 0.65, rimLit: 0, char: 1, rimCool: rc }));
+  headSolid.receiveShadow = false;   // no hard cast shadows from hair or hats on the face (a lit white triangle cut the face, ep01 f1240); the reference head is one soft white form
   head.add(headSolid);
   const rig = new THREE.Group(); head.add(rig);
   const FR = faceRig(W, { glasses: !!spec.glasses });
@@ -484,7 +489,8 @@ export function makeStick(spec) {
   head.traverse(o => { if (!o.isMesh || skip.has(o)) return; o.geometry = o.geometry.clone(); shapeHeadGeo(o.geometry, _hm.clone().multiply(o.matrixWorld)); });
 
   const limbs = { armL: new Tube(16, LIMB_R), armR: new Tube(16, LIMB_R), legL: new Tube(18, LIMB_R), legR: new Tube(18, LIMB_R) };
-  const dotGeo = new THREE.SphereGeometry(0.040 * W, 16, 10), jointGeo = new THREE.SphereGeometry(LIMB_R * 1.05, 10, 8);
+  // hand mitt: reference hands are ~0.10 W across, about twice the arm line
+  const dotGeo = new THREE.SphereGeometry(0.050 * W, 16, 10), jointGeo = new THREE.SphereGeometry(LIMB_R * 1.05, 10, 8);
   const ball = geo => { const m = new THREE.Mesh(geo, inkMat); m.castShadow = true; root.add(m); return m; };
   const hands = { L: ball(dotGeo), R: ball(dotGeo) }, ankles = { L: ball(jointGeo), R: ball(jointGeo) }, toes = { L: ball(jointGeo), R: ball(jointGeo) };
   for (const t of Object.values(limbs)) root.add(t.mesh);

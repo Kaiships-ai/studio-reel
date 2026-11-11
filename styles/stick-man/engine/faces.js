@@ -31,7 +31,7 @@ export const EXPR = {
   neutral: { ...DOT, brow: [0, 0.125, 0.008, 0, 0.006], mouth: 'flat', mx: 0.008 },
   calm: { ...DOT, lid: 0.34, brow: [-3, 0.120, 0.010, 0, 0.006], mouth: 'smile', mw: 0.7 },
   happy: { ...DOT, ry: 0.058, low: 0.22, brow: [-6, 0.135, 0.014, 0, 0.008], mouth: 'smile' },
-  grin: { ...DOT, lid: 0.28, low: 0.18, brow: [4, 0.120, 0.010, 0, 0.018], mouth: 'grin' },
+  grin: { ...DOT, low: 0.10, brow: [-4, 0.135, 0.014, 0, 0.012], mouth: 'grin' },   // the reference beam: open dot eyes over the big grin
   closed: { eye: 'happy', rx: 0.048, ry: 0.050, brow: [-6, 0.130, 0.012, 0, 0.006], mouth: 'smile', skin: { blush: 0.45 } },
   smug: { ...DOT, lid: 0.50, lidTilt: -5, gx: 0.45, brow: [6, 0.112, 0.008, 0, 0.030], mouth: 'smirk', mx: 0.016 },
   sly: { ...DOT, lid: 0.56, lidTilt: 5, gx: -0.55, low: 0.2, brow: [10, 0.106, 0.002, 0.026, -0.004], mouth: 'smirk_l', mx: -0.014 },
@@ -108,7 +108,7 @@ function brow(g, ex, s, by, tilt, arch, bw = 1) {
     pts.push([ex + s * 0.006 + x * c - y * sn, by + x * sn + y * c]);
   }
   if (s < 0) pts.reverse();                                                                 // t 0 = inner end on both sides
-  const n = pts.length - 1, top = [], bot = [], th = 0.0165 * bw;
+  const n = pts.length - 1, top = [], bot = [], th = 0.019 * bw;   // reference brow ~0.024 W thick
   for (let i = 0; i <= n; i++) {
     const t = i / n, [x, y] = pts[i], [ax, ay] = pts[Math.max(0, i - 1)], [bx, by2] = pts[Math.min(n, i + 1)];
     let nx = -(by2 - ay), ny = bx - ax; const l = Math.hypot(nx, ny) || 1; nx /= l; ny /= l;
@@ -183,43 +183,47 @@ function mouth(g, kind, mw = 1, x0 = 0, y0 = -0.15) {
       fill(g, [...bez([X(-w), y], [X(-w * 0.4), y + 0.006], [X(w * 0.4), y + 0.008], [X(w), y + 0.002], 10),
         ...bez([X(w), y + 0.002], [X(w * 0.5), y - 0.024], [X(-w * 0.5), y - 0.024], [X(-w), y], 10)].map(rot)); break;
     }
-    case 'smile': taper(g, bez([X(-0.048), y + 0.012], [X(-0.020), y - 0.020], [X(0.020), y - 0.020], [X(0.048), y + 0.012], 16), 0.0125); break;
+    case 'smile': taper(g, bez([X(-0.072), y + 0.020], [X(-0.030), y - 0.026], [X(0.030), y - 0.026], [X(0.072), y + 0.020], 16), 0.0135); break;   // ref closed smile ~0.22 W wide
     case 'smirk': taper(g, bez([X(-0.036), y - 0.002], [X(-0.006), y - 0.012], [X(0.024), y - 0.010], [X(0.044), y + 0.018], 16), 0.0125); break;
     case 'smirk_l': taper(g, bez([X(0.036), y - 0.002], [X(0.006), y - 0.012], [X(-0.024), y - 0.010], [X(-0.044), y + 0.018], 16), 0.0125); break;
     case 'frown': taper(g, bez([X(-0.036), y - 0.012], [X(-0.014), y + 0.012], [X(0.014), y + 0.012], [X(0.036), y - 0.012], 16), 0.0125); break;
     case 'sneer': taper(g, bez([X(-0.038), y - 0.014], [X(-0.012), y + 0.004], [X(0.014), y + 0.014], [X(0.040), y + 0.004], 16), 0.0125); break;
     case 'wobble': taper(g, bez([X(-0.040), y - 0.002], [X(-0.016), y + 0.018], [X(0.010), y - 0.018], [X(0.040), y + 0.004], 18), 0.0115); break;
     case 'skew': taper(g, bez([X(-0.034), y + 0.008], [X(-0.010), y + 0.004], [X(0.014), y - 0.006], [X(0.038), y - 0.014], 14), 0.012); break;
-    case 'wavy': { const pts = []; for (let i = 0; i <= 28; i++) { const u = i / 28; pts.push([X(-0.058 + 0.116 * u), y + 0.008 * Math.sin(u * 5 * Math.PI)]); } line(g, pts, 0.012); break; }
+    case 'wavy': { const pts = []; for (let i = 0; i <= 28; i++) { const u = i / 28; pts.push([X(-0.072 + 0.144 * u), y + 0.010 * Math.sin(u * 5 * Math.PI)]); } line(g, pts, 0.013); break; }
     case 'o': g.beginPath(); g.ellipse(x0, y - 0.010, 0.024 * mw, 0.034, 0, 0, Math.PI * 2); g.fillStyle = INK; g.fill(); break;
     case 'o_big': g.beginPath(); g.ellipse(x0, y - 0.012, 0.028 * mw, 0.038, 0, 0, Math.PI * 2); g.fillStyle = INK; g.fill(); break;
     case 'bar': { const w = 0.068 * mw, h = 0.034; rrect(g, x0 - w, y - h, 2 * w, h, 0.012); g.fillStyle = INK; g.fill(); break; }   // rage
     case 'teeth': {                                                                        // gritted: a white grid, ink outline
-      const w = 0.066 * mw, h = 0.068, top = y + 0.014;
+      const w = 0.092 * mw, h = 0.070, top = y + 0.014;
       rrect(g, x0 - w, top - h, 2 * w, h, 0.012); g.fillStyle = WHITE; g.fill(); g.lineWidth = 0.016; g.strokeStyle = INK; g.stroke();
       line(g, [[x0 - w, top - h / 2], [x0 + w, top - h / 2]], 0.010);
-      for (let i = 1; i < 4; i++) { const x = x0 - w + 2 * w * i / 4; line(g, [[x, top], [x, top - h]], 0.010); }
+      for (let i = 1; i < 6; i++) { const x = x0 - w + 2 * w * i / 6; line(g, [[x, top], [x, top - h]], 0.010); }
       break;
     }
     case 'teeth_grin': {                                                                   // wide crescent of teeth (manic, nervous)
-      const w = 0.088 * mw, pts = [...bez([X(-0.088), y + 0.026], [X(-0.036), y + 0.006], [X(0.036), y + 0.006], [X(0.088), y + 0.026], 14),
-        ...bez([X(0.088), y + 0.026], [X(0.06), y - 0.064], [X(-0.06), y - 0.064], [X(-0.088), y + 0.026], 16)];
+      const w = 0.130 * mw, pts = [...bez([X(-0.130), y + 0.034], [X(-0.052), y + 0.004], [X(0.052), y + 0.004], [X(0.130), y + 0.034], 14),
+        ...bez([X(0.130), y + 0.034], [X(0.088), y - 0.080], [X(-0.088), y - 0.080], [X(-0.130), y + 0.034], 16)];
       fill(g, pts, WHITE, 0.016);
       g.save(); path(g, pts, true); g.clip();
-      line(g, bez([X(-0.088), y + 0.012], [X(-0.036), y - 0.014], [X(0.036), y - 0.014], [X(0.088), y + 0.012], 12), 0.009);
+      line(g, bez([X(-0.130), y + 0.016], [X(-0.052), y - 0.020], [X(0.052), y - 0.020], [X(0.130), y + 0.016], 12), 0.009);
       for (let i = 1; i < 6; i++) { const x = x0 - w + 2 * w * i / 6; line(g, [[x, y + 0.03], [x, y - 0.06]], 0.009); }
       g.restore(); break;
     }
-    case 'grin': {                                                                         // a crescent with a row of top teeth
-      const pts = [...bez([X(-0.080), y + 0.022], [X(-0.034), y + 0.004], [X(0.034), y + 0.004], [X(0.080), y + 0.022], 14),
-        ...bez([X(0.080), y + 0.022], [X(0.054), y - 0.050], [X(-0.054), y - 0.050], [X(-0.080), y + 0.022], 16)];
-      fill(g, pts, WHITE, 0.016);
+    case 'grin': {                                                                         // the reference grin (QlDPM f180): a wide ink
+      // crescent ~0.46 W across, its top edge curling up at the corners, a white row of top teeth with ink gaps filling the
+      // upper part and a dark band below; the ink rim is the line weight
+      const w = 0.165, pts = [...bez([X(-w), y + 0.040], [X(-w * 0.42), y + 0.002], [X(w * 0.42), y + 0.002], [X(w), y + 0.040], 18),
+        ...bez([X(w), y + 0.040], [X(w * 0.62), y - 0.080], [X(-w * 0.62), y - 0.080], [X(-w), y + 0.040], 20)];
+      fill(g, pts);
       g.save(); path(g, pts, true); g.clip();
-      for (let i = -3; i <= 3; i++) line(g, [[X(i * 0.022), y + 0.02], [X(i * 0.022), y - 0.012]], 0.008);
-      g.restore(); break;
+      const tb = bez([X(-w), y + 0.018], [X(-w * 0.42), y - 0.022], [X(w * 0.42), y - 0.022], [X(w), y + 0.018], 18);
+      fill(g, [...bez([X(-w), y + 0.050], [X(-w * 0.42), y + 0.012], [X(w * 0.42), y + 0.012], [X(w), y + 0.050], 18), ...tb.slice().reverse()], WHITE);
+      for (let i = -3; i <= 3; i++) { const x = X(i * 0.034); line(g, [[x, y + 0.04], [x, y - 0.03]], 0.0085); }
+      g.restore(); fill(g, pts, 'rgba(0,0,0,0)', 0.014); break;
     }
     case 'big': case 'big_open': case 'open_big': {                                        // laughing: dark crescent, top teeth
-      const h = kind === 'big' ? 0.060 : kind === 'open_big' ? 0.066 : 0.084, w = 0.082;
+      const h = kind === 'big' ? 0.066 : kind === 'open_big' ? 0.072 : 0.092, w = 0.118;   // ref laugh ~0.36 W wide
       const pts = [...bez([X(-w), y + 0.016], [X(-w * 0.45), y + 0.004], [X(w * 0.45), y + 0.004], [X(w), y + 0.016], 14),
         ...bez([X(w), y + 0.016], [X(w * 0.62), y - h * 1.25], [X(-w * 0.62), y - h * 1.25], [X(-w), y + 0.016], 16)];
       fill(g, pts); teethBand(pts, y + 0.016, 0.022); break;
@@ -310,7 +314,7 @@ export function mixFace(st) {
 function vmouth(g, F, x0, y0) {
   const T = F.talk, mw = F.mw;
   if (T.open < 0.06) { mouth(g, F.mouth, mw, x0, y0); return; }
-  const y = y0 + 0.008, w = 0.052 * mw * (1 + 0.40 * T.wide - 0.38 * T.round) + 0.018 * T.open, h = 0.012 + 0.085 * T.open, c = 0.012 * F.curve * (1 - 0.5 * T.round);
+  const y = y0 + 0.008, w = 0.064 * mw * (1 + 0.40 * T.wide - 0.38 * T.round) + 0.018 * T.open, h = 0.012 + 0.085 * T.open, c = 0.012 * F.curve * (1 - 0.5 * T.round);
   const lip = 0.004 + 0.25 * h * T.round;
   const top = bez([x0 - w, y + c], [x0 - w * 0.45, y + lip], [x0 + w * 0.45, y + lip], [x0 + w, y + c], 14);
   const bot = bez([x0 + w, y + c], [x0 + w * 0.62, y - h * 1.3 + 0.3 * c], [x0 - w * 0.62, y - h * 1.3 + 0.3 * c], [x0 - w, y + c], 16);

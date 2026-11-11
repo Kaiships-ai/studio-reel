@@ -1,5 +1,16 @@
 # Changelog · make-reel-stick-man
 
+## p10 · 2026-11-11 · character quality pass (measured on the QlDPM and VS1Z reference shorts)
+
+Engine-wide, every reel gets it. Look: ink is a dark warm plum, not black (`INK_RGB`, renders ~sRGB 50-65, 35-45, 40-50
+like the reference); heads are white (`HEAD_WHITE`), softly shaded and receive no cast shadows (no hard hair-shadow
+triangle on the face); the outline never thins below 0.6x on the lit side; curly hair is one smooth sculpted mass (soft
+union); bodies are eggs (fuller belly, narrower shoulders); limbs 0.046 W, hand mitts 0.10 W. Faces: the grin is the
+reference beam (0.5 W wide ink crescent, a white row of teeth, open dot eyes); smile, laugh, teeth grids, worried mouth
+and talking mouth ~1.4-1.9x wider; brows 0.024 W thick. Acting: every pose plays 1.2x by default (`ACT_AMP` in play.js;
+`actingAmp` / cast `amp` still override), bigger shrug, a real take (`recoil`), `present` pushes a held thing at the lens,
+any pose beat takes `props`. Test bed: `faces3d.html?glasses=0&names=a,b`; a 12 s acting study `films/char-test` (local).
+
 ## p9 · 2026-11-11 · micro-animation layer (FORENSIC.md section 3, fixes 8, 14, 16, 17)
 
 Automatic, from the words and beats: faces in-betweened through every change (faces.js `mixFace`, acting.js
