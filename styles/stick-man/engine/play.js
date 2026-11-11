@@ -140,7 +140,7 @@ async function buildAct(R, X) {
     mark: s => typeof s === 'string' && SET.MARKS?.[s] ? SET.MARKS[s] : point(s),
     // a cast name = that actor's near shoulder (hand on shoulder, grab, shove, hand a prop over: reach / point_lean to: 'bram')
     target: (s, st) => s == null ? { rest: true } : typeof s === 'string' && props[s] ? { prop: s } : typeof s === 'string' && byName[s] && st
-      ? { w: (() => { const o = byName[s].st0, dx = st.pos[0] - o[0], dy = st.pos[1] - o[1], d = Math.hypot(dx, dy) || 1; return [o[0] + 0.16 * dx / d, o[1] + 0.16 * dy / d, 1.28]; })() }
+      ? { w: (() => { const o = byName[s].st0, dx = st.pos[0] - o[0], dy = st.pos[1] - o[1], d = Math.hypot(dx, dy) || 1; return [o[0] + 0.16 * dx / d, o[1] + 0.16 * dy / d, (o[2] || 0) + 1.28]; })() }   // on a raised stage too (was z 1.28 absolute: 0.5 m low)
       : typeof s === 'string' ? { w: point(s) }
       : Array.isArray(s) ? { w: s } : s,
     rest: n => { if (!rest[n]) throw new Error(`prop "${n}" has no rest pose (a child of another prop, e.g. cutaway pack inside stack): move its parent, or key its parts with a \`prop\` effect`); return rest[n].pos; },
@@ -409,6 +409,9 @@ async function buildAct(R, X) {
   function update(f, force = null) {
     sun(); poseAll(f);
     cam = DIR ? DIR.at(f, force) : camera.at(shots, f, n => anchor(n, f, livePos), cues, force);
+    // a director shot aimed at an actor reads its anchor at the shot's first frame, and the anchor hook poses the whole scene
+    // there: pose this frame again, or every body, prop and effect renders frozen at the shot's start (only faces moved)
+    if (F.f !== f) poseAll(f);
     const px = height / 1920;
     stage.camera.setViewOffset(width, height, cam.offset[0] * px, cam.offset[1] * px, width, height);
     stage.setCamera(cam.pos, cam.aim, cam.lens);

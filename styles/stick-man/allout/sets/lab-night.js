@@ -121,6 +121,7 @@ export async function build(stage, opts = {}) {
   const door = K.group([3.95, 1.6, 0], 0);                          // the door stands open into the corridor
   K.box([0, -0.03, 0], [0.8, 0.0, 2.12], M.cab, { parent: door, r: 0.01 }); K.box([0.2, -0.035, 1.2], [0.6, -0.025, 1.9], K.glass([0.9, 0.95, 1], { opacity: 0.5 }), { parent: door, r: 0.004 });
   door.rotation.y = -1.2;
+  K.anim('door', door, (f, v) => { door.rotation.y = -1.2 + 2.77 * v('shut', 0); });   // round 3: key shut 0..1 (he shuts it on the ethics committee)
   // corridor beyond the door as a backdrop seen through the open doorway (opening in the side wall)
   K.card([5.0, 2.0, 1.2], 1.6, 2.6, tex(256, 512, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#e9efe6'); gr.addColorStop(1, '#a7b3a6'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
     g.fillStyle = '#7f8c80'; g.fillRect(0, h * 0.72, w, h * 0.28); g.fillStyle = '#1d3f66'; g.fillRect(w * 0.12, h * 0.18, w * 0.76, h * 0.14);
@@ -137,7 +138,8 @@ export async function build(stage, opts = {}) {
   const brothMat = broth.material, c0 = brothMat.color.clone(), cG = brothMat.color.clone().lerp(new (cloud.material.color.constructor)().setRGB(0.25, 0.32, 0.05), 0.6);
   K.anim('beaker_set', bk, (f, v) => { bk.visible = !DAY && v('show', 1) > 0.5; const p = v('plop', 0);
     blob.forEach((b, i) => { const t = Math.min(1, Math.max(0, p - i)); b.visible = t > 0 && t < 1; b.position.set(0, 0.32 - 0.2 * t * t, 0); });
-    brothMat.color.copy(c0).lerp(cG, Math.min(1, p / 2)); broth.scale.y = 1 + 0.06 * Math.min(2, p); });
+    brothMat.color.copy(c0).lerp(cG, Math.min(1, p / 2)); const lv = v('level', 1); broth.visible = lv > 0.02;   // round 3: key level 0..1 (slammed down empty)
+    broth.scale.y = Math.max(0.02, lv) * (1 + 0.06 * Math.min(2, p)); broth.position.y = 0.006 + 0.07 * Math.max(0.02, lv) * (1 + 0.06 * Math.min(2, p)); });
   // two culture dishes with spiral colonies; key tip 0..1: the dish rises over the beaker, tips, then goes back down empty
   const dish = (name, at, side) => { const g = K.group(at), d = K.group([0, 0, 0], 0, g); K.cyl([0, 0, 0.012], 0.085, 0.022, K.glass([0.9, 0.95, 1], { opacity: 0.3 }), { parent: d });
     const agar = K.cyl([0, 0, 0.008], 0.08, 0.012, K.mat([0.86, 0.80, 0.42], 0.3, { physical: true, clearcoat: 1, opacity: 0.92 }), { parent: d });

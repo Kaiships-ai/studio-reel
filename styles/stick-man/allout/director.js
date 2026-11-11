@@ -5,6 +5,7 @@
 //
 // A shot: { at, intent, why, cut: 'cut' | 'dissolve' | 'whip', n (frames of the dissolve / whip), cam, to, move, kick, dof }
 //   at      a beat ref ({ line, on, offset } or { f }) where the shot starts
+//   travel  the travel's ease for cut 'move' / 'whip': 'inout' (default), 'rush' (hold, then rush), 'land', 'out'
 //   cut     'move' (default after the first shot: the camera travels from the last framing to this one over n frames,
 //           16 by default), 'whip' (the same travel in ~8 frames, smeared), 'dissolve' (n frames), 'cut' (a hard cut:
 //           the reference has one or two per film, keep it for a stop beat)
@@ -29,6 +30,8 @@ const EASE = {
   // a whip: almost all of the travel in the middle third (the eye can't follow it; the smear covers it)
   whip: t => { const u = clamp((t - 0.3) / 0.4, 0, 1); return u * u * (3 - 2 * u); },
   // ease-out with a small settle past the end and back (a punch that lands)
+  // hold, then rush (FORENSIC section 2: the reference holds, then moves at 40-100 px/f and settles): no smear, a crisp travel
+  rush: t => { const u = clamp((t - 0.12) / 0.7, 0, 1); return u * u * u * (u * (u * 6 - 15) + 10); },
   land: t => { const u = 1 - Math.pow(1 - t, 3); return u + 0.06 * Math.sin(Math.PI * clamp(t * 1.15, 0, 1)) * (1 - t); },
 };
 const KICK = [1, -0.75, 0.5, -0.3, 0.15, -0.05];
@@ -113,7 +116,8 @@ export function createDirector(list, { frameOf, anchor, aspect, F1 }) {
       const k = kind(S), u = force == null && (k === 'move' || k === 'whip') ? travel(S, f) : null;
       if (u == null) return c;
       // the camera travels from where the last shot is now to this one (no cut): eased, the aim leads a little
-      const p = camOf(shots[i - 1], f), t = (k === 'whip' ? EASE.whip : EASE.inout)(u), ta = (k === 'whip' ? EASE.whip : EASE.inout)(Math.min(1, u * 1.15));
+      // S.travel picks the travel's ease ('rush' = hold then rush, crisp; 'land' = arrive with a small settle past the mark)
+      const te = EASE[S.travel || (k === 'whip' ? 'whip' : 'inout')], p = camOf(shots[i - 1], f), t = te(u), ta = te(Math.min(1, u * 1.15));
       return { ...c, pos: lerp3(p.pos, c.pos, t), aim: lerp3(p.aim, c.aim, ta), lens: 18 / lerp(18 / p.lens, 18 / c.lens, t), roll: lerp(p.roll || 0, c.roll || 0, t),
         focus: lerp3(p.focus, c.focus, t), dof: lerp(p.dof, c.dof, t) };
     },

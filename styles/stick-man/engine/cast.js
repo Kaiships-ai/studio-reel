@@ -498,7 +498,10 @@ export function makeStick(spec) {
     if (P.pos) root.position.copy(B(...P.pos));
     if (P.yaw != null) S.yaw = P.yaw * DEG;
     else if (P.face) { const d = B(...P.face).sub(root.position); S.yaw = Math.atan2(d.x, d.z); }
-    root.rotation.y = S.yaw + (P.yaw_extra || 0) * DEG;
+    // x_tumble / x_roll (deg, opt-in from allout/acting.js): the whole figure tips about its soles (+ tumble = falls on
+    // its face, - = on its back; + roll = toward its right), x_lift (m) raises it so a body lying down rests on the floor
+    root.rotation.set((P.x_tumble || 0) * DEG, S.yaw + (P.yaw_extra || 0) * DEG, -(P.x_roll || 0) * DEG, 'YXZ');
+    if (P.x_lift) root.position.y += P.x_lift;
     root.updateMatrixWorld(true);
   };
   // a Blender world point -> this figure's (u, v) in W units
@@ -601,7 +604,7 @@ export function makeStick(spec) {
     S.rig = rig;
     handProps(P, rig);
     S.xmarks = Object.keys(P).filter(k => k.startsWith('x_mark_') && P[k] >= 1).map(k => [k.slice(7), Math.floor(P[k] - 1)]);
-    contact.visible = P.contact !== false;
+    contact.visible = P.contact !== false && Math.abs(P.x_tumble || 0) < 20 && Math.abs(P.x_roll || 0) < 20;   // a figure tipped over has no foot shadow
     contact.position.y = 0.004 + (P.ground || 0) * W;
     root.updateMatrixWorld(true);
     return S;

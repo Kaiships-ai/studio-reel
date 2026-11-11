@@ -18,7 +18,18 @@ BUILD.beaker = () => {                                        // the beef-broth 
   c.font = '700 26px InterReel, Arial'; c.fillStyle = '#9a1c16'; c.fillText('+ H. pylori', 128, 98);
   const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace;
   const lab = mesh(new THREE.CylinderGeometry(R + 0.003, R + 0.003, 0.07, 32, 1, true, -0.9, 1.8), new THREE.MeshStandardMaterial({ map: tx, roughness: 0.7 })); lab.material.userData.noToon = true; lab.position.y = H * 0.45; g.add(lab);
-  const level = v => { const h = Math.max(0.004, (H - 0.02) * Math.max(0, Math.min(1, v)) * 0.8); liq.scale.y = h; liq.position.y = 0.007 + h / 2; liq.visible = v > 0.02; };
+  // the bacteria you can see (round 3): green spiral bugs swimming in the broth, so "a beaker of bacteria" reads without
+  // the label; a bug above the liquid line is gone (drunk)
+  const bugM = std([0.30, 0.92, 0.20], 0.35); bugM.emissive = new THREE.Color(0.10, 0.45, 0.05); bugM.emissiveIntensity = 0.9;
+  const bugs = [];
+  for (let i = 0; i < 9; i++) {
+    const pts = []; for (let k = 0; k <= 16; k++) { const u = k / 16; pts.push(new THREE.Vector3(0.006 * Math.cos(u * 14), u * 0.03 - 0.015, 0.006 * Math.sin(u * 14))); }
+    const b = mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, 0.0032, 6), bugM);
+    const a = i * 2.4, r = 0.018 + 0.03 * ((i * 37) % 10) / 10, y = 0.025 + 0.13 * ((i * 53) % 10) / 10;
+    b.position.set(Math.cos(a) * r, y, Math.sin(a) * r); b.rotation.set(i * 0.7, i * 1.3, i * 0.4); g.add(b); bugs.push(b);
+  }
+  const level = v => { const h = Math.max(0.004, (H - 0.02) * Math.max(0, Math.min(1, v)) * 0.8); liq.scale.y = h; liq.position.y = 0.007 + h / 2; liq.visible = v > 0.02;
+    for (const b of bugs) b.visible = v > 0.02 && b.position.y < 0.007 + h; };
   level(1);
   g.userData = { mode: 'up', grip: [0, 0.06, 0.055], level, noInk: true }; return g;
 };
@@ -66,3 +77,11 @@ BUILD.blister = () => {
 // show_pills: the show_medal pose holding up the blister pack
 POSES.show_pills = { ...POSES.show_medal, props: { R: 'blister' } };
 POSE_VERBS.show_pills = ACT.show_pills = (p, st, C) => compilePose('show_pills', p, st, C);
+
+// a white handkerchief bunched in the fist (wipe the bug off the slide like a smudge; dust it off)
+BUILD.hanky = () => {
+  const g = new THREE.Group(); g.userData.noInk = true; const m = std([0.97, 0.97, 0.95], 0.85);
+  const a = mesh(new THREE.SphereGeometry(0.05, 12, 8), m); a.scale.set(1.2, 0.8, 1); g.add(a);
+  for (let i = 0; i < 3; i++) { const t = mesh(new THREE.ConeGeometry(0.035, 0.09, 6), m); t.position.set(-0.03 + 0.03 * i, -0.06, 0.01 * i); t.rotation.set(3.0, 0.4 * i, 0.3 * (i - 1)); g.add(t); }
+  g.userData = { mode: 'up', grip: [0, 0.0, 0], noInk: true }; return g;
+};

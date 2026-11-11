@@ -82,5 +82,35 @@ export async function build(stage) {
     const pos = h <= 0 ? [0.35, -0.2, 0.88] : h < 1 ? [0.35 - 0.45 * down, -0.2 + 0.15 * down, 0.88 + 0.25 * Math.sin(h * Math.PI)] : [-0.1 + 0.4 * Math.min(1, lift * 2), -0.05 - 0.15 * Math.min(1, lift * 2), 0.88 + 0.2 * Math.sin(Math.min(1, lift * 2) * Math.PI)];
     stamp.visible = false; ink.visible = h >= 1; });
   K.anim('paper', paper, () => {});
+  // ---- round 3 story props (added, the set's look unchanged)
+  // the reviewer's pile: a tower of submitted papers on the left of her desk, taller than she is ("bottom ten percent":
+  // theirs goes in at the very bottom). Keys: wobble (pulse: the tower sways), lift 0..1 (the bottom sheets part for it)
+  const pile = K.group([5.55, -5.95, 0.88]), pr = rng(77), sheets = [];
+  for (let i = 0; i < 44; i++) { const c = K.cube([(pr() - 0.5) * 0.04, (pr() - 0.5) * 0.04, 0.012 + i * 0.024], [0.46, 0.6, 0.02], i % 5 === 2 ? K.mat([0.92, 0.88, 0.76], 0.85) : M.paper, { parent: pile, r: 0.003, rotZ: (pr() - 0.5) * 8 }); sheets.push(c); }
+  K.anim('pile', pile, (f, v) => { const w = v('wobble', 0), l = v('lift', 0);
+    pile.rotation.z = 0.05 * w * Math.sin(f * 0.55); pile.rotation.x = 0.03 * w * Math.cos(f * 0.47);
+    sheets.forEach((c, i) => { c.position.y = 0.012 + i * 0.024 + (i > 0 ? 0.035 * l : 0); }); });
+  // their paper (the spiral bug on its cover): keys up 0..1 (off the desk, held up to read), under 0..1 (down and shoved in
+  // under the tower)
+  const th = K.group([6.2, -6.05, 0.885]);
+  K.card([0, 0, 0], 0.42, 0.56, tex(256, 340, (g, w, h) => { g.fillStyle = '#fbf8ee'; g.fillRect(0, 0, w, h); g.fillStyle = '#e8a7c0'; g.beginPath(); g.arc(w / 2, h * 0.38, 70, 0, 7); g.fill();
+    g.strokeStyle = '#7b2d6b'; g.lineWidth = 7; for (const [x, y] of [[0.42, 0.33], [0.56, 0.42], [0.48, 0.47]]) { g.beginPath(); for (let t = 0; t < 1; t += 0.05) g.lineTo(w * x - 25 + t * 50, h * y + 7 * Math.sin(t * 20)); g.stroke(); }
+    g.fillStyle = '#222'; for (let y = h * 0.66; y < h - 16; y += 13) g.fillRect(24, y, w - 48 - ((y * 7) % 30), 4); }), { parent: th, rotX: -90, env: 0.4 });
+  K.anim('theirs', th, (f, v) => { const u = v('up', 0), d = v('under', 0), e = x => x * x * (3 - 2 * x);
+    const held = [6.15, -5.78, 1.42], desk = [6.0, -6.0, 0.885], under = [5.55, -5.95, 0.905];
+    let q, rx;
+    if (d <= 0) { q = desk.map((x, i) => x + (held[i] - x) * e(u)); rx = -Math.PI / 2 + 1.35 * e(u); }
+    else { const a = Math.min(1, d * 2), b = Math.max(0, d * 2 - 1); q = held.map((x, i) => x + (desk[i] - x) * e(a)); q = q.map((x, i) => x + (under[i] - desk[i]) * e(b)); rx = -Math.PI / 2 + 1.35 * (1 - e(a)); }
+    th.position.copy(B(...q)); th.children[0].rotation.x = rx; });
+  // the slide gets wiped like a smudge (key clean 0..1: a clean pink circle over the bugs) and the bugs crawl back
+  // (key back 0..1: one by one, wriggling)
+  const cl = new THREE.Mesh(new THREE.CircleGeometry(0.84, 48), new THREE.MeshBasicMaterial({ color: new THREE.Color('#e8a7c0').multiplyScalar(1.25), transparent: true, opacity: 0, toneMapped: true }));
+  cl.material.userData.noToon = true; cl.userData.noPrepass = true; cl.position.copy(B(-0.88, 5.835, 2.43)); K.add(cl, K.root, { cast: false });
+  const bm = new THREE.MeshBasicMaterial({ color: new THREE.Color('#7b2d6b') }); bm.userData.noToon = true; const back = [], br = rng(12);
+  for (let i = 0; i < 9; i++) { const pts = []; for (let k = 0; k <= 12; k++) pts.push(new THREE.Vector3(-0.07 + 0.14 * k / 12, 0.025 * Math.sin(k / 12 * 20), 0));
+    const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, 0.012, 6), bm); m.userData.noPrepass = true;
+    const a = br() * 6.28, r = 0.15 + 0.55 * br(); m.position.copy(B(-0.88 + Math.cos(a) * r, 5.83, 2.43 + Math.sin(a) * r)); m.rotation.z = br() * 3; m.userData.k = i / 9; K.add(m, K.root, { cast: false }); back.push(m); }
+  K.anim('wipe', cl, (f, v) => { const c = v('clean', 0), b = v('back', 0); cl.material.opacity = Math.min(1, c * 1.15) * (1 - 0.0 * b);
+    back.forEach(m => { const t = Math.min(1, Math.max(0, (b - m.userData.k) * 4)); m.visible = t > 0 && c > 0.5; m.scale.setScalar(Math.max(0.01, t) * (1 + 0.15 * Math.sin(f * 0.6 + m.userData.k * 9))); }); });
   return { props: K.props };
 }
