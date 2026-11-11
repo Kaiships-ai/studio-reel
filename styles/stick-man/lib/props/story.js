@@ -49,15 +49,16 @@ export function makeStomach(stage, { scale = 1, tag = 'MODEL', sub = 'HUMAN STOM
   // stand + printed tag
   const base = ink(new THREE.BoxGeometry(0.62, 0.05, 0.36), [0.30, 0.22, 0.16]); base.position.y = 0.025; body.add(base);
   const post = ink(new THREE.CylinderGeometry(0.018, 0.018, 0.30, 10), [0.55, 0.57, 0.62]); post.position.y = 0.2; body.add(post);
-  const tg = label(tag, sub, 0.34, 0.12); tg.position.set(0, 0.03, 0.181); body.add(tg);
+  const tg = label(tag, sub, 0.22, 0.07); tg.position.set(0, 0.025, 0.181); body.add(tg);   // a small tag: the organ is the subject
   // the J-shaped stomach: a cut-away shell (back half) with the lining showing in front, the oesophagus on top
   const S = new THREE.Group(); S.position.y = 0.58; S.rotation.z = -0.35; body.add(S);
-  const shellG = new THREE.SphereGeometry(0.21, 40, 28, 0, Math.PI); shellG.scale(1, 1.25, 0.75); shellG.rotateY(Math.PI / 2);
-  const shell = ink(shellG, [0.93, 0.56, 0.52], {}, false, 0.01); shell.material = shell.material.clone(); shell.material.side = THREE.DoubleSide; S.add(shell);
-  const lining = new THREE.Mesh(shellG.clone().scale(0.93, 0.95, 0.9), toon([1.0, 0.70, 0.70], { rough: 0.6, sheen: 0.3 })); lining.material.side = THREE.BackSide; S.add(lining);
+  const shellG = new THREE.SphereGeometry(0.21, 40, 28, Math.PI, Math.PI); shellG.scale(1, 1.25, 0.75);   // the back half: the cut faces the viewer
+  const WARM = { char: 1, shade: [0.86, 0.58, 0.58] };          // an organ, not a blue blob: warm shade, little place tint
+  const shell = ink(shellG, [0.93, 0.56, 0.52], WARM, false, 0.01); shell.material = shell.material.clone(); shell.material.side = THREE.DoubleSide; S.add(shell);
+  const lining = new THREE.Mesh(shellG.clone().scale(0.93, 0.95, 0.9), toon([1.0, 0.70, 0.70], { rough: 0.6, sheen: 0.1, ...WARM })); lining.material.side = THREE.BackSide; S.add(lining);
   const rim = new THREE.Mesh(new THREE.TorusGeometry(1, 0.035, 8, 48), mat([0.80, 0.40, 0.38])); rim.scale.set(0.21, 0.26, 1); S.add(rim);
-  const oes = ink(new THREE.CylinderGeometry(0.045, 0.06, 0.26, 16), [0.93, 0.56, 0.52]); oes.position.set(0.10, 0.30, -0.02); oes.rotation.z = 0.45; S.add(oes);
-  const duo = ink(new THREE.CylinderGeometry(0.05, 0.04, 0.18, 16), [0.93, 0.56, 0.52]); duo.position.set(-0.17, -0.25, -0.02); duo.rotation.z = -1.1; S.add(duo);
+  const oes = ink(new THREE.CylinderGeometry(0.045, 0.06, 0.26, 16), [0.93, 0.56, 0.52], WARM); oes.position.set(0.10, 0.30, -0.02); oes.rotation.z = 0.45; S.add(oes);
+  const duo = ink(new THREE.CylinderGeometry(0.05, 0.04, 0.18, 16), [0.93, 0.56, 0.52], WARM); duo.position.set(-0.17, -0.25, -0.02); duo.rotation.z = -1.1; S.add(duo);
   // bugs on the lining
   const r = lcg(seed), bugM = toon([0.35, 0.80, 0.20], { sheen: 0.4 }); bugM.emissive = lin(0.04, 0.12, 0.02); const bugs = [];
   for (let i = 0; i < 26; i++) { const a = (r() - 0.5) * 2.4, b = (r() - 0.5) * 2.2, m = new THREE.Mesh(helixGeo, bugM);

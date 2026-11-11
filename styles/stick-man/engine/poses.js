@@ -167,6 +167,7 @@ export const POSES = {
   phone: { A: 3, T: 9, hold: 40, props: { R: 'phone' }, body: { head_tilt: 10, lean: 3, head_pitch: 4 },
     hands: { R: { h: [0.46, -0.06, 0.12], elbow: [0.9, -0.6, 0.1] }, L: HIP_HAND(-1) }, cycle: t => ({ head_tilt: 3 * Math.sin(t * 0.15) }) },
 };
+POSES.eat_chilli = { ...POSES.eat, props: { R: 'chilli' } };   // the same bite cycle with a red hot chilli
 export const POSE_NAMES = [...Object.keys(POSES), 'stand_up'];
 
 // ---------------------------------------------------------------- compile

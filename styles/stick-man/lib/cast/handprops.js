@@ -82,6 +82,12 @@ const BUILD = {
     level(1);
     g.userData = { mode: 'up', grip: [0, 0.06, 0.055], level }; return g;
   },
+  chilli() {                                                     // a red hot chilli, stalk in the fist
+    const g = new THREE.Group(), pts = []; for (let i = 0; i <= 8; i++) { const t = i / 8; pts.push(new THREE.Vector2(0.028 * Math.sin(Math.PI * Math.pow(1 - t, 0.7)) + 0.002, t * 0.16)); }
+    const pod = solid(new THREE.LatheGeometry(pts, 16), [0.90, 0.10, 0.08], { sheen: 0.6, rough: 0.3 }); pod.rotation.z = 0.25; pod.position.y = 0.02; g.add(pod);
+    const stalk = solid(cyl(0.008, 0.01, 0.04, 8), [0.20, 0.60, 0.15]); stalk.position.y = 0.0; g.add(stalk);
+    g.userData = { mode: 'along', grip: [0, -0.01, 0] }; return g;
+  },
   medal() {                                                      // a gold medal held up by its ribbon
     const g = new THREE.Group(), disc = solid(cyl(0.07, 0.07, 0.014, 32), [1.0, 0.76, 0.18], { sheen: 0.9, rough: 0.2 }); disc.rotation.x = Math.PI / 2; disc.position.y = -0.10; g.add(disc);
     const rib = solid(new THREE.BoxGeometry(0.035, 0.11, 0.006), [0.12, 0.30, 0.78]); rib.position.y = -0.03; g.add(rib);

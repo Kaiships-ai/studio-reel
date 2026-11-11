@@ -80,6 +80,8 @@ export function toonify(m, o = {}) {
       col += vec3(0.42, 0.62, 1.0) * 0.85 * uRimCool * uPlaceRim * pow(1.0 - saturate(dot(geometryNormal, geometryViewDir)), 2.5);
       // rimLit: a bright back-light edge on the sun side (the glossy reference heads), never in cast shadow
       col += vec3(1.0, 0.97, 0.92) * uRimLit * pow(1.0 - saturate(dot(geometryNormal, geometryViewDir)), 3.0) * smoothstep(-0.3, 0.4, ndl) * shw;
+      // a figure never goes HDR: a lit cream head at > 1 fed the highlight bloom, which hazed the face ink grey
+      col = mix(col, min(col, vec3(0.96)), uChar);
       gl_FragColor = vec4(col, diffuseColor.a);`);
   };
   m.needsUpdate = true;

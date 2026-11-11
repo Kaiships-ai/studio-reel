@@ -140,11 +140,11 @@ export function hairCap(col = [0.30, 0.19, 0.12], tilt = 20) {
 export function flatCap(col = [0.13, 0.15, 0.22], band = [0.80, 0.82, 0.86], tilt = 16) {
   return () => {
     const g = new THREE.Group(); g.rotation.x = -tilt * DEG;
-    const y0 = 0.25 * W, R = 0.56 * W, Hc = 0.18 * W, pr = [[0, y0], [R * 0.95, y0]];   // sits above the brows (never over the eyes)
+    const y0 = 0.31 * W, R = 0.50 * W, Hc = 0.17 * W, pr = [[0, y0], [R * 0.95, y0]];   // sits above the brows (never over the eyes; round 4: ep1 close shot)
     for (let i = 0; i <= 14; i++) { const a = 90 * i / 14 * DEG; pr.push([R * Math.pow(Math.cos(a), 0.4) * (1 + 0.06 * Math.sin(2 * a)), y0 + Hc * Math.sin(a)]); }
     const crown = solid(lathe(pr, 64), toon(col, { sheen: 0, rough: 1, char: 1 })); crown.scale.set(1, 1, 1.08); crown.position.z = 0.04 * W; g.add(crown);
-    g.add(solid(bandGeo(22 * DEG, 34 * DEG, 0.075 * W), toon(band, { sheen: 0, rough: 1, char: 1 })));
-    const peak = solid(brimGeo(HA * Math.cos(26 * DEG) + 0.03 * W, 0.54 * W, 0.76 * W), toon(col.map(c => c * 0.8), { sheen: 0, rough: 1, char: 1 }));
+    g.add(solid(bandGeo(30 * DEG, 42 * DEG, 0.07 * W), toon(band, { sheen: 0, rough: 1, char: 1 })));
+    const peak = solid(brimGeo(HA * Math.cos(34 * DEG) + 0.03 * W, 0.50 * W, 0.68 * W), toon(col.map(c => c * 0.8), { sheen: 0, rough: 1, char: 1 }));
     peak.position.set(0, y0 - 0.01 * W, 0); peak.rotation.x = 0.22; g.add(peak);
     return g;
   };
@@ -208,11 +208,37 @@ function glasses() {
 }
 
 // spherical patch just above the head; UVs are the straight-on projection, so from the front it reads as the flat 2D face
+// ------------------------------------------------------------------ head silhouette
+// Not a perfect ellipsoid (Kai 11/11: "đầu tròn hoàn hảo quá"). Measured on the reference (pink f653, ref_close, hair incl.):
+// h/w 0.88, the widest row at 34 % from the top, a broad flattish crown (73 % of the width only 6 % down), then a long
+// taper to a narrower rounded chin (65 % of the width at 78 %, 48 % at 90 %). An ellipse is widest at 50 % and only 47 %
+// wide 6 % down. HEAD_S = the horizontal scale against our ellipsoid at height yn = y / HB (top +1), 85 % of the measured
+// difference, crown capped so hats and hair still fit; plus a 1 % lopsidedness and a 0.8 % three-lobe wobble so the
+// outline is drawn, not turned. Every head part (head, face patch, glasses, hair, hats) is deformed with the same map, so
+// the face layout and the hats stay on the new shape.
+const HEAD_S = [[1.0, 1.08], [0.8, 1.12], [0.64, 1.12], [0.48, 1.10], [0.32, 1.05], [0.16, 0.99], [0.0, 0.93], [-0.2, 0.88],
+  [-0.4, 0.83], [-0.6, 0.815], [-0.8, 0.83], [-0.92, 0.88], [-1.0, 0.95]];
+export function headScale(yn) {
+  yn = Math.max(-1, Math.min(1, yn)); let i = 0; while (i + 2 < HEAD_S.length && HEAD_S[i + 1][0] > yn) i++;
+  const [a, sa] = HEAD_S[i], [b, sb] = HEAD_S[i + 1], u = (a - yn) / (a - b); return sa + (sb - sa) * u * u * (3 - 2 * u);
+}
+const _hv = new THREE.Vector3(), _hm = new THREE.Matrix4(), _hi = new THREE.Matrix4();
+// deform a geometry whose vertices are in a frame M (-> head space); M null = head space already
+function shapeHeadGeo(g, M = null) {
+  const p = g.attributes.position; if (M) _hi.copy(M).invert();
+  for (let i = 0; i < p.count; i++) {
+    _hv.fromBufferAttribute(p, i); if (M) _hv.applyMatrix4(M);
+    const k = headScale(_hv.y / HB) * (1 + 0.010 * Math.tanh(_hv.x / (0.1 * W)) + 0.008 * Math.sin(3 * Math.atan2(_hv.z, _hv.x) + 0.7));
+    _hv.x *= k; _hv.z *= k; if (M) _hv.applyMatrix4(_hi); p.setXYZ(i, _hv.x, _hv.y, _hv.z);
+  }
+  p.needsUpdate = true; if (g.attributes.normal) g.computeVertexNormals(); g.computeBoundingSphere(); g.computeBoundingBox();
+}
 function facePatch() {
   const R = 1.012, g = new THREE.SphereGeometry(HA * R, 48, 36, Math.PI / 2 - 0.95, 1.9, Math.PI / 2 - 0.80, 1.6);
   g.scale(1, HEAD_H, 1);
   const p = g.attributes.position, uv = g.attributes.uv;
   for (let i = 0; i < p.count; i++) uv.setXY(i, 0.5 + p.getX(i) / W, 0.5 + p.getY(i) / W);
+  shapeHeadGeo(g);                                               // uv kept from the ellipsoid: the layout follows the new shape
   return g;
 }
 
@@ -437,7 +463,7 @@ export function makeStick(spec) {
   torso.position.y = (TORSO.cy - TORSO.h / 2 - HIP_V) * W; body.add(torso);
 
   const head = new THREE.Group(); root.add(head);
-  const hg = new THREE.SphereGeometry(HA, 64, 40); hg.scale(1, HEAD_H, 1);
+  const hg = new THREE.SphereGeometry(HA, 64, 40); hg.scale(1, HEAD_H, 1); shapeHeadGeo(hg);
   const headSolid = solid(hg, toon(spec.skin || CREAM, { shade: [0.80, 0.79, 0.87], rim: 0, sheen: 0, broad: 0, rough: 1, soft: 0, rimLit: 0, char: 1, rimCool: rc }));
   head.add(headSolid);
   const rig = new THREE.Group(); head.add(rig);
@@ -448,6 +474,10 @@ export function makeStick(spec) {
   const skin0 = headSolid.material.color.clone(), tintC = new THREE.Color();
   if (spec.glasses) rig.add(glasses());
   for (const f of spec.hair || []) head.add(f());
+  // hair, hats and glasses were built on the ellipsoid: give them the same head shape (in head space), geometry cloned
+  head.updateMatrixWorld(true); _hm.copy(head.matrixWorld).invert();
+  const skip = new Set([headSolid, face]); headSolid.traverse(o => skip.add(o)); FR.group.traverse(o => skip.add(o));
+  head.traverse(o => { if (!o.isMesh || skip.has(o)) return; o.geometry = o.geometry.clone(); shapeHeadGeo(o.geometry, _hm.clone().multiply(o.matrixWorld)); });
 
   const limbs = { armL: new Tube(16, LIMB_R), armR: new Tube(16, LIMB_R), legL: new Tube(18, LIMB_R), legR: new Tube(18, LIMB_R) };
   const dotGeo = new THREE.SphereGeometry(0.040 * W, 16, 10), jointGeo = new THREE.SphereGeometry(LIMB_R * 1.05, 10, 8);

@@ -193,7 +193,8 @@ const EXPR_POSES = { panic: ['flail', 'cower'], scream: ['flail', 'cower'], angr
   shock: ['recoil', 'lean_away'], worried: ['brace', 'shrug'], smug: ['arms_crossed', 'hands_on_hips'], sly: ['lean_in', 'arms_crossed'],
   happy: ['present', 'shrug'], grin: ['present', 'hands_on_hips'], excited: ['celebrate'], dizzy: ['wobble'], pain: ['clutch', 'cover_ears'],
   sad: ['shrug'], cry: ['facepalm'], confused: ['think', 'shrug'], blush: ['shrug'], proud: ['hands_on_hips'], nervous: ['shrug', 'lean_away'],
-  suspicious: ['arms_crossed', 'think'], deadpan: ['arms_crossed'], manic: ['flail', 'laugh'], closed: ['laugh', 'shrug'] };
+  suspicious: ['arms_crossed', 'think'], deadpan: ['arms_crossed'], manic: ['flail', 'laugh'], closed: ['laugh', 'shrug'],
+  laugh: ['laugh', 'celebrate'], skeptic: ['arms_crossed', 'think'], bored: ['arms_crossed', 'hands_on_hips'] };   // names added by the face rebuild
 const DEFAULT_POSES = ['hands_on_hips', 'present', 'arms_crossed', 'shrug', 'think', 'lean_in'];
 const norm = w => w.toLowerCase().replace(/[^a-z0-9'-]/g, '');
 export function autoActing({ R, actors, words, fps, win }) {
