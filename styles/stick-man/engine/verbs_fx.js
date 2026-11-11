@@ -22,7 +22,7 @@ const stand = (pos, yaw, o = {}) => ({ pos, yaw, bob: o.bob || 0, lean: o.lean |
 export const ACT = {
   // jump the actor to a mark (off screen, or between acts' windows): no motion
   place(p, st, C) {
-    const pos = C.point(p.to).slice(); pos[2] = pos[2] || 0; const yaw = p.yaw ?? st.yaw;
+    const pos = (C.mark || C.point)(p.to).slice(); pos[2] = pos[2] || 0; const yaw = p.yaw ?? st.yaw;
     st.pos = pos; st.yaw = yaw;
     return { end: p.at, owners: [{ chan: 'body', start: p.at, fade: 0, fn: () => stand(pos, yaw) }] };
   },

@@ -10,6 +10,7 @@
 // `hand` ('L' mirrors a one-handed pose), `amp` (0..1.5 size). VERBS.md "Body acting" has one line and an example each.
 import { STAND, SIT, clamp, smooth, smoother, lerp, toLocal } from './verbs.js';
 import { HEAD_C, HIP_V } from './cast.js';
+import { slowIn, MOVE_T } from './acting.js';
 
 const DEG = Math.PI / 180;
 export const LAG_A = 2, LAG_H = 4;
@@ -18,16 +19,17 @@ const HEAD = ['head_pitch', 'head_tilt', 'head_dx', 'head_dv'];
 const MIRROR = new Set(['lean', 'dx', 'shTwist', 'hipTwist', 'head_tilt', 'head_dx']);
 const s2 = (x, e) => Math.sin(Math.PI * clamp(x, 0, 1)) ** e;
 
-// rise curve: anticipation (opposite way, `antic` of the size) over A frames, then the action over T frames with a small
-// overshoot that settles into the hold; release eases back to 0 over R frames
+// rise curve: anticipation (opposite way, `antic` of the size) over A frames, then the action over T frames with the
+// reference's slow start (acting.js slowIn: 7 % of the travel in the first eighth) and a small overshoot that settles into
+// the hold; release eases back to 0 over R frames, also slow to start
 export function envelope(t, A, T, antic = 0.15, over = 0.07) {
   if (t <= 0) return 0;
   if (t < A) return -antic * smooth(t / A);
   const x = (t - A) / T;
   if (x >= 1) return 1;
-  return lerp(-antic, 1, smoother(x / 0.8)) + over * Math.sin(Math.PI * clamp((x - 0.5) / 0.5, 0, 1));
+  return lerp(-antic, 1, slowIn(x / 0.85)) + over * Math.sin(Math.PI * clamp((x - 0.5) / 0.5, 0, 1));
 }
-const relEnv = (t, R) => 1 - smoother(t / R);
+const relEnv = (t, R) => 1 - slowIn(t / R);
 
 // ---------------------------------------------------------------- the library
 // one-handed poses are written for the right hand (u > 0 = the figure's right as the camera sees it)
@@ -149,9 +151,23 @@ export const POSES = {
   eat: { A: 3, T: 9, hold: 44, props: { R: 'drumstick' }, body: { head_pitch: -2, pitch: 3 },
     hands: { R: { t: [0.32, 1.86, 0.50], elbow: [0.9, -0.5, -0.1] }, L: { t: [-0.10, 1.52, 0.42], elbow: [-0.8, -0.6, 0] } },
     bite: { per: 22, side: 'R', mouth: [0.10, -0.16, 0.56] } },
+  // show_medal: the prize held up high beside the head, chest out, chin up
+  show_medal: { A: 4, T: 13, hold: 50, props: { R: 'medal' }, body: { pitch: -6, head_pitch: -10, lean: -3, shrug: 0.04, bob: 0.02 },
+    hands: { R: { t: [0.46, 2.62, 0.30], elbow: [0.9, -0.5, 0] }, L: HIP_HAND(-1) }, cycle: t => ({ head_tilt: 3 * Math.sin(t * 0.18) }) },
+  // toast: the cup raised high in front, chin up, a small proud lean back
+  toast: { A: 3, T: 10, hold: 34, props: { R: 'beaker' }, body: { pitch: -4, head_pitch: -8, lean: -2, shrug: 0.02 },
+    hands: { R: { t: [0.44, 2.20, 0.40], elbow: [0.9, -0.6, 0] }, L: HIP_HAND(-1) }, tiltKeys: { R: [[0, 0], [12, -8], [30, 6]] },   // beside the head, never over the eyes
+    cycle: t => ({ head_tilt: 2 * Math.sin(t * 0.2) }) },
+  // drink: the cup comes up to the mouth, the head tips back, the cup tilts past level and the fill drains (levelKeys:
+  // [frame after the anticipation, 0..1]), three gulps bob the head, then the cup comes down empty
+  drink: { A: 4, T: 12, hold: 42, props: { R: 'beaker' }, body: { pitch: -7, head_pitch: -20, lean: 2, shrug: 0.03 },
+    hands: { R: { h: [0.16, -0.24, 0.42], elbow: [0.9, -0.5, 0.1] }, L: HIP_HAND(-1) },
+    tiltKeys: { R: [[0, 0], [10, 15], [18, 95], [44, 115], [52, 20]] }, levelKeys: { R: [[0, 1], [16, 1], [42, 0]] },
+    cycle: t => ({ head_dv: t < 30 ? -0.012 * Math.max(0, Math.sin(t * 0.75)) : 0, head_pitch: t < 30 ? 2.5 * Math.sin(t * 0.75) : 0 }) },
   phone: { A: 3, T: 9, hold: 40, props: { R: 'phone' }, body: { head_tilt: 10, lean: 3, head_pitch: 4 },
     hands: { R: { h: [0.46, -0.06, 0.12], elbow: [0.9, -0.6, 0.1] }, L: HIP_HAND(-1) }, cycle: t => ({ head_tilt: 3 * Math.sin(t * 0.15) }) },
 };
+POSES.eat_chilli = { ...POSES.eat, props: { R: 'chilli' } };   // the same bite cycle with a red hot chilli
 export const POSE_NAMES = [...Object.keys(POSES), 'stand_up'];
 
 // ---------------------------------------------------------------- compile
@@ -162,7 +178,7 @@ const mirrorPose = P => {
   if (P.feet) o.feet = { L: P.feet.R && [-P.feet.R[0], P.feet.R[1], P.feet.R[2]], R: P.feet.L && [-P.feet.L[0], P.feet.L[1], P.feet.L[2]] };
   if (P.props) o.props = Object.fromEntries(Object.entries(P.props).map(([k, v]) => [k === 'L' ? 'R' : k === 'R' ? 'L' : k, v]));
   if (P.keys) o.keys = P.keys.map(mirrorPose);
-  for (const k of ['tiltKeys']) if (P[k]) o[k] = { L: P[k].R, R: P[k].L };
+  for (const k of ['tiltKeys', 'levelKeys']) if (P[k]) o[k] = { L: P[k].R, R: P[k].L };
   for (const k of ['strike', 'bite']) if (P[k]) o[k] = { ...P[k], side: P[k].side === 'R' ? 'L' : 'R', up: P[k].up && [-P[k].up[0], P[k].up[1], P[k].up[2]], down: P[k].down && [-P[k].down[0], P[k].down[1], P[k].down[2]], mouth: P[k].mouth && [-P[k].mouth[0], P[k].mouth[1], P[k].mouth[2]] };
   if (P.cycle) { const c = P.cycle; o.cycle = t => { const r = c(t), q = {}; for (const [k, v] of Object.entries(r)) q[k] = k === 'hands' ? { L: v.R && [-v.R[0], v.R[1], v.R[2]], R: v.L && [-v.L[0], v.L[1], v.L[2]] } : MIRROR.has(k) ? -v : v; return q; }; }
   return o;
@@ -198,9 +214,12 @@ export function compilePose(name, p, st, C) {
   let spec = POSES[name];
   if (!spec) throw new Error(`pose: unknown ${name}`);
   if (p.hand === 'L') spec = mirrorPose(spec);
-  const amp = p.amp ?? 1, big = Math.max(0, ...(spec.keys || [spec]).flatMap(k => [Math.abs(k.body?.pitch || 0), 1.5 * Math.abs(k.body?.lean || 0)])) * amp;
+  const amp = (p.amp ?? 1) * (st.ampScale ?? 1), big =   // st.ampScale: cast `amp` or act `actingAmp` (bigger acting for a whole act)
+    Math.max(0, ...(spec.keys || [spec]).flatMap(k => [Math.abs(k.body?.pitch || 0), 1.5 * Math.abs(k.body?.lean || 0)])) * amp;
   // the torso never turns faster than ~3.2 deg a frame on average (its arms hang off it): big poses take longer
-  const t0 = p.at, A = p.antic ?? spec.A ?? 3, T = Math.max(p.dur ?? spec.T ?? 9, Math.ceil(big / 3.2)), H = p.hold ?? spec.hold ?? 30, R = Math.max(p.out ?? spec.R ?? 10, Math.ceil(big / 3.2));
+  const t0 = p.at, A = p.antic ?? spec.A ?? 3, T = Math.max(p.dur ?? ((spec.T ?? 9) >= 8 ? Math.max(MOVE_T, spec.T ?? 9) : spec.T), Math.ceil(big / 3.2)), H = p.hold ?? spec.hold ?? 30, R = Math.max(p.out ?? Math.max(14, spec.R ?? 10), Math.ceil(big / 3.2));
+  // (FORENSIC.md section 3: reference moves take 12-15 f; a pose with T >= 8 now moves in MOVE_T, the snaps under 8 f
+  // (recoil, flail, startle) stay snaps)
   const inst = { name, t0, rel: spec.keep && p.hold == null ? 1e9 : t0 + A + T + H, R, rest: [] };
   if (spec.keep) st.sitPose = inst;
   const at = keyed(spec), antic = p.antic0 ?? spec.antic ?? 0.15;
@@ -233,6 +252,7 @@ export function compilePose(name, p, st, C) {
       let tl = tableAt(spec.tiltKeys?.[s], b.t - A);
       if (spec.strike?.side === s) { const ph = strikePh(b.t - A - T); tl = lerp(spec.strike.tiltUp, spec.strike.tiltDown, ph.down); }
       if (tl) out['x_tilt' + s] = tl;
+      if (spec.levelKeys?.[s]) out['x_lvl' + s] = tableAt(spec.levelKeys[s], b.t - A);
     }
     return out;
   } }];

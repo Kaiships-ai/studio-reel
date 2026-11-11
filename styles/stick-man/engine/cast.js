@@ -4,13 +4,15 @@
 import * as THREE from 'three';
 import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { toon, lin, css, B, INK_RGB, INK_SUN } from './look.js';
-import { EXPR, faceRig } from './faces.js';
+import { EXPR, faceRig, mixFace } from './faces.js';
 import { makeHandProp } from '../lib/cast/handprops.js';
 
+const SPIN_Q = new THREE.Quaternion(), SPIN_AX = new THREE.Vector3(0, 1, 0);
 export const W_M = 0.60;                     // head width in metres
 const W = W_M;
 const INK_T = 0.046 * W;                     // outline base width; the hull shader scales it 0.35-1.6x by the light (below):
                                              // reference rim 3.8-5.6 % of head width, thick/thin side ratio 1.65-2.47 (FORENSIC.md fix 7)
+const CREAM = [0.90, 0.87, 0.78];             // reference heads and bodies: flat off-white / cream, never pure white or blue-white
 const LIMB_R = 0.038 * W / 2;                // limbs stay a thinner line than the outline
 export const HEAD_C = [0.0, 2.43], HEAD_H = 0.94, HIP_V = 1.34, SHOULDER_V = 2.00;
 export const TORSO = { cx: 0.0, cy: 1.72, w: 0.57, h: 0.90, depth: 0.80 };
@@ -43,7 +45,7 @@ function hullGeo(geo, t) {
   g.setAttribute('inkT', new THREE.Float32BufferAttribute(new Float32Array(p.count).fill(t), 1));
   return g;
 }
-function solid(geo, mat, t = INK_T, hullSrc = geo) {
+export function solid(geo, mat, t = INK_T, hullSrc = geo) {
   const m = new THREE.Mesh(geo, mat); m.castShadow = true; m.receiveShadow = true;
   const h = new THREE.Mesh(hullGeo(hullSrc, t), hullMat); h.castShadow = false; h.receiveShadow = false;
   m.add(h); return m;
@@ -51,7 +53,7 @@ function solid(geo, mat, t = INK_T, hullSrc = geo) {
 
 // ------------------------------------------------------------------ geometry helpers
 const ell = (lat, lon, out = 0) => new THREE.Vector3((HA + out) * Math.cos(lat) * Math.sin(lon), (HB + out) * Math.sin(lat), (HA + out) * Math.cos(lat) * Math.cos(lon));
-function lathe(profile, seg = 64) {
+export function lathe(profile, seg = 64) {
   const g = new THREE.LatheGeometry(profile.map(([r, y]) => new THREE.Vector2(Math.max(0, r), y)), seg);
   g.rotateY(Math.PI);                                            // lathe seam to the back, front of the texture at u = 0.5
   return g;
@@ -134,6 +136,20 @@ export function hairCap(col = [0.30, 0.19, 0.12], tilt = 20) {
     return g;
   };
 }
+// flat cap (Bram, bible v1.1: "flat cap with a pale grey band" - his thumbnail silhouette): a low wide crown that
+// overhangs the head, a short stiff peak at the front, and a pale band round the bottom that always shows
+export function flatCap(col = [0.13, 0.15, 0.22], band = [0.80, 0.82, 0.86], tilt = 16) {
+  return () => {
+    const g = new THREE.Group(); g.rotation.x = -tilt * DEG;
+    const y0 = 0.31 * W, R = 0.50 * W, Hc = 0.17 * W, pr = [[0, y0], [R * 0.95, y0]];   // sits above the brows (never over the eyes; round 4: ep1 close shot)
+    for (let i = 0; i <= 14; i++) { const a = 90 * i / 14 * DEG; pr.push([R * Math.pow(Math.cos(a), 0.4) * (1 + 0.06 * Math.sin(2 * a)), y0 + Hc * Math.sin(a)]); }
+    const crown = solid(lathe(pr, 64), toon(col, { sheen: 0, rough: 1, char: 1 })); crown.scale.set(1, 1, 1.08); crown.position.z = 0.04 * W; g.add(crown);
+    g.add(solid(bandGeo(30 * DEG, 42 * DEG, 0.07 * W), toon(band, { sheen: 0, rough: 1, char: 1 })));
+    const peak = solid(brimGeo(HA * Math.cos(34 * DEG) + 0.03 * W, 0.50 * W, 0.68 * W), toon(col.map(c => c * 0.8), { sheen: 0, rough: 1, char: 1 }));
+    peak.position.set(0, y0 - 0.01 * W, 0); peak.rotation.x = 0.22; g.add(peak);
+    return g;
+  };
+}
 function stripeTex(base, draw) {
   const cv = document.createElement('canvas'); cv.width = 1024; cv.height = 128; const c = cv.getContext('2d');
   c.fillStyle = css(base); c.fillRect(0, 0, 1024, 128); draw(c);
@@ -193,11 +209,40 @@ function glasses() {
 }
 
 // spherical patch just above the head; UVs are the straight-on projection, so from the front it reads as the flat 2D face
+// ------------------------------------------------------------------ head silhouette
+// Not a perfect ellipsoid (Kai 11/11: "đầu tròn hoàn hảo quá"). Measured on the reference (pink f653, ref_close, hair incl.):
+// h/w 0.88, the widest row at 34 % from the top, a broad flattish crown (73 % of the width only 6 % down), then a long
+// taper to a narrower rounded chin (65 % of the width at 78 %, 48 % at 90 %). An ellipse is widest at 50 % and only 47 %
+// wide 6 % down. HEAD_S = the horizontal scale against our ellipsoid at height yn = y / HB (top +1), 85 % of the measured
+// difference, crown capped so hats and hair still fit; plus a 1 % lopsidedness and a 0.8 % three-lobe wobble so the
+// outline is drawn, not turned. Every head part (head, face patch, glasses, hair, hats) is deformed with the same map, so
+// the face layout and the hats stay on the new shape.
+const HEAD_S = [[1.0, 1.08], [0.8, 1.12], [0.64, 1.12], [0.48, 1.10], [0.32, 1.05], [0.16, 0.99], [0.0, 0.93], [-0.2, 0.88],
+  [-0.4, 0.83], [-0.6, 0.815], [-0.8, 0.83], [-0.92, 0.88], [-1.0, 0.95]];
+export function headScale(yn) {
+  yn = Math.max(-1, Math.min(1, yn)); let i = 0; while (i + 2 < HEAD_S.length && HEAD_S[i + 1][0] > yn) i++;
+  const [a, sa] = HEAD_S[i], [b, sb] = HEAD_S[i + 1], u = (a - yn) / (a - b); return sa + (sb - sa) * u * u * (3 - 2 * u);
+}
+const _hv = new THREE.Vector3(), _hm = new THREE.Matrix4(), _hi = new THREE.Matrix4();
+// deform a geometry whose vertices are in a frame M (-> head space); M null = head space already
+// Kai 11/11 (later): back to the original round head ("đầu hiện tại anh lại thấy không ok") -> off by default.
+export const HEAD_SHAPE = { on: false };
+function shapeHeadGeo(g, M = null) {
+  if (!HEAD_SHAPE.on) return;
+  const p = g.attributes.position; if (M) _hi.copy(M).invert();
+  for (let i = 0; i < p.count; i++) {
+    _hv.fromBufferAttribute(p, i); if (M) _hv.applyMatrix4(M);
+    const k = headScale(_hv.y / HB) * (1 + 0.010 * Math.tanh(_hv.x / (0.1 * W)) + 0.008 * Math.sin(3 * Math.atan2(_hv.z, _hv.x) + 0.7));
+    _hv.x *= k; _hv.z *= k; if (M) _hv.applyMatrix4(_hi); p.setXYZ(i, _hv.x, _hv.y, _hv.z);
+  }
+  p.needsUpdate = true; if (g.attributes.normal) g.computeVertexNormals(); g.computeBoundingSphere(); g.computeBoundingBox();
+}
 function facePatch() {
   const R = 1.012, g = new THREE.SphereGeometry(HA * R, 48, 36, Math.PI / 2 - 0.95, 1.9, Math.PI / 2 - 0.80, 1.6);
   g.scale(1, HEAD_H, 1);
   const p = g.attributes.position, uv = g.attributes.uv;
   for (let i = 0; i < p.count; i++) uv.setXY(i, 0.5 + p.getX(i) / W, 0.5 + p.getY(i) / W);
+  shapeHeadGeo(g);                                               // uv kept from the ellipsoid: the layout follows the new shape
   return g;
 }
 
@@ -215,7 +260,8 @@ function clothesCanvas(spec) {
     g.lineWidth = w * k; g.strokeStyle = css(col); g.lineCap = g.lineJoin = 'round'; g.stroke(); };
   const dot = (c, rr, col) => { const [x, y] = P(...c); g.beginPath(); g.arc(x, y, rr * k, 0, Math.PI * 2); g.fillStyle = css(col); g.fill(); };
   const dense = (a, b, n = 12) => Array.from({ length: n + 1 }, (_, i) => [a[0] + (b[0] - a[0]) * i / n, a[1] + (b[1] - a[1]) * i / n]);
-  g.fillStyle = css(spec.shirt || [1, 1, 1]); g.fillRect(0, 0, TEX_W, TEX_H);
+  const sh = spec.shirt || CREAM, white = Math.min(...sh) > 0.9;          // a white shirt is the reference's cream body
+  g.fillStyle = css(white ? CREAM : sh); g.fillRect(0, 0, TEX_W, TEX_H);
   const top = T.cy + T.h / 2, BRASS = [1.0, 0.70, 0.16];
   for (const c of spec.clothes || []) {
     if (c.vest) {
@@ -410,12 +456,19 @@ export function reachAssist(P) {
 export function makeStick(spec) {
   const root = new THREE.Group(); root.name = spec.name || 'stick'; root.userData.stick = true;   // look.js: no screen ink (own hull)
   const body = new THREE.Group(); root.add(body);
-  const torso = solid(torsoGeo(), toon([1, 1, 1], { map: clothesCanvas(spec), sheen: 0.45, rough: 0.30, rim: 0.12, soft: 0.6, shade: [0.62, 0.64, 0.88], rimLit: 0.30 }));
+  // flat like the reference (judge t1: our glossy lavender-blue body vs flat off-white / cream heads): a hard 2-step cel
+  // ramp, no gloss, no rim light; the shade is a soft cool grey that never reaches the lit side; place light tints the
+  // figure only a little (char: 1)
+  // girth: a body silhouette per actor (judge t2: "a grey blob body"); 1 = the default, Bram is stocky, Mabel slim.
+  // rimCool: a cool rim light on dark places (bible v1.1: a dark figure keeps an edge on any set darker than Y 95)
+  const girth = spec.girth ?? 1, rc = spec.rimCool ? 1 : 0;
+  const torso = solid(torsoGeo(), toon([1, 1, 1], { map: clothesCanvas(spec), sheen: 0, rough: 1, rim: 0, soft: 0, shade: [0.78, 0.78, 0.86], char: 1, rimCool: rc }));
+  torso.scale.set(girth, 1, 0.9 + 0.1 * girth);
   torso.position.y = (TORSO.cy - TORSO.h / 2 - HIP_V) * W; body.add(torso);
 
   const head = new THREE.Group(); root.add(head);
-  const hg = new THREE.SphereGeometry(HA, 64, 40); hg.scale(1, HEAD_H, 1);
-  const headSolid = solid(hg, toon(spec.skin || [1, 1, 1], { shade: [0.74, 0.74, 0.92], rim: 0.12, sheen: 0.55, broad: 0.30, rough: 0.25, soft: 0.6, rimLit: 0.45 }));
+  const hg = new THREE.SphereGeometry(HA, 64, 40); hg.scale(1, HEAD_H, 1); shapeHeadGeo(hg);
+  const headSolid = solid(hg, toon(spec.skin || CREAM, { shade: [0.80, 0.79, 0.87], rim: 0, sheen: 0, broad: 0, rough: 1, soft: 0, rimLit: 0, char: 1, rimCool: rc }));
   head.add(headSolid);
   const rig = new THREE.Group(); head.add(rig);
   const FR = faceRig(W, { glasses: !!spec.glasses });
@@ -425,6 +478,10 @@ export function makeStick(spec) {
   const skin0 = headSolid.material.color.clone(), tintC = new THREE.Color();
   if (spec.glasses) rig.add(glasses());
   for (const f of spec.hair || []) head.add(f());
+  // hair, hats and glasses were built on the ellipsoid: give them the same head shape (in head space), geometry cloned
+  head.updateMatrixWorld(true); _hm.copy(head.matrixWorld).invert();
+  const skip = new Set([headSolid, face]); headSolid.traverse(o => skip.add(o)); FR.group.traverse(o => skip.add(o));
+  head.traverse(o => { if (!o.isMesh || skip.has(o)) return; o.geometry = o.geometry.clone(); shapeHeadGeo(o.geometry, _hm.clone().multiply(o.matrixWorld)); });
 
   const limbs = { armL: new Tube(16, LIMB_R), armR: new Tube(16, LIMB_R), legL: new Tube(18, LIMB_R), legR: new Tube(18, LIMB_R) };
   const dotGeo = new THREE.SphereGeometry(0.040 * W, 16, 10), jointGeo = new THREE.SphereGeometry(LIMB_R * 1.05, 10, 8);
@@ -445,7 +502,12 @@ export function makeStick(spec) {
     if (P.pos) root.position.copy(B(...P.pos));
     if (P.yaw != null) S.yaw = P.yaw * DEG;
     else if (P.face) { const d = B(...P.face).sub(root.position); S.yaw = Math.atan2(d.x, d.z); }
-    root.rotation.y = S.yaw + (P.yaw_extra || 0) * DEG;
+    // x_tumble / x_roll (deg, opt-in from allout/acting.js): the whole figure tips about its soles (+ tumble = falls on
+    // its face, - = on its back; + roll = toward its right), x_lift (m) raises it so a body lying down rests on the floor
+    root.rotation.set((P.x_tumble || 0) * DEG, S.yaw + (P.yaw_extra || 0) * DEG, -(P.x_roll || 0) * DEG, 'YXZ');
+    if (P.x_spin) root.quaternion.multiply(SPIN_Q.setFromAxisAngle(SPIN_AX, P.x_spin * DEG));   // + x_spin turns the fallen body about its own length (cheek to the ground, the face to one side)
+    if (P.x_lift) root.position.y += P.x_lift;
+    if (P.x_slide) { const y = S.yaw; root.position.x += Math.sin(y) * P.x_slide; root.position.z += Math.cos(y) * P.x_slide; }   // a fallen body skids on along its facing
     root.updateMatrixWorld(true);
   };
   // a Blender world point -> this figure's (u, v) in W units
@@ -454,13 +516,17 @@ export function makeStick(spec) {
   // face only (expression cell, blink, eye slide): the reel runtime sets it after every prop has moved this frame
   // Extra keys: t (frame), age (frames since this expression began), cam (camera, Blender metres: mark cards face it),
   // marks ([[kind, age]] on top of the expression's own; verbs add them through the pose keys x_mark_<kind> = age + 1).
+  // state (acting.js faceStateAt): a continuous face (in-betweened change, visemes, hold drift) drawn instead of expr
   S.face = (P = {}) => {
     const e = EXPR[P.expr] ? P.expr : 'neutral', E = EXPR[e], t = P.t || 0, age = P.age ?? 99;
     const marks = (E.marks || []).filter(([, life]) => !life || age < life).map(([k]) => [k, age]);
     for (const m of [...(P.marks || []), ...S.xmarks]) if (!marks.some(q => q[0] === m[0])) marks.push(m);
-    FR.draw(e, P.blink || 0, t, marks, P.cam ? B(...P.cam) : null);
-    const tk = E.tint ? Math.min(1, age / 6) : 0;               // a furious face flushes over 6 frames
-    headSolid.material.color.copy(skin0); if (tk) headSolid.material.color.lerp(tintC.setRGB(...E.tint), tk);
+    const mx = P.state ? mixFace(P.state) : null, blink = Math.max(P.blink || 0, mx ? mx.blink : 0);
+    FR.draw(e, blink, t, marks, P.cam ? B(...P.cam) : null, mx ? mx.F : null);
+    S.faceStats = FR.stats;
+    const ta = P.state && EXPR[P.state.a]?.tint, tb = E.tint, u = P.state ? Math.max(0, Math.min(1, P.state.u)) : 1;
+    const tk = tb ? Math.min(1, age / 6) * u : ta ? 1 - u : 0;   // a furious face flushes over 6 frames (and fades as it leaves)
+    headSolid.material.color.copy(skin0); if (tk) headSolid.material.color.lerp(tintC.setRGB(...(tb || ta)), tk);
     rig.rotation.set(-(P.look_v || 0) * 0.12, (P.look || 0) * LOOK_RAD, 0);
   };
   // Hand props: pose key x_hp<L|R>_<kind> > 0.5 shows that prop in that hand (x_hpB_<kind> = between both hands);
@@ -487,6 +553,7 @@ export function makeStick(spec) {
         }
       }
       o.position.copy(hand).sub(gp.applyQuaternion(o.quaternion));
+      if (U.level) U.level(P['x_lvl' + (side === 'B' ? 'L' : side)] ?? 1);     // x_lvl<L|R>: a container's fill 0..1 (beaker)
     }
   }
   // Extra keys for the reel runtime: pitch (deg, upper body forward about the hip), hands and feet may carry a
@@ -508,7 +575,7 @@ export function makeStick(spec) {
     const front = new Set(P.front || []), rig = { pitch: P.pitch || 0, roll: P.lean || 0, assist: P.assist || 0, body: [P.dx || 0, P.bob || 0, P.shTwist || 0].map(x => +x.toFixed(3)) };
     const twist = (q, deg) => { const a = (deg || 0) * DEG, u = q[0] - dx; return [dx + u * Math.cos(a), q[1], q[2] + u * Math.sin(a)]; };
     for (const [side, sg] of [['L', -1], ['R', 1]]) {
-      const sh = V(twist(bt(sg * TORSO.w * 0.40, SHOULDER_V + (P.shrug || 0) + (P['shrug' + side] || 0)), P.shTwist)), h0 = P['hand' + side];
+      const sh = V(twist(bt(sg * TORSO.w * 0.40 * girth, SHOULDER_V + (P.shrug || 0) + (P['shrug' + side] || 0)), P.shTwist)), h0 = P['hand' + side];
       let hand = V(h0 ? [h0[0], h0[1], h0.length > 2 ? h0[2] : (front.has('arm' + side) ? 0.16 : 0.0)] : bt(sg * 0.41, 1.22));
       let pole;
       if (P['elbow' + side]) pole = V(P['elbow' + side]);
@@ -526,7 +593,7 @@ export function makeStick(spec) {
       hand = arm.end;
       const pts = hose(sh, arm.joint, hand, ROUND.arm, 16);
       limbs['arm' + side].set(pts); hands[side].position.copy(pts[15]); S.hand[side] = hand.toArray();
-      const hb = bt(sg * 0.14, HIP_V + 0.04), hip = V(twist([hb[0], hb[1], 0], P.hipTwist));
+      const hb = bt(sg * 0.14 * girth, HIP_V + 0.04), hip = V(twist([hb[0], hb[1], 0], P.hipTwist));
       const f0 = P['foot' + side] || [sg * 0.22, 0.022], foot = V(f0);
       const kp = P['kneeDir' + side] || P.kneeDir || [sg * 0.15, 0, 1];
       const leg = ik(hip, foot, LIMB.thigh, V(kp), SOFT.leg);
@@ -543,7 +610,7 @@ export function makeStick(spec) {
     S.rig = rig;
     handProps(P, rig);
     S.xmarks = Object.keys(P).filter(k => k.startsWith('x_mark_') && P[k] >= 1).map(k => [k.slice(7), Math.floor(P[k] - 1)]);
-    contact.visible = P.contact !== false;
+    contact.visible = P.contact !== false && Math.abs(P.x_tumble || 0) < 20 && Math.abs(P.x_roll || 0) < 20;   // a figure tipped over has no foot shadow
     contact.position.y = 0.004 + (P.ground || 0) * W;
     root.updateMatrixWorld(true);
     return S;

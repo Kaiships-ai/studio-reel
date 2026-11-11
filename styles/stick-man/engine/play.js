@@ -4,10 +4,10 @@
 // A reel is one or more ACTS (reel.js is the first; reel2.js, when present, adds more): each act builds its own set,
 // cast, beats and camera; boot() shows the act whose window holds the frame and dissolves between them.
 import * as THREE from 'three';
-import { createStage, SET_GRADE } from './look.js';
+import { createStage, SET_GRADE, B as toThree, lin, PLACE } from './look.js';
 import { makeStick, KAI, TELLER, GUARD, EXPR, HEAD_C } from './cast.js';
 import { VERBS, STAND, SIT, REST_ARM, W, lerp, lerp3, add3, angDiff, toLocal, smoother, hash, handEase } from './verbs.js';
-import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, exprAccent, bodyFollow, LATE, EXPR_LEAD, exprKeyAt, markOwner, isBodyVerb, autoActing } from './acting.js';
+import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, exprAccent, bodyFollow, LATE, EXPR_LEAD, exprKeyAt, markOwner, isBodyVerb, autoActing, faceStateAt, visemeTrack } from './acting.js';
 import { createCamera } from './camera.js';
 import { planShots } from './shotplan.js';
 import { createCaptions } from './captions.js';
@@ -15,7 +15,8 @@ import { ACT, PROPV, MAKE, keyTracks } from './verbs_fx.js';
 import { POSE_VERBS } from './poses.js';
 import * as EXTRAS from '../lib/cast/extras.js';
 import { PHYS } from '../lib/props/physfx.js';
-Object.assign(MAKE, PHYS);                                       // physical FX kinds (SETS.md "Physical effects")
+import { STORY } from '../lib/props/story.js';
+Object.assign(MAKE, PHYS, STORY);                               // story props that animate (lib/props/story.js)                                       // physical FX kinds (SETS.md "Physical effects")
 
 // every cast spec exported by lib/cast/extras.js (an object with a name and a shirt) registers itself by its export name
 const dye = EXTRAS.dye;
@@ -39,6 +40,17 @@ export function resolveBeatFrame(b, words, fps) {
   const w = ws[(b.nth || 1) - 1];
   if (!w) throw new Error(`beat: no "${b.on}" #${b.nth || 1} in ${b.line}`);
   return Math.max(0, Math.round(w.t0 * fps) + (b.offset ?? -2));
+}
+
+// opt-in module hooks (allout/costume.js sets HOOKS.costume)
+export const HOOKS = {};
+// where a Blender point lands on screen (0..1, y down) for a { pos, aim, lens } camera; null behind it
+function projUV(c, p, aspect) {
+  const f = c.aim.map((x, i) => x - c.pos[i]), fl = Math.hypot(...f); if (!fl) return null; const F = f.map(x => x / fl);
+  let R = [F[1], -F[0], 0]; const rl = Math.hypot(...R) || 1; R = R.map(x => x / rl); const U = [R[1] * F[2] - R[2] * F[1], R[2] * F[0] - R[0] * F[2], R[0] * F[1] - R[1] * F[0]];
+  const v = p.map((x, i) => x - c.pos[i]), z = v[0] * F[0] + v[1] * F[1] + v[2] * F[2]; if (z <= 0.01) return null;
+  const tv = 18 / c.lens, th = tv * aspect;
+  return [0.5 + 0.5 * (v[0] * R[0] + v[1] * R[1] + v[2] * R[2]) / z / th, 0.5 - 0.5 * (v[0] * U[0] + v[1] * U[1] + v[2] * U[2]) / z / tv];
 }
 
 const ZERO_KEY = /^(head_|shrug|x_|f[LR][xyz]$)/;
@@ -86,15 +98,40 @@ function chain(list, f, val, env, hand = false) {
 
 async function buildAct(R, X) {
   const { stage, words, fps, F0, F1, width, height } = X;
-  if (!SETS[R.set]) throw new Error(`unknown set ${R.set} (SETS.md)`);
-  const SET = await SETS[R.set]();
+  // act.setModule: a set module by URL (styles/stick-man/allout/sets/*.js), outside the kit's SETS table
+  if (!R.setModule && !SETS[R.set]) throw new Error(`unknown set ${R.set} (SETS.md)`);
+  const SET = R.setModule ? await import(R.setModule) : await SETS[R.set]();
   // the set's meshes and lights go into this act's group (shown only while the act is on screen)
   const group = new THREE.Group(), before = new Set(stage.scene.children), bg0 = stage.scene.background;
-  const built = await SET.build(stage, { use: R.use || [] });   // act.use: opt-in set props (street: police, bag)
+  const built = await SET.build(stage, { use: R.use || [], ...(R.setOpts || {}) });   // act.use: opt-in set props (street: police, bag)
   for (const c of [...stage.scene.children]) if (!before.has(c)) group.add(c);
-  const background = stage.scene.background; stage.scene.background = bg0; stage.scene.add(group); group.visible = false;
+  let background = stage.scene.background; stage.scene.background = bg0; stage.scene.add(group); group.visible = false;
+  // act haze: { color (sRGB), near, far } m: distance fog toward the sky colour (aerial perspective), shown with the act
+  const fog = R.haze ? new THREE.Fog(lin(...R.haze.color), R.haze.near ?? 12, R.haze.far ?? 160) : null;
   const props = built.props;
-  const sun = () => stage.setSun(SET.SUN_DIR, R.sun?.center || SET.SUN_CENTER, R.sun?.half || SET.SUN_HALF);
+  // per-place light (FORENSIC.md section 6: every reference place has its own light, per-shot YAVG std 23-25 vs ours 6-9):
+  // act `light: { lit, shade (tints of the toon ramp's two ends), lamp (gain of the practical lights), sun, power, sky,
+  // ground, hemi, fill, fillPower, background, bounce, lamps: [{at, rgb, power, dist}] }`
+  // recolours the shared sun / sky / fill while this act is on screen, scales the set's own bounce lights, and hangs
+  // practical lamps (point lights in this act's group, so they only light this act)
+  const LT = R.light || null;
+  stage.light0 ||= { sun: stage.sun.color.clone(), si: stage.sun.intensity, sky: stage.hemi.color.clone(), gr: stage.hemi.groundColor.clone(),
+    hi: stage.hemi.intensity, fill: stage.fill.color.clone(), fi: stage.fill.intensity };
+  if (LT) {
+    group.traverse(o => { if (o.isPointLight) o.intensity *= LT.bounce ?? 1; });
+    for (const l of LT.lamps || []) { const pl = new THREE.PointLight(lin(...l.rgb), l.power ?? 2, l.dist ?? 5, 1.6); pl.position.copy(toThree(...l.at)); group.add(pl); }
+    if (LT.background) background = lin(...LT.background);
+  }
+  const L0 = stage.light0;
+  const sun = () => {
+    stage.setSun(LT?.sunDir || SET.SUN_DIR, R.sun?.center || SET.SUN_CENTER, R.sun?.half || SET.SUN_HALF);   // light.sunDir: a lower, warmer key per act
+    stage.sun.color.copy(LT?.sun ? lin(...LT.sun) : L0.sun); stage.sun.intensity = LT?.power ?? L0.si;
+    stage.hemi.color.copy(LT?.sky ? lin(...LT.sky) : L0.sky); stage.hemi.groundColor.copy(LT?.ground ? lin(...LT.ground) : L0.gr); stage.hemi.intensity = LT?.hemi ?? L0.hi;
+    stage.fill.color.copy(LT?.fill ? lin(...LT.fill) : L0.fill); stage.fill.intensity = LT?.fillPower ?? L0.fi;
+    PLACE.lit.value.set(...(LT?.lit || [1, 1, 1])); PLACE.shade.value.set(...(LT?.shade || [1, 1, 1])); PLACE.lamp.value = LT?.lamp ?? 0;
+    const lum = LT?.lit ? 0.2126 * LT.lit[0] + 0.7152 * LT.lit[1] + 0.0722 * LT.lit[2] : 1;
+    PLACE.rim.value = LT?.rim ?? (lum < 0.7 || (R.grade?.exp ?? 1) < 0.85 ? 1 : 0.35);   // dark place: full cool rim on dark figures
+  };
 
   // ---------------------------------------------------------------- compile
   const point = s => Array.isArray(s) ? s : SET.PLACES[s] || SET.MARKS[s] || (props[s] && props[s].userData.rest.pos) ||
@@ -112,7 +149,12 @@ async function buildAct(R, X) {
   const C = {
     words, fps,
     point,
-    target: (s, st) => s == null ? { rest: true } : typeof s === 'string' && props[s] ? { prop: s } : typeof s === 'string' ? { w: point(s) }
+    // where an actor stands: a set MARK wins over a PLACE of the same name (PLACES are prop tops: a counter, a bench)
+    mark: s => typeof s === 'string' && SET.MARKS?.[s] ? SET.MARKS[s] : point(s),
+    // a cast name = that actor's near shoulder (hand on shoulder, grab, shove, hand a prop over: reach / point_lean to: 'bram')
+    target: (s, st) => s == null ? { rest: true } : typeof s === 'string' && props[s] ? { prop: s } : typeof s === 'string' && byName[s] && st
+      ? { w: (() => { const o = byName[s].st0, dx = st.pos[0] - o[0], dy = st.pos[1] - o[1], d = Math.hypot(dx, dy) || 1; return [o[0] + 0.16 * dx / d, o[1] + 0.16 * dy / d, (o[2] || 0) + 1.28]; })() }   // on a raised stage too (was z 1.28 absolute: 0.5 m low)
+      : typeof s === 'string' ? { w: point(s) }
       : Array.isArray(s) ? { w: s } : s,
     rest: n => { if (!rest[n]) throw new Error(`prop "${n}" has no rest pose (a child of another prop, e.g. cutaway pack inside stack): move its parent, or key its parts with a \`prop\` effect`); return rest[n].pos; },
     restRot: n => rest[n]?.rot ?? 0, setRest: (n, p, r) => { rest[n] = { pos: p, rot: r }; },
@@ -128,9 +170,11 @@ async function buildAct(R, X) {
     if (!SPECS[c.spec]) throw new Error(`unknown cast spec ${c.spec} (SETS.md, Cast)`);
     // glasses: per cast entry, else per reel (R1.glasses), else the spec's own (Q2: rims make every face read as round eyes)
     const gl = c.glasses ?? X.glasses, S = makeStick(gl == null ? SPECS[c.spec] : { ...SPECS[c.spec], glasses: gl }); group.add(S.root);
+    if (c.costume) { if (!HOOKS.costume) throw new Error(`cast ${name}: costume needs import '/styles/stick-man/allout/costume.js'`); HOOKS.costume(S, c.costume, { group, name }); }   // role layers (belt, holster, hat)
+    if (HOOKS.faceExtras) HOOKS.faceExtras(S);                      // allout/face_extras.js (proposal): hidden cards until a beat asks
     const posture = c.posture || 'stand', base = posture === 'sit' ? SIT : STAND;
     const pos = point(c.at).slice(); pos[2] = pos[2] || 0;
-    const st = { name, pos, yaw: c.yaw ?? 0, posture, hold: { L: null, R: null }, handW: {}, sling: null };
+    const st = { name, pos, yaw: c.yaw ?? 0, posture, hold: { L: null, R: null }, handW: {}, sling: null, ampScale: c.amp ?? R.actingAmp ?? 1 };
     const a = { name, S, c, st, posture, seed: Math.round(hash(name.length, name.charCodeAt(0), name.charCodeAt(1)) * 1e6),
       focus: c.focus, watch: c.watch, owners: { body: [], handL: [], handR: [], add: [] }, verbs: [], exprs: [{ f: -1e9, expr: c.expr || 'neutral' }],
       focusSegs: [], mouth: [], holdLog: [], st0: pos.slice() };
@@ -166,6 +210,7 @@ async function buildAct(R, X) {
     for (const q of out.active || []) active.push(q);
     if (out.focus) a.focusSegs.push(out.focus);
     if (out.mouth) a.mouth.push(...out.mouth);
+    if (out.say) (a.says ||= []).push(out.say);
   };
   for (const b of beats) compile(b);
   // a pose's end moves when a later pose (or stand_up) releases it
@@ -179,6 +224,7 @@ async function buildAct(R, X) {
     a.exprs.sort((x, y) => x.f - y.f);
     const swaps = a.exprs.slice(1).filter((e, i) => e.expr !== a.exprs[i].expr).map(e => e.f);
     a.blinks = blinkTrack(a.seed, F0 - 60, F1 + 60, swaps);
+    a.vis = a.says?.length ? visemeTrack(words, fps, a.says) : null;     // the mouth follows the letters of its lines
     a.focusSegs.sort((x, y) => x.from - y.from);
   }
   for (const n of Object.keys(props)) if (rest[n] || segs[n]) {
@@ -259,8 +305,8 @@ async function buildAct(R, X) {
     const base = a.posture === 'sit' ? SIT : STAND, hands = {}, bends = {}, elbows = {}, fks = {}, off = {}, late = {};
     // the body acting layer: idle beats between actions, accents on expression changes, the body following the hands
     const stand = a.posture !== 'sit', walking = body.walking != null;
-    // the idle channels run staggered (body now, arms 3 frames behind, head 6): one of them is always on the move
-    const ib = stand ? idleBeats(a.seed, f) : null, ibA = stand ? idleBeats(a.seed, f - 3) : null, ibH = stand ? idleBeats(a.seed, f - 6) : null, acc = stand ? exprAccent(a.exprs, f, a.seed) : {};
+    // the idle channels overlap: the head leads, the body follows 2 frames later, the arms 4 (follow-through)
+    const ib = stand ? idleBeats(a.seed, f - 2) : null, ibA = stand ? idleBeats(a.seed, f - 4) : null, ibH = stand ? idleBeats(a.seed, f) : null, acc = stand ? exprAccent(a.exprs, f, a.seed) : {};
     const handAt = (side, g) => chain(a.owners['hand' + side], g, spec => {
       const sg = side === 'L' ? -1 : 1, s = spec.w || spec.prop || spec.mouth ? env.resolve(spec, g) : spec;
       let l;
@@ -298,7 +344,7 @@ async function buildAct(R, X) {
     const bob = (body.bob || 0) + id.bob + k('bob'), P = {
       pos: root.pos, yaw: root.yaw, bob, lean: (body.lean || 0) + (add.lean || 0) + k('lean'), pitch: (body.pitch || 0) + (add.pitch || 0) + k('pitch'),
       head_tilt: id.head_tilt + (add.head_tilt || 0) + (a.c.head_tilt || 0) + k('head_tilt'), head_dv: id.head_dv + (add.head_dv || 0) + k('head_dv'),
-      head_dx: id.head_dx + (add.head_dx || 0) + k('head_dx'), head_pitch: (add.head_pitch || 0) + k('head_pitch'), shrug: k('shrug'),
+      head_dx: id.head_dx + (add.head_dx || 0) + k('head_dx'), head_pitch: (add.head_pitch || 0) + k('head_pitch'), shrug: k('shrug') + id.shrug,
       footL: body.footL, footR: body.footR, toeL: body.toeL, toeR: body.toeR, toeF: body.toeF,
       handL: hands.L, handR: hands.R, bendL: bends.L, bendR: bends.R, expr: a.lastExpr || a.c.expr,
       elbowL: elbows.L, elbowR: elbows.R, armFKL: fks.L, armFKR: fks.R,
@@ -315,17 +361,14 @@ async function buildAct(R, X) {
   }
 
   function faceActor(a, f, camPos) {
-    const ek = exprKeyAt(a.exprs, f); let e = ek.expr; a.exprKey = ek;
-    const talking = a.mouth.some(([s, t]) => f >= s && f < t);
+    const ek = exprKeyAt(a.exprs, f), e = ek.expr; a.exprKey = ek;
     const id = idle(a.seed, f, a.posture);
-    // expression ramp (FORENSIC.md fix 8): a change is drawn through in-betweens, not swapped: squint (4 f), wide-open
-    // mouth (5 f), then the face; the old face before it makes >= 3 drawings in 12 frames, like the reference
-    const age = f - ek.f, prevE = a.exprs.filter(x => x.f < ek.f).pop()?.expr;
-    let rampBlink = 0;
-    if (prevE && prevE !== e && age >= 0 && age < 9) { if (age < 4) rampBlink = 2; else if (EXPR[e + '_O']) e += '_O'; }
-    // talking: the mouth opens and closes by syllable (3-frame steps: open, wide, open, closed), never one open shape
-    else if (talking && EXPR[e + '_o']) { const ph = Math.floor(f / 3 + a.seed) % 4; e = ph === 1 && EXPR[e + '_O'] ? e + '_O' : ph === 3 ? e : e + '_o'; }
-    else if (e === 'sleep' && id.snore) e = 'sleep_o';
+    // the micro-animation face (acting.js faceStateAt, faces.js mixFace): an expression change is in-betweened over 10
+    // frames with a slow start and overshoot (a new drawing every frame, eyes squeeze and mouth gasps through the swap),
+    // the mouth follows the visemes of the actor's lines, and a held face drifts a little (brows, lids, mouth width)
+    const state = faceStateAt(a.exprs, f, a.seed, a.vis);
+    if (!state.talk && e === 'sleep' && id.snore) state.talk = { open: 0.3, wide: 0, round: 1, teeth: 0 };
+    a.talking = !!state.talk;
     const tgtPos = t => t === 'camera' ? camPos : byName[t] ? toB(byName[t].S.parts.head.getWorldPosition(hv)) : Array.isArray(t) ? t : t ? livePos(t) : camPos;
     const cur = focusAt(a, f, a.focusSegs, active), head = toB(a.S.parts.head.getWorldPosition(new THREE.Vector3()));
     const yaw = F.bodies[a.name].yaw, gz = x => gaze(head, yaw, tgtPos(x.prop || x.target));
@@ -333,8 +376,8 @@ async function buildAct(R, X) {
     while (d < 3 && focusAt(a, f - d - 1, a.focusSegs, active).key === cur.key) d++;
     if (d < 3) g = lerp3(gz(focusAt(a, f - d - 1, a.focusSegs, active)), g, smoother((d + 1) / 4));
     const sc = saccade(a.seed, f);
-    const blink = rampBlink || a.blinks.at(f);
-    const P = { expr: e, blink, look: g[0] + sc[0] + (cur.prop ? 0 : a.idleLook || 0), look_v: g[1] + sc[1], t: f, age: f - ek.f, cam: camPos };
+    const blink = a.blinks.at(f);
+    const P = { expr: e, state, blink, look: g[0] + sc[0] + (cur.prop ? 0 : a.idleLook || 0), look_v: g[1] + sc[1], t: f, age: f - ek.f, cam: camPos };
     a.S.face(P); a.face = P; a.lastExpr = e;
   }
 
@@ -347,15 +390,21 @@ async function buildAct(R, X) {
     if (spec.head) { const a = byName[spec.head], h = toB(a.S.parts.head.getWorldPosition(hv)), y = F.bodies[spec.head].yaw * Math.PI / 180;
       const fw = spec.fwd || 0, sd = spec.side || 0;                // fwd: where he faces; side: toward his LEFT (screen right when he faces the camera)
       return [h[0] + Math.sin(y) * fw + Math.cos(y) * sd, h[1] - Math.cos(y) * fw + Math.sin(y) * sd, h[2] + (spec.up || 0)]; }
+    // sole: the body channel's floor point (pos + yaw, no lean or bob): a holster on the hip that does not swing with the head
+    if (spec.sole) { const b = F.bodies[spec.sole] || bodyAt(byName[spec.sole], F.f), y = b.yaw * Math.PI / 180, fw = spec.fwd || 0, sd = spec.side || 0;
+      return [b.pos[0] + Math.sin(y) * fw + Math.cos(y) * sd, b.pos[1] - Math.cos(y) * fw + Math.sin(y) * sd, b.pos[2] + (spec.up || 0)]; }
     return add3(livePos(spec.prop), spec.off || [0, 0, 0]);
   } };
   const camera = createCamera({ aspect: width / height, side: SET.CAMERA_SIDE, bounds: R.cameraRoom || SET.CAMERA_ROOM, zRange: R.zRange,
     zMax: R.zMax ?? SET.CAMERA_ZMAX, actors: actors.map(a => a.name) });
   // compile sees the real scene at each shot change (everything is a pure function of the frame)
-  const shots = camera.compile(R.shots.map(s => ({ f: frameOf(s), kind: s.shot, subjects: s.of, opt: s })).sort((x, y) => x.f - y.f),
+  // act.direct: hand-directed camera (allout/director.js): every shot names its intent, cuts are cuts, a move has a trigger
+  const DIR = R.direct ? (await import('../allout/director.js')).createDirector(R.direct, { frameOf, aspect: width / height, F1, dofAuto: R.look?.dofAuto ?? X.dofAuto,
+    anchor: (n, f) => { if (F.f !== f) poseAll(f); return anchor(n, f, livePos); } }) : null;
+  const shots = DIR ? [] : camera.compile((R.shots || []).map(s => ({ f: frameOf(s), kind: s.shot, subjects: s.of, opt: s })).sort((x, y) => x.f - y.f),
     (n, f) => { if (F.f !== f) poseAll(f); return anchor(n, f, livePos); }, F1 + 1);
 
-  let cam = null, caption = null;
+  let cam = null, caption = null, blurV = null;
 
   function poseAll(f) {
     F = { f, posed: new Set(), cache: new Map(), handWorld: {}, bodies: {} };
@@ -377,7 +426,21 @@ async function buildAct(R, X) {
   }
   function update(f, force = null) {
     sun(); poseAll(f);
-    cam = camera.at(shots, f, n => anchor(n, f, livePos), cues, force);
+    // motion blur on very fast camera moves only (act look.mblur: { px (threshold, px/frame at 1080 wide), k }): the aim point's
+    // travel across the screen since the frame before, smeared along that travel when it passes the threshold
+    const MB = R.look?.mblur, pc = MB && DIR && f > F0 ? DIR.at(f - 1, force) : null;
+    cam = DIR ? DIR.at(f, force) : camera.at(shots, f, n => anchor(n, f, livePos), cues, force);
+    blurV = null;
+    if (pc && !DIR.cutAt(f)) { const a = projUV(cam, cam.aim, width / height), b = projUV(pc, cam.aim, width / height);
+      if (a && b) { const dx = a[0] - b[0], dy = a[1] - b[1], L = Math.hypot(dx * width, dy * height) * (1080 / width), th = MB.px ?? 60;
+        if (L > th) { const k = (MB.k ?? 0.7) * (L - th) / L; blurV = [-dx * k, dy * k]; } } }
+    // a director shot aimed at an actor reads its anchor at the shot's first frame, and the anchor hook poses the whole scene
+    // there: pose this frame again, or every body, prop and effect renders frozen at the shot's start (only faces moved)
+    if (F.f !== f) poseAll(f);
+    // light.camKey { az, el } (deg): the key light comes from beside and above the lens every shot (the cartoon cheat: the face
+    // in the shot is lit, whichever way it faces), shadows fall away from the camera
+    if (LT?.camKey) { const F = cam.aim.map((x, i) => x - cam.pos[i]), h = Math.hypot(F[0], F[1]) || 1, a = Math.atan2(F[0], F[1]) + (LT.camKey.az ?? 30) * Math.PI / 180, e = (LT.camKey.el ?? 35) * Math.PI / 180;
+      stage.setSun([Math.sin(a) * Math.cos(e), Math.cos(a) * Math.cos(e), -Math.sin(e)], R.sun?.center || SET.SUN_CENTER, R.sun?.half || SET.SUN_HALF); }
     const px = height / 1920;
     stage.camera.setViewOffset(width, height, cam.offset[0] * px, cam.offset[1] * px, width, height);
     stage.setCamera(cam.pos, cam.aim, cam.lens);
@@ -407,6 +470,7 @@ async function buildAct(R, X) {
       out.actors[a.name] = { pos: F.bodies[a.name].pos.map(x => +x.toFixed(4)), yaw: +F.bodies[a.name].yaw.toFixed(2), expr: a.face.expr, blink: a.face.blink,
         verb: a.verbs.filter(x => x.start <= f && f < x.end).map(x => x.name), head: box, feet, limbs: a.S.rigWorld(),
         body: a.verbs.filter(x => x.start <= f && f < x.end && isBodyVerb(x)).map(x => x.name).pop() || null, lead: !!a.lead,
+        mouthA: +(a.S.faceStats?.mouth ?? 0).toFixed(5), faceKey: a.S.faceStats?.key ?? '', talking: !!a.talking,
         exprFrom: a.exprKey?.f > -1e8 ? a.exprKey.f : null, exprWord: a.exprKey?.word ?? null,
         headW: toB(c).map(x => +x.toFixed(4)), figH: +((sole - ys[0]) / height).toFixed(3),
         inFrame: a.S.root.visible && vz < 1 && box[2] > 0 && box[0] < width && box[3] > 0 && box[1] < height };
@@ -493,10 +557,11 @@ async function buildAct(R, X) {
       const p0 = ft0[n][s], p1 = ft1[n][s], q0 = px(cam, p0), q1 = px(cam, p1);
       feet[n][s] = { planted: p0[2] < 0.014 && p1[2] < 0.014, px: +Math.hypot(q1[0] - q0[0], q1[1] - q0[1]).toFixed(3) }; } }
     // a shot asked as a cut (glide 0) is an edit, not camera motion
-    const shotCut = (cam.shotIndex !== i0 && shots[cam.shotIndex].glide === 0) || !!camera.mixAt(shots, f);
+    const shotCut = DIR ? DIR.cutAt(f) : (cam.shotIndex !== i0 && shots[cam.shotIndex].glide === 0) || !!camera.mixAt(shots, f);
     return { cam: f === F0 ? 0 : +camPx.toFixed(3), camPeak: f === F0 ? 0 : +camPeak.toFixed(3), feet, shotCut };
   };
-  return { name: R.name || R.set, R, grade: { ...(SET_GRADE[R.set] || {}), ...(R.grade || {}) }, group, background, update, dbg, motion, cues, actors, frameOf, flash: f => KT.at('screen', 'flash', f, 0) || 0, shotMix: f => camera.mixAt(shots, f) };
+  return { name: R.name || R.set, R, grade: { ...(SET_GRADE[R.set] || {}), ...(R.grade || {}) }, group, background, fog, update, dbg, motion, cues, actors, frameOf, flash: f => KT.at('screen', 'flash', f, 0) || 0, blur: () => blurV,
+    impact: f => KT.at('screen', 'impact', f, 0) || 0, shotMix: f => DIR ? DIR.mixAt(f) : camera.mixAt(shots, f) };
 }
 
 // storyboard lines the reel data does not shoot get planned shots (shotplan.js): each line goes to the act on screen at
@@ -553,18 +618,21 @@ export async function boot({ film, width, height }) {
   // windows: act k is on screen from its `from`; a dissolve of n frames is centred on that frame
   const fr = x => typeof x === 'number' ? x : resolveBeatFrame(x, words, fps);
   // place changes dissolve (FORENSIC.md fix 1: the reference cross-dissolves, median ~9 f, almost never hard-cuts)
-  const wins = acts.flatMap((A, k) => defs[k].show.map(w => ({ A, a: fr(w.from), n: w.dissolve ?? (A === acts[0] && w.from === F0 ? 0 : 9) }))).sort((x, y) => x.a - y.a);
+  // `whip: n` instead of `dissolve`: an n-frame whip pan (a horizontal smear peaking mid-transition, then the cross-fade)
+  const wins = acts.flatMap((A, k) => defs[k].show.map(w => ({ A, a: fr(w.from), whip: w.whip ? (w.dir ?? 1) : 0, n: w.whip ?? w.dissolve ?? (A === acts[0] && w.from === F0 ? 0 : 9) }))).sort((x, y) => x.a - y.a);
   const at = f => {
-    for (let k = 1; k < wins.length; k++) { const w = wins[k], h = w.n / 2; if (w.n && f >= w.a - h && f < w.a + h) return { cur: w.A, prev: wins[k - 1].A, u: (f - (w.a - h) + 0.5) / w.n }; }
+    for (let k = 1; k < wins.length; k++) { const w = wins[k], h = w.n / 2; if (w.n && f >= w.a - h && f < w.a + h) return { cur: w.A, prev: wins[k - 1].A, u: (f - (w.a - h) + 0.5) / w.n, whip: w.whip }; }
     let k = 0; while (k + 1 < wins.length && wins[k + 1].a <= f) k++; return { cur: wins[k].A };
   };
-  const show = A => { for (const x of acts) x.group.visible = x === A; stage.scene.background = A.background ?? bg0; };
+  const show = A => { for (const x of acts) x.group.visible = x === A; stage.scene.background = A.background ?? bg0; stage.scene.fog = A.fog || null; };
   function frame(f) {
     const s = at(f); let ms = 0;
-    if (s.prev) { show(s.prev); s.prev.update(f); ms += stage.render({ flash: s.prev.flash(f), grade: s.prev.grade }); stage.grab(); }
+    const wp = s.whip ? 0.22 * s.whip * Math.sin(Math.PI * s.u) : 0, wu = s.whip ? Math.min(1, Math.max(0, (s.u - 0.3) / 0.4)) : s.u;
+    if (s.prev) { show(s.prev); s.prev.update(f); ms += stage.render({ flash: s.prev.flash(f), grade: s.prev.grade, whip: wp }); stage.grab(); }
     const sm = s.prev ? null : s.cur.shotMix(f);                   // a shot dissolve inside the act: the outgoing camera first
-    if (sm) { show(s.cur); s.cur.update(f, sm.i); ms += stage.render({ flash: s.cur.flash(f), grade: s.cur.grade }); stage.grab(); }
-    show(s.cur); s.cur.update(f); ms += stage.render({ prev: s.prev ? 1 - s.u : sm ? 1 - sm.u : 0, flash: s.cur.flash(f), grade: s.cur.grade });
+    const sw = sm?.whip ? 0.22 * sm.whip * Math.sin(Math.PI * (sm.ws ?? sm.u)) : 0;   // a whip between two shots of one place (allout/director.js)
+    if (sm) { show(s.cur); s.cur.update(f, sm.i); ms += stage.render({ flash: s.cur.flash(f), grade: s.cur.grade, whip: sw }); stage.grab(); }
+    show(s.cur); s.cur.update(f); ms += stage.render({ prev: s.prev ? 1 - wu : sm ? 1 - sm.u : 0, flash: s.cur.flash(f), grade: s.cur.grade, whip: wp || sw, impact: s.cur.impact(f), blur: wp || sw ? null : s.cur.blur(), t: f / fps });
     cap.draw(f); return ms;
   }
   window.__motion = f => { const s = at(f), p = at(Math.max(F0, f - 1)); show(s.cur); const m = s.cur.motion(f); return { ...m, cut: !!s.prev || p.cur !== s.cur || !!p.prev || s.cur.flash(f) > 0.3 || m.shotCut }; };   // dissolves, act cuts, flash cuts, shot cuts

@@ -208,7 +208,7 @@ export const VERBS = {
       for (const [s, e] of opens) if (f >= s && f < e + 3) dv += -0.014 * Math.sin(Math.PI * (f - s) / (e + 3 - s));
       return { head_dv: dv, head_pitch: dv * 120 };
     } }];
-    return { end: opens.length ? opens[opens.length - 1][1] : p.at, owners, mouth: opens };
+    return { end: opens.length ? opens[opens.length - 1][1] : p.at, owners, mouth: opens, say: p.line };
   },
 
   look_at(p, st) { return { end: p.at + 3, owners: [], focus: { from: p.at, target: p.target ?? p.to } }; },
@@ -228,7 +228,7 @@ export const VERBS = {
   // carry: 'L' | 'R' = that hand is busy (the other arm swings more).
   walk_to(p, st, C) {
     const G = { ...GAIT[p.style || 'walk'], ...(p.gait || {}) }, T = p.step ?? G.T;
-    const to = C.point(p.to), from = st.pos.slice(), w = p.width ?? 0.10;
+    const to = (C.mark || C.point)(p.to), from = st.pos.slice(), w = p.width ?? 0.10;
     const dxy = [to[0] - from[0], to[1] - from[1]], D = Math.hypot(...dxy), head = C.yawTo(from, to);
     const posture0 = st.posture, cheat = p.cheat || 0, dTurn = angDiff(st.yaw, head + cheat);
     const Tt = Math.abs(dTurn) > 15 ? (p.turn ?? Math.round(clamp(Math.abs(dTurn) / 7, 8, 12))) : 0, Tc = 3;

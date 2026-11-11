@@ -23,7 +23,7 @@ function solid(geo, col, o = {}) {
 }
 const cyl = (r0, r1, h, n = 24) => new THREE.CylinderGeometry(r0, r1, h, n);
 
-const BUILD = {
+export const BUILD = {
   cup() {                                                       // a mug: the fist round its middle, handle out the side
     const g = new THREE.Group(), body = solid(cyl(0.055, 0.048, 0.12), [0.95, 0.35, 0.25]); g.add(body);
     const coffee = new THREE.Mesh(new THREE.CircleGeometry(0.048, 20), toon([0.30, 0.16, 0.08])); coffee.rotation.x = -Math.PI / 2; coffee.position.y = 0.052; g.add(coffee);
@@ -64,6 +64,34 @@ const BUILD = {
   megaphone() {
     const g = new THREE.Group(), c = solid(cyl(0.07, 0.025, 0.24, 20), [0.98, 0.85, 0.15]); c.position.y = 0.12; g.add(c);
     g.userData = { mode: 'along', grip: [0, -0.01, 0] }; return g;
+  },
+  beaker() {                                                     // a lab beaker of green broth with a printed label; level 0..1
+    const g = new THREE.Group(), H = 0.21, R = 0.068;   // big enough to read in a medium shot
+    const glass = solid(cyl(R, R * 0.96, H, 28), [0.82, 0.93, 0.96], { sheen: 0.7, rough: 0.2 });
+    glass.material.transparent = true; glass.material.opacity = 0.45; glass.material.depthWrite = false; glass.position.y = H / 2; g.add(glass);
+    const lip = solid(new THREE.TorusGeometry(R, 0.006, 8, 28), [0.82, 0.93, 0.96]); lip.rotation.x = Math.PI / 2; lip.position.y = H; g.add(lip);
+    const liq = new THREE.Mesh(cyl(R * 0.9, R * 0.88, 1, 24), toon([0.42, 0.82, 0.18], { sheen: 0.4 }));
+    liq.material.emissive = lin(0.05, 0.16, 0.02); g.add(liq);
+    const cv = document.createElement('canvas'); cv.width = 256; cv.height = 96; const c = cv.getContext('2d');
+    c.fillStyle = '#f6f1e2'; c.fillRect(0, 0, 256, 96); c.fillStyle = '#16161c'; c.font = '900 34px InterReel, Arial Black, sans-serif'; c.textAlign = 'center';
+    c.fillText('H. PYLORI', 128, 42); c.font = '700 22px InterReel, Arial, sans-serif'; c.fillText('LIVE CULTURE', 128, 76);
+    const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+    const label = new THREE.Mesh(new THREE.CylinderGeometry(R * 1.01, R * 1.01, 0.055, 24, 1, true, -0.9, 1.8), toon([1, 1, 1], { map: tex, sheen: 0 }));
+    label.position.y = H * 0.42; g.add(label);
+    const level = v => { const h = Math.max(0.004, (H - 0.012) * Math.max(0, Math.min(1, v)) * 0.85); liq.scale.y = h; liq.position.y = 0.006 + h / 2; liq.visible = v > 0.02; };
+    level(1);
+    g.userData = { mode: 'up', grip: [0, 0.06, 0.055], level }; return g;
+  },
+  chilli() {                                                     // a red hot chilli, stalk in the fist
+    const g = new THREE.Group(), pts = []; for (let i = 0; i <= 8; i++) { const t = i / 8; pts.push(new THREE.Vector2(0.028 * Math.sin(Math.PI * Math.pow(1 - t, 0.7)) + 0.002, t * 0.16)); }
+    const pod = solid(new THREE.LatheGeometry(pts, 16), [0.90, 0.10, 0.08], { sheen: 0.6, rough: 0.3 }); pod.rotation.z = 0.25; pod.position.y = 0.02; g.add(pod);
+    const stalk = solid(cyl(0.008, 0.01, 0.04, 8), [0.20, 0.60, 0.15]); stalk.position.y = 0.0; g.add(stalk);
+    g.userData = { mode: 'along', grip: [0, -0.01, 0] }; return g;
+  },
+  medal() {                                                      // a gold medal held up by its ribbon
+    const g = new THREE.Group(), disc = solid(cyl(0.07, 0.07, 0.014, 32), [1.0, 0.76, 0.18], { sheen: 0.9, rough: 0.2 }); disc.rotation.x = Math.PI / 2; disc.position.y = -0.10; g.add(disc);
+    const rib = solid(new THREE.BoxGeometry(0.035, 0.11, 0.006), [0.12, 0.30, 0.78]); rib.position.y = -0.03; g.add(rib);
+    g.userData = { mode: 'up', grip: [0, 0.02, 0] }; return g;
   },
   box() {                                                        // a heavy crate between both hands
     const g = new THREE.Group(), b = solid(new THREE.BoxGeometry(0.42, 0.30, 0.30), [0.78, 0.55, 0.30]); g.add(b);

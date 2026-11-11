@@ -43,6 +43,7 @@ Plain data modules, no code beyond small helpers. The runtime (`styles/stick-man
 | `name`, `show`, `zRange`, `sun` | optional | as in an act below (`name` defaults to `lobby`) |
 | `glasses` | optional bool | every cast member's glasses on / off for the whole reel (a cast entry's own `glasses` wins); `false` = faces read by brows and eye shapes (stick06) |
 | `grade` | optional `{exp, lift, gam, sat}` | this act's colour grade over the set's `SET_GRADE` default (engine/look.js); per act too |
+| `light` | optional `{lit, shade, lamp, bounce, background, sun, power, sky, ground, hemi, fill, fillPower, lamps: [{at, rgb, power, dist}]}` | this place's own light (engine/play.js): `lit` / `shade` tint the two ends of the toon ramp (night: `[0.4, 0.4, 0.56]` / `[0.3, 0.36, 0.78]`), `lamp` = gain of practical lights (point lamps, sparks with `light`), `bounce` scales the set's own bounce lights; omitted = the old daylight, unchanged |
 
 ## `reel2.js`: more acts
 

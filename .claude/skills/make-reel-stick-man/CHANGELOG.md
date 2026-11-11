@@ -1,5 +1,15 @@
 # Changelog · make-reel-stick-man
 
+## p9 · 2026-11-11 · micro-animation layer (FORENSIC.md section 3, fixes 8, 14, 16, 17)
+
+Automatic, from the words and beats: faces in-betweened through every change (faces.js `mixFace`, acting.js
+`faceStateAt`: 10 f slow-in with overshoot, eyes squeeze / mouth gasps through a swap, held faces drift), mouths from the
+letters of each word (acting.js `visemeTrack`), breathing shoulders, idle beats held 36-75 f instead of every 12-24 f,
+moves of MOVE_T = 13 f with the reference spacing (`slowIn`: 7 % in the first eighth), head leads / body 2 f / arms 4 f.
+Light: three tone steps + warm bounce on figures, cooler split tone, per-place `light` (REEL_DATA.md), sparks that light
+the set. Gates: `frozen run` now means a dead pose (1 mm / 0.3 deg from the run start), new `mouth range` CV >= 0.4;
+head holds / moves are principles (report `micro:`, `tools/forensic/microanim.mjs`).
+
 ## p8 · 2026-11-11 · forensic fix round (FORENSIC.md Top 10)
 
 Gates that contradicted the reference were retargeted to the reference: camera speed <= 25 -> ceiling 95 px/f at 720;

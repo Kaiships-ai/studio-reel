@@ -1,0 +1,93 @@
+{
+ "model": "gemini-3.8-flash-tts",
+ "cast": {
+  "nar": "Achird"
+ },
+ "note": "Sounds Fake ep 1 'The Doctor Who Drank the Bug', v2 (independent review applied 11/11). Built from story/chapters/chapter-01.md. 200 words, est. 61-69 s of speech at Achird 2.9-3.3 words/s. Sources: story/research/ep01-marshall-fact-check.md. NOT yet approved by Kai.",
+ "lines": [
+  {
+   "id": "l01",
+   "who": "nar",
+   "style": "fast, intrigued",
+   "text": "A doctor swallowed a beaker of bacteria. On purpose."
+  },
+  {
+   "id": "l02",
+   "who": "nar",
+   "style": "fast",
+   "text": "1982, Perth, Australia. Everyone knows ulcers come from stress and spicy food."
+  },
+  {
+   "id": "l03",
+   "who": "nar",
+   "style": "fast, matter-of-fact",
+   "text": "But Barry Marshall and pathologist Robin Warren keep seeing the same tiny spiral bug in sick stomachs, again and again."
+  },
+  {
+   "id": "l04",
+   "who": "nar",
+   "style": "fast, amused",
+   "text": "The experts scoff. Reviewers rank their paper in the bottom ten percent they received that year."
+  },
+  {
+   "id": "l05",
+   "who": "nar",
+   "style": "fast, mocking",
+   "text": "The bug? Just a contaminant, they say. Harmless."
+  },
+  {
+   "id": "l06",
+   "who": "nar",
+   "style": "fast, determined",
+   "text": "He spends six months trying to infect piglets. It fails. So, to win the argument, he picks one last test animal: himself."
+  },
+  {
+   "id": "l07",
+   "who": "nar",
+   "style": "fast",
+   "text": "1984. Two dishes of the bug go into a beaker of beef broth, and down it goes."
+  },
+  {
+   "id": "l08",
+   "who": "nar",
+   "style": "fast, sly",
+   "text": "He doesn't clear it with the hospital, or his wife. In his words: \"easier to get forgiveness than permission.\""
+  },
+  {
+   "id": "l09",
+   "who": "nar",
+   "style": "fast, grossed out",
+   "text": "Days later, his wife notices his breath smells putrid. Then he's throwing up every morning."
+  },
+  {
+   "id": "l10",
+   "who": "nar",
+   "style": "fast, excited",
+   "text": "Wait. A camera down his throat finds his stomach inflamed. The biopsy grows the spiral bug."
+  },
+  {
+   "id": "l11",
+   "who": "nar",
+   "style": "fast, explaining",
+   "text": "You see, the bug is behind most ulcers, not stress. It keeps the stomach lining inflamed."
+  },
+  {
+   "id": "l12",
+   "who": "nar",
+   "style": "fast, matter-of-fact",
+   "text": "Kill the bug, and the ulcer heals for good."
+  },
+  {
+   "id": "l13",
+   "who": "nar",
+   "style": "fast, matter-of-fact",
+   "text": "Two weeks of pills. No surgery."
+  },
+  {
+   "id": "l14",
+   "who": "nar",
+   "style": "fast, triumphant",
+   "text": "Twenty-one years after that putrid drink, the doctor they laughed at collects the Nobel Prize."
+  }
+ ]
+}

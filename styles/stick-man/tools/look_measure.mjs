@@ -53,13 +53,29 @@ export function measure(rgb) {
     }
     if (hits >= 3) { cur++; best = Math.max(best, cur); } else cur = 0;
   }
-  return { inkPx: runs.length ? runs[runs.length >> 1] : 0, inkCover: 1000 * inkPx / scanned, inkRuns: runs.length, capPx: best };
+  // caption weight: in the caption rows, the median width of a white glyph run (a stem) and of the black stroke run that
+  // borders it on the outside (dark run 2-20 px with white on one side and a non-dark, non-white pixel on the other)
+  const stems = [], strokes = [], isW = q => rgb[q] > 225 && rgb[q + 1] > 225 && rgb[q + 2] > 225, isK = q => rgb[q] < 50 && rgb[q + 1] < 50 && rgb[q + 2] < 50;
+  if (best >= 20) for (let y = cap0; y < cap1; y += 3) {
+    const o = y * W; let x = 1;
+    while (x < W - 1) {
+      const q = (o + x) * 3;
+      if (isW(q)) { let j = x; while (j < W && isW((o + j) * 3)) j++; const nk = (from, d) => { for (let e = 1; e <= 4; e++) { const xx = from + d * e; if (xx < 0 || xx >= W) return false; if (isK((o + xx) * 3)) return true; } return false; };
+        if (nk(x, -1) && nk(j - 1, 1) && j - x <= 40) stems.push(j - x); x = j; continue; }
+      if (isK(q)) { let j = x; while (j < W && isK((o + j) * 3)) j++; const L = j - x, a = isW((o + x - 1) * 3), b = j < W && isW((o + j) * 3);
+        if (L >= 2 && L <= 20 && a !== b) strokes.push(L); x = j; continue; }
+      x++;
+    }
+  }
+  stems.sort((a, b) => a - b); strokes.sort((a, b) => a - b);
+  return { inkPx: runs.length ? runs[runs.length >> 1] : 0, inkCover: 1000 * inkPx / scanned, inkRuns: runs.length, capPx: best,
+    capStem: stems.length > 20 ? stems[stems.length >> 1] : 0, capStroke: strokes.length > 20 ? strokes[strokes.length >> 1] : 0 };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   for (const f of process.argv.slice(2)) {
     if (!fs.existsSync(f)) { console.error('missing', f); continue; }
     decode(f).forEach((fr, i) => { const m = measure(fr);
-      console.log(`${f.split('/').pop()}#${i}  ink ${m.inkPx} px, cover ${m.inkCover.toFixed(1)} per mille (${m.inkRuns} runs), caption ${m.capPx} px`); });
+      console.log(`${f.split('/').pop()}#${i}  ink ${m.inkPx} px, cover ${m.inkCover.toFixed(1)} per mille (${m.inkRuns} runs), caption ${m.capPx} px, stem ${m.capStem} px, stroke ${m.capStroke} px`); });
   }
 }
