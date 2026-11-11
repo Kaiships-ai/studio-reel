@@ -50,6 +50,11 @@ for (const l of [...new Set(words.map(w => w.line))]) if (!pick.some(m => m.line
   const ws = mids.filter(m => m.line === l); if (!ws.length) continue;
   const m = ws[ws.length >> 1], k = pick.reduce((b, x, i) => (Math.abs(x.t - m.t) < Math.abs(pick[b].t - m.t) ? i : b), 0); pick[k] = m;
 }
+// short test scenes (fewer words than tiles): fill the rest with evenly spaced frames so both sheets are full
+for (let i = 0; pick.length < N && i < N; i++) {
+  const t = (i + 0.5) * dur / N;
+  if (!pick.some(m => Math.abs(m.t - t) < 0.5 * dur / N)) pick.push({ t, line: '-', word: '-' });
+}
 pick.sort((a, b) => a.t - b.t);
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'stick-judge-'));

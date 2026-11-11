@@ -151,6 +151,16 @@ export const POSES = {
   eat: { A: 3, T: 9, hold: 44, props: { R: 'drumstick' }, body: { head_pitch: -2, pitch: 3 },
     hands: { R: { t: [0.32, 1.86, 0.50], elbow: [0.9, -0.5, -0.1] }, L: { t: [-0.10, 1.52, 0.42], elbow: [-0.8, -0.6, 0] } },
     bite: { per: 22, side: 'R', mouth: [0.10, -0.16, 0.56] } },
+  // toast: the cup raised high in front, chin up, a small proud lean back
+  toast: { A: 3, T: 10, hold: 34, props: { R: 'beaker' }, body: { pitch: -4, head_pitch: -8, lean: -2, shrug: 0.02 },
+    hands: { R: { t: [0.44, 2.20, 0.40], elbow: [0.9, -0.6, 0] }, L: HIP_HAND(-1) }, tiltKeys: { R: [[0, 0], [12, -8], [30, 6]] },   // beside the head, never over the eyes
+    cycle: t => ({ head_tilt: 2 * Math.sin(t * 0.2) }) },
+  // drink: the cup comes up to the mouth, the head tips back, the cup tilts past level and the fill drains (levelKeys:
+  // [frame after the anticipation, 0..1]), three gulps bob the head, then the cup comes down empty
+  drink: { A: 4, T: 12, hold: 42, props: { R: 'beaker' }, body: { pitch: -7, head_pitch: -20, lean: 2, shrug: 0.03 },
+    hands: { R: { h: [0.16, -0.24, 0.42], elbow: [0.9, -0.5, 0.1] }, L: HIP_HAND(-1) },
+    tiltKeys: { R: [[0, 0], [10, 15], [18, 95], [44, 115], [52, 20]] }, levelKeys: { R: [[0, 1], [16, 1], [42, 0]] },
+    cycle: t => ({ head_dv: t < 30 ? -0.012 * Math.max(0, Math.sin(t * 0.75)) : 0, head_pitch: t < 30 ? 2.5 * Math.sin(t * 0.75) : 0 }) },
   phone: { A: 3, T: 9, hold: 40, props: { R: 'phone' }, body: { head_tilt: 10, lean: 3, head_pitch: 4 },
     hands: { R: { h: [0.46, -0.06, 0.12], elbow: [0.9, -0.6, 0.1] }, L: HIP_HAND(-1) }, cycle: t => ({ head_tilt: 3 * Math.sin(t * 0.15) }) },
 };
@@ -164,7 +174,7 @@ const mirrorPose = P => {
   if (P.feet) o.feet = { L: P.feet.R && [-P.feet.R[0], P.feet.R[1], P.feet.R[2]], R: P.feet.L && [-P.feet.L[0], P.feet.L[1], P.feet.L[2]] };
   if (P.props) o.props = Object.fromEntries(Object.entries(P.props).map(([k, v]) => [k === 'L' ? 'R' : k === 'R' ? 'L' : k, v]));
   if (P.keys) o.keys = P.keys.map(mirrorPose);
-  for (const k of ['tiltKeys']) if (P[k]) o[k] = { L: P[k].R, R: P[k].L };
+  for (const k of ['tiltKeys', 'levelKeys']) if (P[k]) o[k] = { L: P[k].R, R: P[k].L };
   for (const k of ['strike', 'bite']) if (P[k]) o[k] = { ...P[k], side: P[k].side === 'R' ? 'L' : 'R', up: P[k].up && [-P[k].up[0], P[k].up[1], P[k].up[2]], down: P[k].down && [-P[k].down[0], P[k].down[1], P[k].down[2]], mouth: P[k].mouth && [-P[k].mouth[0], P[k].mouth[1], P[k].mouth[2]] };
   if (P.cycle) { const c = P.cycle; o.cycle = t => { const r = c(t), q = {}; for (const [k, v] of Object.entries(r)) q[k] = k === 'hands' ? { L: v.R && [-v.R[0], v.R[1], v.R[2]], R: v.L && [-v.L[0], v.L[1], v.L[2]] } : MIRROR.has(k) ? -v : v; return q; }; }
   return o;
@@ -237,6 +247,7 @@ export function compilePose(name, p, st, C) {
       let tl = tableAt(spec.tiltKeys?.[s], b.t - A);
       if (spec.strike?.side === s) { const ph = strikePh(b.t - A - T); tl = lerp(spec.strike.tiltUp, spec.strike.tiltDown, ph.down); }
       if (tl) out['x_tilt' + s] = tl;
+      if (spec.levelKeys?.[s]) out['x_lvl' + s] = tableAt(spec.levelKeys[s], b.t - A);
     }
     return out;
   } }];

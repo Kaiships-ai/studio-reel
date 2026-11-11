@@ -153,13 +153,16 @@ const LOOK = { ink: [2, 3], ratio: [0.235, 0.388], cap: 54, capTol: 0.10,
     }
     gate('colour per shot', !bad.length, bad.length ? `out: ${bad.join('; ')}` : `${shots.size} shots in range`, 'YAVG 60-170, SAT 13-54, YLOW 17-101');
     // ink + caption on 1 frame a second at 1080x1920
-    const fr = decode(A.in, 1), ink = [], cap = [];
-    fr.forEach((rgb, i) => { const m = measure(rgb); if (m.inkRuns > 50) ink.push(m.inkPx);
+    const fr = decode(A.in, 1), ink = [], cap = [], stem = [], strk = [];
+    fr.forEach((rgb, i) => { const m = measure(rgb); if (m.inkRuns > 50) ink.push(m.inkPx); if (m.capStem) stem.push(m.capStem); if (m.capStroke) strk.push(m.capStroke);
       const t = byF.get(i * 30)?.caption; if (t && m.capPx > 0 && !/[gjpqy,;]/.test(t) && /[A-Zbdfhiklt]/.test(t)) cap.push(m.capPx); });
     ink.sort((a, b) => a - b); cap.sort((a, b) => a - b);
     ink.length ? gate('ink thickness', med(ink) >= LOOK.ink[0] && med(ink) <= LOOK.ink[1], `median ${med(ink)} px (${ink.length} frames, range ${ink[0]}-${ink[ink.length - 1]})`, `${LOOK.ink.join('-')} px at 1080 wide`) : missing('ink thickness');
     const lo = LOOK.cap * (1 - LOOK.capTol), hi = LOOK.cap * (1 + LOOK.capTol);
     cap.length ? gate('caption height', med(cap) >= lo && med(cap) <= hi, `median ${med(cap)} px (${cap.length} frames)`, `${lo.toFixed(1)}-${hi.toFixed(1)} px at 1920`) : missing('caption height');
+    // caption weight (measured on 28 reference frames 11/11: stem 15-16 px, stroke median 7 px): a heavy face with a 7 px rim
+    stem.sort((a, b) => a - b); strk.sort((a, b) => a - b);
+    stem.length ? gate('caption weight', med(stem) >= 14 && med(stem) <= 18 && med(strk) >= 6 && med(strk) <= 9, `stem ${med(stem)} px, stroke ${med(strk)} px (${stem.length} frames)`, 'stem 14-18, stroke 6-9 px at 1080') : missing('caption weight');
   }
 }
 // __dbg rows for --film (made once with shot.mjs --dbg at 540x960 and shared with the story gates through A.dbg)
@@ -222,7 +225,10 @@ async function story(film) {
   const inWin = w => rows.filter(r => r.f >= w.a && r.f < w.b);
   // 1 duration
   const dur = rows.length / fps;
-  sg('duration', dur >= 27 && dur <= 33, `${dur.toFixed(1)} s (${rows.length} frames)`, '27-33 s');
+  // the locked series length (Kai 11/11: episodes 60-80 s; the reference runs 63.5-65.2 s). A test film (slug with "test")
+  // is a short engine check and is exempt.
+  if (/test/i.test(path.basename(A.film))) sg('duration', true, `${dur.toFixed(1)} s (${rows.length} frames), test film: exempt`, '60-80 s (test films exempt)');
+  else sg('duration', dur >= 60 && dur <= 80, `${dur.toFixed(1)} s (${rows.length} frames)`, '60-80 s');
   // 2 distinct sets (on screen >= 15 frames each)
   const setN = {}; for (const r of rows) if (r.set) setN[r.set] = (setN[r.set] || 0) + 1;
   const sets = Object.entries(setN).filter(([, n]) => n >= 15).map(([k]) => k);

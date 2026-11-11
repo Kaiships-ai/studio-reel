@@ -11,6 +11,7 @@ export const W_M = 0.60;                     // head width in metres
 const W = W_M;
 const INK_T = 0.046 * W;                     // outline base width; the hull shader scales it 0.35-1.6x by the light (below):
                                              // reference rim 3.8-5.6 % of head width, thick/thin side ratio 1.65-2.47 (FORENSIC.md fix 7)
+const CREAM = [0.90, 0.87, 0.78];             // reference heads and bodies: flat off-white / cream, never pure white or blue-white
 const LIMB_R = 0.038 * W / 2;                // limbs stay a thinner line than the outline
 export const HEAD_C = [0.0, 2.43], HEAD_H = 0.94, HIP_V = 1.34, SHOULDER_V = 2.00;
 export const TORSO = { cx: 0.0, cy: 1.72, w: 0.57, h: 0.90, depth: 0.80 };
@@ -215,7 +216,8 @@ function clothesCanvas(spec) {
     g.lineWidth = w * k; g.strokeStyle = css(col); g.lineCap = g.lineJoin = 'round'; g.stroke(); };
   const dot = (c, rr, col) => { const [x, y] = P(...c); g.beginPath(); g.arc(x, y, rr * k, 0, Math.PI * 2); g.fillStyle = css(col); g.fill(); };
   const dense = (a, b, n = 12) => Array.from({ length: n + 1 }, (_, i) => [a[0] + (b[0] - a[0]) * i / n, a[1] + (b[1] - a[1]) * i / n]);
-  g.fillStyle = css(spec.shirt || [1, 1, 1]); g.fillRect(0, 0, TEX_W, TEX_H);
+  const sh = spec.shirt || CREAM, white = Math.min(...sh) > 0.9;          // a white shirt is the reference's cream body
+  g.fillStyle = css(white ? CREAM : sh); g.fillRect(0, 0, TEX_W, TEX_H);
   const top = T.cy + T.h / 2, BRASS = [1.0, 0.70, 0.16];
   for (const c of spec.clothes || []) {
     if (c.vest) {
@@ -410,12 +412,15 @@ export function reachAssist(P) {
 export function makeStick(spec) {
   const root = new THREE.Group(); root.name = spec.name || 'stick'; root.userData.stick = true;   // look.js: no screen ink (own hull)
   const body = new THREE.Group(); root.add(body);
-  const torso = solid(torsoGeo(), toon([1, 1, 1], { map: clothesCanvas(spec), sheen: 0.45, rough: 0.30, rim: 0.12, soft: 0.6, shade: [0.62, 0.64, 0.88], rimLit: 0.30 }));
+  // flat like the reference (judge t1: our glossy lavender-blue body vs flat off-white / cream heads): a hard 2-step cel
+  // ramp, no gloss, no rim light; the shade is a soft cool grey that never reaches the lit side; place light tints the
+  // figure only a little (char: 1)
+  const torso = solid(torsoGeo(), toon([1, 1, 1], { map: clothesCanvas(spec), sheen: 0, rough: 1, rim: 0, soft: 0, shade: [0.78, 0.78, 0.86], char: 1 }));
   torso.position.y = (TORSO.cy - TORSO.h / 2 - HIP_V) * W; body.add(torso);
 
   const head = new THREE.Group(); root.add(head);
   const hg = new THREE.SphereGeometry(HA, 64, 40); hg.scale(1, HEAD_H, 1);
-  const headSolid = solid(hg, toon(spec.skin || [1, 1, 1], { shade: [0.74, 0.74, 0.92], rim: 0.12, sheen: 0.55, broad: 0.30, rough: 0.25, soft: 0.6, rimLit: 0.45 }));
+  const headSolid = solid(hg, toon(spec.skin || CREAM, { shade: [0.80, 0.79, 0.87], rim: 0, sheen: 0, broad: 0, rough: 1, soft: 0, rimLit: 0, char: 1 }));
   head.add(headSolid);
   const rig = new THREE.Group(); head.add(rig);
   const FR = faceRig(W, { glasses: !!spec.glasses });
@@ -491,6 +496,7 @@ export function makeStick(spec) {
         }
       }
       o.position.copy(hand).sub(gp.applyQuaternion(o.quaternion));
+      if (U.level) U.level(P['x_lvl' + (side === 'B' ? 'L' : side)] ?? 1);     // x_lvl<L|R>: a container's fill 0..1 (beaker)
     }
   }
   // Extra keys for the reel runtime: pitch (deg, upper body forward about the hip), hands and feet may carry a

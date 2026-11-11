@@ -1,6 +1,6 @@
 ---
 name: make-reel-stick-man
-description: Turn a short script or story idea into one 30 s vertical (1080x1920, 30 fps) stick-man 3D reel at the quality of reel 1 "dye pack" - one narrator (Gemini TTS), three.js stick figures acting on spoken words, every line illustrated (sets, cutaways, explainer fx), word-locked captions, SFX and music, measured gates. Use when Kai asks for a stick-man reel, a stickman story reel, or a reel like stick01 / Ricks Clips. Trigger: /make-reel-stick-man
+description: Turn a short script or story idea into one 60-80 s vertical (1080x1920, 30 fps) stick-man 3D episode (the locked series length; was 30 s) at the quality of reel 1 "dye pack" - one narrator (Gemini TTS), three.js stick figures acting on spoken words, every line illustrated (sets, cutaways, explainer fx), word-locked captions, SFX and music, measured gates. Use when Kai asks for a stick-man reel, a stickman story reel, or a reel like stick01 / Ricks Clips. Trigger: /make-reel-stick-man
 argument-hint: "<slug> <script or idea>"
 ---
 
@@ -10,7 +10,7 @@ Goal: a fresh agent turns `$ARGUMENTS` into `films/<slug>/renders/<slug>_vN.mp4`
 
 | # | Stage | Command / output | Read first |
 |---|---|---|---|
-| 1 | script | `node styles/stick-man/tools/new_film.mjs <slug>`, then `vo/script.json`: 1 narrator, Achird pace 2.9-3.3 words/s, so 95-100 words for 30 s; every style starts `fast`; hook in line 1; each line names something drawable | `examples/dye-pack/script.json` |
+| 1 | script | `node styles/stick-man/tools/new_film.mjs <slug>`, then `vo/script.json`: 1 narrator, Achird pace 2.9-3.3 words/s, so 190-250 words for 60-80 s (aim ~210); every style starts `fast`; hook in line 1; each line names something drawable | `examples/dye-pack/script.json` |
 | | **gate: Kai approves the script** | | |
 | 2 | voice | `python styles/stick-man/tools/voice.py films/<slug> --samples Achird`, then `--take Achird` → `vo/vo.wav`; takes vary ±2 s: re-take up to 3 times, keep the shortest with no ❌ | |
 | | **gate: Kai approves the voice** | | |

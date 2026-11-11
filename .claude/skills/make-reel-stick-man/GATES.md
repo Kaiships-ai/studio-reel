@@ -84,7 +84,7 @@ itself, or takes `--dbg <jsonl>`.
 
 | Gate | Threshold | Measured as | Why |
 |---|---|---|---|
-| duration | 27-33 s | frames / 30 | 30 s reels; reel 2 ran 33.9 s |
+| duration | 60-80 s (films whose slug contains `test` are exempt) | frames / 30 | the locked series length (Kai 11/11; reference 63.5-65.2 s); was 27-33 s for the 30 s reels |
 | distinct sets | ≥ 3 | sets on screen ≥ 15 frames each (a `cutaway` act counts as a set) | reel 2: one street for 34 s |
 | shot variety | ≤ 2 lines alike | each line's main set + shot kind (most frames in its window); longest run of equal lines | no three lines in the same framing |
 | shot types | ≥ 4 kinds (≥ 4 per 30 s) | shot kinds (`camera.shot` before the bracket) on screen ≥ 15 frames each | reference cuts between macro, wide, top-down and aerial; reel 3 judged 2-3/10 on one medium angle |
