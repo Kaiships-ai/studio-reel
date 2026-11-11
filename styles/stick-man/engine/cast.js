@@ -459,6 +459,7 @@ export function makeStick(spec) {
     const marks = (E.marks || []).filter(([, life]) => !life || age < life).map(([k]) => [k, age]);
     for (const m of [...(P.marks || []), ...S.xmarks]) if (!marks.some(q => q[0] === m[0])) marks.push(m);
     FR.draw(e, P.blink || 0, t, marks, P.cam ? B(...P.cam) : null);
+    S.faceStats = FR.stats;
     const tk = E.tint ? Math.min(1, age / 6) : 0;               // a furious face flushes over 6 frames
     headSolid.material.color.copy(skin0); if (tk) headSolid.material.color.lerp(tintC.setRGB(...E.tint), tk);
     rig.rotation.set(-(P.look_v || 0) * 0.12, (P.look || 0) * LOOK_RAD, 0);

@@ -314,14 +314,18 @@ export const MARK_NAMES = Object.keys(MARKS);
 
 // One figure's face: its own canvas (redrawn only when what it shows changes) and its mark cards.
 export function faceRig(headW, opt = {}) {
-  const cv = document.createElement('canvas'); cv.width = cv.height = 512; const g = cv.getContext('2d');
+  const cv = document.createElement('canvas'); cv.width = cv.height = 512; const g = cv.getContext('2d', { willReadFrequently: true });
   const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
   const group = new THREE.Group(), cards = {};
+  // measurement for __dbg (the forensic mouth numbers): dark mouth area (W^2, ink pixels below the eyes) and the drawing key
+  const stats = { mouth: 0, key: '' };
+  const darkMouth = () => { const d = g.getImageData(150, 318, 212, 150).data; let n = 0;
+    for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 128 && d[i] + d[i + 1] + d[i + 2] < 200) n++; return n / (512 * 512); };
   let key = '';
   const cardsOf = kind => (cards[kind] ||= MARKS[kind].cards.map(c => { const m = card(c); group.add(m); return m; }));
   const v = new THREE.Vector3();
   return {
-    tex, group,
+    tex, group, stats,
     // marks: [[kind, age]], cam: camera position (three world) or null
     draw(expr, blink, t, marks, cam) {
       const E = EXPR[expr] || EXPR.neutral, live = (E.skin?.tears || E.skin?.veins || E.eye === 'spiral' || (E.pupil ?? 1) < 0.02);
@@ -329,6 +333,7 @@ export function faceRig(headW, opt = {}) {
       if (k !== key) {
         key = k; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 512, 512);
         g.setTransform(512, 0, 0, -512, 256, 256); drawFace(g, expr, blink, t, opt); tex.needsUpdate = true;
+        stats.mouth = darkMouth(); stats.key = k;
       }
       for (const list of Object.values(cards)) for (const m of list) m.visible = false;
       for (const [kind, age] of marks) {
