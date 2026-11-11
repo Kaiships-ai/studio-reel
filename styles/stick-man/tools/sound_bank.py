@@ -208,6 +208,74 @@ def sting(rng):          # short final chord: bright plucked F major stab with a
     return norm(norm(y) + 0.4 * glk) * adsr(len(t), 0.002, 0.12)
 
 
+# ---- railroad sounds (rail-gaps, 11/11): saw, train pass, steam whistle, clickety-clack, metal groan, boom, crowd, crane
+def saw(rng):            # hand saw on steel: three rasping strokes, a band of grit that rises on the push and dips on the pull
+    d = 0.9; t = ts(d); n = len(t); y = np.zeros(n)
+    for k in range(3):
+        a, L = k * 0.3, 0.26; seg = bp(_nz(rng, L), 2200, 7000) * (0.6 + 0.4 * np.abs(np.sin(np.pi * 38 * ts(L)))) * np.sin(np.pi * ts(L) / L) ** 0.7
+        put(y, seg * (1.0 if k % 2 == 0 else 0.7), a)
+    ring = sum(np.sin(2 * np.pi * f * t) * np.exp(-t / 0.4) for f in (1830, 2470)) * 0.08
+    return norm(y + ring)
+
+
+def chug(rng):           # a steam train roaring past: low rumble, chuffs and wheel clanks swelling and falling (doppler)
+    d = 1.6; t = ts(d); u = t / d; n = len(t)
+    env = np.exp(-((u - 0.45) / 0.22) ** 2)
+    rum = lp(_nz(rng, d), 180) * 3
+    ch = np.zeros(n)
+    for k in range(int(d / 0.11)):
+        put(ch, bp(_nz(rng, 0.09), 300, 2500) * _exp(0.09, 0.03), k * 0.11 * (1 - 0.15 * (k * 0.11 / d)))
+    cl = np.zeros(n)
+    for k in range(6): put(cl, bp(_nz(rng, 0.03), 1500, 5000) * _exp(0.03, 0.006), 0.3 + k * 0.17)
+    return norm((norm(rum) + 0.8 * norm(ch) + 0.5 * norm(cl)) * env)
+
+
+def whistle(rng):        # steam whistle: three close organ-pipe tones with breath, a swell and a drop at the end
+    d = 0.9; t = ts(d); f = 520 * (1 - 0.04 * np.clip((t - 0.7) / 0.2, 0, 1))
+    y = sum(np.sin(2 * np.pi * np.cumsum(f * r) / SR) / (i + 1) for i, r in enumerate((1, 1.26, 1.5)))
+    air = bp(_nz(rng, d), 400, 2500) * 0.25
+    return norm(y + air) * adsr(len(t), 0.06, 0.18)
+
+
+def clack(rng):          # clickety-clack: a wheel pair over a rail gap: two short metal knocks with a tiny ring
+    d = 0.32; y = np.zeros(int(d * SR))
+    for a, g in ((0.0, 1.0), (0.11, 0.8)):
+        k = bp(_nz(rng, 0.04), 800, 4000) * _exp(0.04, 0.008); r = np.sin(2 * np.pi * 1450 * ts(0.12)) * np.exp(-ts(0.12) / 0.03) * 0.4
+        put(y, k * g, a); put(y, r * g, a)
+    return norm(y)
+
+
+def groan(rng):          # steel rails groaning in the heat: a slow creaking bend, beating low partials and a scrape
+    d = 1.4; t = ts(d); f = 95 + 25 * np.sin(2 * np.pi * 0.6 * t)
+    y = sum(np.sin(2 * np.pi * np.cumsum(f * r) / SR) / r for r in (1, 2.01, 3.03, 4.1))
+    scr = bp(_nz(rng, d), 600, 1800) * (0.5 + 0.5 * np.sin(2 * np.pi * 7 * t) ** 2) * 0.35
+    return norm(sat(norm(y) + scr, 2.0)) * adsr(len(t), 0.25, 0.4)
+
+
+def boom(rng):           # a far crash and explosion: a low thump, a roar of debris, a long tail
+    d = 2.2; t = ts(d)
+    th = np.sin(2 * np.pi * (55 * t - 15 * t * t)) * np.exp(-t / 0.35)
+    roar = lp(_nz(rng, d), 900) * np.exp(-t / 0.7) * np.minimum(1, t / 0.02)
+    deb = np.zeros(len(t))
+    for k in range(30): put(deb, bp(_nz(rng, 0.02), 1000, 5000) * _exp(0.02, 0.004) * rng.uniform(0.1, 0.6), rng.uniform(0.1, 1.6))
+    return norm(1.2 * th + norm(roar) + 0.4 * norm(deb))
+
+
+def crowd(rng):          # a station crowd: a murmur of many voices (formant noise) with footsteps
+    d = 1.8; t = ts(d); n = len(t)
+    y = sum(bp(_nz(rng, d), f, f * 1.6) * (0.5 + 0.5 * lp(np.abs(rng.standard_normal(n)), 4) * 4) for f in (300, 700, 1300))
+    st = np.zeros(n)
+    for k in range(14): put(st, bp(_nz(rng, 0.03), 200, 1500) * _exp(0.03, 0.01) * rng.uniform(0.3, 1), rng.uniform(0, d - 0.05))
+    return norm(norm(y) + 0.6 * norm(st)) * adsr(n, 0.2, 0.5)
+
+
+def crank(rng):          # a crane winch / ratchet: a run of quick metal ticks under a low motor hum
+    d = 0.8; t = ts(d); y = np.zeros(len(t))
+    for k in range(int(d / 0.045)): put(y, bp(_nz(rng, 0.012), 1500, 6000) * _exp(0.012, 0.003), k * 0.045)
+    return norm(y + 0.3 * np.sin(2 * np.pi * 110 * t) * np.sin(np.pi * t / d))
+
+
 BANK = {f.__name__: f for f in (slide, thud, rustle, ting, ding, whoosh, step_l, step_r, beep, tick, poof, hiss, scratch, pop,
-                                snore, clunk, blip, ping, sizzle, slide_whistle_up, flutter, wah, siren, sting)}
+                                snore, clunk, blip, ping, sizzle, slide_whistle_up, flutter, wah, siren, sting,
+                                saw, chug, whistle, clack, groan, boom, crowd, crank)}
 BANK['step'] = step_l

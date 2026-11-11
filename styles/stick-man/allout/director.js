@@ -18,6 +18,7 @@
 //           kx / ky: where the target sits on screen (0..1, y down), track: follow the target every frame
 //   move    { from, to, dur, ease: 'inout' | 'out' | 'in' | 'linear' | 'whip' }
 //   kick    [{ at, amp }]: a short camera shake on an impact word
+//   drift   share of the camera-to-aim distance closed per second (a slow push); act `directDrift` sets it for every shot
 //   dof     { gain, band }: lens blur round the look target
 // Blender coordinates (x right, y into the set, z up), like the rest of the engine.
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
@@ -51,8 +52,10 @@ const withPreset = s => { const P = PRESETS[s.preset]; if (!P) return s;
   const fill = c => c && !c.pos && !c.chase ? { ...P.cam, ...c } : c;
   return { ...s, cam: fill(s.cam), to: fill(s.to), dof: s.dof ?? P.dof }; };
 
-export function createDirector(list, { frameOf, anchor, aspect, F1, dofAuto }) {
-  const shots = list.map(withPreset).map((s, i) => ({ ...s, i, f: frameOf(s.at) })).sort((a, b) => a.f - b.f);
+export function createDirector(list, { frameOf, anchor, aspect, F1, dofAuto, drift = 0 }) {
+  // drift (act `directDrift`, share of the distance per second): every shot without its own `drift` breathes in slowly, so the
+  // camera is never dead still between moves (the rail reference drifts a median 2.9 px/f at 1080; a held three.js shot is 0)
+  const shots = list.map(withPreset).map((s, i) => ({ drift, ...s, i, f: frameOf(s.at) })).sort((a, b) => a.f - b.f);
   shots.forEach((s, i) => {
     s.end = i + 1 < shots.length ? shots[i + 1].f : F1 + 1;
     if (s.to) {
@@ -136,7 +139,9 @@ export function createDirector(list, { frameOf, anchor, aspect, F1, dofAuto }) {
       }
     }
     // a slow breath on a held shot only where the shot asks for it (drift: share of the distance per second)
-    if (S.drift) { const k = 1 - S.drift * (f - f0) / 30; c.pos = c.aim.map((x, i) => x + (c.pos[i] - x) * k); }
+    // the push is measured on min(distance, 4 m), so a far aim point (an absolute pos / aim shot) does not fly the camera
+    if (S.drift) { const d = Math.hypot(...c.pos.map((x, i) => x - c.aim[i])), step = Math.min(0.5 * d, S.drift * (f - f0) / 30 * Math.min(d, 4));
+      c.pos = c.pos.map((x, i) => x + (c.aim[i] - x) * step / Math.max(d, 1e-6)); }
     let ox = 0, oy = 0;
     for (const q of S.kicks) { const d = f - q.f; if (d >= 0 && d < KICK.length) { ox += 9 * q.amp * KICK[d]; oy += 6 * q.amp * KICK[d]; } }
     // dofAuto (act look.dofAuto: { below (m), gain }): a shot without its own dof gets a lens blur when the camera is close

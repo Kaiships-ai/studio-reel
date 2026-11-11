@@ -22,7 +22,7 @@ Object.assign(MAKE, PHYS, STORY);                               // story props t
 
 // every cast spec exported by lib/cast/extras.js (an object with a name and a shirt) registers itself by its export name
 const dye = EXTRAS.dye;
-const SPECS = { KAI, TELLER, GUARD, ...Object.fromEntries(Object.entries(EXTRAS).filter(([, v]) => v && typeof v === 'object' && !Array.isArray(v) && v.name && v.shirt)) };
+export const SPECS = { KAI, TELLER, GUARD, ...Object.fromEntries(Object.entries(EXTRAS).filter(([, v]) => v && typeof v === 'object' && !Array.isArray(v) && v.name && v.shirt)) };
 const SETS = { 'bank-lobby': () => import('../lib/sets/bank-lobby.js'), street: () => import('../lib/sets/street.js'),
   cutaway: () => import('../lib/sets/cutaway.js'), park: () => import('../lib/sets/park.js'), lab: () => import('../lib/sets/lab.js'),
   'halden-street': () => import('../lib/sets/halden-street.js'), 'halden-plaza': () => import('../lib/sets/halden-plaza.js'),
@@ -401,8 +401,12 @@ async function buildAct(R, X) {
     zMax: R.zMax ?? SET.CAMERA_ZMAX, actors: actors.map(a => a.name) });
   // compile sees the real scene at each shot change (everything is a pure function of the frame)
   // act.direct: hand-directed camera (allout/director.js): every shot names its intent, cuts are cuts, a move has a trigger
-  const DIR = R.direct ? (await import('../allout/director.js')).createDirector(R.direct, { frameOf, aspect: width / height, F1, dofAuto: R.look?.dofAuto ?? X.dofAuto,
+  const DIR = R.direct ? (await import('../allout/director.js')).createDirector(R.direct, { frameOf, aspect: width / height, F1, dofAuto: R.look?.dofAuto ?? X.dofAuto, drift: R.directDrift ?? X.directDrift ?? 0,
     anchor: (n, f) => { if (F.f !== f) poseAll(f); return anchor(n, f, livePos); } }) : null;
+  // a whoosh under every camera travel (act `travelWhoosh`, strength 0..1; off by default): the reference has an SFX on
+  // almost every visible action, camera rushes included (15.6 hits / 10 s, REF_SPEC.md rail)
+  if (DIR && (R.travelWhoosh ?? X.travelWhoosh)) for (const S of DIR.shots) if (S.i > 0 && S.cut !== 'dissolve' && S.cut !== 'cut' && (S.n ?? 16) > 4)
+    cues.push({ fr: S.f, name: 'whoosh', strength: (R.travelWhoosh ?? X.travelWhoosh) * Math.min(1, 16 / (S.n ?? 16)) });
   const shots = DIR ? [] : camera.compile((R.shots || []).map(s => ({ f: frameOf(s), kind: s.shot, subjects: s.of, opt: s })).sort((x, y) => x.f - y.f),
     (n, f) => { if (F.f !== f) poseAll(f); return anchor(n, f, livePos); }, F1 + 1);
 
@@ -524,8 +528,12 @@ async function buildAct(R, X) {
     if (!o?.isObject3D) return false;
     for (let q = o; q; q = q.parent) if (!q.visible) return false;
     box3.makeEmpty();
-    o.traverseVisible(m => { if (!m.isMesh || !m.geometry) return; if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
-      bb.copy(m.geometry.boundingBox).applyMatrix4(m.matrixWorld); box3.union(bb); });
+    const add = m => { if (!m.isMesh || !m.geometry) return;
+      if (m.isInstancedMesh) { if (!m.boundingBox) m.computeBoundingBox(); bb.copy(m.boundingBox).applyMatrix4(m.matrixWorld); }   // the instances, not one unit box at the origin
+      else { if (!m.geometry.boundingBox) m.geometry.computeBoundingBox(); bb.copy(m.geometry.boundingBox).applyMatrix4(m.matrixWorld); }
+      box3.union(bb); };
+    o.traverseVisible(add);
+    for (const q of o.userData?.seenParts || []) if (q.visible) q.traverseVisible(add);   // a prop whose visible body lives elsewhere (the hero joint's rail ends)
     if (box3.isEmpty()) return false;
     let x0 = 1, y0 = 1, x1 = -1, y1 = -1, n = 0;
     for (let i = 0; i < 8; i++) {
@@ -595,7 +603,8 @@ function autoShots(defs, SB, words, fps, F1, ids) {
 // internal cue names -> the sound bank (tools/sound_bank.py); steps alternate left / right
 const SOUND = { cash_lift: 'rustle', bundle_drop: 'thud', paper_slide: 'slide', swoosh: 'whoosh', sensor_beep: 'beep', glint: 'ting' };
 const BANK = new Set(['slide', 'thud', 'rustle', 'ting', 'ding', 'whoosh', 'step_l', 'step_r', 'beep', 'tick', 'poof', 'hiss', 'scratch', 'pop', 'snore',
-  'clunk', 'blip', 'ping', 'sizzle', 'slide_whistle_up', 'flutter', 'wah', 'siren', 'sting']);
+  'clunk', 'blip', 'ping', 'sizzle', 'slide_whistle_up', 'flutter', 'wah', 'siren', 'sting',
+  'saw', 'chug', 'whistle', 'clack', 'groan', 'boom', 'crowd', 'crank']);   // = tools/sound_bank.py BANK (test/unit/stick-sound-bank.test.mjs)
 
 export async function boot({ film, width, height }) {
   const R1 = (await import(`/${film}/reel.js`)).default;
@@ -606,8 +615,8 @@ export async function boot({ film, width, height }) {
   const fps = R1.fps || 30, F0 = R1.frames[0], F1 = R2 ? R2.frames[1] : R1.frames[1];
   const stage = createStage({ width, height, ...(R1.look || {}) });
   try { await document.fonts.load('900 100px InterReel'); } catch { /* falls back to the system sans */ }
-  const cap = createCaptions({ words, lines: [...R1.lines, ...(R2?.lines || [])], fps, width, height });
-  const X = { stage, words, fps, F0, F1, width, height, cap, glasses: R1.glasses }, bg0 = stage.scene.background;
+  const cap = createCaptions({ words, lines: [...R1.lines, ...(R2?.lines || [])], fps, width, height, mode: R1.captions?.mode });
+  const X = { stage, words, fps, F0, F1, width, height, cap, glasses: R1.glasses, directDrift: R1.directDrift, travelWhoosh: R1.travelWhoosh }, bg0 = stage.scene.background;
   const defs = [{ ...R1, name: R1.name || 'lobby', show: R1.show || [{ from: R1.frames[0] }] }, ...(R2?.acts || [])];
   for (const am of R2?.amend || []) { const d = defs.find(x => x.name === am.act); d.shots = [...d.shots, ...(am.shots || [])]; d.beats = [...d.beats, ...(am.beats || [])]; }
   autoShots(defs, await getJSON(`/${film}/storyboard.json`), words, fps, F1, [...R1.lines, ...(R2?.lines || [])]);
@@ -649,7 +658,8 @@ export async function boot({ film, width, height }) {
     for (const A of acts) for (const q of A.cues) {
       const s = at(q.fr); if (s.cur !== A && s.prev !== A) continue;
       if (q.fr > F1 - 2) continue;
-      let name = SOUND[q.name] || q.name; if (name === 'step') { if (q.strength < 0.2 || (q.who && q.who !== 'kai')) continue; name = step++ % 2 ? 'step_r' : 'step_l'; }   // the hero's feet only
+      let name = SOUND[q.name] || q.name;
+      if (name === 'step') { const hero = A.R.steps === 'all' || !q.who || q.who === 'kai' || A.actors.some(x => x.name === q.who && x.c.lead); if (q.strength < 0.2 || !hero) continue; name = step++ % 2 ? 'step_r' : 'step_l'; }   // the leads' feet only (act steps: 'all' = every walker's feet)
       if (!BANK.has(name)) continue;
       out.push({ t: +(q.fr / fps).toFixed(4), name, strength: +Math.min(1, Math.max(0.55, 0.55 + 0.6 * q.strength)).toFixed(2) });
     }

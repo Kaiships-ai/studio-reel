@@ -15,6 +15,7 @@ const INK_T = 0.046 * W;                     // outline base width; the hull sha
 const CREAM = [0.90, 0.87, 0.78];             // reference bodies: flat cream
 const HEAD_WHITE = [0.985, 0.965, 0.95];
 const HEAD_FLAT = [0.92, 0.905, 0.89];         // the unlit head sits a little under white so the grade's exposure keeps its soft wash (else it clips flat)      // reference heads are lighter than the body: lit sRGB (251, 246, 243), shade (230, 219, 231)
+const FILL_RGB = [0.20, 0.06, 0.48];            // rage purple, linear (= faces.js furious tint): the head fills from the chin up (verb face_fill)
 const LIMB_R = 0.046 * W / 2;                // limbs: reference legs and arms ~0.045-0.05 W (QlDPM f600), a bold line, not a thread
 export const HEAD_C = [0.0, 2.43], HEAD_H = 0.94, HIP_V = 1.34, SHOULDER_V = 2.00;
 export const TORSO = { cx: 0.0, cy: 1.72, w: 0.57, h: 0.90, depth: 0.80 };
@@ -237,15 +238,15 @@ export const FACE_2D = { on: true };
 // flat head: unlit fill, a thin crescent of shade inside the silhouette on the side away from the key (screen down-right,
 // reference sRGB 251/246/243 lit, 230/219/231 shade), lightly tinted by the place light so a night head is not a lamp
 function flatHeadMat(rgb, shade) {
-  const U = { uColor: { value: lin(...rgb) }, uShade: { value: lin(...shade) }, uPlaceLit: PLACE.lit };
+  const U = { uColor: { value: lin(...rgb) }, uShade: { value: lin(...shade) }, uPlaceLit: PLACE.lit, uFill: { value: -2 }, uFillCol: { value: lin(...FILL_RGB) } };
   const m = new THREE.ShaderMaterial({ uniforms: U,
-    vertexShader: `varying vec3 vN; varying vec3 vV;
+    vertexShader: `varying vec3 vN; varying vec3 vV; varying vec2 vP;
       #include <common>
       #include <logdepthbuf_pars_vertex>
-      void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv;
+      void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); vP = vec2(position.x / ${HA.toFixed(5)}, position.y / ${HB.toFixed(5)}); gl_Position = projectionMatrix * mv;
       #include <logdepthbuf_vertex>
       }`,
-    fragmentShader: `uniform vec3 uColor, uShade, uPlaceLit; varying vec3 vN; varying vec3 vV;
+    fragmentShader: `uniform vec3 uColor, uShade, uPlaceLit, uFillCol; uniform float uFill; varying vec3 vN; varying vec3 vV; varying vec2 vP;
       #include <logdepthbuf_pars_fragment>
       void main(){
       #include <logdepthbuf_fragment>
@@ -255,7 +256,10 @@ function flatHeadMat(rgb, shade) {
         float edge = 1.0 - clamp(dot(n, normalize(vV)), 0.0, 1.0);
         float side = clamp(0.35 + 0.9 * dot(normalize(n.xy + 1e-4), normalize(vec2(0.55, -0.85))), 0.0, 1.0);
         float k = max(max(0.85 * smoothstep(0.35, -0.95, n.y), 0.55 * smoothstep(0.5, 0.95, edge)), smoothstep(0.6, 0.9, edge) * side);
-        vec3 c = mix(uColor, uColor * uShade, k) * mix(vec3(1.0), uPlaceLit, 0.25);
+        // rage fill (verb face_fill): colour rises from the chin like a liquid, a soft wavy surface line
+        float lvl = uFill + 0.035 * sin(vP.x * 9.0 + uFill * 14.0);
+        vec3 base = mix(uColor, uFillCol, smoothstep(lvl + 0.03, lvl - 0.03, vP.y));
+        vec3 c = mix(base, base * uShade, k) * mix(vec3(1.0), uPlaceLit, 0.25);
         gl_FragColor = vec4(c, 1.0);
         #include <colorspace_fragment>
       }` });
@@ -301,6 +305,10 @@ function clothesCanvas(spec) {
   for (const c of spec.clothes || []) {
     if (c.vest) {
       g.fillStyle = css(c.vest); g.fillRect(0, 0, TEX_W, TEX_H);
+      if (c.check) { g.strokeStyle = css(c.check); g.globalAlpha = 0.85; g.lineWidth = 0.022 * k; const s = 0.13 * k;      // window-pane check
+        for (let x = 0; x < TEX_W; x += s) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, TEX_H); g.stroke(); }
+        for (let y = 0; y < TEX_H; y += s) { g.beginPath(); g.moveTo(0, y); g.lineTo(TEX_W, y); g.stroke(); } g.globalAlpha = 1; }
+      if (c.pin) { g.fillStyle = css(c.pin); const s = 0.085 * k; for (let x = 0; x < TEX_W; x += s) g.fillRect(x, 0, 0.026 * k, TEX_H); }
       const L = s => [[s * 0.075, top + 0.02], [s * 0.075, top - 0.02], [s * 0.115, T.cy + 0.05], [s * 0.10, v0 + 0.03], [s * 0.10, v0 - 0.02]];
       const strip = [...L(-1).flatMap((q, i, a) => i ? dense(a[i - 1], q, 6).slice(1) : [q]), ...L(1).reverse().flatMap((q, i, a) => i ? dense(a[i - 1], q, 6).slice(1) : [q])];
       poly(strip, spec.shirt || [1, 1, 1]);
@@ -309,6 +317,10 @@ function clothesCanvas(spec) {
         const a = [-T.w * 0.34, T.cy + T.h * 0.40], b = [T.w * 0.44, T.cy - T.h * 0.30];
         line(dense(a, b, 20), 0.085, INK_RGB); line(dense(a, b, 20), 0.050, c.strap);
       }
+    }
+    if (c.kerchief) {                                             // a knotted neckerchief under the chin, the point down the chest
+      const t0 = top - 0.06; poly([[-0.16, t0], [0.16, t0], [0, t0 - 0.30]], c.kerchief, 0.010);
+      dot([0, t0 - 0.02], 0.045, c.kerchief.map(x => x * 0.75));
     }
     if (c.tie) {
       const t0 = top - 0.10;
@@ -582,6 +594,7 @@ export function makeStick(spec) {
     const ta = P.state && EXPR[P.state.a]?.tint, tb = E.tint, u = P.state ? Math.max(0, Math.min(1, P.state.u)) : 1;
     const tk = tb ? Math.min(1, age / 6) * u : ta ? 1 - u : 0;   // a furious face flushes over 6 frames (and fades as it leaves)
     headSolid.material.color.copy(skin0); if (tk) headSolid.material.color.lerp(tintC.setRGB(...(tb || ta)), tk);
+    if (headSolid.material.uniforms?.uFill) headSolid.material.uniforms.uFill.value = S.fill > 0 ? -1.08 + 2.2 * Math.min(1, S.fill) : -2;
     rig.rotation.set(-(P.look_v || 0) * 0.12, (P.look || 0) * LOOK_RAD, 0);
   };
   // Hand props: pose key x_hp<L|R>_<kind> > 0.5 shows that prop in that hand (x_hpB_<kind> = between both hands);
@@ -623,6 +636,7 @@ export function makeStick(spec) {
     const hc = bt(HEAD_C[0] + (P.head_dx || 0), HEAD_C[1] + (P.head_dv || 0));
     head.position.set(hc[0] * W, hc[1] * W, hc[2] * W);
     head.rotation.set(pt * 0.6 + (P.head_pitch || 0) * DEG, 0, -(lean + (P.head_tilt || 0) * DEG));
+    S.fill = P.x_fill || 0;                                        // rage fill (verb face_fill): the face pass reads it
     S.face(P);
     // Limbs. Extra keys: elbow{L,R} / kneeDir (or kneeDir{L,R}) = pole vectors (figure-local), armFK{L,R} =
     // {fwd, out, flex, w} swing the arm from the shoulder (w blends it over the hand target), footPitch{L,R} (deg,

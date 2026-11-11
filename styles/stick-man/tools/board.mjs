@@ -92,7 +92,7 @@ body { margin: 0; background: #fff; font: 13px/1.25 Helvetica, Arial, sans-serif
 }
 
 async function lastFrame() {
-  const imp = async f => (await import(pathToFileURL(F(f)).href + `?t=${Date.now()}`)).default;
+  const imp = async f => (await import('./reel_load.mjs')).loadReel(path.dirname(F(f)), path.basename(F(f)));
   const R1 = await imp('reel.js'), R2 = fs.existsSync(F('reel2.js')) ? await imp('reel2.js') : null;
   return (R2 || R1).frames[1];
 }

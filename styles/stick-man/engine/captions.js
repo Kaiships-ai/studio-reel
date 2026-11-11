@@ -8,7 +8,10 @@ export const CAP = { size: 74, weight: 900, stroke: 8, track: 1.5 };   // stroke
 // trailing punctuation stays ("pink.", "minutes,": FORENSIC.md captions); only quote marks go
 const clean = w => w.replace(/^["“]+|["”]+$/g, '');
 
-export function chunkWords(words, lines) {
+// mode 'word' (reel `captions: { mode: 'word' }`): one content word a caption, the small words before it ride with it
+// ("a canyon", "on the job.", "in May."), the rail reference's rhythm: 2.67 captions a second, ~1.25 words each
+const FUNC = new Set('a an the to of in on at by for with from into over his her my your their its our and but or as'.split(' '));
+export function chunkWords(words, lines, mode = 'chunk') {
   const out = [];
   for (const id of lines) {
     const ws = words.filter(w => w.line === id).sort((a, b) => a.i - b.i);
@@ -17,15 +20,16 @@ export function chunkWords(words, lines) {
     ws.forEach((w, k) => {
       cur.push(w);
       const nx = ws[k + 1], chars = cur.map(x => clean(x.word)).join(' ').length;
-      if (!nx || cur.length >= MAX_WORDS || /[.,!?;:]["”]?$/.test(w.word) || chars + 1 + clean(nx.word).length > MAX_CHARS || nx.t0 - w.t1 > 0.25) flush();
+      const content = mode === 'word' && !FUNC.has(clean(w.word).toLowerCase().replace(/[^a-z']/g, ''));
+      if (!nx || content || cur.length >= MAX_WORDS || /[.,!?;:]["”]?$/.test(w.word) || chars + 1 + clean(nx.word).length > MAX_CHARS || nx.t0 - w.t1 > 0.25) flush();
     });
     flush();
   }
   return out;
 }
 
-export function createCaptions({ words, lines, fps, width, height, font = 'InterReel' }) {
-  const chunks = chunkWords(words, lines);
+export function createCaptions({ words, lines, fps, width, height, font = 'InterReel', mode = 'chunk' }) {
+  const chunks = chunkWords(words, lines, mode);
   // a chunk stays up until the next one starts, unless the voice pauses for more than 0.6 s
   chunks.forEach((c, i) => { const nx = chunks[i + 1]; c.until = nx && nx.t0 - c.t1 < 0.6 ? nx.t0 : c.t1 + 0.35; });
   const cv = document.createElement('canvas'); cv.width = width; cv.height = height; cv.id = 'captions';
