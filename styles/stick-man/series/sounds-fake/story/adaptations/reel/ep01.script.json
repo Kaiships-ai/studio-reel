@@ -1,0 +1,87 @@
+{
+ "model": "gemini-3.8-flash-tts",
+ "cast": {
+  "nar": "Achird"
+ },
+ "note": "Sounds Fake ep 1 'The Doctor Who Drank the Bug'. Built from story/chapters/chapter-01.md (story-skills adaptation). 206 words, est. 62-71 s at Achird 2.9-3.3 words/s. Sources: story/research/ep01-marshall-fact-check.md. NOT yet approved by Kai.",
+ "lines": [
+  {
+   "id": "l01",
+   "who": "nar",
+   "style": "fast, intrigued",
+   "text": "To win an argument, a doctor drank a beaker of live bacteria."
+  },
+  {
+   "id": "l02",
+   "who": "nar",
+   "style": "fast",
+   "text": "Western Australia, the early 1980s. Everyone knows ulcers come from stress, spicy food and too much acid."
+  },
+  {
+   "id": "l03",
+   "who": "nar",
+   "style": "fast, matter-of-fact",
+   "text": "But Barry Marshall and pathologist Robin Warren keep finding the same tiny spiral bug in ulcer patients."
+  },
+  {
+   "id": "l04",
+   "who": "nar",
+   "style": "fast, amused",
+   "text": "The experts laugh. Reviewers rank their paper in the bottom ten percent of the year."
+  },
+  {
+   "id": "l05",
+   "who": "nar",
+   "style": "fast, mocking",
+   "text": "The bug? Just a contaminant, they say."
+  },
+  {
+   "id": "l06",
+   "who": "nar",
+   "style": "fast, determined",
+   "text": "So he tries to infect piglets. Nothing. That leaves one test animal: himself."
+  },
+  {
+   "id": "l07",
+   "who": "nar",
+   "style": "fast",
+   "text": "July 1984. His lab tech scrapes two dishes of bacteria into beef broth, and he knocks it back like a shot."
+  },
+  {
+   "id": "l08",
+   "who": "nar",
+   "style": "fast, sly",
+   "text": "He doesn't clear it with the hospital, or his wife. In his words: \"easier to get forgiveness than permission.\""
+  },
+  {
+   "id": "l09",
+   "who": "nar",
+   "style": "fast, grossed out",
+   "text": "Days later, his breath smells putrid. Then he's throwing up every morning."
+  },
+  {
+   "id": "l10",
+   "who": "nar",
+   "style": "fast, excited",
+   "text": "Wait. A camera down his throat finds his stomach swollen and red, crawling with the spiral bug."
+  },
+  {
+   "id": "l11",
+   "who": "nar",
+   "style": "fast, explaining",
+   "text": "You see, the real culprit was the bug. It inflames the stomach lining, and that's where most ulcers start."
+  },
+  {
+   "id": "l12",
+   "who": "nar",
+   "style": "fast, matter-of-fact",
+   "text": "Kill the bug, and the ulcer is cured. Two weeks of pills instead of surgery."
+  },
+  {
+   "id": "l13",
+   "who": "nar",
+   "style": "fast, triumphant",
+   "text": "Twenty-one years after that putrid drink, the two men they laughed at walk on stage in Stockholm and collect the Nobel Prize."
+  }
+ ]
+}
