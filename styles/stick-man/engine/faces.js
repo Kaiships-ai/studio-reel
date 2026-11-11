@@ -48,6 +48,9 @@ const OPEN = { flat: 'open', smile: 'open', grin: 'open_big', smirk: 'open_skew'
   big: 'big_open', scream: 'scream', tongue: 'open' };
 for (const k of Object.keys(EXPR)) EXPR[k + '_o'] = { ...EXPR[k], mouth: OPEN[EXPR[k].mouth] || 'open', base: k };
 EXPR.sleep_o = { ...EXPR.sleep, mouth: 'o', mw: 0.6, base: 'sleep' };
+// wide-open twins (`<expr>_O`): the loud syllable and the middle of an expression ramp (FORENSIC.md fix 8: reference mouth
+// area swings, CV 0.33-0.56; ours barely moved). Bigger in width and drawn lower so the dark shape grows.
+for (const k of Object.keys(EXPR)) if (!k.endsWith('_o') && !k.endsWith('_O')) EXPR[k + '_O'] = { ...EXPR[k + '_o'], mw: 1.45 * (EXPR[k].mw || 1), my: (EXPR[k].my || 0) - 0.012, base: k };
 export const EXPR_NAMES = Object.keys(EXPR).filter(k => !k.endsWith('_o'));
 export const baseExpr = e => (e && EXPR[e]?.base) || e;
 

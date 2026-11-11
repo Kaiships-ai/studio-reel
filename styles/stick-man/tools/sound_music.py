@@ -145,6 +145,17 @@ def music(words, n, seed=31, plan=None):
     rr = np.random.default_rng(seed + 1)
     L, R = room(b.L, rr, wet=0.10), room(b.R, rr, wet=0.10)
     L, R = [hp(lp(c, 5500, 2), 45, 2) for c in (L, R)]
+    # FORENSIC.md fix 10: the reference bed fills the pauses - sustained bass under them (bass voice-minus-pause 3-6.5 dB)
+    # and air on top (5-14 kHz shaker wash). A root drone follows the section's bass line; a soft 8th-note wash rides on top.
+    tt = np.arange(n) / SR; bar = (tt // (4 * BEAT)).astype(int)
+    root = np.where(tt < t_urg, np.array(F_BASS)[bar % 4], np.array(D_BASS)[bar % 4]).astype(float)
+    root = np.where(tt >= t_so, 41.0, root)
+    f0 = lp(440 * 2 ** ((root - 69) / 12), 8, 2)                                    # glide between roots, no clicks
+    ph = 2 * np.pi * np.cumsum(f0) / SR
+    drone = (np.sin(ph) + 0.35 * np.sin(2 * ph)) * (0.85 + 0.15 * np.sin(2 * np.pi * tt / (2 * BEAT)))
+    air = hp(rr.standard_normal(n), 7000, 2) * (0.5 + 0.5 * np.cos(2 * np.pi * tt / (BEAT / 2))) ** 4
+    pk = max(np.abs(L).max(), 1e-6)
+    L = L + 0.30 * pk * drone + 0.06 * pk * air; R = R + 0.30 * pk * drone + 0.06 * pk * np.roll(air, 37)
     i = int(t_wait * SR); f = int(0.008 * SR)                     # full stop on "Wait": 8 ms fade then silence until "You see"
     for c in (L, R): c[i - f:i] *= np.linspace(1, 0, f); c[i:int(t_see * SR) - 1] = 0
     fo = int(0.4 * SR)

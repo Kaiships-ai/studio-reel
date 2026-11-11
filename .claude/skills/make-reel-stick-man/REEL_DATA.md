@@ -48,7 +48,7 @@ Plain data modules, no code beyond small helpers. The runtime (`styles/stick-man
 
 `export default { title, frames: [first, last], lines, acts: [act, ...], amend: [] }`. Each act is
 `{ name, set, use, zRange, show, cast, make, beats, shots }`. `show: [{ from, dissolve }]` = the frames (or `{ line, on }`)
-where this act comes on; `dissolve` frames (default 7, `0` = hard cut). An act can come back (`show` with two entries).
+where this act comes on; `dissolve` frames (default 9; `0` = hard cut, which the hard-cuts gate fails). `grade: { exp, gam, lift, sat, haze, tint: [r, g, b] }` = this place's own light (a dark place: exp 0.55-0.75; the light-per-place gate wants a shot under YAVG 95). An act can come back (`show` with two entries).
 `amend: [{ act, beats, shots }]` adds to an earlier act. Helper for word-timed entries:
 `const at = (line, on, offset = -2, nth) => ({ line, on, offset, ...(nth ? { nth } : {}) });` then `{ ...at('l05', 'ten'), who: ..., do: ... }`.
 
@@ -84,12 +84,12 @@ export default {
 | Every spoken line gets one visible action on its key word; a beat every 1-2 s | clear frames ≥ 94 %, frozen ≤ 8 f |
 | Frame 0 is mid-action (a prop already in hand) | the hook lands on frame 0 |
 | Let the planner shoot (`shots: []`, storyboard `shot: auto` + `role`); hand-write a shot only where it must differ | ≥ 4 kinds, est + insert, a cut every ~1 s (GATES.md) |
-| A change of place = a new act with a hard cut (`dissolve: 0`) on the word | no double exposure |
+| A change of place = a new act that dissolves in (default 9 f) on the word, with its own `grade` | the reference dissolves 53 % of boundaries, hard-cuts 1 % |
 | An explainer (how a thing works) = a `cutaway` act with props only, kept ≤ 45 frames per insert, or with a figure in frame | small-figure gate |
 | Gestures only with an empty hand; `hold` a prop before a `walk_to` with `carry` | gesture throws on a busy hand |
 | Read the error: `beat: no "<word>" #1 in l03` = `on` is not a spoken word of that line | |
 | A syntax error in `reel.js` / `reel2.js`: `shot.mjs` runs `node --check` first and prints the line; by hand `node --check films/<slug>/reel.js` | the page only says `pageerror` |
-| A quoted line (someone speaks): show the speaker saying it to the listener, both in frame, with a `stamp` speech bubble (`tail`) | reel 1 l03: a smile alone was "not shown" 6/6 |
+| A quoted line (someone speaks): show the speaker saying it to the listener, both in frame; any words go on a thing in the world (a `sign` board, paper, poster), never a sticker | floating labels gate = 0 |
 | Estimated words (`est: true` in words.json, whisper heard them differently) can carry beats but are ±3 f off; prefer the next real word | timing |
 
 ## Music (`audio/music.json`, read by `tools/sound.py`)
@@ -114,14 +114,17 @@ prints the sections it used.
 | `ots` | over the shoulder of `fore` at the subject, 48 mm | `fore`, `foreX` (0.10), `kx` |
 | `profile` | side-on tight two-shot, 44 mm | `size` |
 | `dutch` | rolled close-up (18 deg) for panic | `roll`, `rollSide`, `head` |
-| `punch` | cut-in close-up that snaps tighter over 14 f (the gag hit; a whip pan would break 25 px/f) | `head` |
+| `punch` | cut-in close-up that snaps tighter over 14 f (the gag hit) | `head` |
 | `two`, `ms`, `cu`, `insert`, `wide`, `follow` | the older eye-level kinds | VERBS.md Shots |
 
 Every orbit shot takes `el`, `lens`, `angle`, `kx` / `ky`, `zMax` (an act's `zMax`: the ceiling or wall top, e.g. lab 3.3).
-`est`, `aerial` and `top` are small-figure shots: hold them ≤ 40 f (the small-figure gate is 45 f); the planner does.
+`est`, `aerial` and `top` are small-figure shots: hold them ≤ ~3 s (the small-figure gate is 120 f); the planner does.
+A shot change rushes (camera.js: 16-30 f, peak ~90 px/f at 1080, cap 100) unless the shot asks `dissolve: n` (crossfade from the
+shot before, inside the act) or `cut: true` (hidden by a flash only).
 
-Planner (when a line has no reel shot in its window): first shot from the role (hook → aerial / est, number → macro /
-top, compare → top / profile / two, reaction → punch / dutch / cu, twist → punch / dutch / low, payoff → punch / low /
-dutch, explain → low / ots / profile / top / est), never one of the last two kinds; then a cut about every 34 frames,
-each the opposite scale of the one before; a macro waits for its thing to pop; the shot on the key word shows the
+Planner (when a line has no reel shot in its window): first shot from the role (hook → est / aerial, number → est / macro /
+top, compare → wide / top / profile / two, reaction → punch / low / dutch / cu, twist → low / punch / dutch, payoff → low /
+punch / dutch, explain → est / low / wide / top / ots / profile), never one of the last two kinds (wide kinds may repeat
+more); a line that changes scale family (wide ↔ near) opens with a 9 f dissolve; the hook rushes by frame 18; then a rush
+whenever a framing has held over ~84 frames, each the opposite scale of the one before; a macro waits for its thing to pop; the shot on the key word shows the
 line's things when it names 2 or more. The act's own `shots` always win.

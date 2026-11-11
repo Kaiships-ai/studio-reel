@@ -6,12 +6,15 @@
 //   est (establishing, high wide), aerial (drone: very high, slow orbit), top (top-down on a prop or the cast),
 //   macro (prop insert, long lens, shallow focus on the prop / its label), low (hero angle from knee height),
 //   ots (over the shoulder of `fore`), profile (side-on tight two-shot, long lens), dutch (rolled close-up, panic),
-//   punch (cut-in close-up that snaps tighter over 14 frames: the gag hit; a whip pan would break 25 px/f).
+//   punch (cut-in close-up that snaps tighter over 14 frames: the gag hit).
+// Pace (FORENSIC.md fix 2): hold, then rush. Between shots the camera drifts (push-in), a shot change is a
+// 16-30 frame rush that peaks near RUSH px/frame (60 at 720 = 90 at 1080; reference move peak p90 97-106 at 1080), never over CAP.
 import * as THREE from 'three';
 import { B } from './look.js';
 import { clamp, smoother, lerp, lerp3, DEG } from './verbs.js';
 
-const KICK = [1, -0.78, 0.55, -0.33, 0.16, -0.05];               // flips sign every frame, gone in 6
+const KICK = [1, -0.78, 0.55, -0.33, 0.16, -0.05];
+const RUSH = 60, CAP = 67;                                     // px/frame at 720 wide (pace()); KICK flips sign every frame, gone in 6
 const CAPTION = [0.66, 0.78];
 const KIND = {
   two: { lens: 28, h: 1.25, size: 0.43, headY: 0.33, dof: 0 },
@@ -272,9 +275,9 @@ export function createCamera({ aspect, side = [0, -1], bounds = null, zRange = [
         set(a.pos, a.aim, a.lens, a.roll); const pa = proj(b.aim);
         const scale = Math.abs(Math.log((Math.hypot(...a.pos.map((x, j) => x - a.aim[j])) / a.lens) / (Math.hypot(...b.pos.map((x, j) => x - b.aim[j])) / b.lens)));
         const shift = Math.hypot((pa[0] - 0.5) * 720, (pa[1] - 0.5) * 1280) + 640 * scale;
-        // long enough that the smootherstep peak stays near 18 px/frame; the speed limit wins over a short asked-for glide
-        S.glide = Math.max(S.opt.glide ?? 0, clamp(Math.ceil(1.875 * shift / 18), 18, 40));
-        if (S.opt.cut) S.glide = 0;                                  // a cut hidden by a flash: no glide
+        // a rush: the smootherstep peak lands near RUSH px/frame, 10-30 frames long; CAP (pace) wins over a short asked-for glide
+        S.glide = Math.max(S.opt.glide ?? 0, clamp(Math.ceil(1.875 * shift / RUSH), 16, 30));
+        if (S.opt.cut || S.opt.dissolve) S.glide = 0;                // a cut hidden by a flash, or a dissolve (play.js): no glide
       }
     });
     shots.forEach((S, i) => {                                      // plan the other heads at the frame the shot has settled
@@ -326,7 +329,7 @@ export function createCamera({ aspect, side = [0, -1], bounds = null, zRange = [
   }
   // speed cap: walk the glide frame by frame; where the smootherstep step would move the frame more than CAP px,
   // take the largest step under it (bisection). The glide then runs a little longer than asked, never faster.
-  const CAP = 19;
+  // CAP = 67 px/f at 720 = 100 at 1080 (reference move peaks: p90 ~101, max 114-142 at 1080; no motion blur needed).
   function pace(shots, i, A) {
     const S = shots[i]; if (!S.glide) return;
     const G = S.glide; S.glide = G + 400; S.prog = null;            // blended() must see the glide as running while it is paced
@@ -344,8 +347,10 @@ export function createCamera({ aspect, side = [0, -1], bounds = null, zRange = [
     if (u < 1 - 1e-4) prog.push(1);
     S.prog = prog; S.glide = prog.length - 1;
   }
-  function at(shots, f, A, cues) {
+  // force: solve shot `force` instead of the one live at f (the outgoing side of a shot dissolve, play.js)
+  function at(shots, f, A, cues, force = null) {
     let i = 0; while (i + 1 < shots.length && shots[i + 1].f <= f) i++;
+    if (force != null) i = force;
     const S = shots[i], c = blended(shots, i, f, A);
     // handheld breath + impact kick, as a sub-pixel-to-few-pixel view offset (px at 1920 tall)
     let ox = 0.9 * Math.sin(6.283 * f / 53 + 1.3) + 0.5 * Math.sin(6.283 * f / 23), oy = 0.7 * Math.sin(6.283 * f / 61) + 0.4 * Math.sin(6.283 * f / 29 + 2);
@@ -353,5 +358,11 @@ export function createCamera({ aspect, side = [0, -1], bounds = null, zRange = [
     c.offset = [ox, oy]; c.shot = S.kind + '(' + S.subjects.join(',') + ')'; c.shotIndex = i;
     return c;
   }
-  return { compile, at, solve, CAPTION, project: (c, p) => { set(c.pos, c.aim, c.lens, c.roll || 0); return proj(p); } };
+  // a shot asked with `dissolve: n` crossfades from the shot before over its first n frames: { i (outgoing), u (0..1) }
+  function mixAt(shots, f) {
+    let i = 0; while (i + 1 < shots.length && shots[i + 1].f <= f) i++;
+    const n = shots[i].opt.dissolve, d = f - shots[i].f;
+    return i > 0 && n > 0 && d < n ? { i: i - 1, u: (d + 0.5) / n } : null;
+  }
+  return { compile, at, solve, mixAt, CAPTION, project: (c, p) => { set(c.pos, c.aim, c.lens, c.roll || 0); return proj(p); } };
 }

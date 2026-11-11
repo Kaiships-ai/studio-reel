@@ -28,7 +28,9 @@ still == null ? missing('still frames') : gate('still frames', still < 1, `${sti
 
 // (b) camera speed
 const cam = /camera speed at 720p: peak ([\d.]+) px\/frame \(frame (\d+)\)/.exec(R);
-cam ? gate('camera speed', Number(cam[1]) <= 25, `${cam[1]} px/f (frame ${cam[2]})`, '<= 25 px/f at 720p') : missing('camera speed');
+// a ceiling only (FORENSIC.md fix 2: the reference rushes at 97-106 px/f p90, max 142 at 1080 = 95 at 720; the old 25 px/f cap
+// was the opposite of the reference). The rush itself is the forensic `rush peak` gate.
+cam ? gate('camera speed', Number(cam[1]) <= 95, `${cam[1]} px/f (frame ${cam[2]})`, '<= 95 px/f at 720p') : missing('camera speed');
 
 // per actor: frozen run, arm ratio, joint change, head cut
 const actors = [...R.matchAll(/^ {4}(\w+): blinks[^\n]*\n([\s\S]*?)(?=^ {4}\w+: blinks|^ {4}largest figure|^\(d\))/gm)];
@@ -68,7 +70,8 @@ else {
 
 // small figures
 const small = /largest figure under 30 % of frame height in ([\d-]+): longest run (\d+) frames(?: \(ends (\d+)\))?/.exec(R);
-small ? gate('small-figure run', +small[2] <= 45, `${small[2]} f${small[3] ? ' (ends ' + small[3] + ')' : ''}, over ${small[1]}`, '<= 45 f') : missing('small-figure run');
+// <= 120 f (was 45): wide / establishing shots carry ~a third of the reference runtime and hold like any shot (shot p90 4.2-6.4 s)
+small ? gate('small-figure run', +small[2] <= 120, `${small[2]} f${small[3] ? ' (ends ' + small[3] + ')' : ''}, over ${small[1]}`, '<= 120 f') : missing('small-figure run');
 
 // (d) hand to held prop
 const holds = [...R.matchAll(/^ {4}(\w+): ([\d.]+) px(?: \(frame ([^)]+)\))? over (\d+) held frames/gm)];
@@ -106,15 +109,19 @@ const col1 = k => ct.split('\n').filter(l => l.includes(`.${k}=`)).map(l => Numb
 const med = v => v[v.length >> 1];
 const Y = col1('YAVG'), S = col1('SATAVG');
 if (!Y.length) missing('colour'); else {
-  gate('colour YAVG', med(Y) >= 109 && med(Y) <=163, `median ${med(Y).toFixed(1)} (range ${Y[0].toFixed(0)}-${Y[Y.length - 1].toFixed(0)}, ${Y.length} samples)`, 'median 109-163');
+  // (the old `colour YAVG median 109-163` gate is gone: jar 104 and rail 107 failed it; brightness per place is the forensic
+  // `light per place` gate: shot YAVG std >= 20, a shot under 95, median 105-130)
   gate('colour SATAVG', med(S) >= 19 && med(S) <= 47, `median ${med(S).toFixed(1)} (range ${S[0].toFixed(0)}-${S[S.length - 1].toFixed(0)})`, 'median 19-47');
 }
 
 // ---------------------------------------------------------------- look gates (GATES.md "Look gates")
 // Reference numbers measured with the same code (tools/look_measure.mjs, ffmpeg signalstats) on ref-private frames:
 // 60 tiles of the two 30-tile reference sheets (colour, contrast) and 3 full-size frames (ink, caption).
+// per shot (11/11 forensic): measured with this same signalstats code on the four full reference videos (2 a second):
+// YAVG p5-p95 61-168, SAT p5-p95 13-54, YLOW min 17 (pink's black frame excluded); the old 84-158 / 36-101 came from 60
+// sheet tiles and failed every dark place the reference has
 const LOOK = { ink: [2, 3], ratio: [0.235, 0.388], cap: 54, capTol: 0.10,
-  shot: { YAVG: [84, 158], SATAVG: [18.6, 46.4], YLOW: [36, 101] } };
+  shot: { YAVG: [60, 170], SATAVG: [13, 54], YLOW: [17, 101] } };
 {
   // per-sample signalstats (2 a second) in order; mp4 is tv range, the reference stills full range: convert to full
   const per = []; let cur = null;
@@ -140,7 +147,7 @@ const LOOK = { ink: [2, 3], ratio: [0.235, 0.388], cap: 54, capTol: 0.10,
       const off = Object.entries(LOOK.shot).filter(([q, [lo, hi]]) => m3[q] < lo || m3[q] > hi).map(([q]) => `${q} ${m3[q].toFixed(0)}`);
       if (off.length) bad.push(`${k}: ${off.join(', ')}`);
     }
-    gate('colour per shot', !bad.length, bad.length ? `out: ${bad.join('; ')}` : `${shots.size} shots in range`, 'YAVG 84-158, SAT 19-46, YLOW 36-101');
+    gate('colour per shot', !bad.length, bad.length ? `out: ${bad.join('; ')}` : `${shots.size} shots in range`, 'YAVG 60-170, SAT 13-54, YLOW 17-101');
     // ink + caption on 1 frame a second at 1080x1920
     const fr = decode(A.in, 1), ink = [], cap = [];
     fr.forEach((rgb, i) => { const m = measure(rgb); if (m.inkRuns > 50) ink.push(m.inkPx);
@@ -172,10 +179,20 @@ const lines = [`gates for ${path.basename(A.in)} (report ${path.basename(A.repor
 const fails = G.filter(g => !g[2]).length;
 lines.push(fails ? `${fails} of ${G.length} gates FAIL` : `all ${G.length} gates PASS`);
 const SG = A.film ? await story(A.film) : [];
+// forensic gates (FORENSIC.md ranked fixes 1-10, measured on the mp4 by the scripts that measured the reference)
+const FG = [];
+if (A.film) {
+  const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
+  const out = A.forensic || A.in.replace(/\.mp4$/, '') + '-forensic.json';
+  const r = run('python', [path.join(ROOT, 'styles/stick-man/tools/forensic/measure.py'), path.resolve(A.in), '--words', path.join(ROOT, A.film, 'vo/words.json'), '--out', path.resolve(out)], { capture: true });
+  if (r.status || !fs.existsSync(out)) FG.push(['forensic', 'measure.py failed: ' + String(r.stderr || '').slice(-300), false, 'runs']);
+  else for (const [n, ok, got, want] of JSON.parse(fs.readFileSync(out, 'utf8')).gates) FG.push([n, got, ok, want]);
+}
+if (FG.length) { const ff = FG.filter(g => !g[2]).length; lines.push('', 'forensic gates (FORENSIC.md fixes 1-10)', ...FG.map(fmt), ff ? `${ff} of ${FG.length} forensic gates FAIL` : `all ${FG.length} forensic gates PASS`); }
 if (SG.length) { const sf = SG.filter(g => !g[2]).length; lines.push('', `story gates (${A.film}/storyboard.json)`, ...SG.map(fmt), sf ? `${sf} of ${SG.length} story gates FAIL` : `all ${SG.length} story gates PASS`); }
 const out = lines.join('\n') + '\n'; process.stdout.write(out);
 if (A.out) { fs.mkdirSync(path.dirname(path.resolve(A.out)), { recursive: true }); fs.writeFileSync(A.out, out); }
-process.exit(fails || SG.some(g => !g[2]) ? 1 : 0);
+process.exit(fails || SG.some(g => !g[2]) || FG.some(g => !g[2]) ? 1 : 0);
 
 // ---------------------------------------------------------------- story gates (computed from the storyboard and __dbg)
 // Thresholds: GATES.md "Story gates". A line's window = its first word to the next line's first word.
@@ -224,6 +241,14 @@ async function story(film) {
   const est = kinds.filter(k => ['est', 'aerial'].includes(k)), ins = kinds.filter(k => ['insert', 'macro', 'top'].includes(k));
   sg('establishing shot', est.length > 0, est.join(', ') || 'none', '>= 1 est / aerial');
   sg('insert shot', ins.length > 0, ins.join(', ') || 'none', '>= 1 insert / macro / top');
+  // 3c shot sizes (FORENSIC.md fix 5): establishing + wide >= 30 % of frames, low angle >= 7 % (reference 32 %, 7.3 %)
+  const shareOf = ks => Math.round(1000 * rows.filter(r => ks.includes(kindOf(r))).length / rows.length) / 10;
+  const ew = shareOf(['est', 'aerial', 'wide']), lo = shareOf(['low']);
+  sg('wide share', ew >= 30, `${ew} % est / aerial / wide`, '>= 30 % of frames');
+  sg('low angle share', lo >= 7, `${lo} % low`, '>= 7 % of frames');
+  // 3d open on the verb (FORENSIC.md fix 6): a character is mid-action (a body verb) in >= 10 of frames 0-20
+  const open = rows.filter(r => r.f <= 20 && Object.values(r.actors).some(a => a.inFrame && (a.verb || []).some(v => !['talk', 'look', 'blink'].includes(v)))).length;
+  sg('open on the verb', open >= 10, `${open} of the first 21 frames show a body verb`, '>= 10 of frames 0-20');
   // 4 + 5 every line has an entry; its props / fx are seen (>= 3 frames in its window); >= 40 % of lines use one
   const noEntry = ids.filter(id => !E[id]), unseen = [], using = [];
   for (const w of win) {
@@ -252,8 +277,9 @@ async function story(film) {
   // floating labels: stamp / callout / bars / split entries seen >= 3 frames anywhere in the reel
   const LABELS = ['stamp', 'callout', 'bars', 'split'], DIAGRAM = ['rings', 'flow', 'rays', 'star', 'shimmer'];   // lib/props/physfx.js
   const lab = {}; for (const r of rows) for (const n of r.seen || []) if (LABELS.includes(makeKind(r.act, n))) lab[`${r.act}.${n}`] = (lab[`${r.act}.${n}`] || 0) + 1;
-  const labs = Object.entries(lab).filter(([, c]) => c >= 3).map(([k]) => k), budget = Math.round(3 * dur / 30);
-  sg('floating labels', labs.length <= budget, `${labs.length} (${labs.join(', ') || '-'})`, `<= ${budget} (3 per 30 s)`);
+  // 0 (FORENSIC.md fix 9): the reference has no text stickers in 4 videos; a fact goes on a sign, label, poster or paper
+  const labs = Object.entries(lab).filter(([, c]) => c >= 3).map(([k]) => k);
+  sg('floating labels', labs.length === 0, `${labs.length} (${labs.join(', ') || '-'})`, '0 (put it on a sign in the world)');
   // every storyboard fx is an in-world kind (labels go in the entry's `labels`, never in `fx`)
   const notWorld = [];
   for (const w of win) { const e = E[w.id]; if (!e) continue; const acts = [...new Set(inWin(w).map(r => r.act))];

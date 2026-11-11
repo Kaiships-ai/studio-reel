@@ -1,5 +1,16 @@
 # Changelog · make-reel-stick-man
 
+## p8 · 2026-11-11 · forensic fix round (FORENSIC.md Top 10)
+
+Gates that contradicted the reference were retargeted to the reference: camera speed <= 25 -> ceiling 95 px/f at 720;
+`colour YAVG median 109-163` removed; colour per shot 60-170 / SAT 13-54 / YLOW 17-101 (measured on the 4 full reference
+videos); small-figure run 45 -> 120 f; floating labels 3 -> 0. New: 10 forensic gates (`tools/forensic/measure.py`, the
+reference's own measuring scripts) + wide share, low share, open-on-the-verb story gates.
+Kit: act dissolves default 9 f, shot `dissolve: n`, rush camera (16-30 f, peak ~90 px/f at 1080, cap 100), planner without
+cut grid (wide-first roles, hook rush by f18), act `grade.tint`, light-driven hull (0.35-1.6x by N.L), expression ramps +
+syllable mouths (`_O` twins), captions without pop and with punctuation, music bed -11.5 LU + drone + air.
+Proof reels stick07-robe / stick07-levels v3: forensic 8/10 and 9/10; style judge 4.5 / 5.5 (unchanged, target 8.5).
+
 ## p7 · 2026-11-10 · cheaper, steadier board gate; open SKILL_GAPS closed
 
 Board gate: `board.mjs --judge 3` = one ≤ 1560 px image, 2 stills per line (A `still` word, B fx peak), 3 headless Sonnet

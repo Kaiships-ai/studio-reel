@@ -1,25 +1,40 @@
 {
- "film": "stick04-levels-of-loud",
- "note": "Levels shape: every level is its own place and gets a LEVEL n stamp plus a counting dB stamp, louder each time; level 5 (Krakatoa) is a prop-only island set; the payoff pays off the hook (3,000 miles, a police chief).",
+ "film": "stick06-levels",
+ "note": "Q4 rebuild of stick04: same script, voice, acting and camera; every level is a dense, specific place (Halden street, park on a Saturday, a real classroom, the street at rush hour, the square with a rock stage, a lived-on volcano island, the bank's street) and every effect happens in the world: real signposts, a tripod sound meter, chalk on the blackboard, speaker stacks, dust shocks, an eruption with debris, shattering glass. Floating text is the label budget: LOUD!, PAIN!, CANNON FIRE?! (3). stick06: combined kit; every line carries Q2 body acting in `act`. stick07 (forensic fixes): no floating text (LOUD!/PAIN! dropped, CANNON FIRE? is a police report board); planned shots open establishing; acts dissolve; own light per act.",
  "lines": [
   {
    "id": "l01",
-   "see": "On a Halden City street a five-bar LEVELS chart shoots up beside Kai as a LOUD! stamp slams in, then 3,000 MILES AWAY pops up by his head.",
-   "shot": "ms",
+   "see": "On a busy Halden street a blast bursts the shop window behind Kai, splits the pavement in red-hot cracks and whips dust and leaves over the pavement (LOUD!), five real speaker stacks rise one after another under a hanging 5 LEVELS sign, then a 3,000 MI signpost rises behind Kai.",
+   "shot": "est",
    "set": "halden-street",
    "props": [],
    "fx": [
-    "loud",
+    "boom",
     "levels",
     "five",
-    "miles"
+    "miles",
+    "split",
+    "pane"
    ],
-   "still": "miles"
+   "still": "miles",
+   "labels": [],
+   "act": {
+    "kai": [
+     "startle@open",
+     "present@level",
+     "cup_ear@heard",
+     "arms_wide@miles"
+    ],
+    "otis": [
+     "cover_ears@loud",
+     "arms_crossed@five"
+    ]
+   }
   },
   {
    "id": "l02",
-   "see": "In the sunny park Wren whispers into Kai's ear, tiny sound rings pass between them, a LEVEL 1 \u00b7 30 dB stamp, Kai giggles.",
-   "shot": "two",
+   "see": "In the busy park Wren whispers: little breath puffs drift into Kai's ear, a LEVEL 1 signpost stands behind them, and a tripod sound meter pops up and reads 30 dB.",
+   "shot": "est",
    "set": "park",
    "props": [],
    "fx": [
@@ -27,51 +42,111 @@
     "db",
     "hush"
    ],
-   "still": "whisper"
+   "still": "whisper",
+   "labels": [],
+   "act": {
+    "wren": [
+     "lean_in@whisper",
+     "hands_on_hips@thirty"
+    ],
+    "kai": [
+     "cup_ear@level",
+     "laugh@park",
+     "present@decibels",
+     "shrug@tickle"
+    ]
+   }
   },
   {
    "id": "l03",
-   "see": "In the classroom Kai and Bram talk under a 60 dB stamp, then a bar chart shows 70 dB ten times taller than 60 dB and 10x POWER slams in.",
-   "shot": "two",
-   "set": "lab",
+   "see": "In a real classroom Kai talks to Bram under a hanging LEVEL 2 sign, the tripod meter reads 60 dB, then chalk on the blackboard draws 70 dB's bar ten times taller and writes 10x POWER!",
+   "shot": "low",
+   "set": "classroom",
    "props": [],
    "fx": [
     "db",
     "chart",
     "tenx"
    ],
-   "still": "times"
+   "still": "times",
+   "labels": [],
+   "act": {
+    "kai": [
+     "present@talking",
+     "point_lean@every",
+     "recoil@times",
+     "arms_wide@power"
+    ],
+    "bram": [
+     "arms_crossed@talking",
+     "think@every",
+     "lean_away@times"
+    ]
+   }
   },
   {
    "id": "l04",
-   "see": "Back on the Halden street cars roar past, sound rings hit Kai, an 85 dB stamp, and a callout rings his sore ear.",
+   "see": "Kai stands in the road at rush hour: a car's honk blasts dust and litter at him, its exhaust smokes, the meter reads 85 dB beside the LEVEL 3 post, and steam pours out of his sore ear.",
    "shot": "wide",
    "set": "halden-street",
    "props": [],
    "fx": [
     "db",
     "honk",
-    "ear"
+    "ear",
+    "roar"
    ],
-   "still": "traffic"
+   "still": "traffic",
+   "labels": [],
+   "act": {
+    "kai": [
+     "startle@traffic",
+     "brace@hours",
+     "wobble@damages"
+    ],
+    "june": [
+     "cower@traffic",
+     "facepalm@hours"
+    ]
+   }
   },
   {
    "id": "l05",
-   "see": "In Halden plaza a crowd fist-pumps at a ROCK! concert, a 120 dB stamp slams in, and Kai is blasted back by PAIN!",
-   "shot": "wide",
+   "see": "In Halden square a rock stage fires sparks, the crowd fist-pumps, the wall of sound blows dust over the square, the meter reads 120 dB and Kai, ears steaming, is hit by PAIN! Red cracks race over the paving under him.",
+   "shot": "est",
    "set": "halden-plaza",
    "props": [],
    "fx": [
     "rock",
     "db",
-    "pain",
-    "waves"
+    "waves",
+    "quake"
    ],
-   "still": "concert"
+   "still": "concert",
+   "labels": [],
+   "act": {
+    "kai": [
+     "jump_joy@rock",
+     "cover_ears@twenty",
+     "recoil@threshold",
+     "facepalm@pain"
+    ],
+    "otis": [
+     "gesture@rock",
+     "flail@concert"
+    ],
+    "mabel": [
+     "tiptoe@a",
+     "celebrate@that's"
+    ],
+    "june": [
+     "jump_joy@concert"
+    ]
+   }
   },
   {
    "id": "l06",
-   "see": "A lone volcano island at sea under a 1883 stamp; the volcano explodes in a white flash, a smoke cloud and a pow star.",
+   "see": "A lived-on volcano island (huts, boats, a lighthouse) with a KRAKATOA 1883 signpost; glowing lava cracks split the cone, then it explodes in a fireball, flinging rocks and lava sparks, an ash column rising.",
    "shot": "wide",
    "set": "island",
    "props": [
@@ -80,13 +155,16 @@
    "fx": [
     "year",
     "blast",
-    "pow"
+    "pow",
+    "lava"
    ],
-   "still": "exploded"
+   "still": "exploded",
+   "labels": [],
+   "act": {}
   },
   {
    "id": "l07",
-   "see": "Closer on the erupting volcano, huge sound rings roll out over the sea while a 170 dB stamp counts up, then 100 MILES.",
+   "see": "Closer on the erupting volcano: a white ring of foam races out over the sea, the big tripod meter on the beach reads 170 dB, and a 100 MI HEARD IT signpost rises.",
    "shot": "insert",
    "set": "island",
    "props": [
@@ -97,12 +175,14 @@
     "waves",
     "far"
    ],
-   "still": "decibels"
+   "still": "decibels",
+   "labels": [],
+   "act": {}
   },
   {
    "id": "l08",
-   "see": "On a quiet street the police chief beside his car jumps as rings arrive, 3,000 MILES, and he says CANNONS?! in a speech bubble.",
-   "shot": "ms",
+   "see": "On the bank's street the police chief by his car gets a 3,000 MI FROM KRAKATOA signpost, the bang arrives: dust whips his feet, the bank stone cracks and its door glass bursts into shards, and he says CANNON FIRE?!",
+   "shot": "low",
    "set": "street",
    "props": [
     "police"
@@ -110,9 +190,18 @@
    "fx": [
     "miles",
     "waves",
-    "bubble"
+    "glass",
+    "wallcrack"
    ],
-   "still": "cannon"
+   "still": "cannon",
+   "labels": [],
+   "act": {
+    "officer": [
+     "hands_on_hips@three",
+     "startle@heard",
+     "cower@cannon"
+    ]
+   }
   }
  ]
 }

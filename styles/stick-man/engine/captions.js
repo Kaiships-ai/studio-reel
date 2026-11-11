@@ -2,7 +2,8 @@
 // word t0. Drawn on a 2D canvas over the WebGL one (round-joined stroke, which CSS text-stroke cannot do).
 const MAX_WORDS = 3, MAX_CHARS = 14;
 export const CAP = { size: 72, weight: 800, stroke: 6 };   // px at 1080 wide; stroke = px outside the glyph
-const clean = w => w.replace(/^["“]+|["”]+$/g, '').replace(/[.,;:"”]+$/g, '');
+// trailing punctuation stays ("pink.", "minutes,": FORENSIC.md captions); only quote marks go
+const clean = w => w.replace(/^["“]+|["”]+$/g, '');
 
 export function chunkWords(words, lines) {
   const out = [];
@@ -30,7 +31,7 @@ export function createCaptions({ words, lines, fps, width, height, font = 'Inter
   function draw(f) {
     g.clearRect(0, 0, width, height);
     const c = chunkAt(f); if (!c) return null;
-    const age = f - Math.ceil(c.t0 * fps - 1e-6), pop = age < 3 ? 1 + 0.06 * (1 - age / 3) : 1;
+    const pop = 1;                                                     // the reference cuts in at final size (no pop)
     // measured on the reference frames (GATES.md "Look gates"): ascender height 54 px at 1920 tall, a ~6 px black
     // stroke outside the glyph, a hard drop shadow down-right; bold, not black weight; centre at 70 % of the height
     let size = CAP.size * k;
