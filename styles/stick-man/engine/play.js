@@ -42,6 +42,17 @@ export function resolveBeatFrame(b, words, fps) {
   return Math.max(0, Math.round(w.t0 * fps) + (b.offset ?? -2));
 }
 
+// opt-in module hooks (allout/costume.js sets HOOKS.costume)
+export const HOOKS = {};
+// where a Blender point lands on screen (0..1, y down) for a { pos, aim, lens } camera; null behind it
+function projUV(c, p, aspect) {
+  const f = c.aim.map((x, i) => x - c.pos[i]), fl = Math.hypot(...f); if (!fl) return null; const F = f.map(x => x / fl);
+  let R = [F[1], -F[0], 0]; const rl = Math.hypot(...R) || 1; R = R.map(x => x / rl); const U = [R[1] * F[2] - R[2] * F[1], R[2] * F[0] - R[0] * F[2], R[0] * F[1] - R[1] * F[0]];
+  const v = p.map((x, i) => x - c.pos[i]), z = v[0] * F[0] + v[1] * F[1] + v[2] * F[2]; if (z <= 0.01) return null;
+  const tv = 18 / c.lens, th = tv * aspect;
+  return [0.5 + 0.5 * (v[0] * R[0] + v[1] * R[1] + v[2] * R[2]) / z / th, 0.5 - 0.5 * (v[0] * U[0] + v[1] * U[1] + v[2] * U[2]) / z / tv];
+}
+
 const ZERO_KEY = /^(head_|shrug|x_|f[LR][xyz]$)/;
 function mixObj(a, b, w) {
   if (w >= 1 || a == null) return b; if (w <= 0 || b == null) return a;
@@ -95,6 +106,8 @@ async function buildAct(R, X) {
   const built = await SET.build(stage, { use: R.use || [], ...(R.setOpts || {}) });   // act.use: opt-in set props (street: police, bag)
   for (const c of [...stage.scene.children]) if (!before.has(c)) group.add(c);
   let background = stage.scene.background; stage.scene.background = bg0; stage.scene.add(group); group.visible = false;
+  // act haze: { color (sRGB), near, far } m: distance fog toward the sky colour (aerial perspective), shown with the act
+  const fog = R.haze ? new THREE.Fog(lin(...R.haze.color), R.haze.near ?? 12, R.haze.far ?? 160) : null;
   const props = built.props;
   // per-place light (FORENSIC.md section 6: every reference place has its own light, per-shot YAVG std 23-25 vs ours 6-9):
   // act `light: { lit, shade (tints of the toon ramp's two ends), lamp (gain of the practical lights), sun, power, sky,
@@ -111,7 +124,7 @@ async function buildAct(R, X) {
   }
   const L0 = stage.light0;
   const sun = () => {
-    stage.setSun(SET.SUN_DIR, R.sun?.center || SET.SUN_CENTER, R.sun?.half || SET.SUN_HALF);
+    stage.setSun(LT?.sunDir || SET.SUN_DIR, R.sun?.center || SET.SUN_CENTER, R.sun?.half || SET.SUN_HALF);   // light.sunDir: a lower, warmer key per act
     stage.sun.color.copy(LT?.sun ? lin(...LT.sun) : L0.sun); stage.sun.intensity = LT?.power ?? L0.si;
     stage.hemi.color.copy(LT?.sky ? lin(...LT.sky) : L0.sky); stage.hemi.groundColor.copy(LT?.ground ? lin(...LT.ground) : L0.gr); stage.hemi.intensity = LT?.hemi ?? L0.hi;
     stage.fill.color.copy(LT?.fill ? lin(...LT.fill) : L0.fill); stage.fill.intensity = LT?.fillPower ?? L0.fi;
@@ -157,9 +170,11 @@ async function buildAct(R, X) {
     if (!SPECS[c.spec]) throw new Error(`unknown cast spec ${c.spec} (SETS.md, Cast)`);
     // glasses: per cast entry, else per reel (R1.glasses), else the spec's own (Q2: rims make every face read as round eyes)
     const gl = c.glasses ?? X.glasses, S = makeStick(gl == null ? SPECS[c.spec] : { ...SPECS[c.spec], glasses: gl }); group.add(S.root);
+    if (c.costume) { if (!HOOKS.costume) throw new Error(`cast ${name}: costume needs import '/styles/stick-man/allout/costume.js'`); HOOKS.costume(S, c.costume, { group, name }); }   // role layers (belt, holster, hat)
+    if (HOOKS.faceExtras) HOOKS.faceExtras(S);                      // allout/face_extras.js (proposal): hidden cards until a beat asks
     const posture = c.posture || 'stand', base = posture === 'sit' ? SIT : STAND;
     const pos = point(c.at).slice(); pos[2] = pos[2] || 0;
-    const st = { name, pos, yaw: c.yaw ?? 0, posture, hold: { L: null, R: null }, handW: {}, sling: null };
+    const st = { name, pos, yaw: c.yaw ?? 0, posture, hold: { L: null, R: null }, handW: {}, sling: null, ampScale: c.amp ?? R.actingAmp ?? 1 };
     const a = { name, S, c, st, posture, seed: Math.round(hash(name.length, name.charCodeAt(0), name.charCodeAt(1)) * 1e6),
       focus: c.focus, watch: c.watch, owners: { body: [], handL: [], handR: [], add: [] }, verbs: [], exprs: [{ f: -1e9, expr: c.expr || 'neutral' }],
       focusSegs: [], mouth: [], holdLog: [], st0: pos.slice() };
@@ -384,12 +399,12 @@ async function buildAct(R, X) {
     zMax: R.zMax ?? SET.CAMERA_ZMAX, actors: actors.map(a => a.name) });
   // compile sees the real scene at each shot change (everything is a pure function of the frame)
   // act.direct: hand-directed camera (allout/director.js): every shot names its intent, cuts are cuts, a move has a trigger
-  const DIR = R.direct ? (await import('../allout/director.js')).createDirector(R.direct, { frameOf, aspect: width / height, F1,
+  const DIR = R.direct ? (await import('../allout/director.js')).createDirector(R.direct, { frameOf, aspect: width / height, F1, dofAuto: R.look?.dofAuto ?? X.dofAuto,
     anchor: (n, f) => { if (F.f !== f) poseAll(f); return anchor(n, f, livePos); } }) : null;
   const shots = DIR ? [] : camera.compile((R.shots || []).map(s => ({ f: frameOf(s), kind: s.shot, subjects: s.of, opt: s })).sort((x, y) => x.f - y.f),
     (n, f) => { if (F.f !== f) poseAll(f); return anchor(n, f, livePos); }, F1 + 1);
 
-  let cam = null, caption = null;
+  let cam = null, caption = null, blurV = null;
 
   function poseAll(f) {
     F = { f, posed: new Set(), cache: new Map(), handWorld: {}, bodies: {} };
@@ -411,10 +426,21 @@ async function buildAct(R, X) {
   }
   function update(f, force = null) {
     sun(); poseAll(f);
+    // motion blur on very fast camera moves only (act look.mblur: { px (threshold, px/frame at 1080 wide), k }): the aim point's
+    // travel across the screen since the frame before, smeared along that travel when it passes the threshold
+    const MB = R.look?.mblur, pc = MB && DIR && f > F0 ? DIR.at(f - 1, force) : null;
     cam = DIR ? DIR.at(f, force) : camera.at(shots, f, n => anchor(n, f, livePos), cues, force);
+    blurV = null;
+    if (pc && !DIR.cutAt(f)) { const a = projUV(cam, cam.aim, width / height), b = projUV(pc, cam.aim, width / height);
+      if (a && b) { const dx = a[0] - b[0], dy = a[1] - b[1], L = Math.hypot(dx * width, dy * height) * (1080 / width), th = MB.px ?? 60;
+        if (L > th) { const k = (MB.k ?? 0.7) * (L - th) / L; blurV = [-dx * k, dy * k]; } } }
     // a director shot aimed at an actor reads its anchor at the shot's first frame, and the anchor hook poses the whole scene
     // there: pose this frame again, or every body, prop and effect renders frozen at the shot's start (only faces moved)
     if (F.f !== f) poseAll(f);
+    // light.camKey { az, el } (deg): the key light comes from beside and above the lens every shot (the cartoon cheat: the face
+    // in the shot is lit, whichever way it faces), shadows fall away from the camera
+    if (LT?.camKey) { const F = cam.aim.map((x, i) => x - cam.pos[i]), h = Math.hypot(F[0], F[1]) || 1, a = Math.atan2(F[0], F[1]) + (LT.camKey.az ?? 30) * Math.PI / 180, e = (LT.camKey.el ?? 35) * Math.PI / 180;
+      stage.setSun([Math.sin(a) * Math.cos(e), Math.cos(a) * Math.cos(e), -Math.sin(e)], R.sun?.center || SET.SUN_CENTER, R.sun?.half || SET.SUN_HALF); }
     const px = height / 1920;
     stage.camera.setViewOffset(width, height, cam.offset[0] * px, cam.offset[1] * px, width, height);
     stage.setCamera(cam.pos, cam.aim, cam.lens);
@@ -534,7 +560,7 @@ async function buildAct(R, X) {
     const shotCut = DIR ? DIR.cutAt(f) : (cam.shotIndex !== i0 && shots[cam.shotIndex].glide === 0) || !!camera.mixAt(shots, f);
     return { cam: f === F0 ? 0 : +camPx.toFixed(3), camPeak: f === F0 ? 0 : +camPeak.toFixed(3), feet, shotCut };
   };
-  return { name: R.name || R.set, R, grade: { ...(SET_GRADE[R.set] || {}), ...(R.grade || {}) }, group, background, update, dbg, motion, cues, actors, frameOf, flash: f => KT.at('screen', 'flash', f, 0) || 0,
+  return { name: R.name || R.set, R, grade: { ...(SET_GRADE[R.set] || {}), ...(R.grade || {}) }, group, background, fog, update, dbg, motion, cues, actors, frameOf, flash: f => KT.at('screen', 'flash', f, 0) || 0, blur: () => blurV,
     impact: f => KT.at('screen', 'impact', f, 0) || 0, shotMix: f => DIR ? DIR.mixAt(f) : camera.mixAt(shots, f) };
 }
 
@@ -598,7 +624,7 @@ export async function boot({ film, width, height }) {
     for (let k = 1; k < wins.length; k++) { const w = wins[k], h = w.n / 2; if (w.n && f >= w.a - h && f < w.a + h) return { cur: w.A, prev: wins[k - 1].A, u: (f - (w.a - h) + 0.5) / w.n, whip: w.whip }; }
     let k = 0; while (k + 1 < wins.length && wins[k + 1].a <= f) k++; return { cur: wins[k].A };
   };
-  const show = A => { for (const x of acts) x.group.visible = x === A; stage.scene.background = A.background ?? bg0; };
+  const show = A => { for (const x of acts) x.group.visible = x === A; stage.scene.background = A.background ?? bg0; stage.scene.fog = A.fog || null; };
   function frame(f) {
     const s = at(f); let ms = 0;
     const wp = s.whip ? 0.22 * s.whip * Math.sin(Math.PI * s.u) : 0, wu = s.whip ? Math.min(1, Math.max(0, (s.u - 0.3) / 0.4)) : s.u;
@@ -606,7 +632,7 @@ export async function boot({ film, width, height }) {
     const sm = s.prev ? null : s.cur.shotMix(f);                   // a shot dissolve inside the act: the outgoing camera first
     const sw = sm?.whip ? 0.22 * sm.whip * Math.sin(Math.PI * (sm.ws ?? sm.u)) : 0;   // a whip between two shots of one place (allout/director.js)
     if (sm) { show(s.cur); s.cur.update(f, sm.i); ms += stage.render({ flash: s.cur.flash(f), grade: s.cur.grade, whip: sw }); stage.grab(); }
-    show(s.cur); s.cur.update(f); ms += stage.render({ prev: s.prev ? 1 - wu : sm ? 1 - sm.u : 0, flash: s.cur.flash(f), grade: s.cur.grade, whip: wp || sw, impact: s.cur.impact(f) });
+    show(s.cur); s.cur.update(f); ms += stage.render({ prev: s.prev ? 1 - wu : sm ? 1 - sm.u : 0, flash: s.cur.flash(f), grade: s.cur.grade, whip: wp || sw, impact: s.cur.impact(f), blur: wp || sw ? null : s.cur.blur(), t: f / fps });
     cap.draw(f); return ms;
   }
   window.__motion = f => { const s = at(f), p = at(Math.max(F0, f - 1)); show(s.cur); const m = s.cur.motion(f); return { ...m, cut: !!s.prev || p.cur !== s.cur || !!p.prev || s.cur.flash(f) > 0.3 || m.shotCut }; };   // dissolves, act cuts, flash cuts, shot cuts

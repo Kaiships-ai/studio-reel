@@ -352,14 +352,22 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1
     uniforms: { tDiffuse: { value: null }, sat: { value: sat }, con: { value: con }, vig: { value: vig }, split: { value: split },
       aspect: { value: width / height }, tPrev: { value: null }, uPrev: { value: 0 }, uFlash: { value: 0 },
       uExp: { value: 1 }, uLift: { value: 0 }, uGam: { value: 1 }, uSat: { value: 1 }, uTint: { value: new THREE.Vector3(1, 1, 1) },
-      uImpact: { value: 0 }, uImpC: { value: new THREE.Vector2(0.5, 0.5) }, uWhip: { value: 0 } },
+      uImpact: { value: 0 }, uImpC: { value: new THREE.Vector2(0.5, 0.5) }, uWhip: { value: 0 },
+      uShadowC: { value: new THREE.Vector3(0, 0, 0) }, uShadowK: { value: 0 }, uShoulder: { value: 0 }, uGrain: { value: 0 }, uSoft: { value: 0 }, uTime: { value: 0 },
+      uBlur: { value: new THREE.Vector2(0, 0) }, texel: { value: new THREE.Vector2(1 / width, 1 / height) } },
     vertexShader: FS_QUAD_V,
-    fragmentShader: `uniform sampler2D tDiffuse, tPrev; uniform float sat, con, vig, split, aspect, uPrev, uFlash, uExp, uLift, uGam, uSat, uImpact, uWhip; uniform vec3 uTint; uniform vec2 uImpC; varying vec2 vUv;
+    fragmentShader: `uniform sampler2D tDiffuse, tPrev; uniform float sat, con, vig, split, aspect, uPrev, uFlash, uExp, uLift, uGam, uSat, uImpact, uWhip, uShadowK, uShoulder, uGrain, uSoft, uTime; uniform vec3 uTint, uShadowC; uniform vec2 uImpC, uBlur, texel; varying vec2 vUv;
       float hsh(float n){ return fract(sin(n * 12.9898) * 43758.5453); }
       void main(){ vec3 c = texture2D(tDiffuse, vUv).rgb;
         // whip pan between places (judge t2: the reference uses motion-blur / whip transitions): a horizontal smear whose
         // length follows uWhip (signed, fraction of the frame width), 16 taps, on the outgoing and the incoming frame
         if (abs(uWhip) > 0.002) { vec3 a = vec3(0.0); for (int i = 0; i < 16; i++) a += texture2D(tDiffuse, vUv + vec2(uWhip * (float(i) / 15.0 - 0.5), 0.0)).rgb; c = a / 16.0; }
+        // motion blur on a very fast camera move only (uBlur = the image's travel this frame, fraction of the frame; play.js
+        // sets it from the camera when the move passes the threshold): 16 taps along it
+        else if (length(uBlur) > 0.002) { vec3 a = vec3(0.0); for (int i = 0; i < 16; i++) a += texture2D(tDiffuse, vUv + uBlur * (float(i) / 15.0 - 0.5)).rgb; c = a / 16.0; }
+        // painted finish: a gentle soften (a 1-texel cross blur mixed in), opt-in per act (grade.soft 0..1)
+        if (uSoft > 0.001) { vec3 b = (texture2D(tDiffuse, vUv + vec2(texel.x, 0.0)).rgb + texture2D(tDiffuse, vUv - vec2(texel.x, 0.0)).rgb
+          + texture2D(tDiffuse, vUv + vec2(0.0, texel.y)).rgb + texture2D(tDiffuse, vUv - vec2(0.0, texel.y)).rgb) * 0.25; c = mix(c, b, uSoft); }
         float l = dot(c, vec3(0.2126,0.7152,0.0722));
         c = mix(vec3(l), c, sat);
         // split tone: shade leans blue-lilac, light leans warm, like the sunlit reference sets
@@ -371,6 +379,10 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1
         vec2 d = (vUv - 0.5)*vec2(aspect, 1.0); c *= 1.0 - vig*smoothstep(0.25, 0.75, length(d)*1.25);
         c = clamp(c, 0.0, 1.0);
         c = pow(c, vec3(uGam)) * uExp * uTint; c += uLift * (1.0 - c);       // per-set / per-act grade (SET_GRADE, act grade): own light per place
+        // tone (opt-in, grade.shadow / shoulder): deep shadows lifted toward a colour (the reference's mauve-violet shade sits
+        // near 0.25, ours near 0.05), the ink lines (near black) left alone; highlights rolled off instead of clipping
+        { float l2 = dot(c, vec3(0.2126,0.7152,0.0722)), w = uShadowK * (1.0 - smoothstep(0.06, 0.32, l2)) * smoothstep(0.012, 0.05, l2);   // only the deep shade: a blue sky must not go grey
+          c = mix(c, max(c, uShadowC), w); c = c - uShoulder * c * c * 0.5; }
         c = clamp(mix(vec3(dot(c, vec3(0.2126,0.7152,0.0722))), c, uSat), 0.0, 1.0);
         if (uPrev > 0.0) c = mix(c, texture2D(tPrev, vUv).rgb, uPrev);       // dissolve: the other act's finished frame on top
         // impact frame: radial speed lines burst from uImpC, the centre stays clear (pirate f1830 explosion), uImpact 0..1
@@ -379,6 +391,7 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1
           float k = on * smoothstep(0.18 + 0.12 * hsh(id + 3.0), 0.34 + 0.2 * hsh(id + 7.0), r) * (1.0 - smoothstep(0.0, 0.35 + 0.4 * hsh(id + 1.0), w)) * uImpact;
           c = mix(c, vec3(0.02), clamp(k, 0.0, 0.9)); }
         c = mix(c, vec3(1.0, 0.99, 0.96), uFlash);                           // full-frame white flash
+        if (uGrain > 0.0) c += (hsh(dot(floor(vUv / texel), vec2(1.0, 1543.0)) + uTime * 17.0) - 0.5) * uGrain;   // film grain, per frame
         gl_FragColor = vec4(c, 1.0); }` });
   // dissolves: grab() keeps the finished frame on the canvas; the next render(o) lays it over at o.prev (0..1)
   const prevTex = new THREE.FramebufferTexture(width, height);
@@ -412,6 +425,8 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1
     gradePass.uniforms.uPrev.value = o.prev || 0; gradePass.uniforms.uFlash.value = Math.min(1, o.flash || 0);
     const gr = o.grade || {}; if (stage.shafts) stage.shafts.march.material.uniforms.dens.value = shafts * (gr.haze ?? 1); gradePass.uniforms.uExp.value = gr.exp ?? 1; gradePass.uniforms.uLift.value = gr.lift ?? 0; gradePass.uniforms.uGam.value = gr.gam ?? 1; gradePass.uniforms.uSat.value = gr.sat ?? 1; gradePass.uniforms.uTint.value.set(...(gr.tint || [1, 1, 1]));
     gradePass.uniforms.uImpact.value = Math.min(1, o.impact || 0); gradePass.uniforms.uWhip.value = o.whip || 0;
+    const U = gradePass.uniforms, sc = gr.shadow; U.uShadowC.value.set(...(sc?.c || [0, 0, 0])); U.uShadowK.value = sc?.k ?? 0;
+    U.uShoulder.value = gr.shoulder ?? 0; U.uGrain.value = gr.grain ?? 0; U.uSoft.value = gr.soft ?? 0; U.uTime.value = o.t ?? 0; U.uBlur.value.set(...(o.blur || [0, 0]));
     INK_SUN.value.copy(sun.position).sub(sun.target.position).normalize();   // figure outlines thicken away from the sun (cast.js)
     camera.updateMatrixWorld();
     autoToon();

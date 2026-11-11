@@ -113,18 +113,19 @@ const P = {
   // fire_gun: aimed, BANG: the recoil throws the gun hand up and the body back, then it comes down again
   fire_gun: { A: 1, T: 3, hold: 24, props: { R: 'revolver' }, keys: [
     { at: 0, body: { pitch: 4, shTwist: 14, head_pitch: 4 }, hands: { R: { t: [0.30, 2.02, 1.02], elbow: [0.9, -0.3, -0.2] }, L: HIP(-1) } },
-    { at: 3, body: { pitch: -10, shTwist: 10, head_pitch: -10, lean: -3, bob: 0.01 }, hands: { R: { t: [0.34, 2.75, 0.62], elbow: [0.9, -0.3, -0.2] } } },
+    { at: 3, body: { pitch: -16, shTwist: 6, head_pitch: -16, lean: -5, bob: 0.02 }, hands: { R: { t: [0.30, 3.0, 0.30], elbow: [0.9, -0.3, -0.2] } } },
     { at: 14, body: { pitch: -2, shTwist: 12, head_pitch: -2 }, hands: { R: { t: [0.32, 2.30, 0.85], elbow: [0.9, -0.3, -0.2] } } }],
-    tiltKeys: { R: [[0, 0], [3, -35], [14, -10]] } },
+    tiltKeys: { R: [[0, 0], [3, -60], [14, -15]] } },
   // grab_draw: going for the gun as fast as he can: a crouch, the hand clawing at the holster on the hip, straining
-  grab_draw: { A: 2, T: 6, hold: 60, body: { pitch: 16, bob: -0.12, head_pitch: -14, shrug: 0.08, shTwist: -8 },
-    feet: { L: [-0.34, 0.022, 0.10], R: [0.32, 0.022, -0.06] },
+  grab_draw: { A: 2, T: 6, hold: 60, body: { pitch: 22, bob: -0.2, head_pitch: -20, shrug: 0.1, shTwist: -14, lean: 4 },
+    feet: { L: [-0.40, 0.022, 0.16], R: [0.36, 0.022, -0.10] },
     hands: { R: { t: [0.42, 1.36, 0.10], elbow: [0.9, 0.2, -0.4] }, L: { t: [-0.55, 1.80, 0.30], elbow: [-0.9, -0.3, 0] } },
-    cycle: t => ({ hands: { R: [0.012 * sn(t, 2.2), 0.015 * sn(t, 1.7), 0] }, bob: 0.008 * sn(t, 2.6), head_tilt: 2 * sn(t, 1.9) }) },
+    cycle: t => ({ hands: { R: [0.02 * sn(t, 2.2), 0.03 * sn(t, 1.7), 0] }, bob: 0.016 * sn(t, 2.6), head_tilt: 4 * sn(t, 1.9), lean: 2.5 * sn(t, 3.1), dx: 0.012 * sn(t, 2.9) }) },
   // body under a tumble: arms flung up (faint / topple) or forward (faceplant); the verb below tips the whole figure
   tumble_back: { A: 2, T: 6, hold: 40, body: { pitch: -6, head_pitch: -10, shrug: 0.08 },
     hands: { L: { t: [-0.60, 2.55, 0.20], elbow: [-0.9, -0.3, 0] }, R: { t: [0.60, 2.55, 0.20], elbow: [0.9, -0.3, 0] } } },
   tumble_fwd: { A: 2, T: 6, hold: 40, body: { pitch: 4, head_pitch: -42, shrug: 0.06 },   // chin up: lying on his front the face looks along the ground
+    feet: { L: [-0.20, 0.55, -0.50], R: [0.24, 0.40, -0.34] },                                // the legs kick up behind as he lands
     hands: { L: { t: [-0.40, 2.40, 0.62], elbow: [-0.9, -0.3, 0.2] }, R: { t: [0.40, 2.40, 0.62], elbow: [0.9, -0.3, 0.2] } } },
 };
 Object.assign(POSES, P);
@@ -145,12 +146,13 @@ function tumbleVerb(pose, D) {
       else { const d = t - A - T; e = 1 - 0.07 * Math.exp(-d / 2.5) * Math.abs(Math.sin(d * 0.9)); }   // thud, one bounce
       if (f > inst.rel) e *= 1 - smoother((f - inst.rel) / inst.R);
       const sp = (p.spin ?? 0) * smoother((t - A - T * 0.6) / 6);                         // the head turns aside as it lands
-      return { x_tumble: deg * e, x_lift: (lift + 0.1 * Math.abs(sp) / 90) * Math.sin(Math.min(1, Math.abs(e)) * Math.PI / 2), x_roll: (p.roll ?? 0) * e, x_spin: f > inst.rel ? sp * e : sp };
+      const sl = (p.slide ?? D.slide ?? 0) * smoother((t - A - T) / 9) * (f > inst.rel ? e : 1);                  // skids on after the thud
+      return { x_tumble: deg * e, x_lift: (lift + 0.1 * Math.abs(sp) / 90) * Math.sin(Math.min(1, Math.abs(e)) * Math.PI / 2), x_roll: (p.roll ?? 0) * e, x_spin: f > inst.rel ? sp * e : sp, x_slide: sl };
     } });
     r.cues = [...(r.cues || []), { f: t0 + A + T, name: 'thud', strength: 0.8 }];
     return r;
   };
 }
-POSE_VERBS.faceplant = ACT.faceplant = tumbleVerb('tumble_fwd', { A: 4, T: 9, deg: 86, lift: 0.12 });
+POSE_VERBS.faceplant = ACT.faceplant = tumbleVerb('tumble_fwd', { A: 4, T: 9, deg: 86, lift: 0.12, slide: 0.3 });
 POSE_VERBS.faint = ACT.faint = tumbleVerb('tumble_back', { A: 6, T: 10, deg: -84, lift: 0.12 });
 POSE_VERBS.topple = ACT.topple = tumbleVerb('tumble_back', { A: 3, T: 8, deg: -40, lift: 0 });

@@ -27,3 +27,20 @@ Sets: `lab-night` (also `setOpts: { mode: 'day' }`), `perth`, `micro`, `hall`, `
 Round 3 (ep 1): one acted gag per line, the doubter as a thread, one hard cut ("Wait."). Engine fix that came with it:
 a director shot aimed at an actor used to re-pose the whole scene at the shot's first frame (bodies, props and effects
 froze for the shot); `update()` in engine/play.js now poses the current frame again after the camera solve.
+
+Finish kit (from the private master study, 11/11; each is opt-in, an act without it renders as before):
+
+| Gap | Use | File |
+|---|---|---|
+| tone | act `grade: { shadow: { c, k }, shoulder, soft, grain }` (deep shade lifted toward a colour, ink untouched; highlight roll-off; soften; grain) | engine/look.js |
+| haze | act `haze: { color, near, far }` (distance fog toward the sky) | engine/play.js |
+| lens | shot `preset: 'hero' \| 'macro' \| 'wide'`; act `look.dofAuto: { below, gain }` | director.js |
+| chase | shot `cam: { chase: { a, b, ax, ay, bx, by, back, up }, lens }` (two subjects pinned to two screen points) | director.js |
+| motion blur | act `look.mblur: { px, k }` (only when the image travels faster than px per frame at 1080) | engine/play.js, look.js |
+| light | act `light: { sunDir, camKey: { az, el } }` (a lower key; the key rides the camera so the face in shot is lit) | engine/play.js |
+| soft fx | `make: { kind: 'ao_puff' }` (soft smoke / dust / fire sprites, no ink), `ao_aura` (flame tongues + a warm light), `ao_debris` (pebbles at the feet) | fx.js |
+| costume | `import costume.js`; cast `costume: ['belt', 'holster', 'holster:L', 'hat:cowboy' \| 'hat:flat' \| 'hat:bowler']`; verb `lose_hat` (the hat flies off) | costume.js |
+| acting | act `actingAmp` / cast `amp` (all pose sizes); faceplant legs kick, skid, spin (face to camera) | engine/poses.js, acting.js, engine/cast.js |
+| sets | `K.planks`, `SURF.weathered`, `K.extras` (background people), `K.skyDome` (a sky that rides the camera), card `fog` | kit.js |
+| preset | `LOOKS.sunnyExterior` / `withLook(name, act)` | looks.js |
+| faces (proposal, off) | `import face_extras.js`; verb `face_extra` kind veins \| glow \| dirt \| sweat | face_extras.js |

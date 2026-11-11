@@ -214,7 +214,8 @@ export function compilePose(name, p, st, C) {
   let spec = POSES[name];
   if (!spec) throw new Error(`pose: unknown ${name}`);
   if (p.hand === 'L') spec = mirrorPose(spec);
-  const amp = p.amp ?? 1, big = Math.max(0, ...(spec.keys || [spec]).flatMap(k => [Math.abs(k.body?.pitch || 0), 1.5 * Math.abs(k.body?.lean || 0)])) * amp;
+  const amp = (p.amp ?? 1) * (st.ampScale ?? 1), big =   // st.ampScale: cast `amp` or act `actingAmp` (bigger acting for a whole act)
+    Math.max(0, ...(spec.keys || [spec]).flatMap(k => [Math.abs(k.body?.pitch || 0), 1.5 * Math.abs(k.body?.lean || 0)])) * amp;
   // the torso never turns faster than ~3.2 deg a frame on average (its arms hang off it): big poses take longer
   const t0 = p.at, A = p.antic ?? spec.A ?? 3, T = Math.max(p.dur ?? ((spec.T ?? 9) >= 8 ? Math.max(MOVE_T, spec.T ?? 9) : spec.T), Math.ceil(big / 3.2)), H = p.hold ?? spec.hold ?? 30, R = Math.max(p.out ?? Math.max(14, spec.R ?? 10), Math.ceil(big / 3.2));
   // (FORENSIC.md section 3: reference moves take 12-15 f; a pose with T >= 8 now moves in MOVE_T, the snaps under 8 f

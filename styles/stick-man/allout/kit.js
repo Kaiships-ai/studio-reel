@@ -27,6 +27,14 @@ export const SURF = {
   // painted plaster: a soft blotchy tone so a wall never reads as flat CG
   plaster: (c, seed = 1) => tex(512, 512, (g, w, h) => { g.fillStyle = hex(c); g.fillRect(0, 0, w, h); const r = rng(seed);
     for (let i = 0; i < 260; i++) { const x = r() * w, y = r() * h, s = 20 + r() * 80, a = 0.025 + r() * 0.03; g.fillStyle = r() > 0.5 ? `rgba(255,255,255,${a})` : `rgba(0,0,0,${a})`; g.beginPath(); g.arc(x, y, s, 0, 7); g.fill(); } }, { repeat: [1, 1] }),
+  // weathered boards (study gap 8): planks with grain, dark gaps, sun-faded patches, grime toward the bottom, nail heads
+  weathered: (c, seed = 6, n = 8) => tex(512, 512, (g, w, h) => { const r = rng(seed), cc = col(c), bw = h / n;
+    for (let i = 0; i < n; i++) { const k = 0.86 + 0.24 * r(); g.fillStyle = `rgb(${255 * cc.r * k},${255 * cc.g * k},${255 * cc.b * k})`; g.fillRect(0, i * bw, w, bw);
+      for (let j = 0; j < 9; j++) { g.strokeStyle = `rgba(0,0,0,${0.05 + 0.07 * r()})`; g.lineWidth = 1 + 2 * r(); g.beginPath(); const y = i * bw + r() * bw; g.moveTo(0, y); g.bezierCurveTo(w * 0.3, y + (r() - 0.5) * 8, w * 0.7, y + (r() - 0.5) * 8, w, y + (r() - 0.5) * 6); g.stroke(); }
+      g.fillStyle = 'rgba(20,12,6,0.55)'; g.fillRect(0, i * bw, w, 3); for (const x of [w * 0.1, w * 0.9]) { g.fillStyle = 'rgba(30,25,20,0.7)'; g.beginPath(); g.arc(x, i * bw + bw / 2, 3, 0, 7); g.fill(); } }
+    for (let i = 0; i < 18; i++) { g.fillStyle = `rgba(255,250,235,${0.05 + 0.08 * r()})`; g.beginPath(); g.ellipse(r() * w, r() * h, 20 + 60 * r(), 8 + 20 * r(), 0, 0, 7); g.fill(); }
+    const gr = g.createLinearGradient(0, h * 0.7, 0, h); gr.addColorStop(0, 'rgba(60,40,20,0)'); gr.addColorStop(1, 'rgba(60,40,20,0.35)'); g.fillStyle = gr; g.fillRect(0, h * 0.7, w, h * 0.3);
+  }),
   // floor tiles with grout and a little tone change per tile
   tiles: (c, grout, n = 4, seed = 2) => tex(512, 512, (g, w, h) => { const r = rng(seed), s = w / n; for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
     const k = 0.92 + 0.12 * r(); const cc = col(c); g.fillStyle = `rgb(${255 * Math.min(1, cc.r ** (1 / 2.2) * k)},${255 * Math.min(1, cc.g ** (1 / 2.2) * k)},${255 * Math.min(1, cc.b ** (1 / 2.2) * k)})`; g.fillRect(i * s, j * s, s, s); }
@@ -134,8 +142,9 @@ export function createKit(stage, { env = {}, envK = 1.0 } = {}) {
       const x = new THREE.Mesh(new THREE.TorusGeometry(R, r, 12, seg, arc), m); x.position.copy(B(...at)); x.rotation.x = rx; return K.add(x, parent);
     },
     // a flat card (poster, sign, painted backdrop) facing -y (the camera side) unless rotZ; emissive = self-lit (sky)
-    card(at, w, h, map, { parent = root, rotZ = 0, rotX = 0, emissive = 0, rough = 0.8, cast = false, transparent = false, env = 0.5 } = {}) {
-      const m = emissive ? new THREE.MeshBasicMaterial({ map, color: new THREE.Color(emissive, emissive, emissive), transparent, depthWrite: !transparent })
+    card(at, w, h, map, { parent = root, rotZ = 0, rotX = 0, emissive = 0, rough = 0.8, cast = false, transparent = false, env = 0.5, fog = !emissive } = {}) {
+      // fog: a self-lit sky never takes the act haze (it is the haze's colour); a distant self-lit range can (fog: true)
+      const m = emissive ? new THREE.MeshBasicMaterial({ map, color: new THREE.Color(emissive, emissive, emissive), transparent, depthWrite: !transparent, fog })
         : new THREE.MeshStandardMaterial({ map, roughness: rough, envMap: ENV, envMapIntensity: env, transparent, alphaTest: transparent ? 0.02 : 0 });
       m.userData.noToon = true;
       const x = new THREE.Mesh(new THREE.PlaneGeometry(w, h), m); x.position.copy(B(...at)); x.rotation.order = 'YXZ'; x.rotation.y = rotZ * Math.PI / 180; x.rotation.x = rotX * Math.PI / 180;
@@ -153,6 +162,37 @@ export function createKit(stage, { env = {}, envK = 1.0 } = {}) {
     // a soft window / panel light: RectAreaLight at `at`, facing `target`
     area(at, target, w, h, c, power = 4, { parent = root } = {}) {
       const l = new THREE.RectAreaLight(col(c), power, w, h); l.position.copy(B(...at)); l.lookAt(B(...target)); parent.add(l); return l;
+    },
+    // planks (study gap 8): a deck, a wall or a boardwalk as separate boards with gaps, each a little off in height, tone and
+    // angle: lo / hi corners like box(); along 'x' | 'y' = the boards' length; board (m) width; gap (m); m: a material or an array
+    planks(lo, hi, m, { along = 'y', board = 0.16, gap = 0.012, parent = root, seed = 5 } = {}) {
+      const r = rng(seed), ax = along === 'x' ? 1 : 0, span = ax ? hi[1] - lo[1] : hi[0] - lo[0], n = Math.max(1, Math.round(span / board)), w = span / n, out = [];
+      for (let i = 0; i < n; i++) { const a = (ax ? lo[1] : lo[0]) + i * w, z = hi[2] + (r() - 0.5) * 0.008, mm = Array.isArray(m) ? m[Math.floor(r() * m.length)] : m;
+        const L = ax ? [lo[0], a + gap / 2, lo[2]] : [a + gap / 2, lo[1], lo[2]], H = ax ? [hi[0], a + w - gap / 2, z] : [a + w - gap / 2, hi[1], z];
+        const b = K.box(L, H, mm, { r: 0.006, parent }); b.rotation.z = (r() - 0.5) * 0.004; out.push(b); }
+      return out;
+    },
+    // extras (study gap 8): background people as simple inked-free silhouettes (a body, a head, a hat), to fill a street or a
+    // crowd far from the lens where the haze softens them. list: [{ at: [x, y, z], yaw, body: rgb, head: rgb, hat: rgb|null, s }]
+    extras(list, { parent = root } = {}) {
+      for (const e of list) { const g = K.group(e.at, e.yaw ?? 0, parent), s = e.s ?? 1;
+        K.cyl([0, 0, 0.42 * s], 0.025 * s, 0.84 * s, K.mat([0.08, 0.08, 0.09], 0.8), { parent: g }); K.cyl([0, 0, 0.95 * s], 0.16 * s, 0.5 * s, K.mat(e.body || [0.6, 0.3, 0.2], 0.85), { parent: g });
+        K.sphere([0, 0, 1.38 * s], 0.2 * s, K.mat(e.head || [0.95, 0.93, 0.88], 0.9), { parent: g, sy: 1.0, sz: 1.15 });
+        if (e.hat) { K.cyl([0, 0, 1.6 * s], 0.32 * s, 0.03 * s, K.mat(e.hat, 0.8), { parent: g }); K.cyl([0, 0, 1.68 * s], 0.16 * s, 0.16 * s, K.mat(e.hat, 0.8), { parent: g }); } }
+    },
+    // skyDome (study): a sky that rides the camera (a back-faced sphere inside the far plane, re-centred on the lens just
+    // before it draws, never culled, no fog, no depth write): deep blue at the zenith, pale at the horizon, cartoon clouds in
+    // a band above it. A texture as scene.background is not safe in this pipeline (a dark rectangle showed up in the post).
+    skyDome({ zenith = '#3a8bf0', mid = '#72b2f5', horizon = '#e2f0fb', clouds = 16, seed = 11, r = 60 } = {}) {
+      const t = tex(2048, 1024, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h / 2); gr.addColorStop(0, zenith); gr.addColorStop(0.6, mid); gr.addColorStop(1, horizon);
+        g.fillStyle = gr; g.fillRect(0, 0, w, h / 2); g.fillStyle = horizon; g.fillRect(0, h / 2, w, h / 2); const q = rng(seed);
+        for (let i = 0; i < clouds; i++) { const cx = q() * w, cy = h * (0.3 + 0.15 * q()), s = 18 + 26 * q();
+          for (let k = 0; k < 6; k++) { g.fillStyle = '#ffffff'; g.beginPath(); g.ellipse(cx + (k - 2.5) * s * 0.55, cy - Math.abs(Math.sin(k * 1.3)) * s * 0.35, s * (0.45 + 0.2 * q()), s * 0.36, 0, 0, 7); g.fill(); }
+          g.fillStyle = 'rgba(190,215,240,0.9)'; g.fillRect(cx - s * 1.7, cy + s * 0.12, s * 3.4, s * 0.12); } });
+      const m = new THREE.MeshBasicMaterial({ map: t, side: THREE.BackSide, depthWrite: false, fog: false }); m.userData.noToon = true;
+      const d = new THREE.Mesh(new THREE.SphereGeometry(r, 48, 24), m); d.frustumCulled = false; d.renderOrder = -10; d.userData.noPrepass = true; d.userData.noInk = true;
+      d.onBeforeRender = (rd, sc, cam) => { d.position.copy(cam.position); d.updateMatrixWorld(); d.modelViewMatrix.multiplyMatrices(cam.matrixWorldInverse, d.matrixWorld); };
+      root.add(d); return d;
     },
     prop(name, obj, { grip = null } = {}) { obj.name = name; obj.userData.rest = { pos: K.toB(obj.position), rot: obj.rotation.y }; if (grip) obj.userData.grip = grip; props[name] = obj; return obj; },
     // a named thing the reel can key (allout/fx.js ao_anim): anim(f, v) runs every frame after the engine posed the props

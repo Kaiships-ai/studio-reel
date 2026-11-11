@@ -83,25 +83,75 @@ MAKE.ao_bullet = (stage, o, ctx) => {
   } };
 };
 
-// ao_aura (study): speed flames licking up all round a figure (tongues of yellow-orange fire rising and flickering), an
-// in-world effect that lights nothing but glows. at: env.at spec (use { sole: 'kip' }); r (m) ring radius; h (m) height;
-// key on 0..1
+// ---------------------------------------------------------------- soft effects (study gap 4)
+// The reference's smoke, dust and fire are soft, see-through and textured, never outlined; ours were inked toon balls.
+// Soft sprites: a noise-edged radial blob (smoke / dust) and a teardrop flame with a white-hot core, both camera-facing,
+// alpha (smoke) or additive (fire), no ink, no depth write. Every one is a pure function of the frame (seeded).
+const TEXC = {};
+function softTex(kind) {
+  if (TEXC[kind]) return TEXC[kind];
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128; const g = cv.getContext('2d'), r = (s => () => (s = (s * 16807) % 2147483647) / 2147483647)(kind.length * 977 + 3);
+  if (kind === 'flame') {
+    const gr = g.createRadialGradient(64, 84, 4, 64, 74, 60); gr.addColorStop(0, 'rgba(255,255,240,1)'); gr.addColorStop(0.25, 'rgba(255,230,120,0.95)'); gr.addColorStop(0.6, 'rgba(255,140,30,0.6)'); gr.addColorStop(1, 'rgba(255,90,10,0)');
+    g.fillStyle = gr; g.beginPath(); g.moveTo(64, 4); g.bezierCurveTo(92, 40, 112, 70, 100, 98); g.bezierCurveTo(90, 122, 38, 122, 28, 98); g.bezierCurveTo(16, 70, 36, 40, 64, 4); g.fill();
+  } else {
+    for (let i = 0; i < 26; i++) { const x = 64 + (r() - 0.5) * 50, y = 64 + (r() - 0.5) * 50, rad = 18 + r() * 30, gr = g.createRadialGradient(x, y, 0, x, y, rad);
+      gr.addColorStop(0, `rgba(255,255,255,${0.30 + 0.25 * r()})`); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); }
+  }
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return (TEXC[kind] = t);
+}
+const sprite = (kind, rgb, add) => { const m = new THREE.SpriteMaterial({ map: softTex(kind), color: new THREE.Color().setRGB(...rgb, THREE.SRGBColorSpace), transparent: true,
+  depthWrite: false, blending: add ? THREE.AdditiveBlending : THREE.NormalBlending, fog: !add }); m.userData.noToon = true; const sp = new THREE.Sprite(m); sp.userData.noPrepass = true; sp.userData.noInk = true; return sp; };
+const lcg = seed => { let s = (seed * 9973 + 7) >>> 0 || 1; return () => (s = (s * 16807) % 2147483647) / 2147483647; };
+const easeOut = x => 1 - Math.pow(1 - Math.min(1, Math.max(0, x)), 3);
+
+// ao_puff: soft smoke / dust / muzzle fire on `fire` (t0): puffs burst out, grow, drift up and fade. build { at, size (m),
+// count, color, dark (a second shade), life (s), rise (m/s), spread, fire (additive hot core, lights nothing), seed, opacity }
+MAKE.ao_puff = (stage, o, ctx) => {
+  const g = new THREE.Group(); ctx.group.add(g); const r = lcg(o.seed ?? 3), P = [], n = o.count ?? 12, size = o.size ?? 0.6;
+  for (let i = 0; i < n; i++) { const sp = sprite(o.fire ? 'flame' : 'smoke', i % 3 === 2 && o.dark ? o.dark : (o.color || [0.85, 0.82, 0.78]), !!o.fire); g.add(sp);
+    const a = r() * Math.PI * 2, e = r(); P.push({ sp, dir: new THREE.Vector3(Math.cos(a) * (o.spread ?? 1), 0.25 + 0.6 * e, Math.sin(a) * (o.spread ?? 1)).normalize(),
+      dist: size * (0.3 + 0.7 * r()), rad: size * (0.45 + 0.4 * r()), delay: r() * 0.12, spin: (r() - 0.5) * 2 }); }
+  return { obj: g, apply: (v, f, env) => {
+    const t0 = v('t0'); const t = t0 == null ? -1 : (f - t0) / ctx.fps, life = o.life ?? 1.5; g.visible = t >= 0 && t < life; if (!g.visible) return;
+    const p = env.at(o.at); g.position.set(p[0], p[2], -p[1]);
+    for (const q of P) { const u = t - q.delay; q.sp.visible = u > 0; if (u <= 0) continue; const k = easeOut(u / (life * 0.45)), fade = 1 - Math.min(1, u / life);
+      q.sp.position.copy(q.dir).multiplyScalar(q.dist * k).add(new THREE.Vector3(0, (o.rise ?? 0.3) * u, 0));
+      q.sp.scale.setScalar(Math.max(1e-3, q.rad * (0.4 + 0.9 * k))); q.sp.material.rotation = q.spin * u; q.sp.material.opacity = (o.opacity ?? 0.85) * Math.pow(fade, 1.3) * Math.min(1, u * 12); }
+  } };
+};
+
+// ao_aura: speed flames licking up all round a figure: soft flame sprites with white-hot cores rising and flickering,
+// and a warm light from them on the figure and the ground (the act needs light.lamp > 0 for the cast to take it).
+// at: env.at spec ({ sole: 'kip' }); r (m) ring radius; h (m) height; n; light { power, dist }; key on 0..1
 MAKE.ao_aura = (stage, o, ctx) => {
   const g = new THREE.Group(); g.userData.noInk = true; ctx.group.add(g);
-  const T = [], n = o.n ?? 14, R = o.r ?? 0.42, H = o.h ?? 1.7;
-  for (let i = 0; i < n; i++) {
-    const m = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.0, i % 3 ? 0.78 : 0.5, i % 3 ? 0.18 : 0.06), transparent: true, opacity: 0.92, depthWrite: false });
-    m.userData.noToon = true;
-    const t = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.45, 8, 1), m); t.userData.noPrepass = true; stage.glow(t, 0.7);
-    const a = i / n * Math.PI * 2 + (i % 2) * 0.3; t.userData = { a, ph: i * 1.7, hz: 0.18 + 0.05 * (i % 4), h0: (i % 5) / 5 };
-    g.add(t); T.push(t);
-  }
+  const T = [], n = o.n ?? 18, R = o.r ?? 0.42, H = o.h ?? 1.8;
+  for (let i = 0; i < n; i++) { const t = sprite('flame', i % 3 ? [1.0, 0.97, 0.72] : [1.0, 0.82, 0.38], true); t.center.set(0.5, 0.05);
+    t.userData.q = { a: i / n * Math.PI * 2 + (i % 2) * 0.3, ph: i * 1.7, hz: 0.07 + 0.02 * (i % 4), h0: (i % 5) / 5 }; g.add(t); T.push(t); }
+  const pl = new THREE.PointLight(new THREE.Color(1.0, 0.75, 0.35), 0, o.light?.dist ?? 3.5, 1.5); pl.position.set(0, 1.0, 0); g.add(pl);
   return { obj: g, apply: (v, f, env) => {
-    const on = v('on', 0); g.visible = on > 0.02; if (!g.visible) return;
+    const on = v('on', 0); g.visible = on > 0.02; pl.intensity = g.visible ? (o.light?.power ?? 3) * on * (0.85 + 0.15 * Math.sin(f * 1.3)) : 0; if (!g.visible) return;
     const p = env.at(o.at); g.position.set(p[0], p[2], -p[1]);
-    for (const t of T) { const u = t.userData, k = ((f * u.hz + u.ph) % 1 + 1) % 1, y = (u.h0 + k) % 1;
-      const r = R * (1 + 0.15 * Math.sin(f * 0.4 + u.ph)); t.position.set(Math.cos(u.a) * r, H * y, Math.sin(u.a) * r);
-      const s = on * (0.6 + 0.6 * Math.sin(Math.PI * y)) * (0.9 + 0.2 * Math.sin(f * 0.9 + u.ph)); t.scale.set(s, s * (1.2 + 0.8 * Math.sin(f * 0.7 + u.ph)), s);
-      t.material.opacity = 0.92 * Math.sin(Math.PI * Math.min(1, y * 1.15)); }
+    for (const t of T) { const q = t.userData.q, y = ((q.h0 + f * q.hz) % 1 + 1) % 1, rr = R * (1 + 0.15 * Math.sin(f * 0.4 + q.ph));
+      t.position.set(Math.cos(q.a) * rr, H * y * 0.85, Math.sin(q.a) * rr);
+      const s = on * (0.75 + 0.35 * Math.sin(f * 0.9 + q.ph)); t.scale.set(0.13 * s, 0.75 * s * (1 - 0.35 * y), 1); t.material.opacity = Math.sin(Math.PI * Math.min(1, y * 1.15)); }
+  } };
+};
+
+// ao_debris: pebbles and grit thrown up at a figure's feet (secondary action: a scramble, a stamp, a fall): each fire throws
+// a handful that arc, bounce once and lie. at: env.at spec; n; spread (m/s); up (m/s); size (m); color; key t0 (fire)
+MAKE.ao_debris = (stage, o, ctx) => {
+  const g = new THREE.Group(); g.userData.noInk = true; ctx.group.add(g); const r = lcg(o.seed ?? 9), B = [];
+  const m = new THREE.MeshStandardMaterial({ color: new THREE.Color().setRGB(...(o.color || [0.62, 0.50, 0.38]), THREE.SRGBColorSpace), roughness: 0.9 }); m.userData.noToon = true;
+  for (let i = 0; i < (o.n ?? 14); i++) { const b = new THREE.Mesh(new THREE.DodecahedronGeometry((o.size ?? 0.025) * (0.6 + 0.8 * r()), 0), m); b.castShadow = true; g.add(b);
+    const a = r() * Math.PI * 2, sp = (o.spread ?? 1.4) * (0.4 + 0.8 * r()); b.userData.q = { vx: Math.cos(a) * sp, vz: Math.sin(a) * sp, vy: (o.up ?? 1.8) * (0.5 + 0.7 * r()), spin: r() * 12 }; B.push(b); }
+  return { obj: g, apply: (v, f, env) => {
+    const t0 = v('t0'); const t = t0 == null ? -1 : (f - t0) / ctx.fps; g.visible = t >= 0; if (!g.visible) return;
+    const p = env.at(o.at); g.position.set(p[0], p[2], -p[1]);
+    for (const b of B) { const q = b.userData.q, T1 = 2 * q.vy / 9.8; let x, y, z;
+      if (t < T1) { x = q.vx * t; z = q.vz * t; y = q.vy * t - 4.9 * t * t; }
+      else { const u = Math.min(t - T1, 0.25 * T1), v2 = q.vy * 0.25; x = q.vx * (T1 + 0.3 * u); z = q.vz * (T1 + 0.3 * u); y = Math.max(0, v2 * u - 4.9 * u * u); }
+      b.position.set(x, y + 0.01, z); b.rotation.set(q.spin * Math.min(t, T1), q.spin * 0.6 * Math.min(t, T1), 0); }
   } };
 };

@@ -45,7 +45,7 @@ function hullGeo(geo, t) {
   g.setAttribute('inkT', new THREE.Float32BufferAttribute(new Float32Array(p.count).fill(t), 1));
   return g;
 }
-function solid(geo, mat, t = INK_T, hullSrc = geo) {
+export function solid(geo, mat, t = INK_T, hullSrc = geo) {
   const m = new THREE.Mesh(geo, mat); m.castShadow = true; m.receiveShadow = true;
   const h = new THREE.Mesh(hullGeo(hullSrc, t), hullMat); h.castShadow = false; h.receiveShadow = false;
   m.add(h); return m;
@@ -53,7 +53,7 @@ function solid(geo, mat, t = INK_T, hullSrc = geo) {
 
 // ------------------------------------------------------------------ geometry helpers
 const ell = (lat, lon, out = 0) => new THREE.Vector3((HA + out) * Math.cos(lat) * Math.sin(lon), (HB + out) * Math.sin(lat), (HA + out) * Math.cos(lat) * Math.cos(lon));
-function lathe(profile, seg = 64) {
+export function lathe(profile, seg = 64) {
   const g = new THREE.LatheGeometry(profile.map(([r, y]) => new THREE.Vector2(Math.max(0, r), y)), seg);
   g.rotateY(Math.PI);                                            // lathe seam to the back, front of the texture at u = 0.5
   return g;
@@ -504,6 +504,7 @@ export function makeStick(spec) {
     root.rotation.set((P.x_tumble || 0) * DEG, S.yaw + (P.yaw_extra || 0) * DEG, -(P.x_roll || 0) * DEG, 'YXZ');
     if (P.x_spin) root.quaternion.multiply(SPIN_Q.setFromAxisAngle(SPIN_AX, P.x_spin * DEG));   // + x_spin turns the fallen body about its own length (cheek to the ground, the face to one side)
     if (P.x_lift) root.position.y += P.x_lift;
+    if (P.x_slide) { const y = S.yaw; root.position.x += Math.sin(y) * P.x_slide; root.position.z += Math.cos(y) * P.x_slide; }   // a fallen body skids on along its facing
     root.updateMatrixWorld(true);
   };
   // a Blender world point -> this figure's (u, v) in W units

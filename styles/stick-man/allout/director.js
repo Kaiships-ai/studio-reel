@@ -10,7 +10,9 @@
 //           16 by default), 'whip' (the same travel in ~8 frames, smeared), 'dissolve' (n frames), 'cut' (a hard cut:
 //           the reference has one or two per film, keep it for a stop beat)
 //   cam/to  camera specs; with `to` the camera moves from cam to to over `move` (from / to beat refs or dur frames, ease)
-//   spec    { look, up, az, el, d, lens, kx, ky, roll, track } (orbit round a target) or { pos, aim, lens } (absolute)
+//   spec    { look, up, az, el, d, lens, kx, ky, roll, track } (orbit round a target) or { pos, aim, lens } (absolute) or
+//           { chase: { a, b, ax, ay, bx, by, back, up }, lens } (two subjects pinned to two screen points)
+//   preset  'hero' | 'macro' | 'wide' (PRESETS: lens, distance, height and focus defaults the cam / to leave out)
 //           look: an actor ('kip' = head, 'kip.chest', 'kip.hips', 'kip.feet'), a prop / place / effect name, or [x, y, z]
 //           az: degrees round the target (0 = from -y, + = camera to the right), el: degrees above, d: metres,
 //           kx / ky: where the target sits on screen (0..1, y down), track: follow the target every frame
@@ -36,8 +38,21 @@ const EASE = {
 };
 const KICK = [1, -0.75, 0.5, -0.3, 0.15, -0.05];
 
-export function createDirector(list, { frameOf, anchor, aspect, F1 }) {
-  const shots = list.map((s, i) => ({ ...s, i, f: frameOf(s.at) })).sort((a, b) => a.f - b.f);
+// lens presets (study gap 3): `preset` on a shot fills what its cam / to leave out
+//   hero: close and low on a wide lens, looking up a little (the reference's big heads and foreshortened hands)
+//   macro: an insert on a long lens with a thin band of focus (the room melts away)
+//   wide: an establishing frame on a wide lens
+export const PRESETS = {
+  hero: { cam: { lens: 22, d: 1.55, el: -14, ky: 0.42 }, dof: { gain: 0.4 } },
+  macro: { cam: { lens: 45, d: 0.45, el: 4, ky: 0.5 }, dof: { gain: 1.0, band: [0.93, 1.08] } },
+  wide: { cam: { lens: 24, el: 4, ky: 0.5 } },
+};
+const withPreset = s => { const P = PRESETS[s.preset]; if (!P) return s;
+  const fill = c => c && !c.pos && !c.chase ? { ...P.cam, ...c } : c;
+  return { ...s, cam: fill(s.cam), to: fill(s.to), dof: s.dof ?? P.dof }; };
+
+export function createDirector(list, { frameOf, anchor, aspect, F1, dofAuto }) {
+  const shots = list.map(withPreset).map((s, i) => ({ ...s, i, f: frameOf(s.at) })).sort((a, b) => a.f - b.f);
   shots.forEach((s, i) => {
     s.end = i + 1 < shots.length ? shots[i + 1].f : F1 + 1;
     if (s.to) {
@@ -65,6 +80,7 @@ export function createDirector(list, { frameOf, anchor, aspect, F1 }) {
   // one camera from a spec at frame f (target frozen at fFreeze unless the spec tracks)
   function solve(sp, f, fFreeze) {
     if (sp.pos) return { pos: sp.pos, aim: sp.aim, lens: sp.lens ?? 35, roll: sp.roll || 0, focus: sp.focus || sp.aim };
+    if (sp.chase) return chase(sp.chase, sp.lens ?? 26, f);
     let tg = point(sp.look, sp.track ? f : fFreeze);
     tg = [tg[0] + (sp.dx || 0), tg[1] + (sp.dy || 0), tg[2] + (sp.up || 0)];
     const az = (sp.az ?? 0) * DEG, el = (sp.el ?? 0) * DEG, d = sp.d ?? 3, lens = sp.lens ?? 35;
@@ -78,8 +94,27 @@ export function createDirector(list, { frameOf, anchor, aspect, F1 }) {
     const aim = tg.map((x, i) => x - R[i] * dx - U[i] * dy);
     return { pos, aim, lens, roll: sp.roll || 0, focus: tg };
   }
+  // chase (study gap 11): pin two moving things to two screen points (the bullet big low-left, the far gunfighter at the
+  // centre): the camera rides behind A away from B at `back` m and `up` m; side and height offsets are solved (Newton, numeric
+  // Jacobian) so A lands on (ax, ay) while the aim keeps B on (bx, by). c: { a, b, ax, ay, bx, by, back, up }
+  const Z = [0, 0, 1], sub = (a, b) => a.map((x, i) => x - b[i]), nrm = v => { const l = Math.hypot(...v) || 1; return v.map(x => x / l); };
+  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]], dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const aimFor = (pos, B, bx, by, lens) => { const fw = nrm(sub(B, pos)), R = nrm(cross(fw, Z)), U = cross(R, fw), d = Math.hypot(...sub(B, pos)), tv = 18 / lens, th = tv * aspect;
+    const dx = (bx - 0.5) * 2 * th * d, dy = -(by - 0.5) * 2 * tv * d; return B.map((x, i) => x - R[i] * dx - U[i] * dy); };
+  const project = (pos, aim, lens, P) => { const F = nrm(sub(aim, pos)), R = nrm(cross(F, Z)), U = cross(R, F), v = sub(P, pos), z = dot(v, F), tv = 18 / lens, th = tv * aspect;
+    return [0.5 + 0.5 * dot(v, R) / z / th, 0.5 - 0.5 * dot(v, U) / z / tv]; };
+  function chase(c, lens, f) {
+    const A = point(c.a, f), B = point(c.b, f), back = nrm([A[0] - B[0], A[1] - B[1], 0]), side = nrm(cross(Z, back));
+    const at = (s, h) => { const pos = A.map((x, i) => x + back[i] * (c.back ?? 0.6) + side[i] * s + Z[i] * ((c.up ?? 0.1) + h)); return { pos, aim: aimFor(pos, B, c.bx ?? 0.5, c.by ?? 0.4, lens) }; };
+    const res = (s, h) => { const q = at(s, h), p = project(q.pos, q.aim, lens, A); return [p[0] - (c.ax ?? 0.3), p[1] - (c.ay ?? 0.7)]; };
+    let s = 0, h = 0;
+    for (let it = 0; it < 8; it++) { const r = res(s, h); if (Math.hypot(...r) < 1e-3) break; const e = 0.01, rs = res(s + e, h), rh = res(s, h + e);
+      const J = [[(rs[0] - r[0]) / e, (rh[0] - r[0]) / e], [(rs[1] - r[1]) / e, (rh[1] - r[1]) / e]], det = J[0][0] * J[1][1] - J[0][1] * J[1][0]; if (Math.abs(det) < 1e-9) break;
+      s = clamp(s - (J[1][1] * r[0] - J[0][1] * r[1]) / det, -2, 2); h = clamp(h - (-J[1][0] * r[0] + J[0][0] * r[1]) / det, -1.5, 2); }
+    const q = at(s, h); return { pos: q.pos, aim: q.aim, lens, roll: 0, focus: A };
+  }
   const mixSpec = (a, b, t) => {
-    if (a.pos || b.pos) return null;
+    if (a.pos || b.pos || a.chase || b.chase) return null;
     const o = { ...b };
     for (const k of ['az', 'el', 'd', 'lens', 'kx', 'ky', 'up', 'roll', 'dx', 'dy']) {
       const x = a[k] ?? (k === 'kx' || k === 'ky' ? 0.5 : k === 'lens' ? 35 : k === 'd' ? 3 : 0), y = b[k] ?? (k === 'kx' || k === 'ky' ? 0.5 : k === 'lens' ? 35 : k === 'd' ? 3 : 0);
@@ -104,7 +139,9 @@ export function createDirector(list, { frameOf, anchor, aspect, F1 }) {
     if (S.drift) { const k = 1 - S.drift * (f - f0) / 30; c.pos = c.aim.map((x, i) => x + (c.pos[i] - x) * k); }
     let ox = 0, oy = 0;
     for (const q of S.kicks) { const d = f - q.f; if (d >= 0 && d < KICK.length) { ox += 9 * q.amp * KICK[d]; oy += 6 * q.amp * KICK[d]; } }
-    const D = S.dof;
+    // dofAuto (act look.dofAuto: { below (m), gain }): a shot without its own dof gets a lens blur when the camera is close
+    const near = dofAuto && !S.dof ? Math.hypot(...c.pos.map((x, i) => x - c.focus[i])) < (dofAuto.below ?? 2.2) : false;
+    const D = S.dof || (near ? { gain: dofAuto.gain ?? 0.35 } : null);
     return { ...c, offset: [ox, oy], dof: D ? (D.gain ?? 0.8) : 0, band: D?.band || null, shot: S.intent || 'shot', shotIndex: S.i, why: S.why || '' };
   }
   const kind = S => S.i === 0 ? 'cut' : (S.cut || 'move');
