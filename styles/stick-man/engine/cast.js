@@ -516,6 +516,7 @@ export function makeStick(spec) {
   const skin0 = headSolid.material.color.clone(), tintC = new THREE.Color();
   if (spec.glasses) rig.add(glasses());
   for (const f of spec.hair || []) head.add(f());
+  if (spec.head) head.scale.set(spec.head[0], spec.head[1], spec.head[0]);   // per-character head proportion [width, height] (lib/cast/heads.js)
   // hair, hats and glasses were built on the ellipsoid: give them the same head shape (in head space), geometry cloned
   head.updateMatrixWorld(true); _hm.copy(head.matrixWorld).invert();
   const skip = new Set([headSolid, face]); headSolid.traverse(o => skip.add(o)); FR.group.traverse(o => skip.add(o));
@@ -568,7 +569,7 @@ export function makeStick(spec) {
       head.updateWorldMatrix(true, false); _camL.copy(B(...P.cam)); head.worldToLocal(_camL);
       const d = _camL.lengthSq() > 1e-8 ? _camL.normalize() : _camL.set(0, 0, 1);
       const yaw = Math.atan2(d.x, d.z) - (P.look || 0) * LOOK_RAD, el = Math.asin(Math.max(-1, Math.min(1, d.y))) + (P.look_v || 0) * 0.12;
-      const vis = Math.max(0, Math.min(1, (Math.cos(yaw) + 0.05) / 0.3));
+      const vis = Math.max(0, Math.min(1, (Math.cos(yaw) - 0.22) / 0.3));   // gone a little before profile: the drawing never lands on hair at the side
       slide = [-0.40 * Math.sin(yaw), -0.40 * Math.sin(el) * HEAD_H, vis];
       card2d.visible = true; card2d.position.copy(d).multiplyScalar(HA * 1.02); card2d.lookAt(B(...P.cam));
     } else card2d.visible = false;

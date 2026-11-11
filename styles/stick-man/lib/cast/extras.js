@@ -152,3 +152,4 @@ export function shoppingBag(col = [0.72, 0.50, 0.30]) {
   }
   return g;
 }
+export { KIP_A, KIP_B, KIP_C } from './heads.js';   // head redesign proposals (heads.js)

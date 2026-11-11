@@ -8,10 +8,11 @@ import * as THREE from 'three';
 import { createStage, lin } from './engine/look.js';
 import { makeStick, KAI, EXPR } from './engine/cast.js';
 import { BRAM } from './lib/cast/extras.js';
+import { KIP_A, KIP_B, KIP_C } from './lib/cast/heads.js';
 import { faceStateAt } from './engine/acting.js';
 
 const Q = new URLSearchParams(location.search);
-const SPEC0 = { KAI, BRAM }[Q.get('spec') || 'KAI'] || KAI, MODE = Q.get('mode') || 'sheet';
+const SPEC0 = { KAI, BRAM, KIP_A, KIP_B, KIP_C }[Q.get('spec') || 'KAI'] || KAI, MODE = Q.get('mode') || 'sheet';
 const SPEC = Q.get('glasses') === '0' ? { ...SPEC0, glasses: false } : SPEC0;   // ?glasses=0: the face grammar without rims
 const stage = createStage({ width: innerWidth, height: innerHeight });
 stage.scene.background = lin(0.62, 0.66, 0.70);
