@@ -23,7 +23,7 @@ function solid(geo, col, o = {}) {
 }
 const cyl = (r0, r1, h, n = 24) => new THREE.CylinderGeometry(r0, r1, h, n);
 
-const BUILD = {
+export const BUILD = {
   cup() {                                                       // a mug: the fist round its middle, handle out the side
     const g = new THREE.Group(), body = solid(cyl(0.055, 0.048, 0.12), [0.95, 0.35, 0.25]); g.add(body);
     const coffee = new THREE.Mesh(new THREE.CircleGeometry(0.048, 20), toon([0.30, 0.16, 0.08])); coffee.rotation.x = -Math.PI / 2; coffee.position.y = 0.052; g.add(coffee);

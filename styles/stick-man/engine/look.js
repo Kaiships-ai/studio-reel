@@ -13,6 +13,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
 
 export const PROPS = 1;                                            // layer that gets the ink line
@@ -170,7 +171,7 @@ class ShaftPass extends Pass {
 // 1.15 -> 0.85, sun lowered to <= 35 deg; set ink 2.6 -> 2.1 px (ink gate median 4 px; judge: set lines compete with figures);
 // round 3 ('washed out, hazy overlays'): highlight bloom 0.38 -> 0.28, shafts 0.032 -> 0.024
 export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1.38, con = 1.18, vig = 0.30, split = 0.7, bloom = 1.1,
-  hot = 0.28, shafts = 0.024, shaftK = 1.6, dofK = 0.55 } = {}) {
+  hot = 0.28, shafts = 0.024, shaftK = 1.6, dofK = 0.55, ao = 0, aoRadius = 0.5, shadowRadius = 1.0, toneExp = null } = {}) {
   const stage = {};                                               // late-bound parts (setSun runs before the passes exist)
   const px = height / 1920;                                       // every pixel-size number scales with this
   const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: true });
@@ -187,7 +188,7 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1
   // sun: 4096 map fitted tight round what the shot sees; PCF with a small radius keeps bar edges straight, not stepped
   const sun = new THREE.DirectionalLight(lin(1.0, 0.93, 0.80), 6.0);
   sun.castShadow = true; sun.shadow.mapSize.set(4096, 4096);
-  sun.shadow.bias = -0.0002; sun.shadow.normalBias = 0.006; sun.shadow.radius = 1.0;   // hard-edged cast shadows (reference)
+  sun.shadow.bias = -0.0002; sun.shadow.normalBias = 0.006; sun.shadow.radius = shadowRadius;   // hard-edged cast shadows (reference)
   scene.add(sun, sun.target);
   const hemi = new THREE.HemisphereLight(lin(0.44, 0.60, 1.0), lin(0.80, 0.68, 0.58), 0.85);
   scene.add(hemi);
@@ -387,6 +388,11 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1
   const composer = new EffectComposer(renderer, crt);
   composer.setPixelRatio(1);
   composer.addPass(new RenderPass(scene, camera));
+  // ao > 0 (allout look): ground-truth ambient occlusion, so set pieces sit in their corners and contact shadows read
+  if (ao > 0) { const aoPass = new GTAOPass(scene, camera, width, height); aoPass.blendIntensity = ao;
+    aoPass.updateGtaoMaterial({ radius: aoRadius, distanceExponent: 1.5, thickness: 1.0, scale: 1.0, samples: 16 });
+    aoPass.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 16 });
+    composer.addPass(aoPass); stage.ao = aoPass; }
   const shaftPass = stage.shafts = new ShaftPass(width, height, camera, sun, nrt.depthTexture, { dens: shafts, maxD: 22, g: 0.35, k: shaftK });
   shaftPass.enabled = shafts > 0;
   composer.addPass(shaftPass);
@@ -418,5 +424,5 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1
     return performance.now() - t0;
   }
   return { THREE, renderer, scene, camera, sun, hemi, fill, px, setSun, addBounce, setCamera, setDof, prop, glow, render, grab,
-    passes: { ink: inkPass, grade: gradePass, dof: dofPass, shafts: shaftPass, hot: hotPass } };
+    passes: { ink: inkPass, grade: gradePass, dof: dofPass, shafts: shaftPass, hot: hotPass, ao: stage.ao || null } };
 }

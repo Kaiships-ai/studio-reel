@@ -87,11 +87,12 @@ function chain(list, f, val, env, hand = false) {
 
 async function buildAct(R, X) {
   const { stage, words, fps, F0, F1, width, height } = X;
-  if (!SETS[R.set]) throw new Error(`unknown set ${R.set} (SETS.md)`);
-  const SET = await SETS[R.set]();
+  // act.setModule: a set module by URL (styles/stick-man/allout/sets/*.js), outside the kit's SETS table
+  if (!R.setModule && !SETS[R.set]) throw new Error(`unknown set ${R.set} (SETS.md)`);
+  const SET = R.setModule ? await import(R.setModule) : await SETS[R.set]();
   // the set's meshes and lights go into this act's group (shown only while the act is on screen)
   const group = new THREE.Group(), before = new Set(stage.scene.children), bg0 = stage.scene.background;
-  const built = await SET.build(stage, { use: R.use || [] });   // act.use: opt-in set props (street: police, bag)
+  const built = await SET.build(stage, { use: R.use || [], ...(R.setOpts || {}) });   // act.use: opt-in set props (street: police, bag)
   for (const c of [...stage.scene.children]) if (!before.has(c)) group.add(c);
   let background = stage.scene.background; stage.scene.background = bg0; stage.scene.add(group); group.visible = false;
   const props = built.props;
@@ -377,7 +378,10 @@ async function buildAct(R, X) {
   const camera = createCamera({ aspect: width / height, side: SET.CAMERA_SIDE, bounds: R.cameraRoom || SET.CAMERA_ROOM, zRange: R.zRange,
     zMax: R.zMax ?? SET.CAMERA_ZMAX, actors: actors.map(a => a.name) });
   // compile sees the real scene at each shot change (everything is a pure function of the frame)
-  const shots = camera.compile(R.shots.map(s => ({ f: frameOf(s), kind: s.shot, subjects: s.of, opt: s })).sort((x, y) => x.f - y.f),
+  // act.direct: hand-directed camera (allout/director.js): every shot names its intent, cuts are cuts, a move has a trigger
+  const DIR = R.direct ? (await import('../allout/director.js')).createDirector(R.direct, { frameOf, aspect: width / height, F1,
+    anchor: (n, f) => { if (F.f !== f) poseAll(f); return anchor(n, f, livePos); } }) : null;
+  const shots = DIR ? [] : camera.compile((R.shots || []).map(s => ({ f: frameOf(s), kind: s.shot, subjects: s.of, opt: s })).sort((x, y) => x.f - y.f),
     (n, f) => { if (F.f !== f) poseAll(f); return anchor(n, f, livePos); }, F1 + 1);
 
   let cam = null, caption = null;
@@ -402,7 +406,7 @@ async function buildAct(R, X) {
   }
   function update(f, force = null) {
     sun(); poseAll(f);
-    cam = camera.at(shots, f, n => anchor(n, f, livePos), cues, force);
+    cam = DIR ? DIR.at(f, force) : camera.at(shots, f, n => anchor(n, f, livePos), cues, force);
     const px = height / 1920;
     stage.camera.setViewOffset(width, height, cam.offset[0] * px, cam.offset[1] * px, width, height);
     stage.setCamera(cam.pos, cam.aim, cam.lens);
@@ -519,11 +523,11 @@ async function buildAct(R, X) {
       const p0 = ft0[n][s], p1 = ft1[n][s], q0 = px(cam, p0), q1 = px(cam, p1);
       feet[n][s] = { planted: p0[2] < 0.014 && p1[2] < 0.014, px: +Math.hypot(q1[0] - q0[0], q1[1] - q0[1]).toFixed(3) }; } }
     // a shot asked as a cut (glide 0) is an edit, not camera motion
-    const shotCut = (cam.shotIndex !== i0 && shots[cam.shotIndex].glide === 0) || !!camera.mixAt(shots, f);
+    const shotCut = DIR ? DIR.cutAt(f) : (cam.shotIndex !== i0 && shots[cam.shotIndex].glide === 0) || !!camera.mixAt(shots, f);
     return { cam: f === F0 ? 0 : +camPx.toFixed(3), camPeak: f === F0 ? 0 : +camPeak.toFixed(3), feet, shotCut };
   };
   return { name: R.name || R.set, R, grade: { ...(SET_GRADE[R.set] || {}), ...(R.grade || {}) }, group, background, update, dbg, motion, cues, actors, frameOf, flash: f => KT.at('screen', 'flash', f, 0) || 0,
-    impact: f => KT.at('screen', 'impact', f, 0) || 0, shotMix: f => camera.mixAt(shots, f) };
+    impact: f => KT.at('screen', 'impact', f, 0) || 0, shotMix: f => DIR ? DIR.mixAt(f) : camera.mixAt(shots, f) };
 }
 
 // storyboard lines the reel data does not shoot get planned shots (shotplan.js): each line goes to the act on screen at
@@ -592,8 +596,9 @@ export async function boot({ film, width, height }) {
     const wp = s.whip ? 0.22 * s.whip * Math.sin(Math.PI * s.u) : 0, wu = s.whip ? Math.min(1, Math.max(0, (s.u - 0.3) / 0.4)) : s.u;
     if (s.prev) { show(s.prev); s.prev.update(f); ms += stage.render({ flash: s.prev.flash(f), grade: s.prev.grade, whip: wp }); stage.grab(); }
     const sm = s.prev ? null : s.cur.shotMix(f);                   // a shot dissolve inside the act: the outgoing camera first
-    if (sm) { show(s.cur); s.cur.update(f, sm.i); ms += stage.render({ flash: s.cur.flash(f), grade: s.cur.grade }); stage.grab(); }
-    show(s.cur); s.cur.update(f); ms += stage.render({ prev: s.prev ? 1 - wu : sm ? 1 - sm.u : 0, flash: s.cur.flash(f), grade: s.cur.grade, whip: wp, impact: s.cur.impact(f) });
+    const sw = sm?.whip ? 0.22 * sm.whip * Math.sin(Math.PI * sm.u) : 0;   // a whip between two shots of one place (allout/director.js)
+    if (sm) { show(s.cur); s.cur.update(f, sm.i); ms += stage.render({ flash: s.cur.flash(f), grade: s.cur.grade, whip: sw }); stage.grab(); }
+    show(s.cur); s.cur.update(f); ms += stage.render({ prev: s.prev ? 1 - wu : sm ? 1 - sm.u : 0, flash: s.cur.flash(f), grade: s.cur.grade, whip: wp || sw, impact: s.cur.impact(f) });
     cap.draw(f); return ms;
   }
   window.__motion = f => { const s = at(f), p = at(Math.max(F0, f - 1)); show(s.cur); const m = s.cur.motion(f); return { ...m, cut: !!s.prev || p.cur !== s.cur || !!p.prev || s.cur.flash(f) > 0.3 || m.shotCut }; };   // dissolves, act cuts, flash cuts, shot cuts
