@@ -24,12 +24,12 @@ BUILD.beaker = () => {                                        // the beef-broth 
   const bugs = [];
   for (let i = 0; i < 9; i++) {
     const pts = []; for (let k = 0; k <= 16; k++) { const u = k / 16; pts.push(new THREE.Vector3(0.006 * Math.cos(u * 14), u * 0.03 - 0.015, 0.006 * Math.sin(u * 14))); }
-    const b = mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, 0.0032, 6), bugM);
+    const b = mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, 0.0045, 6), bugM); b.scale.setScalar(1.5);
     const a = i * 2.4, r = 0.018 + 0.03 * ((i * 37) % 10) / 10, y = 0.025 + 0.13 * ((i * 53) % 10) / 10;
     b.position.set(Math.cos(a) * r, y, Math.sin(a) * r); b.rotation.set(i * 0.7, i * 1.3, i * 0.4); g.add(b); bugs.push(b);
   }
   const level = v => { const h = Math.max(0.004, (H - 0.02) * Math.max(0, Math.min(1, v)) * 0.8); liq.scale.y = h; liq.position.y = 0.007 + h / 2; liq.visible = v > 0.02;
-    for (const b of bugs) b.visible = v > 0.02 && b.position.y < 0.007 + h; };
+    for (const b of bugs) b.visible = v > 0.02 && b.position.y < 0.03 + 2.2 * h; };   // the last ones cling to the glass
   level(1);
   g.userData = { mode: 'up', grip: [0, 0.06, 0.055], level, noInk: true }; return g;
 };

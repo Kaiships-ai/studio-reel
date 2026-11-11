@@ -85,7 +85,7 @@ export async function build(stage) {
   // ---- round 3 story props (added, the set's look unchanged)
   // the reviewer's pile: a tower of submitted papers on the left of her desk, taller than she is ("bottom ten percent":
   // theirs goes in at the very bottom). Keys: wobble (pulse: the tower sways), lift 0..1 (the bottom sheets part for it)
-  const pile = K.group([5.55, -5.95, 0.88]), pr = rng(77), sheets = [];
+  const pile = K.group([5.4, -5.8, 0.88]), pr = rng(77), sheets = [];
   for (let i = 0; i < 44; i++) { const c = K.cube([(pr() - 0.5) * 0.04, (pr() - 0.5) * 0.04, 0.012 + i * 0.024], [0.46, 0.6, 0.02], i % 5 === 2 ? K.mat([0.92, 0.88, 0.76], 0.85) : M.paper, { parent: pile, r: 0.003, rotZ: (pr() - 0.5) * 8 }); sheets.push(c); }
   K.anim('pile', pile, (f, v) => { const w = v('wobble', 0), l = v('lift', 0);
     pile.rotation.z = 0.05 * w * Math.sin(f * 0.55); pile.rotation.x = 0.03 * w * Math.cos(f * 0.47);
@@ -97,7 +97,7 @@ export async function build(stage) {
     g.strokeStyle = '#7b2d6b'; g.lineWidth = 7; for (const [x, y] of [[0.42, 0.33], [0.56, 0.42], [0.48, 0.47]]) { g.beginPath(); for (let t = 0; t < 1; t += 0.05) g.lineTo(w * x - 25 + t * 50, h * y + 7 * Math.sin(t * 20)); g.stroke(); }
     g.fillStyle = '#222'; for (let y = h * 0.66; y < h - 16; y += 13) g.fillRect(24, y, w - 48 - ((y * 7) % 30), 4); }), { parent: th, rotX: -90, env: 0.4 });
   K.anim('theirs', th, (f, v) => { const u = v('up', 0), d = v('under', 0), e = x => x * x * (3 - 2 * x);
-    const held = [6.15, -5.78, 1.42], desk = [6.0, -6.0, 0.885], under = [5.55, -5.95, 0.905];
+    const held = [6.12, -5.82, 1.2], desk = [6.0, -6.0, 0.885], under = [5.4, -5.8, 0.905];
     let q, rx;
     if (d <= 0) { q = desk.map((x, i) => x + (held[i] - x) * e(u)); rx = -Math.PI / 2 + 1.35 * e(u); }
     else { const a = Math.min(1, d * 2), b = Math.max(0, d * 2 - 1); q = held.map((x, i) => x + (desk[i] - x) * e(a)); q = q.map((x, i) => x + (under[i] - desk[i]) * e(b)); rx = -Math.PI / 2 + 1.35 * (1 - e(a)); }

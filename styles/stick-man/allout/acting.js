@@ -6,7 +6,7 @@
 //
 //   pose verbs (beat { who, do: '<name>', hold, amp, to, hand }) : chug, slam_beaker, pat_belly, nod, belly_laugh,
 //     point_laugh, fan_nose, retch, wipe, wag_finger, thumb_self, feed_tube, gag_tube, dust_hands, pop_pill, peer,
-//     blow, cheer_fist, scope_twiddle
+//     blow, cheer_fist, scope_twiddle, read_paper
 //   tumble verbs (the whole figure tips about its soles; cast.js x_tumble / x_roll / x_lift): faceplant, faint,
 //     topple (beat { deg, dur, hold }: the fall accelerates like a real one, bounces once, and gets up on release)
 // Units: hands in head widths (W = 0.6 m), figure-local: x = the figure's right, y = up from the soles, z = forward.
@@ -101,6 +101,10 @@ const P = {
   scope_twiddle: { A: 3, T: 9, hold: 40, body: { pitch: 22, bob: -0.08, head_pitch: 6, shrug: 0.04 },
     hands: { R: { t: [0.30, 1.78, 0.62], elbow: [0.9, -0.5, -0.1] }, L: { t: [-0.20, 1.74, 0.62], elbow: [-0.9, -0.5, -0.1] } },
     cycle: t => ({ hands: { R: [0.015 * sn(t, 0.9), 0.015 * Math.cos(t * 0.9), 0] }, head_dx: 0.01 * sn(t, 0.2) }) },
+  // read_paper: a sheet held up in both hands in front of the face, reading, the head bobbing along the lines
+  read_paper: { A: 3, T: 9, hold: 30, body: { pitch: 4, head_pitch: 8 },
+    hands: { L: { t: [-0.26, 2.24, 0.50], elbow: [-0.9, -0.5, 0] }, R: { t: [0.26, 2.24, 0.50], elbow: [0.9, -0.5, 0] } },
+    cycle: t => ({ head_dx: 0.02 * sn(t, 0.3), head_pitch: 2 * sn(t, 0.6) }) },
   // body under a tumble: arms flung up (faint / topple) or forward (faceplant); the verb below tips the whole figure
   tumble_back: { A: 2, T: 6, hold: 40, body: { pitch: -6, head_pitch: -10, shrug: 0.08 },
     hands: { L: { t: [-0.60, 2.55, 0.20], elbow: [-0.9, -0.3, 0] }, R: { t: [0.60, 2.55, 0.20], elbow: [0.9, -0.3, 0] } } },
