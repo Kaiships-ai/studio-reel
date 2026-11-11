@@ -141,12 +141,18 @@ export function makeShatter(stage, { w = 1.2, h = 1.0, n = 18, seed = 11, ground
 }
 
 // ---------------------------------------------------------------- sparks: hot streaks thrown from a point
-export function makeSparks(stage, { n = 16, speed = 3.0, color = [1.0, 0.80, 0.25], seed = 13, life = 0.7 } = {}) {
+// light ({rgb, power, dist}): the burst lights the set and the faces near it (FORENSIC.md section 7: reference FX cast
+// light and stay in the set) - a point light that flashes up in 2 frames and dies with the sparks, flickering
+export function makeSparks(stage, { n = 16, speed = 3.0, color = [1.0, 0.80, 0.25], seed = 13, life = 0.7, light = null } = {}) {
   const g = new THREE.Group(), r = lcg(seed), S = [], m = emat(color, 2.0);
+  const pl = light ? new THREE.PointLight(new THREE.Color(...(light.rgb || color)), 0, light.dist ?? 3, 1.6) : null;
+  if (pl) { pl.position.set(0, 0.05, 0); g.add(pl); }
   for (let i = 0; i < n; i++) { const s = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.015, 1), m); g.add(s); stage.glow(s, 1.5);
     const a = r() * 6.28, e = 0.2 + r() * 0.9; S.push({ s, v: new THREE.Vector3(Math.cos(a) * speed * (0.4 + r()), e * speed, Math.sin(a) * speed * (0.4 + r())), d: r() * 0.12 }); }
   g.userData.set = t => {
-    g.visible = t >= 0 && t < life + 0.2; if (!g.visible) return;
+    g.visible = t >= 0 && t < life + 0.2;
+    if (pl) pl.intensity = g.visible ? (light.power ?? 4) * Math.min(1, t / 0.066) * Math.max(0, 1 - t / life) ** 1.5 * (0.75 + 0.25 * Math.sin(t * 97 + seed)) : 0;
+    if (!g.visible) return;
     for (const p of S) { const u = t - p.d, on = u > 0 && u < life; p.s.visible = on; if (!on) continue;
       const pos = new THREE.Vector3(p.v.x * u, p.v.y * u - 4.9 * u * u, p.v.z * u), vel = new THREE.Vector3(p.v.x, p.v.y - 9.8 * u, p.v.z);
       p.s.position.copy(pos); p.s.lookAt(pos.clone().add(vel)); p.s.scale.set(1, 1, Math.max(0.01, 0.12 * vel.length() / 3 * (1 - u / life))); }

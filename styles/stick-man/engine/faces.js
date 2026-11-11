@@ -199,21 +199,23 @@ function mouth(g, kind, mw = 1, my = 0, t = 0) {
 
 // paint on the skin: blush, red veins, tears, dark sockets, gloom lines
 function skin(g, S, ey, t) {
-  if (S.socket) for (const s of [-1, 1]) {
+  if (S.socket > 0.03) for (const s of [-1, 1]) {
     const gr = g.createRadialGradient(s * 0.15, ey, 0.02, s * 0.15, ey, 0.13);
     gr.addColorStop(0, `rgba(40,20,48,${0.75 * S.socket})`); gr.addColorStop(1, 'rgba(40,20,48,0)');
     g.fillStyle = gr; g.beginPath(); g.ellipse(s * 0.15, ey, 0.13, 0.12, 0, 0, Math.PI * 2); g.fill();
   }
-  if (S.gloom) {                                                                         // blue-violet lines down the forehead
+  if (S.gloom > 0.03) {                                                                         // blue-violet lines down the forehead
     g.save(); g.globalAlpha = 0.55 * S.gloom;
     for (let i = -4; i <= 4; i++) { const x = i * 0.05; line(g, [[x, 0.34], [x, 0.27 - 0.03 * Math.cos(i)]], 0.012, 'rgb(90,80,190)'); }
     g.restore();
   }
-  if (S.blush) for (const s of [-1, 1]) {
+  if (S.blush > 0.03) for (const s of [-1, 1]) {
+    g.save(); g.globalAlpha = Math.min(1, S.blush);
     g.fillStyle = PINK; g.beginPath(); g.ellipse(s * 0.22, ey - 0.105, 0.075, 0.042, 0, 0, Math.PI * 2); g.fill();
     for (let i = -1; i <= 1; i++) line(g, [[s * 0.22 + i * 0.03 - 0.008, ey - 0.088], [s * 0.22 + i * 0.03 + 0.008, ey - 0.122]], 0.009, 'rgba(230,70,100,0.9)');
+    g.restore();
   }
-  if (S.veins) {                                                                         // forked red veins from the temples and brow
+  if (S.veins > 0.05) {                                                                         // forked red veins from the temples and brow
     const k = S.veins, pulse = 1 + 0.06 * Math.sin((t || 0) * 0.9);
     g.save(); g.globalAlpha = Math.min(1, 0.4 + 0.6 * k);
     const fork = (x0, y0, a, len, w, depth) => {
@@ -227,32 +229,96 @@ function skin(g, S, ey, t) {
     if (k > 0.7) fork(0.06, 0.34, -Math.PI / 2 - 0.3, 0.09, 0.013, 1);
     g.restore();
   }
-  if (S.tears) for (const s of [-1, 1]) {                                               // streams from the lower lid, a drop running down
+  if (S.tears > 0.03) for (const s of [-1, 1]) {                                        // streams from the lower lid, a drop running down
+    g.save(); g.globalAlpha = Math.min(1, S.tears);
     const x = s * 0.17, y0 = ey - 0.06, ph = ((t || 0) % 14) / 14;
     const pts = [[x - 0.018, y0], [x - 0.022, y0 - 0.12], [x - 0.012, y0 - 0.26], [x + 0.012, y0 - 0.26], [x + 0.022, y0 - 0.12], [x + 0.018, y0]];
     blob(g, pts, TEAR, 0.012);
     const dy = y0 - 0.04 - 0.2 * ph; blob(g, ellipse(x, dy, 0.016, 0.022, 12), 'rgb(210,238,255)', 0);
+    g.restore();
   }
 }
 
+// ------------------------------------------------------------------ continuous faces (micro-animation layer)
+// A face is a set of numbers (eye radii, lid, lid tilt, cheek push, brow tilt / height / arch / lifts, mouth width, skin
+// alphas) plus two discrete picks (eye kind, mouth kind). Between two expressions every number is in-betweened, so each
+// frame of a change is its own drawing (FORENSIC.md section 3: the reference redraws a face 5 times in 12 frames; ours
+// toggled presets). A discrete pick that differs is hidden inside an in-between: the eyes squeeze shut and the mouth
+// passes through an open gasp at the swap. Talking draws a parametric mouth from visemes (acting.js) with a real
+// open / close range.
+const CURVE = { smile: 1, grin: 1, big: 1, big_open: 1, open_big: 0.8, teeth_grin: 1, cat: 0.8, smirk: 0.5, frown: -1, wobble: -0.6,
+  sad_open: -1, wail: -1, wavy: -0.4, open_frown: -0.8, skew: 0.2 };
+const REST_OPEN = { o: 0.45, o_big: 0.6, grin: 0.25, big: 0.6, big_open: 0.8, open_big: 0.55, scream: 1, scream_small: 0.7, teeth: 0.2,
+  teeth_grin: 0.25, teeth_open: 0.55, sad_open: 0.35, wail: 0.7, tongue: 0.1, open: 0.4, open_skew: 0.4, open_frown: 0.3 };
+const ROUND = { o: 1, o_big: 1, scream: 0.6, scream_small: 0.6, sleep: 0.5 };
+export function faceParams(name) {
+  const E = EXPR[name] || EXPR.neutral, S = E.skin || {}, [bt, bh, ba = 0, bl = 0, br = 0] = E.brow;
+  return { eye: E.eye, rx: E.rx, ry: E.ry, lid: E.lid || 0, lidTilt: E.lidTilt || 0, low: E.low || 0, pupil: E.pupil ?? 0.024,
+    brow: [bt, bh, ba, bl, br], mouth: E.mouth, mw: E.mw || 1, my: E.my || 0, curve: CURVE[E.mouth] || 0, rest: REST_OPEN[E.mouth] || 0,
+    round: ROUND[E.mouth] || 0, skin: { blush: S.blush || 0, veins: S.veins || 0, tears: S.tears || 0, socket: S.socket || 0, gloom: S.gloom || 0 } };
+}
+const LIDDED = new Set(['oval', 'white', 'manic', 'star', 'wet']);
+// st = { a, b (expression names), u (0..1, may overshoot a little), life ({brow, tilt, lid, mw}: hold drift), talk ({open,
+// wide, round, teeth} or null), gasp (0..1 extra open in a change) }. Returns the drawable face and the blink it forces.
+export function mixFace(st) {
+  const A = faceParams(st.a), B = faceParams(st.b ?? st.a), u = st.u ?? 1, uc = Math.max(0, Math.min(1, u)), L = st.life || {};
+  const m = (x, y) => x + (y - x) * u, F = { ...B };
+  for (const k of ['rx', 'ry', 'lid', 'lidTilt', 'low', 'pupil', 'mw', 'my', 'curve', 'rest', 'round']) F[k] = m(A[k], B[k]);
+  F.brow = A.brow.map((x, i) => m(x, B.brow[i]));
+  F.skin = Object.fromEntries(Object.keys(A.skin).map(k => [k, Math.max(0, Math.min(1, A.skin[k] + (B.skin[k] - A.skin[k]) * uc))]));
+  F.eye = uc < 0.5 ? A.eye : B.eye; F.mouth = uc < 0.5 ? A.mouth : B.mouth;
+  F.lid = Math.max(0, Math.min(0.9, F.lid + (LIDDED.has(F.eye) ? L.lid || 0 : 0)));
+  F.ry = Math.max(0.02, F.ry); F.rx = Math.max(0.02, F.rx); F.lid = Math.max(0, F.lid);
+  F.brow[0] += L.tilt || 0; F.brow[1] += L.brow || 0; F.mw *= 1 + (L.mw || 0);
+  // the hidden swaps: eyes squeeze through the change, the mouth passes through an open gasp
+  let blink = 0;
+  if (A.eye !== B.eye) { const c = Math.sin(Math.PI * uc) ** 2; blink = c > 0.8 ? 2 : c > 0.35 ? 1 : 0; }
+  else if (LIDDED.has(F.eye)) F.lid = Math.min(0.9, F.lid + 0.35 * Math.sin(Math.PI * uc) * (A.lid !== B.lid || A.ry !== B.ry ? 1 : 0.4) * (uc < 1 ? 1 : 0));
+  const gasp = (st.gasp || 0) + (A.mouth !== B.mouth && !st.talk ? 0.5 * Math.sin(Math.PI * uc) : 0);
+  if (st.talk) {
+    const v = st.talk, any = v.open > 0.04 ? 1 : 0;
+    F.talk = { open: Math.min(1.1, v.open * (1 + 0.3 * F.rest) + 0.22 * F.rest * any + gasp * 0.3), wide: v.wide ?? 0, round: Math.max(v.round ?? 0, F.round * 0.6), teeth: v.teeth ?? 0 };
+  } else if (gasp > 0.12) F.talk = { open: Math.max(F.rest, gasp), wide: 0.2, round: F.round, teeth: 0 };
+  return { F, blink };
+}
+
+// a parametric open mouth: width from wide / round, depth from open, corners from the expression's curve; top teeth and
+// tongue show with the opening. Closed (open < 0.06): the expression's own mouth shape.
+function vmouth(g, F, mwK) {
+  const T = F.talk, mw = mwK * F.mw, y = 0.02 - 0.20 + F.my;
+  if (T.open < 0.06) { mouth(g, F.mouth, mw, F.my); return; }
+  const w = 0.080 * mw * (1 + 0.35 * T.wide - 0.40 * T.round), h = 0.014 + 0.15 * T.open, c = 0.022 * F.curve * (1 - 0.5 * T.round);
+  const lip = 0.008 + 0.30 * h * T.round;
+  const top = bez([-w, y + c], [-w * 0.45, y + lip], [w * 0.45, y + lip], [w, y + c], 14);
+  const bot = bez([w, y + c], [w * 0.62, y - h * 1.3 + 0.3 * c], [-w * 0.62, y - h * 1.3 + 0.3 * c], [-w, y + c], 16);
+  const pts = [...top, ...bot];
+  blob(g, pts, INK, 0.024);
+  g.save(); path(g, pts, true); g.clip();
+  if (T.round < 0.6 && T.open > 0.16) { g.fillStyle = WHITE; g.fillRect(-w, y + lip - 0.026 - 0.01 * T.teeth, 2 * w, 0.03); }
+  if (T.teeth > 0.3) { g.fillStyle = WHITE; g.fillRect(-w, y - h * 0.9, 2 * w, 0.02); }
+  if (T.open > 0.32) { g.fillStyle = TONGUE; g.beginPath(); g.ellipse(0, y - h * 1.05 + 0.3 * c, w * 0.55, 0.018 + 0.25 * h, 0, 0, Math.PI * 2); g.fill(); }
+  g.restore();
+}
+
 // o.glasses: the rims circle the eyes, so the brows sit higher (clear of the rim) and tilt 1.4x so the expression still reads
-export function drawFace(g, expr, blink = 0, t = 0, o = {}) {
-  const E = EXPR[expr] || EXPR.neutral, ey = 0.02, dx = 0.150, S = E.skin || {};
+export function drawFaceState(g, F, blink = 0, t = 0, o = {}) {
+  const ey = 0.02, dx = 0.150;
   g.lineCap = g.lineJoin = 'round';
-  skin(g, S, ey, t);
+  skin(g, F.skin, ey, t);
   g.save(); g.scale(FEATURE, FEATURE);                                                   // features a little larger than the
   // reference: at phone size (and on a contact sheet) a face must still read from across the room
-  const [tilt0, bh0, arch = 0, liftL = 0, liftR = 0] = E.brow;
+  const [tilt0, bh0, arch = 0, liftL = 0, liftR = 0] = F.brow;
   const tilt = o.glasses ? tilt0 * 1.4 : tilt0, bh = o.glasses ? Math.max(bh0, 0.150) + 0.022 : bh0;
   for (const s of [-1, 1]) {
     const ex = s * dx;
-    eye(g, E, ex, s, ey, blink, t);
+    eye(g, F, ex, s, ey, blink, t);
     const by = ey + bh + 0.018 - (blink === 2 ? 0.014 : 0) + (s < 0 ? liftL : liftR);
     brow(g, ex, s, by, tilt, arch);
   }
-  mouth(g, E.mouth, 1.15 * (E.mw || 1), E.my || 0, t);
+  if (F.talk) vmouth(g, F, 1.15); else mouth(g, F.mouth, 1.15 * F.mw, F.my, t);
   g.restore();
 }
+export function drawFace(g, expr, blink = 0, t = 0, o = {}) { drawFaceState(g, faceParams(expr), blink, t, o); }
 const FEATURE = 1.12;
 
 // ------------------------------------------------------------------ head-attached emotion marks (flat cards, ink outline)
@@ -312,6 +378,7 @@ const MARKS = {
 };
 export const MARK_NAMES = Object.keys(MARKS);
 
+const hashKey = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return (h >>> 0).toString(36); };
 // One figure's face: its own canvas (redrawn only when what it shows changes) and its mark cards.
 export function faceRig(headW, opt = {}) {
   const cv = document.createElement('canvas'); cv.width = cv.height = 512; const g = cv.getContext('2d', { willReadFrequently: true });
@@ -326,14 +393,16 @@ export function faceRig(headW, opt = {}) {
   const v = new THREE.Vector3();
   return {
     tex, group, stats,
-    // marks: [[kind, age]], cam: camera position (three world) or null
-    draw(expr, blink, t, marks, cam) {
+    // marks: [[kind, age]], cam: camera position (three world) or null; F (optional) = a mixed face from mixFace(): drawn
+    // instead of the named expression (redrawn whenever one of its numbers moves, i.e. a new drawing per frame of a change)
+    draw(expr, blink, t, marks, cam, F = null) {
       const E = EXPR[expr] || EXPR.neutral, live = (E.skin?.tears || E.skin?.veins || E.eye === 'spiral' || (E.pupil ?? 1) < 0.02);
-      const k = `${expr}|${blink}|${live ? Math.floor(t / 2) : 0}`;
+      const fk = F ? JSON.stringify(F, (n, v) => typeof v === 'number' ? Math.round(v * 1000) / 1000 : v) : expr;
+      const k = `${fk}|${blink}|${live ? Math.floor(t / 2) : 0}`;
       if (k !== key) {
         key = k; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 512, 512);
-        g.setTransform(512, 0, 0, -512, 256, 256); drawFace(g, expr, blink, t, opt); tex.needsUpdate = true;
-        stats.mouth = darkMouth(); stats.key = k;
+        g.setTransform(512, 0, 0, -512, 256, 256); if (F) drawFaceState(g, F, blink, t, opt); else drawFace(g, expr, blink, t, opt); tex.needsUpdate = true;
+        stats.mouth = darkMouth(); stats.key = k.length > 64 ? hashKey(k) : k;
       }
       for (const list of Object.values(cards)) for (const m of list) m.visible = false;
       for (const [kind, age] of marks) {

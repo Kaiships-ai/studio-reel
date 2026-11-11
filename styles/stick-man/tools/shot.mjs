@@ -16,6 +16,7 @@ import { chromium } from 'playwright-core';
 import http from 'node:http'; import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { start, run } from '../../../kit/env.mjs';
+import { microanim } from './forensic/microanim.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '../../..');                     // repo root: serves the page and node_modules/three
@@ -74,7 +75,9 @@ const compress = list => {
 };
 
 // Acting numbers for one actor from __dbg rows (frames where it is in frame, cut frames left out):
-// frozen = longest run of frames with every joint within 2 mm and every angle within 0.5 deg of the frame before;
+// frozen = longest DEAD run: every joint within 1 mm and every angle within 0.3 deg of where the run began (a hold that
+// breathes is alive: the old test, 2 mm / 0.5 deg against the frame before, called a breathing hold frozen and so pushed
+// the kit toward constant fidget, while reference holds last up to 86 f - FORENSIC.md section 3, fix 14);
 // ratio = (shoulder-elbow + elbow-hand) / rest arm length; jump = largest one-frame change of a flex, a foot pitch,
 // the torso lean or roll, or a limb segment's direction (deg).
 const JOINTS = ['hip', 'knee', 'ankle', 'toe', 'shoulder', 'elbow', 'hand'], ANG = ['kneeFlex', 'elbowFlex', 'footPitch'];
@@ -83,23 +86,24 @@ const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 const dirAng = (a0, b0, a1, b1) => { const u = b0.map((x, i) => x - a0[i]), v = b1.map((x, i) => x - a1[i]), lu = Math.hypot(...u), lv = Math.hypot(...v);
   return lu < 1e-6 || lv < 1e-6 ? 0 : Math.acos(Math.max(-1, Math.min(1, u.reduce((s, x, i) => s + x * v[i], 0) / (lu * lv)))) * 180 / Math.PI; };
 function acting(rows, n) {
-  let run = 1, frozen = 0, frozenAt = null, ratio = 0, ratioAt = null, jump = 0, jumpAt = null; const per = [];   // per = worst joint change of each frame
+  let run = 1, frozen = 0, frozenAt = null, ratio = 0, ratioAt = null, jump = 0, jumpAt = null, anchor = null; const per = [];   // per = worst joint change of each frame
   for (let i = 0; i < rows.length; i++) {
     const a = rows[i].actors[n], l = a.limbs; if (!a.inFrame || !l) { run = 1; continue; }
     for (const s of ['L', 'R']) { const q = (dist(l[s].shoulder, l[s].elbow) + dist(l[s].elbow, l[s].hand)) / ARM; if (q > ratio) { ratio = q; ratioAt = rows[i].f; } }
     const p = rows[i - 1]?.actors[n];
     // a sleeping face is meant to be still: it never counts toward a frozen run
-    if (!p || !p.inFrame || !p.limbs || rows[i].motion.cut || rows[i].act !== rows[i - 1].act || a.expr === 'sleep') { run = 1; continue; }
-    const m = p.limbs; let moved = dist(a.headW, p.headW) > 0.002 || Math.abs(l.torsoLean - m.torsoLean) > 0.5 || Math.abs(l.torsoRoll - m.torsoRoll) > 0.5;
+    if (!p || !p.inFrame || !p.limbs || rows[i].motion.cut || rows[i].act !== rows[i - 1].act || a.expr === 'sleep') { run = 1; anchor = a; continue; }
+    const m = p.limbs, q = (anchor || p).limbs, qa = anchor || p;
+    let moved = dist(a.headW, qa.headW) > 0.001 || Math.abs(l.torsoLean - q.torsoLean) > 0.3 || Math.abs(l.torsoRoll - q.torsoRoll) > 0.3;
     const chg = [['torsoLean', Math.abs(l.torsoLean - m.torsoLean)], ['torsoRoll', Math.abs(l.torsoRoll - m.torsoRoll)]];
     for (const s of ['L', 'R']) {
-      for (const j of JOINTS) if (dist(l[s][j], m[s][j]) > 0.002) moved = true;
-      for (const k of ANG) { const d = Math.abs(l[s][k] - m[s][k]); if (d > 0.5) moved = true; chg.push([k + s, d]); }
+      for (const j of JOINTS) if (dist(l[s][j], q[s][j]) > 0.001) moved = true;
+      for (const k of ANG) { const d = Math.abs(l[s][k] - m[s][k]); if (Math.abs(l[s][k] - q[s][k]) > 0.3) moved = true; chg.push([k + s, d]); }
       for (const [x, y] of SEGS) chg.push([x + '-' + y + s, dirAng(m[s][x], m[s][y], l[s][x], l[s][y])]);
     }
     for (const [k, d] of chg) if (d > jump) { jump = d; jumpAt = `frame ${rows[i].f}, ${k}`; }
     const w = chg.reduce((a, b) => (b[1] > a[1] ? b : a), ['', 0]); per.push({ f: rows[i].f, k: w[0], d: w[1] });
-    run = moved ? 1 : run + 1;
+    if (moved) { run = 1; anchor = a; } else run++;
     if (run > frozen) { frozen = run; frozenAt = rows[i].f; }
   }
   // the five worst frames (not only the max: fixing one pop otherwise reveals the next) and how many frames are over 25 deg
@@ -183,6 +187,9 @@ if (A.speed && !REEL) {
       `      head cut by the top edge: ${compress(rows.filter(r => { const a = r.actors[n]; return a.inFrame && a.head[1] < 0; }).map(r => r.f)) || 'never'}`);
     // body acting: the share of this lead's in-frame frames with a body verb running (GATES.md "Acting gates")
     const lf = rows.filter(r => r.actors[n].inFrame && r.actors[n].lead), idleF = lf.filter(r => !r.actors[n].body).map(r => r.f);
+    // micro-animation (FORENSIC.md section 3; principles, the mouth range is a gate): head moves and holds, mouth range
+    const mi = microanim(rows)[n];
+    if (mi) L.push(`      micro: head moves ${mi.headMoves}, median ${mi.moveLenMedian ?? '-'} f; holds ${mi.holds}, median ${mi.holdMedian ?? '-'} f, longest ${mi.holdMax} f; mouth CV ${mi.mouthCV_talk == null ? '-' : mi.mouthCV_talk.toFixed(2)} over ${mi.talkFrames} talking frames`);
     L.push(`      body acting: ${lf.length ? (100 * (lf.length - idleF.length) / lf.length).toFixed(1) : '-'} % of ${lf.length} lead frames in frame; frames without: ${compress(idleF) || 'none'}`);
   }
   // (g) faces: distinct expressions on screen (>= 3 frames, open-mouth twins count as their base) and how early each change

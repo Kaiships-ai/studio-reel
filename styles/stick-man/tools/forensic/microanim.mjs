@@ -12,9 +12,6 @@
 //   dead    longest run in which no joint moved 1 mm and no angle 0.3 deg from where the run began (a truly still pose)
 import fs from 'node:fs';
 
-const file = process.argv[2];
-if (!file) { console.error('usage: microanim.mjs <dbg.jsonl> [--json out.json]'); process.exit(2); }
-const rows = fs.readFileSync(file, 'utf8').trim().split('\n').map(l => JSON.parse(l));
 const W = 0.60, HOLD = 0.012;
 const med = xs => { const s = [...xs].sort((a, b) => a - b); return s.length ? (s.length % 2 ? s[s.length >> 1] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2) : null; };
 const cv = xs => { if (xs.length < 2) return null; const m = xs.reduce((a, b) => a + b, 0) / xs.length; if (m <= 0) return 0; return Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / xs.length) / m; };
@@ -80,6 +77,9 @@ export function microanim(rows) {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
+  const file = process.argv[2];
+  if (!file) { console.error('usage: microanim.mjs <dbg.jsonl> [--json out.json]'); process.exit(2); }
+  const rows = fs.readFileSync(file, 'utf8').trim().split('\n').map(l => JSON.parse(l));
   const r = microanim(rows), f = x => x == null ? '-' : typeof x === 'number' ? +x.toFixed(3) : x;
   for (const [n, m] of Object.entries(r)) {
     console.log(`${n}: ${m.frames} f in frame`);

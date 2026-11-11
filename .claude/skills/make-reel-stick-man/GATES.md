@@ -10,7 +10,12 @@ Never change a threshold to pass a reel: fix the reel data or the kit, or show K
 | clear frames | ≥ 94 % | frame-to-frame YAVG difference ≥ 1.0, top 60 % of the frame at 270x288 (report a) | 4 reference videos (STYLE plan, section D) |
 | still frames | < 1 % | YAVG difference < 0.2 (report a) | 4 reference videos (plan D) |
 | camera speed | ≤ 95 px/f at 720p (a ceiling) | peak camera motion, cuts and dissolves left out (report b) | reference max 114-142 px/f at 1080 (FORENSIC.md; was ≤ 25, the opposite of the reference's rushes) |
-| frozen run | ≤ 8 f | longest run with every joint still, per actor in frame; expr `sleep` exempt (report b, acting) | reel 1 build target |
+| frozen run | ≤ 8 f | longest DEAD run per actor in frame: no joint 1 mm and no angle 0.3° from where the run began (a breathing hold is alive; the old frame-to-frame 2 mm test called it frozen and pushed constant fidget, while reference holds last up to 86 f); expr `sleep` exempt (report b, acting) | reel 1 build target, retargeted 11/11 (FORENSIC.md fix 14) |
+| mouth range | CV ≥ 0.4 | dark mouth-area CV over the frames an actor talks (≥ 30 f), report b `micro:` | FORENSIC.md fix 8: reference 0.33–0.56, ours 0.06–0.21 |
+
+Principles, not gates (report b `micro:`, tool `tools/forensic/microanim.mjs`): head moves of 12–15 f with a slow start (7 % of
+the travel in the first eighth), fewer and bigger, then holds that breathe (median ≥ 12 f, some ≥ 40 f); the face redrawn
+through every change (engine/acting.js `faceStateAt`, faces.js `mixFace`); the mouth from the words (acting.js `visemeTrack`).
 | arm length ratio | ≤ 1.03 | (upper + fore arm) / rest arm length, per actor | reel 1 build target (no stretched arms) |
 | joint change | ≤ 25 deg/f | largest one-frame change of a flex, foot pitch, torso or limb direction; the FAIL line lists the worst actor's top 5 frames (report: `joint change top 5`, `frames over 25 deg`) | reel 1 build target (no pops) |
 | head never cut | never | head box above the top edge, any actor in frame | reel 1 review |

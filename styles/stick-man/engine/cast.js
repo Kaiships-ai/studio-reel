@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { toon, lin, css, B, INK_RGB, INK_SUN } from './look.js';
-import { EXPR, faceRig } from './faces.js';
+import { EXPR, faceRig, mixFace } from './faces.js';
 import { makeHandProp } from '../lib/cast/handprops.js';
 
 export const W_M = 0.60;                     // head width in metres
@@ -454,14 +454,17 @@ export function makeStick(spec) {
   // face only (expression cell, blink, eye slide): the reel runtime sets it after every prop has moved this frame
   // Extra keys: t (frame), age (frames since this expression began), cam (camera, Blender metres: mark cards face it),
   // marks ([[kind, age]] on top of the expression's own; verbs add them through the pose keys x_mark_<kind> = age + 1).
+  // state (acting.js faceStateAt): a continuous face (in-betweened change, visemes, hold drift) drawn instead of expr
   S.face = (P = {}) => {
     const e = EXPR[P.expr] ? P.expr : 'neutral', E = EXPR[e], t = P.t || 0, age = P.age ?? 99;
     const marks = (E.marks || []).filter(([, life]) => !life || age < life).map(([k]) => [k, age]);
     for (const m of [...(P.marks || []), ...S.xmarks]) if (!marks.some(q => q[0] === m[0])) marks.push(m);
-    FR.draw(e, P.blink || 0, t, marks, P.cam ? B(...P.cam) : null);
+    const mx = P.state ? mixFace(P.state) : null, blink = Math.max(P.blink || 0, mx ? mx.blink : 0);
+    FR.draw(e, blink, t, marks, P.cam ? B(...P.cam) : null, mx ? mx.F : null);
     S.faceStats = FR.stats;
-    const tk = E.tint ? Math.min(1, age / 6) : 0;               // a furious face flushes over 6 frames
-    headSolid.material.color.copy(skin0); if (tk) headSolid.material.color.lerp(tintC.setRGB(...E.tint), tk);
+    const ta = P.state && EXPR[P.state.a]?.tint, tb = E.tint, u = P.state ? Math.max(0, Math.min(1, P.state.u)) : 1;
+    const tk = tb ? Math.min(1, age / 6) * u : ta ? 1 - u : 0;   // a furious face flushes over 6 frames (and fades as it leaves)
+    headSolid.material.color.copy(skin0); if (tk) headSolid.material.color.lerp(tintC.setRGB(...(tb || ta)), tk);
     rig.rotation.set(-(P.look_v || 0) * 0.12, (P.look || 0) * LOOK_RAD, 0);
   };
   // Hand props: pose key x_hp<L|R>_<kind> > 0.5 shows that prop in that hand (x_hpB_<kind> = between both hands);

@@ -208,7 +208,7 @@ export const VERBS = {
       for (const [s, e] of opens) if (f >= s && f < e + 3) dv += -0.014 * Math.sin(Math.PI * (f - s) / (e + 3 - s));
       return { head_dv: dv, head_pitch: dv * 120 };
     } }];
-    return { end: opens.length ? opens[opens.length - 1][1] : p.at, owners, mouth: opens };
+    return { end: opens.length ? opens[opens.length - 1][1] : p.at, owners, mouth: opens, say: p.line };
   },
 
   look_at(p, st) { return { end: p.at + 3, owners: [], focus: { from: p.at, target: p.target ?? p.to } }; },

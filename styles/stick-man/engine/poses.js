@@ -10,6 +10,7 @@
 // `hand` ('L' mirrors a one-handed pose), `amp` (0..1.5 size). VERBS.md "Body acting" has one line and an example each.
 import { STAND, SIT, clamp, smooth, smoother, lerp, toLocal } from './verbs.js';
 import { HEAD_C, HIP_V } from './cast.js';
+import { slowIn, MOVE_T } from './acting.js';
 
 const DEG = Math.PI / 180;
 export const LAG_A = 2, LAG_H = 4;
@@ -18,16 +19,17 @@ const HEAD = ['head_pitch', 'head_tilt', 'head_dx', 'head_dv'];
 const MIRROR = new Set(['lean', 'dx', 'shTwist', 'hipTwist', 'head_tilt', 'head_dx']);
 const s2 = (x, e) => Math.sin(Math.PI * clamp(x, 0, 1)) ** e;
 
-// rise curve: anticipation (opposite way, `antic` of the size) over A frames, then the action over T frames with a small
-// overshoot that settles into the hold; release eases back to 0 over R frames
+// rise curve: anticipation (opposite way, `antic` of the size) over A frames, then the action over T frames with the
+// reference's slow start (acting.js slowIn: 7 % of the travel in the first eighth) and a small overshoot that settles into
+// the hold; release eases back to 0 over R frames, also slow to start
 export function envelope(t, A, T, antic = 0.15, over = 0.07) {
   if (t <= 0) return 0;
   if (t < A) return -antic * smooth(t / A);
   const x = (t - A) / T;
   if (x >= 1) return 1;
-  return lerp(-antic, 1, smoother(x / 0.8)) + over * Math.sin(Math.PI * clamp((x - 0.5) / 0.5, 0, 1));
+  return lerp(-antic, 1, slowIn(x / 0.85)) + over * Math.sin(Math.PI * clamp((x - 0.5) / 0.5, 0, 1));
 }
-const relEnv = (t, R) => 1 - smoother(t / R);
+const relEnv = (t, R) => 1 - slowIn(t / R);
 
 // ---------------------------------------------------------------- the library
 // one-handed poses are written for the right hand (u > 0 = the figure's right as the camera sees it)
@@ -200,7 +202,9 @@ export function compilePose(name, p, st, C) {
   if (p.hand === 'L') spec = mirrorPose(spec);
   const amp = p.amp ?? 1, big = Math.max(0, ...(spec.keys || [spec]).flatMap(k => [Math.abs(k.body?.pitch || 0), 1.5 * Math.abs(k.body?.lean || 0)])) * amp;
   // the torso never turns faster than ~3.2 deg a frame on average (its arms hang off it): big poses take longer
-  const t0 = p.at, A = p.antic ?? spec.A ?? 3, T = Math.max(p.dur ?? spec.T ?? 9, Math.ceil(big / 3.2)), H = p.hold ?? spec.hold ?? 30, R = Math.max(p.out ?? spec.R ?? 10, Math.ceil(big / 3.2));
+  const t0 = p.at, A = p.antic ?? spec.A ?? 3, T = Math.max(p.dur ?? ((spec.T ?? 9) >= 8 ? Math.max(MOVE_T, spec.T ?? 9) : spec.T), Math.ceil(big / 3.2)), H = p.hold ?? spec.hold ?? 30, R = Math.max(p.out ?? Math.max(14, spec.R ?? 10), Math.ceil(big / 3.2));
+  // (FORENSIC.md section 3: reference moves take 12-15 f; a pose with T >= 8 now moves in MOVE_T, the snaps under 8 f
+  // (recoil, flail, startle) stay snaps)
   const inst = { name, t0, rel: spec.keep && p.hold == null ? 1e9 : t0 + A + T + H, R, rest: [] };
   if (spec.keep) st.sitPose = inst;
   const at = keyed(spec), antic = p.antic0 ?? spec.antic ?? 0.15;

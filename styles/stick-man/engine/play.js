@@ -4,10 +4,10 @@
 // A reel is one or more ACTS (reel.js is the first; reel2.js, when present, adds more): each act builds its own set,
 // cast, beats and camera; boot() shows the act whose window holds the frame and dissolves between them.
 import * as THREE from 'three';
-import { createStage, SET_GRADE } from './look.js';
+import { createStage, SET_GRADE, B as toThree, lin, PLACE } from './look.js';
 import { makeStick, KAI, TELLER, GUARD, EXPR, HEAD_C } from './cast.js';
 import { VERBS, STAND, SIT, REST_ARM, W, lerp, lerp3, add3, angDiff, toLocal, smoother, hash, handEase } from './verbs.js';
-import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, exprAccent, bodyFollow, LATE, EXPR_LEAD, exprKeyAt, markOwner, isBodyVerb, autoActing } from './acting.js';
+import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, exprAccent, bodyFollow, LATE, EXPR_LEAD, exprKeyAt, markOwner, isBodyVerb, autoActing, faceStateAt, visemeTrack } from './acting.js';
 import { createCamera } from './camera.js';
 import { planShots } from './shotplan.js';
 import { createCaptions } from './captions.js';
@@ -92,9 +92,29 @@ async function buildAct(R, X) {
   const group = new THREE.Group(), before = new Set(stage.scene.children), bg0 = stage.scene.background;
   const built = await SET.build(stage, { use: R.use || [] });   // act.use: opt-in set props (street: police, bag)
   for (const c of [...stage.scene.children]) if (!before.has(c)) group.add(c);
-  const background = stage.scene.background; stage.scene.background = bg0; stage.scene.add(group); group.visible = false;
+  let background = stage.scene.background; stage.scene.background = bg0; stage.scene.add(group); group.visible = false;
   const props = built.props;
-  const sun = () => stage.setSun(SET.SUN_DIR, R.sun?.center || SET.SUN_CENTER, R.sun?.half || SET.SUN_HALF);
+  // per-place light (FORENSIC.md section 6: every reference place has its own light, per-shot YAVG std 23-25 vs ours 6-9):
+  // act `light: { lit, shade (tints of the toon ramp's two ends), lamp (gain of the practical lights), sun, power, sky,
+  // ground, hemi, fill, fillPower, background, bounce, lamps: [{at, rgb, power, dist}] }`
+  // recolours the shared sun / sky / fill while this act is on screen, scales the set's own bounce lights, and hangs
+  // practical lamps (point lights in this act's group, so they only light this act)
+  const LT = R.light || null;
+  stage.light0 ||= { sun: stage.sun.color.clone(), si: stage.sun.intensity, sky: stage.hemi.color.clone(), gr: stage.hemi.groundColor.clone(),
+    hi: stage.hemi.intensity, fill: stage.fill.color.clone(), fi: stage.fill.intensity };
+  if (LT) {
+    group.traverse(o => { if (o.isPointLight) o.intensity *= LT.bounce ?? 1; });
+    for (const l of LT.lamps || []) { const pl = new THREE.PointLight(lin(...l.rgb), l.power ?? 2, l.dist ?? 5, 1.6); pl.position.copy(toThree(...l.at)); group.add(pl); }
+    if (LT.background) background = lin(...LT.background);
+  }
+  const L0 = stage.light0;
+  const sun = () => {
+    stage.setSun(SET.SUN_DIR, R.sun?.center || SET.SUN_CENTER, R.sun?.half || SET.SUN_HALF);
+    stage.sun.color.copy(LT?.sun ? lin(...LT.sun) : L0.sun); stage.sun.intensity = LT?.power ?? L0.si;
+    stage.hemi.color.copy(LT?.sky ? lin(...LT.sky) : L0.sky); stage.hemi.groundColor.copy(LT?.ground ? lin(...LT.ground) : L0.gr); stage.hemi.intensity = LT?.hemi ?? L0.hi;
+    stage.fill.color.copy(LT?.fill ? lin(...LT.fill) : L0.fill); stage.fill.intensity = LT?.fillPower ?? L0.fi;
+    PLACE.lit.value.set(...(LT?.lit || [1, 1, 1])); PLACE.shade.value.set(...(LT?.shade || [1, 1, 1])); PLACE.lamp.value = LT?.lamp ?? 0;
+  };
 
   // ---------------------------------------------------------------- compile
   const point = s => Array.isArray(s) ? s : SET.PLACES[s] || SET.MARKS[s] || (props[s] && props[s].userData.rest.pos) ||
@@ -166,6 +186,7 @@ async function buildAct(R, X) {
     for (const q of out.active || []) active.push(q);
     if (out.focus) a.focusSegs.push(out.focus);
     if (out.mouth) a.mouth.push(...out.mouth);
+    if (out.say) (a.says ||= []).push(out.say);
   };
   for (const b of beats) compile(b);
   // a pose's end moves when a later pose (or stand_up) releases it
@@ -179,6 +200,7 @@ async function buildAct(R, X) {
     a.exprs.sort((x, y) => x.f - y.f);
     const swaps = a.exprs.slice(1).filter((e, i) => e.expr !== a.exprs[i].expr).map(e => e.f);
     a.blinks = blinkTrack(a.seed, F0 - 60, F1 + 60, swaps);
+    a.vis = a.says?.length ? visemeTrack(words, fps, a.says) : null;     // the mouth follows the letters of its lines
     a.focusSegs.sort((x, y) => x.from - y.from);
   }
   for (const n of Object.keys(props)) if (rest[n] || segs[n]) {
@@ -259,8 +281,8 @@ async function buildAct(R, X) {
     const base = a.posture === 'sit' ? SIT : STAND, hands = {}, bends = {}, elbows = {}, fks = {}, off = {}, late = {};
     // the body acting layer: idle beats between actions, accents on expression changes, the body following the hands
     const stand = a.posture !== 'sit', walking = body.walking != null;
-    // the idle channels run staggered (body now, arms 3 frames behind, head 6): one of them is always on the move
-    const ib = stand ? idleBeats(a.seed, f) : null, ibA = stand ? idleBeats(a.seed, f - 3) : null, ibH = stand ? idleBeats(a.seed, f - 6) : null, acc = stand ? exprAccent(a.exprs, f, a.seed) : {};
+    // the idle channels overlap: the head leads, the body follows 2 frames later, the arms 4 (follow-through)
+    const ib = stand ? idleBeats(a.seed, f - 2) : null, ibA = stand ? idleBeats(a.seed, f - 4) : null, ibH = stand ? idleBeats(a.seed, f) : null, acc = stand ? exprAccent(a.exprs, f, a.seed) : {};
     const handAt = (side, g) => chain(a.owners['hand' + side], g, spec => {
       const sg = side === 'L' ? -1 : 1, s = spec.w || spec.prop || spec.mouth ? env.resolve(spec, g) : spec;
       let l;
@@ -298,7 +320,7 @@ async function buildAct(R, X) {
     const bob = (body.bob || 0) + id.bob + k('bob'), P = {
       pos: root.pos, yaw: root.yaw, bob, lean: (body.lean || 0) + (add.lean || 0) + k('lean'), pitch: (body.pitch || 0) + (add.pitch || 0) + k('pitch'),
       head_tilt: id.head_tilt + (add.head_tilt || 0) + (a.c.head_tilt || 0) + k('head_tilt'), head_dv: id.head_dv + (add.head_dv || 0) + k('head_dv'),
-      head_dx: id.head_dx + (add.head_dx || 0) + k('head_dx'), head_pitch: (add.head_pitch || 0) + k('head_pitch'), shrug: k('shrug'),
+      head_dx: id.head_dx + (add.head_dx || 0) + k('head_dx'), head_pitch: (add.head_pitch || 0) + k('head_pitch'), shrug: k('shrug') + id.shrug,
       footL: body.footL, footR: body.footR, toeL: body.toeL, toeR: body.toeR, toeF: body.toeF,
       handL: hands.L, handR: hands.R, bendL: bends.L, bendR: bends.R, expr: a.lastExpr || a.c.expr,
       elbowL: elbows.L, elbowR: elbows.R, armFKL: fks.L, armFKR: fks.R,
@@ -315,17 +337,14 @@ async function buildAct(R, X) {
   }
 
   function faceActor(a, f, camPos) {
-    const ek = exprKeyAt(a.exprs, f); let e = ek.expr; a.exprKey = ek;
-    const talking = a.mouth.some(([s, t]) => f >= s && f < t);
+    const ek = exprKeyAt(a.exprs, f), e = ek.expr; a.exprKey = ek;
     const id = idle(a.seed, f, a.posture);
-    // expression ramp (FORENSIC.md fix 8): a change is drawn through in-betweens, not swapped: squint (4 f), wide-open
-    // mouth (5 f), then the face; the old face before it makes >= 3 drawings in 12 frames, like the reference
-    const age = f - ek.f, prevE = a.exprs.filter(x => x.f < ek.f).pop()?.expr;
-    let rampBlink = 0;
-    if (prevE && prevE !== e && age >= 0 && age < 9) { if (age < 4) rampBlink = 2; else if (EXPR[e + '_O']) e += '_O'; }
-    // talking: the mouth opens and closes by syllable (3-frame steps: open, wide, open, closed), never one open shape
-    else if (talking && EXPR[e + '_o']) { const ph = Math.floor(f / 3 + a.seed) % 4; e = ph === 1 && EXPR[e + '_O'] ? e + '_O' : ph === 3 ? e : e + '_o'; }
-    else if (e === 'sleep' && id.snore) e = 'sleep_o';
+    // the micro-animation face (acting.js faceStateAt, faces.js mixFace): an expression change is in-betweened over 10
+    // frames with a slow start and overshoot (a new drawing every frame, eyes squeeze and mouth gasps through the swap),
+    // the mouth follows the visemes of the actor's lines, and a held face drifts a little (brows, lids, mouth width)
+    const state = faceStateAt(a.exprs, f, a.seed, a.vis);
+    if (!state.talk && e === 'sleep' && id.snore) state.talk = { open: 0.3, wide: 0, round: 1, teeth: 0 };
+    a.talking = !!state.talk;
     const tgtPos = t => t === 'camera' ? camPos : byName[t] ? toB(byName[t].S.parts.head.getWorldPosition(hv)) : Array.isArray(t) ? t : t ? livePos(t) : camPos;
     const cur = focusAt(a, f, a.focusSegs, active), head = toB(a.S.parts.head.getWorldPosition(new THREE.Vector3()));
     const yaw = F.bodies[a.name].yaw, gz = x => gaze(head, yaw, tgtPos(x.prop || x.target));
@@ -333,8 +352,8 @@ async function buildAct(R, X) {
     while (d < 3 && focusAt(a, f - d - 1, a.focusSegs, active).key === cur.key) d++;
     if (d < 3) g = lerp3(gz(focusAt(a, f - d - 1, a.focusSegs, active)), g, smoother((d + 1) / 4));
     const sc = saccade(a.seed, f);
-    const blink = rampBlink || a.blinks.at(f);
-    const P = { expr: e, blink, look: g[0] + sc[0] + (cur.prop ? 0 : a.idleLook || 0), look_v: g[1] + sc[1], t: f, age: f - ek.f, cam: camPos };
+    const blink = a.blinks.at(f);
+    const P = { expr: e, state, blink, look: g[0] + sc[0] + (cur.prop ? 0 : a.idleLook || 0), look_v: g[1] + sc[1], t: f, age: f - ek.f, cam: camPos };
     a.S.face(P); a.face = P; a.lastExpr = e;
   }
 
@@ -407,7 +426,7 @@ async function buildAct(R, X) {
       out.actors[a.name] = { pos: F.bodies[a.name].pos.map(x => +x.toFixed(4)), yaw: +F.bodies[a.name].yaw.toFixed(2), expr: a.face.expr, blink: a.face.blink,
         verb: a.verbs.filter(x => x.start <= f && f < x.end).map(x => x.name), head: box, feet, limbs: a.S.rigWorld(),
         body: a.verbs.filter(x => x.start <= f && f < x.end && isBodyVerb(x)).map(x => x.name).pop() || null, lead: !!a.lead,
-        mouthA: +(a.S.faceStats?.mouth ?? 0).toFixed(5), faceKey: a.S.faceStats?.key ?? '', talking: a.mouth.some(([s, t]) => f >= s && f < t),
+        mouthA: +(a.S.faceStats?.mouth ?? 0).toFixed(5), faceKey: a.S.faceStats?.key ?? '', talking: !!a.talking,
         exprFrom: a.exprKey?.f > -1e8 ? a.exprKey.f : null, exprWord: a.exprKey?.word ?? null,
         headW: toB(c).map(x => +x.toFixed(4)), figH: +((sole - ys[0]) / height).toFixed(3),
         inFrame: a.S.root.visible && vz < 1 && box[2] > 0 && box[0] < width && box[3] > 0 && box[1] < height };

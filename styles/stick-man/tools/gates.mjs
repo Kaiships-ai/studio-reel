@@ -60,6 +60,10 @@ if (actors.length) {
   else { const low = ba.filter(x => x[1] < 70), w = ba.reduce((a, b) => (b[1] < a[1] ? b : a));
     gate('body acting', !low.length, `lowest ${w[1]} % (${w[0]}, ${w[2]} f)${low.length ? '; under: ' + low.map(x => x[0]).join(', ') : ''}; ${ba.map(x => x[0] + ' ' + x[1]).join(', ')}`, '>= 70 % per lead'); }
 }
+// mouth range (FORENSIC.md fix 8: reference mouth-area CV 0.33-0.56, ours was 0.06-0.21): an actor who talks >= 30 frames
+// opens and closes the mouth for real. Head holds / moves are principles (report line "micro:"), not gates.
+const mouths = actors.map(([, n, b]) => { const m = /mouth CV ([\d.]+) over (\d+) talking frames/.exec(b); return m && +m[2] >= 30 ? [n, +m[1]] : null; }).filter(Boolean);
+if (mouths.length) { const w = mouths.reduce((a, b) => (b[1] < a[1] ? b : a)); gate('mouth range', w[1] >= 0.4, `lowest CV ${w[1]} (${w[0]})`, '>= 0.4 per talking actor'); }
 const fg = /\(g\) faces: (\d+) distinct expressions on screen over ([\d.]+) s \(([^)]*)\); expression lead before its word: worst (-?\d+|-)(?: f \(([^)]*)\))?/.exec(R);
 if (!fg) { missing('expressions'); missing('expression lead'); }
 else {
