@@ -6,9 +6,10 @@
 //
 //   pose verbs (beat { who, do: '<name>', hold, amp, to, hand }) : chug, slam_beaker, pat_belly, nod, belly_laugh,
 //     point_laugh, fan_nose, retch, wipe, wag_finger, thumb_self, feed_tube, gag_tube, dust_hands, pop_pill, peer,
-//     blow, cheer_fist, scope_twiddle, read_paper
+//     blow, cheer_fist, scope_twiddle, read_paper, aim_gun, fire_gun, grab_draw
 //   tumble verbs (the whole figure tips about its soles; cast.js x_tumble / x_roll / x_lift): faceplant, faint,
-//     topple (beat { deg, dur, hold }: the fall accelerates like a real one, bounces once, and gets up on release)
+//     topple (beat { deg, dur, hold, spin }: the fall accelerates like a real one, bounces once, and gets up on release;
+//     spin turns the fallen body about its length so the face shows, cheek to the ground)
 // Units: hands in head widths (W = 0.6 m), figure-local: x = the figure's right, y = up from the soles, z = forward.
 //   { t } torso frame (rides the lean), { h } head frame (rides the head), { l } figure frame.
 import { POSES, POSE_VERBS, compilePose } from '../engine/poses.js';
@@ -105,10 +106,25 @@ const P = {
   read_paper: { A: 3, T: 9, hold: 30, body: { pitch: 4, head_pitch: 8 },
     hands: { L: { t: [-0.26, 2.24, 0.50], elbow: [-0.9, -0.5, 0] }, R: { t: [0.26, 2.24, 0.50], elbow: [0.9, -0.5, 0] } },
     cycle: t => ({ head_dx: 0.02 * sn(t, 0.3), head_pitch: 2 * sn(t, 0.6) }) },
+  // aim_gun: the six-shooter held straight out at shoulder height, the other hand on the hip, chin down along the sights
+  aim_gun: { A: 3, T: 8, hold: 40, props: { R: 'revolver' }, body: { pitch: 4, shTwist: 14, head_pitch: 4, head_tilt: -4 },
+    feet: { L: [-0.30, 0.022, 0.12], R: [0.26, 0.022, -0.10] }, hands: { R: { t: [0.30, 2.02, 1.02], elbow: [0.9, -0.3, -0.2] }, L: HIP(-1) },
+    tiltKeys: { R: [[0, 0]] } },
+  // fire_gun: aimed, BANG: the recoil throws the gun hand up and the body back, then it comes down again
+  fire_gun: { A: 1, T: 3, hold: 24, props: { R: 'revolver' }, keys: [
+    { at: 0, body: { pitch: 4, shTwist: 14, head_pitch: 4 }, hands: { R: { t: [0.30, 2.02, 1.02], elbow: [0.9, -0.3, -0.2] }, L: HIP(-1) } },
+    { at: 3, body: { pitch: -10, shTwist: 10, head_pitch: -10, lean: -3, bob: 0.01 }, hands: { R: { t: [0.34, 2.75, 0.62], elbow: [0.9, -0.3, -0.2] } } },
+    { at: 14, body: { pitch: -2, shTwist: 12, head_pitch: -2 }, hands: { R: { t: [0.32, 2.30, 0.85], elbow: [0.9, -0.3, -0.2] } } }],
+    tiltKeys: { R: [[0, 0], [3, -35], [14, -10]] } },
+  // grab_draw: going for the gun as fast as he can: a crouch, the hand clawing at the holster on the hip, straining
+  grab_draw: { A: 2, T: 6, hold: 60, body: { pitch: 16, bob: -0.12, head_pitch: -14, shrug: 0.08, shTwist: -8 },
+    feet: { L: [-0.34, 0.022, 0.10], R: [0.32, 0.022, -0.06] },
+    hands: { R: { t: [0.42, 1.36, 0.10], elbow: [0.9, 0.2, -0.4] }, L: { t: [-0.55, 1.80, 0.30], elbow: [-0.9, -0.3, 0] } },
+    cycle: t => ({ hands: { R: [0.012 * sn(t, 2.2), 0.015 * sn(t, 1.7), 0] }, bob: 0.008 * sn(t, 2.6), head_tilt: 2 * sn(t, 1.9) }) },
   // body under a tumble: arms flung up (faint / topple) or forward (faceplant); the verb below tips the whole figure
   tumble_back: { A: 2, T: 6, hold: 40, body: { pitch: -6, head_pitch: -10, shrug: 0.08 },
     hands: { L: { t: [-0.60, 2.55, 0.20], elbow: [-0.9, -0.3, 0] }, R: { t: [0.60, 2.55, 0.20], elbow: [0.9, -0.3, 0] } } },
-  tumble_fwd: { A: 2, T: 6, hold: 40, body: { pitch: 4, head_pitch: -14, shrug: 0.06 },
+  tumble_fwd: { A: 2, T: 6, hold: 40, body: { pitch: 4, head_pitch: -42, shrug: 0.06 },   // chin up: lying on his front the face looks along the ground
     hands: { L: { t: [-0.40, 2.40, 0.62], elbow: [-0.9, -0.3, 0.2] }, R: { t: [0.40, 2.40, 0.62], elbow: [0.9, -0.3, 0.2] } } },
 };
 Object.assign(POSES, P);
@@ -128,7 +144,8 @@ function tumbleVerb(pose, D) {
       else if (t < A + T) e = ((t - A) / T) ** 2;                                           // falling: faster and faster
       else { const d = t - A - T; e = 1 - 0.07 * Math.exp(-d / 2.5) * Math.abs(Math.sin(d * 0.9)); }   // thud, one bounce
       if (f > inst.rel) e *= 1 - smoother((f - inst.rel) / inst.R);
-      return { x_tumble: deg * e, x_lift: lift * Math.sin(Math.min(1, Math.abs(e)) * Math.PI / 2), x_roll: (p.roll ?? 0) * e };
+      const sp = (p.spin ?? 0) * smoother((t - A - T * 0.6) / 6);                         // the head turns aside as it lands
+      return { x_tumble: deg * e, x_lift: (lift + 0.1 * Math.abs(sp) / 90) * Math.sin(Math.min(1, Math.abs(e)) * Math.PI / 2), x_roll: (p.roll ?? 0) * e, x_spin: f > inst.rel ? sp * e : sp };
     } });
     r.cues = [...(r.cues || []), { f: t0 + A + T, name: 'thud', strength: 0.8 }];
     return r;

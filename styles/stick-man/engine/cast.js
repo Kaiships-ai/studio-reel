@@ -7,6 +7,7 @@ import { toon, lin, css, B, INK_RGB, INK_SUN } from './look.js';
 import { EXPR, faceRig, mixFace } from './faces.js';
 import { makeHandProp } from '../lib/cast/handprops.js';
 
+const SPIN_Q = new THREE.Quaternion(), SPIN_AX = new THREE.Vector3(0, 1, 0);
 export const W_M = 0.60;                     // head width in metres
 const W = W_M;
 const INK_T = 0.046 * W;                     // outline base width; the hull shader scales it 0.35-1.6x by the light (below):
@@ -501,6 +502,7 @@ export function makeStick(spec) {
     // x_tumble / x_roll (deg, opt-in from allout/acting.js): the whole figure tips about its soles (+ tumble = falls on
     // its face, - = on its back; + roll = toward its right), x_lift (m) raises it so a body lying down rests on the floor
     root.rotation.set((P.x_tumble || 0) * DEG, S.yaw + (P.yaw_extra || 0) * DEG, -(P.x_roll || 0) * DEG, 'YXZ');
+    if (P.x_spin) root.quaternion.multiply(SPIN_Q.setFromAxisAngle(SPIN_AX, P.x_spin * DEG));   // + x_spin turns the fallen body about its own length (cheek to the ground, the face to one side)
     if (P.x_lift) root.position.y += P.x_lift;
     root.updateMatrixWorld(true);
   };

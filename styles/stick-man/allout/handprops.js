@@ -85,3 +85,15 @@ BUILD.hanky = () => {
   for (let i = 0; i < 3; i++) { const t = mesh(new THREE.ConeGeometry(0.035, 0.09, 6), m); t.position.set(-0.03 + 0.03 * i, -0.06, 0.01 * i); t.rotation.set(3.0, 0.4 * i, 0.3 * (i - 1)); g.add(t); }
   g.userData = { mode: 'up', grip: [0, 0.0, 0], noInk: true }; return g;
 };
+
+// a six-shooter held out along the forearm (mode along: +y out of the fist): barrel, drum, hammer, wooden grip
+BUILD.revolver = () => {
+  const g = new THREE.Group(); g.userData.noInk = true; const steel = std([0.22, 0.23, 0.26], 0.3, { metal: 0.9 }), wood = std([0.45, 0.25, 0.12], 0.6);
+  const grip = mesh(new THREE.BoxGeometry(0.03, 0.08, 0.045), wood); grip.position.set(0, -0.01, -0.02); grip.rotation.x = 0.35; g.add(grip);
+  const frame = mesh(new THREE.BoxGeometry(0.028, 0.06, 0.05), steel); frame.position.set(0, 0.045, 0.01); g.add(frame);
+  const drum = mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.045, 12), steel); drum.position.set(0, 0.055, 0.012); g.add(drum);
+  const barrel = mesh(new THREE.CylinderGeometry(0.008, 0.009, 0.16, 12), steel); barrel.position.set(0, 0.15, 0.022); g.add(barrel);
+  const ham = mesh(new THREE.BoxGeometry(0.01, 0.02, 0.02), steel); ham.position.set(0, 0.03, -0.015); g.add(ham);
+  g.scale.setScalar(1.7);   // cartoon size: a real six-shooter is a sliver next to a stick figure's head
+  g.userData = { mode: 'along', grip: [0, 0.0, 0], noInk: true, muzzle: [0, 0.39, 0.037] }; return g;
+};

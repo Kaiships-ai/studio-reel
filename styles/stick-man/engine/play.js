@@ -375,6 +375,9 @@ async function buildAct(R, X) {
     if (spec.head) { const a = byName[spec.head], h = toB(a.S.parts.head.getWorldPosition(hv)), y = F.bodies[spec.head].yaw * Math.PI / 180;
       const fw = spec.fwd || 0, sd = spec.side || 0;                // fwd: where he faces; side: toward his LEFT (screen right when he faces the camera)
       return [h[0] + Math.sin(y) * fw + Math.cos(y) * sd, h[1] - Math.cos(y) * fw + Math.sin(y) * sd, h[2] + (spec.up || 0)]; }
+    // sole: the body channel's floor point (pos + yaw, no lean or bob): a holster on the hip that does not swing with the head
+    if (spec.sole) { const b = F.bodies[spec.sole] || bodyAt(byName[spec.sole], F.f), y = b.yaw * Math.PI / 180, fw = spec.fwd || 0, sd = spec.side || 0;
+      return [b.pos[0] + Math.sin(y) * fw + Math.cos(y) * sd, b.pos[1] - Math.cos(y) * fw + Math.sin(y) * sd, b.pos[2] + (spec.up || 0)]; }
     return add3(livePos(spec.prop), spec.off || [0, 0, 0]);
   } };
   const camera = createCamera({ aspect: width / height, side: SET.CAMERA_SIDE, bounds: R.cameraRoom || SET.CAMERA_ROOM, zRange: R.zRange,
