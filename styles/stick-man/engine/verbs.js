@@ -228,7 +228,7 @@ export const VERBS = {
   // carry: 'L' | 'R' = that hand is busy (the other arm swings more).
   walk_to(p, st, C) {
     const G = { ...GAIT[p.style || 'walk'], ...(p.gait || {}) }, T = p.step ?? G.T;
-    const to = C.point(p.to), from = st.pos.slice(), w = p.width ?? 0.10;
+    const to = (C.mark || C.point)(p.to), from = st.pos.slice(), w = p.width ?? 0.10;
     const dxy = [to[0] - from[0], to[1] - from[1]], D = Math.hypot(...dxy), head = C.yawTo(from, to);
     const posture0 = st.posture, cheat = p.cheat || 0, dTurn = angDiff(st.yaw, head + cheat);
     const Tt = Math.abs(dTurn) > 15 ? (p.turn ?? Math.round(clamp(Math.abs(dTurn) / 7, 8, 12))) : 0, Tc = 3;

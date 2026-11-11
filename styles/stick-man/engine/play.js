@@ -136,6 +136,8 @@ async function buildAct(R, X) {
   const C = {
     words, fps,
     point,
+    // where an actor stands: a set MARK wins over a PLACE of the same name (PLACES are prop tops: a counter, a bench)
+    mark: s => typeof s === 'string' && SET.MARKS?.[s] ? SET.MARKS[s] : point(s),
     // a cast name = that actor's near shoulder (hand on shoulder, grab, shove, hand a prop over: reach / point_lean to: 'bram')
     target: (s, st) => s == null ? { rest: true } : typeof s === 'string' && props[s] ? { prop: s } : typeof s === 'string' && byName[s] && st
       ? { w: (() => { const o = byName[s].st0, dx = st.pos[0] - o[0], dy = st.pos[1] - o[1], d = Math.hypot(dx, dy) || 1; return [o[0] + 0.16 * dx / d, o[1] + 0.16 * dy / d, 1.28]; })() }
@@ -596,7 +598,7 @@ export async function boot({ film, width, height }) {
     const wp = s.whip ? 0.22 * s.whip * Math.sin(Math.PI * s.u) : 0, wu = s.whip ? Math.min(1, Math.max(0, (s.u - 0.3) / 0.4)) : s.u;
     if (s.prev) { show(s.prev); s.prev.update(f); ms += stage.render({ flash: s.prev.flash(f), grade: s.prev.grade, whip: wp }); stage.grab(); }
     const sm = s.prev ? null : s.cur.shotMix(f);                   // a shot dissolve inside the act: the outgoing camera first
-    const sw = sm?.whip ? 0.22 * sm.whip * Math.sin(Math.PI * sm.u) : 0;   // a whip between two shots of one place (allout/director.js)
+    const sw = sm?.whip ? 0.22 * sm.whip * Math.sin(Math.PI * (sm.ws ?? sm.u)) : 0;   // a whip between two shots of one place (allout/director.js)
     if (sm) { show(s.cur); s.cur.update(f, sm.i); ms += stage.render({ flash: s.cur.flash(f), grade: s.cur.grade, whip: sw }); stage.grab(); }
     show(s.cur); s.cur.update(f); ms += stage.render({ prev: s.prev ? 1 - wu : sm ? 1 - sm.u : 0, flash: s.cur.flash(f), grade: s.cur.grade, whip: wp || sw, impact: s.cur.impact(f) });
     cap.draw(f); return ms;

@@ -5,6 +5,9 @@
 //
 // A shot: { at, intent, why, cut: 'cut' | 'dissolve' | 'whip', n (frames of the dissolve / whip), cam, to, move, kick, dof }
 //   at      a beat ref ({ line, on, offset } or { f }) where the shot starts
+//   cut     'move' (default after the first shot: the camera travels from the last framing to this one over n frames,
+//           16 by default), 'whip' (the same travel in ~8 frames, smeared), 'dissolve' (n frames), 'cut' (a hard cut:
+//           the reference has one or two per film, keep it for a stop beat)
 //   cam/to  camera specs; with `to` the camera moves from cam to to over `move` (from / to beat refs or dur frames, ease)
 //   spec    { look, up, az, el, d, lens, kx, ky, roll, track } (orbit round a target) or { pos, aim, lens } (absolute)
 //           look: an actor ('kip' = head, 'kip.chest', 'kip.hips', 'kip.feet'), a prop / place / effect name, or [x, y, z]
@@ -101,15 +104,26 @@ export function createDirector(list, { frameOf, anchor, aspect, F1 }) {
     const D = S.dof;
     return { ...c, offset: [ox, oy], dof: D ? (D.gain ?? 0.8) : 0, band: D?.band || null, shot: S.intent || 'shot', shotIndex: S.i, why: S.why || '' };
   }
+  const kind = S => S.i === 0 ? 'cut' : (S.cut || 'move');
+  const travel = (S, f) => { const n = S.n ?? (kind(S) === 'whip' ? 8 : 16), d = f - S.f; return d >= 0 && d < n ? (d + 0.5) / n : null; };
   return {
     shots,
-    at(f, force = null) { return camOf(shots[force ?? idx(f)], f); },
-    // a shot that starts with a dissolve or whip crossfades from the one before over its first n frames
-    mixAt(f) {
-      const i = idx(f), S = shots[i]; if (i === 0 || !S.cut || S.cut === 'cut') return null;
-      const n = S.n ?? (S.cut === 'whip' ? 8 : 10), d = f - S.f;
-      return d < n ? { i: i - 1, u: (d + 0.5) / n, whip: S.cut === 'whip' ? (S.dir ?? 1) : 0 } : null;
+    at(f, force = null) {
+      const i = force ?? idx(f), S = shots[i], c = camOf(S, f);
+      const k = kind(S), u = force == null && (k === 'move' || k === 'whip') ? travel(S, f) : null;
+      if (u == null) return c;
+      // the camera travels from where the last shot is now to this one (no cut): eased, the aim leads a little
+      const p = camOf(shots[i - 1], f), t = (k === 'whip' ? EASE.whip : EASE.inout)(u), ta = (k === 'whip' ? EASE.whip : EASE.inout)(Math.min(1, u * 1.15));
+      return { ...c, pos: lerp3(p.pos, c.pos, t), aim: lerp3(p.aim, c.aim, ta), lens: 18 / lerp(18 / p.lens, 18 / c.lens, t), roll: lerp(p.roll || 0, c.roll || 0, t),
+        focus: lerp3(p.focus, c.focus, t), dof: lerp(p.dof, c.dof, t) };
     },
-    cutAt(f) { const i = idx(f); return (i > 0 && f === shots[i].f) || !!this.mixAt(f); },
+    // a dissolve crossfades from the shot before over its first n frames; a whip smears the travel (u 1 = no crossfade)
+    mixAt(f) {
+      const i = idx(f), S = shots[i], k = kind(S);
+      if (k === 'dissolve') { const n = S.n ?? 10, d = f - S.f; return d < n ? { i: i - 1, u: (d + 0.5) / n, whip: 0 } : null; }
+      if (k === 'whip') { const u = travel(S, f); return u == null ? null : { i, u: 1, ws: u, whip: S.dir ?? 1 }; }
+      return null;
+    },
+    cutAt(f) { const i = idx(f); return (i > 0 && f === shots[i].f && kind(shots[i]) === 'cut') || kind(shots[i]) === 'dissolve' && !!this.mixAt(f); },
   };
 }

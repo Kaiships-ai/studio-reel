@@ -6,7 +6,7 @@ import { createKit, room, windowY, SURF, label, tex, rng, B } from '../kit.js';
 
 export const SUN_DIR = [-0.7, 0.55, -0.45];
 export const SUN_CENTER = [0, 1, 0.8], SUN_HALF = 5;
-export const PLACES = { sink: [-1.6, 2.2, 0.92], table: [0.9, 0.7, 0.75], clock: [0.6, 2.58, 2.25], calendar: [1.6, 2.58, 1.65], breath: [0.25, 0.3, 1.45] };
+export const PLACES = { sink: [-1.6, 2.2, 0.92], table: [0.9, 0.7, 0.75], clock: [0.5, 2.58, 2.25], calendar: [-0.3, 2.575, 1.68], breath: [0.25, 0.3, 1.45] };
 export const MARKS = { kip: [-0.15, 0.25, 0], mabel: [0.85, 0.15, 0], sink: [-1.6, 1.6, 0] };
 export const CAMERA_SIDE = [0, -1]; export const CAMERA_ROOM = [[[-3.8, -8], [3.8, 0.4]]]; export const COLLIDE = [];
 

@@ -7,7 +7,7 @@ import { daySky } from './lab-night.js';
 
 export const SUN_DIR = [0.55, 0.65, -0.52];
 export const SUN_CENTER = [0, 1, 0.5], SUN_HALF = 5;
-export const PLACES = { pen: [0.9, 0.9, 0.3], calendar: [-2.2, 2.78, 1.8], clip: [-1.55, 0.45, 1.05], pig1: [0.5, 0.8, 0], pig2: [1.2, 1.25, 0], pig3: [1.5, 0.55, 0] };
+export const PLACES = { bowl: [0.12, 0.45, 0.1], pen: [0.9, 0.9, 0.3], calendar: [-2.2, 2.78, 1.8], clip: [-1.55, 0.45, 1.05], pig1: [0.5, 0.8, 0], pig2: [1.2, 1.25, 0], pig3: [1.5, 0.55, 0] };
 export const MARKS = { kip: [-0.75, 0.1, 0] };
 export const CAMERA_SIDE = [0, -1]; export const CAMERA_ROOM = [[[-3.8, -8], [3.8, 0.4]]]; export const COLLIDE = [{ name: 'pen', lo: [-0.1, 0.0, 0], hi: [2.4, 2.2, 0.8] }];
 
@@ -47,7 +47,8 @@ export async function build(stage) {
   K.add(straw);
   for (const [x, y, s] of [[2.3, 1.9, 0.6], [0.3, 2.0, 0.4]]) K.sphere([x, y, 0], s, M.straw, { sz: 0.55, seg: 20 });
   K.box([0.3, 1.7, 0], [1.3, 2.0, 0.22], M.timber, { r: 0.03 }); K.box([0.36, 1.76, 0.12], [1.24, 1.94, 0.2], K.mat([0.75, 0.62, 0.38], 0.9), { r: 0.01 });
-  K.cyl([1.9, 0.4, 0.05], 0.16, 0.1, M.steel, { r2: 0.18 }); K.cyl([1.9, 0.4, 0.09], 0.14, 0.01, K.glass([0.6, 0.75, 0.9], { opacity: 0.6 }));
+  K.cyl([0.12, 0.45, 0.05], 0.16, 0.1, M.steel, { r2: 0.18 }); const milk = K.cyl([0.12, 0.45, 0.09], 0.14, 0.01, K.mat([0.96, 0.95, 0.9], 0.3));
+  K.anim('bowl', milk, (f, v) => { milk.material.color.setRGB(0.96 - 0.5 * v('green', 0), 0.95 - 0.2 * v('green', 0), 0.9 - 0.6 * v('green', 0)); });
   // three piglets that trot about (key trot), heads up and happy
   const pigs = [piglet(K, PLACES.pig1, 1.0, 1), piglet(K, PLACES.pig2, 0.9, 2), piglet(K, PLACES.pig3, 1.05, 3)];
   pigs[0].g.rotation.y = 0.6; pigs[1].g.rotation.y = -0.4; pigs[2].g.rotation.y = 2.4;

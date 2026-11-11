@@ -8,7 +8,7 @@ import { daySky } from './lab-night.js';
 
 export const SUN_DIR = [0.6, 0.55, -0.6];
 export const SUN_CENTER = [0, 1, 1], SUN_HALF = 5;
-export const PLACES = { couch: [-0.7, 1.2, 0.62], screen: [0.95, 1.55, 1.42], dish: [1.75, 0.7, 0.96], blister: [-1.55, 0.55, 0.96], scalpel: [2.6, 1.0, 0.96], cart: [0.95, 1.55, 0] };
+export const PLACES = { model: [-2.6, 0.65, 1.4], modelIn: [-2.6, 0.72, 1.32], couch: [-0.7, 1.2, 0.62], screen: [0.95, 1.55, 1.42], dish: [1.75, 0.7, 0.96], blister: [-1.55, 0.55, 0.96], scalpel: [2.6, 1.0, 0.96], cart: [0.95, 1.55, 0] };
 export const MARKS = { kip: [-0.55, 0.85, 0], warren: [0.35, 0.45, 0], bram: [2.65, 0.55, 0] };
 export const CAMERA_SIDE = [0, -1]; export const CAMERA_ROOM = [[[-3.8, -8], [3.8, 0.4]]];
 export const COLLIDE = [{ name: 'couch', lo: [-1.7, 1.0, 0], hi: [0.2, 1.8, 0.62] }];
@@ -61,7 +61,7 @@ export async function build(stage) {
   K.cube([0, 0, 0.015], [0.3, 0.16, 0.006], K.mat([0.82, 0.84, 0.88], 0.2, { metal: 0.8 }), { parent: bl, r: 0.002 });
   for (let i = 0; i < 14; i++) K.sphere([-0.12 + (i % 7) * 0.04, -0.035 + Math.floor(i / 7) * 0.07, 0.02], 0.014, K.mat([0.96, 0.96, 0.98], 0.3, { physical: true, clearcoat: 1 }), { parent: bl, sz: 0.5, seg: 12 });
   K.card([0, -0.1, 0.02], 0.3, 0.05, label('14 DAYS · 1 TWICE DAILY', { w: 512, h: 80, bg: '#1d4f8a', fg: '#fff' }), { parent: bl, rotX: -90 });
-  K.box([-1.9, 0.3, 0], [-1.2, 0.8, 0.94], M.white, { r: 0.02 }); K.anim('blister', bl, () => {});
+  bl.visible = false; K.anim('blister', bl, () => {});
   // surgery tray: steel tray, scalpel, forceps, a lamp above that goes out on "No surgery"
   const tr = K.group(PLACES.scalpel, 0); K.cube([0, 0, 0.01], [0.5, 0.32, 0.02], M.steel, { parent: tr, r: 0.008 });
   K.cube([-0.05, 0, 0.026], [0.26, 0.016, 0.006], M.steel, { parent: tr, r: 0.002 }); K.cube([0.11, 0.0, 0.026], [0.05, 0.012, 0.004], K.mat([0.9, 0.92, 0.95], 0.1, { metal: 1 }), { parent: tr, r: 0.001 });
@@ -79,6 +79,46 @@ export async function build(stage) {
   const clk = K.group([-0.9, 2.56, 2.5]); K.cyl([0, 0, 0], 0.2, 0.05, M.black, { parent: clk, axis: 'y' }); K.cyl([0, -0.03, 0], 0.18, 0.02, M.white, { parent: clk, axis: 'y' });
   K.cube([0, -0.045, 0.05], [0.012, 0.005, 0.11], M.black, { parent: clk }); K.cube([0.04, -0.045, 0], [0.08, 0.005, 0.01], M.black, { parent: clk });
   K.box([-3.6, 1.6, 0.8], [-3.2, 2.5, 0.95], M.white, { r: 0.03 }); K.box([-3.75, 1.7, 1.2], [-3.7, 2.4, 1.9], K.mat([0.8, 0.85, 0.9], 0.05, { metal: 1 }), { r: 0.01 });
-  K.point([0, 0, 2.9], [1, 0.97, 0.9], 3, 6);
+  K.point([0, 0, 2.9], [1, 0.97, 0.9], 3, 6); K.area([0, 0.4, 3.1], [0, 0.4, 0], 4, 1.4, [1, 0.98, 0.95], 7);
+  K.box([-1.5, 0.3, 3.15], [1.5, 0.6, 3.2], K.glow([1, 0.99, 0.95], 2.0), { r: 0 });
+  // the teaching model: a big cutaway stomach on a pedestal, open toward the camera, its lining inside. Keys (lining):
+  // inflame, ulcer, heal; (bugs) grow, kill; (pills) drop. Kip and Warren stand beside it and explain.
+  const md = K.group([-2.6, 0.75, 0], 8);
+  K.cyl([0, 0, 0.42], 0.09, 0.84, M.steel, { parent: md }); K.cyl([0, 0, 0.02], 0.35, 0.04, M.steel, { parent: md });
+  const outer = K.mat([0.95, 0.62, 0.58], 0.45, { physical: true, clearcoat: 0.6 }), lin = K.mat([0.90, 0.48, 0.48], 0.3, { physical: true, clearcoat: 1, side: THREE.BackSide });
+  const bowlG = new THREE.SphereGeometry(0.55, 64, 40, Math.PI, Math.PI);   // the back half: a bowl open to -y
+  const shell = new THREE.Mesh(bowlG, outer); shell.scale.set(1.0, 1.15, 0.75); shell.position.copy(B(0, 0, 1.45)); K.add(shell, md);
+  const ig = new THREE.SphereGeometry(0.53, 96, 60, Math.PI, Math.PI), ip = ig.attributes.position, v3 = new THREE.Vector3();
+  for (let i = 0; i < ip.count; i++) { v3.fromBufferAttribute(ip, i); const a = Math.atan2(v3.y, v3.x); v3.multiplyScalar(1 - 0.05 * Math.pow(Math.abs(Math.sin(a * 7 + v3.y * 4)), 0.6)); ip.setXYZ(i, v3.x, v3.y, v3.z); }
+  ig.computeVertexNormals(); const inner = new THREE.Mesh(ig, lin); inner.scale.set(1.0, 1.15, 0.75); inner.position.copy(B(0, 0, 1.45)); K.add(inner, md);
+  const rim = K.torus([0, 0, 1.45], 0.55, 0.035, outer, { parent: md, rx: 0 }); rim.scale.set(1, 1.15, 1);
+  K.torus([-0.42, 0.05, 2.0], 0.22, 0.09, outer, { parent: md, arc: Math.PI * 0.7, rx: 0 }).rotation.z = 1.2;      // gullet in at the top left
+  K.torus([0.45, 0.05, 0.95], 0.2, 0.08, outer, { parent: md, arc: Math.PI * 0.8, rx: 0 }).rotation.z = -2.4;      // out to the gut, bottom right
+  K.card([0, -0.25, 0.72], 0.6, 0.12, label('STOMACH · MODEL', { w: 512, h: 100, bg: '#20304a', fg: '#ffe7b0' }), { parent: md });
+  const R2 = rng(12), wallY = (x, z) => 0.75 * 0.53 * Math.sqrt(Math.max(0, 1 - (x / 0.53) ** 2 - ((z - 1.45) / 0.61) ** 2)) - 0.03;
+  // ulcer crater on the back wall
+  const ul = K.group([0.12, 0.35, 1.32], 0, md); K.cyl([0, 0, 0], 0.11, 0.02, K.mat([0.42, 0.04, 0.05], 0.4, { physical: true, clearcoat: 1, emit: [0.5, 0.05, 0.02], emitK: 0.5 }), { parent: ul, axis: 'y' });
+  K.torus([0, -0.01, 0], 0.11, 0.025, K.mat([0.85, 0.15, 0.14], 0.3, { physical: true, clearcoat: 1 }), { parent: ul, rx: 0 });
+  K.anim('ulcer', ul, () => {});
+  // spiral bugs that crawl over the inner wall
+  class Hx extends THREE.Curve { getPoint(t, o = new THREE.Vector3()) { return o.set(t * 0.12 - 0.06, 0.012 * Math.sin(t * 22), 0.012 * Math.cos(t * 22)); } }
+  const hg = new THREE.TubeGeometry(new Hx(), 50, 0.006, 6, false), bm = K.mat([0.30, 0.72, 0.22], 0.35, { physical: true, clearcoat: 0.8 }), bugs = K.group([0, 0, 0], 0, md), BL = [];
+  for (let i = 0; i < 26; i++) { const m = new THREE.Mesh(hg, bm), x = (R2() - 0.5) * 0.7, z = 1.45 + (R2() - 0.5) * 0.8, y = wallY(x, z);
+    K.add(m, bugs); BL.push({ m, p: [x, y, z], from: [x * 0.3 - 0.42, -0.1, 2.05], d: R2() * 0.4, ph: R2() * 6 }); }
+  K.anim('bugs', bugs, (f, v) => { const g = v('grow', 0), k = v('kill', 0);
+    for (const q of BL) { const t = Math.min(1, Math.max(0, g * 1.4 - q.d)), e = 1 - Math.pow(1 - t, 3), kk = Math.min(1, Math.max(0, k * 1.4 - q.d));
+      q.m.visible = t > 0 && kk < 0.98; q.m.position.copy(B(...q.from.map((x, i) => x + (q.p[i] - x) * e))); q.m.rotation.set(Math.PI / 2, 0, q.ph + 0.3 * Math.sin(f * 0.3 + q.ph)); q.m.scale.setScalar(Math.max(0.001, 1.6 * (1 - kk))); } });
+  // pills that tumble in through the gullet and burst into foam
+  const pills = K.group([0, 0, 0], 0, md), PL = [], ca = K.mat([0.96, 0.96, 0.98], 0.25, { physical: true, clearcoat: 1 }), cb = K.mat([0.2, 0.45, 0.9], 0.25, { physical: true, clearcoat: 1 });
+  for (let i = 0; i < 5; i++) { const c = new THREE.Group(), a = new THREE.Mesh(new THREE.CapsuleGeometry(0.025, 0.04, 6, 12), ca), b2 = new THREE.Mesh(new THREE.CapsuleGeometry(0.0255, 0.04, 6, 12), cb); a.position.y = 0.02; b2.position.y = -0.02; c.add(a, b2); K.add(c, pills);
+    const foam = []; for (let k = 0; k < 8; k++) { const s2 = new THREE.Mesh(new THREE.SphereGeometry(0.015 + 0.02 * R2(), 10, 8), K.glass([1, 1, 1], { opacity: 0.6 })); K.add(s2, pills); foam.push(s2); }
+    PL.push({ c, foam, x: -0.25 + 0.12 * i, d: i * 0.1, sp: R2() * 6 }); }
+  K.anim('pills', pills, (f, v) => { const dr = v('drop', 0); for (const q of PL) { const t = Math.min(1, Math.max(0, dr * 1.5 - q.d)), fall = Math.min(1, t * 1.6);
+    q.c.visible = t > 0 && t < 0.85; q.c.position.copy(B(-0.42 + (q.x + 0.42) * fall, 0.1 + 0.15 * fall, 2.05 - 0.95 * fall * fall)); q.c.rotation.set(t * 9 + q.sp, t * 5, q.sp);
+    const bu = Math.max(0, (t - 0.6) / 0.4); q.foam.forEach((s2, k) => { const a = k * 2.4 + q.sp; s2.visible = bu > 0 && bu < 1; s2.position.copy(B(q.x + Math.cos(a) * 0.12 * bu, 0.28, 1.1 + Math.sin(a) * 0.12 * bu)); s2.scale.setScalar(1 + bu); }); } });
+  const healthy = lin.color.clone(), sore = new THREE.Color().setRGB(0.62, 0.08, 0.08);
+  K.anim('lining', inner, (f, v) => { const inf = v('inflame', 0) * (1 - v('heal', 0)), p = 0.5 + 0.5 * Math.sin(f * 0.25); lin.color.copy(healthy).lerp(sore, inf); lin.emissive.setRGB(0.35 * inf * (0.6 + 0.4 * p), 0.02 * inf, 0.02 * inf);
+    const u = v('ulcer', 0) * (1 - v('heal', 0)); ul.visible = u > 0.01; ul.scale.setScalar(Math.max(0.01, u)); });
+  K.spot([-1.6, -1.2, 2.6], [-2.6, 0.75, 1.4], [1, 0.97, 0.92], 22, { angle: 32, pen: 0.6, dist: 6 });
   return { props: K.props };
 }

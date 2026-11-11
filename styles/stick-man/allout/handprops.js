@@ -2,6 +2,8 @@
 // lit objects (glass, liquid, gold) without ink, to sit in the allout sets. Importing this module swaps them in.
 import * as THREE from 'three';
 import { BUILD } from '../lib/cast/handprops.js';
+import { POSES, POSE_VERBS, compilePose } from '../engine/poses.js';
+import { ACT } from '../engine/verbs_fx.js';
 
 const std = (c, rough, o = {}) => { const m = new (o.phys ? THREE.MeshPhysicalMaterial : THREE.MeshStandardMaterial)({ color: new THREE.Color().setRGB(...c, THREE.SRGBColorSpace), roughness: rough, metalness: o.metal ?? 0, ...(o.phys ? { clearcoat: 1, clearcoatRoughness: 0.08 } : {}), transparent: o.op != null, opacity: o.op ?? 1, depthWrite: o.op == null, side: o.side ?? THREE.FrontSide }); m.userData.noToon = true; return m; };
 const mesh = (g, m) => { const x = new THREE.Mesh(g, m); x.castShadow = true; x.receiveShadow = true; x.userData.noInk = true; return x; };
@@ -28,3 +30,39 @@ BUILD.medal = () => {                                         // the Nobel medal
   const rib = mesh(new THREE.BoxGeometry(0.035, 0.1, 0.004), std([0.10, 0.22, 0.62], 0.5)); rib.position.y = -0.03; g.add(rib);
   g.userData = { mode: 'up', grip: [0, 0.02, 0], noInk: true }; return g;
 };
+
+// the culture bottle (pour: into the piglets' trough, into the broth): a stoppered flask of green culture, label CULTURE
+BUILD.cup = () => {
+  const g = new THREE.Group(); g.userData.noInk = true;
+  const prof = [[0, 0], [0.05, 0], [0.055, 0.01], [0.055, 0.07], [0.022, 0.12], [0.02, 0.15], [0.024, 0.155], [0, 0.155]].map(([a, b]) => new THREE.Vector2(a, b));
+  g.add(mesh(new THREE.LatheGeometry(prof, 32), std([0.92, 0.96, 1.0], 0.05, { phys: true, op: 0.35, side: THREE.DoubleSide })));
+  const liq = mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.06, 24), std([0.35, 0.78, 0.22], 0.2, { phys: true })); liq.position.y = 0.035; g.add(liq);
+  const cork = mesh(new THREE.CylinderGeometry(0.022, 0.018, 0.03, 16), std([0.72, 0.52, 0.30], 0.8)); cork.position.y = 0.165; g.add(cork);
+  const cv = document.createElement('canvas'); cv.width = 256; cv.height = 96; const c = cv.getContext('2d'); c.fillStyle = '#fff6dc'; c.fillRect(0, 0, 256, 96);
+  c.fillStyle = '#1d5a2a'; c.textAlign = 'center'; c.font = '900 44px InterReel, Arial Black'; c.fillText('CULTURE', 128, 64);
+  const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace;
+  const lab = mesh(new THREE.CylinderGeometry(0.057, 0.057, 0.035, 24, 1, true, -0.9, 1.8), new THREE.MeshStandardMaterial({ map: tx, roughness: 0.7 })); lab.material.userData.noToon = true; lab.position.y = 0.04; g.add(lab);
+  g.userData = { mode: 'up', grip: [0, 0.05, 0.05], noInk: true }; return g;
+};
+// the reviewer's rubber stamp (hammer pose: up, then slammed down every 15 f)
+BUILD.hammer = () => {
+  const g = new THREE.Group(); g.userData.noInk = true;
+  const h = mesh(new THREE.SphereGeometry(0.045, 20, 14), std([0.55, 0.32, 0.16], 0.5)); h.position.y = 0.02; g.add(h);
+  const st = mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.12, 12), std([0.55, 0.32, 0.16], 0.5)); st.position.y = 0.09; g.add(st);
+  const base = mesh(new THREE.BoxGeometry(0.15, 0.035, 0.09), std([0.12, 0.12, 0.14], 0.5)); base.position.y = 0.16; g.add(base);
+  const pad = mesh(new THREE.BoxGeometry(0.14, 0.01, 0.08), std([0.75, 0.08, 0.06], 0.6)); pad.position.y = 0.182; g.add(pad);
+  g.userData = { mode: 'along', grip: [0, 0.0, 0], noInk: true }; return g;
+};
+// a blister of 14 pills held up (show_pills, the show_medal pose with the pack)
+BUILD.blister = () => {
+  const g = new THREE.Group(); g.userData.noInk = true;
+  const card = mesh(new THREE.BoxGeometry(0.2, 0.13, 0.008), std([0.80, 0.84, 0.90], 0.25, { metal: 0.7 })); card.position.y = -0.08; g.add(card);
+  for (let i = 0; i < 14; i++) { const p = mesh(new THREE.SphereGeometry(0.011, 12, 8), std([0.98, 0.98, 1.0], 0.3, { phys: true })); p.scale.z = 0.6; p.position.set(-0.075 + (i % 7) * 0.025, -0.055 - Math.floor(i / 7) * 0.05, 0.006); g.add(p); }
+  const cv = document.createElement('canvas'); cv.width = 256; cv.height = 64; const c = cv.getContext('2d'); c.fillStyle = '#1d4f8a'; c.fillRect(0, 0, 256, 64); c.fillStyle = '#fff'; c.textAlign = 'center'; c.font = '900 40px InterReel, Arial Black'; c.fillText('14 DAYS', 128, 48);
+  const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace;
+  const lb = mesh(new THREE.PlaneGeometry(0.2, 0.05), new THREE.MeshBasicMaterial({ map: tx })); lb.material.userData.noToon = true; lb.position.set(0, -0.01, 0.005); g.add(lb);
+  g.userData = { mode: 'up', grip: [0, 0.02, 0], noInk: true }; return g;
+};
+// show_pills: the show_medal pose holding up the blister pack
+POSES.show_pills = { ...POSES.show_medal, props: { R: 'blister' } };
+POSE_VERBS.show_pills = ACT.show_pills = (p, st, C) => compilePose('show_pills', p, st, C);

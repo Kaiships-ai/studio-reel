@@ -62,6 +62,7 @@ export async function build(stage) {
     K.card([0, -0.035, 0], 0.85, 1.15, tex(128, 160, (g, w, h) => { g.fillStyle = '#3b2a1e'; g.fillRect(0, 0, w, h); g.fillStyle = '#d8c7a8'; g.beginPath(); g.arc(w / 2, h * 0.42, 28, 0, 7); g.fill(); g.fillStyle = '#1d1d1d'; g.fillRect(w * 0.25, h * 0.62, w * 0.5, h * 0.4);
       g.fillStyle = '#eee'; g.beginPath(); g.moveTo(w / 2 - 10, h * 0.62); g.lineTo(w / 2, h * 0.75); g.lineTo(w / 2 + 10, h * 0.62); g.fill(); g.fillStyle = '#222'; g.fillRect(w / 2 - 12, h * 0.4, 8, 3); g.fillRect(w / 2 + 4, h * 0.4, 8, 3); }), { parent: pg });
   }
+  for (const x of [-4, 0, 4]) for (const y of [-6, -2]) { K.sphere([x, y, 5.4], 0.18, K.glow([1, 0.9, 0.7], 2.5)); K.point([x, y, 5.0], [1, 0.85, 0.62], 6, 7); }
   // stage lights: a warm key from above the rows onto the stage, a cool rim from the screen side
   K.spot([0, -3, 5.5], [-1.2, 3.4, 1.2], [1, 0.82, 0.58], 60, { angle: 30, pen: 0.6, dist: 14 });
   K.spot([0, 4.5, 5.4], [0, -1, 1], [1, 0.78, 0.5], 45, { angle: 50, pen: 0.8, dist: 12 });
@@ -69,17 +70,17 @@ export async function build(stage) {
   const rd = K.group([6.1, -6.0, 0]);
   K.cube([0, 0, 0.42], [1.6, 0.9, 0.84], M.panel, { parent: rd, r: 0.02 }); K.cube([0, 0, 0.86], [1.7, 1.0, 0.04], K.mat([0.12, 0.28, 0.18], 0.7), { parent: rd, r: 0.01 });
   const lamp = K.group([0.5, 0.3, 0.88], 0, rd); K.cyl([0, 0, 0.02], 0.08, 0.03, M.brass, { parent: lamp }); K.cyl([0, 0, 0.18], 0.01, 0.3, M.brass, { parent: lamp });
-  K.cyl([0, -0.05, 0.34], 0.07, 0.3, M.green, { parent: lamp, axis: 'x', r2: 0.07 }); K.spot([6.6, -5.75, 1.2], [6.0, -6.05, 0.86], [1, 0.9, 0.7], 10, { angle: 40, pen: 0.7, dist: 3 });
-  const paper = K.card([-0.1, -0.05, 0.885], 0.5, 0.66, tex(256, 340, (g, w, h) => { g.fillStyle = '#f6f2e6'; g.fillRect(0, 0, w, h); g.fillStyle = '#111'; g.textAlign = 'center';
+  K.cyl([0, -0.05, 0.34], 0.07, 0.3, M.green, { parent: lamp, axis: 'x', r2: 0.07 }); K.spot([6.6, -6.6, 2.4], [6.1, -5.7, 1.0], [1, 0.9, 0.7], 14, { angle: 45, pen: 0.7, dist: 4 });
+  const paper = K.card([0.08, 0.16, 0.885], 0.5, 0.66, tex(256, 340, (g, w, h) => { g.fillStyle = '#f6f2e6'; g.fillRect(0, 0, w, h); g.fillStyle = '#111'; g.textAlign = 'center';
     g.font = '700 14px Georgia'; g.fillText('Unidentified curved bacilli', w / 2, 34); g.fillText('in the stomach of patients', w / 2, 52); g.fillText('with gastritis and peptic ulceration', w / 2, 70);
     g.font = 'italic 12px Georgia'; g.fillText('B. J. Marshall, J. R. Warren', w / 2, 92); for (let y = 112; y < h - 14; y += 11) g.fillRect(20, y, w - 40 - ((y * 7) % 30), 3); }), { parent: rd, rotX: -90, env: 0.4 });
-  const ink = K.card([-0.1, -0.05, 0.887], 0.44, 0.22, label(['BOTTOM 10 %', { t: 'REVIEWERS 1983', s: 0.45 }], { w: 512, h: 256, bg: null, fg: '#c0140e', border: '#c0140e' }), { parent: rd, rotX: -90, transparent: true, env: 0.3 });
+  const ink = K.card([0.08, 0.16, 0.887], 0.44, 0.22, label(['BOTTOM 10 %', { t: 'REVIEWERS 1983', s: 0.45 }], { w: 512, h: 256, bg: null, fg: '#c0140e', border: '#c0140e' }), { parent: rd, rotX: -90, transparent: true, env: 0.3 });
   ink.rotation.z = 0.15;
   const stamp = K.group([0.35, -0.2, 0.88], 0, rd); K.cube([0, 0, 0.03], [0.2, 0.12, 0.05], M.black, { parent: stamp, r: 0.01 }); K.cyl([0, 0, 0.12], 0.025, 0.14, M.wood, { parent: stamp }); K.sphere([0, 0, 0.21], 0.05, M.wood, { parent: stamp });
   K.cube([-0.6, 0.2, 0.89], [0.3, 0.2, 0.03], K.mat([0.6, 0.06, 0.05], 0.6), { parent: rd, r: 0.01 });
   K.anim('stamp', stamp, (f, v) => { const h = v('hit', 0); const down = h < 1 ? Math.sin(h * Math.PI / 2) : 1, lift = Math.max(0, h - 1);
     const pos = h <= 0 ? [0.35, -0.2, 0.88] : h < 1 ? [0.35 - 0.45 * down, -0.2 + 0.15 * down, 0.88 + 0.25 * Math.sin(h * Math.PI)] : [-0.1 + 0.4 * Math.min(1, lift * 2), -0.05 - 0.15 * Math.min(1, lift * 2), 0.88 + 0.2 * Math.sin(Math.min(1, lift * 2) * Math.PI)];
-    stamp.position.copy(B(...pos)); stamp.rotation.y = h > 0 && h < 1 ? 0.15 * down : 0; ink.visible = h >= 1; });
+    stamp.visible = false; ink.visible = h >= 1; });
   K.anim('paper', paper, () => {});
   return { props: K.props };
 }
