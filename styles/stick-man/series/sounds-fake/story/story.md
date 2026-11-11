@@ -54,7 +54,7 @@ Logline: In a toy city called Halden, three stick actors restage one true story 
 - Present tense for the story; past tense allowed in the hook sentence.
 - Plain words a 12-year-old knows; one number per line at most; every number checkable.
 - Gross or scary is played as a gag (breath, vomit, explosions), never as gore.
-- Episodes run 60-80 s (190-250 words at Achird's 2.9-3.3 words/s). Each episode is one chapter of this serial.
+- Episodes run 60-80 s (195-235 words at Achird's 2.9-3.3 words/s). Each episode is one chapter of this serial.
 
 ## Notes
 
@@ -77,7 +77,7 @@ Title shortlist (premise-workshop step 7): Sounds Fake (kept), Laughed At, It Wo
 ## Series Notes
 
 - Season 1 of the series `sounds-fake`. Each episode stands alone; no episode needs another to make sense.
-- Canon that never changes: the troupe (`characters/kai.md`, `characters/bram.md`, `characters/mabel.md`) keeps its look and temperament and plays a new real person each episode. The narrator is always Achird.
+- Canon that never changes: the troupe (`characters/kip.md`, `characters/bram.md`, `characters/mabel.md`) keeps its look and temperament and plays a new real person each episode. The narrator is always Achird.
 - Real people are new characters per episode, listed in the chapter cast, each with a `## Played By` line naming the troupe actor.
 - Halden is the only city. A real place is shown by restaging it on a Halden set and printing the real name and year on something in the world (`worldbuilding/systems/restaging.md`).
 - Threads carried between episodes: none on purpose. The only running thread is the season goal and Bram being wrong again (a gag, never a plot).

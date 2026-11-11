@@ -23,7 +23,7 @@ state-changes: []
 
 ## Purpose
 
-The odd act (l06-l08): piglets fail, so he drinks it without permission. Outcome yes-but: he drinks it, but he risks his health and his marriage.
+The odd act (l06-l08): six months of piglets fail, so to win the argument he drinks it without permission. Outcome yes-but: he drinks it, but he risks his health and his marriage.
 
 ## Continuity Notes
 

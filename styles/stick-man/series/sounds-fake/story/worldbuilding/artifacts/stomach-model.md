@@ -13,11 +13,11 @@ tags:
 
 ## Description
 
-A large cut-open stomach model on the lab bench (tabletop scale, like the `cutaway` explainers): pink lining, keyed parts `bugs` (small green spirals that wiggle in), `inflame` (lining shifts to angry red, `glowK`), `ulcer` (a crater opens), `cure` (pills drop in, bugs vanish, lining back to pink).
+A large cut-open stomach model on the lab bench (tabletop scale, like the `cutaway` explainers): pink lining, keyed parts `bugs` (small green spirals that wiggle in), `inflame` (lining shifts to angry red, `glowK`), `ulcer` (a crater opens; only on the generic model in the "You see," explainer, never on Marshall's own scope view: he had gastritis, not an ulcer), `cure` (pills drop in, bugs vanish, lining back to pink).
 
 ## Function
 
-The "You see," pivot (l11) and the cure (l12). Reusable for any body-inside explainer.
+The "You see," pivot (l11) and the cure (l12-l13). Reusable for any body-inside explainer.
 
 ## History
 

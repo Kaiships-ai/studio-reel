@@ -3,7 +3,7 @@ name: Laughed At
 type: main
 status: in-progress
 characters:
-  - kai
+  - kip
   - bram
   - mabel
 themes:
@@ -14,7 +14,7 @@ acts: []
 
 # Laughed At
 
-The season arc (serial `season-goal`): every episode, an idea the world laughs at turns out true. Kai does it, Bram laughs, Mabel sees it first, the last word proves it.
+The season arc (serial `season-goal`): every episode, an idea the world laughs at turns out true. Kip does it, Bram laughs, Mabel sees it first, the last word proves it.
 
 ## Setup
 
@@ -38,7 +38,7 @@ Bram's face in the last frame (series sign-off). Nothing carries to the next epi
 
 | # | Plot Point | Act | Chapter | Status | Notes |
 |---|------------|-----|---------|--------|-------|
-| 1 | A doctor drinks the bug and wins the Nobel Prize | 1 | chapter-01 | drafted | 206 words |
+| 1 | A doctor drinks the bug and wins the Nobel Prize | 1 | chapter-01 | drafted | 200 words (v2) |
 | 2 | Rubber tanks: "The Americans are very strong." | 1 | chapter-02 | planned | research open |
 | 3 | Chicago lifts a hotel with guests inside | 1 | chapter-03 | planned | research disputed |
 

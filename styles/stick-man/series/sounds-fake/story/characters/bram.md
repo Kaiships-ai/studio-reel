@@ -5,7 +5,7 @@ status: alive
 aliases:
   - "the Doubter"
 relationships:
-  - character: kai
+  - character: kip
     type: rival
   - character: mabel
     type: neighbour
@@ -27,7 +27,7 @@ ghost-wound: ""
 
 ## Appearance
 
-Kit spec `BRAM` (`lib/cast/extras.js`): navy-black shirt (the darkest figure on screen, reads as a black cut-out at thumbnail size), a flat dark hair cap. Empty hands so the arms can cross. One role piece per episode (a tie, a cap badge) may be added.
+Kit spec `BRAM` (`lib/cast/extras.js`): navy-black shirt (the darkest figure on screen, reads as a black cut-out at thumbnail size), a flat dark hair cap with a pale grey band (role-independent, part of his identity) and a cool rim light on dark sets, so the navy-black never vanishes. Empty hands so the arms can cross. One role piece per episode (a tie, a cap badge) may be added.
 
 ## Personality & Traits
 

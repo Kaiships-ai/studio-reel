@@ -3,49 +3,49 @@
  "cast": {
   "nar": "Achird"
  },
- "note": "Sounds Fake ep 1 'The Doctor Who Drank the Bug'. Built from story/chapters/chapter-01.md (story-skills adaptation). 206 words, est. 62-71 s at Achird 2.9-3.3 words/s. Sources: story/research/ep01-marshall-fact-check.md. NOT yet approved by Kai.",
+ "note": "Sounds Fake ep 1 'The Doctor Who Drank the Bug', v2 (independent review applied 11/11). Built from story/chapters/chapter-01.md. 200 words, est. 61-69 s of speech at Achird 2.9-3.3 words/s. Sources: story/research/ep01-marshall-fact-check.md. NOT yet approved by Kai.",
  "lines": [
   {
    "id": "l01",
    "who": "nar",
    "style": "fast, intrigued",
-   "text": "To win an argument, a doctor drank a beaker of live bacteria."
+   "text": "A doctor swallowed a beaker of bacteria. On purpose."
   },
   {
    "id": "l02",
    "who": "nar",
    "style": "fast",
-   "text": "Western Australia, the early 1980s. Everyone knows ulcers come from stress, spicy food and too much acid."
+   "text": "1982, Perth, Australia. Everyone knows ulcers come from stress and spicy food."
   },
   {
    "id": "l03",
    "who": "nar",
    "style": "fast, matter-of-fact",
-   "text": "But Barry Marshall and pathologist Robin Warren keep finding the same tiny spiral bug in ulcer patients."
+   "text": "But Barry Marshall and pathologist Robin Warren keep seeing the same tiny spiral bug in sick stomachs, again and again."
   },
   {
    "id": "l04",
    "who": "nar",
    "style": "fast, amused",
-   "text": "The experts laugh. Reviewers rank their paper in the bottom ten percent of the year."
+   "text": "The experts scoff. Reviewers rank their paper in the bottom ten percent they received that year."
   },
   {
    "id": "l05",
    "who": "nar",
    "style": "fast, mocking",
-   "text": "The bug? Just a contaminant, they say."
+   "text": "The bug? Just a contaminant, they say. Harmless."
   },
   {
    "id": "l06",
    "who": "nar",
    "style": "fast, determined",
-   "text": "So he tries to infect piglets. Nothing. That leaves one test animal: himself."
+   "text": "He spends six months trying to infect piglets. It fails. So, to win the argument, he picks one last test animal: himself."
   },
   {
    "id": "l07",
    "who": "nar",
    "style": "fast",
-   "text": "July 1984. His lab tech scrapes two dishes of bacteria into beef broth, and he knocks it back like a shot."
+   "text": "1984. Two dishes of the bug go into a beaker of beef broth, and down it goes."
   },
   {
    "id": "l08",
@@ -57,31 +57,37 @@
    "id": "l09",
    "who": "nar",
    "style": "fast, grossed out",
-   "text": "Days later, his breath smells putrid. Then he's throwing up every morning."
+   "text": "Days later, his wife notices his breath smells putrid. Then he's throwing up every morning."
   },
   {
    "id": "l10",
    "who": "nar",
    "style": "fast, excited",
-   "text": "Wait. A camera down his throat finds his stomach swollen and red, crawling with the spiral bug."
+   "text": "Wait. A camera down his throat finds his stomach inflamed. The biopsy grows the spiral bug."
   },
   {
    "id": "l11",
    "who": "nar",
    "style": "fast, explaining",
-   "text": "You see, the real culprit was the bug. It inflames the stomach lining, and that's where most ulcers start."
+   "text": "You see, the bug is behind most ulcers, not stress. It keeps the stomach lining inflamed."
   },
   {
    "id": "l12",
    "who": "nar",
    "style": "fast, matter-of-fact",
-   "text": "Kill the bug, and the ulcer is cured. Two weeks of pills instead of surgery."
+   "text": "Kill the bug, and the ulcer heals for good."
   },
   {
    "id": "l13",
    "who": "nar",
+   "style": "fast, matter-of-fact",
+   "text": "Two weeks of pills. No surgery."
+  },
+  {
+   "id": "l14",
+   "who": "nar",
    "style": "fast, triumphant",
-   "text": "Twenty-one years after that putrid drink, the two men they laughed at walk on stage in Stockholm and collect the Nobel Prize."
+   "text": "Twenty-one years after that putrid drink, the doctor they laughed at collects the Nobel Prize."
   }
  ]
 }

@@ -6,7 +6,7 @@ population: ""
 controlled-by: ""
 notable-characters:
   - bram
-  - kai
+  - kip
 tags:
   - kit-set-classroom
 status: active

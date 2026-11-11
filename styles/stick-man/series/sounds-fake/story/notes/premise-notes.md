@@ -39,7 +39,7 @@ Logline: In a toy city called Halden, three stick actors restage one true story 
 | Irony / hook | pass | "sounds fake" is a promise the last word pays |
 | Repeatable (serial engine) | pass | the world supplies endless true stories; only the script swaps |
 | Distinct from the reference channel | pass | our frame is a fixed troupe + "laughed at, proven right"; their stories and characters are not used |
-| Risk | weak | real living people are portrayed; mitigated by sourcing every claim and keeping the tone admiring |
+| Risk | weak | real people are portrayed (Marshall is living; Warren died in 2024); mitigated by sourcing every claim and keeping the tone admiring |
 
 ## 4. Premise and counter-premise
 
@@ -52,7 +52,7 @@ External: the fact the world got wrong. Relational: the doubter's laugh, aimed a
 
 ## 6. Form
 
-`serial`: each episode is a chapter of 190-250 words; a season is the book. Moving parts per episode: 1 doer, 1 doubter, 1 witness, 3-5 places, 1 hidden rule. That fits flash length, not a short story.
+`serial`: each episode is a chapter of 195-235 words; a season is the book. Moving parts per episode: 1 doer, 1 doubter, 1 witness, 3-5 places, 1 hidden rule. That fits flash length, not a short story.
 
 ## 7. Titles
 

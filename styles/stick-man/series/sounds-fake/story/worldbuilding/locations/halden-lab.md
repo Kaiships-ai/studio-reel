@@ -5,7 +5,7 @@ region: halden
 population: ""
 controlled-by: ""
 notable-characters:
-  - kai
+  - kip
   - barry-marshall
   - robin-warren
 tags:

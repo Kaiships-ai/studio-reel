@@ -6,7 +6,7 @@ character-state: []
 object-state: []
 knowledge-state:
   - character: barry-marshall
-    knows: Drinking the culture gave him gastritis and the biopsy shows the spiral bug
+    knows: Drinking the culture gave him gastritis (not an ulcer) and the biopsy grows the spiral bug
     fact: self-infection-proof
     learned-in: chapter-01
 ---

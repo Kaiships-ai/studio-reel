@@ -6,7 +6,7 @@ population: ""
 controlled-by: ""
 notable-characters:
   - mabel
-  - kai
+  - kip
   - barry-marshall
   - adrienne-marshall
 tags:
@@ -23,7 +23,7 @@ New small code set `kitchen` (SETS.md "Add a new set in 15 minutes"): a home kit
 ## Notable Features
 
 - Mabel leans in, then recoils from the breath (a green `steam` puff is the breath).
-- The sink is where Kai throws up every morning (shown as a gag: back to camera, wall clock jumps a day).
+- The sink is where Kip throws up every morning (shown as a gag: back to camera, wall clock jumps a day).
 
 ## Current State
 

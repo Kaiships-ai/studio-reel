@@ -24,7 +24,7 @@ state-changes: []
 
 ## Purpose
 
-Turn and payoff (l10-l13): the camera finds the bug; 'You see,' explains the rule; the cure; the Nobel Prize on the last word. Pays off the beaker promise.
+Turn and payoff (l10-l14): the scope finds his stomach inflamed and the biopsy grows the bug (gastritis, no ulcer); 'You see,' explains the rule; the cure; the Nobel Prize on the last word. Pays off the beaker promise.
 
 ## Continuity Notes
 

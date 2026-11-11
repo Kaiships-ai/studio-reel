@@ -24,7 +24,7 @@ state-changes: []
 
 ## Purpose
 
-Stage the doubt (l02-l05): common belief, the laughing experts, 'a contaminant'. Outcome no-and: the paper is ranked bottom ten percent AND the bug is dismissed.
+Stage the doubt (l02-l05): common belief, the scoffing experts, 'a contaminant'. Outcome no-and: the paper is ranked bottom ten percent AND the bug is dismissed.
 
 ## Continuity Notes
 

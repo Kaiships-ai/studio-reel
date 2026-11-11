@@ -9,7 +9,7 @@ relationships:
     type: colleague
   - character: adrienne-marshall
     type: spouse
-  - character: kai
+  - character: kip
     type: played-by
 locations:
   - halden-lab
@@ -25,7 +25,7 @@ arc: "the laughed-at idea"
 
 ## Appearance
 
-Restaged by Kai. Role piece: a tie (kit clothes `tie`). Real person, living: portrayed only through sourced facts (`research/ep01-marshall-fact-check.md`).
+Restaged by Kip. Role piece: a tie (kit clothes `tie`). First appearance shows a printed name plaque "DR BARRY MARSHALL". Real person, living (2026): portrayed only through sourced facts (`research/ep01-marshall-fact-check.md`).
 
 ## Personality & Traits
 
@@ -41,7 +41,7 @@ Prove that a bacterium, not stress, causes most ulcers, so ulcers can be cured.
 
 ## Played By
 
-Kai (troupe).
+Kip (troupe).
 
 ## Character Arc
 

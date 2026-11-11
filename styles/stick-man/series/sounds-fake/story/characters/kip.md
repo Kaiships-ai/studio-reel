@@ -1,5 +1,5 @@
 ---
-name: Kai
+name: Kip
 role: protagonist
 status: alive
 aliases:
@@ -26,11 +26,11 @@ truth: "A strange idea is worth testing on yourself before you argue about it."
 ghost-wound: ""
 ---
 
-# Kai
+# Kip
 
 ## Appearance
 
-Kit spec `KAI` (`engine/cast.js`), never changed: white head and shirt, brown curls with a red bandana knot (bushy, red-topped silhouette), round glasses, orange vest with a green strap. One role piece per episode may be added on top (a tie, a hand prop); the curls, bandana, glasses and vest stay.
+Actor name **Kip** (never "Kai", so the actor never collides with Kai the owner); kit spec stays `KAI` (`engine/cast.js`), never changed: white head and shirt, brown curls with a red bandana knot (bushy, red-topped silhouette), round glasses, orange vest with a green strap. One role piece per episode may be added on top (a tie, a hand prop); the curls, bandana, glasses and vest stay.
 
 ## Personality & Traits
 

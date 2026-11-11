@@ -12,10 +12,10 @@ story: sounds-fake
 | Adrienne Marshall | minor | alive | [adrienne-marshall](adrienne-marshall.md) |
 | Barry Marshall | protagonist | alive | [barry-marshall](barry-marshall.md) |
 | Bram | antagonist | alive | [bram](bram.md) |
-| Kai | protagonist | alive | [kai](kai.md) |
+| Kip | protagonist | alive | [kip](kip.md) |
 | Mabel | supporting | alive | [mabel](mabel.md) |
 | Narrator | narrator | alive | [narrator](narrator.md) |
-| Robin Warren | supporting | alive | [robin-warren](robin-warren.md) |
+| Robin Warren | supporting | deceased | [robin-warren](robin-warren.md) |
 
 ## Relationship Map
 

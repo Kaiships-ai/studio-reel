@@ -1,7 +1,7 @@
 ---
 name: Robin Warren
 role: supporting
-status: alive
+status: deceased
 aliases: []
 relationships:
   - character: barry-marshall
@@ -19,7 +19,7 @@ arc: ""
 
 ## Appearance
 
-One-off extra built for this episode (bible extras rule): light grey shirt, grey hair cap, glasses. Real person; shown only at the microscope and on the prize stage.
+One-off extra built for this episode (bible extras rule): light grey shirt, grey hair cap, glasses. Real person, died 23 July 2024 in Perth, aged 87 (Nobel Foundation laureate page). Alive throughout the restaged events (1981-2005). Shown only at the microscope and on the prize stage, with a name plaque "DR ROBIN WARREN" on first appearance.
 
 ## Backstory
 
@@ -35,3 +35,4 @@ One-off extra `warren` (not a troupe actor).
 |------|-------|-----------|
 | early 1980s | sees the bacteria in biopsies | setup |
 | 2005 | shares the Nobel Prize | payoff |
+| 23 Jul 2024 | dies in Perth, aged 87 | after the story; tone stays respectful |

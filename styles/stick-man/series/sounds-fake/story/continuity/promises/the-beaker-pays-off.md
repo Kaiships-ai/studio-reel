@@ -13,11 +13,11 @@ characters:
 
 ## Setup
 
-l01: "a doctor drank a beaker of live bacteria" — the viewer is owed why.
+l01: "A doctor swallowed a beaker of bacteria. On purpose." — the viewer is owed why.
 
 ## Payoff
 
-l13: the drink is named again ("that putrid drink") as the prize is handed over.
+l14: the drink is named again ("that putrid drink") as the prize is handed over.
 
 ## Tracking Notes
 

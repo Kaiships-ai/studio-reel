@@ -5,7 +5,7 @@ status: alive
 aliases:
   - "the Witness"
 relationships:
-  - character: kai
+  - character: kip
     type: friend
   - character: bram
     type: neighbour

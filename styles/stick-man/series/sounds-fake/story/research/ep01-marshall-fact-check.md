@@ -5,7 +5,9 @@ sources:
   - "Nobel Foundation, Barry J. Marshall - Biographical (Les Prix Nobel 2005), https://www.nobelprize.org/prizes/medicine/2005/marshall/biographical/"
   - "Nobel Assembly at Karolinska Institutet, press release 3 October 2005, https://www.nobelprize.org/prizes/medicine/2005/press-release/"
   - "Nobel Foundation, Award ceremony speech (S. Normark), 10 December 2005, https://www.nobelprize.org/prizes/medicine/2005/ceremony-speech/"
+  - "Nobel Foundation, J. Robin Warren laureate page, https://www.nobelprize.org/laureate/790"
   - "Lasker Foundation, 'Gut feeling', https://laskerfoundation.org/gut-feeling/"
+  - "Penn State News, 'Gut instincts: profile of Nobel laureate Barry Marshall', https://www.psu.edu/news/research/story/gut-instincts-profile-nobel-laureate-barry-marshall"
   - "Wikipedia, 'Barry Marshall' (cites Klein, Seeing What Others Don't; Discover; Nobel lecture), https://en.wikipedia.org/wiki/Barry_Marshall"
 used-in:
   - chapter-01
@@ -21,39 +23,37 @@ reviewed-by: []
 
 ## Question
 
-Every claim the ep 1 narration makes about Barry Marshall, Robin Warren and H. pylori, line by line. Enough = one primary source (Nobel Foundation, Marshall's own autobiography) or two independent secondary sources that agree. All URLs below were opened on 11/11/2026.
-
-## Search Plan
-
-Primary: Nobel Foundation pages (press release, Marshall's autobiography, ceremony speech). Secondary: Lasker Foundation feature; Wikipedia with its citations. Terms: "Marshall drank Helicobacter broth 1984", "bottom 10% Gastroenterological Society".
+Every claim the ep 1 narration (v2, 200 words) makes about Barry Marshall, Robin Warren and H. pylori, line by line. Enough = one primary source (Nobel Foundation, Marshall's own autobiography) or two independent secondary sources that agree. All URLs were opened on 11/11/2026. v2 applies the independent review of 11/11 (fixes to l04, l06, l07, l10; Warren's death).
 
 ## Findings
 
 | Line | Claim in the script | Source and exact wording | Confidence |
 |---|---|---|---|
-| l01 | a doctor drank a beaker of live bacteria | Lasker: "scraping the contents of two petri dishes swarming with bacteria into a small beaker of beef broth"; Nobel bio: "decided to use myself" | high |
-| l01 | "to win an argument" | Nobel bio: "I had a successful infection, I had proved my point." (paraphrase) | high |
-| l02 | early 1980s, ulcers blamed on stress, spicy food, too much acid | Nobel PR: "In 1982 ... stress and lifestyle were considered the major causes of peptic ulcer disease"; Wikipedia: "ulcers were caused primarily by stress, spicy foods, and too much acid" | high |
-| l03 | Marshall and pathologist Robin Warren keep finding the same tiny spiral bug in ulcer patients | Nobel PR: "Robin Warren ... a pathologist from Perth"; "Helicobacter pylori is a spiral-shaped Gram-negative bacterium"; "present in almost all patients with gastric inflammation, duodenal ulcer or gastric ulcer" | high |
-| l04 | the experts laugh | Lasker (quoting Gaynes): "Gastroenterologists didn't believe a word of it ... He was ridiculed." | high |
-| l04 | reviewers rank their paper in the bottom ten percent of the year | Wikipedia: "rating it in the bottom 10% of those they received that year" (cites Klein); Lasker: reviewers "ranked their submission as one of the worst for that year" | medium-high (two secondary sources agree) |
-| l05 | "just a contaminant, they say" | Nobel bio: "I was told that the bacteria were either contaminants or harmless commensals." | high |
-| l06 | he tries to infect piglets, nothing | Wikipedia: "After failed attempts to infect piglets in 1984" (cites Discover); Nobel bio: "I was unsuccessfully attempting to infect an animal model" | high |
-| l06 | that leaves himself | Nobel bio: "decided to use myself" | high |
-| l07 | July 1984; lab tech scrapes two dishes into beef broth; knocks it back like a shot | Lasker: "On a Tuesday morning in July 1984 ... asked his lab technician to fix him a stiff drink ... two petri dishes ... beef broth"; swallowed "quickly, like a shot" | high |
+| l01 | a doctor swallowed a beaker of bacteria, on purpose | Lasker: "two petri dishes swarming with bacteria into a small beaker of beef broth"; Nobel bio: "I realized I had to have an animal model and decided to use myself" | high |
+| l02 | 1982, Perth; ulcers blamed on stress and spicy food | Nobel PR: "In 1982 ... stress and lifestyle were considered the major causes of peptic ulcer disease"; Wikipedia: "caused primarily by stress, spicy foods, and too much acid"; Nobel bio: Royal Perth Hospital; Nobel PR: Warren "a pathologist from Perth" | high |
+| l03 | Marshall and pathologist Robin Warren keep seeing the same tiny spiral bug in sick stomachs | Nobel PR: "spiral-shaped Gram-negative bacterium"; "present in almost all patients with gastric inflammation, duodenal ulcer or gastric ulcer" | high |
+| l04 | the experts scoff | Lasker (quoting Gaynes): "He was ridiculed." Nobel bio: "my results were disputed and disbelieved, not on the basis of science but because they simply could not be true" | high |
+| l04 | reviewers rank their paper in the bottom ten percent they received that year | Wikipedia: "rating it in the bottom 10% of those they received that year" (cites Klein); Lasker: reviewers "ranked their submission as one of the worst for that year" | medium-high (two secondary sources agree) |
+| l05 | "just a contaminant ... harmless", they say | Nobel bio: "I was told that the bacteria were either contaminants or harmless commensals." | high |
+| l06 | six months trying to infect piglets; it fails | Penn State: "We started with a piglet experiment ... we couldn't get the bacteria to take! ... I'd wasted six months."; Nobel bio: "unsuccessfully attempting to infect an animal model"; Wikipedia: "failed attempts to infect piglets in 1984" | high |
+| l06 | "to win the argument ... himself" | Nobel bio: "decided to use myself"; "I had proved my point" (paraphrase) | high |
+| l07 | 1984; two dishes of the bug go into a beaker of beef broth; down it goes | Lasker: July 1984, "two petri dishes ... a small beaker of beef broth"; Wikipedia: "drinking a broth containing cultured H. pylori"; Penn State: he "drank a Petri dish full of H. pylori" | high for the broth and the year; "two dishes" single-source (Lasker), kept without the lab-tech detail |
 | l08 | doesn't clear it with the hospital, or his wife | Nobel bio: "I didn't discuss it with the ethics committee at the hospital ... I didn't discuss it in detail with Adrienne"; Lasker: "He didn't clear the experiment with his superiors at the hospital—or with his wife." | high |
-| l08 | quote "easier to get forgiveness than permission" | Nobel bio, verbatim: "This was one of those occasions when it would be easier to get forgiveness than permission." | high |
-| l09 | days later, breath putrid; throwing up every morning | Lasker: "a couple of days after ... reporting that his breath was 'putrid'"; "vomiting every morning"; Wikipedia: "On days 5-8, he developed achlorhydric vomiting" | high |
-| l10 | a camera down his throat (endoscopy) finds the stomach inflamed and colonised | Wikipedia: "On day eight, he had another endoscopy, which showed massive inflammation (gastritis)"; Nobel bio: "biopsy results showing colonization and classic histological damage to my stomach"; ceremony speech: "he suffered a severe inflammation of the stomach" | high |
-| l11 | the bug inflames the lining; that's where most ulcers start | Nobel PR: "inflammation in the stomach (gastritis) as well as ulceration ... is the result of an infection ... caused by the bacterium Helicobacter pylori"; "causes more than 90% of duodenal ulcers and up to 80% of gastric ulcers"; ceremony speech: "Today we know that most ulcers are caused by Helicobacter infection." | high |
-| l12 | kill the bug, the ulcer is cured; two weeks of pills instead of surgery | Nobel PR: "cured ... only when the bacteria were eradicated"; Nobel bio: "patients had postponed surgery which became unnecessary after a simple 2 week course of antibiotics and bismuth" | high |
-| l13 | 21 years later (1984 to 2005) both walk on stage in Stockholm and collect the Nobel Prize | Nobel PR (3 Oct 2005): prize "jointly to Barry J. Marshall and J. Robin Warren"; ceremony speech, Stockholm Concert Hall, 10 December 2005: "I now ask you to step forward to receive the Nobel Prize from the hands of His Majesty the King" | high |
+| l08 | quote "easier to get forgiveness than permission" | Nobel bio, verbatim: "This was one of those occasions when it would be easier to get forgiveness than permission." (Penn State gives "a lot easier to obtain forgiveness than permission"; the script follows the Nobel text) | high |
+| l09 | days later his wife notices his breath smells putrid; throwing up every morning | Lasker: "a couple of days after ... she and his mother ... reporting that his breath was 'putrid'"; "vomiting every morning"; Wikipedia: "bad breath, noticed by his wife"; "On days 5-8, he developed achlorhydric vomiting" | high |
+| l10 | a camera down his throat finds his stomach inflamed; the biopsy grows the spiral bug | Wikipedia: endoscopy "showed massive inflammation (gastritis)"; "organisms cultured from him"; Nobel bio: "biopsy results showing colonization and classic histological damage"; ceremony speech: "he suffered a severe inflammation of the stomach". He got gastritis, NOT an ulcer (Lasker: "did not develop an ulcer") | high |
+| l11 | the bug is behind most ulcers, not stress; it keeps the lining inflamed | Nobel PR: "causes more than 90% of duodenal ulcers and up to 80% of gastric ulcers"; ulcers "frequently relapsed, since bacteria and chronic inflammation of the stomach remained"; ceremony speech: "most ulcers are caused by Helicobacter infection" | high |
+| l12 | kill the bug, the ulcer heals for good | ceremony speech: "ulcer patients can be cured for good if the Helicobacter is eliminated from the stomach with the help of antibiotics" | high |
+| l13 | two weeks of pills, no surgery | Nobel bio: "patients had postponed surgery which became unnecessary after a simple 2 week course of antibiotics and bismuth" | high |
+| l14 | 21 years after the drink (1984-2005) the doctor collects the Nobel Prize | Nobel PR (3 Oct 2005): prize "jointly to Barry J. Marshall and J. Robin Warren"; ceremony speech, Stockholm Concert Hall, 10 Dec 2005: "step forward to receive the Nobel Prize from the hands of His Majesty the King" | high |
 
-Conflict noted, not used: the endoscopy day is "day eight" (Wikipedia) vs "ten days after" (Lasker); the script says only "a camera down his throat", no day.
+Not used: the endoscopy day ("day eight" in Wikipedia vs "ten days" in Lasker); the lab technician scraping the dishes (Lasker only); the pigs' size. Marshall himself calls the claim that "no one was able to replicate my results" untrue "folklore of the period" (Nobel bio), so the script never says nobody could replicate it.
 
 ## Story Use
 
-- Compressed: the 1983 paper rejection is told before the 1984 drink, in order; "early 1980s" covers 1982-83.
-- Paraphrase: "to win an argument" for "I had proved my point".
-- Not claimed: no day counts, no claim that he got an ulcer (he got gastritis, not an ulcer).
-- Risk `defamation`: Marshall and Warren are living people. Tone is admiring; every claim is sourced; Kai sees the script with its sources in the render-approval pack (bible hard rule 8). No living-person lines are invented: the one quote is verbatim.
+- Order: the 1983 paper rejection is told before the 1984 drink; l02 opens in 1982 (the discovery year in the Nobel PR).
+- Paraphrase: "to win the argument" for "I had proved my point".
+- Not claimed: no day counts; no ulcer in Marshall (he had gastritis). The ulcer crater appears only on the generic explainer model, never in his scope view.
+- People: Barry Marshall is living (2026). Robin Warren died on 23 July 2024 in Perth, aged 87 (Nobel laureate page). Tone is admiring for both; every claim is sourced; the one quote is verbatim; no line is invented for either.
+- Safety: the post caption says "Don't try this at home": he was a trained doctor, it made him ill, and he treated himself (Nobel bio: "Adrienne suggested it was time to treat myself").
+- Risk `defamation`: needs the independent fact-review (FLOW stage 4) before voice; Kai sees the script and sources in the render-approval pack (bible hard rule 8).
