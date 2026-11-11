@@ -151,6 +151,9 @@ export const POSES = {
   eat: { A: 3, T: 9, hold: 44, props: { R: 'drumstick' }, body: { head_pitch: -2, pitch: 3 },
     hands: { R: { t: [0.32, 1.86, 0.50], elbow: [0.9, -0.5, -0.1] }, L: { t: [-0.10, 1.52, 0.42], elbow: [-0.8, -0.6, 0] } },
     bite: { per: 22, side: 'R', mouth: [0.10, -0.16, 0.56] } },
+  // show_medal: the prize held up high beside the head, chest out, chin up
+  show_medal: { A: 4, T: 13, hold: 50, props: { R: 'medal' }, body: { pitch: -6, head_pitch: -10, lean: -3, shrug: 0.04, bob: 0.02 },
+    hands: { R: { t: [0.46, 2.62, 0.30], elbow: [0.9, -0.5, 0] }, L: HIP_HAND(-1) }, cycle: t => ({ head_tilt: 3 * Math.sin(t * 0.18) }) },
   // toast: the cup raised high in front, chin up, a small proud lean back
   toast: { A: 3, T: 10, hold: 34, props: { R: 'beaker' }, body: { pitch: -4, head_pitch: -8, lean: -2, shrug: 0.02 },
     hands: { R: { t: [0.44, 2.20, 0.40], elbow: [0.9, -0.6, 0] }, L: HIP_HAND(-1) }, tiltKeys: { R: [[0, 0], [12, -8], [30, 6]] },   // beside the head, never over the eyes

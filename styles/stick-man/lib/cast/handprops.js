@@ -66,7 +66,7 @@ const BUILD = {
     g.userData = { mode: 'along', grip: [0, -0.01, 0] }; return g;
   },
   beaker() {                                                     // a lab beaker of green broth with a printed label; level 0..1
-    const g = new THREE.Group(), H = 0.15, R = 0.05;
+    const g = new THREE.Group(), H = 0.21, R = 0.068;   // big enough to read in a medium shot
     const glass = solid(cyl(R, R * 0.96, H, 28), [0.82, 0.93, 0.96], { sheen: 0.7, rough: 0.2 });
     glass.material.transparent = true; glass.material.opacity = 0.45; glass.material.depthWrite = false; glass.position.y = H / 2; g.add(glass);
     const lip = solid(new THREE.TorusGeometry(R, 0.006, 8, 28), [0.82, 0.93, 0.96]); lip.rotation.x = Math.PI / 2; lip.position.y = H; g.add(lip);
@@ -81,6 +81,11 @@ const BUILD = {
     const level = v => { const h = Math.max(0.004, (H - 0.012) * Math.max(0, Math.min(1, v)) * 0.85); liq.scale.y = h; liq.position.y = 0.006 + h / 2; liq.visible = v > 0.02; };
     level(1);
     g.userData = { mode: 'up', grip: [0, 0.06, 0.055], level }; return g;
+  },
+  medal() {                                                      // a gold medal held up by its ribbon
+    const g = new THREE.Group(), disc = solid(cyl(0.07, 0.07, 0.014, 32), [1.0, 0.76, 0.18], { sheen: 0.9, rough: 0.2 }); disc.rotation.x = Math.PI / 2; disc.position.y = -0.10; g.add(disc);
+    const rib = solid(new THREE.BoxGeometry(0.035, 0.11, 0.006), [0.12, 0.30, 0.78]); rib.position.y = -0.03; g.add(rib);
+    g.userData = { mode: 'up', grip: [0, 0.02, 0] }; return g;
   },
   box() {                                                        // a heavy crate between both hands
     const g = new THREE.Group(), b = solid(new THREE.BoxGeometry(0.42, 0.30, 0.30), [0.78, 0.55, 0.30]); g.add(b);

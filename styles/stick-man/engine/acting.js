@@ -90,7 +90,7 @@ function beatPose(seed, i) {
     L: [14 * a(48) * big(2), 7 * a(49) * big(2), 24 * a(50) * big(2)], R: [14 * a(51) * big(2), 7 * a(52) * big(2), 24 * a(53) * big(2)] };
 }
 const mixPose = (a, b, u) => Object.fromEntries(Object.keys(a).map(k => [k, Array.isArray(a[k]) ? a[k].map((x, j) => x + (b[k][j] - x) * u) : a[k] + (b[k] - a[k]) * u]));
-export const idleGap = (seed, i) => 36 + Math.round(39 * hash(seed, i, 61));
+export const idleGap = (seed, i) => 48 + Math.round(52 * hash(seed, i, 61));   // holds of 35-87 f between idle moves (reference holds up to 86 f)
 export function idleBeats(seed, f) {
   let t = IDLE_T0 + Math.round(20 * hash(seed, 60)), i = 0;
   for (;;) {
@@ -112,7 +112,7 @@ const ACCENT = {
 // The accent is an attitude, not a twitch: a 3-frame anticipation the other way, a MOVE_T slow-in rise with a small
 // overshoot, held (breathing) until the next change or ACC_HOLD frames, then released over ACC_OUT frames. 1.6x the old
 // size (FORENSIC: our head moves travelled 0.5-0.7 W, the reference ~2.3 W on its big beats).
-const ACC_A = 3, ACC_HOLD = 45, ACC_OUT = 24, ACC_K = 1.6;
+const ACC_A = 3, ACC_HOLD = 60, ACC_OUT = 24, ACC_K = 2.0;
 export function exprAccent(track, f, seed) {
   const o = {};
   for (let j = 1; j < track.length; j++) {

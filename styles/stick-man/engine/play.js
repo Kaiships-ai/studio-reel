@@ -15,7 +15,8 @@ import { ACT, PROPV, MAKE, keyTracks } from './verbs_fx.js';
 import { POSE_VERBS } from './poses.js';
 import * as EXTRAS from '../lib/cast/extras.js';
 import { PHYS } from '../lib/props/physfx.js';
-Object.assign(MAKE, PHYS);                                       // physical FX kinds (SETS.md "Physical effects")
+import { STORY } from '../lib/props/story.js';
+Object.assign(MAKE, PHYS, STORY);                               // story props that animate (lib/props/story.js)                                       // physical FX kinds (SETS.md "Physical effects")
 
 // every cast spec exported by lib/cast/extras.js (an object with a name and a shirt) registers itself by its export name
 const dye = EXTRAS.dye;
@@ -114,6 +115,8 @@ async function buildAct(R, X) {
     stage.hemi.color.copy(LT?.sky ? lin(...LT.sky) : L0.sky); stage.hemi.groundColor.copy(LT?.ground ? lin(...LT.ground) : L0.gr); stage.hemi.intensity = LT?.hemi ?? L0.hi;
     stage.fill.color.copy(LT?.fill ? lin(...LT.fill) : L0.fill); stage.fill.intensity = LT?.fillPower ?? L0.fi;
     PLACE.lit.value.set(...(LT?.lit || [1, 1, 1])); PLACE.shade.value.set(...(LT?.shade || [1, 1, 1])); PLACE.lamp.value = LT?.lamp ?? 0;
+    const lum = LT?.lit ? 0.2126 * LT.lit[0] + 0.7152 * LT.lit[1] + 0.0722 * LT.lit[2] : 1;
+    PLACE.rim.value = LT?.rim ?? (lum < 0.7 || (R.grade?.exp ?? 1) < 0.85 ? 1 : 0.35);   // dark place: full cool rim on dark figures
   };
 
   // ---------------------------------------------------------------- compile
@@ -132,7 +135,10 @@ async function buildAct(R, X) {
   const C = {
     words, fps,
     point,
-    target: (s, st) => s == null ? { rest: true } : typeof s === 'string' && props[s] ? { prop: s } : typeof s === 'string' ? { w: point(s) }
+    // a cast name = that actor's near shoulder (hand on shoulder, grab, shove, hand a prop over: reach / point_lean to: 'bram')
+    target: (s, st) => s == null ? { rest: true } : typeof s === 'string' && props[s] ? { prop: s } : typeof s === 'string' && byName[s] && st
+      ? { w: (() => { const o = byName[s].st0, dx = st.pos[0] - o[0], dy = st.pos[1] - o[1], d = Math.hypot(dx, dy) || 1; return [o[0] + 0.16 * dx / d, o[1] + 0.16 * dy / d, 1.28]; })() }
+      : typeof s === 'string' ? { w: point(s) }
       : Array.isArray(s) ? { w: s } : s,
     rest: n => { if (!rest[n]) throw new Error(`prop "${n}" has no rest pose (a child of another prop, e.g. cutaway pack inside stack): move its parent, or key its parts with a \`prop\` effect`); return rest[n].pos; },
     restRot: n => rest[n]?.rot ?? 0, setRest: (n, p, r) => { rest[n] = { pos: p, rot: r }; },
@@ -516,7 +522,8 @@ async function buildAct(R, X) {
     const shotCut = (cam.shotIndex !== i0 && shots[cam.shotIndex].glide === 0) || !!camera.mixAt(shots, f);
     return { cam: f === F0 ? 0 : +camPx.toFixed(3), camPeak: f === F0 ? 0 : +camPeak.toFixed(3), feet, shotCut };
   };
-  return { name: R.name || R.set, R, grade: { ...(SET_GRADE[R.set] || {}), ...(R.grade || {}) }, group, background, update, dbg, motion, cues, actors, frameOf, flash: f => KT.at('screen', 'flash', f, 0) || 0, shotMix: f => camera.mixAt(shots, f) };
+  return { name: R.name || R.set, R, grade: { ...(SET_GRADE[R.set] || {}), ...(R.grade || {}) }, group, background, update, dbg, motion, cues, actors, frameOf, flash: f => KT.at('screen', 'flash', f, 0) || 0,
+    impact: f => KT.at('screen', 'impact', f, 0) || 0, shotMix: f => camera.mixAt(shots, f) };
 }
 
 // storyboard lines the reel data does not shoot get planned shots (shotplan.js): each line goes to the act on screen at
@@ -573,18 +580,20 @@ export async function boot({ film, width, height }) {
   // windows: act k is on screen from its `from`; a dissolve of n frames is centred on that frame
   const fr = x => typeof x === 'number' ? x : resolveBeatFrame(x, words, fps);
   // place changes dissolve (FORENSIC.md fix 1: the reference cross-dissolves, median ~9 f, almost never hard-cuts)
-  const wins = acts.flatMap((A, k) => defs[k].show.map(w => ({ A, a: fr(w.from), n: w.dissolve ?? (A === acts[0] && w.from === F0 ? 0 : 9) }))).sort((x, y) => x.a - y.a);
+  // `whip: n` instead of `dissolve`: an n-frame whip pan (a horizontal smear peaking mid-transition, then the cross-fade)
+  const wins = acts.flatMap((A, k) => defs[k].show.map(w => ({ A, a: fr(w.from), whip: w.whip ? (w.dir ?? 1) : 0, n: w.whip ?? w.dissolve ?? (A === acts[0] && w.from === F0 ? 0 : 9) }))).sort((x, y) => x.a - y.a);
   const at = f => {
-    for (let k = 1; k < wins.length; k++) { const w = wins[k], h = w.n / 2; if (w.n && f >= w.a - h && f < w.a + h) return { cur: w.A, prev: wins[k - 1].A, u: (f - (w.a - h) + 0.5) / w.n }; }
+    for (let k = 1; k < wins.length; k++) { const w = wins[k], h = w.n / 2; if (w.n && f >= w.a - h && f < w.a + h) return { cur: w.A, prev: wins[k - 1].A, u: (f - (w.a - h) + 0.5) / w.n, whip: w.whip }; }
     let k = 0; while (k + 1 < wins.length && wins[k + 1].a <= f) k++; return { cur: wins[k].A };
   };
   const show = A => { for (const x of acts) x.group.visible = x === A; stage.scene.background = A.background ?? bg0; };
   function frame(f) {
     const s = at(f); let ms = 0;
-    if (s.prev) { show(s.prev); s.prev.update(f); ms += stage.render({ flash: s.prev.flash(f), grade: s.prev.grade }); stage.grab(); }
+    const wp = s.whip ? 0.22 * s.whip * Math.sin(Math.PI * s.u) : 0, wu = s.whip ? Math.min(1, Math.max(0, (s.u - 0.3) / 0.4)) : s.u;
+    if (s.prev) { show(s.prev); s.prev.update(f); ms += stage.render({ flash: s.prev.flash(f), grade: s.prev.grade, whip: wp }); stage.grab(); }
     const sm = s.prev ? null : s.cur.shotMix(f);                   // a shot dissolve inside the act: the outgoing camera first
     if (sm) { show(s.cur); s.cur.update(f, sm.i); ms += stage.render({ flash: s.cur.flash(f), grade: s.cur.grade }); stage.grab(); }
-    show(s.cur); s.cur.update(f); ms += stage.render({ prev: s.prev ? 1 - s.u : sm ? 1 - sm.u : 0, flash: s.cur.flash(f), grade: s.cur.grade });
+    show(s.cur); s.cur.update(f); ms += stage.render({ prev: s.prev ? 1 - wu : sm ? 1 - sm.u : 0, flash: s.cur.flash(f), grade: s.cur.grade, whip: wp, impact: s.cur.impact(f) });
     cap.draw(f); return ms;
   }
   window.__motion = f => { const s = at(f), p = at(Math.max(F0, f - 1)); show(s.cur); const m = s.cur.motion(f); return { ...m, cut: !!s.prev || p.cur !== s.cur || !!p.prev || s.cur.flash(f) > 0.3 || m.shotCut }; };   // dissolves, act cuts, flash cuts, shot cuts

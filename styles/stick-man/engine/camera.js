@@ -16,6 +16,10 @@ import { clamp, smoother, lerp, lerp3, DEG } from './verbs.js';
 const KICK = [1, -0.78, 0.55, -0.33, 0.16, -0.05];
 const RUSH = 60, CAP = 67;                                     // px/frame at 720 wide (pace()); KICK flips sign every frame, gone in 6
 const CAPTION = [0.66, 0.78];
+// framing guard (judge t2: the low angle and the close-ups cut Bram's head off the top): every keepIn head is fitted with its
+// top, hat included, at least 4 % below the frame's top edge; the camera backs off until it is
+const HEAD_TOP = 0.40;
+const INSERTS = new Set(['insert', 'macro']);
 const KIND = {
   two: { lens: 28, h: 1.25, size: 0.43, headY: 0.33, dof: 0 },
   ms: { lens: 30, h: 1.25, size: 0.43, headY: 0.32, dof: 0 },
@@ -62,6 +66,7 @@ export function createCamera({ aspect, side = [0, -1], bounds = null, zRange = [
       for (const p of keepIn) {                                    // head-box edges (not centres) inside x 10.5-89.5 %
         const r = [-dir[1] * 0.31, dir[0] * 0.31];
         for (const s of [-1, 1]) { const [x] = proj([p[0] + r[0] * s, p[1] + r[1] * s, p[2]]); need = Math.max(need, Math.abs(x - 0.5) / edge); }
+        need = Math.max(need, (0.5 - proj([p[0], p[1], p[2] + HEAD_TOP])[1]) / 0.46);   // head top (hat incl.) >= 4 % below the top edge
       }
       for (const p of extras) { const [x, y] = proj(p); need = Math.max(need, Math.abs(x - 0.5) / 0.40, (y - 0.5) / 0.11, (0.5 - y) / 0.40); }
       D = clamp(D * Math.min(need, 1.6), 0.8, 9);                  // the margins win over the size target
@@ -90,7 +95,7 @@ export function createCamera({ aspect, side = [0, -1], bounds = null, zRange = [
       let need = 1;
       const { R } = axes();
       for (const p of keepIn) for (const s of [-1, 1]) { const [x, y] = proj([p[0] + R[0] * 0.31 * s, p[1] + R[1] * 0.31 * s, p[2]]);
-        need = Math.max(need, Math.abs(x - 0.5) / edge, (0.5 - y) / 0.40); }
+        need = Math.max(need, Math.abs(x - 0.5) / edge, (0.5 - y) / 0.40, (0.5 - proj([p[0], p[1], p[2] + HEAD_TOP])[1]) / 0.46); }
       for (const p of extras) { const [x, y] = proj(p); need = Math.max(need, Math.abs(x - 0.5) / 0.40, (y - 0.5) / 0.14, (0.5 - y) / 0.40); }
       D = clamp(D * Math.min(need, 1.6), Dmin, 40);
       pos = at(); set(pos, aim, lens, roll);
@@ -270,6 +275,9 @@ export function createCamera({ aspect, side = [0, -1], bounds = null, zRange = [
       S.size0 = clamp((S.opt.size ?? 0.46) / Math.pow(1 + S.push, len), KIND[S.kind].size ? 0.30 : 0, 0.46);
       if (S.kind === 'wide' || S.kind === 'follow') S.size0 = S.opt.size ?? KIND[S.kind].size;
       S.glide = 0;
+      // into or out of a prop insert the camera dissolves (8 f) instead of gliding: a glide paced at CAP px/frame in the
+      // insert's tight long-lens frame crept for the whole next shot and never reached its subject (sf-ep01 lecture hall)
+      if (i > 0 && (INSERTS.has(S.kind) || INSERTS.has(shots[i - 1].kind)) && S.opt.glide == null && !S.opt.cut) S.opt.dissolve ??= 8;
       if (i > 0) {                                                  // pixel shift of the new key point at 720 wide
         const Af = n => A(n, S.f), a = solve(shots[i - 1], S.f, Af), b = solve(S, S.f, Af);
         set(a.pos, a.aim, a.lens, a.roll); const pa = proj(b.aim);

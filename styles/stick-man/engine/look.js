@@ -7,7 +7,7 @@ export const INK_SUN = { value: new THREE.Vector3(0, 1, 0) };
 // ramp below is intensity-free (only the sun's direction and shadow pick the tone), so a place is lit through these shared
 // uniforms: lit / shade tint the two ends of the ramp, lamp adds the practical lights (point lights, fill) on top.
 // Defaults (1, 1, 0) leave every existing reel exactly as it was. Set per act by play.js from the act's `light`.
-export const PLACE = { lit: { value: new THREE.Vector3(1, 1, 1) }, shade: { value: new THREE.Vector3(1, 1, 1) }, lamp: { value: 0 } };
+export const PLACE = { lit: { value: new THREE.Vector3(1, 1, 1) }, shade: { value: new THREE.Vector3(1, 1, 1) }, lamp: { value: 0 }, rim: { value: 0 } };
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
@@ -37,12 +37,12 @@ export function toonify(m, o = {}) {
   const U = {
     uShade: { value: lin(...(o.shade || [0.66, 0.64, 0.90])) }, uGain: { value: o.gain ?? 1.0 },
     uSheen: { value: o.sheen ?? 0.15 }, uBroad: { value: o.broad ?? 0.0 }, uRim: { value: o.rim ?? 0.35 }, uSoft: { value: o.soft ?? 0.0 }, uRimLit: { value: o.rimLit ?? 0.0 },
-    uPlaceLit: PLACE.lit, uPlaceShade: PLACE.shade, uLamp: PLACE.lamp, uChar: { value: o.char ?? 0 },
+    uPlaceLit: PLACE.lit, uPlaceShade: PLACE.shade, uLamp: PLACE.lamp, uChar: { value: o.char ?? 0 }, uRimCool: { value: o.rimCool ?? 0 }, uPlaceRim: PLACE.rim,
   };
   m.userData.toon = U;
   m.onBeforeCompile = sh => {
     Object.assign(sh.uniforms, U);
-    sh.fragmentShader = 'uniform vec3 uShade, uPlaceLit, uPlaceShade; uniform float uGain, uSheen, uBroad, uRim, uSoft, uRimLit, uLamp, uChar;\n' + sh.fragmentShader.replace('#include <opaque_fragment>', `
+    sh.fragmentShader = 'uniform vec3 uShade, uPlaceLit, uPlaceShade; uniform float uGain, uSheen, uBroad, uRim, uSoft, uRimLit, uLamp, uChar, uRimCool, uPlaceRim;\n' + sh.fragmentShader.replace('#include <opaque_fragment>', `
       float ndl = 0.0, shw = 1.0; vec3 sunD = vec3(0.0, 1.0, 0.0);
       #if NUM_DIR_LIGHTS > 0
         sunD = directionalLights[ 0 ].direction;
@@ -76,6 +76,8 @@ export function toonify(m, o = {}) {
       col += min(uLamp * max(reflectedLight.directDiffuse - sunPart, vec3(0.0)), vec3(0.35 + 0.25 * (1.0 - uChar)));
       col += reflectedLight.directSpecular * uSheen * mix(1.0, shw, uSoft) + totalEmissiveRadiance;
       col += vec3(1.0, 0.97, 0.92) * uBroad * k * pow(saturate(dot(geometryNormal, normalize(sunD + geometryViewDir))), 5.0);
+      // cool rim on dark places for dark figures (material rimCool x the place's rim 0..1)
+      col += vec3(0.42, 0.62, 1.0) * 0.85 * uRimCool * uPlaceRim * pow(1.0 - saturate(dot(geometryNormal, geometryViewDir)), 2.5);
       // rimLit: a bright back-light edge on the sun side (the glossy reference heads), never in cast shadow
       col += vec3(1.0, 0.97, 0.92) * uRimLit * pow(1.0 - saturate(dot(geometryNormal, geometryViewDir)), 3.0) * smoothstep(-0.3, 0.4, ndl) * shw;
       gl_FragColor = vec4(col, diffuseColor.a);`);
@@ -346,10 +348,16 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1
   const gradePass = new ShaderPass({
     uniforms: { tDiffuse: { value: null }, sat: { value: sat }, con: { value: con }, vig: { value: vig }, split: { value: split },
       aspect: { value: width / height }, tPrev: { value: null }, uPrev: { value: 0 }, uFlash: { value: 0 },
-      uExp: { value: 1 }, uLift: { value: 0 }, uGam: { value: 1 }, uSat: { value: 1 }, uTint: { value: new THREE.Vector3(1, 1, 1) } },
+      uExp: { value: 1 }, uLift: { value: 0 }, uGam: { value: 1 }, uSat: { value: 1 }, uTint: { value: new THREE.Vector3(1, 1, 1) },
+      uImpact: { value: 0 }, uImpC: { value: new THREE.Vector2(0.5, 0.5) }, uWhip: { value: 0 } },
     vertexShader: FS_QUAD_V,
-    fragmentShader: `uniform sampler2D tDiffuse, tPrev; uniform float sat, con, vig, split, aspect, uPrev, uFlash, uExp, uLift, uGam, uSat; uniform vec3 uTint; varying vec2 vUv;
-      void main(){ vec3 c = texture2D(tDiffuse, vUv).rgb; float l = dot(c, vec3(0.2126,0.7152,0.0722));
+    fragmentShader: `uniform sampler2D tDiffuse, tPrev; uniform float sat, con, vig, split, aspect, uPrev, uFlash, uExp, uLift, uGam, uSat, uImpact, uWhip; uniform vec3 uTint; uniform vec2 uImpC; varying vec2 vUv;
+      float hsh(float n){ return fract(sin(n * 12.9898) * 43758.5453); }
+      void main(){ vec3 c = texture2D(tDiffuse, vUv).rgb;
+        // whip pan between places (judge t2: the reference uses motion-blur / whip transitions): a horizontal smear whose
+        // length follows uWhip (signed, fraction of the frame width), 16 taps, on the outgoing and the incoming frame
+        if (abs(uWhip) > 0.002) { vec3 a = vec3(0.0); for (int i = 0; i < 16; i++) a += texture2D(tDiffuse, vUv + vec2(uWhip * (float(i) / 15.0 - 0.5), 0.0)).rgb; c = a / 16.0; }
+        float l = dot(c, vec3(0.2126,0.7152,0.0722));
         c = mix(vec3(l), c, sat);
         // split tone: shade leans blue-lilac, light leans warm, like the sunlit reference sets
         // (FORENSIC.md fix 16: reference shadow pixels are cool and saturated, hue 212-301 deg, sat 0.35-0.54; ours were warm
@@ -362,6 +370,11 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1
         c = pow(c, vec3(uGam)) * uExp * uTint; c += uLift * (1.0 - c);       // per-set / per-act grade (SET_GRADE, act grade): own light per place
         c = clamp(mix(vec3(dot(c, vec3(0.2126,0.7152,0.0722))), c, uSat), 0.0, 1.0);
         if (uPrev > 0.0) c = mix(c, texture2D(tPrev, vUv).rgb, uPrev);       // dissolve: the other act's finished frame on top
+        // impact frame: radial speed lines burst from uImpC, the centre stays clear (pirate f1830 explosion), uImpact 0..1
+        if (uImpact > 0.01) { vec2 d = (vUv - uImpC) * vec2(aspect, 1.0); float r = length(d), a = atan(d.y, d.x) / 6.28318 + 0.5;
+          float id = floor(a * 72.0), on = step(0.55, hsh(id)), w = abs(fract(a * 72.0) - 0.5) * 2.0;
+          float k = on * smoothstep(0.18 + 0.12 * hsh(id + 3.0), 0.34 + 0.2 * hsh(id + 7.0), r) * (1.0 - smoothstep(0.0, 0.35 + 0.4 * hsh(id + 1.0), w)) * uImpact;
+          c = mix(c, vec3(0.02), clamp(k, 0.0, 0.9)); }
         c = mix(c, vec3(1.0, 0.99, 0.96), uFlash);                           // full-frame white flash
         gl_FragColor = vec4(c, 1.0); }` });
   // dissolves: grab() keeps the finished frame on the canvas; the next render(o) lays it over at o.prev (0..1)
@@ -390,6 +403,7 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1
     const t0 = performance.now();
     gradePass.uniforms.uPrev.value = o.prev || 0; gradePass.uniforms.uFlash.value = Math.min(1, o.flash || 0);
     const gr = o.grade || {}; if (stage.shafts) stage.shafts.march.material.uniforms.dens.value = shafts * (gr.haze ?? 1); gradePass.uniforms.uExp.value = gr.exp ?? 1; gradePass.uniforms.uLift.value = gr.lift ?? 0; gradePass.uniforms.uGam.value = gr.gam ?? 1; gradePass.uniforms.uSat.value = gr.sat ?? 1; gradePass.uniforms.uTint.value.set(...(gr.tint || [1, 1, 1]));
+    gradePass.uniforms.uImpact.value = Math.min(1, o.impact || 0); gradePass.uniforms.uWhip.value = o.whip || 0;
     INK_SUN.value.copy(sun.position).sub(sun.target.position).normalize();   // figure outlines thicken away from the sun (cast.js)
     camera.updateMatrixWorld();
     autoToon();

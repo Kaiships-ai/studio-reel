@@ -135,6 +135,20 @@ export function hairCap(col = [0.30, 0.19, 0.12], tilt = 20) {
     return g;
   };
 }
+// flat cap (Bram, bible v1.1: "flat cap with a pale grey band" - his thumbnail silhouette): a low wide crown that
+// overhangs the head, a short stiff peak at the front, and a pale band round the bottom that always shows
+export function flatCap(col = [0.13, 0.15, 0.22], band = [0.80, 0.82, 0.86], tilt = 16) {
+  return () => {
+    const g = new THREE.Group(); g.rotation.x = -tilt * DEG;
+    const y0 = 0.25 * W, R = 0.56 * W, Hc = 0.18 * W, pr = [[0, y0], [R * 0.95, y0]];   // sits above the brows (never over the eyes)
+    for (let i = 0; i <= 14; i++) { const a = 90 * i / 14 * DEG; pr.push([R * Math.pow(Math.cos(a), 0.4) * (1 + 0.06 * Math.sin(2 * a)), y0 + Hc * Math.sin(a)]); }
+    const crown = solid(lathe(pr, 64), toon(col, { sheen: 0, rough: 1, char: 1 })); crown.scale.set(1, 1, 1.08); crown.position.z = 0.04 * W; g.add(crown);
+    g.add(solid(bandGeo(22 * DEG, 34 * DEG, 0.075 * W), toon(band, { sheen: 0, rough: 1, char: 1 })));
+    const peak = solid(brimGeo(HA * Math.cos(26 * DEG) + 0.03 * W, 0.54 * W, 0.76 * W), toon(col.map(c => c * 0.8), { sheen: 0, rough: 1, char: 1 }));
+    peak.position.set(0, y0 - 0.01 * W, 0); peak.rotation.x = 0.22; g.add(peak);
+    return g;
+  };
+}
 function stripeTex(base, draw) {
   const cv = document.createElement('canvas'); cv.width = 1024; cv.height = 128; const c = cv.getContext('2d');
   c.fillStyle = css(base); c.fillRect(0, 0, 1024, 128); draw(c);
@@ -415,12 +429,16 @@ export function makeStick(spec) {
   // flat like the reference (judge t1: our glossy lavender-blue body vs flat off-white / cream heads): a hard 2-step cel
   // ramp, no gloss, no rim light; the shade is a soft cool grey that never reaches the lit side; place light tints the
   // figure only a little (char: 1)
-  const torso = solid(torsoGeo(), toon([1, 1, 1], { map: clothesCanvas(spec), sheen: 0, rough: 1, rim: 0, soft: 0, shade: [0.78, 0.78, 0.86], char: 1 }));
+  // girth: a body silhouette per actor (judge t2: "a grey blob body"); 1 = the default, Bram is stocky, Mabel slim.
+  // rimCool: a cool rim light on dark places (bible v1.1: a dark figure keeps an edge on any set darker than Y 95)
+  const girth = spec.girth ?? 1, rc = spec.rimCool ? 1 : 0;
+  const torso = solid(torsoGeo(), toon([1, 1, 1], { map: clothesCanvas(spec), sheen: 0, rough: 1, rim: 0, soft: 0, shade: [0.78, 0.78, 0.86], char: 1, rimCool: rc }));
+  torso.scale.set(girth, 1, 0.9 + 0.1 * girth);
   torso.position.y = (TORSO.cy - TORSO.h / 2 - HIP_V) * W; body.add(torso);
 
   const head = new THREE.Group(); root.add(head);
   const hg = new THREE.SphereGeometry(HA, 64, 40); hg.scale(1, HEAD_H, 1);
-  const headSolid = solid(hg, toon(spec.skin || CREAM, { shade: [0.80, 0.79, 0.87], rim: 0, sheen: 0, broad: 0, rough: 1, soft: 0, rimLit: 0, char: 1 }));
+  const headSolid = solid(hg, toon(spec.skin || CREAM, { shade: [0.80, 0.79, 0.87], rim: 0, sheen: 0, broad: 0, rough: 1, soft: 0, rimLit: 0, char: 1, rimCool: rc }));
   head.add(headSolid);
   const rig = new THREE.Group(); head.add(rig);
   const FR = faceRig(W, { glasses: !!spec.glasses });
@@ -518,7 +536,7 @@ export function makeStick(spec) {
     const front = new Set(P.front || []), rig = { pitch: P.pitch || 0, roll: P.lean || 0, assist: P.assist || 0, body: [P.dx || 0, P.bob || 0, P.shTwist || 0].map(x => +x.toFixed(3)) };
     const twist = (q, deg) => { const a = (deg || 0) * DEG, u = q[0] - dx; return [dx + u * Math.cos(a), q[1], q[2] + u * Math.sin(a)]; };
     for (const [side, sg] of [['L', -1], ['R', 1]]) {
-      const sh = V(twist(bt(sg * TORSO.w * 0.40, SHOULDER_V + (P.shrug || 0) + (P['shrug' + side] || 0)), P.shTwist)), h0 = P['hand' + side];
+      const sh = V(twist(bt(sg * TORSO.w * 0.40 * girth, SHOULDER_V + (P.shrug || 0) + (P['shrug' + side] || 0)), P.shTwist)), h0 = P['hand' + side];
       let hand = V(h0 ? [h0[0], h0[1], h0.length > 2 ? h0[2] : (front.has('arm' + side) ? 0.16 : 0.0)] : bt(sg * 0.41, 1.22));
       let pole;
       if (P['elbow' + side]) pole = V(P['elbow' + side]);
@@ -536,7 +554,7 @@ export function makeStick(spec) {
       hand = arm.end;
       const pts = hose(sh, arm.joint, hand, ROUND.arm, 16);
       limbs['arm' + side].set(pts); hands[side].position.copy(pts[15]); S.hand[side] = hand.toArray();
-      const hb = bt(sg * 0.14, HIP_V + 0.04), hip = V(twist([hb[0], hb[1], 0], P.hipTwist));
+      const hb = bt(sg * 0.14 * girth, HIP_V + 0.04), hip = V(twist([hb[0], hb[1], 0], P.hipTwist));
       const f0 = P['foot' + side] || [sg * 0.22, 0.022], foot = V(f0);
       const kp = P['kneeDir' + side] || P.kneeDir || [sg * 0.15, 0, 1];
       const leg = ik(hip, foot, LIMB.thigh, V(kp), SOFT.leg);
