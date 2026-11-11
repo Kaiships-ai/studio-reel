@@ -1,7 +1,7 @@
 # Gates
 
 `node styles/stick-man/tools/gates.mjs --report <stats.txt> --in <mp4> --film films/<slug> --out <gates.txt>` prints PASS/FAIL
-per gate (22 picture, sound, acting and look gates, then 17 story gates: story, shot grammar, world and fx, acting plan, board, style judge, blind test) and exits 1 on any FAIL. The stats come from `shot.mjs --film films/<slug> --frames 0-<last> --report <stats.txt> --in <mp4>`
+per gate (21 picture, sound, acting and look gates, 10 forensic gates, then 20 story gates: story, shot grammar and sizes, open on the verb, world and fx, acting plan, board, style judge, blind test) and exits 1 on any FAIL. The stats come from `shot.mjs --film films/<slug> --frames 0-<last> --report <stats.txt> --in <mp4>`
 (`--frames` is required; without `--in` the frame-difference lines are missing and those gates FAIL as "not in report").
 Never change a threshold to pass a reel: fix the reel data or the kit, or show Kai the FAIL.
 
@@ -9,12 +9,12 @@ Never change a threshold to pass a reel: fix the reel data or the kit, or show K
 |---|---|---|---|
 | clear frames | ≥ 94 % | frame-to-frame YAVG difference ≥ 1.0, top 60 % of the frame at 270x288 (report a) | 4 reference videos (STYLE plan, section D) |
 | still frames | < 1 % | YAVG difference < 0.2 (report a) | 4 reference videos (plan D) |
-| camera speed | ≤ 25 px/f at 720p | peak camera motion, cuts and dissolves left out (report b) | reel 1 build target |
+| camera speed | ≤ 95 px/f at 720p (a ceiling) | peak camera motion, cuts and dissolves left out (report b) | reference max 114-142 px/f at 1080 (FORENSIC.md; was ≤ 25, the opposite of the reference's rushes) |
 | frozen run | ≤ 8 f | longest run with every joint still, per actor in frame; expr `sleep` exempt (report b, acting) | reel 1 build target |
 | arm length ratio | ≤ 1.03 | (upper + fore arm) / rest arm length, per actor | reel 1 build target (no stretched arms) |
 | joint change | ≤ 25 deg/f | largest one-frame change of a flex, foot pitch, torso or limb direction; the FAIL line lists the worst actor's top 5 frames (report: `joint change top 5`, `frames over 25 deg`) | reel 1 build target (no pops) |
 | head never cut | never | head box above the top edge, any actor in frame | reel 1 review |
-| small-figure run | ≤ 45 f | longest run where the largest figure in frame is under 30 % of the frame height (a frame with no figure resets the run) | reel 1 build target |
+| small-figure run | ≤ 120 f | longest run where the largest figure in frame is under 30 % of the frame height (a frame with no figure resets the run) | reference wide + establishing = 32 % of runtime, shot p90 4.2-6.4 s (FORENSIC.md; was 45 f) |
 | hand-prop gap | ≤ 2 px at 1080p | hand dot to the held prop's grip socket (report d) | reel 1 review (props floating off hands) |
 | collisions | none | any body point inside a set `COLLIDE` box, or torso in torso (report e) | reel 1 review (man inside a pillar) |
 | close-up head x | 45-55 % | subject head centre x in settled `cu` frames (report f) | reel 1 review |
@@ -23,8 +23,26 @@ Never change a threshold to pass a reel: fix the reel data or the kit, or show K
 | expression lead | ≥ 3 f before the word | for every in-frame face change made by a beat with a word: word start − change frame (the engine lands it 4 f early, `EXPR_LEAD`) (report g) | the face reads before the sound |
 | mix loudness | -14 ± 0.5 LUFS | ffmpeg ebur128 integrated, on the mp4 audio | house target (`make-reel`, kai-reel-3d) |
 | true peak | ≤ -1 dBTP | ffmpeg ebur128 true peak, on the mp4 audio | house target |
-| colour YAVG | median 109-163 | signalstats YAVG, 2 frames a second, median | 7 reference frames, `STYLE.md` Màu |
 | colour SATAVG | median 19-47 | signalstats SATAVG, same samples, median | 7 reference frames, `STYLE.md` Màu |
+
+## Forensic gates (FORENSIC.md ranked fixes 1-10, 11/11)
+
+`gates.mjs --film` runs `tools/forensic/measure.py <mp4> --words <words.json>` (~1 min): the same scripts that measured the
+four reference shorts (copied into the kit), so our number and theirs come from one code path. Output also lands in
+`<mp4 without .mp4>-forensic.json`.
+
+| Gate | Threshold | Measured as | Reference |
+|---|---|---|---|
+| hard cuts | ≤ 0.2 per 10 s | shot boundaries (histogram jump), one-frame jumps = cut | 0-0.15 |
+| dissolves | ≥ 50 % of boundaries, median 7-12 f | linear-blend residual < 0.33 over ≥ 3 frames | 53 %, ~9 f |
+| rush peak | move peak p90 ≥ 90 px/f at 1080 | similarity fit (pan, tilt, zoom) on 8 tiles; a move = edge speed > 8 px/f for ≥ 4 f | 97-106 |
+| time in moves | ≥ 30 % | frames inside moves | 33-64 % |
+| shot length CV | ≥ 0.6 | std / mean of shot lengths between boundaries | 0.57-1.31 |
+| light per place | shot YAVG std ≥ 20, a shot < 95, median 105-130 | median YAVG per shot (360x640) | std 23-25, darkest 65-91, median 104-129 |
+| first move | ≤ frame 30 | first move or transition | f3-61, median ~17 |
+| outline thick/thin | 1.7-2.5 | 18 rays round big heads at 1080, shadow-side / lit-side median | 1.65-2.47 |
+| mouth movement | mouth area CV ≥ 0.4 | tracked faces with a dark mouth shape | 0.33-0.56 |
+| bed in pauses | -12..-10 dB vs voice | median total power in pause frames minus speech frames (energy VAD) | -10.3..-11.9 |
 
 ## Look gates (picture style against the reference, measured on the mp4)
 
@@ -36,12 +54,12 @@ colour convert to full range first. Per shot and caption need `--film` (shot ind
 | Gate | Threshold | Measured as | Reference |
 |---|---|---|---|
 | shadow contrast | median 0.235-0.388 | (YLOW-16)/(YHIGH-16) per sample (P10 / P90 luma), 2 a second, median | tiles p25-p75 (median 0.289) |
-| colour per shot | YAVG 84-158, SATAVG 19-46, YLOW 36-101 | per shot (act + shot index, ≥ 2 samples), median of each | tiles p10-p90 |
+| colour per shot | YAVG 60-170, SATAVG 13-54, YLOW 17-101 | per shot (act + shot index, ≥ 2 samples), median of each | the four full reference videos, same signalstats code: YAVG p5-p95 61-168, SAT 13-54, YLOW min 17 (was tiles p10-p90, which failed every dark place) |
 | ink thickness | median 2-3 px at 1080 wide | thin dark runs (1-14 px, Y < 72, both sides ≥ 45 brighter and > 90) on rows and columns, caption band 60-80 % left out; median width per frame (frames with > 50 runs), median of 1 frame a second | 3 full frames: 3, 2, 2 px |
 | caption height | 54 px ± 10 % at 1920 tall | white glyph rows next to black stroke in the band 60-80 %, tallest run; only frames whose caption has an ascender or capital and no descender | `ref_wide` "Then" 54 px (tiles x4: 49-51) |
 
 Engine side (engine/look.js, one look for every set): every set and prop mesh gets the screen ink (stick figures keep
-their own hull, 5.4 % of head width); every plain MeshStandardMaterial gets the set toon ramp (`SET_LOOK`: form
+their own hull: 4.6 % of head width, x0.35-1.6 by the sun, thick on the shadow side); every plain MeshStandardMaterial gets the set toon ramp (`SET_LOOK`: form
 gradient, hard blue-grey cast shadow, warm sun tint); a sun higher than 50 deg is lowered to 40 deg (longer shadows);
 light shafts ray-marched through the sun's shadow map; bloom on highlights. Captions (engine/captions.js `CAP`): 72 px
 weight 800, 6 px stroke outside, hard drop shadow.
@@ -74,7 +92,10 @@ itself, or takes `--dbg <jsonl>`.
 | acting plan | every line with a character on screen ≥ 15 f | the entry's `act` ({ actor: ['verb@word', ...] }) names known body verbs (poses.js, verbs), never talk | director rule: a line is acted, not said |
 | board shown | ≥ 85 % | judged: `review/board-verdict.json` from the reviewer below | every spoken line illustrated |
 | dressing density | ≥ 16 pieces in ≥ 85 % of frames | `dress` in each `__dbg` row: registered set pieces (lib/sets/dress.js, .glb pieces) the camera really sees (shown, ≥ 0.04 % of the frame, one of five sample points not hidden behind another mesh); cu frames, cutaway tables and dissolves left out | reference: 21 distinct objects in `ref_wide`, 16 in `ref_medium` (counted by eye, 10/11); Q4 judge: "bare park and classroom" |
-| floating labels | ≤ 3 per 30 s | `make` entries of kind stamp / callout / bars / split seen ≥ 3 frames | judge: "floating UI labels read like a diagram" |
+| floating labels | 0 | `make` entries of kind stamp / callout / bars / split seen ≥ 3 frames | 0 text stickers in 4 reference videos (FORENSIC.md fix 9); a fact goes on a `sign`, meter or chalk |
+| wide share | ≥ 30 % of frames | `est`, `aerial`, `wide` frames in `__dbg` | reference establishing + wide 32 % (FORENSIC.md fix 5) |
+| low angle share | ≥ 7 % of frames | `low` frames | reference 7.3 % |
+| open on the verb | ≥ 10 of frames 0-20 | a character in frame with a body verb running (not talk / look / blink) | 4/4 reference videos are mid-action on frame 0 (fix 6) |
 | fx in world | every storyboard `fx` | each `fx` name's `make` kind is a physical kind (not stamp, callout, bars, split, rings, flow, rays, star, shimmer); floating text goes in the entry's `labels` (counted by the label budget, checked by props / fx seen) | the reference shows cracks, smoke, timers as things in the room |
 
 ### World and fx gates (Q4, 10/11)

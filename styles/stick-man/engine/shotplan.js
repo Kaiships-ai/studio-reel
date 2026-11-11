@@ -2,25 +2,28 @@
 // Pure data in, shot specs out (the same shape as an act's `shots`), so it runs in node tests and in the page.
 // Roles (storyboard `role`, else guessed from the line): hook, setup, fact / number, compare, reaction, twist, panic,
 // explain, payoff.
-// A line over ~2.6 s gets a second shot on its key word (`on` / `still`), so the reel cuts every 1.5-3 s like the reference;
-// a small-figure shot (est, aerial, top) always hands over within 40 frames (GATES.md small-figure run <= 45 f).
+// A line over ~2.6 s gets a second shot on its key word (`on` / `still`). Rhythm (FORENSIC.md fixes 1-3, 5): a new line
+// opens with a cross-dissolve (9 f) when it changes scale family, else the camera rushes to the new framing (camera.js);
+// a framing may hold up to ~3 s (`maxSeg`) and the camera rushes 4-6 times per 10 s, so shot lengths swing (reference shot-length CV 0.57-1.31); est / aerial /
+// top hand over within ~3 s (small-figure run gate); the hook line rushes by frame ~18 (first move <= f30).
 
 export const ROLE_SHOTS = {
-  hook: ['aerial', 'est'],
-  setup: ['profile', 'low', 'ots', 'two'],
-  fact: ['macro', 'top'], number: ['macro', 'top'],
-  reaction: ['punch', 'dutch', 'cu'],
-  compare: ['top', 'profile', 'two'],
-  twist: ['punch', 'dutch', 'low'],
-  panic: ['dutch', 'punch'],
-  explain: ['low', 'ots', 'profile', 'top', 'est', 'ms'],
-  payoff: ['punch', 'low', 'dutch'],
+  hook: ['est', 'aerial'],
+  setup: ['est', 'low', 'profile', 'ots', 'two'],
+  fact: ['est', 'macro', 'top'], number: ['est', 'macro', 'top'],
+  reaction: ['punch', 'low', 'dutch', 'cu'],
+  compare: ['wide', 'top', 'profile', 'two'],
+  twist: ['low', 'punch', 'dutch'],
+  panic: ['dutch', 'punch', 'low'],
+  explain: ['est', 'low', 'wide', 'top', 'ots', 'profile', 'ms'],
+  payoff: ['low', 'punch', 'dutch'],
 };
-// what follows a line's first shot inside the same line (opposite scale: far -> near, near -> far)
+// what follows a line's first shot inside the same line (opposite scale: far -> near, near -> far); wide and establishing
+// lead the near lists: the reference spends ~32 % of its runtime on them (FORENSIC.md fix 5)
 export const FOLLOW = {
   aerial: ['low', 'profile', 'two'], est: ['low', 'punch', 'profile'], top: ['punch', 'low', 'cu'], macro: ['punch', 'low', 'cu'],
-  cu: ['top', 'low', 'est', 'macro'], punch: ['top', 'low', 'est'], dutch: ['top', 'low', 'punch'], ms: ['punch', 'macro', 'top'], low: ['top', 'punch', 'macro', 'ots'],
-  ots: ['top', 'punch', 'profile'], profile: ['low', 'top', 'punch'], two: ['top', 'low', 'punch'], wide: ['low', 'cu'], follow: ['cu'], insert: ['cu'],
+  cu: ['est', 'top', 'low', 'macro'], punch: ['est', 'top', 'low'], dutch: ['est', 'top', 'low', 'punch'], ms: ['est', 'punch', 'macro', 'top'], low: ['est', 'top', 'punch', 'macro', 'ots'],
+  ots: ['est', 'top', 'punch', 'profile'], profile: ['est', 'low', 'top', 'punch'], two: ['est', 'top', 'low', 'punch'], wide: ['low', 'cu'], follow: ['cu'], insert: ['cu'],
 };
 export const DRAWN_ON_TOP = new Set(['stamp', 'callout']);
 export const SMALL = new Set(['est', 'aerial', 'top']);       // figures under 30 % of the frame: hand over within 40 f
@@ -51,13 +54,15 @@ export function macroThing(things, f, last = Infinity) {
 // lines: [{ id, a, b, key, text, entry, things, explicit, act: { name, start, actors: [names], beatsBy: { actor: count } } }]
 // (a, b = the line's window in frames; key = frame of its key word or null; things = the line's fx / props as
 // { name, kind, beats: [frames] }; explicit = kinds of the reel's own shots in the window). Returns { actName: [shot, ...] }.
-export function planShots(lines, { lead = 3, split = 78, small = 36, seg = 34, maxSeg = 46 } = {}) {
+export const WIDE = new Set(['est', 'aerial', 'top', 'wide']);   // scale families: a line that jumps between them dissolves
+export function planShots(lines, { lead = 3, split = 78, small = 80, seg = 48, maxSeg = 84 } = {}) {
   const out = {}, used = {}, n = lines.length;
   let prev = null, prev2 = null, side = 1;
   const pick = (list, ok, avoid) => {
     const c = list.filter(k => ok(k) && !avoid.includes(k));
     const pool = c.length ? c : list.filter(ok);
-    return pool.sort((x, y) => (used[x] || 0) - (used[y] || 0) || list.indexOf(x) - list.indexOf(y))[0];
+    const w = x => (used[x] || 0) * (WIDE.has(x) ? 0.34 : 1);       // wide kinds may repeat more (a third of the runtime)
+    return pool.sort((x, y) => w(x) - w(y) || list.indexOf(x) - list.indexOf(y))[0];
   };
   lines.forEach((L, i) => {
     const e = L.entry || {}, act = L.act;
@@ -73,7 +78,7 @@ export function planShots(lines, { lead = 3, split = 78, small = 36, seg = 34, m
     const shots = (out[act.name] ||= []);
     const f1 = i === 0 || L.a - lead <= act.start ? Math.min(act.start, L.a - lead) : L.a - lead;
     const spec = (k, f, thing) => {
-      const s = { f: Math.max(f, act.start), shot: k, cut: true, auto: role };
+      const s = { f: Math.max(f, act.start), shot: k, auto: role };
       const names = things.map(t => t.name), of = e.of || (actors.length ? [lead1] : names.slice(0, 1));
       if (PAIR.has(k) || k === 'est' || k === 'aerial' || k === 'top') s.of = actors.length ? actors : names.slice(0, 1);
       else if (k === 'macro') { const t = things.find(x => x.name === (thing || macroThing(things, s.f))); s.of = [t.name];
@@ -117,7 +122,10 @@ export function planShots(lines, { lead = 3, split = 78, small = 36, seg = 34, m
         if (k2) plan.push({ k: k2, f: f2 });
       }
     }
-    // the reference cuts about once a second: any stretch over maxSeg frames gets more shots, each the opposite scale of
+    // the hook rushes early: the first framing change lands by frame ~18 (reference first move f3-61, median ~17)
+    if (i === 0 && plan.length > 1 && plan[1].f > f1 + 18) plan[1].f = f1 + 18;
+    else if (i === 0 && plan.length === 1 && L.b - f1 > 40) plan.push({ k: pick(FOLLOW[plan[0].k] || ['low'], ok, [plan[0].k]), f: f1 + 18 });
+    // long holds are split: any stretch over maxSeg frames gets more shots (camera rushes), each the opposite scale of
     // the one before (FOLLOW), never the last two kinds again, never two small-figure shots in a row
     for (let j = 0; j < plan.length; j++) {
       const end = j + 1 < plan.length ? plan[j + 1].f : L.b, gap = end - plan[j].f;
@@ -136,7 +144,10 @@ export function planShots(lines, { lead = 3, split = 78, small = 36, seg = 34, m
         if (k) plan[j] = { k, f: plan[j].f };
       }
     }
-    for (const q of plan) shots.push(spec(q.k, q.f, q.t));
+    plan.forEach((q, j) => { const s = spec(q.k, q.f, q.t);
+      // a line's first shot dissolves when the scale family changes (wide <-> near) and the act was already on screen
+      if (j === 0 && i > 0 && prev && WIDE.has(prev) !== WIDE.has(q.k) && q.f > act.start + 2) s.dissolve = 9;
+      shots.push(s); });
     const last = plan[plan.length - 1].k;
     prev2 = prev; prev = last;
   });

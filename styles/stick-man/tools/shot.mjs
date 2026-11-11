@@ -187,7 +187,7 @@ if (A.speed && !REEL) {
   }
   // (g) faces: distinct expressions on screen (>= 3 frames, open-mouth twins count as their base) and how early each change
   // lands before its word (in-frame changes of a beat with a word)
-  const base = e => String(e || '').replace(/_o$/, ''), seenE = {}, leads = [];
+  const base = e => String(e || '').replace(/_[oO]$/, ''), seenE = {}, leads = [];
   for (const r of rows) for (const [n, a] of Object.entries(r.actors)) {
     if (!a.inFrame || !a.expr) continue; seenE[base(a.expr)] = (seenE[base(a.expr)] || 0) + 1;
     if (a.exprFrom === r.f && a.exprWord != null) leads.push({ n, f: r.f, lead: a.exprWord - r.f });

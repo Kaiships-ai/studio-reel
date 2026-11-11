@@ -1,6 +1,8 @@
 // Stick-man stage: renderer, sun + sky + fake bounce, toon-leaning materials, prop-only ink, lens blur, glow, grade.
 // Everything here is deterministic; a frame is a pure function of what the caller set before stage.render().
 import * as THREE from 'three';
+// sun direction (three world, toward the sun) for the light-driven figure outline (cast.js hull shader), set on each render
+export const INK_SUN = { value: new THREE.Vector3(0, 1, 0) };
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
@@ -328,9 +330,9 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1
   const gradePass = new ShaderPass({
     uniforms: { tDiffuse: { value: null }, sat: { value: sat }, con: { value: con }, vig: { value: vig }, split: { value: split },
       aspect: { value: width / height }, tPrev: { value: null }, uPrev: { value: 0 }, uFlash: { value: 0 },
-      uExp: { value: 1 }, uLift: { value: 0 }, uGam: { value: 1 }, uSat: { value: 1 } },
+      uExp: { value: 1 }, uLift: { value: 0 }, uGam: { value: 1 }, uSat: { value: 1 }, uTint: { value: new THREE.Vector3(1, 1, 1) } },
     vertexShader: FS_QUAD_V,
-    fragmentShader: `uniform sampler2D tDiffuse, tPrev; uniform float sat, con, vig, split, aspect, uPrev, uFlash, uExp, uLift, uGam, uSat; varying vec2 vUv;
+    fragmentShader: `uniform sampler2D tDiffuse, tPrev; uniform float sat, con, vig, split, aspect, uPrev, uFlash, uExp, uLift, uGam, uSat; uniform vec3 uTint; varying vec2 vUv;
       void main(){ vec3 c = texture2D(tDiffuse, vUv).rgb; float l = dot(c, vec3(0.2126,0.7152,0.0722));
         c = mix(vec3(l), c, sat);
         // split tone: shade leans blue-lilac, light leans warm, like the sunlit reference sets
@@ -339,7 +341,7 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1
         c = (c - 0.5)*con + 0.5;
         vec2 d = (vUv - 0.5)*vec2(aspect, 1.0); c *= 1.0 - vig*smoothstep(0.25, 0.75, length(d)*1.25);
         c = clamp(c, 0.0, 1.0);
-        c = pow(c, vec3(uGam)) * uExp; c += uLift * (1.0 - c);               // per-set grade (SET_GRADE)
+        c = pow(c, vec3(uGam)) * uExp * uTint; c += uLift * (1.0 - c);       // per-set / per-act grade (SET_GRADE, act grade): own light per place
         c = clamp(mix(vec3(dot(c, vec3(0.2126,0.7152,0.0722))), c, uSat), 0.0, 1.0);
         if (uPrev > 0.0) c = mix(c, texture2D(tPrev, vUv).rgb, uPrev);       // dissolve: the other act's finished frame on top
         c = mix(c, vec3(1.0, 0.99, 0.96), uFlash);                           // full-frame white flash
@@ -369,7 +371,8 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1
   function render(o = {}) {
     const t0 = performance.now();
     gradePass.uniforms.uPrev.value = o.prev || 0; gradePass.uniforms.uFlash.value = Math.min(1, o.flash || 0);
-    const gr = o.grade || {}; if (stage.shafts) stage.shafts.march.material.uniforms.dens.value = shafts * (gr.haze ?? 1); gradePass.uniforms.uExp.value = gr.exp ?? 1; gradePass.uniforms.uLift.value = gr.lift ?? 0; gradePass.uniforms.uGam.value = gr.gam ?? 1; gradePass.uniforms.uSat.value = gr.sat ?? 1;
+    const gr = o.grade || {}; if (stage.shafts) stage.shafts.march.material.uniforms.dens.value = shafts * (gr.haze ?? 1); gradePass.uniforms.uExp.value = gr.exp ?? 1; gradePass.uniforms.uLift.value = gr.lift ?? 0; gradePass.uniforms.uGam.value = gr.gam ?? 1; gradePass.uniforms.uSat.value = gr.sat ?? 1; gradePass.uniforms.uTint.value.set(...(gr.tint || [1, 1, 1]));
+    INK_SUN.value.copy(sun.position).sub(sun.target.position).normalize();   // figure outlines thicken away from the sun (cast.js)
     camera.updateMatrixWorld();
     autoToon();
     prepass();

@@ -70,8 +70,8 @@ meshes a set built by hand. A code set's COLLIDE starts from `resetCollide(COLLI
 | `chalk` | writing and a chalk bar chart drawn on a real board | draw, grow, n |
 | `speakers` | a row of speaker stacks rising one after another, cones pumping | grow, pump |
 
-Floating text (`stamp`, `callout`, `bars`, `split`) is the label budget: ≤ 3 per 30 s, listed in the storyboard entry's
-`labels`, never in `fx`. Turn a stamp into a sign, a meter or chalk; turn rings / arrows into a shock, steam or a crack.
+Floating text (`stamp`, `callout`, `bars`, `split`) is banned (floating labels gate = 0, FORENSIC.md fix 9: 0 in 4 reference
+videos). Turn a stamp into a `sign` (post, hang, board, plaque), a meter or chalk; turn rings / arrows into a shock, steam or a crack.
 
 ## Cast (`spec:` in `cast`)
 

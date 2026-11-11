@@ -1,15 +1,16 @@
 // Posable 3D stick figures: squashed-sphere head with a sliding face decal, capsule torso with painted clothes,
-// thin black tube limbs, hair and hats as solids. Each solid gets an inverted-hull outline 3.6 % of the head width.
+// thin black tube limbs, hair and hats as solids. Each solid gets an inverted-hull outline, thick on the shadow side, thin on the lit side.
 // Units: W = head width. Pose numbers are in W, in the figure's own plane (u = its right as the camera sees it, v = up).
 import * as THREE from 'three';
 import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { toon, lin, css, B, INK_RGB } from './look.js';
+import { toon, lin, css, B, INK_RGB, INK_SUN } from './look.js';
 import { EXPR, faceRig } from './faces.js';
 import { makeHandProp } from '../lib/cast/handprops.js';
 
 export const W_M = 0.60;                     // head width in metres
 const W = W_M;
-const INK_T = 0.054 * W;                     // outline width: the reference measures 5.4-6.4 % of head width
+const INK_T = 0.046 * W;                     // outline base width; the hull shader scales it 0.35-1.6x by the light (below):
+                                             // reference rim 3.8-5.6 % of head width, thick/thin side ratio 1.65-2.47 (FORENSIC.md fix 7)
 const LIMB_R = 0.038 * W / 2;                // limbs stay a thinner line than the outline
 export const HEAD_C = [0.0, 2.43], HEAD_H = 0.94, HIP_V = 1.34, SHOULDER_V = 2.00;
 export const TORSO = { cx: 0.0, cy: 1.72, w: 0.57, h: 0.90, depth: 0.80 };
@@ -22,6 +23,15 @@ export { EXPR, EXPR_NAMES, MARK_NAMES, baseExpr } from './faces.js';
 
 const inkMat = new THREE.MeshBasicMaterial({ color: lin(...INK_RGB) });
 const hullMat = new THREE.MeshBasicMaterial({ color: lin(...INK_RGB), side: THREE.BackSide });
+// light-driven line weight: the shell grows on the side away from the sun and thins on the lit side (k = 0.95 - 0.75 N.L,
+// clamped 0.35-1.6), like the reference's brush line. inkT = the base offset baked into the geometry (hullGeo).
+hullMat.onBeforeCompile = sh => {
+  sh.uniforms.inkSun = INK_SUN;
+  sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float inkT; uniform vec3 inkSun;')
+    .replace('#include <begin_vertex>', `#include <begin_vertex>
+      float ndl = dot(normalize(mat3(modelMatrix) * normal), inkSun);
+      transformed += normal * inkT * (clamp(0.95 - 0.75 * ndl, 0.35, 1.6) - 1.0);`);
+};
 
 // ------------------------------------------------------------------ outline
 function hullGeo(geo, t) {
@@ -30,6 +40,7 @@ function hullGeo(geo, t) {
   g = mergeVertices(g, 1e-5); g.computeVertexNormals();          // shared normals so the shell never cracks at seams
   const p = g.attributes.position, n = g.attributes.normal;
   for (let i = 0; i < p.count; i++) p.setXYZ(i, p.getX(i) + n.getX(i) * t, p.getY(i) + n.getY(i) * t, p.getZ(i) + n.getZ(i) * t);
+  g.setAttribute('inkT', new THREE.Float32BufferAttribute(new Float32Array(p.count).fill(t), 1));
   return g;
 }
 function solid(geo, mat, t = INK_T, hullSrc = geo) {

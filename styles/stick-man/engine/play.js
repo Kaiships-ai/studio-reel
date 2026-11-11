@@ -318,7 +318,13 @@ async function buildAct(R, X) {
     const ek = exprKeyAt(a.exprs, f); let e = ek.expr; a.exprKey = ek;
     const talking = a.mouth.some(([s, t]) => f >= s && f < t);
     const id = idle(a.seed, f, a.posture);
-    if (talking && EXPR[e + '_o']) e += '_o';
+    // expression ramp (FORENSIC.md fix 8): a change is drawn through in-betweens, not swapped: squint (4 f), wide-open
+    // mouth (5 f), then the face; the old face before it makes >= 3 drawings in 12 frames, like the reference
+    const age = f - ek.f, prevE = a.exprs.filter(x => x.f < ek.f).pop()?.expr;
+    let rampBlink = 0;
+    if (prevE && prevE !== e && age >= 0 && age < 9) { if (age < 4) rampBlink = 2; else if (EXPR[e + '_O']) e += '_O'; }
+    // talking: the mouth opens and closes by syllable (3-frame steps: open, wide, open, closed), never one open shape
+    else if (talking && EXPR[e + '_o']) { const ph = Math.floor(f / 3 + a.seed) % 4; e = ph === 1 && EXPR[e + '_O'] ? e + '_O' : ph === 3 ? e : e + '_o'; }
     else if (e === 'sleep' && id.snore) e = 'sleep_o';
     const tgtPos = t => t === 'camera' ? camPos : byName[t] ? toB(byName[t].S.parts.head.getWorldPosition(hv)) : Array.isArray(t) ? t : t ? livePos(t) : camPos;
     const cur = focusAt(a, f, a.focusSegs, active), head = toB(a.S.parts.head.getWorldPosition(new THREE.Vector3()));
@@ -327,7 +333,7 @@ async function buildAct(R, X) {
     while (d < 3 && focusAt(a, f - d - 1, a.focusSegs, active).key === cur.key) d++;
     if (d < 3) g = lerp3(gz(focusAt(a, f - d - 1, a.focusSegs, active)), g, smoother((d + 1) / 4));
     const sc = saccade(a.seed, f);
-    const blink = a.blinks.at(f);
+    const blink = rampBlink || a.blinks.at(f);
     const P = { expr: e, blink, look: g[0] + sc[0] + (cur.prop ? 0 : a.idleLook || 0), look_v: g[1] + sc[1], t: f, age: f - ek.f, cam: camPos };
     a.S.face(P); a.face = P; a.lastExpr = e;
   }
@@ -369,9 +375,9 @@ async function buildAct(R, X) {
     }
     for (const [n, h] of Object.entries(fxo)) h.apply((k, d) => KT.at(n, k, f, d), f, fenv);
   }
-  function update(f) {
+  function update(f, force = null) {
     sun(); poseAll(f);
-    cam = camera.at(shots, f, n => anchor(n, f, livePos), cues);
+    cam = camera.at(shots, f, n => anchor(n, f, livePos), cues, force);
     const px = height / 1920;
     stage.camera.setViewOffset(width, height, cam.offset[0] * px, cam.offset[1] * px, width, height);
     stage.setCamera(cam.pos, cam.aim, cam.lens);
@@ -487,10 +493,10 @@ async function buildAct(R, X) {
       const p0 = ft0[n][s], p1 = ft1[n][s], q0 = px(cam, p0), q1 = px(cam, p1);
       feet[n][s] = { planted: p0[2] < 0.014 && p1[2] < 0.014, px: +Math.hypot(q1[0] - q0[0], q1[1] - q0[1]).toFixed(3) }; } }
     // a shot asked as a cut (glide 0) is an edit, not camera motion
-    const shotCut = cam.shotIndex !== i0 && shots[cam.shotIndex].glide === 0;
+    const shotCut = (cam.shotIndex !== i0 && shots[cam.shotIndex].glide === 0) || !!camera.mixAt(shots, f);
     return { cam: f === F0 ? 0 : +camPx.toFixed(3), camPeak: f === F0 ? 0 : +camPeak.toFixed(3), feet, shotCut };
   };
-  return { name: R.name || R.set, R, grade: { ...(SET_GRADE[R.set] || {}), ...(R.grade || {}) }, group, background, update, dbg, motion, cues, actors, frameOf, flash: f => KT.at('screen', 'flash', f, 0) || 0 };
+  return { name: R.name || R.set, R, grade: { ...(SET_GRADE[R.set] || {}), ...(R.grade || {}) }, group, background, update, dbg, motion, cues, actors, frameOf, flash: f => KT.at('screen', 'flash', f, 0) || 0, shotMix: f => camera.mixAt(shots, f) };
 }
 
 // storyboard lines the reel data does not shoot get planned shots (shotplan.js): each line goes to the act on screen at
@@ -546,7 +552,8 @@ export async function boot({ film, width, height }) {
   for (const d of defs) acts.push(await buildAct(d, X));
   // windows: act k is on screen from its `from`; a dissolve of n frames is centred on that frame
   const fr = x => typeof x === 'number' ? x : resolveBeatFrame(x, words, fps);
-  const wins = acts.flatMap((A, k) => defs[k].show.map(w => ({ A, a: fr(w.from), n: w.dissolve ?? (A === acts[0] && w.from === F0 ? 0 : 7) }))).sort((x, y) => x.a - y.a);
+  // place changes dissolve (FORENSIC.md fix 1: the reference cross-dissolves, median ~9 f, almost never hard-cuts)
+  const wins = acts.flatMap((A, k) => defs[k].show.map(w => ({ A, a: fr(w.from), n: w.dissolve ?? (A === acts[0] && w.from === F0 ? 0 : 9) }))).sort((x, y) => x.a - y.a);
   const at = f => {
     for (let k = 1; k < wins.length; k++) { const w = wins[k], h = w.n / 2; if (w.n && f >= w.a - h && f < w.a + h) return { cur: w.A, prev: wins[k - 1].A, u: (f - (w.a - h) + 0.5) / w.n }; }
     let k = 0; while (k + 1 < wins.length && wins[k + 1].a <= f) k++; return { cur: wins[k].A };
@@ -555,7 +562,9 @@ export async function boot({ film, width, height }) {
   function frame(f) {
     const s = at(f); let ms = 0;
     if (s.prev) { show(s.prev); s.prev.update(f); ms += stage.render({ flash: s.prev.flash(f), grade: s.prev.grade }); stage.grab(); }
-    show(s.cur); s.cur.update(f); ms += stage.render({ prev: s.prev ? 1 - s.u : 0, flash: s.cur.flash(f), grade: s.cur.grade });
+    const sm = s.prev ? null : s.cur.shotMix(f);                   // a shot dissolve inside the act: the outgoing camera first
+    if (sm) { show(s.cur); s.cur.update(f, sm.i); ms += stage.render({ flash: s.cur.flash(f), grade: s.cur.grade }); stage.grab(); }
+    show(s.cur); s.cur.update(f); ms += stage.render({ prev: s.prev ? 1 - s.u : sm ? 1 - sm.u : 0, flash: s.cur.flash(f), grade: s.cur.grade });
     cap.draw(f); return ms;
   }
   window.__motion = f => { const s = at(f), p = at(Math.max(F0, f - 1)); show(s.cur); const m = s.cur.motion(f); return { ...m, cut: !!s.prev || p.cur !== s.cur || !!p.prev || s.cur.flash(f) > 0.3 || m.shotCut }; };   // dissolves, act cuts, flash cuts, shot cuts
