@@ -425,14 +425,24 @@ export function faceRig(headW, opt = {}) {
     tex, group, stats,
     // marks: [[kind, age]], cam: camera position (three world) or null; F (optional) = a mixed face from mixFace(): drawn
     // instead of the named expression (redrawn whenever one of its numbers moves, i.e. a new drawing per frame of a change)
-    draw(expr, blink, t, marks, cam, F = null) {
+    // slide = [dx, dy, alpha] (W units): the flat 2D face (cast.js FACE_2D) - the whole drawing slides across the head disc
+    // as the head turns, clipped by the disc's edge, never wrapped round a sphere; alpha 0 = the back of the head
+    draw(expr, blink, t, marks, cam, F = null, slide = null) {
       const E = EXPR[expr] || EXPR.neutral, live = !!(E.skin?.tears || F?.skin?.tears > 0.03);
       const fk = F ? JSON.stringify(F, (n, v) => typeof v === 'number' ? Math.round(v * 1000) / 1000 : v) : expr;
-      const k = `${fk}|${blink}|${live ? Math.floor(t / 2) : 0}`;
+      const sl = slide ? slide.map(v => Math.round(v * 500) / 500) : null;
+      const k = `${fk}|${blink}|${live ? Math.floor(t / 2) : 0}|${sl ? sl.join(',') : ''}`;
       if (k !== key) {
-        key = k; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 512, 512);
-        g.setTransform(512, 0, 0, -512, 256, 256); if (F) drawFaceState(g, F, blink, t, opt); else drawFace(g, expr, blink, t, opt); tex.needsUpdate = true;
-        stats.mouth = darkMouth(); stats.key = k.length > 64 ? hashKey(k) : k;
+        key = k;
+        const paint = sh => {
+          g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 512, 512); g.setTransform(512, 0, 0, -512, 256, 256);
+          if (sh) { if (sh[2] <= 0.01) return; g.save(); g.beginPath(); g.ellipse(0, 0, 0.462, 0.432, 0, 0, Math.PI * 2); g.clip(); g.translate(sh[0], sh[1]); g.globalAlpha = sh[2]; }
+          if (F) drawFaceState(g, F, blink, t, opt); else drawFace(g, expr, blink, t, opt);
+          if (sh) g.restore();
+        };
+        paint(null); stats.mouth = darkMouth(); stats.key = k.length > 64 ? hashKey(k) : k;   // measured on the face itself, not where it slid
+        if (sl && (sl[0] || sl[1] || sl[2] < 1)) paint(sl);
+        tex.needsUpdate = true;
       }
       for (const list of Object.values(cards)) for (const m of list) m.visible = false;
       for (const [kind, age] of marks) {

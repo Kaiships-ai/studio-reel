@@ -25,7 +25,8 @@ const CAM = [0, -2.3, 1.47], TGT = [0, 0, 1.45];
 stage.setSun([-0.55, -1.0, 1.25], [0, 0, 1.2], 2.5);
 
 window.__frame = f => {
-  const P = { pos: [0, 0, 0], yaw: 0, face: CAM, look: 0, blink: 0, t: f, age: 30, cam: CAM };
+  const YAWS = Q.get('yaws') ? Q.get('yaws').split(',').map(Number) : null;   // ?yaws=0,35,70: one frame per turn (the 2D face slide)
+  const P = { pos: [0, 0, 0], yaw: YAWS ? YAWS[f % YAWS.length] : 0, face: YAWS ? null : CAM, look: 0, blink: 0, t: f, age: 30, cam: CAM };
   if (MODE === 'beat') { const g = 2 * f; P.expr = BEAT.filter(k => k.f <= g).pop().expr; P.state = faceStateAt(BEAT, g, 7); P.t = g; P.age = g - BEAT.filter(k => k.f <= g).pop().f; }
   else if (MODE === 'talk') { const [open, wide, round, teeth] = TALK[f % TALK.length]; P.expr = 'neutral'; P.state = { a: 'neutral', b: 'neutral', u: 1, talk: { open, wide, round, teeth } }; }
   else P.expr = NAMES[f % NAMES.length];
