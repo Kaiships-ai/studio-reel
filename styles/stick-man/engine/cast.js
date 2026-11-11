@@ -13,7 +13,8 @@ const W = W_M;
 const INK_T = 0.046 * W;                     // outline base width; the hull shader scales it 0.35-1.6x by the light (below):
                                              // reference rim 3.8-5.6 % of head width, thick/thin side ratio 1.65-2.47 (FORENSIC.md fix 7)
 const CREAM = [0.90, 0.87, 0.78];             // reference bodies: flat cream
-const HEAD_WHITE = [0.985, 0.965, 0.95];      // reference heads are lighter than the body: lit sRGB (251, 246, 243), shade (230, 219, 231)
+const HEAD_WHITE = [0.985, 0.965, 0.95];
+const HEAD_FLAT = [0.92, 0.905, 0.89];         // the unlit head sits a little under white so the grade's exposure keeps its soft wash (else it clips flat)      // reference heads are lighter than the body: lit sRGB (251, 246, 243), shade (230, 219, 231)
 const LIMB_R = 0.046 * W / 2;                // limbs: reference legs and arms ~0.045-0.05 W (QlDPM f600), a bold line, not a thread
 export const HEAD_C = [0.0, 2.43], HEAD_H = 0.94, HIP_V = 1.34, SHOULDER_V = 2.00;
 export const TORSO = { cx: 0.0, cy: 1.72, w: 0.57, h: 0.90, depth: 0.80 };
@@ -33,7 +34,7 @@ hullMat.onBeforeCompile = sh => {
   sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float inkT; uniform vec3 inkSun;')
     .replace('#include <begin_vertex>', `#include <begin_vertex>
       float ndl = dot(normalize(mat3(modelMatrix) * normal), inkSun);
-      transformed += normal * inkT * (clamp(0.95 - 0.75 * ndl, 0.6, 1.6) - 1.0);   // lit side never under ~0.6x: the reference line stays bold all round (thick/thin ~2)`);
+      transformed += normal * inkT * (clamp(1.0 - 0.45 * ndl, 0.8, 1.45) - 1.0);   // lit side never under ~0.6x: the reference line stays bold all round (thick/thin ~2)`);
 };
 
 // ------------------------------------------------------------------ outline
@@ -248,9 +249,12 @@ function flatHeadMat(rgb, shade) {
       #include <logdepthbuf_pars_fragment>
       void main(){
       #include <logdepthbuf_fragment>
-        float edge = 1.0 - clamp(dot(normalize(vN), normalize(vV)), 0.0, 1.0);
-        float side = clamp(0.35 + 0.9 * dot(normalize(vN.xy + 1e-4), normalize(vec2(0.55, -0.85))), 0.0, 1.0);
-        float k = smoothstep(0.55, 0.85, edge) * side;
+        // a soft top-to-bottom wash (reference: top 255/253/250, middle 246/243/239, bottom 220/210/218) plus a thin
+        // crescent at the edge on the shadow side; never a lit 3D ball
+        vec3 n = normalize(vN);
+        float edge = 1.0 - clamp(dot(n, normalize(vV)), 0.0, 1.0);
+        float side = clamp(0.35 + 0.9 * dot(normalize(n.xy + 1e-4), normalize(vec2(0.55, -0.85))), 0.0, 1.0);
+        float k = max(max(0.85 * smoothstep(0.35, -0.95, n.y), 0.55 * smoothstep(0.5, 0.95, edge)), smoothstep(0.6, 0.9, edge) * side);
         vec3 c = mix(uColor, uColor * uShade, k) * mix(vec3(1.0), uPlaceLit, 0.25);
         gl_FragColor = vec4(c, 1.0);
         #include <colorspace_fragment>
@@ -501,7 +505,7 @@ export function makeStick(spec) {
 
   const head = new THREE.Group(); root.add(head);
   const hg = new THREE.SphereGeometry(HA, 64, 40); hg.scale(1, HEAD_H, 1); shapeHeadGeo(hg);
-  const headSolid = solid(hg, FACE_2D.on ? flatHeadMat(spec.skin || HEAD_WHITE, [0.92, 0.89, 0.95]) : toon(spec.skin || HEAD_WHITE, { shade: [0.97, 0.95, 0.98], rim: 0, sheen: 0, broad: 0, rough: 1, soft: 0.65, rimLit: 0, char: 1, rimCool: rc }));
+  const headSolid = solid(hg, FACE_2D.on ? flatHeadMat(spec.skin || HEAD_FLAT, [0.80, 0.77, 0.84]) : toon(spec.skin || HEAD_WHITE, { shade: [0.97, 0.95, 0.98], rim: 0, sheen: 0, broad: 0, rough: 1, soft: 0.65, rimLit: 0, char: 1, rimCool: rc }));
   headSolid.receiveShadow = false;   // no hard cast shadows from hair or hats on the face (a lit white triangle cut the face, ep01 f1240); the reference head is one soft white form
   head.add(headSolid);
   const rig = new THREE.Group(); head.add(rig);
@@ -516,7 +520,6 @@ export function makeStick(spec) {
   const skin0 = headSolid.material.color.clone(), tintC = new THREE.Color();
   if (spec.glasses) rig.add(glasses());
   for (const f of spec.hair || []) head.add(f());
-  if (spec.head) head.scale.set(spec.head[0], spec.head[1], spec.head[0]);   // per-character head proportion [width, height] (lib/cast/heads.js)
   // hair, hats and glasses were built on the ellipsoid: give them the same head shape (in head space), geometry cloned
   head.updateMatrixWorld(true); _hm.copy(head.matrixWorld).invert();
   const skip = new Set([headSolid, face]); headSolid.traverse(o => skip.add(o)); FR.group.traverse(o => skip.add(o));

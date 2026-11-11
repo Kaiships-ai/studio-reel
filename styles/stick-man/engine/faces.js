@@ -26,7 +26,8 @@ const DEG = Math.PI / 180;
 // apart (+) or together (-); brow = [tilt deg (+ = inner end down), height above the eye centre (W), arch (W), lift L,
 // lift R], bw = brow weight; mouth = shape (below), mw = width scale, mx / my = mouth shift (W); skin = { blush, tears }
 // 0..1; marks = head-attached cards; tint = head colour (linear) for rage.
-const DOT = { eye: 'oval', rx: 0.046, ry: 0.060 }, RING = { eye: 'oval', rx: 0.066, ry: 0.070, white: 1, pupil: 0.020 };
+// DOT eye ~0.09 x 0.12 W on the head (Kai's reference shots 11/11)
+const DOT = { eye: 'oval', rx: 0.037, ry: 0.049 }, RING = { eye: 'oval', rx: 0.066, ry: 0.070, white: 1, pupil: 0.020 };
 export const EXPR = {
   neutral: { ...DOT, brow: [0, 0.125, 0.008, 0, 0.006], mouth: 'flat', mx: 0.008 },
   calm: { ...DOT, lid: 0.34, brow: [-3, 0.120, 0.010, 0, 0.006], mouth: 'smile', mw: 0.7 },
@@ -98,6 +99,19 @@ function taper(g, pts, th, col = INK, end = 0.18) {
   }
   fill(g, [...top, ...bot.reverse()], col);
 }
+// an open mouth (Kai's reference shots, 11/11): an ink rim round a dark red cavity with a pink tongue low in it, never a
+// flat black hole (measured: rim ~sRGB 87/47/53, inside 180/88/106)
+const CAVITY = 'rgb(122,38,52)', TONGUE = 'rgb(214,112,128)';
+function cav(g, pts, rim = 0.011) {
+  path(g, pts, true); g.fillStyle = CAVITY; g.fill();
+  let lo = Infinity, hi = -Infinity, lx = Infinity, rx = -Infinity;
+  for (const [x, y] of pts) { lo = Math.min(lo, y); hi = Math.max(hi, y); lx = Math.min(lx, x); rx = Math.max(rx, x); }
+  g.save(); path(g, pts, true); g.clip();
+  g.beginPath(); g.ellipse((lx + rx) / 2, lo + (hi - lo) * 0.05, (rx - lx) * 0.42, (hi - lo) * 0.42, 0, 0, Math.PI * 2); g.fillStyle = TONGUE; g.fill();
+  g.restore();
+  path(g, pts, true); g.lineWidth = rim; g.strokeStyle = INK; g.stroke();
+}
+const ellPts = (cx, cy, rx, ry, n = 28) => Array.from({ length: n }, (_, i) => { const a = 2 * Math.PI * i / n; return [cx + rx * Math.cos(a), cy + ry * Math.sin(a)]; });
 const rrect = (g, x, y, w, h, r) => { g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h); };
 
 // brow: a short crescent, pointed at both ends, thickest a little inside the middle (inner end heavier when angry)
@@ -108,7 +122,7 @@ function brow(g, ex, s, by, tilt, arch, bw = 1) {
     pts.push([ex + s * 0.006 + x * c - y * sn, by + x * sn + y * c]);
   }
   if (s < 0) pts.reverse();                                                                 // t 0 = inner end on both sides
-  const n = pts.length - 1, top = [], bot = [], th = 0.019 * bw;   // reference brow ~0.024 W thick
+  const n = pts.length - 1, top = [], bot = [], th = 0.025 * bw;   // reference brow ~0.03-0.035 W thick (Kai's reference shots)
   for (let i = 0; i <= n; i++) {
     const t = i / n, [x, y] = pts[i], [ax, ay] = pts[Math.max(0, i - 1)], [bx, by2] = pts[Math.min(n, i + 1)];
     let nx = -(by2 - ay), ny = bx - ax; const l = Math.hypot(nx, ny) || 1; nx /= l; ny /= l;
@@ -191,8 +205,8 @@ function mouth(g, kind, mw = 1, x0 = 0, y0 = -0.15) {
     case 'wobble': taper(g, bez([X(-0.040), y - 0.002], [X(-0.016), y + 0.018], [X(0.010), y - 0.018], [X(0.040), y + 0.004], 18), 0.0115); break;
     case 'skew': taper(g, bez([X(-0.034), y + 0.008], [X(-0.010), y + 0.004], [X(0.014), y - 0.006], [X(0.038), y - 0.014], 14), 0.012); break;
     case 'wavy': { const pts = []; for (let i = 0; i <= 28; i++) { const u = i / 28; pts.push([X(-0.072 + 0.144 * u), y + 0.010 * Math.sin(u * 5 * Math.PI)]); } line(g, pts, 0.013); break; }
-    case 'o': g.beginPath(); g.ellipse(x0, y - 0.010, 0.024 * mw, 0.034, 0, 0, Math.PI * 2); g.fillStyle = INK; g.fill(); break;
-    case 'o_big': g.beginPath(); g.ellipse(x0, y - 0.012, 0.028 * mw, 0.038, 0, 0, Math.PI * 2); g.fillStyle = INK; g.fill(); break;
+    case 'o': cav(g, ellPts(x0, y - 0.010, 0.026 * mw, 0.034)); break;
+    case 'o_big': cav(g, ellPts(x0, y - 0.012, 0.030 * mw, 0.040)); break;
     case 'bar': { const w = 0.068 * mw, h = 0.034; rrect(g, x0 - w, y - h, 2 * w, h, 0.012); g.fillStyle = INK; g.fill(); break; }   // rage
     case 'teeth': {                                                                        // gritted: a white grid, ink outline
       const w = 0.092 * mw, h = 0.070, top = y + 0.014;
@@ -226,18 +240,18 @@ function mouth(g, kind, mw = 1, x0 = 0, y0 = -0.15) {
       const h = kind === 'big' ? 0.066 : kind === 'open_big' ? 0.072 : 0.092, w = 0.118;   // ref laugh ~0.36 W wide
       const pts = [...bez([X(-w), y + 0.016], [X(-w * 0.45), y + 0.004], [X(w * 0.45), y + 0.004], [X(w), y + 0.016], 14),
         ...bez([X(w), y + 0.016], [X(w * 0.62), y - h * 1.25], [X(-w * 0.62), y - h * 1.25], [X(-w), y + 0.016], 16)];
-      fill(g, pts); teethBand(pts, y + 0.016, 0.022); break;
+      cav(g, pts); teethBand(pts, y + 0.016, 0.022); path(g, pts, true); g.lineWidth = 0.011; g.strokeStyle = INK; g.stroke(); break;
     }
-    case 'open': fill(g, lens(0.040, 0.032)); break;
-    case 'open_skew': fill(g, lens(0.040, 0.030, 0, 0.004).map(([px, py]) => [px, py + (px - x0) * 0.22])); break;
-    case 'open_frown': fill(g, lens(0.036, 0.022, -0.010, 0.010)); break;
-    case 'sad_open': fill(g, lens(0.034, 0.020, -0.012, 0.012)); break;
-    case 'wail': fill(g, lens(0.050, 0.046, -0.014, 0.014)); break;
-    case 'teeth_open': { const pts = lens(0.058, 0.048, 0.004); fill(g, pts); teethBand(pts, y + 0.012, 0.018); break; }
+    case 'open': cav(g, lens(0.040, 0.032)); break;
+    case 'open_skew': cav(g, lens(0.040, 0.030, 0, 0.004).map(([px, py]) => [px, py + (px - x0) * 0.22])); break;
+    case 'open_frown': cav(g, lens(0.036, 0.022, -0.010, 0.010)); break;
+    case 'sad_open': cav(g, lens(0.034, 0.020, -0.012, 0.012)); break;
+    case 'wail': cav(g, lens(0.050, 0.046, -0.014, 0.014)); break;
+    case 'teeth_open': { const pts = lens(0.058, 0.048, 0.004); cav(g, pts); teethBand(pts, y + 0.012, 0.018); path(g, pts, true); g.lineWidth = 0.011; g.strokeStyle = INK; g.stroke(); break; }
     case 'scream': case 'scream_small': {                                                  // tall dark oval, top teeth
       const k = kind === 'scream' ? 1 : 0.72, w = 0.044 * k * mw, h = 0.086 * k, cy = y - 0.022 * k;
       const pts = Array.from({ length: 32 }, (_, i) => { const a = 2 * Math.PI * i / 32; return [x0 + w * Math.cos(a), cy + h * 0.5 * Math.sin(a) * (Math.sin(a) > 0 ? 0.8 : 1)]; });
-      fill(g, pts); teethBand(pts, cy + h * 0.4, 0.016); break;
+      cav(g, pts); teethBand(pts, cy + h * 0.4, 0.016); path(g, pts, true); g.lineWidth = 0.011; g.strokeStyle = INK; g.stroke(); break;
     }
     default: fill(g, lens(0.030, 0.010));
   }
@@ -319,7 +333,7 @@ function vmouth(g, F, x0, y0) {
   const top = bez([x0 - w, y + c], [x0 - w * 0.45, y + lip], [x0 + w * 0.45, y + lip], [x0 + w, y + c], 14);
   const bot = bez([x0 + w, y + c], [x0 + w * 0.62, y - h * 1.3 + 0.3 * c], [x0 - w * 0.62, y - h * 1.3 + 0.3 * c], [x0 - w, y + c], 16);
   const pts = [...top, ...bot];
-  fill(g, pts);
+  if (T.open > 0.22) cav(g, pts); else fill(g, pts);                                       // barely open: a dark slit; open: the cavity
   g.save(); path(g, pts, true); g.clip();
   if (T.round < 0.6 && T.open > 0.30) { g.fillStyle = WHITE; g.fillRect(x0 - w, y + lip - 0.016 - 0.006 * T.teeth, 2 * w, 0.02); }
   if (T.teeth > 0.3) { g.fillStyle = WHITE; g.fillRect(x0 - w, y - h * 1.0, 2 * w, 0.014); }
@@ -331,7 +345,7 @@ function vmouth(g, F, x0, y0) {
 // are big and bold (an eye is 0.10-0.12 W wide, a lid stroke 0.03 W thick), which is also what still reads on a phone.
 // o.glasses: the eyes sit in the rim centres (cast.js glasses(): +-0.15, 0.02, radius 0.112), ring eyes shrink to fit
 // inside, the brows clear the rims and the mouth drops a little; the expression still reads through brows and mouth.
-export const LAYOUT = { K: 1.25, ey: 0.0, dx: 0.155, my: -0.175, glasses: { K: 1.12, ey: 0.02, dx: 0.150, my: -0.185, maxR: 0.086, browMin: 0.165 } };
+export const LAYOUT = { K: 1.25, ey: 0.0, dx: 0.135, my: -0.175, glasses: { K: 1.12, ey: 0.02, dx: 0.150, my: -0.185, maxR: 0.086, browMin: 0.165 } };
 export function drawFaceState(g, F, blink = 0, t = 0, o = {}) {
   const Lo = o.glasses ? LAYOUT.glasses : LAYOUT, K = Lo.K, ey = Lo.ey / K, dx = Lo.dx / K;
   g.save(); g.scale(K, K);

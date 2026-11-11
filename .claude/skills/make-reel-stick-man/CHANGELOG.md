@@ -12,7 +12,9 @@ and talking mouth ~1.4-1.9x wider; brows 0.024 W thick. Acting: every pose plays
 any pose beat takes `props`. 2D head (Kai: "the reference face is 2D, ours is a 3D sphere"): with `FACE_2D.on` (default) the
 head is unlit flat white with one thin shade crescent at its edge, and the face is a flat card that always faces the lens
 and slides across the head disc as the head turns (clipped at the edge, gone from behind); `faces3d.html?yaws=0,50,100`
-shows the turnaround. Test bed: `faces3d.html?glasses=0&names=a,b`; a 12 s acting study `films/char-test` (local).
+shows the turnaround. Head style matched to Kai's reference stills (11/11): near-black ink (renders ~sRGB 38/33/36), a
+steadier line (0.8-1.45x), smaller solid eyes (0.09 x 0.12 W, 0.27 W apart), thicker brows (~0.03 W), open mouths are an
+ink rim round a red cavity with a pink tongue, and the head fill carries a soft top-to-bottom wash. Test bed: `faces3d.html?glasses=0&names=a,b`; a 12 s acting study `films/char-test` (local).
 
 ## p9 · 2026-11-11 · micro-animation layer (FORENSIC.md section 3, fixes 8, 14, 16, 17)
 
