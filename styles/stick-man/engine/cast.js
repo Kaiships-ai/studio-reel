@@ -225,7 +225,10 @@ export function headScale(yn) {
 }
 const _hv = new THREE.Vector3(), _hm = new THREE.Matrix4(), _hi = new THREE.Matrix4();
 // deform a geometry whose vertices are in a frame M (-> head space); M null = head space already
+// Kai 11/11 (later): back to the original round head ("đầu hiện tại anh lại thấy không ok") -> off by default.
+export const HEAD_SHAPE = { on: false };
 function shapeHeadGeo(g, M = null) {
+  if (!HEAD_SHAPE.on) return;
   const p = g.attributes.position; if (M) _hi.copy(M).invert();
   for (let i = 0; i < p.count; i++) {
     _hv.fromBufferAttribute(p, i); if (M) _hv.applyMatrix4(M);
