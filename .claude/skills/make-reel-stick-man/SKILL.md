@@ -26,7 +26,7 @@ that caused it.
 | | 6 | animatic | the storyboard stills held for their lines' time on `vo/vo.wav` → `review/animatic.mp4` (ffmpeg concat until a tool exists) | |
 | | | **gate 2: Kai approves the animatic; length, story and shots are locked** | | |
 | 2 Asset | 7 | missing pieces | a set, prop, fx or pose the animatic needs and the kit lacks goes in the kit with its rule (SETS.md, VERBS.md) | SETS.md, VERBS.md |
-| 3 Shot | 8 | layout + blocking | `reel.js` (+ `reel2.js`): cameras from the animatic, characters as key poses only (`anim`, every key `ease: 'snap'`); stills with `shot.mjs --frames a,b --out <dir>/f_%d.jpg --w 540 --h 960` | REEL_DATA.md, `.claude/skills/animation-principles` |
+| 3 Shot | 8 | layout + blocking | `reel.js` (+ `reel2.js`): cameras from the animatic, each `direct` entry's `why` starts with the shot's PURPOSE (what the viewer must get in its 1-2 s), a clear size (real wide or real close-up), a clean background (face against sky or plain wall; other characters and trains out of frame); an independent agent challenges the layout stills against the animatic and the purposes before Kai sees them; characters as key poses only (`anim`, every key `ease: 'snap'`); stills with `shot.mjs --frames a,b --out <dir>/f_%d.jpg --w 540 --h 960` | REEL_DATA.md, `.claude/skills/animation-principles` |
 | | | **gate 3: Kai approves the blocking** | | |
 | | 9 | polish | eases, holds, anticipation, cycles (engine/motion.js); preview `shot.mjs --film films/<slug> --frames 0-<last> --report films/<slug>/review/pre-stats.txt --fast 1` | GATES.md |
 | | 10 | board | `node styles/stick-man/tools/board.mjs films/<slug> --judge 3` → `review/board.jpg`, `review/board-verdict.json` | GATES.md (judged gate) |
@@ -43,6 +43,7 @@ Board before render: a line marked "not shown" is fixed in the storyboard (`stil
 | `<last>` = the "last frame" line of `vo/voice-qa.md`; a beat names a spoken word (`line` + `on`), `f` only before the first word | picture follows the voice |
 | A line about a process (light, heat, air, money, inside of a thing) gets an explainer fx or a cutaway on its key word | reel 2: talked about airflow, showed none |
 | The lead's acting is keyed by hand in blocking (gate 3); auto-acting from the words is for background characters only; a line where the lead only stands and talks is a FAIL | stick04 judge: poses 3-4/10; rail-gaps: auto-acting read as puppets (Kai 6/10) |
+| Layout is challenged by a fresh agent (stills + animatic + purposes) before Kai reviews it | pilot A layout v1: timid mid shots, noisy backgrounds, shots with no clear purpose (Kai) |
 | Held props have `userData.grip`; every set has `COLLIDE` boxes; close-ups keep head x 45-55 % | hand-prop gap, collision, framing gates |
 | Fast verbs (fist_pump, point, cough, startle, wave_small) carry a built-in ease; never shorten their fades | joint gate ≤ 25 deg/f |
 | A new set, prop, fx or verb goes in the kit with its rule (SETS.md template, VERBS.md row); never edit the kit for one film's taste | the next reel reuses it |

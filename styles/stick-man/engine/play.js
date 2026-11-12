@@ -11,6 +11,7 @@ import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, e
 import { createCamera } from './camera.js';
 import { planShots } from './shotplan.js';
 import { createCaptions } from './captions.js';
+import { createOverlays } from './overlays.js';
 import { ACT, PROPV, MAKE, keyTracks } from './verbs_fx.js';
 import { POSE_VERBS, POSES } from './poses.js';
 import { compileTrack, playActor, toPose, MOTION_POSES } from './motion.js';
@@ -650,6 +651,9 @@ export async function boot({ film, width, height }) {
   defs.forEach((d, k) => { d.win = starts.map(([a], i) => [a, i + 1 < starts.length ? starts[i + 1][0] : F1 + 1]).filter((_, i) => starts[i][1] === k); });
   const acts = [];
   for (const d of defs) acts.push(await buildAct(d, X));
+  // drawn overlays (engine/overlays.js): each act's `overlays` list, over the picture on the captions canvas
+  acts.forEach((A, k) => { A.ov = createOverlays({ stage, width, height, list: defs[k].overlays }); });
+  const capG = cap.canvas.getContext('2d');
   // windows: act k is on screen from its `from`; a dissolve of n frames is centred on that frame
   const fr = x => typeof x === 'number' ? x : resolveBeatFrame(x, words, fps);
   // place changes dissolve (FORENSIC.md fix 1: the reference cross-dissolves, median ~9 f, almost never hard-cuts)
@@ -667,8 +671,11 @@ export async function boot({ film, width, height }) {
     const sm = s.prev ? null : s.cur.shotMix(f);                   // a shot dissolve inside the act: the outgoing camera first
     const sw = sm?.whip ? 0.22 * sm.whip * Math.sin(Math.PI * (sm.ws ?? sm.u)) : 0;   // a whip between two shots of one place (allout/director.js)
     if (sm) { show(s.cur); s.cur.update(f, sm.i); ms += stage.render({ flash: s.cur.flash(f), grade: s.cur.grade, whip: sw }); stage.grab(); }
+    const lo = !s.prev && !sm ? s.cur.ov.loupeAt(f) : null;       // a loupe: one extra render from its own camera first
+    if (lo) { show(s.cur); s.cur.update(f); stage.setCamera(lo.cam.pos, lo.cam.aim, lo.cam.lens ?? 50); stage.setDof(null);
+      ms += stage.render({ grade: s.cur.grade }); s.cur.ov.grabLoupe(stage.renderer.domElement); }
     show(s.cur); s.cur.update(f); ms += stage.render({ prev: s.prev ? 1 - wu : sm ? 1 - sm.u : 0, flash: s.cur.flash(f), grade: s.cur.grade, whip: wp || sw, impact: s.cur.impact(f), blur: wp || sw ? null : s.cur.blur(), t: f / fps });
-    cap.draw(f); return ms;
+    cap.draw(f); s.cur.ov.draw(capG, f); return ms;
   }
   window.__motion = f => { const s = at(f), p = at(Math.max(F0, f - 1)); show(s.cur); const m = s.cur.motion(f); return { ...m, cut: !!s.prev || p.cur !== s.cur || !!p.prev || s.cur.flash(f) > 0.3 || m.shotCut }; };   // dissolves, act cuts, flash cuts, shot cuts
   window.__dbg = f => {

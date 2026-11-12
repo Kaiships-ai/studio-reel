@@ -10,7 +10,7 @@
 //   board   thermometer + calendar: temp 0..1, month 0 = MAY .. 1 = JULY
 //   loco    blue 4-4-0 + coach on the blue line, facing -y: y (front y)
 //   rloco   purple 4-4-0 + coach on the purple line, facing -y: y (front y), off 0..1 (derails toward the drop: slides out
-//           and tips over the lip), lamp 0..1
+//           and tips over the lip), fall (seconds after the lip: drops into the canyon at g = 9.8, scraping the cliff face, never through it), lamp 0..1
 import { createKit, tex, rng, B, SURF } from '/styles/stick-man/allout/kit.js';
 import { track, loco, coach, canyonWall, mesa, sky, atmos, slab, shrub, cactus, rock, pole, wires, collideFromMeshes, RSURF, RAIL_X, RAIL_TOP } from '/styles/stick-man/allout/rail-kit.js';
 
@@ -55,7 +55,7 @@ export async function build(stage, opts = {}) {
   track(K, { x: RX, y0: 300, y1: 820, seed: 8, stones: false, cast: false, gapM: 0.0005, width: 1.35, tieMat: tiePurple });
   // ---- the wall (right), the cliff under the lip, the far wall, the canyon floor
   canyonWall(K, { at: [4.6, 900, 0], rotZ: -90, L: 1160, H: 30, zb: -1, step: 2.6, fine: [820, 920, 1.2], rows: 1.3, amp: 1.0, crag: 10, top: 40, seed: 5, bands: NEAR_BANDS, texL: 38, recess: 0.5 });
-  canyonWall(K, { at: [LIP, 900, 0], rotZ: -90, L: 1160, H: -0.15, zb: -175, step: 4, rows: 3, amp: 1.2, crag: 0.25, top: 2.2, topRows: 3, seed: 7, pal: 'red', ledge: 1.5, big: 3, texL: 60, lowSafe: -999 });
+  const cliff = canyonWall(K, { at: [LIP, 900, 0], rotZ: -90, L: 1160, H: -0.15, zb: -175, step: 4, rows: 3, amp: 1.2, crag: 0.25, top: 2.2, topRows: 3, seed: 7, pal: 'red', ledge: 1.5, big: 3, texL: 60, lowSafe: -999 });
   canyonWall(K, { at: [-95, -420, 0], rotZ: 90, L: 1400, H: -3, zb: -175, step: 4.5, rows: 2.6, amp: 2.2, crag: 5, top: 260, seed: 9, pal: 'red', ledge: 2.5, big: 5, texL: 70, lowSafe: -999, plateau: '#8a3a30' });
   slab(K, [-96, -420, -176], [LIP, 980, -175], K.mat([0.18, 0.2, 0.45], 1.0), { step: 40, tile: 40 });
   for (const [x, y, rr, h, s] of [[-420, 640, 70, 42, 1], [-760, 1150, 120, 70, 2], [-330, 1380, 90, 55, 3], [-980, 420, 140, 60, 4], [-1250, 980, 160, 80, 5], [-80, 1650, 120, 50, 6], [320, 1700, 140, 70, 7], [-600, -500, 110, 50, 8]])
@@ -112,8 +112,28 @@ export async function build(stage, opts = {}) {
   const ours = train('loco', OX, 40, { cab: BLUE, wheel: BLUE, pilot: BLUE, tender: BLUE, boiler: [0.06, 0.08, 0.14] }, BLUE, 'BLUE GAP LINE');
   const theirs = train('rloco', RX, 30, { cab: PURPLE, wheel: PURPLE, pilot: PURPLE, tender: PURPLE, boiler: [0.10, 0.05, 0.14], trim: [0.92, 0.75, 0.30] }, PURPLE, 'PURPLE SMOOTH LINE');
   K.anim('loco', ours.g, (f, v) => { const y = v('y', 40); ours.g.position.copy(B(OX, y, 0)); ours.LO.drive(40 - y); ours.LO.lamp(v('lamp', 0)); });
-  K.anim('rloco', theirs.g, (f, v) => { const y = v('y', 30), o = Math.max(0, Math.min(1, v('off', 0)));
-    theirs.g.position.copy(B(RX - 2.6 * o, y, -2.2 * o * o)); theirs.g.rotation.set(0, -0.9 * o, 0.35 * o); theirs.LO.drive(30 - y); theirs.LO.lamp(v('lamp', 0)); });
+  // the cliff under the lip as a contact surface: FACE[iy][iz] = x of the rock face (rock is at larger x), sampled by rays
+  // along +x every 2 m of y round the buckle and every 0.5 m of depth; a falling train is pushed out of it (it scrapes down the
+  // face, never through it)
+  const T3 = K.THREE, ray = new T3.Raycaster(), FY = [], FZ = [], FACE = [];
+  cliff.updateMatrixWorld(true);
+  for (let y = BK - 14; y <= BK + 30; y += 2) FY.push(y);
+  for (let z = 0; z >= -60; z -= 0.5) FZ.push(z);
+  for (const y of FY) FACE.push(FZ.map(z => { ray.set(B(LIP - 40, y, z), new T3.Vector3(1, 0, 0)); ray.far = 60;
+    const h = ray.intersectObject(cliff, false)[0]; return h ? h.point.x : LIP; }));
+  const faceAt = (y0, y1, z0, z1) => { let m = Infinity;
+    FY.forEach((y, a) => { if (y < y0 || y > y1) return; FZ.forEach((z, b) => { if (z <= z1 && z >= z0) m = Math.min(m, FACE[a][b]); }); });
+    return m === Infinity ? LIP : m; };
+  // rloco off 0..1: it slides sideways off its bed to the lip and tips over the edge (no sinking into the ground: it only drops
+  // once its centre overhangs). fall: seconds since it left the lip (key it with a linear ramp at real time): it keeps
+  // 5 m/s sideways, drops at g = 9.8, and the cliff face pushes it out (contact), nose tipping down.
+  const HALF = 1.1, HIGH = 4.2, LEN = 20;
+  K.anim('rloco', theirs.g, (f, v) => { const y = v('y', 30), o = Math.max(0, Math.min(1, v('off', 0))), t = Math.max(0, v('fall', 0));
+    const x0 = RX + (LIP - 0.6 - RX) * o, over = Math.max(0, LIP - x0);
+    let x = x0 - 5 * t, z = -1.2 * over - 4.9 * t * t;
+    if (t > 0) x = Math.min(x, faceAt(y - 2, y + LEN, z, z + HIGH) - HALF);
+    theirs.g.position.copy(B(x, y, z)); theirs.g.rotation.set(-0.5 * t, -0.08 * o, 0.3 * o + 0.6 * t);
+    theirs.LO.drive(30 - y); theirs.LO.lamp(v('lamp', 0)); });
   stage.addBounce([3.0, 3.0, 1.4], [1.0, 0.62, 0.42], 1.3, 7);
   atmos(K, K.root, { haze: { color: S.haze, near: 30, dist: 300, max: 0.66 }, deep: { z: -12, depth: 115, color: S.deep, max: 0.97 }, sun: { color: '#fff0d6', k: 0.4, dir: opts.sunDir || SUN_DIR }, squash: { from: 62, span: 17.5, L: 160 } });
   collideFromMeshes(COLLIDE, K.root, { skip: ['loco', 'rloco', 'joint'], big: 8 });
