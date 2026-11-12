@@ -1,5 +1,14 @@
 # Changelog · make-reel-stick-man
 
+## p11 · 2026-11-12 · the steps follow the animation pipeline
+
+Kai's audit against the standard 3D pipeline: rail-gaps skipped development and pre-production (its treatment was the
+reference's shot list, the storyboard was shot after the reel data, no animatic) and had only one approval gate, the
+final video. The skill now runs by phase: 0 Development (show bible, brief + treatment, gate 1), 1 Pre-production (script,
+voice, align, storyboard stills, animatic, gate 2), 2 Asset (only what the animatic needs), 3 Shot (layout + blocking with
+keys held, gate 3, then polish and board), 4 Post (sound, render, gates, deliver, gate 4). The lead's acting is keyed by
+hand; auto-acting is for background characters.
+
 ## p10 · 2026-11-11 · character quality pass (measured on the QlDPM and VS1Z reference shorts)
 
 Engine-wide, every reel gets it. Look: ink is a dark warm plum, not black (`INK_RGB`, renders ~sRGB 50-65, 35-45, 40-50
