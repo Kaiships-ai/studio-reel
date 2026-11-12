@@ -6,6 +6,7 @@ import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometr
 import { toon, lin, css, B, INK_RGB, INK_SUN, PLACE } from './look.js';
 import { EXPR, faceRig, mixFace } from './faces.js';
 import { makeHandProp } from '../lib/cast/handprops.js';
+import { limitArm, torsoSlices, ellipsoid, solveArm } from './body.js';
 
 const SPIN_Q = new THREE.Quaternion(), SPIN_AX = new THREE.Vector3(0, 1, 0), _camL = new THREE.Vector3();
 export const W_M = 0.60;                     // head width in metres
@@ -386,7 +387,9 @@ class Tube {
   }
 }
 // Bone lengths (W). Leg = hip (v 1.38) to ankle (v 0.022) when straight; the arm hangs in a soft ~25 deg arc at rest.
-export const LIMB = { thigh: 0.679, shin: 0.679, upper: 0.41, fore: 0.41, stub: 0.122 };
+// Arms 25 % longer than the first design (Kai 2026-11-12: at 0.41 the arm was shorter than the head and a raised hand hid
+// behind it); both bones stay equal (ik() assumes it).
+export const LIMB = { thigh: 0.679, shin: 0.679, upper: 0.5125, fore: 0.5125, stub: 0.122 };
 // Above this share of full reach the joint eases toward straight and the hose stretches (rubber hose), so a target is
 // always reached exactly (feet never slide, props stay in the hand). Legs straighten fully (a standing leg never
 // flickers bent); arms keep a soft 12 deg bend and stretch, easing over a wide range so a fast reach never snaps.
@@ -746,7 +749,7 @@ export function makeStick(spec) {
   // pelvis {pitch, roll, yaw} (deg), spine {bend, side, twist} (deg), sq, neck {nod, tilt, turn} (deg), headSq,
   // arm{L,R} {raise, swing, elbow, roll, ik: [x, y, z] figure W, ikw, pole}, leg{L,R} {foot: [x, y, z] W, pitch, yaw, knee},
   // hat {pitch, roll} (deg, the follow-through swing), plus the x_ keys (props, marks) and contact.
-  let bent = null;
+  let bent = null, slices = null;
   const _e = new THREE.Euler();
   S.pose2 = (Q = {}) => {
     S.place(Q);
@@ -754,6 +757,7 @@ export function makeStick(spec) {
       const hull = torso.children[0];
       bent = [torso, hull].map(m => ({ g: m.geometry, p: m.geometry.attributes.position.array.slice(), n: m.geometry.attributes.normal.array.slice() }));
       torso.scale.set(1, 1, 1); torso.position.set(0, 0, 0);
+      slices = torsoSlices(bent[0].p, { girth, gz: 0.9 + 0.1 * girth, W, y0: TORSO_Y0 });
     }
     const B = spineParams(Q.spine, Q.sq || 0), gz = 0.9 + 0.1 * girth, v = new THREE.Vector3(), n = new THREE.Vector3();
     for (const b of bent) {
@@ -779,9 +783,15 @@ export function makeStick(spec) {
     const rig = { pitch: (pv.pitch || 0) + (Q.spine?.bend || 0), roll: (pv.roll || 0) + (Q.spine?.side || 0), assist: 0,
       body: [Q.hip?.x || 0, Q.bob || 0, Q.spine?.twist || 0].map(x => +x.toFixed(3)), sq: Q.sq || 0, headSq: Q.headSq || 0 };
     const shY = SHOULDER_V - HIP_V, qChest = qb.clone().multiply(spineFrame(B, shY).q);
+    // the body as volumes (engine/body.js): the head as drawn (squash kept), the torso as bent elliptic slices
+    const kS = 1 / Math.sqrt(B.s), vols = [ellipsoid(toRoot(top.p.clone().add(hOff)), qb.clone().multiply(qTop), [0.5 / Math.sqrt(hs), 0.5 * HEAD_H * hs, 0.5 / Math.sqrt(hs)], 'head')];
+    for (const sl of slices) {
+      const c = new THREE.Vector3(sl.cx, sl.y, sl.cz); bendPt(B, c);
+      vols.push(ellipsoid(toRoot(c), qb.clone().multiply(spineFrame(B, Math.max(0, sl.y)).q), [sl.rx * kS, sl.ry * B.s, sl.rz * kS], 'torso'));
+    }
     for (const [side, sg] of [['L', -1], ['R', 1]]) {
       const shB = new THREE.Vector3(sg * TORSO.w * 0.40 * girth, shY, 0); bendPt(B, shB);
-      const sh = toRoot(shB), A = Q['arm' + side] || {};
+      const lim = limitArm(Q['arm' + side] || {}), sh = toRoot(shB), A = lim.A;
       // FK from the shoulder; with an ik target the hand goes there instead, blended by ikw (0 = FK, 1 = on the target),
       // the elbow still folding the FK way
       const k = armDirs(A, sg); k.d.applyQuaternion(qChest); k.fd.applyQuaternion(qChest); k.pole.applyQuaternion(qChest);
@@ -790,6 +800,11 @@ export function makeStick(spec) {
       if (iw > 0) {
         const r = ik(sh, hand.clone().lerp(V(A.ik), iw), LIMB.upper, A.pole ? V(A.pole) : k.pole, SOFT.arm, true); elbow = r.joint; hand = r.end; flex = r.flex;
       }
+      // physics: a hand inside the head or the torso stops on its surface, an elbow inside is pushed out, the elbow
+      // stays in its range (bones keep their length)
+      const sol = solveArm({ sh, elbow, hand, flex, pole: A.pole ? V(A.pole) : k.pole, l: LIMB.upper, vols, limb: LIMB_R / W, handR: 0.05, out: new THREE.Vector3(sg, -0.3, 0.4).applyQuaternion(qChest),
+        ik: (a, b, l, p) => ik(a, b, l, p, SOFT.arm, true) });
+      elbow = sol.elbow; hand = sol.hand; flex = sol.flex;
       const pts = hose(sh, elbow, hand, ROUND.arm, 16);
       limbs['arm' + side].set(pts); hands[side].position.copy(pts[15]); S.hand[side] = hand.toArray();
       const hipJ = toRoot(new THREE.Vector3(sg * 0.14 * girth, 0.04, 0)), G = Q['leg' + side] || {};
@@ -801,7 +816,8 @@ export function makeStick(spec) {
       const toe = toeL.clone().multiplyScalar(W);
       for (let i = 1; i <= 5; i++) lp.push(lp[12].clone().lerp(toe, i / 5));
       limbs['leg' + side].set(lp); ankles[side].position.copy(lp[12]); toes[side].position.copy(toe);
-      rig[side] = { hip: hipJ, knee: leg.joint, ankle: foot, toe: toeL, shoulder: sh, elbow, hand, kneeFlex: leg.flex, elbowFlex: flex, footPitch: G.pitch || 0 };
+      rig[side] = { hip: hipJ, knee: leg.joint, ankle: foot, toe: toeL, shoulder: sh, elbow, hand, kneeFlex: leg.flex, elbowFlex: flex, footPitch: G.pitch || 0,
+        pen0: sol.pen0, pen: sol.pen, limits: lim.hits + sol.limits };
     }
     S.rig = rig;
     handProps(Q, rig);
@@ -817,7 +833,8 @@ export function makeStick(spec) {
     for (const s of ['L', 'R']) {
       const r = S.rig[s];
       o[s] = { hip: w(r.hip), knee: w(r.knee), ankle: w(r.ankle), toe: w(r.toe), shoulder: w(r.shoulder), elbow: w(r.elbow), hand: w(r.hand),
-        kneeFlex: +r.kneeFlex.toFixed(2), elbowFlex: +r.elbowFlex.toFixed(2), footPitch: +r.footPitch.toFixed(2) };
+        kneeFlex: +r.kneeFlex.toFixed(2), elbowFlex: +r.elbowFlex.toFixed(2), footPitch: +r.footPitch.toFixed(2),
+        ...(r.pen0 != null ? { penCm0: +(r.pen0 * W * 100).toFixed(2), penCm: +(r.pen * W * 100).toFixed(2), limits: r.limits } : {}) };
     }
     return o;
   };

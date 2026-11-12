@@ -1,5 +1,16 @@
 # Changelog · make-reel-stick-man
 
+## p12 · 2026-11-12 · a body with physics and anatomy (motion v2 actors)
+
+Kai: "no human scratches his head with a hand through it; build it from physics and anatomy, not patches". Root (first
+principles): the rig had no body; arms were ink lines with no volume, no collision and no joint limits (measured: a
+hand 6.6 cm inside the head, an arm 9.3 cm inside the chest). `engine/body.js`: the head and the torso are volumes the
+size they are drawn (the torso as bent elliptic slices), a hand that reaches inside stops on the surface and the elbow
+is re-solved (bones keep their length), the elbow is pushed out of the torso, joints stay in clinical ranges (`JOINTS`:
+shoulder 0-180, extension 60, elbow 0-145 one way). Arms are 25 % longer (`LIMB.upper` / `fore` 0.41 -> 0.5125 W).
+`__dbg` limbs carry `penCm0` / `penCm` / `limits`; new gate **body contact** <= 0.1 cm. On the 12-principles tiles the
+deepest arm went from 13.8 cm to 0.00 cm with 0 one-frame pops.
+
 ## p11 · 2026-11-12 · the steps follow the animation pipeline
 
 Kai's audit against the standard 3D pipeline: rail-gaps skipped development and pre-production (its treatment was the

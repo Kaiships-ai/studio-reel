@@ -22,6 +22,7 @@ through every change (engine/acting.js `faceStateAt`, faces.js `mixFace`); the m
 | small-figure run | ≤ 120 f | longest run where the largest figure in frame is under 30 % of the frame height (a frame with no figure resets the run) | reference wide + establishing = 32 % of runtime, shot p90 4.2-6.4 s (FORENSIC.md; was 45 f) |
 | hand-prop gap | ≤ 2 px at 1080p | hand dot to the held prop's grip socket (report d) | reel 1 review (props floating off hands) |
 | collisions | none | any body point inside a set `COLLIDE` box, or torso in torso (report e) | reel 1 review (man inside a pillar) |
+| body contact | ≤ 0.1 cm | deepest point of an arm or hand inside a head or a torso after the contact solve (`__dbg` limbs `penCm`, motion v2 actors) | Kai 12/11: "no human scratches his head with a hand through it" (engine/body.js) |
 | close-up head x | 45-55 % | subject head centre x in settled `cu` frames (report f) | reel 1 review |
 | body acting | ≥ 70 % per lead | share of each lead's in-frame frames with a body verb running (`__dbg` `body`: any verb but idle, talk, look_at, place, hold, mark, nod / tilt); a lead = cast `lead: true`, a `talk` beat or a shot subject (report b, `body acting:`) | judge on stick04: "characters mostly stand still" (poses/acting 3-4/10) |
 | expressions | ≥ 5 per 30 s | distinct faces on screen ≥ 3 frames each, open-mouth twins count as their base (report g) | judge on stick04: "faces near-neutral dots" |
