@@ -7,10 +7,10 @@ recoloured and restyled, Blip from primitives) and `character-designer.html`. In
 (`episodes/sample/sample.mp4`) and `studio install` draws only its first 2 s (720x1280, 10 fps, 20 frames) as its test
 render, then deletes it (`kit/studio.mjs`); it renders the whole sample only if `sample.mp4` is gone.
 `test/clean-install.mjs` then makes `episodes/ci-smoke` (`test/tmv-smoke.mjs`: the sample's first beat, first stats card,
-first card and vote beat, 13-17 s, drawn at 4 fps on Linux CI (8 fps for the full sample), voiced through the `vo` step from a take cut out of the sample's `vo/vo.wav`) with
+first card (when the episode has none, its shortest middle beat recast as one) and vote beat, 13-17 s, drawn at 4 fps on Linux CI (the full sample at 8 fps, hand-draw at 4), voiced through the `vo` step from a take cut out of the sample's `vo/vo.wav`) with
 every check ✓ or `–` skipped; `--full-episode` renders a copy of the whole sample as `episodes/ci-full` and runs its 11 gates (CI: nightly
 on main, `v*` tags, by hand, the PR label `full-episode`). `--style paper|handdraw` renders either in that style: CI's smoke
-takes the style whose engine folder the PR touches (`smokeStyles` in `release/install-needed.mjs`; `engines.mjs` → every
+takes the style whose engine folder the PR touches (`smokeStyles` in `release/install-needed.mjs`; any shared `tmv/` or `core/` file → every
 built style; else 3d), the full episode every built style (`builtStyles`), one Linux leg each.
 
 ## Sub-features
@@ -21,7 +21,7 @@ built style; else 3d), the full episode every built style (`builtStyles`), one L
   own pauses: the words split into one run per stretch of voice, preferring runs that end on . ? ! then , ; :, letter-weighted inside a run). Each line's pauses over 0.34 s are cut to 0.34 s before its words are
   timed (`tighten`, from Ep1's `tighten.py`), so the voice runs on (G8) and the captions and cuts follow the tightened audio. A stretch of sound under 60 ms is a click, not a word: `spoken` drops it, so it never takes a phrase's place. A stretch of noise is a breath, not a word: `spoken` drops a stretch whose median spectral flatness (100 Hz-4 kHz) is 0.28 or more (real takes: breaths 0.34-0.50, words up to 0.21), so an inhale never pulls a caption early. Inside a line, a frame that is not noise counts as voice down to -50 dB (else -38 dB), so a soft word is kept by `tighten` and gets its own stretch; `cuts` keeps -38 dB. A take that reads one line twice (a Gemini glitch seen in PR #41) stops the step with one line naming that line, its two times and "re-run vo for a new take" (`repeated`: 1.2 s windows of speech matched by DTW on cepstra inside the next 6 s; real takes: twice 0.20-0.24, good 0.39-0.45, limit 0.30; skipped when the script itself repeats 4 words). `voice.py --self-check` (synthetic doubled line, soft word, breath) runs in the tmv clean install. Errors: no key / 400 key / 429 (tries the fallback models) / no network
   (`GEMINI_HOST` points it elsewhere to test). Test-only: `TMV_VO_TAKE=<wav>` cuts that take instead of calling Gemini,
-  and `studio doctor` then skips its `voice key` call; the journeys set it to the sample's `vo/take.wav`. Dev-only sync check on a Mac with whisper.cpp: `pixi run python dev/caption-sync.py <ep>` (not shipped). `core/render/reel.mjs vo` uses the same path when kai-hand-draw is absent.
+  and `studio doctor` then skips its `voice key` call; the journeys set it to the sample's `vo/take.wav`. Dev-only sync check on a Mac with whisper.cpp: `pixi run python dev/caption-sync.py <ep>` (not shipped). Without kai-hand-draw, `core/render/reel.mjs vo` uses the offline Kokoro voice instead (`pixi run -e full`, `pixi run fetch voice`), with timings from `episode/voice.py`.
 - `episode.render`: `make.mjs <ep> render check` → `<ep>/<name>.mp4` at 720x1280 30 fps with the code-made bed (room tone, music, hits; `bed.py`) (ST-77 preview; `--full` only on
   request), checks size, sound, length = voice + 1.4 s, -14 LUFS, no black, no silent gap, no 1.5 s freeze, faces not blown out (`faceluma.py`: under 2 % of skin pixels washed out, frames at 2/s outside cards; 3D only: paper and hand-draw print `–` skipped with the reason from `skip.faces` in `engines.mjs`, since flat colour has no light to wash a face out and their cream paper reads as clipped skin); `out/sheet.jpg`.
 - `episode.script`: `make.mjs <ep> script` (no tools needed, runs before `requireReady`) → the shape check, then the
@@ -29,7 +29,7 @@ built style; else 3d), the full episode every built style (`builtStyles`), one L
   sentence), `link` (BUT/SO: a line opening with But/So or `"link"`; card, stats, previously and the last beat exempt;
   "and then" fails), `source` (every card and stats beat), `vote` (a question, two distinct tags, the last line says
   exactly those), `you` (the lead's id or name never in a line, except a lead called You, as /story writes it; a third of lines say you). ✓/✗ per rule with each beat's
-  line and the fix; exit 1 on a ✗. The shipped sample fails link, source and you (third-person, pre plan item 7).
+  line and the fix; exit 1 on a ✗. The shipped sample passes all five rules.
   Every step first checks `episode.json` against `episode/episode.schema.json` (`shapeErrors`: one line per field,
   unknown keys at the top, in beats, palette, texts and vote are errors); cross-field checks (who in cast, seeds and
   parts, the lead in the room, card/stats fields by shot, the phone HUD, the vote words in the last line) stay in `episode()`.

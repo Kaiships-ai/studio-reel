@@ -16,7 +16,7 @@ The maintained source for proving the user-facing behavior of the Kaiships reel 
 - The harness is `journeys.mjs` (every feature below, `--only=<file name>` for one), `draft.mjs` (draft verify) and
   `make.mjs` (the real pipeline steps). All drive the real page through `core/render/page.mjs`; nothing is mocked.
 - A feature change updates its file here and its journey, which must fail when that step breaks.
-- Draft by default. `make.mjs <film> render verify` (full) only when the user says "full".
+- Draft by default. `make.mjs <film> render verify` renders medium; 1080x1920 only when the user says "full".
 - Treat every command as literal.
 
 ## Proof and skip reporting
