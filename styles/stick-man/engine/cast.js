@@ -736,7 +736,7 @@ export function makeStick(spec) {
     S.rig = rig;
     handProps(P, rig);
     S.xmarks = Object.keys(P).filter(k => k.startsWith('x_mark_') && P[k] >= 1).map(k => [k.slice(7), Math.floor(P[k] - 1)]);
-    contact.visible = P.contact !== false && Math.abs(P.x_tumble || 0) < 20 && Math.abs(P.x_roll || 0) < 20;   // a figure tipped over has no foot shadow
+    contact.visible = P.contact !== false && !(P.x_air > 0) && Math.abs(P.x_tumble || 0) < 20 && Math.abs(P.x_roll || 0) < 20;   // a figure tipped over or airborne has no foot shadow
     contact.position.y = 0.004 + (P.ground || 0) * W;
     root.updateMatrixWorld(true);
     return S;
