@@ -1,0 +1,178 @@
+// Motion v2: characters animated pose to pose from keys, the way an animator works, with the 12 principles built into
+// how the keys are played back. Reel data, per act:  anim: { eng: [key, key, ...], ... }  (cast.js S.pose2 draws a pose)
+//
+//   key = { f | at (beat ref), pose: 'name' | {...}, ...overrides, ease, hold, antic, expr, look, props }
+//   pose  joint-space values (cast.js S.pose2): pos [x, y] (Blender m), yaw, bob, hip, pelvis, spine, sq, neck, headSq,
+//         armL/armR, legL/legR (foot in the figure frame W, or footW = [x, y, z] Blender m: planted, never slides), props
+//   ease  how the motion leaves and enters this key: 'slow' (slow in and out, the default: an extreme), 'flow' (passes
+//         through at speed: a breakdown), 'out' (slow out only), 'in' (slow in only), 'snap' (no in-between: a cut)
+//   hold  frames the pose is held (a moving hold: the secondary layer keeps it breathing)
+//   antic share of the move (0..0.6) played backwards first; the move itself then takes the last 40 % of the gap (4 f at least)
+//   cycle secondary business on top until the next key: { 'spine.bend': [amplitude, period frames, phase], ... }
+//
+// Playback, per channel: cubic Hermite through the keys (arcs: every joint swings on a curve, no straight lerps), the
+// time between two keys warped by their ease (slow in / slow out); extremes get flat tangents (no overshoot from the
+// curve itself). Then the secondary layer, run straight ahead from the act's first frame: springs drag the head, arms
+// and hat behind the body (overlapping action), overshoot and settle when it stops (follow-through), the hip's vertical
+// speed stretches the body and a landing squashes it (squash and stretch, volume kept), and a held pose breathes.
+// the kit's named poses (a film adds its own: act `poses`, or import this and assign)
+export const MOTION_POSES = {};
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+
+// ---------------------------------------------------------------- poses as flat channel maps
+// nested pose objects <-> flat maps ('armR.raise' -> 40); arrays index as 'legL.foot.0'
+export function flatten(o, pre = '', out = {}) {
+  for (const [k, v] of Object.entries(o || {})) {
+    const n = pre ? `${pre}.${k}` : k;
+    if (typeof v === 'number') out[n] = v;
+    else if (Array.isArray(v)) v.forEach((x, i) => { if (typeof x === 'number') out[`${n}.${i}`] = x; });
+    else if (v && typeof v === 'object') flatten(v, n, out);
+  }
+  return out;
+}
+export function unflatten(m) {
+  const o = {};
+  for (const [k, v] of Object.entries(m)) {
+    const p = k.split('.'); let c = o;
+    for (let i = 0; i < p.length - 1; i++) { const nx = /^\d+$/.test(p[i + 1]); c = c[p[i]] ??= nx ? [] : {}; }
+    c[p[p.length - 1]] = v;
+  }
+  return o;
+}
+const DISCRETE = new Set(['expr', 'look', 'props', 'ik']);
+const NON_POSE = new Set(['f', 'at', 'pose', 'ease', 'hold', 'antic', 'expr', 'look', 'props', 'cycle', 'line', 'on', 'offset', 'nth', 'cue', 'snap']);
+
+// ---------------------------------------------------------------- the time warp between two keys
+// cubic Hermite in time: e(0) = 0, e(1) = 1, start slope a, end slope b (0 = a full slow, 1 = passing through)
+const warp = (s, a, b) => { const s2 = s * s, s3 = s2 * s; return (s3 - 2 * s2 + s) * a + (-2 * s3 + 3 * s2) + (s3 - s2) * b; };
+const leaves = e => (e === 'flow' || e === 'in' ? 1 : 0), enters = e => (e === 'flow' || e === 'out' ? 1 : 0);
+
+// ---------------------------------------------------------------- compile one actor's keys
+// keys: resolved frames, sorted; poses: name -> pose object (the film's own, then the kit's)
+export function compileTrack(keys, poses, base) {
+  const ks = keys.map(k => {
+    const named = typeof k.pose === 'string' ? poses[k.pose] : k.pose;
+    if (typeof k.pose === 'string' && !named) throw new Error(`anim: unknown pose "${k.pose}"`);
+    const over = Object.fromEntries(Object.entries(k).filter(([n]) => !NON_POSE.has(n)));
+    return { f: k.f, ease: k.ease || 'slow', hold: k.hold || 0, antic: k.antic || 0, expr: k.expr, look: k.look, props: k.props, cycle: k.cycle,
+      m: { ...flatten(named), ...flatten(over) } };
+  }).sort((a, b) => a.f - b.f);
+  // carry every channel forward (a key names only what changes); before its first key a channel is neutral (0), except
+  // a planted foot or an ik target, which waits where it is first put
+  const first = { ...flatten(base) };
+  for (const k of ks) for (const [n, v] of Object.entries(k.m)) if (!(n in first)) first[n] = /footW|\.ik\./.test(n) ? v : 0;
+  let cur = { ...first };
+  for (const k of ks) { cur = { ...cur, ...k.m }; k.m = cur; }
+  // holds become a second key with the same pose; anticipation becomes a key before the move, against it
+  const out = [];
+  for (let i = 0; i < ks.length; i++) {
+    const k = ks[i], prev = out[out.length - 1];
+    if (k.antic && prev) {
+      const gap = k.f - prev.f, fa = Math.round(k.f - Math.max(4, gap * 0.4));   // the action itself keeps at least 4 frames
+      if (fa > prev.f + 2) {
+        const m = {}; for (const n of Object.keys(k.m)) m[n] = n.startsWith('pos.') || n === 'yaw' ? prev.m[n] : prev.m[n] - k.antic * (k.m[n] - prev.m[n]);
+        out.push({ f: fa, ease: 'slow', m, antic: true });
+      }
+    }
+    out.push(k);
+    if (k.hold) out.push({ ...k, f: k.f + k.hold, hold: 0, antic: 0, expr: undefined, look: undefined, held: true });
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------- keyed value of every channel at frame f
+export function keyed(track, f) {
+  const n = track.length;
+  if (f <= track[0].f) return { ...track[0].m };
+  if (f >= track[n - 1].f) return { ...track[n - 1].m };
+  let i = 0; while (i + 1 < n && track[i + 1].f <= f) i++;
+  const A = track[i], Bk = track[i + 1];
+  if (Bk.ease === 'snap') return { ...A.m };
+  const s = (f - A.f) / (Bk.f - A.f), u = warp(s, leaves(A.ease), enters(Bk.ease)), out = {};
+  const P = track[i - 1], N = track[i + 2], df = Bk.f - A.f;
+  for (const c of Object.keys(A.m)) {
+    const a = A.m[c], b = Bk.m[c];
+    // Catmull-Rom tangents (per segment), flat at an extreme: the curve passes through every key without overshooting
+    const ta = P ? tangent(P.m[c], a, b, P.f, A.f, Bk.f) * df : 0, tb = N ? tangent(a, b, N.m[c], A.f, Bk.f, N.f) * df : 0;
+    const u2 = u * u, u3 = u2 * u;
+    out[c] = (2 * u3 - 3 * u2 + 1) * a + (u3 - 2 * u2 + u) * ta + (-2 * u3 + 3 * u2) * b + (u3 - u2) * tb;
+  }
+  // a hand travelling to an ik target swings up through an arc (15 % of the way it goes), never down a straight rail
+  for (const arm of ['armL', 'armR']) {
+    const k0 = `${arm}.ik.0`; if (!(k0 in A.m)) continue;
+    const d = Math.hypot(...[0, 1, 2].map(i => Bk.m[`${arm}.ik.${i}`] - A.m[`${arm}.ik.${i}`]));
+    out[`${arm}.ik.1`] += ARC * d * Math.sin(Math.PI * u) * (A.m[`${arm}.ikw`] ?? 1);
+  }
+  return out;
+}
+const ARC = 0.15;
+function tangent(p, c, n, fp, fc, fn) {
+  if (p == null || n == null) return 0;
+  if ((c - p) * (n - c) <= 0) return 0;                               // an extreme or a hold: flat
+  return (n - p) / (fn - fp);
+}
+
+// ---------------------------------------------------------------- the secondary layer (straight ahead)
+// a damped spring per channel: x'' = w^2 (target - x) - 2 z w x'; per frame, exact enough at w < 1.2 rad/frame
+class Spring {
+  constructor(w, z) { this.w = w; this.z = z; this.x = null; this.v = 0; }
+  step(t) {
+    if (this.x == null) { this.x = t; return t; }
+    const n = 4, h = 1 / n;
+    for (let i = 0; i < n; i++) { const a = this.w * this.w * (t - this.x) - 2 * this.z * this.w * this.v; this.v += a * h; this.x += this.v * h; }
+    return this.x;
+  }
+}
+// which channels drag and how loose they are (rad per frame, damping): further from the root = looser
+const DRAG = [
+  [/^neck\./, 0.55, 0.55], [/^arm[LR]\.(raise|swing)$/, 0.62, 0.5], [/^arm[LR]\.(elbow|roll)$/, 0.5, 0.45], [/^headSq$/, 0.7, 0.35],
+];
+// runs once per actor over [F0, F1]: returns the posed channel maps, one per frame
+export function playActor(track, F0, F1, opt = {}) {
+  const springs = {}, hat = { p: new Spring(0.32, 0.28), r: new Spring(0.32, 0.28) }, sq = new Spring(0.6, 0.3);
+  const frames = [];
+  let prev = null, prev2 = null;
+  for (let f = F0; f <= F1; f++) {
+    const k = keyed(track, f);
+    // secondary business: the latest key's cycle, faded in over 6 frames
+    let ck = null; for (const t of track) if (t.f <= f && !t.held && !t.antic) ck = t;
+    if (ck?.cycle) { const w = clamp((f - ck.f) / 6, 0, 1); for (const [c, [amp, per, ph = 0]] of Object.entries(ck.cycle)) k[c] = (k[c] || 0) + w * amp * Math.sin(2 * Math.PI * (f - ck.f) / per + ph); }
+    const o = { ...k };
+    for (const [c, v] of Object.entries(k)) {
+      const d = DRAG.find(([re]) => re.test(c)); if (!d || opt.stiff) continue;
+      o[c] = (springs[c] ||= new Spring(d[1], d[2])).step(v);
+    }
+    // hip vertical speed stretches the body, its sudden stop squashes it; the head follows a beat later
+    const by = k.bob ?? 0, vy = prev ? by - (prev.bob ?? 0) : 0, vp = prev && prev2 ? (prev.bob ?? 0) - (prev2.bob ?? 0) : 0, ay = vy - vp;
+    const want = clamp(1.0 * Math.abs(vy), 0, 0.10) - (vp < 0 ? clamp(5 * Math.max(0, ay), 0, 0.12) : 0);
+    const auto = sq.step(want);
+    o.sq = (k.sq || 0) + auto; o.headSq = (o.headSq || 0) + 0.6 * auto;
+    // the hat lags the head's swing (nod, tilt, the body's bend under it), then overshoots and settles
+    const hp = (k['neck.nod'] || 0) + (k['spine.bend'] || 0) + (k['pelvis.pitch'] || 0), hr = (k['neck.tilt'] || 0) + (k['spine.side'] || 0) + (k['pelvis.roll'] || 0);
+    o['hat.pitch'] = clamp(hat.p.step(hp) - hp, -22, 22) + (k['hat.pitch'] || 0);
+    o['hat.roll'] = clamp(hat.r.step(hr) - hr, -18, 18) + (k['hat.roll'] || 0);
+    // a moving hold: a held pose breathes (chest up and down, the head drifts a little), never freezes
+    const t = f / 30;
+    o['spine.bend'] = (o['spine.bend'] || 0) + 0.8 * Math.sin(t * 2 * Math.PI * 0.28);
+    o['neck.tilt'] = (o['neck.tilt'] || 0) + 0.9 * Math.sin(t * 2 * Math.PI * 0.17 + 1.3);
+    frames.push(o); prev2 = prev; prev = k;
+  }
+  return frames;
+}
+
+// ---------------------------------------------------------------- from channels to the figure's pose (cast.js S.pose2)
+// footW (Blender world, planted) is turned into the figure frame from the frame's own root, so a planted foot stays put
+const W_M = 0.60, DEG = Math.PI / 180;
+export function toPose(m) {
+  const Q = unflatten(m);
+  const pos = Q.pos || [0, 0], yaw = (Q.yaw || 0) * DEG;
+  for (const s of ['L', 'R']) {
+    const G = Q['leg' + s]; if (!G?.footW) continue;
+    // Blender world -> figure frame (x right as the camera in front sees it, y up, z forward), W units
+    const dx = G.footW[0] - pos[0], dy = G.footW[1] - pos[1], tx = dx, tz = -dy;
+    const c = Math.cos(yaw), sn = Math.sin(yaw);
+    G.foot = [(tx * c - tz * sn) / W_M, (G.footW[2] || 0) / W_M + 0.022, (tx * sn + tz * c) / W_M];
+    delete G.footW;
+  }
+  return { ...Q, pos: [pos[0], pos[1], Q.pos?.[2] || 0], yaw: Q.yaw || 0 };
+}

@@ -12,7 +12,7 @@ import { POSE_VERBS } from './poses.js';
 const SIDE = { L: -1, R: 1 };
 const rest = (chan, start, fade = 9) => ({ chan, start, fade, fn: () => ({ rest: true }) });
 const EASE = { smoother, smooth, linear: x => clamp(x, 0, 1), step: x => (x >= 0 ? 1 : 0),
-  out: x => 1 - Math.pow(1 - clamp(x, 0, 1), 3), back: x => { x = clamp(x, 0, 1); const c = 1.9; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); } };
+  out: x => 1 - Math.pow(1 - clamp(x, 0, 1), 3), in: x => Math.pow(clamp(x, 0, 1), 3), back: x => { x = clamp(x, 0, 1); const c = 1.9; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); } };
 const mix = (a, b, u) => (Array.isArray(a) ? lerp3(a, b, u) : lerp(a, b, u));
 // a standing body at pos/yaw with optional extras (feet spread, pitch, bob)
 const stand = (pos, yaw, o = {}) => ({ pos, yaw, bob: o.bob || 0, lean: o.lean || 0, pitch: o.pitch || 0,
@@ -197,6 +197,7 @@ export function keyTracks(fps) {
       const who = b.who, at = b.at, cues = [];
       if (b.do === 'set') {
         const from = b.from ?? last[who + '.' + b.key] ?? b.dflt ?? 0, to = b.to, dur = b.dur ?? 0, ez = EASE[b.ease || 'smoother'];
+        if (!ez) throw new Error(`set ${who}.${b.key}: unknown ease "${b.ease}" (${Object.keys(EASE).join(', ')})`);
         last[who + '.' + b.key] = to;
         tr(who, b.key).base.push({ start: at, fn: f => (dur <= 0 ? to : mix(from, to, ez((f - at) / dur))) });
       } else if (b.do === 'pulse') {

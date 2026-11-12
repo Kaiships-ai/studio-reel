@@ -155,7 +155,8 @@ def music(words, n, seed=31, plan=None):
     drone = (np.sin(ph) + 0.35 * np.sin(2 * ph)) * (0.85 + 0.15 * np.sin(2 * np.pi * tt / (2 * BEAT)))
     air = hp(rr.standard_normal(n), 7000, 2) * (0.5 + 0.5 * np.cos(2 * np.pi * tt / (BEAT / 2))) ** 4
     pk = max(np.abs(L).max(), 1e-6)
-    L = L + 0.30 * pk * drone + 0.06 * pk * air; R = R + 0.30 * pk * drone + 0.06 * pk * np.roll(air, 37)
+    ag = float((plan or {}).get('air', 0.06))                                    # music.json "air": the wash level (rail reference: air in pauses -13.3 dB)
+    L = L + 0.30 * pk * drone + ag * pk * air; R = R + 0.30 * pk * drone + ag * pk * np.roll(air, 37)
     i = int(t_wait * SR); f = int(0.008 * SR)                     # full stop on "Wait": 8 ms fade then silence until "You see"
     for c in (L, R): c[i - f:i] *= np.linspace(1, 0, f); c[i:int(t_see * SR) - 1] = 0
     fo = int(0.4 * SR)

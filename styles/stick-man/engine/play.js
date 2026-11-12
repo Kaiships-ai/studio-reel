@@ -13,14 +13,17 @@ import { planShots } from './shotplan.js';
 import { createCaptions } from './captions.js';
 import { ACT, PROPV, MAKE, keyTracks } from './verbs_fx.js';
 import { POSE_VERBS, POSES } from './poses.js';
+import { compileTrack, playActor, toPose, MOTION_POSES } from './motion.js';
 import * as EXTRAS from '../lib/cast/extras.js';
 import { PHYS } from '../lib/props/physfx.js';
 import { STORY } from '../lib/props/story.js';
+// default acting size: the reference's big beats travel ~2.3 head widths, ours ~0.5-0.7 (FORENSIC.md section 3), so every pose plays 1.2x unless an act or cast entry says otherwise
+const ACT_AMP = 1.2;
 Object.assign(MAKE, PHYS, STORY);                               // story props that animate (lib/props/story.js)                                       // physical FX kinds (SETS.md "Physical effects")
 
 // every cast spec exported by lib/cast/extras.js (an object with a name and a shirt) registers itself by its export name
 const dye = EXTRAS.dye;
-const SPECS = { KAI, TELLER, GUARD, ...Object.fromEntries(Object.entries(EXTRAS).filter(([, v]) => v && typeof v === 'object' && !Array.isArray(v) && v.name && v.shirt)) };
+export const SPECS = { KAI, TELLER, GUARD, ...Object.fromEntries(Object.entries(EXTRAS).filter(([, v]) => v && typeof v === 'object' && !Array.isArray(v) && v.name && v.shirt)) };
 const SETS = { 'bank-lobby': () => import('../lib/sets/bank-lobby.js'), street: () => import('../lib/sets/street.js'),
   cutaway: () => import('../lib/sets/cutaway.js'), park: () => import('../lib/sets/park.js'), lab: () => import('../lib/sets/lab.js'),
   'halden-street': () => import('../lib/sets/halden-street.js'), 'halden-plaza': () => import('../lib/sets/halden-plaza.js'),
@@ -174,7 +177,7 @@ async function buildAct(R, X) {
     if (HOOKS.faceExtras) HOOKS.faceExtras(S);                      // allout/face_extras.js (proposal): hidden cards until a beat asks
     const posture = c.posture || 'stand', base = posture === 'sit' ? SIT : STAND;
     const pos = point(c.at).slice(); pos[2] = pos[2] || 0;
-    const st = { name, pos, yaw: c.yaw ?? 0, posture, hold: { L: null, R: null }, handW: {}, sling: null, ampScale: c.amp ?? R.actingAmp ?? 1 };
+    const st = { name, pos, yaw: c.yaw ?? 0, posture, hold: { L: null, R: null }, handW: {}, sling: null, ampScale: c.amp ?? R.actingAmp ?? ACT_AMP };
     const a = { name, S, c, st, posture, seed: Math.round(hash(name.length, name.charCodeAt(0), name.charCodeAt(1)) * 1e6),
       focus: c.focus, watch: c.watch, owners: { body: [], handL: [], handR: [], add: [] }, verbs: [], exprs: [{ f: -1e9, expr: c.expr || 'neutral' }],
       focusSegs: [], mouth: [], holdLog: [], st0: pos.slice() };
@@ -183,6 +186,20 @@ async function buildAct(R, X) {
     for (const s of ['L', 'R']) a.owners['hand' + s].push({ start: -1e9, fade: 0, verb: 'rest', fn: () => ({ rest: true }) });
     actors.push(a); byName[name] = a;
   }
+  // motion v2: an actor with keys (act `anim`) is animated pose to pose by engine/motion.js, never by verbs or auto-acting
+  for (const [name, keys] of Object.entries(R.anim || {})) {
+    const a = byName[name]; if (!a) throw new Error(`anim: no cast entry ${name}`);
+    const ks = keys.map(k => ({ ...k, f: frameOf(k.at || k) })).sort((x, y) => x.f - y.f);
+    a.anim = { track: compileTrack(ks, { ...MOTION_POSES, ...(R.poses || {}) }, { pos: a.st0.slice(), yaw: a.c.yaw ?? 0 }), keys: ks, frames: null };
+    for (const k of ks) { if (k.expr) a.exprs.push({ f: k.f, expr: k.expr, word: null }); if (k.look) a.focusSegs.push({ from: k.f, target: k.look }); }
+  }
+  const animFrame = (a, f) => {
+    const A = a.anim, f0 = F0 - 30; A.frames ||= playActor(A.track, f0, F1 + 1);
+    const Q = toPose(A.frames[Math.max(0, Math.min(A.frames.length - 1, Math.round(f) - f0))]);
+    let pk = null; for (const k of A.keys) if (k.f <= f && k.props !== undefined) pk = k.props;
+    for (const [side, kind] of Object.entries(pk || {})) if (kind) Q[`x_hp${side}_${kind}`] = 1;
+    return Q;
+  };
   const beats = R.beats.map((b, i) => ({ ...b, at: frameOf(b), i })).sort((x, y) => x.at - y.at || x.i - y.i);
   const segs = {}, active = [], cues = [], fx = [];
   const compile = b => {
@@ -217,7 +234,7 @@ async function buildAct(R, X) {
   const poseEnds = () => { for (const a of actors) for (const v of a.verbs) if (v.pose) v.end = Math.min(v.end, v.pose.rel + v.pose.R + 4); };
   poseEnds();
   // auto-acting: key poses for every lead's frames no body verb covers (acting.js), picked from the words said there
-  for (const b of autoActing({ R, actors, words, fps, win: R.win || [[F0, F1 + 1]] })) compile({ ...b, at: b.f });
+  for (const b of autoActing({ R, actors, words, fps, win: R.win || [[F0, F1 + 1]] })) if (!byName[b.who]?.anim) compile({ ...b, at: b.f });
   poseEnds();
   for (const a of actors) {
     for (const k of Object.keys(a.owners)) a.owners[k].sort((x, y) => x.start - y.start);
@@ -235,7 +252,7 @@ async function buildAct(R, X) {
   cues.sort((x, y) => x.fr - y.fr);
 
   // ---------------------------------------------------------------- per-frame evaluation
-  const bodyAt = (a, f) => chain(a.owners.body, f, v => v, null);
+  const bodyAt = (a, f) => { if (!a.anim) return chain(a.owners.body, f, v => v, null); const Q = animFrame(a, f); return { pos: Q.pos, yaw: Q.yaw }; };
   const headZ = a => (a.posture === 'sit' ? HEAD_C[1] + SIT.bob : HEAD_C[1]) * W;
   // camera anchors: from the body channel only (no idle bob), so the framing never chases a head wobble
   const anchor = (n, f, live) => {
@@ -297,6 +314,7 @@ async function buildAct(R, X) {
   };
 
   function poseActor(a, f) {
+    if (a.anim) { const Q = animFrame(a, f); F.bodies[a.name] = { pos: Q.pos, yaw: Q.yaw }; a.S.pose2(Q); F.posed.add(a.name); a.P = Q; return; }
     const body = bodyAt(a, f), root = { pos: body.pos, yaw: body.yaw };
     F.bodies[a.name] = body;
     const id = idle(a.seed, f, a.posture);
@@ -407,8 +425,12 @@ async function buildAct(R, X) {
     zMax: R.zMax ?? SET.CAMERA_ZMAX, actors: actors.map(a => a.name) });
   // compile sees the real scene at each shot change (everything is a pure function of the frame)
   // act.direct: hand-directed camera (allout/director.js): every shot names its intent, cuts are cuts, a move has a trigger
-  const DIR = R.direct ? (await import('../allout/director.js')).createDirector(R.direct, { frameOf, aspect: width / height, F1, dofAuto: R.look?.dofAuto ?? X.dofAuto,
+  const DIR = R.direct ? (await import('../allout/director.js')).createDirector(R.direct, { frameOf, aspect: width / height, F1, dofAuto: R.look?.dofAuto ?? X.dofAuto, drift: R.directDrift ?? X.directDrift ?? 0,
     anchor: (n, f) => { if (F.f !== f) poseAll(f); return anchor(n, f, livePos); } }) : null;
+  // a whoosh under every camera travel (act `travelWhoosh`, strength 0..1; off by default): the reference has an SFX on
+  // almost every visible action, camera rushes included (15.6 hits / 10 s, REF_SPEC.md rail)
+  if (DIR && (R.travelWhoosh ?? X.travelWhoosh)) for (const S of DIR.shots) if (S.i > 0 && S.cut !== 'dissolve' && S.cut !== 'cut' && (S.n ?? 16) > 4)
+    cues.push({ fr: S.f, name: 'whoosh', strength: (R.travelWhoosh ?? X.travelWhoosh) * Math.min(1, 16 / (S.n ?? 16)) });
   const shots = DIR ? [] : camera.compile((R.shots || []).map(s => ({ f: frameOf(s), kind: s.shot, subjects: s.of, opt: s })).sort((x, y) => x.f - y.f),
     (n, f) => { if (F.f !== f) poseAll(f); return anchor(n, f, livePos); }, F1 + 1);
 
@@ -530,8 +552,12 @@ async function buildAct(R, X) {
     if (!o?.isObject3D) return false;
     for (let q = o; q; q = q.parent) if (!q.visible) return false;
     box3.makeEmpty();
-    o.traverseVisible(m => { if (!m.isMesh || !m.geometry) return; if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
-      bb.copy(m.geometry.boundingBox).applyMatrix4(m.matrixWorld); box3.union(bb); });
+    const add = m => { if (!m.isMesh || !m.geometry) return;
+      if (m.isInstancedMesh) { if (!m.boundingBox) m.computeBoundingBox(); bb.copy(m.boundingBox).applyMatrix4(m.matrixWorld); }   // the instances, not one unit box at the origin
+      else { if (!m.geometry.boundingBox) m.geometry.computeBoundingBox(); bb.copy(m.geometry.boundingBox).applyMatrix4(m.matrixWorld); }
+      box3.union(bb); };
+    o.traverseVisible(add);
+    for (const q of o.userData?.seenParts || []) if (q.visible) q.traverseVisible(add);   // a prop whose visible body lives elsewhere (the hero joint's rail ends)
     if (box3.isEmpty()) return false;
     let x0 = 1, y0 = 1, x1 = -1, y1 = -1, n = 0;
     for (let i = 0; i < 8; i++) {
@@ -601,7 +627,8 @@ function autoShots(defs, SB, words, fps, F1, ids) {
 // internal cue names -> the sound bank (tools/sound_bank.py); steps alternate left / right
 const SOUND = { cash_lift: 'rustle', bundle_drop: 'thud', paper_slide: 'slide', swoosh: 'whoosh', sensor_beep: 'beep', glint: 'ting' };
 const BANK = new Set(['slide', 'thud', 'rustle', 'ting', 'ding', 'whoosh', 'step_l', 'step_r', 'beep', 'tick', 'poof', 'hiss', 'scratch', 'pop', 'snore',
-  'clunk', 'blip', 'ping', 'sizzle', 'slide_whistle_up', 'flutter', 'wah', 'siren', 'sting']);
+  'clunk', 'blip', 'ping', 'sizzle', 'slide_whistle_up', 'flutter', 'wah', 'siren', 'sting',
+  'saw', 'chug', 'whistle', 'clack', 'groan', 'boom', 'crowd', 'crank']);   // = tools/sound_bank.py BANK (test/unit/stick-sound-bank.test.mjs)
 
 export async function boot({ film, width, height }) {
   const R1 = (await import(`/${film}/reel.js`)).default;
@@ -612,8 +639,8 @@ export async function boot({ film, width, height }) {
   const fps = R1.fps || 30, F0 = R1.frames[0], F1 = R2 ? R2.frames[1] : R1.frames[1];
   const stage = createStage({ width, height, ...(R1.look || {}) });
   try { await document.fonts.load('900 100px InterReel'); } catch { /* falls back to the system sans */ }
-  const cap = createCaptions({ words, lines: [...R1.lines, ...(R2?.lines || [])], fps, width, height });
-  const X = { stage, words, fps, F0, F1, width, height, cap, glasses: R1.glasses }, bg0 = stage.scene.background;
+  const cap = createCaptions({ words, lines: [...R1.lines, ...(R2?.lines || [])], fps, width, height, mode: R1.captions?.mode });
+  const X = { stage, words, fps, F0, F1, width, height, cap, glasses: R1.glasses, directDrift: R1.directDrift, travelWhoosh: R1.travelWhoosh }, bg0 = stage.scene.background;
   const defs = [{ ...R1, name: R1.name || 'lobby', show: R1.show || [{ from: R1.frames[0] }] }, ...(R2?.acts || [])];
   for (const am of R2?.amend || []) { const d = defs.find(x => x.name === am.act); d.shots = [...d.shots, ...(am.shots || [])]; d.beats = [...d.beats, ...(am.beats || [])]; }
   autoShots(defs, await getJSON(`/${film}/storyboard.json`), words, fps, F1, [...R1.lines, ...(R2?.lines || [])]);
@@ -655,7 +682,8 @@ export async function boot({ film, width, height }) {
     for (const A of acts) for (const q of A.cues) {
       const s = at(q.fr); if (s.cur !== A && s.prev !== A) continue;
       if (q.fr > F1 - 2) continue;
-      let name = SOUND[q.name] || q.name; if (name === 'step') { if (q.strength < 0.2 || (q.who && q.who !== 'kai')) continue; name = step++ % 2 ? 'step_r' : 'step_l'; }   // the hero's feet only
+      let name = SOUND[q.name] || q.name;
+      if (name === 'step') { const hero = A.R.steps === 'all' || !q.who || q.who === 'kai' || A.actors.some(x => x.name === q.who && x.c.lead); if (q.strength < 0.2 || !hero) continue; name = step++ % 2 ? 'step_r' : 'step_l'; }   // the leads' feet only (act steps: 'all' = every walker's feet)
       if (!BANK.has(name)) continue;
       out.push({ t: +(q.fr / fps).toFixed(4), name, strength: +Math.min(1, Math.max(0.55, 0.55 + 0.6 * q.strength)).toFixed(2) });
     }

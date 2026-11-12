@@ -47,10 +47,14 @@ export const POSES = {
     cycle: t => tremble(t) },
   crouch: { A: 3, T: 10, hold: 34, body: { bob: -0.34, pitch: 24, head_pitch: -16, head_dv: 0.02 },
     feet: { L: [-0.32, 0.022, 0.04], R: [0.32, 0.022, 0.0] }, hands: { L: { l: [-0.30, 0.96, 0.54], elbow: [-0.9, -0.2, -0.3] }, R: { l: [0.30, 0.96, 0.54], elbow: [0.9, -0.2, -0.3] } } },
-  recoil: { A: 2, T: 6, hold: 18, antic: 0.10, body: { pitch: -10, lean: 2, bob: -0.03, head_pitch: -12, head_dv: 0.03, shrug: 0.08 },
-    hands: { L: { t: [-0.46, 2.12, 0.30], elbow: [-0.9, -0.5, 0] }, R: { t: [0.46, 2.12, 0.30], elbow: [0.9, -0.5, 0] } } },
-  shrug: { A: 3, T: 8, hold: 18, body: { shrug: 0.10, head_tilt: 10, head_dv: -0.02, pitch: -3, lean: 2 },
-    hands: { L: { t: [-0.62, 1.66, 0.36], elbow: [-0.3, -1, -0.3], bend: 0.3 }, R: { t: [0.62, 1.66, 0.36], elbow: [0.3, -1, -0.3], bend: -0.3 } } },
+  // the take (reference: the whole body jolts back, both open hands fly up in front of the chest, one foot steps back)
+  // (the face stays on the lens: head_pitch cancels most of the lean back, so the eyes pop at the viewer, not the ceiling)
+  recoil: { A: 2, T: 6, hold: 18, antic: 0.12, body: { pitch: -14, lean: 3, bob: -0.04, head_pitch: 3, head_dv: 0.05, shrug: 0.14 },
+    feet: { L: [-0.24, 0.022, -0.09] },
+    hands: { L: { t: [-0.66, 1.98, 0.50], elbow: [-0.9, -0.8, 0] }, R: { t: [0.70, 2.04, 0.48], elbow: [0.9, -0.8, 0] } } },
+  // the reference shrug ("Not really."): shoulders up, head tipped, both forearms out wide and open at hip height
+  shrug: { A: 3, T: 8, hold: 18, body: { shrug: 0.15, head_tilt: 14, head_dv: -0.03, pitch: -4, lean: 4 },
+    hands: { L: { t: [-0.84, 1.78, 0.30], elbow: [-0.3, -1, -0.3], bend: 0.3 }, R: { t: [0.84, 1.82, 0.30], elbow: [0.3, -1, -0.3], bend: -0.3 } } },
   facepalm: { A: 3, T: 9, hold: 30, body: { pitch: 10, bob: -0.03, head_pitch: 20, head_tilt: -6 },
     hands: { R: { h: [0.02, -0.02, 0.54], elbow: [0.9, -0.6, 0.1] }, L: HIP_HAND(-1) },
     cycle: t => ({ head_dx: 0.02 * Math.sin(t * 0.32), head_tilt: 3 * Math.sin(t * 0.32) }) },
@@ -118,8 +122,10 @@ export const POSES = {
     cycle: t => ({ hands: { R: [0, 0.012 * Math.sin(t * 0.7), 0] }, head_tilt: 2 * Math.sin(t * 0.12) }) },
   shush: { A: 3, T: 8, hold: 30, body: { pitch: 10, head_tilt: -6, bob: -0.03 },
     hands: { R: { h: [0.02, -0.20, 0.58], elbow: [0.8, -0.7, 0.1] } } },
-  present: { A: 3, T: 9, hold: 32, body: { shTwist: -10, head_tilt: 6, lean: -2, pitch: 2 },
-    hands: { R: { t: [0.70, 1.82, 0.46], elbow: [0.4, -1, -0.2], bend: -0.3 }, L: { t: [-0.20, 1.80, 0.40], elbow: [-0.8, -0.6, 0.1] } },
+  // present: the right hand pushes out toward the lens at chest height (with `prop`, that thing held up to be seen), the
+  // other fist on the hip
+  present: { A: 3, T: 9, hold: 32, body: { shTwist: -12, head_tilt: 7, lean: -3, pitch: 4 },
+    hands: { R: { t: [0.30, 1.92, 0.80], elbow: [0.9, -0.8, -0.1], bend: -0.3 }, L: HIP_HAND(-1) },
     cycle: t => ({ hands: { R: [0.02 * Math.sin(t * 0.25), 0.03 * Math.sin(t * 0.25), 0] } }) },
   arms_wide: { A: 4, T: 9, hold: 30, body: { pitch: -6, head_pitch: -8, shrug: 0.05 },
     hands: { L: { t: [-0.78, 2.16, 0.22], elbow: [-0.3, -1, -0.2] }, R: { t: [0.78, 2.16, 0.22], elbow: [0.3, -1, -0.2] } } },
@@ -247,7 +253,7 @@ export function compilePose(name, p, st, C) {
       const d = tg.map((x, i) => (x - base[i]) * fe), dist = Math.hypot(d[0], d[2]);
       out['f' + s + 'x'] = d[0]; out['f' + s + 'y'] = d[1] + (dist > 0.04 ? 0.06 * lift * Math.min(1, dist / 0.2) : 0); out['f' + s + 'z'] = d[2];
     }
-    for (const [s, kind] of Object.entries(spec.props || {})) if (b.t > 0 && (f < inst.rel || fe > 0.2) && (s === 'B' || !busy(s))) out[`x_hp${s}_${kind}`] = 1;
+    for (const [s, kind] of Object.entries(p.props || spec.props || {})) if (b.t > 0 && (f < inst.rel || fe > 0.2) && (s === 'B' || !busy(s))) out[`x_hp${s}_${kind}`] = 1;
     for (const s of ['L', 'R']) {
       let tl = tableAt(spec.tiltKeys?.[s], b.t - A);
       if (spec.strike?.side === s) { const ph = strikePh(b.t - A - T); tl = lerp(spec.strike.tiltUp, spec.strike.tiltDown, ph.down); }

@@ -32,7 +32,7 @@ def kmeans(X, k=8, it=25, seed=0):
 
 def grab(name, frames, fmt="rgb24", ch=3):
     expr = "+".join(f"eq(n\\,{n})" for n in frames)
-    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", f"{D}/{name}.mp4", "-vf", f"select='{expr}'", "-fps_mode", "vfr",
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", f"{D}/{name}.mp4", "-vf", f"select='{expr}',scale={W}:{H}:flags=bicubic", "-fps_mode", "vfr",
                           "-pix_fmt", fmt, "-f", "rawvideo", "-"], capture_output=True).stdout
     return np.frombuffer(raw, np.uint8).reshape(-1, H, W, ch) if ch > 1 else np.frombuffer(raw, np.uint8).reshape(-1, H, W)
 

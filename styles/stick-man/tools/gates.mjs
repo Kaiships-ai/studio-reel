@@ -170,8 +170,8 @@ async function lookDbg() {
   if (!A.film) return null;
   if (!A.dbg) {
     const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..'), F = p => path.join(ROOT, A.film, p);
-    const R1 = (await import(pathToFileURL(F('reel.js')).href)).default;
-    const R2 = fs.existsSync(F('reel2.js')) ? (await import(pathToFileURL(F('reel2.js')).href)).default : null;
+    const R1 = await (await import('./reel_load.mjs')).loadReel(F('.'), 'reel.js');
+    const R2 = fs.existsSync(F('reel2.js')) ? await (await import('./reel_load.mjs')).loadReel(F('.'), 'reel2.js') : null;
     const d = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'stick-look-')), 'dbg.jsonl');
     const r = run('node', [path.join(ROOT, 'styles/stick-man/tools/shot.mjs'), '--film', A.film, '--frames', `0-${(R2 || R1).frames[1]}`, '--dbg', d, '--w', '540', '--h', '960'], { capture: true });
     if (r.status) return null;
@@ -210,8 +210,8 @@ async function story(film) {
   const SB = JSON.parse(fs.readFileSync(F('storyboard.json'), 'utf8')), script = JSON.parse(fs.readFileSync(F('vo/script.json'), 'utf8'));
   const words = JSON.parse(fs.readFileSync(F('vo/words.json'), 'utf8'));
   let dbg = A.dbg;
-  const R1 = (await import(pathToFileURL(F('reel.js')).href)).default;
-  const R2 = fs.existsSync(F('reel2.js')) ? (await import(pathToFileURL(F('reel2.js')).href)).default : null;
+  const R1 = await (await import('./reel_load.mjs')).loadReel(F('.'), 'reel.js');
+  const R2 = fs.existsSync(F('reel2.js')) ? await (await import('./reel_load.mjs')).loadReel(F('.'), 'reel2.js') : null;
   if (!dbg) {
     const last = (R2 || R1).frames[1];
     dbg = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'stick-story-')), 'dbg.jsonl');
@@ -296,7 +296,11 @@ async function story(film) {
     for (const n of e.fx || []) { const k = acts.map(a => makeKind(a, n)).find(Boolean); if (!k || LABELS.includes(k) || DIAGRAM.includes(k)) notWorld.push(`${w.id}.${n}${k ? ' (' + k + ')' : ' (no make entry)'}`); } }
   sg('fx in world', !notWorld.length, notWorld.length ? notWorld.join(', ') : 'every storyboard fx is a physical object or event', 'no label / diagram kinds in fx');
   // director rule: every line with a character on screen names its body action(s) in `act` (a known verb, never talk)
-  const known = new Set(fs.readFileSync(path.join(ROOT, 'styles/stick-man/engine/poses.js'), 'utf8').match(/^  (\w+): \{/gm).map(x => x.trim().slice(0, -3))
+  // known = engine/poses.js poses + the opt-in pose modules in allout/ (a pose table entry `  name: { A:` or a
+  // `POSE_VERBS.name =` registration), so a reel that imports allout/acting.js or allout/rail.js is not failed for using them
+  const poseSrc = ['styles/stick-man/engine/poses.js', ...fs.readdirSync(path.join(ROOT, 'styles/stick-man/allout')).filter(n => n.endsWith('.js')).map(n => 'styles/stick-man/allout/' + n)]
+    .map(p => fs.readFileSync(path.join(ROOT, p), 'utf8'));
+  const known = new Set([...poseSrc[0].matchAll(/^  (\w+): \{/gm), ...poseSrc.slice(1).flatMap(t => [...t.matchAll(/^  (\w+): \{ ?A:/gm), ...t.matchAll(/POSE_VERBS\.(\w+) =/g)])].map(m => m[1])
     .concat(['walk_to', 'turn_to', 'startle', 'step_back', 'cough', 'point', 'wave_small', 'slump', 'pluck', 'let_fall', 'lift', 'drop_in', 'slide', 'sling', 'gesture', 'stand_up']));
   const noAct = [];
   for (const w of win) {

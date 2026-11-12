@@ -3,17 +3,20 @@
 // Units: W = head width. Pose numbers are in W, in the figure's own plane (u = its right as the camera sees it, v = up).
 import * as THREE from 'three';
 import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { toon, lin, css, B, INK_RGB, INK_SUN } from './look.js';
+import { toon, lin, css, B, INK_RGB, INK_SUN, PLACE } from './look.js';
 import { EXPR, faceRig, mixFace } from './faces.js';
 import { makeHandProp } from '../lib/cast/handprops.js';
 
-const SPIN_Q = new THREE.Quaternion(), SPIN_AX = new THREE.Vector3(0, 1, 0);
+const SPIN_Q = new THREE.Quaternion(), SPIN_AX = new THREE.Vector3(0, 1, 0), _camL = new THREE.Vector3();
 export const W_M = 0.60;                     // head width in metres
 const W = W_M;
 const INK_T = 0.046 * W;                     // outline base width; the hull shader scales it 0.35-1.6x by the light (below):
                                              // reference rim 3.8-5.6 % of head width, thick/thin side ratio 1.65-2.47 (FORENSIC.md fix 7)
-const CREAM = [0.90, 0.87, 0.78];             // reference heads and bodies: flat off-white / cream, never pure white or blue-white
-const LIMB_R = 0.038 * W / 2;                // limbs stay a thinner line than the outline
+const CREAM = [0.90, 0.87, 0.78];             // reference bodies: flat cream
+const HEAD_WHITE = [0.985, 0.965, 0.95];
+const HEAD_FLAT = [0.92, 0.905, 0.89];         // the unlit head sits a little under white so the grade's exposure keeps its soft wash (else it clips flat)      // reference heads are lighter than the body: lit sRGB (251, 246, 243), shade (230, 219, 231)
+const FILL_RGB = [0.20, 0.06, 0.48];            // rage purple, linear (= faces.js furious tint): the head fills from the chin up (verb face_fill)
+const LIMB_R = 0.046 * W / 2;                // limbs: reference legs and arms ~0.045-0.05 W (QlDPM f600), a bold line, not a thread
 export const HEAD_C = [0.0, 2.43], HEAD_H = 0.94, HIP_V = 1.34, SHOULDER_V = 2.00;
 export const TORSO = { cx: 0.0, cy: 1.72, w: 0.57, h: 0.90, depth: 0.80 };
 const HA = 0.5 * W, HB = 0.5 * HEAD_H * W;   // head half width / half height (m)
@@ -32,7 +35,7 @@ hullMat.onBeforeCompile = sh => {
   sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float inkT; uniform vec3 inkSun;')
     .replace('#include <begin_vertex>', `#include <begin_vertex>
       float ndl = dot(normalize(mat3(modelMatrix) * normal), inkSun);
-      transformed += normal * inkT * (clamp(0.95 - 0.75 * ndl, 0.35, 1.6) - 1.0);`);
+      transformed += normal * inkT * (clamp(1.0 - 0.45 * ndl, 0.8, 1.45) - 1.0);   // lit side never under ~0.6x: the reference line stays bold all round (thick/thin ~2)`);
 };
 
 // ------------------------------------------------------------------ outline
@@ -122,7 +125,8 @@ export function curls(col = [0.45, 0.25, 0.12], tilt = 18) {
     const mask = (lat, lon) => { const L = lat / DEG, O = Math.abs(lon) / DEG;
       return Math.max(sm(33, 39, L), sm(88, 102, O) * sm(-48, -40, L), sm(74, 86, O) * sm(2, 9, L)); };
     // hull from rounded valleys: no folds, no inner lines. No received shadow: the bumps would self-shadow into acne.
-    const mop = solid(massGeo(balls, mask, -t), hairMat(col), INK_T, massGeo(balls, mask, -t, 0.012 * W)); mop.receiveShadow = false;
+    // one smooth sculpted mass (reference hair is a clean solid shape, never a pile of balls): a soft union of the curls
+    const mop = solid(massGeo(balls, mask, -t, 0.034 * W), hairMat(col), INK_T, massGeo(balls, mask, -t, 0.034 * W)); mop.receiveShadow = false;
     const g = new THREE.Group(); g.add(mop);
     return g;
   };
@@ -227,6 +231,41 @@ const _hv = new THREE.Vector3(), _hm = new THREE.Matrix4(), _hi = new THREE.Matr
 // deform a geometry whose vertices are in a frame M (-> head space); M null = head space already
 // Kai 11/11 (later): back to the original round head ("đầu hiện tại anh lại thấy không ok") -> off by default.
 export const HEAD_SHAPE = { on: false };
+// Kai 11/11: "the reference face and line are very 2D, ours is a 3D sphere". FACE_2D.on: the head is drawn flat (unlit
+// white, one thin shade crescent at the edge, no light gradient) and the face is a flat card that always faces the lens and
+// slides across the head disc as the head turns (clipped by its edge), instead of a texture wrapped round a sphere.
+export const FACE_2D = { on: true };
+// flat head: unlit fill, a thin crescent of shade inside the silhouette on the side away from the key (screen down-right,
+// reference sRGB 251/246/243 lit, 230/219/231 shade), lightly tinted by the place light so a night head is not a lamp
+function flatHeadMat(rgb, shade) {
+  const U = { uColor: { value: lin(...rgb) }, uShade: { value: lin(...shade) }, uPlaceLit: PLACE.lit, uFill: { value: -2 }, uFillCol: { value: lin(...FILL_RGB) } };
+  const m = new THREE.ShaderMaterial({ uniforms: U,
+    vertexShader: `varying vec3 vN; varying vec3 vV; varying vec2 vP;
+      #include <common>
+      #include <logdepthbuf_pars_vertex>
+      void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); vP = vec2(position.x / ${HA.toFixed(5)}, position.y / ${HB.toFixed(5)}); gl_Position = projectionMatrix * mv;
+      #include <logdepthbuf_vertex>
+      }`,
+    fragmentShader: `uniform vec3 uColor, uShade, uPlaceLit, uFillCol; uniform float uFill; varying vec3 vN; varying vec3 vV; varying vec2 vP;
+      #include <logdepthbuf_pars_fragment>
+      void main(){
+      #include <logdepthbuf_fragment>
+        // a soft top-to-bottom wash (reference: top 255/253/250, middle 246/243/239, bottom 220/210/218) plus a thin
+        // crescent at the edge on the shadow side; never a lit 3D ball
+        vec3 n = normalize(vN);
+        float edge = 1.0 - clamp(dot(n, normalize(vV)), 0.0, 1.0);
+        float side = clamp(0.35 + 0.9 * dot(normalize(n.xy + 1e-4), normalize(vec2(0.55, -0.85))), 0.0, 1.0);
+        float k = max(max(0.85 * smoothstep(0.35, -0.95, n.y), 0.55 * smoothstep(0.5, 0.95, edge)), smoothstep(0.6, 0.9, edge) * side);
+        // rage fill (verb face_fill): colour rises from the chin like a liquid, a soft wavy surface line
+        float lvl = uFill + 0.035 * sin(vP.x * 9.0 + uFill * 14.0);
+        vec3 base = mix(uColor, uFillCol, smoothstep(lvl + 0.03, lvl - 0.03, vP.y));
+        vec3 c = mix(base, base * uShade, k) * mix(vec3(1.0), uPlaceLit, 0.25);
+        gl_FragColor = vec4(c, 1.0);
+        #include <colorspace_fragment>
+      }` });
+  m.color = U.uColor.value;            // S.face tints it for rage through .color, like the toon material
+  return m;
+}
 function shapeHeadGeo(g, M = null) {
   if (!HEAD_SHAPE.on) return;
   const p = g.attributes.position; if (M) _hi.copy(M).invert();
@@ -266,6 +305,10 @@ function clothesCanvas(spec) {
   for (const c of spec.clothes || []) {
     if (c.vest) {
       g.fillStyle = css(c.vest); g.fillRect(0, 0, TEX_W, TEX_H);
+      if (c.check) { g.strokeStyle = css(c.check); g.globalAlpha = 0.85; g.lineWidth = 0.022 * k; const s = 0.13 * k;      // window-pane check
+        for (let x = 0; x < TEX_W; x += s) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, TEX_H); g.stroke(); }
+        for (let y = 0; y < TEX_H; y += s) { g.beginPath(); g.moveTo(0, y); g.lineTo(TEX_W, y); g.stroke(); } g.globalAlpha = 1; }
+      if (c.pin) { g.fillStyle = css(c.pin); const s = 0.085 * k; for (let x = 0; x < TEX_W; x += s) g.fillRect(x, 0, 0.026 * k, TEX_H); }
       const L = s => [[s * 0.075, top + 0.02], [s * 0.075, top - 0.02], [s * 0.115, T.cy + 0.05], [s * 0.10, v0 + 0.03], [s * 0.10, v0 - 0.02]];
       const strip = [...L(-1).flatMap((q, i, a) => i ? dense(a[i - 1], q, 6).slice(1) : [q]), ...L(1).reverse().flatMap((q, i, a) => i ? dense(a[i - 1], q, 6).slice(1) : [q])];
       poly(strip, spec.shirt || [1, 1, 1]);
@@ -274,6 +317,10 @@ function clothesCanvas(spec) {
         const a = [-T.w * 0.34, T.cy + T.h * 0.40], b = [T.w * 0.44, T.cy - T.h * 0.30];
         line(dense(a, b, 20), 0.085, INK_RGB); line(dense(a, b, 20), 0.050, c.strap);
       }
+    }
+    if (c.kerchief) {                                             // a knotted neckerchief under the chin, the point down the chest
+      const t0 = top - 0.06; poly([[-0.16, t0], [0.16, t0], [0, t0 - 0.30]], c.kerchief, 0.010);
+      dot([0, t0 - 0.02], 0.045, c.kerchief.map(x => x * 0.75));
     }
     if (c.tie) {
       const t0 = top - 0.10;
@@ -300,6 +347,8 @@ function torsoGeo() {
   const T = TORSO, r = T.w / 2 * W, h = T.h * W, pr = [], n = 14;
   for (let i = 0; i <= n; i++) { const a = -Math.PI / 2 + Math.PI / 2 * i / n; pr.push([r * Math.cos(a), r + r * Math.sin(a)]); }
   for (let i = 0; i <= n; i++) { const a = Math.PI / 2 * i / n; pr.push([r * Math.cos(a), h - r + r * Math.sin(a)]); }
+  // an egg, not a pill: the reference bodies are fuller at the belly and narrower at the shoulders (QlDPM f600, VS1Z)
+  for (const q of pr) { const u = q[1] / h; q[0] *= 1.10 - 0.20 * u * u; }
   const g = lathe(pr, 64); g.scale(1, 1, T.depth);
   const p = g.attributes.position, uv = g.attributes.uv;
   for (let i = 0; i < p.count; i++) uv.setY(i, p.getY(i) / h);
@@ -452,6 +501,59 @@ export function reachAssist(P) {
   return { ...P, ...Object.fromEntries(K.map(k => [k, q[k]])), assist: +Math.abs(q.pitch - q0.pitch + q.lean - q0.lean).toFixed(2) };
 }
 
+// ------------------------------------------------------------------ joint-space pose (motion v2)
+// The body curves progressively from the hip (y = 0, body space, W) to the top of the torso: `bend` (forward) and `side`
+// (toward the figure's +x) in degrees in total, `twist` about the spine by the top; `sq` squashes (-) or stretches (+) it
+// about the hip, volume kept (x and z scale by 1 / sqrt of the y scale). Points above the top go on straight.
+const SPINE_L = TORSO.cy + TORSO.h / 2 - HIP_V, TORSO_Y0 = TORSO.cy - TORSO.h / 2 - HIP_V;
+function spineParams(sp = {}, sq = 0) {
+  const f = (sp.bend || 0) * DEG, sd = (sp.side || 0) * DEG;
+  return { th: Math.hypot(f, sd), phi: Math.atan2(sd, f), tw: (sp.twist || 0) * DEG, s: Math.max(0.4, 1 + sq) };
+}
+// bend one point (and optionally its normal) in place; returns the frame angle at its height
+function bendPt(B, v, n) {
+  const k = 1 / Math.sqrt(B.s); let x = v.x * k, y = v.y * B.s, z = v.z * k;
+  const L = SPINE_L * B.s, u = Math.max(0, Math.min(1, y / L)), t = B.tw * u, ct = Math.cos(t), st = Math.sin(t);
+  [x, z] = [x * ct + z * st, -x * st + z * ct];
+  const cp = Math.cos(B.phi), sp = Math.sin(B.phi);
+  [x, z] = [x * cp - z * sp, x * sp + z * cp];
+  let a = 0;
+  if (y > 0 && B.th > 1e-5) {
+    const R = L / B.th; a = B.th * Math.min(y, L) / L;
+    const yb = (R - z) * Math.sin(a), zb = R - (R - z) * Math.cos(a), e = Math.max(0, y - L);
+    y = yb + e * Math.cos(a); z = zb + e * Math.sin(a);
+  }
+  [x, z] = [x * cp + z * sp, -x * sp + z * cp];
+  v.set(x, y, z);
+  if (n) {
+    let nx = n.x, ny = n.y, nz = n.z;
+    [nx, nz] = [nx * ct + nz * st, -nx * st + nz * ct];
+    [nx, nz] = [nx * cp - nz * sp, nx * sp + nz * cp];
+    [ny, nz] = [ny * Math.cos(a) - nz * Math.sin(a), ny * Math.sin(a) + nz * Math.cos(a)];
+    [nx, nz] = [nx * cp + nz * sp, -nx * sp + nz * cp];
+    n.set(nx, ny, nz);
+  }
+  return a;
+}
+// the spine frame at height y (body space, W): where it is and how it is turned
+const _Y = new THREE.Vector3(0, 1, 0), _X = new THREE.Vector3(1, 0, 0);
+function spineFrame(B, y) {
+  const p = new THREE.Vector3(0, y, 0), a = bendPt(B, p), u = Math.max(0, Math.min(1, y / SPINE_L));
+  const q = new THREE.Quaternion().setFromAxisAngle(_Y, B.phi).multiply(new THREE.Quaternion().setFromAxisAngle(_X, a))
+    .multiply(new THREE.Quaternion().setFromAxisAngle(_Y, -B.phi)).multiply(new THREE.Quaternion().setFromAxisAngle(_Y, B.tw * u));
+  return { p, q };
+}
+// an arm swung from the shoulder in the chest's frame: raise = out to the side (deg), swing = forward (deg), elbow = flex
+// (deg), roll = turns the plane the elbow folds in (deg, + = the forearm folds up toward the face)
+function armDirs(a, sg) {
+  const d = new THREE.Vector3(0, -1, 0).applyAxisAngle(new THREE.Vector3(0, 0, 1), sg * (a.raise || 0) * DEG)
+    .applyAxisAngle(_X, -(a.swing || 0) * DEG).normalize();
+  const pref = new THREE.Vector3(-sg * 0.25, 0.3, 1).normalize().applyAxisAngle(d, sg * (a.roll || 0) * DEG);
+  const b = pref.addScaledVector(d, -pref.dot(d)); if (b.lengthSq() < 1e-6) b.set(0, 1, 0); b.normalize();
+  const fl = (a.elbow ?? 20) * DEG, fd = d.clone().multiplyScalar(Math.cos(fl)).addScaledVector(b, Math.sin(fl));
+  return { d, fd, pole: b };
+}
+
 // ------------------------------------------------------------------ the figure
 export function makeStick(spec) {
   const root = new THREE.Group(); root.name = spec.name || 'stick'; root.userData.stick = true;   // look.js: no screen ink (own hull)
@@ -468,25 +570,35 @@ export function makeStick(spec) {
 
   const head = new THREE.Group(); root.add(head);
   const hg = new THREE.SphereGeometry(HA, 64, 40); hg.scale(1, HEAD_H, 1); shapeHeadGeo(hg);
-  const headSolid = solid(hg, toon(spec.skin || CREAM, { shade: [0.80, 0.79, 0.87], rim: 0, sheen: 0, broad: 0, rough: 1, soft: 0, rimLit: 0, char: 1, rimCool: rc }));
+  const headSolid = solid(hg, FACE_2D.on ? flatHeadMat(spec.skin || HEAD_FLAT, [0.80, 0.77, 0.84]) : toon(spec.skin || HEAD_WHITE, { shade: [0.97, 0.95, 0.98], rim: 0, sheen: 0, broad: 0, rough: 1, soft: 0.65, rimLit: 0, char: 1, rimCool: rc }));
+  headSolid.receiveShadow = false;   // no hard cast shadows from hair or hats on the face (a lit white triangle cut the face, ep01 f1240); the reference head is one soft white form
   head.add(headSolid);
   const rig = new THREE.Group(); head.add(rig);
   const FR = faceRig(W, { glasses: !!spec.glasses });
   const face = new THREE.Mesh(facePatch(), new THREE.MeshBasicMaterial({ map: FR.tex, transparent: true, depthWrite: false,
     polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
   face.userData.noPrepass = true; face.renderOrder = 2; rig.add(face); head.add(FR.group);
+  const card2d = new THREE.Mesh(new THREE.PlaneGeometry(W, W), new THREE.MeshBasicMaterial({ map: FR.tex, transparent: true, depthWrite: false,
+    polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+  card2d.userData.noPrepass = true; card2d.renderOrder = 2; card2d.visible = false; head.add(card2d);
+  if (FACE_2D.on) face.visible = false;
   const skin0 = headSolid.material.color.clone(), tintC = new THREE.Color();
   if (spec.glasses) rig.add(glasses());
-  for (const f of spec.hair || []) head.add(f());
+  // hair and hats hang in their own group so the motion layer can swing them after the head (follow-through)
+  const hairG = new THREE.Group(); head.add(hairG);
+  for (const f of spec.hair || []) hairG.add(f());
   // hair, hats and glasses were built on the ellipsoid: give them the same head shape (in head space), geometry cloned
   head.updateMatrixWorld(true); _hm.copy(head.matrixWorld).invert();
   const skip = new Set([headSolid, face]); headSolid.traverse(o => skip.add(o)); FR.group.traverse(o => skip.add(o));
   head.traverse(o => { if (!o.isMesh || skip.has(o)) return; o.geometry = o.geometry.clone(); shapeHeadGeo(o.geometry, _hm.clone().multiply(o.matrixWorld)); });
 
   const limbs = { armL: new Tube(16, LIMB_R), armR: new Tube(16, LIMB_R), legL: new Tube(18, LIMB_R), legR: new Tube(18, LIMB_R) };
-  const dotGeo = new THREE.SphereGeometry(0.040 * W, 16, 10), jointGeo = new THREE.SphereGeometry(LIMB_R * 1.05, 10, 8);
+  // hand mitt: reference hands are ~0.10 W across, about twice the arm line
+  const dotGeo = new THREE.SphereGeometry(0.050 * W, 16, 10), jointGeo = new THREE.SphereGeometry(LIMB_R * 1.05, 10, 8);
   const ball = geo => { const m = new THREE.Mesh(geo, inkMat); m.castShadow = true; root.add(m); return m; };
-  const hands = { L: ball(dotGeo), R: ball(dotGeo) }, ankles = { L: ball(jointGeo), R: ball(jointGeo) }, toes = { L: ball(jointGeo), R: ball(jointGeo) };
+  // gloves (spec.gloves = rgb): a light mitt with its own ink edge, so a hand reads against a dark coat or a dark set
+  const glove = () => { const m = solid(dotGeo.clone().scale(1.15, 1.15, 1.15), toon(spec.gloves, { rough: 1, rim: 0, sheen: 0, soft: 0, char: 1 }), INK_T * 0.7); root.add(m); return m; };
+  const hands = spec.gloves ? { L: glove(), R: glove() } : { L: ball(dotGeo), R: ball(dotGeo) }, ankles = { L: ball(jointGeo), R: ball(jointGeo) }, toes = { L: ball(jointGeo), R: ball(jointGeo) };
   for (const t of Object.values(limbs)) root.add(t.mesh);
 
   const contact = new THREE.Mesh(new THREE.CircleGeometry(1, 32), new THREE.MeshBasicMaterial({ color: lin(0.05, 0.09, 0.22),
@@ -522,11 +634,24 @@ export function makeStick(spec) {
     const marks = (E.marks || []).filter(([, life]) => !life || age < life).map(([k]) => [k, age]);
     for (const m of [...(P.marks || []), ...S.xmarks]) if (!marks.some(q => q[0] === m[0])) marks.push(m);
     const mx = P.state ? mixFace(P.state) : null, blink = Math.max(P.blink || 0, mx ? mx.blink : 0);
-    FR.draw(e, blink, t, marks, P.cam ? B(...P.cam) : null, mx ? mx.F : null);
+    let slide = null;
+    if (FACE_2D.on && P.cam) {
+      // where the lens is, seen from the head (head-local, +z = the face's front): the face slides toward the side it turns
+      // to, up / down with the lens height, and is gone when the lens sees the back of the head
+      head.updateWorldMatrix(true, false); _camL.copy(B(...P.cam)); head.worldToLocal(_camL);
+      const d = _camL.lengthSq() > 1e-8 ? _camL.normalize() : _camL.set(0, 0, 1);
+      const yaw = Math.atan2(d.x, d.z) - (P.look || 0) * LOOK_RAD, el = Math.asin(Math.max(-1, Math.min(1, d.y))) + (P.look_v || 0) * 0.12;
+      const vis = Math.max(0, Math.min(1, (Math.cos(yaw) - 0.22) / 0.3));   // gone a little before profile: the drawing never lands on hair at the side
+      slide = [-0.40 * Math.sin(yaw), -0.40 * Math.sin(el) * HEAD_H, vis];
+      card2d.visible = true; card2d.position.copy(d).multiplyScalar(HA * 1.02); card2d.lookAt(B(...P.cam));
+    } else card2d.visible = false;
+    face.visible = !FACE_2D.on || !P.cam;
+    FR.draw(e, blink, t, marks, P.cam ? B(...P.cam) : null, mx ? mx.F : null, slide);
     S.faceStats = FR.stats;
     const ta = P.state && EXPR[P.state.a]?.tint, tb = E.tint, u = P.state ? Math.max(0, Math.min(1, P.state.u)) : 1;
     const tk = tb ? Math.min(1, age / 6) * u : ta ? 1 - u : 0;   // a furious face flushes over 6 frames (and fades as it leaves)
     headSolid.material.color.copy(skin0); if (tk) headSolid.material.color.lerp(tintC.setRGB(...(tb || ta)), tk);
+    if (headSolid.material.uniforms?.uFill) headSolid.material.uniforms.uFill.value = S.fill > 0 ? -1.08 + 2.2 * Math.min(1, S.fill) : -2;
     rig.rotation.set(-(P.look_v || 0) * 0.12, (P.look || 0) * LOOK_RAD, 0);
   };
   // Hand props: pose key x_hp<L|R>_<kind> > 0.5 shows that prop in that hand (x_hpB_<kind> = between both hands);
@@ -568,6 +693,7 @@ export function makeStick(spec) {
     const hc = bt(HEAD_C[0] + (P.head_dx || 0), HEAD_C[1] + (P.head_dv || 0));
     head.position.set(hc[0] * W, hc[1] * W, hc[2] * W);
     head.rotation.set(pt * 0.6 + (P.head_pitch || 0) * DEG, 0, -(lean + (P.head_tilt || 0) * DEG));
+    S.fill = P.x_fill || 0;                                        // rage fill (verb face_fill): the face pass reads it
     S.face(P);
     // Limbs. Extra keys: elbow{L,R} / kneeDir (or kneeDir{L,R}) = pole vectors (figure-local), armFK{L,R} =
     // {fwd, out, flex, w} swing the arm from the shoulder (w blends it over the hand target), footPitch{L,R} (deg,
@@ -615,10 +741,79 @@ export function makeStick(spec) {
     root.updateMatrixWorld(true);
     return S;
   };
+  // Joint-space pose (motion v2, engine/motion.js): every number is an angle or a position the animator keyed; nothing
+  // here moves a joint on its own (no reach assist, no hand smoothing). Keys: pos, yaw, bob (W), hip {x, z} (W shift),
+  // pelvis {pitch, roll, yaw} (deg), spine {bend, side, twist} (deg), sq, neck {nod, tilt, turn} (deg), headSq,
+  // arm{L,R} {raise, swing, elbow, roll, ik: [x, y, z] figure W, ikw, pole}, leg{L,R} {foot: [x, y, z] W, pitch, yaw, knee},
+  // hat {pitch, roll} (deg, the follow-through swing), plus the x_ keys (props, marks) and contact.
+  let bent = null;
+  const _e = new THREE.Euler();
+  S.pose2 = (Q = {}) => {
+    S.place(Q);
+    if (!bent) {                                                   // rest copies of the torso and its ink shell, once
+      const hull = torso.children[0];
+      bent = [torso, hull].map(m => ({ g: m.geometry, p: m.geometry.attributes.position.array.slice(), n: m.geometry.attributes.normal.array.slice() }));
+      torso.scale.set(1, 1, 1); torso.position.set(0, 0, 0);
+    }
+    const B = spineParams(Q.spine, Q.sq || 0), gz = 0.9 + 0.1 * girth, v = new THREE.Vector3(), n = new THREE.Vector3();
+    for (const b of bent) {
+      const P = b.g.attributes.position, N = b.g.attributes.normal;
+      for (let i = 0; i < P.count; i++) {
+        v.set(b.p[3 * i] * girth / W, b.p[3 * i + 1] / W + TORSO_Y0, b.p[3 * i + 2] * gz / W); n.set(b.n[3 * i], b.n[3 * i + 1], b.n[3 * i + 2]);
+        bendPt(B, v, n); P.setXYZ(i, v.x * W, v.y * W, v.z * W); N.setXYZ(i, n.x, n.y, n.z);
+      }
+      P.needsUpdate = N.needsUpdate = true; b.g.computeBoundingSphere();
+    }
+    const pv = Q.pelvis || {}, hipP = new THREE.Vector3(Q.hip?.x || 0, HIP_V + (Q.bob || 0), Q.hip?.z || 0);
+    const qb = new THREE.Quaternion().setFromEuler(_e.set((pv.pitch || 0) * DEG, (pv.yaw || 0) * DEG, -(pv.roll || 0) * DEG, 'YXZ'));
+    body.position.copy(hipP).multiplyScalar(W); body.quaternion.copy(qb);
+    const toRoot = p => p.clone().applyQuaternion(qb).add(hipP);
+    // head: on the neck at the top of the spine, nodded / tilted / turned, squashed with its volume kept
+    const top = spineFrame(B, SPINE_L), nk = Q.neck || {};
+    const qn = new THREE.Quaternion().setFromEuler(_e.set((nk.nod || 0) * DEG, (nk.turn || 0) * DEG, -(nk.tilt || 0) * DEG, 'YXZ'));
+    const qTop = top.q.clone().multiply(qn), hOff = new THREE.Vector3(0, (HEAD_C[1] - HIP_V - SPINE_L) * B.s, 0).applyQuaternion(qTop);
+    head.position.copy(toRoot(top.p.clone().add(hOff))).multiplyScalar(W); head.quaternion.copy(qb.clone().multiply(qTop));
+    const hs = Math.max(0.5, 1 + (Q.headSq || 0)); head.scale.set(1 / Math.sqrt(hs), hs, 1 / Math.sqrt(hs));
+    hairG.rotation.set((Q.hat?.pitch || 0) * DEG, 0, -(Q.hat?.roll || 0) * DEG);
+    S.fill = Q.x_fill || 0;
+    const rig = { pitch: (pv.pitch || 0) + (Q.spine?.bend || 0), roll: (pv.roll || 0) + (Q.spine?.side || 0), assist: 0,
+      body: [Q.hip?.x || 0, Q.bob || 0, Q.spine?.twist || 0].map(x => +x.toFixed(3)), sq: Q.sq || 0, headSq: Q.headSq || 0 };
+    const shY = SHOULDER_V - HIP_V, qChest = qb.clone().multiply(spineFrame(B, shY).q);
+    for (const [side, sg] of [['L', -1], ['R', 1]]) {
+      const shB = new THREE.Vector3(sg * TORSO.w * 0.40 * girth, shY, 0); bendPt(B, shB);
+      const sh = toRoot(shB), A = Q['arm' + side] || {};
+      // FK from the shoulder; with an ik target the hand goes there instead, blended by ikw (0 = FK, 1 = on the target),
+      // the elbow still folding the FK way
+      const k = armDirs(A, sg); k.d.applyQuaternion(qChest); k.fd.applyQuaternion(qChest); k.pole.applyQuaternion(qChest);
+      let elbow = sh.clone().addScaledVector(k.d, LIMB.upper), hand = elbow.clone().addScaledVector(k.fd, LIMB.fore), flex = A.elbow ?? 20;
+      const iw = A.ik ? Math.max(0, Math.min(1, A.ikw ?? 1)) : 0;
+      if (iw > 0) {
+        const r = ik(sh, hand.clone().lerp(V(A.ik), iw), LIMB.upper, A.pole ? V(A.pole) : k.pole, SOFT.arm, true); elbow = r.joint; hand = r.end; flex = r.flex;
+      }
+      const pts = hose(sh, elbow, hand, ROUND.arm, 16);
+      limbs['arm' + side].set(pts); hands[side].position.copy(pts[15]); S.hand[side] = hand.toArray();
+      const hipJ = toRoot(new THREE.Vector3(sg * 0.14 * girth, 0.04, 0)), G = Q['leg' + side] || {};
+      const foot = V(G.foot || [sg * 0.22, 0.022, 0]), kp = V(G.knee || [sg * 0.15, 0, 1]);
+      const leg = ik(hipJ, foot, LIMB.thigh, kp, SOFT.leg);
+      const lp = hose(hipJ, leg.joint, foot, ROUND.leg, 13);
+      const ptc = (G.pitch || 0) * DEG, hdir = new THREE.Vector3(0.10 * sg, 0, 0.07).normalize().applyAxisAngle(_Y, (G.yaw || 0) * DEG);
+      const toeL = foot.clone().addScaledVector(hdir, LIMB.stub * Math.cos(ptc)); toeL.y += LIMB.stub * Math.sin(ptc) - 0.004;
+      const toe = toeL.clone().multiplyScalar(W);
+      for (let i = 1; i <= 5; i++) lp.push(lp[12].clone().lerp(toe, i / 5));
+      limbs['leg' + side].set(lp); ankles[side].position.copy(lp[12]); toes[side].position.copy(toe);
+      rig[side] = { hip: hipJ, knee: leg.joint, ankle: foot, toe: toeL, shoulder: sh, elbow, hand, kneeFlex: leg.flex, elbowFlex: flex, footPitch: G.pitch || 0 };
+    }
+    S.rig = rig;
+    handProps(Q, rig);
+    S.xmarks = Object.keys(Q).filter(k => k.startsWith('x_mark_') && Q[k] >= 1).map(k => [k.slice(7), Math.floor(Q[k] - 1)]);
+    contact.visible = Q.contact !== false; contact.position.y = 0.004 + (Q.ground || 0) * W;
+    root.updateMatrixWorld(true);
+    return S;
+  };
   // the last pose's joints in Blender world metres (y = depth), flexes and pitches in degrees, for __dbg
   S.rigWorld = () => {
     const w = q => { const v = q.clone().multiplyScalar(W).applyMatrix4(root.matrixWorld); return [v.x, -v.z, v.y].map(x => +x.toFixed(4)); };
-    const o = { torsoLean: +S.rig.pitch.toFixed(2), torsoRoll: +S.rig.roll.toFixed(2), assist: S.rig.assist, body: S.rig.body };
+    const o = { torsoLean: +S.rig.pitch.toFixed(2), torsoRoll: +S.rig.roll.toFixed(2), assist: S.rig.assist, body: S.rig.body, sq: S.rig.sq ?? 0, headSq: S.rig.headSq ?? 0 };
     for (const s of ['L', 'R']) {
       const r = S.rig[s];
       o[s] = { hip: w(r.hip), knee: w(r.knee), ankle: w(r.ankle), toe: w(r.toe), shoulder: w(r.shoulder), elbow: w(r.elbow), hand: w(r.hand),
