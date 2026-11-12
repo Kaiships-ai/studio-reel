@@ -29,6 +29,8 @@ Read [PROCESS.md](PROCESS.md) before step 1.
    Fix what holds up. Never score your own work.
 5. Put it on the stage page: status rows plus decision buttons. Kai picks there and may approve several steps at once.
 6. Read his picks from the page's db, lock them, and strip the rejected options and stale sections from the page.
+   A step is not done until the page shows it: republish in the same turn, unasked, with only the latest state on it
+   (old drafts, superseded options and old review tables go; history lives in git and the files).
 7. Reply short in Vietnamese and end with the table `việc · đầu ra · bằng chứng · trạng thái`.
 
 ## Stages, steps and gates
