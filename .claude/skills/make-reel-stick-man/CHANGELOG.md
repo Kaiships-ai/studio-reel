@@ -1,5 +1,21 @@
 # Changelog · make-reel-stick-man
 
+## p10 · 2026-11-11 · character quality pass (measured on the QlDPM and VS1Z reference shorts)
+
+Engine-wide, every reel gets it. Look: ink is a dark warm plum, not black (`INK_RGB`, renders ~sRGB 50-65, 35-45, 40-50
+like the reference); heads are white (`HEAD_WHITE`), softly shaded and receive no cast shadows (no hard hair-shadow
+triangle on the face); the outline never thins below 0.6x on the lit side; curly hair is one smooth sculpted mass (soft
+union); bodies are eggs (fuller belly, narrower shoulders); limbs 0.046 W, hand mitts 0.10 W. Faces: the grin is the
+reference beam (0.5 W wide ink crescent, a white row of teeth, open dot eyes); smile, laugh, teeth grids, worried mouth
+and talking mouth ~1.4-1.9x wider; brows 0.024 W thick. Acting: every pose plays 1.2x by default (`ACT_AMP` in play.js;
+`actingAmp` / cast `amp` still override), bigger shrug, a real take (`recoil`), `present` pushes a held thing at the lens,
+any pose beat takes `props`. 2D head (Kai: "the reference face is 2D, ours is a 3D sphere"): with `FACE_2D.on` (default) the
+head is unlit flat white with one thin shade crescent at its edge, and the face is a flat card that always faces the lens
+and slides across the head disc as the head turns (clipped at the edge, gone from behind); `faces3d.html?yaws=0,50,100`
+shows the turnaround. Head style matched to Kai's reference stills (11/11): near-black ink (renders ~sRGB 38/33/36), a
+steadier line (0.8-1.45x), smaller solid eyes (0.09 x 0.12 W, 0.27 W apart), thicker brows (~0.03 W), open mouths are an
+ink rim round a red cavity with a pink tongue, and the head fill carries a soft top-to-bottom wash. Test bed: `faces3d.html?glasses=0&names=a,b`; a 12 s acting study `films/char-test` (local).
+
 ## p9 · 2026-11-11 · micro-animation layer (FORENSIC.md section 3, fixes 8, 14, 16, 17)
 
 Automatic, from the words and beats: faces in-betweened through every change (faces.js `mixFace`, acting.js

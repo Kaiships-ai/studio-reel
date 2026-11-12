@@ -16,6 +16,8 @@ import { POSE_VERBS } from './poses.js';
 import * as EXTRAS from '../lib/cast/extras.js';
 import { PHYS } from '../lib/props/physfx.js';
 import { STORY } from '../lib/props/story.js';
+// default acting size: the reference's big beats travel ~2.3 head widths, ours ~0.5-0.7 (FORENSIC.md section 3), so every pose plays 1.2x unless an act or cast entry says otherwise
+const ACT_AMP = 1.2;
 Object.assign(MAKE, PHYS, STORY);                               // story props that animate (lib/props/story.js)                                       // physical FX kinds (SETS.md "Physical effects")
 
 // every cast spec exported by lib/cast/extras.js (an object with a name and a shirt) registers itself by its export name
@@ -174,7 +176,7 @@ async function buildAct(R, X) {
     if (HOOKS.faceExtras) HOOKS.faceExtras(S);                      // allout/face_extras.js (proposal): hidden cards until a beat asks
     const posture = c.posture || 'stand', base = posture === 'sit' ? SIT : STAND;
     const pos = point(c.at).slice(); pos[2] = pos[2] || 0;
-    const st = { name, pos, yaw: c.yaw ?? 0, posture, hold: { L: null, R: null }, handW: {}, sling: null, ampScale: c.amp ?? R.actingAmp ?? 1 };
+    const st = { name, pos, yaw: c.yaw ?? 0, posture, hold: { L: null, R: null }, handW: {}, sling: null, ampScale: c.amp ?? R.actingAmp ?? ACT_AMP };
     const a = { name, S, c, st, posture, seed: Math.round(hash(name.length, name.charCodeAt(0), name.charCodeAt(1)) * 1e6),
       focus: c.focus, watch: c.watch, owners: { body: [], handL: [], handR: [], add: [] }, verbs: [], exprs: [{ f: -1e9, expr: c.expr || 'neutral' }],
       focusSegs: [], mouth: [], holdLog: [], st0: pos.slice() };

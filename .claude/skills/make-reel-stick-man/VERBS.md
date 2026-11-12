@@ -69,8 +69,8 @@ set prop) keeps its prop; the rest of the pose still plays. Joint gate: every po
 | `lean_away` | rocks back and away, both palms up to ward off | `{ who: 'bram', do: 'lean_away', expr: 'shock' }` |
 | `brace` | wide knees-bent stance, forearms up before the face, trembling | `{ who: 'june', do: 'brace', expr: 'scream' }` |
 | `crouch` | squats low, hands on knees, looks up | `{ who: 'kai', do: 'crouch', expr: 'suspicious' }` |
-| `recoil` | snaps back from something, hands up at the shoulders (fast: 2 f wind-up) | `{ ...at('l03', 'times', -4), who: 'kai', do: 'recoil', expr: 'shock' }` |
-| `shrug` | shoulders up, palms out, head tipped | `{ who: 'kai', do: 'shrug', expr: 'confused' }` |
+| `recoil` | the take: the body jolts back, open hands fly up beside the chest, one foot steps back, the face stays on the lens (fast: 2 f wind-up) | `{ ...at('l03', 'times', -4), who: 'kai', do: 'recoil', expr: 'shock' }` |
+| `shrug` | shoulders up, both forearms out wide at hip height, head tipped (the "Not really." shrug) | `{ who: 'kai', do: 'shrug', expr: 'confused' }` |
 | `facepalm` | hand over the face, head down, slow head shake | `{ who: 'june', do: 'facepalm', expr: 'sad' }` |
 | `arms_crossed` | arms folded, weight on one hip, chin up | `{ who: 'bram', do: 'arms_crossed', expr: 'deadpan' }` |
 | `hands_on_hips` | fists on hips, elbows out, wide stance | `{ f: 748, who: 'officer', do: 'hands_on_hips', expr: 'smug' }` |
@@ -87,7 +87,7 @@ set prop) keeps its prop; the rest of the pose still plays. Joint gate: every po
 | `cup_ear` | a hand cupped behind the ear, leaning to listen | `{ who: 'kai', do: 'cup_ear', hand: 'L', expr: 'confused' }` |
 | `think` | hand on the chin, the other arm across, head tipped up | `{ who: 'bram', do: 'think', expr: 'confused' }` |
 | `shush` | a finger to the lips, leaning in | `{ who: 'wren', do: 'shush', expr: 'sly' }` |
-| `present` | an open palm out to the side (explaining), the other hand at the chest | `{ who: 'kai', do: 'present', expr: 'happy' }` |
+| `present` | the right hand pushes out toward the lens at chest height, the other fist on the hip; `props: { R: 'beaker' }` shows a thing in that hand (any pose takes `props`) | `{ who: 'kai', do: 'present', expr: 'happy' }` |
 | `arms_wide` | both arms flung wide (big, huge, all of it) | `{ ...at('l03', 'power', -4), who: 'kai', do: 'arms_wide', expr: 'excited' }` |
 | `shade_eyes` | a hand flat at the brow, up on the toes, looking far | `{ who: 'kai', do: 'shade_eyes' }` |
 | `clutch` | doubled over, hands on the belly, shaking (pain, sick) | `{ who: 'kai', do: 'clutch', expr: 'pain' }` |

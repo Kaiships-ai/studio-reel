@@ -3,17 +3,19 @@
 // Units: W = head width. Pose numbers are in W, in the figure's own plane (u = its right as the camera sees it, v = up).
 import * as THREE from 'three';
 import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { toon, lin, css, B, INK_RGB, INK_SUN } from './look.js';
+import { toon, lin, css, B, INK_RGB, INK_SUN, PLACE } from './look.js';
 import { EXPR, faceRig, mixFace } from './faces.js';
 import { makeHandProp } from '../lib/cast/handprops.js';
 
-const SPIN_Q = new THREE.Quaternion(), SPIN_AX = new THREE.Vector3(0, 1, 0);
+const SPIN_Q = new THREE.Quaternion(), SPIN_AX = new THREE.Vector3(0, 1, 0), _camL = new THREE.Vector3();
 export const W_M = 0.60;                     // head width in metres
 const W = W_M;
 const INK_T = 0.046 * W;                     // outline base width; the hull shader scales it 0.35-1.6x by the light (below):
                                              // reference rim 3.8-5.6 % of head width, thick/thin side ratio 1.65-2.47 (FORENSIC.md fix 7)
-const CREAM = [0.90, 0.87, 0.78];             // reference heads and bodies: flat off-white / cream, never pure white or blue-white
-const LIMB_R = 0.038 * W / 2;                // limbs stay a thinner line than the outline
+const CREAM = [0.90, 0.87, 0.78];             // reference bodies: flat cream
+const HEAD_WHITE = [0.985, 0.965, 0.95];
+const HEAD_FLAT = [0.92, 0.905, 0.89];         // the unlit head sits a little under white so the grade's exposure keeps its soft wash (else it clips flat)      // reference heads are lighter than the body: lit sRGB (251, 246, 243), shade (230, 219, 231)
+const LIMB_R = 0.046 * W / 2;                // limbs: reference legs and arms ~0.045-0.05 W (QlDPM f600), a bold line, not a thread
 export const HEAD_C = [0.0, 2.43], HEAD_H = 0.94, HIP_V = 1.34, SHOULDER_V = 2.00;
 export const TORSO = { cx: 0.0, cy: 1.72, w: 0.57, h: 0.90, depth: 0.80 };
 const HA = 0.5 * W, HB = 0.5 * HEAD_H * W;   // head half width / half height (m)
@@ -32,7 +34,7 @@ hullMat.onBeforeCompile = sh => {
   sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float inkT; uniform vec3 inkSun;')
     .replace('#include <begin_vertex>', `#include <begin_vertex>
       float ndl = dot(normalize(mat3(modelMatrix) * normal), inkSun);
-      transformed += normal * inkT * (clamp(0.95 - 0.75 * ndl, 0.35, 1.6) - 1.0);`);
+      transformed += normal * inkT * (clamp(1.0 - 0.45 * ndl, 0.8, 1.45) - 1.0);   // lit side never under ~0.6x: the reference line stays bold all round (thick/thin ~2)`);
 };
 
 // ------------------------------------------------------------------ outline
@@ -122,7 +124,8 @@ export function curls(col = [0.45, 0.25, 0.12], tilt = 18) {
     const mask = (lat, lon) => { const L = lat / DEG, O = Math.abs(lon) / DEG;
       return Math.max(sm(33, 39, L), sm(88, 102, O) * sm(-48, -40, L), sm(74, 86, O) * sm(2, 9, L)); };
     // hull from rounded valleys: no folds, no inner lines. No received shadow: the bumps would self-shadow into acne.
-    const mop = solid(massGeo(balls, mask, -t), hairMat(col), INK_T, massGeo(balls, mask, -t, 0.012 * W)); mop.receiveShadow = false;
+    // one smooth sculpted mass (reference hair is a clean solid shape, never a pile of balls): a soft union of the curls
+    const mop = solid(massGeo(balls, mask, -t, 0.034 * W), hairMat(col), INK_T, massGeo(balls, mask, -t, 0.034 * W)); mop.receiveShadow = false;
     const g = new THREE.Group(); g.add(mop);
     return g;
   };
@@ -227,6 +230,38 @@ const _hv = new THREE.Vector3(), _hm = new THREE.Matrix4(), _hi = new THREE.Matr
 // deform a geometry whose vertices are in a frame M (-> head space); M null = head space already
 // Kai 11/11 (later): back to the original round head ("đầu hiện tại anh lại thấy không ok") -> off by default.
 export const HEAD_SHAPE = { on: false };
+// Kai 11/11: "the reference face and line are very 2D, ours is a 3D sphere". FACE_2D.on: the head is drawn flat (unlit
+// white, one thin shade crescent at the edge, no light gradient) and the face is a flat card that always faces the lens and
+// slides across the head disc as the head turns (clipped by its edge), instead of a texture wrapped round a sphere.
+export const FACE_2D = { on: true };
+// flat head: unlit fill, a thin crescent of shade inside the silhouette on the side away from the key (screen down-right,
+// reference sRGB 251/246/243 lit, 230/219/231 shade), lightly tinted by the place light so a night head is not a lamp
+function flatHeadMat(rgb, shade) {
+  const U = { uColor: { value: lin(...rgb) }, uShade: { value: lin(...shade) }, uPlaceLit: PLACE.lit };
+  const m = new THREE.ShaderMaterial({ uniforms: U,
+    vertexShader: `varying vec3 vN; varying vec3 vV;
+      #include <common>
+      #include <logdepthbuf_pars_vertex>
+      void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv;
+      #include <logdepthbuf_vertex>
+      }`,
+    fragmentShader: `uniform vec3 uColor, uShade, uPlaceLit; varying vec3 vN; varying vec3 vV;
+      #include <logdepthbuf_pars_fragment>
+      void main(){
+      #include <logdepthbuf_fragment>
+        // a soft top-to-bottom wash (reference: top 255/253/250, middle 246/243/239, bottom 220/210/218) plus a thin
+        // crescent at the edge on the shadow side; never a lit 3D ball
+        vec3 n = normalize(vN);
+        float edge = 1.0 - clamp(dot(n, normalize(vV)), 0.0, 1.0);
+        float side = clamp(0.35 + 0.9 * dot(normalize(n.xy + 1e-4), normalize(vec2(0.55, -0.85))), 0.0, 1.0);
+        float k = max(max(0.85 * smoothstep(0.35, -0.95, n.y), 0.55 * smoothstep(0.5, 0.95, edge)), smoothstep(0.6, 0.9, edge) * side);
+        vec3 c = mix(uColor, uColor * uShade, k) * mix(vec3(1.0), uPlaceLit, 0.25);
+        gl_FragColor = vec4(c, 1.0);
+        #include <colorspace_fragment>
+      }` });
+  m.color = U.uColor.value;            // S.face tints it for rage through .color, like the toon material
+  return m;
+}
 function shapeHeadGeo(g, M = null) {
   if (!HEAD_SHAPE.on) return;
   const p = g.attributes.position; if (M) _hi.copy(M).invert();
@@ -300,6 +335,8 @@ function torsoGeo() {
   const T = TORSO, r = T.w / 2 * W, h = T.h * W, pr = [], n = 14;
   for (let i = 0; i <= n; i++) { const a = -Math.PI / 2 + Math.PI / 2 * i / n; pr.push([r * Math.cos(a), r + r * Math.sin(a)]); }
   for (let i = 0; i <= n; i++) { const a = Math.PI / 2 * i / n; pr.push([r * Math.cos(a), h - r + r * Math.sin(a)]); }
+  // an egg, not a pill: the reference bodies are fuller at the belly and narrower at the shoulders (QlDPM f600, VS1Z)
+  for (const q of pr) { const u = q[1] / h; q[0] *= 1.10 - 0.20 * u * u; }
   const g = lathe(pr, 64); g.scale(1, 1, T.depth);
   const p = g.attributes.position, uv = g.attributes.uv;
   for (let i = 0; i < p.count; i++) uv.setY(i, p.getY(i) / h);
@@ -468,13 +505,18 @@ export function makeStick(spec) {
 
   const head = new THREE.Group(); root.add(head);
   const hg = new THREE.SphereGeometry(HA, 64, 40); hg.scale(1, HEAD_H, 1); shapeHeadGeo(hg);
-  const headSolid = solid(hg, toon(spec.skin || CREAM, { shade: [0.80, 0.79, 0.87], rim: 0, sheen: 0, broad: 0, rough: 1, soft: 0, rimLit: 0, char: 1, rimCool: rc }));
+  const headSolid = solid(hg, FACE_2D.on ? flatHeadMat(spec.skin || HEAD_FLAT, [0.80, 0.77, 0.84]) : toon(spec.skin || HEAD_WHITE, { shade: [0.97, 0.95, 0.98], rim: 0, sheen: 0, broad: 0, rough: 1, soft: 0.65, rimLit: 0, char: 1, rimCool: rc }));
+  headSolid.receiveShadow = false;   // no hard cast shadows from hair or hats on the face (a lit white triangle cut the face, ep01 f1240); the reference head is one soft white form
   head.add(headSolid);
   const rig = new THREE.Group(); head.add(rig);
   const FR = faceRig(W, { glasses: !!spec.glasses });
   const face = new THREE.Mesh(facePatch(), new THREE.MeshBasicMaterial({ map: FR.tex, transparent: true, depthWrite: false,
     polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
   face.userData.noPrepass = true; face.renderOrder = 2; rig.add(face); head.add(FR.group);
+  const card2d = new THREE.Mesh(new THREE.PlaneGeometry(W, W), new THREE.MeshBasicMaterial({ map: FR.tex, transparent: true, depthWrite: false,
+    polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+  card2d.userData.noPrepass = true; card2d.renderOrder = 2; card2d.visible = false; head.add(card2d);
+  if (FACE_2D.on) face.visible = false;
   const skin0 = headSolid.material.color.clone(), tintC = new THREE.Color();
   if (spec.glasses) rig.add(glasses());
   for (const f of spec.hair || []) head.add(f());
@@ -484,7 +526,8 @@ export function makeStick(spec) {
   head.traverse(o => { if (!o.isMesh || skip.has(o)) return; o.geometry = o.geometry.clone(); shapeHeadGeo(o.geometry, _hm.clone().multiply(o.matrixWorld)); });
 
   const limbs = { armL: new Tube(16, LIMB_R), armR: new Tube(16, LIMB_R), legL: new Tube(18, LIMB_R), legR: new Tube(18, LIMB_R) };
-  const dotGeo = new THREE.SphereGeometry(0.040 * W, 16, 10), jointGeo = new THREE.SphereGeometry(LIMB_R * 1.05, 10, 8);
+  // hand mitt: reference hands are ~0.10 W across, about twice the arm line
+  const dotGeo = new THREE.SphereGeometry(0.050 * W, 16, 10), jointGeo = new THREE.SphereGeometry(LIMB_R * 1.05, 10, 8);
   const ball = geo => { const m = new THREE.Mesh(geo, inkMat); m.castShadow = true; root.add(m); return m; };
   const hands = { L: ball(dotGeo), R: ball(dotGeo) }, ankles = { L: ball(jointGeo), R: ball(jointGeo) }, toes = { L: ball(jointGeo), R: ball(jointGeo) };
   for (const t of Object.values(limbs)) root.add(t.mesh);
@@ -522,7 +565,19 @@ export function makeStick(spec) {
     const marks = (E.marks || []).filter(([, life]) => !life || age < life).map(([k]) => [k, age]);
     for (const m of [...(P.marks || []), ...S.xmarks]) if (!marks.some(q => q[0] === m[0])) marks.push(m);
     const mx = P.state ? mixFace(P.state) : null, blink = Math.max(P.blink || 0, mx ? mx.blink : 0);
-    FR.draw(e, blink, t, marks, P.cam ? B(...P.cam) : null, mx ? mx.F : null);
+    let slide = null;
+    if (FACE_2D.on && P.cam) {
+      // where the lens is, seen from the head (head-local, +z = the face's front): the face slides toward the side it turns
+      // to, up / down with the lens height, and is gone when the lens sees the back of the head
+      head.updateWorldMatrix(true, false); _camL.copy(B(...P.cam)); head.worldToLocal(_camL);
+      const d = _camL.lengthSq() > 1e-8 ? _camL.normalize() : _camL.set(0, 0, 1);
+      const yaw = Math.atan2(d.x, d.z) - (P.look || 0) * LOOK_RAD, el = Math.asin(Math.max(-1, Math.min(1, d.y))) + (P.look_v || 0) * 0.12;
+      const vis = Math.max(0, Math.min(1, (Math.cos(yaw) - 0.22) / 0.3));   // gone a little before profile: the drawing never lands on hair at the side
+      slide = [-0.40 * Math.sin(yaw), -0.40 * Math.sin(el) * HEAD_H, vis];
+      card2d.visible = true; card2d.position.copy(d).multiplyScalar(HA * 1.02); card2d.lookAt(B(...P.cam));
+    } else card2d.visible = false;
+    face.visible = !FACE_2D.on || !P.cam;
+    FR.draw(e, blink, t, marks, P.cam ? B(...P.cam) : null, mx ? mx.F : null, slide);
     S.faceStats = FR.stats;
     const ta = P.state && EXPR[P.state.a]?.tint, tb = E.tint, u = P.state ? Math.max(0, Math.min(1, P.state.u)) : 1;
     const tk = tb ? Math.min(1, age / 6) * u : ta ? 1 - u : 0;   // a furious face flushes over 6 frames (and fades as it leaves)
