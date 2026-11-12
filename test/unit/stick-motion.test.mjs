@@ -39,3 +39,9 @@ test('a planted foot stays put in the world while the body moves', () => {
   const b = toPose({ 'pos.0': 1.1, 'pos.1': 0, yaw: 0, 'legL.footW.0': 1.2, 'legL.footW.1': 0, 'legL.footW.2': 0 });
   assert.ok(Math.abs((a.legL.foot[0] - b.legL.foot[0]) * 0.6 - 0.1) < 1e-9, 'the foot moves back in the figure frame by exactly the root step');
 });
+
+test('a cut (snap key) starts the follow-through fresh: no arm still swinging from the shot before', () => {
+  const keys = [{ f: 0, pose: 'rest' }, { f: 4, pose: 'up' }, { f: 10, pose: 'rest', ease: 'snap' }];
+  const loose = play(keys, 0, 14), stiff = play(keys, 0, 14, { stiff: true });
+  assert.equal(loose[10], stiff[10], `at the cut ${loose[10].toFixed(1)} should equal the key ${stiff[10].toFixed(1)}`);
+});

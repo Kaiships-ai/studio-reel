@@ -4,7 +4,8 @@
 // 3D look (ink, grade, bloom). Blender coordinates (x right, y into the set, z up), frames like everything else.
 //   { kind: 'loupe', from, to, look: [x, y, z], cam: { pos, aim, lens }, at: [kx, ky], r }   r: radius as a share of the width
 //   { kind: 'text', from, to, text, at: [kx, ky] | world: [x, y, z], size, tilt, shake }       size: px at 1080 wide
-//   { kind: 'arrows', from, to, world: [x, y, z], axis: [x, y, z], len }                       len: metres at full spread
+//   { kind: 'arrows', from, to, world: [x, y, z], axis: [x, y, z], len, gap, inward }           len: metres at full spread;
+//                                                                  inward: the pair points at the point (rail ends growing into a gap)
 import * as THREE from 'three';
 
 const ORANGE = '#f08a2c', INK = '#141414';
@@ -58,7 +59,7 @@ export function createOverlays({ stage, width, height, list = [] }) {
         const p = o.world, a = o.axis ?? [0, 1, 0], grow = Math.min(1, (f - o.from) / Math.max(1, (o.to - o.from) * 0.6));
         const at = t => screen([p[0] + a[0] * t, p[1] + a[1] * t, p[2] + a[2] * t]);
         const [x0, y0] = at(0), gap = (o.gap ?? 0.04), len = (o.len ?? 0.3) * (0.35 + 0.65 * grow);
-        for (const sgn of [-1, 1]) { const [xa, ya] = at(sgn * gap), [xb, yb] = at(sgn * (gap + len)); arrow(g, xa, ya, xb, yb, s); }
+        for (const sgn of [-1, 1]) { const [xa, ya] = at(sgn * gap), [xb, yb] = at(sgn * (gap + len)); if (o.inward) arrow(g, xb, yb, xa, ya, s); else arrow(g, xa, ya, xb, yb, s); }
         g.fillStyle = INK; g.beginPath(); g.arc(x0, y0, 5 * k, 0, 2 * Math.PI); g.fill();
       }
     }

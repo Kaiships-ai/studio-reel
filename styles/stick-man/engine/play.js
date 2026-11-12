@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { createStage, SET_GRADE, B as toThree, lin, PLACE } from './look.js';
 import { makeStick, KAI, TELLER, GUARD, EXPR, HEAD_C } from './cast.js';
 import { VERBS, STAND, SIT, REST_ARM, W, lerp, lerp3, add3, angDiff, toLocal, smoother, hash, handEase } from './verbs.js';
-import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, exprAccent, bodyFollow, LATE, EXPR_LEAD, exprKeyAt, markOwner, isBodyVerb, autoActing, faceStateAt, visemeTrack } from './acting.js';
+import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, exprAccent, bodyFollow, LATE, EXPR_LEAD, exprKeyAt, markOwner, isBodyVerb, autoActing, faceStateAt, visemeTrack, TAKES } from './acting.js';
 import { createCamera } from './camera.js';
 import { planShots } from './shotplan.js';
 import { createCaptions } from './captions.js';
@@ -192,7 +192,7 @@ async function buildAct(R, X) {
     const a = byName[name]; if (!a) throw new Error(`anim: no cast entry ${name}`);
     const ks = keys.map(k => ({ ...k, f: frameOf(k.at || k) })).sort((x, y) => x.f - y.f);
     a.anim = { track: compileTrack(ks, { ...MOTION_POSES, ...(R.poses || {}) }, { pos: a.st0.slice(), yaw: a.c.yaw ?? 0 }, R.style), keys: ks, frames: null };
-    for (const k of ks) { if (k.expr) a.exprs.push({ f: k.f, expr: k.expr, word: null }); if (k.look) a.focusSegs.push({ from: k.f, target: k.look }); }
+    for (const k of ks) { if (k.expr) a.exprs.push({ f: k.f, expr: k.expr, word: null, cut: k.ease === 'snap' }); if (k.look) a.focusSegs.push({ from: k.f, target: k.look }); }
   }
   const animFrame = (a, f) => {
     const A = a.anim, f0 = F0 - 30; A.frames ||= playActor(A.track, f0, F1 + 1);
@@ -240,8 +240,11 @@ async function buildAct(R, X) {
   for (const a of actors) {
     for (const k of Object.keys(a.owners)) a.owners[k].sort((x, y) => x.start - y.start);
     a.exprs.sort((x, y) => x.f - y.f);
-    const swaps = a.exprs.slice(1).filter((e, i) => e.expr !== a.exprs[i].expr).map(e => e.f);
+    // a take (shock, scream...) is wide-eyed: no blink inside one and none forced on a swap into or out of it
+    const take = f => TAKES.has(String(exprAt(a.exprs, f)).replace(/_[oO]$/, ''));
+    const swaps = a.exprs.slice(1).filter((e, i) => e.expr !== a.exprs[i].expr && !take(e.f) && !take(e.f - 1)).map(e => e.f);
     a.blinks = blinkTrack(a.seed, F0 - 60, F1 + 60, swaps);
+    a.blinks.starts.splice(0, Infinity, ...a.blinks.starts.filter(b => ![0, 1, 2, 3].some(d => take(b + d))));
     a.vis = a.says?.length ? visemeTrack(words, fps, a.says) : null;     // the mouth follows the letters of its lines
     a.focusSegs.sort((x, y) => x.from - y.from);
   }
@@ -499,8 +502,9 @@ async function buildAct(R, X) {
       const box = [xs[0], ys[0], xs[1], ys[1]].map(x => +x.toFixed(1));
       const sole = Math.max(...['L', 'R'].flatMap(s => [a.S.parts.ankles[s], a.S.parts.toes[s]].map(o => toPx(o.getWorldPosition(new THREE.Vector3()))[1])));
       out.actors[a.name] = { pos: F.bodies[a.name].pos.map(x => +x.toFixed(4)), yaw: +F.bodies[a.name].yaw.toFixed(2), expr: a.face.expr, blink: a.face.blink,
-        verb: a.verbs.filter(x => x.start <= f && f < x.end).map(x => x.name), head: box, feet, limbs: a.S.rigWorld(),
-        body: a.verbs.filter(x => x.start <= f && f < x.end && isBodyVerb(x)).map(x => x.name).pop() || null, lead: !!a.lead,
+        verb: [...a.verbs.filter(x => x.start <= f && f < x.end).map(x => x.name), ...(a.anim && a.anim.keys.length > 1 ? ['key'] : [])], head: box, feet, limbs: a.S.rigWorld(),
+        // a motion v2 actor acts from hand-set keys, not verbs: past its first key it is acting ('key')
+        body: a.verbs.filter(x => x.start <= f && f < x.end && isBodyVerb(x)).map(x => x.name).pop() || (a.anim && a.anim.keys.length > 1 && f >= a.anim.keys[0].f ? 'key' : null), lead: !!a.lead,
         mouthA: +(a.S.faceStats?.mouth ?? 0).toFixed(5), faceKey: a.S.faceStats?.key ?? '', talking: !!a.talking,
         exprFrom: a.exprKey?.f > -1e8 ? a.exprKey.f : null, exprWord: a.exprKey?.word ?? null,
         headW: toB(c).map(x => +x.toFixed(4)), figH: +((sole - ys[0]) / height).toFixed(3),
@@ -548,7 +552,7 @@ async function buildAct(R, X) {
     out.seen = [...new Set([...Object.keys(props), ...Object.keys(fxo)])].filter(n => onScreen(fxo[n]?.obj || props[n]?.isObject3D && props[n] || props[n]?.mesh));
     return out;
   }
-  const box3 = new THREE.Box3(), bb = new THREE.Box3(), cv = new THREE.Vector3();
+  const box3 = new THREE.Box3(), bb = new THREE.Box3(), cv = new THREE.Vector3(), frust = new THREE.Frustum(), pm = new THREE.Matrix4();
   function onScreen(o) {
     if (!o?.isObject3D) return false;
     for (let q = o; q; q = q.parent) if (!q.visible) return false;
@@ -560,6 +564,10 @@ async function buildAct(R, X) {
     o.traverseVisible(add);
     for (const q of o.userData?.seenParts || []) if (q.visible) q.traverseVisible(add);   // a prop whose visible body lives elsewhere (the hero joint's rail ends)
     if (box3.isEmpty()) return false;
+    // a long prop seen close up (a 12 m rail piece in an extreme close-up) has its box corners behind the camera or far off
+    // screen, so the corner projection below misses it: inside the view and within 3 m of the lens counts as seen
+    stage.camera.updateMatrixWorld(); frust.setFromProjectionMatrix(pm.multiplyMatrices(stage.camera.projectionMatrix, stage.camera.matrixWorldInverse));
+    if (frust.intersectsBox(box3) && box3.distanceToPoint(stage.camera.position) < 3) return true;
     let x0 = 1, y0 = 1, x1 = -1, y1 = -1, n = 0;
     for (let i = 0; i < 8; i++) {
       cv.set(i & 1 ? box3.max.x : box3.min.x, i & 2 ? box3.max.y : box3.min.y, i & 4 ? box3.max.z : box3.min.z).project(stage.camera);
