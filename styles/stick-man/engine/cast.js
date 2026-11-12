@@ -902,7 +902,6 @@ export function makeStick(spec) {
     root.updateMatrixWorld(true);
     return S;
   };
-  // the last pose's joints in Blender world metres (y = depth), flexes and pitches in degrees, for __dbg
   // balance (rig B4): a body standing on both feet with its centre of mass outside them moves its hips over its feet,
   // as a person does, feet staying where they are (a pelvis shift moves ~85% of the body's mass with it)
   const pose2raw = S.pose2;
@@ -915,6 +914,7 @@ export function makeStick(spec) {
     S.rig.balanceShift = shift;
     return r;
   };
+  // the last pose's joints in Blender world metres (y = depth), flexes and pitches in degrees, for __dbg
   S.rigWorld = () => {
     const w = q => { const v = q.clone().multiplyScalar(W).applyMatrix4(root.matrixWorld); return [v.x, -v.z, v.y].map(x => +x.toFixed(4)); };
     const o = { torsoLean: +S.rig.pitch.toFixed(2), torsoRoll: +S.rig.roll.toFixed(2), assist: S.rig.assist, body: S.rig.body, sq: S.rig.sq ?? 0, headSq: S.rig.headSq ?? 0 };

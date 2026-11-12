@@ -6,7 +6,7 @@
 //   - five marks and no more: two eyes, two brows, one mouth. No highlights, no colour in the eyes, no skin effects
 //     except a soft blush and, rarely, small tears. Rage turns the whole head purple (tint) with steam; it never adds
 //     veins or red eyes.
-//   - eyes are small solid ink ovals (0.085 W wide), 0.24 W apart (v2, was 0.27), at the head's middle. The signature is the lid: a
+//   - eyes are small solid ink ovals (0.085 W wide), 0.24 W apart, at the head's middle. The signature is the lid: a
 //     thick straight stroke, longer than the eye, cutting the top off the oval (deadpan, smug, bored, angry = the same
 //     eye with a different lid height and tilt). Shock opens the oval into an ink ring with a dot pupil; joy closes it
 //     into a thin ^ arc. The oval -> ring change is continuous (`white`), so a face can ramp from deadpan to shock.
@@ -435,7 +435,7 @@ const hashKey = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) h 
 // One figure's face: its own canvas (redrawn only when what it shows changes) and its mark cards.
 export function faceRig(headW, opt = {}) {
   const cv = document.createElement('canvas'); cv.width = cv.height = 512; const g = cv.getContext('2d', { willReadFrequently: true });
-  const off = document.createElement('canvas'); off.width = off.height = 512;
+  const off = document.createElement('canvas'); off.width = off.height = 512; const og = off.getContext('2d');
   const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
   const group = new THREE.Group(), cards = {};
   // measurement for __dbg (the forensic mouth numbers): dark mouth area (W^2, ink pixels below the eyes) and the drawing key
@@ -465,7 +465,7 @@ export function faceRig(headW, opt = {}) {
           // the face drawn on the ball of the head (asset 2.4): each vertical strip of the flat drawing sits at its own
           // longitude, turned by the face's yaw (sl[0], rad), so features squeeze as they go round, the far eye slides
           // behind the edge and fades, the near one stays: a profile, not a drawing sliding off a disc
-          off.getContext('2d').clearRect(0, 0, 512, 512); off.getContext('2d').drawImage(cv, 0, 0);
+          og.clearRect(0, 0, 512, 512); og.drawImage(cv, 0, 0);
           g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 512, 512);
           if (sl[2] > 0.01) {
             g.save(); g.beginPath(); g.ellipse(256, 256, 0.462 * 512, 0.432 * 512, 0, 0, Math.PI * 2); g.clip();
