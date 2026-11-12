@@ -1,5 +1,5 @@
 # Blender -> .glb for the stick-man sets (GLB.md). Runs inside Blender, headless, on a COPY of the source .blend:
-#   Blender -b <copy.blend> --python styles/stick-man/tools/export_glb.py -- --out styles/stick-man/assets/halden [--pieces a,b] [--max-kb 1500] [--tex 512]
+#   Blender -b <copy.blend> --python styles/stick-man/tools/export_glb.py -- --out styles/stick-man/assets/<pack> [--pieces a,b] [--max-kb 1500] [--tex 512]
 # Each piece is one kit master collection (KIT_<group>_<name>) or one object. Per piece: every visible mesh, curve and
 # text (collection instances flattened) is evaluated with its modifiers, baked to world space, merged into ONE mesh,
 # triangulated. A material whose colour comes from an image keeps it: the Mapping node is baked into the UVs and the

@@ -319,7 +319,7 @@ async function story(film) {
   sg('fx in world', !notWorld.length, notWorld.length ? notWorld.join(', ') : 'every storyboard fx is a physical object or event', 'no label / diagram kinds in fx');
   // director rule: every line with a character on screen names its body action(s) in `act` (a known verb, never talk)
   // known = engine/poses.js poses + the opt-in pose modules in allout/ (a pose table entry `  name: { A:` or a
-  // `POSE_VERBS.name =` registration), so a reel that imports allout/acting.js or allout/rail.js is not failed for using them
+  // `POSE_VERBS.name =` registration), so a reel that imports allout/rail.js is not failed for using them
   const poseSrc = ['styles/stick-man/engine/poses.js', ...fs.readdirSync(path.join(ROOT, 'styles/stick-man/allout')).filter(n => n.endsWith('.js')).map(n => 'styles/stick-man/allout/' + n)]
     .map(p => fs.readFileSync(path.join(ROOT, p), 'utf8'));
   const known = new Set([...poseSrc[0].matchAll(/^  (\w+): \{/gm), ...poseSrc.slice(1).flatMap(t => [...t.matchAll(/^  (\w+): \{ ?A:/gm), ...t.matchAll(/POSE_VERBS\.(\w+) =/g)])].map(m => m[1])

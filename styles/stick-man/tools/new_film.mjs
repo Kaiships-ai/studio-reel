@@ -41,7 +41,7 @@ function polish(keys) {
 export default {
   title: '${slug}', fps: 30, glasses: false, style: 'kaiships', directDrift: 0.07,
   frames: [0, 0],          // [first, last]; last = the "last frame" line of vo/voice-qa.md
-  set: 'bank-lobby',       // or an allout set: set: '<name>', setModule: '/styles/stick-man/allout/sets/<name>.js' (SETS.md)
+  set: 'canyon-edge', setModule: '/styles/stick-man/allout/sets/canyon-edge.js',   // a set in allout/sets (SETS.md)
   lines: [],               // the vo/script.json line ids, in order
   cast: {},                // name: { spec, at, yaw, expr, focus, lead }
   anim: {},                // the lead's acting: { name: polish([ hold(f, { ...pose, pos, yaw, expr, look }), ... ]) }

@@ -4,7 +4,7 @@
 // A reel is one or more ACTS (reel.js is the first; reel2.js, when present, adds more): each act builds its own set,
 // cast, beats and camera; boot() shows the act whose window holds the frame and dissolves between them.
 import * as THREE from 'three';
-import { createStage, SET_GRADE, B as toThree, lin, PLACE } from './look.js';
+import { createStage, B as toThree, lin, PLACE } from './look.js';
 import { makeStick, KAI, TELLER, GUARD, EXPR, HEAD_C } from './cast.js';
 import { VERBS, STAND, SIT, REST_ARM, W, lerp, lerp3, add3, angDiff, toLocal, smoother, hash, handEase } from './verbs.js';
 import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, exprAccent, bodyFollow, LATE, EXPR_LEAD, exprKeyAt, markOwner, isBodyVerb, autoActing, faceStateAt, visemeTrack, TAKES } from './acting.js';
@@ -25,11 +25,6 @@ Object.assign(MAKE, PHYS, STORY);                               // story props t
 // every cast spec exported by lib/cast/extras.js (an object with a name and a shirt) registers itself by its export name
 const dye = EXTRAS.dye;
 export const SPECS = { KAI, TELLER, GUARD, ...Object.fromEntries(Object.entries(EXTRAS).filter(([, v]) => v && typeof v === 'object' && !Array.isArray(v) && v.name && v.shirt)) };
-const SETS = { 'bank-lobby': () => import('../lib/sets/bank-lobby.js'), street: () => import('../lib/sets/street.js'),
-  cutaway: () => import('../lib/sets/cutaway.js'), park: () => import('../lib/sets/park.js'), lab: () => import('../lib/sets/lab.js'),
-  'halden-street': () => import('../lib/sets/halden-street.js'), 'halden-plaza': () => import('../lib/sets/halden-plaza.js'),
-  island: () => import('../lib/sets/island.js'),
-  classroom: () => import('../lib/sets/classroom.js') };
 const KEYV = new Set(['set', 'pulse', 'shake', 'fire', 'flash', 'sound']);
 const HAND_R = 0.040 * W;                                        // the hand dot's radius (cast.js)
 const THICK = { b1: 0.045, b2: 0.045, stack: 0.07, note: 0.003 };
@@ -102,9 +97,9 @@ function chain(list, f, val, env, hand = false) {
 
 async function buildAct(R, X) {
   const { stage, words, fps, F0, F1, width, height } = X;
-  // act.setModule: a set module by URL (styles/stick-man/allout/sets/*.js), outside the kit's SETS table
-  if (!R.setModule && !SETS[R.set]) throw new Error(`unknown set ${R.set} (SETS.md)`);
-  const SET = R.setModule ? await import(R.setModule) : await SETS[R.set]();
+  // act.setModule: the set module by URL (styles/stick-man/allout/sets/<name>.js)
+  if (!R.setModule) throw new Error(`act ${R.set || ''} has no setModule (SETS.md)`);
+  const SET = await import(R.setModule);
   // the set's meshes and lights go into this act's group (shown only while the act is on screen)
   const group = new THREE.Group(), before = new Set(stage.scene.children), bg0 = stage.scene.background;
   const built = await SET.build(stage, { use: R.use || [], ...(R.setOpts || {}) });   // act.use: opt-in set props (street: police, bag)
@@ -602,7 +597,7 @@ async function buildAct(R, X) {
     const shotCut = DIR ? DIR.cutAt(f) : (cam.shotIndex !== i0 && shots[cam.shotIndex].glide === 0) || !!camera.mixAt(shots, f);
     return { cam: f === F0 ? 0 : +camPx.toFixed(3), camPeak: f === F0 ? 0 : +camPeak.toFixed(3), feet, shotCut };
   };
-  return { name: R.name || R.set, R, grade: { ...(SET_GRADE[R.set] || {}), ...(R.grade || {}) }, group, background, fog, update, dbg, motion, cues, actors, frameOf, flash: f => KT.at('screen', 'flash', f, 0) || 0, blur: () => blurV,
+  return { name: R.name || R.set, R, grade: { ...(R.grade || {}) }, group, background, fog, update, dbg, motion, cues, actors, frameOf, flash: f => KT.at('screen', 'flash', f, 0) || 0, blur: () => blurV,
     impact: f => KT.at('screen', 'impact', f, 0) || 0, shotMix: f => DIR ? DIR.mixAt(f) : camera.mixAt(shots, f) };
 }
 

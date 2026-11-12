@@ -92,21 +92,8 @@ export function toonify(m, o = {}) {
 // set-surface defaults for toonify (every MeshStandardMaterial a set or prop makes without toon()); SET_LOOK is the
 // one place to tune them for all sets at once
 export const SET_LOOK = { soft: 1.0, gain: 1.0, shade: [0.36, 0.43, 0.72], sheen: 0.45, rim: 0.0 };
-// per-set grade (colour per shot gate, GATES.md "Look gates"): exp scales the finished frame, lift raises the shadows
-// toward white (lift * (1 - c)), gam < 1 brightens the mids, sat scales saturation, haze scales the light-shaft density. Tuned per set against the reference tiles p10-p90
-// (YAVG 84-158, YLOW 36-101); an act can override with `grade: {exp, lift, gam}`.
-export const SET_GRADE = {
-  // measured 10/11 on stick06-robe / stick06-levels v1 (per-set median YAVG / YLOW, full range) -> aim YAVG ~140, YLOW ~70
-  park: { exp: 0.86, gam: 1.06, lift: 0.03 },              // v1 129 / 60 (robe), 133 / 45 (levels)
-  lab: { exp: 0.90, gam: 1.0, sat: 1.25 },                 // v1 139 / 65, SAT 18 (low)
-  cutaway: { exp: 0.86, gam: 1.06 },                       // v1 134 / 54
-  'bank-lobby': { exp: 1.0, gam: 0.96, lift: 0.06 },      // Q1: YLOW 30-33 (too dark)
-  street: { exp: 1.0, lift: 0.09, sat: 1.25 },             // v1 117 / 29, SAT 20
-  'halden-street': { exp: 0.80, gam: 1.22, lift: 0.04, sat: 1.15, haze: 0.45 },   // v1 194 / 112; v2 traffic YLOW 21-28, SAT 12-17 (haze)
-  classroom: { exp: 0.86, gam: 1.23 },                     // v1 177 / 101
-  'halden-plaza': { exp: 0.84, gam: 1.13, sat: 1.3 },      // v1 175 / 95, SAT 18
-  island: { exp: 0.79, gam: 1.74 },                        // v1 207 / 139
-};
+// act `grade` (colour per shot gate, GATES.md): exp scales the finished frame, lift raises the shadows toward white
+// (lift * (1 - c)), gam < 1 brightens the mids, sat scales saturation, haze scales the light-shaft density.
 
 export function std(rgb, rough, o = {}) {
   return new THREE.MeshStandardMaterial({ color: lin(...rgb), roughness: rough, metalness: 0, ...o });
@@ -378,7 +365,7 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1
         c = (c - 0.5)*con + 0.5;
         vec2 d = (vUv - 0.5)*vec2(aspect, 1.0); c *= 1.0 - vig*smoothstep(0.25, 0.75, length(d)*1.25);
         c = clamp(c, 0.0, 1.0);
-        c = pow(c, vec3(uGam)) * uExp * uTint; c += uLift * (1.0 - c);       // per-set / per-act grade (SET_GRADE, act grade): own light per place
+        c = pow(c, vec3(uGam)) * uExp * uTint; c += uLift * (1.0 - c);       // per-act grade (act grade): own light per place
         // tone (opt-in, grade.shadow / shoulder): deep shadows lifted toward a colour (the reference's mauve-violet shade sits
         // near 0.25, ours near 0.05), the ink lines (near black) left alone; highlights rolled off instead of clipping
         { float l2 = dot(c, vec3(0.2126,0.7152,0.0722)), w = uShadowK * (1.0 - smoothstep(0.06, 0.32, l2)) * smoothstep(0.012, 0.05, l2);   // only the deep shade: a blue sky must not go grey
