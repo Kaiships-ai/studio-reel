@@ -22,7 +22,17 @@ export const MOTION_POSES = {};
 // animation, 0.5 = the kit as authored (a reel without `style` plays exactly as before). The body's physics (rig B1-B6)
 // is the floor under all of them: a dial bends the performance, never the anatomy.
 export const STYLE = { exaggeration: 0.5, timing: 0.5, squash: 0.5, anticipation: 0.5, followThrough: 0.5, slowInOut: 0.5, arcs: 0.5, secondary: 0.5 };
-const dial = (k, lo = 0, hi = 2) => Math.max(lo, Math.min(hi, 2 * STYLE[k]));
+// named doses. kaiships: the dose Kai chose for the stick-man films (stage 2 · 2.0b, 2026-11-12): strong exaggeration for
+// a phone screen, smooth on ones, crisp ends, a clean frame. real / verse: the two ends it was compared against.
+export const STYLE_PRESETS = {
+  kaiships: { exaggeration: 0.75, timing: 0.60, squash: 0.50, anticipation: 0.70, followThrough: 0.55, slowInOut: 0.45, arcs: 0.70, secondary: 0.35 },
+  real: { exaggeration: 0.05, timing: 0.15, squash: 0.10, anticipation: 0.30, followThrough: 0.50, slowInOut: 0.60, arcs: 0.50, secondary: 0.80 },
+  verse: { exaggeration: 0.95, timing: 0.90, squash: 0.60, anticipation: 0.70, followThrough: 0.50, slowInOut: 0.30, arcs: 0.70, secondary: 0.20 },
+};
+// an act's `style`: a preset name, an object of dials over the kit default, or nothing (the global STYLE)
+export const resolveStyle = st => ({ ...STYLE, ...(typeof st === 'string' ? STYLE_PRESETS[st] || {} : st || {}) });
+let CUR = STYLE;                                                       // the dials of the track being compiled / played
+const dial = (k, lo = 0, hi = 2) => Math.max(lo, Math.min(hi, 2 * CUR[k]));
 // gravity (rig B6): once a body leaves the ground nothing but gravity moves its centre, so between the first airborne
 // key and the landing key the height follows a parabola with g = 9.8 m/s2 and the travel a straight line at constant
 // speed, whatever keys an animator put in between. The time in the air is the animator's; the height it allows is not.
@@ -59,7 +69,8 @@ const leaves = e => (e === 'flow' || e === 'in' ? 1 : 0), enters = e => (e === '
 
 // ---------------------------------------------------------------- compile one actor's keys
 // keys: resolved frames, sorted; poses: name -> pose object (the film's own, then the kit's)
-export function compileTrack(keys, poses, base) {
+export function compileTrack(keys, poses, base, style) {
+  CUR = resolveStyle(style);
   const ks = keys.map(k => {
     const named = typeof k.pose === 'string' ? poses[k.pose] : k.pose;
     if (typeof k.pose === 'string' && !named) throw new Error(`anim: unknown pose "${k.pose}"`);
@@ -87,6 +98,7 @@ export function compileTrack(keys, poses, base) {
     out.push(k);
     if (k.hold) out.push({ ...k, f: k.f + k.hold, hold: 0, antic: 0, expr: undefined, look: undefined, held: true });
   }
+  out.style = CUR;
   // flights: a run of keys off the ground (pos.2 > 2 cm), from the key before it (on the ground) to the next key on the ground
   out.flights = [];
   for (let i = 0; i < out.length; i++) {
@@ -106,6 +118,7 @@ export function ballistic(fl, f) {
 
 // ---------------------------------------------------------------- keyed value of every channel at frame f
 export function keyed(track, f) {
+  CUR = track.style || STYLE;
   const n = track.length;
   if (f <= track[0].f) return { ...track[0].m };
   if (f >= track[n - 1].f) return { ...track[n - 1].m };
@@ -156,13 +169,14 @@ const DRAG = [
 ];
 // runs once per actor over [F0, F1]: returns the posed channel maps, one per frame
 export function playActor(track, F0, F1, opt = {}) {
+  CUR = track.style || STYLE;
   const springs = {}, hat = { p: new Spring(0.32, 0.28), r: new Spring(0.32, 0.28) }, sq = new Spring(0.6, 0.3);
   const frames = [];
   let prev = null, prev2 = null;
   for (let f = F0; f <= F1; f++) {
     const k = keyed(track, f);
     // exaggeration: every pose channel pushed further from (or pulled back toward) the act's rest pose
-    const E = 0.4 + 1.2 * STYLE.exaggeration, rest = track[0].m;
+    const E = 0.4 + 1.2 * CUR.exaggeration, rest = track[0].m;
     if (E !== 1) for (const c of Object.keys(k)) if (EXAG.test(c) && c in rest) k[c] = rest[c] + (k[c] - rest[c]) * E;
     // secondary business: the latest key's cycle, faded in over 6 frames
     let ck = null; for (const t of track) if (t.f <= f && !t.held && !t.antic) ck = t;
@@ -189,7 +203,8 @@ export function playActor(track, F0, F1, opt = {}) {
     frames.push(o); prev2 = prev; prev = k;
   }
   // timing: a stylised film holds each drawing for 2 frames ("on twos", 12 a second) or 3; a simulation runs on ones
-  const step = STYLE.timing >= 0.95 ? 3 : STYLE.timing >= 0.7 ? 2 : 1;
+  CUR = track.style || STYLE;                                          // keyed() above may have switched tracks
+  const step = CUR.timing >= 0.95 ? 3 : CUR.timing >= 0.7 ? 2 : 1;
   if (step > 1) for (let i = 0; i < frames.length; i++) frames[i] = frames[i - (i % step)];
   return frames;
 }
