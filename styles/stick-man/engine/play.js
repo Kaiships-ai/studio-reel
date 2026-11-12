@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { createStage, SET_GRADE, B as toThree, lin, PLACE } from './look.js';
 import { makeStick, KAI, TELLER, GUARD, EXPR, HEAD_C } from './cast.js';
 import { VERBS, STAND, SIT, REST_ARM, W, lerp, lerp3, add3, angDiff, toLocal, smoother, hash, handEase } from './verbs.js';
-import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, exprAccent, bodyFollow, LATE, EXPR_LEAD, exprKeyAt, markOwner, isBodyVerb, autoActing, faceStateAt, visemeTrack } from './acting.js';
+import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, exprAccent, bodyFollow, LATE, EXPR_LEAD, exprKeyAt, markOwner, isBodyVerb, autoActing, faceStateAt, visemeTrack, TAKES } from './acting.js';
 import { createCamera } from './camera.js';
 import { planShots } from './shotplan.js';
 import { createCaptions } from './captions.js';
@@ -240,8 +240,11 @@ async function buildAct(R, X) {
   for (const a of actors) {
     for (const k of Object.keys(a.owners)) a.owners[k].sort((x, y) => x.start - y.start);
     a.exprs.sort((x, y) => x.f - y.f);
-    const swaps = a.exprs.slice(1).filter((e, i) => e.expr !== a.exprs[i].expr).map(e => e.f);
+    // a take (shock, scream...) is wide-eyed: no blink inside one and none forced on a swap into or out of it
+    const take = f => TAKES.has(String(exprAt(a.exprs, f)).replace(/_[oO]$/, ''));
+    const swaps = a.exprs.slice(1).filter((e, i) => e.expr !== a.exprs[i].expr && !take(e.f) && !take(e.f - 1)).map(e => e.f);
     a.blinks = blinkTrack(a.seed, F0 - 60, F1 + 60, swaps);
+    a.blinks.starts.splice(0, Infinity, ...a.blinks.starts.filter(b => ![0, 1, 2, 3].some(d => take(b + d))));
     a.vis = a.says?.length ? visemeTrack(words, fps, a.says) : null;     // the mouth follows the letters of its lines
     a.focusSegs.sort((x, y) => x.from - y.from);
   }
