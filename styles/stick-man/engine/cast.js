@@ -6,7 +6,7 @@ import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometr
 import { toon, lin, css, B, INK_RGB, INK_SUN, PLACE } from './look.js';
 import { EXPR, faceRig, mixFace } from './faces.js';
 import { makeHandProp } from '../lib/cast/handprops.js';
-import { limitArm, torsoSlices, ellipsoid, solveArm, armPenetration, PHYS } from './body.js';
+import { limitArm, torsoSlices, ellipsoid, solveArm, armPenetration, PHYS, centreOfMass } from './body.js';
 
 const SPIN_Q = new THREE.Quaternion(), SPIN_AX = new THREE.Vector3(0, 1, 0), _camL = new THREE.Vector3();
 export const W_M = 0.60;                     // head width in metres
@@ -823,6 +823,11 @@ export function makeStick(spec) {
       rig[side] = { hip: hipJ, knee: leg.joint, ankle: foot, toe: toeL, shoulder: sh, elbow, hand, kneeFlex: leg.flex, elbowFlex: flex, footPitch: G.pitch || 0,
         pen0: sol.pen0, pen: sol.pen, limits: lim.hits + sol.limits };
     }
+    // the skeleton in root space (W): pelvis, five points up the spine, the neck base, the head centre, the trunk's
+    // centre; and the centre of mass of the whole body
+    const neck = toRoot(top.p.clone()), headC = toRoot(top.p.clone().add(hOff)), trunk = toRoot(spineFrame(B, TORSO.cy - HIP_V).p);
+    S.skel = { pelvis: hipP.clone(), spine: [0, 0.25, 0.5, 0.75, 1].map(u => toRoot(spineFrame(B, u * SPINE_L).p)), neck, head: headC, trunk };
+    S.com = centreOfMass({ head: headC, trunk, L: rig.L, R: rig.R });
     S.rig = rig; S.vols = vols;
     handProps(Q, rig);
     S.xmarks = Object.keys(Q).filter(k => k.startsWith('x_mark_') && Q[k] >= 1).map(k => [k.slice(7), Math.floor(Q[k] - 1)]);
@@ -840,6 +845,7 @@ export function makeStick(spec) {
         kneeFlex: +r.kneeFlex.toFixed(2), elbowFlex: +r.elbowFlex.toFixed(2), footPitch: +r.footPitch.toFixed(2),
         ...(r.pen0 != null ? { penCm0: +(r.pen0 * W * 100).toFixed(2), penCm: +(r.pen * W * 100).toFixed(2), limits: r.limits } : {}) };
     }
+    if (S.com) { o.com = w(S.com); o.skel = { pelvis: w(S.skel.pelvis), neck: w(S.skel.neck), head: w(S.skel.head), spine: S.skel.spine.map(w) }; }
     return o;
   };
   S.pose({});

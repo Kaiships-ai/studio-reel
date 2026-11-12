@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import { ellipsoid, armPenetration, solveArm, limitArm, JOINTS } from '../../styles/stick-man/engine/body.js';
+import { ellipsoid, armPenetration, solveArm, limitArm, JOINTS, centreOfMass } from '../../styles/stick-man/engine/body.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 // two equal bones: elbow on the pole side, a target past reach is pulled in
@@ -58,4 +58,16 @@ test('a hand sweeping into and across the torso moves smoothly (no pops) and nev
   }
   assert.equal(deepest, 0);
   assert.ok(worst < 0.08, `largest step ${worst.toFixed(3)} W`);
+});
+
+test('centre of mass: a person standing straight has it on the centre line, about hip height', () => {
+  const side = sg => ({ shoulder: V(sg * 0.23, 2.0, 0), elbow: V(sg * 0.25, 1.5, 0), hand: V(sg * 0.26, 1.0, 0),
+    hip: V(sg * 0.14, 1.38, 0), knee: V(sg * 0.15, 0.7, 0), ankle: V(sg * 0.15, 0.02, 0), toe: V(sg * 0.15, 0.02, 0.2) });
+  const c = centreOfMass({ head: V(0, 2.43, 0), trunk: V(0, 1.72, 0), L: side(-1), R: side(1) });
+  assert.ok(Math.abs(c.x) < 1e-9, 'on the centre line');
+  assert.ok(c.y > 1.2 && c.y < 1.7, `height ${c.y.toFixed(2)} W`);
+  // one arm held straight out to the side moves it toward that arm, by its share of the mass
+  const L = side(-1), R = side(1); R.elbow = V(0.73, 2.0, 0); R.hand = V(1.23, 2.0, 0);
+  const c2 = centreOfMass({ head: V(0, 2.43, 0), trunk: V(0, 1.72, 0), L, R });
+  assert.ok(c2.x > 0.01 && c2.x < 0.06, `shift ${c2.x.toFixed(3)} W`);
 });

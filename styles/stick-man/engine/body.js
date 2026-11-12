@@ -8,6 +8,18 @@
 import * as THREE from 'three';
 
 export const JOINTS = { raise: [-20, 180], swing: [-180, 60], elbow: [0, 145] };
+// segment masses as shares of the whole body (Winter, Biomechanics and Motor Control of Human Movement, table 4.1):
+// a cartoon head is drawn big, but the body it moves is a person's, so balance uses a person's mass split
+export const MASS = { head: 0.081, trunk: 0.497, upper: 0.028, fore: 0.022, thigh: 0.100, shank: 0.0465, foot: 0.0145 };
+// the body's centre of mass from its joints (each segment's mass at its middle; head and trunk at their centres)
+export function centreOfMass(K) {
+  const c = new THREE.Vector3(), mid = (a, b) => a.clone().add(b).multiplyScalar(0.5); let m = 0;
+  const add = (p, w) => { c.addScaledVector(p, w); m += w; };
+  add(K.head, MASS.head); add(K.trunk, MASS.trunk);
+  for (const s of [K.L, K.R]) { add(mid(s.shoulder, s.elbow), MASS.upper); add(mid(s.elbow, s.hand), MASS.fore);
+    add(mid(s.hip, s.knee), MASS.thigh); add(mid(s.knee, s.ankle), MASS.shank); add(mid(s.ankle, s.toe), MASS.foot); }
+  return c.multiplyScalar(1 / m);
+}
 // PHYS.on = false skips the contact solve (joint ranges still hold): only for a side-by-side proof, never in a reel
 export const PHYS = { on: true };
 const clamp = (x, [a, b]) => Math.min(b, Math.max(a, x));
