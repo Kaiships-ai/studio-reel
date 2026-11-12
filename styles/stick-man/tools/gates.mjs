@@ -139,6 +139,16 @@ const LOOK = { ink: [2, 3], ratio: [0.235, 0.388], cap: 54, capTol: 0.10,
     `median ${med(ratios).toFixed(3)} (range ${ratios[0].toFixed(2)}-${ratios[ratios.length - 1].toFixed(2)})`, `P10/P90 luma ${LOOK.ratio.join('-')}`) : missing('shadow contrast');
   // per shot: needs __dbg (shot index per frame)
   const rows = await lookDbg();
+  // body contact (engine/body.js): no hand or arm inside a head or a torso, measured after the contact solve
+  if (rows) {
+    let pen = 0, at = null, bad = 0;
+    for (const r of rows) for (const [n, a] of Object.entries(r.actors || {})) for (const s of ['L', 'R']) {
+      const L = a.limbs?.[s]; if (!L || !('penCm0' in L)) continue;
+      if (L.penCm == null) { bad++; continue; }
+      if (L.penCm > pen) { pen = L.penCm; at = `${n} f${r.f}`; }
+    }
+    gate('body contact', pen <= 0.1 && !bad, `max ${pen.toFixed(2)} cm${at ? ` (${at})` : ''}${bad ? `, ${bad} broken poses` : ''}`, '<= 0.1 cm into head / torso');
+  }
   if (!rows) { missing('colour per shot'); missing('caption height'); }
   else {
     const byF = new Map(rows.map(r => [r.f, r])), shots = new Map();

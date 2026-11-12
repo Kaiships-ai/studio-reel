@@ -81,7 +81,7 @@ const compress = list => {
 // ratio = (shoulder-elbow + elbow-hand) / rest arm length; jump = largest one-frame change of a flex, a foot pitch,
 // the torso lean or roll, or a limb segment's direction (deg).
 const JOINTS = ['hip', 'knee', 'ankle', 'toe', 'shoulder', 'elbow', 'hand'], ANG = ['kneeFlex', 'elbowFlex', 'footPitch'];
-const SEGS = [['shoulder', 'elbow'], ['elbow', 'hand'], ['hip', 'knee'], ['knee', 'ankle']], ARM = 2 * 0.41 * 0.60;
+const SEGS = [['shoulder', 'elbow'], ['elbow', 'hand'], ['hip', 'knee'], ['knee', 'ankle']], ARM = 2 * 0.5125 * 0.60;   // rest arm length (m) = 2 x cast.js LIMB.upper x W_M
 const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 const dirAng = (a0, b0, a1, b1) => { const u = b0.map((x, i) => x - a0[i]), v = b1.map((x, i) => x - a1[i]), lu = Math.hypot(...u), lv = Math.hypot(...v);
   return lu < 1e-6 || lv < 1e-6 ? 0 : Math.acos(Math.max(-1, Math.min(1, u.reduce((s, x, i) => s + x * v[i], 0) / (lu * lv)))) * 180 / Math.PI; };
