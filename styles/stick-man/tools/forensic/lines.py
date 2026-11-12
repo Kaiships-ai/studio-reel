@@ -9,7 +9,7 @@ W, H = 1080, 1920
 
 def grab(name, frames):
     expr = "+".join(f"eq(n\\,{n})" for n in frames)
-    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", f"{D}/{name}.mp4", "-vf", f"select='{expr}'", "-fps_mode", "vfr",
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", f"{D}/{name}.mp4", "-vf", f"select='{expr}',scale={W}:{H}:flags=bicubic", "-fps_mode", "vfr",
                           "-pix_fmt", "gray", "-f", "rawvideo", "-"], capture_output=True).stdout
     a = np.frombuffer(raw, np.uint8)
     return a.reshape(-1, H, W)

@@ -4,7 +4,7 @@
 // hull), so they read as part of the character, never as set props. Base designs stay as they are when no costume is given.
 //   import '/styles/stick-man/allout/costume.js'
 //   cast: { kip: { spec: 'KAI', costume: ['belt', 'holster', 'hat:flat'] } }   beats: { f, who: 'kip', do: 'lose_hat' }
-// layers: belt[:rgb hex], holster (on the figure's right hip), holster:L, hat:cowboy | hat:flat | hat:bowler (+ :rrggbb)
+// layers: belt[:rgb hex], holster (on the figure's right hip), holster:L, hat:cowboy | hat:flat | hat:bowler | hat:top (+ :rrggbb)
 import * as THREE from 'three';
 import { solid, lathe, W_M, HEAD_H } from '../engine/cast.js';
 import { toon } from '../engine/look.js';
@@ -43,6 +43,12 @@ function hat(kind = 'cowboy', rgb) {
     g.add(solid(lathe(pr, 48), mat(c)));
     const band = solid(new THREE.CylinderGeometry(0.193, 0.193, 0.03, 40, 1, true), mat([0.55, 0.12, 0.10])); band.material.side = THREE.DoubleSide; band.position.y = y0 + 0.025; g.add(band);
     const brim = solid(new THREE.CylinderGeometry(0.42, 0.42, 0.018, 64), mat(c)); brim.position.y = y0 + 0.004; brim.scale.z = 0.86; g.add(brim);
+  } else if (kind === 'top') {                                    // the magnate's top hat (allout/rail.js): tall silk crown, red band, curled brim
+    const c = rgb || [0.03, 0.03, 0.04], Hh = 0.57;
+    g.add(solid(lathe([[0, y0], [0.24, y0], [0.222, y0 + Hh * 0.55], [0.258, y0 + Hh], [0, y0 + Hh]], 48), mat(c)));
+    const band = solid(new THREE.CylinderGeometry(0.237, 0.243, 0.09, 40, 1, true), mat([0.30, 0.04, 0.06])); band.material.side = THREE.DoubleSide; band.position.y = y0 + 0.055; g.add(band);
+    const bp = []; for (let i = 0; i <= 10; i++) bp.push([0.24 + 0.16 * i / 10, y0 + 0.05 * Math.pow(i / 10, 2.5)]);
+    const brim = solid(lathe(bp.concat([[0.40, y0 + 0.06], [0.24, y0 + 0.012]]), 56), mat(c)); brim.scale.z = 0.86; g.add(brim);
   } else {
     const c = rgb || [0.16, 0.14, 0.12], pr = []; for (let i = 0; i <= 12; i++) { const a = i / 12 * Math.PI / 2; pr.push([0.2 * Math.cos(a), y0 + 0.16 * Math.sin(a)]); }
     g.add(solid(lathe(pr, 48), mat(c))); const brim = solid(new THREE.CylinderGeometry(0.29, 0.29, 0.015, 48), mat(c)); brim.position.y = y0; g.add(brim);

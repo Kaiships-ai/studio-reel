@@ -97,13 +97,15 @@ def main(film):
     vfb = win_rms(vo); vbd = win_rms(bp(vo, 200, 6000, 4)); sp = vbd > 0.1 * vbd.max(); tw = (np.arange(len(vfb)) + 0.5) * 0.05
     def vmed(t, r=1.5):
         m = sp & (np.abs(tw - t) < r); return np.median(vfb[m]) if m.sum() >= 6 else np.median(vfb[sp])
-    # ---------------- SFX: each hit set to HIT_DB (+ its strength) vs the voice around it
+    # ---------------- SFX: each hit set to HIT_DB (+ its strength) vs the voice around it; audio/music.json "hit_db" overrides it
+    # for a film matched to a reference that hits harder (rail reference: 15.6 broadband hits / 10 s, forensic audio.py)
+    mp0 = os.path.join(A, 'music.json'); HD = float((json.load(open(mp0)) if os.path.exists(mp0) else {}).get('hit_db', HIT_DB))
     rows = []
     for i, c in enumerate(cues):
         rng = np.random.default_rng(1000 + i); name = c['name']; t = float(c['t'])
         y = siren(rng, min(2.0, (N / SR) - t - 0.02)) if name == 'siren' else BANK[name](rng)
         y = hp(room(np.pad(y, (0, int(ROOM_S * SR))), rng, d=ROOM_S, wet=ROOM.get(name, 0.5)), HP.get(name, 150), 2)
-        target = LEVEL.get(name, HIT_DB) + 10 * np.log10(max(float(c.get('strength', 1.0)), 0.05))
+        target = LEVEL.get(name, HD) + 10 * np.log10(max(float(c.get('strength', 1.0)), 0.05))
         ref = vmed(t + 0.1); y = y * ref * 10 ** (target / 20) / loudest150(y, 0, len(y))
         i0 = int(round(t * SR)); y = y[:N - i0]
         rows.append(dict(c, i0=i0, n=len(y), y=y, set_db=target, ref=ref, g=1.0))
@@ -126,7 +128,8 @@ def main(film):
     # ---------------- music, set relative to the voice
     mp = os.path.join(A, 'music.json')
     mL, mR, sec = music(words, N, plan=json.load(open(mp)) if os.path.exists(mp) else None)
-    v_lu = lufs([vo, vo]); m_lu = lufs([mL, mR]); g_m = 10 ** ((v_lu + MUS_LU - m_lu) / 20); mL, mR = mL * g_m, mR * g_m
+    mus_lu = float((json.load(open(mp)) if os.path.exists(mp) else {}).get('mus_lu', MUS_LU))   # music.json "mus_lu": a film's bed level vs the voice
+    v_lu = lufs([vo, vo]); m_lu = lufs([mL, mR]); g_m = 10 ** ((v_lu + mus_lu - m_lu) / 20); mL, mR = mL * g_m, mR * g_m
     s_lu = lufs([sfx, sfx]); print(f'sfx vs voice: {pre_lu - v_lu:+.1f} LU before the duck, {s_lu - v_lu:+.1f} after (target {SFX_LU})')
     # ---------------- master: gain to -14 LUFS through a true-peak limiter
     G = 10 ** ((MIX_LU - lufs([vo + mL + sL, vo + mR + sR])) / 20)
