@@ -1,5 +1,30 @@
 # Changelog · make-reel-stick-man
 
+## p13 · 2026-11-12 · the standard process (pilot A)
+
+Pilot A ran the whole pipeline: Development → Pre-production → Asset → Shot → Post. Kai approved every gate ("quy trình đã rất hoàn thiện"). SKILL.md is now that process.
+
+**The process**
+- One stage page per stage, with db status rows and decision cards (`templates/stage-page.html`).
+- Every option is rendered and comes with a recommendation.
+- Independent agents run the checks: layout challenge, camera pass (the `animation-camera-pass` skill), lock check, blocking review, 12-principles audit, and a sạn hunt before every pass. Board with 3 judges.
+- Gate profiles: safety, quality and reference. Kai waived the reference gates for the 20 s pilot.
+- New `PROCESS.md` holds the recipes (agent prompts, camera options as data, polish timing, prop physics, sound arc, gate stop rule). `REEL_DATA.md` documents motion v2 keys, `direct` cameras and the polish helper.
+- Worked example: `styles/stick-man/examples/pilot-a/`.
+
+**Engine fixes (PRs #88-#90)**
+- Follow-through restarts on a cut.
+- A face lands on a cut and does not replay on a repeated key.
+- No blink inside a take.
+- `overlays.js`.
+- The canyon fall with cliff contact at g = 9.8.
+- `__dbg` counts motion v2 acting and long props seen up close.
+
+**Removed as stale**
+- The fixed 60-80 s length and the 170k-token / one-hour budget.
+- The quota craft rules that chased reference averages (dissolve share, planner-first shots).
+- The reel-1 gate history.
+
 ## p12 · 2026-11-12 · a body with physics and anatomy (motion v2 actors)
 
 Kai: "no human scratches his head with a hand through it; build it from physics and anatomy, not patches". Root (first

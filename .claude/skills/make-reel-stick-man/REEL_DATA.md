@@ -17,11 +17,12 @@ One entry per `vo/script.json` line; the reel data is built to it and the story 
 | `role` | optional: hook, setup, fact / number, compare, reaction, twist, panic, explain, payoff (else guessed: line 1 hook, last payoff, a number, `same` / `than`, `but` / `here's`) |
 | `set` | the set the line plays on |
 | `props`, `fx` | set prop names and `make` effect names on screen in this line (each must be seen ≥ 3 frames) |
-| `still` (`on` also read) | optional: the word board still A is taken on (default the middle word); pick the word the key thing is on screen (reel 1 l05: `explodes`, not `later`) |
+| `still` (`on` also read) | the word board still A is taken on: the frame that carries the line's meaning, which can be another shot than the spoken key word (pilot A l05 "snake" is spoken over the fall; its still is `track`, on the bend) |
+| `act` | `{ actor: ['pose@word', ...] }`: the lead's body action per line, names from poses.js / allout (arms_crossed, hands_on_hips, point, laugh, startle, saw, ...) |
 | (B) | board still B is the line's fx peak: the frame where most of its `props` / `fx` are seen, so list what carries the line |
 
-Plan it so: ≥ 3 sets or cutaways in 30 s, never 3 lines in a row on the same set + shot, ≥ 40 % of lines with a prop or fx,
-and every process the words describe drawn with an explainer fx (VERBS.md). Full example: `examples/dye-pack/storyboard.json`.
+Every process the words describe is drawn (an overlay, a prop that moves, a cutaway) on its line. Full example:
+`films/pilot-a/storyboard.json` (pilot A); older auto-mode example `examples/dye-pack/storyboard.json`.
 
 Plain data modules, no code beyond small helpers. The runtime (`styles/stick-man/engine/play.js`) reads `reel.js`, then
 `reel2.js` if present, and `vo/words.json`; every frame is a pure function of its number.
@@ -37,8 +38,11 @@ Plain data modules, no code beyond small helpers. The runtime (`styles/stick-man
 | `use` | list | opt-in set props, e.g. street `['police', 'bag']` (none by default) |
 | `lines` | ids | the `vo/script.json` lines this file covers, in order (captions come from them) |
 | `cast` | `{ name: { spec, at, yaw, expr, focus, posture, watch, head_tilt } }` | who is in the act |
-| `beats` | list | what happens, on which word (VERBS.md) |
-| `shots` | list | camera, on which word (VERBS.md, Shots) |
+| `anim` | `{ actor: [key, ...] }` | **the lead's acting**, motion v2 keys (section below); an actor with keys is never driven by verbs or auto-acting |
+| `direct` | list | **hand-directed cameras** from the camera pass (section below); with `direct` the shot planner is off |
+| `beats` | list | prop keys (`set`), sounds (`do: 'sound'`), and verbs for background characters (VERBS.md) |
+| `shots` | list | auto-mode camera on words (Shots, legacy); not used with `direct` |
+| `directDrift` | number | share of camera-to-aim distance closed per second on every `direct` shot (pilot A 0.07: held shots never freeze) |
 | `make` | `{ name: { kind, ... } }` | effects for this act (optional) |
 | `name`, `show`, `zRange`, `sun` | optional | as in an act below (`name` defaults to `lobby`) |
 | `glasses` | optional bool | every cast member's glasses on / off for the whole reel (a cast entry's own `glasses` wins); `false` = faces read by brows and eye shapes (stick06) |
@@ -46,6 +50,49 @@ Plain data modules, no code beyond small helpers. The runtime (`styles/stick-man
 | `overlays` | optional list: `{ kind: 'loupe', from, to, look, cam: { pos, aim, lens }, at: [kx, ky], r }`, `{ kind: 'text', from, to, text, at \| world, size, tilt, shake }`, `{ kind: 'arrows', from, to, world, axis, len, gap }` | the storyboard's drawn layer over the picture (engine/overlays.js): a magnifier with its own camera and a leader line, a pop-up sound word, arrows that spread (expansion); drawn after the 3D look, so ink and grade never touch it |
 | `grade` | optional `{exp, lift, gam, sat}` | this act's colour grade over the set's `SET_GRADE` default (engine/look.js); per act too |
 | `light` | optional `{lit, shade, lamp, bounce, background, sun, power, sky, ground, hemi, fill, fillPower, lamps: [{at, rgb, power, dist}]}` | this place's own light (engine/play.js): `lit` / `shade` tint the two ends of the toon ramp (night: `[0.4, 0.4, 0.56]` / `[0.3, 0.36, 0.78]`), `lamp` = gain of practical lights (point lamps, sparks with `light`), `bounce` scales the set's own bounce lights; omitted = the old daylight, unchanged |
+
+## Motion v2 keys (`anim`): blocking and polish
+
+```js
+const STAND = { bob: 0, sq: 0, spine: { bend: 0, side: 0, twist: 0 }, neck: { nod: 0, tilt: 0, turn: 0 }, pelvis: { pitch: 0, roll: 0, yaw: 0 },
+  armL: { raise: 12, swing: 0, elbow: 15, roll: 0 }, armR: { raise: 12, swing: 0, elbow: 15, roll: 0 },
+  legL: { foot: [-0.22, 0.022, 0], pitch: 0, knee: [-0.15, 0, 1] }, legR: { foot: [0.22, 0.022, 0], pitch: 0, knee: [0.15, 0, 1] } };
+const BREATH = { 'spine.bend': [1.5, 40], 'neck.tilt': [1.5, 53, 1] };              // a moving hold: no pose ever freezes
+const hold = (f, extra) => ({ f, pose: STAND, cycle: BREATH, ...extra, ease: 'snap' });   // blocking: every key held
+const BLOCKING = new URLSearchParams(globalThis.location?.search || '').get('blocking') === '1';   // ?blocking=1 = the approved blocking
+function polish(keys) {                    // the poses stay; a key on a cut stays a snap; others hold, then move T frames before the next
+  if (BLOCKING) return keys;
+  return keys.map((k, i) => {
+    const nx = keys[i + 1], cut = CUTS.includes(k.f), sameShot = nx && !CUTS.includes(nx.f);
+    const T = nx?.t ?? (k.stroke ? 4 : 7), { stroke, antic, t, ...rest } = k;
+    return { ...rest, ease: cut ? 'snap' : 'slow', ...(antic ? { antic } : {}), ...(sameShot && nx.f - k.f > T + 2 ? { hold: nx.f - k.f - T } : {}) };
+  });
+}
+anim: { eng: polish([ hold(0, { ...KNEEL, pos: E0, yaw: -120, expr: 'sly', look: 'joint' }), hold(8, { stroke: 1, ... }), ... ]) }
+```
+
+| Key field | Meaning |
+|---|---|
+| `f` | frame (CUTS for the first key of a shot) |
+| `pose` + overrides | joint channels: `pos [x, y]`, `yaw`, `bob`, `spine {bend, side, twist}`, `neck {nod, tilt, turn}`, `pelvis`, `armL/armR {raise, swing (+ forward), elbow, roll}`, `legL/legR`, props (`x_hpR_saw: 1`) |
+| `ease` | `snap` (a cut: no in-between, follow-through, hat lag and face start fresh), `slow` (slow in/out), `flow`, `in`, `out` |
+| `hold` | frames held before moving (polish writes it) |
+| `antic` | 0.1-0.35: a wind-up against the move; it shortens the action itself, so give the move enough `t` |
+| `t` | on the next key: move length in frames (default 7, strokes 4, big arm moves 14-22, a take 9) |
+| `cycle` | `{ 'channel': [amplitude, period, phase] }` on top until the next key (breath, tremble) |
+| `expr`, `look` | the face (EXPR names; takes = shock/scream/panic/pain/furious/angry land in 3 f, never blink) and the gaze target (an actor, a prop, `camera`) |
+
+Conventions: yaw 0 faces the camera side (-y), yaw -90 faces -x; `swing` + is forward. Keep `elbow` ≥ 15 and hands a fist
+away from head and belly (the IK flips otherwise). Off screen = a far `pos` on a key at a cut frame. `style: 'kaiships'`
+bends the keys by Kai's dose; the body's physics (`engine/body.js`) is the floor.
+
+## Hand-directed cameras (`direct`)
+
+`{ at: { f }, intent, why, cut: 'cut', cam: { pos, aim, lens, roll }, to, move: { from, dur, ease }, kick: [{ at, amp }] }`
+(Blender metres; `allout/director.js`). Always write `cut: 'cut'` (the default `move` glides 16 frames between shots).
+`intent` is the shot kind the gates read (`est`, `wide`, `ws`, `ms`, `mcu`, `cu`, `low`, `insert`, `top`); `why` starts with
+`P<n> · PURPOSE`. Camera-pass options: `OPT = { <shot>: { safe, emo, bold } }`, `KAI` picks, `?opt=<shot>:<name>` renders one
+(PROCESS.md section 3). A move must not pass through geometry and stays ≤ 95 px/f at 720p; bigger = a cut.
 
 ## `reel2.js`: more acts
 
@@ -55,7 +102,13 @@ where this act comes on; `dissolve` frames (default 9; `0` = hard cut, which the
 `amend: [{ act, beats, shots }]` adds to an earlier act. Helper for word-timed entries:
 `const at = (line, on, offset = -2, nth) => ({ line, on, offset, ...(nth ? { nth } : {}) });` then `{ ...at('l05', 'ten'), who: ..., do: ... }`.
 
-## Minimal worked example (from `styles/stick-man/examples/dye-pack/reel.js`)
+## Worked examples
+
+Standard process: `styles/stick-man/examples/pilot-a/` (motion v2 keys, `direct` cameras, overlays, sound beats). The
+short auto-mode example below (verbs, planner shots) is reel 1 `styles/stick-man/examples/dye-pack/reel.js`; use it for
+background characters and quick tests only.
+
+### Auto mode (legacy)
 
 Two script lines ("He robs a bank, and the teller HELPS him pack the bag." / "She doesn't scream. ...") become:
 
@@ -80,32 +133,28 @@ export default {
 };
 ```
 
-## Craft rules from reel 1
+## Craft rules
 
 | Rule | Why |
 |---|---|
-| Every spoken line gets one visible action on its key word; a beat every 1-2 s | clear frames ≥ 94 %, frozen ≤ 8 f |
 | Frame 0 is mid-action (a prop already in hand) | the hook lands on frame 0 |
-| Let the planner shoot (`shots: []`, storyboard `shot: auto` + `role`); hand-write a shot only where it must differ | ≥ 4 kinds, est + insert, a cut every ~1 s (GATES.md) |
-| A change of place = a new act that dissolves in (default 9 f) on the word, with its own `grade` | the reference dissolves 53 % of boundaries, hard-cuts 1 % |
-| An explainer (how a thing works) = a `cutaway` act with props only, kept ≤ 45 frames per insert, or with a figure in frame | small-figure gate |
 | Gestures only with an empty hand; `hold` a prop before a `walk_to` with `carry` | gesture throws on a busy hand |
 | Read the error: `beat: no "<word>" #1 in l03` = `on` is not a spoken word of that line | |
-| A syntax error in `reel.js` / `reel2.js`: `shot.mjs` runs `node --check` first and prints the line; by hand `node --check films/<slug>/reel.js` | the page only says `pageerror` |
-| A quoted line (someone speaks): show the speaker saying it to the listener, both in frame; any words go on a thing in the world (a `sign` board, paper, poster), never a sticker | floating labels gate = 0 |
-| Estimated words (`est: true` in words.json, whisper heard them differently) can carry beats but are ±3 f off; prefer the next real word | timing |
+| A syntax error in `reel.js`: `shot.mjs` runs `node --check` first; by hand `node --check films/<slug>/reel.js`. `reel.js` is also imported in Node by board.mjs: read the URL with `globalThis.location?.search` | the page only says `pageerror` |
+| Any words go on a thing in the world (a sign, paper, a calendar) or a drawn overlay that the picture backs; never a floating sticker | floating labels gate = 0 |
+| `set` ease names: smoother, smooth, linear, step, out, in, back | `unknown ease` page error |
+| Estimated words (`est: true` in words.json) can carry beats but are ±3 f off; prefer the next real word | timing |
 
 ## Music (`audio/music.json`, read by `tools/sound.py`)
 
-Section starts as seconds or `[line, word]`: `{ "playful_end": 17.6, "build": 17.7, "build_end": 21.0, "wait": ["l07", "Same"],
-"see": ["l08", "Here's"], "urgent": ["l08", "warm"], "so": ["l09", "So"] }`. playful A runs to `playful_end`, a build rises
-`build`-`build_end`, the bed stops dead on `wait` (the twist beat) until `see`, `urgent` drives to `so`, which resolves to the
-last word. What each sounds like: `playful` = bouncy opening tune (to `playful_end`); `build` = rising riser (`build`-`build_end`);
-`wait` = full stop, silence on the twist word; `see` = music back, light and curious (the explainer); `urgent` = driving
-drums; `so` = two playful bars, then the resolve chord lands on the last word. Missing keys fall back to reel 1's anchors (which name reel 1's words: always write the file). `audio/levels.txt`
-prints the sections it used.
+Section starts in seconds or `[line, word]` (the word without punctuation), in this order:
+`playful_end` < `build` < `build_end` < `wait` < `see` < `urgent` < `so`. Pilot A:
+`{ "playful_end": 8.7, "build": ["l03", "Then"], "build_end": 11.3, "wait": ["l04", "On"], "see": ["l04", "his"], "urgent": ["l05", "The"], "so": ["l05", "snake"] }`.
+`playful` = bouncy opening (teasing); `build` = rising riser (the turn); `wait` = dead stop, silence on the twist word; `see` =
+music back, light and curious; `urgent` = driving drums; `so` = two playful bars, then the resolve chord on the last word.
+`air` (default 0.06) = the high wash level. `audio/levels.txt` prints the sections it used and every level against target.
 
-## Shots (camera grammar, `engine/camera.js`; planner `engine/shotplan.js`)
+## Shots (auto mode, legacy: `engine/camera.js`, planner `engine/shotplan.js`; a film with `direct` does not use them)
 
 | Kind | What it is | Keys beyond the common ones |
 |---|---|---|

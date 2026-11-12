@@ -12,7 +12,16 @@ import { run } from '../../../kit/env.mjs';
 import { decode, measure } from './look_measure.mjs';
 
 const A = {}; for (let i = 2; i < process.argv.length; i += 2) A[process.argv[i].replace(/^--/, '')] = process.argv[i + 1];
-if (!A.report || !A.in) { console.error('usage: gates.mjs --report <stats.txt> --in <reel.mp4> [--out <gates.txt>]'); process.exit(2); }
+if (!A.report || !A.in) { console.error('usage: gates.mjs --report <stats.txt> --in <reel.mp4> [--film films/<slug>] [--profile full|pilot] [--out <gates.txt>]'); process.exit(2); }
+// --profile pilot (GATES.md "Gate profiles"): the reference gates (measured from one reference short) still print, as
+// WAIVED instead of FAIL, and never set the exit code; safety and quality gates block as always. Thresholds never change.
+const PROFILE = A.profile || 'full';
+if (!['full', 'pilot'].includes(PROFILE)) { console.error(`unknown --profile ${PROFILE} (full | pilot)`); process.exit(2); }
+const REFERENCE_GATES = new Set(['clear frames', 'still frames', 'small-figure run', 'colour SATAVG', 'shadow contrast', 'colour per shot', 'ink thickness',
+  'caption height', 'caption weight', 'hard cuts', 'dissolves', 'rush peak', 'time in moves', 'shot length CV', 'light per place', 'first move',
+  'outline thick/thin', 'mouth movement', 'bed in pauses', 'duration', 'distinct sets', 'shot variety', 'shot types', 'shot type run',
+  'establishing shot', 'insert shot', 'wide share', 'low angle share', 'open on the verb', 'dressing density', 'style judge', 'blind test']);
+const waived = g => PROFILE === 'pilot' && !g[2] && REFERENCE_GATES.has(g[0]);
 for (const f of [A.report, A.in]) if (!fs.existsSync(f)) { console.error(`missing ${f}`); process.exit(2); }
 const R = fs.readFileSync(A.report, 'utf8');
 
@@ -191,7 +200,7 @@ async function lookDbg() {
 }
 
 const pad = (s, n) => String(s).padEnd(n);
-const fmt = ([n, got, ok, want]) => `${ok ? 'PASS' : 'FAIL'}  ${pad(n, 18)} ${pad(want, 20)} ${got}`;
+const fmt = g => { const [n, got, ok, want] = g; return `${ok ? 'PASS' : waived(g) ? 'WAIVED' : 'FAIL'}  ${pad(n, 18)} ${pad(want, 20)} ${got}`; };
 const lines = [`gates for ${path.basename(A.in)} (report ${path.basename(A.report)})`, ...G.map(fmt)];
 const fails = G.filter(g => !g[2]).length;
 lines.push(fails ? `${fails} of ${G.length} gates FAIL` : `all ${G.length} gates PASS`);
@@ -207,9 +216,12 @@ if (A.film) {
 }
 if (FG.length) { const ff = FG.filter(g => !g[2]).length; lines.push('', 'forensic gates (FORENSIC.md fixes 1-10)', ...FG.map(fmt), ff ? `${ff} of ${FG.length} forensic gates FAIL` : `all ${FG.length} forensic gates PASS`); }
 if (SG.length) { const sf = SG.filter(g => !g[2]).length; lines.push('', `story gates (${A.film}/storyboard.json)`, ...SG.map(fmt), sf ? `${sf} of ${SG.length} story gates FAIL` : `all ${SG.length} story gates PASS`); }
+{ const all = [...G, ...SG, ...FG], w = all.filter(waived).length, b = all.filter(g => !g[2] && !waived(g)).length;
+  lines.push('', `profile ${PROFILE}: ${all.length - b - w} PASS, ${b} blocking FAIL${w ? `, ${w} reference gates WAIVED` : ''}`); }
 const out = lines.join('\n') + '\n'; process.stdout.write(out);
 if (A.out) { fs.mkdirSync(path.dirname(path.resolve(A.out)), { recursive: true }); fs.writeFileSync(A.out, out); }
-process.exit(fails || SG.some(g => !g[2]) || FG.some(g => !g[2]) ? 1 : 0);
+const blocking = [...G, ...SG, ...FG].filter(g => !g[2] && !waived(g));
+process.exit(blocking.length ? 1 : 0);
 
 // ---------------------------------------------------------------- story gates (computed from the storyboard and __dbg)
 // Thresholds: GATES.md "Story gates". A line's window = its first word to the next line's first word.

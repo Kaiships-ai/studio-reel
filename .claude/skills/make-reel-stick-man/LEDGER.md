@@ -1,27 +1,23 @@
 # Ledger · <slug>
 
-Filled by the agent during the run (one row per stage, after it ends). Tokens = the session's token count at the end of
-the stage minus at its start (the client's usage line or `/cost`; a sub-agent has neither: estimate from context growth and
-mark the number "(est.)"); minutes = wall clock. Budget per reel:
-~170k tokens + new assets, render 1-7 min. Over 1.5x a stage's share: stop and tell Kai.
+Filled by stage, as each gate passes. One row per stage. "Proof" is what Kai saw. "Kai" is his words or his pick on the stage page, with the date.
 
-| # | Stage | Tokens | Minutes | Rounds | Output | Note |
-|---|---|---|---|---|---|---|
-| 1 | script | | | | vo/script.json | |
-| | Kai approves script | | | | | date, words |
-| 2 | voice | | | | vo/vo.wav | voice, words/s |
-| | Kai approves voice | | | | | |
-| 3 | align | | | | vo/words.json, vo/voice-qa.md | last frame |
-| 4 | storyboard | | | | storyboard.json | sets, % lines with props/fx |
-| 5 | reel data | | | | reel.js, reel2.js | new sets/props/fx |
-| 6 | preview | | | | review/pre-stats.txt | joint top 5 |
-| 7 | board | | | | review/board.jpg, review/board-verdict.json | % shown; reviewer tokens = `tokens` in the verdict (measured) |
-| 8 | sound | | | | audio/music.json, audio/mix.wav, audio/levels.txt | |
-| 9 | render | | | | renders/<slug>_vN.mp4 | ms/frame |
-| 10 | gates | | | | review/<slug>_vN-gates.txt | PASS count (15 + 7 story) |
-| 11 | deliver | | | | review/<slug>_vN-sheet.jpg (--n 30) | |
-| | **total** | | | | | |
+Log minutes per stage and the number of rounds per gate. Example: `styles/stick-man/examples/pilot-a/LEDGER.md`.
 
-Kit changes this run (new set, prop, verb, cast; file and one line why):
+| Stage | Output | Proof | Rounds | Kai |
+|---|---|---|---|---|
+| 0 Development | `BRIEF.md`, `TREATMENT.md`, beat board | page | | |
+| 1 Pre-production | script, look, design, storyboard panels, voice, animatic, colour script | animatic video | | |
+| 2 Asset | rig/dose/faces/set/props in the kit (PR) | run-through video + body numbers | | |
+| 3 Shot | camera pass, overlays, blocking, polish, board | previs, blocking and polish videos; board % | | |
+| 4 Post | sound, render, gates, final | levels, gate table, final video | | |
+
+Stage pages: <URL per stage>
+
+Kit and engine changes (PRs, one line each on why):
+
+-
+
+Kai's decisions that set the film (look, dose, gate profile, waived gates):
 
 -

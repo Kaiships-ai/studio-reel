@@ -1,0 +1,42 @@
+{
+ "model": "gemini-3.8-flash-tts",
+ "cast": {
+  "nar": "Achird"
+ },
+ "note": "pilot-a: the whole story in 5 lines, ~20 s, one narrator (Achird).",
+ "say": {
+  "39": "thirty-nine"
+ },
+ "lines": [
+  {
+   "id": "l01",
+   "who": "nar",
+   "style": "fast, intrigued, punchy hook",
+   "text": "Every thirty-nine feet, he cut a gap in his own railroad."
+  },
+  {
+   "id": "l02",
+   "who": "nar",
+   "style": "fast, teasing",
+   "text": "His trains rattled over every gap, while the rival's tight rails ran smooth and silent."
+  },
+  {
+   "id": "l03",
+   "who": "nar",
+   "style": "fast, a turn, mysterious",
+   "text": "Then summer came, and the steel began to grow."
+  },
+  {
+   "id": "l04",
+   "who": "nar",
+   "style": "fast, satisfied",
+   "text": "On the hottest day, his gaps closed, rail against rail."
+  },
+  {
+   "id": "l05",
+   "who": "nar",
+   "style": "fast, building to a punch",
+   "text": "The rival's perfect track had nowhere to go, so it bent like a snake."
+  }
+ ]
+}

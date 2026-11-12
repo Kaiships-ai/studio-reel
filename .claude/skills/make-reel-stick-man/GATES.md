@@ -1,35 +1,48 @@
 # Gates
 
-`node styles/stick-man/tools/gates.mjs --report <stats.txt> --in <mp4> --film films/<slug> --out <gates.txt>` prints PASS/FAIL
-per gate (21 picture, sound, acting and look gates, 10 forensic gates, then 20 story gates: story, shot grammar and sizes, open on the verb, world and fx, acting plan, board, style judge, blind test) and exits 1 on any FAIL. The stats come from `shot.mjs --film films/<slug> --frames 0-<last> --report <stats.txt> --in <mp4>`
-(`--frames` is required; without `--in` the frame-difference lines are missing and those gates FAIL as "not in report").
-Never change a threshold to pass a reel: fix the reel data or the kit, or show Kai the FAIL.
+`node styles/stick-man/tools/gates.mjs --report <stats.txt> --in <mp4> --film films/<slug> --profile pilot|full --out <gates.txt>`
+prints PASS / FAIL / WAIVED per gate (picture, sound, acting and look gates, forensic gates, story gates). The stats come from
+`node styles/stick-man/tools/shot.mjs --film films/<slug> --frames 0-<last> --report <stats.txt> --in <mp4>` (`--frames` and
+`--in` are required, or those gates FAIL as "not in report"). Never change a threshold to pass a film: fix the data or the
+kit, or show Kai the FAIL with a still.
+
+## Gate profiles (which gates block)
+
+| Profile | Gates | Applies |
+|---|---|---|
+| **safety** | camera speed, arm length ratio, joint change, head never cut, hand-prop gap, collisions, body contact, mix loudness, true peak, props / fx seen, board shown | always: a FAIL blocks |
+| **quality** | frozen run, mouth range, body acting, expressions, expression lead, close-up head x, storyboard entries, props / fx used, acting plan, floating labels, fx in world | always: a FAIL blocks |
+| **reference** | clear frames, still frames, small-figure run, colour SATAVG, shadow contrast, colour per shot, ink thickness, caption height, caption weight, all 10 forensic gates (hard cuts, dissolves, rush peak, time in moves, shot length CV, light per place, first move, outline thick/thin, mouth movement, bed in pauses), duration, distinct sets, shot variety, shot types, shot type run, establishing shot, insert shot, wide share, low angle share, open on the verb, dressing density, style judge, blind test | measured from one reference short. They block only with `--profile full`, for an episode matched to that reference when Kai picks it. `--profile pilot` prints them as WAIVED (pilot A, 12/11: 34 PASS, 0 blocking, 19 WAIVED) |
+
+These numbers are information whenever they don't block: read them, and fix what Kai would see. A gate that
+mis-measures (a tool gap) is fixed in the tool, in its own commit.
 
 | Gate | Threshold | Measured as | Source |
 |---|---|---|---|
 | clear frames | ≥ 94 % | frame-to-frame YAVG difference ≥ 1.0, top 60 % of the frame at 270x288 (report a) | 4 reference videos (STYLE plan, section D) |
 | still frames | < 1 % | YAVG difference < 0.2 (report a) | 4 reference videos (plan D) |
-| camera speed | ≤ 95 px/f at 720p (a ceiling) | peak camera motion, cuts and dissolves left out (report b) | reference max 114-142 px/f at 1080 (FORENSIC.md; was ≤ 25, the opposite of the reference's rushes) |
-| frozen run | ≤ 8 f | longest DEAD run per actor in frame: no joint 1 mm and no angle 0.3° from where the run began (a breathing hold is alive; the old frame-to-frame 2 mm test called it frozen and pushed constant fidget, while reference holds last up to 86 f); expr `sleep` exempt (report b, acting) | reel 1 build target, retargeted 11/11 (FORENSIC.md fix 14) |
+| camera speed | ≤ 95 px/f at 720p (a ceiling) | peak camera motion, cuts and dissolves left out (report b) | reference max 114-142 px/f at 1080 (FORENSIC.md) |
+| frozen run | ≤ 8 f | longest DEAD run per actor in frame: no joint 1 mm and no angle 0.3° from where the run began; expr `sleep` exempt (report b, acting) | reel 1 build target |
 | mouth range | CV ≥ 0.4 | dark mouth-area CV over the frames an actor talks (≥ 30 f), report b `micro:` | FORENSIC.md fix 8: reference 0.33–0.56, ours 0.06–0.21 |
 
-Principles, not gates (report b `micro:`, tool `tools/forensic/microanim.mjs`): head moves of 12–15 f with a slow start (7 % of
-the travel in the first eighth), fewer and bigger, then holds that breathe (median ≥ 12 f, some ≥ 40 f); the face redrawn
-through every change (engine/acting.js `faceStateAt`, faces.js `mixFace`); the mouth from the words (acting.js `visemeTrack`).
 | arm length ratio | ≤ 1.03 | (upper + fore arm) / rest arm length, per actor | reel 1 build target (no stretched arms) |
 | joint change | ≤ 25 deg/f | largest one-frame change of a flex, foot pitch, torso or limb direction; the FAIL line lists the worst actor's top 5 frames (report: `joint change top 5`, `frames over 25 deg`) | reel 1 build target (no pops) |
 | head never cut | never | head box above the top edge, any actor in frame | reel 1 review |
-| small-figure run | ≤ 120 f | longest run where the largest figure in frame is under 30 % of the frame height (a frame with no figure resets the run) | reference wide + establishing = 32 % of runtime, shot p90 4.2-6.4 s (FORENSIC.md; was 45 f) |
+| small-figure run | ≤ 120 f | longest run where the largest figure in frame is under 30 % of the frame height (a frame with no figure resets the run) | reference wide + establishing = 32 % of runtime, shot p90 4.2-6.4 s |
 | hand-prop gap | ≤ 2 px at 1080p | hand dot to the held prop's grip socket (report d) | reel 1 review (props floating off hands) |
 | collisions | none | any body point inside a set `COLLIDE` box, or torso in torso (report e) | reel 1 review (man inside a pillar) |
 | body contact | ≤ 0.1 cm | deepest point of an arm or hand inside a head or a torso after the contact solve (`__dbg` limbs `penCm`, motion v2 actors) | Kai 12/11: "no human scratches his head with a hand through it" (engine/body.js) |
 | close-up head x | 45-55 % | subject head centre x in settled `cu` frames (report f) | reel 1 review |
-| body acting | ≥ 70 % per lead | share of each lead's in-frame frames with a body verb running (`__dbg` `body`: any verb but idle, talk, look_at, place, hold, mark, nod / tilt); a lead = cast `lead: true`, a `talk` beat or a shot subject (report b, `body acting:`) | judge on stick04: "characters mostly stand still" (poses/acting 3-4/10) |
+| body acting | ≥ 70 % per lead | share of each lead's in-frame frames with a body verb running, or past its first motion v2 key (`__dbg` `body: 'key'`) (`__dbg` `body`: any verb but idle, talk, look_at, place, hold, mark, nod / tilt); a lead = cast `lead: true`, a `talk` beat or a shot subject (report b, `body acting:`) | judge on stick04: "characters mostly stand still" (poses/acting 3-4/10) |
 | expressions | ≥ 5 per 30 s | distinct faces on screen ≥ 3 frames each, open-mouth twins count as their base (report g) | judge on stick04: "faces near-neutral dots" |
 | expression lead | ≥ 3 f before the word | for every in-frame face change made by a beat with a word: word start − change frame (the engine lands it 4 f early, `EXPR_LEAD`) (report g) | the face reads before the sound |
 | mix loudness | -14 ± 0.5 LUFS | ffmpeg ebur128 integrated, on the mp4 audio | house target (`make-reel`, kai-reel-3d) |
 | true peak | ≤ -1 dBTP | ffmpeg ebur128 true peak, on the mp4 audio | house target |
 | colour SATAVG | median 19-47 | signalstats SATAVG, same samples, median | 7 reference frames, `STYLE.md` Màu |
+
+Principles, not gates (report b `micro:`, tool `tools/forensic/microanim.mjs`): head moves of 12–15 f with a slow start (7 % of
+the travel in the first eighth), fewer and bigger, then holds that breathe (median ≥ 12 f, some ≥ 40 f); the face redrawn
+through every change (engine/acting.js `faceStateAt`, faces.js `mixFace`); the mouth from the words (acting.js `visemeTrack`).
 
 ## Forensic gates (FORENSIC.md ranked fixes 1-10, 11/11)
 
@@ -60,7 +73,7 @@ colour convert to full range first. Per shot and caption need `--film` (shot ind
 | Gate | Threshold | Measured as | Reference |
 |---|---|---|---|
 | shadow contrast | median 0.235-0.388 | (YLOW-16)/(YHIGH-16) per sample (P10 / P90 luma), 2 a second, median | tiles p25-p75 (median 0.289) |
-| colour per shot | YAVG 60-170, SATAVG 13-54, YLOW 17-101 | per shot (act + shot index, ≥ 2 samples), median of each | the four full reference videos, same signalstats code: YAVG p5-p95 61-168, SAT 13-54, YLOW min 17 (was tiles p10-p90, which failed every dark place) |
+| colour per shot | YAVG 60-170, SATAVG 13-54, YLOW 17-101 | per shot (act + shot index, ≥ 2 samples), median of each | the four full reference videos, same signalstats code: YAVG p5-p95 61-168, SAT 13-54, YLOW min 17 |
 | ink thickness | median 2-3 px at 1080 wide | thin dark runs (1-14 px, Y < 72, both sides ≥ 45 brighter and > 90) on rows and columns, caption band 60-80 % left out; median width per frame (frames with > 50 runs), median of 1 frame a second | 3 full frames: 3, 2, 2 px |
 | caption height | 54 px ± 10 % at 1920 tall | white glyph rows next to black stroke in the band 60-80 %, tallest run; only frames whose caption has an ascender or capital and no descender | `ref_wide` "Then" 54 px (tiles x4: 49-51) |
 
@@ -73,59 +86,24 @@ weight 800, 6 px stroke outside, hard drop shadow.
 Colour per shot is fixed per set in `SET_GRADE` (engine/look.js: exposure, shadow lift, gamma, saturation after the
 grade pass), measured per set on a render, never by moving the gate. An act can override with `grade`.
 
-Measured 10/11 (Q1, `films/stick05-q1-{robe,dye}/review/*_q1r3-gates.txt`): robe ink median 4 px FAIL, colour per shot
-FAIL (park and lab YAVG 160-186); dye ink 3 px PASS, colour per shot FAIL (bank YLOW 30-33, street YLOW 105-111,
-cutaway YAVG 174-179); shadow contrast and caption height PASS on both.
-
-## Story gates (`--film`: storyboard.json against `__dbg`, no human)
-
-A line's window = its first word to the next line's first word. `__dbg` rows carry `set`, `camera.shot` and `seen` (every set
-prop and `make` effect shown, in front of the camera and covering ≥ 0.2 % of the frame). gates.mjs runs `shot.mjs --dbg`
-itself, or takes `--dbg <jsonl>`.
-
-| Gate | Threshold | Measured as | Why |
-|---|---|---|---|
-| duration | 60-80 s (films whose slug contains `test` are exempt) | frames / 30 | the locked series length (Kai 11/11; reference 63.5-65.2 s); was 27-33 s for the 30 s reels |
-| distinct sets | ≥ 3 | sets on screen ≥ 15 frames each (a `cutaway` act counts as a set) | reel 2: one street for 34 s |
-| shot variety | ≤ 2 lines alike | each line's main set + shot kind (most frames in its window); longest run of equal lines | no three lines in the same framing |
-| shot types | ≥ 4 kinds (≥ 4 per 30 s) | shot kinds (`camera.shot` before the bracket) on screen ≥ 15 frames each | reference cuts between macro, wide, top-down and aerial; reel 3 judged 2-3/10 on one medium angle |
-| shot type run | ≤ 2 lines | each line's main shot kind (set ignored); longest run of equal lines | same |
-| establishing shot | ≥ 1 | an `est` or `aerial` on screen ≥ 15 f | the reference opens places from above |
-| insert shot | ≥ 1 | an `insert`, `macro` or `top` on screen ≥ 15 f | the reference reads its numbers and props up close |
-| storyboard entries | every line | an entry per `vo/script.json` line | the plan exists before reel data |
-| props / fx used | ≥ 40 % of lines | lines whose entry lists a prop or fx and at least one is seen | beyond standing and talking |
-| props / fx seen | all | every listed prop / fx seen ≥ 3 frames in its line's window | the plan is really on screen |
-| acting plan | every line with a character on screen ≥ 15 f | the entry's `act` ({ actor: ['verb@word', ...] }) names known body verbs (poses.js, verbs), never talk | director rule: a line is acted, not said |
-| board shown | ≥ 85 % | judged: `review/board-verdict.json` from the reviewer below | every spoken line illustrated |
-| dressing density | ≥ 16 pieces in ≥ 85 % of frames | `dress` in each `__dbg` row: registered set pieces (lib/sets/dress.js, .glb pieces) the camera really sees (shown, ≥ 0.04 % of the frame, one of five sample points not hidden behind another mesh); cu frames, cutaway tables and dissolves left out | reference: 21 distinct objects in `ref_wide`, 16 in `ref_medium` (counted by eye, 10/11); Q4 judge: "bare park and classroom" |
-| floating labels | 0 | `make` entries of kind stamp / callout / bars / split seen ≥ 3 frames | 0 text stickers in 4 reference videos (FORENSIC.md fix 9); a fact goes on a `sign`, meter or chalk |
-| wide share | ≥ 30 % of frames | `est`, `aerial`, `wide` frames in `__dbg` | reference establishing + wide 32 % (FORENSIC.md fix 5) |
-| low angle share | ≥ 7 % of frames | `low` frames | reference 7.3 % |
-| open on the verb | ≥ 10 of frames 0-20 | a character in frame with a body verb running (not talk / look / blink) | 4/4 reference videos are mid-action on frame 0 (fix 6) |
-| fx in world | every storyboard `fx` | each `fx` name's `make` kind is a physical kind (not stamp, callout, bars, split, rings, flow, rays, star, shimmer); floating text goes in the entry's `labels` (counted by the label budget, checked by props / fx seen) | the reference shows cracks, smoke, timers as things in the room |
-
-### World and fx gates (Q4, 10/11)
+### World and fx gates
 
 How the reference was counted: every distinct physical object in the frame (a bench, a light fixture, a sign, a drain, a
 door, a beam = 1 each; the floor, the walls and the sky do not count). `ref_wide` 21, `ref_medium` 16, so N = 16. Our count
 is the same idea measured: one registered piece = one object (a bench, a bin, a poster, a .glb room part such as a board or
 a window row). `node styles/stick-man/tools/shot.mjs --film <f> --frames <a,b> --dbg <out> --dress 1` lists the pieces seen.
 A low count is fixed by dressing what the camera sees (low pieces on the near floor never cover a body), never by moving
-the camera or lowering N. Proof `films/stick05-q4-levels/review/reel-gates.txt`.
+the camera or lowering N.
 
 ### The judged gate: board reviewers (never judge your own board)
 
-Run it once, after preview (stage 7): `node styles/stick-man/tools/board.mjs films/<slug> --judge 3`. It renders
+Run it at Shot lock (step 3.5): `node styles/stick-man/tools/board.mjs films/<slug> --judge 3`. It renders
 `review/board.jpg` (one image ≤ 1560 px: two stills per line, A on the entry's `still` word, B at the line's fx peak, the
 spoken words burned under each pair, no plan text) and sends it inline to 3 independent headless `claude -p` reviews
 (sonnet, effort medium, no tools, no settings, empty cwd); a line is shown when 2 of 3 say shown. Writes
 `review/board-verdict.json` (votes, reasons, tokens per review); gates.mjs reads it. New reel data = run it again.
 The prompt lives in `board.mjs` (`prompt()`); `--prompt 1` prints it with the absolute board path, for an Agent-tool
-reviewer when `claude` is not on PATH (that route measured ~80k tokens a review, the headless one ~4.1-4.7k).
-
-Measured 10/11 (`films/*/review/board-verdict-*.json`): robe board 100 % in 3 of 3 gates (15 reviews, 1 split vote);
-reel 1 board, 15 single reviews 90-100 %, both-of-2 pairs 80-100 %, 2-of-3 gates 100, 100, 100 % → 2 of 3 is the rule.
-The old one-still board with one reviewer scored the same robe content 89 % then 56 %.
+reviewer when `claude` is not on PATH.
 
 ### The judged gate: style judge + blind test (Q5, against the reference)
 
@@ -144,18 +122,15 @@ not be generous"). Writes `review/judge.json` / `judge.txt` (scores per review, 
 | style judge | mean overall ≥ 8.5 and no category mean < 8 | mean of the 2 reviews |
 | blind test | ≤ 8 / 12 told apart | 6 reference + 6 ours tiles shuffled (seeded), one more review labels each original / imitation; tiles labelled right, or wrong when the reviewer swapped the names (max of the two; 6 = chance, 12 = fully told apart) |
 
-Cost: ~4 images a review; tokens per review are in `judge.json`.
 
 ## Acting gates: how to fix a FAIL
 
-Body acting under 70 %: name a body verb for that lead in the storyboard `act` and the beats (VERBS.md "Body acting"),
-or check it is a lead (auto-acting fills a lead's gaps ≥ 18 f). Expressions under 5: give each line a strong face (the
+Body acting under 70 %: a motion v2 lead counts from its first key (`body: 'key'`); a verb-driven lead needs a body verb in
+the storyboard `act` and the beats (VERBS.md "Body acting"). Joint change over 25°/f on a motion v2 lead: a longer `t`
+on the next key, less `antic`, `elbow` ≥ 15, hands away from head and belly (PROCESS.md section 5). Expressions under 5: give each line a strong face (the
 29 in VERBS.md "Faces"; neutral / calm count once). Expression lead: put the `expr` on the word itself (the engine leads by
 4 f); a beat at `f` with no word is not checked. A pose that pushes a close-up head out of 45-55 %: a smaller `amp`, or
 mirror it (`hand: 'L'`): a 3/4-turned figure that pitches forward moves sideways on screen.
-
-Proof (q2, 10/11): `films/stick05-q2-levels` (stick04 with new acting only): all gates PASS, `review/reel-gates.txt`;
-judged against the reference in `review/judge.md`.
 
 ## Not scripted (eyes, on the 30-tile sheet and stills)
 
@@ -165,17 +140,3 @@ judged against the reference in `review/judge.md`.
 | Captions | 1-3 words, never over a face (report b: head box in caption band 66-78 % = never) |
 | Blinks | every actor in frame blinks, gaps ~0.5-1.5 s (report b) |
 | Feet | stance-foot slide small; no moonwalk (report b, eyes on the walk stills) |
-
-## Reel 1 (`reel1_v4b`, approved by Kai 10/11) against these gates
-
-14 PASS, 1 FAIL: joint change 29.2 deg (kai, frame 399, right upper arm). Story gates (storyboard written 10/11 after the
-cut, `films/stick01-dye-pack/storyboard.json`): 6 computed PASS, board shown FAIL 70 % (one still). `reel1_v5` (10/11, p7):
-same picture plus a LOVELY DAY! speech bubble (l03, `dof: 0` on that close-up) and a ?! stamp (l06), l05 still word
-`explodes`; board 100 % (3 of 3 gates), all 7 story gates PASS; joint change still the one FAIL (29.9 deg, kai f401: the
-same on the data without the stamps, engine drift since v4b). Output: `films/stick01-dye-pack/review/reel1_v5-gates.txt`.
-Robe re-shot with the shot grammar (`stick05-q3-robe`, 10/11): 15/15 + 11/11 PASS (11 shot kinds, 31 shots, peak
-camera 22.8 px/f, board 89 %); the style judge still scored shot variety 3/10 (`review/judge.md`).
-Reel 2 (`stick02-black-robe`): duration 33.9 s, 1 set, 3 lines alike, board shown 33 % FAIL (`review/reel2-story-gates.txt`). Two rules settled 10/11: a face with
-expr `sleep` never counts toward a frozen run, and a frame with no figure in it (prop-only cutaway) never counts toward
-the small-figure run. Kai approved the video with these open; a new
-reel still has to pass, or the FAIL goes to Kai with a still.

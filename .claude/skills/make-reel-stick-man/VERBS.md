@@ -3,6 +3,10 @@
 Source of truth: `styles/stick-man/engine/verbs.js` (`VERBS`), `verbs_fx.js` (`ACT`, `PROPV`, `keyTracks`, `MAKE`), `play.js`
 (`buildAct`). An unknown `do` throws `unknown verb`. Examples are from `styles/stick-man/examples/dye-pack/`.
 
+In the standard process the **lead** is acted with motion v2 keys (`anim`, REEL_DATA.md), not verbs. Verbs drive
+background characters, props (`set` keys) and sound beats. The pose and face names below are also the vocabulary for
+the storyboard `act` field and for `expr` on keys.
+
 ## Every beat
 
 | Key | Meaning | Example |
