@@ -1,18 +1,20 @@
 ---
 name: make-reel-stick-man
-description: Make a vertical (1080x1920, 30 fps) stick-man 3D film the Kaiships way, by the standard animation pipeline with Kai approving each step on one page per stage. Five stages, each ending at a gate: Development, Pre-production (script, voice, storyboard, animatic), Asset (rig, faces, set), Shot (camera pass, layout, blocking, polish, board), Post (sound, render, gates). Every option comes with real renders and a recommendation. Independent agents challenge the cameras and hunt logic slips before Kai sees a pass. Characters obey both Disney's 12 principles and body physics at the 'kaiships' dose. Proven on pilot A (12/11, Kai approved every gate). Use when Kai asks for a stick-man reel, a stickman story film, or a film like pilot A or stick01. Trigger: /make-reel-stick-man
+description: Make a vertical (1080x1920, 30 fps) stick-man 3D film by the standard animation pipeline - Development, Pre-production, Asset, Shot, Post - with Kai approving each step on one page per stage, real renders for every option, independent agents checking each pass, and characters that obey Disney's 12 principles and body physics at the 'kaiships' dose. Use when Kai asks for a stick-man reel or stick-man story film. Trigger: /make-reel-stick-man
 argument-hint: "<slug> <story idea or script>"
 ---
 
 # /make-reel-stick-man
 
-The standard process for a stick-man film. Pilot A ran it end to end on 12/11; Kai approved every gate and said "quy trình đã rất hoàn thiện". Dev only (`kit.manifest` [dev]).
+The standard process for a stick-man film (dev only).
 
 - Run from the library root with `.pixi/envs/default/bin/node` and `.pixi/envs/default/bin/python` (written `node` / `python` below), never `pixi run`.
 - Work in a fresh worktree. `films/` is git-ignored; kit and engine changes go in PRs, and Kai merges.
-- Worked example: `styles/stick-man/examples/pilot-a/` (reel data, storyboard, music, ledger); stage pages listed in PROCESS.md.
+- Worked example: `styles/stick-man/examples/pilot-a/` (copy it to `films/pilot-a/` to replay it; its README says how).
+- Needs: `GOOGLE_API_KEY` in `.env` (voice), faster-whisper (align), `claude` on PATH (board judges).
+- Kai reads Vietnamese: replies and page text are Vietnamese; "Em đề xuất" marks your recommended option.
 
-**Read [PROCESS.md](PROCESS.md) before step 1.** It holds the stage-page template, the agent prompts, and the camera-pass, polish, sound and gate recipes.
+Read [PROCESS.md](PROCESS.md) before step 1.
 
 ## The loop (every step of every stage)
 
@@ -33,7 +35,7 @@ The standard process for a stick-man film. Pilot A ran it end to end on 12/11; K
 
 | Stage | Step | Output | Proof Kai sees |
 |---|---|---|---|
-| **0 Development** | [0.1] brief + treatment | `node styles/stick-man/tools/new_film.mjs <slug>`, `BRIEF.md`, `TREATMENT.md` (DIRECTOR.md §4: 3 structures + choice, logline, arc). A reference is a quality bar, never a shot list. | the page |
+| **0 Development** | [0.1] brief + treatment | `node styles/stick-man/tools/new_film.mjs <slug>` makes the folder, `vo/script.json`, `storyboard.json`, `reel.js`, `LEDGER.md`; you write `BRIEF.md` and `TREATMENT.md` (3 structures + choice, logline, arc). A reference is a quality bar, never a shot list. | the page |
 | | [0.2] beat board | the whole story in ~12 panels (one beat each); pick a pilot segment that is a complete mini story (conflict + payoff) | sketch panels |
 | | **◇1** brief, treatment, story | | |
 | **1 Pre-production** | [1.1] script | `vo/script.json`: 1 narrator, 2.9-3.3 words/s; hook in line 1; every line names something drawable | text + word count |
@@ -41,11 +43,11 @@ The standard process for a stick-man film. Pilot A ran it end to end on 12/11; K
 | | [1.3] design | characters (model sheet, faces, profile), set layout, props; each reads by silhouette and team colour | sheets |
 | | [1.4] storyboard | **sketch panels** (never a text shot list), 1 per beat, with camera arrows; caption-free read test by a fresh agent | panels + retell |
 | | [1.5] voice | `python styles/stick-man/tools/voice.py films/<slug> --samples Achird`, then `--take`; align with `tools/align.py` (re-take on ❌) | audio + `voice-qa.md` |
-| | [1.6] animatic | panels held to `vo/vo.wav` → `review/animatic.mp4` | video |
-| | [1.7] colour script | one colour frame per line; heat, time and mood carried by props and light | strip |
+| | [1.6] animatic | panel images held for their line's time: an ffmpeg concat list (`file 'p01.png'` / `duration 1.0` per panel) over `vo/vo.wav` → `review/animatic.mp4` | video |
+| | [1.7] colour script | one style frame per line from the chosen look (rendered or painted); heat, time and mood carried by props and light | strip |
 | | **◇2** animatic + design lock (length, story, shots, look) | | |
-| **2 Asset** | [2.1] rig + dose | body physics (bones, joint ranges, contact, balance, gravity) and the style dose (`style`), proven on principle tiles with physics on/off | tiles + numbers |
-| | [2.2] faces, set, props | only what the animatic needs, each in the kit with its rule (SETS.md, VERBS.md) | sheets, stills |
+| **2 Asset** | [2.1] rig + dose | the body is `engine/body.js` (bones, joint ranges, contact, balance; `PHYS` switches) and the dose `engine/motion.js` `STYLE_PRESETS`; prove a change on short test clips rendered with physics on and off, plus `shot.mjs --report` numbers | clips + numbers |
+| | [2.2] faces, set, props | only what the animatic needs: faces `engine/faces.js`, sets and props `styles/stick-man/allout/` (pattern: `allout/sets/canyon-edge.js`), Blender pieces `styles/stick-man/docs/GLB.md` | sheets, stills |
 | | [2.3] run-through | every approved asset together in the real set at the chosen dose (not a film shot) | video + body numbers |
 | | **◇3** asset lock | | |
 | **3 Shot** | [3.1] camera pass | skill `animation-camera-pass`: intent per scene (Kai confirms), intensity graph, axis map, 3 rendered options per flagged shot, previs, lock check (PROCESS.md) | option cards, previs video |
@@ -57,7 +59,7 @@ The standard process for a stick-man film. Pilot A ran it end to end on 12/11; K
 | | **◇4** Shot lock (board ≥ 85 %) | | |
 | **4 Post** | [4.1] sound | `node styles/stick-man/tools/shot.mjs --film films/<slug> --cues films/<slug>/audio/cues.json`, `audio/music.json`, `python styles/stick-man/tools/sound.py films/<slug>` | levels + video |
 | | [4.2] render | `node styles/stick-man/tools/shot.mjs --film films/<slug> --frames 0-<last> --mp4 films/<slug>/renders/<slug>_vN.mp4 --audio films/<slug>/audio/mix.wav` | video + sheet |
-| | [4.3] gates | `shot.mjs --film films/<slug> --frames 0-<last> --report review/<slug>_vN-stats.txt --in <mp4>`, then `node styles/stick-man/tools/gates.mjs --report <stats> --in <mp4> --film films/<slug> --profile pilot\|full --out review/<slug>_vN-gates.txt` (Kai picks the profile) | gate table |
+| | [4.3] gates | the two commands in GATES.md, always with `--profile` (Kai picks pilot or full) | gate table |
 | | **◇5** deliver | `sheet.mjs`, `LEDGER.md`, final mp4 on the page | final video |
 
 A later stage's problem is fixed in the stage that caused it. Never jump ahead into the engine or the gates.
@@ -66,19 +68,19 @@ A later stage's problem is fixed in the stage that caused it. Never jump ahead i
 
 | Rule | Why |
 |---|---|
-| Motion obeys two rulebooks: the 12 principles and body physics (no penetration, bones keep length, joints in range, balance, gravity g = 9.8, no pops). Props and sets obey physics too. | Kai: "không chỉ copy các khối vô hồn"; "rơi xuyên tường trông buồn cười" |
-| Style is the dose each principle is bent (`style: 'kaiships'`); physics is the floor under it | Kai chose the 'kaiships' dose at asset [2.1] of pilot A |
-| The lead's acting is keyed by hand (motion v2 `anim`); auto-acting from words only for background characters | auto-acting read as puppets (rail-gaps 6/10) |
-| Faces sell the character: no ring-eye creep, no blink inside a take (shock, scream), a new face lands on a cut, takes land in 3 frames | face reviews, pilot A P14 |
-| Every camera states its PURPOSE (what the viewer must get in its 1-2 s) and a clear size: a real wide or a real close-up, with a clean background behind faces | Kai on layout v1: "thô sơ, chưa đạt mục đích" |
-| An overlay may only claim what the picture shows, the same way at the same time (expansion arrows point into the gap while the rail ends close) | Kai on P9: "có mỗi mũi tên thôi" |
-| Direction conventions: yaw 0 faces the -y camera side, yaw -90 faces -x; arm `swing` + is forward; along the track the camera looks +y (wall right); across it, from the drop side | the engineer once sawed behind his back |
-| Never loosen a threshold. After 2 fix rounds on one gate, stop and show Kai the FAIL with a still. | gate rule |
-| Numbers measured from a reference short (reference gate profile) are information, not pass/fail, unless Kai picks `--profile full` | an earlier reel chasing those quotas came out choppy (6/10) |
+| Motion obeys two rulebooks: the 12 principles and body physics (no penetration, bones keep length, joints in range, balance, gravity g = 9.8, no pops). Props and sets obey physics too. | bodies that ignore physics read as lifeless |
+| Style is the dose each principle is bent (`style: 'kaiships'`); physics is the floor under it | Kai's chosen dose |
+| The lead's acting is keyed by hand (motion v2 `anim`); auto-acting from words only for background characters | auto-acting reads as puppets |
+| Faces sell the character: no ring-eye creep, no blink inside a take (shock, scream), a new face lands on a cut, takes land in 3 frames | the face sells the character |
+| Every camera states its PURPOSE (what the viewer must get in its 1-2 s) and a clear size: a real wide or a real close-up, with a clean background behind faces | timid mid shots miss their purpose |
+| An overlay may only claim what the picture shows, the same way at the same time (expansion arrows point into the gap while the rail ends close) | a fake overlay is the first sạn a viewer sees |
+| Keep the direction conventions (REEL_DATA.md) and one camera axis per place (PROCESS.md section 3) | reversed axes read as mistakes |
+| Never loosen a threshold. After 2 fix rounds on one gate, stop and show Kai the FAIL with a still. | gates protect the viewer |
+| Numbers measured from a reference short (reference gate profile) are information, not pass/fail, unless Kai picks `--profile full` | chasing quotas makes a film choppy |
 | Never copy frames, audio or wording of a reference; `ref-private/` is never committed or posted | rights |
 | Renders are medium (540x960) until Post; full 1080x1920 for the Post render only | time and machine |
-| A look change starts from a whole-look prototype (style frames, a Blender turntable) Kai picks by eye, never from tuning numbers one by one | three rounds of number tweaks were "chẳng khác gì" |
-| A hand, a strike or a tool lands on a real target and holds 2-4 frames; a showcase of motion means travel through space (leaps, falls), not poses in place | boxing v1: "punches go nowhere" |
+| A look change starts from a whole-look prototype (style frames, a Blender turntable) Kai picks by eye, never from tuning numbers one by one | number tweaks don't change the look |
+| A hand, a strike or a tool lands on a real target and holds 2-4 frames; a showcase of motion means travel through space (leaps, falls), not poses in place | hands acting on air read as fake |
 | Blender is the asset workshop (export `.glb`); a new set, prop, fx or verb goes in the kit with its rule, never for one film's taste | the next film reuses it |
 
 ## Files
@@ -87,7 +89,7 @@ A later stage's problem is fixed in the stage that caused it. Never jump ahead i
 |---|---|
 | [PROCESS.md](PROCESS.md) | stage pages, agent prompts, camera pass, blocking/polish recipe, sạn hunt, board, sound, gate profiles, deliver |
 | [REEL_DATA.md](REEL_DATA.md) | `storyboard.json`, `reel.js` keys: motion v2 `anim`, `direct` cameras, `overlays`, `style`, beats, music |
-| [GATES.md](GATES.md) | every gate, its profile (safety / quality / reference), how to fix a FAIL |
-| [SETS.md](SETS.md), [VERBS.md](VERBS.md), [GLB.md](GLB.md) | kit: sets, props, cast, verbs, faces, effects, Blender sets |
+| [GATES.md](GATES.md) | the gates by profile (safety / quality / reference) and how to fix a FAIL |
 | [LEDGER.md](LEDGER.md) | the per-stage ledger template |
-| [CHANGELOG.md](CHANGELOG.md) | why the skill is the way it is |
+| `templates/stage-page.html` | the stage page |
+| `styles/stick-man/docs/` | kit reference: verbs, poses, faces, sets, Blender sets |

@@ -1,5 +1,5 @@
 // Hand-directed camera for an act (`act.direct`, read by engine/play.js). Built from the reference breakdown
-// (.claude/skills/make-reel-stick-man/DIRECTOR.md): the camera holds while a line is said, and moves only for a reason the
+// (.claude/skills/make-reel-stick-man/PROCESS.md, section 3): the camera holds while a line is said, and moves only for a reason the
 // shot names (`intent`), started by a word or an action (`move.from`). Shots inside a place change by a cut, a dissolve or
 // a whip; nothing glides between shots on its own, nothing pushes in to fill time.
 //

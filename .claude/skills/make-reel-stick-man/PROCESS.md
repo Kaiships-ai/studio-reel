@@ -1,13 +1,6 @@
 # Process: how each step is run
 
-This file covers the recipes behind SKILL.md: stage pages, agent prompts, cameras, blocking and polish, the sạn hunt, the board, sound, gates and delivery. Everything here was used on pilot A (12/11).
-
-The pilot A pages are the worked example:
-- 0 Development: https://claude.ai/artifact/64z267xxDufuE64rSEj2hi
-- 1 Pre-production: https://claude.ai/artifact/KNYRuojddgU7778NVq8RHq
-- 2 Asset: https://claude.ai/artifact/7WcF1PFRKE5m3idsBgrzBK
-- 3 Shot: https://claude.ai/artifact/8b9FGEZLifq6KS2u9krMqc
-- 4 · Post: https://claude.ai/artifact/6CShKvUuYJwn8rWCsALnCb
+The recipes behind SKILL.md.
 
 ## 1. Stage pages (one artifact per stage)
 
@@ -20,7 +13,7 @@ Kai keeps one tab per stage. So there is one page per stage, and you open the ne
 - **Status rows.** Collection `items`, one row per step: `{ order, code, title, state: done|review|doing|todo|blocked, evidence, ask }`.
   - Kai's buttons write `kai: ok|fix` and `note`.
   - Write rows with the `ArtifactData` tool. Pin `if_version` and read the row first.
-- **Decisions.** Collection `decisions`, keyed by the card's `data-d` and holding `{ choice, note }`. Read them before acting: Kai often answers in the page notes, not the chat, e.g. "tàu lao xuống vực".
+- **Decisions.** Collection `decisions`, keyed by the card's `data-d` and holding `{ choice, note }`. Read them, notes included, before acting: Kai often answers in the page notes, not the chat.
 - **Keeping it clean.** Once something is locked, the page keeps only the locked result and the open items. Remove rejected options, earlier rounds and exploration. Before republishing, update every status that has gone stale.
 - **Options.** Every option is a real render next to the current state, never text only. If an option can't be rendered yet, say so on its card.
 
@@ -40,31 +33,24 @@ Label the strips with the shot's real cut frames (`CUTS`), not the animatic's ro
 | Check | When | Prompt core (add the story, intents, shot ranges, file paths) |
 |---|---|---|
 | Layout challenge | before Kai sees any camera layout | "Judge camera only: shot size, angle, lens, what the eye hits first, background clutter, phone readability in the panel's duration, continuity, purpose. The bar: a real wide or a real close-up, a clean background behind faces, an obvious purpose. PASS or FAIL + one camera fix per shot." |
-| Camera pass | camera lock, or whenever Kai doubts a shot's purpose | run the skill `.claude/skills/animation-camera-pass/SKILL.md` on the current frames. Deliver OUT-1, OUT-3, OUT-4 and OUT-5 to `scratchpad/.../campassN.md`, with a recommended option per failing shot. |
+| Camera pass | camera lock, or whenever Kai doubts a shot's purpose | run the skill `.claude/skills/animation-camera-pass/SKILL.md` on the current frames. Deliver OUT-1, OUT-3, OUT-4 and OUT-5 to `films/<slug>/review/campassN.md`, with a recommended option per failing shot. |
 | Lock check | after previs | the camera-pass 7-point checklist per shot: CAM LOCK or FIX [items] + one fix |
 | Blocking review | after blocking | "Judge the key poses: silhouette, line of action, does the pose read the beat, expression, contact with props or ground, overlay readability. PASS or FIX + one pose fix." |
 | 12-principles audit | after polish | `.claude/skills/animation-principles/SKILL.md` "Audit a reel": a yes / partly / no table with frame evidence, plus the 5 most visible problems with a fix each |
 | **Sạn hunt** | before every pass goes to Kai | "Find visible logic, physics and continuity slips a plain viewer would catch. Example: an overlay that claims what the picture does not show, a hat that vanishes, a face from the previous shot leaking in, an object through rock, a character where he should not be. Not camera style. Confirm each finding on a full frame." |
 | Board | Shot lock | `board.mjs --judge 3` (section 7) |
 
-Sạn that pilot A caught, worth checking every time:
-- arrows with no motion behind them;
-- the saw not touching the rail;
-- a cap hidden by a very low camera;
-- the arm of a hip pose looping round the head from below;
-- the boss left standing on the track during the buckle;
-- the last shot's laugh leaking into a shock;
-- a blink in the middle of a scream;
-- a train falling nose-up or through the cliff;
-- a camera move passing through rock;
-- a loupe whose content reads as "a coin".
+Classic sạn to check every time: an overlay with no motion behind it, a tool not touching its target, a hat hidden by a
+very low camera, a limb looping round the head from below, a character left in a shot where he should not be, a face from
+the last shot leaking across the cut, a blink inside a take, a falling object pitched the wrong way or passing through the
+set, a camera move through geometry, a loupe whose content does not read.
 
 ## 3. Camera pass (stage 3.1)
 
 Follow `.claude/skills/animation-camera-pass/SKILL.md`. Its OUT-1 to OUT-7 outputs go on the Shot page. What follows is specific to this engine.
 
 1. **Intent first.** Derive one "what the audience feels" line per scene from the approved voice styles, mark it `(est.)`, and stop for Kai to confirm. Story intensity comes from that line.
-2. **Cut frames.** Take them from the animatic, `ffmpeg -i animatic.mp4 -vf "select='gt(scene,0.08)',showinfo" -f null -`, and store them as `CUTS` in `reel.js`.
+2. **Cut frames.** Take them from the animatic, `ffmpeg -i films/<slug>/review/animatic.mp4 -vf "select='gt(scene,0.08)',showinfo" -f null -`, and store them as `CUTS` in `reel.js`.
 3. **Cameras are hand-directed** (`direct`, REEL_DATA.md).
    - Each entry's `why` starts with `P<n> · PURPOSE`.
    - Give every entry `cut: 'cut'`. Without it the director glides 16 frames between shots (`cut: 'move'` default), which smears every cut.
@@ -120,12 +106,12 @@ Props follow the same rules as the body.
 - A falling object follows g = 9.8 from the frame it leaves support.
 - It only tips once its centre overhangs.
 - It never passes through the set. Sample the surface it can hit and push it out on contact. Example: `styles/stick-man/allout/sets/canyon-edge.js` samples the cliff with rays into a `faceAt` table.
-- **Prove it with numbers:** log clearance per frame in a temporary build. Pilot A: 36 fall frames, clearance ≥ 0, touching on 1 frame.
+- **Prove it with numbers:** log clearance per frame in a temporary build; it must stay ≥ 0.
 
 ## 7. Board (3.5)
 
 - **Storyboard entries** (REEL_DATA.md) need `see`, `still`, `act` and `props` per line.
-- **The still word** picks the frame that carries the line's meaning. The spoken key word can land on a different shot: pilot A's "snake" is spoken over the fall, so its still is "track".
+- **The still word** picks the frame that carries the line's meaning. The spoken key word can land on a different shot than the one that shows it.
 - **Fixing a "not shown".** Fix the picture: make the snake visible, make the loupe readable, clear the stage. Never touch the wording.
 - **Judges.** 3 headless judges; a line counts as shown on 2 of 3. Make the latest verdict `review/board-verdict.json`.
 
@@ -134,9 +120,7 @@ Props follow the same rules as the body.
 - **Cues.** `beats` entries `{ f, who, do: 'sound', name, strength }`. Names come from `tools/sound_bank.py`: saw, chug, clack, flutter, crank, groan, sting, whoosh, boom, …
   - A silence can be the point: the rival's train has no sound.
 - **Extract and mix.** Pull the cues with `shot.mjs --cues audio/cues.json`, then run `sound.py`.
-- **`audio/music.json`.** The order is fixed: `playful_end` < `build` < `build_end` < `wait` < `see` < `urgent` < `so`.
-  - Values are seconds or `[line, word]`, with the word without its punctuation.
-  - Arc: teasing → rising → dead stop on the turn → back → driving → resolve chord on the last word.
+- **`audio/music.json`.** The music arc, REEL_DATA.md "Music".
 - **Targets** (`audio/levels.txt`):
 
   | | Target |
@@ -151,12 +135,10 @@ Props follow the same rules as the body.
 
 ## 9. Gates (4.3)
 
-Gates have three profiles (GATES.md). **Safety** and **quality** always block. **Reference** gates (measured from one reference short) block only with `--profile full`, for a film matched to that reference when Kai picks it; `--profile pilot` prints them as WAIVED.
+Commands, profiles and thresholds: GATES.md. Always pass `--profile` (the default is `full`); Kai picks it.
 
 - Show Kai the table: safety PASS, quality FAIL with a fix plan, reference FAIL with the reason.
 - Fix quality FAILs in data or kit. Fix measuring-tool gaps in the tool (`__dbg`), with a commit that says so.
-- After 2 rounds, stop and show Kai.
-  - Pilot A stopped on colour contrast, ink width and clear frames. Kai kept the approved look A, the designed ink and the held shots.
 
 ## 10. Deliver (◇5)
 
