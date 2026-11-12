@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import { ellipsoid, armPenetration, solveArm, limitArm, JOINTS, centreOfMass } from '../../styles/stick-man/engine/body.js';
+import { ellipsoid, armPenetration, solveArm, limitArm, limitBody, ROM, JOINTS, centreOfMass, balanceShift } from '../../styles/stick-man/engine/body.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 // two equal bones: elbow on the pole side, a target past reach is pulled in
@@ -70,4 +70,19 @@ test('centre of mass: a person standing straight has it on the centre line, abou
   const L = side(-1), R = side(1); R.elbow = V(0.73, 2.0, 0); R.hand = V(1.23, 2.0, 0);
   const c2 = centreOfMass({ head: V(0, 2.43, 0), trunk: V(0, 1.72, 0), L, R });
   assert.ok(c2.x > 0.01 && c2.x < 0.06, `shift ${c2.x.toFixed(3)} W`);
+});
+
+test('balance: a centre of mass behind the heels is moved forward over the feet; over them it is left alone', () => {
+  const foot = x => ({ heel: V(x, 0.022, -0.08), ankle: V(x, 0.022, 0), toe: V(x + 0.03, 0.022, 0.1) });
+  const feet = [foot(-0.2), foot(0.2)];
+  assert.equal(balanceShift(V(0, 1.3, 0.02), feet), null, 'over the feet');
+  const b = balanceShift(V(0, 1.3, -0.2), feet);
+  assert.ok(b && b.z > 0.1 && Math.abs(b.x) < 0.02, `shift ${JSON.stringify(b)}`);
+  // one foot lifted high: not standing, no correction
+  assert.equal(balanceShift(V(0, 1.3, -0.2), [foot(-0.2), { ...foot(0.2), heel: V(0.2, 0.4, -0.08), ankle: V(0.2, 0.4, 0), toe: V(0.23, 0.4, 0.1) }]), null);
+});
+
+test('joint ranges: spine and neck channels are held in their clinical ranges', () => {
+  const { Q, hits } = limitBody({ spine: { bend: 120, side: -60, twist: 10 }, neck: { nod: 10, tilt: 0, turn: 150 } });
+  assert.deepEqual([Q.spine.bend, Q.spine.side, Q.spine.twist, Q.neck.turn, hits], [ROM.bend[1], ROM.side[0], 10, ROM.turn[1], 3]);
 });

@@ -8,6 +8,21 @@
 import * as THREE from 'three';
 
 export const JOINTS = { raise: [-20, 180], swing: [-180, 60], elbow: [0, 145] };
+// the rest of the body's joint ranges (deg), clinical norms (AAOS): spine and neck channels as the pose gives them, hip
+// / knee / ankle as measured on the solved leg. The ankle's 40 is weight-bearing (a deep squat needs ~38; 20 is the
+// unloaded norm); past it the heel comes off the ground instead of the ankle bending further.
+export const ROM = { bend: [-25, 80], side: [-35, 35], twist: [-45, 45], nod: [-45, 45], tilt: [-45, 45], turn: [-70, 70],
+  hipFlex: [-20, 120], hipAbd: [-30, 45], knee: [0, 140], ankleDF: [-50, 40] };
+// the spine and neck channels held inside their ranges; returns the pose with them clamped and how many were out
+export function limitBody(Q = {}) {
+  let hits = 0; const o = { ...Q };
+  if (!PHYS.rom) return { Q: o, hits };
+  for (const [part, keys] of [['spine', ['bend', 'side', 'twist']], ['neck', ['nod', 'tilt', 'turn']]]) {
+    if (!Q[part]) continue; o[part] = { ...Q[part] };
+    for (const k of keys) if (typeof Q[part][k] === 'number') { const c = clamp(Q[part][k], ROM[k]); if (c !== Q[part][k]) hits++; o[part][k] = c; }
+  }
+  return { Q: o, hits };
+}
 // segment masses as shares of the whole body (Winter, Biomechanics and Motor Control of Human Movement, table 4.1):
 // a cartoon head is drawn big, but the body it moves is a person's, so balance uses a person's mass split
 export const MASS = { head: 0.081, trunk: 0.497, upper: 0.028, fore: 0.022, thigh: 0.100, shank: 0.0465, foot: 0.0145 };
@@ -17,11 +32,35 @@ export function centreOfMass(K) {
   const add = (p, w) => { c.addScaledVector(p, w); m += w; };
   add(K.head, MASS.head); add(K.trunk, MASS.trunk);
   for (const s of [K.L, K.R]) { add(mid(s.shoulder, s.elbow), MASS.upper); add(mid(s.elbow, s.hand), MASS.fore);
-    add(mid(s.hip, s.knee), MASS.thigh); add(mid(s.knee, s.ankle), MASS.shank); add(mid(s.ankle, s.toe), MASS.foot); }
+    add(mid(s.hip, s.knee), MASS.thigh); add(mid(s.knee, s.ankle), MASS.shank); add(mid(s.heel || s.ankle, s.toe), MASS.foot); }
   return c.multiplyScalar(1 / m);
 }
 // PHYS.on = false skips the contact solve (joint ranges still hold): only for a side-by-side proof, never in a reel
-export const PHYS = { on: true };
+export const PHYS = { on: true, rom: true, balance: true };
+// balance (rig B4): with both soles on the ground a body stands only if its centre of mass is over the area its feet
+// cover. Returns the horizontal shift (root space x, z, W) that brings it back inside, or null when it is inside or the
+// body is not standing (stepping, jumping, falling are not standing). feet: [{ heel, toe, ankle }], gnd
+export function balanceShift(com, feet, gnd = 0, { sole = 0.022, margin = 0.02 } = {}) {
+  // how much each foot carries the body: 1 on the ground, fading to 0 as it lifts 6 cm (a step or a jump), so the
+  // correction comes and goes smoothly instead of snapping when a foot leaves the ground
+  const k = Math.min(...feet.map(f => Math.max(0, Math.min(1, 1 - (Math.min(f.heel.y, f.toe.y, f.ankle.y) - sole - gnd - 0.012) / 0.1))));
+  if (k <= 0) return null;
+  const P = feet.flatMap(f => [[f.heel.x, f.heel.z], [f.toe.x, f.toe.z], [f.ankle.x, f.ankle.z]]);
+  P.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]), lo = [], up = [];
+  for (const p of P) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop(); lo.push(p); }
+  for (const p of [...P].reverse()) { while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], p) <= 0) up.pop(); up.push(p); }
+  const H = lo.slice(0, -1).concat(up.slice(0, -1)); if (H.length < 3) return null;
+  const c = [com.x, com.z], cx = H.reduce((a, p) => a + p[0], 0) / H.length, cz = H.reduce((a, p) => a + p[1], 0) / H.length;
+  // shrink the area by the margin so the answer lands a little inside, not on the edge
+  const S = H.map(([x, z]) => { const dx = cx - x, dz = cz - z, l = Math.hypot(dx, dz) || 1, k = Math.min(margin, l * 0.5) / l; return [x + dx * k, z + dz * k]; });
+  if (S.every((p, i) => cr(p, S[(i + 1) % S.length], c) >= 0)) return null;
+  let best = null;
+  for (let i = 0; i < S.length; i++) { const a = S[i], b = S[(i + 1) % S.length], ab = [b[0] - a[0], b[1] - a[1]], L2 = ab[0] ** 2 + ab[1] ** 2 || 1;
+    const t = Math.max(0, Math.min(1, ((c[0] - a[0]) * ab[0] + (c[1] - a[1]) * ab[1]) / L2)), q = [a[0] + ab[0] * t, a[1] + ab[1] * t], d = Math.hypot(q[0] - c[0], q[1] - c[1]);
+    if (!best || d < best.d) best = { d, x: q[0] - c[0], z: q[1] - c[1] }; }
+  return { d: best.d * k, x: best.x * k, z: best.z * k };
+}
 const clamp = (x, [a, b]) => Math.min(b, Math.max(a, x));
 
 // FK arm channels held inside the joint ranges; returns the clamped channels and how many were out of range
