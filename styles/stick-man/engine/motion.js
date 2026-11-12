@@ -16,7 +16,12 @@
 // and hat behind the body (overlapping action), overshoot and settle when it stops (follow-through), the hip's vertical
 // speed stretches the body and a landing squashes it (squash and stretch, volume kept), and a held pose breathes.
 // the kit's named poses (a film adds its own: act `poses`, or import this and assign)
+import { PHYS } from './body.js';
 export const MOTION_POSES = {};
+// gravity (rig B6): once a body leaves the ground nothing but gravity moves its centre, so between the first airborne
+// key and the landing key the height follows a parabola with g = 9.8 m/s2 and the travel a straight line at constant
+// speed, whatever keys an animator put in between. The time in the air is the animator's; the height it allows is not.
+export const G = 9.8, FPS = 30;
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 
 // ---------------------------------------------------------------- poses as flat channel maps
@@ -77,7 +82,21 @@ export function compileTrack(keys, poses, base) {
     out.push(k);
     if (k.hold) out.push({ ...k, f: k.f + k.hold, hold: 0, antic: 0, expr: undefined, look: undefined, held: true });
   }
+  // flights: a run of keys off the ground (pos.2 > 2 cm), from the key before it (on the ground) to the next key on the ground
+  out.flights = [];
+  for (let i = 0; i < out.length; i++) {
+    if (!((out[i].m['pos.2'] || 0) > 0.02) || (i && (out[i - 1].m['pos.2'] || 0) > 0.02)) continue;
+    let j = i; while (j < out.length && (out[j].m['pos.2'] || 0) > 0.02) j++;
+    if (j >= out.length) break;
+    const a = i ? out[i - 1] : out[i], b = out[j];                                  // from the last key on the ground (the push-off)
+    out.flights.push({ f0: a.f, f1: b.f, x0: a.m['pos.0'] || 0, y0: a.m['pos.1'] || 0, z0: a.m['pos.2'], x1: b.m['pos.0'] || 0, y1: b.m['pos.1'] || 0, z1: b.m['pos.2'] || 0 });
+  }
   return out;
+}
+// where gravity puts the body at frame f of a flight (Blender m)
+export function ballistic(fl, f) {
+  const T = (fl.f1 - fl.f0) / FPS, t = (f - fl.f0) / FPS, u = t / T, v0 = (fl.z1 - fl.z0) / T + G * T / 2;
+  return [fl.x0 + (fl.x1 - fl.x0) * u, fl.y0 + (fl.y1 - fl.y0) * u, fl.z0 + v0 * t - G * t * t / 2];
 }
 
 // ---------------------------------------------------------------- keyed value of every channel at frame f
@@ -103,6 +122,7 @@ export function keyed(track, f) {
     const d = Math.hypot(...[0, 1, 2].map(i => Bk.m[`${arm}.ik.${i}`] - A.m[`${arm}.ik.${i}`]));
     out[`${arm}.ik.1`] += ARC * d * Math.sin(Math.PI * u) * (A.m[`${arm}.ikw`] ?? 1);
   }
+  if (PHYS.on && PHYS.gravity !== false) for (const fl of track.flights || []) if (f > fl.f0 && f < fl.f1) { const [x, y, z] = ballistic(fl, f); out['pos.0'] = x; out['pos.1'] = y; out['pos.2'] = z; }
   return out;
 }
 const ARC = 0.15;

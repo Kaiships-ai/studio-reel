@@ -799,6 +799,7 @@ export function makeStick(spec) {
       const c = new THREE.Vector3(sl.cx, sl.y, sl.cz); bendPt(B, c);
       vols.push(ellipsoid(toRoot(c), qb.clone().multiply(spineFrame(B, Math.max(0, sl.y)).q), [sl.rx * kS, sl.ry * B.s, sl.rz * kS], 'torso'));
     }
+    const legs = {};
     for (const [side, sg] of [['L', -1], ['R', 1]]) {
       const shB = new THREE.Vector3(sg * TORSO.w * 0.40 * girth, shY, 0); bendPt(B, shB);
       const lim = limitArm(Q['arm' + side] || {}), sh = toRoot(shB), A = lim.A;
@@ -835,6 +836,42 @@ export function makeStick(spec) {
         if (!PHYS.rom || df <= ROM.ankleDF[1] + 0.5 || pass) break;
         ptc -= (df - ROM.ankleDF[1]) * DEG; ankleLift = 1;
       }
+      // the leg is a solid too (rig B5): a thigh or shin inside the trunk or the head turns its knee out round the
+      // hip-foot line (the foot stays planted) by the smallest angle that clears, as knees open in a deep squat
+      let legPen0 = 0, legPen = 0;
+      {
+        const w0 = armPenetration(hipJ, leg.joint, foot, vols, { limb: LIMB_R / W, handR: 0.03 });
+        if (w0 && !PHYS.on) legPen0 = legPen = w0.depth;
+        else if (w0) { legPen0 = w0.depth; const ax = foot.clone().sub(hipJ).normalize(), out = new THREE.Vector3(sg, 0, 0.3).applyQuaternion(qb);
+          let best = null;
+          for (let k = 1; k <= 36 && !best; k++) for (const sgn of [1, -1]) {
+            const P = kp.clone().applyAxisAngle(ax, sgn * k * 5 * DEG), r = ik(hipJ, foot, LIMB.thigh, P, SOFT.leg);
+            if (!armPenetration(hipJ, r.joint, foot, vols, { limb: LIMB_R / W, handR: 0.03 }) && (!best || r.joint.clone().sub(hipJ).dot(out) > best.joint.clone().sub(hipJ).dot(out))) best = r;
+            if (best && sgn === -1) break;
+          }
+          if (best) leg = best; else legPen = w0.depth; }
+      }
+      rig[side] = { shoulder: sh, elbow, hand, elbowFlex: flex, pen0: sol.pen0, pen: sol.pen, limits: lim.hits + sol.limits + (side === 'L' ? LB.hits : 0) };
+      legs[side] = { sg, hipJ, foot, leg, kp, ptc, toeO, heelO, ankleLift, legPen0, legPen };
+    }
+    // legs never pass through each other: two leg lines closer than two radii turn their knees apart (each away from the
+    // other), smallest angle first; crossed feet still cross, but one shin passes in front of the other
+    const segD = (p1, q1, p2, q2) => { // closest distance between two segments
+      const d1 = q1.clone().sub(p1), d2 = q2.clone().sub(p2), r = p1.clone().sub(p2), a = d1.dot(d1), e = d2.dot(d2), f = d2.dot(r), c = d1.dot(r), b = d1.dot(d2), den = a * e - b * b;
+      let s1 = den > 1e-9 ? Math.max(0, Math.min(1, (b * f - c * e) / den)) : 0, t1 = (b * s1 + f) / e;
+      if (t1 < 0) { t1 = 0; s1 = Math.max(0, Math.min(1, -c / a)); } else if (t1 > 1) { t1 = 1; s1 = Math.max(0, Math.min(1, (b - c) / a)); }
+      return p1.clone().addScaledVector(d1, s1).distanceTo(p2.clone().addScaledVector(d2, t1)); };
+    const legGap = () => { const A = legs.L, B = legs.R, lerp = (h, k, t) => h.clone().lerp(k, t);
+      const segs = X => [[lerp(X.hipJ, X.leg.joint, 0.35), X.leg.joint], [X.leg.joint, X.foot]];
+      let m = Infinity; for (const [p, q] of segs(A)) for (const [r, t] of segs(B)) m = Math.min(m, segD(p, q, r, t)); return m; };
+    const minGap = 2 * LIMB_R / W, gap0 = legGap(); let legHit = 0;
+    if (gap0 < minGap) legHit = minGap - gap0;
+    if (PHYS.on && gap0 < minGap) {
+      for (let k = 1; k <= 12 && legGap() < minGap; k++) for (const sd of ['L', 'R']) { const X = legs[sd], ax = X.foot.clone().sub(X.hipJ).normalize();
+        const P = X.kp.clone().applyAxisAngle(ax, -X.sg * k * 3 * DEG); X.leg = ik(X.hipJ, X.foot, LIMB.thigh, P, SOFT.leg); }
+    }
+    for (const [side, sg] of [['L', -1], ['R', 1]]) {
+      const { hipJ, foot, leg, ptc, toeO, heelO, ankleLift, legPen0, legPen } = legs[side];
       const lp = hose(hipJ, leg.joint, foot, ROUND.leg, 13);
       const toeL = foot.clone().add(toeO), heelL = foot.clone().add(heelO);
       const toe = toeL.clone().multiplyScalar(W);
@@ -847,9 +884,8 @@ export function makeStick(spec) {
       const hipFlex = Math.atan2(th.z, -th.y) / DEG, hipAbd = Math.atan2(sg * th.x, Math.hypot(th.y, th.z)) / DEG;
       const shin = foot.clone().sub(leg.joint).normalize(), soleD = toeL.clone().sub(heelL).normalize();
       const ankleDF = 90 - Math.acos(Math.max(-1, Math.min(1, -shin.dot(soleD)))) / DEG;
-      rig[side] = { hip: hipJ, knee: leg.joint, ankle: foot, toe: toeL, heel: heelL, shoulder: sh, elbow, hand, kneeFlex: leg.flex, elbowFlex: flex, footPitch: ptc / DEG,
-        hipFlex, hipAbd, ankleDF, heelUp: ankleLift,
-        pen0: sol.pen0, pen: sol.pen, limits: lim.hits + sol.limits + (side === 'L' ? LB.hits : 0) };
+      Object.assign(rig[side], { hip: hipJ, knee: leg.joint, ankle: foot, toe: toeL, heel: heelL, kneeFlex: leg.flex, footPitch: ptc / DEG,
+        hipFlex, hipAbd, ankleDF, heelUp: ankleLift, legPen0, legPen, legGap0: side === 'L' ? legHit : 0 });
     }
     // the skeleton in root space (W): pelvis, five points up the spine, the neck base, the head centre, the trunk's
     // centre; and the centre of mass of the whole body
@@ -884,7 +920,7 @@ export function makeStick(spec) {
       const r = S.rig[s];
       o[s] = { hip: w(r.hip), knee: w(r.knee), ankle: w(r.ankle), toe: w(r.toe), ...(r.heel ? { heel: w(r.heel) } : {}), shoulder: w(r.shoulder), elbow: w(r.elbow), hand: w(r.hand),
         kneeFlex: +r.kneeFlex.toFixed(2), elbowFlex: +r.elbowFlex.toFixed(2), footPitch: +r.footPitch.toFixed(2),
-        ...(r.hipFlex != null ? { hipFlex: +r.hipFlex.toFixed(1), hipAbd: +r.hipAbd.toFixed(1), ankleDF: +r.ankleDF.toFixed(1) } : {}),
+        ...(r.hipFlex != null ? { hipFlex: +r.hipFlex.toFixed(1), hipAbd: +r.hipAbd.toFixed(1), ankleDF: +r.ankleDF.toFixed(1), legPenCm0: +(r.legPen0 * W * 100).toFixed(2), legPenCm: +(r.legPen * W * 100).toFixed(2), legGapCm: +(r.legGap0 * W * 100).toFixed(2) } : {}),
         ...(r.pen0 != null ? { penCm0: +(r.pen0 * W * 100).toFixed(2), penCm: +(r.pen * W * 100).toFixed(2), limits: r.limits } : {}) };
     }
     if (S.chan) o.chan = S.chan;

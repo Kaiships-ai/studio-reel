@@ -36,7 +36,7 @@ export function centreOfMass(K) {
   return c.multiplyScalar(1 / m);
 }
 // PHYS.on = false skips the contact solve (joint ranges still hold): only for a side-by-side proof, never in a reel
-export const PHYS = { on: true, rom: true, balance: true };
+export const PHYS = { on: true, rom: true, balance: true, gravity: true };
 // balance (rig B4): with both soles on the ground a body stands only if its centre of mass is over the area its feet
 // cover. Returns the horizontal shift (root space x, z, W) that brings it back inside, or null when it is inside or the
 // body is not standing (stepping, jumping, falling are not standing). feet: [{ heel, toe, ankle }], gnd
