@@ -5,7 +5,7 @@
 // "canyon colour": afternoon sun, blue sky, saturated red-orange wall, violet shade); heat reads through the props.
 // setOpts.sky: 'day' (default, the approved look) | 'noon' | 'flat' (the two looks Kai did not pick, kept for other reels)
 // Story props (K.anim; keys via `set` beats):
-//   joint   hero joint on the blue right rail at y = 0: gap 0..1 (1 = 4 cm, 0 = touching), heat 0..1
+//   joint   hero joint on the blue right rail at y = 0: gap 0..1 (1 = 4 cm, 0 = touching), heat 0..1, light 0..1 (warm fill under a train)
 //   rtrack  the purple line: buckle 0..1 (a sideways snake, 1.4 m at 1 over 22 m round y = BK), heat 0..1
 //   board   thermometer + calendar: temp 0..1, month 0 = MAY .. 1 = JULY
 //   loco    blue 4-4-0 + coach on the blue line, facing -y: y (front y)
@@ -73,7 +73,10 @@ export async function build(stage, opts = {}) {
   const J = K.group([OX + RAIL_X, 0, 0]); J.name = 'joint';
   const heat = T.mats.heat.userData.rkHeat;
   J.userData.seenParts = T.hero.filter(h => h.side > 0).map(h => h.mesh);
+  // a warm fill for close shots under the train (key `light` 0..1): the sun never reaches under a loco
+  const JL = new K.THREE.PointLight(0xffd2a0, 0, 4, 2); JL.position.set(-0.4, 0.45, 0.6); J.add(JL);
   K.anim('joint', J, (f, v) => { const G = 0.04 * Math.max(0.005, v('gap', 1)), d = (G - 0.03) / 2; for (const h of T.hero) h.move(h.y1 < 0.01 ? -d : d);
+    JL.intensity = 3.5 * v('light', 0);
     const k = v('heat', 0); heat.heat.value = k; heat.spread.value = 0.35 + 1.25 * Math.min(1, k * 1.2); });
   // ---- story prop: the purple line buckles
   const rh = RT.mats.heat.userData.rkHeat;

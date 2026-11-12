@@ -173,7 +173,10 @@ export function playActor(track, F0, F1, opt = {}) {
   const springs = {}, hat = { p: new Spring(0.32, 0.28), r: new Spring(0.32, 0.28) }, sq = new Spring(0.6, 0.3);
   const frames = [];
   let prev = null, prev2 = null;
+  // a 'snap' key is a cut: the secondary layer starts fresh there (no arm or hat still swinging from the last shot's pose)
+  const cuts = new Set(track.filter(t => t.ease === 'snap').map(t => t.f));
   for (let f = F0; f <= F1; f++) {
+    if (cuts.has(f)) { for (const sp of Object.values(springs)) { sp.x = null; sp.v = 0; } for (const sp of [hat.p, hat.r, sq]) { sp.x = null; sp.v = 0; } prev = prev2 = null; }
     const k = keyed(track, f);
     // exaggeration: every pose channel pushed further from (or pulled back toward) the act's rest pose
     const E = 0.4 + 1.2 * CUR.exaggeration, rest = track[0].m;
