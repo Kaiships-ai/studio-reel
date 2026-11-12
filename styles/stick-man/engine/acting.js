@@ -295,7 +295,10 @@ export const TAKE_T = 3, TAKES = new Set(['shock', 'scream', 'panic', 'pain', 'f
 export function faceStateAt(track, f, seed, talk = null) {
   const k = exprKeyAt(track, f), i = track.indexOf(k), prev = track.slice(0, Math.max(0, i)).reverse().find(x => x.expr !== k.expr);
   const T = TAKES.has(String(k.expr).replace(/_[oO]$/, '')) ? FACE_SPEED.take : FACE_T;
-  const age = f - k.f, ramp = prev && age >= 0 && age < T + 6;
+  // the change starts at the first key of this run of the same expression: a second key that repeats it (a new body
+  // pose, same face) must not replay the change from the old face
+  let j = Math.max(0, i); while (j > 0 && track[j - 1].expr === k.expr) j--;
+  const age = f - track[j].f, ramp = prev && !track[j].cut && age >= 0 && age < T + 6;   // on a cut the new face is already there
   const u = ramp ? slowInOver(age / T, T < FACE_T ? 0.14 : 0.10) : 1, ug = ramp ? slowInOver(age / FACE_SPEED.gaze, 0) : 1;
   const ph = q => 6.283 * hash(seed, q);
   const life = { brow: 0.007 * Math.sin(6.283 * f / 47 + ph(81)), tilt: 2.2 * Math.sin(6.283 * f / 71 + ph(82)),

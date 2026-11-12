@@ -68,3 +68,16 @@ test('expression accent: anticipation, a slow rise, a hold, a release', () => {
   assert.ok(Math.abs(at(55) - at(65)) < 0.5, 'held');
   assert.equal(at(200), 0, 'released');
 });
+
+test('a second key with the same expression does not replay the change from the old face', () => {
+  const track = [{ f: -1e9, expr: 'laugh' }, { f: 100, expr: 'shock' }, { f: 103, expr: 'shock' }];
+  const s = faceStateAt(track, 104, 7);
+  assert.equal(s.b, 'shock');
+  assert.ok(s.u > 0.99 || s.a === 'shock', `at f104 the face is still ramping from ${s.a} (u ${s.u.toFixed(2)})`);
+});
+
+test('on a cut the new face is already there (no change carried over from the last shot)', () => {
+  const track = [{ f: -1e9, expr: 'laugh' }, { f: 100, expr: 'shock', cut: true }];
+  const s = faceStateAt(track, 101, 7);
+  assert.equal(s.a, 'shock'); assert.equal(s.u, 1);
+});

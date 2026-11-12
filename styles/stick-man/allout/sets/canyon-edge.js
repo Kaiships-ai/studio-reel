@@ -135,7 +135,7 @@ export async function build(stage, opts = {}) {
     const x0 = RX + (LIP - 0.6 - RX) * o, over = Math.max(0, LIP - x0);
     let x = x0 - 5 * t, z = -1.2 * over - 4.9 * t * t;
     if (t > 0) x = Math.min(x, faceAt(y - 2, y + LEN, z, z + HIGH) - HALF);
-    theirs.g.position.copy(B(x, y, z)); theirs.g.rotation.set(-0.5 * t, -0.08 * o, 0.3 * o + 0.6 * t);
+    theirs.g.position.copy(B(x, y, z)); theirs.g.rotation.set(0.5 * t, -0.08 * o, 0.3 * o + 0.6 * t);   // +x pitch = nose (toward -y) down
     theirs.LO.drive(30 - y); theirs.LO.lamp(v('lamp', 0)); });
   stage.addBounce([3.0, 3.0, 1.4], [1.0, 0.62, 0.42], 1.3, 7);
   atmos(K, K.root, { haze: { color: S.haze, near: 30, dist: 300, max: 0.66 }, deep: { z: -12, depth: 115, color: S.deep, max: 0.97 }, sun: { color: '#fff0d6', k: 0.4, dir: opts.sunDir || SUN_DIR }, squash: { from: 62, span: 17.5, L: 160 } });

@@ -192,7 +192,7 @@ async function buildAct(R, X) {
     const a = byName[name]; if (!a) throw new Error(`anim: no cast entry ${name}`);
     const ks = keys.map(k => ({ ...k, f: frameOf(k.at || k) })).sort((x, y) => x.f - y.f);
     a.anim = { track: compileTrack(ks, { ...MOTION_POSES, ...(R.poses || {}) }, { pos: a.st0.slice(), yaw: a.c.yaw ?? 0 }, R.style), keys: ks, frames: null };
-    for (const k of ks) { if (k.expr) a.exprs.push({ f: k.f, expr: k.expr, word: null }); if (k.look) a.focusSegs.push({ from: k.f, target: k.look }); }
+    for (const k of ks) { if (k.expr) a.exprs.push({ f: k.f, expr: k.expr, word: null, cut: k.ease === 'snap' }); if (k.look) a.focusSegs.push({ from: k.f, target: k.look }); }
   }
   const animFrame = (a, f) => {
     const A = a.anim, f0 = F0 - 30; A.frames ||= playActor(A.track, f0, F1 + 1);
