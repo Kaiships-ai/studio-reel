@@ -129,11 +129,11 @@ export async function build(stage, opts = {}) {
     return m === Infinity ? LIP : m; };
   // rloco off 0..1: it slides sideways off its bed to the lip and tips over the edge (no sinking into the ground: it only drops
   // once its centre overhangs). fall: seconds since it left the lip (key it with a linear ramp at real time): it keeps
-  // 5 m/s sideways, drops at g = 9.8, and the cliff face pushes it out (contact), nose tipping down.
+  // 8 m/s sideways, drops at g = 9.8, and the cliff face pushes it out (contact), nose tipping down.
   const HALF = 1.1, HIGH = 4.2, LEN = 20;
   K.anim('rloco', theirs.g, (f, v) => { const y = v('y', 30), o = Math.max(0, Math.min(1, v('off', 0))), t = Math.max(0, v('fall', 0));
     const x0 = RX + (LIP - 0.6 - RX) * o, over = Math.max(0, LIP - x0);
-    let x = x0 - 5 * t, z = -1.2 * over - 4.9 * t * t;
+    let x = x0 - 8 * t, z = -1.2 * over - 4.9 * t * t;
     if (t > 0) x = Math.min(x, faceAt(y - 2, y + LEN, z, z + HIGH) - HALF);
     theirs.g.position.copy(B(x, y, z)); theirs.g.rotation.set(0.5 * t, -0.08 * o, 0.3 * o + 0.6 * t);   // +x pitch = nose (toward -y) down
     theirs.LO.drive(30 - y); theirs.LO.lamp(v('lamp', 0)); });
