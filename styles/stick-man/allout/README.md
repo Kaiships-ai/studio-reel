@@ -22,7 +22,8 @@ lamps against a cool fill, a painted self-lit backdrop for skies and streets, an
 with their own keys.
 
 Sets: `lab-night` (also `setOpts: { mode: 'day' }`), `perth`, `micro`, `hall`, `pigpen`, `kitchen`, `clinic`,
-`stomach`, `nobel`. Film: `films/sf-ep01-allout/` (local data).
+`stomach`, `nobel`, `canyon-edge` (two rival lines on a ledge: the blue gapped line, the purple tight line that buckles
+over the lip; spread `EDGE_LOOK` for its approved light). Film: `films/sf-ep01-allout/` (local data).
 
 Round 3 (ep 1): one acted gag per line, the doubter as a thread, one hard cut ("Wait."). Engine fix that came with it:
 a director shot aimed at an actor used to re-pose the whole scene at the shot's first frame (bodies, props and effects
