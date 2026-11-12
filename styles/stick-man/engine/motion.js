@@ -206,7 +206,6 @@ export function playActor(track, F0, F1, opt = {}) {
     frames.push(o); prev2 = prev; prev = k;
   }
   // timing: a stylised film holds each drawing for 2 frames ("on twos", 12 a second) or 3; a simulation runs on ones
-  CUR = track.style || STYLE;                                          // keyed() above may have switched tracks
   const step = CUR.timing >= 0.95 ? 3 : CUR.timing >= 0.7 ? 2 : 1;
   if (step > 1) for (let i = 0; i < frames.length; i++) frames[i] = frames[i - (i % step)];
   return frames;
