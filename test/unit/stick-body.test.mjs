@@ -86,3 +86,16 @@ test('joint ranges: spine and neck channels are held in their clinical ranges', 
   const { Q, hits } = limitBody({ spine: { bend: 120, side: -60, twist: 10 }, neck: { nod: 10, tilt: 0, turn: 150 } });
   assert.deepEqual([Q.spine.bend, Q.spine.side, Q.spine.twist, Q.neck.turn, hits], [ROM.bend[1], ROM.side[0], 10, ROM.turn[1], 3]);
 });
+
+test('style dials: at 0.5 the kit plays as authored; exaggeration scales poses away from rest; timing steps frames', async () => {
+  const M = await import('../../styles/stick-man/engine/motion.js');
+  const keys = [{ f: 0, pose: { spine: { bend: 0 }, armR: { raise: 12 } } }, { f: 10, pose: { spine: { bend: 20 }, armR: { raise: 90 } } }];
+  const play = () => M.playActor(M.compileTrack(keys, {}, {}), 0, 12, { stiff: true });
+  const base = play();
+  Object.assign(M.STYLE, { exaggeration: 0.95 }); const big = play();
+  assert.ok(big[10]['armR.raise'] > base[10]['armR.raise'] + 20, `raise ${base[10]['armR.raise']} -> ${big[10]['armR.raise']}`);
+  Object.assign(M.STYLE, { exaggeration: 0.5, timing: 0.9 }); const twos = play();
+  assert.deepEqual(twos[5], twos[4], 'on twos: frame 5 repeats frame 4');
+  Object.assign(M.STYLE, { timing: 0.5 });
+  assert.deepEqual(play()[7], base[7], 'back at 0.5: as authored');
+});
