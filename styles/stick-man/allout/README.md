@@ -22,8 +22,8 @@ lamps against a cool fill, a painted self-lit backdrop for skies and streets, an
 with their own keys.
 
 Sets: `lab-night` (also `setOpts: { mode: 'day' }`), `perth`, `micro`, `hall`, `pigpen`, `kitchen`, `clinic`,
-`stomach`, `nobel`, `canyon-edge` (two rival lines on a ledge: the blue gapped line, the purple tight line that buckles
-over the lip; spread `EDGE_LOOK` for its approved light). Film: `films/sf-ep01-allout/` (local data).
+`nobel`, `canyon-edge` (two rival lines on a ledge: the blue gapped line, the purple tight line that buckles
+over the lip; spread `EDGE_LOOK` for its approved light; used by `examples/pilot-a`).
 
 Round 3 (ep 1): one acted gag per line, the doubter as a thread, one hard cut ("Wait."). Engine fix that came with it:
 a director shot aimed at an actor used to re-pose the whole scene at the shot's first frame (bodies, props and effects
@@ -43,5 +43,3 @@ Finish kit (from the private master study, 11/11; each is opt-in, an act without
 | costume | `import costume.js`; cast `costume: ['belt', 'holster', 'holster:L', 'hat:cowboy' \| 'hat:flat' \| 'hat:bowler']`; verb `lose_hat` (the hat flies off) | costume.js |
 | acting | act `actingAmp` / cast `amp` (all pose sizes); faceplant legs kick, skid, spin (face to camera) | engine/poses.js, acting.js, engine/cast.js |
 | sets | `K.planks`, `SURF.weathered`, `K.extras` (background people), `K.skyDome` (a sky that rides the camera), card `fog` | kit.js |
-| preset | `LOOKS.sunnyExterior` / `withLook(name, act)` | looks.js |
-| faces (proposal, off) | `import face_extras.js`; verb `face_extra` kind veins \| glow \| dirt \| sweat | face_extras.js |

@@ -28,8 +28,8 @@ export const SPECS = { KAI, TELLER, GUARD, ...Object.fromEntries(Object.entries(
 const SETS = { 'bank-lobby': () => import('../lib/sets/bank-lobby.js'), street: () => import('../lib/sets/street.js'),
   cutaway: () => import('../lib/sets/cutaway.js'), park: () => import('../lib/sets/park.js'), lab: () => import('../lib/sets/lab.js'),
   'halden-street': () => import('../lib/sets/halden-street.js'), 'halden-plaza': () => import('../lib/sets/halden-plaza.js'),
-  island: () => import('../lib/sets/island.js'), diner: () => import('../lib/sets/diner.js'), workshop: () => import('../lib/sets/workshop.js'),
-  classroom: () => import('../lib/sets/classroom.js'), harbour: () => import('../lib/sets/harbour.js') };
+  island: () => import('../lib/sets/island.js'),
+  classroom: () => import('../lib/sets/classroom.js') };
 const KEYV = new Set(['set', 'pulse', 'shake', 'fire', 'flash', 'sound']);
 const HAND_R = 0.040 * W;                                        // the hand dot's radius (cast.js)
 const THICK = { b1: 0.045, b2: 0.045, stack: 0.07, note: 0.003 };
@@ -175,7 +175,6 @@ async function buildAct(R, X) {
     // glasses: per cast entry, else per reel (R1.glasses), else the spec's own (Q2: rims make every face read as round eyes)
     const gl = c.glasses ?? X.glasses, S = makeStick(gl == null ? SPECS[c.spec] : { ...SPECS[c.spec], glasses: gl }); group.add(S.root);
     if (c.costume) { if (!HOOKS.costume) throw new Error(`cast ${name}: costume needs import '/styles/stick-man/allout/costume.js'`); HOOKS.costume(S, c.costume, { group, name }); }   // role layers (belt, holster, hat)
-    if (HOOKS.faceExtras) HOOKS.faceExtras(S);                      // allout/face_extras.js (proposal): hidden cards until a beat asks
     const posture = c.posture || 'stand', base = posture === 'sit' ? SIT : STAND;
     const pos = point(c.at).slice(); pos[2] = pos[2] || 0;
     const st = { name, pos, yaw: c.yaw ?? 0, posture, hold: { L: null, R: null }, handW: {}, sling: null, ampScale: c.amp ?? R.actingAmp ?? ACT_AMP };

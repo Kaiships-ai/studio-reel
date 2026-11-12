@@ -17,10 +17,7 @@ purple by the drop; props `joint` (gap, heat, light), `rtrack` (buckle, heat), `
 | `cutaway` | marble counter top close up (tabletop scale) | stack, hand, lifter | stack, plate, thermo, hand_grip | plate, stack, pack, thermo | none (tabletop, no cast) |
 | `park` | sunny park: grass, sandy path, hedge, round trees, bench, lamp, big sun up left | left, right, center, bench, walk_start, tree | sun, sky, bench_seat, lamp, ground | none | bench, tree-trunk, lamp |
 | `lab` | school science lab: chalkboard with notes, clock, conduit, projector, bench with flasks / burner / microscope, stools, sink, skeleton, lockers, fish tank, ceiling beams and lights | left, right, center, board, door | bench_top, board, flask_l, flask_r, window | none | bench, back-wall, shelf + dressing |
-| `diner` (.glb) | 1950s diner inside: checker floor, red counter with stools, booths, jukebox, neon DINER, menu board, pendant lamps, fans | left, right, center, counter, booth, door | counter_top, pie, sign, menu, jukebox | none | from the pieces |
-| `workshop` (.glb) | garage workshop: roller door, pegboard, blue car with bonnet up, workbench, tool chest, drums, tyres, ladder | left, right, center, car, bench | bonnet, bench_top, door, pegboard | none | from the pieces |
 | `classroom` (.glb) | primary classroom: plank floor, blackboard (middle kept clean for a reel's `chalk`), alphabet strip, clock, windows with plants, pinboard, cubbies, teacher's desk, pupils' desks, bookcase | same as `lab` | board, board_l, board_r, desk_top, window | none | from the pieces |
-| `harbour` (.glb) | fishing pier: plank deck on piles, PIER 9 warehouse, moored boat, dock crane, fish stall, cargo, bollards, sea | left, right, center, edge, stall | boat, crane, sea, door | none | from the pieces |
 
 Every set above is dressed with 25-60 registered pieces (`lib/sets/dress.js`); `halden-plaza` takes `use: ['concert']` for a
 rock stage behind the fountain (`PLACES.speakers`, `PLACES.stage`). Proof sheet of all 11 sets: `films/stick05-q4-levels/review/sets_sheet.jpg`

@@ -23,7 +23,7 @@ origin stays: buildings face -y with the facade on y = 0, vehicles point +x, the
 high: sink it with the road so the pavement top is z = 0). A procedural (non-image) colour would need a Cycles bake to
 an image first; the Halden kit has none (44 image materials, 93 flat).
 
-## New sets from scratch (Q4: diner, workshop, classroom, harbour)
+## New sets from scratch (`classroom`)
 
 `tools/interiors.py` models whole places headless from a factory scene (no source .blend): one collection
 `KIT_<set>_<part>` per real object (the room, its beams, the board, the window row, the counter, a stool...), low-poly
@@ -36,7 +36,7 @@ Blender -b --factory-startup --python styles/stick-man/tools/interiors.py --pyth
 
 In the set: `g.decor([...parts])` places parts modelled in place (origin, not solid, one dressing piece each; `<set>_room`
 casts no shadow so the ceiling never shades the room); furniture goes through `g.place()` (solid, auto COLLIDE). Pack
-`assets/interiors/`: 49 pieces, 1.45 MB, export 1 s; render 18-48 ms/frame page-side on the proof reel.
+`assets/interiors/`: 11 classroom pieces, .37 MB, export 1 s; render 18-48 ms/frame page-side on the proof reel.
 
 ## Framing presets
 
@@ -48,7 +48,7 @@ square fills the top of the frame; `angle` turns it down the street.
 
 | Rule | Limit | Halden pack |
 |---|---|---|
-| One .glb | <= 1.5 MB (the exporter decimates until it fits: `--max-kb`) | largest `diner.glb` 619 KB (text signs = 12 k tris) |
+| One .glb | <= 1.5 MB (the exporter decimates until it fits: `--max-kb`) | largest Halden `diner.glb` 619 KB (text signs = 12 k tris) |
 | One pack (`assets/<pack>/`) | <= 10 MB | 18 pieces, 2.55 MB |
 | Textures | <= 512 px long side, JPEG inside the .glb (no alpha: grates and cut-outs come out opaque) | 7-8 maps a building |
 | No third-party models without a note in `THIRD_PARTY_NOTICES.md` | | Halden kit is our own (`records/2026-11-10-city`) |

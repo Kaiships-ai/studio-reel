@@ -1,6 +1,6 @@
 # sound_music.py: the stick-man music bed, a light bouncy cartoon-explainer underscore (pizzicato plucks, soft staccato bass,
 # shaker / rim / soft kick, a glock). Original and synthesized. Every section starts on a spoken word from words.json, so the bed is
-# a pure function of the timing (fixed seed for the noise). Sections for stick01: A playful (0 → l05 "About"), build (→ l06 "Wait",
+# a pure function of the timing (fixed seed for the noise). Sections (written for the first reel): A playful (0 → l05 "About"), build (→ l06 "Wait",
 # dead stop there), B light + curious (l07 "You" → 21 s), urgent (21 s → l10 "So"), resolve (→ a final chord on the last word).
 import numpy as np
 from sound_dsp import SR, NOTE, lp, hp, bp, ts, norm, adsr, osc, put, sat, room

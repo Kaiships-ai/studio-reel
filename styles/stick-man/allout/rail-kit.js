@@ -1,4 +1,4 @@
-// Rail kit: shared builders for the railroad-canyon sets (canyon-track, canyon-bridges, station, railcar).
+// Rail kit: shared builders for the railroad-canyon sets (canyon-edge).
 // Blender metres (x right, y into the set, z up), allout look: physically lit, bevelled, never inked.
 //   track(K, o)            ties, steel rails with a real profile, tie plates + spikes, joint bars + bolts, instanced ballast
 //   loco(K, o)             a 4-4-0 American steam locomotive + tender; { group, drive(m), lamp(k), funnel }
