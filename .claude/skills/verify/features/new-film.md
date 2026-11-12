@@ -1,7 +1,7 @@
 # New film
 
-A user starts a reel with one command and gets `films/<name>/` copied from the starter: a working film (one scene,
-`src/ch/c1_hook.js`, from the hook to the CTA, with shared props in `src/ch/c0_props.js`) with the presenter and
+A user starts a reel with one command and gets `films/<name>/` copied from the starter: a working film (two chapters,
+`hook` and `cta`, both in `src/ch/c1_hook.js`, with shared props in `src/ch/c0_props.js`) with the presenter and
 Clawd that renders as-is. The presenter comes from `src/character.js` (see [Presenter](./presenter.md)).
 
 ## Sub-features

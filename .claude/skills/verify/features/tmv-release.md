@@ -19,8 +19,8 @@ files minus `[tmv_exclude]`, with each `tmv/<path>` replacing or adding `<path>`
 
 ## Driving it
 
-- `node release/build.mjs --tier tmv --dry-run` → `✓ tmv: … every check passed`; `--dry-run` without `--tier` → Starter
-  and Pro ✓ as before.
+- `node release/build.mjs --tier tmv --dry-run` → `✓ tmv: … every check passed`; `--dry-run` without `--tier` → Starter,
+  Pro and TMV ✓.
 - Planted break: commit a file under `styles/<any shipped style>/` containing `Clawd` on a scratch branch → `✗ tmv: 1
   problem(s)`, `… not ours to sell ("clawd")`.
 - Story CLI from the built zip, in an empty folder: `node <unzipped>/tmv-studio/.claude/skills/story-maintenance/scripts/story.js

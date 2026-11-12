@@ -7,7 +7,7 @@ tools resolved by `kit/env.mjs`.
 
 ## Sub-features
 
-- `setup.install`: npm ci (only when `package-lock.json` changed), Playwright headless shell, a WebGL probe, then a
+- `setup.install`: npm ci (only when `node_modules/` is missing or `package-lock.json` changed), Playwright headless shell, a WebGL probe, then a
   test render of `kit/check-reel` through `video.mjs` + `mux.mjs`, checked with ffprobe; records `pixi.lock`'s hash in
   `.pixi/studio-installed`.
 - `setup.idempotent`: a second `install` skips npm and the test render; the browser step runs again (a few seconds).

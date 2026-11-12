@@ -1,6 +1,6 @@
 ---
 name: verify
-description: Prove a change to a kai-hand-draw reel (films/<name>/) or to the reel tooling works, fast. Default is a draft verify (270x480 @ 8 fps, about 1 s of wall time per second of reel) that fails on page errors, missing vo() words, wrong length, missing audio, frozen, black or empty scenes, plus a stills sheet to look at. Full 1080x1920 render and verify only when the user says "full". Use after editing a chapter, script, cues, the engine, or before handing a reel over.
+description: Prove a change to a kai-hand-draw reel (films/<name>/) or to the reel tooling works, fast. Default is a draft verify (270x480 @ 8 fps, about 1 s of wall time per second of reel) that fails on page errors, missing vo() words, wrong length, missing audio, frozen, black or empty scenes, plus a stills sheet to look at. A real render is medium 720x1280; 1080x1920 only when the user says "full". Use after editing a chapter, script, cues, the engine, or before handing a reel over.
 ---
 
 # verify (studio-reel)
@@ -82,22 +82,26 @@ Then **open `out/verify/sheet.jpg` with Read** (6 stills spread over the reel, 2
 The checks do not judge the look: an off-model character, a label in the caption band or a wrong prop is only
 visible there. Say what you saw.
 
-## Drive: full (only when the user says "full")
+## Drive: render (medium by default; full only when the user says "full")
 
 ```sh
 node styles/kai-hand-draw/tools/make.mjs films/<name> render verify     # buyers: pixi run make films/<name> render verify
 ```
 
+That renders `medium`: 720x1280 at the film's fps, a fast encode. 1080x1920 needs the user's go first:
+`node core/approve-full.mjs films/<name> --by "<who asked, when>"`, then `REEL_PRESET=full make.mjs films/<name> render
+verify`. Without the approval file every render tool stops with "needs the user's go". Never approve it yourself.
+
 `--no-asr` skips the Whisper keyword check (it then shows `–`, which is not a pass), `--no-camscan` the camera scan.
 
-The real pipeline: 1080x1920 @ 30 fps, BT.709, −14 LUFS, camscan, Whisper on the CTA keyword, frames in
-`out/check/final_*.jpg`. Minutes, not seconds. Never run it on your own initiative.
+The real pipeline: BT.709, −14 LUFS, camscan, Whisper on the CTA keyword, frames in `out/check/final_*.jpg`.
+Minutes, not seconds. See `features/full-render.md`.
 
 ## Evidence
 
 Draft: `films/<name>/out/verify/` → `draft.mp4` (small, with sound), `sheet.jpg`, `report.json` (`pass`,
 `seconds`, every check with its measured detail). The draft also writes the `draft` step of `films/<name>/job.json`
-(`running` with `pct` in tens, then `done` or `failed`; schema in `core/README.md`). Full: `films/<name>/<name>.mp4` and `out/check/verify.json`.
+(`running` with `pct` in tens, then `done` or `failed`; schema in `core/README.md`). Render: `films/<name>/<name>.mp4` and `out/check/verify.json`.
 `films/` is git-ignored, so evidence never lands in a commit. Quote the ✓/✗ lines and the paths in the reply.
 
 A proof is the real page drawn by the real engine: never stub `vo()`, `chapter()` or `render()`, and never

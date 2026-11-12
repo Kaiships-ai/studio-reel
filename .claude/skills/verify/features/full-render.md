@@ -12,9 +12,10 @@ says "full".
   at most 15 s, fast encode; verify checks that size and skips the camera scan.
 - `full.medium-default`: no preset renders `medium`, 720×1280 at the film's fps, the whole film, a fast encode; verify
   checks 720×1280 and still runs the camera scan. `reel.mjs` (any style) renders medium too.
-- `full.gate`: `full` (1080×1920, lossless frames) renders only when the film has `APPROVED-FULL`, written by
+- `full.gate`: `full` (1080×1920; JPEG 95 frames, crf 19 mux) renders only when the film has `APPROVED-FULL`, written by
   `node core/approve-full.mjs <film> --by "<who asked, when>"` after the user asks for it; without it every render
-  tool stops with "needs the user's go". The TMV kit's `episode/make.mjs --full` stops the same way.
+  tool stops with "needs the user's go". The TMV kit's `episode/make.mjs --full` stops the same way, and with
+  `APPROVED-FULL` it still stops: a full-quality episode render is not in that kit yet.
 
 ## How to get to it (user POV)
 

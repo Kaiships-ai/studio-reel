@@ -162,12 +162,12 @@ const JOURNEYS = {
       rmSync(COPY, { recursive: true, force: true }); cpSync(film, COPY, { recursive: true, filter: s => !/\/out$/.test(s) && !s.includes(`/${name}.`) && !s.includes(`/${name}-cover`) });
       // the exit code also judges this film's own pacing and text, which is not what this step proves
       const r = node('core/render/reel.mjs', COPY, 'audio', 'render', 'check', '--no-asr', '--cover', '1');
-      for (const row of ['✓ 1080×1920 at 30 fps', '✓ BT.709 limited range', '✓ loudness −14 ± 1 LUFS']) has(r, row);
+      for (const row of ['✓ 720×1280 at 30 fps', '✓ BT.709 limited range', '✓ loudness −14 ± 1 LUFS']) has(r, row);
       if (!existsSync(`${COPY}/verify-run-copy.mp4`) || !existsSync(`${COPY}/verify-run-copy-cover.png`)) throw new Error('no mp4 or cover');
     });
   },
   // The paid TMV kit, as a buyer gets it: build the zip, unzip into a fresh folder (a space in its path), install,
-  // whose test render draws 2 s of the sample, then a full render of a copy; then the character designer and planted breaks.
+  // whose test render draws 2 s of the sample, then the ci-smoke episode; then the character designer and planted breaks.
   async 'tmv-episode'() {
     const BOX = join(process.platform === 'win32' ? tmpdir() : '/tmp', `tmv verify ${RUN}`), KIT = join(BOX, 'tmv-studio');
     let zip = flag('zip');
