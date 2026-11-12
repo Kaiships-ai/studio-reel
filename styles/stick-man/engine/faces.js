@@ -164,7 +164,7 @@ function eye(g, F, ex, s, ey, blink, rim = false) {
   }
   const top = ey + ry * (1 - 2 * lid), lowK = F.low || 0, white = Math.max(0, Math.min(1, F.white || 0));
   const st = 0.022, look = (F.gx || 0) + (F.cross || 0) * s;
-  const ox = look * rx * 0.30 * (1 - white);                                              // a dot eye slides under its lid
+  const ox = look * rx * 0.30 * (1 - white), oy = (F.gy || 0) * ry * 0.30 * (1 - white);  // a dot eye slides under its lid
   const cheekY = ey - ry - ry * 0.9 + lowK * ry * 0.75;
   g.save();
   if (lid > 0.001) { g.beginPath(); g.moveTo(ex - 0.3, top - 0.3 * slope); g.lineTo(ex + 0.3, top + 0.3 * slope); g.lineTo(ex + 0.3, ey - 0.3); g.lineTo(ex - 0.3, ey - 0.3); g.closePath(); g.clip(); }
@@ -173,12 +173,12 @@ function eye(g, F, ex, s, ey, blink, rim = false) {
     const pr = Math.max(F.pupil ?? 0.02, 0.026), ax = rx + (pr - rx) * white, ay = ry + (pr * 1.08 - ry) * white;   // the oval
     const room = Math.max(0, rx * 1.15 - ax);                                              // shrinks to a pupil, no white
     g.beginPath(); g.ellipse(ex + ox + look * room * 0.8 * white, ey - 0.003 * white, ax, ay, 0, 0, Math.PI * 2); g.fillStyle = INK; g.fill();
-  } else { g.beginPath(); g.ellipse(ex + ox, ey, rx, ry, 0, 0, Math.PI * 2); g.fillStyle = INK; g.fill(); }
+  } else { g.beginPath(); g.ellipse(ex + ox, ey + oy, rx, ry, 0, 0, Math.PI * 2); g.fillStyle = INK; g.fill(); }
   if (white > 0.01 && !rim) {
     const ix = Math.max(0.001, (rx - st) * white), iy = Math.max(0.001, (ry - st) * white), p0 = F.pupil ?? 0.02;
     g.beginPath(); g.ellipse(ex + ox, ey, ix, iy, 0, 0, Math.PI * 2); g.fillStyle = WHITE; g.fill();
     const pr = p0 + (Math.min(rx, ry) - st - p0) * (1 - white), room = Math.max(0, rx - st - pr - 0.004);
-    g.beginPath(); g.ellipse(ex + ox + look * room * 0.8, ey - 0.003, pr, pr * 1.08, 0, 0, Math.PI * 2); g.fillStyle = INK; g.fill();
+    g.beginPath(); g.ellipse(ex + ox + look * room * 0.8, ey - 0.003 + (F.gy || 0) * room * 0.8, pr, pr * 1.08, 0, 0, Math.PI * 2); g.fillStyle = INK; g.fill();
   }
   g.restore();
   // the lid: a thick straight stroke, longer than the eye (fades in from nothing so a ramp has no pop)
@@ -290,6 +290,8 @@ const REST_OPEN = { o: 0.40, o_big: 0.55, grin: 0.2, big: 0.55, big_open: 0.8, o
   teeth_grin: 0.25, teeth_open: 0.55, sad_open: 0.3, wail: 0.7, open: 0.35, open_skew: 0.35, open_frown: 0.25, bar: 0.15 };
 const ROUND = { o: 1, o_big: 1, scream: 0.6, scream_small: 0.6, sleep: 0.5 };
 const NUM = ['rx', 'ry', 'lid', 'lidTilt', 'lidA', 'low', 'white', 'pupil', 'gx', 'cross', 'bw', 'mw', 'mx', 'my', 'curve', 'rest', 'round'];
+const GAZE = new Set(['gx', 'cross']);
+export const GAZE_ARC = { k: 0.45 };   // how far a pupil crossing the eye dips at the middle of its move (share of its room)
 export function faceParams(name) {
   const E = EXPR[name] || EXPR.neutral, S = E.skin || {}, [bt, bh0, ba = 0, bl = 0, br = 0] = E.brow, bh = bh0 - BROW_DROP;
   return { eye: E.eye, rx: E.rx, ry: E.ry, lid: E.lid || 0, lidTilt: E.lidTilt || 0, lidA: E.lidA || 0, low: E.low || 0,
@@ -305,7 +307,11 @@ const LIDDED = new Set(['oval']);
 export function mixFace(st) {
   const A = faceParams(st.a), B = faceParams(st.b ?? st.a), u = st.u ?? 1, uc = Math.max(0, Math.min(1, u)), L = st.life || {};
   const m = (x, y) => x + (y - x) * u, F = { ...B };
-  for (const k of NUM) F[k] = m(A[k], B[k]);
+  // the eyes move on their own clock (st.ug, a 3-frame saccade) and along an arc, not a straight line: a pupil crossing
+  // from one side to the other dips a little at the middle, as an eyeball rolls (asset 2.6)
+  const ug = st.ug ?? u, mg = (x, y) => x + (y - x) * ug;
+  for (const k of NUM) F[k] = GAZE.has(k) ? mg(A[k], B[k]) : m(A[k], B[k]);
+  F.gy = -GAZE_ARC.k * Math.min(1, Math.abs(B.gx - A.gx) + 0.5 * Math.abs(B.cross - A.cross)) * Math.sin(Math.PI * Math.max(0, Math.min(1, ug)));
   F.white = Math.max(0, Math.min(1, F.white)); F.bw = Math.max(0.6, F.bw);
   F.brow = A.brow.map((x, i) => m(x, B.brow[i]));
   F.skin = Object.fromEntries(Object.keys(A.skin).map(k => [k, Math.max(0, Math.min(1, A.skin[k] + (B.skin[k] - A.skin[k]) * uc))]));
@@ -429,6 +435,7 @@ const hashKey = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) h 
 // One figure's face: its own canvas (redrawn only when what it shows changes) and its mark cards.
 export function faceRig(headW, opt = {}) {
   const cv = document.createElement('canvas'); cv.width = cv.height = 512; const g = cv.getContext('2d', { willReadFrequently: true });
+  const off = document.createElement('canvas'); off.width = off.height = 512;
   const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
   const group = new THREE.Group(), cards = {};
   // measurement for __dbg (the forensic mouth numbers): dark mouth area (W^2, ink pixels below the eyes) and the drawing key
@@ -442,8 +449,8 @@ export function faceRig(headW, opt = {}) {
     tex, group, stats,
     // marks: [[kind, age]], cam: camera position (three world) or null; F (optional) = a mixed face from mixFace(): drawn
     // instead of the named expression (redrawn whenever one of its numbers moves, i.e. a new drawing per frame of a change)
-    // slide = [dx, dy, alpha] (W units): the flat 2D face (cast.js FACE_2D) - the whole drawing slides across the head disc
-    // as the head turns, clipped by the disc's edge, never wrapped round a sphere; alpha 0 = the back of the head
+    // slide = [yaw (rad), dy (W), alpha]: the flat 2D face (cast.js FACE_2D) turned round the ball of the head by yaw,
+    // strip by strip, clipped by the head's outline; alpha 0 = the back of the head
     draw(expr, blink, t, marks, cam, F = null, slide = null) {
       const E = EXPR[expr] || EXPR.neutral, live = !!(E.skin?.tears || F?.skin?.tears > 0.03);
       const fk = F ? JSON.stringify(F, (n, v) => typeof v === 'number' ? Math.round(v * 1000) / 1000 : v) : expr;
@@ -451,14 +458,28 @@ export function faceRig(headW, opt = {}) {
       const k = `${fk}|${blink}|${live ? Math.floor(t / 2) : 0}|${sl ? sl.join(',') : ''}`;
       if (k !== key) {
         key = k;
-        const paint = sh => {
-          g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 512, 512); g.setTransform(512, 0, 0, -512, 256, 256);
-          if (sh) { if (sh[2] <= 0.01) return; g.save(); g.beginPath(); g.ellipse(0, 0, 0.462, 0.432, 0, 0, Math.PI * 2); g.clip(); g.translate(sh[0], sh[1]); g.globalAlpha = sh[2]; }
-          if (F) drawFaceState(g, F, blink, t, opt); else drawFace(g, expr, blink, t, opt);
-          if (sh) g.restore();
-        };
-        paint(null); stats.mouth = darkMouth(); stats.key = k.length > 64 ? hashKey(k) : k;   // measured on the face itself, not where it slid
-        if (sl && (sl[0] || sl[1] || sl[2] < 1)) paint(sl);
+        const paint = () => { g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 512, 512); g.setTransform(512, 0, 0, -512, 256, 256);
+          if (F) drawFaceState(g, F, blink, t, opt); else drawFace(g, expr, blink, t, opt); };
+        paint(); stats.mouth = darkMouth(); stats.key = k.length > 64 ? hashKey(k) : k;   // measured on the face itself, not where it turned
+        if (sl && (sl[0] || sl[1] || sl[2] < 1)) {
+          // the face drawn on the ball of the head (asset 2.4): each vertical strip of the flat drawing sits at its own
+          // longitude, turned by the face's yaw (sl[0], rad), so features squeeze as they go round, the far eye slides
+          // behind the edge and fades, the near one stays: a profile, not a drawing sliding off a disc
+          off.getContext('2d').clearRect(0, 0, 512, 512); off.getContext('2d').drawImage(cv, 0, 0);
+          g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 512, 512);
+          if (sl[2] > 0.01) {
+            g.save(); g.beginPath(); g.ellipse(256, 256, 0.462 * 512, 0.432 * 512, 0, 0, Math.PI * 2); g.clip();
+            const R = 0.462, N = 120, px = u => 256 + 512 * u, dyp = -512 * sl[1];
+            for (let i = 0; i < N; i++) {
+              const u0 = -R + 2 * R * i / N, u1 = u0 + 2 * R / N, a0 = Math.asin(u0 / R) + sl[0], a1 = Math.asin(Math.min(1, u1 / R)) + sl[0];
+              const z = Math.cos((a0 + a1) / 2); if (z < 0.08) continue;
+              const x0 = px(R * Math.sin(a0)), x1 = px(R * Math.sin(a1)); if (x1 - x0 < 0.05) continue;
+              g.globalAlpha = Math.min(1, (z - 0.08) / 0.25) * sl[2];
+              g.drawImage(off, px(u0), 0, px(u1) - px(u0), 512, x0, dyp, x1 - x0 + 0.6, 512);
+            }
+            g.restore();
+          }
+        }
         tex.needsUpdate = true;
       }
       for (const list of Object.values(cards)) for (const m of list) m.visible = false;

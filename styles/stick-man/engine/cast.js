@@ -653,8 +653,10 @@ export function makeStick(spec) {
       head.updateWorldMatrix(true, false); _camL.copy(B(...P.cam)); head.worldToLocal(_camL);
       const d = _camL.lengthSq() > 1e-8 ? _camL.normalize() : _camL.set(0, 0, 1);
       const yaw = Math.atan2(d.x, d.z) - (P.look || 0) * LOOK_RAD, el = Math.asin(Math.max(-1, Math.min(1, d.y))) + (P.look_v || 0) * 0.12;
-      const vis = Math.max(0, Math.min(1, (Math.cos(yaw) - 0.22) / 0.3));   // gone a little before profile: the drawing never lands on hair at the side
-      slide = [-0.40 * Math.sin(yaw), -0.40 * Math.sin(el) * HEAD_H, vis];
+      // the face turns 80% as far as the skull (the cartoon cheat that keeps it on the ball in profile, approved at 1.3);
+      // each feature hides itself as it goes round the edge, the whole face only at the back of the head
+      const vis = Math.max(0, Math.min(1, (Math.cos(yaw) + 0.35) / 0.3));
+      slide = [-0.8 * yaw, -0.40 * Math.sin(el) * HEAD_H, vis];
       card2d.visible = true; card2d.position.copy(d).multiplyScalar(HA * 1.02); card2d.lookAt(B(...P.cam));
     } else card2d.visible = false;
     face.visible = !FACE_2D.on || !P.cam;

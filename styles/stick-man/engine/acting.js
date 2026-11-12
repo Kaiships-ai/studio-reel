@@ -289,12 +289,16 @@ export function visemeTrack(words, fps, lines) {
 // small overshoot (every frame a new drawing), the eyes squeeze and the mouth gasps through the swap (faces.js mixFace);
 // in a hold the brows, lids and mouth width drift on slow seeded sines, so a held face is alive but never twitches.
 export const FACE_T = 10;
+// a take (asset 2.5): a sudden face (a fright, a scream, a jolt of pain, a flash of rage) lands in 3 frames, not 10, so
+// it hits on the same frame as the body's jolt; the eyes (gaze) always move in 3 frames, ahead of the rest of the face
+export const TAKE_T = 3, TAKES = new Set(['shock', 'scream', 'panic', 'pain', 'furious', 'angry']), FACE_SPEED = { take: TAKE_T, gaze: 3 };
 export function faceStateAt(track, f, seed, talk = null) {
   const k = exprKeyAt(track, f), i = track.indexOf(k), prev = track.slice(0, Math.max(0, i)).reverse().find(x => x.expr !== k.expr);
-  const age = f - k.f, ramp = prev && age >= 0 && age < FACE_T + 6;
-  const u = ramp ? slowInOver(age / FACE_T, 0.10) : 1;
+  const T = TAKES.has(String(k.expr).replace(/_[oO]$/, '')) ? FACE_SPEED.take : FACE_T;
+  const age = f - k.f, ramp = prev && age >= 0 && age < T + 6;
+  const u = ramp ? slowInOver(age / T, T < FACE_T ? 0.14 : 0.10) : 1, ug = ramp ? slowInOver(age / FACE_SPEED.gaze, 0) : 1;
   const ph = q => 6.283 * hash(seed, q);
   const life = { brow: 0.007 * Math.sin(6.283 * f / 47 + ph(81)), tilt: 2.2 * Math.sin(6.283 * f / 71 + ph(82)),
     lid: 0.05 * (0.5 + 0.5 * Math.sin(6.283 * f / 59 + ph(83))), mw: 0.05 * Math.sin(6.283 * f / 37 + ph(84)) };
-  return { a: ramp ? prev.expr : k.expr, b: k.expr, u, life, talk: talk ? talk(f) : null, key: k };
+  return { a: ramp ? prev.expr : k.expr, b: k.expr, u, ug, life, talk: talk ? talk(f) : null, key: k };
 }
