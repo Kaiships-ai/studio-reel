@@ -278,8 +278,9 @@ export function compilePose(name, p, st, C) {
     // a path that passes close by the shoulder folds the elbow fast (the forearm whips round): slow that move down
     const from = ph && ph.until > t0 ? ph.at : r, sh = [sg * 0.228, 2.0, 0], dv = q.map((x, i) => x - from[i]), dl = Math.hypot(...dv) || 1;
     const u = clamp(dv.reduce((a2, x, i) => a2 + x * (sh[i] - from[i]), 0) / (dl * dl), 0, 1), near = Math.hypot(...sh.map((x, i) => x - (from[i] + dv[i] * u)));
-    const hf = Math.round(clamp(5 + 9 * far, 8, 18) + (near < 0.45 ? 14 * (0.45 - near) / 0.45 + 3 : 0));   // the hand is there within ~half a second
-    owners.push({ chan: 'hand' + side, start: t0 + LAG_A, fade: hf, smooth: true, fn: f => {
+    const hf = spec.handFade ?? Math.round(clamp(5 + 9 * far, 8, 18) + (near < 0.45 ? 14 * (0.45 - near) / 0.45 + 3 : 0));   // the hand is there within ~half a second
+    // (spec.handFade: a strike that must land in a few frames, a punch, sets its own hand fade and its own elbow poles)
+    owners.push({ chan: 'hand' + side, start: t0 + (spec.fastHands ? 0 : LAG_A), fade: hf, smooth: !spec.fastHands, fast: !!spec.fastHands, fn: f => {
       const b = bodyAt(f, LAG_A), B = bodyAt(f).o, hA = b.k.hands?.[side] || hs0, hB = b.k.handsB?.[side];   // targets ride the body as it is now
       let l = where(hA, B);
       if (hB) l = l.map((x, i) => lerp(x, where(hB, B)[i], b.k.u));

@@ -405,6 +405,13 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1
   if (ao > 0) { const aoPass = new GTAOPass(scene, camera, width, height); aoPass.blendIntensity = ao;
     aoPass.updateGtaoMaterial({ radius: aoRadius, distanceExponent: 1.5, thickness: 1.0, scale: 1.0, samples: 16 });
     aoPass.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 16 });
+    // soft fx sprites (flames, puffs) must not enter the AO g-buffer: drawn there with the pass's normal override they are
+    // solid quads, and the AO darkens a rectangle round every flame (Kai caught it on kai-chilli v3)
+    const gbuf = aoPass.renderOverride.bind(aoPass);
+    aoPass.renderOverride = (...a) => {
+      const hid = []; scene.traverse(o => { if (o.visible && (o.isSprite || o.userData.noPrepass || o.material?.userData?.noPrepass)) { o.visible = false; hid.push(o); } });
+      gbuf(...a); for (const o of hid) o.visible = true;
+    };
     composer.addPass(aoPass); stage.ao = aoPass; }
   const shaftPass = stage.shafts = new ShaftPass(width, height, camera, sun, nrt.depthTexture, { dens: shafts, maxD: 22, g: 0.35, k: shaftK });
   shaftPass.enabled = shafts > 0;

@@ -12,7 +12,7 @@ import { createCamera } from './camera.js';
 import { planShots } from './shotplan.js';
 import { createCaptions } from './captions.js';
 import { ACT, PROPV, MAKE, keyTracks } from './verbs_fx.js';
-import { POSE_VERBS } from './poses.js';
+import { POSE_VERBS, POSES } from './poses.js';
 import * as EXTRAS from '../lib/cast/extras.js';
 import { PHYS } from '../lib/props/physfx.js';
 import { STORY } from '../lib/props/story.js';
@@ -90,8 +90,8 @@ const HAND_FIR_POSE = [0.15, 0.15, 0.14, 0.13, 0.12, 0.10, 0.09, 0.07, 0.05];
 function chain(list, f, val, env, hand = false) {
   let i = list.length - 1; while (i > 0 && list[i].start > f) i--;
   // a hand never changes owner in under HAND_FADE frames (a fade of 0 is a cut-in and stays one)
-  const go = j => { const v = val(list[j].fn(f, env), j); const o = list[j]; const fd = hand && o.fade ? Math.max(HAND_FADE, o.fade) : o.fade || 0;
-    if (j > 0 && fd > 0 && hand && f - o.start < fd * 1.35 + 1) return mixHand(go(j - 1), v, (f - o.start + 1) / (fd + 1));
+  const go = j => { const v = val(list[j].fn(f, env), j); const o = list[j]; const fd = hand && o.fade && !o.fast ? Math.max(HAND_FADE, o.fade) : o.fade || 0;
+    if (j > 0 && fd > 0 && hand && !o.fast && f - o.start < fd * 1.35 + 1) return mixHand(go(j - 1), v, (f - o.start + 1) / (fd + 1));
     if (j > 0 && fd > 0 && f - o.start < fd) return mixObj(go(j - 1), v, smoother((f - o.start + 1) / (fd + 1))); return v; };
   return go(i);
 }
@@ -293,7 +293,7 @@ async function buildAct(R, X) {
   }
   const env = {
     prop: propWorld, mouth: n => propWorld(n),
-    resolve: (t, f) => t.prop ? { w: add3(propWorld(t.prop), [0, 0, t.up ?? (C.thick(t.prop) + 0.035)]), bend: t.bend } : t.mouth ? { w: add3(propWorld(t.mouth), [0, 0, t.up ?? 0.12]) } : t,
+    resolve: (t, f) => t.at ? { w: fenv.at(t.at), bend: t.bend, elbow: t.elbow } : t.prop ? { w: add3(propWorld(t.prop), [0, 0, t.up ?? (C.thick(t.prop) + 0.035)]), bend: t.bend } : t.mouth ? { w: add3(propWorld(t.mouth), [0, 0, t.up ?? 0.12]) } : t,
   };
 
   function poseActor(a, f) {
@@ -308,7 +308,7 @@ async function buildAct(R, X) {
     // the idle channels overlap: the head leads, the body follows 2 frames later, the arms 4 (follow-through)
     const ib = stand ? idleBeats(a.seed, f - 2) : null, ibA = stand ? idleBeats(a.seed, f - 4) : null, ibH = stand ? idleBeats(a.seed, f) : null, acc = stand ? exprAccent(a.exprs, f, a.seed) : {};
     const handAt = (side, g) => chain(a.owners['hand' + side], g, spec => {
-      const sg = side === 'L' ? -1 : 1, s = spec.w || spec.prop || spec.mouth ? env.resolve(spec, g) : spec;
+      const sg = side === 'L' ? -1 : 1, s = spec.w || spec.prop || spec.mouth || spec.at ? env.resolve(spec, g) : spec;
       let l;
       if (s.rest) l = base['hand' + side].slice();
       else if (s.w) l = toLocal(s.w, root); else l = s.l.slice();
@@ -321,6 +321,10 @@ async function buildAct(R, X) {
     // joint never snaps (one frame of an arm is the weighted mean of where the verbs put the hand over 5 frames)
     const fir = (side, g) => {
       const L = a.owners['hand' + side], smoothAt = h => { let q = L.length - 1; while (q > 0 && L[q].start > h) q--; return L[q].smooth ? 1 : 0; };
+      const ownerAt = h => { let q = L.length - 1; while (q > 0 && L[q].start > h) q--; return L[q]; };
+      // strikes (owners marked fast) and the 3 frames after one skip the filter: a 9-frame mean takes the contact frame
+      // out of a punch, and the glove never arrives (Kai, kai-boxing v1: "the punches go nowhere")
+      if ([0, 1, 2, 3].some(j => ownerAt(g - j)?.fast)) return handAt(side, g);
       let k = 0; for (let j = 0; j < 10; j++) k += smoothAt(g - j) / 10;            // share of pose hands over the last 10 frames
       const xs = HAND_FIR_POSE.map((_, j) => handAt(side, Math.max(X.F0, g - j)));
       const avg = taps => { let o = null, ws = 0; taps.forEach((w, j) => { ws += w; o = o ? mixObj(o, xs[j], w / ws) : xs[j]; }); return o; };
@@ -329,7 +333,11 @@ async function buildAct(R, X) {
     };
     const vs = {};
     for (const side of ['L', 'R']) { vs[side] = fir(side, f); off[side] = busy(side, vs[side]); late[side] = busy(side, handAt(side, f - LATE)); }
-    const bf = stand && !walking ? bodyFollow(off, late) : { arm: {} }, iw = walking ? 0.2 : 1;
+    // a pose that owns the whole body (spec.noFollow: a boxing guard and its punches) turns the body-follows-the-hands layer
+    // off: that layer twists the torso toward busy hands, and in a guard both hands are always busy, so it swung the
+    // shoulders 40 deg in 3 frames under every punch and whipped the other elbow round
+    let owning = null; for (const o of a.owners.add) if (o.pose && o.pose.t0 <= f && f <= o.pose.rel + o.pose.R && (!owning || o.pose.t0 > owning.t0)) owning = o.pose;
+    const bf = stand && !walking && !(owning && POSES[owning.name]?.noFollow) ? bodyFollow(off, late) : { arm: {} }, iw = walking ? 0.2 : 1;
     for (const side of ['L', 'R']) {
       const sg = side === 'L' ? -1 : 1, v = vs[side];
       const im = ibA ? ibA[side] : [0, 0, 0];
