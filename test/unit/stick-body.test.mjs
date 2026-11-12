@@ -44,3 +44,18 @@ test('FK channels are held inside the joint ranges', () => {
   const { A, hits } = limitArm({ raise: 200, swing: 90, elbow: 170, roll: 30 });
   assert.deepEqual([A.raise, A.swing, A.elbow, A.roll, hits], [180, 60, 145, 30, 3]);
 });
+
+test('a hand sweeping into and across the torso moves smoothly (no pops) and never ends inside', () => {
+  // the wanted arm slides 1 cm per step from the side, across the belly, to the far side; the solved hand and elbow may
+  // move a little more than that, never jump (the old solver flipped the elbow behind the body between steps)
+  let prev = null, worst = 0, deepest = 0;
+  for (let i = 0; i <= 60; i++) {
+    const w = ik(sh, V(0.45 - i * 0.01, 1.65, 0.12), l, V(1, 0, -0.3));
+    const s = solveArm({ sh, elbow: w.joint, hand: w.end, pole: V(1, 0, -0.3), l, vols: [head, torso], ik, flex: w.flex, limb: 0.023, handR: 0.05, out: V(1, -0.3, 0.4) });
+    deepest = Math.max(deepest, s.pen);
+    if (prev) worst = Math.max(worst, s.hand.distanceTo(prev.hand), s.elbow.distanceTo(prev.elbow));
+    prev = s;
+  }
+  assert.equal(deepest, 0);
+  assert.ok(worst < 0.08, `largest step ${worst.toFixed(3)} W`);
+});

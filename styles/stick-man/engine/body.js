@@ -8,6 +8,8 @@
 import * as THREE from 'three';
 
 export const JOINTS = { raise: [-20, 180], swing: [-180, 60], elbow: [0, 145] };
+// PHYS.on = false skips the contact solve (joint ranges still hold): only for a side-by-side proof, never in a reel
+export const PHYS = { on: true };
 const clamp = (x, [a, b]) => Math.min(b, Math.max(a, x));
 
 // FK arm channels held inside the joint ranges; returns the clamped channels and how many were out of range
@@ -36,7 +38,7 @@ export function torsoSlices(pos, { girth = 1, gz = 1, W, y0, n = 9 }) {
 export function ellipsoid(c, q, r, kind) {
   const qi = q.clone().invert(), l = new THREE.Vector3();
   return {
-    kind,
+    kind, c, q, r,
     test(p, margin = 0) {
       l.copy(p).sub(c).applyQuaternion(qi);
       const R = r.map(x => x + margin), s = Math.hypot(l.x / R[0], l.y / R[1], l.z / R[2]);
@@ -45,6 +47,24 @@ export function ellipsoid(c, q, r, kind) {
       const n = new THREE.Vector3(l.x / (R[0] * R[0]), l.y / (R[1] * R[1]), l.z / (R[2] * R[2]));
       if (n.lengthSq() < 1e-12) n.set(0, 0, 1);
       return { depth, n: n.normalize().applyQuaternion(q) };
+    },
+    // the nearest way out, continuous in p: a head pushes a point straight out from its centre; a torso slice pushes
+    // it out sideways in the slice's own plane (the torso is a stack of slices, so a hand slides over the belly at its
+    // own height instead of popping over the top of a slice). Returns the point on the surface, or null if p is outside.
+    push(p, margin = 0, fallback = null) {
+      l.copy(p).sub(c).applyQuaternion(qi);
+      const R = r.map(x => x + margin);
+      if (Math.hypot(l.x / R[0], l.y / R[1], l.z / R[2]) >= 1) return null;
+      if (kind === 'torso') {
+        // out from a point 0.8 of the depth behind the centre: a hand in front of the spine always leaves by the front
+        // (where arms work), so a target crossing the middle does not flip the hand to the other side
+        const bz = -0.8 * R[2], dx = l.x / R[0], dz = (l.z - bz) / R[2];
+        // walk out along (dx, dz) from the back point to the ellipse x^2 + z^2 = 1 (scaled): solve |b + t d| = 1
+        const B0 = bz / R[2], a2 = dx * dx + dz * dz;
+        if (a2 < 1e-12) { l.x = 0; l.z = R[2]; }
+        else { const bq = 2 * B0 * dz, cq = B0 * B0 - 1, t = (-bq + Math.sqrt(bq * bq - 4 * a2 * cq)) / (2 * a2); l.x = t * dx * R[0]; l.z = (B0 + t * dz) * R[2]; }
+      } else { const s = Math.max(1e-6, Math.hypot(l.x / R[0], l.y / R[1], l.z / R[2])); l.multiplyScalar(1 / s); }
+      return l.clone().multiplyScalar(1.0005).applyQuaternion(q).add(c);
     },
   };
 }
@@ -68,23 +88,39 @@ export function armPenetration(sh, elbow, hand, vols, { limb = 0.023, handR = 0.
   return worst;
 }
 
-// contact solve: move the hand out of any volume along its surface normal, push the elbow outward if the upper arm is
-// inside, re-solve the elbow each time (bones keep their length), then keep the elbow inside its range
+// contact solve, from first principles and stateless (a pure function of the wanted pose, so neighbouring frames get
+// neighbouring answers):
+//   1. reach: the elbow folds at most JOINTS.elbow[1], so the hand comes no closer to the shoulder than dMin
+//   2. the hand: a hand inside a volume goes to that volume's nearest surface (push), repeated while volumes overlap
+//   3. the elbow: the bones keep their length, so the elbow lies on a circle round the shoulder-hand line; it stays on
+//      the wanted side when it can, else turns round that line by the smallest angle (5 deg steps, at most 15) that
+//      clears the body: a bigger swing in one frame reads as a pop
+//   4. if no small turn clears it, the hand steps 2 cm out toward this arm's own side and front (an arm cannot reach
+//      deep across its own body) and 3 is tried again; after 40 steps any turn is allowed
 export function solveArm({ sh, elbow, hand, pole, l, vols, ik, flex, limb, handR, out = new THREE.Vector3(1, 0, 0.3) }) {
   const before = armPenetration(sh, elbow, hand, vols, { limb, handR });
-  let E = elbow.clone(), H = hand.clone(), P = pole.clone(), F = flex, it = 0, w = before;
-  const safePole = () => { if (!(P.lengthSq() > 1e-6) || !Number.isFinite(P.x)) P.copy(out); P.normalize(); };
-  while (w && it++ < 80) {
-    const k = it < 20 ? 0.7 : 1.3;                                            // small steps first, firmer if it has not converged
-    if (w.seg === 'upper') { P.addScaledVector(w.n, 0.6 * k); safePole(); H.addScaledVector(w.n, w.depth * 0.3 * k + 0.002); }
-    else H.addScaledVector(w.n, k * w.depth / Math.max(0.6, w.seg === 'hand' ? 1 : w.t) + 0.002);   // small steps: the hand ends on the surface, not flung past it
-    safePole();
-    const r = ik(sh, H, l, P); E = r.joint; H = r.end; F = r.flex;
-    w = armPenetration(sh, E, H, vols, { limb, handR });
+  const dMin = 2 * l * Math.cos(JOINTS.elbow[1] / 2 * Math.PI / 180), o = out.clone().normalize();
+  if (!before && hand.distanceTo(sh) >= dMin) return { elbow: elbow.clone(), hand: hand.clone(), flex, pen0: 0, pen: 0, limits: 0, moved: false };
+  let H = hand.clone(), limits = 0;
+  const reach = () => { const dv = H.clone().sub(sh), d = dv.length(); if (d >= dMin) return false; H = sh.clone().addScaledVector(d > 1e-6 ? dv.normalize() : o, dMin); limits = 1; return true; };
+  const place = () => { for (let i = 0; i < 6; i++) { let moved = reach();
+      for (const v of vols) { const q = v.push(H, handR, o); if (q) { H.copy(q); moved = true; } }
+      if (!moved) return; } };
+  // the wanted elbow's own side of the shoulder-hand line, so an arm that needs no turn keeps exactly the elbow it was
+  // given (an IK pole is not the same plane as the FK elbow: using it made the elbow jump at the first touch)
+  const a0 = hand.clone().sub(sh).normalize(), e0 = elbow.clone().sub(sh), P0 = e0.addScaledVector(a0, -e0.dot(a0));
+  if (P0.lengthSq() < 1e-9) P0.copy(pole.lengthSq() > 1e-9 ? pole : o); P0.normalize();
+  let best = null;
+  for (let tries = 0; tries < 60 && !best; tries++) {
+    place();
+    const ax = H.clone().sub(sh).normalize();
+    for (let k = 0; k <= (tries < 40 ? 6 : 72); k++) {
+      const P = P0.clone().applyAxisAngle(ax, (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 5 * Math.PI / 180), r = ik(sh, H, l, P);
+      const w = armPenetration(sh, r.joint, r.end, vols, { limb, handR });
+      if (!w) { best = r; break; }
+    }
+    if (!best) H.addScaledVector(o, 0.02);                                     // no small turn clears it: the hand steps out toward its own side and front
   }
-  let limits = 0;
-  const dMin = 2 * l * Math.cos(JOINTS.elbow[1] / 2 * Math.PI / 180), dv = H.clone().sub(sh), d = dv.length();
-  if (d < dMin) { H = sh.clone().addScaledVector(d > 1e-6 ? dv.normalize() : out.clone().normalize(), dMin); const r = ik(sh, H, l, P); E = r.joint; H = r.end; F = r.flex; limits++; }
-  const after = armPenetration(sh, E, H, vols, { limb, handR });
-  return { elbow: E, hand: H, flex: F, pen0: before ? before.depth : 0, pen: after ? after.depth : 0, limits, moved: !!before };
+  const r = best || ik(sh, H, l, P0), after = best ? null : armPenetration(sh, r.joint, r.end, vols, { limb, handR });
+  return { elbow: r.joint, hand: r.end, flex: r.flex, pen0: before ? before.depth : 0, pen: after ? after.depth : 0, limits, moved: true };
 }

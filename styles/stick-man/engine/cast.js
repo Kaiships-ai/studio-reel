@@ -6,7 +6,7 @@ import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometr
 import { toon, lin, css, B, INK_RGB, INK_SUN, PLACE } from './look.js';
 import { EXPR, faceRig, mixFace } from './faces.js';
 import { makeHandProp } from '../lib/cast/handprops.js';
-import { limitArm, torsoSlices, ellipsoid, solveArm } from './body.js';
+import { limitArm, torsoSlices, ellipsoid, solveArm, armPenetration, PHYS } from './body.js';
 
 const SPIN_Q = new THREE.Quaternion(), SPIN_AX = new THREE.Vector3(0, 1, 0), _camL = new THREE.Vector3();
 export const W_M = 0.60;                     // head width in metres
@@ -805,8 +805,9 @@ export function makeStick(spec) {
       }
       // physics: a hand inside the head or the torso stops on its surface, an elbow inside is pushed out, the elbow
       // stays in its range (bones keep their length)
-      const sol = solveArm({ sh, elbow, hand, flex, pole: A.pole ? V(A.pole) : k.pole, l: LIMB.upper, vols, limb: LIMB_R / W, handR: 0.05, out: new THREE.Vector3(sg, -0.3, 0.4).applyQuaternion(qChest),
-        ik: (a, b, l, p) => ik(a, b, l, p, SOFT.arm, true) });
+      const sol = PHYS.on ? solveArm({ sh, elbow, hand, flex, pole: A.pole ? V(A.pole) : k.pole, l: LIMB.upper, vols, limb: LIMB_R / W, handR: 0.05, out: new THREE.Vector3(sg, -0.3, 0.4).applyQuaternion(qChest),
+        ik: (a, b, l, p) => ik(a, b, l, p, SOFT.arm, true) })
+        : (w => ({ elbow, hand, flex, pen0: w ? w.depth : 0, pen: w ? w.depth : 0, limits: 0 }))(armPenetration(sh, elbow, hand, vols, { limb: LIMB_R / W, handR: 0.05 }));
       elbow = sol.elbow; hand = sol.hand; flex = sol.flex;
       const pts = hose(sh, elbow, hand, ROUND.arm, 16);
       limbs['arm' + side].set(pts); hands[side].position.copy(pts[15]); S.hand[side] = hand.toArray();
@@ -822,7 +823,7 @@ export function makeStick(spec) {
       rig[side] = { hip: hipJ, knee: leg.joint, ankle: foot, toe: toeL, shoulder: sh, elbow, hand, kneeFlex: leg.flex, elbowFlex: flex, footPitch: G.pitch || 0,
         pen0: sol.pen0, pen: sol.pen, limits: lim.hits + sol.limits };
     }
-    S.rig = rig;
+    S.rig = rig; S.vols = vols;
     handProps(Q, rig);
     S.xmarks = Object.keys(Q).filter(k => k.startsWith('x_mark_') && Q[k] >= 1).map(k => [k.slice(7), Math.floor(Q[k] - 1)]);
     contact.visible = Q.contact !== false; contact.position.y = 0.004 + (Q.ground || 0) * W;
