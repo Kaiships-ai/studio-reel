@@ -8,7 +8,7 @@
 //   joint  the hero joint on the right rail at y = 0: gap 0..1 (1 = 4 cm, 0 = touching), heat 0..1 (glow magenta -> pink ->
 //          yellow-white spreading ~1.5 m along both rails), coin 0..1 (falls in, stands wedged), paper 0..1 (a sheet slides in
 //          and stands), saw 0..1 (a half-cut notch grows at y = -0.3)
-//   board  post board at [2.3, 1.0]: temp 0..1 (red column), month 0 = MAY .. 1 = JULY (page flips at 0.5); blue pennant
+//   board  post board at [2.3, 1.0]: temp 0..1 (red column), month 0 = MAY .. 1 = JULY (page flips at 0.5), show 0/1; blue pennant
 //   loco   4-4-0 facing -y: y (front y, m; wheels turn with distance), lamp 0..1 (lens + point and spot light on the rails)
 //   saw    a hand saw resting in the notch (grip at the handle; key show 0/1), cut (show 0/1: the rock cut)
 import { createKit, label, tex, rng, B, SURF } from '../kit.js';
@@ -122,7 +122,7 @@ export async function build(stage, opts = {}) {
   for (let i = 0; i < fp.count; i++) fp.setZ(i, 0.03 * Math.sin((fp.getX(i) + 0.17) * 9)); flag.geometry.computeVertexNormals(); flag.position.copy(B(0.18, 0, 1.56)); flag.rotation.y = Math.PI / 2 - 0.4; K.add(flag, pen);
   K.anim('board', bd, (f, v) => { const t = Math.max(0, Math.min(1, v('temp', 0.2))); const hgt = 0.05 + 0.44 * t; column.scale.y = hgt; column.position.copy(B(0.035, -0.016, 0.1 + hgt / 2));
     const m = v('month', 0), a = Math.max(0, Math.min(1, (m - 0.4) / 0.2)); may.rotation.x = -a * 2.9; may.visible = a < 0.99;
-    flag.rotation.x = 0.06 * Math.sin(f * 0.25); });
+    flag.rotation.x = 0.06 * Math.sin(f * 0.25); bd.visible = v('show', 1) > 0.5; });
   // ---- story prop: the locomotive (comes toward a camera at y < 0 along the track)
   const LO = loco(K, { name: 'loco', number: '9' }); const lg = LO.group; lg.position.copy(B(0, LOCO_Y, 0));
   K.prop('loco', lg); K.anim('loco', lg, (f, v) => { const y = v('y', LOCO_Y); lg.position.copy(B(0, y, 0)); LO.drive(LOCO_Y - y); LO.lamp(v('lamp', 0)); });

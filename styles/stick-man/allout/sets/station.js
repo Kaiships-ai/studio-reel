@@ -5,7 +5,7 @@
 // a sign board on posts. Blender metres; camera inside looks +y (head building) or across x (coaches side-on).
 // setOpts.mode: 'hall' (default; inside) | 'front' (outside: the brick front with the big arched glass end, a tower, a banner
 // across the front, a red-carpet stage with a pile of gold coin sacks and a podium, desert ground in front).
-// setOpts.banner (front banner text, default 'FIRST LINE IN TAKES IT ALL!'), setOpts.sign (sign board text, default 'ALL ABOARD!'),
+// setOpts.banner (front banner text, default 'FIRST LINE IN TAKES IT ALL!'; an array = lines; bannerW / bannerH size it), setOpts.sign (sign board text, default 'ALL ABOARD!'),
 // setOpts.name (the name over the front, default 'MESA CITY TERMINAL').
 // Props: sign (key show 0..1: the board rises on its posts), sacks (key glint 0..1), banner.
 import { createKit, SURF, label, tex, rng, B, css } from '../kit.js';
@@ -118,7 +118,10 @@ export async function build(stage, opts = {}) {
   K.box([-2.7, -2.7, 19.6], [2.7, 2.7, 20.4], M.trim, { parent: tw, r: 0.05 });
   K.lathe([0, 0, 20.4], [[0, 0], [2.2, 0], [1.6, 3], [0.6, 6], [0.1, 9], [0, 9.2]], M.copper, { parent: tw, seg: 4 }).rotation.y = Math.PI / 4;
   K.cyl([0, 0, 30.5], 0.05, 2.4, M.iron, { parent: tw }); K.card([0.55, 0, 31.2], 1.0, 0.6, tex(64, 40, (g, w, h) => { g.fillStyle = '#c8322a'; g.fillRect(0, 0, w, h); }), { parent: tw, rotZ: 90 }).material.side = 2;
-  const banner = K.card([0, -1.4, 7.4], 20, 2.4, label([{ t: opts.banner || 'FIRST LINE IN TAKES IT ALL!', c: '#b3201a' }], { w: 2048, h: 246, bg: '#f6f0e2', font: 'Georgia, serif', weight: 900, border: '#b3201a' }), { cast: true, env: 0.5 });
+  // banner: one line across the whole front (default), or setOpts.banner as an array of lines on a narrower card
+  // (setOpts.bannerW / bannerH, m) so a closer camera reads all of it
+  const BL = Array.isArray(opts.banner) ? opts.banner : [opts.banner || 'FIRST LINE IN TAKES IT ALL!'], BW = opts.bannerW ?? 20, BH = opts.bannerH ?? 2.4;
+  const banner = K.card([0, -1.4, 7.4 - (BH - 2.4) / 2], BW, BH, label(BL.map(t => ({ t, c: '#b3201a' })), { w: 2048, h: Math.round(2048 * BH / BW), bg: '#f6f0e2', font: 'Georgia, serif', weight: 900, border: '#b3201a' }), { cast: true, env: 0.5 });
   banner.material.side = 2; for (const x of [-10.2, 10.2]) K.cyl([x, -1.4, 4.4], 0.06, 8.8, M.iron); K.prop('banner', banner);
   // ---- the stage outside: red carpet, the pile of gold sacks, a podium
   const st = K.group([0, -7.5, 0]);

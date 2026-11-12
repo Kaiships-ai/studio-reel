@@ -13,6 +13,7 @@ import { planShots } from './shotplan.js';
 import { createCaptions } from './captions.js';
 import { ACT, PROPV, MAKE, keyTracks } from './verbs_fx.js';
 import { POSE_VERBS } from './poses.js';
+import { compileTrack, playActor, toPose, MOTION_POSES } from './motion.js';
 import * as EXTRAS from '../lib/cast/extras.js';
 import { PHYS } from '../lib/props/physfx.js';
 import { STORY } from '../lib/props/story.js';
@@ -185,6 +186,20 @@ async function buildAct(R, X) {
     for (const s of ['L', 'R']) a.owners['hand' + s].push({ start: -1e9, fade: 0, verb: 'rest', fn: () => ({ rest: true }) });
     actors.push(a); byName[name] = a;
   }
+  // motion v2: an actor with keys (act `anim`) is animated pose to pose by engine/motion.js, never by verbs or auto-acting
+  for (const [name, keys] of Object.entries(R.anim || {})) {
+    const a = byName[name]; if (!a) throw new Error(`anim: no cast entry ${name}`);
+    const ks = keys.map(k => ({ ...k, f: frameOf(k.at || k) })).sort((x, y) => x.f - y.f);
+    a.anim = { track: compileTrack(ks, { ...MOTION_POSES, ...(R.poses || {}) }, { pos: a.st0.slice(), yaw: a.c.yaw ?? 0 }), keys: ks, frames: null };
+    for (const k of ks) { if (k.expr) a.exprs.push({ f: k.f, expr: k.expr, word: null }); if (k.look) a.focusSegs.push({ from: k.f, target: k.look }); }
+  }
+  const animFrame = (a, f) => {
+    const A = a.anim, f0 = F0 - 30; A.frames ||= playActor(A.track, f0, F1 + 1);
+    const Q = toPose(A.frames[Math.max(0, Math.min(A.frames.length - 1, Math.round(f) - f0))]);
+    let pk = null; for (const k of A.keys) if (k.f <= f && k.props !== undefined) pk = k.props;
+    for (const [side, kind] of Object.entries(pk || {})) if (kind) Q[`x_hp${side}_${kind}`] = 1;
+    return Q;
+  };
   const beats = R.beats.map((b, i) => ({ ...b, at: frameOf(b), i })).sort((x, y) => x.at - y.at || x.i - y.i);
   const segs = {}, active = [], cues = [], fx = [];
   const compile = b => {
@@ -219,7 +234,7 @@ async function buildAct(R, X) {
   const poseEnds = () => { for (const a of actors) for (const v of a.verbs) if (v.pose) v.end = Math.min(v.end, v.pose.rel + v.pose.R + 4); };
   poseEnds();
   // auto-acting: key poses for every lead's frames no body verb covers (acting.js), picked from the words said there
-  for (const b of autoActing({ R, actors, words, fps, win: R.win || [[F0, F1 + 1]] })) compile({ ...b, at: b.f });
+  for (const b of autoActing({ R, actors, words, fps, win: R.win || [[F0, F1 + 1]] })) if (!byName[b.who]?.anim) compile({ ...b, at: b.f });
   poseEnds();
   for (const a of actors) {
     for (const k of Object.keys(a.owners)) a.owners[k].sort((x, y) => x.start - y.start);
@@ -237,7 +252,7 @@ async function buildAct(R, X) {
   cues.sort((x, y) => x.fr - y.fr);
 
   // ---------------------------------------------------------------- per-frame evaluation
-  const bodyAt = (a, f) => chain(a.owners.body, f, v => v, null);
+  const bodyAt = (a, f) => { if (!a.anim) return chain(a.owners.body, f, v => v, null); const Q = animFrame(a, f); return { pos: Q.pos, yaw: Q.yaw }; };
   const headZ = a => (a.posture === 'sit' ? HEAD_C[1] + SIT.bob : HEAD_C[1]) * W;
   // camera anchors: from the body channel only (no idle bob), so the framing never chases a head wobble
   const anchor = (n, f, live) => {
@@ -299,6 +314,7 @@ async function buildAct(R, X) {
   };
 
   function poseActor(a, f) {
+    if (a.anim) { const Q = animFrame(a, f); F.bodies[a.name] = { pos: Q.pos, yaw: Q.yaw }; a.S.pose2(Q); F.posed.add(a.name); a.P = Q; return; }
     const body = bodyAt(a, f), root = { pos: body.pos, yaw: body.yaw };
     F.bodies[a.name] = body;
     const id = idle(a.seed, f, a.posture);

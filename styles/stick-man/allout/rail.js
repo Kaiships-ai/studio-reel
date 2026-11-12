@@ -73,7 +73,7 @@ Object.assign(SPECS, {
   BOSS: { name: 'Boss', shirt: [1, 1, 1], hair: [bowler()], girth: 1.18,
     clothes: [{ vest: L([0.86, 0.66, 0.14]), check: L([0.40, 0.26, 0.06]) }] },
   // the rival magnate: top hat, black suit with gold pinstripes, a monocle; slim
-  MAGNATE: { name: 'Magnate', shirt: L([0.16, 0.12, 0.20]), hair: [monocle()], girth: 0.92,   // wears costume ['hat:top'] so lose_hat can fly it
+  MAGNATE: { name: 'Magnate', shirt: L([0.16, 0.12, 0.20]), hair: [monocle()], girth: 0.92, gloves: [0.97, 0.96, 0.93],   // wears costume ['hat:top'] so lose_hat can fly it
     clothes: [{ vest: L([0.10, 0.08, 0.12]), pin: L([0.86, 0.66, 0.20]) }, { bowtie: L([0.70, 0.08, 0.10]) }] },
   // the rival's conductor: navy uniform and peaked cap (the guard cap in navy, brass badge)
   CONDUCTOR: { ...SPECS.GUARD, name: 'Conductor', shirt: L([0.16, 0.24, 0.50]) },
@@ -141,11 +141,11 @@ BUILD.newspaper = () => {                             // a broadsheet held open 
 const sn = (t, w, a = 0) => Math.sin(t * w + a);
 const HIP = s => ({ t: [s * 0.37, 1.44, 0.04], elbow: [s * 1, 0.15, -0.35], bend: -0.2 * s });
 const RP = {
-  // saw: crouched at the rail, the saw in the right fist driven back and forth along the rail, the left hand on the knee
-  saw: { A: 3, T: 10, hold: 90, props: { R: 'saw' }, body: { bob: -0.52, pitch: 34, head_pitch: -26, lean: 4 },
-    feet: { L: [-0.36, 0.022, 0.22], R: [0.30, 0.022, -0.20] }, tilt: { R: 40 },
-    hands: { R: { l: [0.14, 0.62, 0.86], elbow: [0.9, 0.2, -0.6] }, L: { l: [-0.30, 0.98, 0.52], elbow: [-0.9, -0.2, -0.3] } },
-    cycle: t => ({ hands: { R: [0, 0.03 * sn(t, 0.62), 0.22 * sn(t, 0.62)] }, pitch: 4 * sn(t, 0.62), shTwist: 6 * sn(t, 0.62), head_pitch: -1.5 * sn(t, 0.62), bob: 0.012 * sn(t, 1.24) }) },
+  // saw: squatting at the rail, torso up under the head, both fists on the saw driving it back and forth along the rail
+  saw: { A: 3, T: 10, hold: 90, props: { R: 'saw' }, body: { bob: -0.56, pitch: 20, head_pitch: -30, lean: 2 },
+    feet: { L: [-0.36, 0.022, 0.14], R: [0.34, 0.022, -0.06] }, tilt: { R: 40 },
+    hands: { R: { l: [0.10, 0.62, 0.80], elbow: [0.9, 0.2, -0.6] }, L: { l: [-0.10, 0.66, 0.76], elbow: [-0.9, 0.2, -0.6] } },
+    cycle: t => ({ hands: { R: [0, 0.03 * sn(t, 0.62), 0.20 * sn(t, 0.62)], L: [0, 0.03 * sn(t, 0.62), 0.20 * sn(t, 0.62)] }, pitch: 3 * sn(t, 0.62), shTwist: 5 * sn(t, 0.62), head_pitch: -1.5 * sn(t, 0.62), bob: 0.012 * sn(t, 1.24) }) },
   // sip: seated, saucer in the left hand, the cup up to the lips with the right, chin up, eyes closed in bliss
   sip: { A: 3, T: 10, hold: 60, props: { R: 'teacup' }, body: { pitch: -6, head_pitch: -8, head_tilt: 6 },
     hands: { R: { h: [0.10, -0.24, 0.42], elbow: [0.9, -0.5, 0.1] }, L: { t: [0.02, 1.82, 0.48], elbow: [-0.9, -0.5, 0.2] } },
