@@ -6,7 +6,7 @@
 //   cast: { kip: { spec: 'KAI', costume: ['belt', 'holster', 'hat:flat'] } }   beats: { f, who: 'kip', do: 'lose_hat' }
 // layers: belt[:rgb hex], holster (on the figure's right hip), holster:L, hat:cowboy | hat:flat | hat:bowler | hat:top (+ :rrggbb)
 import * as THREE from 'three';
-import { solid, lathe, W_M, HEAD_H } from '../engine/cast.js';
+import { solid, lathe, W_M, HEAD_H, HAT_LIFT } from '../engine/cast.js';
 import { toon } from '../engine/look.js';
 import { HOOKS } from '../engine/play.js';
 import { ACT } from '../engine/verbs_fx.js';
@@ -63,7 +63,7 @@ HOOKS.costume = (S, list, { group }) => {
     const [k, a, b] = String(item).split(':');
     if (k === 'belt') body.add(belt(hex(a)));
     else if (k === 'holster') body.add(holster(a === 'L' ? -1 : 1, hex(a === 'L' ? b : a)));
-    else if (k === 'hat') { worn = hat(a, hex(b)); head.add(worn); flying = hat(a, hex(b)); flying.visible = false; group.add(flying); }
+    else if (k === 'hat') { worn = hat(a, hex(b)); worn.position.y += HAT_LIFT; head.add(worn); flying = hat(a, hex(b)); flying.visible = false; group.add(flying); }
   }
   if (!worn) return;
   // the hat flies off: x_hatfly = frames since lose_hat + 1. An arc from where the head stands (the body channel's position

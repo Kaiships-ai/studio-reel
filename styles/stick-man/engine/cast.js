@@ -228,6 +228,8 @@ export function headScale(yn) {
   yn = Math.max(-1, Math.min(1, yn)); let i = 0; while (i + 2 < HEAD_S.length && HEAD_S[i + 1][0] > yn) i++;
   const [a, sa] = HEAD_S[i], [b, sb] = HEAD_S[i + 1], u = (a - yn) / (a - b); return sa + (sb - sa) * u * u * (3 - 2 * u);
 }
+// hats and hair sit HAT_LIFT higher than they were modelled so the brows always show (Kai, gate A 2026-11-12)
+export const HAT_LIFT = 0.035;
 const _hv = new THREE.Vector3(), _hm = new THREE.Matrix4(), _hi = new THREE.Matrix4();
 // deform a geometry whose vertices are in a frame M (-> head space); M null = head space already
 // Kai 11/11 (later): back to the original round head ("đầu hiện tại anh lại thấy không ok") -> off by default.
@@ -594,6 +596,7 @@ export function makeStick(spec) {
   head.updateMatrixWorld(true); _hm.copy(head.matrixWorld).invert();
   const skip = new Set([headSolid, face]); headSolid.traverse(o => skip.add(o)); FR.group.traverse(o => skip.add(o));
   head.traverse(o => { if (!o.isMesh || skip.has(o)) return; o.geometry = o.geometry.clone(); shapeHeadGeo(o.geometry, _hm.clone().multiply(o.matrixWorld)); });
+  hairG.position.y = HAT_LIFT;
 
   const limbs = { armL: new Tube(16, LIMB_R), armR: new Tube(16, LIMB_R), legL: new Tube(18, LIMB_R), legR: new Tube(18, LIMB_R) };
   // hand mitt: reference hands are ~0.10 W across, about twice the arm line

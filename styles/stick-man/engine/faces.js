@@ -6,7 +6,7 @@
 //   - five marks and no more: two eyes, two brows, one mouth. No highlights, no colour in the eyes, no skin effects
 //     except a soft blush and, rarely, small tears. Rage turns the whole head purple (tint) with steam; it never adds
 //     veins or red eyes.
-//   - eyes are small solid ink ovals (0.085 W wide), 0.27 W apart, at the head's middle. The signature is the lid: a
+//   - eyes are small solid ink ovals (0.085 W wide), 0.24 W apart (v2, was 0.27), at the head's middle. The signature is the lid: a
 //     thick straight stroke, longer than the eye, cutting the top off the oval (deadpan, smug, bored, angry = the same
 //     eye with a different lid height and tilt). Shock opens the oval into an ink ring with a dot pupil; joy closes it
 //     into a thin ^ arc. The oval -> ring change is continuous (`white`), so a face can ramp from deadpan to shock.
@@ -27,7 +27,10 @@ const DEG = Math.PI / 180;
 // lift R], bw = brow weight; mouth = shape (below), mw = width scale, mx / my = mouth shift (W); skin = { blush, tears }
 // 0..1; marks = head-attached cards; tint = head colour (linear) for rage.
 // DOT eye ~0.09 x 0.12 W on the head (Kai's reference shots 11/11)
-const DOT = { eye: 'oval', rx: 0.037, ry: 0.049 }, RING = { eye: 'oval', rx: 0.066, ry: 0.070, white: 1, pupil: 0.020 };
+const DOT = { eye: 'oval', rx: 0.037, ry: 0.049 }, RING = { eye: 'oval', rx: 0.056, ry: 0.062, white: 1, pupil: 0.031 };
+// ring eyes v2 (Kai, gate A 2026-11-12): smaller and closer, big pupils that look somewhere (gx / cross), often one lid
+// lower (lidA); every brow sits BROW_DROP lower than its table height so it is never hidden under a hat brim
+const BROW_DROP = 0.03;
 export const EXPR = {
   neutral: { ...DOT, brow: [0, 0.125, 0.008, 0, 0.006], mouth: 'flat', mx: 0.008 },
   calm: { ...DOT, lid: 0.34, brow: [-3, 0.120, 0.010, 0, 0.006], mouth: 'smile', mw: 0.7 },
@@ -38,11 +41,11 @@ export const EXPR = {
   sly: { ...DOT, lid: 0.56, lidTilt: 5, gx: -0.55, low: 0.2, brow: [10, 0.106, 0.002, 0.026, -0.004], mouth: 'smirk_l', mx: -0.014 },
   stern: { ...DOT, lid: 0.36, lidTilt: 12, brow: [16, 0.108, -0.004], bw: 1.2, mouth: 'frown', mw: 0.8 },
   worried: { ...DOT, ry: 0.058, lid: 0.10, brow: [-18, 0.135, 0.010, 0, 0.010], mouth: 'wobble' },
-  shock: { ...RING, brow: [-6, 0.150, 0.020, 0, 0.012], mouth: 'o' },
+  shock: { ...RING, cross: -0.35, lidA: 0.15, brow: [-10, 0.180, 0.022, 0, 0.026], mouth: 'o' },
   sleep: { eye: 'content', rx: 0.046, ry: 0.050, brow: [0, 0.112, 0.004], mouth: 'flat', mw: 0.6, mx: 0, marks: [['zzz']] },
   // the reference's manic grin: ring eyes with dot pupils over a wide grid of teeth (rail "anyone"). No red, no veins.
-  manic: { ...RING, rx: 0.068, ry: 0.072, pupil: 0.018, brow: [-4, 0.155, 0.016, 0, 0.012], mouth: 'teeth_grin', mw: 1.2 },
-  panic: { ...RING, ry: 0.074, pupil: 0.014, brow: [-20, 0.155, 0.012, 0, 0.010], mouth: 'wavy', marks: [['sweat']] },
+  manic: { ...RING, rx: 0.058, ry: 0.066, pupil: 0.030, cross: -0.3, lidA: 0.48, lidTilt: -8, brow: [-4, 0.180, 0.026, 0, -0.012], mouth: 'teeth_grin', mw: 1.25, mx: 0.012 },
+  panic: { ...RING, ry: 0.066, pupil: 0.027, gx: -0.7, brow: [-24, 0.180, 0.010, 0, 0.018], mouth: 'wavy', marks: [['sweat']] },
   blush: { eye: 'happy', rx: 0.048, ry: 0.050, brow: [-10, 0.130, 0.014], mouth: 'smile', mw: 0.7, skin: { blush: 1 } },
   angry: { ...DOT, lid: 0.40, lidTilt: 22, brow: [26, 0.098, -0.008], bw: 1.45, mouth: 'teeth' },
   // rage (rail "purple."): the head goes purple, steam puffs, the mouth a dark bar; the eyes stay ink
@@ -50,12 +53,12 @@ export const EXPR = {
   nervous: { ...DOT, lid: 0.08, gx: 0.5, brow: [-14, 0.135, 0.010, 0, 0.012], mouth: 'teeth_grin', mw: 0.8, marks: [['sweat']] },
   sad: { ...DOT, lid: 0.30, lidTilt: -14, brow: [-22, 0.125, 0.008], mouth: 'frown', mw: 0.85 },
   cry: { eye: 'pinch', rx: 0.050, ry: 0.050, brow: [-24, 0.125, 0.006], mouth: 'wail', skin: { tears: 1 } },
-  dizzy: { ...RING, rx: 0.062, ry: 0.066, pupil: 0.018, cross: 0.8, brow: [-8, 0.150, 0.016, 0, 0.022], mouth: 'wobble' },
+  dizzy: { ...RING, pupil: 0.027, cross: 0.9, lidA: 0.18, brow: [-6, 0.175, 0.016, 0, 0.030], mouth: 'wobble' },
   confused: { ...DOT, gx: 0.3, brow: [0, 0.122, 0.008, -0.016, 0.040], mouth: 'skew', mx: 0.012 },
-  excited: { ...RING, pupil: 0.030, brow: [-8, 0.155, 0.018, 0, 0.010], mouth: 'big' },
+  excited: { ...RING, rx: 0.060, ry: 0.066, pupil: 0.031, cross: -0.25, brow: [-12, 0.190, 0.024, 0, 0.014], mouth: 'big' },
   deadpan: { ...DOT, lid: 0.55, brow: [0, 0.104, 0, 0, 0.008], mouth: 'flat', mw: 0.85, mx: 0.012 },
   suspicious: { ...DOT, lid: 0.55, lidTilt: 8, gx: 0.6, low: 0.3, brow: [14, 0.100, -0.004, -0.018, 0.024], mouth: 'flat', mw: 0.7, mx: 0.016 },
-  scream: { ...RING, rx: 0.068, ry: 0.076, pupil: 0.012, brow: [-22, 0.165, 0.016], mouth: 'scream', marks: [['sweat']] },
+  scream: { ...RING, rx: 0.062, ry: 0.072, pupil: 0.024, cross: -0.2, brow: [-26, 0.195, 0.018, 0, 0.012], mouth: 'scream', marks: [['sweat']] },
   pain: { eye: 'pinch', rx: 0.050, ry: 0.050, brow: [-20, 0.118, 0], bw: 1.2, mouth: 'teeth', mw: 1.05, marks: [['sweat']] },
   proud: { eye: 'happy', rx: 0.048, ry: 0.050, brow: [-12, 0.140, 0.016, 0, 0.008], mouth: 'grin', mw: 0.95 },
   disgust: { ...DOT, lid: 0.40, lidTilt: 10, lidA: 0.12, low: 0.45, brow: [18, 0.108, 0, 0.020, -0.020], mouth: 'sneer', mw: 0.9 },
@@ -288,7 +291,7 @@ const REST_OPEN = { o: 0.40, o_big: 0.55, grin: 0.2, big: 0.55, big_open: 0.8, o
 const ROUND = { o: 1, o_big: 1, scream: 0.6, scream_small: 0.6, sleep: 0.5 };
 const NUM = ['rx', 'ry', 'lid', 'lidTilt', 'lidA', 'low', 'white', 'pupil', 'gx', 'cross', 'bw', 'mw', 'mx', 'my', 'curve', 'rest', 'round'];
 export function faceParams(name) {
-  const E = EXPR[name] || EXPR.neutral, S = E.skin || {}, [bt, bh, ba = 0, bl = 0, br = 0] = E.brow;
+  const E = EXPR[name] || EXPR.neutral, S = E.skin || {}, [bt, bh0, ba = 0, bl = 0, br = 0] = E.brow, bh = bh0 - BROW_DROP;
   return { eye: E.eye, rx: E.rx, ry: E.ry, lid: E.lid || 0, lidTilt: E.lidTilt || 0, lidA: E.lidA || 0, low: E.low || 0,
     white: E.white || 0, pupil: E.pupil ?? 0.020, gx: E.gx || 0, cross: E.cross || 0, brow: [bt, bh, ba, bl, br], bw: E.bw || 1,
     mouth: E.mouth, mw: E.mw || 1, mx: E.mx || 0, my: E.my || 0, curve: CURVE[E.mouth] || 0, rest: REST_OPEN[E.mouth] || 0,
@@ -307,7 +310,7 @@ export function mixFace(st) {
   F.brow = A.brow.map((x, i) => m(x, B.brow[i]));
   F.skin = Object.fromEntries(Object.keys(A.skin).map(k => [k, Math.max(0, Math.min(1, A.skin[k] + (B.skin[k] - A.skin[k]) * uc))]));
   F.eye = uc < 0.5 ? A.eye : B.eye; F.mouth = uc < 0.5 ? A.mouth : B.mouth;
-  F.lid = Math.max(0, Math.min(0.9, F.lid + (LIDDED.has(F.eye) ? L.lid || 0 : 0)));
+  F.lid = Math.max(0, Math.min(0.9, F.lid + (LIDDED.has(F.eye) ? (L.lid || 0) * (1 - F.white) : 0)));   // a ring eye has no idle lid drift: on a ring it draws a ruler line
   F.ry = Math.max(0.02, F.ry); F.rx = Math.max(0.02, F.rx); F.pupil = Math.max(0.008, F.pupil);
   F.brow[0] += L.tilt || 0; F.brow[1] += L.brow || 0; F.mw *= 1 + (L.mw || 0);
   // the hidden swaps: eyes squeeze through a change of eye kind, the mouth passes through an open gasp
@@ -345,7 +348,7 @@ function vmouth(g, F, x0, y0) {
 // are big and bold (an eye is 0.10-0.12 W wide, a lid stroke 0.03 W thick), which is also what still reads on a phone.
 // o.glasses: the eyes sit in the rim centres (cast.js glasses(): +-0.15, 0.02, radius 0.112), ring eyes shrink to fit
 // inside, the brows clear the rims and the mouth drops a little; the expression still reads through brows and mouth.
-export const LAYOUT = { K: 1.25, ey: 0.0, dx: 0.135, my: -0.175, glasses: { K: 1.12, ey: 0.02, dx: 0.150, my: -0.185, maxR: 0.086, browMin: 0.165 } };
+export const LAYOUT = { K: 1.25, ey: 0.0, dx: 0.118, my: -0.175, glasses: { K: 1.12, ey: 0.02, dx: 0.150, my: -0.185, maxR: 0.086, browMin: 0.165 } };
 export function drawFaceState(g, F, blink = 0, t = 0, o = {}) {
   const Lo = o.glasses ? LAYOUT.glasses : LAYOUT, K = Lo.K, ey = Lo.ey / K, dx = Lo.dx / K;
   g.save(); g.scale(K, K);
