@@ -3,44 +3,16 @@
 Coordinates are Blender metres (x right, y into the scene, z up). A mark is where a figure's root stands; a place is a
 prop spot or hand target. `at` / `to` take a mark or place name, a prop name, or `[x, y, z]`.
 
-## Sets (`set:` in an act; files in `styles/stick-man/lib/sets/`)
+## Sets (`setModule` in an act; files in `styles/stick-man/allout/sets/`)
 
-Allout sets (`setModule: '/styles/stick-man/allout/sets/<name>.js'`, `make: { prop: { kind: 'ao_anim', prop } }`, keys via `set` beats; list in
-`styles/stick-man/allout/README.md`). `canyon-edge` (pilot A): two rival lines on a canyon ledge, blue line by the wall,
-purple by the drop; props `joint` (gap, heat, light), `rtrack` (buckle, heat), `board` (temp, month), `loco` (y, lamp),
-`rloco` (y, off, fall: g = 9.8 with cliff contact, lamp); look `EDGE_LOOK` (look A).
+An act names its set by URL: `set: '<name>', setModule: '/styles/stick-man/allout/sets/<name>.js'` (`make: { prop: { kind:
+'ao_anim', prop } }`, keys via `set` beats; kit in `styles/stick-man/allout/README.md`).
 
-| Set | Looks like | Marks | Places | Props (`who`) | COLLIDE |
-|---|---|---|---|---|---|
-| `bank-lobby` | teal-tiled bank hall, counter, vault | customer, teller, bench, door, street | plate, stack, b1, b2, note, note_end, bag_on_counter, bag_grip, sensor | plate, stack, b1, b2, note, bag, sensor | counter, raised-floor |
-| `street` | pavement in front of a bank facade with columns, two shops | door, stroll_start, burst, crowd_1-3, officer, police_stop, hatchback | sensor, bag_burst, bag_rest, lamp, hydrant, mailbox, tree | sensor; opt-in with act `use`: police, bag | facade, columns, door leaves, mailbox, hydrant, planter |
-| `cutaway` | marble counter top close up (tabletop scale) | stack, hand, lifter | stack, plate, thermo, hand_grip | plate, stack, pack, thermo | none (tabletop, no cast) |
-| `park` | sunny park: grass, sandy path, hedge, round trees, bench, lamp, big sun up left | left, right, center, bench, walk_start, tree | sun, sky, bench_seat, lamp, ground | none | bench, tree-trunk, lamp |
-| `lab` | school science lab: chalkboard with notes, clock, conduit, projector, bench with flasks / burner / microscope, stools, sink, skeleton, lockers, fish tank, ceiling beams and lights | left, right, center, board, door | bench_top, board, flask_l, flask_r, window | none | bench, back-wall, shelf + dressing |
-| `diner` (.glb) | 1950s diner inside: checker floor, red counter with stools, booths, jukebox, neon DINER, menu board, pendant lamps, fans | left, right, center, counter, booth, door | counter_top, pie, sign, menu, jukebox | none | from the pieces |
-| `workshop` (.glb) | garage workshop: roller door, pegboard, blue car with bonnet up, workbench, tool chest, drums, tyres, ladder | left, right, center, car, bench | bonnet, bench_top, door, pegboard | none | from the pieces |
-| `classroom` (.glb) | primary classroom: plank floor, blackboard (middle kept clean for a reel's `chalk`), alphabet strip, clock, windows with plants, pinboard, cubbies, teacher's desk, pupils' desks, bookcase | same as `lab` | board, board_l, board_r, desk_top, window | none | from the pieces |
-| `harbour` (.glb) | fishing pier: plank deck on piles, PIER 9 warehouse, moored boat, dock crane, fish stall, cargo, bollards, sea | left, right, center, edge, stall | boat, crane, sea, door | none | from the pieces |
+| Set | Looks like | Props (`set` beat keys) | Look |
+|---|---|---|---|
+| `canyon-edge` (pilot A) | two rival lines on a canyon ledge, blue line by the wall, purple by the drop | `joint` (gap, heat, light), `rtrack` (buckle, heat), `board` (temp, month), `loco` (y, lamp), `rloco` (y, off, fall: g = 9.8 with cliff contact, lamp) | `EDGE_LOOK` (look A) |
 
-Every set above is dressed with 25-60 registered pieces (`lib/sets/dress.js`); `halden-plaza` takes `use: ['concert']` for a
-rock stage behind the fountain (`PLACES.speakers`, `PLACES.stage`). Proof sheet of all 11 sets: `films/stick05-q4-levels/review/sets_sheet.jpg`
-(clip `films/stick05-q4-sets`, `--query set=<name>`).
-
-Mark and place coordinates (`[x, y, z]` m, from each set's `MARKS` / `PLACES`; the source wins if they drift):
-
-| Set | Marks | Places |
-|---|---|---|
-| `bank-lobby` | customer [0.92, 1.1, 0] · teller [2.34, 1, 0.33] · bench [-1.2, 4.2, 0] · door [-3.8, 1.27, 0] · street [-6.2, 1.27, 0] | plate [1.9, 0.7, 1.05] · stack [1.9, 0.7, 1.07] · b1 [1.84, 1.1, 1.05] · b2 [1.86, 1.3, 1.05] · note [1.22, 0.94, 1.05] · note_end [1.33, 0.9, 1.05] · bag_on_counter [1.53, 1.3, 1.08] · bag_grip [1.44, 1.25, 1.39] · sensor [-3.54, 2.1, 2.59] |
-| `street` | door [0, -0.55, 0] · stroll_start [-5, -1.9, 0] · burst [1.2, -1.9, 0] · crowd_1 [-0.8, -2.7, 0] · crowd_2 [2.6, -1.35, 0] · crowd_3 [3.7, -3.3, 0] · officer [-1.4, -4.3, 0] · police_stop [-2.6, -5.4, 0] · hatchback [-9.6, -5.2, 0] | sensor [0.97, -0.07, 2.63] · bag_burst [1.2, -1.9, 1.55] · bag_rest [0.35, -0.9, 0.36] · lamp [-6.2, -3.55, 0] · hydrant [-4.4, -3.5, 0] · mailbox [-2.9, -3.45, 0] · tree [7.9, -2.9, 0] |
-| `cutaway` | stack [0, 0, 0] · hand [0.06, -0.1, 0.26] · lifter [0.1, 0.45, 0] | stack [0, 0, 0.01] · plate [0, 0, 0] · thermo [0.22, 0.3, 0] · hand_grip [0, 0, 0.1] |
-| `park` | left [-0.9, -0.2, 0] · right [0.9, -0.2, 0] · center [0, -0.2, 0] · bench [-3.3, 1.2, 0] · walk_start [-5.5, 0.2, 0] · tree [3.6, 2.2, 0] | sun [-3.2, 9, 7.2] · sky [0, 2, 3.6] · bench_seat [-3.3, 1.55, 0.46] · lamp [5.6, 1.4, 0] · ground [0, -0.2, 0] |
-| `lab` | left [-0.8, -0.35, 0] · right [0.8, -0.35, 0] · center [0, -0.35, 0] · board [-1.9, 1.9, 0] · door [3.2, 0.2, 0] | bench_top [0, 0.85, 0.92] · board [0, 2.58, 1.9] · flask_l [-0.85, 0.85, 0.92] · flask_r [0.85, 0.85, 0.92] · window [-3, 2.6, 1.9] |
-
-`cutaway` always builds plate, stack and thermo; the `pack` sits INSIDE the stack (its child): `move` the stack (the pack
-rides along) or key the pack's parts (`{ kind: 'prop', prop: 'pack', keys: ['awake', 'alarm', 'dial', 'count'] }`). A `move`
-on `pack` stops with "prop pack has no rest pose". Move unused props out of shot at `f: 0` (`to: [0.22, 6, 0], dur: 1`).
-`cutaway` is the explainer table: tabletop scale, `zRange: [0.08, 1.2]`. People sets use `zRange: [1.1, 1.9]` (camera height);
-`lab` inserts on the bench work with `zRange: [1.0, 1.9]`. Street's police car and bag exist only when an act lists them in `use`.
+Marks, places and COLLIDE boxes: the set file's `MARKS`, `PLACES` and `COLLIDE` (the source is the truth).
 
 ## Dressing (the dressing gate: ≥ 16 pieces seen in 85 % of non-cu frames, GATES.md)
 
@@ -107,16 +79,17 @@ engine edit). A pure-black shirt renders dark grey under the toon shade: fine fo
 ## Add a new set in 15 minutes
 
 A topic set (kitchen, desert, office) is a floor, a back wall, 25+ dressing pieces (`dress.js`), COLLIDE boxes and marks. Never reword a
-script to dodge a missing set. `park.js` and `lab.js` were built from this file.
+script to dodge a missing set. For a set built like pilot A's (rich materials, story props with keys), start from
+`allout/sets/canyon-edge.js` instead.
 
-1. Copy the template below to `lib/sets/<name>.js` (`lib/sets/kit.js` gives `box, cyl, sphere, card, sky, mat`).
-2. Register it in `SETS` at the top of `engine/play.js`: `'<name>': () => import('../lib/sets/<name>.js')`, add a row above.
+1. Copy the template below to `allout/sets/<name>.js` (`lib/sets/kit.js` gives `box, cyl, sphere, card, sky, mat`).
+2. Point the act at it: `set: '<name>', setModule: '/styles/stick-man/allout/sets/<name>.js'`, and add a row to the table above.
 3. Prove it: a two-line test film (synthetic `vo/words.json` like `films/stick-fxkit`), the cast on its marks,
    `shot.mjs --frames 0,60 --out` stills, and `--report --fast 1` shows collisions none.
 
 ```js
 // <name>: one line on what it looks like. Blender metres: x right, y into the scene, z up; camera on the y < 0 side.
-import { setKit } from './kit.js';
+import { setKit } from '/styles/stick-man/lib/sets/kit.js';
 export const SUN_DIR = [0.35, 0.45, -0.82];                    // direction the light travels (front-left, high)
 export const SUN_CENTER = [0, 0.5, 0.8], SUN_HALF = 6.0;         // one fixed shadow fit
 export const MARKS = { left: [-0.9, -0.3, 0], right: [0.9, -0.3, 0], center: [0, -0.3, 0] };   // where figures stand
@@ -147,10 +120,9 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 const g = (await new GLTFLoader().loadAsync('/styles/stick-man/lib/props/<name>.glb')).scene;
 g.traverse(m => { if (m.isMesh) m.castShadow = m.receiveShadow = true; });
 g.userData.grip = [0, 0, 0];                 // hand props only
-put('<name>', g, PLACES.<name>);              // bank-lobby / cutaway helper: adds, inks, sets userData.rest
+g.position.set(...PLACES.<name>); stage.scene.add(g); stage.prop(g);   // add, ink
+g.userData.rest = { pos: g.position.clone(), rot: g.rotation.clone() };  // so `move` / `hold` can start from it
 ```
-
-`street.js` and `kit.js` sets have no `put()`: set `position`, `scene.add`, `stage.prop` and `userData.rest` by hand, as street does for `bag`.
 
 Prefer a prop built in code (see `lib/props/*.js`: pure functions, `userData.set(params)`) when it needs keyed parts.
 Only our own designs: no brand, no third-party model without a licence note in `THIRD_PARTY_NOTICES.md`.

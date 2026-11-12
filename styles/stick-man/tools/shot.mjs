@@ -1,9 +1,7 @@
 // Frame capture for the stick-man pages: headless Chromium (Metal ANGLE), one worker, JPEG q92 or PNG by extension.
-//   node styles/stick-man/tools/shot.mjs --view a --frames 0 --out films/stick-p0/out/a.png          (p0 page)
-//   node styles/stick-man/tools/shot.mjs --view front --probe 1
-//   node styles/stick-man/tools/shot.mjs --view a --speed 60 --stats films/stick-p0/out/speed.txt
+//   node styles/stick-man/tools/shot.mjs --page styles/stick-man/faces.html --frames 12 --out faces.jpg   (a proof page)
 // Reel page (styles/stick-man/reel.html) when --film is given:
-//   --film films/stick01-dye-pack --frames 0-344 --out f_%d.jpg        stills
+//   --film films/pilot-a --frames 0-344 --out f_%d.jpg        stills
 //   --film ... --frames 0-344 --mp4 renders/p1.mp4 [--w 540 --h 960]    mp4 with the voice from the right offset
 //   --film ... --frames 0-344 --dbg dbg.jsonl                          __dbg + motion per frame, no render (+ dress: pieces seen;
 //                                                                       --dress 1 adds dressList, their names)
@@ -32,7 +30,8 @@ if (A.film) for (const f of ['reel.js', 'reel2.js']) {
   if (c.status) { console.error(`${A.film}/${f} does not parse:\n${(c.stderr || '').trim()}`); process.exit(1); }
 }
 const W = Number(A.w || 1080), H = Number(A.h || 1920);
-const REEL = !!A.film, page = A.page || (REEL ? 'styles/stick-man/reel.html' : 'styles/stick-man/p0.html');
+const REEL = !!A.film, page = A.page || (REEL ? 'styles/stick-man/reel.html' : null);
+if (!page) { console.error('give --film films/<slug> or --page <proof page>'); process.exit(2); }
 const frames = (A.frames || '0').split(',').flatMap(s => { const [a, b] = s.split('-').map(Number); return b == null ? [a] : Array.from({ length: b - a + 1 }, (_, i) => a + i); });
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json', '.wav': 'audio/wav',

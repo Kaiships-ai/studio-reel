@@ -1,6 +1,6 @@
 # sound.py: SFX + music + mix for a stick-man film. Method and numbers from styles/kai-reel-3d (SFX.md, LISTICLE.md step 7,
 # listicle/audio/sfx.py word_duck, listicle/review/levels.py), copied here, not imported.
-#   python styles/stick-man/tools/sound.py films/stick01-dye-pack
+#   python styles/stick-man/tools/sound.py films/pilot-a
 # reads  vo/vo.wav (48 kHz mono, timing untouched), vo/words.json, audio/cues.json [{t, name, strength 0..1}]
 # writes audio/sfx.wav, audio/music.wav, audio/vo_m.wav, audio/mix.wav (48 kHz stereo, voice + 0.5 s), audio/levels.txt, audio/preview.m4a
 # Targets (Kai-approved, reel63 v2): voice ~-14.6, SFX stem ~-21, music ~-26 (was -28 until the 11/11 forensic: the reference bed sits -10..-12 dB under the voice in pauses), mix -14 LUFS; each hit 4-8 dB under the voice around it;

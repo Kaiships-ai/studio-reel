@@ -1,8 +1,8 @@
 // Blender-made pieces (.glb from tools/export_glb.py) as set dressing, in the stick-man look (GLB.md).
-//   const g = glbKit(stage, 'halden', COLLIDE);          // assets/halden/<name>.glb
-//   await g.load(['corner_shop', 'sedan']);              // fetch + parse once, before build() returns (so before __ready)
-//   g.place('corner_shop', [x, y, 0], 180);              // Blender metres + degrees about z; toon + ink + shadows
-//   export const COLLIDE = [];  glbKit(stage, 'halden', COLLIDE)   // place() pushes one box per piece, from its geometry
+//   const g = glbKit(stage, '<pack>', COLLIDE);          // assets/<pack>/<name>.glb
+//   await g.load(['shop', 'car']);                       // fetch + parse once, before build() returns (so before __ready)
+//   g.place('shop', [x, y, 0], 180);                     // Blender metres + degrees about z; toon + ink + shadows
+//   export const COLLIDE = [];  glbKit(stage, '<pack>', COLLIDE)   // place() pushes one box per piece, from its geometry
 // Materials: every glTF material becomes engine/look.js toon() (shared per colour or per map): painted maps keep their
 // windows, brick and signs under the toon ramp; emissive ones (signs, neon) keep a little glow. COLLIDE: x/y bounds of the triangles that cross the body band (z 0.05-1.8 m),
 // so a lamp arm or an awning overhead never blocks the pavement under it.
@@ -61,7 +61,7 @@ export function glbKit(stage, pack, collide = []) {
   return {
     collide,
     async load(names) { await Promise.all(names.map(async n => { src[n] = await loadGlb(`${ASSETS}/${pack}/${n}.glb`); })); },
-    // the parts of a room modelled in place (tools/interiors.py): each at the origin, not solid, one dressing piece each;
+    // the parts of a room modelled in place (exported in parts): each at the origin, not solid, one dressing piece each;
     // the `<set>_room` part (floor, walls, ceiling) casts no shadow so the ceiling never shades the room
     decor(names) { return names.map(n => { const o = this.place(n, [0, 0, 0], 0, { solid: false, dressing: !/_room$/.test(n) });
       if (/_room$/.test(n)) o.traverse(m => { if (m.isMesh) m.castShadow = false; }); return o; }); },

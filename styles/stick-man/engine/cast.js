@@ -626,7 +626,7 @@ export function makeStick(spec) {
     if (P.pos) root.position.copy(B(...P.pos));
     if (P.yaw != null) S.yaw = P.yaw * DEG;
     else if (P.face) { const d = B(...P.face).sub(root.position); S.yaw = Math.atan2(d.x, d.z); }
-    // x_tumble / x_roll (deg, opt-in from allout/acting.js): the whole figure tips about its soles (+ tumble = falls on
+    // x_tumble / x_roll (deg, opt-in): the whole figure tips about its soles (+ tumble = falls on
     // its face, - = on its back; + roll = toward its right), x_lift (m) raises it so a body lying down rests on the floor
     root.rotation.set((P.x_tumble || 0) * DEG, S.yaw + (P.yaw_extra || 0) * DEG, -(P.x_roll || 0) * DEG, 'YXZ');
     if (P.x_spin) root.quaternion.multiply(SPIN_Q.setFromAxisAngle(SPIN_AX, P.x_spin * DEG));   // + x_spin turns the fallen body about its own length (cheek to the ground, the face to one side)

@@ -22,7 +22,7 @@ const width = capture ? innerWidth : Number(Q.get('w') || 540), height = capture
 const view = document.getElementById('view');
 const fit = () => { const k = capture ? 1 : Math.min((innerHeight - 40) / height, innerWidth / width); view.style.width = width * k + 'px'; view.style.height = height * k + 'px'; };
 fit(); addEventListener('resize', fit);
-const reel = await boot({ film: Q.get('film') || 'films/stick01-dye-pack', width, height });
+const reel = await boot({ film: Q.get('film') || 'films/pilot-a', width, height });
 view.appendChild(reel.stage.renderer.domElement); view.appendChild(reel.captions.canvas);
 if (!capture) {
   const audio = new Audio(reel.audio), bar = document.getElementById('scrub');
