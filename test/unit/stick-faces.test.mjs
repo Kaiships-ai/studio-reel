@@ -84,7 +84,13 @@ test('layout: eyes in the glasses rims, features inside the head and clear of th
   const G = LAYOUT.glasses;
   assert.ok(Math.abs(G.dx - 0.15) < 1e-9 && Math.abs(G.ey - 0.02) < 1e-9, 'rim centres (cast.js glasses)');
   assert.ok(G.maxR < 0.112 - 0.013, 'ring eye fits inside the rim');
-  assert.ok(LAYOUT.dx * 2 > 0.26 && LAYOUT.dx * 2 < 0.34, 'eye spacing ~0.30 W');
+  assert.ok(LAYOUT.dx * 2 > 0.22 && LAYOUT.dx * 2 < 0.26, 'eye spacing ~0.24 W (face v2, Kai gate A)');
   // faceRig's dark-mouth probe reads v -0.121 .. -0.414: every resting mouth sits inside it
   assert.ok(LAYOUT.my < -0.13 && LAYOUT.my > -0.30 && G.my < -0.13);
+});
+
+test('hold drift never draws a lid line across a ring eye (Kai: the floating ruler line)', () => {
+  const ring = mixFace({ a: 'panic', life: { lid: 0.05 } }).F, dot = mixFace({ a: 'neutral', life: { lid: 0.05 } }).F;
+  assert.equal(ring.lid, 0, 'ring eye: no lid from the drift');
+  assert.ok(dot.lid > 0.04, 'dot eye still breathes its lid');
 });

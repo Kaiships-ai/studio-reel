@@ -3,7 +3,7 @@
 // (FORENSIC.md section 3 and fixes 8, 14).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { slowIn, MOVE_T, idleBeats, idleGap, phonemes, visemeTrack, faceStateAt, exprAccent, FACE_T } from '../../styles/stick-man/engine/acting.js';
+import { slowIn, MOVE_T, idleBeats, idleGap, phonemes, visemeTrack, faceStateAt, exprAccent, FACE_T, TAKE_T } from '../../styles/stick-man/engine/acting.js';
 
 test('slowIn: 7 % of the travel in the first eighth, half at the middle, monotone', () => {
   assert.ok(Math.abs(slowIn(1 / 8) - 0.07) < 0.01);
@@ -44,12 +44,19 @@ test('visemes: the mouth opens on the words, closes in a pause, and swings a lot
 });
 
 test('face: a change is in-betweened over FACE_T frames (a new mix every frame), then holds', () => {
-  const track = [{ f: -1e9, expr: 'neutral' }, { f: 20, expr: 'shock' }];
-  const us = []; for (let f = 20; f < 20 + FACE_T; f++) { const s = faceStateAt(track, f, 7); assert.equal(s.a, 'neutral'); assert.equal(s.b, 'shock'); us.push(s.u); }
+  const track = [{ f: -1e9, expr: 'neutral' }, { f: 20, expr: 'happy' }];
+  const us = []; for (let f = 20; f < 20 + FACE_T; f++) { const s = faceStateAt(track, f, 7); assert.equal(s.a, 'neutral'); assert.equal(s.b, 'happy'); us.push(s.u); }
   assert.equal(new Set(us.map(u => u.toFixed(4))).size, FACE_T);
   assert.ok(us[0] < 0.1);
-  const late = faceStateAt(track, 60, 7); assert.equal(late.a, 'shock'); assert.equal(late.u, 1);
+  const late = faceStateAt(track, 60, 7); assert.equal(late.a, 'happy'); assert.equal(late.u, 1);
   assert.notDeepEqual(faceStateAt(track, 60, 7).life, faceStateAt(track, 75, 7).life, 'a held face still drifts');
+});
+
+test('face: a take (shock) lands in TAKE_T frames, and the eyes move in GAZE_T frames ahead of the face', () => {
+  const track = [{ f: -1e9, expr: 'neutral' }, { f: 20, expr: 'shock' }];
+  assert.ok(faceStateAt(track, 20 + TAKE_T, 7).u > 0.95, 'landed by frame 3');
+  const slow = [{ f: -1e9, expr: 'neutral' }, { f: 20, expr: 'smug' }], s3 = faceStateAt(slow, 23, 7);
+  assert.ok(s3.ug > 0.95 && s3.u < 0.6, `eyes ${s3.ug.toFixed(2)} ahead of the face ${s3.u.toFixed(2)}`);
 });
 
 test('expression accent: anticipation, a slow rise, a hold, a release', () => {

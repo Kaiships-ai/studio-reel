@@ -6,7 +6,7 @@
 //   - five marks and no more: two eyes, two brows, one mouth. No highlights, no colour in the eyes, no skin effects
 //     except a soft blush and, rarely, small tears. Rage turns the whole head purple (tint) with steam; it never adds
 //     veins or red eyes.
-//   - eyes are small solid ink ovals (0.085 W wide), 0.27 W apart, at the head's middle. The signature is the lid: a
+//   - eyes are small solid ink ovals (0.085 W wide), 0.24 W apart (v2, was 0.27), at the head's middle. The signature is the lid: a
 //     thick straight stroke, longer than the eye, cutting the top off the oval (deadpan, smug, bored, angry = the same
 //     eye with a different lid height and tilt). Shock opens the oval into an ink ring with a dot pupil; joy closes it
 //     into a thin ^ arc. The oval -> ring change is continuous (`white`), so a face can ramp from deadpan to shock.
@@ -27,7 +27,10 @@ const DEG = Math.PI / 180;
 // lift R], bw = brow weight; mouth = shape (below), mw = width scale, mx / my = mouth shift (W); skin = { blush, tears }
 // 0..1; marks = head-attached cards; tint = head colour (linear) for rage.
 // DOT eye ~0.09 x 0.12 W on the head (Kai's reference shots 11/11)
-const DOT = { eye: 'oval', rx: 0.037, ry: 0.049 }, RING = { eye: 'oval', rx: 0.066, ry: 0.070, white: 1, pupil: 0.020 };
+const DOT = { eye: 'oval', rx: 0.037, ry: 0.049 }, RING = { eye: 'oval', rx: 0.056, ry: 0.062, white: 1, pupil: 0.031 };
+// ring eyes v2 (Kai, gate A 2026-11-12): smaller and closer, big pupils that look somewhere (gx / cross), often one lid
+// lower (lidA); every brow sits BROW_DROP lower than its table height so it is never hidden under a hat brim
+const BROW_DROP = 0.03;
 export const EXPR = {
   neutral: { ...DOT, brow: [0, 0.125, 0.008, 0, 0.006], mouth: 'flat', mx: 0.008 },
   calm: { ...DOT, lid: 0.34, brow: [-3, 0.120, 0.010, 0, 0.006], mouth: 'smile', mw: 0.7 },
@@ -38,11 +41,11 @@ export const EXPR = {
   sly: { ...DOT, lid: 0.56, lidTilt: 5, gx: -0.55, low: 0.2, brow: [10, 0.106, 0.002, 0.026, -0.004], mouth: 'smirk_l', mx: -0.014 },
   stern: { ...DOT, lid: 0.36, lidTilt: 12, brow: [16, 0.108, -0.004], bw: 1.2, mouth: 'frown', mw: 0.8 },
   worried: { ...DOT, ry: 0.058, lid: 0.10, brow: [-18, 0.135, 0.010, 0, 0.010], mouth: 'wobble' },
-  shock: { ...RING, brow: [-6, 0.150, 0.020, 0, 0.012], mouth: 'o' },
+  shock: { ...RING, cross: -0.35, lidA: 0.15, brow: [-10, 0.180, 0.022, 0, 0.026], mouth: 'o' },
   sleep: { eye: 'content', rx: 0.046, ry: 0.050, brow: [0, 0.112, 0.004], mouth: 'flat', mw: 0.6, mx: 0, marks: [['zzz']] },
   // the reference's manic grin: ring eyes with dot pupils over a wide grid of teeth (rail "anyone"). No red, no veins.
-  manic: { ...RING, rx: 0.068, ry: 0.072, pupil: 0.018, brow: [-4, 0.155, 0.016, 0, 0.012], mouth: 'teeth_grin', mw: 1.2 },
-  panic: { ...RING, ry: 0.074, pupil: 0.014, brow: [-20, 0.155, 0.012, 0, 0.010], mouth: 'wavy', marks: [['sweat']] },
+  manic: { ...RING, rx: 0.058, ry: 0.066, pupil: 0.030, cross: -0.3, lidA: 0.48, lidTilt: -8, brow: [-4, 0.180, 0.026, 0, -0.012], mouth: 'teeth_grin', mw: 1.25, mx: 0.012 },
+  panic: { ...RING, ry: 0.066, pupil: 0.027, gx: -0.7, brow: [-24, 0.180, 0.010, 0, 0.018], mouth: 'wavy', marks: [['sweat']] },
   blush: { eye: 'happy', rx: 0.048, ry: 0.050, brow: [-10, 0.130, 0.014], mouth: 'smile', mw: 0.7, skin: { blush: 1 } },
   angry: { ...DOT, lid: 0.40, lidTilt: 22, brow: [26, 0.098, -0.008], bw: 1.45, mouth: 'teeth' },
   // rage (rail "purple."): the head goes purple, steam puffs, the mouth a dark bar; the eyes stay ink
@@ -50,12 +53,12 @@ export const EXPR = {
   nervous: { ...DOT, lid: 0.08, gx: 0.5, brow: [-14, 0.135, 0.010, 0, 0.012], mouth: 'teeth_grin', mw: 0.8, marks: [['sweat']] },
   sad: { ...DOT, lid: 0.30, lidTilt: -14, brow: [-22, 0.125, 0.008], mouth: 'frown', mw: 0.85 },
   cry: { eye: 'pinch', rx: 0.050, ry: 0.050, brow: [-24, 0.125, 0.006], mouth: 'wail', skin: { tears: 1 } },
-  dizzy: { ...RING, rx: 0.062, ry: 0.066, pupil: 0.018, cross: 0.8, brow: [-8, 0.150, 0.016, 0, 0.022], mouth: 'wobble' },
+  dizzy: { ...RING, pupil: 0.027, cross: 0.9, lidA: 0.18, brow: [-6, 0.175, 0.016, 0, 0.030], mouth: 'wobble' },
   confused: { ...DOT, gx: 0.3, brow: [0, 0.122, 0.008, -0.016, 0.040], mouth: 'skew', mx: 0.012 },
-  excited: { ...RING, pupil: 0.030, brow: [-8, 0.155, 0.018, 0, 0.010], mouth: 'big' },
+  excited: { ...RING, rx: 0.060, ry: 0.066, pupil: 0.031, cross: -0.25, brow: [-12, 0.190, 0.024, 0, 0.014], mouth: 'big' },
   deadpan: { ...DOT, lid: 0.55, brow: [0, 0.104, 0, 0, 0.008], mouth: 'flat', mw: 0.85, mx: 0.012 },
   suspicious: { ...DOT, lid: 0.55, lidTilt: 8, gx: 0.6, low: 0.3, brow: [14, 0.100, -0.004, -0.018, 0.024], mouth: 'flat', mw: 0.7, mx: 0.016 },
-  scream: { ...RING, rx: 0.068, ry: 0.076, pupil: 0.012, brow: [-22, 0.165, 0.016], mouth: 'scream', marks: [['sweat']] },
+  scream: { ...RING, rx: 0.062, ry: 0.072, pupil: 0.024, cross: -0.2, brow: [-26, 0.195, 0.018, 0, 0.012], mouth: 'scream', marks: [['sweat']] },
   pain: { eye: 'pinch', rx: 0.050, ry: 0.050, brow: [-20, 0.118, 0], bw: 1.2, mouth: 'teeth', mw: 1.05, marks: [['sweat']] },
   proud: { eye: 'happy', rx: 0.048, ry: 0.050, brow: [-12, 0.140, 0.016, 0, 0.008], mouth: 'grin', mw: 0.95 },
   disgust: { ...DOT, lid: 0.40, lidTilt: 10, lidA: 0.12, low: 0.45, brow: [18, 0.108, 0, 0.020, -0.020], mouth: 'sneer', mw: 0.9 },
@@ -161,7 +164,7 @@ function eye(g, F, ex, s, ey, blink, rim = false) {
   }
   const top = ey + ry * (1 - 2 * lid), lowK = F.low || 0, white = Math.max(0, Math.min(1, F.white || 0));
   const st = 0.022, look = (F.gx || 0) + (F.cross || 0) * s;
-  const ox = look * rx * 0.30 * (1 - white);                                              // a dot eye slides under its lid
+  const ox = look * rx * 0.30 * (1 - white), oy = (F.gy || 0) * ry * 0.30 * (1 - white);  // a dot eye slides under its lid
   const cheekY = ey - ry - ry * 0.9 + lowK * ry * 0.75;
   g.save();
   if (lid > 0.001) { g.beginPath(); g.moveTo(ex - 0.3, top - 0.3 * slope); g.lineTo(ex + 0.3, top + 0.3 * slope); g.lineTo(ex + 0.3, ey - 0.3); g.lineTo(ex - 0.3, ey - 0.3); g.closePath(); g.clip(); }
@@ -170,12 +173,12 @@ function eye(g, F, ex, s, ey, blink, rim = false) {
     const pr = Math.max(F.pupil ?? 0.02, 0.026), ax = rx + (pr - rx) * white, ay = ry + (pr * 1.08 - ry) * white;   // the oval
     const room = Math.max(0, rx * 1.15 - ax);                                              // shrinks to a pupil, no white
     g.beginPath(); g.ellipse(ex + ox + look * room * 0.8 * white, ey - 0.003 * white, ax, ay, 0, 0, Math.PI * 2); g.fillStyle = INK; g.fill();
-  } else { g.beginPath(); g.ellipse(ex + ox, ey, rx, ry, 0, 0, Math.PI * 2); g.fillStyle = INK; g.fill(); }
+  } else { g.beginPath(); g.ellipse(ex + ox, ey + oy, rx, ry, 0, 0, Math.PI * 2); g.fillStyle = INK; g.fill(); }
   if (white > 0.01 && !rim) {
     const ix = Math.max(0.001, (rx - st) * white), iy = Math.max(0.001, (ry - st) * white), p0 = F.pupil ?? 0.02;
     g.beginPath(); g.ellipse(ex + ox, ey, ix, iy, 0, 0, Math.PI * 2); g.fillStyle = WHITE; g.fill();
     const pr = p0 + (Math.min(rx, ry) - st - p0) * (1 - white), room = Math.max(0, rx - st - pr - 0.004);
-    g.beginPath(); g.ellipse(ex + ox + look * room * 0.8, ey - 0.003, pr, pr * 1.08, 0, 0, Math.PI * 2); g.fillStyle = INK; g.fill();
+    g.beginPath(); g.ellipse(ex + ox + look * room * 0.8, ey - 0.003 + (F.gy || 0) * room * 0.8, pr, pr * 1.08, 0, 0, Math.PI * 2); g.fillStyle = INK; g.fill();
   }
   g.restore();
   // the lid: a thick straight stroke, longer than the eye (fades in from nothing so a ramp has no pop)
@@ -287,8 +290,10 @@ const REST_OPEN = { o: 0.40, o_big: 0.55, grin: 0.2, big: 0.55, big_open: 0.8, o
   teeth_grin: 0.25, teeth_open: 0.55, sad_open: 0.3, wail: 0.7, open: 0.35, open_skew: 0.35, open_frown: 0.25, bar: 0.15 };
 const ROUND = { o: 1, o_big: 1, scream: 0.6, scream_small: 0.6, sleep: 0.5 };
 const NUM = ['rx', 'ry', 'lid', 'lidTilt', 'lidA', 'low', 'white', 'pupil', 'gx', 'cross', 'bw', 'mw', 'mx', 'my', 'curve', 'rest', 'round'];
+const GAZE = new Set(['gx', 'cross']);
+export const GAZE_ARC = { k: 0.45 };   // how far a pupil crossing the eye dips at the middle of its move (share of its room)
 export function faceParams(name) {
-  const E = EXPR[name] || EXPR.neutral, S = E.skin || {}, [bt, bh, ba = 0, bl = 0, br = 0] = E.brow;
+  const E = EXPR[name] || EXPR.neutral, S = E.skin || {}, [bt, bh0, ba = 0, bl = 0, br = 0] = E.brow, bh = bh0 - BROW_DROP;
   return { eye: E.eye, rx: E.rx, ry: E.ry, lid: E.lid || 0, lidTilt: E.lidTilt || 0, lidA: E.lidA || 0, low: E.low || 0,
     white: E.white || 0, pupil: E.pupil ?? 0.020, gx: E.gx || 0, cross: E.cross || 0, brow: [bt, bh, ba, bl, br], bw: E.bw || 1,
     mouth: E.mouth, mw: E.mw || 1, mx: E.mx || 0, my: E.my || 0, curve: CURVE[E.mouth] || 0, rest: REST_OPEN[E.mouth] || 0,
@@ -302,12 +307,16 @@ const LIDDED = new Set(['oval']);
 export function mixFace(st) {
   const A = faceParams(st.a), B = faceParams(st.b ?? st.a), u = st.u ?? 1, uc = Math.max(0, Math.min(1, u)), L = st.life || {};
   const m = (x, y) => x + (y - x) * u, F = { ...B };
-  for (const k of NUM) F[k] = m(A[k], B[k]);
+  // the eyes move on their own clock (st.ug, a 3-frame saccade) and along an arc, not a straight line: a pupil crossing
+  // from one side to the other dips a little at the middle, as an eyeball rolls (asset 2.6)
+  const ug = st.ug ?? u, mg = (x, y) => x + (y - x) * ug;
+  for (const k of NUM) F[k] = GAZE.has(k) ? mg(A[k], B[k]) : m(A[k], B[k]);
+  F.gy = -GAZE_ARC.k * Math.min(1, Math.abs(B.gx - A.gx) + 0.5 * Math.abs(B.cross - A.cross)) * Math.sin(Math.PI * Math.max(0, Math.min(1, ug)));
   F.white = Math.max(0, Math.min(1, F.white)); F.bw = Math.max(0.6, F.bw);
   F.brow = A.brow.map((x, i) => m(x, B.brow[i]));
   F.skin = Object.fromEntries(Object.keys(A.skin).map(k => [k, Math.max(0, Math.min(1, A.skin[k] + (B.skin[k] - A.skin[k]) * uc))]));
   F.eye = uc < 0.5 ? A.eye : B.eye; F.mouth = uc < 0.5 ? A.mouth : B.mouth;
-  F.lid = Math.max(0, Math.min(0.9, F.lid + (LIDDED.has(F.eye) ? L.lid || 0 : 0)));
+  F.lid = Math.max(0, Math.min(0.9, F.lid + (LIDDED.has(F.eye) ? (L.lid || 0) * (1 - F.white) : 0)));   // a ring eye has no idle lid drift: on a ring it draws a ruler line
   F.ry = Math.max(0.02, F.ry); F.rx = Math.max(0.02, F.rx); F.pupil = Math.max(0.008, F.pupil);
   F.brow[0] += L.tilt || 0; F.brow[1] += L.brow || 0; F.mw *= 1 + (L.mw || 0);
   // the hidden swaps: eyes squeeze through a change of eye kind, the mouth passes through an open gasp
@@ -345,7 +354,7 @@ function vmouth(g, F, x0, y0) {
 // are big and bold (an eye is 0.10-0.12 W wide, a lid stroke 0.03 W thick), which is also what still reads on a phone.
 // o.glasses: the eyes sit in the rim centres (cast.js glasses(): +-0.15, 0.02, radius 0.112), ring eyes shrink to fit
 // inside, the brows clear the rims and the mouth drops a little; the expression still reads through brows and mouth.
-export const LAYOUT = { K: 1.25, ey: 0.0, dx: 0.135, my: -0.175, glasses: { K: 1.12, ey: 0.02, dx: 0.150, my: -0.185, maxR: 0.086, browMin: 0.165 } };
+export const LAYOUT = { K: 1.25, ey: 0.0, dx: 0.118, my: -0.175, glasses: { K: 1.12, ey: 0.02, dx: 0.150, my: -0.185, maxR: 0.086, browMin: 0.165 } };
 export function drawFaceState(g, F, blink = 0, t = 0, o = {}) {
   const Lo = o.glasses ? LAYOUT.glasses : LAYOUT, K = Lo.K, ey = Lo.ey / K, dx = Lo.dx / K;
   g.save(); g.scale(K, K);
@@ -426,6 +435,7 @@ const hashKey = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) h 
 // One figure's face: its own canvas (redrawn only when what it shows changes) and its mark cards.
 export function faceRig(headW, opt = {}) {
   const cv = document.createElement('canvas'); cv.width = cv.height = 512; const g = cv.getContext('2d', { willReadFrequently: true });
+  const off = document.createElement('canvas'); off.width = off.height = 512;
   const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
   const group = new THREE.Group(), cards = {};
   // measurement for __dbg (the forensic mouth numbers): dark mouth area (W^2, ink pixels below the eyes) and the drawing key
@@ -439,8 +449,8 @@ export function faceRig(headW, opt = {}) {
     tex, group, stats,
     // marks: [[kind, age]], cam: camera position (three world) or null; F (optional) = a mixed face from mixFace(): drawn
     // instead of the named expression (redrawn whenever one of its numbers moves, i.e. a new drawing per frame of a change)
-    // slide = [dx, dy, alpha] (W units): the flat 2D face (cast.js FACE_2D) - the whole drawing slides across the head disc
-    // as the head turns, clipped by the disc's edge, never wrapped round a sphere; alpha 0 = the back of the head
+    // slide = [yaw (rad), dy (W), alpha]: the flat 2D face (cast.js FACE_2D) turned round the ball of the head by yaw,
+    // strip by strip, clipped by the head's outline; alpha 0 = the back of the head
     draw(expr, blink, t, marks, cam, F = null, slide = null) {
       const E = EXPR[expr] || EXPR.neutral, live = !!(E.skin?.tears || F?.skin?.tears > 0.03);
       const fk = F ? JSON.stringify(F, (n, v) => typeof v === 'number' ? Math.round(v * 1000) / 1000 : v) : expr;
@@ -448,14 +458,28 @@ export function faceRig(headW, opt = {}) {
       const k = `${fk}|${blink}|${live ? Math.floor(t / 2) : 0}|${sl ? sl.join(',') : ''}`;
       if (k !== key) {
         key = k;
-        const paint = sh => {
-          g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 512, 512); g.setTransform(512, 0, 0, -512, 256, 256);
-          if (sh) { if (sh[2] <= 0.01) return; g.save(); g.beginPath(); g.ellipse(0, 0, 0.462, 0.432, 0, 0, Math.PI * 2); g.clip(); g.translate(sh[0], sh[1]); g.globalAlpha = sh[2]; }
-          if (F) drawFaceState(g, F, blink, t, opt); else drawFace(g, expr, blink, t, opt);
-          if (sh) g.restore();
-        };
-        paint(null); stats.mouth = darkMouth(); stats.key = k.length > 64 ? hashKey(k) : k;   // measured on the face itself, not where it slid
-        if (sl && (sl[0] || sl[1] || sl[2] < 1)) paint(sl);
+        const paint = () => { g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 512, 512); g.setTransform(512, 0, 0, -512, 256, 256);
+          if (F) drawFaceState(g, F, blink, t, opt); else drawFace(g, expr, blink, t, opt); };
+        paint(); stats.mouth = darkMouth(); stats.key = k.length > 64 ? hashKey(k) : k;   // measured on the face itself, not where it turned
+        if (sl && (sl[0] || sl[1] || sl[2] < 1)) {
+          // the face drawn on the ball of the head (asset 2.4): each vertical strip of the flat drawing sits at its own
+          // longitude, turned by the face's yaw (sl[0], rad), so features squeeze as they go round, the far eye slides
+          // behind the edge and fades, the near one stays: a profile, not a drawing sliding off a disc
+          off.getContext('2d').clearRect(0, 0, 512, 512); off.getContext('2d').drawImage(cv, 0, 0);
+          g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 512, 512);
+          if (sl[2] > 0.01) {
+            g.save(); g.beginPath(); g.ellipse(256, 256, 0.462 * 512, 0.432 * 512, 0, 0, Math.PI * 2); g.clip();
+            const R = 0.462, N = 120, px = u => 256 + 512 * u, dyp = -512 * sl[1];
+            for (let i = 0; i < N; i++) {
+              const u0 = -R + 2 * R * i / N, u1 = u0 + 2 * R / N, a0 = Math.asin(u0 / R) + sl[0], a1 = Math.asin(Math.min(1, u1 / R)) + sl[0];
+              const z = Math.cos((a0 + a1) / 2); if (z < 0.08) continue;
+              const x0 = px(R * Math.sin(a0)), x1 = px(R * Math.sin(a1)); if (x1 - x0 < 0.05) continue;
+              g.globalAlpha = Math.min(1, (z - 0.08) / 0.25) * sl[2];
+              g.drawImage(off, px(u0), 0, px(u1) - px(u0), 512, x0, dyp, x1 - x0 + 0.6, 512);
+            }
+            g.restore();
+          }
+        }
         tex.needsUpdate = true;
       }
       for (const list of Object.values(cards)) for (const m of list) m.visible = false;

@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import { ellipsoid, armPenetration, solveArm, limitArm, JOINTS } from '../../styles/stick-man/engine/body.js';
+import { ellipsoid, armPenetration, solveArm, limitArm, limitBody, ROM, JOINTS, centreOfMass, balanceShift } from '../../styles/stick-man/engine/body.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 // two equal bones: elbow on the pole side, a target past reach is pulled in
@@ -43,4 +43,59 @@ test('the elbow never folds past its range', () => {
 test('FK channels are held inside the joint ranges', () => {
   const { A, hits } = limitArm({ raise: 200, swing: 90, elbow: 170, roll: 30 });
   assert.deepEqual([A.raise, A.swing, A.elbow, A.roll, hits], [180, 60, 145, 30, 3]);
+});
+
+test('a hand sweeping into and across the torso moves smoothly (no pops) and never ends inside', () => {
+  // the wanted arm slides 1 cm per step from the side, across the belly, to the far side; the solved hand and elbow may
+  // move a little more than that, never jump (the old solver flipped the elbow behind the body between steps)
+  let prev = null, worst = 0, deepest = 0;
+  for (let i = 0; i <= 60; i++) {
+    const w = ik(sh, V(0.45 - i * 0.01, 1.65, 0.12), l, V(1, 0, -0.3));
+    const s = solveArm({ sh, elbow: w.joint, hand: w.end, pole: V(1, 0, -0.3), l, vols: [head, torso], ik, flex: w.flex, limb: 0.023, handR: 0.05, out: V(1, -0.3, 0.4) });
+    deepest = Math.max(deepest, s.pen);
+    if (prev) worst = Math.max(worst, s.hand.distanceTo(prev.hand), s.elbow.distanceTo(prev.elbow));
+    prev = s;
+  }
+  assert.equal(deepest, 0);
+  assert.ok(worst < 0.08, `largest step ${worst.toFixed(3)} W`);
+});
+
+test('centre of mass: a person standing straight has it on the centre line, about hip height', () => {
+  const side = sg => ({ shoulder: V(sg * 0.23, 2.0, 0), elbow: V(sg * 0.25, 1.5, 0), hand: V(sg * 0.26, 1.0, 0),
+    hip: V(sg * 0.14, 1.38, 0), knee: V(sg * 0.15, 0.7, 0), ankle: V(sg * 0.15, 0.02, 0), toe: V(sg * 0.15, 0.02, 0.2) });
+  const c = centreOfMass({ head: V(0, 2.43, 0), trunk: V(0, 1.72, 0), L: side(-1), R: side(1) });
+  assert.ok(Math.abs(c.x) < 1e-9, 'on the centre line');
+  assert.ok(c.y > 1.2 && c.y < 1.7, `height ${c.y.toFixed(2)} W`);
+  // one arm held straight out to the side moves it toward that arm, by its share of the mass
+  const L = side(-1), R = side(1); R.elbow = V(0.73, 2.0, 0); R.hand = V(1.23, 2.0, 0);
+  const c2 = centreOfMass({ head: V(0, 2.43, 0), trunk: V(0, 1.72, 0), L, R });
+  assert.ok(c2.x > 0.01 && c2.x < 0.06, `shift ${c2.x.toFixed(3)} W`);
+});
+
+test('balance: a centre of mass behind the heels is moved forward over the feet; over them it is left alone', () => {
+  const foot = x => ({ heel: V(x, 0.022, -0.08), ankle: V(x, 0.022, 0), toe: V(x + 0.03, 0.022, 0.1) });
+  const feet = [foot(-0.2), foot(0.2)];
+  assert.equal(balanceShift(V(0, 1.3, 0.02), feet), null, 'over the feet');
+  const b = balanceShift(V(0, 1.3, -0.2), feet);
+  assert.ok(b && b.z > 0.1 && Math.abs(b.x) < 0.02, `shift ${JSON.stringify(b)}`);
+  // one foot lifted high: not standing, no correction
+  assert.equal(balanceShift(V(0, 1.3, -0.2), [foot(-0.2), { ...foot(0.2), heel: V(0.2, 0.4, -0.08), ankle: V(0.2, 0.4, 0), toe: V(0.23, 0.4, 0.1) }]), null);
+});
+
+test('joint ranges: spine and neck channels are held in their clinical ranges', () => {
+  const { Q, hits } = limitBody({ spine: { bend: 120, side: -60, twist: 10 }, neck: { nod: 10, tilt: 0, turn: 150 } });
+  assert.deepEqual([Q.spine.bend, Q.spine.side, Q.spine.twist, Q.neck.turn, hits], [ROM.bend[1], ROM.side[0], 10, ROM.turn[1], 3]);
+});
+
+test('style dials: at 0.5 the kit plays as authored; exaggeration scales poses away from rest; timing steps frames', async () => {
+  const M = await import('../../styles/stick-man/engine/motion.js');
+  const keys = [{ f: 0, pose: { spine: { bend: 0 }, armR: { raise: 12 } } }, { f: 10, pose: { spine: { bend: 20 }, armR: { raise: 90 } } }];
+  const play = () => M.playActor(M.compileTrack(keys, {}, {}), 0, 12, { stiff: true });
+  const base = play();
+  Object.assign(M.STYLE, { exaggeration: 0.95 }); const big = play();
+  assert.ok(big[10]['armR.raise'] > base[10]['armR.raise'] + 20, `raise ${base[10]['armR.raise']} -> ${big[10]['armR.raise']}`);
+  Object.assign(M.STYLE, { exaggeration: 0.5, timing: 0.9 }); const twos = play();
+  assert.deepEqual(twos[5], twos[4], 'on twos: frame 5 repeats frame 4');
+  Object.assign(M.STYLE, { timing: 0.5 });
+  assert.deepEqual(play()[7], base[7], 'back at 0.5: as authored');
 });

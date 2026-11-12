@@ -6,7 +6,7 @@ import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometr
 import { toon, lin, css, B, INK_RGB, INK_SUN, PLACE } from './look.js';
 import { EXPR, faceRig, mixFace } from './faces.js';
 import { makeHandProp } from '../lib/cast/handprops.js';
-import { limitArm, torsoSlices, ellipsoid, solveArm } from './body.js';
+import { limitArm, limitBody, ROM, torsoSlices, ellipsoid, solveArm, armPenetration, PHYS, centreOfMass, balanceShift } from './body.js';
 
 const SPIN_Q = new THREE.Quaternion(), SPIN_AX = new THREE.Vector3(0, 1, 0), _camL = new THREE.Vector3();
 export const W_M = 0.60;                     // head width in metres
@@ -228,6 +228,8 @@ export function headScale(yn) {
   yn = Math.max(-1, Math.min(1, yn)); let i = 0; while (i + 2 < HEAD_S.length && HEAD_S[i + 1][0] > yn) i++;
   const [a, sa] = HEAD_S[i], [b, sb] = HEAD_S[i + 1], u = (a - yn) / (a - b); return sa + (sb - sa) * u * u * (3 - 2 * u);
 }
+// hats and hair sit HAT_LIFT higher than they were modelled so the brows always show (Kai, gate A 2026-11-12)
+export const HAT_LIFT = 0.035;
 const _hv = new THREE.Vector3(), _hm = new THREE.Matrix4(), _hi = new THREE.Matrix4();
 // deform a geometry whose vertices are in a frame M (-> head space); M null = head space already
 // Kai 11/11 (later): back to the original round head ("đầu hiện tại anh lại thấy không ok") -> off by default.
@@ -390,6 +392,11 @@ class Tube {
 // Arms 25 % longer than the first design (Kai 2026-11-12: at 0.41 the arm was shorter than the head and a raised hand hid
 // behind it); both bones stay equal (ik() assumes it).
 export const LIMB = { thigh: 0.679, shin: 0.679, upper: 0.5125, fore: 0.5125, stub: 0.122 };
+// the foot (W): a heel behind the ankle as well as the toe in front, so the body has something to stand on (rig B2; a
+// 4 cm toe stub with no heel put a standing body's centre of mass behind its feet). FOOT_R: the drawn line's radius,
+// the height of the sole under a foot point
+export const FOOT = { heel: 0.08 };
+const FOOT_R = 0.022;
 // Above this share of full reach the joint eases toward straight and the hose stretches (rubber hose), so a target is
 // always reached exactly (feet never slide, props stay in the hand). Legs straighten fully (a standing leg never
 // flickers bent); arms keep a soft 12 deg bend and stretch, easing over a wide range so a fast reach never snaps.
@@ -594,6 +601,7 @@ export function makeStick(spec) {
   head.updateMatrixWorld(true); _hm.copy(head.matrixWorld).invert();
   const skip = new Set([headSolid, face]); headSolid.traverse(o => skip.add(o)); FR.group.traverse(o => skip.add(o));
   head.traverse(o => { if (!o.isMesh || skip.has(o)) return; o.geometry = o.geometry.clone(); shapeHeadGeo(o.geometry, _hm.clone().multiply(o.matrixWorld)); });
+  hairG.position.y = HAT_LIFT;
 
   const limbs = { armL: new Tube(16, LIMB_R), armR: new Tube(16, LIMB_R), legL: new Tube(18, LIMB_R), legR: new Tube(18, LIMB_R) };
   // hand mitt: reference hands are ~0.10 W across, about twice the arm line
@@ -601,7 +609,8 @@ export function makeStick(spec) {
   const ball = geo => { const m = new THREE.Mesh(geo, inkMat); m.castShadow = true; root.add(m); return m; };
   // gloves (spec.gloves = rgb): a light mitt with its own ink edge, so a hand reads against a dark coat or a dark set
   const glove = () => { const m = solid(dotGeo.clone().scale(1.15, 1.15, 1.15), toon(spec.gloves, { rough: 1, rim: 0, sheen: 0, soft: 0, char: 1 }), INK_T * 0.7); root.add(m); return m; };
-  const hands = spec.gloves ? { L: glove(), R: glove() } : { L: ball(dotGeo), R: ball(dotGeo) }, ankles = { L: ball(jointGeo), R: ball(jointGeo) }, toes = { L: ball(jointGeo), R: ball(jointGeo) };
+  const hands = spec.gloves ? { L: glove(), R: glove() } : { L: ball(dotGeo), R: ball(dotGeo) }, ankles = { L: ball(jointGeo), R: ball(jointGeo) }, toes = { L: ball(jointGeo), R: ball(jointGeo) }, heels = { L: ball(jointGeo), R: ball(jointGeo) };
+  const heelT = { L: new Tube(6, LIMB_R), R: new Tube(6, LIMB_R) }; for (const t of Object.values(heelT)) root.add(t.mesh);
   for (const t of Object.values(limbs)) root.add(t.mesh);
 
   const contact = new THREE.Mesh(new THREE.CircleGeometry(1, 32), new THREE.MeshBasicMaterial({ color: lin(0.05, 0.09, 0.22),
@@ -644,8 +653,10 @@ export function makeStick(spec) {
       head.updateWorldMatrix(true, false); _camL.copy(B(...P.cam)); head.worldToLocal(_camL);
       const d = _camL.lengthSq() > 1e-8 ? _camL.normalize() : _camL.set(0, 0, 1);
       const yaw = Math.atan2(d.x, d.z) - (P.look || 0) * LOOK_RAD, el = Math.asin(Math.max(-1, Math.min(1, d.y))) + (P.look_v || 0) * 0.12;
-      const vis = Math.max(0, Math.min(1, (Math.cos(yaw) - 0.22) / 0.3));   // gone a little before profile: the drawing never lands on hair at the side
-      slide = [-0.40 * Math.sin(yaw), -0.40 * Math.sin(el) * HEAD_H, vis];
+      // the face turns 80% as far as the skull (the cartoon cheat that keeps it on the ball in profile, approved at 1.3);
+      // each feature hides itself as it goes round the edge, the whole face only at the back of the head
+      const vis = Math.max(0, Math.min(1, (Math.cos(yaw) + 0.35) / 0.3));
+      slide = [-0.8 * yaw, -0.40 * Math.sin(el) * HEAD_H, vis];
       card2d.visible = true; card2d.position.copy(d).multiplyScalar(HA * 1.02); card2d.lookAt(B(...P.cam));
     } else card2d.visible = false;
     face.visible = !FACE_2D.on || !P.cam;
@@ -751,7 +762,8 @@ export function makeStick(spec) {
   // hat {pitch, roll} (deg, the follow-through swing), plus the x_ keys (props, marks) and contact.
   let bent = null, slices = null;
   const _e = new THREE.Euler();
-  S.pose2 = (Q = {}) => {
+  S.pose2 = (Q0 = {}) => {
+    const LB = limitBody(Q0), Q = LB.Q;
     S.place(Q);
     if (!bent) {                                                   // rest copies of the torso and its ink shell, once
       const hull = torso.children[0];
@@ -789,6 +801,7 @@ export function makeStick(spec) {
       const c = new THREE.Vector3(sl.cx, sl.y, sl.cz); bendPt(B, c);
       vols.push(ellipsoid(toRoot(c), qb.clone().multiply(spineFrame(B, Math.max(0, sl.y)).q), [sl.rx * kS, sl.ry * B.s, sl.rz * kS], 'torso'));
     }
+    const legs = {};
     for (const [side, sg] of [['L', -1], ['R', 1]]) {
       const shB = new THREE.Vector3(sg * TORSO.w * 0.40 * girth, shY, 0); bendPt(B, shB);
       const lim = limitArm(Q['arm' + side] || {}), sh = toRoot(shB), A = lim.A;
@@ -802,24 +815,87 @@ export function makeStick(spec) {
       }
       // physics: a hand inside the head or the torso stops on its surface, an elbow inside is pushed out, the elbow
       // stays in its range (bones keep their length)
-      const sol = solveArm({ sh, elbow, hand, flex, pole: A.pole ? V(A.pole) : k.pole, l: LIMB.upper, vols, limb: LIMB_R / W, handR: 0.05, out: new THREE.Vector3(sg, -0.3, 0.4).applyQuaternion(qChest),
-        ik: (a, b, l, p) => ik(a, b, l, p, SOFT.arm, true) });
+      const sol = PHYS.on ? solveArm({ sh, elbow, hand, flex, pole: A.pole ? V(A.pole) : k.pole, l: LIMB.upper, vols, limb: LIMB_R / W, handR: 0.05, out: new THREE.Vector3(sg, -0.3, 0.4).applyQuaternion(qChest),
+        ik: (a, b, l, p) => ik(a, b, l, p, SOFT.arm, true) })
+        : (w => ({ elbow, hand, flex, pen0: w ? w.depth : 0, pen: w ? w.depth : 0, limits: 0 }))(armPenetration(sh, elbow, hand, vols, { limb: LIMB_R / W, handR: 0.05 }));
       elbow = sol.elbow; hand = sol.hand; flex = sol.flex;
       const pts = hose(sh, elbow, hand, ROUND.arm, 16);
       limbs['arm' + side].set(pts); hands[side].position.copy(pts[15]); S.hand[side] = hand.toArray();
       const hipJ = toRoot(new THREE.Vector3(sg * 0.14 * girth, 0.04, 0)), G = Q['leg' + side] || {};
-      const foot = V(G.foot || [sg * 0.22, 0.022, 0]), kp = V(G.knee || [sg * 0.15, 0, 1]);
-      const leg = ik(hipJ, foot, LIMB.thigh, kp, SOFT.leg);
+      const foot0 = V(G.foot || [sg * 0.22, 0.022, 0]), kp = V(G.knee || [sg * 0.15, 0, 1]);
+      const hdir = new THREE.Vector3(0.10 * sg, 0, 0.07).normalize().applyAxisAngle(_Y, (G.yaw || 0) * DEG), gnd = Q.ground || 0;
+      // heel and toe turn about the ankle with the foot's pitch; no part of the sole goes under the ground (a toes-down
+      // foot stands on its toes, so the ankle rises). Past the ankle's range the heel lifts instead (second pass).
+      let ptc = (G.pitch || 0) * DEG, foot, toeO, heelO, leg, ankleLift = 0;
+      for (let pass = 0; pass < 2; pass++) {
+        toeO = hdir.clone().multiplyScalar(LIMB.stub * Math.cos(ptc)).setY(LIMB.stub * Math.sin(ptc) - 0.004);
+        heelO = hdir.clone().multiplyScalar(-FOOT.heel * Math.cos(ptc)).setY(-FOOT.heel * Math.sin(ptc) - 0.004);
+        foot = foot0.clone(); const sole = Math.min(foot.y, foot.y + toeO.y, foot.y + heelO.y) - FOOT_R;
+        if (sole < gnd) foot.y += gnd - sole;
+        leg = ik(hipJ, foot, LIMB.thigh, kp, SOFT.leg);
+        const shin = foot.clone().sub(leg.joint).normalize(), soleD = toeO.clone().sub(heelO).normalize();
+        const df = 90 - Math.acos(Math.max(-1, Math.min(1, -shin.dot(soleD)))) / DEG;
+        if (!PHYS.rom || df <= ROM.ankleDF[1] + 0.5 || pass) break;
+        ptc -= (df - ROM.ankleDF[1]) * DEG; ankleLift = 1;
+      }
+      // the leg is a solid too (rig B5): a thigh or shin inside the trunk or the head turns its knee out round the
+      // hip-foot line (the foot stays planted) by the smallest angle that clears, as knees open in a deep squat
+      let legPen0 = 0, legPen = 0;
+      {
+        const w0 = armPenetration(hipJ, leg.joint, foot, vols, { limb: LIMB_R / W, handR: 0.03 });
+        if (w0 && !PHYS.on) legPen0 = legPen = w0.depth;
+        else if (w0) { legPen0 = w0.depth; const ax = foot.clone().sub(hipJ).normalize(), out = new THREE.Vector3(sg, 0, 0.3).applyQuaternion(qb);
+          let best = null;
+          for (let k = 1; k <= 36 && !best; k++) for (const sgn of [1, -1]) {
+            const P = kp.clone().applyAxisAngle(ax, sgn * k * 5 * DEG), r = ik(hipJ, foot, LIMB.thigh, P, SOFT.leg);
+            if (!armPenetration(hipJ, r.joint, foot, vols, { limb: LIMB_R / W, handR: 0.03 }) && (!best || r.joint.clone().sub(hipJ).dot(out) > best.joint.clone().sub(hipJ).dot(out))) best = r;
+            if (best && sgn === -1) break;
+          }
+          if (best) leg = best; else legPen = w0.depth; }
+      }
+      rig[side] = { shoulder: sh, elbow, hand, elbowFlex: flex, pen0: sol.pen0, pen: sol.pen, limits: lim.hits + sol.limits + (side === 'L' ? LB.hits : 0) };
+      legs[side] = { sg, hipJ, foot, leg, kp, ptc, toeO, heelO, ankleLift, legPen0, legPen };
+    }
+    // legs never pass through each other: two leg lines closer than two radii turn their knees apart (each away from the
+    // other), smallest angle first; crossed feet still cross, but one shin passes in front of the other
+    const segD = (p1, q1, p2, q2) => { // closest distance between two segments
+      const d1 = q1.clone().sub(p1), d2 = q2.clone().sub(p2), r = p1.clone().sub(p2), a = d1.dot(d1), e = d2.dot(d2), f = d2.dot(r), c = d1.dot(r), b = d1.dot(d2), den = a * e - b * b;
+      let s1 = den > 1e-9 ? Math.max(0, Math.min(1, (b * f - c * e) / den)) : 0, t1 = (b * s1 + f) / e;
+      if (t1 < 0) { t1 = 0; s1 = Math.max(0, Math.min(1, -c / a)); } else if (t1 > 1) { t1 = 1; s1 = Math.max(0, Math.min(1, (b - c) / a)); }
+      return p1.clone().addScaledVector(d1, s1).distanceTo(p2.clone().addScaledVector(d2, t1)); };
+    const legGap = () => { const A = legs.L, B = legs.R, lerp = (h, k, t) => h.clone().lerp(k, t);
+      const segs = X => [[lerp(X.hipJ, X.leg.joint, 0.35), X.leg.joint], [X.leg.joint, X.foot]];
+      let m = Infinity; for (const [p, q] of segs(A)) for (const [r, t] of segs(B)) m = Math.min(m, segD(p, q, r, t)); return m; };
+    const minGap = 2 * LIMB_R / W, gap0 = legGap(); let legHit = 0;
+    if (gap0 < minGap) legHit = minGap - gap0;
+    if (PHYS.on && gap0 < minGap) {
+      for (let k = 1; k <= 12 && legGap() < minGap; k++) for (const sd of ['L', 'R']) { const X = legs[sd], ax = X.foot.clone().sub(X.hipJ).normalize();
+        const P = X.kp.clone().applyAxisAngle(ax, -X.sg * k * 3 * DEG); X.leg = ik(X.hipJ, X.foot, LIMB.thigh, P, SOFT.leg); }
+    }
+    for (const [side, sg] of [['L', -1], ['R', 1]]) {
+      const { hipJ, foot, leg, ptc, toeO, heelO, ankleLift, legPen0, legPen } = legs[side];
       const lp = hose(hipJ, leg.joint, foot, ROUND.leg, 13);
-      const ptc = (G.pitch || 0) * DEG, hdir = new THREE.Vector3(0.10 * sg, 0, 0.07).normalize().applyAxisAngle(_Y, (G.yaw || 0) * DEG);
-      const toeL = foot.clone().addScaledVector(hdir, LIMB.stub * Math.cos(ptc)); toeL.y += LIMB.stub * Math.sin(ptc) - 0.004;
+      const toeL = foot.clone().add(toeO), heelL = foot.clone().add(heelO);
       const toe = toeL.clone().multiplyScalar(W);
       for (let i = 1; i <= 5; i++) lp.push(lp[12].clone().lerp(toe, i / 5));
       limbs['leg' + side].set(lp); ankles[side].position.copy(lp[12]); toes[side].position.copy(toe);
-      rig[side] = { hip: hipJ, knee: leg.joint, ankle: foot, toe: toeL, shoulder: sh, elbow, hand, kneeFlex: leg.flex, elbowFlex: flex, footPitch: G.pitch || 0,
-        pen0: sol.pen0, pen: sol.pen, limits: lim.hits + sol.limits };
+      heelT[side].set(Array.from({ length: 6 }, (_, i) => lp[12].clone().lerp(heelL.clone().multiplyScalar(W), i / 5))); heels[side].position.copy(heelL).multiplyScalar(W);
+      // joint angles as a clinician measures them (deg): hip flexion (+ forward) and abduction (+ outward) of the thigh
+      // in the pelvis frame, ankle dorsiflexion (+ toes toward the shin) between the shin and the sole
+      const th = leg.joint.clone().sub(hipJ).applyQuaternion(qb.clone().invert());
+      const hipFlex = Math.atan2(th.z, -th.y) / DEG, hipAbd = Math.atan2(sg * th.x, Math.hypot(th.y, th.z)) / DEG;
+      const shin = foot.clone().sub(leg.joint).normalize(), soleD = toeL.clone().sub(heelL).normalize();
+      const ankleDF = 90 - Math.acos(Math.max(-1, Math.min(1, -shin.dot(soleD)))) / DEG;
+      Object.assign(rig[side], { hip: hipJ, knee: leg.joint, ankle: foot, toe: toeL, heel: heelL, kneeFlex: leg.flex, footPitch: ptc / DEG,
+        hipFlex, hipAbd, ankleDF, heelUp: ankleLift, legPen0, legPen, legGap0: side === 'L' ? legHit : 0 });
     }
-    S.rig = rig;
+    // the skeleton in root space (W): pelvis, five points up the spine, the neck base, the head centre, the trunk's
+    // centre; and the centre of mass of the whole body
+    const neck = toRoot(top.p.clone()), headC = toRoot(top.p.clone().add(hOff)), trunk = toRoot(spineFrame(B, TORSO.cy - HIP_V).p);
+    S.skel = { pelvis: hipP.clone(), spine: [0, 0.25, 0.5, 0.75, 1].map(u => toRoot(spineFrame(B, u * SPINE_L).p)), neck, head: headC, trunk };
+    S.com = centreOfMass({ head: headC, trunk, L: rig.L, R: rig.R });
+    S.chan = { bend: +(Q.spine?.bend || 0).toFixed(1), side: +(Q.spine?.side || 0).toFixed(1), twist: +(Q.spine?.twist || 0).toFixed(1), nod: +(nk.nod || 0).toFixed(1), tilt: +(nk.tilt || 0).toFixed(1), turn: +(nk.turn || 0).toFixed(1) };
+    S.rig = rig; S.vols = vols;
     handProps(Q, rig);
     S.xmarks = Object.keys(Q).filter(k => k.startsWith('x_mark_') && Q[k] >= 1).map(k => [k.slice(7), Math.floor(Q[k] - 1)]);
     contact.visible = Q.contact !== false; contact.position.y = 0.004 + (Q.ground || 0) * W;
@@ -827,15 +903,31 @@ export function makeStick(spec) {
     return S;
   };
   // the last pose's joints in Blender world metres (y = depth), flexes and pitches in degrees, for __dbg
+  // balance (rig B4): a body standing on both feet with its centre of mass outside them moves its hips over its feet,
+  // as a person does, feet staying where they are (a pelvis shift moves ~85% of the body's mass with it)
+  const pose2raw = S.pose2;
+  S.pose2 = (Q = {}) => {
+    let r = pose2raw(Q), shift = 0;
+    if (PHYS.on && PHYS.balance && !Q.fall) for (let i = 0; i < 4; i++) {
+      const b = balanceShift(S.com, ['L', 'R'].map(sd => S.rig[sd]), Q.ground || 0); if (!b) break;
+      shift += Math.hypot(b.x, b.z); Q = { ...Q, hip: { ...(Q.hip || {}), x: (Q.hip?.x || 0) + b.x / 0.85, z: (Q.hip?.z || 0) + b.z / 0.85 } }; r = pose2raw(Q);
+    }
+    S.rig.balanceShift = shift;
+    return r;
+  };
   S.rigWorld = () => {
     const w = q => { const v = q.clone().multiplyScalar(W).applyMatrix4(root.matrixWorld); return [v.x, -v.z, v.y].map(x => +x.toFixed(4)); };
     const o = { torsoLean: +S.rig.pitch.toFixed(2), torsoRoll: +S.rig.roll.toFixed(2), assist: S.rig.assist, body: S.rig.body, sq: S.rig.sq ?? 0, headSq: S.rig.headSq ?? 0 };
     for (const s of ['L', 'R']) {
       const r = S.rig[s];
-      o[s] = { hip: w(r.hip), knee: w(r.knee), ankle: w(r.ankle), toe: w(r.toe), shoulder: w(r.shoulder), elbow: w(r.elbow), hand: w(r.hand),
+      o[s] = { hip: w(r.hip), knee: w(r.knee), ankle: w(r.ankle), toe: w(r.toe), ...(r.heel ? { heel: w(r.heel) } : {}), shoulder: w(r.shoulder), elbow: w(r.elbow), hand: w(r.hand),
         kneeFlex: +r.kneeFlex.toFixed(2), elbowFlex: +r.elbowFlex.toFixed(2), footPitch: +r.footPitch.toFixed(2),
+        ...(r.hipFlex != null ? { hipFlex: +r.hipFlex.toFixed(1), hipAbd: +r.hipAbd.toFixed(1), ankleDF: +r.ankleDF.toFixed(1), legPenCm0: +(r.legPen0 * W * 100).toFixed(2), legPenCm: +(r.legPen * W * 100).toFixed(2), legGapCm: +(r.legGap0 * W * 100).toFixed(2) } : {}),
         ...(r.pen0 != null ? { penCm0: +(r.pen0 * W * 100).toFixed(2), penCm: +(r.pen * W * 100).toFixed(2), limits: r.limits } : {}) };
     }
+    if (S.chan) o.chan = S.chan;
+    if (S.rig.balanceShift != null) o.balanceCm = +(S.rig.balanceShift * W * 100).toFixed(2);
+    if (S.com) { o.com = w(S.com); o.skel = { pelvis: w(S.skel.pelvis), neck: w(S.skel.neck), head: w(S.skel.head), spine: S.skel.spine.map(w) }; }
     return o;
   };
   S.pose({});

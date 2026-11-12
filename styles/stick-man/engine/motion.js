@@ -16,7 +16,27 @@
 // and hat behind the body (overlapping action), overshoot and settle when it stops (follow-through), the hip's vertical
 // speed stretches the body and a landing squashes it (squash and stretch, volume kept), and a held pose breathes.
 // the kit's named poses (a film adds its own: act `poses`, or import this and assign)
+import { PHYS } from './body.js';
 export const MOTION_POSES = {};
+// the style dials: how far this film bends each of the 12 principles, 0 = toward live simulation, 1 = toward stylised
+// animation, 0.5 = the kit as authored (a reel without `style` plays exactly as before). The body's physics (rig B1-B6)
+// is the floor under all of them: a dial bends the performance, never the anatomy.
+export const STYLE = { exaggeration: 0.5, timing: 0.5, squash: 0.5, anticipation: 0.5, followThrough: 0.5, slowInOut: 0.5, arcs: 0.5, secondary: 0.5 };
+// named doses. kaiships: the dose Kai chose for the stick-man films (stage 2 · 2.0b, 2026-11-12): strong exaggeration for
+// a phone screen, smooth on ones, crisp ends, a clean frame. real / verse: the two ends it was compared against.
+export const STYLE_PRESETS = {
+  kaiships: { exaggeration: 0.75, timing: 0.60, squash: 0.50, anticipation: 0.70, followThrough: 0.55, slowInOut: 0.45, arcs: 0.70, secondary: 0.35 },
+  real: { exaggeration: 0.05, timing: 0.15, squash: 0.10, anticipation: 0.30, followThrough: 0.50, slowInOut: 0.60, arcs: 0.50, secondary: 0.80 },
+  verse: { exaggeration: 0.95, timing: 0.90, squash: 0.60, anticipation: 0.70, followThrough: 0.50, slowInOut: 0.30, arcs: 0.70, secondary: 0.20 },
+};
+// an act's `style`: a preset name, an object of dials over the kit default, or nothing (the global STYLE)
+export const resolveStyle = st => ({ ...STYLE, ...(typeof st === 'string' ? STYLE_PRESETS[st] || {} : st || {}) });
+let CUR = STYLE;                                                       // the dials of the track being compiled / played
+const dial = (k, lo = 0, hi = 2) => Math.max(lo, Math.min(hi, 2 * CUR[k]));
+// gravity (rig B6): once a body leaves the ground nothing but gravity moves its centre, so between the first airborne
+// key and the landing key the height follows a parabola with g = 9.8 m/s2 and the travel a straight line at constant
+// speed, whatever keys an animator put in between. The time in the air is the animator's; the height it allows is not.
+export const G = 9.8, FPS = 30;
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 
 // ---------------------------------------------------------------- poses as flat channel maps
@@ -49,12 +69,13 @@ const leaves = e => (e === 'flow' || e === 'in' ? 1 : 0), enters = e => (e === '
 
 // ---------------------------------------------------------------- compile one actor's keys
 // keys: resolved frames, sorted; poses: name -> pose object (the film's own, then the kit's)
-export function compileTrack(keys, poses, base) {
+export function compileTrack(keys, poses, base, style) {
+  CUR = resolveStyle(style);
   const ks = keys.map(k => {
     const named = typeof k.pose === 'string' ? poses[k.pose] : k.pose;
     if (typeof k.pose === 'string' && !named) throw new Error(`anim: unknown pose "${k.pose}"`);
     const over = Object.fromEntries(Object.entries(k).filter(([n]) => !NON_POSE.has(n)));
-    return { f: k.f, ease: k.ease || 'slow', hold: k.hold || 0, antic: k.antic || 0, expr: k.expr, look: k.look, props: k.props, cycle: k.cycle,
+    return { f: k.f, ease: k.ease || 'slow', hold: k.hold || 0, antic: Math.min(0.6, (k.antic || 0) * dial('anticipation')), expr: k.expr, look: k.look, props: k.props, cycle: k.cycle,
       m: { ...flatten(named), ...flatten(over) } };
   }).sort((a, b) => a.f - b.f);
   // carry every channel forward (a key names only what changes); before its first key a channel is neutral (0), except
@@ -77,18 +98,34 @@ export function compileTrack(keys, poses, base) {
     out.push(k);
     if (k.hold) out.push({ ...k, f: k.f + k.hold, hold: 0, antic: 0, expr: undefined, look: undefined, held: true });
   }
+  out.style = CUR;
+  // flights: a run of keys off the ground (pos.2 > 2 cm), from the key before it (on the ground) to the next key on the ground
+  out.flights = [];
+  for (let i = 0; i < out.length; i++) {
+    if (!((out[i].m['pos.2'] || 0) > 0.02) || (i && (out[i - 1].m['pos.2'] || 0) > 0.02)) continue;
+    let j = i; while (j < out.length && (out[j].m['pos.2'] || 0) > 0.02) j++;
+    if (j >= out.length) break;
+    const a = i ? out[i - 1] : out[i], b = out[j];                                  // from the last key on the ground (the push-off)
+    out.flights.push({ f0: a.f, f1: b.f, x0: a.m['pos.0'] || 0, y0: a.m['pos.1'] || 0, z0: a.m['pos.2'], x1: b.m['pos.0'] || 0, y1: b.m['pos.1'] || 0, z1: b.m['pos.2'] || 0 });
+  }
   return out;
+}
+// where gravity puts the body at frame f of a flight (Blender m)
+export function ballistic(fl, f) {
+  const T = (fl.f1 - fl.f0) / FPS, t = (f - fl.f0) / FPS, u = t / T, v0 = (fl.z1 - fl.z0) / T + G * T / 2;
+  return [fl.x0 + (fl.x1 - fl.x0) * u, fl.y0 + (fl.y1 - fl.y0) * u, fl.z0 + v0 * t - G * t * t / 2];
 }
 
 // ---------------------------------------------------------------- keyed value of every channel at frame f
 export function keyed(track, f) {
+  CUR = track.style || STYLE;
   const n = track.length;
   if (f <= track[0].f) return { ...track[0].m };
   if (f >= track[n - 1].f) return { ...track[n - 1].m };
   let i = 0; while (i + 1 < n && track[i + 1].f <= f) i++;
   const A = track[i], Bk = track[i + 1];
   if (Bk.ease === 'snap') return { ...A.m };
-  const s = (f - A.f) / (Bk.f - A.f), u = warp(s, leaves(A.ease), enters(Bk.ease)), out = {};
+  const s = (f - A.f) / (Bk.f - A.f), w0 = warp(s, leaves(A.ease), enters(Bk.ease)), u = s + (w0 - s) * dial('slowInOut', 0, 1.6), out = {};
   const P = track[i - 1], N = track[i + 2], df = Bk.f - A.f;
   for (const c of Object.keys(A.m)) {
     const a = A.m[c], b = Bk.m[c];
@@ -101,11 +138,14 @@ export function keyed(track, f) {
   for (const arm of ['armL', 'armR']) {
     const k0 = `${arm}.ik.0`; if (!(k0 in A.m)) continue;
     const d = Math.hypot(...[0, 1, 2].map(i => Bk.m[`${arm}.ik.${i}`] - A.m[`${arm}.ik.${i}`]));
-    out[`${arm}.ik.1`] += ARC * d * Math.sin(Math.PI * u) * (A.m[`${arm}.ikw`] ?? 1);
+    out[`${arm}.ik.1`] += ARC * dial('arcs') * d * Math.sin(Math.PI * u) * (A.m[`${arm}.ikw`] ?? 1);
   }
+  if (PHYS.on && PHYS.gravity !== false) for (const fl of track.flights || []) if (f > fl.f0 && f < fl.f1) { const [x, y, z] = ballistic(fl, f); out['pos.0'] = x; out['pos.1'] = y; out['pos.2'] = z; }
   return out;
 }
 const ARC = 0.15;
+// the channels exaggeration scales: the body's angles and its bob, not where it stands, its feet or its targets
+const EXAG = /^(bob|spine\.|neck\.|pelvis\.|arm[LR]\.(raise|swing|elbow|roll)$|hip\.)/;
 function tangent(p, c, n, fp, fc, fn) {
   if (p == null || n == null) return 0;
   if ((c - p) * (n - c) <= 0) return 0;                               // an extreme or a hold: flat
@@ -129,34 +169,43 @@ const DRAG = [
 ];
 // runs once per actor over [F0, F1]: returns the posed channel maps, one per frame
 export function playActor(track, F0, F1, opt = {}) {
+  CUR = track.style || STYLE;
   const springs = {}, hat = { p: new Spring(0.32, 0.28), r: new Spring(0.32, 0.28) }, sq = new Spring(0.6, 0.3);
   const frames = [];
   let prev = null, prev2 = null;
   for (let f = F0; f <= F1; f++) {
     const k = keyed(track, f);
+    // exaggeration: every pose channel pushed further from (or pulled back toward) the act's rest pose
+    const E = 0.4 + 1.2 * CUR.exaggeration, rest = track[0].m;
+    if (E !== 1) for (const c of Object.keys(k)) if (EXAG.test(c) && c in rest) k[c] = rest[c] + (k[c] - rest[c]) * E;
     // secondary business: the latest key's cycle, faded in over 6 frames
     let ck = null; for (const t of track) if (t.f <= f && !t.held && !t.antic) ck = t;
-    if (ck?.cycle) { const w = clamp((f - ck.f) / 6, 0, 1); for (const [c, [amp, per, ph = 0]] of Object.entries(ck.cycle)) k[c] = (k[c] || 0) + w * amp * Math.sin(2 * Math.PI * (f - ck.f) / per + ph); }
+    if (ck?.cycle) { const w = clamp((f - ck.f) / 6, 0, 1) * dial('secondary'); for (const [c, [amp, per, ph = 0]] of Object.entries(ck.cycle)) k[c] = (k[c] || 0) + w * amp * Math.sin(2 * Math.PI * (f - ck.f) / per + ph); }
     const o = { ...k };
     for (const [c, v] of Object.entries(k)) {
       const d = DRAG.find(([re]) => re.test(c)); if (!d || opt.stiff) continue;
-      o[c] = (springs[c] ||= new Spring(d[1], d[2])).step(v);
+      const sp = (springs[c] ||= new Spring(d[1], d[2])).step(v); o[c] = v + (sp - v) * dial('followThrough');
     }
     // hip vertical speed stretches the body, its sudden stop squashes it; the head follows a beat later
     const by = k.bob ?? 0, vy = prev ? by - (prev.bob ?? 0) : 0, vp = prev && prev2 ? (prev.bob ?? 0) - (prev2.bob ?? 0) : 0, ay = vy - vp;
     const want = clamp(1.0 * Math.abs(vy), 0, 0.10) - (vp < 0 ? clamp(5 * Math.max(0, ay), 0, 0.12) : 0);
     const auto = sq.step(want);
-    o.sq = (k.sq || 0) + auto; o.headSq = (o.headSq || 0) + 0.6 * auto;
+    const SQ = dial('squash'); o.sq = ((k.sq || 0) + auto) * SQ; o.headSq = ((o.headSq || 0) + 0.6 * auto) * SQ;
     // the hat lags the head's swing (nod, tilt, the body's bend under it), then overshoots and settles
     const hp = (k['neck.nod'] || 0) + (k['spine.bend'] || 0) + (k['pelvis.pitch'] || 0), hr = (k['neck.tilt'] || 0) + (k['spine.side'] || 0) + (k['pelvis.roll'] || 0);
-    o['hat.pitch'] = clamp(hat.p.step(hp) - hp, -22, 22) + (k['hat.pitch'] || 0);
-    o['hat.roll'] = clamp(hat.r.step(hr) - hr, -18, 18) + (k['hat.roll'] || 0);
+    o['hat.pitch'] = clamp(hat.p.step(hp) - hp, -22, 22) * dial('followThrough') + (k['hat.pitch'] || 0);
+    o['hat.roll'] = clamp(hat.r.step(hr) - hr, -18, 18) * dial('followThrough') + (k['hat.roll'] || 0);
     // a moving hold: a held pose breathes (chest up and down, the head drifts a little), never freezes
     const t = f / 30;
-    o['spine.bend'] = (o['spine.bend'] || 0) + 0.8 * Math.sin(t * 2 * Math.PI * 0.28);
-    o['neck.tilt'] = (o['neck.tilt'] || 0) + 0.9 * Math.sin(t * 2 * Math.PI * 0.17 + 1.3);
+    const B2 = dial('secondary');
+    o['spine.bend'] = (o['spine.bend'] || 0) + 0.8 * B2 * Math.sin(t * 2 * Math.PI * 0.28);
+    o['neck.tilt'] = (o['neck.tilt'] || 0) + 0.9 * B2 * Math.sin(t * 2 * Math.PI * 0.17 + 1.3);
     frames.push(o); prev2 = prev; prev = k;
   }
+  // timing: a stylised film holds each drawing for 2 frames ("on twos", 12 a second) or 3; a simulation runs on ones
+  CUR = track.style || STYLE;                                          // keyed() above may have switched tracks
+  const step = CUR.timing >= 0.95 ? 3 : CUR.timing >= 0.7 ? 2 : 1;
+  if (step > 1) for (let i = 0; i < frames.length; i++) frames[i] = frames[i - (i % step)];
   return frames;
 }
 
