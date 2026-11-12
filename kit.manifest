@@ -32,6 +32,9 @@ styles/kai-reel-3d/
 styles/stick-man/
 .claude/skills/make-reel-3d/
 .claude/skills/make-reel-stick-man/
+# animation-principles by Dylan Tarre (MIT), upstream files verbatim under skills/ (github.com/dylantarre/animation-principles
+# at 8359713): Disney's 12 principles for directing and auditing reels, dev only
+.claude/skills/animation-principles/
 AGENT_LEARNING.md
 PLAN.md
 # The paid TMV kit's own files: tmv/<path> replaces or adds <path> in the tmv zip only
