@@ -13,7 +13,7 @@ import { decode, measure } from './look_measure.mjs';
 
 const A = {}; for (let i = 2; i < process.argv.length; i += 2) A[process.argv[i].replace(/^--/, '')] = process.argv[i + 1];
 if (!A.report || !A.in) { console.error('usage: gates.mjs --report <stats.txt> --in <reel.mp4> [--film films/<slug>] [--profile full|pilot] [--out <gates.txt>]'); process.exit(2); }
-// --profile pilot (GATES.md "Gate profiles"): the reference gates (measured from one reference short) still print, as
+// --profile pilot (GATES.md "Profiles"): the reference gates (measured from one reference short) still print, as
 // WAIVED instead of FAIL, and never set the exit code; safety and quality gates block as always. Thresholds never change.
 const PROFILE = A.profile || 'full';
 if (!['full', 'pilot'].includes(PROFILE)) { console.error(`unknown --profile ${PROFILE} (full | pilot)`); process.exit(2); }

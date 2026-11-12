@@ -1,5 +1,5 @@
 // stick07-robe (forensic fixes 1-10 on stick06-robe; stick06: combined kit: Q1 look, Q2 acting, Q3 shots, Q4 world fx; data from stick05-q3-robe), act 1: the park at noon, lines l01-l03 (frames 0-358). Data only: beats name a word, the runtime does the timing.
-// Schema: .claude/skills/make-reel-stick-man/REEL_DATA.md · verbs: VERBS.md · sets, props, cast: SETS.md.
+// Schema: .claude/skills/make-reel-stick-man/REEL_DATA.md · verbs, sets: styles/stick-man/docs/.
 const at = (line, on, offset = -2, nth) => ({ line, on, offset, ...(nth ? { nth } : {}) });
 
 export default {
