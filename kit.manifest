@@ -128,6 +128,8 @@ styles/kai-reel-3d/
 styles/stick-man/
 .claude/skills/make-reel-3d/
 .claude/skills/make-reel-stick-man/
+# animation-camera-pass (Kai's camera method: Bruce Block intensity + continuity; run at stage 3 · Shot), dev only
+.claude/skills/animation-camera-pass/
 # animation-principles by Dylan Tarre (MIT), upstream files verbatim under skills/ (github.com/dylantarre/animation-principles
 # at 8359713): Disney's 12 principles for directing and auditing reels, dev only
 .claude/skills/animation-principles/

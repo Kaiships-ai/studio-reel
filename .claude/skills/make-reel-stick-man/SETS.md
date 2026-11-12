@@ -5,6 +5,11 @@ prop spot or hand target. `at` / `to` take a mark or place name, a prop name, or
 
 ## Sets (`set:` in an act; files in `styles/stick-man/lib/sets/`)
 
+Allout sets (`setModule: '/styles/stick-man/allout/sets/<name>.js'`, `make: { prop: { kind: 'ao_anim', prop } }`, keys via `set` beats; list in
+`styles/stick-man/allout/README.md`). `canyon-edge` (pilot A): two rival lines on a canyon ledge, blue line by the wall,
+purple by the drop; props `joint` (gap, heat, light), `rtrack` (buckle, heat), `board` (temp, month), `loco` (y, lamp),
+`rloco` (y, off, fall: g = 9.8 with cliff contact, lamp); look `EDGE_LOOK` (look A).
+
 | Set | Looks like | Marks | Places | Props (`who`) | COLLIDE |
 |---|---|---|---|---|---|
 | `bank-lobby` | teal-tiled bank hall, counter, vault | customer, teller, bench, door, street | plate, stack, b1, b2, note, note_end, bag_on_counter, bag_grip, sensor | plate, stack, b1, b2, note, bag, sensor | counter, raised-floor |

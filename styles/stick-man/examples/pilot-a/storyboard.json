@@ -1,0 +1,91 @@
+{
+ "film": "pilot-a",
+ "lines": [
+  {
+   "id": "l01",
+   "see": "The engineer kneels on his own blue railway and saws a small gap in the rail; the clean gap is shown up close.",
+   "shot": "",
+   "set": "edge",
+   "props": [
+    "joint"
+   ],
+   "fx": [],
+   "on": "gap",
+   "still": "gap",
+   "act": {
+    "eng": [
+     "saw@gap"
+    ]
+   }
+  },
+  {
+   "id": "l02",
+   "see": "His blue train rattles over the gaps (clack!) while the rival's purple train glides silently on gapless rails, and the rival boss in a top hat points and laughs.",
+   "shot": "",
+   "set": "edge",
+   "props": [
+    "loco",
+    "rloco"
+   ],
+   "fx": [],
+   "on": "silent",
+   "still": "trains",
+   "act": {
+    "mag": [
+     "point@smooth",
+     "laugh@silent"
+    ]
+   }
+  },
+  {
+   "id": "l03",
+   "see": "Summer arrives: the calendar flips from May to July, the thermometer rises, and the hot rail glows while its ends grow toward each other into the gap.",
+   "shot": "",
+   "set": "edge",
+   "props": [
+    "board",
+    "joint"
+   ],
+   "fx": [],
+   "on": "grow",
+   "still": "grow"
+  },
+  {
+   "id": "l04",
+   "see": "On the hottest day the gap is closed (rail touching rail, seen in a magnifier), the engineer grins, and his blue train passes smoothly.",
+   "shot": "",
+   "set": "edge",
+   "props": [
+    "joint",
+    "loco"
+   ],
+   "fx": [],
+   "on": "rail",
+   "still": "closed,",
+   "act": {
+    "eng": [
+     "arms_crossed@hottest",
+     "hands_on_hips@closed"
+    ]
+   }
+  },
+  {
+   "id": "l05",
+   "see": "The rival's gapless purple rail bends like a snake, the boss is shocked, and the purple train falls off the edge into the canyon.",
+   "shot": "",
+   "set": "edge",
+   "props": [
+    "rtrack",
+    "rloco"
+   ],
+   "fx": [],
+   "on": "snake",
+   "still": "track",
+   "act": {
+    "mag": [
+     "startle@go"
+    ]
+   }
+  }
+ ]
+}

@@ -1,0 +1,474 @@
+[
+{
+"line": "l01",
+"i": 0,
+"word": "Every",
+"t0": 0.0,
+"t1": 0.5,
+"est": false
+},
+{
+"line": "l01",
+"i": 1,
+"word": "thirty-nine",
+"t0": 0.5,
+"t1": 0.96,
+"est": false
+},
+{
+"line": "l01",
+"i": 2,
+"word": "feet,",
+"t0": 0.96,
+"t1": 1.22,
+"est": false
+},
+{
+"line": "l01",
+"i": 3,
+"word": "he",
+"t0": 1.22,
+"t1": 1.5,
+"est": false
+},
+{
+"line": "l01",
+"i": 4,
+"word": "cut",
+"t0": 1.5,
+"t1": 1.68,
+"est": false
+},
+{
+"line": "l01",
+"i": 5,
+"word": "a",
+"t0": 1.68,
+"t1": 1.78,
+"est": false
+},
+{
+"line": "l01",
+"i": 6,
+"word": "gap",
+"t0": 1.78,
+"t1": 2.1,
+"est": false
+},
+{
+"line": "l01",
+"i": 7,
+"word": "in",
+"t0": 2.1,
+"t1": 2.3,
+"est": false
+},
+{
+"line": "l01",
+"i": 8,
+"word": "his",
+"t0": 2.3,
+"t1": 2.44,
+"est": false
+},
+{
+"line": "l01",
+"i": 9,
+"word": "own",
+"t0": 2.44,
+"t1": 2.56,
+"est": false
+},
+{
+"line": "l01",
+"i": 10,
+"word": "railroad.",
+"t0": 2.56,
+"t1": 2.94,
+"est": false
+},
+{
+"line": "l02",
+"i": 0,
+"word": "His",
+"t0": 2.94,
+"t1": 4.0,
+"est": false
+},
+{
+"line": "l02",
+"i": 1,
+"word": "trains",
+"t0": 4.0,
+"t1": 4.38,
+"est": false
+},
+{
+"line": "l02",
+"i": 2,
+"word": "rattled",
+"t0": 4.38,
+"t1": 4.78,
+"est": false
+},
+{
+"line": "l02",
+"i": 3,
+"word": "over",
+"t0": 4.78,
+"t1": 5.08,
+"est": false
+},
+{
+"line": "l02",
+"i": 4,
+"word": "every",
+"t0": 5.08,
+"t1": 5.38,
+"est": false
+},
+{
+"line": "l02",
+"i": 5,
+"word": "gap,",
+"t0": 5.38,
+"t1": 5.62,
+"est": false
+},
+{
+"line": "l02",
+"i": 6,
+"word": "while",
+"t0": 5.62,
+"t1": 5.86,
+"est": false
+},
+{
+"line": "l02",
+"i": 7,
+"word": "the",
+"t0": 5.86,
+"t1": 6.04,
+"est": false
+},
+{
+"line": "l02",
+"i": 8,
+"word": "rival's",
+"t0": 6.04,
+"t1": 6.32,
+"est": true
+},
+{
+"line": "l02",
+"i": 9,
+"word": "tight",
+"t0": 6.32,
+"t1": 6.64,
+"est": false
+},
+{
+"line": "l02",
+"i": 10,
+"word": "rails",
+"t0": 6.64,
+"t1": 6.98,
+"est": false
+},
+{
+"line": "l02",
+"i": 11,
+"word": "ran",
+"t0": 6.98,
+"t1": 7.34,
+"est": false
+},
+{
+"line": "l02",
+"i": 12,
+"word": "smooth",
+"t0": 7.34,
+"t1": 7.66,
+"est": false
+},
+{
+"line": "l02",
+"i": 13,
+"word": "and",
+"t0": 7.66,
+"t1": 7.82,
+"est": false
+},
+{
+"line": "l02",
+"i": 14,
+"word": "silent.",
+"t0": 7.82,
+"t1": 8.2,
+"est": false
+},
+{
+"line": "l03",
+"i": 0,
+"word": "Then",
+"t0": 8.84,
+"t1": 9.34,
+"est": false
+},
+{
+"line": "l03",
+"i": 1,
+"word": "summer",
+"t0": 9.34,
+"t1": 9.62,
+"est": false
+},
+{
+"line": "l03",
+"i": 2,
+"word": "came,",
+"t0": 9.62,
+"t1": 9.86,
+"est": false
+},
+{
+"line": "l03",
+"i": 3,
+"word": "and",
+"t0": 9.86,
+"t1": 10.3,
+"est": false
+},
+{
+"line": "l03",
+"i": 4,
+"word": "the",
+"t0": 10.3,
+"t1": 10.4,
+"est": false
+},
+{
+"line": "l03",
+"i": 5,
+"word": "steel",
+"t0": 10.4,
+"t1": 10.7,
+"est": false
+},
+{
+"line": "l03",
+"i": 6,
+"word": "began",
+"t0": 10.7,
+"t1": 10.96,
+"est": false
+},
+{
+"line": "l03",
+"i": 7,
+"word": "to",
+"t0": 10.96,
+"t1": 11.14,
+"est": false
+},
+{
+"line": "l03",
+"i": 8,
+"word": "grow.",
+"t0": 11.14,
+"t1": 11.46,
+"est": false
+},
+{
+"line": "l04",
+"i": 0,
+"word": "On",
+"t0": 11.46,
+"t1": 12.5,
+"est": false
+},
+{
+"line": "l04",
+"i": 1,
+"word": "the",
+"t0": 12.5,
+"t1": 12.62,
+"est": false
+},
+{
+"line": "l04",
+"i": 2,
+"word": "hottest",
+"t0": 12.62,
+"t1": 13.0,
+"est": false
+},
+{
+"line": "l04",
+"i": 3,
+"word": "day,",
+"t0": 13.0,
+"t1": 13.36,
+"est": false
+},
+{
+"line": "l04",
+"i": 4,
+"word": "his",
+"t0": 13.36,
+"t1": 13.6,
+"est": false
+},
+{
+"line": "l04",
+"i": 5,
+"word": "gaps",
+"t0": 13.6,
+"t1": 13.88,
+"est": false
+},
+{
+"line": "l04",
+"i": 6,
+"word": "closed,",
+"t0": 13.88,
+"t1": 14.36,
+"est": false
+},
+{
+"line": "l04",
+"i": 7,
+"word": "rail",
+"t0": 14.36,
+"t1": 14.78,
+"est": false
+},
+{
+"line": "l04",
+"i": 8,
+"word": "against",
+"t0": 14.78,
+"t1": 15.1,
+"est": false
+},
+{
+"line": "l04",
+"i": 9,
+"word": "rail.",
+"t0": 15.1,
+"t1": 15.48,
+"est": false
+},
+{
+"line": "l05",
+"i": 0,
+"word": "The",
+"t0": 15.48,
+"t1": 16.44,
+"est": false
+},
+{
+"line": "l05",
+"i": 1,
+"word": "rival's",
+"t0": 16.44,
+"t1": 16.72,
+"est": true
+},
+{
+"line": "l05",
+"i": 2,
+"word": "perfect",
+"t0": 16.72,
+"t1": 17.08,
+"est": false
+},
+{
+"line": "l05",
+"i": 3,
+"word": "track",
+"t0": 17.08,
+"t1": 17.4,
+"est": false
+},
+{
+"line": "l05",
+"i": 4,
+"word": "had",
+"t0": 17.4,
+"t1": 17.6,
+"est": false
+},
+{
+"line": "l05",
+"i": 5,
+"word": "nowhere",
+"t0": 17.6,
+"t1": 17.78,
+"est": false
+},
+{
+"line": "l05",
+"i": 6,
+"word": "to",
+"t0": 17.78,
+"t1": 17.96,
+"est": false
+},
+{
+"line": "l05",
+"i": 7,
+"word": "go,",
+"t0": 17.96,
+"t1": 18.16,
+"est": false
+},
+{
+"line": "l05",
+"i": 8,
+"word": "so",
+"t0": 18.16,
+"t1": 18.42,
+"est": false
+},
+{
+"line": "l05",
+"i": 9,
+"word": "it",
+"t0": 18.42,
+"t1": 18.54,
+"est": false
+},
+{
+"line": "l05",
+"i": 10,
+"word": "bent",
+"t0": 18.54,
+"t1": 18.84,
+"est": false
+},
+{
+"line": "l05",
+"i": 11,
+"word": "like",
+"t0": 18.84,
+"t1": 19.06,
+"est": false
+},
+{
+"line": "l05",
+"i": 12,
+"word": "a",
+"t0": 19.06,
+"t1": 19.18,
+"est": false
+},
+{
+"line": "l05",
+"i": 13,
+"word": "snake.",
+"t0": 19.18,
+"t1": 19.58,
+"est": false
+}
+]
