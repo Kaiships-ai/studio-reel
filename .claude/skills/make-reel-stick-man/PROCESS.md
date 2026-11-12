@@ -40,6 +40,8 @@ Label the strips with the shot's real cut frames (`CUTS`), not the animatic's ro
 | **Sạn hunt** | before every pass goes to Kai | "Find visible logic, physics and continuity slips a plain viewer would catch. Example: an overlay that claims what the picture does not show, a hat that vanishes, a face from the previous shot leaking in, an object through rock, a character where he should not be. Not camera style. Confirm each finding on a full frame." |
 | Board | Shot lock | `board.mjs --judge 3` (section 7) |
 
+Classic script sạn: a line that claims what the point-of-view character cannot know, two lines that contradict each other, a character acting with no reason, a line that needs two readings.
+
 Classic sạn to check every time: an overlay with no motion behind it, a tool not touching its target, a hat hidden by a
 very low camera, a limb looping round the head from below, a character left in a shot where he should not be, a face from
 the last shot leaking across the cut, a blink inside a take, a falling object pitched the wrong way or passing through the

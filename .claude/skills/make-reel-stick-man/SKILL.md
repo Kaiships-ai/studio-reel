@@ -73,6 +73,7 @@ A later stage's problem is fixed in the stage that caused it. Never jump ahead i
 | The lead's acting is keyed by hand (motion v2 `anim`); auto-acting from words only for background characters | auto-acting reads as puppets |
 | Faces sell the character: no ring-eye creep, no blink inside a take (shock, scream), a new face lands on a cut, takes land in 3 frames | the face sells the character |
 | Every camera states its PURPOSE (what the viewer must get in its 1-2 s) and a clear size: a real wide or a real close-up, with a clean background behind faces | timid mid shots miss their purpose |
+| Every script line is something the point-of-view character can know right now: seen or heard now, known by the body (skills, how the world works), said by another character, or asked as a question. The narrator never states what the character can't know (an amnesiac "you just stole… you can't remember doing it"). A fresh agent runs a logic sạn hunt on every script and hook before Kai sees it | Kai is confused in the first line, and the film fails there |
 | An overlay may only claim what the picture shows, the same way at the same time (expansion arrows point into the gap while the rail ends close) | a fake overlay is the first sạn a viewer sees |
 | Keep the direction conventions (REEL_DATA.md) and one camera axis per place (PROCESS.md section 3) | reversed axes read as mistakes |
 | Never loosen a threshold. After 2 fix rounds on one gate, stop and show Kai the FAIL with a still. | gates protect the viewer |
