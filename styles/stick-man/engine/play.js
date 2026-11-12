@@ -502,8 +502,9 @@ async function buildAct(R, X) {
       const box = [xs[0], ys[0], xs[1], ys[1]].map(x => +x.toFixed(1));
       const sole = Math.max(...['L', 'R'].flatMap(s => [a.S.parts.ankles[s], a.S.parts.toes[s]].map(o => toPx(o.getWorldPosition(new THREE.Vector3()))[1])));
       out.actors[a.name] = { pos: F.bodies[a.name].pos.map(x => +x.toFixed(4)), yaw: +F.bodies[a.name].yaw.toFixed(2), expr: a.face.expr, blink: a.face.blink,
-        verb: a.verbs.filter(x => x.start <= f && f < x.end).map(x => x.name), head: box, feet, limbs: a.S.rigWorld(),
-        body: a.verbs.filter(x => x.start <= f && f < x.end && isBodyVerb(x)).map(x => x.name).pop() || null, lead: !!a.lead,
+        verb: [...a.verbs.filter(x => x.start <= f && f < x.end).map(x => x.name), ...(a.anim && a.anim.keys.length > 1 ? ['key'] : [])], head: box, feet, limbs: a.S.rigWorld(),
+        // a motion v2 actor acts from hand-set keys, not verbs: past its first key it is acting ('key')
+        body: a.verbs.filter(x => x.start <= f && f < x.end && isBodyVerb(x)).map(x => x.name).pop() || (a.anim && a.anim.keys.length > 1 && f >= a.anim.keys[0].f ? 'key' : null), lead: !!a.lead,
         mouthA: +(a.S.faceStats?.mouth ?? 0).toFixed(5), faceKey: a.S.faceStats?.key ?? '', talking: !!a.talking,
         exprFrom: a.exprKey?.f > -1e8 ? a.exprKey.f : null, exprWord: a.exprKey?.word ?? null,
         headW: toB(c).map(x => +x.toFixed(4)), figH: +((sole - ys[0]) / height).toFixed(3),
@@ -551,7 +552,7 @@ async function buildAct(R, X) {
     out.seen = [...new Set([...Object.keys(props), ...Object.keys(fxo)])].filter(n => onScreen(fxo[n]?.obj || props[n]?.isObject3D && props[n] || props[n]?.mesh));
     return out;
   }
-  const box3 = new THREE.Box3(), bb = new THREE.Box3(), cv = new THREE.Vector3();
+  const box3 = new THREE.Box3(), bb = new THREE.Box3(), cv = new THREE.Vector3(), frust = new THREE.Frustum(), pm = new THREE.Matrix4();
   function onScreen(o) {
     if (!o?.isObject3D) return false;
     for (let q = o; q; q = q.parent) if (!q.visible) return false;
@@ -563,6 +564,10 @@ async function buildAct(R, X) {
     o.traverseVisible(add);
     for (const q of o.userData?.seenParts || []) if (q.visible) q.traverseVisible(add);   // a prop whose visible body lives elsewhere (the hero joint's rail ends)
     if (box3.isEmpty()) return false;
+    // a long prop seen close up (a 12 m rail piece in an extreme close-up) has its box corners behind the camera or far off
+    // screen, so the corner projection below misses it: inside the view and within 3 m of the lens counts as seen
+    stage.camera.updateMatrixWorld(); frust.setFromProjectionMatrix(pm.multiplyMatrices(stage.camera.projectionMatrix, stage.camera.matrixWorldInverse));
+    if (frust.intersectsBox(box3) && box3.distanceToPoint(stage.camera.position) < 3) return true;
     let x0 = 1, y0 = 1, x1 = -1, y1 = -1, n = 0;
     for (let i = 0; i < 8; i++) {
       cv.set(i & 1 ? box3.max.x : box3.min.x, i & 2 ? box3.max.y : box3.min.y, i & 4 ? box3.max.z : box3.min.z).project(stage.camera);
