@@ -1,0 +1,242 @@
+{
+ "about": "Evidence each gate needs before it can LOCK (stagegate.mjs). measured = a tool run that must exit 0; made = the maker's own files; judged = by: agent:<id> or person:<name>, never the maker; approved = Kai in review/approvals.json. A film may add evidence in review/gates.local.json, never remove it.",
+ "order": [
+  "1",
+  "2a",
+  "2b",
+  "2c",
+  "3",
+  "4",
+  "5",
+  "6"
+ ],
+ "gates": {
+  "1": {
+   "title": "Development: brief, treatment, story",
+   "run": [
+    {
+     "tool": "develop.mjs",
+     "args": [
+      "{film}"
+     ]
+    }
+   ],
+   "evidence": [
+    {
+     "file": "TREATMENT.md",
+     "by": "self",
+     "why": "the treatment (DEVELOP.md [0.2])",
+     "sections": [
+      "^#+ .*logline",
+      "^#+ .*(three|3) structures",
+      "^#+ .*benchmark",
+      "^#+ .*hook",
+      "^#+ .*(intensity|curve)"
+     ]
+    },
+    {
+     "file": "DECISIONS.json",
+     "by": "self",
+     "why": "the decisions the treatment sets (DEVELOP.md section 5)"
+    },
+    {
+     "file": "review/hook-test.md",
+     "by": "independent",
+     "why": "a fresh reader picks a hook from thumbnails + first lines and says why",
+     "sections": [
+      "^#+ .*pick"
+     ],
+     "newerThan": [
+      "TREATMENT.md"
+     ]
+    }
+   ]
+  },
+  "2a": {
+   "title": "Story + timing lock",
+   "run": [
+    {
+     "tool": "prepro.mjs",
+     "args": [
+      "{film}",
+      "--gate",
+      "2a"
+     ]
+    }
+   ],
+   "evidence": [
+    {
+     "file": "review/watch-1x.md",
+     "by": "self",
+     "why": "notes from one full-speed viewing with sound, by timecode (PREPRO.md [1.6] story pass)",
+     "sections": [
+      "\\d+:\\d\\d"
+     ],
+     "newerThan": [
+      "storyboard.json"
+     ]
+    },
+    {
+     "file": "review/retell.md",
+     "by": "independent",
+     "why": "muted retell, want / obstacle / outcome per beat, with every guess marked",
+     "sections": [
+      "^#+ .*guess"
+     ],
+     "newerThan": [
+      "storyboard.json"
+     ]
+    },
+    {
+     "file": "review/swipe.md",
+     "by": "independent",
+     "why": "where a viewer would swipe away, by timecode",
+     "newerThan": [
+      "storyboard.json"
+     ]
+    }
+   ]
+  },
+  "2b": {
+   "title": "Shot lock (camera intent)",
+   "run": [
+    {
+     "tool": "prepro.mjs",
+     "args": [
+      "{film}",
+      "--gate",
+      "2b"
+     ]
+    }
+   ],
+   "evidence": [
+    {
+     "file": "review/camplan.md",
+     "by": "self",
+     "why": "floor plan per scene: the 180° line and each shot's camera position (image linked inside)",
+     "sections": [
+      "180"
+     ]
+    },
+    {
+     "file": "review/checklist7.md",
+     "by": "self",
+     "why": "the 7-point camera checklist for every shot, CAM LOCK or FIX",
+     "newerThan": [
+      "storyboard.json"
+     ]
+    },
+    {
+     "file": "review/campass1.md",
+     "by": "independent",
+     "why": "the camera-intent pass by a fresh agent (OUT-1/3/4/5)",
+     "newerThan": [
+      "storyboard.json"
+     ]
+    }
+   ]
+  },
+  "2c": {
+   "title": "Look + design lock",
+   "evidence": [
+    {
+     "file": "review/look.md",
+     "by": "self",
+     "why": "style frames on two locked shots (a wide, the climax), checked at phone size"
+    },
+    {
+     "file": "review/colour-script.md",
+     "by": "self",
+     "why": "one frame per scene on the intensity curve"
+    }
+   ]
+  },
+  "3": {
+   "title": "Asset lock",
+   "run": [
+    {
+     "tool": "assets.mjs",
+     "args": [
+      "{film}"
+     ]
+    }
+   ],
+   "evidence": [
+    {
+     "file": "review/layout-check.md",
+     "by": "self",
+     "why": "every locked shot rendered grey with the real assets beside its animatic panel (STAGE 2 [2.4])"
+    },
+    {
+     "file": "review/asset-review.md",
+     "by": "independent",
+     "why": "silhouette, phone-size read, colour separation, scale, per asset"
+    }
+   ]
+  },
+  "4": {
+   "title": "Shot lock",
+   "run": [
+    {
+     "tool": "timing.mjs",
+     "args": [
+      "{film}"
+     ]
+    }
+   ],
+   "evidence": [
+    {
+     "file": "review/acting.md",
+     "by": "self",
+     "why": "per acting shot: think → do → change, and the pose thumbnails Kai approved"
+    },
+    {
+     "file": "review/board-verdict.json",
+     "by": "self",
+     "why": "board.mjs --judge 3 (lines shown)"
+    },
+    {
+     "file": "review/feel-check.md",
+     "by": "independent",
+     "why": "each scene scored 1-5 against its feel line, with frames"
+    }
+   ]
+  },
+  "5": {
+   "title": "Deliver",
+   "run": [
+    {
+     "tool": "postcheck.mjs",
+     "args": [
+      "{film}"
+     ]
+    }
+   ],
+   "evidence": [
+    {
+     "file": "review/final-qa.md",
+     "by": "independent",
+     "why": "full-speed, sound on, phone size, UI overlay on: retell + swipe test on the final"
+    }
+   ]
+  },
+  "6": {
+   "title": "Publish + learn",
+   "evidence": [
+    {
+     "file": "review/retention.md",
+     "by": "self",
+     "why": "retention.mjs: drop-offs mapped to shots, 24 h and 7 d"
+    },
+    {
+     "file": "review/retro.md",
+     "by": "self",
+     "why": "what to keep, what to fix, and the rules proposed for the skill",
+     "sections": [
+      "^#+ .*rules? proposed"
+     ]
+    }
+   ]
+  }
+ }
+}
