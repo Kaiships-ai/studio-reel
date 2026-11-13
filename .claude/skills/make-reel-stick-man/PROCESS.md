@@ -14,12 +14,17 @@ Kai keeps one tab per stage. So there is one page per stage, and you open the ne
   - Kai's buttons write `kai: ok|fix` and `note`.
   - Write rows with the `ArtifactData` tool. Pin `if_version` and read the row first.
 - **Decisions.** Collection `decisions`, keyed by the card's `data-d` and holding `{ choice, note }`. Read them, notes included, before acting: Kai often answers in the page notes, not the chat.
+- **Approvals into the film.** When Kai approves a gate row, write it to `films/<slug>/review/approvals.json` as `{ "<gate>": { "by": "kai", "at": "<kaiAt from the row>", "note": "<his note>" } }`, and his approved choices into `DECISIONS.json` (DEVELOP.md section 5). `stagegate.mjs` reads both; an approval older than the latest evidence counts as not given.
+- **Gate rows show the gate checker.** A gate row's evidence is the line `stagegate.mjs` prints (READY FOR KAI or what is missing). Never mark a gate `review` while the checker says OPEN.
 - **Keeping it clean.** Once something is locked, the page keeps only the locked result and the open items. Remove rejected options, earlier rounds and exploration. Before republishing, update every status that has gone stale.
-- **Options.** Every option is a real render next to the current state, never text only. If an option can't be rendered yet, say so on its card.
+- **Options.** Every option is a picture next to the current state, never text only: grey panels or grey stills before ◇2a, real renders after it (PREPRO.md section 6). If an option can't be drawn yet, say so on its card.
+- **Per-shot notes.** From the storyboard on, the page shows the shots as cards (id, panel, purpose) and takes a note per shot, so every note names a shot. Burn-in ids in every video.
 
 ## 2. Independent agents (never judge your own work)
 
 Spawn a **fresh** agent for each check: `subagent_type: verifier`, `model: sonnet`, `effort: medium`, in the background.
+
+The agent's report is saved as the gate's judged evidence with front matter `by: agent:<id>` and `of: <what it reviewed, version>` on its first lines (GATES.json names the files). The maker never writes a judged file.
 
 - Give it files to read: per-shot strips, full frames, purposes. Never give it your conclusion.
 - It writes nothing to disk.
@@ -32,6 +37,7 @@ Label the strips with the shot's real cut frames (`CUTS`), not the animatic's ro
 
 | Check | When | Prompt core (add the story, intents, shot ranges, file paths) |
 |---|---|---|
+| Pre-production reviews | stage 1: after the board, after each animatic version | muted retell, 5-second read, explain audit, swipe test, continuity, camera intent: prompts in PREPRO.md section 5 |
 | Layout challenge | before Kai sees any camera layout | "Judge camera only: shot size, angle, lens, what the eye hits first, background clutter, phone readability in the panel's duration, continuity, purpose. The bar: a real wide or a real close-up, a clean background behind faces, an obvious purpose. PASS or FAIL + one camera fix per shot." |
 | Camera pass | camera lock, or whenever Kai doubts a shot's purpose | run the skill `.claude/skills/animation-camera-pass/SKILL.md` on the current frames. Deliver OUT-1, OUT-3, OUT-4 and OUT-5 to `films/<slug>/review/campassN.md`, with a recommended option per failing shot. |
 | Lock check | after previs | the camera-pass 7-point checklist per shot: CAM LOCK or FIX [items] + one fix |
@@ -45,12 +51,26 @@ very low camera, a limb looping round the head from below, a character left in a
 the last shot leaking across the cut, a blink inside a take, a falling object pitched the wrong way or passing through the
 set, a camera move through geometry, a loupe whose content does not read.
 
-## 3. Camera pass (stage 3.1)
+## 3. Camera pass
 
-Follow `.claude/skills/animation-camera-pass/SKILL.md`. Its OUT-1 to OUT-7 outputs go on the Shot page. What follows is specific to this engine.
+Two passes, one method (`.claude/skills/animation-camera-pass/SKILL.md`):
 
-1. **Intent first.** Derive one "what the audience feels" line per scene from the approved voice styles, mark it `(est.)`, and stop for Kai to confirm. Story intensity comes from that line.
-2. **Cut frames.** Take them from the animatic, `ffmpeg -i films/<slug>/review/animatic.mp4 -vf "select='gt(scene,0.08)',showinfo" -f null -`, and store them as `CUTS` in `reel.js`.
+- **Camera-intent pass, stage [1.6].** On the animatic, before any asset exists. Scene intents come from [1.0] (already
+  confirmed). Story and visual intensity come from `prepro.mjs` (`review/intensity.svg`, `review/prepro.md`); the axis map
+  is the floor plan from [1.3]. Options are grey panels written on the shot itself (`options: { safe, emo, bold }`, each
+  holding the fields it changes plus its own `panels`) and cut into the animatic with
+  `animatic.mjs --opt SH040:emo,SH060:bold` (one version per option set); Kai's choice goes into the shot's `pick`. The result is
+  ◇2b: size, angle, lens class, move and axis side per shot. Deliver OUT-1, OUT-3, OUT-4, OUT-5 to
+  `films/<slug>/review/campass1.md`.
+- **Execution pass, stage [3.1].** In 3D, on real frames: place each locked intent (lens, height, distance, move timing),
+  run the method again on rendered strips, and open new options only where a locked intent fails in 3D (geometry in the
+  way, the figure too small, a hat under the brim). A change of size or side of the line here needs Kai's approval,
+  because it changes ◇2b.
+
+What follows is specific to this engine (execution pass).
+
+1. **Intent first.** The scene `feel` lines from [1.0] are the intents (confirmed at ◇2a). Story intensity is each shot's `story` value.
+2. **Cut frames.** `animatic.mjs` prints `CUTS` from the locked shot list; paste it into `reel.js`. (Only for an animatic made before the shot list existed: `ffmpeg -i films/<slug>/review/animatic.mp4 -vf "select='gt(scene,0.08)',showinfo" -f null -`.)
 3. **Cameras are hand-directed** (`direct`, REEL_DATA.md).
    - Each entry's `why` starts with `P<n> · PURPOSE`.
    - Give every entry `cut: 'cut'`. Without it the director glides 16 frames between shots (`cut: 'move'` default), which smears every cut.

@@ -21,12 +21,71 @@ One entry per `vo/script.json` line; the board and the story gates read it.
 | `props`, `fx` | set props and `make` effects that carry the line (each seen ≥ 3 frames in its window) |
 | `set` | the set the line plays on |
 
+## Shot list (`storyboard.json` → `scenes`, `shots`)
+
+Written in stage 1 ([1.0] scenes, [1.4a] shots), read by `tools/prepro.mjs` (checks), `tools/animatic.mjs` (the cut) and
+stage 3 (`direct` cameras start from it). One entry per **shot**; the `lines` entries above stay one per voice line.
+
+```json
+{ "film": "hm-ep01", "fps": 30, "climax": "SH160", "last": 2490,
+  "scenes": [
+    { "id": "S1", "feel": "panic with greed: four minutes, ten million on the bed", "whose": "you",
+      "key": "police are coming; the money is yours if it reaches the car", "question": "can you get it out in time?" } ],
+  "shots": [
+    { "id": "SH010", "scene": "S1", "at": "l01", "size": "WS", "angle": "high", "lens": 24, "move": "push",
+      "purpose": "P1 · danger + reward in one frame: cops at the window, money on the bed", "see": "you frozen by the bed, red-blue light on the window",
+      "story": 7, "screen_dir": "-", "axis": "A", "kind": "action",
+      "panels": ["board/SH010_a.png", { "img": "board/SH010_b.png", "f": 40 }],
+      "text": [ { "text": "4:00", "at": [0.78, 0.18] } ] } ] }
+```
+
+| Key | Meaning |
+|---|---|
+| scene `feel`, `whose`, `key`, `question` | the scene brief ([1.0]): what the audience feels, whose eyes, what they must learn, the question it opens; `noEst: "why"` when the scene needs no establishing shot |
+| `climax`, `last`, `fps` | the climax shot id (else the highest `story`), the end frame (else 12 frames after the voice), the frame rate |
+| `id`, `scene` | `SH010`, `SH020` … (steps of 10 leave room to insert); the scene it belongs to |
+| `at` / `f0` / `dur` | where it starts: `"l03"` (the line's first word), `"l03:gap"` (a word), `"l03:gap#2"` (its second time); or a frame `f0`; or the previous shot's `dur`. It ends where the next shot starts |
+| `size`, `angle`, `lens`, `move` | the vocabulary in PREPRO.md section 2 (`CARD` needs no lens); `dir` (`up`/`down`, or `L>R`/`R>L`) for pans, tilts and cranes; `fast: true`, `extreme: true` raise the intensity score |
+| `purpose` | `P<n> · ` + what the viewer must get in this shot |
+| `see` | what is visible, in plain words (the grey card shows it while no panel exists) |
+| `story` | the beat's story intensity 1-10 (from [1.0]) |
+| `screen_dir`, `axis`, `turn`, `axis_cross`, `subject` | continuity: `L>R` / `R>L` / `-`; the side of the scene's 180° line (`A`/`B`); a turn shown on screen; how a crossing is made legal; the subject id for the 30° check |
+| `kind` | `action`, `reaction`, `explain`, `insert`, `reveal` (an action needs anticipation, extreme and result keys) |
+| `panels` | image paths under the film folder; `{ img, f }` starts a panel `f` frames into the shot (default: evenly split) |
+| `text` | on-screen words: `{ text, at: [x, y], size, color, box, f0, dur }` (`at` = the block's centre, 0-1; `size` = share of the frame height, default 0.034) or `zone`; `animatic.mjs` draws them where they will be, `prepro.mjs` checks reading speed, width and the text-safe box. Panels carry no baked text |
+| `montage` | a reason a run of same-size shots is the point (a rule-of-three, a list); waives the C3/C4 checks for that run |
+| `hold`, `cam2d` | a reason for a long static hold; an explicit 2D move for the animatic (`{ z: [1, 1.2], x: [0.5, 0.55], y: [0.5, 0.5] }`) |
+| `options`, `pick` | camera-intent options `{ safe: {...}, emo: {...}, bold: {...} }`, each the fields it changes plus its `panels`; `pick` is Kai's choice. `--opt SH040:emo` renders or checks another pick |
+
+## Breakdown, acting and measures (on shots and the storyboard)
+
+| Key | Meaning |
+|---|---|
+| shot `set`, `cast`, `props`, `state` | what the shot needs (`assets.mjs` builds the asset list from them); `state` = story states at this shot (`{ "in_car": 2, "trunk_holes": 3 }`), numeric states never go back without `reset: ["in_car"]` |
+| shot `acting` | `{ think, do, change }` for every action / reaction shot, before blocking (`timing.mjs` A5) |
+| storyboard `measures` | `[{ name, story: "34 steps", meters, tol, module: "set/motel.js", path: ["door9", [x, y], "trunk"] }]`: the set measured against the story (`assets.mjs` A4); `cheat: "why"` only when Kai approved it |
+
+## Decision log (`films/<slug>/DECISIONS.json`)
+
+```json
+{ "decisions": [ { "id": "D03", "decision": "First 3 seconds: one shot, no cut", "by": "kai", "at": "2026-11-13", "status": "approved",
+  "source": "season-1.md Ep1", "where": { "scenes": ["S1"] }, "check": [ { "type": "noCutBefore", "sec": 3 } ] } ] }
+```
+
+`status`: proposed (an agent), approved (only Kai), dropped (only Kai: `droppedBy`, why). `check` types read by `prepro.mjs`
+(D2): `noCutBefore {sec}`, `maxSec {sec}`, `textMust {text, scenes?}`, `textMustNot {text, scenes?}`, `seeIncludes {text (regex), scenes?}`,
+`sizeShare {size, min, scenes?}`.
+
+## Sound plan (`audio/sound-plan.json`)
+
+`{ "scenes": [ { "scene": "S5", "bed": "rain on the lot", "foley": ["bag drag", "trunk"], "music": "build|hold|silence|drop|…", "silence": "why", "transition": "J|L|none" } ] }`, read by `postcheck.mjs`.
+
 ## `reel.js`
 
 | Key | Meaning |
 |---|---|
 | `title`, `fps: 30`, `frames: [0, last]` | `last` = the "last frame" line of `vo/voice-qa.md` |
-| `CUTS` (export) | the animatic's cut frames, last entry = the end frame |
+| `CUTS` (export) | the animatic's cut frames, last entry = the end frame; `animatic.mjs` prints it from the shot list |
 | `set`, `setModule`, `setOpts` | the place: `setModule: '/styles/stick-man/allout/sets/<name>.js'` (sets in `styles/stick-man/allout/README.md`) |
 | `look`, `light`, `grade` | the approved look of the set (e.g. canyon-edge `EDGE_LOOK.look / .light / .grade`) |
 | `style` | `'kaiships'`: Kai's dose of the 12 principles (`engine/motion.js` STYLE_PRESETS); physics stays the floor |
