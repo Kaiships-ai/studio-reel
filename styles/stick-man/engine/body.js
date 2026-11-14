@@ -162,13 +162,15 @@ export function armPenetration(sh, elbow, hand, vols, { limb = 0.023, handR = 0.
 //   1. reach: the elbow folds at most JOINTS.elbow[1], so the hand comes no closer to the shoulder than dMin
 //   2. the hand: a hand inside a volume goes to that volume's nearest surface (push), repeated while volumes overlap
 //   3. the elbow: the bones keep their length, so the elbow lies on a circle round the shoulder-hand line; it stays on
-//      the wanted side when it can, else turns round that line by the smallest angle (5 deg steps, at most 15) that
-//      clears the body: a bigger swing in one frame reads as a pop
-//   4. if no small turn clears it, the hand steps 2 cm out toward this arm's own side and front (an arm cannot reach
-//      deep across its own body) and 3 is tried again; after 40 steps any turn is allowed
+//      the wanted side when it can, else turns round that line by the smallest angle (5 deg steps) that clears the body
+//   4. if no small turn (at most 15 deg) clears it, the hand steps 2 cm out toward this arm's own side and front (an arm
+//      cannot reach deep across its own body) and 3 is tried again, at most STEPS times; then any turn; then the arm that
+//      overlaps least (a hand flung a metre out to a straight arm, as 40 steps did, popped the elbow 70 deg in a frame)
 //   keep (the hand is on a target: an ik grip, a held prop): at the target itself every elbow turn is tried before the
 //      hand may step off it (a hand on a bag handle or a window sill stays there; the elbow finds another way round)
 // gap = how far the hand ended from where it was wanted (W): never hidden, shot.mjs reports it per frame
+// how many 2 cm steps the hand may take off its target before the arm settles for the least overlap
+const STEPS = 8;
 export function solveArm({ sh, elbow, hand, pole, l, vols, ik, flex, limb, handR, out = new THREE.Vector3(1, 0, 0.3), keep = false }) {
   const before = armPenetration(sh, elbow, hand, vols, { limb, handR });
   const dMin = 2 * l * Math.cos(JOINTS.elbow[1] / 2 * Math.PI / 180), o = out.clone().normalize();
@@ -182,18 +184,20 @@ export function solveArm({ sh, elbow, hand, pole, l, vols, ik, flex, limb, handR
   // given (an IK pole is not the same plane as the FK elbow: using it made the elbow jump at the first touch)
   const a0 = hand.clone().sub(sh).normalize(), e0 = elbow.clone().sub(sh), P0 = e0.addScaledVector(a0, -e0.dot(a0));
   if (P0.lengthSq() < 1e-9) P0.copy(pole.lengthSq() > 1e-9 ? pole : o); P0.normalize();
-  let best = null;
-  for (let tries = 0; tries < 60 && !best; tries++) {
+  let best = null, least = null;
+  for (let tries = 0; tries <= STEPS && !best; tries++) {
     place();
     const ax = H.clone().sub(sh).normalize();
-    for (let k = 0; k <= (tries < 40 && !(keep && tries === 0) ? 6 : 72); k++) {
+    for (let k = 0; k <= ((keep && tries === 0) || tries === STEPS ? 72 : 6); k++) {
       const P = P0.clone().applyAxisAngle(ax, (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 5 * Math.PI / 180), r = ik(sh, H, l, P);
       const w = armPenetration(sh, r.joint, r.end, vols, { limb, handR });
       if (!w) { best = r; break; }
+      if (!least || w.depth < least.d) least = { r, d: w.depth };
     }
-    if (!best) H.addScaledVector(o, 0.02);                                     // no small turn clears it: the hand steps out toward its own side and front
+    if (!best && tries < STEPS) H.addScaledVector(o, 0.02);                  // no small turn clears it: the hand steps out toward its own side and front
   }
-  const r = best || ik(sh, H, l, P0), after = best ? null : armPenetration(sh, r.joint, r.end, vols, { limb, handR });
+  // nothing clears it within STEPS: the arm that goes in least (not a straight arm flung out: that reads as a pop)
+  const r = best || least.r, after = best ? null : armPenetration(sh, r.joint, r.end, vols, { limb, handR });
   return { elbow: r.joint, hand: r.end, flex: r.flex, pen0: before ? before.depth : 0, pen: after ? after.depth : 0, limits, moved: true, gap: r.end.distanceTo(hand) };
 }
 

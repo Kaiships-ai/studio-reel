@@ -9,6 +9,7 @@
 // `stop: true` does the same without `to`. A shared clip played on another body scales its metres with that body's size.
 // The README in this folder has the rules; docs/MOTION-LIB.md the catalogue.
 import { BODIES } from './bodies.js';
+import { BASES } from './base.js';
 import Adult_Idle_Breath_Loop_v01 from './body/adult/Adult_Idle_Breath_Loop_v01.js';
 import Adult_Idle_Frozen_Loop_v01 from './body/adult/Adult_Idle_Frozen_Loop_v01.js';
 import Adult_Idle_Tired_Loop_v01 from './body/adult/Adult_Idle_Tired_Loop_v01.js';
@@ -145,6 +146,8 @@ export function placeClip(k, cur = { pos: [0, 0], yaw: 0 }) {
     if (ends) for (const ck of C.outro) put(ck, shift + (n - 1) * C.advance, f0 + n * C.frames);
   }
   for (const [n2, v] of Object.entries(k)) if (PASS.has(n2)) out[0][n2] = v;
+  // a clip written against another standard pose than the one it opens on names it (rest): the dose pushes from that
+  if (C.rest) out[0].rest = BASES[C.rest](body, 0);
   const last = out[out.length - 1];
   return { keys: out, pos: last.pos ? last.pos.slice(0, 2) : O, yaw: last.yaw ?? H, clip: C, n, fit };
 }

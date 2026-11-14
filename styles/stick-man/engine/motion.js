@@ -61,7 +61,7 @@ export function unflatten(m) {
   return o;
 }
 const DISCRETE = new Set(['expr', 'look', 'props', 'ik']);
-const NON_POSE = new Set(['f', 'at', 'pose', 'ease', 'hold', 'antic', 'expr', 'look', 'props', 'cycle', 'line', 'on', 'offset', 'nth', 'cue', 'snap']);
+const NON_POSE = new Set(['f', 'at', 'pose', 'ease', 'hold', 'antic', 'expr', 'look', 'props', 'cycle', 'line', 'on', 'offset', 'nth', 'cue', 'snap', 'rest']);
 
 // ---------------------------------------------------------------- the time warp between two keys
 // cubic Hermite in time: e(0) = 0, e(1) = 1, start slope a, end slope b (0 = a full slow, 1 = passing through)
@@ -110,6 +110,9 @@ export function compileTrack(keys, poses, base, style) {
     const a = i ? out[i - 1] : out[i], b = out[j];                                  // from the last key on the ground (the push-off)
     out.flights.push({ f0: a.f, f1: b.f, x0: a.m['pos.0'] || 0, y0: a.m['pos.1'] || 0, z0: a.m['pos.2'], x1: b.m['pos.0'] || 0, y1: b.m['pos.1'] || 0, z1: b.m['pos.2'] || 0 });
   }
+  // the pose the dose pushes away from: a key may name it (`rest`, a whole pose: the library's clip that does not open on
+  // the pose its numbers were written against, a seated clip written against STAND); else the first key
+  const rk = keys.find(k => k.rest); if (rk) out.rest = flatten(rk.rest);
   return out;
 }
 // where gravity puts the body at frame f of a flight (Blender m)
@@ -181,7 +184,7 @@ export function playActor(track, F0, F1, opt = {}) {
     if (cuts.has(f)) { for (const sp of Object.values(springs)) { sp.x = null; sp.v = 0; } for (const sp of [hat.p, hat.r, sq]) { sp.x = null; sp.v = 0; } prev = prev2 = null; }
     const k = keyed(track, f);
     // exaggeration: every pose channel pushed further from (or pulled back toward) the act's rest pose
-    const E = 0.4 + 1.2 * CUR.exaggeration, rest = track[0].m;
+    const E = 0.4 + 1.2 * CUR.exaggeration, rest = track.rest || track[0].m;
     if (E !== 1) for (const c of Object.keys(k)) if (EXAG.test(c) && c in rest) k[c] = rest[c] + (k[c] - rest[c]) * E;
     // secondary business: the latest key's cycle, faded in over 6 frames
     let ck = null; for (const t of track) if (t.f <= f && !t.held && !t.antic) ck = t;

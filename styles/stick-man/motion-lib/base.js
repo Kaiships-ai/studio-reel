@@ -130,8 +130,22 @@ export function mocapClip({ body = 'adult', src, base = 'STAND', end = base, eas
   const mid = retarget(keys, P0f, P1f).map(k => ({ ...k, f: ease + k.f, ...(seated ? { fall: k.bob < (sitBob + standBob) / 2 ? 1 : 0 } : {}) }));
   const last = ease + keys[n - 1].f + ease;
   // the seat under a SIT pose (as Trans_SitStand's): from 0.25 m behind its pelvis to 0.15 m in front, 0.45 m high
-  const SP = base === 'SIT' ? P0 : end === 'SIT' ? P1 : null, marks = SP ? [{ kind: 'seat', at: [SP.pos[0] - 0.25, SP.pos[1], 0], to: [SP.pos[0] + 0.15, SP.pos[1], 0.45] }] : [];
-  return { keys: [K(0, P0, { ease: 'slow' }), ...mid, K(last, P1, { ease: 'slow' })], frames: last, captured: [ease, ease + keys[n - 1].f], marks };
+  // The seat is where the captured body sits: under its pelvis while it is down (fall), its top at the lowest the hips
+  // come as the film shows them (the dose pushes bob from STAND, the clip's rest) less the seat of the trousers (SIT's own
+  // numbers: hips 0.042 m over the seat). Physics: no frame with the pelvis over the seat goes lower than that, the
+  // standard SIT keys included (they rest on this seat; tools/motionlib.mjs checks a SIT pose by its seat)
+  let marks = [];
+  const sat = mid.filter(k => k.fall >= 1);
+  if (sat.length) {
+    const sc = BODIES[body].spec.scale ?? 1, DR = (1 - (BODIES[body].spec.legScale ?? 1)) * 2 * 0.679, rb = stand(body, 0).bob || 0;
+    const film = k => rb + (k.bob - rb) * DOSE_E, hipM = k => (film(k) + 1.38 - DR) * 0.6 * sc;
+    const px = sat.reduce((a, k) => a + k.pos[0], 0) / sat.length, py = sat.reduce((a, k) => a + k.pos[1], 0) / sat.length, top = Math.min(...sat.map(hipM)) - 0.042 * sc;
+    const minFilm = (top + 0.042 * sc) / (0.6 * sc) - 1.38 + DR, over = k => k.pos[0] > px - 0.30 && k.pos[0] < px + 0.20;
+    for (const k of [P0, ...mid, P1]) if (over(k) && film(k) < minFilm - 1e-9) k.bob = rb + (minFilm - rb) / DOSE_E;
+    marks = [{ kind: 'seat', at: [px - 0.25, py, 0], to: [px + 0.15, py, top] }];
+  }
+  // rest: every captured channel is written against STAND (gaitLoop's un()), whatever pose the clip opens on
+  return { keys: [K(0, P0, { ease: 'slow' }), ...mid, K(last, P1, { ease: 'slow' })], frames: last, captured: [ease, ease + keys[n - 1].f], marks, rest: 'STAND' };
 }
 // a loop in place from motion capture (an idle, talking, a wave): mocapClip from STAND back to STAND
 export const mocapLoop = ({ body = 'adult', src, ease = 14, times = 1 }) => mocapClip({ body, src, ease, times });

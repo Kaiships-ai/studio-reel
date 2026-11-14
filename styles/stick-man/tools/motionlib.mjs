@@ -81,7 +81,10 @@ export function checkClip(C, file) {
     : [[F[0], C.base], [F[F.length - 1], C.end || C.base]];
   for (const [i, [m, nm]] of ends.entries()) {
     // a clip that turns ends on its standard pose facing the new way (the pose turned with the root)
-    const yw = (m.yaw ?? 90) - 90, ref = flatten(Math.abs(yw) > 1e-6 ? turned(BASES[nm](B, 0), yw, [m['pos.0'] || 0, m['pos.1'] || 0]) : BASES[nm](B, m['pos.0'] || 0)), d = diff(body(m, ref), body(ref, ref));
+    const yw = (m.yaw ?? 90) - 90, ref = flatten(Math.abs(yw) > 1e-6 ? turned(BASES[nm](B, 0), yw, [m['pos.0'] || 0, m['pos.1'] || 0]) : BASES[nm](B, m['pos.0'] || 0));
+    // SIT on a seat the clip names sits as deep as that seat (its height is the clip's): the hips' height is the seat's
+    if (nm === 'SIT' && (C.needs?.marks || []).some(k => k.kind === 'seat')) ref.bob = m.bob;
+    const d = diff(body(m, ref), body(ref, ref));
     if (d) fails.push(`${i ? 'ends' : 'starts'} off ${nm}: ${d.n} differs by ${d.d}`);
   }
   // playback with the dose: the joint gate, planted feet, flights
