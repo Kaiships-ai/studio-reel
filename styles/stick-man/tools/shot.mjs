@@ -79,6 +79,7 @@ const compress = list => {
 // the kit toward constant fidget, while reference holds last up to 86 f - FORENSIC.md section 3, fix 14);
 // ratio = (shoulder-elbow + elbow-hand) / rest arm length; jump = largest one-frame change of a flex, a foot pitch,
 // the torso lean or roll, or a limb segment's direction (deg).
+const GRIP_CM = 2, PROP_CM = 1;                                  // (h) a gripping hand off its target, (i) a held prop in the body
 const JOINTS = ['hip', 'knee', 'ankle', 'toe', 'shoulder', 'elbow', 'hand'], ANG = ['kneeFlex', 'elbowFlex', 'footPitch'];
 const SEGS = [['shoulder', 'elbow'], ['elbow', 'hand'], ['hip', 'knee'], ['knee', 'ankle']], ARM = 2 * 0.5125 * 0.60;   // rest arm length (m) = 2 x cast.js LIMB.upper x W_M
 const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
@@ -221,6 +222,22 @@ if (A.speed && !REEL) {
   L.push(`(d) hand to held prop (grip socket), max gap px at 1080p (target <= 2):`);
   for (const [n, g] of Object.entries(gaps)) L.push(`    ${n}: ${g.max.toFixed(2)} px${g.at ? ' (frame ' + g.at + ')' : ''} over ${g.n} held frames, props ${[...g.props].join(', ')}`);
   if (!Object.keys(gaps).length) L.push('    no held props on screen');
+  // (h) a hand that grips (an ik target, a held prop) stays on its target: the solver's distance from where the hand was
+  // keyed (rig K4); (i) a held prop inside a leg, the trunk or the head, before and after the solve (rig K5)
+  L.push(`(h) hand off its target while it grips (ik / held prop), max cm (FAIL > ${GRIP_CM}):`);
+  L.push(`(i) held prop inside the body (legs, trunk, head), max cm before / after the solve (FAIL > ${PROP_CM} after):`);
+  const hi = L.length - 1; let hk = 0;
+  for (const n of Object.keys(rows[0].actors)) {
+    let g = 0, gAt = null, gN = 0, p0 = 0, p1 = 0, pAt = null, kg = 0, bal = 0; const over = [], pOver = [];
+    for (const r of rows) {
+      const a = r.actors[n], l = a.limbs; if (!a.inFrame || !l || r.motion.cut) continue;
+      for (const s of ['L', 'R']) if (l[s]?.grip) { gN++; const d = l[s].targetGapCm || 0; if (d > g) { g = d; gAt = `${r.f} ${s}`; } if (d > GRIP_CM) over.push(r.f); }
+      if (l.propPenCm0 > p0) p0 = l.propPenCm0; if (l.propPenCm > p1) { p1 = l.propPenCm; pAt = r.f; } if (l.propPenCm > PROP_CM) pOver.push(r.f);
+      kg = Math.max(kg, l.carryKg || 0); bal = Math.max(bal, l.balanceCm || 0);
+    }
+    L.splice(hi + hk++, 0, `    ${n}: ${g.toFixed(2)} cm${gAt ? ' (frame ' + gAt + ')' : ''} over ${gN} grip hand-frames; frames over ${GRIP_CM} cm: ${compress([...new Set(over)]) || 'none'}  ${over.length ? 'FAIL' : 'PASS'}`);
+    L.push(`    ${n}: before ${p0.toFixed(2)} cm, after ${p1.toFixed(2)} cm${pAt != null ? ' (frame ' + pAt + ')' : ''}; carried up to ${kg.toFixed(1)} kg, balance shift up to ${bal.toFixed(2)} cm  ${pOver.length ? 'FAIL' : 'PASS'}`);
+  }
   // (e) bodies inside set geometry (and torso in torso)
   const hits = rows.filter(r => r.collide?.length);
   const kinds = {}; for (const r of hits) for (const c of r.collide) (kinds[c] ||= []).push(r.f);

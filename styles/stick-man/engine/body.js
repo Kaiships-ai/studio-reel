@@ -27,9 +27,12 @@ export function limitBody(Q = {}) {
 // a cartoon head is drawn big, but the body it moves is a person's, so balance uses a person's mass split
 export const MASS = { head: 0.081, trunk: 0.497, upper: 0.028, fore: 0.022, thigh: 0.100, shank: 0.0465, foot: 0.0145 };
 // the body's centre of mass from its joints (each segment's mass at its middle; head and trunk at their centres)
+// K.extra: carried loads [{ p, w }] (w = the load's mass over the body's, a 25 kg bag on a 70 kg body = 0.36), so a held bag
+// pulls the centre of mass toward it and balance leans the body away
 export function centreOfMass(K) {
   const c = new THREE.Vector3(), mid = (a, b) => a.clone().add(b).multiplyScalar(0.5); let m = 0;
   const add = (p, w) => { c.addScaledVector(p, w); m += w; };
+  for (const e of K.extra || []) if (e.w > 0) add(e.p, e.w);
   add(K.head, MASS.head); add(K.trunk, MASS.trunk);
   for (const s of [K.L, K.R]) { add(mid(s.shoulder, s.elbow), MASS.upper); add(mid(s.elbow, s.hand), MASS.fore);
     add(mid(s.hip, s.knee), MASS.thigh); add(mid(s.knee, s.ankle), MASS.shank); add(mid(s.heel || s.ankle, s.toe), MASS.foot); }
@@ -148,10 +151,13 @@ export function armPenetration(sh, elbow, hand, vols, { limb = 0.023, handR = 0.
 //      clears the body: a bigger swing in one frame reads as a pop
 //   4. if no small turn clears it, the hand steps 2 cm out toward this arm's own side and front (an arm cannot reach
 //      deep across its own body) and 3 is tried again; after 40 steps any turn is allowed
-export function solveArm({ sh, elbow, hand, pole, l, vols, ik, flex, limb, handR, out = new THREE.Vector3(1, 0, 0.3) }) {
+//   keep (the hand is on a target: an ik grip, a held prop): at the target itself every elbow turn is tried before the
+//      hand may step off it (a hand on a bag handle or a window sill stays there; the elbow finds another way round)
+// gap = how far the hand ended from where it was wanted (W): never hidden, shot.mjs reports it per frame
+export function solveArm({ sh, elbow, hand, pole, l, vols, ik, flex, limb, handR, out = new THREE.Vector3(1, 0, 0.3), keep = false }) {
   const before = armPenetration(sh, elbow, hand, vols, { limb, handR });
   const dMin = 2 * l * Math.cos(JOINTS.elbow[1] / 2 * Math.PI / 180), o = out.clone().normalize();
-  if (!before && hand.distanceTo(sh) >= dMin) return { elbow: elbow.clone(), hand: hand.clone(), flex, pen0: 0, pen: 0, limits: 0, moved: false };
+  if (!before && hand.distanceTo(sh) >= dMin) return { elbow: elbow.clone(), hand: hand.clone(), flex, pen0: 0, pen: 0, limits: 0, moved: false, gap: 0 };
   let H = hand.clone(), limits = 0;
   const reach = () => { const dv = H.clone().sub(sh), d = dv.length(); if (d >= dMin) return false; H = sh.clone().addScaledVector(d > 1e-6 ? dv.normalize() : o, dMin); limits = 1; return true; };
   const place = () => { for (let i = 0; i < 6; i++) { let moved = reach();
@@ -165,7 +171,7 @@ export function solveArm({ sh, elbow, hand, pole, l, vols, ik, flex, limb, handR
   for (let tries = 0; tries < 60 && !best; tries++) {
     place();
     const ax = H.clone().sub(sh).normalize();
-    for (let k = 0; k <= (tries < 40 ? 6 : 72); k++) {
+    for (let k = 0; k <= (tries < 40 && !(keep && tries === 0) ? 6 : 72); k++) {
       const P = P0.clone().applyAxisAngle(ax, (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 5 * Math.PI / 180), r = ik(sh, H, l, P);
       const w = armPenetration(sh, r.joint, r.end, vols, { limb, handR });
       if (!w) { best = r; break; }
@@ -173,5 +179,25 @@ export function solveArm({ sh, elbow, hand, pole, l, vols, ik, flex, limb, handR
     if (!best) H.addScaledVector(o, 0.02);                                     // no small turn clears it: the hand steps out toward its own side and front
   }
   const r = best || ik(sh, H, l, P0), after = best ? null : armPenetration(sh, r.joint, r.end, vols, { limb, handR });
-  return { elbow: r.joint, hand: r.end, flex: r.flex, pen0: before ? before.depth : 0, pen: after ? after.depth : 0, limits, moved: true };
+  return { elbow: r.joint, hand: r.end, flex: r.flex, pen0: before ? before.depth : 0, pen: after ? after.depth : 0, limits, moved: true, gap: r.end.distanceTo(hand) };
+}
+
+// a carried prop against the body (rig K5): the prop as an oriented box { c, q, h: half sizes } in the figure's root
+// space (W), the legs as segments [[a, b], ...] (thighs, shins: a tube of radius limb) and the trunk and head as volumes.
+// Returns the deepest overlap and the move that takes the prop out of it ({ depth, push }), or null when it is clear.
+// The prop never pushes the body: the hand that holds it moves (cast.js re-solves that arm and reports the hand's gap).
+export function propPush({ c, q, h }, segs, vols, { limb = 0.023, n = 6 } = {}) {
+  const qi = q.clone().invert(); let best = null;
+  const take = (depth, push) => { if (depth > 1e-5 && (!best || depth > best.depth)) best = { depth, push }; };
+  for (const [a, b] of segs) for (let i = 0; i <= n; i++) {
+    const l = a.clone().lerp(b, i / n).sub(c).applyQuaternion(qi), L = [l.x, l.y, l.z];
+    const e = L.map((x, k) => h[k] + limb - Math.abs(x)); if (e.some(x => x <= 0)) continue;
+    const k = e.indexOf(Math.min(...e)), d = new THREE.Vector3(); d.setComponent(k, -(Math.sign(L[k]) || 1) * e[k]);
+    take(e[k], d.applyQuaternion(q));                                             // the box leaves by its nearest face, away from the leg
+  }
+  for (const sx of [-1, 0, 1]) for (const sy of [-1, 0, 1]) for (const sz of [-1, 0, 1]) {
+    const p = new THREE.Vector3(sx * h[0], sy * h[1], sz * h[2]).applyQuaternion(q).add(c);
+    for (const v of vols) { const t = v.test(p); if (t) take(t.depth, t.n.clone().multiplyScalar(t.depth)); }
+  }
+  return best;
 }

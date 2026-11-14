@@ -191,7 +191,7 @@ async function buildAct(R, X) {
   }
   const animFrame = (a, f) => {
     const A = a.anim, f0 = F0 - 30; A.frames ||= playActor(A.track, f0, F1 + 1);
-    const Q = toPose(A.frames[Math.max(0, Math.min(A.frames.length - 1, Math.round(f) - f0))]);
+    const Q = toPose(A.frames[Math.max(0, Math.min(A.frames.length - 1, Math.round(f) - f0))], a.S.root.scale.x);
     let pk = null; for (const k of A.keys) if (k.f <= f && k.props !== undefined) pk = k.props;
     for (const [side, kind] of Object.entries(pk || {})) if (kind) Q[`x_hp${side}_${kind}`] = 1;
     return Q;
@@ -519,6 +519,23 @@ async function buildAct(R, X) {
       v.copy(hp).project(stage.camera);
       const on = v.z < 1 && Math.abs(v.x) < 1 && Math.abs(v.y) < 1;
       out.held.push({ actor: s.actor, prop: n, side: s.side, onScreen: on, gapPx: +(Math.max(0, d - HAND_R) * pxPerM(hp)).toFixed(2) });
+    }
+    // hand props (cast.js x_hp<L|R|B>_<kind>, a bag, a phone): the gap from the hand dot to the prop's grip socket (one hand)
+    // or to the prop's box (held between both hands)
+    for (const a of actors) {
+      if (!a.S.root.visible) continue;
+      for (const [id, o] of Object.entries(a.S.props)) {
+        if (!o.visible) continue;
+        const side = id[0], g = o.userData.grip;
+        for (const s of side === 'B' ? ['L', 'R'] : [side]) {
+          const hp = a.S.parts.hands[s].getWorldPosition(new THREE.Vector3());
+          let d;
+          if (side !== 'B' && g) d = o.localToWorld(new THREE.Vector3(...g)).distanceTo(hp);
+          else { const bb = new THREE.Box3().setFromObject(o); d = bb.clampPoint(hp, new THREE.Vector3()).distanceTo(hp); }
+          v.copy(hp).project(stage.camera);
+          out.held.push({ actor: a.name, prop: id.slice(1), side: s, onScreen: v.z < 1 && Math.abs(v.x) < 1 && Math.abs(v.y) < 1, gapPx: +(Math.max(0, d - HAND_R) * pxPerM(hp)).toFixed(2) });
+        }
+      }
     }
     // bodies inside set geometry: the torso (a box between hips and shoulders) and the knees and ankles of every shown
     // actor against the set's collision boxes (1 cm grace), and torso against torso

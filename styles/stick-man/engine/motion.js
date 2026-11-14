@@ -17,6 +17,7 @@
 // speed stretches the body and a landing squashes it (squash and stretch, volume kept), and a held pose breathes.
 // the kit's named poses (a film adds its own: act `poses`, or import this and assign)
 import { PHYS } from './body.js';
+import { expandClips } from '../motion-lib/index.js';
 export const MOTION_POSES = {};
 // the style dials: how far this film bends each of the 12 principles, 0 = toward live simulation, 1 = toward stylised
 // animation, 0.5 = the kit as authored (a reel without `style` plays exactly as before). The body's physics (rig B1-B6)
@@ -71,6 +72,7 @@ const leaves = e => (e === 'flow' || e === 'in' ? 1 : 0), enters = e => (e === '
 // keys: resolved frames, sorted; poses: name -> pose object (the film's own, then the kit's)
 export function compileTrack(keys, poses, base, style) {
   CUR = resolveStyle(style);
+  keys = expandClips(keys, base);                                      // { f, clip, body, to, times }: the motion library's keys
   const ks = keys.map(k => {
     const named = typeof k.pose === 'string' ? poses[k.pose] : k.pose;
     if (typeof k.pose === 'string' && !named) throw new Error(`anim: unknown pose "${k.pose}"`);
@@ -213,8 +215,9 @@ export function playActor(track, F0, F1, opt = {}) {
 
 // ---------------------------------------------------------------- from channels to the figure's pose (cast.js S.pose2)
 // footW (Blender world, planted) is turned into the figure frame from the frame's own root, so a planted foot stays put
+// scale: the figure's root scale (a child, a 'scale:k' costume), so a planted foot lands where it was keyed in metres
 const W_M = 0.60, DEG = Math.PI / 180;
-export function toPose(m) {
+export function toPose(m, scale = 1) {
   const Q = unflatten(m);
   const pos = Q.pos || [0, 0], yaw = (Q.yaw || 0) * DEG;
   for (const s of ['L', 'R']) {
@@ -222,7 +225,8 @@ export function toPose(m) {
     // Blender world -> figure frame (x right as the camera in front sees it, y up, z forward), W units
     const dx = G.footW[0] - pos[0], dy = G.footW[1] - pos[1], tx = dx, tz = -dy;
     const c = Math.cos(yaw), sn = Math.sin(yaw);
-    G.foot = [(tx * c - tz * sn) / W_M, (G.footW[2] || 0) / W_M + 0.022, (tx * sn + tz * c) / W_M];
+    const k = W_M * scale;
+    G.foot = [(tx * c - tz * sn) / k, (G.footW[2] || 0) / k + 0.022, (tx * sn + tz * c) / k];
     delete G.footW;
   }
   return { ...Q, pos: [pos[0], pos[1], Q.pos?.[2] || 0], yaw: Q.yaw || 0 };

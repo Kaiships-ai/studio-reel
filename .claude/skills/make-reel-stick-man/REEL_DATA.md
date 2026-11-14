@@ -134,6 +134,31 @@ Conventions: yaw 0 faces the camera side (-y), yaw -90 faces -x; `swing` + is fo
 away from head and belly (the IK flips otherwise). Off screen = a far `pos` on a key at a cut frame. `style: 'kaiships'`
 bends the keys by Kai's dose; the body's physics (`engine/body.js`) is the floor.
 
+### Motion library clips (`clip`)
+
+A background character, or a lead's blocking start, plays a library clip instead of hand keys: an anim key
+`{ f, clip, body, to?, times?, stop?, pos?, yaw?, swap?, expr?, look? }` expands into the clip's keys before playback
+(`styles/stick-man/motion-lib`, catalogue `styles/stick-man/docs/MOTION-LIB.md`).
+
+```js
+import '/styles/stick-man/motion-lib/props.js';                       // bag, torch, cash, cap
+SPECS.GRAN = bodySpec(SPECS.MAGNATE, 'elder');                       // motion-lib/bodies.js: proportions + mass
+anim: { gran: [{ f: 0, clip: 'Idle_Breath_Loop', body: 'elder', times: 2 }, { f: 160, clip: 'Move_Walk_Fwd_Loop', body: 'elder', to: [3, 0] }],
+        cop:  [{ f: 0, clip: 'Act_LiftHeavy_Once', swap: { bag: 'duffel' } }, { f: 88, clip: 'Move_CarryHeavy_Walk_Loop', to: [4, 0] }] }
+```
+
+| Field | Meaning |
+|---|---|
+| `clip`, `body` | the clip name without body prefix and version; adult, heavy, thin, child, elder (default adult) |
+| `to` / `times` / `stop` | a travelling loop walks to `to` (heading, cycles and stride fitted, first and closing steps); `times` = loop cycles; `stop: true` = the steps without `to` |
+| `pos`, `yaw` | start and facing (default: where the keys before left the actor) |
+| `swap` | the film's prop for the clip's (`{ bag: 'duffel' }`) |
+| `expr`, `look`, `ease`, `antic`, `cycle` | onto the clip's first key |
+
+Clips plant feet with `footW` (metres): a later hand key that moves the feet uses `footW` too (`motion-lib/base.js`
+`stand(body, x)`). Carried props: `x_hp<L|R|B>_<kind>` in a hand, `x_hpH_<kind>` worn on the head, `x_kg<side>` the load
+in kg (it enters the centre of mass), `x_yaw<side>` turns an upright prop about the vertical.
+
 ## Hand-directed cameras (`direct`)
 
 `{ at: { f }, intent, why, cut: 'cut', cam: { pos, aim, lens, roll }, to, move: { from, dur, ease }, kick: [{ at, amp }] }`
