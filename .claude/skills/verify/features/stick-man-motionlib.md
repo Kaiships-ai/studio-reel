@@ -11,6 +11,12 @@ before, except where an old one had a hand forced off a target (now kept when re
 - `clip` keys: `to` (heading, fitted cycles, first and closing steps), `times`, `stop`, `pos`, `yaw`, `swap`, `expr`.
 - Body types (`motion-lib/bodies.js` `bodySpec`): adult, heavy (girth 1.9), thin (0.6), child (scale 0.62, head 1.3, legs
   0.8), elder (stooped posture); each with its own walk, run and breath.
+- Gaits (`base.js` `gaitLoop`, every walk and run): sampled a key a frame from curves. The hips are solved from the
+  stance leg's knee curve (`knees` in `bodies.js`, `legReach` now in `engine/body.js`), so a knee never snaps; the swing
+  foot is the hip-to-ankle line swung forward; hips shift, turn and tilt, shoulders counter-rotate, arms widest just
+  after contact and not twins; a trailing heel peels as the leg needs (at most 16 deg a frame); a run lands its foot
+  0.3 step ahead and has a gravity flight. Rules: `styles/stick-man/docs/MOTION-RULES.md`. The walks of all five bodies
+  keep solved knees and elbows <= 27 deg a frame (test).
 - `toPose(m, scale)`: a scaled figure's planted feet land where they were keyed in metres (`engine/play.js` passes the
   root scale; a `scale:k` costume benefits too).
 - Rig K4: `solveArm({ keep })` tries every elbow turn before moving a gripping hand; `rigWorld()` `L/R.targetGapCm`, `grip`.

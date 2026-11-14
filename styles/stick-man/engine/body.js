@@ -7,6 +7,19 @@
 // All positions are the figure's root space in W units (head width = 1), the space cast.js S.pose2 works in.
 import * as THREE from 'three';
 
+// Above this share of full reach a limb's joint eases toward straight and the hose stretches (rubber hose), so a target
+// is always reached exactly (feet never slide, props stay in the hand). Legs straighten fully (a standing leg never
+// flickers bent); arms keep a soft 12 deg bend and stretch, easing over a wide range so a fast reach never snaps.
+export const SOFT = { leg: 0.965, arm: 0.96 };
+const smooth01 = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+// the hip-to-ankle distance (share of full leg length) at which the leg shows a knee flex of `flex` deg (cast.js ik)
+export function legReach(flex) {
+  const s = SOFT.leg, fs = 2 * Math.acos(s) * 180 / Math.PI;
+  if (flex >= fs) return Math.cos(flex / 2 * Math.PI / 180);
+  let a = s, b = 1;
+  for (let i = 0; i < 30; i++) { const m = (a + b) / 2; if (fs * (1 - smooth01(s, 1, m)) > flex) a = m; else b = m; }
+  return (a + b) / 2;
+}
 export const JOINTS = { raise: [-20, 180], swing: [-180, 60], elbow: [0, 145] };
 // the rest of the body's joint ranges (deg), clinical norms (AAOS): spine and neck channels as the pose gives them, hip
 // / knee / ankle as measured on the solved leg. The ankle's 40 is weight-bearing (a deep squat needs ~38; 20 is the

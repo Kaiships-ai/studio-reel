@@ -6,7 +6,7 @@ import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometr
 import { toon, lin, css, B, INK_RGB, INK_SUN, PLACE } from './look.js';
 import { EXPR, faceRig, mixFace } from './faces.js';
 import { makeHandProp } from '../lib/cast/handprops.js';
-import { limitArm, limitBody, ROM, torsoSlices, ellipsoid, solveArm, armPenetration, propPush, PHYS, centreOfMass, balanceShift } from './body.js';
+import { SOFT, legReach, limitArm, limitBody, ROM, torsoSlices, ellipsoid, solveArm, armPenetration, propPush, PHYS, centreOfMass, balanceShift } from './body.js';
 
 const SPIN_Q = new THREE.Quaternion(), SPIN_AX = new THREE.Vector3(0, 1, 0), _camL = new THREE.Vector3();
 export const W_M = 0.60;                     // head width in metres
@@ -397,18 +397,9 @@ export const LIMB = { thigh: 0.679, shin: 0.679, upper: 0.5125, fore: 0.5125, st
 // the height of the sole under a foot point
 export const FOOT = { heel: 0.08 };
 const FOOT_R = 0.022;
-// Above this share of full reach the joint eases toward straight and the hose stretches (rubber hose), so a target is
-// always reached exactly (feet never slide, props stay in the hand). Legs straighten fully (a standing leg never
-// flickers bent); arms keep a soft 12 deg bend and stretch, easing over a wide range so a fast reach never snaps.
-const SOFT = { leg: 0.965, arm: 0.96 };
-// the hip-to-ankle distance (share of full leg length) at which the leg shows a knee flex of `flex` deg
-export function legReach(flex) {
-  const s = SOFT.leg, fs = 2 * Math.acos(s) / DEG;
-  if (flex >= fs) return Math.cos(flex / 2 * DEG);
-  let a = s, b = 1;
-  for (let i = 0; i < 30; i++) { const m = (a + b) / 2; if (fs * (1 - sm(s, 1, m)) > flex) a = m; else b = m; }
-  return (a + b) / 2;
-}
+// SOFT (the share of full reach above which a joint eases toward straight) and legReach live in body.js, so the
+// motion library can build hips from legs without the renderer
+export { legReach };
 const ROUND = { leg: 0.40, arm: 0.50 };                          // bend roundness: control-point reach as a share of the bone
 const V = (a) => new THREE.Vector3(a[0], a[1], a[2] || 0);
 // Arms never rubber-hose: exact two-bone geometry down to an elbow of ARM_MIN_FLEX; past that the bones stretch at most
