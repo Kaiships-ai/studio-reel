@@ -13,7 +13,7 @@ section 8 the fixes for every `prepro.mjs` check. When something feels wrong and
 ## 1. The flow
 
 ```
-[1.0] scene brief + intensity plan ──► [1.1] script + picture pass ──► [1.4a] thumbnails + floor plans + shot list
+[1.0] scene brief + intensity plan ──► [1.1] script ─► ◇S ─► [1.1p] picture pass ──► [1.4a] thumbnails + floor plans + shot list
                                                                               │
    (parallel, never blocking the story)                                       ▼
    [1.2] look dev   [1.3] design                           [1.4b] rough panels ──► [1.4c] board pitch + read test
@@ -110,12 +110,12 @@ the same intensity (that is a FLAT film in waiting).
   ("smug relief that turns into dread").
 - Every scene at 7-8 → nothing can rise → lower the explanation scenes, save 9-10 for one climax.
 
-### [1.1] Script + picture pass
+### [1.1] Script and [1.1p] picture pass
 
 **Why.** A script for picture is not finished when it reads well; it is finished when every line has something to show.
 
-**Do.** Write and check the script with the existing rules (1 narrator, 2.9-3.3 words/s for Achird, `million-views-rule`
-for retention). Then the **picture pass**, line by line:
+**Do.** The script is written, tested and locked at ◇S by SCRIPT.md (beats, facts, `scriptlint.mjs`, the four reviews,
+the blind A/B). Then the **picture pass** [1.1p] on the locked script, line by line:
 1. Write `see`: what a muted viewer must see on this line.
 2. Classify the line: action, fact, number, compare, reaction, twist, recap, CTA.
 3. For every fact or number, choose an **explain device** from the ladder in 4.3, highest rung first. A line whose only
@@ -231,11 +231,11 @@ unique colour, the release goes calm. Check against the look's limits at phone s
 
 ### 4.1 Story structure for a 60-90 s knowledge reel
 
-- **One question at a time.** Each section opens one question and closes or upgrades it (million-views K3). Write it in
+- **One question at a time.** Each section opens one question and closes or upgrades it (SCRIPT.md K3). Write it in
   the scene brief so the board can stage it.
 - **Want → obstacle → outcome** in every beat. If a beat has no obstacle it is exposition: give it one or merge it.
 - **Rehook** at every section boundary: a new danger, a counter that jumps, a reversal. Roughly every 10-15 s in this
-  format (million-views K1 fact rhythm).
+  format (SCRIPT.md K1 fact rhythm).
 - **Escalation is visual too.** Each flip should look bigger than the last (more police, tighter framing, faster cuts),
   not only sound bigger.
 - **The recap is a scene, not a summary.** It has a feel (dread, temptation), a whose, and its own shot progression.

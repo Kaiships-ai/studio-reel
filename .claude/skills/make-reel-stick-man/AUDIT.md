@@ -14,7 +14,7 @@ the weakest stage was the one that mattered most.
 - The loop: one step, proof Kai can see, 2-3 options, a fresh agent before Kai, decisions on the page.
 - Fixing a problem in the stage that caused it; never loosening a threshold; stop after 2 rounds.
 - The camera-pass method (intent, intensity graph, axis map, 3 options, lock check), the muted read test, the
-  million-views script rules, the board judge, the floor plan of the set.
+  script rules (now SCRIPT.md), the board judge, the floor plan of the set.
 
 ## Gaps found
 

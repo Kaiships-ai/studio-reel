@@ -3,10 +3,10 @@
 ## Every gate: evidence first
 
 ```sh
-node styles/stick-man/tools/stagegate.mjs films/<slug> <1|2a|2b|2c|3|4|5|6|all>   # review/gate-<id>.md
+node styles/stick-man/tools/stagegate.mjs films/<slug> <1|S|2a|2b|2c|3|4|5|6|all>   # review/gate-<id>.md
 ```
 
-Each gate in `styles/stick-man/tools/GATES.json` lists four kinds of evidence: **measured** (a tool that must exit 0: `develop.mjs`, `prepro.mjs --gate`, `assets.mjs`, `timing.mjs`, `postcheck.mjs`), **made** (the maker's files), **judged** (`by: agent:<id>` or `person:<name>`, newer than what it reviewed) and **approved** (Kai in `review/approvals.json`, after the latest evidence). States: OPEN → READY FOR KAI → LOCK. A film may add evidence in `review/gates.local.json`, never remove any.
+Each gate in `styles/stick-man/tools/GATES.json` lists four kinds of evidence: **measured** (a tool that must exit 0: `develop.mjs`, `scriptlint.mjs`, `prepro.mjs --gate`, `assets.mjs`, `timing.mjs`, `postcheck.mjs`), **made** (the maker's files), **judged** (`by: agent:<id>` or `person:<name>`, newer than what it reviewed) and **approved** (Kai in `review/approvals.json`, after the latest evidence). States: OPEN → READY FOR KAI → LOCK. A film may add evidence in `review/gates.local.json`, never remove any.
 
 
 ```sh
@@ -18,6 +18,14 @@ node styles/stick-man/tools/gates.mjs --report <stats> --in <mp4> --film films/<
 
 - **Never change a threshold.** Fix the film data or the kit. A gate that measures wrong is fixed in its tool, in its own commit.
 - **After 2 fix rounds on one gate**, stop and show Kai the FAIL with a still.
+
+## Script (◇S)
+
+```sh
+node styles/stick-man/tools/scriptlint.mjs films/<slug>   # review/scriptlint.md; fixes: SCRIPT.md section 6
+```
+
+◇S needs scriptlint PASS, `vo/beats.json` and `vo/facts.json`, and four reviews by agents, each newer than `vo/script.json`: `review/fact-check.md`, `review/skeptic.md`, `review/ear-retell.md`, `review/script-ab.md` (the new script must win). Then Kai approves.
 
 ## Pre-production (stage 1)
 
