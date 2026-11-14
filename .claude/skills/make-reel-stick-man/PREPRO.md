@@ -322,6 +322,11 @@ conclusion.
 | Continuity | after the shot list and after the animatic | "With the floor plans: for each cut, axis side, screen direction, eyeline and the 30° rule. List violations as shot pairs." |
 | Camera intent | camera-intent pass | the `animation-camera-pass` skill, OUT-1/3/4/5, on the animatic frames |
 
+Judged files are written by an agent that can write files (not a read-only verifier); if it does not know its id, the
+coordinator replaces the placeholder with the agent's real id and changes nothing else. A metadata-only edit after a
+review (an `options` entry, a `pick`) that leaves the cut frame-identical (ffmpeg PSNR inf) is noted at the end of each
+judged file instead of re-running it; any change a viewer can see re-runs the review.
+
 Kai's notes go in this format: **shot id + error code (A-E) + the feeling he wants**. A note without a shot gets one
 question back: "which shot?"
 
@@ -331,7 +336,7 @@ question back: "which shot?"
 |---|---|---|---|
 | Panels | thumbnails, grey sketches, grey engine frames | cleaner keys where a fact must read | cameras matched to the chosen options |
 | Characters | proxies, silhouettes | design sheets | final in stage 2 |
-| Light, colour | none (grey) | colour script | final look in stage 2-3 |
+| Light, colour | none (grey) | colour script (the direction: one frame per scene on the curve) | materials and props stage 2, light per shot stage 3 [3.4b], render + grade stage 4 |
 | Voice | scratch | final | final |
 | Sound | temp music + key sounds | same | stage 4 |
 
@@ -345,7 +350,7 @@ A final-looking render before ◇2a is allowed only as a **style frame** for [1.
 | ◇2b shot lock | camera intent per shot (size, angle, lens class, move, axis side) | camera-intent pass OUT-1/3/4/5, options rendered in the animatic | every shot CAM INTENT LOCK; climax is the visual peak; no continuity FAIL |
 | ◇2c look + design | look, characters, sets, props, colour script | style frames on locked shots, sheets, colour script | Kai approves; nothing in it changes a locked shot |
 
-Kai may approve the three on one page in one sitting; each keeps its own row and evidence. ◇2c is never approved before
+A shot added after Kai locked the story scores gets a score between its neighbours; re-lock with `prepro.mjs --lock-story kai` and tell Kai in the same reply (his curve does not change, it gains a point). Kai may approve the three on one page in one sitting; each keeps its own row and evidence. ◇2c is never approved before
 ◇2a. ◇2 is open when all three are.
 
 ## 8. Fixes for each `prepro.mjs` check
