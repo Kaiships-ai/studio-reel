@@ -43,7 +43,8 @@ the standard pose there.
 | A foot on the floor never slides (< 1 mm a frame): feet leave and reach the floor straight up and down | feet |
 | Clips are written in clip space: the actor at the origin facing +x (yaw 90), metres for `pos` and `footW`, the figure frame (W) for `ik` targets | (convention) |
 | Each body's locomotion is authored with that body's numbers (`bodies.js`): stride, cadence, bounce, lift, sway, stoop; never an adult clip played on another body. Shared clips are authored on the adult and scale their metres with a smaller body | (review) |
-| A hand on a target (ik weight >= 0.5, or holding a prop) stays on it: `shot.mjs --report` (h) fails over 2 cm. A carried prop never passes through the body (i) and its mass (`x_kg<side>` kg) is in the centre of mass, so balance is keyed honestly: hips back under a load, the load handed to the floor or a sill while it rests there | proof renders |
+| A hand on a target (ik weight >= 0.5, or holding a prop) stays on it (<= 2 cm off); a carried prop never passes through the body (<= 1 cm) and its mass (`x_kg<side>` kg) is in the centre of mass, so balance is keyed honestly: hips back under a load, the load handed to the floor or a sill while it rests there, let go over a few frames | rig (`motionlib.mjs` runs every clip through cast.js headless; `shot.mjs --report` (h)/(i) on renders) |
+| Grips get explicit elbow poles (`pole`): a wanted elbow through the body makes the solver swing it round, and its side can change between frames | (review; the rig line prints the solved joints' largest change a frame) |
 
 ## Files
 
@@ -55,6 +56,10 @@ the standard pose there.
 | `props.js` | the hand props the clips name (bag, torch, cash, cap) |
 | `body/`, `shared/` | the clips |
 | `proof/` | the proof page: one clip on one body, physics on or off (`tools/motionlib.mjs --proof`, `--sheet`) |
+
+Changes to existing films: `toPose(m, scale)` puts a scaled figure's planted feet (`footW`) where they are keyed; before,
+they landed `scale` times further from the root (a `scale:1.12` cop: 1.6 cm wider each side, `films/motionlib-proof/cop_feet.png`).
+A two-hand prop (`x_hpB_`) is now measured from the hands' midpoint to its grip socket in `shot.mjs` (d).
 
 New clip: write it in clip space with `K` and the standard poses, add its import to `index.js`, run the checker, render
 it with `--proof <dir> --only <clip>` and read its `(h)` and `(i)` lines physics on and off.

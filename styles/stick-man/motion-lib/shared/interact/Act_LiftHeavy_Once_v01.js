@@ -8,9 +8,12 @@
 // (the set's own bag hides at frame 31).
 import { stand, carry, K, merge, CARRY_KG } from '../../base.js';
 
+// elbows out and down (explicit poles): the wanted elbow already clears the body, so the solver never has to swing it
+// round to the other side between two frames
+const PR = [0.8, -0.6, -0.2], PL = [-0.8, -0.6, -0.2];
 const S0 = stand('adult'), C1 = carry('adult');
 // both fists on the handle (figure frame, W): the right one holds the bag, the left one 0.10 W to its left
-const at = (y, z, x = 0.05, w = 0.10) => ({ armR: { ik: [x, y, z], ikw: 1 }, armL: { ik: [x - w, y, z], ikw: 1 } });
+const at = (y, z, x = 0.05, w = 0.10) => ({ armR: { ik: [x, y, z], ikw: 1, pole: PR }, armL: { ik: [x - w, y, z], ikw: 1, pole: PL } });
 const SQUAT = merge(S0, { bob: -0.55, hip: { z: -0.14 }, spine: { bend: 38 }, neck: { nod: 4 }, legL: { knee: [-0.5, 0, 1] }, legR: { knee: [0.5, 0, 1] } }, at(0.53, 0.63));
 const BAG = kg => ({ x_hpR_bag: 1, x_kgR: kg, x_yawR: 90 }), NONE = { x_hpR_bag: 0, x_kgR: 0, x_yawR: 90 };
 const tremble = { 'spine.side': [0.8, 3], 'neck.tilt': [0.8, 4], bob: [0.006, 3] };

@@ -16,7 +16,9 @@ before, except where an old one had a hand forced off a target (now kept when re
 - Rig K4: `solveArm({ keep })` tries every elbow turn before moving a gripping hand; `rigWorld()` `L/R.targetGapCm`, `grip`.
 - Rig K5: hand props collide with legs, trunk and head (the holding arm moves, `propPenCm0/propPenCm`), their mass
   (`x_kg<side>` or the prop's `userData.mass`) is in the centre of mass (`carryKg`); `x_yaw<side>` turns an upright prop;
-  `x_hpH_<kind>` wears a prop on the head. Hand props are in `__dbg` `held`, so `shot.mjs --report` (d) measures them.
+  `x_pitch<side>` tips it; `x_hpH_<kind>` wears a prop on the head; a prop with `userData.soft` (the cap) has no contact push.
+  The arm re-solve after a prop push keeps the elbow on its side. Hand props are in `__dbg` `held`, so `shot.mjs --report` (d) measures them (a two-hand prop from the hands' midpoint
+  to its grip socket).
 - `shot.mjs --report` lines (h) hand off its target while gripping (FAIL > 2 cm) and (i) held prop inside the body
   (FAIL > 1 cm after the solve).
 
@@ -27,7 +29,8 @@ and `anim: { kid: [{ f: 0, clip: 'Move_Run_Fwd_Loop', body: 'child', to: [4, 0] 
 
 ## Driving it
 
-- Offline checks of every clip: `node styles/stick-man/tools/motionlib.mjs` (32 PASS lines, exit 0).
+- Offline checks of every clip: `node styles/stick-man/tools/motionlib.mjs` (32 PASS lines, exit 0); each line ends with the
+  clip run through cast.js headless (fake 2D canvases): grip cm, prop cm, the solved joints' largest change a frame.
 - One clip in the browser: `node styles/stick-man/tools/shot.mjs --film styles/stick-man/motion-lib/proof --w 540 --h 960
   --query "clip=Act_LiftHeavy_Once&phys=1" --frames 0-100 --report /tmp/lift.txt --fast 1`; read (h) and (i): PASS.
 - A contact sheet: `node styles/stick-man/tools/motionlib.mjs --sheet Act --out /tmp/sheets`.

@@ -47,13 +47,13 @@ numbers, one contact sheet per group).
 | `Act_Phone_Once` | any (adult, scaled) | once | 100 | STAND | phone | a call |
 | `Act_PushThroughWindow_Once` | any (adult, scaled) | once | 82 | CARRY → STAND | bag, window | from CARRY, lift the bag to a window sill with both hands and shove it through |
 | `Act_SlideCash_Once` | any (adult, scaled) | once | 76 | STAND | cash, counter | a bundle of notes from the pocket, laid on a counter and slid across, the hand stays on it a beat, lets go, comes back |
-| `Act_WearCap_Once` | any (adult, scaled) | once | 70 | STAND | cap | a cap from the hip up onto the head |
+| `Act_WearCap_Once` | any (adult, scaled) | once | 76 | STAND | cap | a cap from the hip pocket onto the head, set from the side with the elbow high (the head tips away) |
 
 ## Trans
 
 | Clip | Body | Loop | Frames | Base | Needs | What |
 |---|---|---|---|---|---|---|
-| `Trans_ClimbWindow_Once` | any (adult, scaled) | once | 96 | STAND | window | climb through a low window and stand on the far side |
+| `Trans_ClimbWindow_Once` | any (adult, scaled) | once | 100 | STAND | window | climb through a low window (sill 0.55 m) and stand on the far side: foot planted on the sill, weight onto it |
 | `Trans_SitStand_Once` | any (adult, scaled) | once | 112 | STAND | seat | sit down on a seat behind and stand back up |
 
 ## React

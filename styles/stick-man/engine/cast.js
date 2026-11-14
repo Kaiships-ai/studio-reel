@@ -698,6 +698,8 @@ export function makeStick(spec) {
         } else {
           const t0 = U.tilt0 || [0, 0];
           qa.setFromAxisAngle(ax.set(0, 0, 1), -tilt + t0[1] * DEG); qb.setFromAxisAngle(ax.set(1, 0, 0), t0[0] * DEG); o.quaternion.copy(qa).multiply(qb);
+          const pw = (P['x_pitch' + side] || 0) * DEG;            // x_pitch<L|R> (deg, + tips the top forward): matches a nodding head (a cap set on it)
+          if (pw) o.quaternion.premultiply(qa.setFromAxisAngle(ax.set(1, 0, 0), pw));
           if (yw) o.quaternion.premultiply(qa.setFromAxisAngle(ax.set(0, 1, 0), yw));
         }
       }
@@ -927,7 +929,8 @@ export function makeStick(spec) {
     const propPen0 = pp ? pp.depth : 0;
     for (let it = 0; PHYS.on && pp && it < 6; it++) {
       for (const sd of pp.side === 'B' ? ['L', 'R'] : [pp.side]) {
-        const a = arms[sd], r = ik(a.sh, rig[sd].hand.clone().add(pp.push), LIMB.upper, a.pole, SOFT.arm, true);
+        // the elbow stays on the side the contact solve chose (its own direction as the pole): no jump when an overlap starts
+        const a = arms[sd], r = ik(a.sh, rig[sd].hand.clone().add(pp.push), LIMB.upper, rig[sd].elbow.clone().sub(a.sh), SOFT.arm, true);
         rig[sd].elbow = r.joint; rig[sd].hand = r.end; rig[sd].elbowFlex = r.flex;
       }
       held = handProps(Q, rig); pp = propOverlap(held, legSegs, vols);

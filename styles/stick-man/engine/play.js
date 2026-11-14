@@ -520,17 +520,18 @@ async function buildAct(R, X) {
       const on = v.z < 1 && Math.abs(v.x) < 1 && Math.abs(v.y) < 1;
       out.held.push({ actor: s.actor, prop: n, side: s.side, onScreen: on, gapPx: +(Math.max(0, d - HAND_R) * pxPerM(hp)).toFixed(2) });
     }
-    // hand props (cast.js x_hp<L|R|B>_<kind>, a bag, a phone): the gap from the hand dot to the prop's grip socket (one hand)
-    // or to the prop's box (held between both hands)
+    // hand props (cast.js x_hp<L|R|B>_<kind>, a bag, a phone): the gap from the hand to the prop's grip socket; a prop held
+    // between both hands (B) hangs its socket at the hands' midpoint, so each hand is measured as that midpoint to the socket
     for (const a of actors) {
       if (!a.S.root.visible) continue;
       for (const [id, o] of Object.entries(a.S.props)) {
         const side = id[0], g = o.userData.grip;
         if (!o.visible || side === 'H') continue;                 // worn on the head: no hand holds it
         for (const s of side === 'B' ? ['L', 'R'] : [side]) {
-          const hp = a.S.parts.hands[s].getWorldPosition(new THREE.Vector3());
+          const hp = side === 'B' ? a.S.parts.hands.L.getWorldPosition(new THREE.Vector3()).add(a.S.parts.hands.R.getWorldPosition(new THREE.Vector3())).multiplyScalar(0.5)
+            : a.S.parts.hands[s].getWorldPosition(new THREE.Vector3());
           let d;
-          if (side !== 'B' && g) d = o.localToWorld(new THREE.Vector3(...g)).distanceTo(hp);
+          if (g) d = o.localToWorld(new THREE.Vector3(...g)).distanceTo(hp);
           else { const bb = new THREE.Box3().setFromObject(o); d = bb.clampPoint(hp, new THREE.Vector3()).distanceTo(hp); }
           v.copy(hp).project(stage.camera);
           out.held.push({ actor: a.name, prop: id.slice(1), side: s, onScreen: v.z < 1 && Math.abs(v.x) < 1 && Math.abs(v.y) < 1, gapPx: +(Math.max(0, d - HAND_R) * pxPerM(hp)).toFixed(2) });

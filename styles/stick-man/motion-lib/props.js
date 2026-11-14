@@ -7,11 +7,13 @@
 // Sizes in metres, Blender up = +y here (three.js), the figure's forward = +z.
 import * as THREE from 'three';
 import { BUILD } from '../lib/cast/handprops.js';
-import { toon, lin } from '../engine/look.js';
+import { lin } from '../engine/look.js';
 
 const hullMat = new THREE.MeshBasicMaterial({ color: lin(0.05, 0.05, 0.07), side: THREE.BackSide });
+// an opaque matte surface (a toon ramp on a hand prop read as glass: the legs showed through the bag)
 const solid = (geo, col, ink = 0.012) => {
-  const m = new THREE.Mesh(geo, toon(col, { sheen: 0.1, rough: 0.8 })); m.castShadow = true; m.receiveShadow = true;
+  const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setRGB(...col, THREE.SRGBColorSpace), roughness: 0.85 }); mat.userData.noToon = true;
+  const m = new THREE.Mesh(geo, mat); m.castShadow = true; m.receiveShadow = true;
   const h = new THREE.Mesh(geo, hullMat); h.scale.setScalar(1 + ink / 0.2); m.add(h); return m;
 };
 const round = (w, h, d, r) => { const s = new THREE.Shape(), x = w / 2 - r, y = h / 2 - r;
@@ -43,10 +45,11 @@ BUILD.cash = () => {
   const band = new THREE.Mesh(new THREE.BoxGeometry(0.074, 0.032, 0.03), new THREE.MeshBasicMaterial({ color: lin(0.85, 0.80, 0.70) })); band.position.y = 0.015; g.add(band);
   g.userData = { mode: 'up', grip: [0, 0.03, 0], mass: 0.2 }; return g;
 };
-// the cap fits a head 0.30 m across (W = 0.6, head half width 0.5 W); cast.js scales it with the head on the head slot
+// a big cartoon cap, 0.46 m across over a head 0.30 m across (W = 0.6), so its rim stands out where a hand can hold it;
+// cast.js scales it with the head on the head slot
 BUILD.cap = () => {
   const g = new THREE.Group();
-  const dome = solid(new THREE.SphereGeometry(0.155, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), [0.78, 0.10, 0.08]); dome.scale.y = 0.62; g.add(dome);
-  const brim = solid(new THREE.CylinderGeometry(0.11, 0.11, 0.01, 20, 1, false, -Math.PI / 2, Math.PI), [0.70, 0.08, 0.07], 0.004); brim.position.set(0, 0.004, 0.12); brim.scale.z = 0.8; g.add(brim);
-  g.userData = { mode: 'up', grip: [0, 0.095, 0], mass: 0.1, soft: true }; return g;   // held by the crown; cloth: it gives way on the head (no contact push)
+  const dome = solid(new THREE.SphereGeometry(0.23, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), [0.78, 0.10, 0.08]); dome.scale.y = 0.62; g.add(dome);
+  const brim = solid(new THREE.CylinderGeometry(0.15, 0.15, 0.01, 20, 1, false, -Math.PI / 2, Math.PI), [0.70, 0.08, 0.07], 0.004); brim.position.set(0, 0.004, 0.18); brim.scale.z = 0.8; g.add(brim);
+  g.userData = { mode: 'up', grip: [0.31, -0.076, 0.043], mass: 0.1, soft: true }; return g;   // held under its right rim; cloth: no contact push
 };

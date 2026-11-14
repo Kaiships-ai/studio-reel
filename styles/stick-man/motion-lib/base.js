@@ -25,11 +25,12 @@ export const stand = (body = 'adult', x = 0) => merge(STAND, BODIES[body].postur
 // weight, so balance is off (`fall` is the rig's switch for a body supported by something other than its feet)
 export const sit = (body = 'adult', x = 0) => merge(STAND, BODIES[body].posture, { pos: [x, 0, 0], yaw: 90, bob: -0.56, fall: 1, spine: { bend: 4 },
   armL: { raise: 10, swing: 30, elbow: 40 }, armR: { raise: 10, swing: 30, elbow: 40 } }, feet(body, x + 0.40));
-// CARRY one heavy bag (25 kg) in the right fist: the arm held out so the bag clears the leg, the body leaning away
-// from it, the free arm out for balance
+// CARRY one heavy bag (25 kg) in the right fist: the bag arm straight and dragged down a little out from the leg so the
+// bag clears it, the whole body bent away from the load (the shoulders tip, the head counters), the knees soft, the
+// free arm out wide for balance
 export const CARRY_KG = 25;
-export const carry = (body = 'adult', x = 0) => merge(stand(body, x), { spine: { side: -7, bend: 4 }, neck: { tilt: 5 }, pelvis: { roll: 3 },
-  armR: { raise: 26, swing: 4, elbow: 14 }, armL: { raise: 38, swing: 6, elbow: 30 }, x_hpR_bag: 1, x_kgR: CARRY_KG });
+export const carry = (body = 'adult', x = 0) => merge(stand(body, x), { bob: -0.04, spine: { side: -12, bend: 8 }, neck: { tilt: 9, nod: -4 }, pelvis: { roll: 5 },
+  armR: { raise: 24, swing: 4, elbow: 8 }, armL: { raise: 58, swing: 10, elbow: 22 }, x_hpR_bag: 1, x_kgR: CARRY_KG });
 export const BASES = { STAND: stand, SIT: sit, CARRY: carry };
 
 // a key: the whole pose named (so every key stands alone), ease 'slow' unless given

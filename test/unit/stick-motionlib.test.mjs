@@ -115,3 +115,44 @@ test('K5: a carried load pulls the centre of mass toward it by its share of the 
   const want = (0.8 * 25 / 70) / (1 + 25 / 70);
   assert.ok(Math.abs(c1.x - want) < 0.02, `com x ${c1.x.toFixed(3)} vs ${want.toFixed(3)}`);
 });
+
+// ------------------------------------------------------------------ the same rules through the real rig (cast.js, headless)
+import { rigClip, rigStick, GRIP_CM, PROP_CM } from '../../styles/stick-man/tools/motionlib.mjs';
+
+test('rig: the bag clips keep both hands on the handle and the bag out of the body through cast.js, physics on', async () => {
+  for (const name of ['Act_LiftHeavy_Once', 'Act_DropInTrunk_Once', 'Act_PushThroughWindow_Once', 'Move_CarryHeavy_Walk_Loop', 'Move_CarryHeavy_Run_Loop', 'Act_WearCap_Once', 'Trans_ClimbWindow_Once']) {
+    const C = getClip(name), r = await rigClip(C);
+    assert.ok(r.grip <= GRIP_CM, `${name}: a gripping hand ${r.grip} cm off its target at ${r.gripAt}`);
+    assert.ok(r.prop <= PROP_CM, `${name}: a held prop ${r.prop} cm inside the body at ${r.propAt}`);
+  }
+});
+
+test('rig: a bag hung crosswise against the thigh is measured, and with physics on the hand moves it out', async () => {
+  const { S, PHYS } = await rigStick('adult'), was = PHYS.on;
+  const Q = { armR: { raise: 12, swing: 0, elbow: 6 }, x_hpR_bag: 1, x_kgR: 25, x_yawR: 90 };   // crosswise: it reaches the thigh
+  try {
+    PHYS.on = false; S.pose2(Q); const off = S.rigWorld();
+    PHYS.on = true; S.pose2(Q); const on = S.rigWorld();
+    assert.ok(off.propPenCm > PROP_CM, `physics off: the bag is ${off.propPenCm} cm in the leg`);
+    assert.ok(on.propPenCm0 > PROP_CM && on.propPenCm <= PROP_CM, `physics on: ${on.propPenCm0} cm before, ${on.propPenCm} after`);
+    assert.ok(on.R.grip && on.R.targetGapCm > 0, 'the hand that moved the bag out says how far it went');
+    assert.equal(on.carryKg, 25);
+  } finally { PHYS.on = was; }
+});
+
+test('rig: a hand keyed inside the head is reported off its target (targetGapCm), and a free hand is not a grip', async () => {
+  const { S } = await rigStick('adult');
+  S.pose2({ armR: { ik: [0.05, 2.45, 0.1], ikw: 1 } });
+  const w = S.rigWorld();
+  assert.ok(w.R.grip && w.R.targetGapCm > GRIP_CM, `gap ${w.R.targetGapCm}`);
+  assert.equal(w.L.grip, false);
+});
+
+test('rig: a 25 kg bag on the right pulls the centre of mass right; the cap on the head is a worn prop, not a load in a hand', async () => {
+  const { S } = await rigStick('adult');
+  S.pose2({ armR: { raise: 24, swing: 4, elbow: 8 } }); const c0 = S.com.x;
+  S.pose2({ armR: { raise: 24, swing: 4, elbow: 8 }, x_hpR_bag: 1, x_kgR: 25 }); const c1 = S.com.x;
+  assert.ok(c1 - c0 > 0.05, `com x ${c0.toFixed(3)} -> ${c1.toFixed(3)} (W)`);
+  S.pose2({ x_hpH_cap: 1 }); const w = S.rigWorld();
+  assert.ok(S.props.Hcap.visible && w.propPenCm === 0 && !w.R.grip);
+});
