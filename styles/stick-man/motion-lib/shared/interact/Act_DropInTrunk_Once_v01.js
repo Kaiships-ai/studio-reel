@@ -20,8 +20,8 @@ export default { name: 'Act_DropInTrunk_Once', clip: 'Act_DropInTrunk_Once', gro
   needs: { props: ['bag'], hands: 'both', marks: [{ kind: 'trunk', at: [0.30, 0, 0.68], floor: 0.50 }, { kind: 'bag', drop: true, cross: true, from: 36, at: [0.45, 0.03, 0.77], v: [0.4, 0], fall: 0.50 }] },
   keys: [
     K(0, merge(C1, { x_yawR: 0, armR: { ik: [0.40, 1.30, 0.50], ikw: 0 }, armL: { ik: [0.30, 1.30, 0.50], ikw: 0 } })),
-    K(6, merge(C1, { x_yawR: 45, armR: { ik: [0.58, 1.30, 0.42], ikw: 1, pole: PR }, armL: { ik: [0.30, 1.30, 0.50], ikw: 0 } })),          // the bag swung out ahead of the leg
-    K(12, merge(S0, BAG, hands(1.30, 0.52, 0.30), { spine: { side: -3, bend: 2 }, hip: { z: -0.08 } })),           // round to the front, the left fist joins
+    K(6, merge(C1, { x_yawR: 45, shrugR: -0.04, spine: { side: -9 }, armR: { ik: [0.58, 1.30, 0.42], ikw: 1, pole: PR }, armL: { ik: [0.30, 1.30, 0.50], ikw: 0, raise: 40, swing: 35, elbow: 30 } })),          // the bag swung out ahead of the leg
+    K(12, merge(S0, BAG, hands(1.30, 0.52, 0.22), { spine: { side: -3, bend: 2 }, hip: { z: -0.08 } })),           // round to the front, the left fist joins
     K(20, merge(S0, BAG, hands(1.15, 0.48), { bob: -0.16, hip: { z: -0.12 }, spine: { bend: 8 }, neck: { nod: 8 } })),   // the dip
     K(30, merge(S0, BAG, FK, hands(1.78, 0.74), { bob: 0.02, hip: { z: -0.12 }, spine: { bend: 20 }, neck: { nod: -10 } }), { t: 10 }),   // the heave over the lip
     K(32, merge(S0, BAG, FK, hands(1.80, 0.75), { bob: 0.02, hip: { z: -0.12 }, spine: { bend: 21 }, neck: { nod: -6 } })),

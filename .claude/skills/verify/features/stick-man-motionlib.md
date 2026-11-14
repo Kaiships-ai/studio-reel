@@ -17,7 +17,9 @@ before, except where an old one had a hand forced off a target (now kept when re
 - Rig K5: hand props collide with legs, trunk and head (the holding arm moves, `propPenCm0/propPenCm`), their mass
   (`x_kg<side>` or the prop's `userData.mass`) is in the centre of mass (`carryKg`); `x_yaw<side>` turns an upright prop;
   `x_pitch<side>` tips it; `x_hpH_<kind>` wears a prop on the head; a prop with `userData.soft` (the cap) has no contact push.
-  The arm re-solve after a prop push keeps the elbow on its side. Hand props are in `__dbg` `held`, so `shot.mjs --report` (d) measures them (a two-hand prop from the hands' midpoint
+  The arm re-solve after a prop push keeps the elbow on its side. `shrugL` / `shrugR` drop one shoulder (motion v2).
+- Legs draw a deep knee as an angle: `cast.js` `hose(..., fold)` fades the bend roundness from 60 to 120 deg of flex
+  (a knee in a climb or a squat no longer loops); walks (under ~65 deg) are unchanged. Hand props are in `__dbg` `held`, so `shot.mjs --report` (d) measures them (a two-hand prop from the hands' midpoint
   to its grip socket).
 - `shot.mjs --report` lines (h) hand off its target while gripping (FAIL > 2 cm) and (i) held prop inside the body
   (FAIL > 1 cm after the solve).

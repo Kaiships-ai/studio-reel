@@ -17,7 +17,8 @@ export default { name: 'Act_PushThroughWindow_Once', clip: 'Act_PushThroughWindo
   needs: { props: ['bag'], hands: 'both', marks: [{ kind: 'window', at: [0.30, 0, 0.85], top: 1.60, depth: 0.15, width: 0.8 }, { kind: 'bag', drop: true, from: 39, at: [0.49, 0.06, 0.88], v: [0.9, 0], fall: 0 }] },
   keys: [
     K(0, merge(C1, { armR: { ik: [0.40, 1.30, 0.55], ikw: 0 }, armL: { ik: [0.30, 1.30, 0.55], ikw: 0 } })),
-    K(12, merge(S0, BAG, FK, hands(1.30, 0.55, 0.24), { spine: { side: -3, bend: 2 }, hip: { z: -0.08 } })),
+    K(6, merge(C1, { shrugR: -0.04, spine: { side: -9 }, armR: { ik: [0.40, 1.30, 0.55], ikw: 0 }, armL: { ik: [0.30, 1.30, 0.55], ikw: 0, raise: 40, swing: 35, elbow: 30 } })),   // the free arm comes in
+    K(12, merge(S0, BAG, FK, hands(1.30, 0.55, ), { spine: { side: -3, bend: 2 }, hip: { z: -0.08 } })),
     K(20, merge(S0, BAG, FK, hands(1.28, 0.60), { bob: -0.12, hip: { z: -0.12 }, spine: { bend: 6 }, neck: { nod: -6 } })),       // the dip
     K(30, merge(S0, BAG, FK, hands(1.98, 0.60), { bob: 0.02, hip: { z: -0.08 }, spine: { bend: -2 }, neck: { nod: -16 } }), { t: 10 }),   // up to the sill
     // the bag's front end is on the sill now: the sill takes most of its weight, the arms only shove (x_kgR: what the hands carry)

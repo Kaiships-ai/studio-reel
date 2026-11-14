@@ -20,7 +20,7 @@ export function merge(a, ...bs) {
 const fy = body => FY * (BODIES[body].spec.scale ?? 1) * BODIES[body].stance;
 const feet = (body, x, xl = x, xr = x) => ({ legL: { footW: [xl, -fy(body), 0], pitch: 0 }, legR: { footW: [xr, fy(body), 0], pitch: 0 } });
 // STAND for a body at x (clip space)
-export const stand = (body = 'adult', x = 0) => merge(STAND, BODIES[body].posture, { pos: [x, 0, 0], yaw: 90 }, feet(body, x));
+export const stand = (body = 'adult', x = 0) => merge(STAND, BODIES[body].posture, { pos: [x, 0, 0], yaw: 90, shrugL: 0, shrugR: 0 }, feet(body, x));
 // SIT on a knee-high seat (0.45 m) whose front edge is at x: the feet forward, the pelvis on the seat; the seat carries the
 // weight, so balance is off (`fall` is the rig's switch for a body supported by something other than its feet)
 export const sit = (body = 'adult', x = 0) => merge(STAND, BODIES[body].posture, { pos: [x, 0, 0], yaw: 90, bob: -0.56, fall: 1, spine: { bend: 4 },
@@ -29,8 +29,8 @@ export const sit = (body = 'adult', x = 0) => merge(STAND, BODIES[body].posture,
 // bag clears it, the whole body bent away from the load (the shoulders tip, the head counters), the knees soft, the
 // free arm out wide for balance
 export const CARRY_KG = 25;
-export const carry = (body = 'adult', x = 0) => merge(stand(body, x), { bob: -0.04, spine: { side: -12, bend: 8 }, neck: { tilt: 9, nod: -4 }, pelvis: { roll: 5 },
-  armR: { raise: 24, swing: 4, elbow: 8 }, armL: { raise: 58, swing: 10, elbow: 22 }, x_hpR_bag: 1, x_kgR: CARRY_KG });
+export const carry = (body = 'adult', x = 0) => merge(stand(body, x), { bob: -0.06, shrugR: -0.08, spine: { side: -17, bend: 10 }, neck: { tilt: 13, nod: -4 }, pelvis: { roll: 7 },
+  armR: { raise: 26, swing: 4, elbow: 6 }, armL: { raise: 72, swing: 10, elbow: 18 }, x_hpR_bag: 1, x_kgR: CARRY_KG });
 export const BASES = { STAND: stand, SIT: sit, CARRY: carry };
 
 // a key: the whole pose named (so every key stands alone), ease 'slow' unless given

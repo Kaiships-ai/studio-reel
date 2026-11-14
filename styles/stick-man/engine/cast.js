@@ -434,7 +434,12 @@ function ik(root, end, l, pole, soft, arm = false) {
 }
 // One smooth tube through root, joint and end: two quadratic arcs sharing the chord direction as tangent at the joint,
 // resampled to n points evenly by arc length (W units in, metres out).
-function hose(a, k, e, round, n) {
+// fold (legs): past 60 deg of flex the roundness fades to a near-sharp joint by 120 deg. The control points lie along the
+// root-to-end line, which a deep fold makes short and crosswise to both bones: a round bend there balloons into a loop
+// (a knee in a climb or a squat drawn as a rubber hose), so a deep knee is drawn as an angle
+function hose(a, k, e, round, n, fold = false) {
+  if (fold) { const u = k.clone().sub(a).normalize(), v = e.clone().sub(k).normalize(), fl = Math.acos(Math.max(-1, Math.min(1, u.dot(v)))) / DEG;
+    round *= 1 - 0.85 * Math.max(0, Math.min(1, (fl - 60) / 60)); }
   const t = e.clone().sub(a).normalize(), l1 = a.distanceTo(k), l2 = k.distanceTo(e);
   const c1 = k.clone().addScaledVector(t, -round * l1), c2 = k.clone().addScaledVector(t, round * l2), dense = [];
   const q = (p0, c, p1, s) => new THREE.Vector3().copy(p0).multiplyScalar((1 - s) ** 2).addScaledVector(c, 2 * (1 - s) * s).addScaledVector(p1, s * s);
@@ -768,7 +773,7 @@ export function makeStick(spec) {
       const f0 = P['foot' + side] || [sg * 0.22, 0.022], foot = V(f0);
       const kp = P['kneeDir' + side] || P.kneeDir || [sg * 0.15, 0, 1];
       const leg = ik(hip, foot, LIMB.thigh, V(kp), SOFT.leg);
-      const lp = hose(hip, leg.joint, foot, ROUND.leg, 13);
+      const lp = hose(hip, leg.joint, foot, ROUND.leg, 13, true);
       const td = P['toe' + side] ?? sg, h = new THREE.Vector3(0.10 * td, 0, P.toeF ?? 0.07).normalize(), pt = (P['footPitch' + side] || 0) * DEG;
       h.applyAxisAngle(new THREE.Vector3(0, 1, 0), (P['footYaw' + side] ?? P.footYaw ?? 0) * DEG);   // + turns the toe toward the figure's right
       const toeL = foot.clone().addScaledVector(h, LIMB.stub * Math.cos(pt)); toeL.y += LIMB.stub * Math.sin(pt) - 0.004;
@@ -836,7 +841,8 @@ export function makeStick(spec) {
     // a hand is on a target when an ik weight holds it there or it carries a hand prop (x_hp<side|B>_<kind>)
     const holds = side => Object.keys(Q).some(n => { const m = /^x_hp([LRB])_/.exec(n); return m && (m[1] === side || m[1] === 'B') && Q[n] > 0.5; });
     for (const [side, sg] of [['L', -1], ['R', 1]]) {
-      const shB = new THREE.Vector3(sg * TORSO.w * 0.40 * girth, shY, 0); bendPt(B, shB);
+      // shrugL / shrugR (W, - = dropped): one shoulder pulled down by a load in that hand while the trunk leans away
+      const shB = new THREE.Vector3(sg * TORSO.w * 0.40 * girth, shY + (Q['shrug' + side] || 0), 0); bendPt(B, shB);
       const lim = limitArm(Q['arm' + side] || {}), sh = toRoot(shB), A = lim.A;
       // FK from the shoulder; with an ik target the hand goes there instead, blended by ikw (0 = FK, 1 = on the target),
       // the elbow still folding the FK way
@@ -906,7 +912,7 @@ export function makeStick(spec) {
     }
     for (const [side, sg] of [['L', -1], ['R', 1]]) {
       const { hipJ, foot, leg, ptc, toeO, heelO, ankleLift, legPen0, legPen } = legs[side];
-      const lp = hose(hipJ, leg.joint, foot, ROUND.leg, 13);
+      const lp = hose(hipJ, leg.joint, foot, ROUND.leg, 13, true);
       const toeL = foot.clone().add(toeO), heelL = foot.clone().add(heelO);
       const toe = toeL.clone().multiplyScalar(W);
       for (let i = 1; i <= 5; i++) lp.push(lp[12].clone().lerp(toe, i / 5));

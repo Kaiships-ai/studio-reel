@@ -157,7 +157,8 @@ anim: { gran: [{ f: 0, clip: 'Idle_Breath_Loop', body: 'elder', times: 2 }, { f:
 
 Clips plant feet with `footW` (metres): a later hand key that moves the feet uses `footW` too (`motion-lib/base.js`
 `stand(body, x)`). Carried props: `x_hp<L|R|B>_<kind>` in a hand, `x_hpH_<kind>` worn on the head, `x_kg<side>` the load
-in kg (it enters the centre of mass), `x_yaw<side>` turns an upright prop about the vertical, `x_pitch<side>` tips it.
+in kg (it enters the centre of mass), `x_yaw<side>` turns an upright prop about the vertical, `x_pitch<side>` tips it; `shrugL` / `shrugR`
+(W, negative = dropped) pulls one shoulder down under a load.
 
 ## Hand-directed cameras (`direct`)
 
