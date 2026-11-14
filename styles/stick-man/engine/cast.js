@@ -395,7 +395,9 @@ export const LIMB = { thigh: 0.679, shin: 0.679, upper: 0.5125, fore: 0.5125, st
 // the foot (W): a heel behind the ankle as well as the toe in front, so the body has something to stand on (rig B2; a
 // 4 cm toe stub with no heel put a standing body's centre of mass behind its feet). FOOT_R: the drawn line's radius,
 // the height of the sole under a foot point
-export const FOOT = { heel: 0.08 };
+// out: the toe turned out from straight ahead (deg). A person's feet point forward with a few degrees of toe-out (gait
+// studies: ~5-10); 55 deg (the first design) splayed them like a duck's (Kai 2026-11-14: "bàn chân bè bè ra")
+export const FOOT = { heel: 0.08, out: 8 };
 const FOOT_R = 0.022;
 // SOFT (the share of full reach above which a joint eases toward straight) and legReach live in body.js, so the
 // motion library can build hips from legs without the renderer
@@ -852,7 +854,7 @@ export function makeStick(spec) {
       arms[side] = { sh, pole: A.pole ? V(A.pole) : k.pole, want, grip };
       const hipJ = toRoot(new THREE.Vector3(sg * 0.14 * girth, 0.04, 0)), G = Q['leg' + side] || {};
       const foot0 = V(G.foot || [sg * 0.22, 0.022, 0]), kp = V(G.knee || [sg * 0.15, 0, 1]);
-      const hdir = new THREE.Vector3(0.10 * sg, 0, 0.07).normalize().applyAxisAngle(_Y, (G.yaw || 0) * DEG), gnd = Q.ground || 0;
+      const hdir = new THREE.Vector3(Math.sin(FOOT.out * DEG) * sg, 0, Math.cos(FOOT.out * DEG)).applyAxisAngle(_Y, (G.yaw || 0) * DEG), gnd = Q.ground || 0;
       // heel and toe turn about the ankle with the foot's pitch; no part of the sole goes under the ground (a toes-down
       // foot stands on its toes, so the ankle rises). Past the ankle's range the heel lifts instead (second pass).
       let ptc = (G.pitch || 0) * DEG, foot, toeO, heelO, leg, ankleLift = 0;
