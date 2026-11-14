@@ -28,7 +28,9 @@ const xs = placed.keys.map(k => k.pos?.[0] ?? 0), x0 = Math.min(0, ...xs), x1 = 
 // the load is in front of the legs, never read through them; a clip at a wall (a window) is seen side-on from beyond
 // a clip at a wall (a window) is seen the same way: the proof set's wall is see-through
 const window_ = (C.needs.marks || []).some(m => m.kind === 'window'), right = (C.needs.props || []).includes('bag') || window_ ? 1 : -1;
-const cam = x => ({ pos: [x + 1.6 * k, right * 3.0 * k, 1.1 * k], aim: [x + 0.15, 0, 0.8 * k], lens: 40 });
+// a run outpaces the camera's eased move through its middle (its start and stop are slow), so the camera stands further back
+const far = C.advance && /Run/.test(CLIP) ? 1.4 : 1;
+const cam = x => ({ pos: [x + 1.6 * k * far, right * 3.0 * k * far, 1.1 * k], aim: [x + 0.15, 0, 0.8 * k], lens: 40 });
 const direct = [{ at: { f: 0 }, intent: 'ws', why: 'P1 · motion library proof', cut: 'cut', cam: cam(x0),
   ...(x1 - x0 > 0.4 ? { to: cam(x1), move: { from: { f: F0 }, dur: Math.max(10, last - F0), ease: 'inout' } } : {}) }];
 
