@@ -41,7 +41,7 @@ const INSIDE_MAT = mat(GREY.map(c => c * 0.5));   // the garment's inside at the
 const INK_MAT = new THREE.MeshBasicMaterial({ color: 0x0b0b0c });
 const INK_BACK = new THREE.MeshBasicMaterial({ color: 0x0b0b0c, side: THREE.BackSide });
 const CORD_MAT = mat(CORD_RGB);
-const RIM_K = 1.0, LINE_R = 0.0042, CORD_R = 0.0062, CORD_INK = 0.0042, CORD_N = 10;
+const RIM_K = 1.0, RIM_OVER = 0.007, LINE_R = 0.0042, CORD_R = 0.0062, CORD_INK = 0.0042, CORD_N = 10;   // RIM_OVER: the rim's second pass drawn this much fatter (m), over the lip beside it
 const ONE = new THREE.Vector3(1, 1, 1);
 
 // ---------------------------------------------------------------- the garment: the study's body profile
@@ -148,7 +148,7 @@ const HOOD_C = new THREE.Vector3(0, HEAD_Y, 0);
 function hoodGeos() {
   const g = PIECES.hood.geometry.clone(); roundLip(g); g.computeVertexNormals();
   const P = g.attributes.position, N = g.attributes.normal, col = new Float32Array(P.count * 3), out = new Uint8Array(P.count), u = new THREE.Vector3(), n = new THREE.Vector3();
-  for (let i = 0; i < P.count; i++) { u.set(P.getX(i), P.getY(i), P.getZ(i)).sub(HOOD_C); n.set(N.getX(i), N.getY(i), N.getZ(i)); out[i] = u.dot(n) > 0 ? 1 : 0; const v = out[i] ? 1 : LIP_TONE; col.set([v, v, v], 3 * i); }
+  for (let i = 0; i < P.count; i++) { u.set(P.getX(i), P.getY(i), P.getZ(i)).sub(HOOD_C); n.set(N.getX(i), N.getY(i), N.getZ(i)); out[i] = hoodOut()[i]; const v = out[i] ? 1 : LIP_TONE; col.set([v, v, v], 3 * i); }
   g.setAttribute('color', new THREE.BufferAttribute(col, 3));
   smoothNormals(g, out, 32);
   broadNormals(g, out);
@@ -182,9 +182,12 @@ function smoothNormals(g, out, iters) {
   for (let i = 0; i < n; i++) N.setXYZ(i, A[3 * id[i]], A[3 * id[i] + 1], A[3 * id[i] + 2]);
 }
 // the hood's lip along the face rim, rounded: the drape left the shell's edge flared ~1 cm out past the rim tube at the brow,
-// which drew a sharp point (a notch) in the outline where the brim meets the rim. Umbrella smoothing of the shell's
+// which drew a sharp point (a notch) in the outline where the brim meets the rim. Umbrella smoothing of the shell's outer
 // positions within LIP_D of the rim (welded by position, full strength at the rim, none from LIP_D out) rounds it off.
+// The skirt (below SKIRT_Y) is smoothed the same way: its gathers caught the screen-space AO as a smeared grey band at
+// the nape and drew fold marks on the shoulders from the side.
 const LIP_Y = [1.56, 1.62], LIP_D = 0.045, LIP_IT = 10;
+const SKIRT_Y = [1.44, 1.26], SKIRT_IT = 60;
 function roundLip(g) {
   const P = g.attributes.position, n = P.count, key = new Map(), id = new Int32Array(n);
   for (let i = 0; i < n; i++) { const k = `${Math.round(P.getX(i) * 2e4)},${Math.round(P.getY(i) * 2e4)},${Math.round(P.getZ(i) * 2e4)}`; let v = key.get(k); if (v == null) { v = key.size; key.set(k, v); } id[i] = v; }
@@ -196,25 +199,26 @@ function roundLip(g) {
   for (let j = 0; j < R.count; j += 2) { const k = `${Math.floor(R.getX(j) / cell)},${Math.floor(R.getY(j) / cell)},${Math.floor(R.getZ(j) / cell)}`; (grid.get(k) || grid.set(k, []).get(k)).push(j); }
   for (let v = 0; v < m; v++) { const x = X[3 * v], y = X[3 * v + 1], z = X[3 * v + 2]; let d = Infinity;
     for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) for (let c = -1; c <= 1; c++) for (const j of grid.get(`${Math.floor(x / cell) + a},${Math.floor(y / cell) + b},${Math.floor(z / cell) + c}`) || []) d = Math.min(d, Math.hypot(R.getX(j) - x, R.getY(j) - y, R.getZ(j) - z));
-    w[v] = inner[v] ? 0 : 0.5 * (1 - sstep(0.012, LIP_D, d)) * sstep(LIP_Y[0], LIP_Y[1], y); }
-  for (let it = 0; it < LIP_IT; it++) { const Y = X.slice();
+    w[v] = inner[v] ? 0 : 0.5 * Math.max((1 - sstep(0.012, LIP_D, d)) * sstep(LIP_Y[0], LIP_Y[1], y), sstep(SKIRT_Y[0], SKIRT_Y[1], y) * sstep(0.02, 0.06, d)); }
+  for (let it = 0; it < Math.max(LIP_IT, SKIRT_IT); it++) { const Y = X.slice();
     for (let v = 0; v < m; v++) { if (!w[v] || !nb[v].size) continue; let sx = 0, sy = 0, sz = 0; for (const u of nb[v]) { sx += X[3 * u]; sy += X[3 * u + 1]; sz += X[3 * u + 2]; } const k = nb[v].size;
       Y[3 * v] += w[v] * (sx / k - X[3 * v]); Y[3 * v + 1] += w[v] * (sy / k - X[3 * v + 1]); Y[3 * v + 2] += w[v] * (sz / k - X[3 * v + 2]); }
     X.set(Y); }
   for (let i = 0; i < n; i++) P.setXYZ(i, X[3 * id[i]], X[3 * id[i] + 1], X[3 * id[i] + 2]);
 }
 // the hood's outer shading normals, blended toward a broad form (BROAD of the way): out from the head centre round the head,
-// out from the body's axis where the skirt lies on the shoulders and the back. The drape's gathers and the skirt's folds
+// out from the body's axis where the skirt lies on the shoulders and the back (blended over BR_Y: a narrow blend bent the
+// terminator into a step on the back of the hood). The drape's gathers and the skirt's folds
 // otherwise put a smeared second terminator on the skirt under the back of the hood (a grey patch at the nape); the cops'
 // uniform has one clean terminator per form
-const BROAD = 1.0;
+const BROAD = 1.0, BR_Y = [1.58, 1.12];
 function broadNormals(g, out) {
   const P = g.attributes.position, N = g.attributes.normal, h = new THREE.Vector3(), b = new THREE.Vector3(), n = new THREE.Vector3();
   for (let i = 0; i < P.count; i++) { if (!out[i]) continue; const x = P.getX(i), y = P.getY(i), z = P.getZ(i);
     h.set(x / (HA_M * HA_M), (y - HEAD_Y) / (HB_M * HB_M), z / (HA_M * HA_M)).normalize();
     const yy = Math.min(y, SH_TOP - 0.02), dr = (shellR(yy + 0.005) - shellR(yy - 0.005)) / 0.01;
     b.set(x, -dr * Math.hypot(x, z / DEPTH), z / (DEPTH * DEPTH)).normalize();
-    h.lerp(b, sstep(1.36, 1.18, y)).normalize();
+    h.lerp(b, sstep(BR_Y[0], BR_Y[1], y)).normalize();
     n.set(N.getX(i), N.getY(i), N.getZ(i)).lerp(h, BROAD).normalize(); N.setXYZ(i, n.x, n.y, n.z); }
 }
 // the hood's lower edge where it lies on the shoulders and the back (from one end of the face rim round the back to the
@@ -363,18 +367,21 @@ const restOf = m => [m, ...m.children.filter(c => c.isMesh && !c.userData.over)]
 //          throat, where the cords hang. The face opening turns with the face: the face stays framed through a 90 deg turn
 //          (a crescent of the hood's inside showed at TW 0.4-0.9) and the stretch p99 stays under 15 %
 //   shift  the head centre's shift, 10 % at the skirt (it slides on the shoulders) to 100 % from the ears up
-//   swing  KS of the head's swing about its centre, from the jaw up. The head is near round, so the rest of the swing turns it
-//          inside the hood without cutting into it; what does is pushed out (below)
+//   swing  KS of the head's swing about its centre, from the jaw up, and more toward the face opening (nodW: all of it at the
+//          brim, fading round the crown to the back): a nod carries the opening with the face. The extra follows the nod's
+//          angle up to ~NOD_SAT (tanh), past that the head turns inside the hood (a full follow of the dosed 45 deg nod
+//          stretches the back of the hood 25 %); what cuts into the hood is pushed out (below)
 // The skirt is kept on the jersey and the hood off the head by a push-out (continuous in position: no ripples).
 const Y_LO = 1.095, Y_HI = 1.40, TW_TOP = 1.0, TW_BOT = 0.75, TW_Y0 = 1.095, TW_THROAT = 0.3, KS = 0.25;
 const wShift = y => 0.1 + 0.9 * sstep(1.10, 1.40, y);
-const wRot = y => KS * sstep(1.10, 1.40, y);
+const wRot = y => KS * sstep(1.10, 1.40, y), NOD_SAT = 26 * DEG, NOD_Y = [1.15, 1.35], NOD_DIR = 40 * DEG, NOD_EPS = 0.15;
 const TWIST = (() => { const P = PIECES.hood.geometry.attributes.position, n = 80, dy = (Y_HI - TW_Y0) / n, r = new Float64Array(n).fill(0.05);
   for (let i = 0; i < P.count; i++) { const b = Math.floor((P.getY(i) - TW_Y0) / dy); if (b >= 0 && b < n) r[b] = Math.max(r[b], Math.hypot(P.getX(i), P.getZ(i))); }
   const c = new Float64Array(n + 1); for (let b = 0; b < n; b++) c[b + 1] = c[b] + dy / r[b];
   return { dy, c: c.map(v => TW_BOT + (TW_TOP - TW_BOT) * v / c[n]), n }; })();
 const wTwist = y => { const u = (y - TW_Y0) / TWIST.dy; if (u <= 0) return TW_BOT; if (u >= TWIST.n) return TW_TOP; const b = Math.floor(u); return TWIST.c[b] + (TWIST.c[b + 1] - TWIST.c[b]) * (u - b); };
 const wLag = y => sstep(1.20, 1.72, y);
+function nodW(y, z) { const dy = y - HEAD_Y, c = (dy * Math.sin(NOD_DIR) + z * Math.cos(NOD_DIR)) / Math.sqrt(dy * dy + z * z + NOD_EPS * NOD_EPS); return Math.max(0, Math.min(1, 0.5 + 0.5 * c)) * sstep(NOD_Y[0], NOD_Y[1], y); }
 // the follow-through spring (the back peak of the hood) and its soft clamp
 const PEAK = new THREE.Vector3(0, 1.62, -0.30), SPR_F = 3.5, SPR_Z = 0.6, SPR_GAIN = 0.55, LAG_MAX = 7 * DEG, SUB = 8, PRE = 40;
 const HEAD_GAP = 0.006, JERSEY_GAP = 0.003, ARM_R = 0.0138 + 0.010;   // the arm's ink tube radius plus a gap
@@ -419,7 +426,9 @@ export function hoodie(S, { down = false } = {}) {
   // under the hood's brim is covered by it instead of being painted on the fabric
   const overMat = (m => { m.vertexColors = true; m.transparent = true; m.depthWrite = false; m.depthFunc = THREE.EqualDepth; return m; })(mat(GREY));
   const over = (g, m) => { const o = new THREE.Mesh(g, m); o.renderOrder = 3; o.frustumCulled = false; o.userData.noInk = true; o.userData.noPrepass = true; o.userData.over = true; return o; };
-  hood.add(over(H.g, overMat)); rim.add(over(H.rim, (m => { m.transparent = true; m.depthWrite = false; m.depthFunc = THREE.LessEqualDepth; m.polygonOffset = true; m.polygonOffsetFactor = -6; m.polygonOffsetUnits = -120; return m; })(INK_MAT.clone()))); rim.children[rim.children.length - 1].renderOrder = 4;   // the rim's pass after the hood's
+  hood.add(over(H.g, overMat)); rim.add(over(H.rim, (m => { m.transparent = true; m.depthWrite = false; m.depthFunc = THREE.LessEqualDepth; m.polygonOffset = true; m.polygonOffsetFactor = -6; m.polygonOffsetUnits = -120;
+    m.onBeforeCompile = sh => { sh.vertexShader = sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>\ntransformed += normalize(normal) * ${RIM_OVER.toFixed(4)};`); }; m.customProgramCacheKey = () => 'hoodie-rim-over';
+    return m; })(INK_MAT.clone()))); rim.children[rim.children.length - 1].renderOrder = 4;   // the rim's pass after the hood's
   const creaseRest = down ? null : CREASE, crease = down ? null : new Strand(creaseRest.length, LINE_R * 1.45, 6, INK_MAT, false);
   if (crease) G.add(crease.mesh);
   if (!down) head.add(cowl());
@@ -464,12 +473,13 @@ export function hoodie(S, { down = false } = {}) {
     // the upper arms (shoulder to elbow) in the chest frame
     const Mci = Mc.clone().invert(), arms = [];
     for (const sd of ['L', 'R']) { const r = S.rig?.[sd]; if (r?.shoulder && r?.elbow) arms.push([r.shoulder.clone().multiplyScalar(W).applyMatrix4(Mci), r.elbow.clone().multiplyScalar(W).applyMatrix4(Mci)]); }
-    return { B, qb, bp, Mc, Mh, q, s, d, Sw, Tw, p0, c0, dc, C, Qi: q.clone().invert(), arms };
+    const aS = 2 * Math.acos(Math.min(1, Math.abs(Sw.w))), gNod = aS > 1e-4 ? NOD_SAT * Math.tanh(aS / NOD_SAT) / aS : 1;
+    return { B, qb, bp, Mc, Mh, q, s, d, Sw, Tw, p0, c0, dc, C, Qi: q.clone().invert(), arms, gNod };
   }
   // one rest point of the hood -> chest-relative posed: twist, scale, swing about the head centre, shift, then the lag
   const _qs = new THREE.Quaternion(), _qt = new THREE.Quaternion(), _I = new THREE.Quaternion(), _l = new THREE.Vector3();
   function skin(F, x, y, z, lag, out, nIn, nOut) {
-    const wt = wTwist(y) - TW_THROAT * sstep(1.22, 0.35, Math.abs(Math.atan2(x, z))) * sstep(1.34, 1.15, y), wr = wRot(y), ws = wShift(y), wl = wLag(y);
+    const wt = wTwist(y) - TW_THROAT * sstep(1.22, 0.35, Math.abs(Math.atan2(x, z))) * sstep(1.34, 1.15, y), wr = wRot(y) + (1 - wRot(y)) * F.gNod * nodW(y, z), ws = wShift(y), wl = wLag(y);
     _qt.slerpQuaternions(_I, F.Tw, wt); _qs.slerpQuaternions(_I, F.Sw, wr); _q.copy(_qs).multiply(_qt);
     const sx = 1 + (F.s.x - 1) * ws, sy = 1 + (F.s.y - 1) * ws, sz = 1 + (F.s.z - 1) * ws;
     out.set(x * sx, (y - F.c0.y) * sy, z * sz).applyQuaternion(_q).add(F.c0).addScaledVector(F.dc, ws);
