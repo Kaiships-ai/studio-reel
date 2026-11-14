@@ -253,6 +253,12 @@ land) is what [1.1b], [1.1d] and [1.1e] are for.
   understood. v4.2 kept v4's plain numbers and v4.1's causes, and won 5 of 6. → [1.1g]: never ship a rewrite on the
   writer's word.
 - **The script was never reviewed.** v2 had an independent review; v4 had none, and the structure changed in between. → ◇S.
+- **Two rewrites lost the blind A/B to the old script** (v6 and v7 lost to v4). After one loss, merge: keep the winner and port
+  only the loser's proven fixes (v8 = v4 + 5 fixes won). → [1.1g].
+- **The real take had no climax pause.** The scratch voice carried a 2.4 s silence for the bullet shot; the TTS take did not,
+  and every bullet-cam cut collided. → mark planned pauses in `vo/script.json` and insert them in `vo/vo.wav` before `align.py`.
+- **Numbers read as digits.** Whisper wrote "238", "$9,000"; 28 words were estimated and ◇2a failed V2. → fill the
+  script's `say` map (digits → the words the script uses) before `align.py`.
 
 ## 9. Example (survival prompt)
 

@@ -127,6 +127,10 @@ A later stage's problem is fixed in the stage that caused it. Never jump ahead i
 | Judged evidence is never written by the maker | the maker skipped the steps it was meant to prove |
 | A vague note gets one question back ("which shot?"); then DIAGNOSE.md turns it into a cause and a stage | "chưa tới" can't be fixed, a named cause can |
 | Blender is the asset workshop (export `.glb`); a new set, prop, fx or verb goes in the kit with its rule, never for one film's taste | the next film reuses it |
+| A costume is a closed, smooth shell on the engine body, moved only by the engine's physics (one rig). A look Kai approved in Blender is ported 1:1: a match sheet (Blender vs engine, 4 angles), a full-resolution close-up and every frame of a head turn, as clean as the cops' uniform, before any re-render | the Hot Money hoodie took 7 rounds: an imported thin cloth inked with the hull, AO bakes and size/colour patched by numbers |
+| Every on-screen counter (clock, bags, meter) follows the story math and changes on the word that causes it; a jump shows its cause in the same shot | the clock jumped 2:14 → 1:00 with no police on screen |
+| A 2D card's zoom or kick keeps every word inside the text-safe box on every frame | snap-zooms cropped "SOME BILLS ARE BAIT" |
+| The visual-intensity line measures grey panels only (size, lens, angle, move, cut length) on a contrast scale; it never has to touch the story line. Explain that to Kai, don't chase it; the whole feel (voice, picture, sound, cutting) is measured by a dial test on a cut with sound | Kai asked why the blue line sat far below his curve |
 
 ## Files
 
