@@ -515,13 +515,13 @@ export function reachAssist(P) {
 // The body curves progressively from the hip (y = 0, body space, W) to the top of the torso: `bend` (forward) and `side`
 // (toward the figure's +x) in degrees in total, `twist` about the spine by the top; `sq` squashes (-) or stretches (+) it
 // about the hip, volume kept (x and z scale by 1 / sqrt of the y scale). Points above the top go on straight.
-const SPINE_L = TORSO.cy + TORSO.h / 2 - HIP_V, TORSO_Y0 = TORSO.cy - TORSO.h / 2 - HIP_V;
-function spineParams(sp = {}, sq = 0) {
+export const SPINE_L = TORSO.cy + TORSO.h / 2 - HIP_V, TORSO_Y0 = TORSO.cy - TORSO.h / 2 - HIP_V;
+export function spineParams(sp = {}, sq = 0) {
   const f = (sp.bend || 0) * DEG, sd = (sp.side || 0) * DEG;
   return { th: Math.hypot(f, sd), phi: Math.atan2(sd, f), tw: (sp.twist || 0) * DEG, s: Math.max(0.4, 1 + sq) };
 }
 // bend one point (and optionally its normal) in place; returns the frame angle at its height
-function bendPt(B, v, n) {
+export function bendPt(B, v, n) {
   const k = 1 / Math.sqrt(B.s); let x = v.x * k, y = v.y * B.s, z = v.z * k;
   const L = SPINE_L * B.s, u = Math.max(0, Math.min(1, y / L)), t = B.tw * u, ct = Math.cos(t), st = Math.sin(t);
   [x, z] = [x * ct + z * st, -x * st + z * ct];
@@ -547,7 +547,7 @@ function bendPt(B, v, n) {
 }
 // the spine frame at height y (body space, W): where it is and how it is turned
 const _Y = new THREE.Vector3(0, 1, 0), _X = new THREE.Vector3(1, 0, 0);
-function spineFrame(B, y) {
+export function spineFrame(B, y) {
   const p = new THREE.Vector3(0, y, 0), a = bendPt(B, p), u = Math.max(0, Math.min(1, y / SPINE_L));
   const q = new THREE.Quaternion().setFromAxisAngle(_Y, B.phi).multiply(new THREE.Quaternion().setFromAxisAngle(_X, a))
     .multiply(new THREE.Quaternion().setFromAxisAngle(_Y, -B.phi)).multiply(new THREE.Quaternion().setFromAxisAngle(_Y, B.tw * u));

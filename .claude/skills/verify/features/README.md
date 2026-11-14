@@ -37,6 +37,7 @@ Each feature file: H1 title, one paragraph, then `Sub-features`, `How to get to 
 - [Sound mix](./sound-mix.md): `audio/cues.json` → `assets/reel-audio.wav` at −14 LUFS.
 - [Chapters on screen](./chapters.md): the picture, proven by the draft verify and the stills sheet.
 - [Full render and delivery](./full-render.md): the medium 720x1280 MP4 and cover; 1080x1920 only after the user's go.
+- [Stick-man costume: the hoodie](./stick-man-costume.md): `costume: ['hoodie:grey']` on a stick-man cast entry.
 - [Setup](./setup.md): `pixi run studio install | doctor`, the buyer's first run, on macOS, Windows and Linux.
 - [Progress file](./job-json.md): `films/<name>/job.json` after every step, for Lead Studio.
 - [Reel in another style](./any-style.md): `core/render/reel.mjs` builds and checks a reel made with `--style <slug>`.
