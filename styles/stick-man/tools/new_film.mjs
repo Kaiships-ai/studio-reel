@@ -52,11 +52,15 @@ export default {
 `;
 fs.writeFileSync(path.join(film, 'reel.js'), reel);
 
-// the storyboard stage (REEL_DATA.md): one entry per script line, filled after align and before reel data
-fs.writeFileSync(path.join(film, 'storyboard.json'), JSON.stringify({ film: slug, lines: [] }, null, 1) + '\n');
+// the storyboard stage (REEL_DATA.md): `scenes` ([1.0]) and `shots` ([1.4a], the shot list) first, `lines` one entry per
+// script line; prepro.mjs checks them and animatic.mjs cuts them
+fs.writeFileSync(path.join(film, 'storyboard.json'), JSON.stringify({ film: slug, fps: 30, scenes: [], shots: [], lines: [] }, null, 1) + '\n');
+
+// the decision log (DEVELOP.md section 5): every approved decision, checked at every gate by prepro.mjs D1/D2
+fs.writeFileSync(path.join(film, 'DECISIONS.json'), JSON.stringify({ film: slug, decisions: [] }, null, 1) + '\n');
 
 const tpl = path.join(ROOT, '.claude/skills/make-reel-stick-man/LEDGER.md');
 if (fs.existsSync(tpl)) fs.writeFileSync(path.join(film, 'LEDGER.md'), fs.readFileSync(tpl, 'utf8').replace(/<slug>/g, slug));
 
 console.log(`films/${slug}/  vo/script.json (empty lines), storyboard.json, reel.js (standard skeleton), LEDGER.md, audio/ renders/ review/`);
-console.log(`next: stage 0 (BRIEF.md, TREATMENT.md, beat board) on the Development page, then the script`);
+console.log(`next: stage 0 (BRIEF.md, TREATMENT.md, beat board) on the Development page, then stage 1 (PREPRO.md): scene brief, script, shot list`);

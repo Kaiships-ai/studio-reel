@@ -1,5 +1,14 @@
 # Gates
 
+## Every gate: evidence first
+
+```sh
+node styles/stick-man/tools/stagegate.mjs films/<slug> <1|S|2a|2b|2c|3|4|5|6|all>   # review/gate-<id>.md
+```
+
+Each gate in `styles/stick-man/tools/GATES.json` lists four kinds of evidence: **measured** (a tool that must exit 0: `develop.mjs`, `scriptlint.mjs`, `prepro.mjs --gate`, `assets.mjs`, `timing.mjs`, `postcheck.mjs`), **made** (the maker's files), **judged** (`by: agent:<id>` or `person:<name>`, newer than what it reviewed) and **approved** (Kai in `review/approvals.json`, after the latest evidence). States: OPEN → READY FOR KAI → LOCK. A film may add evidence in `review/gates.local.json`, never remove any.
+
+
 ```sh
 node styles/stick-man/tools/shot.mjs --film films/<slug> --frames 0-<last> --report films/<slug>/review/<slug>_vN-stats.txt --in <mp4>
 node styles/stick-man/tools/gates.mjs --report <stats> --in <mp4> --film films/<slug> --profile pilot|full --out films/<slug>/review/<slug>_vN-gates.txt
@@ -9,6 +18,36 @@ node styles/stick-man/tools/gates.mjs --report <stats> --in <mp4> --film films/<
 
 - **Never change a threshold.** Fix the film data or the kit. A gate that measures wrong is fixed in its tool, in its own commit.
 - **After 2 fix rounds on one gate**, stop and show Kai the FAIL with a still.
+
+## Script (◇S)
+
+```sh
+node styles/stick-man/tools/scriptlint.mjs films/<slug>   # review/scriptlint.md; fixes: SCRIPT.md section 6
+```
+
+◇S needs scriptlint PASS, `vo/beats.json` and `vo/facts.json`, and four reviews by agents, each newer than `vo/script.json`: `review/fact-check.md`, `review/skeptic.md`, `review/ear-retell.md`, `review/script-ab.md` (the new script must win). Then Kai approves.
+
+## Pre-production (stage 1)
+
+```sh
+node styles/stick-man/tools/prepro.mjs films/<slug>                 # review/prepro.md, review/intensity.svg, review/shots.csv
+node styles/stick-man/tools/animatic.mjs films/<slug> --v N --safe 1 # review/animatic_vNNN.mp4 + the CUTS line for reel.js
+```
+
+`prepro.mjs` exits 1 on a FAIL. Its checks (ids T, B, C, P, H, I) and the fix for each are in PREPRO.md section 8. A WARN
+is answered, not ignored: fixed, or a one-line reason on the shot (`hold`, `axis_cross`) or scene (`noEst`). The judged
+checks (muted retell, 5-second read, explain audit, swipe test) are in PREPRO.md section 5. ◇2a needs a PASS on the final
+voice; `--strict 1` (WARN counts as FAIL) is for Kai to ask for, never a default.
+
+| Check | Threshold | Why |
+|---|---|---|
+| every voice line covered | ≥ 1 shot under each line | nothing said without a picture |
+| shot length | ≥ 15 f (8 f for INS, CARD, whip) | a new image needs about half a second to be found |
+| static hold | ≤ 4.5 s or a written reason | dead stretches lose the viewer |
+| cards | ≤ 8 s in a row, ≤ 25 % of the film | explain in pictures first |
+| on-screen text | ≤ 15 characters/s, ≥ 25 f, inside the text-safe box (x 6-87 %, y 14-65 %) | readable on a phone, not under the app's UI |
+| continuity | no screen-direction flip or axis jump without a stated reason | reversed axes read as mistakes |
+| intensity | no visual peak before the climax after the hook | the climax needs somewhere to go |
 
 ## Profiles
 
