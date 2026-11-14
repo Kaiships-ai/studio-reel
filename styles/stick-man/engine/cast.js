@@ -853,7 +853,16 @@ export function makeStick(spec) {
       elbow = sol.elbow; hand = sol.hand; flex = sol.flex;
       arms[side] = { sh, pole: A.pole ? V(A.pole) : k.pole, want, grip };
       const hipJ = toRoot(new THREE.Vector3(sg * 0.14 * girth, 0.04, 0)), G = Q['leg' + side] || {};
-      const foot0 = V(G.foot || [sg * 0.22, 0.022, 0]), kp = V(G.knee || [sg * 0.15, 0, 1]);
+      const foot0 = V(G.foot || [sg * 0.22, 0.022, 0]);
+      // the knee bends in the leg's own plane (hip, foot and the pelvis's sideways axis), always to the front of the
+      // hip-to-foot line: a fixed 'forward' pole points almost along that line when the foot kicks up behind (a run's
+      // heel kick), and the knee then swung out sideways up to 35 cm (Kai 2026-11-14, front view of the run). A keyed
+      // knee [x, y, z] (keyed, default [sg 0.15, 0, 1]) is read in that frame: z = to the front of the line, x = out to
+      // the side (a squat's knees open with a larger x), y = up.
+      const latP = new THREE.Vector3(1, 0, 0).applyQuaternion(qb), KN = G.knee || [sg * 0.15, 0, 1];
+      const legPole = f => { const ax = f.clone().sub(hipJ).normalize(), fw = ax.clone().cross(latP).normalize(), up = latP.clone().cross(fw);
+        return fw.multiplyScalar(KN[2]).addScaledVector(latP, KN[0]).addScaledVector(up, KN[1] || 0); };
+      let kp = legPole(foot0);
       const hdir = new THREE.Vector3(Math.sin(FOOT.out * DEG) * sg, 0, Math.cos(FOOT.out * DEG)).applyAxisAngle(_Y, (G.yaw || 0) * DEG), gnd = Q.ground || 0;
       // heel and toe turn about the ankle with the foot's pitch; no part of the sole goes under the ground (a toes-down
       // foot stands on its toes, so the ankle rises). Past the ankle's range the heel lifts instead (second pass).
@@ -863,6 +872,7 @@ export function makeStick(spec) {
         heelO = hdir.clone().multiplyScalar(-FOOT.heel * Math.cos(ptc)).setY(-FOOT.heel * Math.sin(ptc) - 0.004);
         foot = foot0.clone(); const sole = Math.min(foot.y, foot.y + toeO.y, foot.y + heelO.y) - FOOT_R;
         if (sole < gnd) foot.y += gnd - sole;
+        kp = legPole(foot);
         leg = ik(hipJ, foot, LT, kp, SOFT.leg);
         const shin = foot.clone().sub(leg.joint).normalize(), soleD = toeO.clone().sub(heelO).normalize();
         const df = 90 - Math.acos(Math.max(-1, Math.min(1, -shin.dot(soleD)))) / DEG;

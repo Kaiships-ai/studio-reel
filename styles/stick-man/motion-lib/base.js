@@ -45,7 +45,9 @@ export const K = (f, pose, over = {}) => ({ f, ...merge(pose, over), ease: over.
 // when the right arm swings forward (continuous, -1..1). Returns { keys, frames, advance, intro, introFrames,
 // introTravel, outro, outroTravel }: intro = the first step from the standard pose, outro = the closing step back to it.
 export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }) {
-  const B = BODIES[body], G = { ...B[kind], ...over }, Y = fy(body), run = kind === 'run', L = G.lift;
+  const B = BODIES[body], G = { ...B[kind], ...over }, run = kind === 'run', L = G.lift;
+  // a runner's feet land close to the line under the body (Kai's reference: inside the hips), a walker's a hip apart
+  const Y = run ? (G.lane ?? 0.45) * fy(body) : fy(body);
   // a reference cycle (motion-lib/ref/: key poses taken from footage, ported 1:1) sets the step: its timing at 30 fps and
   // its stride scaled by this body's leg against the reference's
   const RF = G.ref, kR = RF ? (2 * 0.679 * (B.spec.legScale ?? 1) * 0.6 * (B.spec.scale ?? 1)) / RF.leg : 1;
@@ -66,7 +68,10 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
   // print k: the k-th heel strike at x = (k + 1/2) S, left for even k; the body halfway between the feet. A run lands
   // its foot just ahead of the hips (reach, share of a step), not half a step out: a foot thrown far ahead lands on a
   // locked knee that then folds tens of degrees in a frame
-  const land = k => (k + (run ? G.reach ?? 0.28 : 0.5)) * S, yOf = sd => (sd === 'L' ? -Y : Y);
+  const land = k => (k + (run ? G.reach ?? 0.28 : 0.5)) * S, yOf = sd => (sd === 'L' ? -Y : Y), Y0 = fy(body);
+  // a print's sideways place: the gait's lane (a loop repeats, so every print is in it); the first and closing steps put
+  // the standing feet at the standing width (Y0) themselves
+  const yAt = sd => yOf(sd);
   const px = t => S * t / T;                                            // the body's travel t frames into the loop
   // THE HIPS COME FROM THE LEGS. A key names the knee flex a planted leg shows (deg); the hip height is solved from
   // where that foot is, so the knee follows the flex it was given and never snaps: near straight a centimetre of hip
@@ -134,11 +139,11 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
   const heelFor = (P, s, j, c) => {
     const out = s === 'L' ? -1 : 1, yaw = ((P.pelvis.yaw || 0) - (pose0.pelvis?.yaw || 0)) * DOSE_E + (pose0.pelvis?.yaw || 0), roll = ((P.pelvis.roll || 0) - (pose0.pelvis?.roll || 0)) * DOSE_E + (pose0.pelvis?.roll || 0);
     const bp = (pose0.bob || 0) + (P.bob - (pose0.bob || 0)) * DOSE_E, hz = 1.38 + bp - DROP - out * 0.14 * Math.sin(roll * DEG);
-    const fwd = (land(j) - P.pos[0]) * mW + out * 0.14 * Math.sin(yaw * DEG), lat = yOf(s) * mW - (out * 0.14 * Math.cos(yaw * DEG) + (P.hip?.x || 0)), d = legW * legReach(curve(KS, c));
+    const fwd = (land(j) - P.pos[0]) * mW + out * 0.14 * Math.sin(yaw * DEG), lat = yAt(s, j) * mW - (out * 0.14 * Math.cos(yaw * DEG) + (P.hip?.x || 0)), d = legW * legReach(curve(KS, c));
     const az = hz - Math.sqrt(Math.max(0, d * d - fwd * fwd - lat * lat)) - 0.022 - 0.004;
     return -Math.asin(Math.max(0, Math.min(Math.sin(60 * DEG), az / 0.122))) / DEG;
   };
-  const planted = (s, j, c) => foot(land(j), yOf(s), 0, curve(PS, c));
+  const planted = (s, j, c) => foot(land(j), yAt(s, j), 0, curve(PS, c));
   // the bob at frame t: from the stance leg's knee (the other planted foot only caps it, so that leg never over-reaches);
   // in a run's flight the bob runs straight from the push-off to the landing and gravity carries the body (pos.2)
   const bobOf = t => {
@@ -146,7 +151,7 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
     if (a.c >= cs) { const lu = (((t / T) % 1) + 1) % 1, t0 = t - (lu - cs) * T, t1 = t0 + (1 - cs) * T, w = (t - t0) / (t1 - t0); return bobOf(t0 - 1e-6) * (1 - w) + bobOf(t1 + 1e-6) * w; }
     const o = st === 'L' ? 'R' : 'L', b = L_[o], Q = merge(P, { ['leg' + st]: planted(st, a.j, a.c) });
     let bob = legBob(Q, { [st]: curve(KS, a.c) });
-    if (b.c < cs) bob = Math.min(bob, legBob(merge(P, { ['leg' + o]: b.c >= 1 ? foot(land(b.j), yOf(o), 0, -60) : planted(o, b.j, b.c) }), { [o]: 2 }));
+    if (b.c < cs) bob = Math.min(bob, legBob(merge(P, { ['leg' + o]: b.c >= 1 ? foot(land(b.j), yAt(o, b.j), 0, -60) : planted(o, b.j, b.c) }), { [o]: 2 }));
     return bob;
   };
   // a swing foot at frame t: the hip-to-ankle line at angle phi (deg from straight down, + forward), its length from the
@@ -180,7 +185,7 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
     const w0 = (c - cs) / (2 - cs), w = run ? w0 : w0 * w0 * (2 - w0), t0 = t - (c - cs) * T, t1 = t0 + (2 - cs) * T, e = w * w * (3 - 2 * w), p0 = offL.pitch, pitch = p0 + (8 - p0) * e;
     const [x, z] = fk(s, t, curve(KW, w), curve(PHI, w), pitch), [x0, z0] = fk(s, t0, curve(KW, 0), curve(PHI, 0), p0), [x1, z1] = fk(s, t1, curve(KW, 1), curve(PHI, 1), 8);
     const fx = x + (land(j) - x0) * (1 - e) + (land(j + 2) - x1) * e, fz = z - z0 * (1 - e) - z1 * e;
-    return foot(fx, yOf(s), Math.max(w > 0 && w < 1 ? 0.006 : 0, fz), pitch);
+    return foot(fx, yAt(s, j) * (1 - e) + yAt(s, j + 2) * e, Math.max(w > 0 && w < 1 ? 0.006 : 0, fz), pitch);
   };
   const frame = t => { const { P, sl, sr } = torso(t), legs = {};
     for (const [s, l] of [['L', sl], ['R', sr]]) legs['leg' + s] = l.c < cs ? plant(s, t, l.j, l.c) : swing(s, t, l.j, l.c);
@@ -201,10 +206,10 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
     for (const sd of ['L', 'R']) {
       const off = sd === 'R' ? RF.cycle / 2 : 0, tl = (((tr - off) % RF.cycle) + RF.cycle) % RF.cycle, j = 2 * Math.floor((tr - off) / RF.cycle) + (sd === 'R' ? 1 : 0);
       const { a, fa } = p.legs[sd], pitch = fa - 90;
-      if (tl < RF.stance) { P['leg' + sd] = foot(land(j), yOf(sd), 0, pitch); continue; }
+      if (tl < RF.stance) { P['leg' + sd] = foot(land(j), yAt(sd, j), 0, pitch); continue; }
       // the swing: the reference's ankle, plus whatever separates it from this foot's print at the push-off, fading out
       const t0 = t - (tl - RF.stance) * 30 / RF.fps, p0 = RF.pose(t0 * RF.fps / 30), x0 = px(t0) + p0.legs[sd].a[0] * kR, w = Math.min(1, (tl - RF.stance) / 2.5), e = 1 - w * w * (3 - 2 * w);
-      P['leg' + sd] = foot(x + a[0] * kR + (land(j) - x0) * e, yOf(sd), Math.max(0, (p.hip + a[1]) * kR - 0.022 * 0.6 * sc), pitch);
+      P['leg' + sd] = foot(x + a[0] * kR + (land(j) - x0) * e, yAt(sd, j) * e + yAt(sd, j + 2) * (1 - e), Math.max(0, (p.hip + a[1]) * kR - 0.022 * 0.6 * sc), pitch);
     }
     return P;
   };
@@ -233,10 +238,11 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
   const Ti = Math.round(T * (run ? 2 : 1.6)), s0 = land(-1), fi = x => Math.round(Ti * x), kS = run ? kn[0] : kn[2];
   const nh = run ? Math.ceil((1 - cs) * T) + 1 : 3, hand = Array.from({ length: nh }, (_, i) => nh - i);
   const intro = [K(0, merge(pose0, { pos: [s0, 0, 0] }, feet(body, s0)), { ease: 'slow' }),
-    step(fi(0.3), s0 + 0.03, { legL: foot(s0, -Y, L * 0.3, -25), legR: foot(s0, Y) }, { R: kS + 2 }, easeArms(0.3)),
-    step(fi(0.55), s0 + 0.3 * (-s0), { legL: foot((s0 + land(0)) / 2, -Y, L, -10), legR: foot(s0, Y, 0, run ? -20 : 0) }, { R: kS }, easeArms(0.6, 0.6 * torso(-nh).armS)),
+    step(fi(0.3), s0 + 0.03, { legL: foot(s0, -Y0, L * 0.3, -25), legR: foot(s0, Y0) }, { R: kS + 2 }, easeArms(0.3)),
+    step(fi(0.55), s0 + 0.3 * (-s0), { legL: foot((s0 + land(0)) / 2, -Y, L, -10), legR: foot(s0, Y0, 0, run ? -20 : 0) }, { R: kS }, easeArms(0.6, 0.6 * torso(-nh).armS)),
     ...hand.map(d => { const k = keys[2 * T - d], m = merge(k, { pos: [k.pos[0] - 2 * S, k.pos[1], k.pos[2]] });
-      for (const sd of ['legL', 'legR']) m[sd] = { ...k[sd], footW: [k[sd].footW[0] - 2 * S, k[sd].footW[1], k[sd].footW[2]] };
+      // a foot still down on the print it stood on keeps the standing width (it has not been lifted to move in)
+      for (const sd of ['legL', 'legR']) m[sd] = { ...k[sd], footW: [k[sd].footW[0] - 2 * S, k[sd].footW[2] <= 0.005 && k[sd].footW[0] - 2 * S <= s0 + 1e-6 ? Math.sign(k[sd].footW[1]) * Y0 : k[sd].footW[1], k[sd].footW[2]] };
       delete m.f; delete m.ease; return K(Ti - d, m, { ease: 'flow' }); })];
   // the closing step. A walk: the back foot comes up beside the front one, the body settles over both. A run brakes: the
   // swinging right foot lands ahead (the knee takes the stop), the left pushes off and comes up beside it, the body
@@ -244,10 +250,10 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
   const xe = 2 * S, Te = Math.round(T * (run ? 2.8 : 1.6)), fo = x => Math.round(Te * x);
   const xf = run ? xe + 0.6 * S : land(2), rb = land(1);
   const outro = run ? [
-    step(fo(0.2), xe + 0.3 * S, { legL: foot(land(2), -Y, 0, -20), legR: foot(xf, Y, L * 0.25, 6) }, { L: kn[2] + 6 }, easeArms(0.6, 0.4)),
-    step(fo(0.4), xe + 0.48 * S, { legL: foot(land(2), -Y, L * 0.4, -25), legR: foot(xf, Y) }, { R: kD }, easeArms(0.4)),
-    step(fo(0.65), xe + 0.57 * S, { legL: foot((land(2) + xf) / 2, -Y, L * 0.5, -5), legR: foot(xf, Y) }, { R: kn[0] }, easeArms(0.2)),
-    step(fo(0.85), xf, { legL: foot(xf, -Y, 0.01, 3), legR: foot(xf, Y) }, { R: 6 }, easeArms(0.05)),
+    step(fo(0.2), xe + 0.3 * S, { legL: foot(land(2), -Y, 0, -20), legR: foot(xf, Y0, L * 0.25, 6) }, { L: kn[2] + 6 }, easeArms(0.6, 0.4)),
+    step(fo(0.4), xe + 0.48 * S, { legL: foot(land(2), -Y, L * 0.4, -25), legR: foot(xf, Y0) }, { R: kD }, easeArms(0.4)),
+    step(fo(0.65), xe + 0.57 * S, { legL: foot((land(2) + xf) / 2, -(Y + Y0) / 2, L * 0.5, -5), legR: foot(xf, Y0) }, { R: kn[0] }, easeArms(0.2)),
+    step(fo(0.85), xf, { legL: foot(xf, -Y0, 0.01, 3), legR: foot(xf, Y0) }, { R: 6 }, easeArms(0.05)),
     K(Te, merge(pose0, { pos: [xf, 0, 0], hip: { x: 0 } }, feet(body, xf)), { ease: 'slow' })] : [
     step(fo(0.25), xe + 0.1 * S, { legL: foot(xf, -Y), legR: foot(rb, Y, L * 0.3, -25) }, { L: kn[1] }, easeArms(0.7, 0.5)),
     step(fo(0.5), xe + 0.3 * S, { legL: foot(xf, -Y), legR: foot((rb + xf) / 2, Y, L * 0.8, -10) }, { L: kS }, easeArms(0.4)),
