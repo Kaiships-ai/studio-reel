@@ -721,7 +721,8 @@ export function makeStick(spec) {
     return { c, q: o.quaternion.clone(), h: [h.x, h.y, h.z] };
   }
   const propOverlap = (held, segs, vols) => { let w = null;
-    for (const h of held) { const r = propPush(h.box, segs, vols, { limb: LIMB_R / W }); if (r && (!w || r.depth > w.depth)) w = { ...r, side: h.side }; }
+    for (const h of held) { if (h.o.userData.soft) continue;                 // a soft prop (a cloth cap) gives way: no contact
+      const r = propPush(h.box, segs, vols, { limb: LIMB_R / W }); if (r && (!w || r.depth > w.depth)) w = { ...r, side: h.side }; }
     return w; };
   // Extra keys for the reel runtime: pitch (deg, upper body forward about the hip), hands and feet may carry a
   // third number = depth toward where the figure faces (W), kneeF{L,R} = knee pushed forward (W), toeF = toe reach.

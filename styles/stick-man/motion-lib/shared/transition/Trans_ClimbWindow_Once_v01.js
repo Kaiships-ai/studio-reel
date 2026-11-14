@@ -5,8 +5,9 @@
 import { stand, K, merge, FY } from '../../base.js';
 
 const S0 = stand('adult'), sill = 0.80, xs = 0.52;
-const hands = (px, on = 1) => ({ armL: { ik: [-0.24, sill / 0.6 + 0.03, (xs - px) / 0.6], ikw: on }, armR: { ik: [0.24, sill / 0.6 + 0.03, (xs - px) / 0.6], ikw: on } });
-const L = (x, z = 0, pitch = 0) => ({ legL: { footW: [x, -FY, z], pitch } }), R = (x, z = 0, pitch = 0) => ({ legR: { footW: [x, FY, z], pitch } });
+// elbows out and back as the hands push down on the sill; the knee that climbs points up and ahead (explicit poles: no flips)
+const hands = (px, on = 1) => ({ armL: { ik: [-0.24, sill / 0.6 + 0.03, (xs - px) / 0.6], ikw: on, pole: [-0.7, -0.2, -0.7] }, armR: { ik: [0.24, sill / 0.6 + 0.03, (xs - px) / 0.6], ikw: on, pole: [0.7, -0.2, -0.7] } });
+const L = (x, z = 0, pitch = 0) => ({ legL: { footW: [x, -FY, z], pitch, knee: [-0.3, 0.5, 1] } }), R = (x, z = 0, pitch = 0) => ({ legR: { footW: [x, FY, z], pitch, knee: [0.3, 0.5, 1] } });
 const end = 1.05;
 // every foot leaves the floor and reaches it straight up and down (a foot on the floor never slides)
 export default { name: 'Trans_ClimbWindow_Once', clip: 'Trans_ClimbWindow_Once', group: 'Trans', loop: false, frames: 96, base: 'STAND', style: 'kaiships',

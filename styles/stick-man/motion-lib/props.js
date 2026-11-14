@@ -3,7 +3,7 @@
 //   bag    one heavy duffel (25 kg in the clips: x_kg<side>), hung from the fist by its handle, long side forward
 //   torch  a flashlight along the forearm, a dim lit lens and a soft spot
 //   cash   a banded bundle of notes
-//   cap    a peaked cap; worn on the head with x_hpH_cap (cast.js: the head slot), carried with x_hpR_cap
+//   cap    a peaked cap (soft: no contact push); worn on the head with x_hpH_cap (cast.js: the head slot), carried with x_hpR_cap
 // Sizes in metres, Blender up = +y here (three.js), the figure's forward = +z.
 import * as THREE from 'three';
 import { BUILD } from '../lib/cast/handprops.js';
@@ -48,5 +48,5 @@ BUILD.cap = () => {
   const g = new THREE.Group();
   const dome = solid(new THREE.SphereGeometry(0.155, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), [0.78, 0.10, 0.08]); dome.scale.y = 0.62; g.add(dome);
   const brim = solid(new THREE.CylinderGeometry(0.11, 0.11, 0.01, 20, 1, false, -Math.PI / 2, Math.PI), [0.70, 0.08, 0.07], 0.004); brim.position.set(0, 0.004, 0.12); brim.scale.z = 0.8; g.add(brim);
-  g.userData = { mode: 'up', grip: [0, 0.0, 0], mass: 0.1 }; return g;
+  g.userData = { mode: 'up', grip: [0, 0.095, 0], mass: 0.1, soft: true }; return g;   // held by the crown; cloth: it gives way on the head (no contact push)
 };

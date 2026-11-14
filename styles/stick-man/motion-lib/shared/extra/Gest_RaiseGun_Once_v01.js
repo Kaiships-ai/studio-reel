@@ -3,8 +3,10 @@
 import { stand, K, merge } from '../../base.js';
 
 const S0 = stand('adult');
-const AIM = { armR: { ik: [0.10, 2.10, 0.86], ikw: 1 }, armL: { ik: [0.00, 2.06, 0.84], ikw: 1 } };
-const OFF = { armR: { ik: [0.10, 2.10, 0.86], ikw: 0 }, armL: { ik: [0.00, 2.06, 0.84], ikw: 0 } };
+// elbows down and out (an explicit pole: an arm swinging up to straight otherwise flips its elbow)
+const PL = { armR: { pole: [0.5, -1, 0] }, armL: { pole: [-0.5, -1, 0] } };
+const AIM = merge(PL, { armR: { ik: [0.10, 2.10, 0.86], ikw: 1 }, armL: { ik: [0.00, 2.06, 0.84], ikw: 1 } });
+const OFF = merge(PL, { armR: { ik: [0.10, 2.10, 0.86], ikw: 0 }, armL: { ik: [0.00, 2.06, 0.84], ikw: 0 } });
 export default { name: 'Gest_RaiseGun_Once', clip: 'Gest_RaiseGun_Once', group: 'Gest', loop: false, frames: 74, base: 'STAND', style: 'kaiships',
   needs: { props: [], hands: 'both', note: 'implied: no gun is shown' },
   keys: [K(0, merge(S0, OFF)), K(6, merge(S0, OFF, { spine: { bend: 2 }, armL: { swing: -6 }, armR: { swing: -6 } })),

@@ -525,8 +525,8 @@ async function buildAct(R, X) {
     for (const a of actors) {
       if (!a.S.root.visible) continue;
       for (const [id, o] of Object.entries(a.S.props)) {
-        if (!o.visible) continue;
         const side = id[0], g = o.userData.grip;
+        if (!o.visible || side === 'H') continue;                 // worn on the head: no hand holds it
         for (const s of side === 'B' ? ['L', 'R'] : [side]) {
           const hp = a.S.parts.hands[s].getWorldPosition(new THREE.Vector3());
           let d;

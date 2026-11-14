@@ -49,7 +49,9 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
   const arms = sgn => ({ armL: { raise: G.raise ?? pose0.armL.raise, swing: (G.swing0 ?? 0) - sgn * G.swing, elbow: G.elbow + (sgn < 0 ? 10 : 0) },
     armR: { raise: G.raise ?? pose0.armR.raise, swing: (G.swing0 ?? 0) + sgn * G.swing, elbow: G.elbow + (sgn > 0 ? 10 : 0) } });
   const up = sgn => (upper ? upper(sgn) : arms(sgn));
-  const body0 = (x, bob, sgn, extra = {}) => merge(pose0, { pos: [x, 0, 0], bob, spine: { bend: (pose0.spine.bend || 0) + G.bend }, pelvis: { roll: G.sway * sgn },
+  // knee: the hips held this much lower through the gait (W), so a leg is never quite straight: near straight a tiny
+  // change of reach swings the knee tens of degrees in a frame
+  const body0 = (x, bob, sgn, extra = {}) => merge(pose0, { pos: [x, 0, 0], bob: bob - (G.knee ?? 0.09), spine: { bend: (pose0.spine.bend || 0) + G.bend }, pelvis: { roll: G.sway * sgn },
     neck: { nod: (pose0.neck.nod || 0) + G.nod * (bob < 0 ? 1 : -1) } }, up(sgn), extra);
   const foot = (x, y, z = 0, pitch = 0) => ({ footW: [x, y, z], pitch });
   const keys = [], at = (f, pose) => keys.push(K(f, pose, { ease: 'flow' }));
@@ -63,14 +65,16 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
     at(f, body0(k * S, G.bobC, sg, { [ls]: foot(land(k), ys, 0, 8), [lo]: back }));
     if (k === 2) break;
     if (!run) {
-      const q = Math.round(T / 4), h = Math.round(T / 2), u = Math.round(3 * T / 4);
+      // the swing takes most of the step (the foot leaves just after the other lands and lands at the next contact): a
+      // short swing makes the foot outrun the hip and the leg over-reach
+      const q = Math.max(1, Math.round(T * 0.12)), h = Math.round(T / 2), u = Math.min(T - 1, Math.round(T * 0.88));
       at(f + q, body0(px(f + q), G.bobC - 0.01, sg * 0.5, { [ls]: foot(land(k), ys), [lo]: foot(land(k - 1), yo, L * 0.3, -25) }));
       at(f + h, body0(px(f + h), G.bobP, 0, { [ls]: foot(land(k), ys), [lo]: foot(land(k), yo, L, -10) }));
-      at(f + u, body0(px(f + u), G.bobP * 0.5, -sg * 0.5, { [ls]: foot(land(k), ys, 0, -6), [lo]: foot(land(k + 1), yo, L * 0.3, 10) }));
+      at(f + u, body0(px(f + u), G.bobP * 0.5, -sg * 0.5, { [ls]: foot(land(k), ys, 0, -6), [lo]: foot(land(k + 1), yo, L * 0.25, 10) }));
     } else {
       // toe-off: the stance heel up, the swing knee through and ahead; flight: both feet up, the body on gravity's arc
       const ts = G.ts, tf = T - ts, hgt = Math.max(0.021, 9.8 * (tf / 30) ** 2 / 8), fp = f + ts + Math.round(tf / 2);
-      at(f + ts, body0(px(f + ts), G.bobP, sg * 0.5, { [ls]: foot(land(k), ys, 0, -20), [lo]: foot(land(k) + S * 0.4, yo, L, -10) }));
+      at(f + ts, body0(px(f + ts), G.bobP, sg * 0.5, { [ls]: foot(land(k), ys, 0, -20), [lo]: foot(land(k) + S * 0.15, yo, L, -10) }));
       at(fp, merge(body0(px(fp), G.bobP + 0.04, 0, { [ls]: foot(land(k) + 0.03, ys, L * 0.6, -25), [lo]: foot(land(k + 1), yo, L * 0.35, 4) }), { pos: [px(fp), 0, hgt] }));
     }
   }
