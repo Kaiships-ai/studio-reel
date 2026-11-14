@@ -55,12 +55,13 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
   const arms = sgn => ({ armL: { raise: G.raise ?? pose0.armL.raise, swing: (G.swing0 ?? 0) - sgn * G.swing * A * (1 + asym), elbow: G.elbow + 10 * Math.max(0, -sgn) },
     armR: { raise: G.raise ?? pose0.armR.raise, swing: (G.swing0 ?? 0) + sgn * G.swing * A * (1 - asym), elbow: G.elbow + 4 + 10 * Math.max(0, sgn) } });
   const up = sgn => (upper ? upper(sgn) : arms(sgn));
-  const body0 = (x, sgn, extra = {}) => merge(pose0, { pos: [x, 0, 0], spine: { bend: (pose0.spine.bend || 0) + G.bend }, pelvis: { roll: G.sway * sgn } }, up(sgn), extra);
+  // a runner leans from the hips with a straight back (pelvis pitch), never by curling the spine
+  const body0 = (x, sgn, extra = {}) => merge(pose0, { pos: [x, 0, 0], spine: { bend: (pose0.spine.bend || 0) + G.bend }, pelvis: { roll: G.sway * sgn, pitch: (pose0.pelvis?.pitch || 0) + (G.lean ?? 0) } }, up(sgn), extra);
   const foot = (x, y, z = 0, pitch = 0) => ({ footW: [x, y, z], pitch });
   // print k: the k-th heel strike at x = (k + 1/2) S, left for even k; the body halfway between the feet. A run lands
   // its foot just ahead of the hips (reach, share of a step), not half a step out: a foot thrown far ahead lands on a
   // locked knee that then folds tens of degrees in a frame
-  const land = k => (k + (run ? G.reach ?? 0.3 : 0.5)) * S, yOf = sd => (sd === 'L' ? -Y : Y);
+  const land = k => (k + (run ? G.reach ?? 0.12 : 0.5)) * S, yOf = sd => (sd === 'L' ? -Y : Y);
   const px = t => S * t / T;                                            // the body's travel t frames into the loop
   // THE HIPS COME FROM THE LEGS. A key names the knee flex a planted leg shows (deg); the hip height is solved from
   // where that foot is, so the knee follows the flex it was given and never snaps: near straight a centimetre of hip
@@ -104,7 +105,7 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
   const yaw0 = (G.yaw ?? 5) * A, shift0 = (G.shift ?? (run ? 0.012 : 0.022)) * A, cr = G.counter ?? 0.6, ct = G.counterTilt ?? 0.5, lag = G.lag ?? uD;
   const curve = (P, x) => { if (x <= P[0][0]) return P[0][1]; for (let i = 1; i < P.length; i++) if (x <= P[i][0]) { const [a, va] = P[i - 1], [b, vb] = P[i], w = (x - a) / (b - a); return va + (vb - va) * w * w * (3 - 2 * w); } return P[P.length - 1][1]; };
   const KS = run ? [[0, kn[0]], [cs / 2, kD], [cs, kn[2]]] : [[0, kn[0]], [0.2, kD], [0.5, kn[2]], [0.8, kn[3]], [1.0, kn[4]], [cs, kn[5]]];
-  const KW = run ? [[0, kn[2]], [0.3, G.kick ?? 110], [0.6, 85], [0.88, 30], [1, kn[0]]] : [[0, kn[5]], [0.35, G.kick ?? 60], [0.75, 25], [1, kn[0]]];
+  const KW = run ? [[0, kn[2]], [0.35, G.kick ?? 95], [0.62, 75], [0.88, 30], [1, kn[0]]] : [[0, kn[5]], [0.35, G.kick ?? 60], [0.75, 25], [1, kn[0]]];
   const PS = run ? [[0, 6], [cs / 2, 0], [cs, -toe]] : [[0, 8], [0.2, 0], [0.8, 0], [cs, -toe]];
   const PHI = run ? [[0, -28], [0.5, -5], [1, 10]] : [[0, -18], [0.5, 4], [1, 18]];
   const hgt = run ? Math.max(0.021, 9.8 * ((T - G.ts) / 30) ** 2 / 8) : 0;
@@ -166,7 +167,7 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
     const hz = 1.38 + bp - DROP + 0.14 * Math.sin(roll * DEG), fwd = (land(2) - P.pos[0]) * mW - 0.14 * Math.sin(yaw * DEG); return Math.atan2(fwd, hz - 0.022 - sole(8)) / DEG; })();
   // the swing line: a run's leg trails on back after the push-off while the knee folds, then reaches out ahead and comes
   // back onto the print; a walk's swings through
-  PHI.splice(0, PHI.length, ...(run ? [[0, offL.phi], [0.2, offL.phi - 8], [0.6, (offL.phi + onL) / 2 + 14], [0.85, onL + 10], [1, onL]] : [[0, offL.phi], [0.5, (offL.phi + onL) / 2 + 2], [1, onL]]));
+  PHI.splice(0, PHI.length, ...(run ? [[0, offL.phi], [0.15, offL.phi - 6], [0.6, (offL.phi + onL) / 2 + 10], [0.85, onL + 8], [1, onL]] : [[0, offL.phi], [0.5, (offL.phi + onL) / 2 + 2], [1, onL]]));
   const swing = (s, t, j, c) => {
     const w = (c - cs) / (2 - cs), t0 = t - (c - cs) * T, t1 = t0 + (2 - cs) * T, e = w * w * (3 - 2 * w), p0 = offL.pitch, pitch = p0 + (8 - p0) * e;
     const [x, z] = fk(s, t, curve(KW, w), curve(PHI, w), pitch), [x0, z0] = fk(s, t0, curve(KW, 0), curve(PHI, 0), p0), [x1, z1] = fk(s, t1, curve(KW, 1), curve(PHI, 1), 8);
@@ -190,7 +191,7 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
   // the head rides steadier than the hips: it nods against the bob, most at the lowest and highest hips
   const bobs = keys.map(k => k.bob), bMid = (Math.max(...bobs) + Math.min(...bobs)) / 2, bHalf = Math.max(1e-3, (Math.max(...bobs) - Math.min(...bobs)) / 2);
   // a runner leans in from the hips and lifts the head back up to look ahead
-  const look = run ? -0.6 * G.bend : 0;
+  const look = run ? -0.8 * ((G.lean ?? 0) + G.bend) : 0;
   for (const k of keys) k.neck = { ...k.neck, nod: (pose0.neck.nod || 0) + look - G.nod * A * (k.bob - bMid) / bHalf };
   // the first step from STAND: the weight onto the right foot, the left heel peels, swings, lands at the loop's first
   // contact; the right stays where it stood (S/2 behind the loop's origin) and, for a run, peels last
