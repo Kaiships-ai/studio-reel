@@ -18,6 +18,11 @@ import Adult_Move_Run_Fwd_Loop_v01 from './body/adult/Adult_Move_Run_Fwd_Loop_v0
 import Adult_Move_Walk_Fwd_Loop_v01 from './body/adult/Adult_Move_Walk_Fwd_Loop_v01.js';
 import Adult_Move_Sprint_Fwd_Loop_v01 from './body/adult/Adult_Move_Sprint_Fwd_Loop_v01.js';
 import Adult_Act_Jump_Once_v01 from './body/adult/Adult_Act_Jump_Once_v01.js';
+import Adult_Idle_Stand_Loop_v01 from './body/adult/Adult_Idle_Stand_Loop_v01.js';
+import Adult_Idle_LookAround_Loop_v01 from './body/adult/Adult_Idle_LookAround_Loop_v01.js';
+import Adult_Gest_Talk_Loop_v01 from './body/adult/Adult_Gest_Talk_Loop_v01.js';
+import Adult_Gest_Point_Loop_v01 from './body/adult/Adult_Gest_Point_Loop_v01.js';
+import Adult_Gest_Wave_Loop_v01 from './body/adult/Adult_Gest_Wave_Loop_v01.js';
 import Child_Idle_Breath_Loop_v01 from './body/child/Child_Idle_Breath_Loop_v01.js';
 import Child_Move_Run_Fwd_Loop_v01 from './body/child/Child_Move_Run_Fwd_Loop_v01.js';
 import Child_Move_Walk_Fwd_Loop_v01 from './body/child/Child_Move_Walk_Fwd_Loop_v01.js';
@@ -54,6 +59,11 @@ export const ALL = [
   Adult_Move_Walk_Fwd_Loop_v01,
   Adult_Move_Sprint_Fwd_Loop_v01,
   Adult_Act_Jump_Once_v01,
+  Adult_Idle_Stand_Loop_v01,
+  Adult_Idle_LookAround_Loop_v01,
+  Adult_Gest_Talk_Loop_v01,
+  Adult_Gest_Point_Loop_v01,
+  Adult_Gest_Wave_Loop_v01,
   Child_Idle_Breath_Loop_v01,
   Child_Move_Run_Fwd_Loop_v01,
   Child_Move_Walk_Fwd_Loop_v01,

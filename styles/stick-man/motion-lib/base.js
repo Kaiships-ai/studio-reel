@@ -73,6 +73,22 @@ export function mocapOnce({ body = 'adult', src, ease = 8 }) {
   return { keys: [K(0, s1, { ease: 'slow' }), ...mid, K(frames + 2 * ease, s1, { ease: 'slow' })], frames: frames + 2 * ease, captured: [ease, ease + frames] };
 }
 
+// a loop in place from motion capture (an idle, talking, a wave): the captured frames on this body, the feet on the
+// prints the capture stood on, played `times` over between two STAND keys (`ease` frames in and out; the feet stay on
+// the capture's prints). The loop opens and closes on STAND because the dose (motion.js) pushes every angle away from
+// the act's first key: from STAND, as every clip's un() assumes, the capture plays at its own size (a loop opening on
+// a captured pose would play its arm 20 deg short). Mixamo loops end where they start (mocapCycle drops the repeat)
+export function mocapLoop({ body = 'adult', src, ease = 14, times = 1 }) {
+  const { keys, frames } = gaitLoop({ body, kind: 'walk', mocap: src, once: true, feet: 'capture' }), N = frames + 1;
+  const s1 = merge(stand(body, 0), { hip: { x: 0 }, legL: keys[0].legL, legR: keys[0].legR, pos: [keys[0].pos[0], 0, 0] });
+  const out = [K(0, s1, { ease: 'slow' })];
+  for (let r = 0; r < times; r++) for (const k of keys) out.push({ ...k, f: ease + r * N + k.f });
+  out.push({ ...keys[0], f: ease + times * N });
+  const end = 2 * ease + times * N;
+  out.push(K(end, s1, { ease: 'slow' }));
+  return { keys: out, frames: end, captured: [ease, ease + times * N] };
+}
+
 export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }) {
   const B = BODIES[body], G = { ...B[kind], ...over }, run = kind === 'run', L = G.lift;
   // a runner's feet land close to the line under the body (Kai's reference: inside the hips), a walker's a hip apart
@@ -82,7 +98,7 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
   const RF = G.ref, kR = RF ? (2 * 0.679 * (B.spec.legScale ?? 1) * 0.6 * (B.spec.scale ?? 1)) / RF.leg : 1;
   if (RF) { G.T = RF.cycle / 2 * 30 / RF.fps; G.S = RF.speed * kR * RF.cycle / 2; G.ts = RF.stance * 30 / RF.fps; G.reach = RF.pose(0).legs.L.a[0] * kR / G.S; }
   // a motion-capture cycle (ref/mocap.js): its frames on this body, its own step and travel
-  const MC = G.mocap ? mocapCycle(G.mocap, { legM: 2 * 0.679 * (B.spec.legScale ?? 1) * 0.6 * (B.spec.scale ?? 1), once: !!G.once }) : null;
+  const MC = G.mocap ? mocapCycle(G.mocap, { legM: 2 * 0.679 * (B.spec.legScale ?? 1) * 0.6 * (B.spec.scale ?? 1), once: !!G.once, roll: !!G.once }) : null;
   if (MC) { Y = MC.lane; G.T = MC.cycle / 2; G.S = MC.advance / 2; G.ts = Math.round(G.T * (run ? 0.4 : 1.15)); G.reach = MC.firstPrint / G.S; }
   const { S, T } = G;
   const pose0 = base ? base(body, 0) : stand(body, 0);
@@ -258,7 +274,7 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
     // a one-off in place (a jump): a foot down stands on its standing print (the capture's stance is a little staggered),
     // and while both feet are up the hips' rise is the body's own height off the ground (pos.2), which gravity then owns
     if (G.once) {
-      for (const sd of ['L', 'R']) if (m.down[sd] || m['leg' + sd].footW[2] < 0.012) P['leg' + sd] = { footW: [0, sd === 'L' ? -Y0 : Y0, 0], pitch: m['leg' + sd].pitch };
+      if (G.feet !== 'capture') for (const sd of ['L', 'R']) if (m.down[sd] || m['leg' + sd].footW[2] < 0.012) P['leg' + sd] = { footW: [0, sd === 'L' ? -Y0 : Y0, 0], pitch: m['leg' + sd].pitch };
       if (!m.down.L && !m.down.R) { const z = Math.max(0, m.hipZ - MC.standHip); P.pos = [P.pos[0], 0, z]; P.bob = un(MC.standHip * mW + 0.022 * 0.6 * sc * mW - 1.38 + DROP, pose0.bob || 0); P._air = { hipZ: m.hipZ }; }
     }
     // the hips' height from the planted legs' captured knees (legBob), not the captured height: this leg is not the

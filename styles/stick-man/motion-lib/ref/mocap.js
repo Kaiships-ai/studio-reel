@@ -18,7 +18,8 @@ const toClip = p => [-p[1], -p[0], p[2]];
 // PIN: where a stance's print sits between the ankle at the heel strike (0) and its mean over the stance (1): at the
 // strike the leg is long and near straight, so a print set back from there snaps the knee straight then bent
 const PIN = 0.35;
-export function mocapCycle(src, { legM, once = false }) {
+const ROLL_ELBOW = 30;
+export function mocapCycle(src, { legM, once = false, roll = true }) {
   let F = src.frames.map(f => Object.fromEntries(Object.entries(f).map(([k, p]) => [k, toClip(p)])));
   const same = (a, b) => Object.keys(a).every(k => len(V(a[k], b[k])) < 1e-3);
   if (F.length > 2 && same(F[0], F[F.length - 1])) F = F.slice(0, -1);            // the last frame repeats the first
@@ -41,8 +42,13 @@ export function mocapCycle(src, { legM, once = false }) {
   for (const sd of ['Left', 'Right']) {
     const dn = W.map(f => f[sd + 'Foot'][2] < (rest + 0.025) * k);
     prints[sd] = W.map(() => null);
-    for (let i = 0; i < N; i++) if (dn[i] && !dn[(i - 1 + N) % N]) {
-      const run = []; for (let j = i; dn[j % N] && run.length < N; j++) run.push(j);
+    // a one-off does not wrap: a stance under way on its first frame starts there; a foot down the whole capture (an idle)
+    // stands on one print, the mean of where it was
+    // a foot whose ankle stays within 3 cm all through (a heel raised as the weight shifts) never left the ground
+    const hs = W.map(f => f[sd + 'Foot'][2]);
+    if (dn.every(Boolean) || Math.max(...hs) - Math.min(...hs) < 0.03 * k) { const m = W.map(f => f[sd + 'Foot']).reduce((a, b) => add(a, b)).map(x => x / N); prints[sd] = W.map(() => m); continue; }
+    for (let i = 0; i < N; i++) if (dn[i] && (once && i === 0 || !dn[(i - 1 + N) % N])) {
+      const run = []; for (let j = i; dn[j % N] && run.length < N && !(once && j >= N); j++) run.push(j);
       const at = run.map(j => add(W[j % N][sd + 'Foot'], [j >= N ? advance : 0, 0, 0])), m = mix(at[0], at.reduce((a, b) => add(a, b)).map(x => x / at.length), PIN);
       for (const j of run) prints[sd][j % N] = j >= N ? add(m, [-advance, 0, 0]) : m;
     }
@@ -63,8 +69,7 @@ export function mocapCycle(src, { legM, once = false }) {
       const raise = Math.asin(Math.max(-1, Math.min(1, sg * d[0]))) * DEG, swing = Math.atan2(d[2], -d[1]) * DEG, elbow = Math.acos(Math.max(-1, Math.min(1, dot(d, fd)))) * DEG;
       let b0 = nrm([-sg * 0.25, 0.3, 1]); b0 = nrm(add(b0, mul(d, -dot(b0, d)))); const ba = nrm(add(fd, mul(d, -dot(fd, d))));
       const roll = sg * Math.atan2(dot(d, cross(b0, ba)), dot(b0, ba)) * DEG;
-      // the elbow's fold plane (roll) is left to the rig: the captured one flips where the arm passes straight
-      return { raise, swing, elbow, roll: 0 };
+      return { raise, swing, elbow, roll };
     };
     const leg = sd => { const pr = prints[sd][t], a = f[sd + 'Foot'];
       return pr ? { footW: [pr[0], pr[1], 0], pitch: footPitch(f, sd) } : { footW: [a[0], a[1], Math.max(0.006, a[2] - rest * k)], pitch: footPitch(f, sd) }; };
@@ -72,6 +77,22 @@ export function mocapCycle(src, { legM, once = false }) {
     return { kneeL: knee('Left'), kneeR: knee('Right'), down: { L: !!prints.Left[t], R: !!prints.Right[t] }, hipZ: hm[2] - rest * k, pos: [hm[0], 0, 0], hipY: hm[1], yaw, roll, lean, side, twist: syaw - yaw, nod,
       armL: arm('Left', -1), armR: arm('Right', 1), legL: leg('Left'), legR: leg('Right') };
   });
+  // the elbow's fold plane (roll; a loop on the move leaves it to the rig, `roll: false`, as its closing steps fold the
+  // arm in the rig's plane): measured only where the elbow is bent (ROLL_ELBOW deg or more; near straight the plane
+  // is undefined and the captured one flips), unwrapped so it never jumps a turn, filled across the straight frames from
+  // the bent ones on either side (a loop wraps), and faded to the rig's own plane as the elbow straightens
+  for (const sd of ['armL', 'armR']) {
+    const ok = frames.map(f => f[sd].elbow >= ROLL_ELBOW);
+    if (!roll || !ok.some(Boolean)) { for (const f of frames) f[sd].roll = 0; continue; }
+    let prev = null; for (const f of frames) { if (f[sd].elbow < ROLL_ELBOW) continue; let r = f[sd].roll; if (prev != null) r += 360 * Math.round((prev - r) / 360); f[sd].roll = prev = r; }
+    const idx = ok.flatMap((v, i) => v ? [i] : []);
+    for (let i = 0; i < N; i++) if (!ok[i]) {
+      const nx = idx.find(j => j > i) ?? (once ? null : idx[0] + N), pv = [...idx].reverse().find(j => j < i) ?? (once ? null : idx[idx.length - 1] - N);
+      const rv = j => frames[((j % N) + N) % N][sd].roll;
+      frames[i][sd].roll = nx == null ? rv(pv) : pv == null ? rv(nx) : rv(pv) + (rv(nx) - rv(pv)) * (i - pv) / (nx - pv);
+    }
+    for (const f of frames) { const e = f[sd].elbow, w = Math.min(1, Math.max(0, (e - ROLL_ELBOW / 2) / ROLL_ELBOW)); f[sd].roll *= w * w * (3 - 2 * w); }
+  }
   // the prints of the cycle: the left one it starts on, and the right one the next step lands on (the first right print
   // after the left strike)
   let rIdx = 0; for (let i = 1; i < N; i++) if (prints.Right[i] && !prints.Right[i - 1]) { rIdx = i; break; }
