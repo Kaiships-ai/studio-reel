@@ -143,6 +143,19 @@ a{color:var(--ol-clay-ink)}
 .mini{font-family:var(--mono);font-size:10.5px;color:var(--muted);min-height:13px}
 </style>
 <style>.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}.fc{margin:0;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}.fc img{width:100%;aspect-ratio:1;display:block;background:#8fcca8}.fc figcaption{font-size:11.5px;padding:4px 6px 6px;color:var(--muted)}.fc figcaption b{font-family:var(--mono);font-weight:500;color:var(--ink)}.verdict{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--ol-clay);border-radius:10px;padding:14px 16px}</style>
+<style>
+.zoom{all:unset;display:block;position:relative;cursor:zoom-in;width:100%}
+.zoom:focus-visible{outline:2px solid var(--ol-clay);outline-offset:2px}
+.zoom .zh{position:absolute;right:8px;bottom:8px;font-size:11.5px;padding:3px 8px;border-radius:999px;background:#000b;color:#fff}
+#lb{position:fixed;inset:0;z-index:50;background:#0d0d0ef2;display:grid;grid-template-rows:auto 1fr;padding-top:env(safe-area-inset-top,0px)}
+#lb[hidden]{display:none!important}
+#lb .bar{display:flex;gap:8px;align-items:center;padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));color:#eee;font-size:13px}
+#lb .bar span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#lb button{font:inherit;font-size:13px;padding:5px 12px;border-radius:999px;border:1px solid #555;background:#222;color:#eee;cursor:pointer}
+#lb .view{overflow:auto;display:grid;place-items:start center;padding:0 16px 24px}
+#lb .view img{display:block;max-width:100%;height:auto;cursor:zoom-in}
+#lb.big .view img{max-width:none;width:auto;cursor:zoom-out}
+</style>
 <div class="ol-page">
 <aside class="ol-rail">
 <nav aria-label="Mục lục"><ul class="ol-tree" id="ol-tree"></ul></nav>
@@ -160,6 +173,7 @@ a{color:var(--ol-clay-ink)}
   <section>
     <h2 id="s11">[N.1] STEP</h2>
     <p>What the step proves, in one or two sentences.</p>
+    <!-- still proof (click opens the full-size image): <figure class="pc"><button class="zoom" type="button" data-full="k/full/....jpg" aria-label="Phóng to: ..."><img src="k/....jpg" alt="..." style="width:100%;display:block"><span class="zh">Bấm để xem chi tiết</span></button><figcaption>...</figcaption></figure> -->
     <!-- proof: <figure class="pc"><video src="k/....mp4" poster="k/....jpg" controls playsinline preload="metadata" style="aspect-ratio:auto"></video><figcaption>...</figcaption></figure> -->
     <div class="dec"><div class="q">The question Kai answers</div><div class="opts">
       <button class="opt" data-d="DECISION_ID" data-o="a"><span class="rec">Em đề xuất</span><img class="pv" src="k/opt_a.jpg" alt="option A render"><b>Option A</b><span>Why, in one line.</span></button>
@@ -213,6 +227,16 @@ a{color:var(--ol-clay-ink)}
 })();
 </script>
 
+<div id="lb" hidden role="dialog" aria-modal="true" aria-label="Xem ảnh chi tiết"><div class="bar"><span id="lbt"></span><button type="button" id="lbz">Phóng 100%</button><button type="button" id="lbx">Đóng (Esc)</button></div><div class="view" id="lbv"><img id="lbi" alt=""></div></div>
+<script>
+(()=>{const lb=document.getElementById('lb'),im=document.getElementById('lbi'),t=document.getElementById('lbt'),z=document.getElementById('lbz');let last=null;
+const setBig=b=>{lb.classList.toggle('big',b);z.textContent=b?'Vừa màn hình':'Phóng 100%';};
+const open=btn=>{last=btn;const sm=btn.querySelector('img');im.src=btn.dataset.full;im.alt=sm.alt;t.textContent=sm.alt;setBig(false);lb.hidden=false;document.body.style.overflow='hidden';document.getElementById('lbx').focus();};
+const close=()=>{lb.hidden=true;im.removeAttribute('src');document.body.style.overflow='';last&&last.focus();};
+document.addEventListener('click',e=>{const b=e.target.closest('.zoom');if(b){open(b);return;}
+ if(e.target.id==='lbx')close();else if(e.target.id==='lbz'||e.target===im)setBig(!lb.classList.contains('big'));else if(e.target.id==='lbv')close();});
+document.addEventListener('keydown',e=>{if(!lb.hidden&&e.key==='Escape')close();});})();
+</script>
 <!-- OUTLINE: JS -->
 <script>
 (function(){
