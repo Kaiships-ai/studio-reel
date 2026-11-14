@@ -18,7 +18,7 @@ const toClip = p => [-p[1], -p[0], p[2]];
 // PIN: where a stance's print sits between the ankle at the heel strike (0) and its mean over the stance (1): at the
 // strike the leg is long and near straight, so a print set back from there snaps the knee straight then bent
 const PIN = 0.35;
-export function mocapCycle(src, { legM }) {
+export function mocapCycle(src, { legM, once = false }) {
   let F = src.frames.map(f => Object.fromEntries(Object.entries(f).map(([k, p]) => [k, toClip(p)])));
   const same = (a, b) => Object.keys(a).every(k => len(V(a[k], b[k])) < 1e-3);
   if (F.length > 2 && same(F[0], F[F.length - 1])) F = F.slice(0, -1);            // the last frame repeats the first
@@ -26,12 +26,12 @@ export function mocapCycle(src, { legM }) {
   const legOf = f => len(V(f.LeftUpLeg, f.LeftFoot)), k = legM / Math.max(...F.map(legOf));
   const rest = Math.min(...F.flatMap(f => [f.LeftFoot[2], f.RightFoot[2]]));     // the ankle's height over the sole
   // the travel: the planted feet slide back in place at the body's speed
-  const v = (() => { const s = []; for (const sd of ['Left', 'Right']) for (let i = 0; i < N; i++) { const a = F[i][sd + 'Foot'], b = F[(i + 1) % N][sd + 'Foot'];
+  const v = once ? 0 : (() => { const s = []; for (const sd of ['Left', 'Right']) for (let i = 0; i < N; i++) { const a = F[i][sd + 'Foot'], b = F[(i + 1) % N][sd + 'Foot'];
     if (a[2] < rest + 0.02 && b[2] < rest + 0.02) s.push(a[0] - b[0]); }
     s.sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : 0; })();
   // start the cycle on the left heel strike (the frame the left ankle comes down), the hips at x = 0
   const down = i => F[i].LeftFoot[2] < rest + 0.02;
-  let s0 = 0; for (let i = 0; i < N; i++) if (down(i) && !down((i - 1 + N) % N)) { s0 = i; break; }
+  let s0 = 0; if (!once) for (let i = 0; i < N; i++) if (down(i) && !down((i - 1 + N) % N)) { s0 = i; break; }   // a one-off keeps its order
   F = [...F.slice(s0), ...F.slice(0, s0)];
   const W = F.map((f, t) => { const o = {}; for (const [n, p] of Object.entries(f)) o[n] = mul(add(p, [v * t, 0, 0]), k); return o; });
   const hip0 = mix(W[0].LeftUpLeg, W[0].RightUpLeg, 0.5)[0]; for (const f of W) for (const p of Object.values(f)) p[0] -= hip0;
@@ -76,6 +76,8 @@ export function mocapCycle(src, { legM }) {
   // after the left strike)
   let rIdx = 0; for (let i = 1; i < N; i++) if (prints.Right[i] && !prints.Right[i - 1]) { rIdx = i; break; }
   const Lx = prints.Left[0] ? prints.Left[0][0] : 0, Rx = prints.Right[rIdx] ? prints.Right[rIdx][0] : Lx + advance / 2;
+  // the hips' height standing (the first frame's), for a one-off's flight
+  const standHip = frames[0].hipZ;
   const lane = (Math.abs(prints.Left[0]?.[1] ?? 0) + Math.abs(prints.Right[rIdx]?.[1] ?? 0)) / 2;
-  return { frames, cycle: N, advance, scale: k, firstPrint: Lx, prints: { L: Lx, R: Rx, yL: prints.Left[0]?.[1] ?? -lane, yR: prints.Right[rIdx]?.[1] ?? lane }, lane };
+  return { frames, cycle: N, advance, scale: k, firstPrint: Lx, prints: { L: Lx, R: Rx, yL: prints.Left[0]?.[1] ?? -lane, yR: prints.Right[rIdx]?.[1] ?? lane }, lane, standHip };
 }
