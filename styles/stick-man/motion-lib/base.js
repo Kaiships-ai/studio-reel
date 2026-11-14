@@ -105,9 +105,6 @@ function retarget(keys, first, last, { anyLast = false } = {}) {
 }
 const lerpPose = (a, b, w) => typeof a === 'number' ? (typeof b === 'number' ? a + (b - a) * w : a) : Array.isArray(a) ? a.map((v, i) => lerpPose(v, b?.[i], w))
   : a && typeof a === 'object' ? Object.fromEntries(Object.entries(a).map(([k, v]) => [k, b && k in b ? lerpPose(v, b[k], w) : v])) : (w < 0.5 || b === undefined ? a : b);
-// the hips' height smoothed over 5 frames: legBob solves it from whichever legs are down, so it can step where a foot lands
-// or lifts (more so on prints moved off the capture's); a real body's hips never do
-const smoothBob = keys => keys.map((k, i) => { const w = keys.slice(Math.max(0, i - 2), i + 3); return { ...k, bob: w.reduce((a, b) => a + b.bob, 0) / w.length }; });
 const shiftKey = (k, d) => ({ ...k, pos: [k.pos[0] + d[0], k.pos[1] + d[1], k.pos[2] || 0], legL: { ...k.legL, footW: [k.legL.footW[0] + d[0], k.legL.footW[1] + d[1], k.legL.footW[2]] },
   legR: { ...k.legR, footW: [k.legR.footW[0] + d[0], k.legR.footW[1] + d[1], k.legR.footW[2]] } });
 // every channel blended from a toward b (the gait's own frame at that same moment) but a foot down in either (a print
@@ -426,7 +423,7 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
     const rD = keys.map((k, i) => [i, k.legR.footW[2] === 0]).filter(([, dn]) => dn).pop(), R0 = keys[rD[0]].legR.footW;
     let part = SK.slice(0, c).map(k => shiftKey(k, d)); const at = mean2(part[0].legL.footW, part[0].legR.footW);
     const P0 = merge(stand(body, 0), { pos: [at[0], 0, 0], hip: { x: 0 } }, feet(body, at[0]));
-    part = smoothBob(retarget(part, { legL: P0.legL.footW, legR: P0.legR.footW }, { legR: [R0[0] - 2 * S, R0[1]] }, { anyLast: true }));
+    part = retarget(part, { legL: P0.legL.footW, legR: P0.legR.footW }, { legR: [R0[0] - 2 * S, R0[1]] }, { anyLast: true });
     for (let i = c - HB; i < c; i++) part[i] = blendBody(part[i], loopAt(i - c), ease3((i - (c - HB - 1)) / (HB + 1)));
     I = { intro: [K(0, P0, { ease: 'slow' }), ...part.map((k, i) => ({ ...k, f: E0 + i }))], Ti: E0 + c, s0: at[0] };
     cap.unshift([E0, E0 + c]); cap[1] = [I.Ti, I.Ti + 4 * T];
@@ -436,7 +433,7 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
     const L2 = keys[2 * T].legL.footW, d = [L2[0] - EK[sL].legL.footW[0], L2[1] - EK[sL].legL.footW[1]];
     let part = EK.slice(sL + 1).map(k => shiftKey(k, d)); const m = part.length, at = mean2(part[m - 1].legL.footW, part[m - 1].legR.footW);
     const P1 = merge(stand(body, 0), { pos: [at[0], at[1], 0], hip: { x: 0 }, legL: { footW: [at[0], at[1] - Y0, 0] }, legR: { footW: [at[0], at[1] + Y0, 0] } });
-    part = smoothBob(retarget(part, null, { legL: P1.legL.footW, legR: P1.legR.footW }));
+    part = retarget(part, null, { legL: P1.legL.footW, legR: P1.legR.footW });
     for (let i = 0; i < HB; i++) part[i] = blendBody(part[i], loopAt(2 * T + i + 1), 1 - ease3((i + 1) / (HB + 1)));
     const Te2 = m + E0;
     O = { outro: [...part.map((k, i) => ({ ...k, f: i + 1 })), K(Te2, P1, { ease: 'slow' })], xf: at[0], Te: Te2 };
