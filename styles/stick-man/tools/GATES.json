@@ -74,7 +74,9 @@
       "\\d+:\\d\\d"
      ],
      "newerThan": [
-      "storyboard.json"
+      "storyboard.json",
+      "vo/vo.wav",
+      "vo/words.json"
      ]
     },
     {
@@ -85,7 +87,8 @@
       "^#+ .*guess"
      ],
      "newerThan": [
-      "storyboard.json"
+      "storyboard.json",
+      "vo/words.json"
      ]
     },
     {
@@ -93,7 +96,9 @@
      "by": "independent",
      "why": "where a viewer would swipe away, by timecode",
      "newerThan": [
-      "storyboard.json"
+      "storyboard.json",
+      "vo/vo.wav",
+      "vo/words.json"
      ]
     }
    ]

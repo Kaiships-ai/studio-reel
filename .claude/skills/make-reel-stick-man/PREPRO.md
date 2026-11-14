@@ -350,7 +350,7 @@ A final-looking render before ◇2a is allowed only as a **style frame** for [1.
 | ◇2b shot lock | camera intent per shot (size, angle, lens class, move, axis side) | camera-intent pass OUT-1/3/4/5, options rendered in the animatic | every shot CAM INTENT LOCK; climax is the visual peak; no continuity FAIL |
 | ◇2c look + design | look, characters, sets, props, colour script | style frames on locked shots, sheets, colour script | Kai approves; nothing in it changes a locked shot |
 
-A shot added after Kai locked the story scores gets a score between its neighbours; re-lock with `prepro.mjs --lock-story kai` and tell Kai in the same reply (his curve does not change, it gains a point). Kai may approve the three on one page in one sitting; each keeps its own row and evidence. ◇2c is never approved before
+A shot added after Kai locked the story scores gets a score between its nearest locked neighbours (inclusive); K1 then reports it as INFO "added after lock, interpolated" instead of a FAIL, as long as every locked score, scene feel and shot scene is unchanged and no more than two shots are added between the same two locked shots (more is a FAIL: re-lock with Kai). Tell Kai in the same reply (his curve does not change, it gains a point). A lock written before this rule has only a hash: re-lock once with `prepro.mjs --lock-story kai`. Kai may approve the three on one page in one sitting; each keeps its own row and evidence. ◇2c is never approved before
 ◇2a. ◇2 is open when all three are.
 
 ## 8. Fixes for each `prepro.mjs` check

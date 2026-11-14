@@ -233,7 +233,7 @@ land) is what [1.1b], [1.1d] and [1.1e] are for.
 
 | File | What |
 |---|---|
-| `vo/script.json` | `lines[]`: `id`, `who`, `style`, `beat`, `class`, `text`, optional `math: true`; optional `wps` |
+| `vo/script.json` | `lines[]`: `id`, `who`, `style`, `beat`, `class`, `text`, optional `math: true`, optional `pause_after: <seconds>` (a planned silence after the line: `pause.py` puts it in `vo/vo.wav` after `align.py`); optional `wps`; optional `say` {token: words} overrides how a whisper token is read |
 | `vo/beats.json` | `beats[]` (`id`, `name`, `kind`, `lines`, `link`, `because`, `want`, `obstacle`, `outcome`, `human` on the recap), `plants[]` (`id`, `what`, `set`, `paid` = a line or `epN+`), `vote` (`lines`, `options[]` with `word` and `cost` = a plant id) |
 | `vo/facts.json` | `facts[]`: `id`, `claim`, `lines`, `source` {`name`, `url`}, `check`, `move` |
 | `review/scriptlint.md`, `fact-check.md`, `skeptic.md`, `ear-retell.md`, `punchup.md`, `script-ab.md` | the evidence of ◇S |
@@ -256,9 +256,10 @@ land) is what [1.1b], [1.1d] and [1.1e] are for.
 - **Two rewrites lost the blind A/B to the old script** (v6 and v7 lost to v4). After one loss, merge: keep the winner and port
   only the loser's proven fixes (v8 = v4 + 5 fixes won). → [1.1g].
 - **The real take had no climax pause.** The scratch voice carried a 2.4 s silence for the bullet shot; the TTS take did not,
-  and every bullet-cam cut collided. → mark planned pauses in `vo/script.json` and insert them in `vo/vo.wav` before `align.py`.
-- **Numbers read as digits.** Whisper wrote "238", "$9,000"; 28 words were estimated and ◇2a failed V2. → fill the
-  script's `say` map (digits → the words the script uses) before `align.py`.
+  and every bullet-cam cut collided. → mark planned pauses as `pause_after` on the line in `vo/script.json`; `pause.py films/<slug>` (after `align.py`) inserts them in `vo/vo.wav` and shifts `vo/words.json`, idempotently.
+- **Numbers read as digits.** Whisper wrote "238", "$9,000"; 28 words were estimated and ◇2a failed V2. → `align.py` now
+  turns digit tokens into words itself (`numwords.py`: "238" → "two hundred thirty-eight"); the script's `say` map
+  overrides a token that is read another way ("1980" → "nineteen eighty").
 
 ## 9. Example (survival prompt)
 

@@ -5,6 +5,9 @@
 //   node styles/stick-man/tools/stagegate.mjs films/<slug> 2a          -> review/gate-2a.md, exit 1 unless LOCK
 //   node styles/stick-man/tools/stagegate.mjs films/<slug> all         -> every gate's state, one line each
 // Evidence front matter (first lines of a markdown file):  by: agent:<id> | kai | self   ·   of: <what was reviewed + version>
+// Freshness (`newerThan`): a review goes stale when what it judged changed, by a content hash of the JSON fields a viewer
+// sees or hears (fresh.mjs; record in review/.fresh.json). Non-JSON targets fall back to mtime.
+import { isFresh } from './fresh.mjs';
 import fs from 'node:fs'; import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -17,6 +20,10 @@ const SPEC = JSON.parse(fs.readFileSync(path.join(HERE, 'GATES.json'), 'utf8'));
 const local = fs.existsSync(F('review/gates.local.json')) ? JSON.parse(fs.readFileSync(F('review/gates.local.json'), 'utf8')) : {};
 const approvals = fs.existsSync(F('review/approvals.json')) ? JSON.parse(fs.readFileSync(F('review/approvals.json'), 'utf8')) : {};
 const mtime = p => fs.existsSync(F(p)) ? fs.statSync(F(p)).mtimeMs : 0;
+const BOOK = F('review/.fresh.json'), bookText = fs.existsSync(BOOK) ? fs.readFileSync(BOOK, 'utf8') : '';
+let book = {};
+try { book = bookText ? JSON.parse(bookText) : {}; if (!book || typeof book !== 'object' || Array.isArray(book)) throw new Error('not an object'); }
+catch (e) { console.warn(`! review/.fresh.json is unreadable (${e.message}): treated as no record, rewritten on this run`); book = {}; }
 const front = txt => Object.fromEntries((txt.match(/^(?:[a-z]+: .*\n)+/i)?.[0] || '').trim().split('\n').filter(Boolean).map(l => [l.split(':')[0].trim(), l.slice(l.indexOf(':') + 1).trim()]));
 
 function checkGate(id) {
@@ -36,7 +43,7 @@ function checkGate(id) {
     for (const s of e.sections || []) if (!new RegExp(s, 'im').test(txt)) miss.push(`section /${s}/`);
     if ((e.minWords || 0) > txt.split(/\s+/).length) miss.push(`under ${e.minWords} words`);
     if (e.by === 'independent' && !/^agent:|^person:/i.test(fm.by || '')) miss.push(`"by:" must name an independent reviewer (agent:<id> or person:<name>), not "${fm.by || 'nobody'}"`);
-    for (const n of e.newerThan || []) if (mtime(n) && mtime(n) > mtime(e.file)) miss.push(`older than ${n} (stale: review again)`);
+    for (const n of e.newerThan || []) { const r = isFresh(DIR, e.file, n, book); if (!r.fresh) miss.push(r.why); }
     rows.push({ kind: e.by === 'independent' ? 'judged' : 'made', what: e.file, ok: !miss.length, why: miss.length ? miss.join('; ') : (fm.of ? `of ${fm.of}` : 'ok') });
   }
   const ap = approvals[id];
@@ -51,6 +58,8 @@ function checkGate(id) {
 const ids = which === 'all' ? (SPEC.order || Object.keys(SPEC.gates)) : [which];
 const res = ids.map(checkGate);
 fs.mkdirSync(F('review'), { recursive: true });
+const bookOut = JSON.stringify(book, null, 1) + '\n';
+if (bookOut !== bookText && (bookText || Object.keys(book).length)) fs.writeFileSync(BOOK, bookOut);
 for (const r of res) {
   const md = [`# Gate ${r.id} · ${r.title}`, '', `**${r.state}**`, '', '| Kind | Evidence | OK | Why |', '| --- | --- | --- | --- |',
     ...r.rows.map(x => `| ${x.kind} | ${x.what} | ${x.ok ? 'PASS' : 'FAIL'} | ${String(x.why).replace(/\|/g, '/')} |`), '',

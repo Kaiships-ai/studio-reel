@@ -2,15 +2,17 @@
 #   python styles/stick-man/tools/align.py films/<slug> [vo/vo.wav]
 # Writes vo/words.json [{line, i, word, t0, t1, est}] (est = whisper missed it, time spread between neighbours) and
 # vo/voice-qa.md (a line under 80 % heard is marked ❌: re-take the voice, do not hand-fix times).
-# Numbers: whisper writes "10", the script says "ten". Add script.json "say": {"10": "ten", "$20s": "twenties"} as needed.
+# Numbers: whisper writes "238", "$9,000", "1,"; the script says "two hundred thirty-eight". Digit tokens become words
+# automatically (numwords.py); script.json "say": {"1980": "nineteen eighty", "$20s": "twenties"} overrides a token.
 # Audio is decoded with ffmpeg to numpy here (faster-whisper's own PyAV loader fails in this env).
 import json, os, re, sys, difflib, subprocess
 import numpy as np
 from faster_whisper import WhisperModel
+from numwords import words as num_words
 
 film = os.path.abspath(sys.argv[1]); os.chdir(film)
 S = json.load(open('vo/script.json')); wav = sys.argv[2] if len(sys.argv) > 2 else 'vo/vo.wav'
-NUM = {'10': 'ten', '20': 'twenty', '100': 'hundred', '400': 'four hundred', '1000': 'thousand', '20s': 'twenties', **S.get('say', {})}
+NUM = {'20s': 'twenties', **S.get('say', {})}
 norm = lambda w: re.sub(r"[^a-z0-9']", '', w.lower())
 NUM = {norm(k): v for k, v in NUM.items()}
 script = []
@@ -24,7 +26,7 @@ heard = []
 for s in segs:
     for w in s.words:
         t = w.word.strip()
-        for part in NUM.get(norm(t), t).split():
+        for part in (NUM.get(norm(t)) or num_words(t) or t).split():
             if norm(part): heard.append({'n': norm(part), 't0': w.start, 't1': w.end, 'raw': t})
 m = difflib.SequenceMatcher(None, [w['n'] for w in script], [w['n'] for w in heard], autojunk=False)
 for a, b, n in m.get_matching_blocks():
