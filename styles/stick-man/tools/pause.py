@@ -6,7 +6,10 @@
 # records the hashes of what this tool wrote. Every run rebuilds vo.wav and words.json from the no-pause copies, so a
 # second run changes nothing, and a changed pause_after is applied from scratch. A new take (vo.wav not the one this tool
 # wrote) replaces the no-pause wav; words.json re-aligned on the paused wav is shifted back before it is kept.
-# 16-bit (or wider) PCM wav, any channel count; standard library only.
+# Once pauses.json exists, a missing no-pause copy is an error: the paused take is never copied as the no-pause take.
+# Writes are atomic (temp file + rename). pauses.json lists the hashes it is about to write as "pending" before vo.wav
+# and words.json are replaced, so a run stopped half way still knows both files are its own.
+# 16-bit (or wider) integer PCM wav, any channel count; standard library only.
 import hashlib, json, os, shutil, sys, wave
 
 
@@ -23,27 +26,47 @@ def shifts(lines):
     return out
 
 
+def put(p, write):
+    """Atomic write: write(tmp path), then rename over p."""
+    tmp = p + '.tmp'
+    write(tmp); os.replace(tmp, p)
+
+
+def put_json(p, obj, **kw):
+    put(p, lambda t: json.dump(obj, open(t, 'w'), **kw))
+
+
+def read_wav(p):
+    try:
+        with wave.open(p) as w: prm = w.getparams(); data = w.readframes(prm.nframes)
+    except wave.Error as e:
+        sys.exit(f'{p}: not an integer PCM wav ({e}); a 32-bit float wav must be converted first: ffmpeg -i in.wav -c:a pcm_s16le out.wav')
+    if prm.sampwidth < 2: sys.exit(f'{p}: pause.py needs 16-bit (or wider) PCM, not {8 * prm.sampwidth}-bit')
+    return prm, data
+
+
 def main(film):
     vo = os.path.join(film, 'vo'); P = lambda n: os.path.join(vo, n)
     S = json.load(open(P('script.json'))); lines = S['lines']
-    book = json.load(open(P('pauses.json'))) if os.path.exists(P('pauses.json')) else {}
+    book = json.load(open(P('pauses.json'))) if os.path.exists(P('pauses.json')) else None
     if not os.path.exists(P('vo.wav')) or not os.path.exists(P('words.json')): sys.exit('pause.py needs vo/vo.wav and vo/words.json (voice.py --take, then align.py)')
+    if book is not None:
+        for n in ('vo-nopause.wav', 'words-nopause.json'):
+            if not os.path.exists(P(n)): sys.exit(f'vo/{n} is missing but vo/pauses.json says vo/vo.wav has pauses in it: restore vo/{n}, or record a new take (voice.py --take, align.py) and delete vo/pauses.json')
+    book = book or {}
+    ours = lambda key, f: sha(P(f)) in {book.get(key), (book.get('pending') or {}).get(key)} - {None, ''}
     done = dict(book.get('applied', []))
     old = shifts([{'id': l['id'], 'pause_after': done.get(l['id'], 0)} for l in lines])
-    # the no-pause take: a new vo.wav (not ours) is the new take; ours means vo-nopause.wav still holds the take
-    if sha(P('vo.wav')) != book.get('wav') or not os.path.exists(P('vo-nopause.wav')):
-        shutil.copyfile(P('vo.wav'), P('vo-nopause.wav')); old_wav_ours = False
-    else: old_wav_ours = True
-    if sha(P('words.json')) != book.get('words') or not os.path.exists(P('words-nopause.json')):
+    wav_ours = ours('wav', 'vo.wav')
+    if not wav_ours:  # a new take: it becomes the no-pause take
+        read_wav(P('vo.wav')); put(P('vo-nopause.wav'), lambda t: shutil.copyfile(P('vo.wav'), t))
+    if not ours('words', 'words.json'):
         ws = json.load(open(P('words.json')))
-        if old_wav_ours and done:  # re-aligned on the paused wav: move the words back to the no-pause timeline
+        if wav_ours and done:  # re-aligned on the paused wav: move the words back to the no-pause timeline
             for w in ws: d = old.get(w['line'], 0.0); w['t0'] = round(w['t0'] - d, 3); w['t1'] = round(w['t1'] - d, 3)
-        json.dump(ws, open(P('words-nopause.json'), 'w'), indent=0)
+        put_json(P('words-nopause.json'), ws, indent=0)
     raw = json.load(open(P('words-nopause.json')))
-    sh = shifts(lines)
-    with wave.open(P('vo-nopause.wav')) as w:
-        prm = w.getparams(); data = w.readframes(prm.nframes)
-    if prm.sampwidth < 2: sys.exit('pause.py needs 16-bit (or wider) PCM')
+    prm, data = read_wav(P('vo-nopause.wav'))
     fb, rate = prm.nchannels * prm.sampwidth, prm.framerate
     cuts = []  # (frame in the no-pause take, frames of silence)
     for k, l in enumerate(lines):
@@ -58,13 +81,19 @@ def main(film):
     for f, n in sorted(cuts):
         parts += [data[at * fb:f * fb], b'\0' * (n * fb)]; at = f
     parts.append(data[at * fb:])
-    with wave.open(P('vo.wav'), 'wb') as w:
-        w.setnchannels(prm.nchannels); w.setsampwidth(prm.sampwidth); w.setframerate(rate); w.writeframes(b''.join(parts))
+    sh = shifts(lines)
     out = [{**w, 't0': round(w['t0'] + sh.get(w['line'], 0.0), 3), 't1': round(w['t1'] + sh.get(w['line'], 0.0), 3)} for w in raw]
-    json.dump(out, open(P('words.json'), 'w'), indent=0)
     applied = [[l['id'], float(l['pause_after'])] for l in lines if float(l.get('pause_after') or 0) > 0]
-    json.dump({'about': 'written by pause.py: hashes of the vo.wav / words.json it wrote, and the pauses in them',
-               'wav': sha(P('vo.wav')), 'words': sha(P('words.json')), 'applied': applied}, open(P('pauses.json'), 'w'), indent=1)
+
+    def write_wav(t):
+        with wave.open(t, 'wb') as w:
+            w.setnchannels(prm.nchannels); w.setsampwidth(prm.sampwidth); w.setframerate(rate); w.writeframes(b''.join(parts))
+    write_wav(P('vo.wav.new')); json.dump(out, open(P('words.json.new'), 'w'), indent=0)
+    new = {'wav': sha(P('vo.wav.new')), 'words': sha(P('words.json.new'))}
+    about = 'written by pause.py: hashes of the vo.wav / words.json it wrote, and the pauses in them'
+    put_json(P('pauses.json'), {'about': about, 'wav': book.get('wav'), 'words': book.get('words'), 'applied': book.get('applied', []), 'pending': new}, indent=1)
+    os.replace(P('vo.wav.new'), P('vo.wav')); os.replace(P('words.json.new'), P('words.json'))
+    put_json(P('pauses.json'), {'about': about, **new, 'applied': applied}, indent=1)
     total = sum(s for _, s in applied)
     print(f"vo/vo.wav: {len(applied)} pause(s), +{total:.2f} s · {', '.join(f'{i} {s:g} s' for i, s in applied) or 'none'}")
 

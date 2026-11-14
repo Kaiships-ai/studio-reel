@@ -6,7 +6,12 @@
 node styles/stick-man/tools/stagegate.mjs films/<slug> <1|S|2a|2b|2c|3|4|5|6|all>   # review/gate-<id>.md
 ```
 
-Each gate in `styles/stick-man/tools/GATES.json` lists four kinds of evidence: **measured** (a tool that must exit 0: `develop.mjs`, `scriptlint.mjs`, `prepro.mjs --gate`, `assets.mjs`, `timing.mjs`, `postcheck.mjs`), **made** (the maker's files), **judged** (`by: agent:<id>` or `person:<name>`, fresh against what it reviewed: for a JSON file, the fields a viewer sees or hears hash the same as when the review was first seen newer than it, recorded in `review/.fresh.json`, so adding `options`, notes or purposes does not make a review stale; any other file must be older than the review; see `tools/fresh.mjs`) and **approved** (Kai in `review/approvals.json`, after the latest evidence). States: OPEN → READY FOR KAI → LOCK. A film may add evidence in `review/gates.local.json`, never remove any.
+Each gate in `styles/stick-man/tools/GATES.json` lists four kinds of evidence: **measured** (a tool that must exit 0: `develop.mjs`, `scriptlint.mjs`, `prepro.mjs --gate`, `assets.mjs`, `timing.mjs`, `postcheck.mjs`), **made** (the maker's files), **judged** (`by: agent:<id>` or `person:<name>`, fresh against what it reviewed: for a JSON file, everything but non-visible metadata (`notes`, `note`, `purpose`, `why`, `comments`; in `storyboard.json` also the options that are not picked, and `pick`) hashes the same as when the review was first seen newer than it, recorded in `review/.fresh.json`; any other file, such as `vo/vo.wav`, must be older than the review; see `tools/fresh.mjs`) and **approved** (Kai in `review/approvals.json`, after the latest evidence). States: OPEN → READY FOR KAI → LOCK. A film may add evidence in `review/gates.local.json`, never remove any.
+
+Freshness has one limit, first sight: the hash is recorded the first time `stagegate.mjs` runs after a review is
+written. If the reviewed file changes before that run, there is no record, the file is newer than the review and the
+review is stale. So run `stagegate.mjs` right after each review lands. An unreadable `review/.fresh.json` is reported
+with a warning and treated as no record.
 
 
 ```sh

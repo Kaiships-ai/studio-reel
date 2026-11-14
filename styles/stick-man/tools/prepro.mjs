@@ -169,15 +169,18 @@ for (const d of DEC?.decisions || []) {
 for (const d of DEC?.decisions || []) for (const c of d.check || []) if (d.status === 'approved' && c.type === 'sizeShare' && c.size === 'CARD' && c.min > 0.25)
   add('WARN', 'D3', d.id, `conflicts with the skill rule "cards ≤ 25 % / ≤ 8 s in a row" (C5): Kai picks which stands, and the loser is recorded in DECISIONS.json`);
 // K1: Kai's confirmation of the scene feels and story scores is locked; any later change is a FAIL until he confirms again.
-// One exception: a shot added after the lock whose score lies between its two locked neighbours' (inclusive) is INFO.
-const storyNow = { scenes: (SB.scenes || []).map(c => [c.id, c.feel]), shots: shots.map(s => [s.id, s.story]) };
-const storyHash = crypto.createHash('sha256').update(JSON.stringify(storyNow)).digest('hex').slice(0, 16);
+// One exception: a shot added after the lock whose score lies between its two locked neighbours' (inclusive), at most
+// two per gap, is INFO (storylock.mjs). The hash keeps the pre-scene-id format, so a hash-only lock still compares.
+const scenesNow = (SB.scenes || []).map(c => [c.id, c.feel]);
+const storyHash = crypto.createHash('sha256').update(JSON.stringify({ scenes: scenesNow, shots: shots.map(s => [s.id, s.story]) })).digest('hex').slice(0, 16);
+const storyNow = { scenes: scenesNow, shots: shots.map(s => [s.id, s.story, s.scene]) };
 const LK = F('review/locks.json'), locks = fs.existsSync(LK) ? JSON.parse(fs.readFileSync(LK, 'utf8')) : {};
 if (A['lock-story']) { locks.story = { hash: storyHash, by: A['lock-story'], at: new Date().toISOString(), ...storyNow }; fs.mkdirSync(F('review'), { recursive: true }); fs.writeFileSync(LK, JSON.stringify(locks, null, 1)); }
-if (locks.story && locks.story.hash !== storyHash) {
+if (locks.story && (Array.isArray(locks.story.shots) || locks.story.hash !== storyHash)) {
   const k = storyLockDiff(locks.story, storyNow), who = `${locks.story.by} confirmed them (${locks.story.at.slice(0, 10)})`;
   if (k.changed.length) add('FAIL', 'K1', 'story', `scene feels or story scores changed after ${who}${k.changed[0] === 'unknown' ? '' : ': ' + k.changed.join(', ')}: change the picture, not the score, or ask Kai again`);
   for (const id of k.added) add('INFO', 'K1', id, 'added after lock, interpolated (its story score lies between its locked neighbours)');
+  for (const m of k.info) add('INFO', 'K1', 'story', m);
 }
 if (A.gate === '2a' || A.gate === '2b') {
   if (!locks.story) add('FAIL', 'K1', 'story', 'Kai has not confirmed the scene feels and story scores (prepro.mjs --lock-story kai after he does)');

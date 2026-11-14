@@ -20,7 +20,10 @@ const SPEC = JSON.parse(fs.readFileSync(path.join(HERE, 'GATES.json'), 'utf8'));
 const local = fs.existsSync(F('review/gates.local.json')) ? JSON.parse(fs.readFileSync(F('review/gates.local.json'), 'utf8')) : {};
 const approvals = fs.existsSync(F('review/approvals.json')) ? JSON.parse(fs.readFileSync(F('review/approvals.json'), 'utf8')) : {};
 const mtime = p => fs.existsSync(F(p)) ? fs.statSync(F(p)).mtimeMs : 0;
-const BOOK = F('review/.fresh.json'), book = fs.existsSync(BOOK) ? JSON.parse(fs.readFileSync(BOOK, 'utf8')) : {};
+const BOOK = F('review/.fresh.json'), bookText = fs.existsSync(BOOK) ? fs.readFileSync(BOOK, 'utf8') : '';
+let book = {};
+try { book = bookText ? JSON.parse(bookText) : {}; if (!book || typeof book !== 'object' || Array.isArray(book)) throw new Error('not an object'); }
+catch (e) { console.warn(`! review/.fresh.json is unreadable (${e.message}): treated as no record, rewritten on this run`); book = {}; }
 const front = txt => Object.fromEntries((txt.match(/^(?:[a-z]+: .*\n)+/i)?.[0] || '').trim().split('\n').filter(Boolean).map(l => [l.split(':')[0].trim(), l.slice(l.indexOf(':') + 1).trim()]));
 
 function checkGate(id) {
@@ -55,7 +58,8 @@ function checkGate(id) {
 const ids = which === 'all' ? (SPEC.order || Object.keys(SPEC.gates)) : [which];
 const res = ids.map(checkGate);
 fs.mkdirSync(F('review'), { recursive: true });
-fs.writeFileSync(BOOK, JSON.stringify(book, null, 1) + '\n');
+const bookOut = JSON.stringify(book, null, 1) + '\n';
+if (bookOut !== bookText && (bookText || Object.keys(book).length)) fs.writeFileSync(BOOK, bookOut);
 for (const r of res) {
   const md = [`# Gate ${r.id} · ${r.title}`, '', `**${r.state}**`, '', '| Kind | Evidence | OK | Why |', '| --- | --- | --- | --- |',
     ...r.rows.map(x => `| ${x.kind} | ${x.what} | ${x.ok ? 'PASS' : 'FAIL'} | ${String(x.why).replace(/\|/g, '/')} |`), '',
