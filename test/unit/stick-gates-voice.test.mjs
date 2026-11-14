@@ -3,7 +3,7 @@
 // match the script's words, and planned pauses go into the take once.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
+import crypto from 'node:crypto'; import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { ROOT, env, run } from '../../kit/env.mjs';
 import { isFresh, judgedHash } from '../../styles/stick-man/tools/fresh.mjs';
 import { storyLockDiff } from '../../styles/stick-man/tools/storylock.mjs';
@@ -147,7 +147,9 @@ test('pause.py: pause_after inserts silence after the line, shifts later words, 
   const w1 = JSON.parse(fs.readFileSync(path.join(d, 'vo/words.json'), 'utf8'));
   assert.deepEqual(w1.map(w => w.t0), [0.1, 0.35, 0.7, 1.8]);
   const snap = () => ['vo/vo.wav', 'vo/words.json'].map(f => fs.readFileSync(path.join(d, f)).toString('base64'));
-  const s1 = snap(); pause(); assert.deepEqual(snap(), s1, 'idempotent');
+  const mt = () => ['vo/vo.wav', 'vo/words.json', 'vo/pauses.json'].map(f => { fs.utimesSync(path.join(d, f), 100, 100); return f; });
+  const s1 = snap(); mt(); pause(); assert.deepEqual(snap(), s1, 'idempotent');
+  for (const f of ['vo/vo.wav', 'vo/words.json', 'vo/pauses.json']) assert.equal(fs.statSync(path.join(d, f)).mtimeMs, 100000, `${f} not rewritten on a second run`);
   // re-aligned on the paused take: the words are moved back before they are kept, so nothing doubles
   fs.writeFileSync(path.join(d, 'vo/words.json'), JSON.stringify(w1)); pause();
   assert.deepEqual(JSON.parse(fs.readFileSync(path.join(d, 'vo/words.json'), 'utf8')).map(w => w.t0), [0.1, 0.35, 0.7, 1.8]);
@@ -174,4 +176,26 @@ open(sys.argv[1], 'wb').write(b'RIFF' + struct.pack('<I', 36 + len(d)) + b'WAVEf
   assert.equal(run('python', ['-c', mk, path.join(d, 'vo/vo.wav')], { capture: true }).status, 0);
   const p = run('python', [path.join(TOOLS, 'pause.py'), d], { capture: true });
   assert.notEqual(p.status, 0); assert.match(p.stderr, /32-bit float wav must be converted/);
+});
+
+test('pause.py: a run stopped after replacing vo.wav (pauses.json still pending) recovers on the next run', { skip: !hasPython() && 'no pixi python' }, () => {
+  const mkFilm = pa => { const d = tmp();
+    put(d, 'vo/script.json', { lines: [{ id: 'l01', text: 'One two' }, { id: 'l02', text: 'Three', pause_after: pa }, { id: 'l03', text: 'Four' }] });
+    put(d, 'vo/words.json', [{ line: 'l01', i: 0, word: 'One', t0: 0.1, t1: 0.3 }, { line: 'l01', i: 1, word: 'two', t0: 0.35, t1: 0.5 },
+      { line: 'l02', i: 0, word: 'Three', t0: 0.7, t1: 0.9 }, { line: 'l03', i: 0, word: 'Four', t0: 1.3, t1: 1.6 }]);
+    const mk = "import wave, sys; w = wave.open(sys.argv[1], 'wb'); w.setnchannels(1); w.setsampwidth(2); w.setframerate(1000); w.writeframes(b'\\x01\\x00' * 2000); w.close()";
+    assert.equal(run('python', ['-c', mk, path.join(d, 'vo/vo.wav')], { capture: true }).status, 0);
+    const p = run('python', [path.join(TOOLS, 'pause.py'), d], { capture: true }); assert.equal(p.status, 0, p.stderr); return d; };
+  const a = mkFilm(0.5), b = mkFilm(1.2), A = f => path.join(a, 'vo', f);
+  const h = f => crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex').slice(0, 16);
+  // the state a crash leaves: vo.wav and words.json already the 1.2 s output, pauses.json still the 0.5 s record + pending
+  fs.copyFileSync(path.join(b, 'vo/vo.wav'), A('vo.wav')); fs.copyFileSync(path.join(b, 'vo/words.json'), A('words.json'));
+  const book = JSON.parse(fs.readFileSync(A('pauses.json'), 'utf8')); book.pending = { wav: h(A('vo.wav')), words: h(A('words.json')) };
+  fs.writeFileSync(A('pauses.json'), JSON.stringify(book));
+  const sc = JSON.parse(fs.readFileSync(A('script.json'), 'utf8')); sc.lines[1].pause_after = 1.2; fs.writeFileSync(A('script.json'), JSON.stringify(sc));
+  const p = run('python', [path.join(TOOLS, 'pause.py'), a], { capture: true }); assert.equal(p.status, 0, p.stderr);
+  assert.equal(fs.readFileSync(A('vo.wav')).length, fs.readFileSync(path.join(b, 'vo/vo.wav')).length, 'not paused twice (the paused take was not taken as a new one)');
+  assert.deepEqual(JSON.parse(fs.readFileSync(A('words.json'), 'utf8')).map(w => w.t0), [0.1, 0.35, 0.7, 2.5]);
+  const after = JSON.parse(fs.readFileSync(A('pauses.json'), 'utf8'));
+  assert.equal(after.pending, undefined); assert.deepEqual(after.applied, [['l02', 1.2]]);
 });

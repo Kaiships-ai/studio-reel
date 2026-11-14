@@ -7,10 +7,10 @@
 # second run changes nothing, and a changed pause_after is applied from scratch. A new take (vo.wav not the one this tool
 # wrote) replaces the no-pause wav; words.json re-aligned on the paused wav is shifted back before it is kept.
 # Once pauses.json exists, a missing no-pause copy is an error: the paused take is never copied as the no-pause take.
-# Writes are atomic (temp file + rename). pauses.json lists the hashes it is about to write as "pending" before vo.wav
+# Writes are atomic (temp file + rename), and a file whose bytes would not change is not written (its mtime stays). pauses.json lists the hashes it is about to write as "pending" before vo.wav
 # and words.json are replaced, so a run stopped half way still knows both files are its own.
 # 16-bit (or wider) integer PCM wav, any channel count; standard library only.
-import hashlib, json, os, shutil, sys, wave
+import hashlib, io, json, os, shutil, sys, wave
 
 
 def sha(p):
@@ -85,15 +85,19 @@ def main(film):
     out = [{**w, 't0': round(w['t0'] + sh.get(w['line'], 0.0), 3), 't1': round(w['t1'] + sh.get(w['line'], 0.0), 3)} for w in raw]
     applied = [[l['id'], float(l['pause_after'])] for l in lines if float(l.get('pause_after') or 0) > 0]
 
-    def write_wav(t):
-        with wave.open(t, 'wb') as w:
-            w.setnchannels(prm.nchannels); w.setsampwidth(prm.sampwidth); w.setframerate(rate); w.writeframes(b''.join(parts))
-    write_wav(P('vo.wav.new')); json.dump(out, open(P('words.json.new'), 'w'), indent=0)
-    new = {'wav': sha(P('vo.wav.new')), 'words': sha(P('words.json.new'))}
+    buf = io.BytesIO()
+    with wave.open(buf, 'wb') as w:
+        w.setnchannels(prm.nchannels); w.setsampwidth(prm.sampwidth); w.setframerate(rate); w.writeframes(b''.join(parts))
+    wav_bytes, words_bytes = buf.getvalue(), json.dumps(out, indent=0).encode()
+    new = {'wav': hashlib.sha256(wav_bytes).hexdigest()[:16], 'words': hashlib.sha256(words_bytes).hexdigest()[:16]}
     about = 'written by pause.py: hashes of the vo.wav / words.json it wrote, and the pauses in them'
-    put_json(P('pauses.json'), {'about': about, 'wav': book.get('wav'), 'words': book.get('words'), 'applied': book.get('applied', []), 'pending': new}, indent=1)
-    os.replace(P('vo.wav.new'), P('vo.wav')); os.replace(P('words.json.new'), P('words.json'))
-    put_json(P('pauses.json'), {'about': about, **new, 'applied': applied}, indent=1)
+    final = {'about': about, **new, 'applied': applied}
+    same = lambda f, b: os.path.exists(P(f)) and open(P(f), 'rb').read() == b
+    todo = [(f, b) for f, b in (('vo.wav', wav_bytes), ('words.json', words_bytes)) if not same(f, b)]
+    if todo:  # files left untouched keep their mtime, so a review judged against vo.wav stays fresh
+        put_json(P('pauses.json'), {'about': about, 'wav': book.get('wav'), 'words': book.get('words'), 'applied': book.get('applied', []), 'pending': new}, indent=1)
+        for f, b in todo: put(P(f), lambda t, b=b: open(t, 'wb').write(b))
+    if todo or book != final: put_json(P('pauses.json'), final, indent=1)
     total = sum(s for _, s in applied)
     print(f"vo/vo.wav: {len(applied)} pause(s), +{total:.2f} s · {', '.join(f'{i} {s:g} s' for i, s in applied) or 'none'}")
 
