@@ -24,7 +24,9 @@ const first = C.base === 'CARRY' ? (C.advance ? C.intro[0] : C.keys[0]) : stand(
 const anim = [K(0, first, { ease: 'snap' }), key];
 const placed = placeClip(key, { pos: [0, 0], yaw: 90 }), last = placed.keys[placed.keys.length - 1].f;
 const xs = placed.keys.map(k => k.pos?.[0] ?? 0), x0 = Math.min(0, ...xs), x1 = Math.max(0, ...xs), k = Math.max(0.72, sc);
-const cam = x => ({ pos: [x + 1.6 * k, -3.0 * k, 1.1 * k], aim: [x + 0.15, 0, 0.8 * k], lens: 40 });
+// a 3/4 view from ahead; from behind when the clip faces a wall (a window), so the wall never hides the body
+const back = (C.needs.marks || []).some(m => m.kind === 'window') ? -1 : 1;
+const cam = x => ({ pos: [x + back * 1.6 * k, -3.0 * k, 1.1 * k], aim: [x + 0.15, 0, 0.8 * k], lens: 40 });
 const direct = [{ at: { f: 0 }, intent: 'ws', why: 'P1 · motion library proof', cut: 'cut', cam: cam(x0),
   ...(x1 - x0 > 0.4 ? { to: cam(x1), move: { from: { f: F0 }, dur: Math.max(10, last - F0), ease: 'inout' } } : {}) }];
 
