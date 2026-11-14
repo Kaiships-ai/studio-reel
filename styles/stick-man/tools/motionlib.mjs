@@ -90,7 +90,10 @@ export function checkClip(C, file) {
   let jMax = 0, jAt = null, slide = 0, slideAt = null; const over = [];
   for (let f = 1; f < fr.length; f++) {
     const p = fr[f - 1], q = fr[f];
-    for (const n of Object.keys(q)) if (ANGLE.test(n) && n in p) { const d = Math.abs(q[n] - p[n]); if (d > jMax) { jMax = d; jAt = `${f} ${n}`; } if (d > JOINT_MAX) over.push(f); }
+    // a foot in the air hangs off its shin: its pitch is a world angle that turns with the leg, not a joint, so it is not
+    // gated while the foot is up (the ankle's own bend is the rig's: ROM.ankleDF); the solved joints below catch a pop
+    const airborne = n => { const m = /^leg([LR])\.pitch$/.exec(n); return m && Math.max(q[`leg${m[1]}.footW.2`] ?? 0, p[`leg${m[1]}.footW.2`] ?? 0) > 0.005; };
+    for (const n of Object.keys(q)) if (ANGLE.test(n) && n in p && !airborne(n)) { const d = Math.abs(q[n] - p[n]); if (d > jMax) { jMax = d; jAt = `${f} ${n}`; } if (d > JOINT_MAX) over.push(f); }
     // a hand on an ik target: the target's travel against the arm's length, as an angle
     for (const s of ['L', 'R']) if (`arm${s}.ik.0` in q && (q[`arm${s}.ikw`] ?? 1) > 0.5) {
       const d = Math.hypot(...[0, 1, 2].map(i => q[`arm${s}.ik.${i}`] - p[`arm${s}.ik.${i}`])) / ARM_W * 180 / Math.PI;

@@ -45,7 +45,12 @@ export const K = (f, pose, over = {}) => ({ f, ...merge(pose, over), ease: over.
 // when the right arm swings forward (continuous, -1..1). Returns { keys, frames, advance, intro, introFrames,
 // introTravel, outro, outroTravel }: intro = the first step from the standard pose, outro = the closing step back to it.
 export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }) {
-  const B = BODIES[body], G = { ...B[kind], ...over }, { S, T } = G, Y = fy(body), run = kind === 'run', L = G.lift;
+  const B = BODIES[body], G = { ...B[kind], ...over }, Y = fy(body), run = kind === 'run', L = G.lift;
+  // a reference cycle (motion-lib/ref/: key poses taken from footage, ported 1:1) sets the step: its timing at 30 fps and
+  // its stride scaled by this body's leg against the reference's
+  const RF = G.ref, kR = RF ? (2 * 0.679 * (B.spec.legScale ?? 1) * 0.6 * (B.spec.scale ?? 1)) / RF.leg : 1;
+  if (RF) { G.T = RF.cycle / 2 * 30 / RF.fps; G.S = RF.speed * kR * RF.cycle / 2; G.ts = RF.stance * 30 / RF.fps; G.reach = RF.pose(0).legs.L.a[0] * kR / G.S; }
+  const { S, T } = G;
   const pose0 = base ? base(body, 0) : stand(body, 0);
   // A: the walk's size (1 = the body's numbers; <1 plainer, >1 broader): the hips' rise and fall, turn, tilt and shift,
   // the shoulders' counter and the arm swing all scale with it
@@ -180,8 +185,31 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
   const frame = t => { const { P, sl, sr } = torso(t), legs = {};
     for (const [s, l] of [['L', sl], ['R', sr]]) legs['leg' + s] = l.c < cs ? plant(s, t, l.j, l.c) : swing(s, t, l.j, l.c);
     return merge(P, legs, { bob: bobOf(t) }); };
+  // a reference cycle, frame by frame: the trunk tipped from the hips, the pelvis turned and tilted, the shoulders against
+  // it, the arms (world angles in the reference: on the leaning trunk they swing that much further forward), the hips at the reference's height,
+  // a planted foot fixed on its print and rolling heel to toe, a swing foot where the reference's leg puts it (eased off
+  // the print it left). The 'kaiships' dose plays these channels DOSE_E further from the base pose, so they are written
+  // back by that much: the film plays the reference as it is
+  const un = (v, r = 0) => r + (v - r) / DOSE_E;
+  const refFrame = t => {
+    const tr = t * RF.fps / 30, p = RF.pose(tr), x = px(t), hipM = p.hip * kR, bob = hipM * mW - 1.38 + DROP;
+    const P = merge(pose0, { pos: [x, 0, 0], bob: un(bob, pose0.bob || 0), hip: { x: -p.sway * kR * mW },
+      pelvis: { pitch: un(p.lean, pose0.pelvis?.pitch || 0), roll: un(-p.roll, pose0.pelvis?.roll || 0), yaw: un(p.yaw, pose0.pelvis?.yaw || 0) },
+      spine: { bend: pose0.spine.bend || 0, side: pose0.spine.side || 0, twist: un(p.shoulderYaw - p.yaw, pose0.spine.twist || 0) },
+      neck: { nod: un((pose0.neck.nod || 0) - 0.55 * p.lean, pose0.neck.nod || 0), turn: un(-0.25 * p.shoulderYaw, pose0.neck.turn || 0), tilt: pose0.neck.tilt || 0 } });
+    for (const sd of ['L', 'R']) { const [ua, el] = p.arms[sd], a0 = pose0['arm' + sd]; P['arm' + sd] = { ...a0, swing: un(ua + p.lean, a0.swing || 0), elbow: un(el, a0.elbow || 0) }; }
+    for (const sd of ['L', 'R']) {
+      const off = sd === 'R' ? RF.cycle / 2 : 0, tl = (((tr - off) % RF.cycle) + RF.cycle) % RF.cycle, j = 2 * Math.floor((tr - off) / RF.cycle) + (sd === 'R' ? 1 : 0);
+      const { a, fa } = p.legs[sd], pitch = fa - 90;
+      if (tl < RF.stance) { P['leg' + sd] = foot(land(j), yOf(sd), 0, pitch); continue; }
+      // the swing: the reference's ankle, plus whatever separates it from this foot's print at the push-off, fading out
+      const t0 = t - (tl - RF.stance) * 30 / RF.fps, p0 = RF.pose(t0 * RF.fps / 30), x0 = px(t0) + p0.legs[sd].a[0] * kR, w = Math.min(1, (tl - RF.stance) / 2.5), e = 1 - w * w * (3 - 2 * w);
+      P['leg' + sd] = foot(x + a[0] * kR + (land(j) - x0) * e, yOf(sd), Math.max(0, (p.hip + a[1]) * kR - 0.022 * 0.6 * sc), pitch);
+    }
+    return P;
+  };
   const keys = [];
-  for (let t = 0; t <= 2 * T; t++) keys.push(K(t, frame(t), { ease: 'flow' }));
+  for (let t = 0; t <= 2 * T; t++) keys.push(K(t, RF ? refFrame(t) : frame(t), { ease: 'flow' }));
   // a heel never peels faster than PEEL deg a frame: where the leg asks for more, the peel starts earlier (the loop wraps)
   const PEEL = 16;
   const N = 2 * T;
@@ -220,10 +248,10 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
     step(fo(0.4), xe + 0.48 * S, { legL: foot(land(2), -Y, L * 0.4, -25), legR: foot(xf, Y) }, { R: kD }, easeArms(0.4)),
     step(fo(0.65), xe + 0.57 * S, { legL: foot((land(2) + xf) / 2, -Y, L * 0.5, -5), legR: foot(xf, Y) }, { R: kn[0] }, easeArms(0.2)),
     step(fo(0.85), xf, { legL: foot(xf, -Y, 0.01, 3), legR: foot(xf, Y) }, { R: 6 }, easeArms(0.05)),
-    K(Te, merge(pose0, { pos: [xf, 0, 0] }, feet(body, xf)), { ease: 'slow' })] : [
+    K(Te, merge(pose0, { pos: [xf, 0, 0], hip: { x: 0 } }, feet(body, xf)), { ease: 'slow' })] : [
     step(fo(0.25), xe + 0.1 * S, { legL: foot(xf, -Y), legR: foot(rb, Y, L * 0.3, -25) }, { L: kn[1] }, easeArms(0.7, 0.5)),
     step(fo(0.5), xe + 0.3 * S, { legL: foot(xf, -Y), legR: foot((rb + xf) / 2, Y, L * 0.8, -10) }, { L: kS }, easeArms(0.4)),
     step(fo(0.75), xe + 0.45 * S, { legL: foot(xf, -Y), legR: foot(xf, Y, L * 0.3, 6) }, { L: kS / 2 + 1 }, easeArms(0.15)),
-    K(Te, merge(pose0, { pos: [xf, 0, 0] }, feet(body, xf)), { ease: 'slow' })];
+    K(Te, merge(pose0, { pos: [xf, 0, 0], hip: { x: 0 } }, feet(body, xf)), { ease: 'slow' })];
   return { keys, frames: 2 * T, advance: 2 * S, intro, introFrames: Ti, introTravel: -s0, outro, outroTravel: xf - xe };
 }
