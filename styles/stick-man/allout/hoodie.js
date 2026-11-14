@@ -16,8 +16,8 @@
 //   follow-through  PHYS.on: the hood's back peak is a damped mass-spring (3.5 Hz, zeta 0.6) on the posed peak; its lag
 //             (turns, nods, run starts and stops) turns the upper hood about the head centre (soft-clamped to 7 deg).
 //             Settles in ~8-10 frames.
-//   cords     PHYS.on: two inextensible verlet chains (allout/cloth.js) from the rim at the throat, gravity, drag, colliding
-//             with the figure's own body.js volumes (head, torso slices, plus the jersey) and the arm bones.
+//   cords     PHYS.on: two inextensible verlet chains (allout/cloth.js) from the rim at the throat, gravity, drag, a soft
+//             tether toward hanging at rest, colliding with the head's volume, the jersey's own surface and the arm bones.
 //   A frame that does not follow the last one (a still, a cut) starts from rest: the same frame always gives the same picture.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -146,11 +146,12 @@ function lineGeos() {
 // ---------------------------------------------------------------- the hood: the study's closed thick shell
 const HOOD_C = new THREE.Vector3(0, HEAD_Y, 0);
 function hoodGeos() {
-  const g = PIECES.hood.geometry.clone(); g.computeVertexNormals();
+  const g = PIECES.hood.geometry.clone(); roundLip(g); g.computeVertexNormals();
   const P = g.attributes.position, N = g.attributes.normal, col = new Float32Array(P.count * 3), out = new Uint8Array(P.count), u = new THREE.Vector3(), n = new THREE.Vector3();
   for (let i = 0; i < P.count; i++) { u.set(P.getX(i), P.getY(i), P.getZ(i)).sub(HOOD_C); n.set(N.getX(i), N.getY(i), N.getZ(i)); out[i] = u.dot(n) > 0 ? 1 : 0; const v = out[i] ? 1 : LIP_TONE; col.set([v, v, v], 3 * i); }
   g.setAttribute('color', new THREE.BufferAttribute(col, 3));
   smoothNormals(g, out, 32);
+  broadNormals(g, out);
   // the rolled lip next to the face rim is a thin tube in the drape; its own curvature puts glossy toon stripes beside the
   // rim in a close-up. Within 2 cm of the rim its shading normal is the broad one (out from the head centre): one flat tone
   { const R = PIECES.hood_rim.geometry.attributes.position, cell = 0.025, grid = new Map(), v = new THREE.Vector3(), w = new THREE.Vector3();
@@ -179,6 +180,42 @@ function smoothNormals(g, out, iters) {
     for (let v = 0; v < m; v++) { B[3 * v] = A[3 * v]; B[3 * v + 1] = A[3 * v + 1]; B[3 * v + 2] = A[3 * v + 2]; for (const u of nb[v]) { B[3 * v] += A[3 * u]; B[3 * v + 1] += A[3 * u + 1]; B[3 * v + 2] += A[3 * u + 2]; } }
     norm(B); A = B; }
   for (let i = 0; i < n; i++) N.setXYZ(i, A[3 * id[i]], A[3 * id[i] + 1], A[3 * id[i] + 2]);
+}
+// the hood's lip along the face rim, rounded: the drape left the shell's edge flared ~1 cm out past the rim tube at the brow,
+// which drew a sharp point (a notch) in the outline where the brim meets the rim. Umbrella smoothing of the shell's
+// positions within LIP_D of the rim (welded by position, full strength at the rim, none from LIP_D out) rounds it off.
+const LIP_Y = [1.56, 1.62], LIP_D = 0.045, LIP_IT = 10;
+function roundLip(g) {
+  const P = g.attributes.position, n = P.count, key = new Map(), id = new Int32Array(n);
+  for (let i = 0; i < n; i++) { const k = `${Math.round(P.getX(i) * 2e4)},${Math.round(P.getY(i) * 2e4)},${Math.round(P.getZ(i) * 2e4)}`; let v = key.get(k); if (v == null) { v = key.size; key.set(k, v); } id[i] = v; }
+  const m = key.size, X = new Float64Array(3 * m), nb = Array.from({ length: m }, () => new Set()), I = g.index.array, w = new Float64Array(m);
+  const O = hoodOut(), inner = new Uint8Array(m);
+  for (let i = 0; i < n; i++) { X[3 * id[i]] = P.getX(i); X[3 * id[i] + 1] = P.getY(i); X[3 * id[i] + 2] = P.getZ(i); if (!O[i]) inner[id[i]] = 1; }
+  for (let t = 0; t < I.length; t += 3) for (const [a, b] of [[0, 1], [1, 2], [2, 0]]) { const u = id[I[t + a]], v = id[I[t + b]]; if (u !== v) { nb[u].add(v); nb[v].add(u); } }
+  const R = PIECES.hood_rim.geometry.attributes.position, cell = 0.05, grid = new Map();
+  for (let j = 0; j < R.count; j += 2) { const k = `${Math.floor(R.getX(j) / cell)},${Math.floor(R.getY(j) / cell)},${Math.floor(R.getZ(j) / cell)}`; (grid.get(k) || grid.set(k, []).get(k)).push(j); }
+  for (let v = 0; v < m; v++) { const x = X[3 * v], y = X[3 * v + 1], z = X[3 * v + 2]; let d = Infinity;
+    for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) for (let c = -1; c <= 1; c++) for (const j of grid.get(`${Math.floor(x / cell) + a},${Math.floor(y / cell) + b},${Math.floor(z / cell) + c}`) || []) d = Math.min(d, Math.hypot(R.getX(j) - x, R.getY(j) - y, R.getZ(j) - z));
+    w[v] = inner[v] ? 0 : 0.5 * (1 - sstep(0.012, LIP_D, d)) * sstep(LIP_Y[0], LIP_Y[1], y); }
+  for (let it = 0; it < LIP_IT; it++) { const Y = X.slice();
+    for (let v = 0; v < m; v++) { if (!w[v] || !nb[v].size) continue; let sx = 0, sy = 0, sz = 0; for (const u of nb[v]) { sx += X[3 * u]; sy += X[3 * u + 1]; sz += X[3 * u + 2]; } const k = nb[v].size;
+      Y[3 * v] += w[v] * (sx / k - X[3 * v]); Y[3 * v + 1] += w[v] * (sy / k - X[3 * v + 1]); Y[3 * v + 2] += w[v] * (sz / k - X[3 * v + 2]); }
+    X.set(Y); }
+  for (let i = 0; i < n; i++) P.setXYZ(i, X[3 * id[i]], X[3 * id[i] + 1], X[3 * id[i] + 2]);
+}
+// the hood's outer shading normals, blended toward a broad form (BROAD of the way): out from the head centre round the head,
+// out from the body's axis where the skirt lies on the shoulders and the back. The drape's gathers and the skirt's folds
+// otherwise put a smeared second terminator on the skirt under the back of the hood (a grey patch at the nape); the cops'
+// uniform has one clean terminator per form
+const BROAD = 1.0;
+function broadNormals(g, out) {
+  const P = g.attributes.position, N = g.attributes.normal, h = new THREE.Vector3(), b = new THREE.Vector3(), n = new THREE.Vector3();
+  for (let i = 0; i < P.count; i++) { if (!out[i]) continue; const x = P.getX(i), y = P.getY(i), z = P.getZ(i);
+    h.set(x / (HA_M * HA_M), (y - HEAD_Y) / (HB_M * HB_M), z / (HA_M * HA_M)).normalize();
+    const yy = Math.min(y, SH_TOP - 0.02), dr = (shellR(yy + 0.005) - shellR(yy - 0.005)) / 0.01;
+    b.set(x, -dr * Math.hypot(x, z / DEPTH), z / (DEPTH * DEPTH)).normalize();
+    h.lerp(b, sstep(1.36, 1.18, y)).normalize();
+    n.set(N.getX(i), N.getY(i), N.getZ(i)).lerp(h, BROAD).normalize(); N.setXYZ(i, n.x, n.y, n.z); }
 }
 // the hood's lower edge where it lies on the shoulders and the back (from one end of the face rim round the back to the
 // other): one ink line, the crease a hood makes on the body
@@ -228,7 +265,8 @@ function cowl() {
 // a hood down (day 2): the hood folded flat on the upper back, built clean from primitives: the neckline as a soft rolled
 // collar round the base of the head, the folded hood as a low U-shaped pad lying on the jersey from the collar down to the
 // shoulder blades (thickest at the fold, a 1 cm lip at its edge), one ink line round the pad's edge and one across it where
-// the hood's face opening lies. All of it rides the garment (the spine bend), like the pocket.
+// the hood's face opening lies, and the fabric bunched round the back of the neck above it (a soft roll, so the hood reads
+// from the side, not a bare tube neck). All of it rides the garment (the spine bend), like the pocket.
 const DN = { yTop: 1.225, yBot: 0.99, w: 0.175, t0: 0.010, t1: 0.026 };
 const dnW = y => DN.w * Math.sqrt(Math.max(0, 1 - Math.pow((DN.yTop - y) / (DN.yTop - DN.yBot), 3)));
 function backPt(x, y, out = 0) {       // a point on the (untucked) garment's back at x, y, `out` metres along its normal
@@ -261,8 +299,20 @@ function downGeos() {
   const edgeLine = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(rimPts, false, 'centripetal'), 160, LINE_R * 1.3, 6, false);
   const open = []; for (let i = 0; i <= 24; i++) { const u = -0.82 + 1.64 * i / 24, v = 0.10 + 0.32 * (1 - u * u), y = DN.yTop + (DN.yBot - DN.yTop) * v; open.push(backPt(u * dnW(y), y, dnT(u, v) + 0.002)); }
   const openLine = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(open), 64, LINE_R, 6, false);
-  return { pad: g, padOuter: og, collar, edgeLine, openLine };
+  // the bunch: the hood's fabric gathered round the back of the neck where it falls (a soft roll behind and beside the neck,
+  // thickest at the nape, thinning to nothing at the throat beside the cords), so the hood down reads from the side and the
+  // three-quarter, not only from the back
+  const bunch = (() => { const N = 64, R = th => { const a = Math.abs(Math.atan2(Math.sin(th), Math.cos(th))); return 0.004 + 0.036 * sstep(0.70, 2.7, a) * (0.4 + 0.6 * sstep(0.70, 1.4, a)); }, pts = [];
+    for (let i = 0; i <= N; i++) { const th = BUNCH_TH + (2 * Math.PI - 2 * BUNCH_TH) * i / N, cy = 1.205 + 0.04 * (0.5 - 0.5 * Math.cos(th)), y = cy - 0.010 - 0.55 * R(th), r = shellR(y);
+      const nx = Math.sin(th), nz = Math.cos(th) / DEPTH, nl = Math.hypot(nx, nz), o = R(th) + 0.004;
+      pts.push([new THREE.Vector3(r * Math.sin(th) + o * nx / nl, y, DEPTH * r * Math.cos(th) + o * nz / nl), R(th)]); }
+    const curve = new THREE.CatmullRomCurve3(pts.map(p => p[0]), false, 'centripetal'), SEGS = 160, RAD = 14, tg = new THREE.TubeGeometry(curve, SEGS, 1, RAD, false), P = tg.attributes.position, c = new THREE.Vector3(), v = new THREE.Vector3();
+    for (let i = 0; i <= SEGS; i++) { curve.getPointAt(i / SEGS, c); const u = i / SEGS * N, k = Math.min(N - 1, Math.floor(u)), rr = pts[k][1] + (pts[k + 1][1] - pts[k][1]) * (u - k);
+      for (let j = 0; j <= RAD; j++) { const q = i * (RAD + 1) + j; v.fromBufferAttribute(P, q).sub(c).multiplyScalar(rr).add(c); P.setXYZ(q, v.x, v.y, v.z); } }
+    tg.computeVertexNormals(); tg.setAttribute('color', new THREE.BufferAttribute(new Float32Array(P.count * 3).fill(1), 3)); return tg; })();
+  return { pad: g, padOuter: og, collar, edgeLine, openLine, bunch };
 }
+const BUNCH_TH = 40 * DEG;   // the bunch runs from 40 deg beside the throat round the back to the other side
 // a cord's rest centreline (CORD_N points, top first) from the study's cord tube, kept in front of the jersey
 function cordLine(name) {
   const a = PIECES[name].geometry.attributes.position.array, ys = []; for (let i = 1; i < a.length; i += 3) ys.push(a[i]);
@@ -308,13 +358,15 @@ const restOf = m => [m, ...m.children.filter(c => c.isMesh && !c.userData.over)]
 
 // The hood's skinning, by rest height y. The head's turn relative to the chest splits into a twist (about its own axis) and
 // a swing (nod, tilt) about the neck pivot; the swing in turn is the head centre's shift plus a turn about that centre.
-//   twist  none at the skirt, TW_TOP at the crown, spread as 1 / the hood's radius (every edge shears alike: the shear stays
-//          under ~0.3, the stretch of the worst slanted edge under ~15 %)
+//   twist  TW_BOT at the skirt (it slides round on the shoulders, as a loose neckline is dragged), all of it from Y_HI (the
+//          cheeks) up, spread between as 1 / the hood's radius (every edge shears alike); TW_THROAT less at the front of the
+//          throat, where the cords hang. The face opening turns with the face: the face stays framed through a 90 deg turn
+//          (a crescent of the hood's inside showed at TW 0.4-0.9) and the stretch p99 stays under 15 %
 //   shift  the head centre's shift, 10 % at the skirt (it slides on the shoulders) to 100 % from the ears up
 //   swing  KS of the head's swing about its centre, from the jaw up. The head is near round, so the rest of the swing turns it
 //          inside the hood without cutting into it; what does is pushed out (below)
 // The skirt is kept on the jersey and the hood off the head by a push-out (continuous in position: no ripples).
-const Y_LO = 1.095, Y_HI = 1.758, TW_TOP = 0.9, TW_BOT = 0.4, TW_Y0 = 1.06, KS = 0.25;
+const Y_LO = 1.095, Y_HI = 1.40, TW_TOP = 1.0, TW_BOT = 0.75, TW_Y0 = 1.095, TW_THROAT = 0.3, KS = 0.25;
 const wShift = y => 0.1 + 0.9 * sstep(1.10, 1.40, y);
 const wRot = y => KS * sstep(1.10, 1.40, y);
 const TWIST = (() => { const P = PIECES.hood.geometry.attributes.position, n = 80, dy = (Y_HI - TW_Y0) / n, r = new Float64Array(n).fill(0.05);
@@ -327,6 +379,7 @@ const wLag = y => sstep(1.20, 1.72, y);
 const PEAK = new THREE.Vector3(0, 1.62, -0.30), SPR_F = 3.5, SPR_Z = 0.6, SPR_GAIN = 0.55, LAG_MAX = 7 * DEG, SUB = 8, PRE = 40;
 const HEAD_GAP = 0.006, JERSEY_GAP = 0.003, ARM_R = 0.0138 + 0.010;   // the arm's ink tube radius plus a gap
 const _ab = new THREE.Vector3(), _av = new THREE.Vector3(), _cp = new THREE.Vector3();
+const CORD_TETHER = 0.004, CORD_GAP = 0.006, _t3 = new THREE.Vector3(), _jl = new THREE.Vector3(), _jr = new THREE.Vector3(), _jw = new THREE.Vector3(), _jt = new THREE.Vector3(), _jo = new THREE.Vector3(), _jq = new THREE.Quaternion();
 
 const _v = new THREE.Vector3(), _n = new THREE.Vector3(), _a = new THREE.Vector3(), _b = new THREE.Vector3(), _q = new THREE.Quaternion(), _q2 = new THREE.Quaternion(), _qi = new THREE.Quaternion();
 const Y_AX = new THREE.Vector3(0, 1, 0);
@@ -360,7 +413,7 @@ export function hoodie(S, { down = false } = {}) {
   // screen-space AO a false surface 3 cm out, which shows as a blocky pale/dark patch where the skirt lies on the chest
   for (const m of [hood, garment]) m.children[0].userData.noPrepass = true;
   const D = down ? downGeos() : null;
-  const downP = D ? [keep(solid(D.pad, CLOTH_MAT, INK, D.padOuter)), keep(solid(D.collar, CLOTH_MAT, INK * 0.8)), keep(new THREE.Mesh(D.edgeLine, INK_MAT)), keep(new THREE.Mesh(D.openLine, INK_MAT))] : [];
+  const downP = D ? [keep(solid(D.pad, CLOTH_MAT, INK, D.padOuter)), keep(solid(D.collar, CLOTH_MAT, INK * 0.8)), keep(new THREE.Mesh(D.edgeLine, INK_MAT)), keep(new THREE.Mesh(D.openLine, INK_MAT)), keep(solid(D.bunch, CLOTH_MAT, INK * 0.8))] : [];
   // the face is a card drawn in front of the head (engine/cast.js FACE_2D) after the opaque pass; where the hood or its rim is
   // the nearest surface they are drawn again over it (same geometry, depth test EQUAL), so a brow or an eye that slides
   // under the hood's brim is covered by it instead of being painted on the fabric
@@ -380,6 +433,7 @@ export function hoodie(S, { down = false } = {}) {
     for (let i = 0; i < nv; i++) { const t = q.ink ? q.ink[i] : 0, x = q.p[3 * i] - t * (q.n ? q.n[3 * i] : 0), y = q.p[3 * i + 1] - t * (q.n ? q.n[3 * i + 1] : 0), z = q.p[3 * i + 2] - t * (q.n ? q.n[3 * i + 2] : 0);
       const c = Math.hypot(x, z / DEPTH) - garmentR(Math.atan2(x, z / DEPTH), y); q.outG[i] = c >= -0.001 ? Math.min(JERSEY_GAP, Math.max(0, c)) + 1 : 0; }   // 0: inside the jersey at rest (left alone); else 1 + its rest clearance
   }
+  const RIM_C0 = (() => { const A = H.rim.attributes.position.array, c = new THREE.Vector3(); for (let i = 0; i < A.length; i += 3) c.x += A[i], c.y += A[i + 1], c.z += A[i + 2]; return c.multiplyScalar(3 / A.length).sub(HOOD_C).normalize(); })();
   // the hood's rest edges, for the stretch numbers
   const hq = (hoodP[0] || { parts: [{ p: new Float32Array(0) }] }).parts[0], E = (() => { const s = new Set(), e = [], I = down ? [] : H.g.index.array, p = hq.p;
     for (let t = 0; t < I.length; t += 3) for (const [a, b] of [[I[t], I[t + 1]], [I[t + 1], I[t + 2]], [I[t + 2], I[t]]]) { const k = a < b ? a * 1e5 + b : b * 1e5 + a; if (s.has(k)) continue; s.add(k);
@@ -415,7 +469,7 @@ export function hoodie(S, { down = false } = {}) {
   // one rest point of the hood -> chest-relative posed: twist, scale, swing about the head centre, shift, then the lag
   const _qs = new THREE.Quaternion(), _qt = new THREE.Quaternion(), _I = new THREE.Quaternion(), _l = new THREE.Vector3();
   function skin(F, x, y, z, lag, out, nIn, nOut) {
-    const wt = wTwist(y), wr = wRot(y), ws = wShift(y), wl = wLag(y);
+    const wt = wTwist(y) - TW_THROAT * sstep(1.22, 0.35, Math.abs(Math.atan2(x, z))) * sstep(1.34, 1.15, y), wr = wRot(y), ws = wShift(y), wl = wLag(y);
     _qt.slerpQuaternions(_I, F.Tw, wt); _qs.slerpQuaternions(_I, F.Sw, wr); _q.copy(_qs).multiply(_qt);
     const sx = 1 + (F.s.x - 1) * ws, sy = 1 + (F.s.y - 1) * ws, sz = 1 + (F.s.z - 1) * ws;
     out.set(x * sx, (y - F.c0.y) * sy, z * sz).applyQuaternion(_q).add(F.c0).addScaledVector(F.dc, ws);
@@ -480,15 +534,18 @@ export function hoodie(S, { down = false } = {}) {
     ST.corr = corr;
     if (crease) { const n = creaseRest.length; crease.set(creaseRest.map(([x, y, z]) => { const v = skin(F, x, y, z, lag, new THREE.Vector3()); push(F, v, 1 + JERSEY_GAP); return v.applyMatrix4(Mc); }), i => crease.r * Math.min(1, 0.1 + 0.9 * Math.min(i, n - 1 - i) / 6)); }
   }
-  // a cord's anchor (its rest top) on the posed hood, root-local
-  function anchor(c) { const F = ST.F, [x, y, z] = c.rest[0]; if (pinned) return _a.set(x, y, z).applyMatrix4(F.Mc).clone(); const v = skin(F, x, y, z, ST.lag || null, new THREE.Vector3()); push(F, v, 0); return v.applyMatrix4(F.Mc); }
+  // a cord's anchor (its rest top) on the posed hood, root-local, kept outside the jersey: the push-out works in the chest's
+  // frame, which in a deep bend sits a few cm off the garment's own bend 13 cm below the top of the spine, so the anchor is
+  // checked against the jersey as drawn too (jerseyDepth)
+  function anchor(c) { const F = ST.F, [x, y, z] = c.rest[0]; if (pinned) return _a.set(x, y, z).applyMatrix4(F.Mc).clone(); const v = skin(F, x, y, z, ST.lag || null, new THREE.Vector3()); push(F, v, 1 + CORD_R + CORD_GAP); v.applyMatrix4(F.Mc);
+    return jerseyDepth(v, CORD_R + CORD_GAP) > 0 ? v.copy(_jo) : v; }
   // the cords at rest: hanging as modelled from the posed anchor, turned with the chest
   function restCords() {
     const F = ST.F, qc = new THREE.Quaternion(); F.Mc.decompose(_a, qc, _b);
     for (const c of cords) { const A = anchor(c), pts = c.rest.map(p => new THREE.Vector3(p[0] - c.rest[0][0], p[1] - c.rest[0][1], p[2] - c.rest[0][2]).applyQuaternion(qc).add(A)); drawCord(c, pts); }
   }
   function drawCord(c, pts) {
-    const sm = smoothPts(pts, 24); c.body.set(sm); c.ink.set(sm);
+    const sm = c.sm = smoothPts(pts, 24); c.body.set(sm); c.ink.set(sm);
     const e = sm[23], d = _b.subVectors(sm[23], sm[21]).normalize(); c.ag.set([0, 1, 2, 3].map(k => e.clone().addScaledVector(d, -0.016 + k * 0.0055)));
   }
   const p1 = S.pose, p2 = S.pose2;
@@ -508,8 +565,11 @@ export function hoodie(S, { down = false } = {}) {
     if (!ST.chains) ST.chains = cords.map(c => { const pts = c.rest, Ed = [], Bd = [];
       for (let k = 0; k + 1 < CORD_N; k++) Ed.push([k, k + 1, Math.hypot(...[0, 1, 2].map(j => pts[k + 1][j] - pts[k][j]))]);
       for (let k = 0; k + 2 < CORD_N; k++) Bd.push([k, k + 2, Math.hypot(...[0, 1, 2].map(j => pts[k + 2][j] - pts[k][j]))]);
-      const pin = new Uint8Array(CORD_N); pin[0] = 1; return new Cloth(CORD_N, Ed, Bd, pin, { bend: 0.12, damp: 0.05, iters: 10, margin: 0.0275 }); });
-    const cols = ST.vols.map(V => (p, m) => { const l = p.clone().applyMatrix4(RWi).divideScalar(W), s = V.push(l, (V.kind === 'head' ? 0.012 : m) / W); return s ? s.multiplyScalar(W).applyMatrix4(RW) : null; });
+      const pin = new Uint8Array(CORD_N); pin[0] = 1; return new Cloth(CORD_N, Ed, Bd, pin, { bend: 0.12, damp: 0.05, iters: 10, margin: 0.0275, tether: CORD_TETHER }); });
+    // the head's volume, and the jersey itself (the garment's own surface: the torso's volumes lie under it, so a cord kept
+    // off them alone floats in front of the jersey in one place and sinks into it in another)
+    const cols = ST.vols.filter(V => V.kind === 'head').map(V => p => { const l = p.clone().applyMatrix4(RWi).divideScalar(W), s = V.push(l, 0.012 / W); return s ? s.multiplyScalar(W).applyMatrix4(RW) : null; });
+    cols.push(p => { const l = p.clone().applyMatrix4(RWi), d = jerseyDepth(l, CORD_R + CORD_GAP); if (d <= 0) return null; return l.copy(_jo).applyMatrix4(RW); });
     const caps = []; for (const sd of ['L', 'R']) { const r = ST.rig?.[sd]; if (!r?.shoulder) continue; const P3 = q => q.clone().multiplyScalar(W).applyMatrix4(RW); caps.push([P3(r.shoulder.clone().lerp(r.elbow, 0.45)), P3(r.elbow), 0.0138], [P3(r.elbow), P3(r.hand), 0.0138]); }   // the upper arm from where it leaves the body
     const anc = cords.map(c => anchor(c).applyMatrix4(RW));
     if (fresh) {
@@ -517,13 +577,18 @@ export function hoodie(S, { down = false } = {}) {
       const qc = new THREE.Quaternion(); F.Mc.clone().premultiply(RW).decompose(_a, qc, _b);
       ST.chains.forEach((ch, i) => { const c = cords[i]; for (let j = 0; j < CORD_N; j++) ch.set(j, new THREE.Vector3(c.rest[j][0] - c.rest[0][0], c.rest[j][1] - c.rest[0][1], c.rest[j][2] - c.rest[0][2]).applyQuaternion(qc).add(anc[i]).toArray()); });
     }
-    const w = 2 * Math.PI * SPR_F, k = w * w, cdamp = 2 * SPR_Z * w, dt = 1 / (30 * SUB);
+    const w = 2 * Math.PI * SPR_F, k = w * w, cdamp = 2 * SPR_Z * w, dt = 1 / (30 * SUB), qcW = new THREE.Quaternion();
+    // the cords' soft tether: each point is drawn a little toward where it hangs at rest below its anchor, turned with the
+    // chest's heading only (gravity keeps its direction when the body leans), so a cord swings after a fast turn and settles
+    // back to hanging instead of lying along the path its anchor travelled
+    { F.Mc.clone().premultiply(RW).decompose(_a, qcW, _b); const f = new THREE.Vector3(0, 0, 1).applyQuaternion(qcW); qcW.setFromAxisAngle(Y_AX, Math.atan2(f.x, f.z)); }
     const runs = fresh ? PRE : 1;
     for (let f = 0; f < runs; f++) for (let s = 0; s < SUB; s++) {
       const u = fresh ? 1 : (s + 1) / SUB, T = _a.lerpVectors(ST.tgtPrev, tgt, u);
       // the peak: semi-implicit Euler on a damped spring to its posed place
       ST.V.addScaledVector(_b.subVectors(T, ST.P).multiplyScalar(k).addScaledVector(ST.V, -cdamp), dt); ST.P.addScaledVector(ST.V, dt);
-      ST.chains.forEach((ch, i) => { const A = new THREE.Vector3().lerpVectors(ST.ancPrev[i], anc[i], u).toArray(); ch.sub(dt, () => A, cols, caps); leash(ch); });
+      ST.chains.forEach((ch, i) => { const A = new THREE.Vector3().lerpVectors(ST.ancPrev[i], anc[i], u), c = cords[i], tg = c.rest.map((r, j) => j ? _t3.set(r[0] - c.rest[0][0], r[1] - c.rest[0][1], r[2] - c.rest[0][2]).applyQuaternion(qcW).add(A).toArray() : A.toArray());
+        ch.sub(dt, j => tg[j], cols, caps); leash(ch); });
     }
     ST.tgtPrev = tgt.clone(); ST.ancPrev = anc.map(a => a.clone()); ST.t = t;
     // the lag: the turn that carries the posed peak onto the sprung one, about the head centre, in the chest frame (scaled, soft-clamped)
@@ -535,6 +600,22 @@ export function hoodie(S, { down = false } = {}) {
     drawHood(ST.lag);
     ST.chains.forEach((ch, i) => { const pts = []; for (let j = 0; j < CORD_N; j++) pts.push(new THREE.Vector3(ch.x[3 * j], ch.x[3 * j + 1], ch.x[3 * j + 2]).applyMatrix4(RWi)); drawCord(cords[i], pts); });
     if (!down && /hoodstats/.test(globalThis.location?.search || '')) console.error('HOODIE ' + JSON.stringify(stats(t, want, fresh)));
+  }
+  // how deep a root-local point is inside the jersey grown by `grow` (m; <= 0 outside). _jo is set to the point moved out
+  // onto that surface (along the garment's elliptic radius at its rest height). The garment's warp (engine/cast.js bendPt:
+  // the spine's twist, bend and squash) carries a rest point to the spine's frame at its height plus its offset in that
+  // frame, so it is undone by finding the height whose frame's plane holds the point (a few Newton steps along the spine).
+  function jerseyDepth(l, grow) {
+    const F = ST.F, B = F.B; _jl.copy(l).sub(F.bp).applyQuaternion(_jq.copy(F.qb).invert()).divideScalar(W);
+    let yr = _jl.y / B.s, fr = null;
+    for (let k = 0; k < 6; k++) { fr = spineFrame(B, yr); _jt.copy(_jl).sub(fr.p); const dy = _jt.dot(_jw.copy(Y_AX).applyQuaternion(fr.q)) / B.s; yr += dy; if (Math.abs(dy) < 1e-5) break; }
+    fr = spineFrame(B, yr); _jr.copy(_jl).sub(fr.p).applyQuaternion(fr.q.invert()).multiplyScalar(Math.sqrt(B.s));
+    const x = _jr.x * W, y = (yr + HIP_V) * W, z = _jr.z * W;
+    if (y > SH_TOP - 0.01 || y < BAND[0]) return -Infinity;   // above the shoulders or below the hem: no jersey there
+    const th = Math.atan2(x, z / DEPTH), r = Math.hypot(x, z / DEPTH), g = (y < BAND[1] ? RB : shellR(y)) * (down ? 1 : tuck(y)) + grow;   // the jersey as drawn, less the seam under the hood's skirt (a shelf a cord must not catch on)
+    if (r < 1e-4 || r >= g) return g - r;
+    _jw.set(x * g / r / W, y / W - HIP_V, z * g / r / W); bendPt(F.B, _jw); _jo.copy(_jw).multiplyScalar(W).applyQuaternion(F.qb).add(F.bp);
+    return g - r;
   }
   // a cord does not stretch: follow-the-leader from the anchor down (each point at most its rest length from the one above;
   // its previous position moves with it, so the correction adds no speed)
@@ -552,9 +633,21 @@ export function hoodie(S, { down = false } = {}) {
     const st = [], so = []; for (let e = 0; e < E.length; e += 3) { const a = E[e], b = E[e + 1]; if (H.out[a] && H.out[b]) so.push(Math.hypot(A[3 * a] - A[3 * b], A[3 * a + 1] - A[3 * b + 1], A[3 * a + 2] - A[3 * b + 2]) / E[e + 2] - 1); st.push(Math.hypot(A[3 * a] - A[3 * b], A[3 * a + 1] - A[3 * b + 1], A[3 * a + 2] - A[3 * b + 2]) / E[e + 2] - 1); }
     let wi = 0; for (let e = 0; e < st.length; e++) if (st[e] > st[wi]) wi = e; const wy = +hq.p[3 * E[3 * wi] + 1].toFixed(3), wz = +hq.p[3 * E[3 * wi] + 2].toFixed(3); st.sort((x, y) => x - y);
     const rel = ST.P.clone().sub(ST.tgtPrev), move = ST.relPrev && !fresh ? rel.distanceTo(ST.relPrev) : 0; ST.relPrev = rel;
-    const cs = ST.chains.map(ch => ch.stretch()), cordPen = (() => { let m = 0; for (const ch of ST.chains) for (let j = 1; j < CORD_N; j++) { _v.set(ch.x[3 * j], ch.x[3 * j + 1], ch.x[3 * j + 2]).applyMatrix4(RWi).divideScalar(W); for (const V of ST.vols) { const h = V.test(_v, 0); if (h) m = Math.max(m, h.depth * W); } } return m; })();
-    return { t, pen: +pen.toFixed(4), penAt: penAt >= 0 ? +hq.p[3 * penAt + 1].toFixed(3) : null, p99: +st[Math.floor(0.99 * (st.length - 1))].toFixed(4), max: +st[st.length - 1].toFixed(4), min: +st[0].toFixed(4), outP99: +(so.sort((x, y) => x - y), so[Math.floor(0.99 * (so.length - 1))]).toFixed(4), outMax: +so[so.length - 1].toFixed(4), worst: [wy, wz, H.out[E[3 * wi]]],
-      lag: +(lagA / DEG).toFixed(2), sw: +(2 * Math.acos(Math.min(1, Math.abs(ST.F.Sw.w))) / DEG).toFixed(1), tw: +(2 * Math.acos(Math.min(1, Math.abs(ST.F.Tw.w))) / DEG).toFixed(1), d: +ST.F.d.length().toFixed(4), corr: +(ST.corr || 0).toFixed(4), move: +move.toFixed(4), cord: +Math.max(...cs).toFixed(4), cordPen: +cordPen.toFixed(4) };
+    // the cords as drawn (the smoothed tube's centreline, root-local): cordPen, how deep the tube's surface goes into the jersey
+    // (m); cordBody, into a body.js volume (head, torso slices); cordFly, how far the lower two thirds of a cord stand off the jersey (m: a cord that hangs lies on it)
+    let cordPen = 0, cordFly = 0, cordBody = 0; const cordPenD = [0, -1, 0];
+    for (const c of cords) c.sm.forEach((q, j) => { const d = jerseyDepth(q, CORD_R); cordPen = Math.max(cordPen, d); if (j >= 8 && d > -Infinity) cordFly = Math.max(cordFly, -d); if (d > cordPenD[0]) cordPenD.splice(0, 3, d, j, +q.y.toFixed(3));
+      _v.copy(q).divideScalar(W); for (const V of ST.vols) { const h = V.test(_v, CORD_R / W); if (h) cordBody = Math.max(cordBody, h.depth * W); } });
+    const cs = ST.chains.map(ch => ch.stretch());
+    // cordV: the fastest point of a cord against its anchor this frame (m/frame; under 0.002 in a hold = settled, no jitter)
+    let cordV = 0; for (const c of cords) { const a0 = c.sm[0], rel = c.sm.map(q => q.clone().sub(a0)); if (c.relPrev && !fresh) rel.forEach((q, j) => { cordV = Math.max(cordV, q.distanceTo(c.relPrev[j])); }); c.relPrev = rel; }
+    // the face opening against the face: the angle (deg) between where the rim's centre sits round the head centre and where
+    // it sat at rest turned with the head (0: the opening frames the face as at rest)
+    const RA = rim.geometry.attributes.position.array, rc = new THREE.Vector3(); for (let i = 0; i < RA.length; i += 3) rc.x += RA[i], rc.y += RA[i + 1], rc.z += RA[i + 2];
+    rc.multiplyScalar(3 / RA.length).applyMatrix4(ST.F.Mc.clone().invert()).sub(ST.F.C).normalize();
+    const rimOff = rc.angleTo(RIM_C0.clone().applyQuaternion(ST.F.q)) / DEG;
+    return { t, rimOff: +rimOff.toFixed(2), pen: +pen.toFixed(4), penAt: penAt >= 0 ? +hq.p[3 * penAt + 1].toFixed(3) : null, p99: +st[Math.floor(0.99 * (st.length - 1))].toFixed(4), max: +st[st.length - 1].toFixed(4), min: +st[0].toFixed(4), outP99: +(so.sort((x, y) => x - y), so[Math.floor(0.99 * (so.length - 1))]).toFixed(4), outMax: +so[so.length - 1].toFixed(4), worst: [wy, wz, H.out[E[3 * wi]]],
+      lag: +(lagA / DEG).toFixed(2), sw: +(2 * Math.acos(Math.min(1, Math.abs(ST.F.Sw.w))) / DEG).toFixed(1), tw: +(2 * Math.acos(Math.min(1, Math.abs(ST.F.Tw.w))) / DEG).toFixed(1), d: +ST.F.d.length().toFixed(4), corr: +(ST.corr || 0).toFixed(4), move: +move.toFixed(4), cord: +Math.max(...cs).toFixed(4), cordPen: +cordPen.toFixed(4), cordFly: +cordFly.toFixed(4), cordBody: +cordBody.toFixed(4), cordPenAt: cordPenD.slice(1), cordV: +cordV.toFixed(4) };
   }
 }
 
