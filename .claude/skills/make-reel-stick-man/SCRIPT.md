@@ -210,6 +210,8 @@ Save the answer with a header `by: agent:<id>` and `of: <script file>`.
 
 ## 6. Fixes for each `scriptlint.mjs` check
 
+A FAIL Kai chooses to keep is never patched away: record it in `DECISIONS.json` as an approved decision whose `conflict` names the checks (`{"rule": "scriptlint S3 … S4 …", "winner": "<its id>", "by": "kai"}`); the lint then reports it as KAI, not FAIL.
+
 | Id | Check | Fix |
 |---|---|---|
 | S1 | a sentence over 15 words | split it; one idea per sentence |

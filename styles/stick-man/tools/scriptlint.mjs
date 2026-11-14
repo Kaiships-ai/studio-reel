@@ -173,9 +173,18 @@ for (const r of [...refs, ...(S.refs || [])]) {
     for (let i = 0; i + 6 <= w.length; i++) if (grams.has(w.slice(i, i + 6).join(' '))) { add('FAIL', 'S11', l.id, `6 words in a row match ${path.basename(r)}: "${w.slice(i, i + 6).join(' ')}"`); break; } }
 }
 
-const nF = out.filter(o => o.lvl === 'FAIL').length, nW = out.filter(o => o.lvl === 'WARN').length;
+// a FAIL that Kai overrode with an approved decision is reported as KAI, not FAIL: DECISIONS.json
+// { conflict: { rule: "scriptlint S3 … S4 …", winner: <that decision's id>, by: "kai" } } names the checks it overrides
+for (const d of D?.decisions || []) {
+  const c = d.conflict;
+  if (d.status !== 'approved' || !c || c.by !== 'kai' || c.winner !== d.id || !/scriptlint/i.test(c.rule || '')) continue;
+  const checks = c.rule.match(/\bS\d+\b/g) || [];
+  for (const o of out) if (o.lvl === 'FAIL' && checks.includes(o.id)) { o.lvl = 'KAI'; o.msg += ` (Kai chose ${d.id} on ${c.at || d.at}: ${c.how || d.decision})`; }
+}
+
+const nF = out.filter(o => o.lvl === 'FAIL').length, nW = out.filter(o => o.lvl === 'WARN').length, nK = out.filter(o => o.lvl === 'KAI').length;
 const rep = [`# Script check · ${path.basename(DIR)} · ${scriptPath}`, '',
-  `**${nF ? 'FAIL' : 'PASS'}**: ${nF} FAIL, ${nW} WARN · ${lines.length} lines, ${nWords} words, ≈ ${total.toFixed(1)} s at ${WPS} words/s${maxSec ? ` (max ${maxSec} s)` : ''}`, '',
+  `**${nF ? 'FAIL' : 'PASS'}**: ${nF} FAIL, ${nW} WARN${nK ? `, ${nK} overridden by Kai` : ''} · ${lines.length} lines, ${nWords} words, ≈ ${total.toFixed(1)} s at ${WPS} words/s${maxSec ? ` (max ${maxSec} s)` : ''}`, '',
   '| Level | Check | Where | What |', '| --- | --- | --- | --- |', ...out.map(o => `| ${o.lvl} | ${o.id} | ${o.where} | ${o.msg.replace(/\|/g, '/')} |`), '',
   '## Lines', '', '| Line | t (s) | Words | Class | New numbers | Text |', '| --- | --- | --- | --- | --- | --- |',
   ...lines.map(l => `| ${l.id} | ${l.t0.toFixed(1)} | ${l.w} | ${l.cls || '?'} | ${l.nums.join(' · ')} | ${l.text.replace(/\|/g, '/')} |`), '',
