@@ -16,6 +16,48 @@ body.capture #view { margin: 0; }
 // ?film=films/<name> picks the reel. &capture=1 (set by tools/shot.mjs): frame-exact, page size = frame size.
 // Otherwise it plays in real time with the voice: space = play/pause, left/right = one frame, the bar scrubs.
 import { boot } from './engine/play.js';
+import * as THREE from 'three';
+// &xray=1 (dev, not in capture): the solved skeleton over a faded body, every frame. Left side blue, right orange;
+// knee and elbow flex in degrees; the centre of mass (+) and its point on the floor; a planted foot's ankle ringed green.
+// X toggles it.
+function xray(reel) {
+  let cur = reel.F0;
+  const cv = document.createElement('canvas'); cv.style.cssText = 'position:absolute;left:0;top:0;pointer-events:none';
+  view.appendChild(cv); const gl = reel.stage.renderer.domElement, g = cv.getContext('2d');
+  let on = true; const set = () => { gl.style.opacity = on ? 0.35 : 1; cv.style.display = on ? '' : 'none'; }; set();
+  addEventListener('keydown', e => { if (e.code === 'KeyX') { on = !on; set(); draw(); } });
+  const v = new THREE.Vector3();
+  const px = b => { v.set(b[0], b[2], -b[1]).project(reel.stage.camera); return [(v.x + 1) / 2 * cv.width, (1 - v.y) / 2 * cv.height]; };
+  const col = { L: '#3d8bff', R: '#ff8a2a', C: '#ffffff' };
+  const line = (pts, c, w = 4) => { g.strokeStyle = c; g.lineWidth = w; g.lineCap = g.lineJoin = 'round'; g.beginPath(); pts.forEach((p, i) => { const [x, y] = px(p); i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.stroke(); };
+  const dot = (p, c, r = 5) => { const [x, y] = px(p); g.fillStyle = c; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); };
+  const text = (p, s, c, dx = 10) => { const [x, y] = px(p); g.font = '600 15px ui-monospace,Menlo,monospace'; g.lineWidth = 4; g.strokeStyle = '#000'; g.strokeText(s, x + dx, y + 5); g.fillStyle = c; g.fillText(s, x + dx, y + 5); };
+  function draw() {
+    const r = gl.getBoundingClientRect(); cv.style.width = r.width + 'px'; cv.style.height = r.height + 'px'; cv.width = Math.round(r.width * devicePixelRatio); cv.height = Math.round(r.height * devicePixelRatio);
+    g.clearRect(0, 0, cv.width, cv.height); if (!on) return;
+    const D = JSON.parse(window.__dbg(cur)); reel.stage.camera.updateMatrixWorld(); const rows = [`frame ${D.f}`];
+    for (const [name, a] of Object.entries(D.actors)) {
+      const Lb = a.limbs; if (!Lb?.L || a.inFrame === false) continue;
+      if (Lb.skel) { line([Lb.skel.pelvis, ...Lb.skel.spine, Lb.skel.neck, Lb.skel.head], col.C, 5); line([Lb.L.hip, Lb.skel.pelvis, Lb.R.hip], col.C, 4); line([Lb.L.shoulder, Lb.skel.neck, Lb.R.shoulder], col.C, 4); dot(Lb.skel.head, col.C, 6); }
+      for (const s of ['R', 'L']) {
+        const J = Lb[s], c = col[s];
+        line([J.hip, J.knee, J.ankle, J.toe], c); if (J.heel) line([J.ankle, J.heel], c, 3); line([J.shoulder, J.elbow, J.hand], c);
+        for (const k of ['hip', 'knee', 'ankle', 'shoulder', 'elbow', 'hand']) dot(J[k], '#fff', 4);
+        if (J.ankle[2] < 0.06) { const [x, y] = px(J.ankle); g.strokeStyle = '#3ddc84'; g.lineWidth = 3; g.beginPath(); g.arc(x, y, 10, 0, 7); g.stroke(); }
+        text(J.knee, `${Math.round(J.kneeFlex)}°`, c); text(J.elbow, `${Math.round(J.elbowFlex)}°`, c);
+      }
+      if (Lb.com) { const [x, y] = px(Lb.com), [fx, fy] = px([Lb.com[0], Lb.com[1], 0]); g.strokeStyle = '#ffe14d'; g.lineWidth = 2; g.setLineDash([5, 5]); g.beginPath(); g.moveTo(x, y); g.lineTo(fx, fy); g.stroke(); g.setLineDash([]);
+        g.lineWidth = 3; g.beginPath(); g.moveTo(x - 9, y); g.lineTo(x + 9, y); g.moveTo(x, y - 9); g.lineTo(x, y + 9); g.stroke(); g.fillStyle = '#ffe14d'; g.beginPath(); g.arc(fx, fy, 5, 0, 7); g.fill(); }
+      rows.push(`${name}: gối L ${Math.round(Lb.L.kneeFlex)}° R ${Math.round(Lb.R.kneeFlex)}° · khuỷu L ${Math.round(Lb.L.elbowFlex)}° R ${Math.round(Lb.R.elbowFlex)}°`,
+        `  hông cao ${((Lb.L.hip[2] + Lb.R.hip[2]) / 2 * 100).toFixed(1)} cm · bàn chân L ${Math.round(Lb.L.footPitch)}° R ${Math.round(Lb.R.footPitch)}°${Lb.balanceCm != null ? ` · cân bằng dịch ${Lb.balanceCm} cm` : ''}`);
+    }
+    g.font = '600 15px ui-monospace,Menlo,monospace'; g.fillStyle = 'rgba(0,0,0,.65)'; g.fillRect(8, 8, Math.min(cv.width - 16, 16 + Math.max(...rows.map(x => g.measureText(x).width))), 10 + 20 * rows.length);
+    g.fillStyle = '#fff'; rows.forEach((s, i) => g.fillText(s, 16, 28 + 20 * i));
+    g.fillStyle = 'rgba(0,0,0,.65)'; g.fillRect(8, cv.height - 64, 330, 26); g.fillStyle = '#fff'; g.fillText('X: bật/tắt xray · trái xanh · phải cam · + trọng tâm', 14, cv.height - 46);
+  }
+  const f0 = window.__frame; window.__frame = n => { cur = n; const r = f0(n); draw(); return r; };
+  addEventListener('resize', draw);
+}
 const Q = new URLSearchParams(location.search), capture = Q.get('capture') === '1';
 if (capture) document.body.classList.add('capture');
 const width = capture ? innerWidth : Number(Q.get('w') || 540), height = capture ? innerHeight : Number(Q.get('h') || 960);
@@ -37,6 +79,7 @@ if (!capture) {
     else if (e.code === 'ArrowRight' || e.code === 'ArrowLeft') { pause(); show(f + (e.code === 'ArrowRight' ? 1 : -1)); }
   });
   bar.addEventListener('input', () => { pause(); show(Number(bar.value)); });
+  if (Q.get('xray') === '1') xray(reel);
   show(reel.F0);
 }
 </script>
