@@ -9,7 +9,8 @@ import { stand, K, merge, FY } from '../../base.js';
 const S0 = stand('adult'), sill = 0.55, xs = 0.52;
 // elbows out and back as the hands push down on the sill
 const hands = (px, on = 1) => ({ armL: { ik: [-0.24, sill / 0.6 + 0.03, (xs - px) / 0.6], ikw: on, pole: [-0.7, -0.2, -0.7] }, armR: { ik: [0.24, sill / 0.6 + 0.03, (xs - px) / 0.6], ikw: on, pole: [0.7, -0.2, -0.7] } });
-const L = (x, z = 0, pitch = 0) => ({ legL: { footW: [x, -FY, z], pitch, knee: [-0.2, 0.6, 1] } }), R = (x, z = 0, pitch = 0) => ({ legR: { footW: [x, FY, z], pitch, knee: [0.2, 0.6, 1] } });
+// the left leg swings over out to the side (a straddle, the knee out): folded under the hip it would knot
+const L = (x, z = 0, pitch = 0, out = 0) => ({ legL: { footW: [x, -FY - out, z], pitch, knee: out ? [-1, 0.3, 0.6] : [-0.2, 0.6, 1] } }), R = (x, z = 0, pitch = 0) => ({ legR: { footW: [x, FY, z], pitch, knee: [0.2, 0.6, 1] } });
 const end = 1.05;
 export default { name: 'Trans_ClimbWindow_Once', clip: 'Trans_ClimbWindow_Once', group: 'Trans', loop: false, frames: 100, base: 'STAND', style: 'kaiships',
   needs: { props: [], hands: 'both', marks: [{ kind: 'window', at: [0.50, 0, 0.55], top: 1.90, depth: 0.15, width: 1.0 }] },
@@ -25,8 +26,8 @@ export default { name: 'Trans_ClimbWindow_Once', clip: 'Trans_ClimbWindow_Once',
     K(31, merge(S0, hands(0.19), { pos: [0.19, 0, 0], bob: -0.10, spine: { bend: 28 } }, R(0.58, sill + 0.03, 4))),
     K(33, merge(S0, hands(0.20), { pos: [0.20, 0, 0], bob: -0.10, spine: { bend: 28 } }, R(0.58, sill))),                   // planted on the sill
     K(38, merge(S0, hands(0.26), { pos: [0.26, 0, 0], bob: -0.02, spine: { bend: 32 } }, R(0.58, sill), L(0, 0.04, -20))),  // the weight onto it: the left heel peels
-    K(48, merge(S0, hands(0.50, 0.4), { pos: [0.50, 0, 0], bob: 0.12, spine: { bend: 40 }, neck: { nod: -16 } }, R(0.58, sill), L(0.38, sill + 0.20, -15))),   // up over the sill, ducking
-    K(56, merge(S0, hands(0.64, 0), { pos: [0.64, 0, 0], bob: 0.10, spine: { bend: 34 }, neck: { nod: -12 } }, R(0.58, sill), L(0.86, sill + 0.12, -10))),   // the left leg over
+    K(48, merge(S0, hands(0.50, 0.4), { pos: [0.50, 0, 0], bob: 0.12, spine: { bend: 40 }, neck: { nod: -16 } }, R(0.58, sill), L(0.40, sill + 0.10, -15, 0.30))),   // up over the sill, ducking
+    K(56, merge(S0, hands(0.64, 0), { pos: [0.64, 0, 0], bob: 0.10, spine: { bend: 34 }, neck: { nod: -12 } }, R(0.58, sill), L(0.86, sill + 0.08, -10, 0.25))),   // the left leg over
     K(61, merge(S0, hands(0.74, 0), { pos: [0.74, 0, 0], bob: 0.04, spine: { bend: 28 }, neck: { nod: -6 } }, R(0.58, sill), L(end, 0.06, 6))),
     K(65, merge(S0, hands(0.80, 0), { pos: [0.80, 0, 0], bob: -0.10, spine: { bend: 24 }, neck: { nod: -4 } }, R(0.58, sill), L(end))),         // down on the far side
     K(68, merge(S0, hands(0.84, 0), { pos: [0.84, 0, 0], bob: -0.08, spine: { bend: 20 } }, R(0.58, sill + 0.04, -20), L(end))),

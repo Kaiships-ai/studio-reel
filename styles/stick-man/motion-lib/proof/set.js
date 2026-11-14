@@ -12,6 +12,7 @@ const G = 9.8, FPS = 30;
 
 export async function build(stage, opts = {}) {
   const K = createKit(stage, { env: { top: [0.5, 0.5, 0.52], mid: [0.45, 0.45, 0.47], bottom: [0.3, 0.3, 0.3], panels: [] }, envK: 0.4 });
+  const glassWall = K.mat([0.62, 0.62, 0.66], 0.9); glassWall.transparent = true; glassWall.opacity = 0.3; glassWall.depthWrite = false;
   const floor = K.mat([0.46, 0.46, 0.47], 0.95), block = K.mat([0.62, 0.62, 0.63], 0.9), lines = K.mat([0.36, 0.36, 0.37], 0.9), car = K.mat([0.55, 0.20, 0.18], 0.6);
   K.box([-8, -8, -0.05], [12, 8, 0], floor, { r: 0 });
   for (let x = -2; x < 8; x += 0.5) K.box([x - 0.006, -2.5, 0], [x + 0.006, 2.5, 0.002], lines, { r: 0 });
@@ -35,10 +36,11 @@ export async function build(stage, opts = {}) {
       COLLIDE.push({ name: 'trunk-lip', lo: [x, -0.65, 0.18], hi: [x + 0.08, 0.65, z] });
     }
     if (m.kind === 'window') {  // a wall with an opening: sill at z, top at m.top, m.width wide
-      const d = (m.depth || 0.15) * s, w = (m.width || 0.8) * s / 2, top = m.top * s, H = Math.max(top + 0.5, 2.4);
-      K.box([x, -2, 0], [x + d, 2, z], block, { r: 0.01 }); K.box([x, -2, top], [x + d, 2, H], block, { r: 0.01 });
-      K.box([x, -2, z], [x + d, -w, top], block, { r: 0.01 }); K.box([x, w, z], [x + d, 2, top], block, { r: 0.01 });
-      COLLIDE.push({ name: 'wall-low', lo: [x, -2, 0], hi: [x + d, 2, z] }, { name: 'wall-top', lo: [x, -2, top], hi: [x + d, 2, H] });
+      // a see-through wall (30 %): the proof camera sees the body on both sides of it, the hands and the weight
+      const d = (m.depth || 0.15) * s, w = (m.width || 0.8) * s / 2, top = m.top * s, H = Math.max(top + 0.5, 2.4), E = 1.1, block = glassWall;
+      K.box([x, -E, 0], [x + d, E, z], block, { r: 0.01 }); K.box([x, -E, top], [x + d, E, H], block, { r: 0.01 });
+      K.box([x, -E, z], [x + d, -w, top], block, { r: 0.01 }); K.box([x, w, z], [x + d, E, top], block, { r: 0.01 });
+      COLLIDE.push({ name: 'wall-low', lo: [x, -E, 0], hi: [x + d, E, z] }, { name: 'wall-top', lo: [x, -E, top], hi: [x + d, E, H] });
     }
     if (m.kind === 'counter') { K.box([x, -0.9, 0], [x + 0.55, 0.9, z], block, { r: 0.02 }); COLLIDE.push({ name: 'counter', lo: [x, -0.9, 0], hi: [x + 0.55, 0.9, z] }); }
     if (m.kind === 'cash') { const g = K.group([x, y, z]); const c = BUILD.cash(); g.add(c); K.anim('cash_left', g, f => { g.visible = f >= (opts.f0 ?? 0) + m.from; }); }
