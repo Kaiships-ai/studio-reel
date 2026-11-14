@@ -25,9 +25,14 @@ const FOOT_OUT = 8;
 // mirror of Blender's, so right is -(f x u) there)
 const seg = (fv, uv) => { const u = nrm(uv), f = nrm(add(fv, mul(u, -dot(fv, u)))); return { f, u, r: mul(cross(f, u), -1) }; };
 // a child frame on its parent's, in the rig's order (YXZ: yaw about up, then pitch about the side, then roll about forward)
+// the yaw of a frame from its forward (f) and up (u) in the parent's axes: the forward's heading, but a forward near
+// vertical (a body lying on its back or front, pitched ~90 deg) has none, so its up vector (which then lies flat, pointing
+// along the yaw) takes over, faded in from |f.z| 0.5 to 0.9 so the two never jump
+const yawOf = (f, u) => { const w = Math.min(1, Math.max(0, (Math.abs(f[2]) - 0.5) / 0.4)), s = -f[2] >= 0 ? 1 : -1;
+  return Math.atan2(f[1] * (1 - w) + s * u[1] * w, f[0] * (1 - w) + s * u[0] * w); };
 const rel = (Pf, Cf) => {
   const cf = [dot(Cf.f, Pf.f), dot(Cf.f, Pf.r), dot(Cf.f, Pf.u)], cu = [dot(Cf.u, Pf.f), dot(Cf.u, Pf.r), dot(Cf.u, Pf.u)];
-  const y = Math.atan2(cf[1], cf[0]), p = Math.asin(Math.max(-1, Math.min(1, -cf[2])));
+  const y = yawOf(cf, cu), p = Math.asin(Math.max(-1, Math.min(1, -cf[2])));
   const uP = [Math.sin(p) * Math.cos(y), Math.sin(p) * Math.sin(y), Math.cos(p)], rH = [-Math.sin(y), Math.cos(y), 0];
   return { yaw: y * DEG, pitch: p * DEG, roll: Math.atan2(dot(cu, rH), dot(cu, uP)) * DEG };
 };
@@ -38,7 +43,10 @@ export function mocapCycle(src, { legM, once = false, roll = true }) {
   if (F.length > 2 && same(F[0], F[F.length - 1])) F = F.slice(0, -1);            // the last frame repeats the first
   const N = F.length;
   const legOf = f => len(V(f.LeftUpLeg, f.LeftFoot)), k = legM / Math.max(...F.map(legOf));
-  const rest = Math.min(...F.flatMap(f => [f.LeftFoot[2], f.RightFoot[2]]));     // the ankle's height over the sole
+  // the ankle's height over the sole: its lowest while the body is up on its feet (hips over half a leg high); a foot
+  // lying on its side on the floor (the body lying down) sits lower than a foot standing flat
+  const up = F.filter(f => mix(f.LeftUpLeg, f.RightUpLeg, 0.5)[2] - Math.min(f.LeftFoot[2], f.RightFoot[2]) > 0.5 * Math.max(...F.map(g => len(V(g.LeftUpLeg, g.LeftFoot)))));
+  const rest = Math.min(...(up.length ? up : F).flatMap(f => [f.LeftFoot[2], f.RightFoot[2]]));
   // the travel: the planted feet slide back in place at the body's speed
   const v = once ? 0 : (() => { const s = []; for (const sd of ['Left', 'Right']) for (let i = 0; i < N; i++) { const a = F[i][sd + 'Foot'], b = F[(i + 1) % N][sd + 'Foot'];
     if (a[2] < rest + 0.02 && b[2] < rest + 0.02) s.push(a[0] - b[0]); }
@@ -104,7 +112,7 @@ export function mocapCycle(src, { legM, once = false, roll = true }) {
     // pelvis, neck {turn, nod, tilt} on the chest (rel(): yaw about the parent's up, pitch about its side, roll about the
     // forward; signs as the rig's: + turns right, tips forward, leans right)
     const P = seg(f.Hips_f, f.Hips_u), C = seg(f.Spine2_f, f.Spine2_u), Hd = seg(f.Head_f, f.Head_u);
-    const heading = Math.atan2(P.f[1], P.f[0]) * DEG, H = { f: [Math.cos(heading / DEG), Math.sin(heading / DEG), 0], r: [-Math.sin(heading / DEG), Math.cos(heading / DEG), 0], u: [0, 0, 1] };
+    const heading = yawOf(P.f, P.u) * DEG, H = { f: [Math.cos(heading / DEG), Math.sin(heading / DEG), 0], r: [-Math.sin(heading / DEG), Math.cos(heading / DEG), 0], u: [0, 0, 1] };
     const pelvis = rel(H, P), spine = rel(P, C), neck = rel(C, Hd);
     // the chest's frame for the arms: x = the figure's right, y = up the trunk, z = forward
     const xC = C.r, yC = C.u, zC = C.f;
@@ -156,5 +164,5 @@ export function mocapCycle(src, { legM, once = false, roll = true }) {
   // the right print the cycle ends on (a capture of four steps has two right prints: the closing step starts from the
   // second, not the first)
   let rEnd = null; for (let i = N - 1; i >= 0 && !rEnd; i--) if (prints.Right[i] && !prints.Right[(i - 1 + N) % N]) rEnd = prints.Right[i];
-  return { frames, cycle: N, advance, scale: k, firstPrint: Lx, prints: { L: Lx, R: Rx, yL: prints.Left[0]?.[1] ?? -lane, yR: prints.Right[rIdx]?.[1] ?? lane, Rend: rEnd ? rEnd[0] : Rx, yRend: rEnd ? rEnd[1] : lane }, lane, standHip };
+  return { frames, cycle: N, advance, scale: k, legSrc: Math.max(...F.map(legOf)), firstPrint: Lx, prints: { L: Lx, R: Rx, yL: prints.Left[0]?.[1] ?? -lane, yR: prints.Right[rIdx]?.[1] ?? lane, Rend: rEnd ? rEnd[0] : Rx, yRend: rEnd ? rEnd[1] : lane }, lane, standHip };
 }

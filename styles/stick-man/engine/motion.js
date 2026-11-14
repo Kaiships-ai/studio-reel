@@ -61,7 +61,7 @@ export function unflatten(m) {
   return o;
 }
 const DISCRETE = new Set(['expr', 'look', 'props', 'ik']);
-const NON_POSE = new Set(['f', 'at', 'pose', 'ease', 'hold', 'antic', 'expr', 'look', 'props', 'cycle', 'line', 'on', 'offset', 'nth', 'cue', 'snap', 'rest']);
+const NON_POSE = new Set(['f', 'at', 'pose', 'ease', 'hold', 'antic', 'expr', 'look', 'props', 'cycle', 'line', 'on', 'offset', 'nth', 'cue', 'snap', 'rest', 'raw']);
 
 // ---------------------------------------------------------------- the time warp between two keys
 // cubic Hermite in time: e(0) = 0, e(1) = 1, start slope a, end slope b (0 = a full slow, 1 = passing through)
@@ -77,7 +77,7 @@ export function compileTrack(keys, poses, base, style) {
     const named = typeof k.pose === 'string' ? poses[k.pose] : k.pose;
     if (typeof k.pose === 'string' && !named) throw new Error(`anim: unknown pose "${k.pose}"`);
     const over = Object.fromEntries(Object.entries(k).filter(([n]) => !NON_POSE.has(n)));
-    return { f: k.f, ease: k.ease || 'slow', hold: k.hold || 0, antic: Math.min(0.6, (k.antic || 0) * dial('anticipation')), expr: k.expr, look: k.look, props: k.props, cycle: k.cycle,
+    return { f: k.f, ease: k.ease || 'slow', hold: k.hold || 0, antic: Math.min(0.6, (k.antic || 0) * dial('anticipation')), expr: k.expr, look: k.look, props: k.props, cycle: k.cycle, raw: !!k.raw,
       m: { ...flatten(named), ...flatten(over) } };
   }).sort((a, b) => a.f - b.f);
   // carry every channel forward (a key names only what changes); before its first key a channel is neutral (0), except
@@ -149,6 +149,7 @@ export function keyed(track, f) {
   return out;
 }
 const ARC = 0.15;
+const RAW_FADE = 12;
 // the channels exaggeration scales: the body's angles and its bob, not where it stands, its feet or its targets
 const EXAG = /^(bob|spine\.|neck\.|pelvis\.|arm[LR]\.(raise|swing|elbow|roll)$|hip\.)/;
 function tangent(p, c, n, fp, fc, fn) {
@@ -177,7 +178,7 @@ export function playActor(track, F0, F1, opt = {}) {
   CUR = track.style || STYLE;
   const springs = {}, hat = { p: new Spring(0.32, 0.28), r: new Spring(0.32, 0.28) }, sq = new Spring(0.6, 0.3);
   const frames = [];
-  let prev = null, prev2 = null;
+  let prev = null, prev2 = null, rawW = 0;
   // a 'snap' key is a cut: the secondary layer starts fresh there (no arm or hat still swinging from the last shot's pose)
   const cuts = new Set(track.filter(t => t.ease === 'snap').map(t => t.f));
   for (let f = F0; f <= F1; f++) {
@@ -190,9 +191,13 @@ export function playActor(track, F0, F1, opt = {}) {
     let ck = null; for (const t of track) if (t.f <= f && !t.held && !t.antic) ck = t;
     if (ck?.cycle) { const w = clamp((f - ck.f) / 6, 0, 1) * dial('secondary'); for (const [c, [amp, per, ph = 0]] of Object.entries(ck.cycle)) k[c] = (k[c] || 0) + w * amp * Math.sin(2 * Math.PI * (f - ck.f) / per + ph); }
     const o = { ...k };
+    // a captured key (raw: motion capture, its own overlap and settle already in it) is played as it is: the drag fades
+    // out over RAW_FADE frames into a run of captured keys and back in after it (a switch in one frame would jump)
+    let rk = null; for (const t of track) { if (t.f > f) break; rk = t; }
+    rawW = clamp(rawW + (rk?.raw ? 1 : -1) / RAW_FADE, 0, 1);
     for (const [c, v] of Object.entries(k)) {
       const d = DRAG.find(([re]) => re.test(c)); if (!d || opt.stiff) continue;
-      const sp = (springs[c] ||= new Spring(d[1], d[2])).step(v); o[c] = v + (sp - v) * dial('followThrough');
+      const sp = (springs[c] ||= new Spring(d[1], d[2])).step(v); o[c] = v + (sp - v) * dial('followThrough') * (1 - rawW);
     }
     // hip vertical speed stretches the body, its sudden stop squashes it; the head follows a beat later
     const by = k.bob ?? 0, vy = prev ? by - (prev.bob ?? 0) : 0, vp = prev && prev2 ? (prev.bob ?? 0) - (prev2.bob ?? 0) : 0, ay = vy - vp;
@@ -205,7 +210,7 @@ export function playActor(track, F0, F1, opt = {}) {
     o['hat.roll'] = clamp(hat.r.step(hr) - hr, -18, 18) * dial('followThrough') + (k['hat.roll'] || 0);
     // a moving hold: a held pose breathes (chest up and down, the head drifts a little), never freezes
     const t = f / 30;
-    const B2 = dial('secondary');
+    const B2 = dial('secondary') * (1 - rawW);
     o['spine.bend'] = (o['spine.bend'] || 0) + 0.8 * B2 * Math.sin(t * 2 * Math.PI * 0.28);
     o['neck.tilt'] = (o['neck.tilt'] || 0) + 0.9 * B2 * Math.sin(t * 2 * Math.PI * 0.17 + 1.3);
     frames.push(o); prev2 = prev; prev = k;

@@ -5,6 +5,7 @@
 import { BODIES } from './bodies.js';
 import { legReach, SOFT } from '../engine/body.js';
 import { mocapCycle } from './ref/mocap.js';
+import LAYTOIDLE from './ref/ual/laytoidle.js';
 // the 'kaiships' dose's exaggeration (engine/motion.js: 0.4 + 1.2 x exaggeration 0.75); the gait solves its hips on played values
 export const DOSE_E = 1.3;
 
@@ -35,7 +36,18 @@ export const sit = (body = 'adult', x = 0) => merge(STAND, BODIES[body].posture,
 export const CARRY_KG = 25;
 export const carry = (body = 'adult', x = 0) => merge(stand(body, x), { bob: -0.06, shrugR: -0.08, spine: { side: -17, bend: 10 }, neck: { tilt: 13, nod: -4 }, pelvis: { roll: 7 },
   armR: { raise: 26, swing: 4, elbow: 6 }, armL: { raise: 72, swing: 10, elbow: 18 }, x_hpR_bag: 1, x_kgR: CARRY_KG });
-export const BASES = { STAND: stand, SIT: sit, CARRY: carry };
+// LIE on the back on the floor, the head behind where the feet point: the first frame of Quaternius UAL "LayToIdle"
+// (ref/ual/laytoidle.js) on this body, as every captured clip is (gaitLoop's capture path), so a clip from or to lying
+// meets it exactly
+const lieCache = {};
+export const lie = (body = 'adult', x = 0) => {
+  if (!lieCache[body]) { const k = { ...gaitLoop({ body, kind: 'walk', mocap: LAYTOIDLE, once: true, feet: 'capture' }).keys[0] }; delete k.f; delete k.ease; lieCache[body] = k; }
+  // (the channels a STAND carries that a capture does not, the knees' poles, as STAND has them)
+  const s = stand(body, x), P = turned(lieCache[body], 0, [x, 0]);
+  for (const sd of ['legL', 'legR']) P[sd] = { ...P[sd], ...(s[sd].knee ? { knee: s[sd].knee } : {}), ...(s[sd].foot ? { foot: s[sd].foot } : {}) };
+  return P;
+};
+export const BASES = { STAND: stand, SIT: sit, CARRY: carry, LIE: lie };
 
 // a key: the whole pose named (so every key stands alone), ease 'slow' unless given
 export const K = (f, pose, over = {}) => ({ f, ...merge(pose, over), ease: over.ease || 'slow' });
@@ -90,11 +102,11 @@ const mean2 = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
 // keys moved onto other prints: the first stance (it starts the run) onto first[foot], the last (it ends it) onto
 // last[foot] (anyLast: the last stance even if the foot is up again by the end); a moved print is reached through the
 // swing before it (and kept through a swing after it), and the body moves with the mean of its feet
-function retarget(keys, first, last, { anyLast = false } = {}) {
+function retarget(keys, first, last, { anyLast = false, anyFirst = false } = {}) {
   const n = keys.length, runs = runsOf(keys), off = {};
   for (const sd of ['legL', 'legR']) {
     const R = runs[sd], to = (i, p) => [p[0] - keys[i][sd].footW[0], p[1] - keys[i][sd].footW[1]];
-    const o = R.map(([a, b], j) => first?.[sd] && a === 0 ? to(a, first[sd]) : last?.[sd] && (b === n - 1 || anyLast && j === R.length - 1) ? to(b, last[sd]) : [0, 0]);
+    const o = R.map(([a, b], j) => first?.[sd] && (a === 0 || anyFirst && j === 0) ? to(a, first[sd]) : last?.[sd] && (b === n - 1 || anyLast && j === R.length - 1) ? to(b, last[sd]) : [0, 0]);
     off[sd] = keys.map((k, i) => { const j = R.findIndex(([a, b]) => i >= a && i <= b); if (j >= 0) return o[j];
       const pj = R.findLastIndex(([, b]) => b < i), nj = R.findIndex(([a]) => a > i), po = pj >= 0 ? o[pj] : nj >= 0 ? o[nj] : [0, 0], no = nj >= 0 ? o[nj] : po;
       const w = pj >= 0 && nj >= 0 ? ease3((i - R[pj][1]) / (R[nj][0] - R[pj][1])) : 0; return [po[0] + (no[0] - po[0]) * w, po[1] + (no[1] - po[1]) * w]; });
@@ -127,7 +139,9 @@ export function mocapClip({ body = 'adult', src, base = 'STAND', end = base, eas
   const P1 = turned(BASES[end](body, 0), h1, e1), P1f = { legL: P1.legL.footW, legR: P1.legR.footW };
   for (const P of [P0, P1]) { P.hip = { ...(P.hip || {}), x: 0 }; if (seated) P.fall = P === P1 ? (end === 'SIT' ? 1 : 0) : (base === 'SIT' ? 1 : 0); }
   const sitBob = sit(body, 0).bob, standBob = stand(body, 0).bob;
-  const mid = retarget(keys, P0f, P1f).map(k => ({ ...k, f: ease + k.f, ...(seated ? { fall: k.bob < (sitBob + standBob) / 2 ? 1 : 0 } : {}) }));
+  // (a foot not quite down on the first or last frame, a heel up as the capture opens or closes, still belongs to the
+  // standard pose's print: its first and last stances are moved however they fall)
+  const mid = retarget(keys, P0f, P1f, { anyFirst: true, anyLast: true }).map(k => ({ ...k, f: ease + k.f, ...(seated ? { fall: k.bob < (sitBob + standBob) / 2 ? 1 : 0 } : {}) }));
   const last = ease + keys[n - 1].f + ease;
   // the seat under a SIT pose (as Trans_SitStand's): from 0.25 m behind its pelvis to 0.15 m in front, 0.45 m high
   // The seat is where the captured body sits: under its pelvis while it is down (fall), its top at the lowest the hips
@@ -135,7 +149,7 @@ export function mocapClip({ body = 'adult', src, base = 'STAND', end = base, eas
   // numbers: hips 0.042 m over the seat). Physics: no frame with the pelvis over the seat goes lower than that, the
   // standard SIT keys included (they rest on this seat; tools/motionlib.mjs checks a SIT pose by its seat)
   let marks = [];
-  const sat = mid.filter(k => k.fall >= 1);
+  const sat = seated ? mid.filter(k => k.fall >= 1) : [];         // (a body lying on the floor has no seat)
   if (sat.length) {
     const sc = BODIES[body].spec.scale ?? 1, DR = (1 - (BODIES[body].spec.legScale ?? 1)) * 2 * 0.679, rb = stand(body, 0).bob || 0;
     const film = k => rb + (k.bob - rb) * DOSE_E, hipM = k => (film(k) + 1.38 - DR) * 0.6 * sc;
@@ -358,6 +372,12 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
     }
     // the hips' height from the planted legs' captured knees (legBob), not the captured height: this leg is not the
     // capture's, and near straight a centimetre of height is tens of degrees of knee
+    // A body down on the ground (hips under a third of a leg up: lying, sitting on the floor) rests on it, not on its
+    // legs: the captured hips' height stays, the balance is off (the floor carries it), the feet are where they were
+    const grounded = m.hipZ < 0.35 * MC.scale * MC.legSrc;
+    P.raw = true;                                       // (motion.js: a captured key plays as it is, no drag)
+    if (grounded) { P.fall = 1; return P; }
+    P.fall = 0;
     const want = {}; for (const sd of ['L', 'R']) if (m.down[sd]) want[sd] = m['knee' + sd];
     // and a swinging foot shows its captured knee (reachFoot)
     if (Object.keys(want).length) P.bob = legBob(P, want);
@@ -390,16 +410,20 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
   const step = (f, x, legs, want, arms, ease = 'flow') => { const p = body0(x, 0, { ...arms, ...legs }); return K(f, merge(p, { bob: legBob(p, want) }), { ease }); };
   // the first step hands over to the loop's own last frames (moved back a cycle) before its start (a run's: from the back foot's push-off), so the gait never jumps into the loop
   // a captured run starts from the loop's own frames after a short settle (its first strides are the capture's)
-  const mcRun = MC && run, upL = (() => { let n = 0; while (n < 2 * T - 1 && keys[2 * T - 1 - n].legL.footW[2] > 0.005) n++; return n; })(), nh = mcRun ? Math.max(2, Math.min(Math.round(T * 0.8), upL)) : run ? Math.ceil((1 - cs) * T) + 1 : 3, hand = Array.from({ length: nh }, (_, i) => nh - i);
-  let Ti = mcRun ? nh + 12 : Math.round(T * (run ? 2 : 1.6)), s0 = MC ? MC.prints.Rend - MC.advance : land(-1), fi = x => Math.round(Ti * x), kS = run ? kn[0] : kn[2];
-  let intro = [K(0, merge(pose0, { pos: [s0, 0, 0] }, feet(body, s0)), { ease: 'slow' }),
+  // (a captured walk with no captured start of its own opens the same way: G.loopIntro)
+  const mcRun = MC && (run || G.loopIntro), upL = (() => { let n = 0; while (n < 2 * T - 1 && keys[2 * T - 1 - n].legL.footW[2] > 0.005) n++; return n; })(), nh = mcRun ? Math.max(2, Math.min(Math.round(T * 0.8), upL)) : run ? Math.ceil((1 - cs) * T) + 1 : 3, hand = Array.from({ length: nh }, (_, i) => nh - i);
+  let Ti = mcRun ? nh + (run ? 12 : 20) : Math.round(T * (run ? 2 : 1.6)), s0 = MC ? MC.prints.Rend - MC.advance : land(-1), fi = x => Math.round(Ti * x), kS = run ? kn[0] : kn[2];
+  // a captured walk opening from its own loop (G.loopIntro) stands where its right foot will stay planted into the loop:
+  // STAND moved sideways onto the loop's right print (iy), so that foot never slides from the standing print to it
+  const iy = MC && G.loopIntro && !run ? MC.prints.yRend - Y0 : 0, st = x => merge(pose0, { pos: [x, iy, 0] }, { legL: { footW: [x, iy - Y0, 0], pitch: 0, yaw: 0 }, legR: { footW: [x, iy + Y0, 0], pitch: 0, yaw: 0 } });
+  let intro = [K(0, st(s0), { ease: 'slow' }),
     // a captured run's first move: the left heel peels straight up off its standing print before it swings
-    ...(mcRun ? [K(4, merge(pose0, { pos: [s0, 0, 0] }, feet(body, s0), { legL: { footW: [s0, -Y0, 0.03], pitch: -15 } }), { ease: 'flow' })] : []),
+    ...(mcRun ? [K(4, merge(st(s0), { legL: { footW: [s0, iy - Y0, 0.03], pitch: -15 } }), { ease: 'flow' })] : []),
     ...(mcRun ? [] : [step(fi(0.3), s0 + 0.03, { legL: foot(s0, -Y0, L * 0.3, -25), legR: foot(s0, Y0) }, { R: kS + 2 }, easeArms(0.3)),
       step(fi(0.55), s0 + 0.3 * (-s0), { legL: foot((s0 + land(0)) / 2, -Y, L, -10), legR: foot(s0, Y0, 0, run ? -20 : 0) }, { R: kS }, easeArms(0.6, 0.6 * torso(-nh).armS))]),
     ...hand.map(d => { const k = keys[2 * T - d], m = merge(k, { pos: [k.pos[0] - 2 * S, k.pos[1], k.pos[2]] });
       // a foot still down on the print it stood on keeps the standing width (it has not been lifted to move in)
-      for (const sd of ['legL', 'legR']) m[sd] = { ...k[sd], footW: [k[sd].footW[0] - 2 * S, k[sd].footW[2] <= 0.005 && k[sd].footW[0] - 2 * S <= s0 + 1e-6 ? (sd === 'legL' ? -Y0 : Y0) : k[sd].footW[1], k[sd].footW[2]] };
+      for (const sd of ['legL', 'legR']) m[sd] = { ...k[sd], footW: [k[sd].footW[0] - 2 * S, k[sd].footW[2] <= 0.005 && k[sd].footW[0] - 2 * S <= s0 + 1e-6 ? (sd === 'legL' ? iy - Y0 : iy + Y0) : k[sd].footW[1], k[sd].footW[2]] };
       delete m.f; delete m.ease; return K(Ti - d, m, { ease: 'flow' }); })];
   // the closing step. A walk: the back foot comes up beside the front one, the body settles over both. A run brakes: the
   // swinging right foot lands ahead (the knee takes the stop), the left pushes off and comes up beside it, the body
@@ -447,7 +471,9 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
     const L2 = keys[2 * T].legL.footW, d = [L2[0] - EK[sL].legL.footW[0], L2[1] - EK[sL].legL.footW[1]];
     let part = EK.slice(sL + 1).map(k => shiftKey(k, d)); const m = part.length, at = mean2(part[m - 1].legL.footW, part[m - 1].legR.footW);
     const P1 = merge(stand(body, 0), { pos: [at[0], at[1], 0], hip: { x: 0 }, legL: { footW: [at[0], at[1] - Y0, 0] }, legR: { footW: [at[0], at[1] + Y0, 0] } });
-    part = retarget(part, null, { legL: P1.legL.footW, legR: P1.legR.footW });
+    // a foot already down when the stop takes over stays on the print the gait put it on
+    const g0 = loopAt(2 * T + 1), on = sd => part[0][sd].footW[2] === 0 && g0[sd].footW[2] === 0 ? g0[sd].footW : null;
+    part = retarget(part, { legL: on('legL'), legR: on('legR') }, { legL: P1.legL.footW, legR: P1.legR.footW });
     for (let i = 0; i < HB; i++) part[i] = blendBody(part[i], loopAt(2 * T + i + 1), 1 - ease3((i + 1) / (HB + 1)));
     const Te2 = m + E0;
     O = { outro: [...part.map((k, i) => ({ ...k, f: i + 1 })), K(Te2, P1, { ease: 'slow' })], xf: at[0], Te: Te2 };
