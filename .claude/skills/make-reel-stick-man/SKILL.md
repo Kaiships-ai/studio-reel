@@ -31,15 +31,19 @@ Read [PROCESS.md](PROCESS.md) before step 1, `DIRECTOR.md` (library root) and [D
    Fix what holds up. Never score your own work.
 5. Put it on the stage page: status rows plus decision buttons. Kai picks there and may approve several steps at once.
 6. Read his picks from the page's db, lock them, and strip the rejected options and stale sections from the page.
-7. Reply short in Vietnamese. Every reply in a session that runs this skill opens with the stage bar, so Kai never loses track: one line per stage 0-5 with its state, the current step marked `◀ đang ở đây`, and each gate's `stagegate.mjs` state (LOCK / READY FOR KAI / OPEN), e.g.
+7. Reply short in Vietnamese. End with the table `việc · đầu ra · bằng chứng · trạng thái`, then, as the very last block of every reply in a session that runs this skill, the progress bar, so Kai never loses track: one bar per stage 0-5, % = steps done (1) + steps in progress (0.5) over the stage's steps, the current step marked `◀`, and the open gates with their `stagegate.mjs` state, e.g.
 
    ```
-   0 Development  ✔ ◇1 OPEN (Kai duyệt lại)
-   1 Tiền kỳ      ◐ [1.1] script ◀ đang ở đây · ◇S OPEN · ◇2a/2b/2c OPEN
-   2 Asset        ○ · 3 Shot ○ · 4 Hậu kỳ ○ · 5 Đăng ○
+   Tiến độ · <film>
+   0 Development ██████████ 100%  ◇1 OPEN
+   1 Tiền kỳ     ████░░░░░░  44%  ◀ [1.1] script · ◇S ◇2a ◇2b ◇2c OPEN
+   2 Asset       ░░░░░░░░░░   0%
+   3 Shot        ░░░░░░░░░░   0%
+   4 Hậu kỳ      ░░░░░░░░░░   0%
+   5 Đăng        ░░░░░░░░░░   0%
    ```
 
-   Read the gate states from the tool, never from memory. End with the table `việc · đầu ra · bằng chứng · trạng thái`.
+   Read the gate states from the tool, never from memory.
 
 Notes from Kai are acted on per shot. A note with no shot gets one question back ("shot nào?"); a vague one is translated with DIAGNOSE.md section 2 before anything is changed.
 
