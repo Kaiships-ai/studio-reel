@@ -14,7 +14,7 @@ The standard process for a stick-man film (dev only).
 - Needs: `GOOGLE_API_KEY` in `.env` (voice), faster-whisper (align), `claude` on PATH (board judges).
 - Kai reads Vietnamese: replies and page text are Vietnamese; "Em đề xuất" marks your recommended option.
 
-Read [PROCESS.md](PROCESS.md) before step 1, `DIRECTOR.md` (library root) and [DEVELOP.md](DEVELOP.md) before stage 0, [PREPRO.md](PREPRO.md) before stage 1, [PUBLISH.md](PUBLISH.md) for stage 5, and [DIAGNOSE.md](DIAGNOSE.md) whenever a result "doesn't land" and the cause isn't obvious.
+Read [PROCESS.md](PROCESS.md) before step 1, `DIRECTOR.md` (library root) and [DEVELOP.md](DEVELOP.md) before stage 0, [SCRIPT.md](SCRIPT.md) before the script [1.1], [PREPRO.md](PREPRO.md) before stage 1, [PUBLISH.md](PUBLISH.md) for stage 5, and [DIAGNOSE.md](DIAGNOSE.md) whenever a result "doesn't land" and the cause isn't obvious.
 
 ## The loop (every step of every stage)
 
@@ -22,6 +22,7 @@ Read [PROCESS.md](PROCESS.md) before step 1, `DIRECTOR.md` (library root) and [D
 2. Make the proof Kai can see: a still, a sheet, a video, or a number.
 3. When there is a choice, show 2-3 options. Each option is a picture next to the current state, never text only: grey panels or grey engine stills before ◇2a, real renders after. Mark one **Em đề xuất**.
 4. Before Kai sees it, a fresh independent agent challenges it:
+   - script: the fact check, the skeptic pass, the ear retell and the blind A/B (SCRIPT.md section 5);
    - board and animatic: the muted retell, the 5-second read, the explain audit and the swipe test (PREPRO.md section 5);
    - layout and camera: the camera-pass prompt;
    - poses: the blocking and 12-principles prompt;
@@ -44,7 +45,9 @@ Notes from Kai are acted on per shot. A note with no shot gets one question back
 | | [0.3] hook test + decision log | a fresh agent picks a hook from thumbnails + first lines (`review/hook-test.md`); every decision in `DECISIONS.json` with `where` and a `check` when a tool can verify it; `node styles/stick-man/tools/develop.mjs films/<slug>` | hook test, decision list |
 | | **◇1** brief, treatment, story (`stagegate.mjs … 1`; the structure is locked here) | | |
 | **1 Pre-production** | [1.0] scene brief + intensity plan | `storyboard.json` `scenes`: feel, whose, key, question per scene; want / obstacle / outcome per beat; target story intensity and the climax (PREPRO.md [1.0]); Kai confirms the feel lines | brief table + intended curve |
-| | [1.1] script + picture pass | `vo/script.json`: 1 narrator, 2.9-3.3 words/s, hook in line 1, `million-views-rule`; then per line `see` + an explain device from the ladder (PREPRO.md 4.3); no card where an event or object can carry the fact | text + word count + line/device table |
+| | [1.1] script (SCRIPT.md) | **a** beat outline with but/so links, plants, vote costs (`vo/beats.json`); **b** fact sheet (`vo/facts.json`) + fresh fact check; **c** draft `vo/script.json` until `node styles/stick-man/tools/scriptlint.mjs films/<slug>` has no FAIL; **d** skeptic pass; **e** table read + ear retell; **f** punch-up: 3 rewrites per flagged line, Kai picks; **g** blind A/B against the last locked script | script + lint + the four reviews + the A/B winner |
+| | **◇S** script lock (`stagegate.mjs … S`; a later script change reopens it and the voice is recorded again) | | |
+| | [1.1p] picture pass | per locked line `see` + an explain device from the ladder (PREPRO.md 4.3); no card where an event or object can carry the fact | line/device table |
 | | [1.2] visual development (parallel) | 2-3 looks rendered as style frames on two shots of the shot list (a wide, the climax), checked at phone size with the text-safe box; Kai picks one look; it never changes a locked shot | style frames |
 | | [1.3] design (parallel) + floor plans | characters (model sheet, faces, profile), props; a floor plan per set with marks, paths, the 180° line per scene, camera zones and the film's screen-direction convention | sheets + plans |
 | | [1.4] storyboard | **a** thumbnails + the shot list (`storyboard.json` `shots`, REEL_DATA.md); **b** grey rough panels, one per key (start/end of a move, anticipation/extreme/result of an action); **c** board pitch + muted retell by a fresh agent. `node styles/stick-man/tools/prepro.mjs films/<slug>` after each change | board sheet, `review/prepro.md`, `review/intensity.svg`, retell |
@@ -99,6 +102,8 @@ A later stage's problem is fixed in the stage that caused it. Never jump ahead i
 | The unit of pre-production is the shot: every shot has an id, a purpose, a size, an angle, a lens, a move and a story intensity before it is drawn well | boarding per voice line made slideshows and left the camera undecided |
 | Fidelity follows lock: grey panels and proxies until ◇2a; a final-looking render is a style frame, never a storyboard panel | pretty panels nobody dared to change |
 | Camera intent is locked in pre-production (◇2b); stage 3 executes it in 3D | "camera later" meant nobody owned the shots until assets were built |
+| The script is written from a beat outline, tested by readers who did not write it (fact check, skeptic, ear retell) and locked at ◇S before a panel is drawn; a new draft replaces the old one only if it wins a blind A/B | Hot Money ep. 1 v4 passed every tool and still had a bait-bill / bank hole, a rule that answered the vote and a 27 s stop of the clock; the first rewrite lost the blind A/B |
+| A fact the script states is checked against the rest of the story; a razor-close sum decides something; a rule never answers the ending vote | v4: bait bills, then a bank deposit; 238 of 240 s that decided nothing; "spend nothing", then "hide or spend?" |
 | Explain in pictures first: event, object, counter, insert; a card last, ≤ 8 s of cards in a row and ≤ 25 % of the film | 27 s of cards after a hook (Hot Money ep. 1) |
 | Words, numbers and faces live in the text-safe box (x 6-87 %, y 14-65 %); check with `animatic.mjs --safe 1` | captions under the app's UI |
 | The animatic is locked on the final voice, timed in frames, with burn-in; every note names a shot | a scratch voice 3 s short moved every cut |
@@ -114,9 +119,10 @@ A later stage's problem is fixed in the stage that caused it. Never jump ahead i
 |---|---|
 | [PROCESS.md](PROCESS.md) | stage pages, agent prompts, camera pass, blocking/polish recipe, sạn hunt, board, sound, gate profiles, deliver |
 | [DEVELOP.md](DEVELOP.md) | stage 0: benchmark, treatment standards, hook test, the decision log, ◇1 |
+| [SCRIPT.md](SCRIPT.md) | the script stage [1.1] and ◇S: the steps, the writing rules R1-R10 and K1-K9 (formerly the `million-views-rule` skill), the review prompts, fixes per `scriptlint.mjs` check |
 | [PUBLISH.md](PUBLISH.md) | stage 5: publish, retention mapped to shots, post-mortem, rules from evidence |
 | `styles/stick-man/tools/GATES.json`, `stagegate.mjs` | the evidence each gate needs, and the checker |
-| `styles/stick-man/tools/develop.mjs`, `assets.mjs`, `timing.mjs`, `postcheck.mjs`, `retention.mjs` | the measured checks of stages 0, 2, 3, 4 and 5 |
+| `styles/stick-man/tools/develop.mjs`, `scriptlint.mjs`, `assets.mjs`, `timing.mjs`, `postcheck.mjs`, `retention.mjs` | the measured checks of stages 0, 1 (script), 2, 3, 4 and 5 |
 | [PREPRO.md](PREPRO.md) | stage 1 in depth: flow, vocabulary, each step's standard, gate and mistakes, craft knowledge (story, staging in 9:16, explaining in pictures, continuity, timing), reviews, fidelity, gates, fixes per `prepro.mjs` check |
 | [DIAGNOSE.md](DIAGNOSE.md) | symptom → isolation test → cause → fix → stage, note translation, process smells, a worked example |
 | [AUDIT.md](AUDIT.md) | why the pre-production stage was rebuilt (Nov 2026), and the roadmap |

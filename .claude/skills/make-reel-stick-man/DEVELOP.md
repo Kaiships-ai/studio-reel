@@ -2,8 +2,8 @@
 
 Stage 0 decides what the film is. Every later stage executes these decisions, so they are written down
 (`DECISIONS.json`), checked by a tool (`develop.mjs`) and carried forward (`prepro.mjs` D1/D2 check every approved decision
-against the shot list). Read `DIRECTOR.md` sections 1-4 (brief, benchmark, story, treatment) and the `million-views-rule`
-skill before [0.1]; this file adds the standards and gate for a stick-man reel.
+against the shot list). Read `DIRECTOR.md` sections 1-4 (brief, benchmark, story, treatment) and SCRIPT.md section 3 (the writing
+rules, formerly the `million-views-rule` skill) before [0.1]; this file adds the standards and gate for a stick-man reel.
 
 ## 1. Steps
 
@@ -22,7 +22,7 @@ skill before [0.1]; this file adds the standards and gate for a stick-man reel.
 - **Logline**: one sentence, ≤ 40 words, naming who, the goal, the obstacle and what is at stake.
 - **Three structures**: three real alternatives (not variations), each with what it gains and costs; one marked as the choice.
 - **Benchmark**: 1-2 works that set the bar; what to learn (composition, pacing, camera grammar, sound) and what not to take.
-- **Hooks**: at least two, of different hook types (`million-views-rule` R3). Each works muted in its first frame.
+- **Hooks**: at least two, of different hook types (SCRIPT.md R3). Each works muted in its first frame.
 - **Intensity curve**: every beat with a story intensity 1-10, one climax, a release after it.
 - **Decisions**: each approved decision has an id, the words, `by: kai`, the date, the source, `where` it lands (scenes) and,
   when a tool can verify it, a `check` (REEL_DATA.md, Decision log).

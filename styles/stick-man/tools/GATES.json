@@ -2,6 +2,7 @@
  "about": "Evidence each gate needs before it can LOCK (stagegate.mjs). measured = a tool run that must exit 0; made = the maker's own files; judged = by: agent:<id> or person:<name>, never the maker; approved = Kai in review/approvals.json. A film may add evidence in review/gates.local.json, never remove it.",
  "order": [
   "1",
+  "S",
   "2a",
   "2b",
   "2c",
@@ -42,12 +43,12 @@
     {
      "file": "review/hook-test.md",
      "by": "independent",
-     "why": "a fresh reader picks a hook from thumbnails + first lines and says why",
+     "why": "a fresh reader picks a hook from thumbnails + first lines and says why (fresh against the thumbnails it judged)",
      "sections": [
       "^#+ .*pick"
      ],
      "newerThan": [
-      "TREATMENT.md"
+      "review/hook-thumbs.jpg"
      ]
     }
    ]
@@ -234,6 +235,73 @@
      "why": "what to keep, what to fix, and the rules proposed for the skill",
      "sections": [
       "^#+ .*rules? proposed"
+     ]
+    }
+   ]
+  },
+  "S": {
+   "title": "Script lock (SCRIPT.md)",
+   "run": [
+    {
+     "tool": "scriptlint.mjs",
+     "args": [
+      "{film}"
+     ]
+    }
+   ],
+   "evidence": [
+    {
+     "file": "vo/beats.json",
+     "by": "self",
+     "why": "the beat outline with but/so links, plants and the vote costs (SCRIPT.md [1.1a])"
+    },
+    {
+     "file": "vo/facts.json",
+     "by": "self",
+     "why": "the fact sheet: claim, lines, source URL, check, the move by you (SCRIPT.md [1.1b])"
+    },
+    {
+     "file": "review/fact-check.md",
+     "by": "independent",
+     "why": "a fresh fact checker tried to break every claim and number",
+     "sections": [
+      "^#+ .*verdict"
+     ],
+     "newerThan": [
+      "vo/script.json"
+     ]
+    },
+    {
+     "file": "review/skeptic.md",
+     "by": "independent",
+     "why": "a fresh skeptic listed every 'but why?', every beat that just happens, and whether the vote is open",
+     "sections": [
+      "^#+ .*vote"
+     ],
+     "newerThan": [
+      "vo/script.json"
+     ]
+    },
+    {
+     "file": "review/ear-retell.md",
+     "by": "independent",
+     "why": "a fresh listener heard it once and retold it: numbers kept and lost, where it got lost",
+     "sections": [
+      "^#+ .*retell"
+     ],
+     "newerThan": [
+      "vo/script.json"
+     ]
+    },
+    {
+     "file": "review/script-ab.md",
+     "by": "independent",
+     "why": "a fresh judge compared the last locked script and this one blind (X / Y)",
+     "sections": [
+      "winner"
+     ],
+     "newerThan": [
+      "vo/script.json"
      ]
     }
    ]

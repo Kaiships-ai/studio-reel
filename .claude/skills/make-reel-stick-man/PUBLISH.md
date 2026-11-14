@@ -19,7 +19,7 @@ better for it. Stage 5 turns retention and comments into named causes, and cause
 
 | Shape | Usually means | Look at |
 |---|---|---|
-| Steep fall in the first 1-3 s | the first frame or line does not promise danger and reward | the hook (DEVELOP.md, million-views R3) |
+| Steep fall in the first 1-3 s | the first frame or line does not promise danger and reward | the hook (DEVELOP.md, SCRIPT.md R3) |
 | A cliff at one shot | confusion or a dead stretch there | that shot's purpose; the muted retell; cards |
 | A slow steady slide | no rehook; nothing new on screen | the intensity curve; rehooks every 10-15 s |
 | A bump up | rewatches: a moment people replay | keep and repeat the device |
