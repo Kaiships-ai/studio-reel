@@ -6,7 +6,7 @@
 node styles/stick-man/tools/stagegate.mjs films/<slug> <1|S|2a|2b|2c|3|4|5|6|all>   # review/gate-<id>.md
 ```
 
-Each gate in `styles/stick-man/tools/GATES.json` lists four kinds of evidence: **measured** (a tool that must exit 0: `develop.mjs`, `scriptlint.mjs`, `prepro.mjs --gate`, `assets.mjs`, `timing.mjs`, `postcheck.mjs`), **made** (the maker's files), **judged** (`by: agent:<id>` or `person:<name>`, newer than what it reviewed) and **approved** (Kai in `review/approvals.json`, after the latest evidence). States: OPEN → READY FOR KAI → LOCK. A film may add evidence in `review/gates.local.json`, never remove any.
+Each gate in `styles/stick-man/tools/GATES.json` lists four kinds of evidence: **measured** (a tool that must exit 0: `develop.mjs`, `scriptlint.mjs`, `prepro.mjs --gate`, `assets.mjs`, `timing.mjs`, `postcheck.mjs`), **made** (the maker's files), **judged** (`by: agent:<id>` or `person:<name>`, fresh against what it reviewed: for a JSON file, the fields a viewer sees or hears hash the same as when the review was first seen newer than it, recorded in `review/.fresh.json`, so adding `options`, notes or purposes does not make a review stale; any other file must be older than the review; see `tools/fresh.mjs`) and **approved** (Kai in `review/approvals.json`, after the latest evidence). States: OPEN → READY FOR KAI → LOCK. A film may add evidence in `review/gates.local.json`, never remove any.
 
 
 ```sh

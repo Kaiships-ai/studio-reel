@@ -11,6 +11,8 @@ import fs from 'node:fs'; import path from 'node:path'; import crypto from 'node
 import { fileURLToPath } from 'node:url';
 import { loadFilm, visual, lensN, SIZES, ANGLES, MOVES, WIDE, TEXT_SAFE } from './shotlist.mjs';
 
+import { storyLockDiff } from './storylock.mjs';
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const argv = process.argv.slice(2), A = {};
 const film = argv[0];
@@ -166,11 +168,17 @@ for (const d of DEC?.decisions || []) {
 // a skill rule that an approved decision overrides is reported once, so Kai decides which one stands
 for (const d of DEC?.decisions || []) for (const c of d.check || []) if (d.status === 'approved' && c.type === 'sizeShare' && c.size === 'CARD' && c.min > 0.25)
   add('WARN', 'D3', d.id, `conflicts with the skill rule "cards ≤ 25 % / ≤ 8 s in a row" (C5): Kai picks which stands, and the loser is recorded in DECISIONS.json`);
-// K1: Kai's confirmation of the scene feels and story scores is locked; any later change is a FAIL until he confirms again
-const storyHash = crypto.createHash('sha256').update(JSON.stringify({ scenes: (SB.scenes || []).map(c => [c.id, c.feel]), shots: shots.map(s => [s.id, s.story]) })).digest('hex').slice(0, 16);
+// K1: Kai's confirmation of the scene feels and story scores is locked; any later change is a FAIL until he confirms again.
+// One exception: a shot added after the lock whose score lies between its two locked neighbours' (inclusive) is INFO.
+const storyNow = { scenes: (SB.scenes || []).map(c => [c.id, c.feel]), shots: shots.map(s => [s.id, s.story]) };
+const storyHash = crypto.createHash('sha256').update(JSON.stringify(storyNow)).digest('hex').slice(0, 16);
 const LK = F('review/locks.json'), locks = fs.existsSync(LK) ? JSON.parse(fs.readFileSync(LK, 'utf8')) : {};
-if (A['lock-story']) { locks.story = { hash: storyHash, by: A['lock-story'], at: new Date().toISOString() }; fs.mkdirSync(F('review'), { recursive: true }); fs.writeFileSync(LK, JSON.stringify(locks, null, 1)); }
-if (locks.story && locks.story.hash !== storyHash) add('FAIL', 'K1', 'story', `scene feels or story scores changed after ${locks.story.by} confirmed them (${locks.story.at.slice(0, 10)}): change the picture, not the score, or ask Kai again`);
+if (A['lock-story']) { locks.story = { hash: storyHash, by: A['lock-story'], at: new Date().toISOString(), ...storyNow }; fs.mkdirSync(F('review'), { recursive: true }); fs.writeFileSync(LK, JSON.stringify(locks, null, 1)); }
+if (locks.story && locks.story.hash !== storyHash) {
+  const k = storyLockDiff(locks.story, storyNow), who = `${locks.story.by} confirmed them (${locks.story.at.slice(0, 10)})`;
+  if (k.changed.length) add('FAIL', 'K1', 'story', `scene feels or story scores changed after ${who}${k.changed[0] === 'unknown' ? '' : ': ' + k.changed.join(', ')}: change the picture, not the score, or ask Kai again`);
+  for (const id of k.added) add('INFO', 'K1', id, 'added after lock, interpolated (its story score lies between its locked neighbours)');
+}
 if (A.gate === '2a' || A.gate === '2b') {
   if (!locks.story) add('FAIL', 'K1', 'story', 'Kai has not confirmed the scene feels and story scores (prepro.mjs --lock-story kai after he does)');
   if (estimated) add('FAIL', 'V2', 'vo/words.json', 'word times are estimated (scratch voice): lock on the final voice');
@@ -192,7 +200,8 @@ md.push(`# Pre-production check · ${SB.film || path.basename(DIR)}`, '');
 md.push(`${shots.length} shots · ${scenes.length} scenes · ${(total / fps).toFixed(2)} s (${total} f at ${fps} fps)${voEnd != null ? ` · voice ends f${voEnd}` : ' · no vo/words.json yet (timing from dur)'}`);
 md.push(`Climax: ${climax >= 0 ? shots[climax].id : '?'} · cards ${(cardSec).toFixed(1)} s · **${nF ? 'FAIL' : 'PASS'}**: ${findings.filter(f => f.lvl === 'FAIL').length} FAIL, ${nW} WARN${strict ? ' (strict)' : ''}`, '');
 md.push('## Findings', '', '| Level | Check | Where | What |', '| --- | --- | --- | --- |');
-for (const f of [...findings].sort((a, b) => (a.lvl === b.lvl ? 0 : a.lvl === 'FAIL' ? -1 : 1))) md.push(`| ${f.lvl} | ${f.id} | ${f.where} | ${f.msg.replace(/\|/g, '/')} |`);
+const RANK = { FAIL: 0, WARN: 1, INFO: 2 };
+for (const f of [...findings].sort((a, b) => RANK[a.lvl] - RANK[b.lvl])) md.push(`| ${f.lvl} | ${f.id} | ${f.where} | ${f.msg.replace(/\|/g, '/')} |`);
 if (!findings.length) md.push('| – | – | – | no findings |');
 md.push('', 'Fixes for each check id: PREPRO.md section 8.', '', '> This is the **measured** half only. A PASS here is not an approval: the judged evidence and Kai\'s approval are checked by `stagegate.mjs` (GATES.json).', '', '## Shots', '',
   '| Shot | Scene | In | Len | Size | Angle | Lens | Move | Story | Visual (sz/ln/an/mv/ct) | Flags | Lines | Purpose |',
