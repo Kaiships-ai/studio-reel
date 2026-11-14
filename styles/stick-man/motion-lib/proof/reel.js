@@ -28,8 +28,19 @@ const xs = placed.keys.map(k => k.pos?.[0] ?? 0), x0 = Math.min(0, ...xs), x1 = 
 // the load is in front of the legs, never read through them; a clip at a wall (a window) is seen side-on from beyond
 // a clip at a wall (a window) is seen the same way: the proof set's wall is see-through
 const window_ = (C.needs.marks || []).some(m => m.kind === 'window'), right = (C.needs.props || []).includes('bag') || window_ ? 1 : -1;
-const cam = x => ({ pos: [x + 1.6 * k, right * 3.0 * k, 1.1 * k], aim: [x + 0.15, 0, 0.8 * k], lens: 40 });
-const direct = [{ at: { f: 0 }, intent: 'ws', why: 'P1 · motion library proof', cut: 'cut', cam: cam(x0),
+// a run outpaces the camera's eased move through its middle (its start and stop are slow), so the camera stands further back
+const far = C.advance && /Run/.test(CLIP) ? 1.4 : 1;
+// &view=side: straight side-on (the view animators judge a walk or a run in)
+const side = QS.get('view') === 'side';
+const cam = x => (side ? { pos: [x, -3.0 * k, 0.85 * k], aim: [x, 0, 0.75 * k], lens: 40 } : { pos: [x + 1.6 * k * far, right * 3.0 * k * far, 1.1 * k], aim: [x + 0.15, 0, 0.8 * k], lens: 40 });
+// the side view tracks the body: short linear moves from where the body is to where it will be, each starting where
+// the last ended (a cut to the same camera does not show), so a fast run stays in the middle of the frame
+const xAt = f => { const K = placed.keys; let i = 0; while (i < K.length - 1 && K[i + 1].f <= f) i++; const a = K[i], b = K[Math.min(K.length - 1, i + 1)];
+  const xa = a.pos?.[0] ?? 0, xb = b.pos?.[0] ?? xa; return b.f > a.f ? xa + (xb - xa) * Math.max(0, Math.min(1, (f - a.f) / (b.f - a.f))) : xa; };
+const SEG = 4, track = [];
+if (side) for (let f = 0; f < last + 12; f += SEG) track.push({ at: { f }, intent: 'ws', why: 'P1 · motion library proof (side, tracking)', cut: 'cut', cam: cam(xAt(f)),
+  to: cam(xAt(f + SEG)), move: { from: { f }, dur: SEG, ease: 'linear' } });
+const direct = side ? track : [{ at: { f: 0 }, intent: 'ws', why: 'P1 · motion library proof', cut: 'cut', cam: cam(x0),
   ...(x1 - x0 > 0.4 ? { to: cam(x1), move: { from: { f: F0 }, dur: Math.max(10, last - F0), ease: 'inout' } } : {}) }];
 
 export default {

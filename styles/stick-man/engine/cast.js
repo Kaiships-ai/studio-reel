@@ -6,7 +6,7 @@ import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometr
 import { toon, lin, css, B, INK_RGB, INK_SUN, PLACE } from './look.js';
 import { EXPR, faceRig, mixFace } from './faces.js';
 import { makeHandProp } from '../lib/cast/handprops.js';
-import { limitArm, limitBody, ROM, torsoSlices, ellipsoid, solveArm, armPenetration, propPush, PHYS, centreOfMass, balanceShift } from './body.js';
+import { SOFT, legReach, limitArm, limitBody, ROM, torsoSlices, ellipsoid, solveArm, armPenetration, propPush, PHYS, centreOfMass, balanceShift } from './body.js';
 
 const SPIN_Q = new THREE.Quaternion(), SPIN_AX = new THREE.Vector3(0, 1, 0), _camL = new THREE.Vector3();
 export const W_M = 0.60;                     // head width in metres
@@ -395,20 +395,13 @@ export const LIMB = { thigh: 0.679, shin: 0.679, upper: 0.5125, fore: 0.5125, st
 // the foot (W): a heel behind the ankle as well as the toe in front, so the body has something to stand on (rig B2; a
 // 4 cm toe stub with no heel put a standing body's centre of mass behind its feet). FOOT_R: the drawn line's radius,
 // the height of the sole under a foot point
-export const FOOT = { heel: 0.08 };
+// out: the toe turned out from straight ahead (deg). A person's feet point forward with a few degrees of toe-out (gait
+// studies: ~5-10); 55 deg (the first design) splayed them like a duck's (Kai 2026-11-14: "bàn chân bè bè ra")
+export const FOOT = { heel: 0.08, out: 8 };
 const FOOT_R = 0.022;
-// Above this share of full reach the joint eases toward straight and the hose stretches (rubber hose), so a target is
-// always reached exactly (feet never slide, props stay in the hand). Legs straighten fully (a standing leg never
-// flickers bent); arms keep a soft 12 deg bend and stretch, easing over a wide range so a fast reach never snaps.
-const SOFT = { leg: 0.965, arm: 0.96 };
-// the hip-to-ankle distance (share of full leg length) at which the leg shows a knee flex of `flex` deg
-export function legReach(flex) {
-  const s = SOFT.leg, fs = 2 * Math.acos(s) / DEG;
-  if (flex >= fs) return Math.cos(flex / 2 * DEG);
-  let a = s, b = 1;
-  for (let i = 0; i < 30; i++) { const m = (a + b) / 2; if (fs * (1 - sm(s, 1, m)) > flex) a = m; else b = m; }
-  return (a + b) / 2;
-}
+// SOFT (the share of full reach above which a joint eases toward straight) and legReach live in body.js, so the
+// motion library can build hips from legs without the renderer
+export { legReach };
 const ROUND = { leg: 0.40, arm: 0.50 };                          // bend roundness: control-point reach as a share of the bone
 const V = (a) => new THREE.Vector3(a[0], a[1], a[2] || 0);
 // Arms never rubber-hose: exact two-bone geometry down to an elbow of ARM_MIN_FLEX; past that the bones stretch at most
@@ -860,8 +853,17 @@ export function makeStick(spec) {
       elbow = sol.elbow; hand = sol.hand; flex = sol.flex;
       arms[side] = { sh, pole: A.pole ? V(A.pole) : k.pole, want, grip };
       const hipJ = toRoot(new THREE.Vector3(sg * 0.14 * girth, 0.04, 0)), G = Q['leg' + side] || {};
-      const foot0 = V(G.foot || [sg * 0.22, 0.022, 0]), kp = V(G.knee || [sg * 0.15, 0, 1]);
-      const hdir = new THREE.Vector3(0.10 * sg, 0, 0.07).normalize().applyAxisAngle(_Y, (G.yaw || 0) * DEG), gnd = Q.ground || 0;
+      const foot0 = V(G.foot || [sg * 0.22, 0.022, 0]);
+      // the knee bends in the leg's own plane (hip, foot and the pelvis's sideways axis), always to the front of the
+      // hip-to-foot line: a fixed 'forward' pole points almost along that line when the foot kicks up behind (a run's
+      // heel kick), and the knee then swung out sideways up to 35 cm (Kai 2026-11-14, front view of the run). A keyed
+      // knee [x, y, z] (keyed, default [sg 0.15, 0, 1]) is read in that frame: z = to the front of the line, x = out to
+      // the side (a squat's knees open with a larger x), y = up.
+      const latP = new THREE.Vector3(1, 0, 0).applyQuaternion(qb), KN = G.knee || [sg * 0.15, 0, 1];
+      const legPole = f => { const ax = f.clone().sub(hipJ).normalize(), fw = ax.clone().cross(latP).normalize(), up = latP.clone().cross(fw);
+        return fw.multiplyScalar(KN[2]).addScaledVector(latP, KN[0]).addScaledVector(up, KN[1] || 0); };
+      let kp = legPole(foot0);
+      const hdir = new THREE.Vector3(Math.sin(FOOT.out * DEG) * sg, 0, Math.cos(FOOT.out * DEG)).applyAxisAngle(_Y, (G.yaw || 0) * DEG), gnd = Q.ground || 0;
       // heel and toe turn about the ankle with the foot's pitch; no part of the sole goes under the ground (a toes-down
       // foot stands on its toes, so the ankle rises). Past the ankle's range the heel lifts instead (second pass).
       let ptc = (G.pitch || 0) * DEG, foot, toeO, heelO, leg, ankleLift = 0;
@@ -870,6 +872,7 @@ export function makeStick(spec) {
         heelO = hdir.clone().multiplyScalar(-FOOT.heel * Math.cos(ptc)).setY(-FOOT.heel * Math.sin(ptc) - 0.004);
         foot = foot0.clone(); const sole = Math.min(foot.y, foot.y + toeO.y, foot.y + heelO.y) - FOOT_R;
         if (sole < gnd) foot.y += gnd - sole;
+        kp = legPole(foot);
         leg = ik(hipJ, foot, LT, kp, SOFT.leg);
         const shin = foot.clone().sub(leg.joint).normalize(), soleD = toeO.clone().sub(heelO).normalize();
         const df = 90 - Math.acos(Math.max(-1, Math.min(1, -shin.dot(soleD)))) / DEG;
@@ -884,7 +887,9 @@ export function makeStick(spec) {
         if (w0 && !PHYS.on) legPen0 = legPen = w0.depth;
         else if (w0) { legPen0 = w0.depth; const ax = foot.clone().sub(hipJ).normalize(), out = new THREE.Vector3(sg, 0, 0.3).applyQuaternion(qb);
           let best = null;
-          for (let k = 1; k <= 36 && !best; k++) for (const sgn of [1, -1]) {
+          // at most 45 deg round the line: past that the knee would point sideways or behind (a tucked jump's thigh against
+          // a thick trunk turned the knees round backwards); a deeper overlap is left and reported (legPen)
+          for (let k = 1; k <= 9 && !best; k++) for (const sgn of [1, -1]) {
             const P = kp.clone().applyAxisAngle(ax, sgn * k * 5 * DEG), r = ik(hipJ, foot, LT, P, SOFT.leg);
             if (!armPenetration(hipJ, r.joint, foot, vols, { limb: LIMB_R / W, handR: 0.03 }) && (!best || r.joint.clone().sub(hipJ).dot(out) > best.joint.clone().sub(hipJ).dot(out))) best = r;
             if (best && sgn === -1) break;

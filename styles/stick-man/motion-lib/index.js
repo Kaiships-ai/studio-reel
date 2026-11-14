@@ -9,6 +9,7 @@
 // `stop: true` does the same without `to`. A shared clip played on another body scales its metres with that body's size.
 // The README in this folder has the rules; docs/MOTION-LIB.md the catalogue.
 import { BODIES } from './bodies.js';
+import { BASES } from './base.js';
 import Adult_Idle_Breath_Loop_v01 from './body/adult/Adult_Idle_Breath_Loop_v01.js';
 import Adult_Idle_Frozen_Loop_v01 from './body/adult/Adult_Idle_Frozen_Loop_v01.js';
 import Adult_Idle_Tired_Loop_v01 from './body/adult/Adult_Idle_Tired_Loop_v01.js';
@@ -16,6 +17,35 @@ import Adult_Move_CarryHeavy_Run_Loop_v01 from './body/adult/Adult_Move_CarryHea
 import Adult_Move_CarryHeavy_Walk_Loop_v01 from './body/adult/Adult_Move_CarryHeavy_Walk_Loop_v01.js';
 import Adult_Move_Run_Fwd_Loop_v01 from './body/adult/Adult_Move_Run_Fwd_Loop_v01.js';
 import Adult_Move_Walk_Fwd_Loop_v01 from './body/adult/Adult_Move_Walk_Fwd_Loop_v01.js';
+import Adult_Move_Sprint_Fwd_Loop_v01 from './body/adult/Adult_Move_Sprint_Fwd_Loop_v01.js';
+import Adult_Act_Jump_Once_v01 from './body/adult/Adult_Act_Jump_Once_v01.js';
+import Adult_Idle_Stand_Loop_v01 from './body/adult/Adult_Idle_Stand_Loop_v01.js';
+import Adult_Idle_LookAround_Loop_v01 from './body/adult/Adult_Idle_LookAround_Loop_v01.js';
+import Adult_Gest_Talk_Loop_v01 from './body/adult/Adult_Gest_Talk_Loop_v01.js';
+import Adult_Gest_Point_Loop_v01 from './body/adult/Adult_Gest_Point_Loop_v01.js';
+import Adult_Gest_Wave_Loop_v01 from './body/adult/Adult_Gest_Wave_Loop_v01.js';
+import Adult_Trans_SitDown_Once_v01 from './body/adult/Adult_Trans_SitDown_Once_v01.js';
+import Adult_Idle_Sit_Loop_v01 from './body/adult/Adult_Idle_Sit_Loop_v01.js';
+import Adult_Trans_StandUp_Once_v01 from './body/adult/Adult_Trans_StandUp_Once_v01.js';
+import Adult_Gest_PointSeated_Loop_v01 from './body/adult/Adult_Gest_PointSeated_Loop_v01.js';
+import Adult_Act_PickUp_Once_v01 from './body/adult/Adult_Act_PickUp_Once_v01.js';
+import Adult_Move_TurnLeft_Once_v01 from './body/adult/Adult_Move_TurnLeft_Once_v01.js';
+import Adult_Trans_LieDown_Once_v01 from './body/adult/Adult_Trans_LieDown_Once_v01.js';
+import Adult_Idle_Sleep_Loop_v01 from './body/adult/Adult_Idle_Sleep_Loop_v01.js';
+import Adult_Trans_GetUp_Once_v01 from './body/adult/Adult_Trans_GetUp_Once_v01.js';
+import Adult_Move_CarryBag_Walk_Loop_v01 from './body/adult/Adult_Move_CarryBag_Walk_Loop_v01.js';
+import Adult_Move_PushHeavy_Loop_v01 from './body/adult/Adult_Move_PushHeavy_Loop_v01.js';
+import Adult_Idle_CarryBag_Loop_v01 from './body/adult/Adult_Idle_CarryBag_Loop_v01.js';
+import Adult_Act_PutDown_Once_v01 from './body/adult/Adult_Act_PutDown_Once_v01.js';
+import Adult_React_Startle_Once_v01 from './body/adult/Adult_React_Startle_Once_v01.js';
+import Adult_Gest_LookBack_Once_v01 from './body/adult/Adult_Gest_LookBack_Once_v01.js';
+import Adult_Act_PistolReady_Loop_v01 from './body/adult/Adult_Act_PistolReady_Loop_v01.js';
+import Adult_Act_PistolShoot_Once_v01 from './body/adult/Adult_Act_PistolShoot_Once_v01.js';
+import Adult_Act_TorchReady_Loop_v01 from './body/adult/Adult_Act_TorchReady_Loop_v01.js';
+import Adult_Act_Drive_Loop_v01 from './body/adult/Adult_Act_Drive_Loop_v01.js';
+import Adult_Act_HandOver_Once_v01 from './body/adult/Adult_Act_HandOver_Once_v01.js';
+import Adult_Act_Consume_Once_v01 from './body/adult/Adult_Act_Consume_Once_v01.js';
+import Adult_Gest_PhoneCall_Loop_v01 from './body/adult/Adult_Gest_PhoneCall_Loop_v01.js';
 import Child_Idle_Breath_Loop_v01 from './body/child/Child_Idle_Breath_Loop_v01.js';
 import Child_Move_Run_Fwd_Loop_v01 from './body/child/Child_Move_Run_Fwd_Loop_v01.js';
 import Child_Move_Walk_Fwd_Loop_v01 from './body/child/Child_Move_Walk_Fwd_Loop_v01.js';
@@ -50,6 +80,35 @@ export const ALL = [
   Adult_Move_CarryHeavy_Walk_Loop_v01,
   Adult_Move_Run_Fwd_Loop_v01,
   Adult_Move_Walk_Fwd_Loop_v01,
+  Adult_Move_Sprint_Fwd_Loop_v01,
+  Adult_Act_Jump_Once_v01,
+  Adult_Idle_Stand_Loop_v01,
+  Adult_Idle_LookAround_Loop_v01,
+  Adult_Gest_Talk_Loop_v01,
+  Adult_Gest_Point_Loop_v01,
+  Adult_Gest_Wave_Loop_v01,
+  Adult_Trans_SitDown_Once_v01,
+  Adult_Idle_Sit_Loop_v01,
+  Adult_Trans_StandUp_Once_v01,
+  Adult_Gest_PointSeated_Loop_v01,
+  Adult_Act_PickUp_Once_v01,
+  Adult_Move_TurnLeft_Once_v01,
+  Adult_Trans_LieDown_Once_v01,
+  Adult_Idle_Sleep_Loop_v01,
+  Adult_Trans_GetUp_Once_v01,
+  Adult_Move_CarryBag_Walk_Loop_v01,
+  Adult_Move_PushHeavy_Loop_v01,
+  Adult_Idle_CarryBag_Loop_v01,
+  Adult_Act_PutDown_Once_v01,
+  Adult_React_Startle_Once_v01,
+  Adult_Gest_LookBack_Once_v01,
+  Adult_Act_PistolReady_Loop_v01,
+  Adult_Act_PistolShoot_Once_v01,
+  Adult_Act_TorchReady_Loop_v01,
+  Adult_Act_Drive_Loop_v01,
+  Adult_Act_HandOver_Once_v01,
+  Adult_Act_Consume_Once_v01,
+  Adult_Gest_PhoneCall_Loop_v01,
   Child_Idle_Breath_Loop_v01,
   Child_Move_Run_Fwd_Loop_v01,
   Child_Move_Walk_Fwd_Loop_v01,
@@ -119,6 +178,8 @@ export function placeClip(k, cur = { pos: [0, 0], yaw: 0 }) {
     if (ends) for (const ck of C.outro) put(ck, shift + (n - 1) * C.advance, f0 + n * C.frames);
   }
   for (const [n2, v] of Object.entries(k)) if (PASS.has(n2)) out[0][n2] = v;
+  // a clip written against another standard pose than the one it opens on names it (rest): the dose pushes from that
+  if (C.rest) out[0].rest = BASES[C.rest](body, 0);
   const last = out[out.length - 1];
   return { keys: out, pos: last.pos ? last.pos.slice(0, 2) : O, yaw: last.yaw ?? H, clip: C, n, fit };
 }

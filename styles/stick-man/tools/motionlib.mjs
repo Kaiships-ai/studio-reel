@@ -11,7 +11,7 @@ import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os'
 import { fileURLToPath } from 'node:url';
 import { run } from '../../../kit/env.mjs';
 import { ALL, placeClip } from '../motion-lib/index.js';
-import { BASES } from '../motion-lib/base.js';
+import { BASES, turned } from '../motion-lib/base.js';
 import { BODIES } from '../motion-lib/bodies.js';
 import { compileTrack, playActor, flatten } from '../engine/motion.js';
 
@@ -80,7 +80,11 @@ export function checkClip(C, file) {
   const ends = C.loop ? (C.advance ? [[full(C.intro)[0], C.base], [full([...C.keys, ...C.outro])[C.keys.length + C.outro.length - 1], C.end || C.base]] : [])
     : [[F[0], C.base], [F[F.length - 1], C.end || C.base]];
   for (const [i, [m, nm]] of ends.entries()) {
-    const ref = flatten(BASES[nm](B, m['pos.0'] || 0)), d = diff(body(m, ref), body(ref, ref));
+    // a clip that turns ends on its standard pose facing the new way (the pose turned with the root)
+    const yw = (m.yaw ?? 90) - 90, ref = flatten(Math.abs(yw) > 1e-6 ? turned(BASES[nm](B, 0), yw, [m['pos.0'] || 0, m['pos.1'] || 0]) : BASES[nm](B, m['pos.0'] || 0));
+    // SIT on a seat the clip names sits as deep as that seat (its height is the clip's): the hips' height is the seat's
+    if (nm === 'SIT' && (C.needs?.marks || []).some(k => k.kind === 'seat')) ref.bob = m.bob;
+    const d = diff(body(m, ref), body(ref, ref));
     if (d) fails.push(`${i ? 'ends' : 'starts'} off ${nm}: ${d.n} differs by ${d.d}`);
   }
   // playback with the dose: the joint gate, planted feet, flights
@@ -90,9 +94,17 @@ export function checkClip(C, file) {
   let jMax = 0, jAt = null, slide = 0, slideAt = null; const over = [];
   for (let f = 1; f < fr.length; f++) {
     const p = fr[f - 1], q = fr[f];
-    for (const n of Object.keys(q)) if (ANGLE.test(n) && n in p) { const d = Math.abs(q[n] - p[n]); if (d > jMax) { jMax = d; jAt = `${f} ${n}`; } if (d > JOINT_MAX) over.push(f); }
+    // a foot in the air hangs off its shin: its pitch is a world angle that turns with the leg, not a joint, so it is not
+    // gated while the foot is up (the ankle's own bend is the rig's: ROM.ankleDF); the solved joints below catch a pop
+    const airborne = n => { const m = /^leg([LR])\.pitch$/.exec(n); return m && Math.max(q[`leg${m[1]}.footW.2`] ?? 0, p[`leg${m[1]}.footW.2`] ?? 0) > 0.005; };
+    // captured frames (C.captured, clip frames) are a real body's own speeds: a run's knee or a jump's arm swing turns
+    // 30-50 deg a frame at 30 fps. They are measured (jointMax) but not gated; the frames the library makes around them
+    // (first and closing steps, the blend from and to the standard pose) are
+    // (one span [a, b] or a list of them: a gait's captured start, cycles and stop, the seams between them the library's)
+    const cap = C.captured && (Array.isArray(C.captured[0]) ? C.captured : [C.captured]).some(([a, b]) => f > a && f <= b);
+    if (!cap) for (const n of Object.keys(q)) if (ANGLE.test(n) && n in p && !airborne(n)) { const d = Math.abs(q[n] - p[n]); if (d > jMax) { jMax = d; jAt = `${f} ${n}`; } if (d > JOINT_MAX) over.push(f); }
     // a hand on an ik target: the target's travel against the arm's length, as an angle
-    for (const s of ['L', 'R']) if (`arm${s}.ik.0` in q && (q[`arm${s}.ikw`] ?? 1) > 0.5) {
+    if (!cap) for (const s of ['L', 'R']) if (`arm${s}.ik.0` in q && (q[`arm${s}.ikw`] ?? 1) > 0.5) {
       const d = Math.hypot(...[0, 1, 2].map(i => q[`arm${s}.ik.${i}`] - p[`arm${s}.ik.${i}`])) / ARM_W * 180 / Math.PI;
       if (d > jMax) { jMax = d; jAt = `${f} arm${s}.ik`; } if (d > JOINT_MAX) over.push(f); }
     for (const s of ['L', 'R']) { const z0 = p[`leg${s}.footW.2`], z1 = q[`leg${s}.footW.2`]; if (z0 == null || z0 > 0.005 || z1 > 0.005) continue;

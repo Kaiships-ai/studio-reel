@@ -1,7 +1,7 @@
 # Stick-man motion library and carried loads
 
 A stick-man reel's motion v2 `anim` takes library clips: `{ f, clip: 'Move_Walk_Fwd_Loop', body: 'elder', to: [3, 0] }`
-expands into the clip's keys (`styles/stick-man/motion-lib`, 32 clips, 5 body types). The rig under it gained body
+expands into the clip's keys (`styles/stick-man/motion-lib`, 61 clips, 5 body types; the adult's 27 Mixamo and 8 Quaternius UAL (CC0) captures; standard poses STAND, SIT, CARRY, LIE; captured keys play without the drag (motion.js raw) (ref/mocap.js): run, sprint, walk with their captured start and stops, jump, idle, look around, talk, point, wave, sit down, sit, stand up, seated point, pick up, quarter turn). The rig under it gained body
 proportions (cast spec `scale`, `headScale`, `legScale`, `kg`), a hand that grips keeps its target or reports the gap
 (rig K4), and a carried prop that is a solid with mass (rig K5). A reel without `clip` keys or new spec fields renders as
 before, except where an old one had a hand forced off a target (now kept when reachable) or a held prop inside the body.
@@ -11,6 +11,12 @@ before, except where an old one had a hand forced off a target (now kept when re
 - `clip` keys: `to` (heading, fitted cycles, first and closing steps), `times`, `stop`, `pos`, `yaw`, `swap`, `expr`.
 - Body types (`motion-lib/bodies.js` `bodySpec`): adult, heavy (girth 1.9), thin (0.6), child (scale 0.62, head 1.3, legs
   0.8), elder (stooped posture); each with its own walk, run and breath.
+- Gaits (`base.js` `gaitLoop`, every walk and run): sampled a key a frame from curves. The hips are solved from the
+  stance leg's knee curve (`knees` in `bodies.js`, `legReach` now in `engine/body.js`), so a knee never snaps; the swing
+  foot is the hip-to-ankle line swung forward; hips shift, turn and tilt, shoulders counter-rotate, arms widest just
+  after contact and not twins; a trailing heel peels as the leg needs (at most 16 deg a frame); a run lands its foot
+  0.3 step ahead and has a gravity flight. Rules: `styles/stick-man/docs/MOTION-RULES.md`. The walks of all five bodies
+  keep solved knees and elbows <= 27 deg a frame (test).
 - `toPose(m, scale)`: a scaled figure's planted feet land where they were keyed in metres (`engine/play.js` passes the
   root scale; a `scale:k` costume benefits too).
 - Rig K4: `solveArm({ keep })` tries every elbow turn before moving a gripping hand; `rigWorld()` `L/R.targetGapCm`, `grip`.

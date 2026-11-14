@@ -6,12 +6,13 @@ import * as THREE from 'three';
 import { checkAll, NAME_RE, clipFiles } from '../../styles/stick-man/tools/motionlib.mjs';
 import { ALL, getClip, placeClip, expandClips } from '../../styles/stick-man/motion-lib/index.js';
 import { BODIES } from '../../styles/stick-man/motion-lib/bodies.js';
-import { compileTrack, playActor, toPose } from '../../styles/stick-man/engine/motion.js';
+import { compileTrack, playActor, toPose, STYLE_PRESETS } from '../../styles/stick-man/engine/motion.js';
+import { DOSE_E } from '../../styles/stick-man/motion-lib/base.js';
 import { ellipsoid, solveArm, armPenetration, propPush, centreOfMass } from '../../styles/stick-man/engine/body.js';
 
-test('the library has 32 clips on 5 bodies, and every one passes motionlib.mjs (naming, seam, base, joint gate, feet)', async () => {
-  assert.equal(ALL.length, 32);
-  assert.equal(clipFiles().length, 32);
+test('the library has 61 clips on 5 bodies, and every one passes motionlib.mjs (naming, seam, base, joint gate, feet)', async () => {
+  assert.equal(ALL.length, 61);
+  assert.equal(clipFiles().length, 61);
   assert.deepEqual(Object.keys(BODIES), ['adult', 'heavy', 'thin', 'child', 'elder']);
   for (const b of Object.keys(BODIES)) for (const c of ['Idle_Breath_Loop', 'Move_Walk_Fwd_Loop', 'Move_Run_Fwd_Loop']) assert.equal(getClip(c, b).body, b);
   const bad = (await checkAll()).filter(r => r.fails.length);
@@ -155,4 +156,14 @@ test('rig: a 25 kg bag on the right pulls the centre of mass right; the cap on t
   assert.ok(c1 - c0 > 0.05, `com x ${c0.toFixed(3)} -> ${c1.toFixed(3)} (W)`);
   S.pose2({ x_hpH_cap: 1 }); const w = S.rigWorld();
   assert.ok(S.props.Hcap.visible && w.propPenCm === 0 && !w.R.grip);
+});
+
+test('gait: the hips are solved on the kaiships dose as motion.js plays it (DOSE_E = 0.4 + 1.2 x exaggeration)', () => {
+  assert.equal(DOSE_E, +(0.4 + 1.2 * STYLE_PRESETS.kaiships.exaggeration).toFixed(6));
+});
+test('gait: the walks of all five bodies keep every solved knee and elbow under 27 deg a frame through the real rig', async () => {
+  for (const b of Object.keys(BODIES)) {
+    const g = await rigClip(getClip('Move_Walk_Fwd_Loop', b), b);
+    assert.ok(g.joint <= 27, `${b} walk: ${g.joint} deg/f at ${g.jointAt}`);
+  }
 });
