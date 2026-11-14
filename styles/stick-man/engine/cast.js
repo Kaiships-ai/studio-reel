@@ -887,7 +887,9 @@ export function makeStick(spec) {
         if (w0 && !PHYS.on) legPen0 = legPen = w0.depth;
         else if (w0) { legPen0 = w0.depth; const ax = foot.clone().sub(hipJ).normalize(), out = new THREE.Vector3(sg, 0, 0.3).applyQuaternion(qb);
           let best = null;
-          for (let k = 1; k <= 36 && !best; k++) for (const sgn of [1, -1]) {
+          // at most 45 deg round the line: past that the knee would point sideways or behind (a tucked jump's thigh against
+          // a thick trunk turned the knees round backwards); a deeper overlap is left and reported (legPen)
+          for (let k = 1; k <= 9 && !best; k++) for (const sgn of [1, -1]) {
             const P = kp.clone().applyAxisAngle(ax, sgn * k * 5 * DEG), r = ik(hipJ, foot, LT, P, SOFT.leg);
             if (!armPenetration(hipJ, r.joint, foot, vols, { limb: LIMB_R / W, handR: 0.03 }) && (!best || r.joint.clone().sub(hipJ).dot(out) > best.joint.clone().sub(hipJ).dot(out))) best = r;
             if (best && sgn === -1) break;

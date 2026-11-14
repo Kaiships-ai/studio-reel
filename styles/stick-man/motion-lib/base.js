@@ -47,8 +47,27 @@ export const K = (f, pose, over = {}) => ({ f, ...merge(pose, over), ease: over.
 // introTravel, outro, outroTravel }: intro = the first step from the standard pose, outro = the closing step back to it.
 // a one-off from motion capture (a jump in place): its frames on this body, from STAND and back to it (`ease` frames each
 // way), the feet on the standing prints
+const KNEE_AIR = 100;
 export function mocapOnce({ body = 'adult', src, ease = 8 }) {
   const { keys, frames } = gaitLoop({ body, kind: 'walk', mocap: src, once: true }), s0 = stand(body, 0);
+  // the flight: motion.js flies the body on gravity from the last key on the ground to the first one back on it, so the
+  // keys carry that same arc, and an airborne foot hangs off the hips where the capture held it (a foot's height is
+  // from the root, which the flight lifts)
+  const B = BODIES[body], sc = B.spec.scale ?? 1, LK = B.spec.legScale ?? 1, standHipM = (1.38 - (1 - LK) * 2 * 0.679) * 0.6 * sc - 0.022 * 0.6 * sc;
+  for (let i = 0; i < keys.length; i++) {
+    if (!keys[i]._air || (i && keys[i - 1]._air)) continue;
+    let j = i; while (j < keys.length && keys[j]._air) j++;
+    const a = Math.max(0, i - 1), b = Math.min(keys.length - 1, j), Tf = (keys[b].f - keys[a].f) / 30, v0 = 9.8 * Tf / 2;
+    for (let n = i; n < j; n++) { const k = keys[n], t = (k.f - keys[a].f) / 30, z = v0 * t - 9.8 * t * t / 2, rel = h => h - k._air.hipZ;
+      k.pos = [k.pos[0], k.pos[1], z];
+      // a tuck folds no further than KNEE_AIR: the capture's knees fold ~130 deg, and on this body's thick trunk the
+      // thighs would then sit inside the belly (the rig turns such a knee round behind the leg)
+      // footW's height is measured from the body's root, which gravity lifts (pos.2): the hips stand standHipM above it
+      const hz = standHipM, dMin = (standHipM + 0.022 * 0.6 * sc) * Math.cos(KNEE_AIR / 2 * Math.PI / 180);
+      for (const sd of ['legL', 'legR']) { const f = k[sd].footW, r = [f[0] - k.pos[0], f[1] - (sd === 'legL' ? -1 : 1) * 0.084 * sc, rel(f[2])], d = Math.hypot(...r), w = d < dMin ? dMin / Math.max(d, 1e-6) : 1;
+        k[sd] = { ...k[sd], footW: [k.pos[0] + r[0] * w, f[1], Math.max(0.006, hz + r[2] * w)] }; } }
+  }
+  for (const k of keys) delete k._air;
   const mid = keys.map(k => ({ ...k, f: k.f + ease }));
   const s1 = merge(s0, { hip: { x: 0 } });
   return { keys: [K(0, s1, { ease: 'slow' }), ...mid, K(frames + 2 * ease, s1, { ease: 'slow' })], frames: frames + 2 * ease, captured: [ease, ease + frames] };
@@ -240,7 +259,7 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
     // and while both feet are up the hips' rise is the body's own height off the ground (pos.2), which gravity then owns
     if (G.once) {
       for (const sd of ['L', 'R']) if (m.down[sd] || m['leg' + sd].footW[2] < 0.012) P['leg' + sd] = { footW: [0, sd === 'L' ? -Y0 : Y0, 0], pitch: m['leg' + sd].pitch };
-      if (!m.down.L && !m.down.R) { const z = Math.max(0, m.hipZ - MC.standHip); P.pos = [P.pos[0], 0, z]; P.bob = un(MC.standHip * mW + 0.022 * 0.6 * sc * mW - 1.38 + DROP, pose0.bob || 0); }
+      if (!m.down.L && !m.down.R) { const z = Math.max(0, m.hipZ - MC.standHip); P.pos = [P.pos[0], 0, z]; P.bob = un(MC.standHip * mW + 0.022 * 0.6 * sc * mW - 1.38 + DROP, pose0.bob || 0); P._air = { hipZ: m.hipZ }; }
     }
     // the hips' height from the planted legs' captured knees (legBob), not the captured height: this leg is not the
     // capture's, and near straight a centimetre of height is tens of degrees of knee
