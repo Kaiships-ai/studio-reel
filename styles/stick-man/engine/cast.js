@@ -6,7 +6,7 @@ import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometr
 import { toon, lin, css, B, INK_RGB, INK_SUN, PLACE } from './look.js';
 import { EXPR, faceRig, mixFace } from './faces.js';
 import { makeHandProp } from '../lib/cast/handprops.js';
-import { limitArm, limitBody, ROM, torsoSlices, ellipsoid, solveArm, armPenetration, PHYS, centreOfMass, balanceShift } from './body.js';
+import { limitArm, limitBody, ROM, torsoSlices, ellipsoid, solveArm, armPenetration, propPush, PHYS, centreOfMass, balanceShift } from './body.js';
 
 const SPIN_Q = new THREE.Quaternion(), SPIN_AX = new THREE.Vector3(0, 1, 0), _camL = new THREE.Vector3();
 export const W_M = 0.60;                     // head width in metres
@@ -434,7 +434,12 @@ function ik(root, end, l, pole, soft, arm = false) {
 }
 // One smooth tube through root, joint and end: two quadratic arcs sharing the chord direction as tangent at the joint,
 // resampled to n points evenly by arc length (W units in, metres out).
-function hose(a, k, e, round, n) {
+// fold (legs): past 60 deg of flex the roundness fades to a near-sharp joint by 120 deg. The control points lie along the
+// root-to-end line, which a deep fold makes short and crosswise to both bones: a round bend there balloons into a loop
+// (a knee in a climb or a squat drawn as a rubber hose), so a deep knee is drawn as an angle
+function hose(a, k, e, round, n, fold = false) {
+  if (fold) { const u = k.clone().sub(a).normalize(), v = e.clone().sub(k).normalize(), fl = Math.acos(Math.max(-1, Math.min(1, u.dot(v)))) / DEG;
+    round *= 1 - 0.85 * Math.max(0, Math.min(1, (fl - 60) / 60)); }
   const t = e.clone().sub(a).normalize(), l1 = a.distanceTo(k), l2 = k.distanceTo(e);
   const c1 = k.clone().addScaledVector(t, -round * l1), c2 = k.clone().addScaledVector(t, round * l2), dense = [];
   const q = (p0, c, p1, s) => new THREE.Vector3().copy(p0).multiplyScalar((1 - s) ** 2).addScaledVector(c, 2 * (1 - s) * s).addScaledVector(p1, s * s);
@@ -574,6 +579,11 @@ export function makeStick(spec) {
   // girth: a body silhouette per actor (judge t2: "a grey blob body"); 1 = the default, Bram is stocky, Mabel slim.
   // rimCool: a cool rim light on dark places (bible v1.1: a dark figure keeps an edge on any set darker than Y 95)
   const girth = spec.girth ?? 1, rc = spec.rimCool ? 1 : 0;
+  // body proportions (motion v2, styles/stick-man/motion-lib/bodies.js): scale = the whole figure from its soles; headScale =
+  // the head (and its contact volume) larger than the body, on the same neck; legScale = shorter legs, the hip lowered with
+  // them (feet stay where they are keyed); kg = the body's mass (a carried load's share of the centre of mass)
+  const SC = spec.scale ?? 1, HK = spec.headScale ?? 1, LK = spec.legScale ?? 1, LT = LIMB.thigh * LK, DROP = (1 - LK) * 2 * LIMB.thigh, KG = spec.kg ?? 70;
+  if (SC !== 1) root.scale.setScalar(SC);
   const torso = solid(torsoGeo(), toon([1, 1, 1], { map: clothesCanvas(spec), sheen: 0, rough: 1, rim: 0, soft: 0, shade: [0.78, 0.78, 0.86], char: 1, rimCool: rc }));
   torso.scale.set(girth, 1, 0.9 + 0.1 * girth);
   torso.position.y = (TORSO.cy - TORSO.h / 2 - HIP_V) * W; body.add(torso);
@@ -673,14 +683,18 @@ export function makeStick(spec) {
   const up = new THREE.Vector3(0, 1, 0), qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), ax = new THREE.Vector3();
   function handProps(P, r) {
     for (const o of Object.values(S.props)) o.visible = false;
+    const held = [];
     for (const k of Object.keys(P)) {
-      const m = /^x_hp([LRB])_(\w+)$/.exec(k); if (!m || !(P[k] > 0.5)) continue;
+      const m = /^x_hp([LRBH])_(\w+)$/.exec(k); if (!m || !(P[k] > 0.5)) continue;
       const side = m[1], kind = m[2], id = side + kind;
       const o = S.props[id] ||= (() => { const g = makeHandProp(kind); root.add(g); return g; })();
       o.visible = true;
+      // H: worn on the head (a cap put on by a hand): on the crown, turned and sized with the head
+      if (side === 'H') { o.quaternion.copy(head.quaternion); o.scale.setScalar(HK); o.position.set(0, HB * HK * 0.80, 0).applyQuaternion(head.quaternion).add(head.position); continue; }
       const tilt = (P['x_tilt' + (side === 'B' ? 'L' : side)] || 0) * DEG, U = o.userData, gp = new THREE.Vector3(...(U.grip || [0, 0, 0]));
+      const yw = (P['x_yaw' + side] || 0) * DEG;                 // x_yaw<L|R|B> (deg): an upright prop turned about the vertical (a bag held crosswise)
       let hand;
-      if (side === 'B') { hand = r.L.hand.clone().add(r.R.hand).multiplyScalar(0.5 * W); o.quaternion.setFromAxisAngle(ax.set(1, 0, 0), tilt); }
+      if (side === 'B') { hand = r.L.hand.clone().add(r.R.hand).multiplyScalar(0.5 * W); o.quaternion.setFromAxisAngle(ax.set(0, 1, 0), yw).multiply(qb.setFromAxisAngle(ax.set(1, 0, 0), tilt)); }
       else {
         hand = r[side].hand.clone().multiplyScalar(W);
         if (U.mode === 'along') {                                 // +y out of the fist along the forearm, then pitched by tilt
@@ -689,12 +703,34 @@ export function makeStick(spec) {
         } else {
           const t0 = U.tilt0 || [0, 0];
           qa.setFromAxisAngle(ax.set(0, 0, 1), -tilt + t0[1] * DEG); qb.setFromAxisAngle(ax.set(1, 0, 0), t0[0] * DEG); o.quaternion.copy(qa).multiply(qb);
+          const pw = (P['x_pitch' + side] || 0) * DEG;            // x_pitch<L|R> (deg, + tips the top forward): matches a nodding head (a cap set on it)
+          if (pw) o.quaternion.premultiply(qa.setFromAxisAngle(ax.set(1, 0, 0), pw));
+          if (yw) o.quaternion.premultiply(qa.setFromAxisAngle(ax.set(0, 1, 0), yw));
         }
       }
       o.position.copy(hand).sub(gp.applyQuaternion(o.quaternion));
       if (U.level) U.level(P['x_lvl' + (side === 'B' ? 'L' : side)] ?? 1);     // x_lvl<L|R>: a container's fill 0..1 (beaker)
+      const box = propBox(o); if (box) held.push({ o, side, kind, box });
     }
+    return held;
   }
+  // a hand prop's oriented box in root space (W): its own geometry's box (light cones and glows left out), once
+  function propBox(o) {
+    const U = o.userData;
+    if (!U.box || U.box.isEmpty()) {
+      o.updateMatrixWorld(true); const inv = new THREE.Matrix4().copy(o.matrixWorld).invert(), m = new THREE.Matrix4(); U.box = new THREE.Box3();
+      o.traverse(c => { if (!c.isMesh || !c.geometry || c.material?.blending === THREE.AdditiveBlending || c.material?.transparent) return;
+        if (!c.geometry.boundingBox) c.geometry.computeBoundingBox(); U.box.union(c.geometry.boundingBox.clone().applyMatrix4(m.multiplyMatrices(inv, c.matrixWorld))); });
+      if (U.box.isEmpty()) return null;
+    }
+    const c = U.box.getCenter(new THREE.Vector3()).multiply(o.scale).applyQuaternion(o.quaternion).add(o.position).multiplyScalar(1 / W);
+    const h = U.box.getSize(new THREE.Vector3()).multiply(o.scale).multiplyScalar(0.5 / W);
+    return { c, q: o.quaternion.clone(), h: [h.x, h.y, h.z] };
+  }
+  const propOverlap = (held, segs, vols) => { let w = null;
+    for (const h of held) { if (h.o.userData.soft) continue;                 // a soft prop (a cloth cap) gives way: no contact
+      const r = propPush(h.box, segs, vols, { limb: LIMB_R / W }); if (r && (!w || r.depth > w.depth)) w = { ...r, side: h.side }; }
+    return w; };
   // Extra keys for the reel runtime: pitch (deg, upper body forward about the hip), hands and feet may carry a
   // third number = depth toward where the figure faces (W), kneeF{L,R} = knee pushed forward (W), toeF = toe reach.
   S.pose = (P = {}) => {
@@ -737,7 +773,7 @@ export function makeStick(spec) {
       const f0 = P['foot' + side] || [sg * 0.22, 0.022], foot = V(f0);
       const kp = P['kneeDir' + side] || P.kneeDir || [sg * 0.15, 0, 1];
       const leg = ik(hip, foot, LIMB.thigh, V(kp), SOFT.leg);
-      const lp = hose(hip, leg.joint, foot, ROUND.leg, 13);
+      const lp = hose(hip, leg.joint, foot, ROUND.leg, 13, true);
       const td = P['toe' + side] ?? sg, h = new THREE.Vector3(0.10 * td, 0, P.toeF ?? 0.07).normalize(), pt = (P['footPitch' + side] || 0) * DEG;
       h.applyAxisAngle(new THREE.Vector3(0, 1, 0), (P['footYaw' + side] ?? P.footYaw ?? 0) * DEG);   // + turns the toe toward the figure's right
       const toeL = foot.clone().addScaledVector(h, LIMB.stub * Math.cos(pt)); toeL.y += LIMB.stub * Math.sin(pt) - 0.004;
@@ -780,47 +816,49 @@ export function makeStick(spec) {
       }
       P.needsUpdate = N.needsUpdate = true; b.g.computeBoundingSphere();
     }
-    const pv = Q.pelvis || {}, hipP = new THREE.Vector3(Q.hip?.x || 0, HIP_V + (Q.bob || 0), Q.hip?.z || 0);
+    const pv = Q.pelvis || {}, hipP = new THREE.Vector3(Q.hip?.x || 0, HIP_V + (Q.bob || 0) - DROP, Q.hip?.z || 0);
     const qb = new THREE.Quaternion().setFromEuler(_e.set((pv.pitch || 0) * DEG, (pv.yaw || 0) * DEG, -(pv.roll || 0) * DEG, 'YXZ'));
     body.position.copy(hipP).multiplyScalar(W); body.quaternion.copy(qb);
     const toRoot = p => p.clone().applyQuaternion(qb).add(hipP);
     // head: on the neck at the top of the spine, nodded / tilted / turned, squashed with its volume kept
     const top = spineFrame(B, SPINE_L), nk = Q.neck || {};
     const qn = new THREE.Quaternion().setFromEuler(_e.set((nk.nod || 0) * DEG, (nk.turn || 0) * DEG, -(nk.tilt || 0) * DEG, 'YXZ'));
-    const qTop = top.q.clone().multiply(qn), hOff = new THREE.Vector3(0, (HEAD_C[1] - HIP_V - SPINE_L) * B.s, 0).applyQuaternion(qTop);
+    const qTop = top.q.clone().multiply(qn), hOff = new THREE.Vector3(0, (HEAD_C[1] - HIP_V - SPINE_L + (HK - 1) * 0.5 * HEAD_H) * B.s, 0).applyQuaternion(qTop);
     head.position.copy(toRoot(top.p.clone().add(hOff))).multiplyScalar(W); head.quaternion.copy(qb.clone().multiply(qTop));
-    const hs = Math.max(0.5, 1 + (Q.headSq || 0)); head.scale.set(1 / Math.sqrt(hs), hs, 1 / Math.sqrt(hs));
+    const hs = Math.max(0.5, 1 + (Q.headSq || 0)); head.scale.set(HK / Math.sqrt(hs), HK * hs, HK / Math.sqrt(hs));
     hairG.rotation.set((Q.hat?.pitch || 0) * DEG, 0, -(Q.hat?.roll || 0) * DEG);
     S.fill = Q.x_fill || 0;
     const rig = { pitch: (pv.pitch || 0) + (Q.spine?.bend || 0), roll: (pv.roll || 0) + (Q.spine?.side || 0), assist: 0,
       body: [Q.hip?.x || 0, Q.bob || 0, Q.spine?.twist || 0].map(x => +x.toFixed(3)), sq: Q.sq || 0, headSq: Q.headSq || 0 };
     const shY = SHOULDER_V - HIP_V, qChest = qb.clone().multiply(spineFrame(B, shY).q);
     // the body as volumes (engine/body.js): the head as drawn (squash kept), the torso as bent elliptic slices
-    const kS = 1 / Math.sqrt(B.s), vols = [ellipsoid(toRoot(top.p.clone().add(hOff)), qb.clone().multiply(qTop), [0.5 / Math.sqrt(hs), 0.5 * HEAD_H * hs, 0.5 / Math.sqrt(hs)], 'head')];
+    const kS = 1 / Math.sqrt(B.s), vols = [ellipsoid(toRoot(top.p.clone().add(hOff)), qb.clone().multiply(qTop), [0.5 * HK / Math.sqrt(hs), 0.5 * HEAD_H * HK * hs, 0.5 * HK / Math.sqrt(hs)], 'head')];
     for (const sl of slices) {
       const c = new THREE.Vector3(sl.cx, sl.y, sl.cz); bendPt(B, c);
       vols.push(ellipsoid(toRoot(c), qb.clone().multiply(spineFrame(B, Math.max(0, sl.y)).q), [sl.rx * kS, sl.ry * B.s, sl.rz * kS], 'torso'));
     }
-    const legs = {};
+    const legs = {}, arms = {};
+    // a hand is on a target when an ik weight holds it there or it carries a hand prop (x_hp<side|B>_<kind>)
+    const holds = side => Object.keys(Q).some(n => { const m = /^x_hp([LRB])_/.exec(n); return m && (m[1] === side || m[1] === 'B') && Q[n] > 0.5; });
     for (const [side, sg] of [['L', -1], ['R', 1]]) {
-      const shB = new THREE.Vector3(sg * TORSO.w * 0.40 * girth, shY, 0); bendPt(B, shB);
+      // shrugL / shrugR (W, - = dropped): one shoulder pulled down by a load in that hand while the trunk leans away
+      const shB = new THREE.Vector3(sg * TORSO.w * 0.40 * girth, shY + (Q['shrug' + side] || 0), 0); bendPt(B, shB);
       const lim = limitArm(Q['arm' + side] || {}), sh = toRoot(shB), A = lim.A;
       // FK from the shoulder; with an ik target the hand goes there instead, blended by ikw (0 = FK, 1 = on the target),
       // the elbow still folding the FK way
       const k = armDirs(A, sg); k.d.applyQuaternion(qChest); k.fd.applyQuaternion(qChest); k.pole.applyQuaternion(qChest);
       let elbow = sh.clone().addScaledVector(k.d, LIMB.upper), hand = elbow.clone().addScaledVector(k.fd, LIMB.fore), flex = A.elbow ?? 20;
-      const iw = A.ik ? Math.max(0, Math.min(1, A.ikw ?? 1)) : 0;
+      const iw = A.ik ? Math.max(0, Math.min(1, A.ikw ?? 1)) : 0, want = iw > 0 ? hand.clone().lerp(V(A.ik), iw) : hand.clone(), grip = iw >= 0.5 || holds(side);
       if (iw > 0) {
-        const r = ik(sh, hand.clone().lerp(V(A.ik), iw), LIMB.upper, A.pole ? V(A.pole) : k.pole, SOFT.arm, true); elbow = r.joint; hand = r.end; flex = r.flex;
+        const r = ik(sh, want, LIMB.upper, A.pole ? V(A.pole) : k.pole, SOFT.arm, true); elbow = r.joint; hand = r.end; flex = r.flex;
       }
       // physics: a hand inside the head or the torso stops on its surface, an elbow inside is pushed out, the elbow
       // stays in its range (bones keep their length)
       const sol = PHYS.on ? solveArm({ sh, elbow, hand, flex, pole: A.pole ? V(A.pole) : k.pole, l: LIMB.upper, vols, limb: LIMB_R / W, handR: 0.05, out: new THREE.Vector3(sg, -0.3, 0.4).applyQuaternion(qChest),
-        ik: (a, b, l, p) => ik(a, b, l, p, SOFT.arm, true) })
+        ik: (a, b, l, p) => ik(a, b, l, p, SOFT.arm, true), keep: grip })
         : (w => ({ elbow, hand, flex, pen0: w ? w.depth : 0, pen: w ? w.depth : 0, limits: 0 }))(armPenetration(sh, elbow, hand, vols, { limb: LIMB_R / W, handR: 0.05 }));
       elbow = sol.elbow; hand = sol.hand; flex = sol.flex;
-      const pts = hose(sh, elbow, hand, ROUND.arm, 16);
-      limbs['arm' + side].set(pts); hands[side].position.copy(pts[15]); S.hand[side] = hand.toArray();
+      arms[side] = { sh, pole: A.pole ? V(A.pole) : k.pole, want, grip };
       const hipJ = toRoot(new THREE.Vector3(sg * 0.14 * girth, 0.04, 0)), G = Q['leg' + side] || {};
       const foot0 = V(G.foot || [sg * 0.22, 0.022, 0]), kp = V(G.knee || [sg * 0.15, 0, 1]);
       const hdir = new THREE.Vector3(0.10 * sg, 0, 0.07).normalize().applyAxisAngle(_Y, (G.yaw || 0) * DEG), gnd = Q.ground || 0;
@@ -832,7 +870,7 @@ export function makeStick(spec) {
         heelO = hdir.clone().multiplyScalar(-FOOT.heel * Math.cos(ptc)).setY(-FOOT.heel * Math.sin(ptc) - 0.004);
         foot = foot0.clone(); const sole = Math.min(foot.y, foot.y + toeO.y, foot.y + heelO.y) - FOOT_R;
         if (sole < gnd) foot.y += gnd - sole;
-        leg = ik(hipJ, foot, LIMB.thigh, kp, SOFT.leg);
+        leg = ik(hipJ, foot, LT, kp, SOFT.leg);
         const shin = foot.clone().sub(leg.joint).normalize(), soleD = toeO.clone().sub(heelO).normalize();
         const df = 90 - Math.acos(Math.max(-1, Math.min(1, -shin.dot(soleD)))) / DEG;
         if (!PHYS.rom || df <= ROM.ankleDF[1] + 0.5 || pass) break;
@@ -847,7 +885,7 @@ export function makeStick(spec) {
         else if (w0) { legPen0 = w0.depth; const ax = foot.clone().sub(hipJ).normalize(), out = new THREE.Vector3(sg, 0, 0.3).applyQuaternion(qb);
           let best = null;
           for (let k = 1; k <= 36 && !best; k++) for (const sgn of [1, -1]) {
-            const P = kp.clone().applyAxisAngle(ax, sgn * k * 5 * DEG), r = ik(hipJ, foot, LIMB.thigh, P, SOFT.leg);
+            const P = kp.clone().applyAxisAngle(ax, sgn * k * 5 * DEG), r = ik(hipJ, foot, LT, P, SOFT.leg);
             if (!armPenetration(hipJ, r.joint, foot, vols, { limb: LIMB_R / W, handR: 0.03 }) && (!best || r.joint.clone().sub(hipJ).dot(out) > best.joint.clone().sub(hipJ).dot(out))) best = r;
             if (best && sgn === -1) break;
           }
@@ -870,11 +908,11 @@ export function makeStick(spec) {
     if (gap0 < minGap) legHit = minGap - gap0;
     if (PHYS.on && gap0 < minGap) {
       for (let k = 1; k <= 12 && legGap() < minGap; k++) for (const sd of ['L', 'R']) { const X = legs[sd], ax = X.foot.clone().sub(X.hipJ).normalize();
-        const P = X.kp.clone().applyAxisAngle(ax, -X.sg * k * 3 * DEG); X.leg = ik(X.hipJ, X.foot, LIMB.thigh, P, SOFT.leg); }
+        const P = X.kp.clone().applyAxisAngle(ax, -X.sg * k * 3 * DEG); X.leg = ik(X.hipJ, X.foot, LT, P, SOFT.leg); }
     }
     for (const [side, sg] of [['L', -1], ['R', 1]]) {
       const { hipJ, foot, leg, ptc, toeO, heelO, ankleLift, legPen0, legPen } = legs[side];
-      const lp = hose(hipJ, leg.joint, foot, ROUND.leg, 13);
+      const lp = hose(hipJ, leg.joint, foot, ROUND.leg, 13, true);
       const toeL = foot.clone().add(toeO), heelL = foot.clone().add(heelO);
       const toe = toeL.clone().multiplyScalar(W);
       for (let i = 1; i <= 5; i++) lp.push(lp[12].clone().lerp(toe, i / 5));
@@ -889,14 +927,34 @@ export function makeStick(spec) {
       Object.assign(rig[side], { hip: hipJ, knee: leg.joint, ankle: foot, toe: toeL, heel: heelL, kneeFlex: leg.flex, footPitch: ptc / DEG,
         hipFlex, hipAbd, ankleDF, heelUp: ankleLift, legPen0, legPen, legGap0: side === 'L' ? legHit : 0 });
     }
+    // carried props (rig K5): a held prop is a solid too. It never passes through a thigh, a shin, the trunk or the head:
+    // the hand holding it moves it out (that arm re-solved, bones keep their length) and the hand's gap from its target
+    // is reported (targetGap). With PHYS off the overlap is only measured.
+    const legSegs = ['L', 'R'].flatMap(sd => [[rig[sd].hip, rig[sd].knee], [rig[sd].knee, rig[sd].ankle]]);
+    let held = handProps(Q, rig), pp = held.length ? propOverlap(held, legSegs, vols) : null;
+    const propPen0 = pp ? pp.depth : 0;
+    for (let it = 0; PHYS.on && pp && it < 6; it++) {
+      for (const sd of pp.side === 'B' ? ['L', 'R'] : [pp.side]) {
+        // the elbow stays on the side the contact solve chose (its own direction as the pole): no jump when an overlap starts
+        const a = arms[sd], r = ik(a.sh, rig[sd].hand.clone().add(pp.push), LIMB.upper, rig[sd].elbow.clone().sub(a.sh), SOFT.arm, true);
+        rig[sd].elbow = r.joint; rig[sd].hand = r.end; rig[sd].elbowFlex = r.flex;
+      }
+      held = handProps(Q, rig); pp = propOverlap(held, legSegs, vols);
+    }
+    for (const side of ['L', 'R']) {
+      const a = arms[side], r = rig[side], pts = hose(a.sh, r.elbow, r.hand, ROUND.arm, 16);
+      limbs['arm' + side].set(pts); hands[side].position.copy(pts[15]); S.hand[side] = r.hand.toArray();
+      Object.assign(r, { targetGap: r.hand.distanceTo(a.want), grip: a.grip, propPen0: side === 'L' ? propPen0 : 0, propPen: side === 'L' && pp ? pp.depth : 0 });
+    }
     // the skeleton in root space (W): pelvis, five points up the spine, the neck base, the head centre, the trunk's
-    // centre; and the centre of mass of the whole body
+    // centre; and the centre of mass of the whole body with what it carries (x_kg<L|R|B> kg, else the prop's userData.mass)
     const neck = toRoot(top.p.clone()), headC = toRoot(top.p.clone().add(hOff)), trunk = toRoot(spineFrame(B, TORSO.cy - HIP_V).p);
     S.skel = { pelvis: hipP.clone(), spine: [0, 0.25, 0.5, 0.75, 1].map(u => toRoot(spineFrame(B, u * SPINE_L).p)), neck, head: headC, trunk };
-    S.com = centreOfMass({ head: headC, trunk, L: rig.L, R: rig.R });
+    const loads = held.map(h => ({ p: h.box.c, w: (Q['x_kg' + h.side] ?? h.o.userData.mass ?? 0) / KG }));
+    S.com = centreOfMass({ head: headC, trunk, L: rig.L, R: rig.R, extra: loads });
+    S.carryKg = loads.reduce((a, l) => a + l.w * KG, 0);
     S.chan = { bend: +(Q.spine?.bend || 0).toFixed(1), side: +(Q.spine?.side || 0).toFixed(1), twist: +(Q.spine?.twist || 0).toFixed(1), nod: +(nk.nod || 0).toFixed(1), tilt: +(nk.tilt || 0).toFixed(1), turn: +(nk.turn || 0).toFixed(1) };
     S.rig = rig; S.vols = vols;
-    handProps(Q, rig);
     S.xmarks = Object.keys(Q).filter(k => k.startsWith('x_mark_') && Q[k] >= 1).map(k => [k.slice(7), Math.floor(Q[k] - 1)]);
     contact.visible = Q.contact !== false; contact.position.y = 0.004 + (Q.ground || 0) * W;
     root.updateMatrixWorld(true);
@@ -923,10 +981,12 @@ export function makeStick(spec) {
       o[s] = { hip: w(r.hip), knee: w(r.knee), ankle: w(r.ankle), toe: w(r.toe), ...(r.heel ? { heel: w(r.heel) } : {}), shoulder: w(r.shoulder), elbow: w(r.elbow), hand: w(r.hand),
         kneeFlex: +r.kneeFlex.toFixed(2), elbowFlex: +r.elbowFlex.toFixed(2), footPitch: +r.footPitch.toFixed(2),
         ...(r.hipFlex != null ? { hipFlex: +r.hipFlex.toFixed(1), hipAbd: +r.hipAbd.toFixed(1), ankleDF: +r.ankleDF.toFixed(1), legPenCm0: +(r.legPen0 * W * 100).toFixed(2), legPenCm: +(r.legPen * W * 100).toFixed(2), legGapCm: +(r.legGap0 * W * 100).toFixed(2) } : {}),
-        ...(r.pen0 != null ? { penCm0: +(r.pen0 * W * 100).toFixed(2), penCm: +(r.pen * W * 100).toFixed(2), limits: r.limits } : {}) };
+        ...(r.pen0 != null ? { penCm0: +(r.pen0 * W * 100).toFixed(2), penCm: +(r.pen * W * 100).toFixed(2), limits: r.limits } : {}),
+        ...(r.targetGap != null ? { targetGapCm: +(r.targetGap * W * SC * 100).toFixed(2), grip: !!r.grip } : {}) };
     }
     if (S.chan) o.chan = S.chan;
     if (S.rig.balanceShift != null) o.balanceCm = +(S.rig.balanceShift * W * 100).toFixed(2);
+    if (S.rig.L.propPen0 != null) { o.propPenCm0 = +(S.rig.L.propPen0 * W * SC * 100).toFixed(2); o.propPenCm = +(S.rig.L.propPen * W * SC * 100).toFixed(2); o.carryKg = +(S.carryKg || 0).toFixed(1); }
     if (S.com) { o.com = w(S.com); o.skel = { pelvis: w(S.skel.pelvis), neck: w(S.skel.neck), head: w(S.skel.head), spine: S.skel.spine.map(w) }; }
     return o;
   };
