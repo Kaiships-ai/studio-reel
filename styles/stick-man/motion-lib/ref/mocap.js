@@ -153,5 +153,8 @@ export function mocapCycle(src, { legM, once = false, roll = true }) {
   // the hips' height standing (the first frame's), for a one-off's flight
   const standHip = frames[0].hipZ;
   const lane = (Math.abs(prints.Left[0]?.[1] ?? 0) + Math.abs(prints.Right[rIdx]?.[1] ?? 0)) / 2;
-  return { frames, cycle: N, advance, scale: k, firstPrint: Lx, prints: { L: Lx, R: Rx, yL: prints.Left[0]?.[1] ?? -lane, yR: prints.Right[rIdx]?.[1] ?? lane }, lane, standHip };
+  // the right print the cycle ends on (a capture of four steps has two right prints: the closing step starts from the
+  // second, not the first)
+  let rEnd = null; for (let i = N - 1; i >= 0 && !rEnd; i--) if (prints.Right[i] && !prints.Right[(i - 1 + N) % N]) rEnd = prints.Right[i];
+  return { frames, cycle: N, advance, scale: k, firstPrint: Lx, prints: { L: Lx, R: Rx, yL: prints.Left[0]?.[1] ?? -lane, yR: prints.Right[rIdx]?.[1] ?? lane, Rend: rEnd ? rEnd[0] : Rx, yRend: rEnd ? rEnd[1] : lane }, lane, standHip };
 }

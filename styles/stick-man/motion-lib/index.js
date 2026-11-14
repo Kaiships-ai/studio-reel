@@ -30,6 +30,17 @@ import Adult_Trans_StandUp_Once_v01 from './body/adult/Adult_Trans_StandUp_Once_
 import Adult_Gest_PointSeated_Loop_v01 from './body/adult/Adult_Gest_PointSeated_Loop_v01.js';
 import Adult_Act_PickUp_Once_v01 from './body/adult/Adult_Act_PickUp_Once_v01.js';
 import Adult_Move_TurnLeft_Once_v01 from './body/adult/Adult_Move_TurnLeft_Once_v01.js';
+import Adult_Idle_CarryBag_Loop_v01 from './body/adult/Adult_Idle_CarryBag_Loop_v01.js';
+import Adult_Act_PutDown_Once_v01 from './body/adult/Adult_Act_PutDown_Once_v01.js';
+import Adult_React_Startle_Once_v01 from './body/adult/Adult_React_Startle_Once_v01.js';
+import Adult_Gest_LookBack_Once_v01 from './body/adult/Adult_Gest_LookBack_Once_v01.js';
+import Adult_Act_PistolReady_Loop_v01 from './body/adult/Adult_Act_PistolReady_Loop_v01.js';
+import Adult_Act_PistolShoot_Once_v01 from './body/adult/Adult_Act_PistolShoot_Once_v01.js';
+import Adult_Act_TorchReady_Loop_v01 from './body/adult/Adult_Act_TorchReady_Loop_v01.js';
+import Adult_Act_Drive_Loop_v01 from './body/adult/Adult_Act_Drive_Loop_v01.js';
+import Adult_Act_HandOver_Once_v01 from './body/adult/Adult_Act_HandOver_Once_v01.js';
+import Adult_Act_Consume_Once_v01 from './body/adult/Adult_Act_Consume_Once_v01.js';
+import Adult_Gest_PhoneCall_Loop_v01 from './body/adult/Adult_Gest_PhoneCall_Loop_v01.js';
 import Child_Idle_Breath_Loop_v01 from './body/child/Child_Idle_Breath_Loop_v01.js';
 import Child_Move_Run_Fwd_Loop_v01 from './body/child/Child_Move_Run_Fwd_Loop_v01.js';
 import Child_Move_Walk_Fwd_Loop_v01 from './body/child/Child_Move_Walk_Fwd_Loop_v01.js';
@@ -77,6 +88,17 @@ export const ALL = [
   Adult_Gest_PointSeated_Loop_v01,
   Adult_Act_PickUp_Once_v01,
   Adult_Move_TurnLeft_Once_v01,
+  Adult_Idle_CarryBag_Loop_v01,
+  Adult_Act_PutDown_Once_v01,
+  Adult_React_Startle_Once_v01,
+  Adult_Gest_LookBack_Once_v01,
+  Adult_Act_PistolReady_Loop_v01,
+  Adult_Act_PistolShoot_Once_v01,
+  Adult_Act_TorchReady_Loop_v01,
+  Adult_Act_Drive_Loop_v01,
+  Adult_Act_HandOver_Once_v01,
+  Adult_Act_Consume_Once_v01,
+  Adult_Gest_PhoneCall_Loop_v01,
   Child_Idle_Breath_Loop_v01,
   Child_Move_Run_Fwd_Loop_v01,
   Child_Move_Walk_Fwd_Loop_v01,

@@ -1,7 +1,7 @@
 # Stick-man motion library and carried loads
 
 A stick-man reel's motion v2 `anim` takes library clips: `{ f, clip: 'Move_Walk_Fwd_Loop', body: 'elder', to: [3, 0] }`
-expands into the clip's keys (`styles/stick-man/motion-lib`, 45 clips, 5 body types; the adult's 18 Mixamo captures (ref/mocap.js): run, sprint, walk with their captured start and stops, jump, idle, look around, talk, point, wave, sit down, sit, stand up, seated point, pick up, quarter turn). The rig under it gained body
+expands into the clip's keys (`styles/stick-man/motion-lib`, 56 clips, 5 body types; the adult's 25 Mixamo and 6 Quaternius UAL (CC0) captures (ref/mocap.js): run, sprint, walk with their captured start and stops, jump, idle, look around, talk, point, wave, sit down, sit, stand up, seated point, pick up, quarter turn). The rig under it gained body
 proportions (cast spec `scale`, `headScale`, `legScale`, `kg`), a hand that grips keeps its target or reports the gap
 (rig K4), and a carried prop that is a solid with mass (rig K5). A reel without `clip` keys or new spec fields renders as
 before, except where an old one had a hand forced off a target (now kept when reachable) or a held prop inside the body.
