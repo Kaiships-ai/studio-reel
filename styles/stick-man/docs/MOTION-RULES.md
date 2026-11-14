@@ -12,10 +12,13 @@ A rule here is checked by a tool or encoded in a generator; where it is neither 
 | W3-W6 contact / down / passing / up: the weight goes down just after contact, up just after passing | `base.js` `gaitLoop`: the hips solved from the stance knee curve (`knees` per body in `bodies.js`) | rig: solved knee change a frame (`motionlib.mjs`, walks <= 27 deg/f in `stick-motionlib.test.mjs`) |
 | Feet never slide; a foot leaves and lands straight | `gaitLoop` planted prints, swing foot eased onto both prints | `motionlib.mjs` slide < 1 mm/f |
 | W9-W11 arms opposite the legs, widest at Down; no twinning | `gaitLoop` arms: phase lag `uD`, left/right amplitude and elbow differ (`asym`) | review |
-| W12-W13 hips tilt, shift over the stance foot, turn; shoulders counter | `gaitLoop` `pelvis.roll/yaw`, `hip.x`, `spine.twist/side` | review |
+| W12-W13 hips tilt (belt line, p147: the lifted leg's side up, the planted side down; Kai chose Williams over biomechanics, 2026-11-14), shift over the stance foot, turn; shoulders counter | `gaitLoop` `pelvis.roll/yaw`, `hip.x`, `spine.twist/side` | review |
+| W6 Up: the stance heel peels so the toe lifts the body to its highest (p108) | `gaitLoop` walk heel curve `PS` from 0.55 of the step, then as the leg needs | review |
+| W15 a foot picks up slowly, travels fast through the middle, puts down fast (p139) | `gaitLoop` walk swing clock `w0^2 (2 - w0)` | review |
+| Run (p177, Kai's default "normal run"): 7-8 frames a step at 30 fps, the foot on the ground most of the step and both feet off for 1-3 frames; lands ahead of the hips, leaves with the leg straight out behind on the toe; the whole body leans from the feet, the back straight and curving opposite ways each step, straight at passing; arms bent, restricted | `bodies.js` run `T`, `ts`, `lean`; `gaitLoop` run `reach` 0.28, toe-off pitch 50, `curve` | review; solved knees ~28-35 deg/f in the loop (a real runner's swing knee turns ~30 deg a frame at 30 fps) |
 | Head steadier than the hips | `gaitLoop` neck nod against the bob, turn against the shoulders | review |
 | W2 tempo (frames a step at 30 fps: 15 brisk, 20 stroll, 25 elderly) | `bodies.js` `T` | review |
-| R1-R3 a run has a flight (both feet up), the rise under half a head, gravity times it | `gaitLoop` run: ground time `ts`, `pos.2` on g = 9.8 (`motion.js` flights) | `motionlib.mjs` physics line (flights, peak cm) |
+| R1-R3 a run has a flight (both feet up), the rise under half a head, gravity times it | `gaitLoop` run: ground time `ts`, `pos.2` on g = 9.8 | `motionlib.mjs` physics line |
 | R6 fast run: arms restricted, bent | `bodies.js` run `swing`, `elbow` | review |
 | Joints within range; no joint faster than 25 deg a frame after the dose | rig (`body.js` ROM), keys | `motionlib.mjs` joint gate (keys); solved joints printed per clip |
 | A carrier: knees bent, lean away from the load, slower, feet barely lift | `carry()` base pose + carry `knees` | review |

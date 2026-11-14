@@ -30,7 +30,9 @@ const xs = placed.keys.map(k => k.pos?.[0] ?? 0), x0 = Math.min(0, ...xs), x1 = 
 const window_ = (C.needs.marks || []).some(m => m.kind === 'window'), right = (C.needs.props || []).includes('bag') || window_ ? 1 : -1;
 // a run outpaces the camera's eased move through its middle (its start and stop are slow), so the camera stands further back
 const far = C.advance && /Run/.test(CLIP) ? 1.4 : 1;
-const cam = x => ({ pos: [x + 1.6 * k * far, right * 3.0 * k * far, 1.1 * k], aim: [x + 0.15, 0, 0.8 * k], lens: 40 });
+// &view=side: straight side-on (the view animators judge a walk or a run in)
+const side = QS.get('view') === 'side';
+const cam = x => (side ? { pos: [x, -3.0 * k * far, 0.85 * k], aim: [x, 0, 0.75 * k], lens: 40 } : { pos: [x + 1.6 * k * far, right * 3.0 * k * far, 1.1 * k], aim: [x + 0.15, 0, 0.8 * k], lens: 40 });
 const direct = [{ at: { f: 0 }, intent: 'ws', why: 'P1 · motion library proof', cut: 'cut', cam: cam(x0),
   ...(x1 - x0 > 0.4 ? { to: cam(x1), move: { from: { f: F0 }, dur: Math.max(10, last - F0), ease: 'inout' } } : {}) }];
 
