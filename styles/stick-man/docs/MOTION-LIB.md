@@ -1,6 +1,6 @@
 # Motion library catalogue
 
-The 39 clips of `styles/stick-man/motion-lib` (rules and use: its README.md). An anim key `{ f, clip, body, to?, times? }`
+The 45 clips of `styles/stick-man/motion-lib` (rules and use: its README.md). An anim key `{ f, clip, body, to?, times? }`
 plays one (REEL_DATA.md). `frames` = one cycle or the whole one-off at 30 fps; `base` = the standard pose it starts (→ ends) on;
 `needs` = hand props and set pieces (the proof page builds the set pieces at the sizes the clip names in `needs.marks`).
 

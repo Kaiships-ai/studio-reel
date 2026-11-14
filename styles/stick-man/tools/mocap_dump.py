@@ -2,6 +2,7 @@
 #   /Applications/Blender.app/Contents/MacOS/Blender -b --python styles/stick-man/tools/mocap_dump.py -- <in.fbx> <out.json>
 # then keep the joints mocap.js reads and save them as motion-lib/ref/mixamo/<name>.js (export default {...}).
 import bpy, sys, json
+from mathutils import Vector
 argv = sys.argv[sys.argv.index('--') + 1:]
 src, out = argv[0], argv[1]
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -20,6 +21,14 @@ for f in range(f0, f1 + 1):
     for w in want:
         b = arm.pose.bones.get(pref + w)
         if b: p = arm.matrix_world @ b.head; d[w] = [round(p.x, 4), round(p.y, 4), round(p.z, 4)]
+    # the trunk's and head's orientation (positions alone cannot say where the face points): each bone's turn from its
+    # rest (bind) pose, applied to the body's forward (-Y) and up (+Z), as <Bone>_f and <Bone>_u (unit vectors)
+    for w in ['Hips', 'Spine2', 'Head']:
+        b = arm.pose.bones.get(pref + w)
+        if not b: continue
+        q = (arm.matrix_world @ b.matrix).to_quaternion() @ (arm.matrix_world @ b.bone.matrix_local).to_quaternion().inverted()
+        for k, v in (('f', Vector((0, -1, 0))), ('u', Vector((0, 0, 1)))):
+            r = q @ v; d[w + '_' + k] = [round(r.x, 4), round(r.y, 4), round(r.z, 4)]
     frames.append(d)
 json.dump({'src': src, 'fps': sc.render.fps, 'range': [f0, f1], 'bones': names, 'frames': frames}, open(out, 'w'))
 print('DUMP', src, 'fps', sc.render.fps, 'frames', f1 - f0 + 1, 'nbones', len(names), 'meshes', sum(o.type == 'MESH' for o in sc.objects))
