@@ -167,7 +167,10 @@ export function armPenetration(sh, elbow, hand, vols, { limb = 0.023, handR = 0.
     for (let i = 0; i <= n; i++) {
       const t = n ? t0 + (1 - t0) * i / n : 1; _p.copy(a).lerp(b, t);
       for (const v of vols) {
-        if (v.kind === 'torso' && seg === 'upper' && t < 0.5) continue;
+        // the upper arm's first half against the trunk or the head: the shoulder is fixed to them and moving the arm cannot
+        // clear it (this figure's big head, nodded down over a bend, overlaps the shoulder's root: the solve then stepped the
+        // fist out 9.6 cm, its whole range, for an overlap no arm can leave)
+        if ((v.kind === 'torso' || v.kind === 'head') && seg === 'upper' && t < 0.5) continue;
         const h = v.test(_p, seg === 'hand' ? handR : r);
         if (h && (!worst || h.depth > worst.depth)) worst = { ...h, seg, kind: v.kind, t };
       }
@@ -214,6 +217,10 @@ export function solveArm({ sh, elbow, hand, pole, l, vols, ik, flex, limb, handR
       if (!w) { best = r; break; }
       if (!least || w.depth < least.d) least = { r, d: w.depth };
     }
+    // a gripping hand (keep: on an ik target or holding a prop) that no elbow turn clears stays on its grip: the arm that
+    // goes in least, the hand where it holds (this figure's big head beside arms reaching forward to push or lift: the
+    // fists stepped 9.6 cm off the crate, the elbows flipping between frames); the overlap is reported (pen)
+    if (!best && keep && tries === 0) break;
     if (!best && tries < STEPS) H.addScaledVector(o, 0.02);                  // no small turn clears it: the hand steps out toward its own side and front
   }
   // nothing clears it within STEPS: the arm that goes in least (not a straight arm flung out: that reads as a pop)

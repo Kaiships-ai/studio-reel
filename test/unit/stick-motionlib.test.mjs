@@ -3,11 +3,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import { checkAll, NAME_RE, clipFiles } from '../../styles/stick-man/tools/motionlib.mjs';
+import fs from 'node:fs';
+import { checkAll, checkClip, NAME_RE, clipFiles, catalogue, CATALOGUE, OBJECT_ACT } from '../../styles/stick-man/tools/motionlib.mjs';
 import { ALL, getClip, placeClip, expandClips } from '../../styles/stick-man/motion-lib/index.js';
 import { BODIES } from '../../styles/stick-man/motion-lib/bodies.js';
 import { compileTrack, playActor, toPose, STYLE_PRESETS } from '../../styles/stick-man/engine/motion.js';
-import { DOSE_E } from '../../styles/stick-man/motion-lib/base.js';
+import { DOSE_E, markColliders } from '../../styles/stick-man/motion-lib/base.js';
 import { ellipsoid, solveArm, armPenetration, propPush, centreOfMass } from '../../styles/stick-man/engine/body.js';
 
 test('the library has 46 clips on 5 bodies, and every one passes motionlib.mjs (naming, seam, base, joint gate, feet)', async () => {
@@ -184,4 +185,38 @@ test('rig: a hand that reaches into the set stops on it (a sill: on its top), wi
     const inside = p => [0, 1, 2].every(i => p[i] > wall.lo[i] + 0.01 && p[i] < wall.hi[i] - 0.01);
     assert.ok(inside(free) && !inside(off), `a wall (not a ledge) puts the hand outside it: ${off.map(v => v.toFixed(3))} (wall from x ${wall.lo[0].toFixed(3)})`);
   } finally { PHYS.on = was; S.obstacles = []; }
+});
+
+test('docs/MOTION-LIB.md is the catalogue the clips make (motionlib.mjs --catalogue), every clip in it', () => {
+  assert.equal(fs.readFileSync(CATALOGUE, 'utf8'), catalogue(), 'run: node styles/stick-man/tools/motionlib.mjs --catalogue');
+  for (const C of ALL) assert.ok(catalogue().includes(`| \`${C.clip}\` | ${C.body || 'any'}`), C.name);
+});
+
+test('props: a clip that acts on a thing holds a declared prop; holding an undeclared one, or none, fails the check', () => {
+  for (const C of ALL.filter(c => OBJECT_ACT.test(c.clip))) assert.ok(C.needs.props.length, `${C.name} declares its prop`);
+  const C = getClip('Idle_CarryBag_Loop'), file = 'body/adult/Adult_Idle_CarryBag_Loop_v01.js';
+  const undeclared = checkClip({ ...C, needs: { ...C.needs, props: [] } }, file).fails.join('; ');
+  assert.match(undeclared, /the keys hold hugbag but needs\.props does not name it/);
+  assert.match(undeclared, /acts on a thing but declares no prop/);
+  const unheld = checkClip({ ...C, keys: C.keys.map(k => ({ ...k, x_hpB_hugbag: 0 })) }, file).fails.join('; ');
+  assert.match(unheld, /names hugbag but no key holds it/);
+});
+
+test('a loop in place plays `times` captures between one blend in and one out; a clip starts at its own origin, so chained clips never jump', () => {
+  const C = getClip('Gest_PhoneCall_Loop'), [a, b] = C.captured, k = placeClip({ f: 0, clip: 'Gest_PhoneCall_Loop', times: 3 }, { pos: [2, 1], yaw: 90 }).keys;
+  assert.equal(k[k.length - 1].f, C.frames + 2 * (b - a));
+  // the phone stays at the ear through the repeats (the arm's ik weight never drops between the first capture and the last)
+  const mid = k.filter(x => x.f > a + 20 && x.f < a + 2 * (b - a));
+  assert.ok(mid.every(x => x.armR.ikw > 0.99), 'the hand stays on the ear across the seams');
+  const W = getClip('Gest_Wave_Loop'); assert.equal(placeClip({ f: 0, clip: 'Gest_Wave_Loop', times: 1 }).keys.at(-1).f, W.frames);
+  for (const c of ALL) { const k0 = c.advance ? c.intro[0] : c.keys[0]; assert.ok(Math.abs(k0.pos?.[1] || 0) < 1e-9 && (c.advance || Math.abs(k0.pos?.[0] || 0) < 1e-9), c.name); }
+  const chain = expandClips([{ f: 0, clip: 'Idle_Stand_Loop' }, { f: 400, clip: 'Idle_Sleep_Loop' }], { pos: [1, 2], yaw: 90 });
+  const track = playActor(compileTrack(chain, {}, { pos: [1, 2], yaw: 90 }, 'kaiships'), 0, 700);
+  let worst = 0; for (let f = 1; f < track.length; f++) worst = Math.max(worst, Math.hypot(track[f]['pos.0'] - track[f - 1]['pos.0'], track[f]['pos.1'] - track[f - 1]['pos.1']));
+  assert.ok(worst < 0.04, `the root moves ${worst.toFixed(3)} m in a frame across Idle_Stand into Idle_Sleep`);
+});
+
+test('the set pieces a clip names are solid in the headless check as in the render: a trunk lip, a counter, a window', () => {
+  const names = markColliders([{ kind: 'trunk', at: [0.45, 0, 0.68] }, { kind: 'counter', at: [0.6, 0, 0.94] }, { kind: 'window', at: [1, 0, 0.8], top: 2, width: 1 }]).map(b => b.name);
+  assert.deepEqual(names, ['trunk-lip', 'counter', 'wall-low', 'wall-top', 'wall-right', 'wall-left']);
 });

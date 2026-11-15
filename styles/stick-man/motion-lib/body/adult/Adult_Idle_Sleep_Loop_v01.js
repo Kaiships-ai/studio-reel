@@ -2,6 +2,7 @@
 import { mocapClip } from '../../base.js';
 import SRC from '../../ref/mixamo/sleeping_idle.js';
 
-const M = mocapClip({ body: 'adult', src: SRC, base: 'LIE', end: 'LIE' });
+// the capture lies curled on its side, LIE flat on its back: a second's roll into it and out (ease 30), the feet drawn up
+const M = mocapClip({ body: 'adult', src: SRC, base: 'LIE', end: 'LIE', ease: 30 });
 export default { name: 'Adult_Idle_Sleep_Loop', clip: 'Idle_Sleep_Loop', body: 'adult', group: 'Idle', loop: true, frames: M.frames, base: 'LIE', end: 'LIE', style: 'kaiships',
   needs: { props: [], hands: null, marks: M.marks }, keys: M.keys, captured: M.captured, rest: M.rest };
