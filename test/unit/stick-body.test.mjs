@@ -41,8 +41,9 @@ test('the elbow never folds past its range', () => {
 });
 
 test('FK channels are held inside the joint ranges', () => {
-  const { A, hits } = limitArm({ raise: 200, swing: 90, elbow: 170, roll: 30 });
-  assert.deepEqual([A.raise, A.swing, A.elbow, A.roll, hits], [180, 60, 145, 30, 3]);
+  const { A, hits } = limitArm({ raise: 200, swing: -90, elbow: 170, roll: 30 });
+  assert.deepEqual([A.raise, A.swing, A.elbow, A.roll, hits], [180, -60, 145, 30, 3]);
+  assert.equal(limitArm({ swing: 120 }).A.swing, 120, 'an arm swings forward past 60 (shoulder flexion goes to 180)');
 });
 
 test('a hand sweeping into and across the torso moves smoothly (no pops) and never ends inside', () => {

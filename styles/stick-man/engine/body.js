@@ -7,7 +7,22 @@
 // All positions are the figure's root space in W units (head width = 1), the space cast.js S.pose2 works in.
 import * as THREE from 'three';
 
-export const JOINTS = { raise: [-20, 180], swing: [-180, 60], elbow: [0, 145] };
+// Above this share of full reach a limb's joint eases toward straight and the hose stretches (rubber hose), so a target
+// is always reached exactly (feet never slide, props stay in the hand). Legs straighten fully (a standing leg never
+// flickers bent); arms keep a soft 12 deg bend and stretch, easing over a wide range so a fast reach never snaps.
+export const SOFT = { leg: 0.965, arm: 0.96 };
+const smooth01 = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+// the hip-to-ankle distance (share of full leg length) at which the leg shows a knee flex of `flex` deg (cast.js ik)
+export function legReach(flex) {
+  const s = SOFT.leg, fs = 2 * Math.acos(s) * 180 / Math.PI;
+  if (flex >= fs) return Math.cos(flex / 2 * Math.PI / 180);
+  let a = s, b = 1;
+  for (let i = 0; i < 30; i++) { const m = (a + b) / 2; if (fs * (1 - smooth01(s, 1, m)) > flex) a = m; else b = m; }
+  return (a + b) / 2;
+}
+// swing is forward (cast.js armDir): flexion to 180, extension behind the body to 60 (it was the other way round, so an
+// arm could swing back over the head and never reach forward past 60; Kai's run reference showed it, 2026-11-14)
+export const JOINTS = { raise: [-20, 180], swing: [-60, 180], elbow: [0, 145] };
 // the rest of the body's joint ranges (deg), clinical norms (AAOS): spine and neck channels as the pose gives them, hip
 // / knee / ankle as measured on the solved leg. The ankle's 40 is weight-bearing (a deep squat needs ~38; 20 is the
 // unloaded norm); past it the heel comes off the ground instead of the ankle bending further.
@@ -88,6 +103,26 @@ export function torsoSlices(pos, { girth = 1, gz = 1, W, y0, n = 9 }) {
     rx: (s.x1 - s.x0) / 2, rz: (s.z1 - s.z0) / 2, ry: step * 0.85 }));
 }
 
+// a piece of the set (a wall, a sill): an axis-aligned box in the world (Blender metres, lo..hi) seen from the figure's
+// root space (W): toW / fromW carry a point between the two, k = world metres per W unit. The same test / push as a body
+// volume, so a hand (and a held prop) that reaches into a wall stops on its face, the nearest one, like it stops on the
+// belly. kind 'set': solveArm treats it like any volume.
+// ledge (m): a surface to rest on (a sill, a counter): a point less than that far under its top leaves upward, onto it,
+// whichever face is nearer (a hand reaching down past a sill's edge lands on the sill, not on the wall's far face)
+export function worldBox(lo, hi, toW, fromW, k, kind = 'set', ledge = 0) {
+  const out = (w, m) => { const d = [w[0] - lo[0] + m, hi[0] + m - w[0], w[1] - lo[1] + m, hi[1] + m - w[1], w[2] - lo[2] + m, hi[2] + m - w[2]];
+    if (d.some(x => x <= 0)) return null; let i = 0; for (let j = 1; j < 6; j++) if (d[j] < d[i]) i = j;
+    if (ledge && d[5] < ledge + m) i = 5; return { depth: d[i], i }; };
+  const N = [[-1, 0, 0], [1, 0, 0], [0, -1, 0], [0, 1, 0], [0, 0, -1], [0, 0, 1]];
+  const dirL = (pL, nW) => { const a = toW(pL), b = fromW([a[0] + nW[0] * 0.01, a[1] + nW[1] * 0.01, a[2] + nW[2] * 0.01]); return b.sub(pL).normalize(); };
+  return {
+    kind, lo, hi,
+    test(p, margin = 0) { const w = toW(p), h = out(w, margin * k); return h ? { depth: h.depth / k, n: dirL(p, N[h.i]) } : null; },
+    push(p, margin = 0) { const w = toW(p), h = out(w, margin * k); if (!h) return null; const n = N[h.i], e = h.depth * 1.0005;
+      return fromW([w[0] + n[0] * e, w[1] + n[1] * e, w[2] + n[2] * e]); },
+  };
+}
+
 // an ellipsoid volume: centre c, orientation q, radii r; depth of a point inside (0 outside) and the outward normal
 export function ellipsoid(c, q, r, kind) {
   const qi = q.clone().invert(), l = new THREE.Vector3();
@@ -147,13 +182,15 @@ export function armPenetration(sh, elbow, hand, vols, { limb = 0.023, handR = 0.
 //   1. reach: the elbow folds at most JOINTS.elbow[1], so the hand comes no closer to the shoulder than dMin
 //   2. the hand: a hand inside a volume goes to that volume's nearest surface (push), repeated while volumes overlap
 //   3. the elbow: the bones keep their length, so the elbow lies on a circle round the shoulder-hand line; it stays on
-//      the wanted side when it can, else turns round that line by the smallest angle (5 deg steps, at most 15) that
-//      clears the body: a bigger swing in one frame reads as a pop
-//   4. if no small turn clears it, the hand steps 2 cm out toward this arm's own side and front (an arm cannot reach
-//      deep across its own body) and 3 is tried again; after 40 steps any turn is allowed
+//      the wanted side when it can, else turns round that line by the smallest angle (5 deg steps) that clears the body
+//   4. if no small turn (at most 15 deg) clears it, the hand steps 2 cm out toward this arm's own side and front (an arm
+//      cannot reach deep across its own body) and 3 is tried again, at most STEPS times; then any turn; then the arm that
+//      overlaps least (a hand flung a metre out to a straight arm, as 40 steps did, popped the elbow 70 deg in a frame)
 //   keep (the hand is on a target: an ik grip, a held prop): at the target itself every elbow turn is tried before the
 //      hand may step off it (a hand on a bag handle or a window sill stays there; the elbow finds another way round)
 // gap = how far the hand ended from where it was wanted (W): never hidden, shot.mjs reports it per frame
+// how many 2 cm steps the hand may take off its target before the arm settles for the least overlap
+const STEPS = 8;
 export function solveArm({ sh, elbow, hand, pole, l, vols, ik, flex, limb, handR, out = new THREE.Vector3(1, 0, 0.3), keep = false }) {
   const before = armPenetration(sh, elbow, hand, vols, { limb, handR });
   const dMin = 2 * l * Math.cos(JOINTS.elbow[1] / 2 * Math.PI / 180), o = out.clone().normalize();
@@ -167,18 +204,20 @@ export function solveArm({ sh, elbow, hand, pole, l, vols, ik, flex, limb, handR
   // given (an IK pole is not the same plane as the FK elbow: using it made the elbow jump at the first touch)
   const a0 = hand.clone().sub(sh).normalize(), e0 = elbow.clone().sub(sh), P0 = e0.addScaledVector(a0, -e0.dot(a0));
   if (P0.lengthSq() < 1e-9) P0.copy(pole.lengthSq() > 1e-9 ? pole : o); P0.normalize();
-  let best = null;
-  for (let tries = 0; tries < 60 && !best; tries++) {
+  let best = null, least = null;
+  for (let tries = 0; tries <= STEPS && !best; tries++) {
     place();
     const ax = H.clone().sub(sh).normalize();
-    for (let k = 0; k <= (tries < 40 && !(keep && tries === 0) ? 6 : 72); k++) {
+    for (let k = 0; k <= ((keep && tries === 0) || tries === STEPS ? 72 : 6); k++) {
       const P = P0.clone().applyAxisAngle(ax, (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 5 * Math.PI / 180), r = ik(sh, H, l, P);
       const w = armPenetration(sh, r.joint, r.end, vols, { limb, handR });
       if (!w) { best = r; break; }
+      if (!least || w.depth < least.d) least = { r, d: w.depth };
     }
-    if (!best) H.addScaledVector(o, 0.02);                                     // no small turn clears it: the hand steps out toward its own side and front
+    if (!best && tries < STEPS) H.addScaledVector(o, 0.02);                  // no small turn clears it: the hand steps out toward its own side and front
   }
-  const r = best || ik(sh, H, l, P0), after = best ? null : armPenetration(sh, r.joint, r.end, vols, { limb, handR });
+  // nothing clears it within STEPS: the arm that goes in least (not a straight arm flung out: that reads as a pop)
+  const r = best || least.r, after = best ? null : armPenetration(sh, r.joint, r.end, vols, { limb, handR });
   return { elbow: r.joint, hand: r.end, flex: r.flex, pen0: before ? before.depth : 0, pen: after ? after.depth : 0, limits, moved: true, gap: r.end.distanceTo(hand) };
 }
 

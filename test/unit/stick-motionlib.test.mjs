@@ -6,14 +6,16 @@ import * as THREE from 'three';
 import { checkAll, NAME_RE, clipFiles } from '../../styles/stick-man/tools/motionlib.mjs';
 import { ALL, getClip, placeClip, expandClips } from '../../styles/stick-man/motion-lib/index.js';
 import { BODIES } from '../../styles/stick-man/motion-lib/bodies.js';
-import { compileTrack, playActor, toPose } from '../../styles/stick-man/engine/motion.js';
+import { compileTrack, playActor, toPose, STYLE_PRESETS } from '../../styles/stick-man/engine/motion.js';
+import { DOSE_E } from '../../styles/stick-man/motion-lib/base.js';
 import { ellipsoid, solveArm, armPenetration, propPush, centreOfMass } from '../../styles/stick-man/engine/body.js';
 
-test('the library has 32 clips on 5 bodies, and every one passes motionlib.mjs (naming, seam, base, joint gate, feet)', async () => {
-  assert.equal(ALL.length, 32);
-  assert.equal(clipFiles().length, 32);
+test('the library has 46 clips on 5 bodies, and every one passes motionlib.mjs (naming, seam, base, joint gate, feet)', async () => {
+  assert.equal(ALL.length, 46);
+  assert.equal(clipFiles().length, 46);
   assert.deepEqual(Object.keys(BODIES), ['adult', 'heavy', 'thin', 'child', 'elder']);
-  for (const b of Object.keys(BODIES)) for (const c of ['Idle_Breath_Loop', 'Move_Walk_Fwd_Loop', 'Move_Run_Fwd_Loop']) assert.equal(getClip(c, b).body, b);
+  // every body stands, walks and runs (the adult's standing idle is the captured Idle_Stand_Loop)
+  for (const b of Object.keys(BODIES)) for (const c of [b === 'adult' ? 'Idle_Stand_Loop' : 'Idle_Breath_Loop', 'Move_Walk_Fwd_Loop', 'Move_Run_Fwd_Loop']) assert.equal(getClip(c, b).body, b);
   const bad = (await checkAll()).filter(r => r.fails.length);
   assert.deepEqual(bad.map(r => `${r.name || r.file}: ${r.fails.join('; ')}`), []);
 });
@@ -35,7 +37,7 @@ test('a walk with `to` starts where the actor stands, heads for the target and e
 
 test('a planted foot stays put in the world along a turned, stretched walk (and a shared clip keeps its feet too)', () => {
   for (const key of [{ f: 0, clip: 'Move_Walk_Fwd_Loop', body: 'adult', to: [-2.3, 1.7] }, { f: 0, clip: 'Move_Run_Fwd_Loop', body: 'child', to: [0, 3] },
-    { f: 0, clip: 'Act_LiftHeavy_Once', body: 'child' }]) {
+    { f: 0, clip: 'Gest_LookUp_Once', body: 'child' }]) {
     const ks = expandClips([key], { pos: [0, 0], yaw: 30 }), fr = playActor(compileTrack(ks, {}, { pos: [0, 0], yaw: 30 }, 'kaiships'), 0, ks[ks.length - 1].f + 5);
     for (let f = 1; f < fr.length; f++) for (const s of ['L', 'R']) {
       const p = fr[f - 1], q = fr[f]; if (p[`leg${s}.footW.2`] > 0.005 || q[`leg${s}.footW.2`] > 0.005) continue;
@@ -46,10 +48,10 @@ test('a planted foot stays put in the world along a turned, stretched walk (and 
 });
 
 test('a shared clip on a smaller body scales its metres with the body; a clip key passes its face to the first key', () => {
-  const a = placeClip({ f: 0, clip: 'Trans_ClimbWindow_Once' }), c = placeClip({ f: 0, clip: 'Trans_ClimbWindow_Once', body: 'child', expr: 'worried' });
-  assert.ok(Math.abs(Math.hypot(...c.pos) / Math.hypot(...a.pos) - BODIES.child.spec.scale) < 1e-4);   // yaw 0: the climb travels toward -y
+  const a = placeClip({ f: 0, clip: 'Gest_LookUp_Once' }, { pos: [0, 0], yaw: 90 }), c = placeClip({ f: 0, clip: 'Gest_LookUp_Once', body: 'child', expr: 'worried' }, { pos: [0, 0], yaw: 90 });
+  assert.ok(Math.abs(c.keys[0].legR.footW[1] / a.keys[0].legR.footW[1] - BODIES.child.spec.scale) < 1e-4);   // the feet's spacing scales
   assert.equal(c.keys[0].expr, 'worried');
-  assert.throws(() => getClip('Idle_Frozen_Loop', 'child'), /no child version/);
+  assert.throws(() => getClip('Idle_Stand_Loop', 'child'), /no child version/);
 });
 
 test('toPose: a planted foot keyed in metres lands in the figure frame of a scaled figure', () => {
@@ -120,7 +122,7 @@ test('K5: a carried load pulls the centre of mass toward it by its share of the 
 import { rigClip, rigStick, GRIP_CM, PROP_CM } from '../../styles/stick-man/tools/motionlib.mjs';
 
 test('rig: the bag clips keep both hands on the handle and the bag out of the body through cast.js, physics on', async () => {
-  for (const name of ['Act_LiftHeavy_Once', 'Act_DropInTrunk_Once', 'Act_PushThroughWindow_Once', 'Move_CarryHeavy_Walk_Loop', 'Move_CarryHeavy_Run_Loop', 'Act_WearCap_Once', 'Trans_ClimbWindow_Once']) {
+  for (const name of ['Act_DropInTrunk_Once', 'Move_CarryBag_Walk_Loop', 'Idle_CarryBag_Loop', 'Act_PutDown_Once', 'Act_Phone_Once']) {
     const C = getClip(name), r = await rigClip(C);
     assert.ok(r.grip <= GRIP_CM, `${name}: a gripping hand ${r.grip} cm off its target at ${r.gripAt}`);
     assert.ok(r.prop <= PROP_CM, `${name}: a held prop ${r.prop} cm inside the body at ${r.propAt}`);
@@ -155,4 +157,31 @@ test('rig: a 25 kg bag on the right pulls the centre of mass right; the cap on t
   assert.ok(c1 - c0 > 0.05, `com x ${c0.toFixed(3)} -> ${c1.toFixed(3)} (W)`);
   S.pose2({ x_hpH_cap: 1 }); const w = S.rigWorld();
   assert.ok(S.props.Hcap.visible && w.propPenCm === 0 && !w.R.grip);
+});
+
+test('gait: the hips are solved on the kaiships dose as motion.js plays it (DOSE_E = 0.4 + 1.2 x exaggeration)', () => {
+  assert.equal(DOSE_E, +(0.4 + 1.2 * STYLE_PRESETS.kaiships.exaggeration).toFixed(6));
+});
+test('gait: the walks of all five bodies keep every solved knee and elbow under 27 deg a frame through the real rig', async () => {
+  for (const b of Object.keys(BODIES)) {
+    const g = await rigClip(getClip('Move_Walk_Fwd_Loop', b), b);
+    assert.ok(g.joint <= 27, `${b} walk: ${g.joint} deg/f at ${g.jointAt}`);
+  }
+});
+
+test('rig: a hand that reaches into the set stops on it (a sill: on its top), with physics on', async () => {
+  const { S, PHYS } = await rigStick('adult'), was = PHYS.on;
+  // the right arm straight ahead at hip height, into a sill 0.3 m ahead whose top is 5 cm over the free hand
+  const Q = { pos: [0, 0, 0], yaw: 90, armR: { raise: 10, swing: 80, elbow: 5 } };
+  try {
+    PHYS.on = true; S.obstacles = []; S.pose2(Q); const free = S.rigWorld().R.hand;
+    const sill = { name: 'wall-low', lo: [free[0] - 0.1, -1, 0], hi: [free[0] + 0.05, 1, free[2] + 0.05], ledge: 0.35 };
+    S.obstacles = [sill]; S.pose2(Q); const on = S.rigWorld().R.hand;
+    assert.ok(on[2] >= sill.hi[2] + 0.02, `the hand rests on the sill's top: ${on[2].toFixed(3)} vs ${sill.hi[2].toFixed(3)}`);
+    // a wall the hand has just reached into (its near face 3 cm behind the free hand): the hand stops on that face
+    const wall = { name: 'wall', lo: [free[0] - 0.03, -1, 0], hi: [free[0] + 0.3, 1, 2.4] };
+    S.obstacles = [wall]; S.pose2(Q); const off = S.rigWorld().R.hand;
+    const inside = p => [0, 1, 2].every(i => p[i] > wall.lo[i] + 0.01 && p[i] < wall.hi[i] - 0.01);
+    assert.ok(inside(free) && !inside(off), `a wall (not a ledge) puts the hand outside it: ${off.map(v => v.toFixed(3))} (wall from x ${wall.lo[0].toFixed(3)})`);
+  } finally { PHYS.on = was; S.obstacles = []; }
 });

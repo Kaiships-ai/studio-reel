@@ -144,7 +144,7 @@ A background character, or a lead's blocking start, plays a library clip instead
 import '/styles/stick-man/motion-lib/props.js';                       // bag, torch, cash, cap
 SPECS.GRAN = bodySpec(SPECS.MAGNATE, 'elder');                       // motion-lib/bodies.js: proportions + mass
 anim: { gran: [{ f: 0, clip: 'Idle_Breath_Loop', body: 'elder', times: 2 }, { f: 160, clip: 'Move_Walk_Fwd_Loop', body: 'elder', to: [3, 0] }],
-        cop:  [{ f: 0, clip: 'Act_LiftHeavy_Once', swap: { bag: 'duffel' } }, { f: 88, clip: 'Move_CarryHeavy_Walk_Loop', to: [4, 0] }] }
+        cop:  [{ f: 0, clip: 'Act_PickUp_Once' }, { f: 100, clip: 'Move_CarryBag_Walk_Loop', to: [4, 0] }] }
 ```
 
 | Field | Meaning |

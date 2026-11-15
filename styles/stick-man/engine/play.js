@@ -169,6 +169,7 @@ async function buildAct(R, X) {
     if (!SPECS[c.spec]) throw new Error(`unknown cast spec ${c.spec} (SETS.md, Cast)`);
     // glasses: per cast entry, else per reel (R1.glasses), else the spec's own (Q2: rims make every face read as round eyes)
     const gl = c.glasses ?? X.glasses, S = makeStick(gl == null ? SPECS[c.spec] : { ...SPECS[c.spec], glasses: gl }); group.add(S.root);
+    S.obstacles = SET.COLLIDE || [];   // the set's solid pieces: hands and held props stop on them (cast.js worldBox)
     const costume = c.costume ?? SPECS[c.spec].costume;   // a spec may wear a costume by default (a character's own clothes, e.g. 'hoodie:grey')
     if (costume) { if (!HOOKS.costume) throw new Error(`cast ${name}: costume needs import '/styles/stick-man/allout/costume.js'`); HOOKS.costume(S, costume, { group, name }); }   // role layers (belt, holster, hat, hoodie)
     const posture = c.posture || 'stand', base = posture === 'sit' ? SIT : STAND;
@@ -393,6 +394,10 @@ async function buildAct(R, X) {
     // the mouth follows the visemes of the actor's lines, and a held face drifts a little (brows, lids, mouth width)
     const state = faceStateAt(a.exprs, f, a.seed, a.vis);
     if (!state.talk && e === 'sleep' && id.snore) state.talk = { open: 0.3, wide: 0, round: 1, teeth: 0 };
+    // chewing (a clip's x_chew channel: how hard, 0..1, motion-lib Act_Consume_Once): the lips part and close every 9
+    // frames (~3.3 chews a second), wide, not round
+    const chew = (a.P?.x_chew || 0) * Math.sin(Math.PI * f / 9) ** 2;
+    if (!state.talk && chew > 0.02) state.talk = { open: chew, wide: 0.35, round: 0.1, teeth: 0 };
     a.talking = !!state.talk;
     const tgtPos = t => t === 'camera' ? camPos : byName[t] ? toB(byName[t].S.parts.head.getWorldPosition(hv)) : Array.isArray(t) ? t : t ? livePos(t) : camPos;
     const cur = focusAt(a, f, a.focusSegs, active), head = toB(a.S.parts.head.getWorldPosition(new THREE.Vector3()));
