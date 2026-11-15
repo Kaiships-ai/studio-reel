@@ -11,9 +11,9 @@ import { compileTrack, playActor, toPose, STYLE_PRESETS } from '../../styles/sti
 import { DOSE_E, markColliders } from '../../styles/stick-man/motion-lib/base.js';
 import { ellipsoid, solveArm, armPenetration, propPush, centreOfMass } from '../../styles/stick-man/engine/body.js';
 
-test('the library has 51 clips on 5 bodies, and every one passes motionlib.mjs (naming, seam, base, joint gate, feet)', async () => {
-  assert.equal(ALL.length, 51);
-  assert.equal(clipFiles().length, 51);
+test('the library has 52 clips on 5 bodies, and every one passes motionlib.mjs (naming, seam, base, joint gate, feet)', async () => {
+  assert.equal(ALL.length, 52);
+  assert.equal(clipFiles().length, 52);
   assert.deepEqual(Object.keys(BODIES), ['adult', 'heavy', 'thin', 'child', 'elder']);
   // every body stands, walks and runs (the adult's standing idle is the captured Idle_Stand_Loop)
   for (const b of Object.keys(BODIES)) for (const c of [b === 'adult' ? 'Idle_Stand_Loop' : 'Idle_Breath_Loop', 'Move_Walk_Fwd_Loop', 'Move_Run_Fwd_Loop']) assert.equal(getClip(c, b).body, b);
@@ -330,7 +330,7 @@ test('joint gate: the reference is the motion as authored (the raw capture), so 
 
 test('joint gate: JOINT_KNOWN only shrinks', async () => {
   const { JOINT_KNOWN } = await import('../../styles/stick-man/tools/motionlib.mjs');
-  assert.ok(Object.keys(JOINT_KNOWN).length <= 14, 'no clip is added to the known list');
+  assert.ok(Object.keys(JOINT_KNOWN).length <= 12, 'no clip is added to the known list');
   for (const [n, [x, why]] of Object.entries(JOINT_KNOWN)) assert.ok(x > 0 && why.length > 10, n);
 });
 
@@ -372,4 +372,49 @@ test('HandOver fit { top }: the cash is set down on a 1.12 m counter', async () 
   const keys = placeClip({ f: 0, clip: C.clip, fit: { top: 1.12 } }, { pos: [0, 0], yaw: 90 }).keys, track = compileTrack(keys, {}, { pos: [0, 0], yaw: 90 }, 'kaiships'), fr = playActor(track, 0, 90);
   const at = propPlan(track, f => toPose(fr[Math.min(fr.length - 1, f)]), S).at(70).Lcash.p;
   assert.ok(Math.abs(at[1] - 1.12) < 0.01, `the cash lies on the counter's top: ${at[1].toFixed(3)} m`);
+});
+
+// ------------------------------------------------------------------ PR E: the clips that hold a bag take its size
+
+test('bag size: a clip key that swaps in a film bag fits the clip to that bag, read off the prop (no numbers in the film)', async () => {
+  const { BUILD } = await import('../../styles/stick-man/lib/cast/handprops.js'), { bagMesh, sizedBag } = await import('../../styles/stick-man/motion-lib/props.js');
+  const { propSize } = await import('../../styles/stick-man/motion-lib/index.js');
+  assert.deepEqual(propSize('bag'), { w: 0.2, h: 0.26, l: 0.46, grip: 0.31 }, 'the kit bag names its size');
+  // a film's bag with no size of its own: measured from its meshes (the ink hull too), the grip from the box's bottom
+  BUILD.test_duffel = () => { const g = bagMesh(undefined, { w: 0.36, l: 0.62, h: 0.30, grip: 0.415 }); g.userData = { mode: 'up', grip: [0, 0.415, 0], mass: 25 }; return g; };
+  const d = propSize('test_duffel');
+  assert.ok(Math.abs(d.w - 0.36) < 0.04 && Math.abs(d.l - 0.62) < 0.05 && Math.abs(d.grip - 0.415) < 0.015, JSON.stringify(d));
+  const T = placeClip({ f: 0, clip: 'Act_DropInTrunk_Once', fit: { lip: 0.85 }, swap: { bag: 'test_duffel' } }).clip;
+  assert.ok(T.fitted.bag, 'the swapped bag is in the fit');
+  assert.ok(T.needs.marks[0].at[0] > 0.6, `a deeper bag is heaved from further off the lip (${T.needs.marks[0].at[0]} m)`);
+  // an explicit fit.bag wins over the prop; a clip that takes no bag size ignores the swap
+  assert.equal(placeClip({ f: 0, clip: 'Act_DropInTrunk_Once', fit: { lip: 0.85, bag: { w: 0.2, l: 0.46, grip: 0.31 } }, swap: { bag: 'test_duffel' } }).clip.needs.marks[0].at[0], 0.45);
+  assert.doesNotThrow(() => placeClip({ f: 0, clip: 'Act_PutDown_Once', swap: { bag: 'test_duffel' } }));
+  assert.equal(sizedBag({ w: 0.36, l: 0.62, h: 0.30, grip: 0.415 }), 'bag_360x620x300_415');
+  delete BUILD.test_duffel;
+});
+
+test('bag size: at Hot Money ep01\'s duffel the bag goes into the trunk (0.85 m lip) and out of the window, never onto the lip or sill', async () => {
+  const { sizedBag } = await import('../../styles/stick-man/motion-lib/props.js'), { propPlan } = await import('../../styles/stick-man/engine/propobj.js');
+  const bag = { w: 0.36, l: 0.62, h: 0.30, grip: 0.415 }, swap = { bag: sizedBag(bag) };
+  for (const [clip, fit, where] of [['Act_DropInTrunk_Once', { lip: 0.85, bag }, 'trunk'], ['Act_PushBagOutWindow_Once', { sill: 0.8, top: 1.9, width: 1.0, depth: 0.138, bag }, 'window']]) {
+    const r = placeClip({ f: 0, clip, fit, swap }, { pos: [0, 0], yaw: 90 }), m = r.clip.needs.marks[0];
+    const track = compileTrack(r.keys, {}, { pos: [0, 0], yaw: 90 }, 'kaiships'), fr = playActor(track, 0, 90);
+    const { S, toPose } = await rigStick('adult'); S.obstacles = markColliders(r.clip.needs.marks);
+    const plan = propPlan(track, f => toPose(fr[Math.min(fr.length - 1, f)]), S), at = plan.at(85)['R' + swap.bag];
+    const x = at.p[0], z = at.p[1];
+    if (where === 'trunk') assert.ok(x > m.at[0] + 0.08 && Math.abs(z - m.floor) < 0.02, `in the trunk: x ${x}, z ${z}`);
+    else {
+      assert.ok(x > m.at[0] + m.depth && Math.abs(z) < 0.02, `outside on the ground: x ${x}, z ${z}`);
+      // the bag's edges, not its centre (held crosswise: half its depth w along x, and its ink): over the wall its bottom
+      // clears the sill, and once below the sill its back is past the wall's outer face, each by 4 cm at least
+      const half = bag.w / 2 + 0.012, X0 = m.at[0], X1 = m.at[0] + m.depth;
+      let over = Infinity, back = Infinity;
+      for (let f = 30; f <= 85; f++) { const q = plan.at(f)['R' + swap.bag]; if (!q) continue; const [px, pz] = q.p;
+        if (px + half > X0 && px - half < X1) over = Math.min(over, pz - m.at[2]);
+        if (pz < m.at[2]) back = Math.min(back, px - half - X1); }
+      assert.ok(over >= 0.04, `the bag's bottom clears the sill by ${(100 * over).toFixed(1)} cm`);
+      assert.ok(back >= 0.04, `the bag's back clears the wall's outer face by ${(100 * back).toFixed(1)} cm`);
+    }
+  }
 });

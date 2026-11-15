@@ -1,6 +1,6 @@
 # Motion library catalogue
 
-The 51 clips of `styles/stick-man/motion-lib` (rules and use: its README.md). An anim key `{ f, clip, body, to?, times? }`
+The 52 clips of `styles/stick-man/motion-lib` (rules and use: its README.md). An anim key `{ f, clip, body, to?, times? }`
 plays one (REEL_DATA.md). `frames` = one cycle or the whole one-off at 30 fps; `base` = the standard pose it starts (→ ends) on;
 `props` = what the hands hold (`x_hp<L|R|B>_<prop>`, motion-lib/props.js and lib/cast/handprops.js; a film swaps its own with
 the key's `swap`), on which hand; `set` = the set pieces it needs (the proof page builds them at the sizes the clip names in
@@ -64,6 +64,7 @@ raw pelvis speed is reported, not gated); the carried mass changes at most 35 % 
 | `Act_Phone_Once` | adult | once | 349 | STAND | phone (R) | - | a call on a mobile: dial it at the chest, up to the ear, talk, put it away, from motion capture (Mixamo "Talking On A Cell Phone", ref/mixamo/talking_on_a_cell_phone.js: its first 203 frames and its last 114, the long middle of the call cut where the two match within 8 cm, joined by a 6-frame bridge) on this body |
 | `Act_PickUp_Once` | adult | once | 315 | STAND → CARRY | bag (R) | - | bend down, pick the bag up off the floor in the right fist, stand up into CARRY, from motion capture (Mixamo "Picking Up", ref/mixamo/picking_up.js) on this body, every captured frame |
 | `Act_PistolShoot_Once` | adult | once | 186 | STAND | pistol (L) | - | raise a handgun one-handed (the left: motion-lib/props.js pistol, x_hpL_pistol), fire, lower it, from motion capture (Mixamo "Shooting Gun", ref/mixamo/shooting_gun.js) on this body, every captured frame |
+| `Act_PushBagOutWindow_Once` | any (adult, scaled) | once | 80 | CARRY → STAND | bag (both) | window | from CARRY, heave the bag up over a window's sill and push it out through the opening |
 | `Act_PutDown_Once` | adult | once | 338 | CARRY → STAND | bag (R) | - | from CARRY (the bag in the right fist), bend and set it down on the floor, stand up, from motion capture (Mixamo "Putting Down", ref/mixamo/putting_down.js) on this body, every captured frame |
 | `Act_TorchReady_Loop` | adult | loop | 65 | STAND | torch (L) | - | standing, a torch (flashlight) held out ahead in the left fist (motion-lib/props.js torch, the same hand as Move_WalkFlashlight_Loop), from motion capture (Quaternius UAL "Idle_Torch_Loop", CC0, ref/ual/idle_torch_loop.js) on this body, every captured frame |
 | `Act_TorchReady_Loop` | heavy | loop | 65 | STAND | torch (L) | - | standing, a torch (flashlight) held out ahead in the left fist (motion-lib/props.js torch, the same hand as Move_WalkFlashlight_Loop), from motion capture (Quaternius UAL "Idle_Torch_Loop", CC0, ref/ual/idle_torch_loop.js) on the heavy body, every captured frame |

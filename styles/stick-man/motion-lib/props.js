@@ -30,14 +30,25 @@ const round = (w, h, d, r) => { const s = new THREE.Shape(), x = w / 2 - r, y = 
 
 // the bag's body 0.20 wide, 0.26 tall, 0.46 long; the handle's top (the grip) 0.31 above its bottom
 export const BAG = { w: 0.20, h: 0.26, l: 0.46, grip: 0.31 };
-export function bagMesh(col = [0.16, 0.20, 0.30]) {
-  const g = new THREE.Group();
-  const body = solid(round(BAG.w, BAG.h, BAG.l, 0.07), col); body.position.y = BAG.h / 2; g.add(body);
-  const zip = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.006, BAG.l * 0.8), new THREE.MeshBasicMaterial({ color: lin(0.75, 0.70, 0.55) })); zip.position.y = BAG.h + 0.002; g.add(zip);
-  const handle = solid(new THREE.TorusGeometry(0.055, 0.012, 8, 16, Math.PI), [0.08, 0.08, 0.10], 0.006); handle.rotation.y = Math.PI / 2; handle.position.y = BAG.h; g.add(handle);
+export function bagMesh(col = [0.16, 0.20, 0.30], d = BAG) {
+  const g = new THREE.Group(), hr = 0.055 * (d.grip - d.h) / (BAG.grip - BAG.h);   // (the handle's arc: the kit bag's, as high as the grip is over the body)
+  const body = solid(round(d.w, d.h, d.l, Math.min(0.07, d.w / 3, d.h / 3)), col); body.position.y = d.h / 2; g.add(body);
+  const zip = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.006, d.l * 0.8), new THREE.MeshBasicMaterial({ color: lin(0.75, 0.70, 0.55) })); zip.position.y = d.h + 0.002; g.add(zip);
+  const handle = solid(new THREE.TorusGeometry(hr, 0.012, 8, 16, Math.PI), [0.08, 0.08, 0.10], 0.006); handle.rotation.y = Math.PI / 2; handle.position.y = d.h; g.add(handle);
   return g;
 }
-BUILD.bag = () => { const g = bagMesh(); g.userData = { mode: 'up', grip: [0, BAG.grip, 0], mass: 25 }; return g; };
+// A one-hand bag's size, the numbers the clips that hold it fit themselves to (index.js placeClip `fit.bag`): userData.size
+// [w, h, l] (m: across, tall, long; its bottom at y 0) and userData.grip (the handle's top, the fist). A film's own bag
+// (`swap: { bag: 'mine' }`) is read the same way: its size if it names one, else its meshes' box.
+const bagData = d => ({ mode: 'up', grip: [0, d.grip, 0], size: [d.w, d.h, d.l], mass: 25 });
+BUILD.bag = () => { const g = bagMesh(); g.userData = bagData(BAG); return g; };
+// a kit bag of another size, registered once under a name of its own (bag_<w>x<l>x<h>_<grip>, mm): a clip key fitted with
+// `fit: { bag: { w, l, h, grip } }` and no film prop of its own plays it (tools/motionlib.mjs fitChecks, the proof page)
+export function sizedBag({ w = BAG.w, l = BAG.l, h = BAG.h, grip = BAG.grip } = {}) {
+  const mm = v => Math.round(v * 1000), kind = `bag_${mm(w)}x${mm(l)}x${mm(h)}_${mm(grip)}`, d = { w, l, h, grip };
+  BUILD[kind] ||= () => { const g = bagMesh(undefined, d); g.userData = bagData(d); return g; };
+  return kind;
+}
 BUILD.torch = () => {
   const g = new THREE.Group();
   const body = solid(new THREE.CylinderGeometry(0.02, 0.02, 0.22, 16), [0.10, 0.10, 0.12]); body.position.y = 0.05; g.add(body);

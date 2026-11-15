@@ -1,7 +1,7 @@
 # Stick-man motion library and carried loads
 
 A stick-man reel's motion v2 `anim` takes library clips: `{ f, clip: 'Move_Walk_Fwd_Loop', body: 'elder', to: [3, 0] }`
-expands into the clip's keys (`styles/stick-man/motion-lib`, 51 clips, 5 body types; the adult's 29 Mixamo and 8 Quaternius UAL (CC0) captures; standard poses STAND, SIT, CARRY, LIE, HUG (a duffel hugged to the chest); captured keys play without the drag (motion.js raw) (ref/mocap.js): run, sprint, walk with their captured start and stops, jump, idle, look around, talk, point, wave, sit down, sit, stand up, seated point, pick up, quarter turn, a window climb from two captures joined (mocapJoin: feet and hands on a sill, ref/mocap.js surfaces)). The rig under it gained body
+expands into the clip's keys (`styles/stick-man/motion-lib`, 52 clips, 5 body types; the adult's 29 Mixamo and 8 Quaternius UAL (CC0) captures; standard poses STAND, SIT, CARRY, LIE, HUG (a duffel hugged to the chest); captured keys play without the drag (motion.js raw) (ref/mocap.js): run, sprint, walk with their captured start and stops, jump, idle, look around, talk, point, wave, sit down, sit, stand up, seated point, pick up, quarter turn, a window climb from two captures joined (mocapJoin: feet and hands on a sill, ref/mocap.js surfaces)). The rig under it gained body
 proportions (cast spec `scale`, `headScale`, `legScale`, `kg`), a hand that grips keeps its target or reports the gap
 (rig K4), and a carried prop that is a solid with mass (rig K5). A reel without `clip` keys or new spec fields renders as
 before, except where an old one had a hand forced off a target (now kept when reachable) or a held prop inside the body.
@@ -14,8 +14,17 @@ before, except where an old one had a hand forced off a target (now kept when re
 - `fit`: a clip fitted to the film's set, `{ clip: 'Act_DropInTrunk_Once', fit: { lip: 0.85 } }`,
   `{ clip: 'Trans_JumpWindow_Once', fit: { sill: 0.8, top: 1.9, width: 1.0 } }` (a narrower window draws the airborne legs in
   toward the hips and thrusts the bag through ahead), `{ clip: 'Act_HandOver_Once', fit: { top: 1.12 } }` (the cash set down on
-  a higher counter) (index.js `fitClip`; a record's `fit(opts)`
+  a higher counter), `{ clip: 'Act_PushBagOutWindow_Once', fit: { sill: 0.8, top: 1.9, width: 1.0, depth: 0.138 } }` (the bag heaved
+  over a window's sill and out: it falls outside on the ground) (index.js `fitClip`; a record's `fit(opts)`
   makes it, its `fitChecks` are checked by motionlib.mjs as rows of their own; `--proof <dir> --only <clip> --fit '<json>'`).
+- Bag size (PR E): a clip whose record names `fitProps: ['bag']` (Act_DropInTrunk_Once, Act_PushBagOutWindow_Once) fits
+  itself to the bag it holds: the key's `fit.bag` (`{ w, l, h, grip }`, m), else the prop the key swaps in, read off the built
+  prop (`index.js propSize`: its `userData.size` [w, h, l] and grip, else its meshes' box). The kit bag names its size
+  (`props.js` BAG); `sizedBag(dims)` registers a kit bag of another size (fitChecks and the proof page play it for a fit
+  that names a bag). A deeper bag is heaved from further off the edge (the trunk / window mark moves out 1.25 times the
+  extra depth), a higher handle raises the fists, the bag is tossed up as it leaves the fingers. At Hot Money ep01's duffel
+  (0.36 x 0.62, handle 0.415) on a 0.85 m lip: hand 19.6 -> 1.7 cm off its target, the bag in the trunk, not on the ground.
+  Trans_JumpWindow_Once takes no bag size yet: with that duffel the leap puts it in the head and the hand 7.7 cm off (open).
 - `support`: a clip key `pos: [x, y, h]` plays the clip on a surface h m high (a bed, a stage): every key is lifted and
   held up there (motion.js counts a flight only above `support`); the next clip carries it on: Trans_LieDown_Once ->
   Idle_Sleep_Loop -> Trans_GetUp_Once on a 0.55 m bed (test). A capture blend whose pelvis turns more than 45 deg (the
@@ -96,7 +105,7 @@ and `anim: { kid: [{ f: 0, clip: 'Move_Run_Fwd_Loop', body: 'child', to: [4, 0] 
   knee (its flex, its two bones) may turn more than 25 deg a frame only where the motion as authored does. In a capture's
   frames that is the raw capture's own joint (`_ref` on the key, ref/mocap.js, before any retarget, fit or ik); in a made
   gait the knee curve it is built from; elsewhere 25, or an arm's own FK keys. No slack (0.02 deg for rounding).
-  `JOINT_KNOWN` lists the 14 rows it fails today with their measured excess (runs' and leaps' knees, see the comments):
+  `JOINT_KNOWN` lists the 12 rows it fails today with their measured excess (runs' and leaps' knees, see the comments):
   a listed row fails if its excess grows or if it passes clean (delete it), so the list only shrinks. A prop inside a set
   piece fails (`propInSet`). `rigClip(C, body, { obstacles })` takes a film's own set pieces (ep01's 1.12 m counter beside
   the phone call). Physics gates on and off (`physicsFails`): a prop moves no more than its hand (times w) plus
@@ -105,6 +114,9 @@ and `anim: { kid: [{ f: 0, clip: 'Move_Run_Fwd_Loop', body: 'child', to: [4, 0] 
   frame (`BAL_CM`: only the balance shift, pelvis balance on minus off; the raw pelvis speed is reported, not gated), the
   load steps at most 35 % a frame (`MASS_STEP`; holdKeys' linear ramp is 25 %, a keyed release eased by the dose peaks
   higher: Act_DropInTrunk_Once is 34 %).
+- The bag clips at a film's bag: `node styles/stick-man/tools/motionlib.mjs --proof <dir> --only Act_PushBagOutWindow_Once --fit
+  '{"sill":0.8,"top":1.9,"width":1.0,"depth":0.138,"bag":{"w":0.36,"l":0.62,"h":0.30,"grip":0.415}}'` (the proof page plays a
+  kit bag of that size); the side view: shot.mjs `--query "clip=Act_PushBagOutWindow_Once&fit=...&view=side&wide=1"`.
 - One clip in the browser: `node styles/stick-man/tools/shot.mjs --film styles/stick-man/motion-lib/proof --w 540 --h 960
   --query "clip=Act_PutDown_Once&phys=1" --frames 0-350 --report /tmp/putdown.txt --fast 1`; read (h) and (i): PASS.
 - A contact sheet: `node styles/stick-man/tools/motionlib.mjs --sheet Act --out /tmp/sheets`.

@@ -8,8 +8,10 @@
 // to cover the distance (its strides stretched to land exactly, `times` fixes the count) and ends with a closing step;
 // `stop: true` does the same without `to`. A shared clip played on another body scales its metres with that body's size.
 // The README in this folder has the rules; docs/MOTION-LIB.md the catalogue.
+import * as THREE from 'three';
 import { BODIES } from './bodies.js';
 import { BASES } from './base.js';
+import { BUILD } from '../lib/cast/handprops.js';
 import Adult_Move_Run_Fwd_Loop_v01 from './body/adult/Adult_Move_Run_Fwd_Loop_v01.js';
 import Adult_Move_Walk_Fwd_Loop_v01 from './body/adult/Adult_Move_Walk_Fwd_Loop_v01.js';
 import Adult_Move_Sprint_Fwd_Loop_v01 from './body/adult/Adult_Move_Sprint_Fwd_Loop_v01.js';
@@ -61,6 +63,7 @@ import Thin_Move_Walk_Fwd_Loop_v01 from './body/thin/Thin_Move_Walk_Fwd_Loop_v01
 import Gest_LookUp_Once_v01 from './shared/extra/Gest_LookUp_Once_v01.js';
 import Move_WalkFlashlight_Loop_v01 from './shared/extra/Move_WalkFlashlight_Loop_v01.js';
 import Act_DropInTrunk_Once_v01 from './shared/interact/Act_DropInTrunk_Once_v01.js';
+import Act_PushBagOutWindow_Once_v01 from './shared/interact/Act_PushBagOutWindow_Once_v01.js';
 
 export const ALL = [
   Adult_Move_Run_Fwd_Loop_v01,
@@ -114,6 +117,7 @@ export const ALL = [
   Gest_LookUp_Once_v01,
   Move_WalkFlashlight_Loop_v01,
   Act_DropInTrunk_Once_v01,
+  Act_PushBagOutWindow_Once_v01,
 ];
 // A clip starts at its own origin: a capture's first frame stands a few cm (an in-place loop) to 1 m off it, and two
 // clips chained (each placed where the last one left the actor) jumped the root by that offset. Every clip is moved so
@@ -133,7 +137,8 @@ function zeroed(C) {
 export const CLIPS = {};
 for (const c of ALL) (CLIPS[c.clip] ||= {})[zeroed(c).body || '*'] = c;
 export const CLIP_NAMES = Object.keys(CLIPS);
-// a clip fitted to its set (the clip key's `fit`, e.g. { lip: 0.85 } for a trunk, { sill, top, width } for a window): a
+// a clip fitted to its set (the clip key's `fit`, e.g. { lip: 0.85 } for a trunk, { sill, top, width } for a window; and
+// to the bag it holds, fit.bag, propFit below): a
 // clip record with `fit(opts)` makes the fitted version (checked by tools/motionlib.mjs on every fit in its `fitChecks`)
 const FITTED = new Map();
 export function fitClip(C, fit) {
@@ -142,6 +147,29 @@ export function fitClip(C, fit) {
   const id = `${C.name}|${JSON.stringify(fit)}`;
   if (!FITTED.has(id)) FITTED.set(id, zeroed(C.fit(fit)));
   return FITTED.get(id);
+}
+// The size of a prop a clip fits itself to (a record's `fitProps`: ['bag']): the clip key's own `fit.bag` ({ w, l, h, grip },
+// metres), else the prop the key swaps in, read off the built prop: its userData.size [w, h, l] and grip (motion-lib/props.js),
+// else its meshes' box (grip measured from the box's bottom). A film's bag needs no numbers of its own. (A prop whose meshes
+// are still loading has no box yet: not cached, read again on the next key.)
+const SIZES = new Map();
+export function propSize(kind) {
+  if (SIZES.has(kind)) return SIZES.get(kind);
+  if (!BUILD[kind]) return null;
+  const g = BUILD[kind](), U = g.userData || {}, gy = U.grip?.[1];
+  let d = null;
+  if (U.size) d = { w: U.size[0], h: U.size[1], l: U.size[2], ...(gy != null ? { grip: gy } : {}) };
+  else { const b = new THREE.Box3().setFromObject(g); if (!b.isEmpty()) { const v = b.getSize(new THREE.Vector3()); d = { w: v.x, h: v.y, l: v.z, ...(gy != null ? { grip: gy - b.min.y } : {}) }; } }
+  if (d) SIZES.set(kind, d);
+  return d;
+}
+const r3 = v => Math.round(v * 1000) / 1000;
+export function propFit(C, k) {
+  if (!C.fitProps) return k.fit || null;
+  const fit = { ...(k.fit || {}) };
+  for (const kind of C.fitProps) { const to = k.swap?.[kind], d = fit[kind] ? null : to && propSize(to);
+    if (d) fit[kind] = Object.fromEntries(Object.entries(d).map(([n, v]) => [n, r3(v)])); }
+  return Object.keys(fit).length ? fit : null;
 }
 export function getClip(name, body = 'adult', fit = null) {
   const e = CLIPS[name] || CLIPS[name.replace(/^(Adult|Heavy|Thin|Child|Elder)_/, '').replace(/_v\d+$/, '')];
@@ -156,7 +184,7 @@ const PASS = new Set(['expr', 'look', 'ease', 'antic', 'cycle']);         // fie
 const clone = v => (Array.isArray(v) ? v.slice() : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, clone(x)])) : v);
 // one clip key -> its keys in the world: { keys, pos, yaw } (pos, yaw: where the actor ends)
 export function placeClip(k, cur = { pos: [0, 0], yaw: 0 }) {
-  const body = k.body || 'adult', C = getClip(k.clip, body, k.fit), sc = C.body ? 1 : (BODIES[body].spec.scale ?? 1);
+  const body = k.body || 'adult', C = getClip(k.clip, body, propFit(getClip(k.clip, body), k)), sc = C.body ? 1 : (BODIES[body].spec.scale ?? 1);
   // (k.pos[2]: the height of a surface the clip plays on, a bed or a stage: every key is lifted onto it and held up by
   // it, motion.js `support`)
   const O = k.pos ? [k.pos[0], k.pos[1]] : cur.pos.slice(0, 2), Hs = k.pos?.[2] ?? cur.support ?? 0;
