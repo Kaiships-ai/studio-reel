@@ -42,8 +42,22 @@ before, except where an old one had a hand forced off a target (now kept when re
   to its grip socket).
 - `shot.mjs --report` lines (h) hand off its target while gripping (FAIL > 2 cm) and (i) held prop inside the body
   (FAIL > 1 cm after the solve).
-- Set pieces a clip names (`needs.marks`: window, trunk, counter) are solid through `base.js markColliders`, one list for
-  the render (`proof/set.js`) and the headless check, so the check sees what the render does.
+- Set pieces a clip names (`needs.marks`: window, trunk and its floor, counter) are solid through `base.js markColliders`,
+  one list for the render (`proof/set.js`) and the headless check, so the check sees what the render does.
+- Props as scene objects (`engine/propobj.js`, PR C): a prop a clip key holds is one object for the key's span
+  (`placeClip` `props`, `track.props`), and beyond it to the track's end once let go (or from its start before a grab).
+  `x_hp` is the attach weight (holdKeys ramps it over 4 frames centred on `from` / `to`): 1 in the hand; 0 before a grab
+  at rest where the hand will take it (set down on the floor or a collider top); 0 after a release falling from the hand
+  with the hand's speed plus the clip's `toss` (m/s, clip space) onto the floor or a collider top; between, lerp + slerp.
+  A floor prop (the crate) stays at its rest until the hands hold it fully. The rests are the rig's own transforms at the
+  edge frames, cached once per track (`propPlan(track, Qat, S)`; play.js, rigClip and films share it; `Q.propRest`). The
+  load is `x_kg` times the weight; a floor prop weighs nothing. The arm blends its gripping and free contact solves by the
+  weight (no 7 cm step at a release). `S.propState[id] = { w, v }`; `__dbg` held counts only w = 1.
+- Balance (rig B4) is weighed: `(1 - fall) (1 - x_raw) (1 - lean on a floor prop) x_stand`. `x_raw` (motion.js): a
+  captured pose carries its own balance. `x_stand` (motion.js): both feet down, eased over 3 + 3 frames each side, so the
+  solve never switches as a sole lands. `rigWorld().balanceCm`, `S.rig.balanceHip` (the hips' shift, W).
+- gaitLoop on a capture: frames with both feet up keep the stance's hip correction (eased between stances), so the hips
+  no longer jump as the last foot lifts (Move_PushHeavy_Loop loop frame 37: 8 cm).
 - `docs/MOTION-LIB.md` is written by `motionlib.mjs --catalogue` from the clips (a test fails when it is stale).
 
 ## How to get to it (user POV)
@@ -57,7 +71,9 @@ and `anim: { kid: [{ f: 0, clip: 'Move_Run_Fwd_Loop', body: 'child', to: [4, 0] 
   with the clip run through cast.js headless (fake 2D canvases) with its set pieces, physics on and off: grip cm, prop cm,
   held frames, the solved joints' largest change a frame. It fails a clip that holds an undeclared prop, declares one it
   never holds, acts on a thing (`OBJECT_ACT`) without one, moves its root faster than 4 cm a frame outside the capture, or
-  starts off its origin.
+  starts off its origin. Physics gates on and off (`physicsFails`): a prop moves no more than its hand (times w) plus
+  gravity plus 1 cm a frame (`PROP_SLIP_CM`), a declared prop is in the scene every frame of the clip, the balance solve
+  moves the pelvis at most 4 cm a frame (`BAL_CM`: pelvis balance on minus off), the load steps at most 35 % a frame.
 - One clip in the browser: `node styles/stick-man/tools/shot.mjs --film styles/stick-man/motion-lib/proof --w 540 --h 960
   --query "clip=Act_PutDown_Once&phys=1" --frames 0-350 --report /tmp/putdown.txt --fast 1`; read (h) and (i): PASS.
 - A contact sheet: `node styles/stick-man/tools/motionlib.mjs --sheet Act --out /tmp/sheets`.
@@ -68,7 +84,10 @@ and `anim: { kid: [{ f: 0, clip: 'Move_Run_Fwd_Loop', body: 'child', to: [4, 0] 
 
 - Clips plant feet with `footW`; a carried `footW` channel overrides `foot`, so hand keys after a clip use `footW`.
 - Balance is the floor: a load held far out moves the hips (balanceCm) and a near-full reach then leaves its target, so
-  heavy clips key the hips back and hand the weight to the floor or a sill while the load rests there.
+  heavy clips key the hips back (Act_DropInTrunk keys the 0.21 W the solve wanted) and hand the weight to the floor or a
+  sill while the load rests there. A captured clip gets no balance solve (its capture has it).
+- A release is blended: a toss whose hands stop dead drags the bag back toward them; the hands follow it out (DropInTrunk).
+- A film that drew its own floor bag where a clip let one go now shows two: the clip's prop stays in the scene.
 - A shared clip on a smaller body scales its metres: its set pieces (`needs.marks`) must scale the same way.
 - `x_hpB_<kind>` hangs a prop at the midpoint of the hands; a switch between sides in one frame jumps the prop by half
   the hands' spacing (the library hangs heavy bags on the right fist instead).

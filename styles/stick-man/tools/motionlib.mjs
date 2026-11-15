@@ -171,26 +171,59 @@ async function rig() {
     globalThis.document = { createElement: canvas, createElementNS: canvas };
   }
   const cast = await import('../engine/cast.js'), body = await import('../engine/body.js'), { toPose } = await import('../engine/motion.js');
-  await import('../motion-lib/props.js'); const { bodySpec } = await import('../motion-lib/bodies.js');
-  return (RIG = { cast, PHYS: body.PHYS, toPose, bodySpec });
+  await import('../motion-lib/props.js'); const { bodySpec } = await import('../motion-lib/bodies.js'), { propPlan } = await import('../engine/propobj.js');
+  return (RIG = { cast, PHYS: body.PHYS, toPose, bodySpec, propPlan });
 }
 // a figure built by cast.js (headless), for tests: { S, PHYS, toPose }
 export async function rigStick(body = 'adult') { const R = await rig(); return { S: R.cast.makeStick(R.bodySpec({ ...R.cast.GUARD, hair: [] }, body)), PHYS: R.PHYS, toPose: R.toPose }; }
 export const GRIP_CM = 2, PROP_CM = 1;
+// props as scene objects (engine/propobj.js) and the balance solve, per frame (Hot Money ep01: a bag that jumped 20 cm as
+// it was set down, a crate that vanished, a pushing body that leapt 77 cm when a foot lifted):
+//   PROP_SLIP_CM  a prop moves no more than the hand that holds it (times its attach weight), plus what gravity gives it
+//                 when it is free, plus this
+//   BAL_CM        the balance solve moves the pelvis no more than this a frame (pelvis with balance on minus off)
+//   MASS_STEP     the carried mass changes no more than this share of its largest a frame (a load enters or leaves the
+//                 hand over three frames at least: holdKeys ramps it over four)
+export const PROP_SLIP_CM = 1, BAL_CM = 4, MASS_STEP = 0.35;
 // one clip through the real rig, physics on: the hand off its target while it grips (shot.mjs (h)) and a held prop
-// inside the body after the solve ((i)), per frame
+// inside the body after the solve ((i)), per frame; and the props, the balance shift and the load frame to frame
 export async function rigClip(C, body = C.body || 'adult', { phys = true } = {}) {
   const R = await rig(), S = R.cast.makeStick(R.bodySpec({ ...R.cast.GUARD, hair: [] }, body)), was = R.PHYS.on; R.PHYS.on = phys;
   S.obstacles = markColliders(C.needs?.marks, C.body ? 1 : (BODIES[body]?.spec.scale ?? 1));   // the clip's set pieces: hands stop on them
   const key = { ...(C.advance ? { f: 0, clip: C.clip, body, to: [C.introTravel + C.outroTravel + 2 * C.advance, 0] } : { f: 0, clip: C.clip, body, ...(C.loop ? { times: 2 } : {}) }), ...fitOf(C) };
-  const keys = placeClip(key, { pos: [0, 0], yaw: 90 }).keys, fr = playActor(compileTrack(keys, {}, { pos: [0, 0], yaw: 90 }, 'kaiships'), 0, keys[keys.length - 1].f + 6);
-  const o = { grip: 0, gripAt: null, prop0: 0, prop: 0, propAt: null, over: [], joint: 0, jointAt: null, heldFrames: 0, inSet: [] };
+  const keys = placeClip(key, { pos: [0, 0], yaw: 90 }).keys, track = compileTrack(keys, {}, { pos: [0, 0], yaw: 90 }, 'kaiships'), fr = playActor(track, 0, keys[keys.length - 1].f + 6);
+  const lastF = keys[keys.length - 1].f, Qat = f => R.toPose(fr[Math.max(0, Math.min(fr.length - 1, f))], S.root.scale.x), plan = R.propPlan(track, Qat, S);
+  const o = { grip: 0, gripAt: null, prop0: 0, prop: 0, propAt: null, over: [], joint: 0, jointAt: null, heldFrames: 0, inSet: [],
+    slip: 0, slipAt: null, gone: [], bal: 0, balAt: null, pelvis: 0, pelvisAt: null, massStep: 0, massAt: null, kgMax: 0 };
+  const d3 = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]), V3 = new (S.root.position.constructor)();
+  const gripW = p => { const g = p.userData.grip || [0, 0, 0]; V3.set(...(Array.isArray(g) ? g : [0, 0, 0])); p.localToWorld(V3); return [V3.x, -V3.z, V3.y]; };
+  let prevP = {}, prevBal = null, prevPel = null, prevKg = null, kgs = [];
   // the solved joints' largest change a frame (shot.mjs "largest one-frame joint change"): flexes and limb directions
   const SEG = [['shoulder', 'elbow'], ['elbow', 'hand'], ['hip', 'knee'], ['knee', 'ankle']], dir = (a, b) => { const v = b.map((x, i) => x - a[i]), l = Math.hypot(...v) || 1; return v.map(x => x / l); };
   let last = null;
   try {
     fr.forEach((m, f) => {
-      S.pose2(R.toPose(m, S.root.scale.x)); const w = S.rigWorld();
+      const Q = Qat(f); Q.propRest = plan.at(f);
+      // the balance shift: the pelvis with balance on minus the same frame with it off (physics on only)
+      let pel0 = null; if (phys && R.PHYS.balance) { R.PHYS.balance = false; S.pose2(Q); pel0 = S.rigWorld().skel.pelvis; R.PHYS.balance = true; }
+      S.pose2(Q); const w = S.rigWorld();
+      const pel = w.skel.pelvis, bal = pel0 ? pel.map((x, i) => x - pel0[i]) : [0, 0, 0];
+      if (prevBal) { const d = 100 * d3(bal, prevBal); if (d > o.bal) { o.bal = +d.toFixed(2); o.balAt = f; } }
+      if (prevPel) { const d = 100 * d3(pel, prevPel); if (d > o.pelvis) { o.pelvis = +d.toFixed(2); o.pelvisAt = f; } }
+      prevBal = bal; prevPel = pel;
+      const kg = S.carryKg || 0; kgs.push([f, kg - (prevKg ?? kg)]); prevKg = kg; o.kgMax = Math.max(o.kgMax, kg);
+      // every prop the clip declares is on screen through the clip (held or resting), and moves no more than its hand lets it
+      if (f <= lastF) for (const kind of C.needs?.props || []) if (!Object.entries(S.props).some(([id, p]) => id.slice(1) === kind && p.visible)) o.gone.push(f);
+      const now = {};
+      for (const [id, p] of Object.entries(S.props)) {
+        if (!p.visible || id[0] === 'H') continue;
+        const st = S.propState?.[id] || { w: 1, v: 0 }, hand = id[0] === 'B' ? w.L.hand.map((x, i) => (x + w.R.hand[i]) / 2) : w[id[0]].hand;
+        now[id] = { at: gripW(p), hand, w: st.w, v: st.v };
+        const q = prevP[id]; if (!q) continue;
+        const allow = Math.max(st.w, q.w) * 100 * d3(hand, q.hand) + 100 * Math.max(st.v, q.v) / 30 + 0.5 * 9.8 / 900 * 100 + PROP_SLIP_CM, d = 100 * d3(now[id].at, q.at);
+        if (d - allow + PROP_SLIP_CM > o.slip) { o.slip = +(d - allow + PROP_SLIP_CM).toFixed(2); o.slipAt = `${f} ${id}`; }
+      }
+      prevP = now;
       if (last) for (const s of ['L', 'R']) {
         for (const k of ['kneeFlex', 'elbowFlex']) { const d = Math.abs(w[s][k] - last[s][k]); if (d > o.joint) { o.joint = +d.toFixed(1); o.jointAt = `${f} ${k}${s}`; } }
         for (const [a, b] of SEG) { const u = dir(last[s][a], last[s][b]), v = dir(w[s][a], w[s][b]), d = Math.acos(Math.max(-1, Math.min(1, u[0] * v[0] + u[1] * v[1] + u[2] * v[2]))) * 180 / Math.PI;
@@ -208,7 +241,17 @@ export async function rigClip(C, body = C.body || 'adult', { phys = true } = {})
       o.prop0 = Math.max(o.prop0, w.propPenCm0 || 0); if ((w.propPenCm || 0) > o.prop) { o.prop = w.propPenCm; o.propAt = f; }
     });
   } finally { R.PHYS.on = was; }
+  for (const [f, d] of kgs) if (o.kgMax > 0 && Math.abs(d) / o.kgMax > o.massStep) { o.massStep = +(Math.abs(d) / o.kgMax).toFixed(3); o.massAt = f; }
   return o;
+}
+// the props-as-objects and balance gates on one rigClip result (physics on or off): the lines that fail
+export function physicsFails(g, tag = '') {
+  const t = tag ? ` (${tag})` : '', out = [];
+  if (g.slip > PROP_SLIP_CM) out.push(`prop${t}: moves ${g.slip} cm a frame more than its hand and gravity allow at ${g.slipAt} (max ${PROP_SLIP_CM})`);
+  if (g.gone.length) out.push(`prop${t}: a declared prop is not in the scene on ${g.gone.length} frames of the clip (${g.gone[0]}..${g.gone[g.gone.length - 1]})`);
+  if (g.bal > BAL_CM) out.push(`balance${t}: the solve moves the pelvis ${g.bal} cm in a frame at ${g.balAt} (max ${BAL_CM})`);
+  if (g.massStep > MASS_STEP) out.push(`load${t}: the carried mass steps ${Math.round(g.massStep * 100)} % of its ${g.kgMax} kg in one frame at ${g.massAt} (max ${MASS_STEP * 100} %)`);
+  return out;
 }
 export async function checkAll() {
   const files = clipFiles(), rows = [], listed = new Set();
@@ -224,6 +267,8 @@ export async function checkAll() {
       if (g0.prop > PROP_CM) r.fails.push(`rig (physics off): a held prop is ${g0.prop} cm inside the body at frame ${g0.propAt} (max ${PROP_CM})`);
       if (g.inSet.length) r.fails.push(`rig: the body is inside the set: ${g.inSet.slice(0, 3).join('; ')}${g.inSet.length > 3 ? ` (+${g.inSet.length - 3} frames)` : ''}`);
       if ((C.needs?.props || []).length && !g.heldFrames) r.fails.push(`rig: needs.props ${C.needs.props} but the rig shows no held prop on any frame`);
+      r.fails.push(...physicsFails(g), ...physicsFails(g0, 'physics off'));
+      Object.assign(r.info, { slipCm: g.slip, balCm: g.bal, massStep: g.massStep });
       Object.assign(r.info, { gripCm: g.grip, propCm0: g.prop0, propCm: g.prop, propOffCm: g0.prop, heldFrames: g.heldFrames, rigJoint: g.joint, rigJointAt: g.jointAt });
       rows.push({ file: f, name: C.name, ...r });
     }
@@ -235,6 +280,8 @@ export async function checkAll() {
     if (g.prop > PROP_CM) r.fails.push(`rig: a held prop is ${g.prop} cm inside the body at frame ${g.propAt} (max ${PROP_CM})`);
     if (g0.prop > PROP_CM) r.fails.push(`rig (physics off): a held prop is ${g0.prop} cm inside the body at frame ${g0.propAt} (max ${PROP_CM})`);
     if (g.inSet.length) r.fails.push(`rig: the body is inside the set: ${g.inSet.slice(0, 3).join('; ')}${g.inSet.length > 3 ? ` (+${g.inSet.length - 3} frames)` : ''}`);
+    r.fails.push(...physicsFails(g), ...physicsFails(g0, 'physics off'));
+    Object.assign(r.info, { slipCm: g.slip, balCm: g.bal, massStep: g.massStep });
     Object.assign(r.info, { gripCm: g.grip, propCm0: g.prop0, propCm: g.prop, propOffCm: g0.prop, heldFrames: g.heldFrames, rigJoint: g.joint, rigJointAt: g.jointAt });
     rows.push({ file: f, name: `${C.name} fit ${JSON.stringify(fit)}`, ...r });
   }

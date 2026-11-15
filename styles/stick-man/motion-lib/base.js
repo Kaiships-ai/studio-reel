@@ -403,14 +403,37 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
     P.fall = 0;
     const want = {}; for (const sd of ['L', 'R']) if (m.down[sd]) want[sd] = m['knee' + sd];
     // and a swinging foot shows its captured knee (reachFoot)
+    P._cap = { bob: P.bob, knee: { L: m.kneeL, R: m.kneeR }, down: { ...m.down } };
     if (Object.keys(want).length) P.bob = legBob(P, want);
     // (also with both feet up: a walk's push-off on the toes, a run's flight; not a jump's, whose flight gravity owns)
     if (!P._air) for (const sd of ['L', 'R']) if (!m.down[sd]) P['leg' + sd] = reachFoot(P, sd, m['knee' + sd]);
     return P;
   };
+  // both feet off the ground in a capture (a push's or a run's): the hips' height is the capture's there, not the stance
+  // knee's (legBob), and the two differ, so the hips jumped as the last foot lifted (8 cm in a frame, Move_PushHeavy_Loop
+  // at its loop frame 37). The stance's correction is carried over those frames instead, eased from the last stance's to
+  // the next one's, and the swinging feet are placed again from those hips (cyc: the frames wrap, a loop)
+  const airBob = (keys, cyc) => {
+    const n = keys.length, off = keys.map(k => k._cap && (k._cap.down.L || k._cap.down.R) ? k.bob - k._cap.bob : null);
+    if (off.some(o => o != null)) for (let i = 0; i < n; i++) {
+      const k = keys[i]; if (!k._cap || off[i] != null) continue;
+      let a = i, b = i, da = 0, db = 0;
+      do { a = cyc ? (a - 1 + n) % n : a - 1; da++; } while (a >= 0 && off[a] == null && da < n);
+      do { b = cyc ? (b + 1) % n : b + 1; db++; } while (b < n && off[b] == null && db < n);
+      const oa = a >= 0 && off[a] != null ? off[a] : null, ob = b < n && off[b] != null ? off[b] : null; if (oa == null && ob == null) continue;
+      const u = ease3(da / (da + db)), o = oa == null ? ob : ob == null ? oa : oa + (ob - oa) * u;
+      k.bob = k._cap.bob + o;
+      for (const sd of ['L', 'R']) if (!k._cap.down[sd]) k['leg' + sd] = reachFoot(k, sd, k._cap.knee[sd]);
+    }
+    for (const k of keys) delete k._cap;
+    return keys;
+  };
   const keys = [];
-  if (G.once) { for (let t = 0; t < MC.cycle; t++) keys.push(K(t, mcFrame(t), { ease: 'flow' })); return { keys, frames: MC.cycle - 1, surfaces: MC.surfaces, marks: MC.marks }; }
+  if (G.once) { for (let t = 0; t < MC.cycle; t++) keys.push(K(t, mcFrame(t), { ease: 'flow' })); airBob(keys, false); return { keys, frames: MC.cycle - 1, surfaces: MC.surfaces, marks: MC.marks }; }
   for (let t = 0; t <= 2 * T; t++) keys.push(K(t, MC ? mcFrame(t) : RF ? refFrame(t) : frame(t), { ease: 'flow' }));
+  // (the seam's last frame is the first one a cycle on: it gets the first one's correction)
+  if (MC) { const L = keys[2 * T], c0 = keys[0]._cap?.bob; airBob(keys.slice(0, 2 * T), true);
+    if (L._cap) { if (c0 != null && !(L._cap.down.L || L._cap.down.R)) { L.bob = L._cap.bob + keys[0].bob - c0; for (const sd of ['L', 'R']) if (!L._cap.down[sd]) L['leg' + sd] = reachFoot(L, sd, L._cap.knee[sd]); } delete L._cap; } }
   // a heel never peels faster than PEEL deg a frame: where the leg asks for more, the peel starts earlier (the loop wraps)
   const PEEL = 16;
   const N = 2 * T;
@@ -533,7 +556,8 @@ export function markColliders(marks = [], s = 1) {
   for (const m of marks) {
     // a car's rear panel (the trunk lip) and a counter: solid up to their top (no ledge: a bag's corner meeting the panel's
     // face low down was lifted onto its top, 22 cm in a frame)
-    if (m.kind === 'trunk') { const [x, , z] = m.at.map(v => v * s); out.push({ name: 'trunk-lip', lo: [x, -0.65, 0.18], hi: [x + 0.08, 0.65, z] }); continue; }
+    // (the trunk's floor too: what a bag dropped in lands on, engine/propobj.js)
+    if (m.kind === 'trunk') { const [x, , z] = m.at.map(v => v * s); out.push({ name: 'trunk-lip', lo: [x, -0.65, 0.18], hi: [x + 0.08, 0.65, z] }, { name: 'trunk-floor', lo: [x + 0.08, -0.65, 0.18], hi: [x + 1.0, 0.65, m.floor * s] }); continue; }
     if (m.kind === 'counter') { const [x, , z] = m.at.map(v => v * s); out.push({ name: 'counter', lo: [x, -0.9, 0], hi: [x + 0.55, 0.9, z] }); continue; }
     if (m.kind !== 'window') continue;
     const [x, y, z] = m.at.map(v => v * s), d = (m.depth || 0.15) * s, w = (m.width || 0.8) * s / 2, top = m.top * s, H = Math.max(top + 0.5, 2.4), E = m.axis === 'y' ? w + 0.7 : 1.1;   // (as proof/set.js draws it)
@@ -544,25 +568,26 @@ export function markColliders(marks = [], s = 1) {
   return out;
 }
 
-// a hand prop held on a run of keys: x_hp<side>_<kind> 1 on the keys from `from` to `to` (clip frames, inclusive), 0 on
-// every other key (a channel a key does not name carries on from the key before, so every key names it); kg: the load's
-// weight on that side (x_kg<side>) while it is held. A clip that holds a prop declares it (needs.props, needs.hands) and
-// uses this: tools/motionlib.mjs fails a clip whose keys hold a prop it does not declare, or declare one they never hold.
-export const holdKeys = (keys, side, kind, { from = -Infinity, to = Infinity, kg } = {}) => keys.map(k => {
-  const on = k.f >= from && k.f <= to;
-  return { ...k, [`x_hp${side}_${kind}`]: on ? 1 : 0, ...(kg != null ? { [`x_kg${side}`]: on ? kg : 0 } : {}) };
+// a hand prop held on a run of keys: x_hp<side>_<kind>, the weight that parents the prop to the hand (engine/propobj.js),
+// is 1 on the keys from `from` to `to` (clip frames) and 0 on the others, ramped over `ramp` frames centred on them (the
+// fist's lowest frame at a grab or a release: the hand takes the prop where it rests, lets it go where it will lie, and
+// the blend between the two is shortest there), so the prop and its load (x_kg<side> = kg on every key; cast.js weighs
+// it by the attach weight) never switch in one frame.
+// Every key names the channel (a channel a key does not name carries on from the key before). A clip that holds a prop
+// declares it (needs.props, needs.hands) and uses this: tools/motionlib.mjs fails a clip whose keys hold a prop it does
+// not declare, or declare one they never hold.
+export const RAMP = 4;
+export const holdKeys = (keys, side, kind, { from = -Infinity, to = Infinity, kg, ramp = RAMP } = {}) => keys.map(k => {
+  const w = Math.max(0, Math.min(1, 0.5 + (k.f - from) / ramp, 0.5 + (to - k.f) / ramp));
+  return { ...k, [`x_hp${side}_${kind}`]: +w.toFixed(4), ...(kg != null ? { [`x_kg${side}`]: kg } : {}) };
 });
 
-// a captured bend that lowers (or lifts) a bag in one fist, fitted to this figure: the bag hanging beside the shin meets
-// it. The bag turns to lie across (x_yaw<side> from yaw[0] at turn[0] to yaw[1] at turn[1]), its length clear of the leg;
-// and over the bend (out: frames a, b, c, d: up from a to b, held, down from c to d) the bag arm can be carried `deg`
-// wider (raise), so the bag rising beside the leg clears it
-// (lift: the head raised that many degrees over the same frames, neck nod: this figure's big head, bowed over the fist at
-// the floor, takes the upper arm inside it; dip: the knees bend that much deeper, bob in W, so the wider arm still reaches
-// the floor: a heavy bag is lifted with the legs)
-export function bagBend(keys, side, { out: [a, b, c, d] = [0, 0, 0, 0], deg = 0, lift = 0, dip = 0, turn, yaw = [0, 90] }) {
+// a captured bend that lowers (or lifts) a bag in one fist, fitted to this figure: over the bend (out: frames a, b, c, d:
+// up from a to b, held, down from c to d) the bag arm is carried `deg` wider (raise), so the bag rising beside the leg
+// clears it, and the knees bend `dip` deeper (bob, W), so the wider arm still reaches the floor: a heavy bag is lifted
+// with the legs. (Act_PickUp_Once measures why it needs both.)
+export function bagBend(keys, side, { out: [a, b, c, d] = [0, 0, 0, 0], deg = 0, dip = 0 }) {
   const ease = w => (w = Math.max(0, Math.min(1, w)), w * w * (3 - 2 * w)), arm = 'arm' + side;
   const bump = f => (f <= a || f >= d ? 0 : f < b ? ease((f - a) / (b - a)) : f > c ? ease((d - f) / (d - c)) : 1);
-  return keys.map(k => ({ ...k, [arm]: { ...k[arm], raise: (k[arm]?.raise ?? 0) + deg * bump(k.f) }, ...(lift ? { neck: { ...k.neck, nod: (k.neck?.nod ?? 0) - lift * bump(k.f) } } : {}), ...(dip ? { bob: (k.bob ?? 0) - dip * bump(k.f) } : {}),
-    ...(turn ? { ['x_yaw' + side]: +(yaw[0] + (yaw[1] - yaw[0]) * ease((k.f - turn[0]) / (turn[1] - turn[0]))).toFixed(2) } : {}) }));
+  return keys.map(k => ({ ...k, [arm]: { ...k[arm], raise: (k[arm]?.raise ?? 0) + deg * bump(k.f) }, ...(dip ? { bob: (k.bob ?? 0) - dip * bump(k.f) } : {}) }));
 }

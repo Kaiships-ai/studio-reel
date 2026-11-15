@@ -120,7 +120,47 @@ test('K5: a carried load pulls the centre of mass toward it by its share of the 
 });
 
 // ------------------------------------------------------------------ the same rules through the real rig (cast.js, headless)
-import { rigClip, rigStick, GRIP_CM, PROP_CM } from '../../styles/stick-man/tools/motionlib.mjs';
+import { rigClip, rigStick, GRIP_CM, PROP_CM, physicsFails, BAL_CM } from '../../styles/stick-man/tools/motionlib.mjs';
+import { holdKeys } from '../../styles/stick-man/motion-lib/base.js';
+
+// props as scene objects (engine/propobj.js) and the balance solve (Hot Money ep01: the bag jumped 20 cm as it was set
+// down, 11 cm as it was picked up, the dropped bag vanished a frame, the pushing body leapt 77 cm when a foot lifted)
+test('props: the clips that take, set down, push or drop a load keep it in the scene, moving no more than the hand or gravity lets it, the pelvis and the load continuous, physics on and off', async () => {
+  for (const name of ['Move_PushHeavy_Loop', 'Act_PutDown_Once', 'Move_CarryBag_Walk_Loop', 'Act_PickUp_Once', 'Act_DropInTrunk_Once', 'Act_HandOver_Once']) {
+    const C = getClip(name), on = await rigClip(C), off = await rigClip(C, undefined, { phys: false });
+    assert.deepEqual([...physicsFails(on), ...physicsFails(off, 'physics off')], [], name);
+    assert.ok(on.bal <= BAL_CM && on.gone.length === 0, name);
+  }
+});
+
+test('props: a prop let go falls on gravity and lands on what is under it, the same whichever order the frames are asked in', async () => {
+  const { S, toPose } = await rigStick('adult'), { propPlan } = await import('../../styles/stick-man/engine/propobj.js');
+  const C = getClip('Act_DropInTrunk_Once'), keys = placeClip({ f: 0, clip: C.clip }, { pos: [0, 0], yaw: 90 }).keys;
+  S.obstacles = markColliders(C.needs.marks);
+  const track = compileTrack(keys, {}, { pos: [0, 0], yaw: 90 }, 'kaiships'), fr = playActor(track, 0, 90), Qat = f => toPose(fr[Math.min(fr.length - 1, f)]);
+  assert.deepEqual(track.props.map(p => [p.id, p.toss.map(v => +v.toFixed(2))]), [['Rbag', [1.2, 0, 0]]], 'the clip names its toss, turned with the heading');
+  const A = propPlan(track, Qat, S), B = propPlan(track, Qat, S), late = A.at(70), early = B.at(5);
+  assert.deepEqual(B.at(70), late, 'stateless: a plan asked for frame 5 first gives frame 70 the same rest');
+  assert.ok(!early?.Rbag, 'in the hand at the start');
+  const [x, y] = late.Rbag.p, floor = C.needs.marks[0].floor;   // three.js world: y up
+  assert.ok(x > 0.53 && Math.abs(y - floor) < 0.03 && late.Rbag.v === 0, `lands on the trunk floor past the lip: ${late.Rbag.p}`);
+  let prev = null;
+  for (let f = 34; f < 60; f++) { const r = A.at(f).Rbag; if (!r) continue; if (prev) assert.ok(r.p[1] <= prev[1] + 1e-9, `falls, never rises (frame ${f})`); prev = r.p; }
+});
+
+test('props: a load enters the hand over a ramp (holdKeys), the floor carries a pushed crate, and a hard switch fails the gates', async () => {
+  const k = holdKeys([0, 1, 2, 3, 4, 5, 6].map(f => ({ f })), 'R', 'bag', { from: 3, kg: 25 });
+  assert.deepEqual(k.map(x => x.x_hpR_bag), [0, 0, 0.25, 0.5, 0.75, 1, 1]);
+  assert.ok(k.every(x => x.x_kgR === 25), 'the load is kg times the attach weight: x_kg stays');
+  const { S } = await rigStick('adult');
+  S.pose2({ armL: { ik: [-0.2, 1.2, 0.6], ikw: 1 }, armR: { ik: [0.2, 1.2, 0.6], ikw: 1 }, x_hpB_crate: 1 });
+  assert.equal(S.carryKg, 0, 'a crate on the floor is no weight on the body');
+  S.pose2({ armR: { raise: 24, swing: 4, elbow: 8 }, x_hpR_bag: 0.5, x_kgR: 25, propRest: { Rbag: { p: [0.3, 0, 0], q: [0, 0, 0, 1], v: 0 } } });
+  assert.ok(Math.abs(S.carryKg - 12.5) < 1e-9 && S.props.Rbag.visible, `half held: ${S.carryKg} kg, still in the scene`);
+  // the clip as it was: the bag switched out of the hand in one frame
+  const C = getClip('Act_PutDown_Once'), keep = C.keys; C.keys = keep.map(x => ({ ...x, x_hpR_bag: x.f <= 185 ? 1 : 0 }));
+  try { assert.match(physicsFails(await rigClip(C)).join('; '), /load: the carried mass steps 100 %/); } finally { C.keys = keep; }
+});
 
 test('rig: the bag clips keep both hands on the handle and the bag out of the body through cast.js, physics on', async () => {
   for (const name of ['Act_DropInTrunk_Once', 'Move_CarryBag_Walk_Loop', 'Idle_CarryBag_Loop', 'Act_PutDown_Once', 'Act_Phone_Once']) {
@@ -218,7 +258,7 @@ test('a loop in place plays `times` captures between one blend in and one out; a
 
 test('the set pieces a clip names are solid in the headless check as in the render: a trunk lip, a counter, a window', () => {
   const names = markColliders([{ kind: 'trunk', at: [0.45, 0, 0.68] }, { kind: 'counter', at: [0.6, 0, 0.94] }, { kind: 'window', at: [1, 0, 0.8], top: 2, width: 1 }]).map(b => b.name);
-  assert.deepEqual(names, ['trunk-lip', 'counter', 'wall-low', 'wall-top', 'wall-right', 'wall-left']);
+  assert.deepEqual(names, ['trunk-lip', 'trunk-floor', 'counter', 'wall-low', 'wall-top', 'wall-right', 'wall-left']);
 });
 
 test('fit: a clip key fits a clip to the film set (a trunk lip, a window), and the fitted clip is checked as its own', () => {
