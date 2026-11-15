@@ -169,6 +169,7 @@ async function buildAct(R, X) {
     if (!SPECS[c.spec]) throw new Error(`unknown cast spec ${c.spec} (SETS.md, Cast)`);
     // glasses: per cast entry, else per reel (R1.glasses), else the spec's own (Q2: rims make every face read as round eyes)
     const gl = c.glasses ?? X.glasses, S = makeStick(gl == null ? SPECS[c.spec] : { ...SPECS[c.spec], glasses: gl }); group.add(S.root);
+    S.obstacles = SET.COLLIDE || [];   // the set's solid pieces: hands and held props stop on them (cast.js worldBox)
     const costume = c.costume ?? SPECS[c.spec].costume;   // a spec may wear a costume by default (a character's own clothes, e.g. 'hoodie:grey')
     if (costume) { if (!HOOKS.costume) throw new Error(`cast ${name}: costume needs import '/styles/stick-man/allout/costume.js'`); HOOKS.costume(S, costume, { group, name }); }   // role layers (belt, holster, hat, hoodie)
     const posture = c.posture || 'stand', base = posture === 'sit' ? SIT : STAND;

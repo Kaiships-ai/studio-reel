@@ -11,7 +11,7 @@ import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os'
 import { fileURLToPath } from 'node:url';
 import { run } from '../../../kit/env.mjs';
 import { ALL, placeClip } from '../motion-lib/index.js';
-import { BASES, turned } from '../motion-lib/base.js';
+import { BASES, turned, markColliders } from '../motion-lib/base.js';
 import { BODIES } from '../motion-lib/bodies.js';
 import { compileTrack, playActor, flatten } from '../engine/motion.js';
 
@@ -142,6 +142,7 @@ export const GRIP_CM = 2, PROP_CM = 1;
 // inside the body after the solve ((i)), per frame
 export async function rigClip(C, body = C.body || 'adult', { phys = true } = {}) {
   const R = await rig(), S = R.cast.makeStick(R.bodySpec({ ...R.cast.GUARD, hair: [] }, body)), was = R.PHYS.on; R.PHYS.on = phys;
+  S.obstacles = markColliders(C.needs?.marks, C.body ? 1 : (BODIES[body]?.spec.scale ?? 1));   // the clip's set pieces: hands stop on them
   const key = C.advance ? { f: 0, clip: C.clip, body, to: [C.introTravel + C.outroTravel + 2 * C.advance, 0] } : { f: 0, clip: C.clip, body, ...(C.loop ? { times: 2 } : {}) };
   const keys = placeClip(key, { pos: [0, 0], yaw: 90 }).keys, fr = playActor(compileTrack(keys, {}, { pos: [0, 0], yaw: 90 }, 'kaiships'), 0, keys[keys.length - 1].f + 6);
   const o = { grip: 0, gripAt: null, prop0: 0, prop: 0, propAt: null, over: [], joint: 0, jointAt: null };

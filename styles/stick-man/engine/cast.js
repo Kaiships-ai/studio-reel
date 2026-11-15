@@ -6,7 +6,7 @@ import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometr
 import { toon, lin, css, B, INK_RGB, INK_SUN, PLACE } from './look.js';
 import { EXPR, faceRig, mixFace } from './faces.js';
 import { makeHandProp } from '../lib/cast/handprops.js';
-import { SOFT, legReach, limitArm, limitBody, ROM, torsoSlices, ellipsoid, solveArm, armPenetration, propPush, PHYS, centreOfMass, balanceShift } from './body.js';
+import { SOFT, legReach, limitArm, limitBody, ROM, torsoSlices, ellipsoid, worldBox, solveArm, armPenetration, propPush, PHYS, centreOfMass, balanceShift } from './body.js';
 
 const SPIN_Q = new THREE.Quaternion(), SPIN_AX = new THREE.Vector3(0, 1, 0), _camL = new THREE.Vector3();
 export const W_M = 0.60;                     // head width in metres
@@ -829,6 +829,14 @@ export function makeStick(spec) {
     for (const sl of slices) {
       const c = new THREE.Vector3(sl.cx, sl.y, sl.cz); bendPt(B, c);
       vols.push(ellipsoid(toRoot(c), qb.clone().multiply(spineFrame(B, Math.max(0, sl.y)).q), [sl.rx * kS, sl.ry * B.s, sl.rz * kS], 'torso'));
+    }
+    // the set's solid pieces near the figure (S.obstacles: [{ lo, hi }] Blender world metres, from the set's COLLIDE): the
+    // arms and held props stop on them as they stop on the body (a hand on a window frame, not through the wall)
+    if (S.obstacles?.length) {
+      root.updateMatrixWorld(true); const M = root.matrixWorld, Mi = M.clone().invert(), k = W * root.scale.x;
+      const toW = p => { const v = p.clone().multiplyScalar(W).applyMatrix4(M); return [v.x, -v.z, v.y]; }, fromW = b => new THREE.Vector3(b[0], b[2], -b[1]).applyMatrix4(Mi).multiplyScalar(1 / W);
+      const at = toW(hipP);
+      for (const o of S.obstacles) if ([0, 1, 2].every(i => at[i] > o.lo[i] - 1.5 && at[i] < o.hi[i] + 1.5)) vols.push(worldBox(o.lo, o.hi, toW, fromW, k, 'set', o.ledge || 0));
     }
     const legs = {}, arms = {};
     // a hand is on a target when an ik weight holds it there or it carries a hand prop (x_hp<side|B>_<kind>)

@@ -168,3 +168,20 @@ test('gait: the walks of all five bodies keep every solved knee and elbow under 
     assert.ok(g.joint <= 27, `${b} walk: ${g.joint} deg/f at ${g.jointAt}`);
   }
 });
+
+test('rig: a hand that reaches into the set stops on it (a sill: on its top), with physics on', async () => {
+  const { S, PHYS } = await rigStick('adult'), was = PHYS.on;
+  // the right arm straight ahead at hip height, into a sill 0.3 m ahead whose top is 5 cm over the free hand
+  const Q = { pos: [0, 0, 0], yaw: 90, armR: { raise: 10, swing: 80, elbow: 5 } };
+  try {
+    PHYS.on = true; S.obstacles = []; S.pose2(Q); const free = S.rigWorld().R.hand;
+    const sill = { name: 'wall-low', lo: [free[0] - 0.1, -1, 0], hi: [free[0] + 0.05, 1, free[2] + 0.05], ledge: 0.35 };
+    S.obstacles = [sill]; S.pose2(Q); const on = S.rigWorld().R.hand;
+    assert.ok(on[2] >= sill.hi[2] + 0.02, `the hand rests on the sill's top: ${on[2].toFixed(3)} vs ${sill.hi[2].toFixed(3)}`);
+    // a wall the hand has just reached into (its near face 3 cm behind the free hand): the hand stops on that face
+    const wall = { name: 'wall', lo: [free[0] - 0.03, -1, 0], hi: [free[0] + 0.3, 1, 2.4] };
+    S.obstacles = [wall]; S.pose2(Q); const off = S.rigWorld().R.hand;
+    const inside = p => [0, 1, 2].every(i => p[i] > wall.lo[i] + 0.01 && p[i] < wall.hi[i] - 0.01);
+    assert.ok(inside(free) && !inside(off), `a wall (not a ledge) puts the hand outside it: ${off.map(v => v.toFixed(3))} (wall from x ${wall.lo[0].toFixed(3)})`);
+  } finally { PHYS.on = was; S.obstacles = []; }
+});

@@ -103,6 +103,26 @@ export function torsoSlices(pos, { girth = 1, gz = 1, W, y0, n = 9 }) {
     rx: (s.x1 - s.x0) / 2, rz: (s.z1 - s.z0) / 2, ry: step * 0.85 }));
 }
 
+// a piece of the set (a wall, a sill): an axis-aligned box in the world (Blender metres, lo..hi) seen from the figure's
+// root space (W): toW / fromW carry a point between the two, k = world metres per W unit. The same test / push as a body
+// volume, so a hand (and a held prop) that reaches into a wall stops on its face, the nearest one, like it stops on the
+// belly. kind 'set': solveArm treats it like any volume.
+// ledge (m): a surface to rest on (a sill, a counter): a point less than that far under its top leaves upward, onto it,
+// whichever face is nearer (a hand reaching down past a sill's edge lands on the sill, not on the wall's far face)
+export function worldBox(lo, hi, toW, fromW, k, kind = 'set', ledge = 0) {
+  const out = (w, m) => { const d = [w[0] - lo[0] + m, hi[0] + m - w[0], w[1] - lo[1] + m, hi[1] + m - w[1], w[2] - lo[2] + m, hi[2] + m - w[2]];
+    if (d.some(x => x <= 0)) return null; let i = 0; for (let j = 1; j < 6; j++) if (d[j] < d[i]) i = j;
+    if (ledge && d[5] < ledge + m) i = 5; return { depth: d[i], i }; };
+  const N = [[-1, 0, 0], [1, 0, 0], [0, -1, 0], [0, 1, 0], [0, 0, -1], [0, 0, 1]];
+  const dirL = (pL, nW) => { const a = toW(pL), b = fromW([a[0] + nW[0] * 0.01, a[1] + nW[1] * 0.01, a[2] + nW[2] * 0.01]); return b.sub(pL).normalize(); };
+  return {
+    kind, lo, hi,
+    test(p, margin = 0) { const w = toW(p), h = out(w, margin * k); return h ? { depth: h.depth / k, n: dirL(p, N[h.i]) } : null; },
+    push(p, margin = 0) { const w = toW(p), h = out(w, margin * k); if (!h) return null; const n = N[h.i], e = h.depth * 1.0005;
+      return fromW([w[0] + n[0] * e, w[1] + n[1] * e, w[2] + n[2] * e]); },
+  };
+}
+
 // an ellipsoid volume: centre c, orientation q, radii r; depth of a point inside (0 outside) and the outward normal
 export function ellipsoid(c, q, r, kind) {
   const qi = q.clone().invert(), l = new THREE.Vector3();

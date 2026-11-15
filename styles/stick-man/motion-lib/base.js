@@ -497,12 +497,27 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
 }
 
 // a hand baked onto a part of the head (tools/mocap_reach.mjs: [f, ik x, y, z, ikw] a frame) put on a clip's keys
-// pole: where the elbow points while the hand is on (the figure frame: x out to the figure's right, y up, z ahead); a
+// pole: where the elbow points while the hand is on (a table with pole: null keeps the arm's own elbow; a row may name its own: [f, x, y, z, w, pole x, y, z]) (the figure frame: x out to the figure's right, y up, z ahead); a
 // hand brought up to the face drops its elbow down and out, never up in front (the solve's default flips there)
-export const reachKeys = (keys, { hand, rows }, pole = [hand === 'L' ? -0.5 : 0.5, -1, 0.3]) => { const at = new Map(rows.map(r => [r[0], r])), arm = 'arm' + hand;
+export const reachKeys = (keys, { hand, rows, pole: tp }, pole = tp === null ? null : [hand === 'L' ? -0.5 : 0.5, -1, 0.3]) => { const at = new Map(rows.map(r => [r[0], r])), arm = 'arm' + hand;
   // (a key past the table lets go: a key names only what changes, so the last weight would hold through the ease out)
   const last = Math.max(...rows.map(r => r[0]));
-  return keys.map(k => { const r = at.get(k.f); return r ? { ...k, [arm]: { ...k[arm], ik: [r[1], r[2], r[3]], ikw: r[4], pole } } : k.f > last ? { ...k, [arm]: { ...k[arm], ikw: 0 } } : k; }); };
+  return keys.map(k => { const r = at.get(k.f); return r ? { ...k, [arm]: { ...k[arm], ik: [r[1], r[2], r[3]], ikw: r[4], ...(r.length > 5 ? { pole: r.slice(5, 8) } : pole ? { pole } : {}) } } : k.f > last ? { ...k, [arm]: { ...k[arm], ikw: 0 } } : k; }); };
 // chewing from frame a to b: x_chew (how hard) eases up over the first `ramp` frames and down over the last; the jaw's
 // own beat (open, shut, ~3 chews a second) is play.js's, so a key per frame is not needed
 export const chewKeys = (keys, a, b, { open = 0.5, ramp = 6 } = {}) => keys.map(k => ({ ...k, x_chew: +(open * Math.max(0, Math.min(1, (k.f - a) / ramp, (b - k.f) / ramp))).toFixed(3) }));
+
+// the solid pieces of a clip's set marks (Blender world = clip space, metres; s = the body's size; ledge: cast.js worldBox), for the rig's contact
+// solve (cast.js S.obstacles) and the proof set's collision report: a window's wall below the sill, above the top and
+// either side of the opening (axis 'y': the wall along x, its room face at at[1], depth toward -y)
+export function markColliders(marks = [], s = 1) {
+  const out = [];
+  for (const m of marks) {
+    if (m.kind !== 'window') continue;
+    const [x, y, z] = m.at.map(v => v * s), d = (m.depth || 0.15) * s, w = (m.width || 0.8) * s / 2, top = m.top * s, H = Math.max(top + 0.5, 2.4), E = m.axis === 'y' ? w + 0.7 : 1.1;   // (as proof/set.js draws it)
+    const box = (name, lo, hi) => out.push({ name, lo, hi, ...(name === 'wall-low' ? { ledge: 0.35 } : {}) });   // the sill: a hand on it rests on top
+    if (m.axis === 'y') { const y0 = y - d; box('wall-low', [x - E, y0, 0], [x + E, y, z]); box('wall-top', [x - E, y0, top], [x + E, y, H]); box('wall-left', [x - E, y0, z], [x - w, y, top]); box('wall-right', [x + w, y0, z], [x + E, y, top]); }
+    else { box('wall-low', [x, -E, 0], [x + d, E, z]); box('wall-top', [x, -E, top], [x + d, E, H]); box('wall-right', [x, -E, z], [x + d, -w, top]); box('wall-left', [x, w, z], [x + d, E, top]); }
+  }
+  return out;
+}
