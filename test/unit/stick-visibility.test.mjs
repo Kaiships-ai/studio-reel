@@ -70,8 +70,9 @@ test('joint pops behind the counter leave the joint measure, listed as hidden; r
   const { f, vis } = tag(FX.rows, camera(FX.camera), scene(FX.counter)), hidden = hiddenOf(f, vis);
   const all = joints(FX.rows, 't3'), seen = joints(FX.rows, 't3', hidden);
   assert.equal(all.jump.toFixed(1), '63.3'); assert.equal(all.jumpAt, 'frame 7, elbowFlexR');
-  assert.equal(`${seen.jump.toFixed(1)} ${seen.jumpAt}`, '57.4 frame 196, shoulder-elbowR', 'the upper arm over the counter is still judged');
-  assert.match(seen.hidden, /occluded 3, 7, 196, 198, 200;.*worst 63\.3 deg \(frame 7, elbowFlexR\)/);
+  // frame 196: the forearm is seen at 195 over the counter, then drops behind it; seen leaving, so judged
+  assert.equal(`${seen.jump.toFixed(1)} ${seen.jumpAt}`, '61.7 frame 196, elbow-handR', 'a limb seen leaving is judged');
+  assert.match(seen.hidden, /occluded 3, 7, 198, 200;.*worst 63\.3 deg \(frame 7, elbowFlexR\)/);
   assert.match(hLine(holdLines(hangUp)), /40\.02 cm \(frame 196 R\).*FAIL$/, 'no camera: judged in 3D');
 });
 

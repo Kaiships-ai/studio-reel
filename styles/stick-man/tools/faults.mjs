@@ -48,7 +48,8 @@ const stepPairs = (rows, n) => rows.flatMap((r, i) => { const a = r.actors[n], p
 // Every fault frame of the rows: { f, actor, kind: 'h' | 'i' | 'j', key, d, pts }.
 //   h  a gripping hand off its target: key L/R, d cm; pts the hand, its target and what it holds
 //   i  a held prop in the body: d cm; pts the prop's box
-//   j  a joint over JOINT_STEP_MAX in one frame: key the channel, d deg; pts the joints and bones it moves
+//   j  a joint over JOINT_STEP_MAX in one frame: key the channel, d deg; pts the joints and bones it moves, where they were
+//      and where they went (a limb that drops behind the counter in the pop is seen leaving)
 export function faultList(rows) {
   const out = [];
   for (const n of Object.keys(rows[0].actors)) {
@@ -57,7 +58,7 @@ export function faultList(rows) {
       for (const s of ['L', 'R']) if (l[s]?.grip && l[s].targetGapCm > GRIP_CM) out.push({ f: r.f, actor: n, kind: 'h', key: s, d: l[s].targetGapCm, pts: [l[s].hand, ...(l[s].target ? [l[s].target] : []), ...(l[s].heldPts || [])] });
       if (l.propPenCm > PROP_CM) out.push({ f: r.f, actor: n, kind: 'i', key: l.propIn || 'prop', d: l.propPenCm, pts: l.propPts || [l.L.hand, l.R.hand] });
     }
-    for (const [f, m, l] of stepPairs(rows, n)) for (const [k, d] of jointSteps(m, l)) if (d > JOINT_STEP_MAX) out.push({ f, actor: n, kind: 'j', key: k, d, pts: stepPoints(k, l) });
+    for (const [f, m, l] of stepPairs(rows, n)) for (const [k, d] of jointSteps(m, l)) if (d > JOINT_STEP_MAX) out.push({ f, actor: n, kind: 'j', key: k, d, pts: [...stepPoints(k, m), ...stepPoints(k, l)] });
   }
   return out;
 }
