@@ -70,6 +70,7 @@ engine edit). A pure-black shirt renders dark grey under the toon shade: fine fo
 | Rule | How | Checked by |
 |---|---|---|
 | A hand-held prop has a grip socket | `group.userData.grip = [x,y,z]` (prop-local) or `{ L: [...], R: [...] }`; the engine parents the prop so the grip sits on the hand dot | gate hand-prop gap ≤ 2 px |
+| A bag a fitted clip holds has a size | `group.userData.size = [w, h, l]` (m, its bottom at y 0) when the builder returns it before its mesh exists; a clip key that swaps it in (`swap: { bag }`) fits the clip to it | `propFit` throws, naming the prop |
 | Every solid piece a body could walk into is a box | `export const COLLIDE = [{ name, lo: [x,y,z], hi: [x,y,z], grace? }]` | gate collisions = none |
 | A prop that moves has a rest | `o.userData.rest = { pos, rot }` (set by `put()`) | `move`, `drive`, `hold` start from it |
 | Props get the ink line | `stage.prop(o)` after `scene.add(o)` | eyes on the stills |

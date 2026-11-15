@@ -19,7 +19,9 @@ before, except where an old one had a hand forced off a target (now kept when re
   makes it, its `fitChecks` are checked by motionlib.mjs as rows of their own; `--proof <dir> --only <clip> --fit '<json>'`).
 - Bag size (PR E): a clip whose record names `fitProps: ['bag']` (Act_DropInTrunk_Once, Act_PushBagOutWindow_Once) fits
   itself to the bag it holds: the key's `fit.bag` (`{ w, l, h, grip }`, m), else the prop the key swaps in, read off the built
-  prop (`index.js propSize`: its `userData.size` [w, h, l] and grip, else its meshes' box). The kit bag names its size
+  prop (`index.js propSize`: its `userData.size` [w, h, l] and grip, else its meshes' box). A swapped prop with neither (a
+  film builder that returns an empty group until its set is built) throws in `propFit`, naming the clip and the prop; it
+  used to drop out of the fit silently and play the kit bag's keys (Hot Money ep01: hand 7.76 cm off). The kit bag names its size
   (`props.js` BAG); `sizedBag(dims)` registers a kit bag of another size (fitChecks and the proof page play it for a fit
   that names a bag). A deeper bag is heaved from further off the edge (the trunk / window mark moves out 1.25 times the
   extra depth), a higher handle raises the fists, the bag is tossed up as it leaves the fingers. At Hot Money ep01's duffel
