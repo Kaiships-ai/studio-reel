@@ -10,7 +10,7 @@
 import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { run } from '../../../kit/env.mjs';
-import { ALL, placeClip } from '../motion-lib/index.js';
+import { ALL, placeClip, fitClip } from '../motion-lib/index.js';
 import { BASES, turned, markColliders } from '../motion-lib/base.js';
 import { BODIES } from '../motion-lib/bodies.js';
 import { compileTrack, playActor, flatten } from '../engine/motion.js';
@@ -55,6 +55,8 @@ function diff(a, b) {
   }
   return worst;
 }
+// a fitted clip (index.js fitClip) is played through its clip key's fit
+const fitOf = C => (C.fitted && !ALL.includes(C) ? { fit: C.fitted } : {});
 // one clip: the checks, plus the offline physics numbers
 export function checkClip(C, file) {
   const fails = [], info = {}, base = path.basename(file, '.js'), dir = file.split(path.sep);
@@ -119,7 +121,7 @@ export function checkClip(C, file) {
     if (d) fails.push(`${i ? 'ends' : 'starts'} off ${nm}: ${d.n} differs by ${d.d}`);
   }
   // playback with the dose: the joint gate, planted feet, flights
-  const key = C.advance ? { f: 0, clip: C.clip, body: B, to: [C.introTravel + C.outroTravel + 2 * C.advance, 0] } : { f: 0, clip: C.clip, body: B, ...(C.loop ? { times: 2 } : {}) };
+  const key = { ...(C.advance ? { f: 0, clip: C.clip, body: B, to: [C.introTravel + C.outroTravel + 2 * C.advance, 0] } : { f: 0, clip: C.clip, body: B, ...(C.loop ? { times: 2 } : {}) }), ...fitOf(C) };
   const placed = placeClip(key, { pos: [0, 0], yaw: 90 }), keys = placed.keys, last = keys[keys.length - 1].f;
   const track = compileTrack(keys, {}, { pos: [0, 0], yaw: 90 }, 'kaiships'), fr = playActor(track, 0, last + 10);
   let jMax = 0, jAt = null, slide = 0, slideAt = null, root = 0, rootAt = null; const over = [], tops = (C.needs?.marks || []).filter(m => m.kind === 'window').map(m => m.at[2]);
@@ -180,9 +182,9 @@ export const GRIP_CM = 2, PROP_CM = 1;
 export async function rigClip(C, body = C.body || 'adult', { phys = true } = {}) {
   const R = await rig(), S = R.cast.makeStick(R.bodySpec({ ...R.cast.GUARD, hair: [] }, body)), was = R.PHYS.on; R.PHYS.on = phys;
   S.obstacles = markColliders(C.needs?.marks, C.body ? 1 : (BODIES[body]?.spec.scale ?? 1));   // the clip's set pieces: hands stop on them
-  const key = C.advance ? { f: 0, clip: C.clip, body, to: [C.introTravel + C.outroTravel + 2 * C.advance, 0] } : { f: 0, clip: C.clip, body, ...(C.loop ? { times: 2 } : {}) };
+  const key = { ...(C.advance ? { f: 0, clip: C.clip, body, to: [C.introTravel + C.outroTravel + 2 * C.advance, 0] } : { f: 0, clip: C.clip, body, ...(C.loop ? { times: 2 } : {}) }), ...fitOf(C) };
   const keys = placeClip(key, { pos: [0, 0], yaw: 90 }).keys, fr = playActor(compileTrack(keys, {}, { pos: [0, 0], yaw: 90 }, 'kaiships'), 0, keys[keys.length - 1].f + 6);
-  const o = { grip: 0, gripAt: null, prop0: 0, prop: 0, propAt: null, over: [], joint: 0, jointAt: null, heldFrames: 0 };
+  const o = { grip: 0, gripAt: null, prop0: 0, prop: 0, propAt: null, over: [], joint: 0, jointAt: null, heldFrames: 0, inSet: [] };
   // the solved joints' largest change a frame (shot.mjs "largest one-frame joint change"): flexes and limb directions
   const SEG = [['shoulder', 'elbow'], ['elbow', 'hand'], ['hip', 'knee'], ['knee', 'ankle']], dir = (a, b) => { const v = b.map((x, i) => x - a[i]), l = Math.hypot(...v) || 1; return v.map(x => x / l); };
   let last = null;
@@ -196,6 +198,11 @@ export async function rigClip(C, body = C.body || 'adult', { phys = true } = {})
       }
       last = w;
       if (Object.values(S.props).some(p => p.visible)) o.heldFrames++;
+      // the body inside the set's solid pieces (a window's wall, a trunk lip): the head (its centre and the crown), the
+      // joints of the limbs (1 cm grace, as the render's (e)); the arms are solved against the set, the rest is not
+      if (S.obstacles.length) { const pts = [['head', w.skel.head], ['crown', [w.skel.head[0], w.skel.head[1], w.skel.head[2] + 0.17]], ['pelvis', w.skel.pelvis], ['neck', w.skel.neck],
+        ...['L', 'R'].flatMap(s => ['knee', 'ankle', 'toe', 'elbow'].map(j => [j + s, w[s][j]]))];
+        for (const b of S.obstacles) { const hit = pts.find(([, p]) => [0, 1, 2].every(i => p[i] > b.lo[i] + 0.01 && p[i] < b.hi[i] - 0.01)); if (hit) { o.inSet.push(`${f} ${hit[0]} in ${b.name}`); } } }
       for (const s of ['L', 'R']) if (w[s].grip && w[s].targetGapCm > o.grip) { o.grip = w[s].targetGapCm; o.gripAt = `${f} ${s}`; }
       for (const s of ['L', 'R']) if (w[s].grip && w[s].targetGapCm > GRIP_CM) o.over.push(f);
       o.prop0 = Math.max(o.prop0, w.propPenCm0 || 0); if ((w.propPenCm || 0) > o.prop) { o.prop = w.propPenCm; o.propAt = f; }
@@ -215,10 +222,21 @@ export async function checkAll() {
       if (g.grip > GRIP_CM) r.fails.push(`rig: a gripping hand is ${g.grip} cm off its target at ${g.gripAt} (max ${GRIP_CM}; frames ${[...new Set(g.over)].slice(0, 8).join(' ')})`);
       if (g.prop > PROP_CM) r.fails.push(`rig: a held prop is ${g.prop} cm inside the body at frame ${g.propAt} (max ${PROP_CM})`);
       if (g0.prop > PROP_CM) r.fails.push(`rig (physics off): a held prop is ${g0.prop} cm inside the body at frame ${g0.propAt} (max ${PROP_CM})`);
+      if (g.inSet.length) r.fails.push(`rig: the body is inside the set: ${g.inSet.slice(0, 3).join('; ')}${g.inSet.length > 3 ? ` (+${g.inSet.length - 3} frames)` : ''}`);
       if ((C.needs?.props || []).length && !g.heldFrames) r.fails.push(`rig: needs.props ${C.needs.props} but the rig shows no held prop on any frame`);
       Object.assign(r.info, { gripCm: g.grip, propCm0: g.prop0, propCm: g.prop, propOffCm: g0.prop, heldFrames: g.heldFrames, rigJoint: g.joint, rigJointAt: g.jointAt });
       rows.push({ file: f, name: C.name, ...r });
     }
+  }
+  // every fit a clip lists (fitChecks: the sets films use) is checked as its own clip
+  for (const C of ALL) for (const fit of C.fitChecks || []) {
+    const F = fitClip(C, fit), f = clipFiles().find(x => path.basename(x, '.js').replace(/_v\d+$/, '') === C.name), r = checkClip(F, f), g = await rigClip(F), g0 = await rigClip(F, undefined, { phys: false });
+    if (g.grip > GRIP_CM) r.fails.push(`rig: a gripping hand is ${g.grip} cm off its target at ${g.gripAt} (max ${GRIP_CM})`);
+    if (g.prop > PROP_CM) r.fails.push(`rig: a held prop is ${g.prop} cm inside the body at frame ${g.propAt} (max ${PROP_CM})`);
+    if (g0.prop > PROP_CM) r.fails.push(`rig (physics off): a held prop is ${g0.prop} cm inside the body at frame ${g0.propAt} (max ${PROP_CM})`);
+    if (g.inSet.length) r.fails.push(`rig: the body is inside the set: ${g.inSet.slice(0, 3).join('; ')}${g.inSet.length > 3 ? ` (+${g.inSet.length - 3} frames)` : ''}`);
+    Object.assign(r.info, { gripCm: g.grip, propCm0: g.prop0, propCm: g.prop, propOffCm: g0.prop, heldFrames: g.heldFrames, rigJoint: g.joint, rigJointAt: g.jointAt });
+    rows.push({ file: f, name: `${C.name} fit ${JSON.stringify(fit)}`, ...r });
   }
   for (const C of ALL) if (!listed.has(C)) rows.push({ file: C.name, fails: ['index: listed in index.js but no file'], info: {} });
   return rows;
@@ -265,7 +283,7 @@ const SHOT = path.join(HERE, 'shot.mjs'), PAGE = 'styles/stick-man/motion-lib/pr
 const shot = args => { const r = run('node', [SHOT, '--film', PAGE, ...args], { capture: true }); if (r.status) throw new Error(`shot.mjs ${args.join(' ')}\n${r.stderr || r.stdout}`); return r.stdout || ''; };
 const clipBodies = C => (C.body ? [C.body] : ['adult']);
 function lastFrame(C, body) {
-  const key = C.advance ? { f: 6, clip: C.clip, body, to: [C.introTravel + C.outroTravel + 2 * C.advance, 0] } : { f: 6, clip: C.clip, body, ...(C.loop ? { times: 2 } : {}) };
+  const key = { ...(C.advance ? { f: 6, clip: C.clip, body, to: [C.introTravel + C.outroTravel + 2 * C.advance, 0] } : { f: 6, clip: C.clip, body, ...(C.loop ? { times: 2 } : {}) }), ...fitOf(C) };
   const k = placeClip(key, { pos: [0, 0], yaw: 90 }).keys; return k[k.length - 1].f + 12;
 }
 function silence(dir, sec) { const w = path.join(dir, 'silence.wav'); if (!fs.existsSync(w)) run('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=stereo', '-t', String(sec), w]); return w; }
@@ -284,14 +302,15 @@ export function sheet(group, out) {
   fs.rmSync(tmp, { recursive: true, force: true });
   return dst;
 }
-export function proof(out, only) {
+export function proof(out, only, fit) {
   fs.mkdirSync(out, { recursive: true });
   const wav = silence(out, 20), lines = [];
   for (const C of ALL) for (const b of clipBodies(C)) {
     if (only && C.clip !== only && C.name !== only) continue;
-    const L = lastFrame(C, b), tag = C.name;
+    const L = lastFrame(fit ? fitClip(C, JSON.parse(fit)) : C, b), tag = C.name;
     for (const ph of ['1', '0']) {
-      const q = `clip=${C.clip}&body=${b}&phys=${ph}`, mp4 = path.join(out, `${tag}_phys${ph}.mp4`), rep = path.join(out, `${tag}_phys${ph}.txt`);
+      const q = `clip=${C.clip}&body=${b}&phys=${ph}${fit ? `&fit=${encodeURIComponent(fit)}` : ''}`, ft = fit ? `_fit${fit.replace(/[^0-9a-z.]+/gi, '')}` : '';
+      const mp4 = path.join(out, `${tag}${ft}_phys${ph}.mp4`), rep = path.join(out, `${tag}${ft}_phys${ph}.txt`);
       shot(['--frames', `0-${L}`, '--w', '540', '--h', '960', '--query', q, '--mp4', mp4, '--audio', wav]);
       shot(['--frames', `0-${L}`, '--w', '540', '--h', '960', '--query', q, '--report', rep, '--in', mp4, '--fast', '1']);
       lines.push(`${tag} phys ${ph}: ${mp4}`);
@@ -306,13 +325,13 @@ if (path.resolve(process.argv[1] || '') === fileURLToPath(import.meta.url)) {
   const A = {}; for (let i = 2; i < process.argv.length; i += 2) A[process.argv[i].replace(/^--/, '')] = process.argv[i + 1];
   if ('catalogue' in A) { fs.writeFileSync(CATALOGUE, catalogue()); console.log(CATALOGUE); }
   else if (A.sheet) console.log(sheet(A.sheet, path.resolve(A.out || '.')));
-  else if (A.proof) console.log(proof(path.resolve(A.proof), A.only).join('\n'));
+  else if (A.proof) console.log(proof(path.resolve(A.proof), A.only, A.fit).join('\n'));
   else {
     const rows = await checkAll(); let bad = 0;
     for (const r of rows) {
       const i = r.info, num = i.frames != null ? `  ${i.frames} f, joint ${i.jointMax} deg/f, slide ${i.slideMm} mm/f, flights ${i.flights}${i.flights ? ` (peak ${i.peakCm} cm, g 9.8)` : ''}${i.carryKg ? `, carries ${i.carryKg} kg` : ''}, rig: grip ${i.gripCm} cm, prop ${i.propCm0}>${i.propCm} cm (physics off ${i.propOffCm}), held ${i.heldFrames} f, solved joint ${i.rigJoint} deg/f (${i.rigJointAt}; not gated: rig K6/K9)` : '';
       console.log(`${r.fails.length ? 'FAIL' : 'PASS'}  ${r.name || r.file}${num}`); for (const f of r.fails) console.log(`      ${f}`); bad += !!r.fails.length;
     }
-    console.log(`${rows.length} clips, ${bad} failing`); process.exit(bad ? 1 : 0);
+    console.log(`${rows.filter(r => !/ fit /.test(r.name || '')).length} clips + ${rows.filter(r => / fit /.test(r.name || '')).length} fitted, ${bad} failing`); process.exit(bad ? 1 : 0);
   }
 }

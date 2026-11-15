@@ -11,15 +11,17 @@ import { stand, K } from '/styles/stick-man/motion-lib/base.js';
 import { BODIES, bodySpec } from '/styles/stick-man/motion-lib/bodies.js';
 
 const QS = new URLSearchParams(globalThis.location?.search || '');
+// fit: the clip fitted to a set, as JSON (fit={"lip":0.85})
+const FIT = QS.get('fit') ? JSON.parse(QS.get('fit')) : null;
 const CLIP = QS.get('clip') || 'Idle_Stand_Loop', C0 = getClip(CLIP, QS.get('body') || 'adult'), BODY = QS.get('body') || C0.body || 'adult';
 if (QS.get('phys') === '0') PHYS.on = false;
-const C = getClip(CLIP, BODY), F0 = 6, sc = C.body ? 1 : (BODIES[BODY].spec.scale ?? 1);
+const C = getClip(CLIP, BODY, FIT), F0 = 6, sc = C.body ? 1 : (BODIES[BODY].spec.scale ?? 1);
 SPECS.PROOF = bodySpec({ ...SPECS.GUARD, name: 'Proof', hair: [] }, BODY);
 export const CUTS = [0];
 
 // the clip key: a travelling loop walks a set distance (start, two cycles, stop); other loops repeat; a one-off plays once
 const times = Number(QS.get('times') || 2);
-const key = C.advance ? { f: F0, clip: CLIP, body: BODY, to: [C.introTravel + C.outroTravel + times * C.advance, 0] } : { f: F0, clip: CLIP, body: BODY, ...(C.loop ? { times } : {}) };
+const key = { ...(C.advance ? { f: F0, clip: CLIP, body: BODY, to: [C.introTravel + C.outroTravel + times * C.advance, 0] } : { f: F0, clip: CLIP, body: BODY, ...(C.loop ? { times } : {}) }), ...(FIT ? { fit: FIT } : {}) };
 // (the actor stands in the clip's own first pose before it starts: a clip that opens holding something holds it from frame 0)
 const first = C.base !== 'STAND' ? (C.advance ? C.intro[0] : C.keys[0]) : stand(BODY);
 const anim = [K(0, first, { ease: 'snap' }), key];

@@ -101,11 +101,14 @@ export function compileTrack(keys, poses, base, style) {
     if (k.hold) out.push({ ...k, f: k.f + k.hold, hold: 0, antic: 0, expr: undefined, look: undefined, held: true });
   }
   out.style = CUR;
-  // flights: a run of keys off the ground (pos.2 > 2 cm), from the key before it (on the ground) to the next key on the ground
+  // flights: a run of keys off the ground (pos.2 > 2 cm over what holds the body up), from the key before it (on the
+  // ground) to the next key on the ground. `support` (m) is a surface under the body (a bed, a seat, a stage: a clip key's
+  // pos [x, y, h]): a body resting on it is held up, not in the air (it fell from a bed before: rig B6 took it for a flight)
   out.flights = [];
+  const up = m => (m['pos.2'] || 0) - (m.support || 0) > 0.02;
   for (let i = 0; i < out.length; i++) {
-    if (!((out[i].m['pos.2'] || 0) > 0.02) || (i && (out[i - 1].m['pos.2'] || 0) > 0.02)) continue;
-    let j = i; while (j < out.length && (out[j].m['pos.2'] || 0) > 0.02) j++;
+    if (!up(out[i].m) || (i && up(out[i - 1].m))) continue;
+    let j = i; while (j < out.length && up(out[j].m)) j++;
     if (j >= out.length) break;
     const a = i ? out[i - 1] : out[i], b = out[j];                                  // from the last key on the ground (the push-off)
     out.flights.push({ f0: a.f, f1: b.f, x0: a.m['pos.0'] || 0, y0: a.m['pos.1'] || 0, z0: a.m['pos.2'], x1: b.m['pos.0'] || 0, y1: b.m['pos.1'] || 0, z1: b.m['pos.2'] || 0 });
