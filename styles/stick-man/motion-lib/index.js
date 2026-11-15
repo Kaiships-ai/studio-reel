@@ -10,11 +10,6 @@
 // The README in this folder has the rules; docs/MOTION-LIB.md the catalogue.
 import { BODIES } from './bodies.js';
 import { BASES } from './base.js';
-import Adult_Idle_Breath_Loop_v01 from './body/adult/Adult_Idle_Breath_Loop_v01.js';
-import Adult_Idle_Frozen_Loop_v01 from './body/adult/Adult_Idle_Frozen_Loop_v01.js';
-import Adult_Idle_Tired_Loop_v01 from './body/adult/Adult_Idle_Tired_Loop_v01.js';
-import Adult_Move_CarryHeavy_Run_Loop_v01 from './body/adult/Adult_Move_CarryHeavy_Run_Loop_v01.js';
-import Adult_Move_CarryHeavy_Walk_Loop_v01 from './body/adult/Adult_Move_CarryHeavy_Walk_Loop_v01.js';
 import Adult_Move_Run_Fwd_Loop_v01 from './body/adult/Adult_Move_Run_Fwd_Loop_v01.js';
 import Adult_Move_Walk_Fwd_Loop_v01 from './body/adult/Adult_Move_Walk_Fwd_Loop_v01.js';
 import Adult_Move_Sprint_Fwd_Loop_v01 from './body/adult/Adult_Move_Sprint_Fwd_Loop_v01.js';
@@ -22,7 +17,6 @@ import Adult_Act_Jump_Once_v01 from './body/adult/Adult_Act_Jump_Once_v01.js';
 import Adult_Idle_Stand_Loop_v01 from './body/adult/Adult_Idle_Stand_Loop_v01.js';
 import Adult_Idle_LookAround_Loop_v01 from './body/adult/Adult_Idle_LookAround_Loop_v01.js';
 import Adult_Gest_Talk_Loop_v01 from './body/adult/Adult_Gest_Talk_Loop_v01.js';
-import Adult_Gest_Point_Loop_v01 from './body/adult/Adult_Gest_Point_Loop_v01.js';
 import Adult_Gest_Wave_Loop_v01 from './body/adult/Adult_Gest_Wave_Loop_v01.js';
 import Adult_Trans_SitDown_Once_v01 from './body/adult/Adult_Trans_SitDown_Once_v01.js';
 import Adult_Idle_Sit_Loop_v01 from './body/adult/Adult_Idle_Sit_Loop_v01.js';
@@ -40,7 +34,6 @@ import Adult_Idle_CarryBag_Loop_v01 from './body/adult/Adult_Idle_CarryBag_Loop_
 import Adult_Act_PutDown_Once_v01 from './body/adult/Adult_Act_PutDown_Once_v01.js';
 import Adult_React_Startle_Once_v01 from './body/adult/Adult_React_Startle_Once_v01.js';
 import Adult_Gest_LookBack_Once_v01 from './body/adult/Adult_Gest_LookBack_Once_v01.js';
-import Adult_Act_PistolReady_Loop_v01 from './body/adult/Adult_Act_PistolReady_Loop_v01.js';
 import Adult_Act_PistolShoot_Once_v01 from './body/adult/Adult_Act_PistolShoot_Once_v01.js';
 import Adult_Act_TorchReady_Loop_v01 from './body/adult/Adult_Act_TorchReady_Loop_v01.js';
 import Adult_Act_Drive_Loop_v01 from './body/adult/Adult_Act_Drive_Loop_v01.js';
@@ -61,24 +54,10 @@ import Thin_Move_Run_Fwd_Loop_v01 from './body/thin/Thin_Move_Run_Fwd_Loop_v01.j
 import Thin_Move_Walk_Fwd_Loop_v01 from './body/thin/Thin_Move_Walk_Fwd_Loop_v01.js';
 import Act_Phone_Once_v01 from './shared/extra/Act_Phone_Once_v01.js';
 import Gest_LookUp_Once_v01 from './shared/extra/Gest_LookUp_Once_v01.js';
-import Gest_RaiseGun_Once_v01 from './shared/extra/Gest_RaiseGun_Once_v01.js';
 import Move_WalkFlashlight_Loop_v01 from './shared/extra/Move_WalkFlashlight_Loop_v01.js';
 import Act_DropInTrunk_Once_v01 from './shared/interact/Act_DropInTrunk_Once_v01.js';
-import Act_EatBite_Loop_v01 from './shared/interact/Act_EatBite_Loop_v01.js';
-import Act_LiftHeavy_Once_v01 from './shared/interact/Act_LiftHeavy_Once_v01.js';
-import Act_PushThroughWindow_Once_v01 from './shared/interact/Act_PushThroughWindow_Once_v01.js';
-import Act_SlideCash_Once_v01 from './shared/interact/Act_SlideCash_Once_v01.js';
-import Act_WearCap_Once_v01 from './shared/interact/Act_WearCap_Once_v01.js';
-import React_FreezeInLight_Once_v01 from './shared/react/React_FreezeInLight_Once_v01.js';
-import Trans_ClimbWindow_Once_v01 from './shared/transition/Trans_ClimbWindow_Once_v01.js';
-import Trans_SitStand_Once_v01 from './shared/transition/Trans_SitStand_Once_v01.js';
 
 export const ALL = [
-  Adult_Idle_Breath_Loop_v01,
-  Adult_Idle_Frozen_Loop_v01,
-  Adult_Idle_Tired_Loop_v01,
-  Adult_Move_CarryHeavy_Run_Loop_v01,
-  Adult_Move_CarryHeavy_Walk_Loop_v01,
   Adult_Move_Run_Fwd_Loop_v01,
   Adult_Move_Walk_Fwd_Loop_v01,
   Adult_Move_Sprint_Fwd_Loop_v01,
@@ -86,7 +65,6 @@ export const ALL = [
   Adult_Idle_Stand_Loop_v01,
   Adult_Idle_LookAround_Loop_v01,
   Adult_Gest_Talk_Loop_v01,
-  Adult_Gest_Point_Loop_v01,
   Adult_Gest_Wave_Loop_v01,
   Adult_Trans_SitDown_Once_v01,
   Adult_Idle_Sit_Loop_v01,
@@ -104,7 +82,6 @@ export const ALL = [
   Adult_Act_PutDown_Once_v01,
   Adult_React_Startle_Once_v01,
   Adult_Gest_LookBack_Once_v01,
-  Adult_Act_PistolReady_Loop_v01,
   Adult_Act_PistolShoot_Once_v01,
   Adult_Act_TorchReady_Loop_v01,
   Adult_Act_Drive_Loop_v01,
@@ -125,17 +102,8 @@ export const ALL = [
   Thin_Move_Walk_Fwd_Loop_v01,
   Act_Phone_Once_v01,
   Gest_LookUp_Once_v01,
-  Gest_RaiseGun_Once_v01,
   Move_WalkFlashlight_Loop_v01,
   Act_DropInTrunk_Once_v01,
-  Act_EatBite_Loop_v01,
-  Act_LiftHeavy_Once_v01,
-  Act_PushThroughWindow_Once_v01,
-  Act_SlideCash_Once_v01,
-  Act_WearCap_Once_v01,
-  React_FreezeInLight_Once_v01,
-  Trans_ClimbWindow_Once_v01,
-  Trans_SitStand_Once_v01,
 ];
 export const CLIPS = {};
 for (const c of ALL) (CLIPS[c.clip] ||= {})[c.body || '*'] = c;

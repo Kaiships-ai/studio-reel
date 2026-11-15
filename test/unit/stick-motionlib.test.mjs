@@ -10,11 +10,12 @@ import { compileTrack, playActor, toPose, STYLE_PRESETS } from '../../styles/sti
 import { DOSE_E } from '../../styles/stick-man/motion-lib/base.js';
 import { ellipsoid, solveArm, armPenetration, propPush, centreOfMass } from '../../styles/stick-man/engine/body.js';
 
-test('the library has 62 clips on 5 bodies, and every one passes motionlib.mjs (naming, seam, base, joint gate, feet)', async () => {
-  assert.equal(ALL.length, 62);
-  assert.equal(clipFiles().length, 62);
+test('the library has 46 clips on 5 bodies, and every one passes motionlib.mjs (naming, seam, base, joint gate, feet)', async () => {
+  assert.equal(ALL.length, 46);
+  assert.equal(clipFiles().length, 46);
   assert.deepEqual(Object.keys(BODIES), ['adult', 'heavy', 'thin', 'child', 'elder']);
-  for (const b of Object.keys(BODIES)) for (const c of ['Idle_Breath_Loop', 'Move_Walk_Fwd_Loop', 'Move_Run_Fwd_Loop']) assert.equal(getClip(c, b).body, b);
+  // every body stands, walks and runs (the adult's standing idle is the captured Idle_Stand_Loop)
+  for (const b of Object.keys(BODIES)) for (const c of [b === 'adult' ? 'Idle_Stand_Loop' : 'Idle_Breath_Loop', 'Move_Walk_Fwd_Loop', 'Move_Run_Fwd_Loop']) assert.equal(getClip(c, b).body, b);
   const bad = (await checkAll()).filter(r => r.fails.length);
   assert.deepEqual(bad.map(r => `${r.name || r.file}: ${r.fails.join('; ')}`), []);
 });
@@ -36,7 +37,7 @@ test('a walk with `to` starts where the actor stands, heads for the target and e
 
 test('a planted foot stays put in the world along a turned, stretched walk (and a shared clip keeps its feet too)', () => {
   for (const key of [{ f: 0, clip: 'Move_Walk_Fwd_Loop', body: 'adult', to: [-2.3, 1.7] }, { f: 0, clip: 'Move_Run_Fwd_Loop', body: 'child', to: [0, 3] },
-    { f: 0, clip: 'Act_LiftHeavy_Once', body: 'child' }]) {
+    { f: 0, clip: 'Gest_LookUp_Once', body: 'child' }]) {
     const ks = expandClips([key], { pos: [0, 0], yaw: 30 }), fr = playActor(compileTrack(ks, {}, { pos: [0, 0], yaw: 30 }, 'kaiships'), 0, ks[ks.length - 1].f + 5);
     for (let f = 1; f < fr.length; f++) for (const s of ['L', 'R']) {
       const p = fr[f - 1], q = fr[f]; if (p[`leg${s}.footW.2`] > 0.005 || q[`leg${s}.footW.2`] > 0.005) continue;
@@ -47,10 +48,10 @@ test('a planted foot stays put in the world along a turned, stretched walk (and 
 });
 
 test('a shared clip on a smaller body scales its metres with the body; a clip key passes its face to the first key', () => {
-  const a = placeClip({ f: 0, clip: 'Trans_ClimbWindow_Once' }), c = placeClip({ f: 0, clip: 'Trans_ClimbWindow_Once', body: 'child', expr: 'worried' });
-  assert.ok(Math.abs(Math.hypot(...c.pos) / Math.hypot(...a.pos) - BODIES.child.spec.scale) < 1e-4);   // yaw 0: the climb travels toward -y
+  const a = placeClip({ f: 0, clip: 'Gest_LookUp_Once' }, { pos: [0, 0], yaw: 90 }), c = placeClip({ f: 0, clip: 'Gest_LookUp_Once', body: 'child', expr: 'worried' }, { pos: [0, 0], yaw: 90 });
+  assert.ok(Math.abs(c.keys[0].legR.footW[1] / a.keys[0].legR.footW[1] - BODIES.child.spec.scale) < 1e-4);   // the feet's spacing scales
   assert.equal(c.keys[0].expr, 'worried');
-  assert.throws(() => getClip('Idle_Frozen_Loop', 'child'), /no child version/);
+  assert.throws(() => getClip('Idle_Stand_Loop', 'child'), /no child version/);
 });
 
 test('toPose: a planted foot keyed in metres lands in the figure frame of a scaled figure', () => {
@@ -121,7 +122,7 @@ test('K5: a carried load pulls the centre of mass toward it by its share of the 
 import { rigClip, rigStick, GRIP_CM, PROP_CM } from '../../styles/stick-man/tools/motionlib.mjs';
 
 test('rig: the bag clips keep both hands on the handle and the bag out of the body through cast.js, physics on', async () => {
-  for (const name of ['Act_LiftHeavy_Once', 'Act_DropInTrunk_Once', 'Act_PushThroughWindow_Once', 'Move_CarryHeavy_Walk_Loop', 'Move_CarryHeavy_Run_Loop', 'Act_WearCap_Once', 'Trans_ClimbWindow_Once']) {
+  for (const name of ['Act_DropInTrunk_Once', 'Move_CarryBag_Walk_Loop', 'Idle_CarryBag_Loop', 'Act_PutDown_Once', 'Act_Phone_Once']) {
     const C = getClip(name), r = await rigClip(C);
     assert.ok(r.grip <= GRIP_CM, `${name}: a gripping hand ${r.grip} cm off its target at ${r.gripAt}`);
     assert.ok(r.prop <= PROP_CM, `${name}: a held prop ${r.prop} cm inside the body at ${r.propAt}`);

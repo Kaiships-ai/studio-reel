@@ -144,7 +144,7 @@ export function mocapClip({ body = 'adult', src, base = 'STAND', end = base, eas
   // standard pose's print: its first and last stances are moved however they fall)
   const mid = retarget(keys, P0f, P1f, { anyFirst: true, anyLast: true, tops }).map(k => ({ ...k, f: ease + k.f, ...(seated ? { fall: k.bob < (sitBob + standBob) / 2 ? 1 : 0 } : {}) }));
   const last = ease + keys[n - 1].f + ease;
-  // the seat under a SIT pose (as Trans_SitStand's): from 0.25 m behind its pelvis to 0.15 m in front, 0.45 m high
+  // the seat under a SIT pose: from 0.25 m behind its pelvis to 0.15 m in front, 0.45 m high
   // The seat is where the captured body sits: under its pelvis while it is down (fall), its top at the lowest the hips
   // come as the film shows them (the dose pushes bob from STAND, the clip's rest) less the seat of the trousers (SIT's own
   // numbers: hips 0.042 m over the seat). Physics: no frame with the pelvis over the seat goes lower than that, the
@@ -495,3 +495,14 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
     // measured with them, not gated: one span from the first captured frame to the last
     ...(MC ? { captured: [cap[0][0], cap[cap.length - 1][1]] } : {}) };
 }
+
+// a hand baked onto a part of the head (tools/mocap_reach.mjs: [f, ik x, y, z, ikw] a frame) put on a clip's keys
+// pole: where the elbow points while the hand is on (the figure frame: x out to the figure's right, y up, z ahead); a
+// hand brought up to the face drops its elbow down and out, never up in front (the solve's default flips there)
+export const reachKeys = (keys, { hand, rows }, pole = [hand === 'L' ? -0.5 : 0.5, -1, 0.3]) => { const at = new Map(rows.map(r => [r[0], r])), arm = 'arm' + hand;
+  // (a key past the table lets go: a key names only what changes, so the last weight would hold through the ease out)
+  const last = Math.max(...rows.map(r => r[0]));
+  return keys.map(k => { const r = at.get(k.f); return r ? { ...k, [arm]: { ...k[arm], ik: [r[1], r[2], r[3]], ikw: r[4], pole } } : k.f > last ? { ...k, [arm]: { ...k[arm], ikw: 0 } } : k; }); };
+// chewing from frame a to b: x_chew (how hard) eases up over the first `ramp` frames and down over the last; the jaw's
+// own beat (open, shut, ~3 chews a second) is play.js's, so a key per frame is not needed
+export const chewKeys = (keys, a, b, { open = 0.5, ramp = 6 } = {}) => keys.map(k => ({ ...k, x_chew: +(open * Math.max(0, Math.min(1, (k.f - a) / ramp, (b - k.f) / ramp))).toFixed(3) }));

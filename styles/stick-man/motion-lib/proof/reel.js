@@ -1,5 +1,5 @@
 // The motion library's proof page (dev only): one clip on one body, physics on or off, a 3/4 camera that follows it.
-//   node styles/stick-man/tools/shot.mjs --film styles/stick-man/motion-lib/proof --w 540 --h 960 --query "clip=Act_LiftHeavy_Once&body=adult&phys=0" --mp4 ...
+//   node styles/stick-man/tools/shot.mjs --film styles/stick-man/motion-lib/proof --w 540 --h 960 --query "clip=Act_PickUp_Once&body=adult&phys=0" --mp4 ...
 //   query: clip (a clip name), body (default the clip's own, else adult), phys=0 (PHYS.on false), times (loop cycles, default 2)
 // tools/motionlib.mjs --proof renders every clip through this page.
 import '/styles/stick-man/allout/fx.js';                  // ao_anim: the set's keyed things (a bag on the floor, a dropped bag)
@@ -11,7 +11,7 @@ import { stand, K } from '/styles/stick-man/motion-lib/base.js';
 import { BODIES, bodySpec } from '/styles/stick-man/motion-lib/bodies.js';
 
 const QS = new URLSearchParams(globalThis.location?.search || '');
-const CLIP = QS.get('clip') || 'Idle_Breath_Loop', C0 = getClip(CLIP, QS.get('body') || 'adult'), BODY = QS.get('body') || C0.body || 'adult';
+const CLIP = QS.get('clip') || 'Idle_Stand_Loop', C0 = getClip(CLIP, QS.get('body') || 'adult'), BODY = QS.get('body') || C0.body || 'adult';
 if (QS.get('phys') === '0') PHYS.on = false;
 const C = getClip(CLIP, BODY), F0 = 6, sc = C.body ? 1 : (BODIES[BODY].spec.scale ?? 1);
 SPECS.PROOF = bodySpec({ ...SPECS.GUARD, name: 'Proof', hair: [] }, BODY);

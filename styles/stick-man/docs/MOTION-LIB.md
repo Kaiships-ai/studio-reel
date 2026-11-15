@@ -1,6 +1,6 @@
 # Motion library catalogue
 
-The 62 clips of `styles/stick-man/motion-lib` (rules and use: its README.md). An anim key `{ f, clip, body, to?, times? }`
+The 46 clips of `styles/stick-man/motion-lib` (rules and use: its README.md). An anim key `{ f, clip, body, to?, times? }`
 plays one (REEL_DATA.md). `frames` = one cycle or the whole one-off at 30 fps; `base` = the standard pose it starts (→ ends) on;
 `needs` = hand props and set pieces (the proof page builds the set pieces at the sizes the clip names in `needs.marks`).
 
@@ -11,20 +11,15 @@ numbers, one contact sheet per group).
 
 | Clip | Body | Loop | Frames | Base | Needs | What |
 |---|---|---|---|---|---|---|
-| `Idle_Breath_Loop` | adult | loop | 80 | STAND | - | a grown-up of average build standing, breathing, the weight drifting to one foot and back |
 | `Idle_Breath_Loop` | child | loop | 60 | STAND | - | a child (big head, short legs, 25 kg) standing, breathing, the weight drifting to one foot and back |
 | `Idle_Breath_Loop` | elder | loop | 112 | STAND | - | an elder (stooped, 62 kg) standing, breathing, the weight drifting to one foot and back |
 | `Idle_Breath_Loop` | heavy | loop | 96 | STAND | - | a heavy body (girth 1.9, 115 kg) standing, breathing, the weight drifting to one foot and back |
 | `Idle_Breath_Loop` | thin | loop | 76 | STAND | - | a thin body (girth 0.6, 55 kg) standing, breathing, the weight drifting to one foot and back |
-| `Idle_Frozen_Loop` | adult | loop | 60 | STAND | - | frozen in fear |
-| `Idle_Tired_Loop` | adult | loop | 90 | STAND | - | worn out |
 
 ## Move
 
 | Clip | Body | Loop | Frames | Base | Needs | What |
 |---|---|---|---|---|---|---|
-| `Move_CarryHeavy_Run_Loop` | adult | loop | 24 | CARRY | bag | the same bag at a heavy run |
-| `Move_CarryHeavy_Walk_Loop` | adult | loop | 36 | CARRY | bag | one 25 kg bag in the right fist |
 | `Move_Run_Fwd_Loop` | adult | loop | 20 | STAND | - | a run: short ground contact, a flight on gravity, knees driving |
 | `Move_Run_Fwd_Loop` | child | loop | 16 | STAND | - | a scamper: quick steps, a little flight, arms pumping |
 | `Move_Run_Fwd_Loop` | elder | loop | 26 | STAND | - | a slow shuffling jog: long contact, a tiny flight |
@@ -42,32 +37,23 @@ numbers, one contact sheet per group).
 | Clip | Body | Loop | Frames | Base | Needs | What |
 |---|---|---|---|---|---|---|
 | `Act_DropInTrunk_Once` | any (adult, scaled) | once | 80 | CARRY → STAND | bag, trunk | from CARRY, heave the bag over a car's trunk lip (0.68 m) and let it drop in |
-| `Act_EatBite_Loop` | any (adult, scaled) | loop | 48 | STAND | drumstick | food held at the chest goes up to the mouth, the head leans in for the bite and holds it, tears it off with a small nod, the hand drops back while the jaw chews |
-| `Act_LiftHeavy_Once` | any (adult, scaled) | once | 88 | STAND → CARRY | bag | heave one 25 kg bag off the floor |
 | `Act_Phone_Once` | any (adult, scaled) | once | 100 | STAND | phone | a call |
-| `Act_PushThroughWindow_Once` | any (adult, scaled) | once | 82 | CARRY → STAND | bag, window | from CARRY, lift the bag to a window sill with both hands and shove it through |
-| `Act_SlideCash_Once` | any (adult, scaled) | once | 76 | STAND | cash, counter | a bundle of notes from the pocket, laid on a counter and slid across, the hand stays on it a beat, lets go, comes back |
-| `Act_WearCap_Once` | any (adult, scaled) | once | 76 | STAND | cap | a cap from the hip pocket onto the head, set from the side with the elbow high (the head tips away) |
 
 ## Trans
 
 | Clip | Body | Loop | Frames | Base | Needs | What |
 |---|---|---|---|---|---|---|
-| `Trans_ClimbWindow_Once` | any (adult, scaled) | once | 100 | STAND | window | climb through a low window (sill 0.55 m) and stand on the far side: foot planted on the sill, weight onto it |
-| `Trans_SitStand_Once` | any (adult, scaled) | once | 112 | STAND | seat | sit down on a seat behind and stand back up |
 
 ## React
 
 | Clip | Body | Loop | Frames | Base | Needs | What |
 |---|---|---|---|---|---|---|
-| `React_FreezeInLight_Once` | any (adult, scaled) | once | 90 | STAND | - | caught in a light |
 
 ## Gest
 
 | Clip | Body | Loop | Frames | Base | Needs | What |
 |---|---|---|---|---|---|---|
 | `Gest_LookUp_Once` | any (adult, scaled) | once | 70 | STAND | - | something above |
-| `Gest_RaiseGun_Once` | any (adult, scaled) | once | 74 | STAND | - | the gun is implied, never shown: both fists come up together to eye line and push out at arm's length (a two-hand aim), hold, and come down |
 
 ## Body types
 

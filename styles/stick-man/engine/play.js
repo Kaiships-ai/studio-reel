@@ -393,6 +393,10 @@ async function buildAct(R, X) {
     // the mouth follows the visemes of the actor's lines, and a held face drifts a little (brows, lids, mouth width)
     const state = faceStateAt(a.exprs, f, a.seed, a.vis);
     if (!state.talk && e === 'sleep' && id.snore) state.talk = { open: 0.3, wide: 0, round: 1, teeth: 0 };
+    // chewing (a clip's x_chew channel: how hard, 0..1, motion-lib Act_Consume_Once): the lips part and close every 9
+    // frames (~3.3 chews a second), wide, not round
+    const chew = (a.P?.x_chew || 0) * Math.sin(Math.PI * f / 9) ** 2;
+    if (!state.talk && chew > 0.02) state.talk = { open: chew, wide: 0.35, round: 0.1, teeth: 0 };
     a.talking = !!state.talk;
     const tgtPos = t => t === 'camera' ? camPos : byName[t] ? toB(byName[t].S.parts.head.getWorldPosition(hv)) : Array.isArray(t) ? t : t ? livePos(t) : camPos;
     const cur = focusAt(a, f, a.focusSegs, active), head = toB(a.S.parts.head.getWorldPosition(new THREE.Vector3()));
