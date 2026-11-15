@@ -239,3 +239,24 @@ export function mocapJoin(parts, { surfaces = [], marks = [], source } = {}) {
   }
   return { source, fps: 30, frames: out.map(f => Object.fromEntries(Object.entries(f).map(([k, v]) => [k, toClip(v)]))), surfaces, marks };
 }
+
+// A capture moving a limb faster than the style allows a frame (tools/jointstep.mjs: 25 deg/f for an elbow or a knee's
+// flex, or a bone's direction), slowed there: each such step is split into as many frames as it needs, the joints moved
+// in a straight line between the two captured frames (the bones' frames _f, _u turned with them). Frames after it come
+// later by as many: a reach table keyed by frame is baked on the slowed clip. Mixamo "Shooting Gun" snaps the elbow
+// open 25.5 then 25.4 deg in two frames (frames 42-44).
+const LIMBS = [['LeftArm', 'LeftForeArm', 'LeftHand'], ['RightArm', 'RightForeArm', 'RightHand'], ['LeftUpLeg', 'LeftLeg', 'LeftFoot'], ['RightUpLeg', 'RightLeg', 'RightFoot']];
+const turn = (u, v) => Math.acos(Math.max(-1, Math.min(1, dot(nrm(u), nrm(v))))) * DEG;
+const limbStep = (a, b) => Math.max(...LIMBS.flatMap(([s, e, h]) => {
+  const ua = V(a[s], a[e]), fa = V(a[e], a[h]), ub = V(b[s], b[e]), fb = V(b[e], b[h]);
+  return [Math.abs(turn(ua, fa) - turn(ub, fb)), turn(ua, ub), turn(fa, fb)];
+}));
+export function slowSource(src, max) {
+  const out = [src.frames[0]];
+  for (let i = 1; i < src.frames.length; i++) {
+    const a = src.frames[i - 1], b = src.frames[i], n = Math.ceil(limbStep(a, b) / max);
+    for (let k = 1; k < n; k++) out.push(Object.fromEntries(Object.keys(b).map(j => { const m = mix(a[j], b[j], k / n); return [j, /_[fu]$/.test(j) ? nrm(m) : m]; })));
+    out.push(b);
+  }
+  return { ...src, frames: out };
+}

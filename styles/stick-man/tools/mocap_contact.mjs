@@ -18,7 +18,7 @@ const [clip, side, ramp, out, mode = 'set', join0, margin = '0'] = process.argv.
 const { rigStick } = await import('./motionlib.mjs'), I = await import('../motion-lib/index.js'), M = await import('../engine/motion.js'), B = await import('../motion-lib/base.js');
 const THREE = await import('three');
 const W = 0.6, R = +ramp;
-const { S, toPose, PHYS } = await rigStick('adult'), C = I.getClip(clip, 'adult'), boxes = B.markColliders(C.needs?.marks);
+const C = I.getClip(clip, 'adult'), { S, toPose, PHYS } = await rigStick('adult', C.needs?.cap), boxes = B.markColliders(C.needs?.marks);
 // body: the clip as it is keyed (with the table it already applies: each run adds the frames the solve still moves, the
 // physics settling the hand that the last table moved); set: the captured arm, its ik taken off
 const old = mode === 'body' && existsSync(out) ? (await import(path.resolve(out))).default.rows : [];
@@ -41,15 +41,21 @@ const runs = []; for (let i = 0; i < at.length; i++) if (at[i].hit) { const j0 =
 // two touches close together (less than two ramps apart) are one: the frames between them hold the captured hand on ik
 // too, so a clip fitted to a higher set (Act_HandOver_Once fit { top }) can lift one table end to end
 for (let i = runs.length - 1; i > 0; i--) if (runs[i][0] - runs[i - 1][1] <= (join != null ? +join : 2 * R + 2)) { runs[i - 1] = [runs[i - 1][0], runs[i][1]]; runs.splice(i, 1); }
-for (const [a, b] of runs) for (let i = a; i <= b; i++) if (!at[i].hit) at[i].solved = at[i].free;
+// The table moves the hand off the captured one by an offset (the solved spot less the captured hand), eased in over the
+// R frames before a touch and out over the R after, and between two touched frames of one run from the one's to the
+// other's: the hand keeps the capture's own path and speed and only stands off it. (Easing the hand's position onto the
+// first spot instead dragged a rising hand off its path: Act_PistolShoot_Once's gun crossed the guard's peak on the way
+// up, 4.4 cm off its grip at frame 52, and stepped back to the captured hand between touches, 26.9 deg/f at frame 72)
+const off = i => at[i].solved.clone().sub(at[i].free);
+for (const [a, b] of runs) { let p = a; for (let i = a + 1; i <= b; i++) if (at[i].hit) { for (let j = p + 1; j < i; j++) at[j].solved = at[j].free.clone().add(off(p).lerp(off(i), (j - p) / (i - p))); p = i; } }
 const T = new Map(), kept = new Map(old.map(r => [r[0], r]));
 for (const [a, b] of runs) {
   for (let i = a; i <= b; i++) T.set(at[i].f, at[i].solved);
   // (out to R + 1 frames each side, where the target is the captured hand itself: the ik takes the arm over where the FK
   // keys have it, so the hand going onto ik never steps the elbow)
   for (let d = 1; d <= R + 1; d++) { const w = ease(1 - d / (R + 1));
-    if (a - d > 0 && !T.has(at[a - d].f)) T.set(at[a - d].f, at[a - d].free.clone().lerp(at[a].solved, w));
-    if (b + d < at.length - 1 && !T.has(at[b + d].f)) T.set(at[b + d].f, at[b + d].free.clone().lerp(at[b].solved, w)); }
+    if (a - d > 0 && !T.has(at[a - d].f)) T.set(at[a - d].f, at[a - d].free.clone().addScaledVector(off(a), w));
+    if (b + d < at.length - 1 && !T.has(at[b + d].f)) T.set(at[b + d].f, at[b + d].free.clone().addScaledVector(off(b), w)); }
 }
 // (each row also names the captured elbow's side: its offset from the middle of its own shoulder-hand line, so the solve
 // keeps the arm's own elbow plane and taking the hand onto ik never flips the elbow. The elbow's direction from the

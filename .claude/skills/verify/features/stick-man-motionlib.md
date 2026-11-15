@@ -103,12 +103,15 @@ and `anim: { kid: [{ f: 0, clip: 'Move_Run_Fwd_Loop', body: 'child', to: [4, 0] 
   with the clip run through cast.js headless (fake 2D canvases) with its set pieces, physics on and off: grip cm, prop cm,
   held frames, the solved joints' largest change a frame. It fails a clip that holds an undeclared prop, declares one it
   never holds, acts on a thing (`OBJECT_ACT`) without one, moves its root faster than 4 cm a frame outside the capture, or
-  starts off its origin. The solved-joint gate (`jointExcess`, `jointFails`, physics on and off): a solved elbow or
-  knee (its flex, its two bones) may turn more than 25 deg a frame only where the motion as authored does. In a capture's
-  frames that is the raw capture's own joint (`_ref` on the key, ref/mocap.js, before any retarget, fit or ik); in a made
-  gait the knee curve it is built from; elsewhere 25, or an arm's own FK keys. No slack (0.02 deg for rounding).
-  `JOINT_KNOWN` lists the 12 rows it fails today with their measured excess (runs' and leaps' knees, see the comments):
-  a listed row fails if its excess grows or if it passes clean (delete it), so the list only shrinks. A prop inside a set
+  starts off its origin. The solved-joint gate (`jointExcess`, `jointFails`, physics on and off) uses the film report's
+  own measure, `tools/jointstep.mjs` (`jointSteps`, shared with `shot.mjs`): every flex (knee, elbow, foot pitch), the
+  torso's lean and roll and the four limb bones' directions turn at most 25 deg a frame, with no allowance for a capture
+  that turns faster. `JOINT_KNOWN` lists the 12 rows it fails today with their measured excess over 25 (runs' and leaps'
+  knees and feet, see the comments):
+  a listed row fails if its excess grows or if it passes clean (delete it), so the list only shrinks. A held prop stops
+  on what the head wears as on the skull (cast.js `headWear`: a cap's crown and its peak, tested every 2 cm of the prop's
+  box); the figure is bare headed unless the clip says `needs.cap` (Act_PistolShoot_Once: the guard's cap, also on the
+  proof page). A prop inside a set
   piece fails (`propInSet`). `rigClip(C, body, { obstacles })` takes a film's own set pieces (ep01's 1.12 m counter beside
   the phone call). Physics gates on and off (`physicsFails`): a prop moves no more than its hand (times w) plus
   gravity plus 1 cm a frame (`PROP_SLIP_CM`, `propExcess`; a prop seen again after a gap is measured from where it was

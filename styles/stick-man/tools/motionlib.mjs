@@ -16,6 +16,7 @@ import { BASES, turned, markColliders } from '../motion-lib/base.js';
 import { BODIES } from '../motion-lib/bodies.js';
 import { compileTrack, playActor, flatten } from '../engine/motion.js';
 import { sizedBag } from '../motion-lib/props.js';
+import { jointSteps, JOINT_STEP_MAX } from './jointstep.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.resolve(HERE, '../../..'), LIB = path.join(ROOT, 'styles/stick-man/motion-lib');
 export const JOINT_MAX = 25, SLIDE_MM = 1, ARM_W = 1.025;
@@ -184,7 +185,10 @@ function propWorldBox(p) {
   return { lo: [b.min.x, -b.max.z, b.min.y], hi: [b.max.x, -b.min.z, b.max.y] };
 }
 // a figure built by cast.js (headless), for tests: { S, PHYS, toPose }
-export async function rigStick(body = 'adult') { const R = await rig(); return { S: R.cast.makeStick(R.bodySpec({ ...R.cast.GUARD, hair: [] }, body)), PHYS: R.PHYS, toPose: R.toPose }; }
+// (bare headed, as most films' casts are; a clip made for a capped figure (needs.cap: Hot Money's cop) wears the guard's cap,
+// which held props stop on: cast.js headWear)
+const guard = cap => (cap ? RIG.cast.GUARD : { ...RIG.cast.GUARD, hair: [] });
+export async function rigStick(body = 'adult', cap = false) { const R = await rig(); return { S: R.cast.makeStick(R.bodySpec(guard(cap), body)), PHYS: R.PHYS, toPose: R.toPose }; }
 export const GRIP_CM = 2, PROP_CM = 1;
 // props as scene objects (engine/propobj.js) and the balance solve, per frame (Hot Money ep01: a bag that jumped 20 cm as
 // it was set down, a crate that vanished, a pushing body that leapt 77 cm when a foot lifted):
@@ -205,29 +209,22 @@ export function propExcess(q, now) {
 // inside the body after the solve ((i)), per frame; and the props, the balance shift and the load frame to frame
 // obstacles: more set pieces ([{ name, lo, hi }], Blender metres, clip space): a film's own (a counter beside the actor, a wall)
 export async function rigClip(C, body = C.body || 'adult', { phys = true, obstacles = [] } = {}) {
-  const R = await rig(), S = R.cast.makeStick(R.bodySpec({ ...R.cast.GUARD, hair: [] }, body)), was = R.PHYS.on; R.PHYS.on = phys;
+  const R = await rig(), S = R.cast.makeStick(R.bodySpec(guard(C.needs?.cap), body)), was = R.PHYS.on; R.PHYS.on = phys;
   S.obstacles = [...markColliders(C.needs?.marks, C.body ? 1 : (BODIES[body]?.spec.scale ?? 1)), ...obstacles];   // the clip's set pieces: hands stop on them
   const key = { ...(C.advance ? { f: 0, clip: C.clip, body, to: [C.introTravel + C.outroTravel + 2 * C.advance, 0] } : { f: 0, clip: C.clip, body, ...(C.loop ? { times: 2 } : {}) }), ...fitOf(C) };
   const keys = placeClip(key, { pos: [0, 0], yaw: 90 }).keys, track = compileTrack(keys, {}, { pos: [0, 0], yaw: 90 }, 'kaiships'), fr = playActor(track, 0, keys[keys.length - 1].f + 6);
-  // (the raw capture's joints on the frames a capture's key sits on: the joint gate's reference)
-  const rawAt = new Map(keys.filter(k => k._ref).map(k => [k.f, k._ref]));
   const lastF = keys[keys.length - 1].f, Qat = f => R.toPose(fr[Math.max(0, Math.min(fr.length - 1, f))], S.root.scale.x), plan = R.propPlan(track, Qat, S);
   const o = { grip: 0, gripAt: null, prop0: 0, prop: 0, propAt: null, over: [], joint: 0, jointAt: null, heldFrames: 0, inSet: [],
     slip: 0, slipAt: null, gone: [], bal: 0, balAt: null, pelvis: 0, pelvisAt: null, massStep: 0, massAt: null, kgMax: 0,
-    limbs: [], raw: [], propInSet: [] };
+    limbs: [], propInSet: [] };
   const d3 = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]), V3 = new (S.root.position.constructor)();
   const gripW = p => { const g = p.userData.grip || [0, 0, 0]; V3.set(...(Array.isArray(g) ? g : [0, 0, 0])); p.localToWorld(V3); return [V3.x, -V3.z, V3.y]; };
   let prevP = {}, prevBal = null, prevPel = null, prevKg = null, kgs = [];
-  // the solved joints' largest change a frame (shot.mjs "largest one-frame joint change"): flexes and limb directions
-  const SEG = [['shoulder', 'elbow'], ['elbow', 'hand'], ['hip', 'knee'], ['knee', 'ankle']], dir = (a, b) => { const v = b.map((x, i) => x - a[i]), l = Math.hypot(...v) || 1; return v.map(x => x / l); };
-  let last = null;
   try {
     fr.forEach((m, f) => {
       const Q = Qat(f); Q.propRest = plan.at(f);
       // the balance shift: the pelvis with balance on minus the same frame with it off (physics on only)
       let pel0 = null; if (phys && R.PHYS.balance) { R.PHYS.balance = false; S.pose2(Q); pel0 = S.rigWorld().skel.pelvis; R.PHYS.balance = true; }
-      // (physics off, the reference the joint gate measures against: the arms on their FK keys too, ik weights off)
-      let fkArm = null; if (!phys) { S.pose2({ ...Q, armL: { ...Q.armL, ikw: 0 }, armR: { ...Q.armR, ikw: 0 } }); const v = S.rigWorld(); fkArm = Object.fromEntries(['L', 'R'].map(s => [s, { shoulder: v[s].shoulder, elbow: v[s].elbow, hand: v[s].hand, elbowFlex: v[s].elbowFlex }])); }
       S.pose2(Q); const w = S.rigWorld();
       const pel = w.skel.pelvis, bal = pel0 ? pel.map((x, i) => x - pel0[i]) : [0, 0, 0];
       if (prevBal) { const d = 100 * d3(bal, prevBal); if (d > o.bal) { o.bal = +d.toFixed(2); o.balAt = f; } }
@@ -243,16 +240,10 @@ export async function rigClip(C, body = C.body || 'adult', { phys = true, obstac
         const now = { f, at: gripW(p), hand, w: st.w, v: st.v }, q = prevP[id]; prevP[id] = now;
         const e = q ? propExcess(q, now) : 0; if (e > o.slip) { o.slip = +e.toFixed(2); o.slipAt = `${f} ${id}`; }
       }
-      if (last) for (const s of ['L', 'R']) {
-        for (const k of ['kneeFlex', 'elbowFlex']) { const d = Math.abs(w[s][k] - last[s][k]); if (d > o.joint) { o.joint = +d.toFixed(1); o.jointAt = `${f} ${k}${s}`; } }
-        for (const [a, b] of SEG) { const u = dir(last[s][a], last[s][b]), v = dir(w[s][a], w[s][b]), d = Math.acos(Math.max(-1, Math.min(1, u[0] * v[0] + u[1] * v[1] + u[2] * v[2]))) * 180 / Math.PI;
-          if (d > o.joint) { o.joint = +d.toFixed(1); o.jointAt = `${f} ${a}-${b}${s}`; } }
-      }
-      last = w;
-      // the solved limbs, for the joint gate (jointExcess): an arm with no ik weight on it is posed by its keys alone (FK)
-      o.raw.push(rawAt.get(f) || null);
-      o.limbs.push(Object.fromEntries(['L', 'R'].map(s => [s, { ...Object.fromEntries(LIMB_PTS.map(j => [j, w[s][j]])), kneeFlex: w[s].kneeFlex, elbowFlex: w[s].elbowFlex,
-        fk: !(`arm${s}.ik.0` in m && (m[`arm${s}.ikw`] ?? 1) > 0), ...(fkArm ? { fkArm: fkArm[s] } : {}) }])));
+      // the solved figure, for the joint gate (jointExcess): what shot.mjs's report reads off the page (rigWorld)
+      const lim = { torsoLean: w.torsoLean, torsoRoll: w.torsoRoll, ...Object.fromEntries(['L', 'R'].map(s => [s, { ...Object.fromEntries(LIMB_PTS.map(j => [j, w[s][j]])), kneeFlex: w[s].kneeFlex, elbowFlex: w[s].elbowFlex, footPitch: w[s].footPitch }])) };
+      if (o.limbs.length) for (const [k, d] of jointSteps(o.limbs[o.limbs.length - 1], lim)) if (d > o.joint) { o.joint = +d.toFixed(1); o.jointAt = `${f} ${k}`; }
+      o.limbs.push(lim);
       if (Object.values(S.props).some(p => p.visible)) o.heldFrames++;
       // the body inside the set's solid pieces (a window's wall, a trunk lip): the head (its centre and the crown), the
       // joints of the limbs (1 cm grace, as the render's (e)); the arms are solved against the set, the rest is not
@@ -271,69 +262,50 @@ export async function rigClip(C, body = C.body || 'adult', { phys = true, obstac
   for (const [f, d] of kgs) if (o.kgMax > 0 && Math.abs(d) / o.kgMax > o.massStep) { o.massStep = +(Math.abs(d) / o.kgMax).toFixed(3); o.massAt = f; }
   return o;
 }
-// ------------------------------------------------------------------ the joint gate on the solved limbs
-// A solved elbow or knee (its flex, its two bones' directions) may turn more than JOINT_MAX a frame only where the motion
-// as authored does, never because the rig made it: a contact solve flipping an elbow round the head (Gest_PhoneCall_Loop,
-// 97 deg/f on ep01's teller), an ik pole swinging round its line, a gait retarget or a baked reach table moving a joint
-// faster than the capture did. The motion as authored is:
-//   in a capture's frames (keys carrying `_ref`, ref/mocap.js: the raw capture's own flexes and bone directions, before
-//   any retarget, fit or ik): that capture's change of the same joint;
-//   in the frames the library makes (blends, first and closing steps, made gaits and one-offs): JOINT_MAX, or for an arm
-//   its keyed FK angles turned through the rig (rigClip physics off, ik weights off: `fkArm`).
-// No slack: the solved joint may not exceed max(JOINT_MAX, the authored change). Run physics on and off: off catches the
-// ik and the retarget, on everything physics adds.
-// ROUND: rigWorld gives flexes to 0.01 deg and the capture's to 0.001: a solved flex equal to the capture's can read 0.01 over
-const ROUND = 0.02;
+// ------------------------------------------------------------------ the joint gate on the solved figure
+// A solved joint turns at most JOINT_STEP_MAX a frame, measured as the film's report measures it (tools/jointstep.mjs:
+// flexes, foot pitches, the torso, the limbs' directions), so a clip the library passes is one the film passes. No
+// allowance for a capture that turns faster: the film has none (Hot Money ep01 SH060 foot 36.6 deg/f and SH172 elbow
+// 35.1 deg/f passed here). Run physics on and off: off catches the keys and the retarget, on everything physics adds.
 const LIMB_PTS = ['shoulder', 'elbow', 'hand', 'hip', 'knee', 'ankle'];
-// each solved joint and the raw capture's joint it answers to (ref/mocap.js frame.ref: flexes, unit bone directions)
-const JOINTS = { arm: [[['elbowFlex'], 'elbowFlex'], [['shoulder', 'elbow'], 'upper'], [['elbow', 'hand'], 'fore']],
-  leg: [[['kneeFlex'], 'kneeFlex'], [['hip', 'knee'], 'thigh'], [['knee', 'ankle'], 'shin']] };
-const unit = (a, b) => { const v = b.map((x, i) => x - a[i]), l = Math.hypot(...v) || 1; return v.map(x => x / l); };
-const angle = (u, v) => { const l = (Math.hypot(...u) * Math.hypot(...v)) || 1; return Math.acos(Math.max(-1, Math.min(1, (u[0] * v[0] + u[1] * v[1] + u[2] * v[2]) / l))) * 180 / Math.PI; };
-const jointTurn = (j, p, q) => (j.length === 1 ? Math.abs(q[j[0]] - p[j[0]]) : angle(unit(p[j[0]], p[j[1]]), unit(q[j[0]], q[j[1]])));
-// the raw capture's change of one joint between two frames (null: not a captured frame pair)
-const rawTurn = (a, b, s, r) => { const x = a?.[r + s], y = b?.[r + s]; if (x == null || y == null) return null; return typeof x === 'number' ? Math.abs(y - x) : angle(x, y); };
-// g: a rigClip result (physics on or off); fk: the physics-off one (its fkArm poses)
-export function jointExcess(g, fk) {
-  const out = { joint: 0, jointAt: null, excess: 0, excessAt: null, over: [] }, n = Math.min(g.limbs.length, fk.limbs.length);
-  for (let f = 1; f < n; f++) for (const s of ['L', 'R']) for (const limb of ['arm', 'leg']) for (const [j, r] of JOINTS[limb]) {
-    const p = g.limbs[f - 1][s], q = g.limbs[f][s], raw = rawTurn(g.raw[f - 1], g.raw[f], s, r);
-    const keyed = raw ?? (limb === 'arm' && fk.limbs[f - 1][s].fkArm ? jointTurn(j, fk.limbs[f - 1][s].fkArm, fk.limbs[f][s].fkArm) : 0);
-    const v = jointTurn(j, p, q), allow = Math.max(JOINT_MAX, keyed), nm = `${f} ${j.join('-')}${s}`;
-    if (v > out.joint) { out.joint = +v.toFixed(1); out.jointAt = nm; }
-    if (v > allow + ROUND && v - allow > out.excess) { out.excess = +(v - allow).toFixed(1); out.excessAt = `${nm} ${v.toFixed(1)} deg/f, the ${raw != null ? 'authored' : 'keys'} ${keyed.toFixed(1)}`; }
-    if (v > allow + ROUND) out.over.push(f);
+// g: a rigClip result (physics on or off)
+export function jointExcess(g) {
+  const out = { joint: 0, jointAt: null, excess: 0, excessAt: null, over: [] };
+  for (let f = 1; f < g.limbs.length; f++) for (const [k, v] of jointSteps(g.limbs[f - 1], g.limbs[f])) {
+    if (v > out.joint) { out.joint = +v.toFixed(1); out.jointAt = `${f} ${k}`; }
+    if (v > JOINT_STEP_MAX) { out.over.push(f); if (v - JOINT_STEP_MAX > out.excess) { out.excess = +(v - JOINT_STEP_MAX).toFixed(1); out.excessAt = `${f} ${k} ${v.toFixed(1)} deg/f`; } }
   }
   return out;
 }
-export function jointFails(g, fk, tag = '') {
-  const e = jointExcess(g, fk), t = tag ? ` (${tag})` : '';
-  return e.over.length ? [`solved joint${t}: ${e.excess} deg/f over the motion as authored at ${e.excessAt} (max ${JOINT_MAX} or the authored change); frames ${[...new Set(e.over)].slice(0, 8).join(' ')}`] : [];
+export function jointFails(g, tag = '') {
+  const e = jointExcess(g), t = tag ? ` (${tag})` : '';
+  return e.over.length ? [`solved joint${t}: ${e.excess} deg/f over ${JOINT_STEP_MAX} at ${e.excessAt}; frames ${[...new Set(e.over)].slice(0, 8).join(' ')}`] : [];
 }
-// Clips the joint gate fails today, each with the excess (deg/f, the larger of physics on and off) measured when the gate
-// went in (PR D) and why. Such a row passes while its excess stays at or under that number and fails as soon as it grows;
-// a row that passes clean while it is listed fails too ("fixed: delete it"), so this list only shrinks. Every entry is
-// a fault of the clip or its retarget, not of the gate: the solved knee leaves the knee the motion was authored with.
+// Clips the joint gate fails today, each with its excess (deg/f over JOINT_STEP_MAX, the larger of physics on and off) and
+// why. Such a row passes while its excess stays at or under that number and fails as soon as it grows; a row that passes
+// clean while it is listed fails too ("fixed: delete it"), so this list only shrinks. PR D measured the rows against the
+// motion as authored; PR G measures them as the film does (flat 25, foot pitch and torso too), which no clip's motion
+// changed for: the seven numbers that grew are the same frames read the film's way (the run's foot pitch, the leap's knee).
 export const JOINT_KNOWN = {
-  Adult_Act_Jump_Once: [5.2, 'the take-off knee: the retargeted hips over the planted feet straighten it faster than the capture'],
+  Adult_Act_Jump_Once: [10, 'the take-off knee: the retargeted hips over the planted feet straighten it faster than the capture'],
   Adult_Gest_PhoneCall_Loop: [0.8, "the reach to the ear blends from STAND in the library's 14 frames: the forearm turns past the FK keys while the elbow plane turns to the pole"],
-  Adult_Move_Run_Fwd_Loop: [5.4, 'captured run: a shin turns faster than the capture where the swing foot is eased onto its print'],
-  Adult_Move_Sprint_Fwd_Loop: [5.6, 'captured sprint: as the run'],
-  Adult_Trans_GetUp_Once: [4.2, 'lying, a knee on the floor straightens faster than the capture (the feet are pinned to their captured prints, the hips are not the capture\'s)'],
-  Adult_Trans_LieDown_Once: [2.9, 'as GetUp, run backwards'],
-  Adult_Trans_JumpWindow_Once: [29.1, 'the leap: the captured right leg kicks straight within a frame and the retarget folds it on this body'],
-  'Adult_Trans_JumpWindow_Once fit {"sill":0.8,"top":1.9,"width":1}': [15.9, 'as the unfitted leap'],
+  Adult_Move_Run_Fwd_Loop: [30.4, 'captured run: a shin turns faster than the capture where the swing foot is eased onto its print'],
+  Adult_Move_Sprint_Fwd_Loop: [26.5, 'captured sprint: as the run'],
+  Adult_Trans_GetUp_Once: [12, 'lying, a knee on the floor straightens faster than the capture (the feet are pinned to their captured prints, the hips are not the capture\'s)'],
+  Adult_Trans_LieDown_Once: [12, 'as GetUp, run backwards'],
+  Adult_Trans_JumpWindow_Once: [35.3, 'the leap: the captured right leg kicks straight within a frame and the retarget folds it on this body'],
+  'Adult_Trans_JumpWindow_Once fit {"sill":0.8,"top":1.9,"width":1}': [23.5, 'as the unfitted leap'],
   Child_Move_Run_Fwd_Loop: [3.4, 'made run: the closing step has no authored knee between its keys (25 deg/f applies)'],
   Elder_Move_Run_Fwd_Loop: [14.5, 'made run: the swing foot eased off its print holds the leg straight after toe-off, the authored knee is bent'],
   Heavy_Move_Run_Fwd_Loop: [20.2, 'made run: as the elder run'],
   Thin_Move_Run_Fwd_Loop: [8.2, 'made run: as the elder run'],
 };
 function jointGate(r, name, g, g0) {
-  const f = [...jointFails(g, g0), ...jointFails(g0, g0, 'physics off')], ex = Math.max(jointExcess(g, g0).excess, jointExcess(g0, g0).excess), k = JOINT_KNOWN[name];
+  const f = [...jointFails(g), ...jointFails(g0, 'physics off')], ex = Math.max(jointExcess(g).excess, jointExcess(g0).excess), k = JOINT_KNOWN[name];
   if (!k) { r.fails.push(...f); return; }
   if (!f.length) r.fails.push(`solved joint: listed in JOINT_KNOWN but passes now: fixed, delete it`);
   else if (ex > k[0] + 0.05) r.fails.push(...f, `solved joint: JOINT_KNOWN allows ${k[0]} deg/f over (${k[1]}), now ${ex}`);
-  else r.known = `known: ${ex} deg/f over the motion as authored (JOINT_KNOWN: ${k[1]})`;
+  else r.known = `known: ${ex} deg/f over ${JOINT_STEP_MAX} (JOINT_KNOWN: ${k[1]})`;
 }
 // the props-as-objects and balance gates on one rigClip result (physics on or off): the lines that fail
 export function physicsFails(g, tag = '') {
@@ -361,7 +333,7 @@ export async function checkAll() {
       if ((C.needs?.props || []).length && !g.heldFrames) r.fails.push(`rig: needs.props ${C.needs.props} but the rig shows no held prop on any frame`);
       r.fails.push(...physicsFails(g), ...physicsFails(g0, 'physics off')); jointGate(r, C.name, g, g0);
       Object.assign(r.info, { slipCm: g.slip, balCm: g.bal, massStep: g.massStep });
-      Object.assign(r.info, { gripCm: g.grip, propCm0: g.prop0, propCm: g.prop, propOffCm: g0.prop, heldFrames: g.heldFrames, rigJoint: g.joint, rigJointAt: g.jointAt, rigExcess: Math.max(jointExcess(g, g0).excess, jointExcess(g0, g0).excess) });
+      Object.assign(r.info, { gripCm: g.grip, propCm0: g.prop0, propCm: g.prop, propOffCm: g0.prop, heldFrames: g.heldFrames, rigJoint: g.joint, rigJointAt: g.jointAt, rigExcess: Math.max(jointExcess(g).excess, jointExcess(g0).excess) });
       rows.push({ file: f, name: C.name, ...r });
     }
   }
@@ -375,7 +347,7 @@ export async function checkAll() {
     if (g.inSet.length) r.fails.push(`rig: the body is inside the set: ${g.inSet.slice(0, 3).join('; ')}${g.inSet.length > 3 ? ` (+${g.inSet.length - 3} frames)` : ''}`);
     r.fails.push(...physicsFails(g), ...physicsFails(g0, 'physics off')); jointGate(r, `${C.name} fit ${JSON.stringify(fit)}`, g, g0);
     Object.assign(r.info, { slipCm: g.slip, balCm: g.bal, massStep: g.massStep });
-    Object.assign(r.info, { gripCm: g.grip, propCm0: g.prop0, propCm: g.prop, propOffCm: g0.prop, heldFrames: g.heldFrames, rigJoint: g.joint, rigJointAt: g.jointAt, rigExcess: Math.max(jointExcess(g, g0).excess, jointExcess(g0, g0).excess) });
+    Object.assign(r.info, { gripCm: g.grip, propCm0: g.prop0, propCm: g.prop, propOffCm: g0.prop, heldFrames: g.heldFrames, rigJoint: g.joint, rigJointAt: g.jointAt, rigExcess: Math.max(jointExcess(g).excess, jointExcess(g0).excess) });
     rows.push({ file: f, name: `${C.name} fit ${JSON.stringify(fit)}`, ...r });
   }
   for (const C of ALL) if (!listed.has(C)) rows.push({ file: C.name, fails: ['index: listed in index.js but no file'], info: {} });
@@ -473,7 +445,7 @@ if (path.resolve(process.argv[1] || '') === fileURLToPath(import.meta.url)) {
   else {
     const rows = await checkAll(); let bad = 0;
     for (const r of rows) {
-      const i = r.info, num = i.frames != null ? `  ${i.frames} f, joint ${i.jointMax} deg/f, slide ${i.slideMm} mm/f, flights ${i.flights}${i.flights ? ` (peak ${i.peakCm} cm, g 9.8)` : ''}${i.carryKg ? `, carries ${i.carryKg} kg` : ''}, rig: grip ${i.gripCm} cm, prop ${i.propCm0}>${i.propCm} cm (physics off ${i.propOffCm}), held ${i.heldFrames} f, solved joint ${i.rigJoint} deg/f (${i.rigJointAt}; over the authored ${i.rigExcess})` : '';
+      const i = r.info, num = i.frames != null ? `  ${i.frames} f, joint ${i.jointMax} deg/f, slide ${i.slideMm} mm/f, flights ${i.flights}${i.flights ? ` (peak ${i.peakCm} cm, g 9.8)` : ''}${i.carryKg ? `, carries ${i.carryKg} kg` : ''}, rig: grip ${i.gripCm} cm, prop ${i.propCm0}>${i.propCm} cm (physics off ${i.propOffCm}), held ${i.heldFrames} f, solved joint ${i.rigJoint} deg/f (${i.rigJointAt}; over ${JOINT_STEP_MAX}: ${i.rigExcess})` : '';
       console.log(`${r.fails.length ? 'FAIL' : 'PASS'}  ${r.name || r.file}${num}`); for (const f of r.fails) console.log(`      ${f}`); if (r.known) console.log(`      ${r.known}`); bad += !!r.fails.length;
     }
     console.log(`${rows.filter(r => !/ fit /.test(r.name || '')).length} clips + ${rows.filter(r => / fit /.test(r.name || '')).length} fitted, ${bad} failing, ${rows.filter(r => r.known).length} known (JOINT_KNOWN)`); process.exit(bad ? 1 : 0);

@@ -6,7 +6,7 @@ import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometr
 import { toon, lin, css, B, INK_RGB, INK_SUN, PLACE } from './look.js';
 import { EXPR, faceRig, mixFace } from './faces.js';
 import { makeHandProp } from '../lib/cast/handprops.js';
-import { SOFT, legReach, limitArm, limitBody, ROM, torsoSlices, ellipsoid, worldBox, solveArm, armPenetration, propPush, PHYS, centreOfMass, balanceShift } from './body.js';
+import { SOFT, legReach, limitArm, limitBody, ROM, torsoSlices, ellipsoid, worldBox, solveArm, armPenetration, propPush, PHYS, centreOfMass, balanceShift, headWear, wearVolume } from './body.js';
 
 const SPIN_Q = new THREE.Quaternion(), SPIN_AX = new THREE.Vector3(0, 1, 0), _camL = new THREE.Vector3();
 export const W_M = 0.60;                     // head width in metres
@@ -79,7 +79,7 @@ function brimGeo(rIn, rx, rz, span = 80) {
   for (let i = 0; i <= N; i++) { const a = (-span + 2 * span * i / N) * DEG; const p = [Math.sin(a) * rx, Math.cos(a) * rz]; i ? s.lineTo(...p) : s.moveTo(...p); }
   for (let i = N; i >= 0; i--) { const a = (-span + 2 * span * i / N) * DEG; s.lineTo(Math.sin(a) * rIn, Math.cos(a) * rIn); }
   const g = new THREE.ExtrudeGeometry(s, { depth: 0.012 * W, bevelEnabled: true, bevelThickness: 0.010 * W, bevelSize: 0.010 * W, bevelSegments: 2, curveSegments: 4 });
-  g.rotateX(Math.PI / 2);
+  g.rotateX(Math.PI / 2); g.userData.sheet = true;
   return g;
 }
 
@@ -605,6 +605,13 @@ export function makeStick(spec) {
   const skip = new Set([headSolid, face]); headSolid.traverse(o => skip.add(o)); FR.group.traverse(o => skip.add(o));
   head.traverse(o => { if (!o.isMesh || skip.has(o)) return; o.geometry = o.geometry.clone(); shapeHeadGeo(o.geometry, _hm.clone().multiply(o.matrixWorld)); });
   hairG.position.y = HAT_LIFT;
+  // what the head wears, as a solid held props stop on (body.js headWear; the hat's swing after the head is left out)
+  head.updateMatrixWorld(true); _hm.copy(head.matrixWorld).invert();
+  const crown = [], sheets = []; hairG.traverse(o => { if (!o.isMesh || o.material?.transparent || o.material?.blending === THREE.AdditiveBlending) return;
+    const P = o.geometry.attributes.position, m = _hm.clone().multiply(o.matrixWorld), at = i => new THREE.Vector3().fromBufferAttribute(P, i).applyMatrix4(m);
+    if (!o.geometry.userData.sheet) { for (let i = 0; i < P.count; i++) crown.push(at(i)); return; }
+    const I = o.geometry.index; for (let i = 0; i < (I ? I.count : P.count); i += 3) sheets.push([0, 1, 2].map(j => at(I ? I.getX(i + j) : i + j))); });
+  const wornShell = headWear(crown, sheets, HA, HB);
 
   const limbs = { armL: new Tube(16, LIMB_R), armR: new Tube(16, LIMB_R), legL: new Tube(18, LIMB_R), legR: new Tube(18, LIMB_R) };
   // hand mitt: reference hands are ~0.10 W across, about twice the arm line
@@ -982,7 +989,9 @@ export function makeStick(spec) {
     // the hand holding it moves it out (that arm re-solved, bones keep their length) and the hand's gap from its target
     // is reported (targetGap). With PHYS off the overlap is only measured.
     const legSegs = ['L', 'R'].flatMap(sd => [[rig[sd].hip, rig[sd].knee], [rig[sd].knee, rig[sd].ankle]]);
-    let held = handProps(Q, rig), pp = held.length ? propOverlap(held, legSegs, vols) : null;
+    // (a held prop also stops on what the head wears: the arms do not, they are solved against the skull as before)
+    const propVols = wornShell ? [...vols, wearVolume(vols[0].c, vols[0].q, vols[0].r, wornShell)] : vols;
+    let held = handProps(Q, rig), pp = held.length ? propOverlap(held, legSegs, propVols) : null;
     const propPen0 = heldPen(pp);
     for (let it = 0; PHYS.on && pp && it < 6; it++) {
       for (const sd of pp.side === 'B' ? ['L', 'R'] : [pp.side]) {
@@ -991,7 +1000,7 @@ export function makeStick(spec) {
         const a = arms[sd], r = ik(a.sh, rig[sd].hand.clone().addScaledVector(pp.push, pp.w ?? 1), LIMB.upper, rig[sd].elbow.clone().sub(a.sh), SOFT.arm, true);
         rig[sd].elbow = r.joint; rig[sd].hand = r.end; rig[sd].elbowFlex = r.flex;
       }
-      held = handProps(Q, rig); pp = propOverlap(held, legSegs, vols);
+      held = handProps(Q, rig); pp = propOverlap(held, legSegs, propVols);
     }
     // a held prop the arms could not take out of a set piece (the body walked on into a wall with the crate before it, out
     // of the arms' reach) stops on that piece anyway: the set holds it there, the hands stay where they got to (their gap
@@ -1001,7 +1010,7 @@ export function makeStick(spec) {
     if (setV.length) { let moved = false;
       for (const h of held) for (let it = 0; h.w >= 0.5 && it < 4; it++) { const r = propPush(h.box, [], setV); if (!r) break;
         h.o.position.addScaledVector(r.push, W); h.o.updateMatrixWorld(true); h.box = propBox(h.o); moved = true; }
-      if (moved) pp = propOverlap(held, legSegs, vols); }
+      if (moved) pp = propOverlap(held, legSegs, propVols); }
     for (const side of ['L', 'R']) {
       const a = arms[side], r = rig[side], pts = hose(a.sh, r.elbow, r.hand, ROUND.arm, 16);
       limbs['arm' + side].set(pts); hands[side].position.copy(pts[15]); S.hand[side] = r.hand.toArray();

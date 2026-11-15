@@ -1,6 +1,7 @@
 // Adult_Act_PistolShoot_Once: raise a handgun one-handed (the left: motion-lib/props.js pistol, x_hpL_pistol), fire, lower it, from motion capture (Mixamo "Shooting Gun", ref/mixamo/shooting_gun.js) on this body, every captured frame. Hot Money ep01.
 import { mocapClip, holdKeys, reachKeys } from '../../base.js';
 import SRC from '../../ref/mixamo/shooting_gun.js';
+import { slowSource } from '../../ref/mocap.js';
 import HEAD from '../../ref/reach/pistol_head.js';
 
 // the gun arm comes up out to the side and folds, the gun beside the head: this figure's head is bigger than the
@@ -9,6 +10,7 @@ import HEAD from '../../ref/reach/pistol_head.js';
 // 3 cm further out (ref/reach/pistol_head.js, tools/mocap_contact.mjs Act_PistolShoot_Once L 14 <out> set - 3: over 14
 // frames each way, so the forearm turns no faster than the capture's, 19 deg/f at frame 70; re-run it when the clip
 // changes), so the grip stays on its target
-const M = mocapClip({ body: 'adult', src: SRC, base: 'STAND', end: 'STAND' });
+// (the capture snaps the elbow open 25.5 deg/f, past the style's 25: slowed there, two frames longer, ref/mocap.js slowSource)
+const M = mocapClip({ body: 'adult', src: slowSource(SRC, 19.5), base: 'STAND', end: 'STAND' });
 export default { name: 'Adult_Act_PistolShoot_Once', clip: 'Act_PistolShoot_Once', body: 'adult', group: 'Act', loop: false, frames: M.frames, base: 'STAND', end: 'STAND', style: 'kaiships',
-  needs: { props: ['pistol'], hands: 'L', marks: M.marks }, keys: holdKeys(reachKeys(M.keys, HEAD), 'L', 'pistol'), captured: M.captured, rest: M.rest };
+  needs: { props: ['pistol'], hands: 'L', marks: M.marks, cap: true }, keys: holdKeys(reachKeys(M.keys, HEAD), 'L', 'pistol'), captured: M.captured, rest: M.rest };
