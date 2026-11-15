@@ -9,6 +9,7 @@ import { makeStick, KAI, TELLER, GUARD, EXPR, HEAD_C } from './cast.js';
 import { VERBS, STAND, SIT, REST_ARM, W, lerp, lerp3, add3, angDiff, toLocal, smoother, hash, handEase } from './verbs.js';
 import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, exprAccent, bodyFollow, LATE, EXPR_LEAD, exprKeyAt, markOwner, isBodyVerb, autoActing, faceStateAt, visemeTrack, TAKES } from './acting.js';
 import { createCamera } from './camera.js';
+import { pointVis, foldVis } from './visible.js';
 import { planShots } from './shotplan.js';
 import { createCaptions } from './captions.js';
 import { createOverlays } from './overlays.js';
@@ -574,6 +575,19 @@ async function buildAct(R, X) {
     out.seen = [...new Set([...Object.keys(props), ...Object.keys(fxo)])].filter(n => onScreen(fxo[n]?.obj || props[n]?.isObject3D && props[n] || props[n]?.mesh));
     return out;
   }
+  // the shot camera's view of a fault (engine/visible.js): items [{ actor, pts: [[x, y, z] Blender world] }], one state
+  // each: 'in' when any point is seen, 'occluded' when hidden, 'off' when out of the frame. The actor's own body and what
+  // it holds never hide its fault.
+  function vis(f, items) {
+    update(f); stage.scene.updateMatrixWorld(); stage.camera.updateMatrixWorld();
+    const heldBy = n => Object.keys(segs).flatMap(k => { const L = segs[k]; let i = L.length - 1; while (i > 0 && L[i].start > f) i--;
+      return L[i].mode === 'hand' && L[i].actor === n ? [props[k], props[k]?.mesh].filter(Boolean) : []; });
+    return items.map(({ actor, pts }) => {
+      const a = byName[actor]; if (!a?.S.root.visible) return 'off';
+      const mine = new Set([a.S.root, ...heldBy(actor)]), own = o => { for (let q = o; q; q = q.parent) if (mine.has(q)) return true; return false; };
+      return foldVis(pts.map(p => pointVis(stage.camera, stage.scene, toThree(...p), own)));
+    });
+  }
   const box3 = new THREE.Box3(), bb = new THREE.Box3(), cv = new THREE.Vector3(), frust = new THREE.Frustum(), pm = new THREE.Matrix4();
   function onScreen(o) {
     if (!o?.isObject3D) return false;
@@ -625,7 +639,7 @@ async function buildAct(R, X) {
     const shotCut = DIR ? DIR.cutAt(f) : (cam.shotIndex !== i0 && shots[cam.shotIndex].glide === 0) || !!camera.mixAt(shots, f);
     return { cam: f === F0 ? 0 : +camPx.toFixed(3), camPeak: f === F0 ? 0 : +camPeak.toFixed(3), feet, shotCut };
   };
-  return { name: R.name || R.set, R, grade: { ...(R.grade || {}) }, group, background, fog, update, dbg, motion, cues, actors, frameOf, flash: f => KT.at('screen', 'flash', f, 0) || 0, blur: () => blurV,
+  return { name: R.name || R.set, R, grade: { ...(R.grade || {}) }, group, background, fog, update, dbg, vis, motion, cues, actors, frameOf, flash: f => KT.at('screen', 'flash', f, 0) || 0, blur: () => blurV,
     impact: f => KT.at('screen', 'impact', f, 0) || 0, shotMix: f => DIR ? DIR.mixAt(f) : camera.mixAt(shots, f) };
 }
 
@@ -708,6 +722,7 @@ export async function boot({ film, width, height }) {
     cap.draw(f); s.cur.ov.draw(capG, f); return ms;
   }
   window.__motion = f => { const s = at(f), p = at(Math.max(F0, f - 1)); show(s.cur); const m = s.cur.motion(f); return { ...m, cut: !!s.prev || p.cur !== s.cur || !!p.prev || s.cur.flash(f) > 0.3 || m.shotCut }; };   // dissolves, act cuts, flash cuts, shot cuts
+  window.__vis = (f, items) => { const s = at(f); show(s.cur); return s.cur.vis(f, items); };
   window.__dbg = f => {
     const s = at(f); show(s.cur); const out = s.cur.dbg(f); out.act = s.cur.name; out.mix = s.prev ? +s.u.toFixed(2) : null;
     for (const A of acts) for (const a of A.actors) if (!out.actors[a.name]) out.actors[a.name] = { blink: 0, head: [0, 0, 0, 0], inFrame: false, verb: [] };

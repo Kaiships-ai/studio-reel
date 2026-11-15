@@ -15,7 +15,7 @@ import http from 'node:http'; import fs from 'node:fs'; import path from 'node:p
 import { fileURLToPath } from 'node:url';
 import { start, run } from '../../../kit/env.mjs';
 import { microanim } from './forensic/microanim.mjs';
-import { acting, compress, holdLines } from './faults.mjs';
+import { acting, joints, compress, holdLines, faultList, hiddenOf } from './faults.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '../../..');                     // repo root: serves the page and node_modules/three
@@ -123,6 +123,12 @@ if (A.speed && !REEL) {
   }
   // (b) from __dbg
   const rows = await dbgAll();
+  // every hold and joint fault, tagged by what this render's camera sees of it (faults.mjs, engine/visible.js)
+  const faults = faultList(rows), byF = new Map();
+  faults.forEach((x, i) => (byF.get(x.f) || byF.set(x.f, []).get(x.f)).push(i));
+  const vis = [], tags = await p.evaluate(g => g.map(([f, items]) => window.__vis(f, items)), [...byF].map(([f, ix]) => [f, ix.map(i => ({ actor: faults[i].actor, pts: faults[i].pts }))]));
+  [...byF.values()].forEach((ix, k) => ix.forEach((i, j) => { vis[i] = tags[k][j]; }));
+  const hidden = hiddenOf(faults, vis);
   let run0 = 0, best = 0, bestAt = 0; const camPx = rows.map(r => r.motion.cut ? NaN : r.motion.cam);
   camPx.forEach((v, i) => { if (i === 0 || Number.isNaN(v)) return; if (v < 0.01) { run0++; if (run0 > best) { best = run0; bestAt = rows[i].f; } } else run0 = 0; });
   const live = camPx.slice(1).filter(x => !Number.isNaN(x)), peak = Math.max(...live), peakAt = rows[camPx.indexOf(peak)].f;
@@ -140,9 +146,10 @@ if (A.speed && !REEL) {
     L.push(`    ${n}: blinks ${starts.length}, gaps ${gaps.length ? Math.min(...gaps) + '-' + Math.max(...gaps) : '-'} frames (${gaps.join(' ')}); in frame ${rows.filter(r => r.actors[n].inFrame).length}/${rows.length}`,
       `      largest stance-foot slide ${slide.toFixed(2)} px/frame at 720p${slideAt != null ? ' (frame ' + slideAt + ')' : ''}`,
       `      head box in caption band 66-78 %: ${compress(band) || 'never'}; head box outside x 8-92 %: ${compress(out) || 'never'}`);
-    const ac = acting(rows, n);
-    L.push(`      acting: longest frozen run ${ac.frozen} frames${ac.frozen ? ' (ends ' + ac.frozenAt + ')' : ''}; largest arm length ratio ${ac.ratio.toFixed(3)}${ac.ratioAt != null ? ' (frame ' + ac.ratioAt + ')' : ''}; largest one-frame joint change ${ac.jump.toFixed(1)} deg${ac.jumpAt ? ' (' + ac.jumpAt + ')' : ''}`,
-      `      joint change top 5: ${ac.top.map(x => `${x.d.toFixed(1)} (frame ${x.f}, ${x.k})`).join('; ') || '-'}; frames over 25 deg: ${compress(ac.over) || 'none'}`,
+    const ac = acting(rows, n), jt = joints(rows, n, hidden);
+    L.push(`      acting: longest frozen run ${ac.frozen} frames${ac.frozen ? ' (ends ' + ac.frozenAt + ')' : ''}; largest arm length ratio ${ac.ratio.toFixed(3)}${ac.ratioAt != null ? ' (frame ' + ac.ratioAt + ')' : ''}; largest one-frame joint change ${jt.jump.toFixed(1)} deg${jt.jumpAt ? ' (' + jt.jumpAt + ')' : ''}`,
+      `      joint change top 5: ${jt.top.map(x => `${x.d.toFixed(1)} (frame ${x.f}, ${x.k})`).join('; ') || '-'}; frames over 25 deg: ${compress(jt.over) || 'none'}`,
+      ...(jt.hidden ? [`      joint change ${jt.hidden}`] : []),
       `      head cut by the top edge: ${compress(rows.filter(r => { const a = r.actors[n]; return a.inFrame && a.head[1] < 0; }).map(r => r.f)) || 'never'}`);
     // body acting: the share of this lead's in-frame frames with a body verb running (GATES.md "Acting gates")
     const lf = rows.filter(r => r.actors[n].inFrame && r.actors[n].lead), idleF = lf.filter(r => !r.actors[n].body).map(r => r.f);
@@ -181,7 +188,7 @@ if (A.speed && !REEL) {
   L.push(`(d) hand to held prop (grip socket), max gap px at 1080p (target <= 2):`);
   for (const [n, g] of Object.entries(gaps)) L.push(`    ${n}: ${g.max.toFixed(2)} px${g.at ? ' (frame ' + g.at + ')' : ''} over ${g.n} held frames, props ${[...g.props].join(', ')}`);
   if (!Object.keys(gaps).length) L.push('    no held props on screen');
-  L.push(...holdLines(rows));
+  L.push(...holdLines(rows, hidden));
   // (e) bodies inside set geometry (and torso in torso)
   const hits = rows.filter(r => r.collide?.length);
   const kinds = {}; for (const r of hits) for (const c of r.collide) (kinds[c] ||= []).push(r.f);

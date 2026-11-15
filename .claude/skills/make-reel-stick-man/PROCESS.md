@@ -120,6 +120,8 @@ What follows is specific to this engine (execution pass).
 - **Arm-solver traps.** A straight arm (`elbow` < 15) or a hand near the head or belly flips the IK. Keep `elbow` ≥ 15 and hands at least a fist away from the body. Measure: joint change ≤ 25°/frame.
 - **Measure** with `shot.mjs --film films/<slug> --frames 0-<last> --report review/pol-stats.txt --fast 1`.
   - Check `joint change top 5`, `frames over 25 deg`, `stance-foot slide` and `actor body inside`.
+  - A hand, prop or joint fault the shot's camera cannot see (behind a counter, out of frame) prints on an `ẩn` line
+    with its frames and number and does not fail the shot. Do not restage for it; a new camera judges it again.
   - Fix with longer `t`, smaller pose changes or other target poses. Never by loosening the gate.
 
 ## 6. Physics of props and sets

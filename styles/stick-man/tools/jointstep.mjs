@@ -18,3 +18,16 @@ export function jointSteps(m, l) {
   }
   return out;
 }
+// where a channel's change shows on the figure (Blender world points of pose l): what it moves, not its pivot (an elbow
+// flex moves the elbow and the forearm, not the shoulder; a lean moves the chest and the head, not the pelvis), so a film
+// report can ask whether the shot's camera sees it. The library gate has no camera and ignores this.
+const FLEXED = { kneeFlex: ['knee', 'ankle'], elbowFlex: ['elbow', 'hand'], footPitch: ['ankle', 'toe'] };
+const along = (a, b) => [0.25, 0.5, 0.75, 1].map(u => a.map((x, i) => x + (b[i] - x) * u));
+export function stepPoints(k, l) {
+  if (k === 'torsoLean' || k === 'torsoRoll') {
+    const hip = l.skel?.pelvis ?? l.L.hip.map((x, i) => (x + l.R.hip[i]) / 2), neck = l.skel?.neck ?? l.L.shoulder.map((x, i) => (x + l.R.shoulder[i]) / 2);
+    return [...along(hip, neck), l.L.shoulder, l.R.shoulder, ...(l.skel?.head ? [l.skel.head] : [])];
+  }
+  const s = k.slice(-1), name = k.slice(0, -1), [a, b] = (FLEXED[name] || name.split('-')).map(j => l[s][j]);
+  return FLEXED[name] ? [a, ...along(a, b)] : along(a, b);          // a bone turning about its first joint: from a quarter along
+}

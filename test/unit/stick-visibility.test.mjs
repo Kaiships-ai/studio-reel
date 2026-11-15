@@ -83,3 +83,11 @@ test('a point out of the frame or behind the lens is off; in front of an opaque 
   assert.equal(pointVis(cam, sc, B(163.6, 0.6, 1.0)), 'occluded');      // behind the counter, inside the frame
   assert.equal(foldVis(['off', 'occluded']), 'occluded'); assert.equal(foldVis(['occluded', 'in']), 'in');
 });
+
+test('a mesh nearer the lens than its near plane is not drawn, so it hides nothing', () => {
+  const cam = camera(FX.camera), sc = scene([{ lo: [163.5, -1.58, 1.5], hi: [163.7, -1.57, 1.6] }]), p = B(163.6, 0.6, 1.4);
+  cam.near = 0.01; cam.updateProjectionMatrix();
+  assert.equal(pointVis(cam, sc, p), 'occluded', 'a card 2 cm in front of the lens, drawn');
+  cam.near = 0.05; cam.updateProjectionMatrix();
+  assert.equal(pointVis(cam, sc, p), 'in', 'the same card clipped by the near plane');
+});
