@@ -8,5 +8,9 @@ import SRC from '../../ref/ual/idle_talkingphone_loop.js';
 import EAR from '../../ref/reach/phonecall_ear.js';
 
 const M = mocapClip({ body: 'adult', src: SRC, base: 'STAND', end: 'STAND' });
+// checked too with a film's bigger phone (tools/motionlib.mjs propChecks): Hot Money ep01's desk handset (0.41 m, at 1.4x)
+// held the kit phone's way, long side up and the fist round its middle
+const EP01_HANDSET = { mode: 'up', grip: [0, 0, 0], size: [0.098, 0.406, 0.07] };
 export default { name: 'Adult_Gest_PhoneCall_Loop', clip: 'Gest_PhoneCall_Loop', body: 'adult', group: 'Gest', loop: true, frames: M.frames, base: 'STAND', end: 'STAND', style: 'kaiships',
-  needs: { props: ['phone'], hands: 'R', marks: M.marks }, keys: holdKeys(reachKeys(M.keys, EAR), 'R', 'phone'), captured: M.captured, rest: M.rest };
+  needs: { props: ['phone'], hands: 'R', marks: M.marks }, keys: holdKeys(reachKeys(M.keys, EAR), 'R', 'phone'), captured: M.captured, rest: M.rest,
+  propChecks: [{ phone: EP01_HANDSET }] };

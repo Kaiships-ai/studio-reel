@@ -23,7 +23,7 @@ anim: { gran: [
 | `to` | a travelling loop walks there: heading, cycle count and stride fitted, starts and ends on the standard pose |
 | `times` | loop cycles (default 1; with `to`, fixes the count); `stop: true` adds the first and closing steps without `to` |
 | `pos`, `yaw` | where the clip starts and which way it faces (default: where the keys before it left the actor) |
-| `swap` | a film's own prop for the clip's: `{ bag: 'duffel' }` |
+| `swap` | a film's own prop for the clip's: `{ bag: 'duffel' }`. It lies as the kit prop does (its longest side along the same axis: a phone's up) |
 | `expr`, `look`, `ease`, `antic`, `cycle` | go onto the clip's first key |
 
 A clip key expands into the clip's keys before playback (`engine/motion.js` `compileTrack`), so the 12-principles
@@ -44,6 +44,7 @@ the standard pose there.
 | Clips are written in clip space: the actor at the origin facing +x (yaw 90), metres for `pos` and `footW`, the figure frame (W) for `ik` targets | (convention) |
 | Each body's locomotion is authored with that body's numbers (`bodies.js`): stride, cadence, bounce, lift, sway, stoop; never an adult clip played on another body. Shared clips are authored on the adult and scale their metres with a smaller body | (review) |
 | A hand on a target (ik weight >= 0.5, or holding a prop) stays on it (<= 2 cm off); a carried prop never passes through the body (<= 1 cm) and its mass (`x_kg<side>` kg) is in the centre of mass, so balance is keyed honestly: hips back under a load, the load handed to the floor or a sill while it rests there, let go over a few frames | rig (`motionlib.mjs` runs every clip through cast.js headless; `shot.mjs --report` (h)/(i) on renders) |
+| A clip plays with the film props it lists (`propChecks: [{ phone: { mode, grip, size } }]`, `props.js` heldProp), and a film checks its own key before it renders: `motionlib.mjs --only <clip> --check '{ "swap": …, "pos": …, "yaw": …, "collide": […] }'` | rig, contract (`motionlib.mjs`) |
 | Grips get explicit elbow poles (`pole`): a wanted elbow through the body makes the solver swing it round, and its side can change between frames | (review; the rig line prints the solved joints' largest change a frame) |
 
 ## Files

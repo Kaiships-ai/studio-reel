@@ -50,6 +50,20 @@ export function sizedBag({ w = BAG.w, l = BAG.l, h = BAG.h, grip = BAG.grip } = 
   BUILD[kind] ||= () => { const g = bagMesh(undefined, d); g.userData = bagData(d); return g; };
   return kind;
 }
+// A film's own prop known by its contract alone (its mesh is built later, with its set): a box `size` [w, h, l] (m, along
+// the prop's x, y, z) centred on its origin, held at `grip` in `mode`, registered once under a name of its own. A clip
+// key's swap names a prop kind or gives such a contract (tools/motionlib.mjs propChecks and --check, the proof page's swap);
+// a bag a clip fits itself to is sizedBag's (its bottom at y 0).
+export function heldProp({ mode = 'up', grip = [0, 0, 0], size, mass = 0.3 }) {
+  const mm = v => v.map(x => Math.round(x * 1000)).join('x'), kind = `prop_${mode}_${mm(size)}_${mm(grip)}`;
+  BUILD[kind] ||= () => { const g = new THREE.Group(); g.add(solid(new THREE.BoxGeometry(...size), [0.10, 0.10, 0.12], 0.006)); g.userData = { mode, grip, size, mass }; return g; };
+  return kind;
+}
+export const propSwap = swap => Object.fromEntries(Object.entries(swap || {}).map(([k, v]) => {
+  if (typeof v !== 'string') return [k, heldProp(v)];
+  if (!BUILD[v]) throw new Error(`motion-lib: no prop "${v}" to swap for ${k}: register its builder first, or give its contract { mode, grip, size } (props.js heldProp)`);
+  return [k, v];
+}));
 BUILD.torch = () => {
   const g = new THREE.Group();
   const body = solid(new THREE.CylinderGeometry(0.02, 0.02, 0.22, 16), [0.10, 0.10, 0.12]); body.position.y = 0.05; g.add(body);
