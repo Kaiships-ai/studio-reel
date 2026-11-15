@@ -11,6 +11,11 @@ Made by `node styles/stick-man/tools/motionlib.mjs --catalogue` from the clips t
 Proof: `node styles/stick-man/tools/motionlib.mjs --proof <dir>` (every clip at 540x960, physics on and off, `shot.mjs --report`
 numbers, one contact sheet per group).
 
+Physics gates (every clip, physics on and off, through the real rig): a prop moves no more than its hand (times its attach
+weight) and gravity allow plus 1 cm, also when it comes back after frames out of the scene; a declared prop is in the scene
+every frame of the clip; the balance solve moves the pelvis at most 4 cm a frame (the pelvis with balance on minus off: the
+raw pelvis speed is reported, not gated); the carried mass changes at most 35 % of its largest a frame.
+
 ## Idle
 
 | Clip | Body | Loop | Frames | Base | Props (hand) | Set | What |

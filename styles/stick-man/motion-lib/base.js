@@ -403,7 +403,7 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
     P.fall = 0;
     const want = {}; for (const sd of ['L', 'R']) if (m.down[sd]) want[sd] = m['knee' + sd];
     // and a swinging foot shows its captured knee (reachFoot)
-    P._cap = { bob: P.bob, knee: { L: m.kneeL, R: m.kneeR }, down: { ...m.down } };
+    if (!P._air) P._cap = { bob: P.bob, knee: { L: m.kneeL, R: m.kneeR }, down: { ...m.down } };   // (a jump's flight is gravity's: airBob leaves it)
     if (Object.keys(want).length) P.bob = legBob(P, want);
     // (also with both feet up: a walk's push-off on the toes, a run's flight; not a jump's, whose flight gravity owns)
     if (!P._air) for (const sd of ['L', 'R']) if (!m.down[sd]) P['leg' + sd] = reachFoot(P, sd, m['knee' + sd]);

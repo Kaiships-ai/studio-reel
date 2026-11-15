@@ -83,7 +83,7 @@ export function propPlan(track, Qat, S) {
   // a span that opens with the prop out of the hand has it there from the track's start (or the same prop's span before
   // it), one that ends with the prop let go keeps it where it lies to the track's end (or the same prop's next span):
   // an object in the scene does not vanish when the clip that used it is over
-  const ext = spans.map(sp => { const same = spans.filter(o => o.id === sp.id); return { from: Math.max(-Infinity, ...same.filter(o => o.f1 < sp.f0).map(o => o.f1 + 1)), to: Math.min(Infinity, ...same.filter(o => o.f0 > sp.f1).map(o => o.f0 - 1)) }; });
+  const ext = spans.map(sp => { const same = spans.filter(o => o.id === sp.id); return { from: Math.max(...same.filter(o => o.f1 < sp.f0).map(o => o.f1 + 1)), to: Math.min(...same.filter(o => o.f0 > sp.f1).map(o => o.f0 - 1)) }; });
   return {
     spans,
     at(f) {

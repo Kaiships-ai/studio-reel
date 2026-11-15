@@ -73,8 +73,11 @@ and `anim: { kid: [{ f: 0, clip: 'Move_Run_Fwd_Loop', body: 'child', to: [4, 0] 
   held frames, the solved joints' largest change a frame. It fails a clip that holds an undeclared prop, declares one it
   never holds, acts on a thing (`OBJECT_ACT`) without one, moves its root faster than 4 cm a frame outside the capture, or
   starts off its origin. Physics gates on and off (`physicsFails`): a prop moves no more than its hand (times w) plus
-  gravity plus 1 cm a frame (`PROP_SLIP_CM`), a declared prop is in the scene every frame of the clip, the balance solve
-  moves the pelvis at most 4 cm a frame (`BAL_CM`: pelvis balance on minus off), the load steps at most 35 % a frame.
+  gravity plus 1 cm a frame (`PROP_SLIP_CM`, `propExcess`; a prop seen again after a gap is measured from where it was
+  last seen), a declared prop is in the scene every frame of the clip, the balance solve moves the pelvis at most 4 cm a
+  frame (`BAL_CM`: only the balance shift, pelvis balance on minus off; the raw pelvis speed is reported, not gated), the
+  load steps at most 35 % a frame (`MASS_STEP`; holdKeys' linear ramp is 25 %, a keyed release eased by the dose peaks
+  higher: Act_DropInTrunk_Once is 34 %).
 - One clip in the browser: `node styles/stick-man/tools/shot.mjs --film styles/stick-man/motion-lib/proof --w 540 --h 960
   --query "clip=Act_PutDown_Once&phys=1" --frames 0-350 --report /tmp/putdown.txt --fast 1`; read (h) and (i): PASS.
 - A contact sheet: `node styles/stick-man/tools/motionlib.mjs --sheet Act --out /tmp/sheets`.

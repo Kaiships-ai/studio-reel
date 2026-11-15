@@ -185,6 +185,13 @@ export const GRIP_CM = 2, PROP_CM = 1;
 //   MASS_STEP     the carried mass changes no more than this share of its largest a frame (a load enters or leaves the
 //                 hand over three frames at least: holdKeys ramps it over four)
 export const PROP_SLIP_CM = 1, BAL_CM = 4, MASS_STEP = 0.35;
+// how far (cm) a prop moved from its last seen state q to now ({ f, at, hand: Blender m, w, v: m/s }) beyond what its hand
+// (times the attach weight) and gravity give it over those frames: over PROP_SLIP_CM it slid, popped or teleported
+export function propExcess(q, now) {
+  const d3 = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]), t = Math.max(1, now.f - q.f) / 30;
+  const allow = Math.max(now.w, q.w) * 100 * d3(now.hand, q.hand) + 100 * (Math.max(now.v, q.v) * t + 0.5 * 9.8 * t * t);
+  return 100 * d3(now.at, q.at) - allow;
+}
 // one clip through the real rig, physics on: the hand off its target while it grips (shot.mjs (h)) and a held prop
 // inside the body after the solve ((i)), per frame; and the props, the balance shift and the load frame to frame
 export async function rigClip(C, body = C.body || 'adult', { phys = true } = {}) {
@@ -214,16 +221,13 @@ export async function rigClip(C, body = C.body || 'adult', { phys = true } = {})
       const kg = S.carryKg || 0; kgs.push([f, kg - (prevKg ?? kg)]); prevKg = kg; o.kgMax = Math.max(o.kgMax, kg);
       // every prop the clip declares is on screen through the clip (held or resting), and moves no more than its hand lets it
       if (f <= lastF) for (const kind of C.needs?.props || []) if (!Object.entries(S.props).some(([id, p]) => id.slice(1) === kind && p.visible)) o.gone.push(f);
-      const now = {};
+      // (a prop that comes back after frames out of the scene is measured from where it was last seen: a teleport fails)
       for (const [id, p] of Object.entries(S.props)) {
         if (!p.visible || id[0] === 'H') continue;
         const st = S.propState?.[id] || { w: 1, v: 0 }, hand = id[0] === 'B' ? w.L.hand.map((x, i) => (x + w.R.hand[i]) / 2) : w[id[0]].hand;
-        now[id] = { at: gripW(p), hand, w: st.w, v: st.v };
-        const q = prevP[id]; if (!q) continue;
-        const allow = Math.max(st.w, q.w) * 100 * d3(hand, q.hand) + 100 * Math.max(st.v, q.v) / 30 + 0.5 * 9.8 / 900 * 100 + PROP_SLIP_CM, d = 100 * d3(now[id].at, q.at);
-        if (d - allow + PROP_SLIP_CM > o.slip) { o.slip = +(d - allow + PROP_SLIP_CM).toFixed(2); o.slipAt = `${f} ${id}`; }
+        const now = { f, at: gripW(p), hand, w: st.w, v: st.v }, q = prevP[id]; prevP[id] = now;
+        const e = q ? propExcess(q, now) : 0; if (e > o.slip) { o.slip = +e.toFixed(2); o.slipAt = `${f} ${id}`; }
       }
-      prevP = now;
       if (last) for (const s of ['L', 'R']) {
         for (const k of ['kneeFlex', 'elbowFlex']) { const d = Math.abs(w[s][k] - last[s][k]); if (d > o.joint) { o.joint = +d.toFixed(1); o.jointAt = `${f} ${k}${s}`; } }
         for (const [a, b] of SEG) { const u = dir(last[s][a], last[s][b]), v = dir(w[s][a], w[s][b]), d = Math.acos(Math.max(-1, Math.min(1, u[0] * v[0] + u[1] * v[1] + u[2] * v[2]))) * 180 / Math.PI;
@@ -247,10 +251,10 @@ export async function rigClip(C, body = C.body || 'adult', { phys = true } = {})
 // the props-as-objects and balance gates on one rigClip result (physics on or off): the lines that fail
 export function physicsFails(g, tag = '') {
   const t = tag ? ` (${tag})` : '', out = [];
-  if (g.slip > PROP_SLIP_CM) out.push(`prop${t}: moves ${g.slip} cm a frame more than its hand and gravity allow at ${g.slipAt} (max ${PROP_SLIP_CM})`);
+  if (g.slip > PROP_SLIP_CM) out.push(`prop${t}: moves ${g.slip} cm more than its hand and gravity allow at ${g.slipAt} (max ${PROP_SLIP_CM})`);
   if (g.gone.length) out.push(`prop${t}: a declared prop is not in the scene on ${g.gone.length} frames of the clip (${g.gone[0]}..${g.gone[g.gone.length - 1]})`);
   if (g.bal > BAL_CM) out.push(`balance${t}: the solve moves the pelvis ${g.bal} cm in a frame at ${g.balAt} (max ${BAL_CM})`);
-  if (g.massStep > MASS_STEP) out.push(`load${t}: the carried mass steps ${Math.round(g.massStep * 100)} % of its ${g.kgMax} kg in one frame at ${g.massAt} (max ${MASS_STEP * 100} %)`);
+  if (g.massStep > MASS_STEP) out.push(`load${t}: the carried mass steps ${Math.round(g.massStep * 100)} % of its ${+g.kgMax.toFixed(1)} kg in one frame at ${g.massAt} (max ${Math.round(MASS_STEP * 100)} %)`);
   return out;
 }
 export async function checkAll() {
@@ -309,7 +313,11 @@ export function catalogue() {
     '`needs.marks`).', '',
     'Made by `node styles/stick-man/tools/motionlib.mjs --catalogue` from the clips themselves: do not edit by hand.', '',
     'Proof: `node styles/stick-man/tools/motionlib.mjs --proof <dir>` (every clip at 540x960, physics on and off, `shot.mjs --report`',
-    'numbers, one contact sheet per group).'];
+    'numbers, one contact sheet per group).', '',
+    'Physics gates (every clip, physics on and off, through the real rig): a prop moves no more than its hand (times its attach',
+    'weight) and gravity allow plus 1 cm, also when it comes back after frames out of the scene; a declared prop is in the scene',
+    'every frame of the clip; the balance solve moves the pelvis at most 4 cm a frame (the pelvis with balance on minus off: the',
+    'raw pelvis speed is reported, not gated); the carried mass changes at most 35 % of its largest a frame.'];
   for (const g of GROUPS) {
     const cs = ALL.filter(c => c.group === g).sort((a, b) => a.clip.localeCompare(b.clip) || (a.body || '').localeCompare(b.body || ''));
     if (!cs.length) continue;

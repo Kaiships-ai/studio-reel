@@ -36,8 +36,9 @@ const right = H === 'R' || window_ || (C.needs.props || []).includes('bag') ? 1 
 // a run outpaces the camera's eased move through its middle (its start and stop are slow), so the camera stands further back
 const far = C.advance && /Run/.test(CLIP) ? 1.4 : 1;
 // &view=side: straight side-on (the view animators judge a walk or a run in)
-const side = QS.get('view') === 'side';
-const cam = x => (side ? { pos: [x, -3.0 * k, 0.85 * k], aim: [x, 0, 0.75 * k], lens: 40 } : { pos: [x + 1.6 * k * far, right * 3.0 * k * far, 1.1 * k], aim: [x + 0.15, 0, 0.8 * k], lens: 40 });
+// (&wide=1: from further back and aimed ahead of the body, so a prop it sets down or pushes in front stays in the frame)
+const side = QS.get('view') === 'side', wide = QS.get('wide') === '1' ? { d: 1.8, ahead: 0.45 } : { d: 1, ahead: 0 };
+const cam = x => (side ? { pos: [x + wide.ahead, -3.0 * k * wide.d, 0.85 * k], aim: [x + wide.ahead, 0, 0.75 * k], lens: 40 } : { pos: [x + 1.6 * k * far, right * 3.0 * k * far, 1.1 * k], aim: [x + 0.15, 0, 0.8 * k], lens: 40 });
 // the side view tracks the body: short linear moves from where the body is to where it will be, each starting where
 // the last ended (a cut to the same camera does not show), so a fast run stays in the middle of the frame
 const xAt = f => { const K = placed.keys; let i = 0; while (i < K.length - 1 && K[i + 1].f <= f) i++; const a = K[i], b = K[Math.min(K.length - 1, i + 1)];

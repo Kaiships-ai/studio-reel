@@ -882,7 +882,7 @@ export function makeStick(spec) {
       // (it steps out of what it is in) blended by that weight, the elbow re-solved so the bones keep their length (a grip
       // switched off in one frame stepped the fist 7 cm, Act_PutDown_Once at its release)
       if (PHYS.on && gw > 0 && gw < 1) { const s0 = arm(false), H = s0.hand.clone().lerp(sol.hand, gw), E = s0.elbow.clone().lerp(sol.elbow, gw).sub(sh);
-        const r = ik(sh, H, LIMB.upper, E, SOFT.arm, true); sol = { ...sol, elbow: r.joint, hand: r.end, flex: r.flex, pen: Math.max(sol.pen, s0.pen) * 1 }; }
+        const r = ik(sh, H, LIMB.upper, E, SOFT.arm, true); sol = { ...sol, elbow: r.joint, hand: r.end, flex: r.flex, pen: Math.max(sol.pen, s0.pen) }; }
       elbow = sol.elbow; hand = sol.hand; flex = sol.flex;
       arms[side] = { sh, pole: A.pole ? V(A.pole) : k.pole, want, grip };
       const hipJ = toRoot(new THREE.Vector3(sg * 0.14 * girth, 0.04, 0)), G = Q['leg' + side] || {};

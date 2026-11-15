@@ -120,7 +120,7 @@ test('K5: a carried load pulls the centre of mass toward it by its share of the 
 });
 
 // ------------------------------------------------------------------ the same rules through the real rig (cast.js, headless)
-import { rigClip, rigStick, GRIP_CM, PROP_CM, physicsFails, BAL_CM } from '../../styles/stick-man/tools/motionlib.mjs';
+import { rigClip, rigStick, GRIP_CM, PROP_CM, physicsFails, BAL_CM, propExcess, PROP_SLIP_CM } from '../../styles/stick-man/tools/motionlib.mjs';
 import { holdKeys } from '../../styles/stick-man/motion-lib/base.js';
 
 // props as scene objects (engine/propobj.js) and the balance solve (Hot Money ep01: the bag jumped 20 cm as it was set
@@ -146,6 +146,20 @@ test('props: a prop let go falls on gravity and lands on what is under it, the s
   assert.ok(x > 0.53 && Math.abs(y - floor) < 0.03 && late.Rbag.v === 0, `lands on the trunk floor past the lip: ${late.Rbag.p}`);
   let prev = null;
   for (let f = 34; f < 60; f++) { const r = A.at(f).Rbag; if (!r) continue; if (prev) assert.ok(r.p[1] <= prev[1] + 1e-9, `falls, never rises (frame ${f})`); prev = r.p; }
+});
+
+test('props: a prop that teleports fails the slip gate, also when it comes back after frames out of the scene', () => {
+  const held = { f: 184, at: [0.58, 0.17, 0.30], hand: [0.58, 0.17, 0.30], w: 1, v: 0 };
+  // in the hand, moving with it: no excess
+  assert.ok(propExcess(held, { f: 185, at: [0.60, 0.17, 0.29], hand: [0.60, 0.17, 0.29], w: 1, v: 0 }) <= PROP_SLIP_CM);
+  // main's set-down: the hand prop hidden at 186, the floor mark 20 cm off where it was let go (seen again from 186)
+  assert.ok(propExcess(held, { f: 186, at: [0.58, 0.36, 0.31], hand: [0.57, 0.23, 0.27], w: 0, v: 0 }) > PROP_SLIP_CM);
+  // a resting prop that jumps 5 cm in a frame
+  const rest = { f: 10, at: [1, 0, 0], hand: [0, 0, 1], w: 0, v: 0 };
+  assert.ok(propExcess(rest, { f: 11, at: [1.05, 0, 0], hand: [0, 0.1, 1], w: 0, v: 0 }) > PROP_SLIP_CM);
+  // falling: gravity gives it room
+  assert.ok(propExcess({ ...rest, v: 2 }, { f: 11, at: [1, 0, -0.07], hand: [0, 0, 1], w: 0, v: 2.3 }) <= PROP_SLIP_CM);
+  assert.match(physicsFails({ slip: 18.4, slipAt: '186 Rbag', gone: [], bal: 0, massStep: 0 }).join(), /prop: moves 18.4 cm more than its hand and gravity allow at 186 Rbag/);
 });
 
 test('props: a load enters the hand over a ramp (holdKeys), the floor carries a pushed crate, and a hard switch fails the gates', async () => {
