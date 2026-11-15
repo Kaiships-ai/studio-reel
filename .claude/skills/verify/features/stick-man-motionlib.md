@@ -27,6 +27,14 @@ before, except where an old one had a hand forced off a target (now kept when re
   extra depth), a higher handle raises the fists, the bag is tossed up as it leaves the fingers. At Hot Money ep01's duffel
   (0.36 x 0.62, handle 0.415) on a 0.85 m lip: hand 19.6 -> 1.7 cm off its target, the bag in the trunk, not on the ground.
   Trans_JumpWindow_Once takes no bag size yet: with that duffel the leap puts it in the head and the hand 7.7 cm off (open).
+- Film keys in the gate (PR H): `motionlib.mjs keyed(C, key)` plays a clip as a film's key does, with its `swap`, `pos`,
+  `yaw` and `collide` (the set pieces beside it); a swap value is a prop kind or a prop's contract `{ mode, grip, size }`
+  (`props.js heldProp`, a box; `propSwap` throws on a kind nothing registered). A record's `propChecks` are checked as rows
+  of their own (Gest_PhoneCall_Loop: Hot Money ep01's desk handset turned up), and `--only <clip> --check '<json>'` runs one
+  film key. `contractFails`: a swapped prop longest along another axis than the kit prop it stands in for fails (the ep01
+  handset, long side across: hand 10.6 cm off, 10.6 cm in the head; the kit gate had said 0). At SH245's place, 0.30 m behind
+  its counter, the reach to the ear stops on the counter: 18.85 cm off at frame 195, as the film's render. The proof page
+  takes `swap=<json>` the same way.
 - `support`: a clip key `pos: [x, y, h]` plays the clip on a surface h m high (a bed, a stage): every key is lifted and
   held up there (motion.js counts a flight only above `support`); the next clip carries it on: Trans_LieDown_Once ->
   Idle_Sleep_Loop -> Trans_GetUp_Once on a 0.55 m bed (test). A capture blend whose pelvis turns more than 45 deg (the

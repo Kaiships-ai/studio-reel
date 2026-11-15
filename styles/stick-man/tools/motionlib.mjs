@@ -4,6 +4,9 @@
 //        (<= 25 deg a frame after the 'kaiships' dose), planted feet that never slide, a physics line (flights, g), and the
 //        clip through the real rig headless (cast.js): a gripping hand <= 2 cm off its target, a held prop <= 1 cm in the body,
 //        no prop inside the set, and the solved joints turning no more than 25 deg a frame beyond the motion's own (jointExcess)
+//   node styles/stick-man/tools/motionlib.mjs --only <clip> [--check '<json>']   one clip and its fitChecks / propChecks,
+//        plus a film's own key as JSON: { swap, pos, yaw, body, fit fields, collide: [{ name, lo, hi }] } (a swap value is a
+//        prop kind or a prop's contract { mode, grip, size }: props.js heldProp), so a film checks its prop and staging first
 //   node styles/stick-man/tools/motionlib.mjs --sheet <group> --out <dir>    a contact sheet of a group (Idle, Move, Act,
 //        Trans, React, Gest): every clip of it on its bodies, 6 frames each, rendered through motion-lib/proof (540x960)
 //   node styles/stick-man/tools/motionlib.mjs --proof <dir> [--only <clip>]   every clip as mp4, physics on and off, the
@@ -11,11 +14,11 @@
 import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { run } from '../../../kit/env.mjs';
-import { ALL, placeClip, fitClip } from '../motion-lib/index.js';
+import { ALL, placeClip, fitClip, propSize } from '../motion-lib/index.js';
 import { BASES, turned, markColliders } from '../motion-lib/base.js';
 import { BODIES } from '../motion-lib/bodies.js';
 import { compileTrack, playActor, flatten } from '../engine/motion.js';
-import { sizedBag } from '../motion-lib/props.js';
+import { sizedBag, propSwap } from '../motion-lib/props.js';
 import { jointSteps, JOINT_STEP_MAX } from './jointstep.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.resolve(HERE, '../../..'), LIB = path.join(ROOT, 'styles/stick-man/motion-lib');
@@ -59,8 +62,19 @@ function diff(a, b) {
   return worst;
 }
 // a fitted clip (index.js fitClip) is played through its clip key's fit
-// (a fit that names a bag's size plays a kit bag of that size: motion-lib/props.js sizedBag, swapped in as a film's own is)
-const fitOf = C => (C.fitted && !ALL.includes(C) ? { fit: C.fitted, ...(C.fitted.bag ? { swap: { bag: sizedBag(C.fitted.bag) } } : {}) } : {});
+// (a fit that names a bag's size plays a kit bag of that size: motion-lib/props.js sizedBag, swapped in as a film's own is),
+// and a keyed one (keyed below) through the rest of a film's key: its swap, pos and yaw
+const fitOf = C => {
+  const fit = C.fitted && !ALL.includes(C) ? { fit: C.fitted, ...(C.fitted.bag ? { swap: { bag: sizedBag(C.fitted.bag) } } : {}) } : {};
+  return C.keyed ? { ...fit, ...C.keyed, swap: { ...fit.swap, ...C.keyed.swap } } : fit;
+};
+// A clip as a film's key plays it, for the gate: { swap?, pos?, yaw?, ...fit } (a swap value is a prop kind or a prop's
+// contract, props.js heldProp). The kit's own clip plays only the kit's props in the open; a film's swapped prop or its
+// placing beside a set piece is checked only this way (Hot Money ep01 SH245: the kit said PASS, the film's hand was 40 cm off).
+export function keyed(C, { swap, pos, yaw, body, collide, ...fit } = {}) {
+  const F = Object.keys(fit).length ? fitClip(C, fit) : C;
+  return swap || pos || yaw != null ? { ...F, keyed: { ...(swap ? { swap: propSwap(swap) } : {}), ...(pos ? { pos } : {}), ...(yaw != null ? { yaw } : {}) } } : F;
+}
 // one clip: the checks, plus the offline physics numbers
 export function checkClip(C, file) {
   const fails = [], info = {}, base = path.basename(file, '.js'), dir = file.split(path.sep);
@@ -307,6 +321,17 @@ function jointGate(r, name, g, g0) {
   else if (ex > k[0] + 0.05) r.fails.push(...f, `solved joint: JOINT_KNOWN allows ${k[0]} deg/f over (${k[1]}), now ${ex}`);
   else r.known = `known: ${ex} deg/f over ${JOINT_STEP_MAX} (JOINT_KNOWN: ${k[1]})`;
 }
+// a swapped prop lies the way the kit prop it stands in for does: its longest side along the same axis of the prop's own
+// frame (a phone's up, a pistol's along the forearm). A film's desk handset modelled long side across put its ends in the
+// head at the ear (Hot Money ep01 SH245: 15.7 cm in, the hand 40 cm off)
+export function contractFails(F) {
+  const out = [], long = d => { const v = [d.w, d.h, d.l]; return v.indexOf(Math.max(...v)); };
+  for (const [from, to] of Object.entries(F.keyed?.swap || {})) {
+    const a = propSize(from), b = propSize(to);
+    if (a && b && long(a) !== long(b)) out.push(`contract: the swapped ${to} is longest along its ${'xyz'[long(b)]} (${+Math.max(b.w, b.h, b.l).toFixed(3)} m), the kit ${from} it stands in for along its ${'xyz'[long(a)]}: turn it (props.js)`);
+  }
+  return out;
+}
 // the props-as-objects and balance gates on one rigClip result (physics on or off): the lines that fail
 export function physicsFails(g, tag = '') {
   const t = tag ? ` (${tag})` : '', out = [];
@@ -316,10 +341,12 @@ export function physicsFails(g, tag = '') {
   if (g.massStep > MASS_STEP) out.push(`load${t}: the carried mass steps ${Math.round(g.massStep * 100)} % of its ${+g.kgMax.toFixed(1)} kg in one frame at ${g.massAt} (max ${Math.round(MASS_STEP * 100)} %)`);
   return out;
 }
-export async function checkAll() {
+export async function checkAll({ only, check } = {}) {
+  const mine = C => !only || C.clip === only || C.name === only;
   const files = clipFiles(), rows = [], listed = new Set();
   for (const f of files) {
     const C = (await import(path.join(LIB, f))).default;
+    if (!mine(C)) { listed.add(C); continue; }
     if (!ALL.includes(C)) rows.push({ file: f, fails: ['index: index.js does not import this file'], info: {} });
     else {
       // the rig as the proof renders it: physics on (the hands' gap from their grip, a held prop after the solve) and off
@@ -337,15 +364,19 @@ export async function checkAll() {
       rows.push({ file: f, name: C.name, ...r });
     }
   }
-  // every fit a clip lists (fitChecks: the sets films use) is checked as its own clip
-  for (const C of ALL) for (const fit of C.fitChecks || []) {
-    const F = fitClip(C, fit), f = clipFiles().find(x => path.basename(x, '.js').replace(/_v\d+$/, '') === C.name), r = checkClip(F, f), g = await rigClip(F), g0 = await rigClip(F, undefined, { phys: false });
+  // every fit a clip lists (fitChecks: the sets films use), every film prop it lists (propChecks: a swap, props.js heldProp)
+  // and a film's own key (--check: its swap, pos, yaw, body and the set pieces it plays beside, collide) is checked as its own clip
+  for (const C of ALL) for (const fit of mine(C) ? [...(C.fitChecks || []), ...(C.propChecks || []).map(swap => ({ swap })), ...(check && only ? [check] : [])] : []) {
+    const F = keyed(C, fit), f = clipFiles().find(x => path.basename(x, '.js').replace(/_v\d+$/, '') === C.name), r = checkClip(F, f), set = { obstacles: fit.collide || [] }, g = await rigClip(F, fit.body, set), g0 = await rigClip(F, fit.body, { ...set, phys: false });
+    r.fails.push(...contractFails(F));
+    // (a key that only swaps a prop or places the clip plays the clip's own motion: its JOINT_KNOWN row, if any, holds)
+    const { swap: _s, pos: _p, yaw: _y, body: _b, collide: _c, ...fitOnly } = fit, jn = Object.keys(fitOnly).length ? `${C.name} fit ${JSON.stringify(fit)}` : C.name;
     if (g.grip > GRIP_CM) r.fails.push(`rig: a gripping hand is ${g.grip} cm off its target at ${g.gripAt} (max ${GRIP_CM})`);
     if (g.prop > PROP_CM) r.fails.push(`rig: a held prop is ${g.prop} cm inside the ${g.propIn === 'set' ? 'set' : 'body'} at frame ${g.propAt} (max ${PROP_CM})`);
     if (g.propInSet.length) r.fails.push(`rig: a prop is inside the set: ${g.propInSet.slice(0, 3).join('; ')}${g.propInSet.length > 3 ? ` (+${g.propInSet.length - 3} frames)` : ''}`);
     if (g0.prop > PROP_CM) r.fails.push(`rig (physics off): a held prop is ${g0.prop} cm inside the ${g0.propIn === 'set' ? 'set' : 'body'} at frame ${g0.propAt} (max ${PROP_CM})`);
     if (g.inSet.length) r.fails.push(`rig: the body is inside the set: ${g.inSet.slice(0, 3).join('; ')}${g.inSet.length > 3 ? ` (+${g.inSet.length - 3} frames)` : ''}`);
-    r.fails.push(...physicsFails(g), ...physicsFails(g0, 'physics off')); jointGate(r, `${C.name} fit ${JSON.stringify(fit)}`, g, g0);
+    r.fails.push(...physicsFails(g), ...physicsFails(g0, 'physics off')); jointGate(r, jn, g, g0);
     Object.assign(r.info, { slipCm: g.slip, balCm: g.bal, massStep: g.massStep });
     Object.assign(r.info, { gripCm: g.grip, propCm0: g.prop0, propCm: g.prop, propOffCm: g0.prop, heldFrames: g.heldFrames, rigJoint: g.joint, rigJointAt: g.jointAt, rigExcess: Math.max(jointExcess(g).excess, jointExcess(g0).excess) });
     rows.push({ file: f, name: `${C.name} fit ${JSON.stringify(fit)}`, ...r });
@@ -443,7 +474,8 @@ if (path.resolve(process.argv[1] || '') === fileURLToPath(import.meta.url)) {
   else if (A.sheet) console.log(sheet(A.sheet, path.resolve(A.out || '.')));
   else if (A.proof) console.log(proof(path.resolve(A.proof), A.only, A.fit).join('\n'));
   else {
-    const rows = await checkAll(); let bad = 0;
+    if (A.check && !A.only) throw new Error('motionlib.mjs: --check needs --only <clip>');
+    const rows = await checkAll({ only: A.only, check: A.check ? JSON.parse(A.check) : null }); let bad = 0;
     for (const r of rows) {
       const i = r.info, num = i.frames != null ? `  ${i.frames} f, joint ${i.jointMax} deg/f, slide ${i.slideMm} mm/f, flights ${i.flights}${i.flights ? ` (peak ${i.peakCm} cm, g 9.8)` : ''}${i.carryKg ? `, carries ${i.carryKg} kg` : ''}, rig: grip ${i.gripCm} cm, prop ${i.propCm0}>${i.propCm} cm (physics off ${i.propOffCm}), held ${i.heldFrames} f, solved joint ${i.rigJoint} deg/f (${i.rigJointAt}; over ${JOINT_STEP_MAX}: ${i.rigExcess})` : '';
       console.log(`${r.fails.length ? 'FAIL' : 'PASS'}  ${r.name || r.file}${num}`); for (const f of r.fails) console.log(`      ${f}`); if (r.known) console.log(`      ${r.known}`); bad += !!r.fails.length;
