@@ -44,6 +44,8 @@ import Adult_Gest_PhoneCall_Loop_v01 from './body/adult/Adult_Gest_PhoneCall_Loo
 import Adult_Gest_LookBackCarry_Once_v01 from './body/adult/Adult_Gest_LookBackCarry_Once_v01.js';
 import Heavy_Act_TorchReady_Loop_v01 from './body/heavy/Heavy_Act_TorchReady_Loop_v01.js';
 import Thin_Act_TorchReady_Loop_v01 from './body/thin/Thin_Act_TorchReady_Loop_v01.js';
+import Heavy_Move_WalkFlashlight_Loop_v01 from './body/heavy/Heavy_Move_WalkFlashlight_Loop_v01.js';
+import Thin_Move_WalkFlashlight_Loop_v01 from './body/thin/Thin_Move_WalkFlashlight_Loop_v01.js';
 import Child_Idle_Breath_Loop_v01 from './body/child/Child_Idle_Breath_Loop_v01.js';
 import Child_Move_Run_Fwd_Loop_v01 from './body/child/Child_Move_Run_Fwd_Loop_v01.js';
 import Child_Move_Walk_Fwd_Loop_v01 from './body/child/Child_Move_Walk_Fwd_Loop_v01.js';
@@ -95,6 +97,8 @@ export const ALL = [
   Adult_Gest_LookBackCarry_Once_v01,
   Heavy_Act_TorchReady_Loop_v01,
   Thin_Act_TorchReady_Loop_v01,
+  Heavy_Move_WalkFlashlight_Loop_v01,
+  Thin_Move_WalkFlashlight_Loop_v01,
   Child_Idle_Breath_Loop_v01,
   Child_Move_Run_Fwd_Loop_v01,
   Child_Move_Walk_Fwd_Loop_v01,
@@ -200,6 +204,10 @@ export function placeClip(k, cur = { pos: [0, 0], yaw: 0 }) {
     return { id: key[4] + kind, key, f0: out[0].f, f1: last.f, ...(t ? { toss: [(t[0] * c - t[1] * s) * sc, (t[0] * s + t[1] * c) * sc, (t[2] || 0) * sc] } : {}) };
   });
   out.props = props;
+  // and on the keys themselves (the first key of the clip key carries its spans, frames counted from it): a film that
+  // copies, maps or spreads its anim array keeps them (play.js .map()ped the array and lost out.props, so a prop let go
+  // vanished; ep01 round 3 carried them in an Array subclass). engine/motion.js compileTrack reads them from there
+  if (props.length) out[0].clipProps = props.map(({ f0, f1, ...p }) => ({ ...p, df0: f0 - out[0].f, df1: f1 - out[0].f }));
   return { keys: out, pos: last.pos ? last.pos.slice(0, 2) : O, yaw: last.yaw ?? H, support: Hs, clip: C, n, fit, props };
 }
 // a track's keys with every clip key expanded (keys sorted by f; plain keys pass through)

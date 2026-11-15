@@ -26,19 +26,33 @@ function support(S, p, y, tol = 0.02) {
   }
   return top;
 }
-// a point (three.js world) inside a set piece's footprint below its top: the side of a box a falling prop runs into
-const blocked = (S, p, bottom) => (S.obstacles || []).some(o => -p.z > o.lo[1] && -p.z < o.hi[1] && p.x > o.lo[0] && p.x < o.hi[0] && bottom < o.hi[2] - 0.005 && bottom > o.lo[2] - 0.5);
+// a prop (three.js world origin p, its half extent e = [x, z] round it) overlapping a set piece's footprint below its top:
+// the side of a box a falling prop runs into (tested by its extent, not its origin: a bag's origin missed a thin wall
+// its body went through)
+const blocked = (S, p, bottom, e = [0, 0]) => (S.obstacles || []).some(o => -p.z + e[1] > o.lo[1] && -p.z - e[1] < o.hi[1] && p.x + e[0] > o.lo[0] && p.x - e[0] < o.hi[0] && bottom < o.hi[2] - 0.005 && bottom > o.lo[2] - 0.5);
 
+// a prop come to rest with its side in a set piece it lies below the top of (a bag landed in a trunk across its lip):
+// moved out sideways by the least way (Act_DropInTrunk_Once: 3 cm into the lip)
+function settle(S, p, bottom, e = [0, 0]) {
+  for (const o of S.obstacles || []) {
+    if (!(bottom < o.hi[2] - 0.005 && bottom > o.lo[2] - 0.5)) continue;
+    const x0 = p.x - e[0], x1 = p.x + e[0], y0 = -p.z - e[1], y1 = -p.z + e[1];
+    if (x1 <= o.lo[0] || x0 >= o.hi[0] || y1 <= o.lo[1] || y0 >= o.hi[1]) continue;
+    const m = [[x1 - o.lo[0], -1, 0], [o.hi[0] - x0, 1, 0], [y1 - o.lo[1], -1, 1], [o.hi[1] - y0, 1, 1]].reduce((a, b) => (b[0] < a[0] ? b : a));
+    if (m[2] === 0) p.x += m[1] * (m[0] + 0.002); else p.z -= m[1] * (m[0] + 0.002);
+  }
+}
 // the prop's world transform with the hand holding it at frame f, and how far its lowest point is under its origin
 function heldAt(S, Qat, id, f) {
   S.pose2(Qat(f));
   const o = S.props[id]; if (!o) return null;
   o.updateMatrixWorld(true);
   const p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3(); o.matrixWorld.decompose(p, q, s);
-  let low = 0; const bx = o.userData.box;
+  let low = 0; const bx = o.userData.box, ext = [0, 0];
   if (bx && !bx.isEmpty()) { low = Infinity; const c = new THREE.Vector3();
-    for (let i = 0; i < 8; i++) { c.set(i & 1 ? bx.max.x : bx.min.x, i & 2 ? bx.max.y : bx.min.y, i & 4 ? bx.max.z : bx.min.z).applyMatrix4(o.matrixWorld); low = Math.min(low, c.y - p.y); } }
-  return { p, q, low, floor: !!o.userData.floor };
+    for (let i = 0; i < 8; i++) { c.set(i & 1 ? bx.max.x : bx.min.x, i & 2 ? bx.max.y : bx.min.y, i & 4 ? bx.max.z : bx.min.z).applyMatrix4(o.matrixWorld); low = Math.min(low, c.y - p.y);
+      ext[0] = Math.max(ext[0], Math.abs(c.x - p.x)); ext[1] = Math.max(ext[1], Math.abs(c.z - p.z)); } }
+  return { p, q, low, ext, floor: !!o.userData.floor };
 }
 
 export function propPlan(track, Qat, S) {
@@ -71,9 +85,9 @@ export function propPlan(track, Qat, S) {
         if (still) continue;
         for (let i = 0; i < SUB && !still; i++) {
           v.y -= G * dt; const n = p.clone().addScaledVector(v, dt);
-          if (blocked(S, n, n.y + r.low) && !blocked(S, p, p.y + r.low)) { v.x = 0; v.z = 0; n.x = p.x; n.z = p.z; }
+          if (blocked(S, n, n.y + r.low, r.ext)) { if (!blocked(S, p, p.y + r.low, r.ext)) { v.x = 0; v.z = 0; n.x = p.x; n.z = p.z; } else settle(S, n, n.y + r.low, r.ext); }
           const top = support(S, n, p.y + r.low);
-          if (n.y + r.low <= top && v.y <= 0) { n.y = top - r.low; v.set(0, 0, 0); still = true; }
+          if (n.y + r.low <= top && v.y <= 0) { n.y = top - r.low; v.set(0, 0, 0); still = true; settle(S, n, n.y + r.low, r.ext); }
           p.copy(n);
         }
       }

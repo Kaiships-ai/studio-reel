@@ -30,11 +30,11 @@ function make({ lip = 0.68 } = {}) {
   needs: { props: ['bag'], hands: 'both', marks: [{ kind: 'trunk', at: [0.45, 0, lip], floor: lip - 0.18 }] }, toss: { bag: [1.2, 0, 0] },
   keys: [
     K(0, merge(C1, { x_yawR: 0, armR: { ik: [0.40, 1.30, 0.50], ikw: 0 }, armL: { ik: [0.30, 1.30, 0.50], ikw: 0 } })),
-    K(6, merge(C1, { x_yawR: 45, shrugR: -0.04, spine: { side: -9 }, armR: { ik: [0.66, 1.30, 0.33], ikw: 1, pole: PR }, armL: { ik: [0.30, 1.30, 0.50], ikw: 0, raise: 40, swing: 35, elbow: 30 } })),          // the bag swung out ahead of the leg
+    K(6, merge(C1, { x_yawR: 45, shrugR: -0.04, spine: { side: -9 }, armR: { ik: [0.66, 1.30, 0.33], ikw: 1, pole: PR }, armL: { ik: [0.30, 1.30, 0.50], ikw: 0, raise: 40, swing: 35, elbow: 30 } }), { ease: 'flow' }),          // the bag swung out ahead of the leg
     K(12, merge(S0, BAG, hands(1.34, 0.50, 0.26), { spine: { side: -3, bend: 2 }, hip: { z: -0.08 } })),           // round to the front, the left fist joins
     K(20, merge(S0, BAG, hands(1.15, 0.48), { bob: -0.16, hip: { z: -0.12 }, spine: { bend: 8 }, neck: { nod: 8 } })),   // the dip
     K(26, merge(S0, BAG, FK, up(1.74, 0.52), { bob: 0.0, hip: { z: -0.10 }, ...bend(16), neck: { nod: -8 } })),   // up: clear of the lip
-    K(30, merge(S0, BAG, FK, up(1.78, 0.78), { bob: 0.02, hip: { z: -0.21 }, ...bend(28), neck: { nod: -10 } })),   // and forward over it
+    K(31, merge(S0, BAG, FK, up(1.78, 0.78), { bob: 0.02, hip: { z: -0.21 }, ...bend(28), neck: { nod: -10 } })),   // and forward over it
     K(32, merge(S0, BAG, FK, up(1.78, 0.79), { bob: 0.02, hip: { z: -0.21 }, ...bend(29), neck: { nod: -6 } })),
     K(33, merge(S0, BAG, FK, up(1.775, 0.86), { x_hpR_bag: 0.7, bob: 0.02, hip: { z: -0.19 }, ...bend(29), neck: { nod: -2 } })),     // the fingers open: the load
     K(36, merge(S0, NONE, FK, up(1.68, 0.98), { x_hpR_bag: 0.05, bob: 0.01, hip: { z: -0.10 }, ...bend(27), neck: { nod: 4 } })),    // leaves the fingers over 3 frames, the fists following it out along its path (a throw: no blend pulls it back)

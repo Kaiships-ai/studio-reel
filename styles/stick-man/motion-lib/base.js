@@ -2,6 +2,7 @@
 // origin facing +x (yaw 90), metres for pos and planted feet (footW), the figure frame (W) for arm ik targets. index.js
 // moves a clip to where the actor is and the way it faces. Every clip starts and ends on a standard pose (STAND, SIT,
 // CARRY) or is a seamless loop, so clips chain in any order.
+import * as THREE from 'three';
 import { BODIES } from './bodies.js';
 import { legReach, SOFT } from '../engine/body.js';
 import { mocapCycle } from './ref/mocap.js';
@@ -79,9 +80,14 @@ export function mocapOnce({ body = 'adult', src, ease = 8 }) {
   for (let i = 0; i < keys.length; i++) {
     if (!keys[i]._air || (i && keys[i - 1]._air)) continue;
     let j = i; while (j < keys.length && keys[j]._air) j++;
-    const a = Math.max(0, i - 1), b = Math.min(keys.length - 1, j), Tf = (keys[b].f - keys[a].f) / 30, v0 = 9.8 * Tf / 2;
-    for (let n = i; n < j; n++) { const k = keys[n], t = (k.f - keys[a].f) / 30, z = v0 * t - 9.8 * t * t / 2, rel = h => h - k._air.hipZ;
-      k.pos = [k.pos[0], k.pos[1], z];
+    const a = Math.max(0, i - 1), b = Math.min(keys.length - 1, j), Tf = (keys[b].f - keys[a].f) / 30, v0 = 9.8 * Tf / 2, pa = keys[a].pos, pb = keys[b].pos;
+    // and across the ground as gravity carries it: straight from the push-off to the landing at one speed (motion.js
+    // ballistic plays it so; the capture's own drift left the keyed hips 3-5 cm off the played ones and the knee that
+    // pushed off turned 5 deg a frame more than the capture's, Act_Jump_Once frame 31). The feet go with the body.
+    for (let n = i; n < j; n++) { const k = keys[n], t = (k.f - keys[a].f) / 30, z = v0 * t - 9.8 * t * t / 2, rel = h => h - k._air.hipZ, u = t / Tf;
+      const at = [pa[0] + (pb[0] - pa[0]) * u, pa[1] + (pb[1] - pa[1]) * u], dv = [at[0] - k.pos[0], at[1] - k.pos[1]];
+      for (const sd of ['legL', 'legR']) { const f = k[sd].footW; k[sd] = { ...k[sd], footW: [f[0] + dv[0], f[1] + dv[1], f[2]] }; }
+      k.pos = [at[0], at[1], z];
       // a tuck folds no further than KNEE_AIR: the capture's knees fold ~130 deg, and on this body's thick trunk the
       // thighs would then sit inside the belly (the rig turns such a knee round behind the leg)
       // footW's height is measured from the body's root, which gravity lifts (pos.2): the hips stand standHipM above it
@@ -134,6 +140,32 @@ const shiftKey = (k, d) => ({ ...k, pos: [k.pos[0] + d[0], k.pos[1] + d[1], k.po
 // never slides; the feet's pitch and turn blend)
 const blendBody = (a, b, w) => { const m = lerpPose(a, b, w); for (const sd of ['legL', 'legR']) if (a[sd].footW[2] === 0 || b[sd].footW[2] === 0) m[sd] = { ...m[sd], footW: a[sd].footW }; m.f = a.f; m.ease = a.ease; return m; };
 
+// the pelvis {pitch, yaw, roll} (deg) as cast.js turns it (Euler YXZ: pitch about x, yaw about y, -roll about z)
+const pelvisQ = p => new THREE.Quaternion().setFromEuler(new THREE.Euler((p?.pitch || 0) * Math.PI / 180, (p?.yaw || 0) * Math.PI / 180, -(p?.roll || 0) * Math.PI / 180, 'YXZ'));
+const pelvisTurn = (A, B) => pelvisQ(A.pelvis).angleTo(pelvisQ(B.pelvis)) * 180 / Math.PI;
+// a body lying down turned from one way of lying to another (flat on the back to curled on the side, and round on the
+// floor to it): its trunk's line kept lying, turned round the vertical and raised as far as the two do, and the body
+// rolled about that line (swing and twist apart). A slerp, the shortest turn, and the three angles each eased on their
+// own both lifted the trunk through sitting up (Idle_Sleep_Loop: the head 0.5 m up in its last 14 frames and first 20)
+const AX = (q, v) => new THREE.Vector3(...v).applyQuaternion(q);
+function lying(q) {
+  const d = AX(q, [0, 1, 0]), f = AX(q, [0, 0, 1]), up = new THREE.Vector3(0, 1, 0), s1 = up.clone().addScaledVector(d, -up.dot(d)).normalize(), s2 = d.clone().cross(s1);
+  return { psi: Math.atan2(d.x, d.z), eps: Math.asin(Math.max(-1, Math.min(1, d.y))), tau: Math.atan2(f.dot(s2), f.dot(s1)) };
+}
+function slerpPelvis(a, b, w) {
+  const qa = pelvisQ(a), qb = pelvisQ(b), A = lying(qa), B = lying(qb), sh = (x, y) => x + (y - x - 2 * Math.PI * Math.round((y - x) / (2 * Math.PI))) * w;
+  let q;
+  if (Math.abs(A.eps) < 1.05 && Math.abs(B.eps) < 1.05) {
+    const psi = sh(A.psi, B.psi), eps = A.eps + (B.eps - A.eps) * w, tau = sh(A.tau, B.tau);
+    const d = new THREE.Vector3(Math.sin(psi) * Math.cos(eps), Math.sin(eps), Math.cos(psi) * Math.cos(eps)), up = new THREE.Vector3(0, 1, 0);
+    const s1 = up.clone().addScaledVector(d, -up.dot(d)).normalize(), s2 = d.clone().cross(s1), f = s1.multiplyScalar(Math.cos(tau)).addScaledVector(s2, Math.sin(tau));
+    q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(d.clone().cross(f), d, f));
+  } else q = qa.slerp(qb, w);
+  const e = new THREE.Euler().setFromQuaternion(q, 'YXZ'), D = 180 / Math.PI;
+  // (each angle the turn nearest the lerped one: a turn round never jumps a full circle between keys)
+  const near = (v, r) => v + 360 * Math.round((r - v) / 360), L = (x, y) => (x || 0) + ((y || 0) - (x || 0)) * w;
+  return { pitch: near(e.x * D, L(a?.pitch, b?.pitch)), yaw: near(e.y * D, L(a?.yaw, b?.yaw)), roll: near(-e.z * D, L(a?.roll, b?.roll)) };
+}
 export function mocapClip({ body = 'adult', src, base = 'STAND', end = base, ease = 14, times = 1, turn = false, seated = false }) {
   const { keys: K0, frames, surfaces = [], marks: setMarks = [] } = gaitLoop({ body, kind: 'walk', mocap: src, once: true, feet: 'capture', turn }), N = frames + 1, tops = surfaces.map(s => s.top);
   const keys = []; for (let r = 0; r < times; r++) for (const k of K0) if (!(r && k.f === 0)) keys.push({ ...k, f: r * N + k.f });
@@ -173,8 +205,15 @@ export function mocapClip({ body = 'adult', src, base = 'STAND', end = base, eas
     for (const k of [P0, ...mid, P1]) if (over(k) && film(k) < minFilm - 1e-9) k.bob = rb + (minFilm - rb) / DOSE_E;
     marks.push({ kind: 'seat', at: [px - 0.25, py, 0], to: [px + 0.15, py, top] });
   }
+  // the blends from the standard pose into the capture and out of it, where the pelvis turns far (a sleeper rolled from
+  // flat on the back, LIE, onto the side): the pelvis turned by slerpPelvis, a key a frame
+  const P0k = K(0, P0, { ease: 'slow' }), P1k = K(last, P1, { ease: 'slow' });
+  const blend = (A, B, f0, f1) => (pelvisTurn(A, B) < 45 ? [] : Array.from({ length: f1 - f0 - 1 }, (_, i) => { const f = f0 + i + 1, w = ease3((f - f0) / (f1 - f0));
+    return { ...lerpPose(A, B, w), pelvis: { ...lerpPose(A.pelvis, B.pelvis, w), ...slerpPelvis(A.pelvis, B.pelvis, w) }, f, ease: 'flow' }; }));
+  const into = blend(P0k, mid[0], 0, mid[0].f), outof = blend(mid[mid.length - 1], P1k, mid[mid.length - 1].f, last);
+  if (into.length) P0k.ease = 'flow'; if (outof.length) P1k.ease = 'flow';
   // rest: every captured channel is written against STAND (gaitLoop's un()), whatever pose the clip opens on
-  return { keys: [K(0, P0, { ease: 'slow' }), ...mid, K(last, P1, { ease: 'slow' })], frames: last, captured: [ease, ease + keys[n - 1].f], marks, rest: 'STAND' };
+  return { keys: [P0k, ...into, ...mid, ...outof, P1k], frames: last, captured: [ease, ease + keys[n - 1].f], marks, rest: 'STAND' };
 }
 // a loop in place from motion capture (an idle, talking, a wave): mocapClip from STAND back to STAND
 export const mocapLoop = ({ body = 'adult', src, ease = 14, times = 1 }) => mocapClip({ body, src, ease, times });
@@ -483,7 +522,10 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
   // the closing step. A walk: the back foot comes up beside the front one, the body settles over both. A run brakes: the
   // swinging right foot lands ahead (the knee takes the stop), the left pushes off and comes up beside it, the body
   // rises over both
-  let xe = 2 * S, Te = Math.round(T * (run ? 2.8 : 1.6)), fo = x => Math.round(Te * x);
+  // (a walk's closing step takes 1.6 steps at the adult's pace; a body that walks faster, a long step in few frames, takes
+  // it as much longer: at 1.6 of its own steps the thin body's swinging knee turned 26.5 deg a frame, frame 86)
+  const pace = run || MC || RF ? 1 : Math.max(1, (S / T) / (BODIES.adult.walk.S / BODIES.adult.walk.T));
+  let xe = 2 * S, Te = Math.round(T * (run ? 2.8 : 1.6) * pace), fo = x => Math.round(Te * x);
   let xf = run ? xe + 0.6 * S : land(2), rb = MC ? MC.prints.Rend : land(1);
   let outro = run ? [
     step(fo(0.2), xe + 0.3 * S, { legL: foot(land(2), yOf('L'), 0, -20), legR: foot(xf, Y0, L * 0.25, 6) }, { L: kn[2] + 6 }, easeArms(0.6, 0.4)),

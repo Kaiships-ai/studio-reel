@@ -11,9 +11,9 @@ import { compileTrack, playActor, toPose, STYLE_PRESETS } from '../../styles/sti
 import { DOSE_E, markColliders } from '../../styles/stick-man/motion-lib/base.js';
 import { ellipsoid, solveArm, armPenetration, propPush, centreOfMass } from '../../styles/stick-man/engine/body.js';
 
-test('the library has 49 clips on 5 bodies, and every one passes motionlib.mjs (naming, seam, base, joint gate, feet)', async () => {
-  assert.equal(ALL.length, 49);
-  assert.equal(clipFiles().length, 49);
+test('the library has 51 clips on 5 bodies, and every one passes motionlib.mjs (naming, seam, base, joint gate, feet)', async () => {
+  assert.equal(ALL.length, 51);
+  assert.equal(clipFiles().length, 51);
   assert.deepEqual(Object.keys(BODIES), ['adult', 'heavy', 'thin', 'child', 'elder']);
   // every body stands, walks and runs (the adult's standing idle is the captured Idle_Stand_Loop)
   for (const b of Object.keys(BODIES)) for (const c of [b === 'adult' ? 'Idle_Stand_Loop' : 'Idle_Breath_Loop', 'Move_Walk_Fwd_Loop', 'Move_Run_Fwd_Loop']) assert.equal(getClip(c, b).body, b);
@@ -291,4 +291,63 @@ test('support: a clip played on a surface (a clip key pos [x, y, h]) rests on it
   assert.equal(track.flights.length, 0);
   const fr = playActor(track, 0, 560);
   assert.ok(fr.every(m => Math.abs(m['pos.2'] - 0.55) < 1e-6), 'the sleeper stays on the bed');
+});
+
+// ------------------------------------------------------------------ PR D: the solved-joint gate and the faults it found
+import { jointExcess, jointFails, JOINT_MAX } from '../../styles/stick-man/tools/motionlib.mjs';
+
+test('joint gate: a solver jump fails it, a capture turning as fast as it does passes, physics on and off', async () => {
+  // ep01 SH245: the phone call at a 1.12 m counter right beside the arm (the render: hand 18.65 cm off, elbow 97 deg/f)
+  const C = getClip('Gest_PhoneCall_Loop'), counter = { name: 'counter', lo: [-0.5, 0.22, 0], hi: [0.5, 0.77, 1.12] };
+  const on = await rigClip(C, undefined, { obstacles: [counter] }), off = await rigClip(C, undefined, { phys: false, obstacles: [counter] });
+  assert.ok(off.prop > 15 && off.propIn === 'set', `the phone is in the counter, named so: ${off.prop} cm in ${off.propIn}`);
+  assert.ok(on.grip > 15, `and with physics on the hand is off its grip: ${on.grip} cm`);
+  assert.match(jointFails(on, off).join(), /solved joint: .* over what the motion turns/);
+  // the clip on its own, and a counter half a metre off, pass
+  for (const obstacles of [[], [{ ...counter, lo: [-0.5, 0.5, 0], hi: [0.5, 1.05, 1.12] }]]) {
+    const a = await rigClip(C, undefined, { obstacles }), b = await rigClip(C, undefined, { phys: false, obstacles });
+    assert.deepEqual([...jointFails(a, b), ...jointFails(b, b, 'physics off')], [], JSON.stringify(obstacles));
+  }
+  // a sprint's captured knees turn past JOINT_MAX: the motion's own speed, allowed
+  const S = getClip('Move_Sprint_Fwd_Loop'), s1 = await rigClip(S), s0 = await rigClip(S, undefined, { phys: false });
+  assert.ok(s1.joint > JOINT_MAX && jointExcess(s1, s0).over.length === 0, `sprint ${s1.joint} deg/f at ${s1.jointAt}`);
+});
+
+test('props survive a copied anim: a film that maps, spreads or copies the placed keys keeps the prop it lets go', async () => {
+  const r = placeClip({ f: 0, clip: 'Act_DropInTrunk_Once' }, { pos: [0, 0], yaw: 90 });
+  for (const copy of [r.keys.map(k => ({ ...k })), [...r.keys], r.keys.map(k => ({ ...k, f: k.f + 10 }))]) {
+    const track = compileTrack(copy, {}, { pos: [0, 0], yaw: 90 }, 'kaiships');
+    assert.deepEqual(track.props.map(p => [p.id, p.f1 - p.f0]), [['Rbag', 80]]);
+    const { S, toPose } = await rigStick('adult'), { propPlan } = await import('../../styles/stick-man/engine/propobj.js');
+    S.obstacles = markColliders(getClip('Act_DropInTrunk_Once').needs.marks);
+    const fr = playActor(track, 0, 100), plan = propPlan(track, f => toPose(fr[Math.min(fr.length - 1, f)]), S);
+    assert.ok(plan.at(copy[0].f + 70)?.Rbag, 'the bag let go is still in the scene');
+  }
+});
+
+test('set pieces stop held props: a crate pushed at a wall stops on it, never inside', async () => {
+  const wall = { name: 'wall', lo: [1.6, -2, 0], hi: [1.74, 2, 2.4] };
+  const g = await rigClip(getClip('Move_PushHeavy_Loop'), undefined, { obstacles: [wall] });
+  assert.deepEqual(g.propInSet, [], 'the crate never ends up inside the wall');
+  assert.ok(g.grip > GRIP_CM, `the body walking on into the wall is reported (the hands left behind: ${g.grip} cm)`);
+});
+
+test('bed: lie down, sleep and get up on a raised surface (clip key pos [x, y, h]), the sleeper never sits up', async () => {
+  const { S, toPose } = await rigStick('adult'), h = 0.55;
+  const ks = expandClips([{ f: 0, clip: 'Trans_LieDown_Once', pos: [0, 0, h] }, { f: 80, clip: 'Idle_Sleep_Loop' }, { f: 360, clip: 'Trans_GetUp_Once' }], { pos: [0, 0], yaw: 90 });
+  const track = compileTrack(ks, {}, { pos: [0, 0], yaw: 90 }, 'kaiships'), fr = playActor(track, 0, ks[ks.length - 1].f);
+  assert.equal(track.flights.length, 0, 'held up by the surface, never a flight');
+  assert.ok(ks.every(k => k.support === h), 'every clip after the first carries the surface on');
+  let lowPelvis = 9, lyingHead = 0;
+  fr.forEach((m, f) => { S.pose2(toPose(m, 1)); const w = S.rigWorld(); lowPelvis = Math.min(lowPelvis, w.skel.pelvis[2]); if (f > 100 && f < 360) lyingHead = Math.max(lyingHead, w.skel.head[2] - h); });
+  assert.ok(Math.abs(lowPelvis - h) < 0.06, `the pelvis rests on the surface: lowest ${lowPelvis.toFixed(3)} m`);
+  assert.ok(lyingHead < 0.32, `asleep, the head stays down (rolling onto the side and back): ${lyingHead.toFixed(2)} m over the surface`);
+});
+
+test('HandOver fit { top }: the cash is set down on a 1.12 m counter', async () => {
+  const { S, toPose } = await rigStick('adult'), { propPlan } = await import('../../styles/stick-man/engine/propobj.js');
+  const C = getClip('Act_HandOver_Once', 'adult', { top: 1.12 }); S.obstacles = markColliders(C.needs.marks);
+  const keys = placeClip({ f: 0, clip: C.clip, fit: { top: 1.12 } }, { pos: [0, 0], yaw: 90 }).keys, track = compileTrack(keys, {}, { pos: [0, 0], yaw: 90 }, 'kaiships'), fr = playActor(track, 0, 90);
+  const at = propPlan(track, f => toPose(fr[Math.min(fr.length - 1, f)]), S).at(70).Lcash.p;
+  assert.ok(Math.abs(at[1] - 1.12) < 0.01, `the cash lies on the counter's top: ${at[1].toFixed(3)} m`);
 });

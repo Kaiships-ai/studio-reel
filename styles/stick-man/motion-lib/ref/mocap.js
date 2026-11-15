@@ -158,6 +158,11 @@ export function mocapCycle(src, { legM, once = false, roll = true }) {
     }
     for (const f of frames) { const e = f[sd].elbow, w = Math.min(1, Math.max(0, (e - ROLL_ELBOW / 2) / ROLL_ELBOW)); f[sd].roll *= w * w * (3 - 2 * w); }
   }
+  // the arm's forward swing is an angle round the shoulder's side axis, and atan2 put its seam (+-180) straight up: an
+  // arm raised past vertical jumped 342 deg in one frame, which the rig's range (-60..180) then clamped to -60 (the gun
+  // arm thrown behind the back: Act_PistolShoot_Once frame 70, 26.6 deg/f). The seam goes where no arm reaches, 60 deg
+  // past straight up behind the head (swing -120 = 240): an arm over the top runs on past 180 and the range holds it there
+  for (const sd of ['armL', 'armR']) for (const f of frames) f[sd].swing -= 360 * Math.floor((f[sd].swing + 120) / 360);
   // the prints of the cycle: the left one it starts on, and the right one the next step lands on (the first right print
   // after the left strike)
   let rIdx = 0; for (let i = 1; i < N; i++) if (prints.Right[i] && !prints.Right[i - 1]) { rIdx = i; break; }
