@@ -9,6 +9,7 @@ Kai keeps one tab per stage. So there is one page per stage, and you open the ne
 - **Template.** Start from `templates/stage-page.html`. It has the outline rail, the status table, decision cards and the status badges in the sidebar.
   - Publish it with the Artifact tool, `capabilities: { db: {} }`, and `icon: 'film'`.
   - Put media under `k/` and publish them as `files`.
+  - Every still opens at full size on click (Kai 14/11: "ảnh anh ấn vào là xem được chi tiết"): wrap it in the template's `button.zoom` with `data-full="k/full/<name>.jpg"`, a full-resolution copy (≤ 3000 px wide) published beside the small one.
 - **Outline.** Number the sections as `[stage.step]` and end each stage with `◇` gates. Map each section id to its row ids in `MAP`.
 - **Status rows.** Collection `items`, one row per step: `{ order, code, title, state: done|review|doing|todo|blocked, evidence, ask }`.
   - Kai's buttons write `kai: ok|fix` and `note`.
