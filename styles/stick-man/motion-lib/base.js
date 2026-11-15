@@ -469,7 +469,7 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
   // them (6 cm, Move_CarryBag_Walk_Loop's captured stop). The correction is carried over frames with no foot down (eased
   // from the last stance's to the next one's) and changes at most BOB_STEP W a frame; the swinging feet are placed again
   // from those hips (cyc: the frames wrap, a loop)
-  const BOB_STEP = 0.01;
+  const BOB_STEP = 0.01, PEEL = 16;
   const airBob = (keys, cyc) => {
     const n = keys.length, off = keys.map(k => k._cap && (k._cap.down.L || k._cap.down.R) ? k.bob - k._cap.bob : null);
     if (n && keys.every(k => k._cap) && off.some(o => o != null)) {
@@ -494,6 +494,16 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
     const PEEL_F = 6, liftIn = (i, sd) => { for (let d = 1; d <= PEEL_F; d++) { const j = cyc ? (i + d) % n : i + d; const c = keys[j]?._cap; if (!c) return null; if (!c.down[sd]) return d; } return null; };
     keys.forEach((k, i) => { if (k._cap) for (const sd of ['L', 'R']) if (k._cap.down[sd]) { const d = liftIn(i, sd); if (d == null) continue;
       const p = peelFor(k, sd, k._cap.knee[sd]) * ease3((PEEL_F + 1 - d) / PEEL_F); if (p < k['leg' + sd].pitch) k['leg' + sd] = { ...k['leg' + sd], pitch: p }; } });
+    // and the foot lifts off that peel: from there the swing foot turns toward the capture's pitch at most PEEL a frame
+    // (the peel ended on the print, the capture's swing began toe up: 39.9 deg/f, Move_CarryBag_Walk_Loop frame 231)
+    for (const sd of ['L', 'R']) for (let i = 0; i < n; i++) {
+      const a = keys[cyc ? (i - 1 + n) % n : i - 1]; if (!a?._cap || !a._cap.down[sd] || keys[i]._cap?.down[sd] !== false) continue;
+      let prev = a['leg' + sd].pitch;
+      for (let d = 0, j = i; d < n && keys[j]?._cap?.down[sd] === false; d++, j = cyc ? (j + 1) % n : j + 1) {
+        const q = keys[j]['leg' + sd].pitch, v = prev + Math.max(-PEEL, Math.min(PEEL, q - prev)); if (Math.abs(v - q) < 1e-9) break;
+        keys[j]['leg' + sd] = { ...keys[j]['leg' + sd], pitch: v }; prev = v;
+      }
+    }
     for (const k of keys) delete k._cap;
     return keys;
   };
@@ -504,7 +514,6 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
   if (MC) { const L = keys[2 * T], c0 = keys[0]._cap?.bob; airBob(keys.slice(0, 2 * T), true);
     if (L._cap) { if (c0 != null && Math.abs(L._cap.bob + keys[0].bob - c0 - L.bob) > 1e-9) { L.bob = L._cap.bob + keys[0].bob - c0; for (const sd of ['L', 'R']) if (!L._cap.down[sd]) L['leg' + sd] = reachFoot(L, sd, L._cap.knee[sd]); } delete L._cap; } }
   // a heel never peels faster than PEEL deg a frame: where the leg asks for more, the peel starts earlier (the loop wraps)
-  const PEEL = 16;
   const N = 2 * T;
   for (const s of ['L', 'R']) for (let pass = 0; pass < 3; pass++) for (let t = N; t > 0; t--) {
     const a = keys[t - 1]['leg' + s], b = keys[t % N]['leg' + s], dx = t === N ? 2 * S : 0;

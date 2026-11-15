@@ -15,6 +15,7 @@ import http from 'node:http'; import fs from 'node:fs'; import path from 'node:p
 import { fileURLToPath } from 'node:url';
 import { start, run } from '../../../kit/env.mjs';
 import { microanim } from './forensic/microanim.mjs';
+import { jointSteps, JOINT_STEP_MAX } from './jointstep.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '../../..');                     // repo root: serves the page and node_modules/three
@@ -80,11 +81,8 @@ const compress = list => {
 // ratio = (shoulder-elbow + elbow-hand) / rest arm length; jump = largest one-frame change of a flex, a foot pitch,
 // the torso lean or roll, or a limb segment's direction (deg).
 const GRIP_CM = 2, PROP_CM = 1;                                  // (h) a gripping hand off its target, (i) a held prop in the body
-const JOINTS = ['hip', 'knee', 'ankle', 'toe', 'shoulder', 'elbow', 'hand'], ANG = ['kneeFlex', 'elbowFlex', 'footPitch'];
-const SEGS = [['shoulder', 'elbow'], ['elbow', 'hand'], ['hip', 'knee'], ['knee', 'ankle']], ARM = 2 * 0.5125 * 0.60;   // rest arm length (m) = 2 x cast.js LIMB.upper x W_M
+const JOINTS = ['hip', 'knee', 'ankle', 'toe', 'shoulder', 'elbow', 'hand'], ANG = ['kneeFlex', 'elbowFlex', 'footPitch'], ARM = 2 * 0.5125 * 0.60;   // rest arm length (m) = 2 x cast.js LIMB.upper x W_M
 const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
-const dirAng = (a0, b0, a1, b1) => { const u = b0.map((x, i) => x - a0[i]), v = b1.map((x, i) => x - a1[i]), lu = Math.hypot(...u), lv = Math.hypot(...v);
-  return lu < 1e-6 || lv < 1e-6 ? 0 : Math.acos(Math.max(-1, Math.min(1, u.reduce((s, x, i) => s + x * v[i], 0) / (lu * lv)))) * 180 / Math.PI; };
 function acting(rows, n) {
   let run = 1, frozen = 0, frozenAt = null, ratio = 0, ratioAt = null, jump = 0, jumpAt = null, anchor = null; const per = [];   // per = worst joint change of each frame
   for (let i = 0; i < rows.length; i++) {
@@ -95,11 +93,10 @@ function acting(rows, n) {
     if (!p || !p.inFrame || !p.limbs || rows[i].motion.cut || rows[i].act !== rows[i - 1].act || a.expr === 'sleep') { run = 1; anchor = a; continue; }
     const m = p.limbs, q = (anchor || p).limbs, qa = anchor || p;
     let moved = dist(a.headW, qa.headW) > 0.001 || Math.abs(l.torsoLean - q.torsoLean) > 0.3 || Math.abs(l.torsoRoll - q.torsoRoll) > 0.3;
-    const chg = [['torsoLean', Math.abs(l.torsoLean - m.torsoLean)], ['torsoRoll', Math.abs(l.torsoRoll - m.torsoRoll)]];
+    const chg = jointSteps(m, l);
     for (const s of ['L', 'R']) {
       for (const j of JOINTS) if (dist(l[s][j], q[s][j]) > 0.001) moved = true;
-      for (const k of ANG) { const d = Math.abs(l[s][k] - m[s][k]); if (Math.abs(l[s][k] - q[s][k]) > 0.3) moved = true; chg.push([k + s, d]); }
-      for (const [x, y] of SEGS) chg.push([x + '-' + y + s, dirAng(m[s][x], m[s][y], l[s][x], l[s][y])]);
+      for (const k of ANG) if (Math.abs(l[s][k] - q[s][k]) > 0.3) moved = true;
     }
     for (const [k, d] of chg) if (d > jump) { jump = d; jumpAt = `frame ${rows[i].f}, ${k}`; }
     const w = chg.reduce((a, b) => (b[1] > a[1] ? b : a), ['', 0]); per.push({ f: rows[i].f, k: w[0], d: w[1] });
@@ -107,7 +104,7 @@ function acting(rows, n) {
     if (run > frozen) { frozen = run; frozenAt = rows[i].f; }
   }
   // the five worst frames (not only the max: fixing one pop otherwise reveals the next) and how many frames are over 25 deg
-  const top = [...per].sort((a, b) => b.d - a.d).slice(0, 5), over = per.filter(x => x.d > 25).map(x => x.f);
+  const top = [...per].sort((a, b) => b.d - a.d).slice(0, 5), over = per.filter(x => x.d > JOINT_STEP_MAX).map(x => x.f);
   return { frozen: frozen > 1 ? frozen : 0, frozenAt, ratio, ratioAt, jump, jumpAt, top, over };
 }
 
