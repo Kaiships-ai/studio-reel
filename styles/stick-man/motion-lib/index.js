@@ -150,8 +150,8 @@ export function fitClip(C, fit) {
 }
 // The size of a prop a clip fits itself to (a record's `fitProps`: ['bag']): the clip key's own `fit.bag` ({ w, l, h, grip },
 // metres), else the prop the key swaps in, read off the built prop: its userData.size [w, h, l] and grip (motion-lib/props.js),
-// else its meshes' box (grip measured from the box's bottom). A film's bag needs no numbers of its own. (A prop whose meshes
-// are still loading has no box yet: not cached, read again on the next key.)
+// else its meshes' box (grip measured from the box's bottom). A prop built empty (its mesh comes later, with the film's set)
+// has no box: null, and propFit fails the clip rather than play the kit bag's keys with it.
 const SIZES = new Map();
 export function propSize(kind) {
   if (SIZES.has(kind)) return SIZES.get(kind);
@@ -167,8 +167,11 @@ const r3 = v => Math.round(v * 1000) / 1000;
 export function propFit(C, k) {
   if (!C.fitProps) return k.fit || null;
   const fit = { ...(k.fit || {}) };
-  for (const kind of C.fitProps) { const to = k.swap?.[kind], d = fit[kind] ? null : to && propSize(to);
-    if (d) fit[kind] = Object.fromEntries(Object.entries(d).map(([n, v]) => [n, r3(v)])); }
+  for (const kind of C.fitProps) { const to = k.swap?.[kind];
+    if (fit[kind] || !to) continue;
+    const d = propSize(to);
+    if (!d) throw new Error(`motion-lib: clip "${C.clip}" fits itself to its ${kind}, but the swapped prop "${to}" has no size: its builder gives no userData.size and no meshes yet. Give its builder userData.size [w, h, l] in metres, as motion-lib/props.js bagData does, or give the clip key fit.${kind}`);
+    fit[kind] = Object.fromEntries(Object.entries(d).map(([n, v]) => [n, r3(v)])); }
   return Object.keys(fit).length ? fit : null;
 }
 export function getClip(name, body = 'adult', fit = null) {

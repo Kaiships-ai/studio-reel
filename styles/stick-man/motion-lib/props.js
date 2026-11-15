@@ -39,7 +39,8 @@ export function bagMesh(col = [0.16, 0.20, 0.30], d = BAG) {
 }
 // A one-hand bag's size, the numbers the clips that hold it fit themselves to (index.js placeClip `fit.bag`): userData.size
 // [w, h, l] (m: across, tall, long; its bottom at y 0) and userData.grip (the handle's top, the fist). A film's own bag
-// (`swap: { bag: 'mine' }`) is read the same way: its size if it names one, else its meshes' box.
+// (`swap: { bag: 'mine' }`) is read the same way: its size if it names one, else its meshes' box; with neither (built empty,
+// its mesh added later) the fitted clip throws.
 const bagData = d => ({ mode: 'up', grip: [0, d.grip, 0], size: [d.w, d.h, d.l], mass: 25 });
 BUILD.bag = () => { const g = bagMesh(); g.userData = bagData(BAG); return g; };
 // a kit bag of another size, registered once under a name of its own (bag_<w>x<l>x<h>_<grip>, mm): a clip key fitted with

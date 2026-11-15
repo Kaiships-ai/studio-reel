@@ -394,6 +394,20 @@ test('bag size: a clip key that swaps in a film bag fits the clip to that bag, r
   delete BUILD.test_duffel;
 });
 
+test('bag size: a swapped bag with no size yet (its mesh is built later) fails the fitted clip, never plays the kit bag\'s keys', async () => {
+  const { BUILD } = await import('../../styles/stick-man/lib/cast/handprops.js');
+  const empty = size => () => { const g = new THREE.Group(); g.userData = { mode: 'up', grip: [0, 0.415, 0], mass: 25, ...(size ? { size } : {}) }; return g; };
+  BUILD.test_late_bag = empty();
+  BUILD.test_late_bag_sized = empty([0.36, 0.30, 0.62]);
+  for (const [clip, fit] of [['Act_DropInTrunk_Once', { lip: 0.85 }], ['Act_PushBagOutWindow_Once', { sill: 0.8, top: 1.9, width: 1, depth: 0.138 }]])
+    assert.throws(() => placeClip({ f: 0, clip, fit, swap: { bag: 'test_late_bag' } }), e => /test_late_bag/.test(e.message) && /userData\.size/.test(e.message), clip);
+  const T = placeClip({ f: 0, clip: 'Act_DropInTrunk_Once', fit: { lip: 0.85 }, swap: { bag: 'test_late_bag_sized' } }).clip;
+  assert.deepEqual(T.fitted.bag, { w: 0.36, h: 0.3, l: 0.62, grip: 0.415 });
+  assert.ok(Math.abs(T.needs.marks[0].at[0] - 0.65) < 1e-9, `the trunk mark at ${T.needs.marks[0].at[0]} m`);
+  delete BUILD.test_late_bag;
+  delete BUILD.test_late_bag_sized;
+});
+
 test('bag size: at Hot Money ep01\'s duffel the bag goes into the trunk (0.85 m lip) and out of the window, never onto the lip or sill', async () => {
   const { sizedBag } = await import('../../styles/stick-man/motion-lib/props.js'), { propPlan } = await import('../../styles/stick-man/engine/propobj.js');
   const bag = { w: 0.36, l: 0.62, h: 0.30, grip: 0.415 }, swap = { bag: sizedBag(bag) };
