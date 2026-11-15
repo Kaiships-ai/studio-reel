@@ -21,7 +21,10 @@ function make({ sill = EP01_WINDOW.sill, top = EP01_WINDOW.top, width = EP01_WIN
   if (!(width >= B.l + 0.08)) throw new Error(`Act_PushBagOutWindow_Once: fit.width ${width} m is narrower than the bag's ${B.l} m and 0.08 to spare`);
   if (!(top >= sill + 0.9)) throw new Error(`Act_PushBagOutWindow_Once: fit.top ${top} m is less than 0.9 m over the sill (${sill} m)`);
   if (!(depth >= 0.05 && depth <= 0.2)) throw new Error(`Act_PushBagOutWindow_Once: fit.depth ${depth} m is outside 0.05..0.20`);
-  const toss = [H.toss[0] + TOSS_PER_M * Math.max(0, depth - 0.08), H.toss[1], H.toss[2]];
+  // (tossed up 15 % harder than into a trunk and at least 1 m/s: the trunk's toss let the ep01 duffel graze the wall's outer
+  // face and slide down it, and left the kit bag lying on the sill; now the duffel clears the sill by 8.7 cm and the face by
+  // 6.3 cm, the kit bag by 7.0 and 12.5 cm. Harder than that, the release blend drags it past what its hand allows)
+  const toss = [H.toss[0] + TOSS_PER_M * Math.max(0, depth - 0.08), H.toss[1], Math.max(1.0, H.toss[2] * 1.15)];
   return { name: 'Act_PushBagOutWindow_Once', clip: 'Act_PushBagOutWindow_Once', group: 'Act', loop: false, frames: 80, base: 'CARRY', end: 'STAND', style: 'kaiships',
     fit: make, fitted: { sill, top, width, depth, ...(bag ? { bag } : {}) }, fitProps: ['bag'], fitChecks: [{ ...EP01_WINDOW, bag: EP01_BAG }],
     needs: { props: ['bag'], hands: 'both', marks: [{ kind: 'window', at: [H.X + WALL_BACK, 0, sill], top, width, depth }] }, toss: { bag: toss }, keys: H.keys };

@@ -48,9 +48,9 @@ export function heave(name, { lip = 0.68, bag } = {}) {
   const dy = (lip - 0.68) / 0.6, BK = 60 * (lip - 0.68) + 40 * (B.grip - KIT.grip), bend = b => ({ spine: { bend: b - BK } });
   const up = (y, z, out = near) => at(y + dy, z, undefined, out), top = (y, z) => hands(y + dy + 0.7 * dg, z);
   return { X, toss: [1.2, 0, 10 * dw], keys: [
-    K(0, merge(C1, { x_yawR: 0, armR: { ik: [0.78, 1.02, 0.03], ikw: 0 }, armL: { ik: [0.30, 1.30, 0.50], ikw: 0 } })),
+    K(0, merge(C1, { x_yawR: 0, armR: { ik: [0.78, 1.02, 0.03], ikw: 0 }, armL: { ik: [0.30, 1.30, 0.50], ikw: 0 } }), { ease: 'flow' }),
     K(6, merge(C1, { x_yawR: 45, shrugR: -0.04, spine: { side: -9 }, armR: { ik: [0.76 + (dw + dl) / 2, 1.30 + dg, 0.33], ikw: 1, pole: PR }, armL: { ik: [-0.82, 1.40, 0.57], ikw: 0, raise: 40, swing: 35, elbow: 30 } }), { ease: 'flow' }),          // the bag swung out ahead of the leg
-    K(12, merge(S0, BAG, at(1.34, 0.50, 0.26, 1.25 * near), { bob: -0.02, spine: { side: -3, bend: 2 }, hip: { z: -0.08 } })),           // round to the front, the left fist joins
+    K(12, merge(S0, BAG, at(1.34, 0.50, 0.26, near), { bob: -0.02, spine: { side: -3, bend: 2 }, hip: { z: -0.08 } })),           // round to the front, the left fist joins
     K(20, merge(S0, BAG, at(1.15, 0.48), { bob: -0.16, hip: { z: -0.12 }, spine: { bend: 8 }, neck: { nod: 8 } })),   // the dip
     K(26, merge(S0, BAG, FK, up(1.74 - 0.5 * dg, 0.52, 1.2 * near), { bob: -0.05, hip: { z: -0.10 }, ...bend(16), neck: { nod: -8 } })),   // up: clear of the lip
     K(31, merge(S0, BAG, FK, top(1.78, 0.78), { bob: 0.02, hip: { z: -0.21 }, ...bend(28), neck: { nod: -10 } })),   // and forward over it

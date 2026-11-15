@@ -401,9 +401,20 @@ test('bag size: at Hot Money ep01\'s duffel the bag goes into the trunk (0.85 m 
     const r = placeClip({ f: 0, clip, fit, swap }, { pos: [0, 0], yaw: 90 }), m = r.clip.needs.marks[0];
     const track = compileTrack(r.keys, {}, { pos: [0, 0], yaw: 90 }, 'kaiships'), fr = playActor(track, 0, 90);
     const { S, toPose } = await rigStick('adult'); S.obstacles = markColliders(r.clip.needs.marks);
-    const at = propPlan(track, f => toPose(fr[Math.min(fr.length - 1, f)]), S).at(85)['R' + swap.bag];
+    const plan = propPlan(track, f => toPose(fr[Math.min(fr.length - 1, f)]), S), at = plan.at(85)['R' + swap.bag];
     const x = at.p[0], z = at.p[1];
     if (where === 'trunk') assert.ok(x > m.at[0] + 0.08 && Math.abs(z - m.floor) < 0.02, `in the trunk: x ${x}, z ${z}`);
-    else assert.ok(x > m.at[0] + m.depth && Math.abs(z) < 0.02, `outside on the ground: x ${x}, z ${z}`);
+    else {
+      assert.ok(x > m.at[0] + m.depth && Math.abs(z) < 0.02, `outside on the ground: x ${x}, z ${z}`);
+      // the bag's edges, not its centre (held crosswise: half its depth w along x, and its ink): over the wall its bottom
+      // clears the sill, and once below the sill its back is past the wall's outer face, each by 4 cm at least
+      const half = bag.w / 2 + 0.012, X0 = m.at[0], X1 = m.at[0] + m.depth;
+      let over = Infinity, back = Infinity;
+      for (let f = 30; f <= 85; f++) { const q = plan.at(f)['R' + swap.bag]; if (!q) continue; const [px, pz] = q.p;
+        if (px + half > X0 && px - half < X1) over = Math.min(over, pz - m.at[2]);
+        if (pz < m.at[2]) back = Math.min(back, px - half - X1); }
+      assert.ok(over >= 0.04, `the bag's bottom clears the sill by ${(100 * over).toFixed(1)} cm`);
+      assert.ok(back >= 0.04, `the bag's back clears the wall's outer face by ${(100 * back).toFixed(1)} cm`);
+    }
   }
 });
