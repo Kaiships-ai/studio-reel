@@ -11,6 +11,11 @@ Made by `node styles/stick-man/tools/motionlib.mjs --catalogue` from the clips t
 Proof: `node styles/stick-man/tools/motionlib.mjs --proof <dir>` (every clip at 540x960, physics on and off, `shot.mjs --report`
 numbers, one contact sheet per group).
 
+Physics gates (every clip, physics on and off, through the real rig): a prop moves no more than its hand (times its attach
+weight) and gravity allow plus 1 cm, also when it comes back after frames out of the scene; a declared prop is in the scene
+every frame of the clip; the balance solve moves the pelvis at most 4 cm a frame (the pelvis with balance on minus off: the
+raw pelvis speed is reported, not gated); the carried mass changes at most 35 % of its largest a frame.
+
 ## Idle
 
 | Clip | Body | Loop | Frames | Base | Props (hand) | Set | What |
@@ -30,7 +35,7 @@ numbers, one contact sheet per group).
 | Clip | Body | Loop | Frames | Base | Props (hand) | Set | What |
 |---|---|---|---|---|---|---|---|
 | `Move_CarryBag_Walk_Loop` | adult | loop | 86 | HUG | hugbag (both) | - | walking with a heavy duffel hugged to the chest in both arms, from motion capture (Mixamo "Walking" carrying, in place, ref/mixamo/carry_walk.js |
-| `Move_PushHeavy_Loop` | adult | loop | 80 | STAND | crate (both) | crate | pushing a heavy crate along, bent low, from motion capture (Quaternius UAL "Push_Loop", CC0, in place, ref/ual/push_loop.js) on this body: the feet pinned to their prints, the body travelling at the speed the captured feet slid back |
+| `Move_PushHeavy_Loop` | adult | loop | 80 | STAND | crate (both) | - | pushing a heavy crate along, bent low, from motion capture (Quaternius UAL "Push_Loop", CC0, in place, ref/ual/push_loop.js) on this body: the feet pinned to their prints, the body travelling at the speed the captured feet slid back |
 | `Move_Run_Fwd_Loop` | adult | loop | 19 | STAND | - | - | a run, from motion capture (Mixamo "Running", ref/mixamo/running.js) on this body: planted feet pinned to their prints, the body travelling at the speed the captured feet slid back |
 | `Move_Run_Fwd_Loop` | child | loop | 16 | STAND | - | - | a scamper: quick steps, a little flight, arms pumping |
 | `Move_Run_Fwd_Loop` | elder | loop | 22 | STAND | - | - | a slow shuffling jog: long contact, a tiny flight |
@@ -51,13 +56,13 @@ numbers, one contact sheet per group).
 |---|---|---|---|---|---|---|---|
 | `Act_Consume_Once` | adult | once | 103 | STAND | hotdog (L) | - | bring food to the mouth, bite, chew, lower it, from motion capture (Quaternius UAL "Consume", CC0, ref/ual/consume.js) on this body, every captured frame |
 | `Act_Drive_Loop` | adult | loop | 77 | SIT | - | seat | seated driving, both hands on the wheel, from motion capture (Quaternius UAL "Driving_Loop", CC0, ref/ual/driving_loop.js) on this body, every captured frame |
-| `Act_DropInTrunk_Once` | any (adult, scaled) | once | 80 | CARRY → STAND | bag (both) | trunk, bag | from CARRY, heave the bag over a car's trunk lip (0.68 m) and let it drop in |
-| `Act_HandOver_Once` | adult | once | 87 | STAND | cash (L) | counter, cash | reach forward and hand a bundle of cash over a counter, leaving it there, from motion capture (Quaternius UAL "Interact", CC0, ref/ual/interact.js) on this body, every captured frame |
+| `Act_DropInTrunk_Once` | any (adult, scaled) | once | 80 | CARRY → STAND | bag (both) | trunk | from CARRY, heave the bag over a car's trunk lip (0.68 m) and let it drop in |
+| `Act_HandOver_Once` | adult | once | 87 | STAND | cash (L) | counter | reach forward and hand a bundle of cash over a counter, leaving it there, from motion capture (Quaternius UAL "Interact", CC0, ref/ual/interact.js) on this body, every captured frame |
 | `Act_Jump_Once` | adult | once | 93 | STAND | - | - | a standing jump straight up (crouch, spring, tuck, land, absorb, stand), from motion capture (Mixamo "Jump", ref/mixamo/jump.js) on this body |
 | `Act_Phone_Once` | adult | once | 349 | STAND | phone (R) | - | a call on a mobile: dial it at the chest, up to the ear, talk, put it away, from motion capture (Mixamo "Talking On A Cell Phone", ref/mixamo/talking_on_a_cell_phone.js: its first 203 frames and its last 114, the long middle of the call cut where the two match within 8 cm, joined by a 6-frame bridge) on this body |
-| `Act_PickUp_Once` | adult | once | 315 | STAND → CARRY | bag (R) | bag | bend down, pick the bag up off the floor in the right fist, stand up into CARRY, from motion capture (Mixamo "Picking Up", ref/mixamo/picking_up.js) on this body, every captured frame |
+| `Act_PickUp_Once` | adult | once | 315 | STAND → CARRY | bag (R) | - | bend down, pick the bag up off the floor in the right fist, stand up into CARRY, from motion capture (Mixamo "Picking Up", ref/mixamo/picking_up.js) on this body, every captured frame |
 | `Act_PistolShoot_Once` | adult | once | 186 | STAND | pistol (L) | - | raise a handgun one-handed (the left: motion-lib/props.js pistol, x_hpL_pistol), fire, lower it, from motion capture (Mixamo "Shooting Gun", ref/mixamo/shooting_gun.js) on this body, every captured frame |
-| `Act_PutDown_Once` | adult | once | 338 | CARRY → STAND | bag (R) | bag | from CARRY (the bag in the right fist), bend and set it down on the floor, stand up, from motion capture (Mixamo "Putting Down", ref/mixamo/putting_down.js) on this body, every captured frame |
+| `Act_PutDown_Once` | adult | once | 338 | CARRY → STAND | bag (R) | - | from CARRY (the bag in the right fist), bend and set it down on the floor, stand up, from motion capture (Mixamo "Putting Down", ref/mixamo/putting_down.js) on this body, every captured frame |
 | `Act_TorchReady_Loop` | adult | loop | 65 | STAND | torch (L) | - | standing, a torch (flashlight) held out ahead in the left fist (motion-lib/props.js torch, the same hand as Move_WalkFlashlight_Loop), from motion capture (Quaternius UAL "Idle_Torch_Loop", CC0, ref/ual/idle_torch_loop.js) on this body, every captured frame |
 | `Act_TorchReady_Loop` | heavy | loop | 65 | STAND | torch (L) | - | standing, a torch (flashlight) held out ahead in the left fist (motion-lib/props.js torch, the same hand as Move_WalkFlashlight_Loop), from motion capture (Quaternius UAL "Idle_Torch_Loop", CC0, ref/ual/idle_torch_loop.js) on the heavy body, every captured frame |
 | `Act_TorchReady_Loop` | thin | loop | 65 | STAND | torch (L) | - | standing, a torch (flashlight) held out ahead in the left fist (motion-lib/props.js torch, the same hand as Move_WalkFlashlight_Loop), from motion capture (Quaternius UAL "Idle_Torch_Loop", CC0, ref/ual/idle_torch_loop.js) on the thin body, every captured frame |

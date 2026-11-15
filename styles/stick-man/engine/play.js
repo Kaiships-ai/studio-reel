@@ -15,6 +15,7 @@ import { createOverlays } from './overlays.js';
 import { ACT, PROPV, MAKE, keyTracks } from './verbs_fx.js';
 import { POSE_VERBS, POSES } from './poses.js';
 import { compileTrack, playActor, toPose, MOTION_POSES } from './motion.js';
+import { propPlan } from './propobj.js';
 import * as EXTRAS from '../lib/cast/extras.js';
 import { PHYS } from '../lib/props/physfx.js';
 import { STORY } from '../lib/props/story.js';
@@ -314,7 +315,9 @@ async function buildAct(R, X) {
   };
 
   function poseActor(a, f) {
-    if (a.anim) { const Q = animFrame(a, f); F.bodies[a.name] = { pos: Q.pos, yaw: Q.yaw }; a.S.pose2(Q); F.posed.add(a.name); a.P = Q; return; }
+    // (the props its clips hold are scene objects: where they rest out of the hand, engine/propobj.js, once per track)
+    if (a.anim) { const Q = animFrame(a, f), A = a.anim; A.plan ||= propPlan(A.track, g => animFrame(a, g), a.S); const pr = A.plan.at(Math.round(f)); if (pr) Q.propRest = pr;
+      F.bodies[a.name] = { pos: Q.pos, yaw: Q.yaw }; a.S.pose2(Q); F.posed.add(a.name); a.P = Q; return; }
     const body = bodyAt(a, f), root = { pos: body.pos, yaw: body.yaw };
     F.bodies[a.name] = body;
     const id = idle(a.seed, f, a.posture);
@@ -532,6 +535,7 @@ async function buildAct(R, X) {
       for (const [id, o] of Object.entries(a.S.props)) {
         const side = id[0], g = o.userData.grip;
         if (!o.visible || side === 'H') continue;                 // worn on the head: no hand holds it
+        if ((a.S.propState?.[id]?.w ?? 1) < 0.999) continue;       // resting, falling or on its way into the hand (engine/propobj.js): not held
         for (const s of side === 'B' ? ['L', 'R'] : [side]) {
           const hp = side === 'B' ? a.S.parts.hands.L.getWorldPosition(new THREE.Vector3()).add(a.S.parts.hands.R.getWorldPosition(new THREE.Vector3())).multiplyScalar(0.5)
             : a.S.parts.hands[s].getWorldPosition(new THREE.Vector3());

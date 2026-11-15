@@ -673,13 +673,18 @@ export function makeStick(spec) {
   };
   // Hand props: pose key x_hp<L|R>_<kind> > 0.5 shows that prop in that hand (x_hpB_<kind> = between both hands);
   // x_tilt<L|R> (deg) tilts it (a cup pours toward the figure's right for +, an 'along' prop pitches about the fist).
+  // A prop a library clip holds is a scene object (engine/propobj.js): P.propRest[id] is where it rests out of the hand
+  // (three.js world), and x_hp is the weight that parents it to the hand (0 = at rest, 1 = in the hand, between = blended)
   const up = new THREE.Vector3(0, 1, 0), qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), ax = new THREE.Vector3();
+  const _mA = new THREE.Matrix4(), _mI = new THREE.Matrix4(), _pA = new THREE.Vector3(), _qA = new THREE.Quaternion(), _sA = new THREE.Vector3(), _qR = new THREE.Quaternion();
+  S.propState = {};
   function handProps(P, r) {
     for (const o of Object.values(S.props)) o.visible = false;
-    const held = [];
+    const held = []; S.propState = {};
     for (const k of Object.keys(P)) {
-      const m = /^x_hp([LRBH])_(\w+)$/.exec(k); if (!m || !(P[k] > 0.5)) continue;
-      const side = m[1], kind = m[2], id = side + kind;
+      const m = /^x_hp([LRBH])_(\w+)$/.exec(k), rest = m && P.propRest?.[m[1] + m[2]];
+      if (!m || (!rest && !(P[k] > 0.5))) continue;
+      const side = m[1], kind = m[2], id = side + kind, hw = rest ? Math.max(0, Math.min(1, P[k])) : 1;
       const o = S.props[id] ||= (() => { const g = makeHandProp(kind); root.add(g); return g; })();
       o.visible = true;
       // H: worn on the head (a cap put on by a hand): on the crown, turned and sized with the head
@@ -704,7 +709,16 @@ export function makeStick(spec) {
       o.position.copy(hand).sub(gp.applyQuaternion(o.quaternion));
       if (U.floor) o.position.y = (P.ground || 0) * W;          // floor: a pushed load stands on the ground, the hands move it along
       if (U.level) U.level(P['x_lvl' + (side === 'B' ? 'L' : side)] ?? 1);     // x_lvl<L|R>: a container's fill 0..1 (beaker)
-      const box = propBox(o); if (box) held.push({ o, side, kind, box });
+      if (rest && hw < 1) {                                       // out of the hand (or on the way): blended toward its rest in the world
+        // (a load the floor carries moves only while the hands hold it fully: hands coming off it or onto it leave it where
+        // it stands, its rest being where they took or left it; a crate slid back 3 cm a frame with hands drawing away)
+        const k = U.floor ? 0 : hw;
+        root.updateMatrixWorld(true); _mA.compose(o.position, o.quaternion, o.scale).premultiply(root.matrixWorld).decompose(_pA, _qA, _sA);
+        _pA.lerp(_pA.clone().fromArray(rest.p), 1 - k); _qA.copy(_qR.fromArray(rest.q).slerp(_qA, k));
+        _mI.copy(root.matrixWorld).invert(); _mA.compose(_pA, _qA, _sA).premultiply(_mI).decompose(o.position, o.quaternion, _sA);
+      }
+      S.propState[id] = { w: hw, v: rest && hw < 1 ? rest.v * (1 - hw) : 0 };
+      const box = propBox(o); if (box && hw > 0) held.push({ o, side, kind, box, w: hw });
     }
     return held;
   }
@@ -723,8 +737,10 @@ export function makeStick(spec) {
   }
   const propOverlap = (held, segs, vols) => { let w = null;
     for (const h of held) { if (h.o.userData.soft) continue;                 // a soft prop (a cloth cap) gives way: no contact
-      const r = propPush(h.box, segs, vols, { limb: LIMB_R / W }); if (r && (!w || r.depth > w.depth)) w = { ...r, side: h.side }; }
+      const r = propPush(h.box, segs, vols, { limb: LIMB_R / W }); if (r && (!w || r.depth > w.depth)) w = { ...r, side: h.side, w: h.w }; }
     return w; };
+  // (reported: the overlap of a prop the hand holds, at least half; one mostly at rest is the scene's, not the hand's)
+  const heldPen = pp => (pp && (pp.w ?? 1) >= 0.5 ? pp.depth : 0);
   // Extra keys for the reel runtime: pitch (deg, upper body forward about the hip), hands and feet may carry a
   // third number = depth toward where the figure faces (W), kneeF{L,R} = knee pushed forward (W), toeF = toe reach.
   S.pose = (P = {}) => {
@@ -840,8 +856,10 @@ export function makeStick(spec) {
       for (const o of S.obstacles) if ([0, 1, 2].every(i => at[i] > o.lo[i] - 1.5 && at[i] < o.hi[i] + 1.5)) vols.push(worldBox(o.lo, o.hi, toW, fromW, k, 'set', o.ledge || 0));
     }
     const legs = {}, arms = {};
-    // a hand is on a target when an ik weight holds it there or it carries a hand prop (x_hp<side|B>_<kind>)
-    const holds = side => Object.keys(Q).some(n => { const m = /^x_hp([LRB])_/.exec(n); return m && (m[1] === side || m[1] === 'B') && Q[n] > 0.5; });
+    // a hand is on a target when an ik weight holds it there or it carries a hand prop (x_hp<side|B>_<kind>): how much, 0..1
+    // (a prop the scene holds too, Q.propRest: its attach weight; any other prop is in the hand or not)
+    const holdW = side => Math.max(0, ...Object.keys(Q).map(n => { const m = /^x_hp([LRB])_(\w+)$/.exec(n); if (!m || (m[1] !== side && m[1] !== 'B')) return 0;
+      return Q.propRest?.[m[1] + m[2]] ? Math.max(0, Math.min(1, Q[n] || 0)) : Q[n] > 0.5 ? 1 : 0; }));
     for (const [side, sg] of [['L', -1], ['R', 1]]) {
       // shrugL / shrugR (W, - = dropped): one shoulder pulled down by a load in that hand while the trunk leans away
       const shB = new THREE.Vector3(sg * TORSO.w * 0.40 * girth, shY + (Q['shrug' + side] || 0), 0); bendPt(B, shB);
@@ -850,15 +868,21 @@ export function makeStick(spec) {
       // the elbow still folding the FK way
       const k = armDirs(A, sg); k.d.applyQuaternion(qChest); k.fd.applyQuaternion(qChest); k.pole.applyQuaternion(qChest);
       let elbow = sh.clone().addScaledVector(k.d, LIMB.upper), hand = elbow.clone().addScaledVector(k.fd, LIMB.fore), flex = A.elbow ?? 20;
-      const iw = A.ik ? Math.max(0, Math.min(1, A.ikw ?? 1)) : 0, want = iw > 0 ? hand.clone().lerp(V(A.ik), iw) : hand.clone(), grip = iw >= 0.5 || holds(side);
+      const iw = A.ik ? Math.max(0, Math.min(1, A.ikw ?? 1)) : 0, want = iw > 0 ? hand.clone().lerp(V(A.ik), iw) : hand.clone(), gw = Math.max(iw >= 0.5 ? 1 : 0, holdW(side)), grip = gw >= 0.999;   // (grip: on its target; a hand taking or letting go is on its way)
       if (iw > 0) {
         const r = ik(sh, want, LIMB.upper, A.pole ? V(A.pole) : k.pole, SOFT.arm, true); elbow = r.joint; hand = r.end; flex = r.flex;
       }
       // physics: a hand inside the head or the torso stops on its surface, an elbow inside is pushed out, the elbow
       // stays in its range (bones keep their length)
-      const sol = PHYS.on ? solveArm({ sh, elbow, hand, flex, pole: A.pole ? V(A.pole) : k.pole, l: LIMB.upper, vols, limb: LIMB_R / W, handR: 0.05, out: new THREE.Vector3(sg, -0.3, 0.4).applyQuaternion(qChest),
-        ik: (a, b, l, p) => ik(a, b, l, p, SOFT.arm, true), keep: grip })
+      const arm = keep => solveArm({ sh, elbow, hand, flex, pole: A.pole ? V(A.pole) : k.pole, l: LIMB.upper, vols, limb: LIMB_R / W, handR: 0.05, out: new THREE.Vector3(sg, -0.3, 0.4).applyQuaternion(qChest),
+        ik: (a, b, l, p) => ik(a, b, l, p, SOFT.arm, true), keep });
+      let sol = PHYS.on ? arm(gw > 0)
         : (w => ({ elbow, hand, flex, pen0: w ? w.depth : 0, pen: w ? w.depth : 0, limits: 0 }))(armPenetration(sh, elbow, hand, vols, { limb: LIMB_R / W, handR: 0.05 }));
+      // a hand taking or letting go of a prop (0 < gw < 1): the gripping solve (the hand stays on its grip) and the free one
+      // (it steps out of what it is in) blended by that weight, the elbow re-solved so the bones keep their length (a grip
+      // switched off in one frame stepped the fist 7 cm, Act_PutDown_Once at its release)
+      if (PHYS.on && gw > 0 && gw < 1) { const s0 = arm(false), H = s0.hand.clone().lerp(sol.hand, gw), E = s0.elbow.clone().lerp(sol.elbow, gw).sub(sh);
+        const r = ik(sh, H, LIMB.upper, E, SOFT.arm, true); sol = { ...sol, elbow: r.joint, hand: r.end, flex: r.flex, pen: Math.max(sol.pen, s0.pen) }; }
       elbow = sol.elbow; hand = sol.hand; flex = sol.flex;
       arms[side] = { sh, pole: A.pole ? V(A.pole) : k.pole, want, grip };
       const hipJ = toRoot(new THREE.Vector3(sg * 0.14 * girth, 0.04, 0)), G = Q['leg' + side] || {};
@@ -946,11 +970,12 @@ export function makeStick(spec) {
     // is reported (targetGap). With PHYS off the overlap is only measured.
     const legSegs = ['L', 'R'].flatMap(sd => [[rig[sd].hip, rig[sd].knee], [rig[sd].knee, rig[sd].ankle]]);
     let held = handProps(Q, rig), pp = held.length ? propOverlap(held, legSegs, vols) : null;
-    const propPen0 = pp ? pp.depth : 0;
+    const propPen0 = heldPen(pp);
     for (let it = 0; PHYS.on && pp && it < 6; it++) {
       for (const sd of pp.side === 'B' ? ['L', 'R'] : [pp.side]) {
         // the elbow stays on the side the contact solve chose (its own direction as the pole): no jump when an overlap starts
-        const a = arms[sd], r = ik(a.sh, rig[sd].hand.clone().add(pp.push), LIMB.upper, rig[sd].elbow.clone().sub(a.sh), SOFT.arm, true);
+        // (a prop on its way into or out of the hand moves w as far as the hand: the hand moves it out by w of the overlap)
+        const a = arms[sd], r = ik(a.sh, rig[sd].hand.clone().addScaledVector(pp.push, pp.w ?? 1), LIMB.upper, rig[sd].elbow.clone().sub(a.sh), SOFT.arm, true);
         rig[sd].elbow = r.joint; rig[sd].hand = r.end; rig[sd].elbowFlex = r.flex;
       }
       held = handProps(Q, rig); pp = propOverlap(held, legSegs, vols);
@@ -958,13 +983,15 @@ export function makeStick(spec) {
     for (const side of ['L', 'R']) {
       const a = arms[side], r = rig[side], pts = hose(a.sh, r.elbow, r.hand, ROUND.arm, 16);
       limbs['arm' + side].set(pts); hands[side].position.copy(pts[15]); S.hand[side] = r.hand.toArray();
-      Object.assign(r, { targetGap: r.hand.distanceTo(a.want), grip: a.grip, propPen0: side === 'L' ? propPen0 : 0, propPen: side === 'L' && pp ? pp.depth : 0 });
+      Object.assign(r, { targetGap: r.hand.distanceTo(a.want), grip: a.grip, propPen0: side === 'L' ? propPen0 : 0, propPen: side === 'L' ? heldPen(pp) : 0 });
     }
     // the skeleton in root space (W): pelvis, five points up the spine, the neck base, the head centre, the trunk's
     // centre; and the centre of mass of the whole body with what it carries (x_kg<L|R|B> kg, else the prop's userData.mass)
     const neck = toRoot(top.p.clone()), headC = toRoot(top.p.clone().add(hOff)), trunk = toRoot(spineFrame(B, TORSO.cy - HIP_V).p);
     S.skel = { pelvis: hipP.clone(), spine: [0, 0.25, 0.5, 0.75, 1].map(u => toRoot(spineFrame(B, u * SPINE_L).p)), neck, head: headC, trunk };
-    const loads = held.map(h => ({ p: h.box.c, w: (Q['x_kg' + h.side] ?? h.o.userData.mass ?? 0) / KG }));
+    // a load the floor carries (userData.floor: a pushed crate) is no weight on the body; a load on its way into or out of
+    // the hand weighs as much as the hand holds it (x_kg times the attach weight: no 25 kg step in one frame)
+    const loads = held.filter(h => !h.o.userData.floor).map(h => ({ p: h.box.c, w: (Q['x_kg' + h.side] ?? h.o.userData.mass ?? 0) * h.w / KG }));
     S.com = centreOfMass({ head: headC, trunk, L: rig.L, R: rig.R, extra: loads });
     S.carryKg = loads.reduce((a, l) => a + l.w * KG, 0);
     S.chan = { bend: +(Q.spine?.bend || 0).toFixed(1), side: +(Q.spine?.side || 0).toFixed(1), twist: +(Q.spine?.twist || 0).toFixed(1), nod: +(nk.nod || 0).toFixed(1), tilt: +(nk.tilt || 0).toFixed(1), turn: +(nk.turn || 0).toFixed(1) };
@@ -975,15 +1002,28 @@ export function makeStick(spec) {
     return S;
   };
   // balance (rig B4): a body standing on both feet with its centre of mass outside them moves its hips over its feet,
-  // as a person does, feet staying where they are (a pelvis shift moves ~85% of the body's mass with it)
-  const pose2raw = S.pose2;
+  // as a person does, feet staying where they are (a pelvis shift moves ~85% of the body's mass with it). The shift is
+  // weighed by how far the body stands on its own legs: not while a seat or the floor carries it (fall, keyed 0..1), not
+  // in a captured pose (x_raw, motion.js: a real body's balance is in the capture, its load's too; the solve on top of it
+  // moved the hips 10-35 cm in a frame as a foot lifted, Adult_Move_Walk_Fwd, Trans_JumpWindow), both faded over frames;
+  // nor while the hands lean on a load the floor carries (a pushed crate, userData.floor: it holds the body up), by how
+  // much they hold it (the push's lean balanced on the feet alone moved the hips 10 cm in a frame, Move_PushHeavy_Loop)
+  const pose2raw = S.pose2, c01 = x => Math.max(0, Math.min(1, x || 0));
   S.pose2 = (Q = {}) => {
-    let r = pose2raw(Q), shift = 0;
-    if (PHYS.on && PHYS.balance && !Q.fall) for (let i = 0; i < 4; i++) {
-      const b = balanceShift(S.com, ['L', 'R'].map(sd => S.rig[sd]), Q.ground || 0); if (!b) break;
-      shift += Math.hypot(b.x, b.z); Q = { ...Q, hip: { ...(Q.hip || {}), x: (Q.hip?.x || 0) + b.x / 0.85, z: (Q.hip?.z || 0) + b.z / 0.85 } }; r = pose2raw(Q);
+    let r = pose2raw(Q), shift = 0, sx = 0, sz = 0;
+    const lean = Math.max(0, ...Object.entries(S.propState).filter(([id]) => S.props[id]?.userData.floor && S.props[id].visible).map(([, p]) => p.w));
+    // (x_stand: both feet down, eased over frames by motion.js; a pose without it falls back to the feet's own height)
+    const st = Q.x_stand, bw = (1 - c01(Q.fall)) * (1 - c01(Q.x_raw)) * (1 - lean) * (st == null ? 1 : c01(st));
+    if (PHYS.on && PHYS.balance && bw > 0) {
+      const Q0 = Q;
+      for (let i = 0; i < 4; i++) {
+        const b = balanceShift(S.com, ['L', 'R'].map(sd => S.rig[sd]), Q.ground || 0, st == null ? {} : { k: 1 }); if (!b) break;
+        sx += b.x / 0.85; sz += b.z / 0.85; Q = { ...Q0, hip: { ...(Q0.hip || {}), x: (Q0.hip?.x || 0) + sx, z: (Q0.hip?.z || 0) + sz } }; r = pose2raw(Q);
+      }
+      if (bw < 1 && (sx || sz)) { sx *= bw; sz *= bw; r = pose2raw({ ...Q0, hip: { ...(Q0.hip || {}), x: (Q0.hip?.x || 0) + sx, z: (Q0.hip?.z || 0) + sz } }); }
+      shift = Math.hypot(sx, sz) * 0.85;
     }
-    S.rig.balanceShift = shift;
+    S.rig.balanceShift = shift; S.rig.balanceHip = [sx, sz];         // (the hips' shift, root space W: x to the right, z forward)
     return r;
   };
   // the last pose's joints in Blender world metres (y = depth), flexes and pitches in degrees, for __dbg

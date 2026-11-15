@@ -2,7 +2,6 @@
 //   node styles/stick-man/tools/shot.mjs --film styles/stick-man/motion-lib/proof --w 540 --h 960 --query "clip=Act_PickUp_Once&body=adult&phys=0" --mp4 ...
 //   query: clip (a clip name), body (default the clip's own, else adult), phys=0 (PHYS.on false), times (loop cycles, default 2)
 // tools/motionlib.mjs --proof renders every clip through this page.
-import '/styles/stick-man/allout/fx.js';                  // ao_anim: the set's keyed things (a bag on the floor, a dropped bag)
 import '/styles/stick-man/motion-lib/props.js';
 import { PHYS } from '/styles/stick-man/engine/body.js';
 import { SPECS } from '/styles/stick-man/engine/play.js';
@@ -26,9 +25,6 @@ const key = { ...(C.advance ? { f: F0, clip: CLIP, body: BODY, to: [C.introTrave
 const first = C.base !== 'STAND' ? (C.advance ? C.intro[0] : C.keys[0]) : stand(BODY);
 const anim = [K(0, first, { ease: 'snap' }), key];
 const placed = placeClip(key, { pos: [0, 0], yaw: 90 }), last = placed.keys[placed.keys.length - 1].f;
-// a travelling loop's last cycle ends (the closing step starts): the clip frame and where the root is then (a pushed
-// crate is left there: proof/set.js)
-const loopEnd = C.advance ? (f => ({ f, pos: placed.keys.filter(k => k.f - F0 <= f).at(-1).pos.slice(0, 2) }))(C.introFrames + placed.n * C.frames) : null;
 const xs = placed.keys.map(k => k.pos?.[0] ?? 0), x0 = Math.min(0, ...xs), x1 = Math.max(0, ...xs), k = Math.max(0.72, sc);
 // a 3/4 view from ahead, on the side of the hand that holds the load (a bag in the right fist: the figure's right, +y), so
 // the load is in front of the legs, never read through them; a clip at a wall (a window) is seen side-on from beyond
@@ -40,8 +36,9 @@ const right = H === 'R' || window_ || (C.needs.props || []).includes('bag') ? 1 
 // a run outpaces the camera's eased move through its middle (its start and stop are slow), so the camera stands further back
 const far = C.advance && /Run/.test(CLIP) ? 1.4 : 1;
 // &view=side: straight side-on (the view animators judge a walk or a run in)
-const side = QS.get('view') === 'side';
-const cam = x => (side ? { pos: [x, -3.0 * k, 0.85 * k], aim: [x, 0, 0.75 * k], lens: 40 } : { pos: [x + 1.6 * k * far, right * 3.0 * k * far, 1.1 * k], aim: [x + 0.15, 0, 0.8 * k], lens: 40 });
+// (&wide=1: from further back and aimed ahead of the body, so a prop it sets down or pushes in front stays in the frame)
+const side = QS.get('view') === 'side', wide = QS.get('wide') === '1' ? { d: 1.8, ahead: 0.45 } : { d: 1, ahead: 0 };
+const cam = x => (side ? { pos: [x + wide.ahead, -3.0 * k * wide.d, 0.85 * k], aim: [x + wide.ahead, 0, 0.75 * k], lens: 40 } : { pos: [x + 1.6 * k * far, right * 3.0 * k * far, 1.1 * k], aim: [x + 0.15, 0, 0.8 * k], lens: 40 });
 // the side view tracks the body: short linear moves from where the body is to where it will be, each starting where
 // the last ended (a cut to the same camera does not show), so a fast run stays in the middle of the frame
 const xAt = f => { const K = placed.keys; let i = 0; while (i < K.length - 1 && K[i + 1].f <= f) i++; const a = K[i], b = K[Math.min(K.length - 1, i + 1)];
@@ -59,8 +56,7 @@ export default {
   light: { sun: [1.0, 0.97, 0.93], power: 3.0, sky: [0.86, 0.86, 0.88], ground: [0.55, 0.55, 0.56], hemi: 0.5, fill: [0.95, 0.95, 1.0], fillPower: 0.4,
     sunDir: [0.35, 0.45, -0.85], background: [0.58, 0.58, 0.60] },
   grade: { exp: 1.0, lift: 0.0, sat: 1.0, haze: 0, shoulder: 0.2 },
-  set: 'motionlib', setModule: '/styles/stick-man/motion-lib/proof/set.js', setOpts: { marks: C.needs.marks || [], sc, f0: F0, loopEnd },
-  make: Object.fromEntries((C.needs.marks || []).map(m => (m.kind === 'bag' ? (m.drop ? 'bag_drop' : 'bag_floor') : m.kind === 'cash' ? 'cash_left' : m.kind === 'crate' ? (m.after ? 'crate_left' : 'crate_start') : null)).filter(Boolean).map(n => [n, { kind: 'ao_anim', prop: n }])),
+  set: 'motionlib', setModule: '/styles/stick-man/motion-lib/proof/set.js', setOpts: { marks: C.needs.marks || [], sc },
   cast: { you: { spec: 'PROOF', at: [0, 0, 0], yaw: 90, expr: 'neutral', focus: 'camera', lead: true } },
   anim: { you: anim }, direct,
 };

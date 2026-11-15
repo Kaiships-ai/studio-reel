@@ -73,6 +73,7 @@ const leaves = e => (e === 'flow' || e === 'in' ? 1 : 0), enters = e => (e === '
 export function compileTrack(keys, poses, base, style) {
   CUR = resolveStyle(style);
   keys = expandClips(keys, base);                                      // { f, clip, body, to, times }: the motion library's keys
+  const props = keys.props || [];                                      // the props its clips hold (engine/propobj.js)
   const ks = keys.map(k => {
     const named = typeof k.pose === 'string' ? poses[k.pose] : k.pose;
     if (typeof k.pose === 'string' && !named) throw new Error(`anim: unknown pose "${k.pose}"`);
@@ -101,6 +102,7 @@ export function compileTrack(keys, poses, base, style) {
     if (k.hold) out.push({ ...k, f: k.f + k.hold, hold: 0, antic: 0, expr: undefined, look: undefined, held: true });
   }
   out.style = CUR;
+  out.props = props;
   // flights: a run of keys off the ground (pos.2 > 2 cm over what holds the body up), from the key before it (on the
   // ground) to the next key on the ground. `support` (m) is a surface under the body (a bed, a seat, a stage: a clip key's
   // pos [x, y, h]): a body resting on it is held up, not in the air (it fell from a bed before: rig B6 took it for a flight)
@@ -151,7 +153,7 @@ export function keyed(track, f) {
   if (PHYS.on && PHYS.gravity !== false) for (const fl of track.flights || []) if (f > fl.f0 && f < fl.f1) { const [x, y, z] = ballistic(fl, f); out['pos.0'] = x; out['pos.1'] = y; out['pos.2'] = z; }
   return out;
 }
-const ARC = 0.15;
+const ARC = 0.15, STAND_PAD = 3;
 const RAW_FADE = 12;
 // the channels exaggeration scales: the body's angles and its bob, not where it stands, its feet or its targets
 const EXAG = /^(bob|spine\.|neck\.|pelvis\.|arm[LR]\.(raise|swing|elbow|roll)$|hip\.)/;
@@ -198,6 +200,7 @@ export function playActor(track, F0, F1, opt = {}) {
     // out over RAW_FADE frames into a run of captured keys and back in after it (a switch in one frame would jump)
     let rk = null; for (const t of track) { if (t.f > f) break; rk = t; }
     rawW = clamp(rawW + (rk?.raw ? 1 : -1) / RAW_FADE, 0, 1);
+    o.x_raw = rawW;                                                    // (cast.js: a captured pose carries its own balance)
     for (const [c, v] of Object.entries(k)) {
       const d = DRAG.find(([re]) => re.test(c)); if (!d || opt.stiff) continue;
       const sp = (springs[c] ||= new Spring(d[1], d[2])).step(v); o[c] = v + (sp - v) * dial('followThrough') * (1 - rawW);
@@ -218,6 +221,14 @@ export function playActor(track, F0, F1, opt = {}) {
     o['neck.tilt'] = (o['neck.tilt'] || 0) + 0.9 * B2 * Math.sin(t * 2 * Math.PI * 0.17 + 1.3);
     frames.push(o); prev2 = prev; prev = k;
   }
+  // standing (x_stand, 0..1, cast.js balance): both feet on the ground, from the keyed feet (footW height in m, else the
+  // figure-frame foot), off from STAND_PAD frames before a foot lifts to as many after it lands, eased over as many again
+  // on each side: the balance solve fades in and out over a quarter second instead of switching as a sole touches (the
+  // hips jumped 8-10 cm in the frame a stepping foot came down, Move_PushHeavy_Loop's first step, Elder_Move_Run)
+  const up = m => Math.max(...['L', 'R'].map(s => m[`leg${s}.footW.2`] ?? (m[`leg${s}.foot.1`] != null ? (m[`leg${s}.foot.1`] - 0.022) * W_M : 0)));
+  const s0 = frames.map(m => clamp(1 - (up(m) - 0.01) / 0.04, 0, 1)), n = frames.length, P = STAND_PAD;
+  const er = s0.map((_, i) => Math.min(...s0.slice(Math.max(0, i - P), Math.min(n, i + P + 1))));
+  frames.forEach((o, i) => { const win = er.slice(Math.max(0, i - P), Math.min(n, i + P + 1)); o.x_stand = win.reduce((a, b) => a + b, 0) / win.length; });
   // timing: a stylised film holds each drawing for 2 frames ("on twos", 12 a second) or 3; a simulation runs on ones
   const step = CUR.timing >= 0.95 ? 3 : CUR.timing >= 0.7 ? 2 : 1;
   if (step > 1) for (let i = 0; i < frames.length; i++) frames[i] = frames[i - (i % step)];

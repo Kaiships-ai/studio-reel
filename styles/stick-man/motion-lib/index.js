@@ -193,15 +193,23 @@ export function placeClip(k, cur = { pos: [0, 0], yaw: 0 }) {
   // a clip written against another standard pose than the one it opens on names it (rest): the dose pushes from that
   if (C.rest) out[0].rest = BASES[C.rest](body, 0);
   const last = out[out.length - 1];
-  return { keys: out, pos: last.pos ? last.pos.slice(0, 2) : O, yaw: last.yaw ?? H, support: Hs, clip: C, n, fit };
+  // the props this clip key holds, each one object for the key's whole span (engine/propobj.js): its id (side + kind, after
+  // the swap), its weight channel and the clip's `toss` (m/s, clip space: forward, left, up) turned with the heading
+  const props = [...new Set(out.flatMap(o => Object.keys(o).filter(n => /^x_hp[LRB]_\w+$/.test(n))))].map(key => {
+    const kind = key.slice(6), from = Object.entries(k.swap || {}).find(([, to]) => to === kind)?.[0] ?? kind, t = C.toss?.[from];
+    return { id: key[4] + kind, key, f0: out[0].f, f1: last.f, ...(t ? { toss: [(t[0] * c - t[1] * s) * sc, (t[0] * s + t[1] * c) * sc, (t[2] || 0) * sc] } : {}) };
+  });
+  out.props = props;
+  return { keys: out, pos: last.pos ? last.pos.slice(0, 2) : O, yaw: last.yaw ?? H, support: Hs, clip: C, n, fit, props };
 }
 // a track's keys with every clip key expanded (keys sorted by f; plain keys pass through)
 export function expandClips(keys, base = {}) {
   if (!keys.some(k => k.clip)) return keys;
   const out = []; let cur = { pos: (base.pos || [0, 0]).slice(0, 2), yaw: base.yaw ?? 0 };
+  out.props = [];
   for (const k of [...keys].sort((a, b) => a.f - b.f)) {
     if (!k.clip) { out.push(k); if (Array.isArray(k.pos)) cur = { ...cur, pos: k.pos.slice(0, 2) }; if (typeof k.yaw === 'number') cur = { ...cur, yaw: k.yaw }; continue; }
-    const r = placeClip(k, cur); out.push(...r.keys); cur = { pos: r.pos, yaw: r.yaw, support: r.support };
+    const r = placeClip(k, cur); out.push(...r.keys); out.props.push(...r.props); cur = { pos: r.pos, yaw: r.yaw, support: r.support };
   }
   return out;
 }

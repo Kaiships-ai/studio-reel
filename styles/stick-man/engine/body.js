@@ -58,10 +58,11 @@ export const PHYS = { on: true, rom: true, balance: true, gravity: true };
 // balance (rig B4): with both soles on the ground a body stands only if its centre of mass is over the area its feet
 // cover. Returns the horizontal shift (root space x, z, W) that brings it back inside, or null when it is inside or the
 // body is not standing (stepping, jumping, falling are not standing). feet: [{ heel, toe, ankle }], gnd
-export function balanceShift(com, feet, gnd = 0, { sole = 0.022, margin = 0.02 } = {}) {
+export function balanceShift(com, feet, gnd = 0, { sole = 0.022, margin = 0.02, k: k0 } = {}) {
   // how much each foot carries the body: 1 on the ground, fading to 0 as it lifts 6 cm (a step or a jump), so the
-  // correction comes and goes smoothly instead of snapping when a foot leaves the ground
-  const k = Math.min(...feet.map(f => Math.max(0, Math.min(1, 1 - (Math.min(f.heel.y, f.toe.y, f.ankle.y) - sole - gnd - 0.012) / 0.1))));
+  // correction comes and goes smoothly instead of snapping when a foot leaves the ground (k: the caller's own weight,
+  // cast.js passes 1 when motion.js has eased the standing weight over frames already)
+  const k = k0 ?? Math.min(...feet.map(f => Math.max(0, Math.min(1, 1 - (Math.min(f.heel.y, f.toe.y, f.ankle.y) - sole - gnd - 0.012) / 0.1))));
   if (k <= 0) return null;
   const P = feet.flatMap(f => [[f.heel.x, f.heel.z], [f.toe.x, f.toe.z], [f.ankle.x, f.ankle.z]]);
   P.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
