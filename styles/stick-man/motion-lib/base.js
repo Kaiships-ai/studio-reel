@@ -43,7 +43,7 @@ export const carry = (body = 'adult', x = 0) => merge(stand(body, x), { bob: -0.
 // meets it exactly
 const lieCache = {};
 export const lie = (body = 'adult', x = 0) => {
-  if (!lieCache[body]) { const k = { ...gaitLoop({ body, kind: 'walk', mocap: LAYTOIDLE, once: true, feet: 'capture' }).keys[0] }; delete k.f; delete k.ease; delete k._ref; lieCache[body] = k; }
+  if (!lieCache[body]) { const k = { ...gaitLoop({ body, kind: 'walk', mocap: LAYTOIDLE, once: true, feet: 'capture' }).keys[0] }; delete k.f; delete k.ease; lieCache[body] = k; }
   // (the channels a STAND carries that a capture does not, the knees' poles, as STAND has them)
   const s = stand(body, x), P = turned(lieCache[body], 0, [x, 0]);
   for (const sd of ['legL', 'legR']) P[sd] = { ...P[sd], ...(s[sd].knee ? { knee: s[sd].knee } : {}), ...(s[sd].foot ? { foot: s[sd].foot } : {}) };
@@ -54,7 +54,7 @@ export const lie = (body = 'adult', x = 0) => {
 export const HUG_KG = 20;
 const hugCache = {};
 export const hug = (body = 'adult', x = 0) => {
-  if (!hugCache[body]) { const k = { ...gaitLoop({ body, kind: 'walk', mocap: CARRY_IDLE, once: true, feet: 'capture' }).keys[0] }; delete k.f; delete k.ease; delete k._ref; hugCache[body] = k; }
+  if (!hugCache[body]) { const k = { ...gaitLoop({ body, kind: 'walk', mocap: CARRY_IDLE, once: true, feet: 'capture' }).keys[0] }; delete k.f; delete k.ease; hugCache[body] = k; }
   const s = stand(body, x), P = merge(s, { bob: hugCache[body].bob, hip: { x: 0 } }, Object.fromEntries(['spine', 'neck', 'pelvis', 'armL', 'armR'].map(n => [n, hugCache[body][n]])), { x_hpB_hugbag: 1, x_kgB: HUG_KG });
   return P;
 };
@@ -393,12 +393,9 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
     const fx = x + (land(j) - x0) * (1 - e) + (land(j + 2) - x1) * e, fz = z - z0 * (1 - e) - z1 * e;
     return foot(fx, yAt(s, j) * (1 - e) + yAt(s, j + 2) * e, Math.max(w > 0 && w < 1 ? 0.006 : 0, fz), pitch);
   };
-  // (_ref: the knee each leg is authored to show, its curve: tools/motionlib.mjs jointExcess measures the solved knee
-  // against it)
-  const kneeAt = l => (l.c < cs ? curve(KS, l.c) : (w0 => curve(KW, run ? w0 : w0 * w0 * (2 - w0)))((l.c - cs) / (2 - cs)));
   const frame = t => { const { P, sl, sr } = torso(t), legs = {};
     for (const [s, l] of [['L', sl], ['R', sr]]) legs['leg' + s] = l.c < cs ? plant(s, t, l.j, l.c) : swing(s, t, l.j, l.c);
-    return { ...merge(P, legs, { bob: bobOf(t) }), _ref: { kneeFlexL: kneeAt(sl), kneeFlexR: kneeAt(sr) } }; };
+    return merge(P, legs, { bob: bobOf(t) }); };
   // a reference cycle, frame by frame: the trunk tipped from the hips, the pelvis turned and tilted, the shoulders against
   // it, the arms (world angles in the reference: on the leaning trunk they swing that much further forward), the hips at the reference's height,
   // a planted foot fixed on its print and rolling heel to toe, a swing foot where the reference's leg puts it (eased off
@@ -450,7 +447,6 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
     // (over a sill or a ledge: the hips' height over it, so a body kneeling or lying on one rests on it too; and a body
     // with a hand down on one, a climb's, leans its weight on that hand)
     const grounded = m.hipZ - m.hipFloor < 0.35 * MC.scale * MC.legSrc || m.handOn;
-    P._ref = m.ref;                                     // (the raw capture's joints: tools/motionlib.mjs jointExcess)
     P.raw = true;                                       // (motion.js: a captured key plays as it is, no drag)
     // (a foot off the floor still shows the captured knee: reachFoot, as a standing body's swinging foot does)
     if (grounded) { P.fall = 1; for (const sd of ['L', 'R']) if (!m.down[sd]) P['leg' + sd] = reachFoot(P, sd, m['knee' + sd]); return P; }
@@ -469,7 +465,7 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
   // them (6 cm, Move_CarryBag_Walk_Loop's captured stop). The correction is carried over frames with no foot down (eased
   // from the last stance's to the next one's) and changes at most BOB_STEP W a frame; the swinging feet are placed again
   // from those hips (cyc: the frames wrap, a loop)
-  const BOB_STEP = 0.01;
+  const BOB_STEP = 0.01, PEEL = 16;
   const airBob = (keys, cyc) => {
     const n = keys.length, off = keys.map(k => k._cap && (k._cap.down.L || k._cap.down.R) ? k.bob - k._cap.bob : null);
     if (n && keys.every(k => k._cap) && off.some(o => o != null)) {
@@ -494,6 +490,16 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
     const PEEL_F = 6, liftIn = (i, sd) => { for (let d = 1; d <= PEEL_F; d++) { const j = cyc ? (i + d) % n : i + d; const c = keys[j]?._cap; if (!c) return null; if (!c.down[sd]) return d; } return null; };
     keys.forEach((k, i) => { if (k._cap) for (const sd of ['L', 'R']) if (k._cap.down[sd]) { const d = liftIn(i, sd); if (d == null) continue;
       const p = peelFor(k, sd, k._cap.knee[sd]) * ease3((PEEL_F + 1 - d) / PEEL_F); if (p < k['leg' + sd].pitch) k['leg' + sd] = { ...k['leg' + sd], pitch: p }; } });
+    // and the foot lifts off that peel: from there the swing foot turns toward the capture's pitch at most PEEL a frame
+    // (the peel ended on the print, the capture's swing began toe up: 39.9 deg/f, Move_CarryBag_Walk_Loop frame 231)
+    for (const sd of ['L', 'R']) for (let i = 0; i < n; i++) {
+      const a = keys[cyc ? (i - 1 + n) % n : i - 1]; if (!a?._cap || !a._cap.down[sd] || keys[i]._cap?.down[sd] !== false) continue;
+      let prev = a['leg' + sd].pitch;
+      for (let d = 0, j = i; d < n && keys[j]?._cap?.down[sd] === false; d++, j = cyc ? (j + 1) % n : j + 1) {
+        const q = keys[j]['leg' + sd].pitch, v = prev + Math.max(-PEEL, Math.min(PEEL, q - prev)); if (Math.abs(v - q) < 1e-9) break;
+        keys[j]['leg' + sd] = { ...keys[j]['leg' + sd], pitch: v }; prev = v;
+      }
+    }
     for (const k of keys) delete k._cap;
     return keys;
   };
@@ -504,7 +510,6 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
   if (MC) { const L = keys[2 * T], c0 = keys[0]._cap?.bob; airBob(keys.slice(0, 2 * T), true);
     if (L._cap) { if (c0 != null && Math.abs(L._cap.bob + keys[0].bob - c0 - L.bob) > 1e-9) { L.bob = L._cap.bob + keys[0].bob - c0; for (const sd of ['L', 'R']) if (!L._cap.down[sd]) L['leg' + sd] = reachFoot(L, sd, L._cap.knee[sd]); } delete L._cap; } }
   // a heel never peels faster than PEEL deg a frame: where the leg asks for more, the peel starts earlier (the loop wraps)
-  const PEEL = 16;
   const N = 2 * T;
   for (const s of ['L', 'R']) for (let pass = 0; pass < 3; pass++) for (let t = N; t > 0; t--) {
     const a = keys[t - 1]['leg' + s], b = keys[t % N]['leg' + s], dx = t === N ? 2 * S : 0;

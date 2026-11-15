@@ -51,7 +51,7 @@ export function sunHat(col = [0.95, 0.80, 0.46], ribbon = [0.10, 0.18, 0.45], ti
     band.push([HA * Math.cos(36 * DEG), HB * Math.sin(36 * DEG)], [HA * Math.cos(22 * DEG), HB * Math.sin(22 * DEG)], band[0]);
     g.add(solid(lathe(band), flat(ribbon)));
     const brim = lathe([[rIn, y + 0.01 * W], [R, y - 0.05 * W], [R, y - 0.075 * W], [rIn, y - 0.02 * W], [rIn, y + 0.01 * W]], 64);
-    g.add(solid(brim, flat(col.map(c => c * 0.95))));
+    brim.userData.sheet = true; g.add(solid(brim, flat(col.map(c => c * 0.95))));
     return g;
   };
 }

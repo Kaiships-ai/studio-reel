@@ -17,7 +17,7 @@ const FIT = QS.get('fit') ? JSON.parse(QS.get('fit')) : null, SWAP = { ...(FIT?.
 const CLIP = QS.get('clip') || 'Idle_Stand_Loop', C0 = getClip(CLIP, QS.get('body') || 'adult'), BODY = QS.get('body') || C0.body || 'adult';
 if (QS.get('phys') === '0') PHYS.on = false;
 const C = getClip(CLIP, BODY, FIT), F0 = 6, sc = C.body ? 1 : (BODIES[BODY].spec.scale ?? 1);
-SPECS.PROOF = bodySpec({ ...SPECS.GUARD, name: 'Proof', hair: [] }, BODY);
+SPECS.PROOF = bodySpec({ ...SPECS.GUARD, name: 'Proof', ...(C0.needs?.cap ? {} : { hair: [] }) }, BODY);   // (a clip made for a capped figure wears the cap)
 export const CUTS = [0];
 
 // the clip key: a travelling loop walks a set distance (start, two cycles, stop); other loops repeat; a one-off plays once

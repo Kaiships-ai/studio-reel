@@ -184,6 +184,50 @@ export function ellipsoid(c, q, r, kind) {
   };
 }
 
+// What the figure wears on its head (hair, a cap, a hat), as a solid a held prop stops on as it does on the skull (the
+// guard's cap reaches 3.6 cm past the skull all round and its peak 0.55 m ahead: a pistol baked 3 cm off the skull went
+// through the cap while the check read 0 cm, Hot Money ep01 SH172 frames 72-88). Built once in head space (metres: x,
+// y up, z ahead; the skull's half sizes ha, hb, ha) from the worn meshes' vertices:
+//   crown: what hugs the head (hair, a cap's crown), as how far out it reaches in each direction from the head's centre,
+//          in skull radii (1 = the skull)
+//   sheet: what sticks out thin (a peak, a brim: geometry.userData.sheet), as balls of its half thickness over its surface
+//          (one direction from the centre passes along a brim, so the crown's measure would fill the space under it)
+const SHELL_LAT = 24, SHELL_LON = 48, CELL = 0.02;
+const shellBin = (x, y, z) => { const s = Math.hypot(x, y, z) || 1, la = Math.min(SHELL_LAT - 1, Math.floor((Math.asin(Math.max(-1, Math.min(1, y / s))) / Math.PI + 0.5) * SHELL_LAT));
+  const lo = Math.min(SHELL_LON - 1, Math.floor((Math.atan2(x, z) / (2 * Math.PI) + 0.5) * SHELL_LON)); return la * SHELL_LON + lo; };
+const cellKey = (x, y, z) => `${Math.floor(x / CELL)},${Math.floor(y / CELL)},${Math.floor(z / CELL)}`;
+// crown: vertices (THREE.Vector3, head space); sheets: triangles [[a, b, c], ...] (head space); half: a sheet's half thickness
+export function headWear(crown, sheets, ha, hb, { half = 0.01, step = 0.01 } = {}) {
+  const grid = new Float32Array(SHELL_LAT * SHELL_LON);
+  // (a vertex covers its own direction and the eight round it: the meshes' vertices are sparser than the bins)
+  for (const v of crown) { const x = v.x / ha, y = v.y / hb, z = v.z / ha, s = Math.hypot(x, y, z); if (s <= 1) continue;
+    const b = shellBin(x, y, z), la = Math.floor(b / SHELL_LON), lo = b % SHELL_LON;
+    for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) { const a = la + i; if (a < 0 || a >= SHELL_LAT) continue; const k = a * SHELL_LON + (lo + j + SHELL_LON) % SHELL_LON; if (s > grid[k]) grid[k] = s; } }
+  const balls = new Map(); let n = 0;
+  for (const [a, b, c] of sheets) { const u = b.clone().sub(a), v = c.clone().sub(a), m = Math.max(1, Math.ceil(Math.max(u.length(), v.length(), c.distanceTo(b)) / step));
+    for (let i = 0; i <= m; i++) for (let j = 0; i + j <= m; j++) { const p = a.clone().addScaledVector(u, i / m).addScaledVector(v, j / m), k = cellKey(p.x, p.y, p.z);
+      if (!balls.has(k)) balls.set(k, []); balls.get(k).push(p); n++; } }
+  return grid.some(x => x > 1) || n ? { grid, balls, half: half + step / 2, ha, hb } : null;
+}
+// the worn solid as a volume on the head's ellipsoid (its centre c, orientation q, radii r, root space W)
+export function wearVolume(c, q, r, wear, kind = 'hat') {
+  const qi = q.clone().invert(), l = new THREE.Vector3(), h = new THREE.Vector3(), k = wear.ha / r[0];   // metres a W unit of this head
+  return {
+    kind, c, q, r,
+    test(p, margin = 0) {
+      l.copy(p).sub(c).applyQuaternion(qi);
+      const x = l.x / r[0], y = l.y / r[1], z = l.z / r[2], s = Math.hypot(x, y, z), out = wear.grid[shellBin(x, y, z)], m = s > 1e-6 ? margin * s / l.length() : 0;
+      let best = out && s < out + m ? { depth: s < 1e-6 ? out * Math.min(...r) : l.length() * ((out + m) / s - 1), n: l.clone().normalize().applyQuaternion(q) } : null;
+      h.set(x * wear.ha, y * wear.hb, z * wear.ha);
+      const R = wear.half + margin * k;
+      for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) for (let t = -1; t <= 1; t++) {
+        for (const b of wear.balls.get(cellKey(h.x + i * CELL, h.y + j * CELL, h.z + t * CELL)) || []) { const d = h.distanceTo(b); if (d >= R) continue;
+          const depth = (R - d) / k; if (!best || depth > best.depth) { const nv = h.clone().sub(b); best = { depth, n: new THREE.Vector3(nv.x / wear.ha * r[0], nv.y / wear.hb * r[1], nv.z / wear.ha * r[2]).normalize().applyQuaternion(q) }; } } }
+      return best;
+    },
+  };
+}
+
 // the deepest point of an arm (shoulder sh -> elbow -> hand) inside any volume. Near the shoulder the upper arm is
 // inside the torso by construction (the shoulder sits in it), so the torso only tests its outer half.
 const _p = new THREE.Vector3();
@@ -265,7 +309,7 @@ export function solveArm({ sh, elbow, hand, pole, l, vols, ik, flex, limb, handR
 // space (W), the legs as segments [[a, b], ...] (thighs, shins: a tube of radius limb) and the trunk and head as volumes.
 // Returns the deepest overlap and the move that takes the prop out of it ({ depth, push }), or null when it is clear.
 // The prop never pushes the body: the hand that holds it moves (cast.js re-solves that arm and reports the hand's gap).
-export function propPush({ c, q, h }, segs, vols, { limb = 0.023, n = 6, from = new THREE.Vector3(0, 1.5, 0) } = {}) {
+export function propPush({ c, q, h }, segs, vols, { limb = 0.023, n = 6, from = new THREE.Vector3(0, 1.5, 0), step = 0.02 / 0.6 } = {}) {
   const qi = q.clone().invert(); let best = null;
   const take = (depth, push, kind = 'body') => { if (depth > 1e-5 && (!best || depth > best.depth)) best = { depth, push, kind }; };
   // the set's pieces as boxes (worldBox boxPush): the prop stops on a wall, the hands holding it stay on it
@@ -278,7 +322,16 @@ export function propPush({ c, q, h }, segs, vols, { limb = 0.023, n = 6, from = 
   }
   for (const sx of [-1, 0, 1]) for (const sy of [-1, 0, 1]) for (const sz of [-1, 0, 1]) {
     const p = new THREE.Vector3(sx * h[0], sy * h[1], sz * h[2]).applyQuaternion(q).add(c);
-    for (const v of vols) { if (v.boxPush) continue; const t = v.test(p); if (t) take(t.depth, t.n.clone().multiplyScalar(t.depth), v.kind); }
+    for (const v of vols) { if (v.boxPush || v.kind === 'hat') continue; const t = v.test(p); if (t) take(t.depth, t.n.clone().multiplyScalar(t.depth), v.kind); }
+  }
+  // what the head wears is thin (a peak 2 cm thick): its test samples the box's surface every `step` (2 cm), where the 27
+  // points above, half the box apart, let a pistol's barrel cross a cap's peak between two of them
+  const wear = vols.filter(v => v.kind === 'hat'); if (!wear.length) return best;
+  const N = h.map(x => Math.max(2, Math.ceil(2 * x / step))), at = (k, i) => -h[k] + 2 * h[k] * i / N[k];
+  for (let i = 0; i <= N[0]; i++) for (let j = 0; j <= N[1]; j++) for (let k = 0; k <= N[2]; k++) {
+    if (i && i < N[0] && j && j < N[1] && k && k < N[2]) continue;
+    const p = new THREE.Vector3(at(0, i), at(1, j), at(2, k)).applyQuaternion(q).add(c);
+    for (const v of wear) { const t = v.test(p); if (t) take(t.depth, t.n.clone().multiplyScalar(t.depth), v.kind); }
   }
   return best;
 }

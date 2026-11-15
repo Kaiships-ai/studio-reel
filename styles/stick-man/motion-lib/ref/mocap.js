@@ -144,12 +144,7 @@ export function mocapCycle(src, { legM, once = false, roll = true }) {
       const y = Math.atan2(d[1], d[0]) * DEG - heading - (sd === 'Left' ? -FOOT_OUT : FOOT_OUT), w = Math.min(1, Math.max(0, (h - 0.5) / 0.4));
       return ((y + 540) % 360 - 180) * w * w * (3 - 2 * w); };
     const L = leg('Left'), R = leg('Right'); L.yaw = toe('Left'); R.yaw = toe('Right');
-    // the raw capture's own joints (flexes in deg, unit bone directions), before any retarget, fit or ik: what the
-    // solved joints are measured against (tools/motionlib.mjs jointExcess)
-    const bone = (a, b) => nrm(V(f[a], f[b])).map(x => +x.toFixed(5)), flex = (a, b, c) => +(Math.acos(Math.max(-1, Math.min(1, dot(bone(a, b), bone(b, c))))) * DEG).toFixed(3);
-    const ref = {}; for (const [sd, s] of [['Left', 'L'], ['Right', 'R']]) Object.assign(ref, { ['kneeFlex' + s]: flex(sd + 'UpLeg', sd + 'Leg', sd + 'Foot'), ['elbowFlex' + s]: flex(sd + 'Arm', sd + 'ForeArm', sd + 'Hand'),
-      ['thigh' + s]: bone(sd + 'UpLeg', sd + 'Leg'), ['shin' + s]: bone(sd + 'Leg', sd + 'Foot'), ['upper' + s]: bone(sd + 'Arm', sd + 'ForeArm'), ['fore' + s]: bone(sd + 'ForeArm', sd + 'Hand') });
-    return { ref, kneeL: knee('Left'), kneeR: knee('Right'), down: { L: !!prints.Left[t], R: !!prints.Right[t] }, hipZ: hm[2] - rest * k, hipFloor: floorAt(hm), handOn: ['Left', 'Right'].some(sd => { const h = f[sd + 'Hand'], t = floorAt(h); return t > 0 && h[2] - t < 0.1 * k; }), pos: [hm[0], 0, 0], hipY: hm[1],
+    return { kneeL: knee('Left'), kneeR: knee('Right'), down: { L: !!prints.Left[t], R: !!prints.Right[t] }, hipZ: hm[2] - rest * k, hipFloor: floorAt(hm), handOn: ['Left', 'Right'].some(sd => { const h = f[sd + 'Hand'], t = floorAt(h); return t > 0 && h[2] - t < 0.1 * k; }), pos: [hm[0], 0, 0], hipY: hm[1],
       heading, pelvis: { yaw: pelvis.yaw, pitch: pelvis.pitch, roll: pelvis.roll }, spine: { twist: spine.yaw, bend: spine.pitch, side: spine.roll }, neck: { turn: neck.yaw, nod: neck.pitch, tilt: neck.roll },
       armL: arm('Left', -1), armR: arm('Right', 1), legL: L, legR: R };
   });
@@ -238,4 +233,25 @@ export function mocapJoin(parts, { surfaces = [], marks = [], source } = {}) {
     out.push(...part);
   }
   return { source, fps: 30, frames: out.map(f => Object.fromEntries(Object.entries(f).map(([k, v]) => [k, toClip(v)]))), surfaces, marks };
+}
+
+// A capture moving a limb faster than the style allows a frame (tools/jointstep.mjs: 25 deg/f for an elbow or a knee's
+// flex, or a bone's direction), slowed there: each such step is split into as many frames as it needs, the joints moved
+// in a straight line between the two captured frames (the bones' frames _f, _u turned with them). Frames after it come
+// later by as many: a reach table keyed by frame is baked on the slowed clip. Mixamo "Shooting Gun" snaps the elbow
+// open 25.5 then 25.4 deg in two frames (frames 42-44).
+const LIMBS = [['LeftArm', 'LeftForeArm', 'LeftHand'], ['RightArm', 'RightForeArm', 'RightHand'], ['LeftUpLeg', 'LeftLeg', 'LeftFoot'], ['RightUpLeg', 'RightLeg', 'RightFoot']];
+const turn = (u, v) => Math.acos(Math.max(-1, Math.min(1, dot(nrm(u), nrm(v))))) * DEG;
+const limbStep = (a, b) => Math.max(...LIMBS.flatMap(([s, e, h]) => {
+  const ua = V(a[s], a[e]), fa = V(a[e], a[h]), ub = V(b[s], b[e]), fb = V(b[e], b[h]);
+  return [Math.abs(turn(ua, fa) - turn(ub, fb)), turn(ua, ub), turn(fa, fb)];
+}));
+export function slowSource(src, max) {
+  const out = [src.frames[0]];
+  for (let i = 1; i < src.frames.length; i++) {
+    const a = src.frames[i - 1], b = src.frames[i], n = Math.ceil(limbStep(a, b) / max);
+    for (let k = 1; k < n; k++) out.push(Object.fromEntries(Object.keys(b).map(j => { const m = mix(a[j], b[j], k / n); return [j, /_[fu]$/.test(j) ? nrm(m) : m]; })));
+    out.push(b);
+  }
+  return { ...src, frames: out };
 }

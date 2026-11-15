@@ -105,18 +105,34 @@ before, except where an old one had a hand forced off a target (now kept when re
 In a film's `reel.js`: `import '/styles/stick-man/motion-lib/props.js'`, a cast spec from `bodySpec(SPECS.X, 'child')`,
 and `anim: { kid: [{ f: 0, clip: 'Move_Run_Fwd_Loop', body: 'child', to: [4, 0] }] }`.
 
+## Known gaps (PR G, waiting on Kai)
+
+- The gate's figure wears a cap only for clips with `needs.cap`. Wearing the guard's cap, these clips hold a prop in it
+  today: Act_Consume_Once 4.07 cm, Act_Phone_Once 7.74, Gest_PhoneCall_Loop 2.97, Act_PickUp_Once 1.14, Act_PutDown_Once
+  1.29, Move_PushHeavy_Loop 1.39, the DropInTrunk and PushBagOutWindow bag fits (physics off).
+- Only worn head gear is tested every 2 cm of a prop's box; the body and legs still take the box's 27 corner, edge and face
+  points. Tested every 2 cm, the bag of Gest_LookBackCarry_Once (1.32 cm), Move_CarryBag_Walk_Loop (1.77) and the two bag
+  fits (2.2) sit in the body (physics off).
+- A film that swaps in its own, bigger prop is not gated (ep01 SH172's 1.53x `hm_pistol`: 1.46 cm in the cap, the hand
+  5.27 cm off): PR H.
+- tools/mocap_contact.mjs now eases the hand's offset from the capture, not its position; only `ref/reach/pistol_head.js`
+  is baked that way. The other tables change on their next bake.
+
 ## Driving it
 
 - Offline checks of every clip: `node styles/stick-man/tools/motionlib.mjs` (one PASS line a clip, exit 0); each line ends
   with the clip run through cast.js headless (fake 2D canvases) with its set pieces, physics on and off: grip cm, prop cm,
   held frames, the solved joints' largest change a frame. It fails a clip that holds an undeclared prop, declares one it
   never holds, acts on a thing (`OBJECT_ACT`) without one, moves its root faster than 4 cm a frame outside the capture, or
-  starts off its origin. The solved-joint gate (`jointExcess`, `jointFails`, physics on and off): a solved elbow or
-  knee (its flex, its two bones) may turn more than 25 deg a frame only where the motion as authored does. In a capture's
-  frames that is the raw capture's own joint (`_ref` on the key, ref/mocap.js, before any retarget, fit or ik); in a made
-  gait the knee curve it is built from; elsewhere 25, or an arm's own FK keys. No slack (0.02 deg for rounding).
-  `JOINT_KNOWN` lists the 12 rows it fails today with their measured excess (runs' and leaps' knees, see the comments):
-  a listed row fails if its excess grows or if it passes clean (delete it), so the list only shrinks. A prop inside a set
+  starts off its origin. The solved-joint gate (`jointExcess`, `jointFails`, physics on and off) uses the film report's
+  own measure, `tools/jointstep.mjs` (`jointSteps`, shared with `shot.mjs`): every flex (knee, elbow, foot pitch), the
+  torso's lean and roll and the four limb bones' directions turn at most 25 deg a frame, with no allowance for a capture
+  that turns faster. `JOINT_KNOWN` lists the 12 rows it fails today with their measured excess over 25 (runs' and leaps'
+  knees and feet, see the comments):
+  a listed row fails if its excess grows or if it passes clean (delete it), so the list only shrinks. A held prop stops
+  on what the head wears as on the skull (cast.js `headWear`: a cap's crown and its peak, tested every 2 cm of the prop's
+  box); the figure is bare headed unless the clip says `needs.cap` (Act_PistolShoot_Once: the guard's cap, also on the
+  proof page). A prop inside a set
   piece fails (`propInSet`). `rigClip(C, body, { obstacles })` takes a film's own set pieces (ep01's 1.12 m counter beside
   the phone call). Physics gates on and off (`physicsFails`): a prop moves no more than its hand (times w) plus
   gravity plus 1 cm a frame (`PROP_SLIP_CM`, `propExcess`; a prop seen again after a gap is measured from where it was
