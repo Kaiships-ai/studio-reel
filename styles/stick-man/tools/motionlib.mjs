@@ -502,6 +502,7 @@ if (path.resolve(process.argv[1] || '') === fileURLToPath(import.meta.url)) {
   else if (A.sheet) console.log(sheet(A.sheet, path.resolve(A.out || '.')));
   else if (A.proof) console.log(proof(path.resolve(A.proof), A.only, A.fit).join('\n'));
   else {
+    if (A.check && !A.only) throw new Error('motionlib.mjs: --check needs --only <clip>');
     const rows = await checkAll({ only: A.only, check: A.check ? JSON.parse(A.check) : null }); let bad = 0;
     for (const r of rows) {
       const i = r.info, num = i.frames != null ? `  ${i.frames} f, joint ${i.jointMax} deg/f, slide ${i.slideMm} mm/f, flights ${i.flights}${i.flights ? ` (peak ${i.peakCm} cm, g 9.8)` : ''}${i.carryKg ? `, carries ${i.carryKg} kg` : ''}, rig: grip ${i.gripCm} cm, prop ${i.propCm0}>${i.propCm} cm (physics off ${i.propOffCm}), held ${i.heldFrames} f, solved joint ${i.rigJoint} deg/f (${i.rigJointAt}; over the authored ${i.rigExcess})` : '';
