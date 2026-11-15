@@ -1011,10 +1011,11 @@ export function makeStick(spec) {
       for (const h of held) for (let it = 0; h.w >= 0.5 && it < 4; it++) { const r = propPush(h.box, [], setV); if (!r) break;
         h.o.position.addScaledVector(r.push, W); h.o.updateMatrixWorld(true); h.box = propBox(h.o); moved = true; }
       if (moved) pp = propOverlap(held, legSegs, propVols); }
+    rig.propBox = heldPen(pp) ? propBox(pp.o) : null; rig.held = held.map(h => ({ side: h.side, box: h.box }));
     for (const side of ['L', 'R']) {
       const a = arms[side], r = rig[side], pts = hose(a.sh, r.elbow, r.hand, ROUND.arm, 16);
       limbs['arm' + side].set(pts); hands[side].position.copy(pts[15]); S.hand[side] = r.hand.toArray();
-      Object.assign(r, { targetGap: r.hand.distanceTo(a.want), grip: a.grip, propPen0: side === 'L' ? propPen0 : 0, propPen: side === 'L' ? heldPen(pp) : 0, propIn: side === 'L' && heldPen(pp) ? pp.kind : null });
+      Object.assign(r, { targetGap: r.hand.distanceTo(a.want), want: a.want, grip: a.grip, propPen0: side === 'L' ? propPen0 : 0, propPen: side === 'L' ? heldPen(pp) : 0, propIn: side === 'L' && heldPen(pp) ? pp.kind : null });
     }
     // the skeleton in root space (W): pelvis, five points up the spine, the neck base, the head centre, the trunk's
     // centre; and the centre of mass of the whole body with what it carries (x_kg<L|R|B> kg, else the prop's userData.mass)
@@ -1060,6 +1061,9 @@ export function makeStick(spec) {
   // the last pose's joints in Blender world metres (y = depth), flexes and pitches in degrees, for __dbg
   S.rigWorld = () => {
     const w = q => { const v = q.clone().multiplyScalar(W).applyMatrix4(root.matrixWorld); return [v.x, -v.z, v.y].map(x => +x.toFixed(4)); };
+    // a prop box's centre and corners (heldPts: the props a hand holds, which show where the hand is when it is hidden in them)
+    const boxPts = ({ c, q, h }) => [[0, 0, 0], ...[0, 1, 2, 3, 4, 5, 6, 7].map(i => [i & 1 ? 1 : -1, i & 2 ? 1 : -1, i & 4 ? 1 : -1])]
+      .map(([x, y, z]) => w(new THREE.Vector3(x * h[0], y * h[1], z * h[2]).applyQuaternion(q).add(c)));
     const o = { torsoLean: +S.rig.pitch.toFixed(2), torsoRoll: +S.rig.roll.toFixed(2), assist: S.rig.assist, body: S.rig.body, sq: S.rig.sq ?? 0, headSq: S.rig.headSq ?? 0 };
     for (const s of ['L', 'R']) {
       const r = S.rig[s];
@@ -1067,11 +1071,14 @@ export function makeStick(spec) {
         kneeFlex: +r.kneeFlex.toFixed(2), elbowFlex: +r.elbowFlex.toFixed(2), footPitch: +r.footPitch.toFixed(2),
         ...(r.hipFlex != null ? { hipFlex: +r.hipFlex.toFixed(1), hipAbd: +r.hipAbd.toFixed(1), ankleDF: +r.ankleDF.toFixed(1), legPenCm0: +(r.legPen0 * W * 100).toFixed(2), legPenCm: +(r.legPen * W * 100).toFixed(2), legGapCm: +(r.legGap0 * W * 100).toFixed(2) } : {}),
         ...(r.pen0 != null ? { penCm0: +(r.pen0 * W * 100).toFixed(2), penCm: +(r.pen * W * 100).toFixed(2), limits: r.limits } : {}),
-        ...(r.targetGap != null ? { targetGapCm: +(r.targetGap * W * SC * 100).toFixed(2), grip: !!r.grip } : {}) };
+        ...(r.targetGap != null ? { targetGapCm: +(r.targetGap * W * SC * 100).toFixed(2), grip: !!r.grip, target: w(r.want) } : {}),
+        ...(S.rig.held?.some(h => h.side === s || h.side === 'B') ? { heldPts: S.rig.held.filter(h => h.side === s || h.side === 'B').flatMap(h => boxPts(h.box)) } : {}) };
     }
     if (S.chan) o.chan = S.chan;
     if (S.rig.balanceShift != null) o.balanceCm = +(S.rig.balanceShift * W * 100).toFixed(2);
     if (S.rig.L.propPen0 != null) { o.propPenCm0 = +(S.rig.L.propPen0 * W * SC * 100).toFixed(2); o.propPenCm = +(S.rig.L.propPen * W * SC * 100).toFixed(2); if (S.rig.L.propIn) o.propIn = S.rig.L.propIn; o.carryKg = +(S.carryKg || 0).toFixed(1); }
+    // the held prop in the body: its box's centre and corners, so a report can ask whether the camera sees it
+    if (S.rig.propBox) o.propPts = boxPts(S.rig.propBox);
     if (S.com) { o.com = w(S.com); o.skel = { pelvis: w(S.skel.pelvis), neck: w(S.skel.neck), head: w(S.skel.head), spine: S.skel.spine.map(w) }; }
     return o;
   };

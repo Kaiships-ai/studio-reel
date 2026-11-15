@@ -79,6 +79,14 @@ before, except where an old one had a hand forced off a target (now kept when re
   to its grip socket).
 - `shot.mjs --report` lines (h) hand off its target while gripping (FAIL > 2 cm) and (i) held prop inside the body
   (FAIL > 1 cm after the solve).
+- Faults by the shot's camera (`tools/faults.mjs`, `engine/visible.js`, `window.__vis`): every (h), (i) and joint-step
+  fault frame is tagged `in`, `occluded` or `off` from the camera of that render. The tag uses the points that show the
+  fault: the hand, its target and the props it holds (`rigWorld()` `L/R.target`, `heldPts`), the prop's box
+  (`propPts`), and the joints and bones a channel moves (`jointstep.mjs` `stepPoints`). A ray hits only opaque meshes
+  the render draws (glass hides nothing). The actor's own body and what it holds never hide its own fault. Only `in`
+  frames are judged. The others print on an `ẩn` line with their frames and worst number. The library gate keeps
+  judging in 3D. Check it: `node --test test/unit/stick-visibility.test.mjs` (SH245 rows), then `shot.mjs --report`
+  on a film with a counter. The (h) line lists the hidden frames under it.
 - Set pieces a clip names (`needs.marks`: window, trunk and its floor, counter) are solid through `base.js markColliders`,
   one list for the render (`proof/set.js`) and the headless check, so the check sees what the render does.
 - Props as scene objects (`engine/propobj.js`, PR C): a prop a clip key holds is one object for the key's span
