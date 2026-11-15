@@ -300,7 +300,7 @@ import { jointSteps, JOINT_STEP_MAX } from '../../styles/stick-man/tools/jointst
 test('joint gate: the library judges joints with the film report\'s measure, one copy of it', () => {
   // Hot Money ep01: the film report read foot pitch 36.6 deg/f (SH060, SH130) and elbow 35.1 (SH172) on clips the gate
   // passed: the gate had its own, shorter list of joints and let a joint turn as fast as its capture did
-  for (const f of ['shot.mjs', 'motionlib.mjs']) {
+  for (const f of ['faults.mjs', 'motionlib.mjs']) {
     const src = fs.readFileSync(new URL(`../../styles/stick-man/tools/${f}`, import.meta.url), 'utf8');
     assert.match(src, /from '\.\/jointstep\.mjs'/, `${f} uses tools/jointstep.mjs`);
     assert.doesNotMatch(src, /\[\['shoulder', 'elbow'\], \['elbow', 'hand'\]/, `${f} keeps no joint list of its own`);
