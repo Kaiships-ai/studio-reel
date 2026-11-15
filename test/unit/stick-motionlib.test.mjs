@@ -11,9 +11,9 @@ import { compileTrack, playActor, toPose, STYLE_PRESETS } from '../../styles/sti
 import { DOSE_E, markColliders } from '../../styles/stick-man/motion-lib/base.js';
 import { ellipsoid, solveArm, armPenetration, propPush, centreOfMass } from '../../styles/stick-man/engine/body.js';
 
-test('the library has 46 clips on 5 bodies, and every one passes motionlib.mjs (naming, seam, base, joint gate, feet)', async () => {
-  assert.equal(ALL.length, 46);
-  assert.equal(clipFiles().length, 46);
+test('the library has 49 clips on 5 bodies, and every one passes motionlib.mjs (naming, seam, base, joint gate, feet)', async () => {
+  assert.equal(ALL.length, 49);
+  assert.equal(clipFiles().length, 49);
   assert.deepEqual(Object.keys(BODIES), ['adult', 'heavy', 'thin', 'child', 'elder']);
   // every body stands, walks and runs (the adult's standing idle is the captured Idle_Stand_Loop)
   for (const b of Object.keys(BODIES)) for (const c of [b === 'adult' ? 'Idle_Stand_Loop' : 'Idle_Breath_Loop', 'Move_Walk_Fwd_Loop', 'Move_Run_Fwd_Loop']) assert.equal(getClip(c, b).body, b);
@@ -219,4 +219,22 @@ test('a loop in place plays `times` captures between one blend in and one out; a
 test('the set pieces a clip names are solid in the headless check as in the render: a trunk lip, a counter, a window', () => {
   const names = markColliders([{ kind: 'trunk', at: [0.45, 0, 0.68] }, { kind: 'counter', at: [0.6, 0, 0.94] }, { kind: 'window', at: [1, 0, 0.8], top: 2, width: 1 }]).map(b => b.name);
   assert.deepEqual(names, ['trunk-lip', 'counter', 'wall-low', 'wall-top', 'wall-right', 'wall-left']);
+});
+
+test('fit: a clip key fits a clip to the film set (a trunk lip, a window), and the fitted clip is checked as its own', () => {
+  const T = placeClip({ f: 0, clip: 'Act_DropInTrunk_Once', fit: { lip: 0.85 } }).clip;
+  assert.equal(T.needs.marks.find(m => m.kind === 'trunk').at[2], 0.85);
+  const J = placeClip({ f: 0, clip: 'Trans_JumpWindow_Once', fit: { sill: 0.8, top: 1.9, width: 1.0 } }).clip, w = J.needs.marks.find(m => m.kind === 'window');
+  assert.deepEqual([w.at[2], w.top, w.width], [0.8, 1.9, 1.0]);
+  assert.throws(() => placeClip({ f: 0, clip: 'Act_DropInTrunk_Once', fit: { lip: 1.2 } }), /outside 0.60..0.90/);
+  assert.throws(() => placeClip({ f: 0, clip: 'Gest_Wave_Loop', fit: { lip: 0.8 } }), /takes no fit/);
+  for (const C of ALL.filter(c => c.fitChecks)) assert.ok(C.fitChecks.length, C.name);
+});
+
+test('support: a clip played on a surface (a clip key pos [x, y, h]) rests on it, never a flight; the next clip carries it', () => {
+  const keys = expandClips([{ f: 0, clip: 'Idle_Sleep_Loop', pos: [1, 2, 0.55] }, { f: 300, clip: 'Idle_Sleep_Loop' }], { pos: [0, 0], yaw: 90 });
+  const track = compileTrack(keys, {}, { pos: [0, 0], yaw: 90 }, 'kaiships');
+  assert.equal(track.flights.length, 0);
+  const fr = playActor(track, 0, 560);
+  assert.ok(fr.every(m => Math.abs(m['pos.2'] - 0.55) < 1e-6), 'the sleeper stays on the bed');
 });

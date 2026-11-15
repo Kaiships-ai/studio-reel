@@ -1,5 +1,5 @@
 // The motion library: (clip name, body) -> clip, and the expansion of a motion v2 anim key into the clip's keys.
-//   anim key  { f, clip: 'Move_Walk_Fwd_Loop', body: 'elder', to?: [x, y], times?: n, stop?, pos?, yaw?, swap?, expr?, look?, ease? }
+//   anim key  { f, clip: 'Move_Walk_Fwd_Loop', body: 'elder', to?: [x, y], times?: n, stop?, pos?, yaw?, swap?, fit?, expr?, look?, ease? }
 //   clip      { name, clip, body?, group, loop, frames, base, end?, style, needs: { props, hands, marks? }, keys,
 //               loops that travel: advance, intro, introFrames, introTravel, outro, outroTravel }
 // A clip is written in clip space (base.js): the actor at the origin facing +x. Expansion moves it to the actor (the
@@ -41,6 +41,9 @@ import Adult_Act_Drive_Loop_v01 from './body/adult/Adult_Act_Drive_Loop_v01.js';
 import Adult_Act_HandOver_Once_v01 from './body/adult/Adult_Act_HandOver_Once_v01.js';
 import Adult_Act_Consume_Once_v01 from './body/adult/Adult_Act_Consume_Once_v01.js';
 import Adult_Gest_PhoneCall_Loop_v01 from './body/adult/Adult_Gest_PhoneCall_Loop_v01.js';
+import Adult_Gest_LookBackCarry_Once_v01 from './body/adult/Adult_Gest_LookBackCarry_Once_v01.js';
+import Heavy_Act_TorchReady_Loop_v01 from './body/heavy/Heavy_Act_TorchReady_Loop_v01.js';
+import Thin_Act_TorchReady_Loop_v01 from './body/thin/Thin_Act_TorchReady_Loop_v01.js';
 import Child_Idle_Breath_Loop_v01 from './body/child/Child_Idle_Breath_Loop_v01.js';
 import Child_Move_Run_Fwd_Loop_v01 from './body/child/Child_Move_Run_Fwd_Loop_v01.js';
 import Child_Move_Walk_Fwd_Loop_v01 from './body/child/Child_Move_Walk_Fwd_Loop_v01.js';
@@ -89,6 +92,9 @@ export const ALL = [
   Adult_Act_HandOver_Once_v01,
   Adult_Act_Consume_Once_v01,
   Adult_Gest_PhoneCall_Loop_v01,
+  Adult_Gest_LookBackCarry_Once_v01,
+  Heavy_Act_TorchReady_Loop_v01,
+  Thin_Act_TorchReady_Loop_v01,
   Child_Idle_Breath_Loop_v01,
   Child_Move_Run_Fwd_Loop_v01,
   Child_Move_Walk_Fwd_Loop_v01,
@@ -123,21 +129,33 @@ function zeroed(C) {
 export const CLIPS = {};
 for (const c of ALL) (CLIPS[c.clip] ||= {})[zeroed(c).body || '*'] = c;
 export const CLIP_NAMES = Object.keys(CLIPS);
-export function getClip(name, body = 'adult') {
+// a clip fitted to its set (the clip key's `fit`, e.g. { lip: 0.85 } for a trunk, { sill, top, width } for a window): a
+// clip record with `fit(opts)` makes the fitted version (checked by tools/motionlib.mjs on every fit in its `fitChecks`)
+const FITTED = new Map();
+export function fitClip(C, fit) {
+  if (!fit) return C;
+  if (!C.fit) throw new Error(`motion-lib: clip "${C.clip}" takes no fit (${JSON.stringify(fit)})`);
+  const id = `${C.name}|${JSON.stringify(fit)}`;
+  if (!FITTED.has(id)) FITTED.set(id, zeroed(C.fit(fit)));
+  return FITTED.get(id);
+}
+export function getClip(name, body = 'adult', fit = null) {
   const e = CLIPS[name] || CLIPS[name.replace(/^(Adult|Heavy|Thin|Child|Elder)_/, '').replace(/_v\d+$/, '')];
   if (!e) throw new Error(`motion-lib: no clip "${name}" (${CLIP_NAMES.join(', ')})`);
   const c = e[body] || e['*'];
   if (!c) throw new Error(`motion-lib: clip "${name}" has no ${body} version (bodies: ${Object.keys(e).join(', ')})`);
   if (!BODIES[body]) throw new Error(`motion-lib: unknown body "${body}" (${Object.keys(BODIES).join(', ')})`);
-  return c;
+  return fitClip(c, fit);
 }
 
 const PASS = new Set(['expr', 'look', 'ease', 'antic', 'cycle']);         // fields of the clip key that go onto its first key
 const clone = v => (Array.isArray(v) ? v.slice() : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, clone(x)])) : v);
 // one clip key -> its keys in the world: { keys, pos, yaw } (pos, yaw: where the actor ends)
 export function placeClip(k, cur = { pos: [0, 0], yaw: 0 }) {
-  const body = k.body || 'adult', C = getClip(k.clip, body), sc = C.body ? 1 : (BODIES[body].spec.scale ?? 1);
-  const O = k.pos ? [k.pos[0], k.pos[1]] : cur.pos.slice(0, 2);
+  const body = k.body || 'adult', C = getClip(k.clip, body, k.fit), sc = C.body ? 1 : (BODIES[body].spec.scale ?? 1);
+  // (k.pos[2]: the height of a surface the clip plays on, a bed or a stage: every key is lifted onto it and held up by
+  // it, motion.js `support`)
+  const O = k.pos ? [k.pos[0], k.pos[1]] : cur.pos.slice(0, 2), Hs = k.pos?.[2] ?? cur.support ?? 0;
   let H = k.yaw ?? cur.yaw, D = 0;
   if (k.to) { const dx = k.to[0] - O[0], dy = k.to[1] - O[1]; D = Math.hypot(dx, dy); if (D > 1e-6) H = 90 + Math.atan2(dy, dx) * 180 / Math.PI; }
   const th = (H - 90) * Math.PI / 180, c = Math.cos(th), s = Math.sin(th);
@@ -149,7 +167,8 @@ export function placeClip(k, cur = { pos: [0, 0], yaw: 0 }) {
   const out = [];
   const put = (ck, dx, df) => {
     const o = clone(ck); o.f = k.f + df + ck.f;
-    if (o.pos) { const [a, b] = X(o.pos[0] + dx, o.pos[1]); o.pos = [a, b, (o.pos[2] || 0) * sc]; }
+    if (o.pos) { const [a, b] = X(o.pos[0] + dx, o.pos[1]); o.pos = [a, b, (o.pos[2] || 0) * sc + Hs]; }
+    o.support = Hs;
     o.yaw = (ck.yaw ?? 90) + (H - 90);
     for (const leg of ['legL', 'legR']) if (o[leg]?.footW) { const w = o[leg].footW, [a, b] = X(w[0] + dx, w[1]); o[leg].footW = [a, b, (w[2] || 0) * sc]; }
     for (const [from, to] of Object.entries(k.swap || {})) for (const n2 of Object.keys(o)) { const m = /^x_hp([LRBH])_(\w+)$/.exec(n2); if (m && m[2] === from) { o[`x_hp${m[1]}_${to}`] = o[n2]; delete o[n2]; } }
@@ -174,7 +193,7 @@ export function placeClip(k, cur = { pos: [0, 0], yaw: 0 }) {
   // a clip written against another standard pose than the one it opens on names it (rest): the dose pushes from that
   if (C.rest) out[0].rest = BASES[C.rest](body, 0);
   const last = out[out.length - 1];
-  return { keys: out, pos: last.pos ? last.pos.slice(0, 2) : O, yaw: last.yaw ?? H, clip: C, n, fit };
+  return { keys: out, pos: last.pos ? last.pos.slice(0, 2) : O, yaw: last.yaw ?? H, support: Hs, clip: C, n, fit };
 }
 // a track's keys with every clip key expanded (keys sorted by f; plain keys pass through)
 export function expandClips(keys, base = {}) {
@@ -182,7 +201,7 @@ export function expandClips(keys, base = {}) {
   const out = []; let cur = { pos: (base.pos || [0, 0]).slice(0, 2), yaw: base.yaw ?? 0 };
   for (const k of [...keys].sort((a, b) => a.f - b.f)) {
     if (!k.clip) { out.push(k); if (Array.isArray(k.pos)) cur = { ...cur, pos: k.pos.slice(0, 2) }; if (typeof k.yaw === 'number') cur = { ...cur, yaw: k.yaw }; continue; }
-    const r = placeClip(k, cur); out.push(...r.keys); cur = { pos: r.pos, yaw: r.yaw };
+    const r = placeClip(k, cur); out.push(...r.keys); cur = { pos: r.pos, yaw: r.yaw, support: r.support };
   }
   return out;
 }

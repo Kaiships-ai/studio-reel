@@ -1,6 +1,6 @@
 # Motion library catalogue
 
-The 46 clips of `styles/stick-man/motion-lib` (rules and use: its README.md). An anim key `{ f, clip, body, to?, times? }`
+The 49 clips of `styles/stick-man/motion-lib` (rules and use: its README.md). An anim key `{ f, clip, body, to?, times? }`
 plays one (REEL_DATA.md). `frames` = one cycle or the whole one-off at 30 fps; `base` = the standard pose it starts (→ ends) on;
 `props` = what the hands hold (`x_hp<L|R|B>_<prop>`, motion-lib/props.js and lib/cast/handprops.js; a film swaps its own with
 the key's `swap`), on which hand; `set` = the set pieces it needs (the proof page builds them at the sizes the clip names in
@@ -59,6 +59,8 @@ numbers, one contact sheet per group).
 | `Act_PistolShoot_Once` | adult | once | 186 | STAND | pistol (L) | - | raise a handgun one-handed (the left: motion-lib/props.js pistol, x_hpL_pistol), fire, lower it, from motion capture (Mixamo "Shooting Gun", ref/mixamo/shooting_gun.js) on this body, every captured frame |
 | `Act_PutDown_Once` | adult | once | 338 | CARRY → STAND | bag (R) | bag | from CARRY (the bag in the right fist), bend and set it down on the floor, stand up, from motion capture (Mixamo "Putting Down", ref/mixamo/putting_down.js) on this body, every captured frame |
 | `Act_TorchReady_Loop` | adult | loop | 65 | STAND | torch (L) | - | standing, a torch (flashlight) held out ahead in the left fist (motion-lib/props.js torch, the same hand as Move_WalkFlashlight_Loop), from motion capture (Quaternius UAL "Idle_Torch_Loop", CC0, ref/ual/idle_torch_loop.js) on this body, every captured frame |
+| `Act_TorchReady_Loop` | heavy | loop | 65 | STAND | torch (L) | - | standing, a torch (flashlight) held out ahead in the left fist (motion-lib/props.js torch, the same hand as Move_WalkFlashlight_Loop), from motion capture (Quaternius UAL "Idle_Torch_Loop", CC0, ref/ual/idle_torch_loop.js) on the heavy body, every captured frame |
+| `Act_TorchReady_Loop` | thin | loop | 65 | STAND | torch (L) | - | standing, a torch (flashlight) held out ahead in the left fist (motion-lib/props.js torch, the same hand as Move_WalkFlashlight_Loop), from motion capture (Quaternius UAL "Idle_Torch_Loop", CC0, ref/ual/idle_torch_loop.js) on the thin body, every captured frame |
 
 ## Trans
 
@@ -81,6 +83,7 @@ numbers, one contact sheet per group).
 | Clip | Body | Loop | Frames | Base | Props (hand) | Set | What |
 |---|---|---|---|---|---|---|---|
 | `Gest_LookBack_Once` | adult | once | 140 | STAND | - | - | a quick nervous look over the right shoulder, from motion capture (Mixamo "Look Over Shoulder", ref/mixamo/look_over_shoulder.js) on this body, every captured frame |
+| `Gest_LookBackCarry_Once` | adult | once | 140 | HUG | hugbag (both) | - | a quick nervous look over the right shoulder with the duffel hugged to the chest, from motion capture (Mixamo "Look Over Shoulder", ref/mixamo/look_over_shoulder.js) on this body, every captured frame, opened and closed on HUG: the capture's legs, head and turn (neck, the spine's twist, the pelvis), its arms and its lean the HUG pose's (they keep the bag, the motion-lib/props.js hugbag, 20 kg, turning with the chest |
 | `Gest_LookUp_Once` | any (adult, scaled) | once | 70 | STAND | - | - | something above |
 | `Gest_PhoneCall_Loop` | adult | loop | 115 | STAND | phone (R) | - | standing, talking on a phone held to the ear, from motion capture (Quaternius UAL "Idle_TalkingPhone_Loop", CC0, ref/ual/idle_talkingphone_loop.js) on this body, every captured frame |
 | `Gest_PointSeated_Loop` | adult | loop | 130 | SIT | - | seat | seated, pointing ahead with the right hand, from motion capture (Mixamo "Pointing (seated)", ref/mixamo/pointing_seated.js) on this body, every captured frame |

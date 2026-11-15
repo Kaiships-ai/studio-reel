@@ -11,6 +11,11 @@ before, except where an old one had a hand forced off a target (now kept when re
 - `clip` keys: `to` (heading, fitted cycles, first and closing steps), `times` (a captured loop in place blends in once,
   repeats its capture, blends out once: a phone stays at the ear), `stop`, `pos`, `yaw`, `swap`, `expr`. Every clip starts
   at its own origin (`index.js` zeroes its first key and its marks), so clips chained in one track never jump the actor.
+- `fit`: a clip fitted to the film's set, `{ clip: 'Act_DropInTrunk_Once', fit: { lip: 0.85 } }`,
+  `{ clip: 'Trans_JumpWindow_Once', fit: { sill: 0.8, top: 1.9, width: 1.0 } }` (index.js `fitClip`; a record's `fit(opts)`
+  makes it, its `fitChecks` are checked by motionlib.mjs as rows of their own; `--proof <dir> --only <clip> --fit '<json>'`).
+- `support`: a clip key `pos: [x, y, h]` plays the clip on a surface h m high (a bed, a stage): every key is lifted and
+  held up there (motion.js counts a flight only above `support`); the next clip carries it on.
 - Props are declared: a clip whose keys hold `x_hp<L|R|B>_<prop>` names it in `needs.props` on `needs.hands`
   (`base.js holdKeys`); `motion-lib/props.js` adds `hugbag` (both arms), `crate` (pushed, stands on the floor:
   `userData.floor`), `hotdog`, `pistol`. A prop's `userData.grip` is the point the fist holds: a film's own prop (`swap`)
