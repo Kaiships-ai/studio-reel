@@ -2,7 +2,8 @@
 //   node styles/stick-man/tools/motionlib.mjs                       check every clip (exit 1 on a FAIL):
 //        naming, the index lists every file, the record, loop seam, starts / ends on its standard pose, the joint gate
 //        (<= 25 deg a frame after the 'kaiships' dose), planted feet that never slide, a physics line (flights, g), and the
-//        clip through the real rig headless (cast.js): a gripping hand <= 2 cm off its target, a held prop <= 1 cm in the body
+//        clip through the real rig headless (cast.js): a gripping hand <= 2 cm off its target, a held prop <= 1 cm in the body,
+//        no prop inside the set, and the solved joints turning no more than 25 deg a frame beyond the motion's own (jointExcess)
 //   node styles/stick-man/tools/motionlib.mjs --sheet <group> --out <dir>    a contact sheet of a group (Idle, Move, Act,
 //        Trans, React, Gest): every clip of it on its bodies, 6 frames each, rendered through motion-lib/proof (540x960)
 //   node styles/stick-man/tools/motionlib.mjs --proof <dir> [--only <clip>]   every clip as mp4, physics on and off, the
@@ -34,7 +35,7 @@ export function clipFiles() {
   return out.sort();
 }
 // every channel of every key, carried forward the way compileTrack does (a key names only what changes)
-function full(keys) { let cur = {}; return keys.map(k => { cur = { ...cur, ...flatten(Object.fromEntries(Object.entries(k).filter(([n]) => !['f', 'ease', 'cycle', 'hold', 'antic', 't'].includes(n)))) }; return { ...cur }; }); }
+function full(keys) { let cur = {}; return keys.map(k => { cur = { ...cur, ...flatten(Object.fromEntries(Object.entries(k).filter(([n]) => !['f', 'ease', 'cycle', 'hold', 'antic', 't', '_ref'].includes(n)))) }; return { ...cur }; }); }
 // a pose made comparable across places: feet relative to the root, the root and the heading dropped, ik targets only
 // when they hold the hand (ikw > 0); x_ channels only those the standard pose names
 function body(m, ref) {
@@ -172,7 +173,13 @@ async function rig() {
   }
   const cast = await import('../engine/cast.js'), body = await import('../engine/body.js'), { toPose } = await import('../engine/motion.js');
   await import('../motion-lib/props.js'); const { bodySpec } = await import('../motion-lib/bodies.js'), { propPlan } = await import('../engine/propobj.js');
-  return (RIG = { cast, PHYS: body.PHYS, toPose, bodySpec, propPlan });
+  return (RIG = { cast, PHYS: body.PHYS, toPose, bodySpec, propPlan, THREE: await import('three') });
+}
+// a prop's drawn extent in the world (Blender metres): its solid meshes (not a torch's transparent cone)
+function propWorldBox(p) {
+  const T = RIG.THREE, b = new T.Box3(), m = new T.Box3(); p.updateMatrixWorld(true);
+  p.traverse(c => { if (!c.isMesh || c.material?.transparent || c.material?.blending === T.AdditiveBlending) return; if (!c.geometry.boundingBox) c.geometry.computeBoundingBox(); b.union(m.copy(c.geometry.boundingBox).applyMatrix4(c.matrixWorld)); });
+  return { lo: [b.min.x, -b.max.z, b.min.y], hi: [b.max.x, -b.min.z, b.max.y] };
 }
 // a figure built by cast.js (headless), for tests: { S, PHYS, toPose }
 export async function rigStick(body = 'adult') { const R = await rig(); return { S: R.cast.makeStick(R.bodySpec({ ...R.cast.GUARD, hair: [] }, body)), PHYS: R.PHYS, toPose: R.toPose }; }
@@ -194,14 +201,18 @@ export function propExcess(q, now) {
 }
 // one clip through the real rig, physics on: the hand off its target while it grips (shot.mjs (h)) and a held prop
 // inside the body after the solve ((i)), per frame; and the props, the balance shift and the load frame to frame
-export async function rigClip(C, body = C.body || 'adult', { phys = true } = {}) {
+// obstacles: more set pieces ([{ name, lo, hi }], Blender metres, clip space): a film's own (a counter beside the actor, a wall)
+export async function rigClip(C, body = C.body || 'adult', { phys = true, obstacles = [] } = {}) {
   const R = await rig(), S = R.cast.makeStick(R.bodySpec({ ...R.cast.GUARD, hair: [] }, body)), was = R.PHYS.on; R.PHYS.on = phys;
-  S.obstacles = markColliders(C.needs?.marks, C.body ? 1 : (BODIES[body]?.spec.scale ?? 1));   // the clip's set pieces: hands stop on them
+  S.obstacles = [...markColliders(C.needs?.marks, C.body ? 1 : (BODIES[body]?.spec.scale ?? 1)), ...obstacles];   // the clip's set pieces: hands stop on them
   const key = { ...(C.advance ? { f: 0, clip: C.clip, body, to: [C.introTravel + C.outroTravel + 2 * C.advance, 0] } : { f: 0, clip: C.clip, body, ...(C.loop ? { times: 2 } : {}) }), ...fitOf(C) };
   const keys = placeClip(key, { pos: [0, 0], yaw: 90 }).keys, track = compileTrack(keys, {}, { pos: [0, 0], yaw: 90 }, 'kaiships'), fr = playActor(track, 0, keys[keys.length - 1].f + 6);
+  // (the raw capture's joints on the frames a capture's key sits on: the joint gate's reference)
+  const rawAt = new Map(keys.filter(k => k._ref).map(k => [k.f, k._ref]));
   const lastF = keys[keys.length - 1].f, Qat = f => R.toPose(fr[Math.max(0, Math.min(fr.length - 1, f))], S.root.scale.x), plan = R.propPlan(track, Qat, S);
   const o = { grip: 0, gripAt: null, prop0: 0, prop: 0, propAt: null, over: [], joint: 0, jointAt: null, heldFrames: 0, inSet: [],
-    slip: 0, slipAt: null, gone: [], bal: 0, balAt: null, pelvis: 0, pelvisAt: null, massStep: 0, massAt: null, kgMax: 0 };
+    slip: 0, slipAt: null, gone: [], bal: 0, balAt: null, pelvis: 0, pelvisAt: null, massStep: 0, massAt: null, kgMax: 0,
+    limbs: [], raw: [], propInSet: [] };
   const d3 = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]), V3 = new (S.root.position.constructor)();
   const gripW = p => { const g = p.userData.grip || [0, 0, 0]; V3.set(...(Array.isArray(g) ? g : [0, 0, 0])); p.localToWorld(V3); return [V3.x, -V3.z, V3.y]; };
   let prevP = {}, prevBal = null, prevPel = null, prevKg = null, kgs = [];
@@ -213,6 +224,8 @@ export async function rigClip(C, body = C.body || 'adult', { phys = true } = {})
       const Q = Qat(f); Q.propRest = plan.at(f);
       // the balance shift: the pelvis with balance on minus the same frame with it off (physics on only)
       let pel0 = null; if (phys && R.PHYS.balance) { R.PHYS.balance = false; S.pose2(Q); pel0 = S.rigWorld().skel.pelvis; R.PHYS.balance = true; }
+      // (physics off, the reference the joint gate measures against: the arms on their FK keys too, ik weights off)
+      let fkArm = null; if (!phys) { S.pose2({ ...Q, armL: { ...Q.armL, ikw: 0 }, armR: { ...Q.armR, ikw: 0 } }); const v = S.rigWorld(); fkArm = Object.fromEntries(['L', 'R'].map(s => [s, { shoulder: v[s].shoulder, elbow: v[s].elbow, hand: v[s].hand, elbowFlex: v[s].elbowFlex }])); }
       S.pose2(Q); const w = S.rigWorld();
       const pel = w.skel.pelvis, bal = pel0 ? pel.map((x, i) => x - pel0[i]) : [0, 0, 0];
       if (prevBal) { const d = 100 * d3(bal, prevBal); if (d > o.bal) { o.bal = +d.toFixed(2); o.balAt = f; } }
@@ -234,6 +247,10 @@ export async function rigClip(C, body = C.body || 'adult', { phys = true } = {})
           if (d > o.joint) { o.joint = +d.toFixed(1); o.jointAt = `${f} ${a}-${b}${s}`; } }
       }
       last = w;
+      // the solved limbs, for the joint gate (jointExcess): an arm with no ik weight on it is posed by its keys alone (FK)
+      o.raw.push(rawAt.get(f) || null);
+      o.limbs.push(Object.fromEntries(['L', 'R'].map(s => [s, { ...Object.fromEntries(LIMB_PTS.map(j => [j, w[s][j]])), kneeFlex: w[s].kneeFlex, elbowFlex: w[s].elbowFlex,
+        fk: !(`arm${s}.ik.0` in m && (m[`arm${s}.ikw`] ?? 1) > 0), ...(fkArm ? { fkArm: fkArm[s] } : {}) }])));
       if (Object.values(S.props).some(p => p.visible)) o.heldFrames++;
       // the body inside the set's solid pieces (a window's wall, a trunk lip): the head (its centre and the crown), the
       // joints of the limbs (1 cm grace, as the render's (e)); the arms are solved against the set, the rest is not
@@ -242,11 +259,81 @@ export async function rigClip(C, body = C.body || 'adult', { phys = true } = {})
         for (const b of S.obstacles) { const hit = pts.find(([, p]) => [0, 1, 2].every(i => p[i] > b.lo[i] + 0.01 && p[i] < b.hi[i] - 0.01)); if (hit) { o.inSet.push(`${f} ${hit[0]} in ${b.name}`); } } }
       for (const s of ['L', 'R']) if (w[s].grip && w[s].targetGapCm > o.grip) { o.grip = w[s].targetGapCm; o.gripAt = `${f} ${s}`; }
       for (const s of ['L', 'R']) if (w[s].grip && w[s].targetGapCm > GRIP_CM) o.over.push(f);
-      o.prop0 = Math.max(o.prop0, w.propPenCm0 || 0); if ((w.propPenCm || 0) > o.prop) { o.prop = w.propPenCm; o.propAt = f; }
+      o.prop0 = Math.max(o.prop0, w.propPenCm0 || 0); if ((w.propPenCm || 0) > o.prop) { o.prop = w.propPenCm; o.propAt = f; o.propIn = w.propIn || 'body'; }
+      // a prop in the scene (held, resting or falling) inside a solid piece of the set: its drawn box (lights and glows left
+      // out) against each piece, 1 cm of grace (a crate pushed through a window wall, ep01 SH150 frame 48)
+      if (S.obstacles.length) for (const [id, p] of Object.entries(S.props)) { if (!p.visible) continue; const bx = propWorldBox(p);
+        for (const b of S.obstacles) { const d = Math.min(...[0, 1, 2].flatMap(i => [bx.hi[i] - b.lo[i], b.hi[i] - bx.lo[i]])); if (d > 0.01) { o.propInSet.push(`${f} ${id} in ${b.name} ${(100 * d).toFixed(1)} cm`); break; } } }
     });
   } finally { R.PHYS.on = was; }
   for (const [f, d] of kgs) if (o.kgMax > 0 && Math.abs(d) / o.kgMax > o.massStep) { o.massStep = +(Math.abs(d) / o.kgMax).toFixed(3); o.massAt = f; }
   return o;
+}
+// ------------------------------------------------------------------ the joint gate on the solved limbs
+// A solved elbow or knee (its flex, its two bones' directions) may turn more than JOINT_MAX a frame only where the motion
+// as authored does, never because the rig made it: a contact solve flipping an elbow round the head (Gest_PhoneCall_Loop,
+// 97 deg/f on ep01's teller), an ik pole swinging round its line, a gait retarget or a baked reach table moving a joint
+// faster than the capture did. The motion as authored is:
+//   in a capture's frames (keys carrying `_ref`, ref/mocap.js: the raw capture's own flexes and bone directions, before
+//   any retarget, fit or ik): that capture's change of the same joint;
+//   in the frames the library makes (blends, first and closing steps, made gaits and one-offs): JOINT_MAX, or for an arm
+//   its keyed FK angles turned through the rig (rigClip physics off, ik weights off: `fkArm`).
+// No slack: the solved joint may not exceed max(JOINT_MAX, the authored change). Run physics on and off: off catches the
+// ik and the retarget, on everything physics adds.
+// ROUND: rigWorld gives flexes to 0.01 deg and the capture's to 0.001: a solved flex equal to the capture's can read 0.01 over
+const ROUND = 0.02;
+const LIMB_PTS = ['shoulder', 'elbow', 'hand', 'hip', 'knee', 'ankle'];
+// each solved joint and the raw capture's joint it answers to (ref/mocap.js frame.ref: flexes, unit bone directions)
+const JOINTS = { arm: [[['elbowFlex'], 'elbowFlex'], [['shoulder', 'elbow'], 'upper'], [['elbow', 'hand'], 'fore']],
+  leg: [[['kneeFlex'], 'kneeFlex'], [['hip', 'knee'], 'thigh'], [['knee', 'ankle'], 'shin']] };
+const unit = (a, b) => { const v = b.map((x, i) => x - a[i]), l = Math.hypot(...v) || 1; return v.map(x => x / l); };
+const angle = (u, v) => { const l = (Math.hypot(...u) * Math.hypot(...v)) || 1; return Math.acos(Math.max(-1, Math.min(1, (u[0] * v[0] + u[1] * v[1] + u[2] * v[2]) / l))) * 180 / Math.PI; };
+const jointTurn = (j, p, q) => (j.length === 1 ? Math.abs(q[j[0]] - p[j[0]]) : angle(unit(p[j[0]], p[j[1]]), unit(q[j[0]], q[j[1]])));
+// the raw capture's change of one joint between two frames (null: not a captured frame pair)
+const rawTurn = (a, b, s, r) => { const x = a?.[r + s], y = b?.[r + s]; if (x == null || y == null) return null; return typeof x === 'number' ? Math.abs(y - x) : angle(x, y); };
+// g: a rigClip result (physics on or off); fk: the physics-off one (its fkArm poses)
+export function jointExcess(g, fk) {
+  const out = { joint: 0, jointAt: null, excess: 0, excessAt: null, over: [] }, n = Math.min(g.limbs.length, fk.limbs.length);
+  for (let f = 1; f < n; f++) for (const s of ['L', 'R']) for (const limb of ['arm', 'leg']) for (const [j, r] of JOINTS[limb]) {
+    const p = g.limbs[f - 1][s], q = g.limbs[f][s], raw = rawTurn(g.raw[f - 1], g.raw[f], s, r);
+    const keyed = raw ?? (limb === 'arm' && fk.limbs[f - 1][s].fkArm ? jointTurn(j, fk.limbs[f - 1][s].fkArm, fk.limbs[f][s].fkArm) : 0);
+    const v = jointTurn(j, p, q), allow = Math.max(JOINT_MAX, keyed), nm = `${f} ${j.join('-')}${s}`;
+    if (v > out.joint) { out.joint = +v.toFixed(1); out.jointAt = nm; }
+    if (v > allow + ROUND && v - allow > out.excess) { out.excess = +(v - allow).toFixed(1); out.excessAt = `${nm} ${v.toFixed(1)} deg/f, the ${raw != null ? 'authored' : 'keys'} ${keyed.toFixed(1)}`; }
+    if (v > allow + ROUND) out.over.push(f);
+  }
+  return out;
+}
+export function jointFails(g, fk, tag = '') {
+  const e = jointExcess(g, fk), t = tag ? ` (${tag})` : '';
+  return e.over.length ? [`solved joint${t}: ${e.excess} deg/f over the motion as authored at ${e.excessAt} (max ${JOINT_MAX} or the authored change); frames ${[...new Set(e.over)].slice(0, 8).join(' ')}`] : [];
+}
+// Clips the joint gate fails today, each with the excess (deg/f, the larger of physics on and off) measured when the gate
+// went in (PR D) and why. Such a row passes while its excess stays at or under that number and fails as soon as it grows;
+// a row that passes clean while it is listed fails too ("fixed: delete it"), so this list only shrinks. Every entry is
+// a fault of the clip or its retarget, not of the gate: the solved knee leaves the knee the motion was authored with.
+export const JOINT_KNOWN = {
+  Adult_Act_Jump_Once: [5.2, 'the take-off knee: the retargeted hips over the planted feet straighten it faster than the capture'],
+  Adult_Gest_PhoneCall_Loop: [0.8, "the reach to the ear blends from STAND in the library's 14 frames: the forearm turns past the FK keys while the elbow plane turns to the pole"],
+  Adult_Move_Run_Fwd_Loop: [5.4, 'captured run: a shin turns faster than the capture where the swing foot is eased onto its print'],
+  Adult_Move_Sprint_Fwd_Loop: [5.6, 'captured sprint: as the run'],
+  Adult_Trans_GetUp_Once: [4.2, 'lying, a knee on the floor straightens faster than the capture (the feet are pinned to their captured prints, the hips are not the capture\'s)'],
+  Adult_Trans_LieDown_Once: [2.9, 'as GetUp, run backwards'],
+  Adult_Trans_JumpWindow_Once: [29.1, 'the leap: the captured right leg kicks straight within a frame and the retarget folds it on this body'],
+  'Adult_Trans_JumpWindow_Once fit {"sill":0.8,"top":1.9,"width":1}': [15.9, 'as the unfitted leap'],
+  Child_Move_Run_Fwd_Loop: [3.4, 'made run: the closing step has no authored knee between its keys (25 deg/f applies)'],
+  Elder_Move_Run_Fwd_Loop: [14.5, 'made run: the swing foot eased off its print holds the leg straight after toe-off, the authored knee is bent'],
+  Heavy_Move_Run_Fwd_Loop: [20.2, 'made run: as the elder run'],
+  Thin_Move_Run_Fwd_Loop: [8.2, 'made run: as the elder run'],
+  Act_DropInTrunk_Once: [1.4, 'made keys: a knee near straight as the dip rises'],
+  'Act_DropInTrunk_Once fit {"lip":0.85}': [1.4, 'as the unfitted one'],
+};
+function jointGate(r, name, g, g0) {
+  const f = [...jointFails(g, g0), ...jointFails(g0, g0, 'physics off')], ex = Math.max(jointExcess(g, g0).excess, jointExcess(g0, g0).excess), k = JOINT_KNOWN[name];
+  if (!k) { r.fails.push(...f); return; }
+  if (!f.length) r.fails.push(`solved joint: listed in JOINT_KNOWN but passes now: fixed, delete it`);
+  else if (ex > k[0] + 0.05) r.fails.push(...f, `solved joint: JOINT_KNOWN allows ${k[0]} deg/f over (${k[1]}), now ${ex}`);
+  else r.known = `known: ${ex} deg/f over the motion as authored (JOINT_KNOWN: ${k[1]})`;
 }
 // the props-as-objects and balance gates on one rigClip result (physics on or off): the lines that fail
 export function physicsFails(g, tag = '') {
@@ -267,13 +354,14 @@ export async function checkAll() {
       // (a held prop as keyed); a clip that declares props holds one on screen
       listed.add(C); const r = checkClip(C, f), g = await rigClip(C), g0 = await rigClip(C, undefined, { phys: false });
       if (g.grip > GRIP_CM) r.fails.push(`rig: a gripping hand is ${g.grip} cm off its target at ${g.gripAt} (max ${GRIP_CM}; frames ${[...new Set(g.over)].slice(0, 8).join(' ')})`);
-      if (g.prop > PROP_CM) r.fails.push(`rig: a held prop is ${g.prop} cm inside the body at frame ${g.propAt} (max ${PROP_CM})`);
-      if (g0.prop > PROP_CM) r.fails.push(`rig (physics off): a held prop is ${g0.prop} cm inside the body at frame ${g0.propAt} (max ${PROP_CM})`);
+      if (g.prop > PROP_CM) r.fails.push(`rig: a held prop is ${g.prop} cm inside the ${g.propIn === 'set' ? 'set' : 'body'} at frame ${g.propAt} (max ${PROP_CM})`);
+      if (g.propInSet.length) r.fails.push(`rig: a prop is inside the set: ${g.propInSet.slice(0, 3).join('; ')}${g.propInSet.length > 3 ? ` (+${g.propInSet.length - 3} frames)` : ''}`);
+      if (g0.prop > PROP_CM) r.fails.push(`rig (physics off): a held prop is ${g0.prop} cm inside the ${g0.propIn === 'set' ? 'set' : 'body'} at frame ${g0.propAt} (max ${PROP_CM})`);
       if (g.inSet.length) r.fails.push(`rig: the body is inside the set: ${g.inSet.slice(0, 3).join('; ')}${g.inSet.length > 3 ? ` (+${g.inSet.length - 3} frames)` : ''}`);
       if ((C.needs?.props || []).length && !g.heldFrames) r.fails.push(`rig: needs.props ${C.needs.props} but the rig shows no held prop on any frame`);
-      r.fails.push(...physicsFails(g), ...physicsFails(g0, 'physics off'));
+      r.fails.push(...physicsFails(g), ...physicsFails(g0, 'physics off')); jointGate(r, C.name, g, g0);
       Object.assign(r.info, { slipCm: g.slip, balCm: g.bal, massStep: g.massStep });
-      Object.assign(r.info, { gripCm: g.grip, propCm0: g.prop0, propCm: g.prop, propOffCm: g0.prop, heldFrames: g.heldFrames, rigJoint: g.joint, rigJointAt: g.jointAt });
+      Object.assign(r.info, { gripCm: g.grip, propCm0: g.prop0, propCm: g.prop, propOffCm: g0.prop, heldFrames: g.heldFrames, rigJoint: g.joint, rigJointAt: g.jointAt, rigExcess: Math.max(jointExcess(g, g0).excess, jointExcess(g0, g0).excess) });
       rows.push({ file: f, name: C.name, ...r });
     }
   }
@@ -281,12 +369,13 @@ export async function checkAll() {
   for (const C of ALL) for (const fit of C.fitChecks || []) {
     const F = fitClip(C, fit), f = clipFiles().find(x => path.basename(x, '.js').replace(/_v\d+$/, '') === C.name), r = checkClip(F, f), g = await rigClip(F), g0 = await rigClip(F, undefined, { phys: false });
     if (g.grip > GRIP_CM) r.fails.push(`rig: a gripping hand is ${g.grip} cm off its target at ${g.gripAt} (max ${GRIP_CM})`);
-    if (g.prop > PROP_CM) r.fails.push(`rig: a held prop is ${g.prop} cm inside the body at frame ${g.propAt} (max ${PROP_CM})`);
-    if (g0.prop > PROP_CM) r.fails.push(`rig (physics off): a held prop is ${g0.prop} cm inside the body at frame ${g0.propAt} (max ${PROP_CM})`);
+    if (g.prop > PROP_CM) r.fails.push(`rig: a held prop is ${g.prop} cm inside the ${g.propIn === 'set' ? 'set' : 'body'} at frame ${g.propAt} (max ${PROP_CM})`);
+    if (g.propInSet.length) r.fails.push(`rig: a prop is inside the set: ${g.propInSet.slice(0, 3).join('; ')}${g.propInSet.length > 3 ? ` (+${g.propInSet.length - 3} frames)` : ''}`);
+    if (g0.prop > PROP_CM) r.fails.push(`rig (physics off): a held prop is ${g0.prop} cm inside the ${g0.propIn === 'set' ? 'set' : 'body'} at frame ${g0.propAt} (max ${PROP_CM})`);
     if (g.inSet.length) r.fails.push(`rig: the body is inside the set: ${g.inSet.slice(0, 3).join('; ')}${g.inSet.length > 3 ? ` (+${g.inSet.length - 3} frames)` : ''}`);
-    r.fails.push(...physicsFails(g), ...physicsFails(g0, 'physics off'));
+    r.fails.push(...physicsFails(g), ...physicsFails(g0, 'physics off')); jointGate(r, `${C.name} fit ${JSON.stringify(fit)}`, g, g0);
     Object.assign(r.info, { slipCm: g.slip, balCm: g.bal, massStep: g.massStep });
-    Object.assign(r.info, { gripCm: g.grip, propCm0: g.prop0, propCm: g.prop, propOffCm: g0.prop, heldFrames: g.heldFrames, rigJoint: g.joint, rigJointAt: g.jointAt });
+    Object.assign(r.info, { gripCm: g.grip, propCm0: g.prop0, propCm: g.prop, propOffCm: g0.prop, heldFrames: g.heldFrames, rigJoint: g.joint, rigJointAt: g.jointAt, rigExcess: Math.max(jointExcess(g, g0).excess, jointExcess(g0, g0).excess) });
     rows.push({ file: f, name: `${C.name} fit ${JSON.stringify(fit)}`, ...r });
   }
   for (const C of ALL) if (!listed.has(C)) rows.push({ file: C.name, fails: ['index: listed in index.js but no file'], info: {} });
@@ -384,9 +473,9 @@ if (path.resolve(process.argv[1] || '') === fileURLToPath(import.meta.url)) {
   else {
     const rows = await checkAll(); let bad = 0;
     for (const r of rows) {
-      const i = r.info, num = i.frames != null ? `  ${i.frames} f, joint ${i.jointMax} deg/f, slide ${i.slideMm} mm/f, flights ${i.flights}${i.flights ? ` (peak ${i.peakCm} cm, g 9.8)` : ''}${i.carryKg ? `, carries ${i.carryKg} kg` : ''}, rig: grip ${i.gripCm} cm, prop ${i.propCm0}>${i.propCm} cm (physics off ${i.propOffCm}), held ${i.heldFrames} f, solved joint ${i.rigJoint} deg/f (${i.rigJointAt}; not gated: rig K6/K9)` : '';
-      console.log(`${r.fails.length ? 'FAIL' : 'PASS'}  ${r.name || r.file}${num}`); for (const f of r.fails) console.log(`      ${f}`); bad += !!r.fails.length;
+      const i = r.info, num = i.frames != null ? `  ${i.frames} f, joint ${i.jointMax} deg/f, slide ${i.slideMm} mm/f, flights ${i.flights}${i.flights ? ` (peak ${i.peakCm} cm, g 9.8)` : ''}${i.carryKg ? `, carries ${i.carryKg} kg` : ''}, rig: grip ${i.gripCm} cm, prop ${i.propCm0}>${i.propCm} cm (physics off ${i.propOffCm}), held ${i.heldFrames} f, solved joint ${i.rigJoint} deg/f (${i.rigJointAt}; over the authored ${i.rigExcess})` : '';
+      console.log(`${r.fails.length ? 'FAIL' : 'PASS'}  ${r.name || r.file}${num}`); for (const f of r.fails) console.log(`      ${f}`); if (r.known) console.log(`      ${r.known}`); bad += !!r.fails.length;
     }
-    console.log(`${rows.filter(r => !/ fit /.test(r.name || '')).length} clips + ${rows.filter(r => / fit /.test(r.name || '')).length} fitted, ${bad} failing`); process.exit(bad ? 1 : 0);
+    console.log(`${rows.filter(r => !/ fit /.test(r.name || '')).length} clips + ${rows.filter(r => / fit /.test(r.name || '')).length} fitted, ${bad} failing, ${rows.filter(r => r.known).length} known (JOINT_KNOWN)`); process.exit(bad ? 1 : 0);
   }
 }

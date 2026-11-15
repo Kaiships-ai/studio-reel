@@ -1,6 +1,6 @@
 # Motion library catalogue
 
-The 49 clips of `styles/stick-man/motion-lib` (rules and use: its README.md). An anim key `{ f, clip, body, to?, times? }`
+The 51 clips of `styles/stick-man/motion-lib` (rules and use: its README.md). An anim key `{ f, clip, body, to?, times? }`
 plays one (REEL_DATA.md). `frames` = one cycle or the whole one-off at 30 fps; `base` = the standard pose it starts (→ ends) on;
 `props` = what the hands hold (`x_hp<L|R|B>_<prop>`, motion-lib/props.js and lib/cast/handprops.js; a film swaps its own with
 the key's `swap`), on which hand; `set` = the set pieces it needs (the proof page builds them at the sizes the clip names in
@@ -49,6 +49,8 @@ raw pelvis speed is reported, not gated); the carried mass changes at most 35 % 
 | `Move_Walk_Fwd_Loop` | heavy | loop | 36 | STAND | - | - | short slow steps on wide feet, the body rolling over each foot, arms out round the belly |
 | `Move_Walk_Fwd_Loop` | thin | loop | 28 | STAND | - | - | long light steps on narrow feet, little roll |
 | `Move_WalkFlashlight_Loop` | adult | loop | 34 | STAND | torch (L) | - | a cautious search walk with a flashlight held out in the left fist (the same hand as Act_TorchReady_Loop), waist high, the beam ahead |
+| `Move_WalkFlashlight_Loop` | heavy | loop | 40 | STAND | torch (L) | - | the cautious search walk with a flashlight held out in the left fist (shared/extra/Move_WalkFlashlight_Loop_v01.js flashlightWalk) on the heavy body, from its own walk |
+| `Move_WalkFlashlight_Loop` | thin | loop | 32 | STAND | torch (L) | - | the cautious search walk with a flashlight held out in the left fist (shared/extra/Move_WalkFlashlight_Loop_v01.js flashlightWalk) on the thin body, from its own walk |
 
 ## Act
 

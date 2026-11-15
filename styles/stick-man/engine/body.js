@@ -118,12 +118,37 @@ export function worldBox(lo, hi, toW, fromW, k, kind = 'set', ledge = 0) {
   const dirL = (pL, nW) => { const a = toW(pL), b = fromW([a[0] + nW[0] * 0.01, a[1] + nW[1] * 0.01, a[2] + nW[2] * 0.01]); return b.sub(pL).normalize(); };
   return {
     kind, lo, hi,
+    // a held prop (an oriented box in root space, W) against this piece: its world extent tested as a box, not by sample
+    // points (a crate's corners stepped over a 14 cm wall: it went through, Move_PushHeavy_Loop in ep01's room). It leaves
+    // toward the body that holds it (`from`, root space: a thin wall never pushes it out the far side), along the
+    // horizontal axis that takes least, or up onto the top when that takes less than the ledge (or 5 cm); null when clear
+    // or when the body itself stands inside the piece's footprint
+    boxPush({ c, q, h }, from) {
+      const P = []; for (let i = 0; i < 8; i++) P.push(toW(new THREE.Vector3(i & 1 ? h[0] : -h[0], i & 2 ? h[1] : -h[1], i & 4 ? h[2] : -h[2]).applyQuaternion(q).add(c)));
+      const pl = [0, 1, 2].map(i => Math.min(...P.map(p => p[i]))), ph = [0, 1, 2].map(i => Math.max(...P.map(p => p[i])));
+      if ([0, 1, 2].some(i => ph[i] <= lo[i] || pl[i] >= hi[i])) return null;
+      const fw = toW(from), opts = [];
+      for (const i of [0, 1]) { if (fw[i] <= lo[i]) opts.push([i, -1, ph[i] - lo[i]]); else if (fw[i] >= hi[i]) opts.push([i, 1, hi[i] - pl[i]]); }
+      const top = hi[2] - pl[2]; if (top < Math.max(ledge, 0.05)) opts.push([2, 1, top]);
+      if (!opts.length) return null;
+      const [i, sg, amt] = opts.reduce((a, b) => (b[2] < a[2] ? b : a)), e = amt * 1.0005 + 0.002;
+      const a = fromW([0, 0, 0]), b = fromW([N[2 * i + (sg > 0 ? 1 : 0)][0] * e, N[2 * i + (sg > 0 ? 1 : 0)][1] * e, N[2 * i + (sg > 0 ? 1 : 0)][2] * e]);
+      return { depth: amt / k, push: b.sub(a) };
+    },
     test(p, margin = 0) { const w = toW(p), h = out(w, margin * k); return h ? { depth: h.depth / k, n: dirL(p, N[h.i]) } : null; },
     push(p, margin = 0) { const w = toW(p), h = out(w, margin * k); if (!h) return null; const n = N[h.i], e = h.depth * 1.0005;
       return fromW([w[0] + n[0] * e, w[1] + n[1] * e, w[2] + n[2] * e]); },
   };
 }
 
+// where a captured elbow sticks out to, as an ik pole (root space, W): its offset from the middle of its own shoulder-hand
+// line. A near straight arm (under 0.1 W off its line, ~25 deg of flex) has no side of its own, so it eases onto a
+// person's resting one: out, a little down, back (cast.js S.pose's default). tools/mocap_contact.mjs and mocap_reach.mjs
+// bake it into their tables, so the hand going onto ik keeps the capture's own elbow
+export function elbowSide(off, side) {
+  const n = new THREE.Vector3(side === 'L' ? -0.6 : 0.6, -0.2, -0.75).normalize(), w = Math.max(0, Math.min(1, (off.length() - 0.02) / 0.08)), s = w * w * (3 - 2 * w);
+  return off.clone().normalize().multiplyScalar(s).addScaledVector(n, 1 - s);
+}
 // an ellipsoid volume: centre c, orientation q, radii r; depth of a point inside (0 outside) and the outward normal
 export function ellipsoid(c, q, r, kind) {
   const qi = q.clone().invert(), l = new THREE.Vector3();
@@ -212,17 +237,24 @@ export function solveArm({ sh, elbow, hand, pole, l, vols, ik, flex, limb, handR
   for (let tries = 0; tries <= STEPS && !best; tries++) {
     place();
     const ax = H.clone().sub(sh).normalize();
+    let w0 = null;
     for (let k = 0; k <= ((keep && tries === 0) || tries === STEPS ? 72 : 6); k++) {
       const P = P0.clone().applyAxisAngle(ax, (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 5 * Math.PI / 180), r = ik(sh, H, l, P);
       const w = armPenetration(sh, r.joint, r.end, vols, { limb, handR });
       if (!w) { best = r; break; }
+      if (!k) w0 = w;
       if (!least || w.depth < least.d) least = { r, d: w.depth };
     }
     // a gripping hand (keep: on an ik target or holding a prop) that no elbow turn clears stays on its grip: the arm that
     // goes in least, the hand where it holds (this figure's big head beside arms reaching forward to push or lift: the
     // fists stepped 9.6 cm off the crate, the elbows flipping between frames); the overlap is reported (pen)
     if (!best && keep && tries === 0) break;
-    if (!best && tries < STEPS) H.addScaledVector(o, 0.02);                  // no small turn clears it: the hand steps out toward its own side and front
+    // no small turn clears it: the hand steps out of what the arm is in, along that surface's normal by the overlap (at
+    // most 2 cm a step; toward its own side and front where the normal points back into the body, or across it). A fixed
+    // 2 cm toward the side and front, whatever the arm touched, took 8 steps to clear a forearm 2 cm inside the trunk of a
+    // body lying down, and the elbow opened 19 deg in a frame (Trans_LieDown_Once frame 44)
+    if (!best && tries < STEPS) { const n = w0?.n, d = w0 ? Math.min(0.02, w0.depth + 0.004) : 0.02;
+      H.addScaledVector(n && n.dot(o) > -0.2 ? n : o, d); }
   }
   // nothing clears it within STEPS: the arm that goes in least (not a straight arm flung out: that reads as a pop)
   const r = best || least.r, after = best ? null : armPenetration(sh, r.joint, r.end, vols, { limb, handR });
@@ -233,9 +265,11 @@ export function solveArm({ sh, elbow, hand, pole, l, vols, ik, flex, limb, handR
 // space (W), the legs as segments [[a, b], ...] (thighs, shins: a tube of radius limb) and the trunk and head as volumes.
 // Returns the deepest overlap and the move that takes the prop out of it ({ depth, push }), or null when it is clear.
 // The prop never pushes the body: the hand that holds it moves (cast.js re-solves that arm and reports the hand's gap).
-export function propPush({ c, q, h }, segs, vols, { limb = 0.023, n = 6 } = {}) {
+export function propPush({ c, q, h }, segs, vols, { limb = 0.023, n = 6, from = new THREE.Vector3(0, 1.5, 0) } = {}) {
   const qi = q.clone().invert(); let best = null;
-  const take = (depth, push) => { if (depth > 1e-5 && (!best || depth > best.depth)) best = { depth, push }; };
+  const take = (depth, push, kind = 'body') => { if (depth > 1e-5 && (!best || depth > best.depth)) best = { depth, push, kind }; };
+  // the set's pieces as boxes (worldBox boxPush): the prop stops on a wall, the hands holding it stay on it
+  for (const v of vols) if (v.boxPush) { const r = v.boxPush({ c, q, h }, from); if (r) take(r.depth, r.push, 'set'); }
   for (const [a, b] of segs) for (let i = 0; i <= n; i++) {
     const l = a.clone().lerp(b, i / n).sub(c).applyQuaternion(qi), L = [l.x, l.y, l.z];
     const e = L.map((x, k) => h[k] + limb - Math.abs(x)); if (e.some(x => x <= 0)) continue;
@@ -244,7 +278,7 @@ export function propPush({ c, q, h }, segs, vols, { limb = 0.023, n = 6 } = {}) 
   }
   for (const sx of [-1, 0, 1]) for (const sy of [-1, 0, 1]) for (const sz of [-1, 0, 1]) {
     const p = new THREE.Vector3(sx * h[0], sy * h[1], sz * h[2]).applyQuaternion(q).add(c);
-    for (const v of vols) { const t = v.test(p); if (t) take(t.depth, t.n.clone().multiplyScalar(t.depth)); }
+    for (const v of vols) { if (v.boxPush) continue; const t = v.test(p); if (t) take(t.depth, t.n.clone().multiplyScalar(t.depth), v.kind); }
   }
   return best;
 }

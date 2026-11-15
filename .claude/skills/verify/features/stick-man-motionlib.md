@@ -1,7 +1,7 @@
 # Stick-man motion library and carried loads
 
 A stick-man reel's motion v2 `anim` takes library clips: `{ f, clip: 'Move_Walk_Fwd_Loop', body: 'elder', to: [3, 0] }`
-expands into the clip's keys (`styles/stick-man/motion-lib`, 46 clips, 5 body types; the adult's 29 Mixamo and 8 Quaternius UAL (CC0) captures; standard poses STAND, SIT, CARRY, LIE, HUG (a duffel hugged to the chest); captured keys play without the drag (motion.js raw) (ref/mocap.js): run, sprint, walk with their captured start and stops, jump, idle, look around, talk, point, wave, sit down, sit, stand up, seated point, pick up, quarter turn, a window climb from two captures joined (mocapJoin: feet and hands on a sill, ref/mocap.js surfaces)). The rig under it gained body
+expands into the clip's keys (`styles/stick-man/motion-lib`, 51 clips, 5 body types; the adult's 29 Mixamo and 8 Quaternius UAL (CC0) captures; standard poses STAND, SIT, CARRY, LIE, HUG (a duffel hugged to the chest); captured keys play without the drag (motion.js raw) (ref/mocap.js): run, sprint, walk with their captured start and stops, jump, idle, look around, talk, point, wave, sit down, sit, stand up, seated point, pick up, quarter turn, a window climb from two captures joined (mocapJoin: feet and hands on a sill, ref/mocap.js surfaces)). The rig under it gained body
 proportions (cast spec `scale`, `headScale`, `legScale`, `kg`), a hand that grips keeps its target or reports the gap
 (rig K4), and a carried prop that is a solid with mass (rig K5). A reel without `clip` keys or new spec fields renders as
 before, except where an old one had a hand forced off a target (now kept when reachable) or a held prop inside the body.
@@ -12,10 +12,28 @@ before, except where an old one had a hand forced off a target (now kept when re
   repeats its capture, blends out once: a phone stays at the ear), `stop`, `pos`, `yaw`, `swap`, `expr`. Every clip starts
   at its own origin (`index.js` zeroes its first key and its marks), so clips chained in one track never jump the actor.
 - `fit`: a clip fitted to the film's set, `{ clip: 'Act_DropInTrunk_Once', fit: { lip: 0.85 } }`,
-  `{ clip: 'Trans_JumpWindow_Once', fit: { sill: 0.8, top: 1.9, width: 1.0 } }` (index.js `fitClip`; a record's `fit(opts)`
+  `{ clip: 'Trans_JumpWindow_Once', fit: { sill: 0.8, top: 1.9, width: 1.0 } }` (a narrower window draws the airborne legs in
+  toward the hips and thrusts the bag through ahead), `{ clip: 'Act_HandOver_Once', fit: { top: 1.12 } }` (the cash set down on
+  a higher counter) (index.js `fitClip`; a record's `fit(opts)`
   makes it, its `fitChecks` are checked by motionlib.mjs as rows of their own; `--proof <dir> --only <clip> --fit '<json>'`).
 - `support`: a clip key `pos: [x, y, h]` plays the clip on a surface h m high (a bed, a stage): every key is lifted and
-  held up there (motion.js counts a flight only above `support`); the next clip carries it on.
+  held up there (motion.js counts a flight only above `support`); the next clip carries it on: Trans_LieDown_Once ->
+  Idle_Sleep_Loop -> Trans_GetUp_Once on a 0.55 m bed (test). A capture blend whose pelvis turns more than 45 deg (the
+  sleeper rolling from LIE onto the side) turns it as a lying body does (`base.js slerpPelvis`: the trunk's line kept
+  lying, rolled about it), a key a frame: the sleeper no longer sits up as the loop opens and closes.
+- Prop spans ride on the keys: placeClip puts them on every key of the clip key (`clipProps`, frames from that key), so a
+  film that copies, maps, spreads, re-sorts or trims its anim keeps a prop it lets go (play.js `.map()`ped them away).
+- The set stops held props as it stops hands (`body.js worldBox boxPush`: the prop's box against each piece, out toward the
+  body holding it, never through a thin wall); a held prop the arms cannot take out stays on the piece and the hands stay
+  where they got to (their gap is reported). A prop at rest or falling (`propobj.js`) is tested by its extent and settles
+  out of a piece it lands across.
+- Ik poles: a keyed pole takes the elbow from where the FK arm has it as far as ikw goes (cast.js); the reach tables
+  (`mocap_contact.mjs`, `mocap_reach.mjs`) bake the captured elbow's own side per row (`body.js elbowSide`). Knee poles do
+  not flip for a foot out to the side at hip height (cast.js legPole). The captured arm swing's seam sits behind the head
+  (ref/mocap.js), not straight up, and the captured arm's raise and swing are held to the rig's ranges with the elbow's
+  roll measured round the held upper arm. A captured trailing foot peels its heel over the 6 frames before it lifts, as
+  far as its captured knee needs (base.js peelFor; CarryBag walk knee 33.4 -> 20.4 deg/f). A grounded capture's raised
+  foot shows the captured knee (reachFoot).
 - Props are declared: a clip whose keys hold `x_hp<L|R|B>_<prop>` names it in `needs.props` on `needs.hands`
   (`base.js holdKeys`); `motion-lib/props.js` adds `hugbag` (both arms), `crate` (pushed, stands on the floor:
   `userData.floor`), `hotdog`, `pistol`. A prop's `userData.grip` is the point the fist holds: a film's own prop (`swap`)
@@ -59,6 +77,8 @@ before, except where an old one had a hand forced off a target (now kept when re
 - gaitLoop on a capture: frames with both feet up keep the stance's hip correction (eased between stances), and the
   correction changes at most 0.01 W a frame, so the hips no longer jump as the last foot lifts (Move_PushHeavy_Loop loop
   frame 37: 8 cm) or as one foot leaves double support (Move_CarryBag_Walk_Loop's captured stop: 6 cm).
+- Body versions of the flashlight walk: `Heavy_` / `Thin_Move_WalkFlashlight_Loop` (`flashlightWalk(body)`); a walk faster than
+  the adult's takes its closing step that much longer (thin: knee 26.5 -> 20 deg/f).
 - `docs/MOTION-LIB.md` is written by `motionlib.mjs --catalogue` from the clips (a test fails when it is stale).
 
 ## How to get to it (user POV)
@@ -72,7 +92,14 @@ and `anim: { kid: [{ f: 0, clip: 'Move_Run_Fwd_Loop', body: 'child', to: [4, 0] 
   with the clip run through cast.js headless (fake 2D canvases) with its set pieces, physics on and off: grip cm, prop cm,
   held frames, the solved joints' largest change a frame. It fails a clip that holds an undeclared prop, declares one it
   never holds, acts on a thing (`OBJECT_ACT`) without one, moves its root faster than 4 cm a frame outside the capture, or
-  starts off its origin. Physics gates on and off (`physicsFails`): a prop moves no more than its hand (times w) plus
+  starts off its origin. The solved-joint gate (`jointExcess`, `jointFails`, physics on and off): a solved elbow or
+  knee (its flex, its two bones) may turn more than 25 deg a frame only where the motion as authored does. In a capture's
+  frames that is the raw capture's own joint (`_ref` on the key, ref/mocap.js, before any retarget, fit or ik); in a made
+  gait the knee curve it is built from; elsewhere 25, or an arm's own FK keys. No slack (0.02 deg for rounding).
+  `JOINT_KNOWN` lists the 14 rows it fails today with their measured excess (runs' and leaps' knees, see the comments):
+  a listed row fails if its excess grows or if it passes clean (delete it), so the list only shrinks. A prop inside a set
+  piece fails (`propInSet`). `rigClip(C, body, { obstacles })` takes a film's own set pieces (ep01's 1.12 m counter beside
+  the phone call). Physics gates on and off (`physicsFails`): a prop moves no more than its hand (times w) plus
   gravity plus 1 cm a frame (`PROP_SLIP_CM`, `propExcess`; a prop seen again after a gap is measured from where it was
   last seen), a declared prop is in the scene every frame of the clip, the balance solve moves the pelvis at most 4 cm a
   frame (`BAL_CM`: only the balance shift, pelvis balance on minus off; the raw pelvis speed is reported, not gated), the

@@ -123,9 +123,15 @@ export function mocapCycle(src, { legM, once = false, roll = true }) {
     const inC = p => [dot(p, xC), dot(p, yC), dot(p, zC)];
     const arm = (sd, sg) => {
       const d = nrm(inC(V(f[sd + 'Arm'], f[sd + 'ForeArm']))), fd = nrm(inC(V(f[sd + 'ForeArm'], f[sd + 'Hand'])));
-      const raise = Math.asin(Math.max(-1, Math.min(1, sg * d[0]))) * DEG, swing = Math.atan2(d[2], -d[1]) * DEG, elbow = Math.acos(Math.max(-1, Math.min(1, dot(d, fd)))) * DEG;
-      let b0 = nrm([-sg * 0.25, 0.3, 1]); b0 = nrm(add(b0, mul(d, -dot(b0, d)))); const ba = nrm(add(fd, mul(d, -dot(fd, d))));
-      const roll = sg * Math.atan2(dot(d, cross(b0, ba)), dot(b0, ba)) * DEG;
+      // the swing's seam (+-180, atan2's) put where no arm reaches, 60 deg past straight up behind the head (-120 = 240):
+      // there an arm raised past vertical jumped 342 deg in a frame, which the rig's range clamped to -60 (the gun arm
+      // thrown behind the back, Act_PistolShoot_Once frame 70). Raise and swing held to the rig's ranges (engine/body.js
+      // JOINTS) here, and the elbow's fold plane (roll) measured round the upper arm as the rig will show it: measured
+      // round the captured one, an arm pushed back past -60 (lying down) had its forearm swing 46 deg in a frame
+      const sw = Math.atan2(d[2], -d[1]) * DEG, raise = Math.max(-20, Math.asin(Math.max(-1, Math.min(1, sg * d[0]))) * DEG), swing = Math.max(-60, Math.min(180, sw - 360 * Math.floor((sw + 120) / 360)));
+      const elbow = Math.acos(Math.max(-1, Math.min(1, dot(d, fd)))) * DEG, rc = raise / DEG, sc = swing / DEG, dc = [Math.sin(sg * rc), -Math.cos(rc) * Math.cos(sc), Math.cos(rc) * Math.sin(sc)];
+      let b0 = nrm([-sg * 0.25, 0.3, 1]); b0 = nrm(add(b0, mul(dc, -dot(b0, dc)))); const ba = nrm(add(fd, mul(dc, -dot(fd, dc))));
+      const roll = sg * Math.atan2(dot(dc, cross(b0, ba)), dot(b0, ba)) * DEG;
       return { raise, swing, elbow, roll };
     };
     const leg = sd => { const pr = prints[sd][t];
@@ -138,7 +144,12 @@ export function mocapCycle(src, { legM, once = false, roll = true }) {
       const y = Math.atan2(d[1], d[0]) * DEG - heading - (sd === 'Left' ? -FOOT_OUT : FOOT_OUT), w = Math.min(1, Math.max(0, (h - 0.5) / 0.4));
       return ((y + 540) % 360 - 180) * w * w * (3 - 2 * w); };
     const L = leg('Left'), R = leg('Right'); L.yaw = toe('Left'); R.yaw = toe('Right');
-    return { kneeL: knee('Left'), kneeR: knee('Right'), down: { L: !!prints.Left[t], R: !!prints.Right[t] }, hipZ: hm[2] - rest * k, hipFloor: floorAt(hm), handOn: ['Left', 'Right'].some(sd => { const h = f[sd + 'Hand'], t = floorAt(h); return t > 0 && h[2] - t < 0.1 * k; }), pos: [hm[0], 0, 0], hipY: hm[1],
+    // the raw capture's own joints (flexes in deg, unit bone directions), before any retarget, fit or ik: what the
+    // solved joints are measured against (tools/motionlib.mjs jointExcess)
+    const bone = (a, b) => nrm(V(f[a], f[b])).map(x => +x.toFixed(5)), flex = (a, b, c) => +(Math.acos(Math.max(-1, Math.min(1, dot(bone(a, b), bone(b, c))))) * DEG).toFixed(3);
+    const ref = {}; for (const [sd, s] of [['Left', 'L'], ['Right', 'R']]) Object.assign(ref, { ['kneeFlex' + s]: flex(sd + 'UpLeg', sd + 'Leg', sd + 'Foot'), ['elbowFlex' + s]: flex(sd + 'Arm', sd + 'ForeArm', sd + 'Hand'),
+      ['thigh' + s]: bone(sd + 'UpLeg', sd + 'Leg'), ['shin' + s]: bone(sd + 'Leg', sd + 'Foot'), ['upper' + s]: bone(sd + 'Arm', sd + 'ForeArm'), ['fore' + s]: bone(sd + 'ForeArm', sd + 'Hand') });
+    return { ref, kneeL: knee('Left'), kneeR: knee('Right'), down: { L: !!prints.Left[t], R: !!prints.Right[t] }, hipZ: hm[2] - rest * k, hipFloor: floorAt(hm), handOn: ['Left', 'Right'].some(sd => { const h = f[sd + 'Hand'], t = floorAt(h); return t > 0 && h[2] - t < 0.1 * k; }), pos: [hm[0], 0, 0], hipY: hm[1],
       heading, pelvis: { yaw: pelvis.yaw, pitch: pelvis.pitch, roll: pelvis.roll }, spine: { twist: spine.yaw, bend: spine.pitch, side: spine.roll }, neck: { turn: neck.yaw, nod: neck.pitch, tilt: neck.roll },
       armL: arm('Left', -1), armR: arm('Right', 1), legL: L, legR: R };
   });

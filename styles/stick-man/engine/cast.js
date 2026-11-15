@@ -737,7 +737,9 @@ export function makeStick(spec) {
   }
   const propOverlap = (held, segs, vols) => { let w = null;
     for (const h of held) { if (h.o.userData.soft) continue;                 // a soft prop (a cloth cap) gives way: no contact
-      const r = propPush(h.box, segs, vols, { limb: LIMB_R / W }); if (r && (!w || r.depth > w.depth)) w = { ...r, side: h.side, w: h.w }; }
+      // (the set stops a prop in the hand, at least half held; one on its way out of it is the scene's: engine/propobj.js
+      // drops it onto what is under it)
+      const r = propPush(h.box, segs, h.w >= 0.5 ? vols : vols.filter(v => !v.boxPush), { limb: LIMB_R / W }); if (r && (!w || r.depth > w.depth)) w = { ...r, side: h.side, w: h.w, o: h.o }; }
     return w; };
   // (reported: the overlap of a prop the hand holds, at least half; one mostly at rest is the scene's, not the hand's)
   const heldPen = pp => (pp && (pp.w ?? 1) >= 0.5 ? pp.depth : 0);
@@ -869,12 +871,18 @@ export function makeStick(spec) {
       const k = armDirs(A, sg); k.d.applyQuaternion(qChest); k.fd.applyQuaternion(qChest); k.pole.applyQuaternion(qChest);
       let elbow = sh.clone().addScaledVector(k.d, LIMB.upper), hand = elbow.clone().addScaledVector(k.fd, LIMB.fore), flex = A.elbow ?? 20;
       const iw = A.ik ? Math.max(0, Math.min(1, A.ikw ?? 1)) : 0, want = iw > 0 ? hand.clone().lerp(V(A.ik), iw) : hand.clone(), gw = Math.max(iw >= 0.5 ? 1 : 0, holdW(side)), grip = gw >= 0.999;   // (grip: on its target; a hand taking or letting go is on its way)
+      // a keyed pole (A.pole) takes the elbow from where the FK arm has it (its offset from the shoulder-hand line) as far
+      // as the hand is on its target (ikw). Used whole from the first frame of a reach, it put the elbow on a pole pointing
+      // down the hanging arm, and the elbow swung round behind the body as the hand rose (Gest_PhoneCall_Loop's reach to
+      // the ear: 37 deg/f)
+      const pk = A.pole ? V(A.pole) : null, fkP = elbow.clone().sub(sh.clone().lerp(hand, 0.5)).normalize();
+      const pole = pk && pk.lengthSq() > 1e-12 ? fkP.multiplyScalar(1 - iw).addScaledVector(pk.normalize(), iw) : k.pole;
       if (iw > 0) {
-        const r = ik(sh, want, LIMB.upper, A.pole ? V(A.pole) : k.pole, SOFT.arm, true); elbow = r.joint; hand = r.end; flex = r.flex;
+        const r = ik(sh, want, LIMB.upper, pole, SOFT.arm, true); elbow = r.joint; hand = r.end; flex = r.flex;
       }
       // physics: a hand inside the head or the torso stops on its surface, an elbow inside is pushed out, the elbow
       // stays in its range (bones keep their length)
-      const arm = keep => solveArm({ sh, elbow, hand, flex, pole: A.pole ? V(A.pole) : k.pole, l: LIMB.upper, vols, limb: LIMB_R / W, handR: 0.05, out: new THREE.Vector3(sg, -0.3, 0.4).applyQuaternion(qChest),
+      const arm = keep => solveArm({ sh, elbow, hand, flex, pole, l: LIMB.upper, vols, limb: LIMB_R / W, handR: 0.05, out: new THREE.Vector3(sg, -0.3, 0.4).applyQuaternion(qChest),
         ik: (a, b, l, p) => ik(a, b, l, p, SOFT.arm, true), keep });
       let sol = PHYS.on ? arm(gw > 0)
         : (w => ({ elbow, hand, flex, pen0: w ? w.depth : 0, pen: w ? w.depth : 0, limits: 0 }))(armPenetration(sh, elbow, hand, vols, { limb: LIMB_R / W, handR: 0.05 }));
@@ -884,7 +892,7 @@ export function makeStick(spec) {
       if (PHYS.on && gw > 0 && gw < 1) { const s0 = arm(false), H = s0.hand.clone().lerp(sol.hand, gw), E = s0.elbow.clone().lerp(sol.elbow, gw).sub(sh);
         const r = ik(sh, H, LIMB.upper, E, SOFT.arm, true); sol = { ...sol, elbow: r.joint, hand: r.end, flex: r.flex, pen: Math.max(sol.pen, s0.pen) }; }
       elbow = sol.elbow; hand = sol.hand; flex = sol.flex;
-      arms[side] = { sh, pole: A.pole ? V(A.pole) : k.pole, want, grip };
+      arms[side] = { sh, pole, want, grip };
       const hipJ = toRoot(new THREE.Vector3(sg * 0.14 * girth, 0.04, 0)), G = Q['leg' + side] || {};
       const foot0 = V(G.foot || [sg * 0.22, 0.022, 0]);
       // the knee bends in the leg's own plane (hip, foot and the pelvis's sideways axis), always to the front of the
@@ -892,8 +900,13 @@ export function makeStick(spec) {
       // heel kick), and the knee then swung out sideways up to 35 cm (Kai 2026-11-14, front view of the run). A keyed
       // knee [x, y, z] (keyed, default [sg 0.15, 0, 1]) is read in that frame: z = to the front of the line, x = out to
       // the side (a squat's knees open with a larger x), y = up.
-      const latP = new THREE.Vector3(1, 0, 0).applyQuaternion(qb), KN = G.knee || [sg * 0.15, 0, 1];
-      const legPole = f => { const ax = f.clone().sub(hipJ).normalize(), fw = ax.clone().cross(latP).normalize(), up = latP.clone().cross(fw);
+      // The front of the line is the pelvis's sideways axis crossed with it, plus the pelvis's forward axis taken off the
+      // line: the cross alone has no direction when the line lies along the sideways axis (a foot out to the side at the
+      // hip's height) and turns round to the back as the foot rises past it, so the knee flipped half a turn in a frame
+      // (Trans_JumpWindow_Once fitted to a 1.0 m window, frame 60: 60 deg/f); for a leg in the body's own plane the two
+      // are the same direction. (The sum vanishes only for a foot straight above its hip, in the pelvis's frame.)
+      const latP = new THREE.Vector3(1, 0, 0).applyQuaternion(qb), fwdP = new THREE.Vector3(0, 0, 1).applyQuaternion(qb), KN = G.knee || [sg * 0.15, 0, 1];
+      const legPole = f => { const ax = f.clone().sub(hipJ).normalize(), fw = ax.clone().cross(latP).add(fwdP.clone().addScaledVector(ax, -fwdP.dot(ax)).multiplyScalar(ax.dot(latP) ** 2)).normalize(), up = latP.clone().cross(fw);
         return fw.multiplyScalar(KN[2]).addScaledVector(latP, KN[0]).addScaledVector(up, KN[1] || 0); };
       let kp = legPole(foot0);
       const hdir = new THREE.Vector3(Math.sin(FOOT.out * DEG) * sg, 0, Math.cos(FOOT.out * DEG)).applyAxisAngle(_Y, (G.yaw || 0) * DEG), gnd = Q.ground || 0;
@@ -980,10 +993,19 @@ export function makeStick(spec) {
       }
       held = handProps(Q, rig); pp = propOverlap(held, legSegs, vols);
     }
+    // a held prop the arms could not take out of a set piece (the body walked on into a wall with the crate before it, out
+    // of the arms' reach) stops on that piece anyway: the set holds it there, the hands stay where they got to (their gap
+    // from it is the hand's targetGap, reported). Only the set does this: a body is not a wall (ep01 SH150 pushed the
+    // crate out through the room's wall)
+    const setV = PHYS.on ? vols.filter(v => v.boxPush) : [];
+    if (setV.length) { let moved = false;
+      for (const h of held) for (let it = 0; h.w >= 0.5 && it < 4; it++) { const r = propPush(h.box, [], setV); if (!r) break;
+        h.o.position.addScaledVector(r.push, W); h.o.updateMatrixWorld(true); h.box = propBox(h.o); moved = true; }
+      if (moved) pp = propOverlap(held, legSegs, vols); }
     for (const side of ['L', 'R']) {
       const a = arms[side], r = rig[side], pts = hose(a.sh, r.elbow, r.hand, ROUND.arm, 16);
       limbs['arm' + side].set(pts); hands[side].position.copy(pts[15]); S.hand[side] = r.hand.toArray();
-      Object.assign(r, { targetGap: r.hand.distanceTo(a.want), grip: a.grip, propPen0: side === 'L' ? propPen0 : 0, propPen: side === 'L' ? heldPen(pp) : 0 });
+      Object.assign(r, { targetGap: r.hand.distanceTo(a.want), grip: a.grip, propPen0: side === 'L' ? propPen0 : 0, propPen: side === 'L' ? heldPen(pp) : 0, propIn: side === 'L' && heldPen(pp) ? pp.kind : null });
     }
     // the skeleton in root space (W): pelvis, five points up the spine, the neck base, the head centre, the trunk's
     // centre; and the centre of mass of the whole body with what it carries (x_kg<L|R|B> kg, else the prop's userData.mass)
@@ -1040,7 +1062,7 @@ export function makeStick(spec) {
     }
     if (S.chan) o.chan = S.chan;
     if (S.rig.balanceShift != null) o.balanceCm = +(S.rig.balanceShift * W * 100).toFixed(2);
-    if (S.rig.L.propPen0 != null) { o.propPenCm0 = +(S.rig.L.propPen0 * W * SC * 100).toFixed(2); o.propPenCm = +(S.rig.L.propPen * W * SC * 100).toFixed(2); o.carryKg = +(S.carryKg || 0).toFixed(1); }
+    if (S.rig.L.propPen0 != null) { o.propPenCm0 = +(S.rig.L.propPen0 * W * SC * 100).toFixed(2); o.propPenCm = +(S.rig.L.propPen * W * SC * 100).toFixed(2); if (S.rig.L.propIn) o.propIn = S.rig.L.propIn; o.carryKg = +(S.carryKg || 0).toFixed(1); }
     if (S.com) { o.com = w(S.com); o.skel = { pelvis: w(S.skel.pelvis), neck: w(S.skel.neck), head: w(S.skel.head), spine: S.skel.spine.map(w) }; }
     return o;
   };
