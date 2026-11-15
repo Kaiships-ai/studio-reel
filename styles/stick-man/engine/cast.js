@@ -702,6 +702,7 @@ export function makeStick(spec) {
         }
       }
       o.position.copy(hand).sub(gp.applyQuaternion(o.quaternion));
+      if (U.floor) o.position.y = (P.ground || 0) * W;          // floor: a pushed load stands on the ground, the hands move it along
       if (U.level) U.level(P['x_lvl' + (side === 'B' ? 'L' : side)] ?? 1);     // x_lvl<L|R>: a container's fill 0..1 (beaker)
       const box = propBox(o); if (box) held.push({ o, side, kind, box });
     }

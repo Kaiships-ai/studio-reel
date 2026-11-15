@@ -4,6 +4,13 @@
 //   torch  a flashlight along the forearm, a dim lit lens and a soft spot
 //   cash   a banded bundle of notes
 //   cap    a peaked cap (soft: no contact push); worn on the head with x_hpH_cap (cast.js: the head slot), carried with x_hpR_cap
+//   hugbag a duffel hugged to the chest in both arms (x_hpB_hugbag), long side across: the hands hold its lower sides
+//   crate  a heavy crate pushed along the floor with both hands on its back face (x_hpB_crate; floor: it stands on the
+//          ground, the hands only move it along)
+//   hotdog a hot dog in a bun, held at its back end, the front end out of the fist along the forearm (x_hp<L|R>_hotdog)
+//   pistol a handgun, the barrel out of the fist along the forearm (x_hp<L|R>_pistol)
+// Every prop's grip is the point the fist (or, for B, the midpoint of the two fists) holds, in the prop's own metres: a
+// film's own prop (swap) sets its grip and mode the same way and needs no offset of its own.
 // Sizes in metres, Blender up = +y here (three.js), the figure's forward = +z.
 import * as THREE from 'three';
 import { BUILD } from '../lib/cast/handprops.js';
@@ -52,4 +59,36 @@ BUILD.cap = () => {
   const dome = solid(new THREE.SphereGeometry(0.23, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), [0.78, 0.10, 0.08]); dome.scale.y = 0.62; g.add(dome);
   const brim = solid(new THREE.CylinderGeometry(0.15, 0.15, 0.01, 20, 1, false, -Math.PI / 2, Math.PI), [0.70, 0.08, 0.07], 0.004); brim.position.set(0, 0.004, 0.18); brim.scale.z = 0.8; g.add(brim);
   g.userData = { mode: 'up', grip: [0.31, -0.076, 0.043], mass: 0.1, soft: true }; return g;   // held under its right rim; cloth: no contact push
+};
+
+// the hugged duffel: 0.38 across (the fists hold its sides), 0.26 tall, 0.24 deep; the fists' midpoint 0.07 up its front
+// half, so its back rests on the chest (the captured carry: fists 0.44 apart, 0.29 m ahead of the hips)
+export const HUG = { w: 0.38, h: 0.26, d: 0.24, grip: [0, 0.07, 0.03] };
+BUILD.hugbag = () => {
+  const g = new THREE.Group(), col = [0.16, 0.20, 0.30];
+  const body = solid(round(HUG.w, HUG.h, HUG.d, 0.07), col); body.position.y = HUG.h / 2; g.add(body);
+  const zip = new THREE.Mesh(new THREE.BoxGeometry(HUG.w * 0.8, 0.006, 0.012), new THREE.MeshBasicMaterial({ color: lin(0.75, 0.70, 0.55) })); zip.position.y = HUG.h + 0.002; g.add(zip);
+  g.userData = { mode: 'both', grip: HUG.grip, mass: 20 }; return g;
+};
+// the pushed crate: 0.60 across, 0.95 tall, 0.55 deep, standing on the floor; the fists on its back face (z = -0.275)
+export const CRATE = { w: 0.60, h: 0.95, d: 0.55 };
+BUILD.crate = () => {
+  const g = new THREE.Group(), wood = [0.50, 0.36, 0.22];
+  const box = solid(new THREE.BoxGeometry(CRATE.w, CRATE.h, CRATE.d), wood); box.position.set(0, CRATE.h / 2, CRATE.d / 2 + 0.02); g.add(box);
+  for (const y of [0.18, 0.5, 0.82]) { const slat = new THREE.Mesh(new THREE.BoxGeometry(CRATE.w + 0.004, 0.012, CRATE.d + 0.004), new THREE.MeshBasicMaterial({ color: lin(0.30, 0.20, 0.12) })); slat.position.set(0, y * CRATE.h, CRATE.d / 2 + 0.02); g.add(slat); }
+  g.userData = { mode: 'both', floor: true, grip: [0, 0, 0], mass: 60 }; return g;
+};
+// the hot dog: a bun 0.18 long, the sausage showing at both ends; the fist round its back third
+BUILD.hotdog = () => {
+  const g = new THREE.Group();
+  const bun = solid(new THREE.CapsuleGeometry(0.026, 0.13, 4, 12), [0.86, 0.62, 0.34]); bun.position.y = 0.09; bun.scale.set(1, 1, 0.8); g.add(bun);
+  const dog = solid(new THREE.CapsuleGeometry(0.014, 0.17, 4, 10), [0.66, 0.24, 0.16], 0.006); dog.position.set(0, 0.09, 0.016); g.add(dog);
+  g.userData = { mode: 'along', grip: [0, 0.04, 0], mass: 0.15 }; return g;
+};
+// the handgun: a slide 0.17 long out of the fist along the forearm, the grip in the fist
+BUILD.pistol = () => {
+  const g = new THREE.Group(), steel = [0.12, 0.12, 0.14];
+  const slide = solid(new THREE.BoxGeometry(0.03, 0.17, 0.045), steel, 0.006); slide.position.set(0, 0.07, 0.03); g.add(slide);
+  const grip = solid(new THREE.BoxGeometry(0.028, 0.05, 0.08), steel, 0.006); grip.position.set(0, 0, 0); g.add(grip);
+  g.userData = { mode: 'along', grip: [0, 0, 0], mass: 0.9 }; return g;
 };

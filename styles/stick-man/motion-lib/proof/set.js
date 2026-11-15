@@ -20,7 +20,9 @@ export async function build(stage, opts = {}) {
   const s = opts.sc ?? 1, S = p => p.map(v => v * s);
   for (const m of opts.marks || []) {
     const [x, y, z] = S(m.at || [0, 0, 0]);
-    if (m.kind === 'bag' && !m.drop) { const g = K.group([x, y, 0], m.cross ? 0 : 90); g.add(bagMesh()); K.anim('bag_floor', g, f => { g.visible = f < (opts.f0 ?? 0) + m.until; }); }
+    // a bag on the floor: until the hands take it (until), or from the frame they set it down (from)
+    if (m.kind === 'bag' && !m.drop) { const g = K.group([x, y, 0], m.cross ? 0 : 90); g.add(bagMesh()); const f0 = opts.f0 ?? 0;
+      K.anim('bag_floor', g, f => { g.visible = (m.from == null || f >= f0 + m.from) && (m.until == null || f < f0 + m.until); }); }
     if (m.kind === 'bag' && m.drop) {   // m.cross: lying crosswise
       // released at the hands' last spot (m.at: the bag's bottom), then only gravity: falls to m.fall and rests
       const g = K.group([0, 0, 0], m.cross ? 0 : 90); g.add(bagMesh()); const v = m.v || [0.6, 0];
@@ -34,7 +36,7 @@ export async function build(stage, opts = {}) {
       K.box([x, -0.65, 0.18], [x + 1.0, 0.65, fl], car, { r: 0.02 });
       for (const sy of [-1, 1]) K.box([x, sy * 0.65 - 0.04, fl], [x + 1.0, sy * 0.65 + 0.04, z], car, { r: 0.02 });
       K.box([x + 0.95, -0.65, fl], [x + 1.05, 0.65, z + 0.45], car, { r: 0.02 });
-      COLLIDE.push({ name: 'trunk-lip', lo: [x, -0.65, 0.18], hi: [x + 0.08, 0.65, z] });
+      COLLIDE.push(...markColliders([m], s));
     }
     if (m.kind === 'window' && m.axis === 'y') {  // the wall along x, its room face at y, m.depth deep toward -y; the opening round x
       const d = m.depth * s, w = m.width * s / 2, top = m.top * s, H = Math.max(top + 0.5, 2.4), E = w + 0.7, y0 = y - d;
@@ -48,7 +50,11 @@ export async function build(stage, opts = {}) {
       K.box([x, -E, z], [x + d, -w, top], block, { r: 0.01 }); K.box([x, w, z], [x + d, E, top], block, { r: 0.01 });
       COLLIDE.push(...markColliders([m], s));
     }
-    if (m.kind === 'counter') { K.box([x, -0.9, 0], [x + 0.55, 0.9, z], block, { r: 0.02 }); COLLIDE.push({ name: 'counter', lo: [x, -0.9, 0], hi: [x + 0.55, 0.9, z] }); }
+    // a crate pushed along (Move_PushHeavy): standing where the hands take it (until), and where they leave it after the
+    // last cycle (after 'loop': `ahead` of the root there, opts.loopEnd from proof/reel.js)
+    if (m.kind === 'crate') { const f0 = opts.f0 ?? 0, E = opts.loopEnd, p = m.after ? (E ? [E.pos[0] + m.ahead[0] * s, E.pos[1] + m.ahead[1] * s] : null) : [x, y];
+      if (p) { const g = K.group([p[0], p[1], 0], 90); g.add(BUILD.crate()); K.anim(m.after ? 'crate_left' : 'crate_start', g, f => { g.visible = m.after ? f >= f0 + E.f : f < f0 + m.until; }); } }
+    if (m.kind === 'counter') { K.box([x, -0.9, 0], [x + 0.55, 0.9, z], block, { r: 0.02 }); COLLIDE.push(...markColliders([m], s)); }
     if (m.kind === 'cash') { const g = K.group([x, y, z]); const c = BUILD.cash(); g.add(c); K.anim('cash_left', g, f => { g.visible = f >= (opts.f0 ?? 0) + m.from; }); }
     if (m.kind === 'seat') { const b = S(m.to); K.box([x, -0.3, 0], [b[0], 0.3, b[2]], block, { r: 0.03 }); }
   }

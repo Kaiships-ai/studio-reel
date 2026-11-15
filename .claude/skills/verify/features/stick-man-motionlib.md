@@ -1,14 +1,20 @@
 # Stick-man motion library and carried loads
 
 A stick-man reel's motion v2 `anim` takes library clips: `{ f, clip: 'Move_Walk_Fwd_Loop', body: 'elder', to: [3, 0] }`
-expands into the clip's keys (`styles/stick-man/motion-lib`, 46 clips, 5 body types; the adult's 29 Mixamo and 8 Quaternius UAL (CC0) captures; standard poses STAND, SIT, CARRY, LIE; captured keys play without the drag (motion.js raw) (ref/mocap.js): run, sprint, walk with their captured start and stops, jump, idle, look around, talk, point, wave, sit down, sit, stand up, seated point, pick up, quarter turn, a window climb from two captures joined (mocapJoin: feet and hands on a sill, ref/mocap.js surfaces)). The rig under it gained body
+expands into the clip's keys (`styles/stick-man/motion-lib`, 46 clips, 5 body types; the adult's 29 Mixamo and 8 Quaternius UAL (CC0) captures; standard poses STAND, SIT, CARRY, LIE, HUG (a duffel hugged to the chest); captured keys play without the drag (motion.js raw) (ref/mocap.js): run, sprint, walk with their captured start and stops, jump, idle, look around, talk, point, wave, sit down, sit, stand up, seated point, pick up, quarter turn, a window climb from two captures joined (mocapJoin: feet and hands on a sill, ref/mocap.js surfaces)). The rig under it gained body
 proportions (cast spec `scale`, `headScale`, `legScale`, `kg`), a hand that grips keeps its target or reports the gap
 (rig K4), and a carried prop that is a solid with mass (rig K5). A reel without `clip` keys or new spec fields renders as
 before, except where an old one had a hand forced off a target (now kept when reachable) or a held prop inside the body.
 
 ## Sub-features
 
-- `clip` keys: `to` (heading, fitted cycles, first and closing steps), `times`, `stop`, `pos`, `yaw`, `swap`, `expr`.
+- `clip` keys: `to` (heading, fitted cycles, first and closing steps), `times` (a captured loop in place blends in once,
+  repeats its capture, blends out once: a phone stays at the ear), `stop`, `pos`, `yaw`, `swap`, `expr`. Every clip starts
+  at its own origin (`index.js` zeroes its first key and its marks), so clips chained in one track never jump the actor.
+- Props are declared: a clip whose keys hold `x_hp<L|R|B>_<prop>` names it in `needs.props` on `needs.hands`
+  (`base.js holdKeys`); `motion-lib/props.js` adds `hugbag` (both arms), `crate` (pushed, stands on the floor:
+  `userData.floor`), `hotdog`, `pistol`. A prop's `userData.grip` is the point the fist holds: a film's own prop (`swap`)
+  sets its grip and mode, no offset.
 - Body types (`motion-lib/bodies.js` `bodySpec`): adult, heavy (girth 1.9), thin (0.6), child (scale 0.62, head 1.3, legs
   0.8), elder (stooped posture); each with its own walk, run and breath.
 - Gaits (`base.js` `gaitLoop`, every walk and run): sampled a key a frame from curves. The hips are solved from the
@@ -19,7 +25,9 @@ before, except where an old one had a hand forced off a target (now kept when re
   keep solved knees and elbows <= 27 deg a frame (test).
 - `toPose(m, scale)`: a scaled figure's planted feet land where they were keyed in metres (`engine/play.js` passes the
   root scale; a `scale:k` costume benefits too).
-- Rig K4: `solveArm({ keep })` tries every elbow turn before moving a gripping hand; `rigWorld()` `L/R.targetGapCm`, `grip`.
+- Rig K4: `solveArm({ keep })` tries every elbow turn before moving a gripping hand, and a gripping hand that no turn clears
+  stays on its grip (the overlap is reported as `penCm`, the hand never steps off); the upper arm's first half is not
+  tested against the trunk or the head (the shoulder is fixed to them); `rigWorld()` `L/R.targetGapCm`, `grip`.
 - Rig K5: hand props collide with legs, trunk and head (the holding arm moves, `propPenCm0/propPenCm`), their mass
   (`x_kg<side>` or the prop's `userData.mass`) is in the centre of mass (`carryKg`); `x_yaw<side>` turns an upright prop;
   `x_pitch<side>` tips it; `x_hpH_<kind>` wears a prop on the head; a prop with `userData.soft` (the cap) has no contact push.
@@ -29,6 +37,9 @@ before, except where an old one had a hand forced off a target (now kept when re
   to its grip socket).
 - `shot.mjs --report` lines (h) hand off its target while gripping (FAIL > 2 cm) and (i) held prop inside the body
   (FAIL > 1 cm after the solve).
+- Set pieces a clip names (`needs.marks`: window, trunk, counter) are solid through `base.js markColliders`, one list for
+  the render (`proof/set.js`) and the headless check, so the check sees what the render does.
+- `docs/MOTION-LIB.md` is written by `motionlib.mjs --catalogue` from the clips (a test fails when it is stale).
 
 ## How to get to it (user POV)
 
@@ -37,10 +48,13 @@ and `anim: { kid: [{ f: 0, clip: 'Move_Run_Fwd_Loop', body: 'child', to: [4, 0] 
 
 ## Driving it
 
-- Offline checks of every clip: `node styles/stick-man/tools/motionlib.mjs` (32 PASS lines, exit 0); each line ends with the
-  clip run through cast.js headless (fake 2D canvases): grip cm, prop cm, the solved joints' largest change a frame.
+- Offline checks of every clip: `node styles/stick-man/tools/motionlib.mjs` (one PASS line a clip, exit 0); each line ends
+  with the clip run through cast.js headless (fake 2D canvases) with its set pieces, physics on and off: grip cm, prop cm,
+  held frames, the solved joints' largest change a frame. It fails a clip that holds an undeclared prop, declares one it
+  never holds, acts on a thing (`OBJECT_ACT`) without one, moves its root faster than 4 cm a frame outside the capture, or
+  starts off its origin.
 - One clip in the browser: `node styles/stick-man/tools/shot.mjs --film styles/stick-man/motion-lib/proof --w 540 --h 960
-  --query "clip=Act_LiftHeavy_Once&phys=1" --frames 0-100 --report /tmp/lift.txt --fast 1`; read (h) and (i): PASS.
+  --query "clip=Act_PutDown_Once&phys=1" --frames 0-350 --report /tmp/putdown.txt --fast 1`; read (h) and (i): PASS.
 - A contact sheet: `node styles/stick-man/tools/motionlib.mjs --sheet Act --out /tmp/sheets`.
 - Everything (mp4s on and off, reports, sheets; minutes, one render process): `--proof <dir>`.
 - Regression: `node --test test/unit/stick-motionlib.test.mjs test/unit/stick-body.test.mjs test/unit/stick-motion.test.mjs`.

@@ -105,8 +105,23 @@ export const ALL = [
   Move_WalkFlashlight_Loop_v01,
   Act_DropInTrunk_Once_v01,
 ];
+// A clip starts at its own origin: a capture's first frame stands a few cm (an in-place loop) to 1 m off it, and two
+// clips chained (each placed where the last one left the actor) jumped the root by that offset. Every clip is moved so
+// its first key's root is at x 0 (an in-place one) and y 0 (the travelling ones too: their x starts the first step), its
+// set marks with it.
+function zeroed(C) {
+  const k0 = C.advance ? C.intro[0] : C.keys[0], o = [C.advance ? 0 : k0.pos?.[0] || 0, k0.pos?.[1] || 0];
+  if (Math.hypot(...o) < 1e-9) return C;
+  const mv = p => (p ? [p[0] - o[0], p[1] - o[1], ...p.slice(2)] : p);
+  for (const k of [...C.keys, ...(C.intro || []), ...(C.outro || [])]) {
+    if (k.pos) k.pos = mv(k.pos);
+    for (const leg of ['legL', 'legR']) if (k[leg]?.footW) k[leg] = { ...k[leg], footW: mv(k[leg].footW) };
+  }
+  if (C.needs?.marks) C.needs = { ...C.needs, marks: C.needs.marks.map(m => ({ ...m, ...(m.at ? { at: mv(m.at) } : {}), ...(m.to ? { to: mv(m.to) } : {}) })) };
+  return C;
+}
 export const CLIPS = {};
-for (const c of ALL) (CLIPS[c.clip] ||= {})[c.body || '*'] = c;
+for (const c of ALL) (CLIPS[c.clip] ||= {})[zeroed(c).body || '*'] = c;
 export const CLIP_NAMES = Object.keys(CLIPS);
 export function getClip(name, body = 'adult') {
   const e = CLIPS[name] || CLIPS[name.replace(/^(Adult|Heavy|Thin|Child|Elder)_/, '').replace(/_v\d+$/, '')];
@@ -140,7 +155,15 @@ export function placeClip(k, cur = { pos: [0, 0], yaw: 0 }) {
     for (const [from, to] of Object.entries(k.swap || {})) for (const n2 of Object.keys(o)) { const m = /^x_hp([LRBH])_(\w+)$/.exec(n2); if (m && m[2] === from) { o[`x_hp${m[1]}_${to}`] = o[n2]; delete o[n2]; } }
     out.push(o);
   };
-  if (!C.advance) for (const ck of C.keys) put(ck, 0, 0);
+  // a loop in place plays `times` cycles. A captured one (C.captured: [a, b], the capture between the blends from and back
+  // to its standard pose) blends in once, plays the capture `times` over (its last frame is its first: the seam) and blends
+  // out once: a phone call stays at the ear, a sleeper stays curled. A made one repeats whole (its last key is its first).
+  const cyc = C.loop && !C.advance && Array.isArray(C.captured) && typeof C.captured[0] === 'number' ? C.captured : null;
+  if (cyc && n > 1) { const [a, b] = cyc, L = b - a;
+    for (const ck of C.keys) if (ck.f <= b) put(ck, 0, 0);
+    for (let i = 1; i < n; i++) for (const ck of C.keys) if (ck.f > a && ck.f <= b) put(ck, 0, i * L);
+    for (const ck of C.keys) if (ck.f > b) put(ck, 0, (n - 1) * L); }
+  else if (!C.advance) for (let i = 0; i < (C.loop ? n : 1); i++) for (const ck of C.keys) { if (i > 0 && ck.f === 0) continue; put(ck, 0, i * C.frames); }
   else {
     const shift = ends ? C.introTravel : 0, f0 = ends ? C.introFrames : 0;
     if (ends) for (const ck of C.intro) put(ck, shift, 0);
