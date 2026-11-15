@@ -181,6 +181,8 @@ export function mocapCycle(src, { legM, once = false, roll = true }) {
 //                    own drop is the clock, so they never rise on the way down)
 //   hold [a, b]      the hands keep the whole shift till a and let go of it by b (they stay on the ledge while the body
 //                    lowers): each arm solved to reach them, its bones' lengths kept, the elbow bent the captured way
+//   follow           (instead of shift) the part carries on where the one before leaves the body: its hips placed
+//                    where the last ones were heading, at their speed, across the bridge (a sprint into a leap)
 //   bridge n         n frames from one part's last frame to the next's first: every bone turns from one to the other
 //                    (its length kept), the hips move straight, the bones' frames (_f, _u) turn with them
 // surfaces [{ x: [x0, x1], y: [y0, y1], top }]: what the body stands, kneels or lies on above the floor (the sole's
@@ -200,7 +202,10 @@ export function mocapJoin(parts, { surfaces = [], marks = [], source } = {}) {
   for (let p = 0; p < parts.length; p++) {
     const P = parts[p];
     if (P.bridge) continue;
-    const [sx, sy, sz] = P.shift || [0, 0, 0], F = P.src.frames.map(f => Object.fromEntries(Object.entries(f).map(([k, v]) => [k, toClip(v)])));
+    const F = P.src.frames.map(f => Object.fromEntries(Object.entries(f).map(([k, v]) => [k, toClip(v)])));
+    let [sx, sy, sz] = P.shift || [0, 0, 0];
+    if (P.follow && out.length > 1) { const n = (parts[p - 1]?.bridge || 0) + 1, a = out[out.length - 1].Hips, b = out[out.length - 2].Hips;
+      sx = a[0] + (a[0] - b[0]) * n - F[0].Hips[0]; sy = a[1] + (a[1] - b[1]) * n - F[0].Hips[1]; sz = 0; }
     const hz = t => F[t].Hips[2], [sa, sb] = P.settle || [Infinity, Infinity], z0 = sa < F.length ? hz(sa) : 0, z1 = sb < F.length ? hz(sb) : 0;
     const part = F.map((f, t) => {
       const fb = t < sa ? 0 : t >= sb ? 1 : Math.max(0, Math.min(1, (z0 - hz(t)) / (z0 - z1))), o = [sx, sy, sz * (1 - fb)], g = {};
