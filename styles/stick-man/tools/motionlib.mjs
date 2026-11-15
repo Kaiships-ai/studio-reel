@@ -15,6 +15,7 @@ import { ALL, placeClip, fitClip } from '../motion-lib/index.js';
 import { BASES, turned, markColliders } from '../motion-lib/base.js';
 import { BODIES } from '../motion-lib/bodies.js';
 import { compileTrack, playActor, flatten } from '../engine/motion.js';
+import { sizedBag } from '../motion-lib/props.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.resolve(HERE, '../../..'), LIB = path.join(ROOT, 'styles/stick-man/motion-lib');
 export const JOINT_MAX = 25, SLIDE_MM = 1, ARM_W = 1.025;
@@ -57,7 +58,8 @@ function diff(a, b) {
   return worst;
 }
 // a fitted clip (index.js fitClip) is played through its clip key's fit
-const fitOf = C => (C.fitted && !ALL.includes(C) ? { fit: C.fitted } : {});
+// (a fit that names a bag's size plays a kit bag of that size: motion-lib/props.js sizedBag, swapped in as a film's own is)
+const fitOf = C => (C.fitted && !ALL.includes(C) ? { fit: C.fitted, ...(C.fitted.bag ? { swap: { bag: sizedBag(C.fitted.bag) } } : {}) } : {});
 // one clip: the checks, plus the offline physics numbers
 export function checkClip(C, file) {
   const fails = [], info = {}, base = path.basename(file, '.js'), dir = file.split(path.sep);
@@ -233,7 +235,7 @@ export async function rigClip(C, body = C.body || 'adult', { phys = true, obstac
       prevBal = bal; prevPel = pel;
       const kg = S.carryKg || 0; kgs.push([f, kg - (prevKg ?? kg)]); prevKg = kg; o.kgMax = Math.max(o.kgMax, kg);
       // every prop the clip declares is on screen through the clip (held or resting), and moves no more than its hand lets it
-      if (f <= lastF) for (const kind of C.needs?.props || []) if (!Object.entries(S.props).some(([id, p]) => id.slice(1) === kind && p.visible)) o.gone.push(f);
+      if (f <= lastF) for (const kind of C.needs?.props || []) if (!Object.entries(S.props).some(([id, p]) => id.slice(1) === (key.swap?.[kind] ?? kind) && p.visible)) o.gone.push(f);
       // (a prop that comes back after frames out of the scene is measured from where it was last seen: a teleport fails)
       for (const [id, p] of Object.entries(S.props)) {
         if (!p.visible || id[0] === 'H') continue;
@@ -325,8 +327,6 @@ export const JOINT_KNOWN = {
   Elder_Move_Run_Fwd_Loop: [14.5, 'made run: the swing foot eased off its print holds the leg straight after toe-off, the authored knee is bent'],
   Heavy_Move_Run_Fwd_Loop: [20.2, 'made run: as the elder run'],
   Thin_Move_Run_Fwd_Loop: [8.2, 'made run: as the elder run'],
-  Act_DropInTrunk_Once: [1.4, 'made keys: a knee near straight as the dip rises'],
-  'Act_DropInTrunk_Once fit {"lip":0.85}': [1.4, 'as the unfitted one'],
 };
 function jointGate(r, name, g, g0) {
   const f = [...jointFails(g, g0), ...jointFails(g0, g0, 'physics off')], ex = Math.max(jointExcess(g, g0).excess, jointExcess(g0, g0).excess), k = JOINT_KNOWN[name];

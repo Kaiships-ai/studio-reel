@@ -2,7 +2,7 @@
 //   node styles/stick-man/tools/shot.mjs --film styles/stick-man/motion-lib/proof --w 540 --h 960 --query "clip=Act_PickUp_Once&body=adult&phys=0" --mp4 ...
 //   query: clip (a clip name), body (default the clip's own, else adult), phys=0 (PHYS.on false), times (loop cycles, default 2)
 // tools/motionlib.mjs --proof renders every clip through this page.
-import '/styles/stick-man/motion-lib/props.js';
+import { sizedBag } from '/styles/stick-man/motion-lib/props.js';
 import { PHYS } from '/styles/stick-man/engine/body.js';
 import { SPECS } from '/styles/stick-man/engine/play.js';
 import { getClip, placeClip } from '/styles/stick-man/motion-lib/index.js';
@@ -10,7 +10,8 @@ import { stand, K } from '/styles/stick-man/motion-lib/base.js';
 import { BODIES, bodySpec } from '/styles/stick-man/motion-lib/bodies.js';
 
 const QS = new URLSearchParams(globalThis.location?.search || '');
-// fit: the clip fitted to a set, as JSON (fit={"lip":0.85})
+// fit: the clip fitted to a set, as JSON (fit={"lip":0.85}); a fit that names a bag's size ({"bag":{"w":0.36,"l":0.62,"h":0.30,"grip":0.415}})
+// plays a kit bag of that size (props.js sizedBag)
 const FIT = QS.get('fit') ? JSON.parse(QS.get('fit')) : null;
 const CLIP = QS.get('clip') || 'Idle_Stand_Loop', C0 = getClip(CLIP, QS.get('body') || 'adult'), BODY = QS.get('body') || C0.body || 'adult';
 if (QS.get('phys') === '0') PHYS.on = false;
@@ -20,9 +21,11 @@ export const CUTS = [0];
 
 // the clip key: a travelling loop walks a set distance (start, two cycles, stop); other loops repeat; a one-off plays once
 const times = Number(QS.get('times') || 2);
-const key = { ...(C.advance ? { f: F0, clip: CLIP, body: BODY, to: [C.introTravel + C.outroTravel + times * C.advance, 0] } : { f: F0, clip: CLIP, body: BODY, ...(C.loop ? { times } : {}) }), ...(FIT ? { fit: FIT } : {}) };
+const key = { ...(C.advance ? { f: F0, clip: CLIP, body: BODY, to: [C.introTravel + C.outroTravel + times * C.advance, 0] } : { f: F0, clip: CLIP, body: BODY, ...(C.loop ? { times } : {}) }), ...(FIT ? { fit: FIT } : {}), ...(FIT?.bag ? { swap: { bag: sizedBag(FIT.bag) } } : {}) };
 // (the actor stands in the clip's own first pose before it starts: a clip that opens holding something holds it from frame 0)
-const first = C.base !== 'STAND' ? (C.advance ? C.intro[0] : C.keys[0]) : stand(BODY);
+// (a swapped prop is held by that name from frame 0 too: the kit's own would be a second prop in the hand)
+const first0 = C.base !== 'STAND' ? (C.advance ? C.intro[0] : C.keys[0]) : stand(BODY);
+const first = Object.fromEntries(Object.entries(first0).map(([n, v]) => { const m = /^x_hp([LRBH])_(\w+)$/.exec(n); return [m && key.swap?.[m[2]] ? `x_hp${m[1]}_${key.swap[m[2]]}` : n, v]; }));
 const anim = [K(0, first, { ease: 'snap' }), key];
 const placed = placeClip(key, { pos: [0, 0], yaw: 90 }), last = placed.keys[placed.keys.length - 1].f;
 const xs = placed.keys.map(k => k.pos?.[0] ?? 0), x0 = Math.min(0, ...xs), x1 = Math.max(0, ...xs), k = Math.max(0.72, sc);
