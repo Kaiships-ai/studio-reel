@@ -144,12 +144,7 @@ export function mocapCycle(src, { legM, once = false, roll = true }) {
       const y = Math.atan2(d[1], d[0]) * DEG - heading - (sd === 'Left' ? -FOOT_OUT : FOOT_OUT), w = Math.min(1, Math.max(0, (h - 0.5) / 0.4));
       return ((y + 540) % 360 - 180) * w * w * (3 - 2 * w); };
     const L = leg('Left'), R = leg('Right'); L.yaw = toe('Left'); R.yaw = toe('Right');
-    // the raw capture's own joints (flexes in deg, unit bone directions), before any retarget, fit or ik: what the
-    // solved joints are measured against (tools/motionlib.mjs jointExcess)
-    const bone = (a, b) => nrm(V(f[a], f[b])).map(x => +x.toFixed(5)), flex = (a, b, c) => +(Math.acos(Math.max(-1, Math.min(1, dot(bone(a, b), bone(b, c))))) * DEG).toFixed(3);
-    const ref = {}; for (const [sd, s] of [['Left', 'L'], ['Right', 'R']]) Object.assign(ref, { ['kneeFlex' + s]: flex(sd + 'UpLeg', sd + 'Leg', sd + 'Foot'), ['elbowFlex' + s]: flex(sd + 'Arm', sd + 'ForeArm', sd + 'Hand'),
-      ['thigh' + s]: bone(sd + 'UpLeg', sd + 'Leg'), ['shin' + s]: bone(sd + 'Leg', sd + 'Foot'), ['upper' + s]: bone(sd + 'Arm', sd + 'ForeArm'), ['fore' + s]: bone(sd + 'ForeArm', sd + 'Hand') });
-    return { ref, kneeL: knee('Left'), kneeR: knee('Right'), down: { L: !!prints.Left[t], R: !!prints.Right[t] }, hipZ: hm[2] - rest * k, hipFloor: floorAt(hm), handOn: ['Left', 'Right'].some(sd => { const h = f[sd + 'Hand'], t = floorAt(h); return t > 0 && h[2] - t < 0.1 * k; }), pos: [hm[0], 0, 0], hipY: hm[1],
+    return { kneeL: knee('Left'), kneeR: knee('Right'), down: { L: !!prints.Left[t], R: !!prints.Right[t] }, hipZ: hm[2] - rest * k, hipFloor: floorAt(hm), handOn: ['Left', 'Right'].some(sd => { const h = f[sd + 'Hand'], t = floorAt(h); return t > 0 && h[2] - t < 0.1 * k; }), pos: [hm[0], 0, 0], hipY: hm[1],
       heading, pelvis: { yaw: pelvis.yaw, pitch: pelvis.pitch, roll: pelvis.roll }, spine: { twist: spine.yaw, bend: spine.pitch, side: spine.roll }, neck: { turn: neck.yaw, nod: neck.pitch, tilt: neck.roll },
       armL: arm('Left', -1), armR: arm('Right', 1), legL: L, legR: R };
   });

@@ -37,7 +37,7 @@ export function clipFiles() {
   return out.sort();
 }
 // every channel of every key, carried forward the way compileTrack does (a key names only what changes)
-function full(keys) { let cur = {}; return keys.map(k => { cur = { ...cur, ...flatten(Object.fromEntries(Object.entries(k).filter(([n]) => !['f', 'ease', 'cycle', 'hold', 'antic', 't', '_ref'].includes(n)))) }; return { ...cur }; }); }
+function full(keys) { let cur = {}; return keys.map(k => { cur = { ...cur, ...flatten(Object.fromEntries(Object.entries(k).filter(([n]) => !['f', 'ease', 'cycle', 'hold', 'antic', 't'].includes(n)))) }; return { ...cur }; }); }
 // a pose made comparable across places: feet relative to the root, the root and the heading dropped, ik targets only
 // when they hold the hand (ikw > 0); x_ channels only those the standard pose names
 function body(m, ref) {

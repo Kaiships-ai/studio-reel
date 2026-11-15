@@ -97,6 +97,19 @@ before, except where an old one had a hand forced off a target (now kept when re
 In a film's `reel.js`: `import '/styles/stick-man/motion-lib/props.js'`, a cast spec from `bodySpec(SPECS.X, 'child')`,
 and `anim: { kid: [{ f: 0, clip: 'Move_Run_Fwd_Loop', body: 'child', to: [4, 0] }] }`.
 
+## Known gaps (PR G, waiting on Kai)
+
+- The gate's figure wears a cap only for clips with `needs.cap`. Wearing the guard's cap, these clips hold a prop in it
+  today: Act_Consume_Once 4.07 cm, Act_Phone_Once 7.74, Gest_PhoneCall_Loop 2.97, Act_PickUp_Once 1.14, Act_PutDown_Once
+  1.29, Move_PushHeavy_Loop 1.39, the DropInTrunk and PushBagOutWindow bag fits (physics off).
+- Only worn head gear is tested every 2 cm of a prop's box; the body and legs still take the box's 27 corner, edge and face
+  points. Tested every 2 cm, the bag of Gest_LookBackCarry_Once (1.32 cm), Move_CarryBag_Walk_Loop (1.77) and the two bag
+  fits (2.2) sit in the body (physics off).
+- A film that swaps in its own, bigger prop is not gated (ep01 SH172's 1.53x `hm_pistol`: 1.46 cm in the cap, the hand
+  5.27 cm off): PR H.
+- tools/mocap_contact.mjs now eases the hand's offset from the capture, not its position; only `ref/reach/pistol_head.js`
+  is baked that way. The other tables change on their next bake.
+
 ## Driving it
 
 - Offline checks of every clip: `node styles/stick-man/tools/motionlib.mjs` (one PASS line a clip, exit 0); each line ends
