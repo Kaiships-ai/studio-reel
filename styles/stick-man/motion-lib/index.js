@@ -204,10 +204,11 @@ export function placeClip(k, cur = { pos: [0, 0], yaw: 0 }) {
     return { id: key[4] + kind, key, f0: out[0].f, f1: last.f, ...(t ? { toss: [(t[0] * c - t[1] * s) * sc, (t[0] * s + t[1] * c) * sc, (t[2] || 0) * sc] } : {}) };
   });
   out.props = props;
-  // and on the keys themselves (the first key of the clip key carries its spans, frames counted from it): a film that
-  // copies, maps or spreads its anim array keeps them (play.js .map()ped the array and lost out.props, so a prop let go
-  // vanished; ep01 round 3 carried them in an Array subclass). engine/motion.js compileTrack reads them from there
-  if (props.length) out[0].clipProps = props.map(({ f0, f1, ...p }) => ({ ...p, df0: f0 - out[0].f, df1: f1 - out[0].f }));
+  // and on the keys themselves (every key of the clip key carries its spans, frames counted from that key): a film that
+  // copies, maps, spreads, re-sorts, trims or drops keys keeps them while one key is left (play.js .map()ped the array
+  // and lost out.props, so a prop let go vanished; ep01 round 3 carried them in an Array subclass). engine/motion.js
+  // compileTrack reads them from there, one span each
+  if (props.length) for (const o of out) o.clipProps = props.map(({ f0, f1, ...p }) => ({ ...p, df0: f0 - o.f, df1: f1 - o.f }));
   return { keys: out, pos: last.pos ? last.pos.slice(0, 2) : O, yaw: last.yaw ?? H, support: Hs, clip: C, n, fit, props };
 }
 // a track's keys with every clip key expanded (keys sorted by f; plain keys pass through)

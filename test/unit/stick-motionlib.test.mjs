@@ -302,26 +302,48 @@ test('joint gate: a solver jump fails it, a capture turning as fast as it does p
   const on = await rigClip(C, undefined, { obstacles: [counter] }), off = await rigClip(C, undefined, { phys: false, obstacles: [counter] });
   assert.ok(off.prop > 15 && off.propIn === 'set', `the phone is in the counter, named so: ${off.prop} cm in ${off.propIn}`);
   assert.ok(on.grip > 15, `and with physics on the hand is off its grip: ${on.grip} cm`);
-  assert.match(jointFails(on, off).join(), /solved joint: .* over what the motion turns/);
-  // the clip on its own, and a counter half a metre off, pass
-  for (const obstacles of [[], [{ ...counter, lo: [-0.5, 0.5, 0], hi: [0.5, 1.05, 1.12] }]]) {
-    const a = await rigClip(C, undefined, { obstacles }), b = await rigClip(C, undefined, { phys: false, obstacles });
-    assert.deepEqual([...jointFails(a, b), ...jointFails(b, b, 'physics off')], [], JSON.stringify(obstacles));
-  }
-  // a sprint's captured knees turn past JOINT_MAX: the motion's own speed, allowed
-  const S = getClip('Move_Sprint_Fwd_Loop'), s1 = await rigClip(S), s0 = await rigClip(S, undefined, { phys: false });
-  assert.ok(s1.joint > JOINT_MAX && jointExcess(s1, s0).over.length === 0, `sprint ${s1.joint} deg/f at ${s1.jointAt}`);
+  assert.match(jointFails(on, off).join(), /solved joint: .* over the motion as authored/);
+  // a counter half a metre off adds nothing to the clip on its own (JOINT_KNOWN: its 0.8 deg/f blend into the reach)
+  const ex = async obstacles => { const a = await rigClip(C, undefined, { obstacles }), b = await rigClip(C, undefined, { phys: false, obstacles });
+    return [jointExcess(a, b).excess, jointExcess(b, b).excess, a.grip, b.prop]; };
+  assert.deepEqual(await ex([{ ...counter, lo: [-0.5, 0.5, 0], hi: [0.5, 1.05, 1.12] }]), await ex([]));
+  // a capture that turns a joint past JOINT_MAX itself (talking hands): the motion as authored, allowed
+  const S = getClip('Gest_Talk_Loop'), s1 = await rigClip(S), s0 = await rigClip(S, undefined, { phys: false });
+  assert.ok(s1.joint > JOINT_MAX && jointExcess(s1, s0).over.length === 0, `talk ${s1.joint} deg/f at ${s1.jointAt}`);
+});
+
+test('joint gate: the reference is the motion as authored (the raw capture), so a retarget jump fails it', async () => {
+  // Move_CarryBag_Walk_Loop frame 231: the trailing knee folded 33.4 deg/f as the foot lifted (the capture: 9.8); its
+  // heel now peels as the captured knee needs (base.js peelFor)
+  const C = getClip('Move_CarryBag_Walk_Loop'), g = await rigClip(C), g0 = await rigClip(C, undefined, { phys: false });
+  assert.ok(g.raw.filter(Boolean).length > 200, 'the captured frames carry the capture\'s own joints');
+  assert.deepEqual([...jointFails(g, g0), ...jointFails(g0, g0, 'physics off')], []);
+  // the same clip with one captured foot pulled 15 cm toward the hips for one frame (a retarget fault): the gate sees it
+  const keep = C.keys, i = keep.findIndex(k => k.f > 20 && k.legL.footW[2] > 0.05);
+  C.keys = keep.map((k, j) => (j === i ? { ...k, legL: { ...k.legL, footW: [k.legL.footW[0], k.legL.footW[1], k.legL.footW[2] + 0.15] } } : k));
+  try { const b = await rigClip(C, undefined, { phys: false }); assert.match(jointFails(b, b).join(), /over the motion as authored/); } finally { C.keys = keep; }
+  // PistolShoot's baked reach keeps the forearm within the capture's speed (main: 26.9 deg/f at frame 70, the capture 19.1)
+  const P = getClip('Act_PistolShoot_Once'), p1 = await rigClip(P), p0 = await rigClip(P, undefined, { phys: false });
+  assert.deepEqual([...jointFails(p1, p0), ...jointFails(p0, p0)], []);
+  assert.ok(p1.grip <= GRIP_CM && p1.prop <= PROP_CM && p0.prop <= PROP_CM, 'the gun stays out of the head, the grip on it');
+});
+
+test('joint gate: JOINT_KNOWN only shrinks', async () => {
+  const { JOINT_KNOWN } = await import('../../styles/stick-man/tools/motionlib.mjs');
+  assert.ok(Object.keys(JOINT_KNOWN).length <= 14, 'no clip is added to the known list');
+  for (const [n, [x, why]] of Object.entries(JOINT_KNOWN)) assert.ok(x > 0 && why.length > 10, n);
 });
 
 test('props survive a copied anim: a film that maps, spreads or copies the placed keys keeps the prop it lets go', async () => {
   const r = placeClip({ f: 0, clip: 'Act_DropInTrunk_Once' }, { pos: [0, 0], yaw: 90 });
-  for (const copy of [r.keys.map(k => ({ ...k })), [...r.keys], r.keys.map(k => ({ ...k, f: k.f + 10 }))]) {
+  // copied, spread, shifted, its first key dropped, re-sorted backwards
+  for (const copy of [r.keys.map(k => ({ ...k })), [...r.keys], r.keys.map(k => ({ ...k, f: k.f + 10 })), r.keys.slice(1), [...r.keys].reverse()]) {
     const track = compileTrack(copy, {}, { pos: [0, 0], yaw: 90 }, 'kaiships');
-    assert.deepEqual(track.props.map(p => [p.id, p.f1 - p.f0]), [['Rbag', 80]]);
+    assert.deepEqual(track.props.map(p => [p.id, p.f1 - p.f0]), [['Rbag', 80]], 'one span, the clip key\'s');
     const { S, toPose } = await rigStick('adult'), { propPlan } = await import('../../styles/stick-man/engine/propobj.js');
     S.obstacles = markColliders(getClip('Act_DropInTrunk_Once').needs.marks);
     const fr = playActor(track, 0, 100), plan = propPlan(track, f => toPose(fr[Math.min(fr.length - 1, f)]), S);
-    assert.ok(plan.at(copy[0].f + 70)?.Rbag, 'the bag let go is still in the scene');
+    assert.ok(plan.at(Math.min(...copy.map(k => k.f)) + 70)?.Rbag, 'the bag let go is still in the scene');
   }
 });
 

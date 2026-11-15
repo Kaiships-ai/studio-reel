@@ -6,14 +6,15 @@
 // onto that spot, and after it from the last spot back to the captured hand, so the hand lands, rests and lets go at a
 // hand's speed:
 //   node styles/stick-man/tools/mocap_contact.mjs <clip> <L|R> <ramp> <out.js> [set|body] [join]
-// join: two touches at most that many frames apart are one (default two ramps): the hand stays on ik between them
+// join: two touches at most that many frames apart are one (default two ramps, '-'): the hand stays on ik between them
+// margin (cm): the resting hand set that much further out from where the solve stopped it (a gun kept clear of the head)
 // body: the same for a hand that runs into its own body (this figure's trunk is deeper than the captured one: a hand
 // lowering a bag past the bent chest, Act_PutDown): the captured hand is the one with physics off, the resting one the
 // solve's with it on, so the clip holds what the physics would do and the grip stays on its target.
 // The clip applies the table (base.js reachKeys, its own elbow: no pole). The arm does not move the set, so one pass is exact.
 import { writeFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
-const [clip, side, ramp, out, mode = 'set', join] = process.argv.slice(2);
+const [clip, side, ramp, out, mode = 'set', join0, margin = '0'] = process.argv.slice(2), join = join0 === '-' ? undefined : join0;
 const { rigStick } = await import('./motionlib.mjs'), I = await import('../motion-lib/index.js'), M = await import('../engine/motion.js'), B = await import('../motion-lib/base.js');
 const THREE = await import('three');
 const W = 0.6, R = +ramp;
@@ -30,7 +31,8 @@ const at = keys.map(k => { const m = fr[k.f];
   PHYS.on = true; S.obstacles = boxes; S.pose2(toPose(m, S.root.scale.x)); const w = S.rigWorld(), hit = (w[side].targetGapCm || 0) > 0.5 || (w[side].penCm0 || 0) > 0.5;
   // (body: the trunk is what the arm meets, and the solve can only step the hand out of it; the arm that clears it keeps
   // the captured hand and takes its elbow out to the side: the target is the captured hand, the pole outward)
-  return { f: k.f, free, pole: mode === 'body' && hit ? new THREE.Vector3(side === 'L' ? -1 : 1, -0.4, 0.2) : pole, solved: mode === 'body' ? free : toL(w[side].hand), hit }; });
+  const sv = toL(w[side].hand), out = sv.clone().sub(free), sm = out.length() > 1e-6 ? sv.clone().addScaledVector(out.normalize(), +margin / 100 / W) : sv;
+  return { f: k.f, free, pole: mode === 'body' && hit ? new THREE.Vector3(side === 'L' ? -1 : 1, -0.4, 0.2) : pole, solved: mode === 'body' ? free : sm, hit }; });
 const ease = w => (w = Math.max(0, Math.min(1, w)), w * w * (3 - 2 * w)), rows = [];
 // each touch (a run of frames the solve moved the hand): its spots, eased onto from the captured hand and off again
 // (never the clip's first or last key: they are its standard poses)
@@ -56,5 +58,5 @@ for (const [a, b] of runs) {
 const byF = new Map(at.map(a => [a.f, a]));
 for (const [f, t] of T) { const pl = byF.get(f).pole; kept.set(f, [f, +t.x.toFixed(4), +t.y.toFixed(4), +t.z.toFixed(4), 1, +pl.x.toFixed(3), +pl.y.toFixed(3), +pl.z.toFixed(3)]); }
 rows.push(...[...kept.values()].sort((p, q) => p[0] - q[0]));
-writeFileSync(out, `// ${clip}: the ${side} hand resting on the ${mode === 'body' ? 'body' : 'set'} where it touches (tools/mocap_contact.mjs ${clip} ${side} ${ramp}${mode === 'body' ? ' body' : join != null ? ' set' : ''}${join != null ? ' ' + join : ''}): [f, ik x, y, z (figure W), ikw, elbow pole x, y, z]\nexport default { hand: '${side}', pole: null, rows: ${JSON.stringify(rows)} };\n`);
+writeFileSync(out, `// ${clip}: the ${side} hand resting on the ${mode === 'body' ? 'body' : 'set'} where it touches (tools/mocap_contact.mjs ${clip} ${side} ${ramp}${mode === 'body' ? ' body' : join != null ? ' set' : ''}${join != null ? ' ' + join : ''}${+margin ? ` ${join ?? '-'} ${margin}` : ''}): [f, ik x, y, z (figure W), ikw, elbow pole x, y, z]\nexport default { hand: '${side}', pole: null, rows: ${JSON.stringify(rows)} };\n`);
 console.log(clip, side, 'touches', JSON.stringify(runs.map(([a, b]) => [at[a].f, at[b].f])), rows.length, 'frames');

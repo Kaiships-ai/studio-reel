@@ -21,8 +21,8 @@ before, except where an old one had a hand forced off a target (now kept when re
   Idle_Sleep_Loop -> Trans_GetUp_Once on a 0.55 m bed (test). A capture blend whose pelvis turns more than 45 deg (the
   sleeper rolling from LIE onto the side) turns it as a lying body does (`base.js slerpPelvis`: the trunk's line kept
   lying, rolled about it), a key a frame: the sleeper no longer sits up as the loop opens and closes.
-- Prop spans ride on the keys: placeClip puts them on the clip key's first key (`clipProps`, frames from that key), so a
-  film that copies, maps or spreads its anim array keeps a prop it lets go (play.js `.map()`ped them away).
+- Prop spans ride on the keys: placeClip puts them on every key of the clip key (`clipProps`, frames from that key), so a
+  film that copies, maps, spreads, re-sorts or trims its anim keeps a prop it lets go (play.js `.map()`ped them away).
 - The set stops held props as it stops hands (`body.js worldBox boxPush`: the prop's box against each piece, out toward the
   body holding it, never through a thin wall); a held prop the arms cannot take out stays on the piece and the hands stay
   where they got to (their gap is reported). A prop at rest or falling (`propobj.js`) is tested by its extent and settles
@@ -30,7 +30,10 @@ before, except where an old one had a hand forced off a target (now kept when re
 - Ik poles: a keyed pole takes the elbow from where the FK arm has it as far as ikw goes (cast.js); the reach tables
   (`mocap_contact.mjs`, `mocap_reach.mjs`) bake the captured elbow's own side per row (`body.js elbowSide`). Knee poles do
   not flip for a foot out to the side at hip height (cast.js legPole). The captured arm swing's seam sits behind the head
-  (ref/mocap.js), not straight up.
+  (ref/mocap.js), not straight up, and the captured arm's raise and swing are held to the rig's ranges with the elbow's
+  roll measured round the held upper arm. A captured trailing foot peels its heel over the 6 frames before it lifts, as
+  far as its captured knee needs (base.js peelFor; CarryBag walk knee 33.4 -> 20.4 deg/f). A grounded capture's raised
+  foot shows the captured knee (reachFoot).
 - Props are declared: a clip whose keys hold `x_hp<L|R|B>_<prop>` names it in `needs.props` on `needs.hands`
   (`base.js holdKeys`); `motion-lib/props.js` adds `hugbag` (both arms), `crate` (pushed, stands on the floor:
   `userData.floor`), `hotdog`, `pistol`. A prop's `userData.grip` is the point the fist holds: a film's own prop (`swap`)
@@ -89,11 +92,14 @@ and `anim: { kid: [{ f: 0, clip: 'Move_Run_Fwd_Loop', body: 'child', to: [4, 0] 
   with the clip run through cast.js headless (fake 2D canvases) with its set pieces, physics on and off: grip cm, prop cm,
   held frames, the solved joints' largest change a frame. It fails a clip that holds an undeclared prop, declares one it
   never holds, acts on a thing (`OBJECT_ACT`) without one, moves its root faster than 4 cm a frame outside the capture, or
-  starts off its origin. The solved-joint gate (`jointExcess`, `jointFails`, physics on and off against the clip with
-  physics off): a solved elbow or knee (its flex, its two bones) turning more than 25 deg a frame beyond what the motion
-  itself turns (an FK arm: its own keys; an ik arm or a leg: its keyed line plus half its keyed flex, or its FK keys) fails,
-  plus 1 deg of slack (`JOINT_SLACK`); a prop inside a set piece fails (`propInSet`). `rigClip(C, body, { obstacles })`
-  takes a film's own set pieces (ep01's 1.12 m counter beside the phone call). Physics gates on and off (`physicsFails`): a prop moves no more than its hand (times w) plus
+  starts off its origin. The solved-joint gate (`jointExcess`, `jointFails`, physics on and off): a solved elbow or
+  knee (its flex, its two bones) may turn more than 25 deg a frame only where the motion as authored does. In a capture's
+  frames that is the raw capture's own joint (`_ref` on the key, ref/mocap.js, before any retarget, fit or ik); in a made
+  gait the knee curve it is built from; elsewhere 25, or an arm's own FK keys. No slack (0.02 deg for rounding).
+  `JOINT_KNOWN` lists the 14 rows it fails today with their measured excess (runs' and leaps' knees, see the comments):
+  a listed row fails if its excess grows or if it passes clean (delete it), so the list only shrinks. A prop inside a set
+  piece fails (`propInSet`). `rigClip(C, body, { obstacles })` takes a film's own set pieces (ep01's 1.12 m counter beside
+  the phone call). Physics gates on and off (`physicsFails`): a prop moves no more than its hand (times w) plus
   gravity plus 1 cm a frame (`PROP_SLIP_CM`, `propExcess`; a prop seen again after a gap is measured from where it was
   last seen), a declared prop is in the scene every frame of the clip, the balance solve moves the pelvis at most 4 cm a
   frame (`BAL_CM`: only the balance shift, pelvis balance on minus off; the raw pelvis speed is reported, not gated), the

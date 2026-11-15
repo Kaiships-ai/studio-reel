@@ -61,7 +61,7 @@ export function unflatten(m) {
   return o;
 }
 const DISCRETE = new Set(['expr', 'look', 'props', 'ik']);
-const NON_POSE = new Set(['f', 'at', 'pose', 'ease', 'hold', 'antic', 'expr', 'look', 'props', 'clipProps', 'cycle', 'line', 'on', 'offset', 'nth', 'cue', 'snap', 'rest', 'raw']);
+const NON_POSE = new Set(['f', 'at', 'pose', 'ease', 'hold', 'antic', 'expr', 'look', 'props', 'clipProps', '_ref', 'cycle', 'line', 'on', 'offset', 'nth', 'cue', 'snap', 'rest', 'raw']);
 
 // ---------------------------------------------------------------- the time warp between two keys
 // cubic Hermite in time: e(0) = 0, e(1) = 1, start slope a, end slope b (0 = a full slow, 1 = passing through)
@@ -74,8 +74,9 @@ export function compileTrack(keys, poses, base, style) {
   CUR = resolveStyle(style);
   keys = expandClips(keys, base);                                      // { f, clip, body, to, times }: the motion library's keys
   // the props its clips hold (engine/propobj.js): each placed clip's first key carries its spans (motion-lib/index.js
-  // placeClip `clipProps`, frames from that key), so they survive however a film copies its keys
-  const props = keys.flatMap(k => (k.clipProps || []).map(({ df0, df1, ...p }) => ({ ...p, f0: k.f + df0, f1: k.f + df1 })));
+  // placeClip `clipProps` on every key, frames from that key), so they survive however a film copies or trims its keys
+  const props = [...new Map(keys.flatMap(k => (k.clipProps || []).map(({ df0, df1, ...p }) => ({ ...p, f0: k.f + df0, f1: k.f + df1 })))
+    .map(p => [`${p.id} ${p.f0} ${p.f1}`, p])).values()];
   const ks = keys.map(k => {
     const named = typeof k.pose === 'string' ? poses[k.pose] : k.pose;
     if (typeof k.pose === 'string' && !named) throw new Error(`anim: unknown pose "${k.pose}"`);
