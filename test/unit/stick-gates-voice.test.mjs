@@ -87,6 +87,16 @@ test('stagegate end to end: a metadata edit to storyboard.json leaves the judged
   JSON.parse(fs.readFileSync(path.join(d, 'review/.fresh.json'), 'utf8'));
 });
 
+test('stagegate writes nothing outside a film: --help prints usage, a missing folder is refused', () => {
+  const cwd = tmp(), gate = (...a) => run('node', [path.join(TOOLS, 'stagegate.mjs'), ...a], { capture: true, cwd });
+  const help = gate('--help');
+  assert.equal(help.status, 0); assert.match(help.stdout, /usage: stagegate/);
+  const miss = path.join(cwd, 'no-such-film'), p = gate(miss, '3');
+  assert.equal(p.status, 2); assert.match(p.stderr, /not a film folder/);
+  assert.equal(fs.existsSync(miss), false, 'a typo must not create a folder of gate files');
+  assert.equal(fs.existsSync(path.join(ROOT, '--help')), false);
+});
+
 test('GATES.json: the 2a reviews that hear the voice go stale with a new take', async () => {
   const g = JSON.parse(fs.readFileSync(path.join(TOOLS, 'GATES.json'), 'utf8')).gates['2a'].evidence, by = f => g.find(e => e.file === f).newerThan;
   for (const f of ['review/watch-1x.md', 'review/swipe.md']) assert.ok(by(f).includes('vo/vo.wav') && by(f).includes('vo/words.json'), f);
