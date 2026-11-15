@@ -293,43 +293,90 @@ test('support: a clip played on a surface (a clip key pos [x, y, h]) rests on it
   assert.ok(fr.every(m => Math.abs(m['pos.2'] - 0.55) < 1e-6), 'the sleeper stays on the bed');
 });
 
-// ------------------------------------------------------------------ PR D: the solved-joint gate and the faults it found
-import { jointExcess, jointFails, JOINT_MAX } from '../../styles/stick-man/tools/motionlib.mjs';
+// ------------------------------------------------------------------ the solved-joint gate: the film's own measure
+import { jointExcess, jointFails, JOINT_KNOWN } from '../../styles/stick-man/tools/motionlib.mjs';
+import { jointSteps, JOINT_STEP_MAX } from '../../styles/stick-man/tools/jointstep.mjs';
 
-test('joint gate: a solver jump fails it, a capture turning as fast as it does passes, physics on and off', async () => {
+test('joint gate: the library judges joints with the film report\'s measure, one copy of it', () => {
+  // Hot Money ep01: the film report read foot pitch 36.6 deg/f (SH060, SH130) and elbow 35.1 (SH172) on clips the gate
+  // passed: the gate had its own, shorter list of joints and let a joint turn as fast as its capture did
+  for (const f of ['shot.mjs', 'motionlib.mjs']) {
+    const src = fs.readFileSync(new URL(`../../styles/stick-man/tools/${f}`, import.meta.url), 'utf8');
+    assert.match(src, /from '\.\/jointstep\.mjs'/, `${f} uses tools/jointstep.mjs`);
+    assert.doesNotMatch(src, /\[\['shoulder', 'elbow'\], \['elbow', 'hand'\]/, `${f} keeps no joint list of its own`);
+  }
+  const m = { torsoLean: 0, torsoRoll: 0, L: {}, R: {} }, l = { torsoLean: 0, torsoRoll: 30, L: {}, R: {} };
+  for (const P of [m, l]) for (const s of ['L', 'R']) Object.assign(P[s], { kneeFlex: 0, elbowFlex: 0, footPitch: 0, shoulder: [0, 0, 1.4], elbow: [0, 0, 1.1], hand: [0, 0, 0.8], hip: [0, 0, 0.9], knee: [0, 0, 0.5], ankle: [0, 0, 0.1] });
+  l.L.footPitch = 36.6;
+  const st = Object.fromEntries(jointSteps(m, l));
+  assert.equal(st.footPitchL, 36.6); assert.equal(st.torsoRoll, 30); assert.equal(st.kneeFlexR, 0);
+});
+
+test('joint gate: every clip the gate passes turns no joint over 25 deg a frame on the film\'s measure, physics on and off', async () => {
+  const film = g => { let w = 0; for (let f = 1; f < g.limbs.length; f++) for (const [, d] of jointSteps(g.limbs[f - 1], g.limbs[f])) w = Math.max(w, d); return w; };
+  const over = [];
+  for (const C of ALL) {
+    if (JOINT_KNOWN[C.name]) continue;
+    for (const phys of [true, false]) { const g = await rigClip(C, undefined, { phys });
+      assert.ok(g.limbs.every(l => Number.isFinite(l.L.footPitch) && Number.isFinite(l.torsoLean)), `${C.name}: the rig gives the gate foot pitch and torso`);
+      const w = film(g); if (w > JOINT_STEP_MAX) over.push(`${C.name} physics ${phys ? 'on' : 'off'}: ${w.toFixed(1)}`); }
+  }
+  assert.deepEqual(over, []);
+});
+
+test('joint gate: a carried bag lifts its peeled heel off at a heel\'s speed, and a foot pop fails the gate', async () => {
+  // Move_CarryBag_Walk_Loop frame 231: the heel peeled to -37.8 deg on its print, the swing foot began at the capture's
+  // pitch (2.1): 39.9 deg/f (the film: SH060 frame 198, SH130 frame 145, 36.6)
+  const C = getClip('Move_CarryBag_Walk_Loop'), g = await rigClip(C), g0 = await rigClip(C, undefined, { phys: false });
+  assert.deepEqual([...jointFails(g), ...jointFails(g0, 'physics off')], []);
+  // the same clip with one captured foot pulled 15 cm toward the hips for one frame: the gate sees it
+  const keep = C.keys, i = keep.findIndex(k => k.f > 20 && k.legL.footW[2] > 0.05);
+  C.keys = keep.map((k, j) => (j === i ? { ...k, legL: { ...k.legL, footW: [k.legL.footW[0], k.legL.footW[1], k.legL.footW[2] + 0.15] } } : k));
+  try { const b = await rigClip(C, undefined, { phys: false }); assert.match(jointFails(b).join(), /solved joint: .* over 25/); } finally { C.keys = keep; }
+});
+
+test('joint gate: a phone call at a counter beside the arm fails it, one half a metre off adds nothing', async () => {
   // ep01 SH245: the phone call at a 1.12 m counter right beside the arm (the render: hand 18.65 cm off, elbow 97 deg/f)
   const C = getClip('Gest_PhoneCall_Loop'), counter = { name: 'counter', lo: [-0.5, 0.22, 0], hi: [0.5, 0.77, 1.12] };
   const on = await rigClip(C, undefined, { obstacles: [counter] }), off = await rigClip(C, undefined, { phys: false, obstacles: [counter] });
   assert.ok(off.prop > 15 && off.propIn === 'set', `the phone is in the counter, named so: ${off.prop} cm in ${off.propIn}`);
   assert.ok(on.grip > 15, `and with physics on the hand is off its grip: ${on.grip} cm`);
-  assert.match(jointFails(on, off).join(), /solved joint: .* over the motion as authored/);
-  // a counter half a metre off adds nothing to the clip on its own (JOINT_KNOWN: its 0.8 deg/f blend into the reach)
+  assert.match(jointFails(on).join(), /solved joint: .* over 25/);
   const ex = async obstacles => { const a = await rigClip(C, undefined, { obstacles }), b = await rigClip(C, undefined, { phys: false, obstacles });
-    return [jointExcess(a, b).excess, jointExcess(b, b).excess, a.grip, b.prop]; };
+    return [jointExcess(a).excess, jointExcess(b).excess, a.grip, b.prop]; };
   assert.deepEqual(await ex([{ ...counter, lo: [-0.5, 0.5, 0], hi: [0.5, 1.05, 1.12] }]), await ex([]));
-  // a capture that turns a joint past JOINT_MAX itself (talking hands): the motion as authored, allowed
-  const S = getClip('Gest_Talk_Loop'), s1 = await rigClip(S), s0 = await rigClip(S, undefined, { phys: false });
-  assert.ok(s1.joint > JOINT_MAX && jointExcess(s1, s0).over.length === 0, `talk ${s1.joint} deg/f at ${s1.jointAt}`);
 });
 
-test('joint gate: the reference is the motion as authored (the raw capture), so a retarget jump fails it', async () => {
-  // Move_CarryBag_Walk_Loop frame 231: the trailing knee folded 33.4 deg/f as the foot lifted (the capture: 9.8); its
-  // heel now peels as the captured knee needs (base.js peelFor)
-  const C = getClip('Move_CarryBag_Walk_Loop'), g = await rigClip(C), g0 = await rigClip(C, undefined, { phys: false });
-  assert.ok(g.raw.filter(Boolean).length > 200, 'the captured frames carry the capture\'s own joints');
-  assert.deepEqual([...jointFails(g, g0), ...jointFails(g0, g0, 'physics off')], []);
-  // the same clip with one captured foot pulled 15 cm toward the hips for one frame (a retarget fault): the gate sees it
-  const keep = C.keys, i = keep.findIndex(k => k.f > 20 && k.legL.footW[2] > 0.05);
-  C.keys = keep.map((k, j) => (j === i ? { ...k, legL: { ...k.legL, footW: [k.legL.footW[0], k.legL.footW[1], k.legL.footW[2] + 0.15] } } : k));
-  try { const b = await rigClip(C, undefined, { phys: false }); assert.match(jointFails(b, b).join(), /over the motion as authored/); } finally { C.keys = keep; }
-  // PistolShoot's baked reach keeps the forearm within the capture's speed (main: 26.9 deg/f at frame 70, the capture 19.1)
-  const P = getClip('Act_PistolShoot_Once'), p1 = await rigClip(P), p0 = await rigClip(P, undefined, { phys: false });
-  assert.deepEqual([...jointFails(p1, p0), ...jointFails(p0, p0)], []);
-  assert.ok(p1.grip <= GRIP_CM && p1.prop <= PROP_CM && p0.prop <= PROP_CM, 'the gun stays out of the head, the grip on it');
+test('a held prop stops on what the head wears: the cop\'s pistol stays out of his cap', async () => {
+  // Hot Money ep01 SH172 frames 72-88: the barrel up through the cop's peaked cap while the check read 0.00 cm (only the
+  // skull was solid; the library's figure wore no cap)
+  const C = getClip('Act_PistolShoot_Once'), strip = k => { const a = { ...k.armL }; delete a.ik; delete a.ikw; delete a.pole; return { ...k, armL: a }; };
+  // the captured arm with no reach table: the gun goes up beside the head; capped, it reads inside the cap
+  const keep = C.keys; C.keys = keep.map(strip);
+  const fk = cap => rigClip({ ...C, needs: { ...C.needs, cap } }, undefined, { phys: false });
+  let capped, bare; try { [capped, bare] = [await fk(true), await fk(false)]; } finally { C.keys = keep; }
+  assert.ok(capped.prop > 10 && capped.propIn === 'hat', `the captured gun in the cap: ${capped.prop} cm in ${capped.propIn}`);
+  assert.ok(bare.prop < capped.prop - 5, `bare headed it is not: ${bare.prop} cm`);
+  // the clip as it ships (needs.cap: checked and proved wearing the cap): its reach table keeps the gun out, the grip on it
+  assert.equal(C.needs.cap, true);
+  const g = await rigClip(C), g0 = await rigClip(C, undefined, { phys: false });
+  assert.ok(g.grip <= GRIP_CM && g.prop <= PROP_CM && g0.prop <= PROP_CM, `grip ${g.grip} cm, gun in the head ${g.prop} / ${g0.prop} cm`);
+  assert.deepEqual([...jointFails(g), ...jointFails(g0)], []);
 });
 
-test('joint gate: JOINT_KNOWN only shrinks', async () => {
-  const { JOINT_KNOWN } = await import('../../styles/stick-man/tools/motionlib.mjs');
+test('a cap\'s peak is solid only where it is: a point under it, in front of the face, is clear', async () => {
+  const { headWear, wearVolume } = await import('../../styles/stick-man/engine/body.js');
+  const ha = 0.3, hb = 0.28, crown = [], peak = [];
+  for (let i = 0; i < 400; i++) { const a = (i % 40) / 40 * 2 * Math.PI, e = Math.floor(i / 40) / 10 * Math.PI / 2; crown.push(new THREE.Vector3(1.1 * ha * Math.cos(e) * Math.sin(a), 0.03 + 1.1 * hb * Math.sin(e), 1.1 * ha * Math.cos(e) * Math.cos(a))); }
+  const P = (x, z) => new THREE.Vector3(x, 0.06, z); peak.push([P(-0.2, 0.25), P(0.2, 0.25), P(0, 0.5)]);
+  const v = wearVolume(new THREE.Vector3(), new THREE.Quaternion(), [0.5, 0.47, 0.5], headWear(crown, peak, ha, hb)), at = (x, y, z) => v.test(new THREE.Vector3(x / 0.6, y / 0.6, z / 0.6));
+  assert.ok(at(0, 0.3, 0.05), 'inside the crown, above the skull');
+  assert.ok(at(0, 0.06, 0.4), 'in the peak');
+  assert.equal(at(0, -0.06, 0.4), null, 'under the peak, in front of the face');
+  assert.equal(at(0, 0.45, 0), null, 'above the cap');
+});
+
+test('joint gate: JOINT_KNOWN only shrinks', () => {
   assert.ok(Object.keys(JOINT_KNOWN).length <= 12, 'no clip is added to the known list');
   for (const [n, [x, why]] of Object.entries(JOINT_KNOWN)) assert.ok(x > 0 && why.length > 10, n);
 });
