@@ -56,8 +56,9 @@ before, except where an old one had a hand forced off a target (now kept when re
 - Balance (rig B4) is weighed: `(1 - fall) (1 - x_raw) (1 - lean on a floor prop) x_stand`. `x_raw` (motion.js): a
   captured pose carries its own balance. `x_stand` (motion.js): both feet down, eased over 3 + 3 frames each side, so the
   solve never switches as a sole lands. `rigWorld().balanceCm`, `S.rig.balanceHip` (the hips' shift, W).
-- gaitLoop on a capture: frames with both feet up keep the stance's hip correction (eased between stances), so the hips
-  no longer jump as the last foot lifts (Move_PushHeavy_Loop loop frame 37: 8 cm).
+- gaitLoop on a capture: frames with both feet up keep the stance's hip correction (eased between stances), and the
+  correction changes at most 0.01 W a frame, so the hips no longer jump as the last foot lifts (Move_PushHeavy_Loop loop
+  frame 37: 8 cm) or as one foot leaves double support (Move_CarryBag_Walk_Loop's captured stop: 6 cm).
 - `docs/MOTION-LIB.md` is written by `motionlib.mjs --catalogue` from the clips (a test fails when it is stale).
 
 ## How to get to it (user POV)

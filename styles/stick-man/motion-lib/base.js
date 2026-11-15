@@ -409,21 +409,28 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
     if (!P._air) for (const sd of ['L', 'R']) if (!m.down[sd]) P['leg' + sd] = reachFoot(P, sd, m['knee' + sd]);
     return P;
   };
-  // both feet off the ground in a capture (a push's or a run's): the hips' height is the capture's there, not the stance
-  // knee's (legBob), and the two differ, so the hips jumped as the last foot lifted (8 cm in a frame, Move_PushHeavy_Loop
-  // at its loop frame 37). The stance's correction is carried over those frames instead, eased from the last stance's to
-  // the next one's, and the swinging feet are placed again from those hips (cyc: the frames wrap, a loop)
+  // the hips' height over a capture is the capture's own plus the stance knee's correction (legBob), which is only known
+  // while a foot is down and which steps when the feet that are down change: with both feet up the hips fell back to the
+  // capture's (8 cm in a frame, Move_PushHeavy_Loop at its loop frame 37), and a foot lifting from double support stepped
+  // them (6 cm, Move_CarryBag_Walk_Loop's captured stop). The correction is carried over frames with no foot down (eased
+  // from the last stance's to the next one's) and changes at most BOB_STEP W a frame; the swinging feet are placed again
+  // from those hips (cyc: the frames wrap, a loop)
+  const BOB_STEP = 0.01;
   const airBob = (keys, cyc) => {
     const n = keys.length, off = keys.map(k => k._cap && (k._cap.down.L || k._cap.down.R) ? k.bob - k._cap.bob : null);
-    if (off.some(o => o != null)) for (let i = 0; i < n; i++) {
-      const k = keys[i]; if (!k._cap || off[i] != null) continue;
-      let a = i, b = i, da = 0, db = 0;
-      do { a = cyc ? (a - 1 + n) % n : a - 1; da++; } while (a >= 0 && off[a] == null && da < n);
-      do { b = cyc ? (b + 1) % n : b + 1; db++; } while (b < n && off[b] == null && db < n);
-      const oa = a >= 0 && off[a] != null ? off[a] : null, ob = b < n && off[b] != null ? off[b] : null; if (oa == null && ob == null) continue;
-      const u = ease3(da / (da + db)), o = oa == null ? ob : ob == null ? oa : oa + (ob - oa) * u;
-      k.bob = k._cap.bob + o;
-      for (const sd of ['L', 'R']) if (!k._cap.down[sd]) k['leg' + sd] = reachFoot(k, sd, k._cap.knee[sd]);
+    if (n && keys.every(k => k._cap) && off.some(o => o != null)) {
+      const o = off.map((x, i) => {
+        if (x != null) return x;
+        let a = i, b = i, da = 0, db = 0;
+        do { a = cyc ? (a - 1 + n) % n : a - 1; da++; } while (a >= 0 && off[a] == null && da < n);
+        do { b = cyc ? (b + 1) % n : b + 1; db++; } while (b < n && off[b] == null && db < n);
+        const oa = a >= 0 && off[a] != null ? off[a] : null, ob = b < n && off[b] != null ? off[b] : null;
+        return oa == null ? ob : ob == null ? oa : oa + (ob - oa) * ease3(da / (da + db));
+      });
+      // at most BOB_STEP a frame, toward the stance's own (two laps round a loop, so its seam is limited too)
+      const u = o.slice(); for (let lap = 0; lap < (cyc ? 2 : 1); lap++) for (let i = cyc || lap ? 0 : 1; i < n; i++) { const p = u[(i - 1 + n) % n]; if (!cyc && i === 0) continue; u[i] = p + Math.max(-BOB_STEP, Math.min(BOB_STEP, o[i] - p)); }
+      keys.forEach((k, i) => { if (Math.abs(k.bob - (k._cap.bob + u[i])) < 1e-9) return; k.bob = k._cap.bob + u[i];
+        for (const sd of ['L', 'R']) if (!k._cap.down[sd]) k['leg' + sd] = reachFoot(k, sd, k._cap.knee[sd]); });
     }
     for (const k of keys) delete k._cap;
     return keys;
@@ -433,7 +440,7 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
   for (let t = 0; t <= 2 * T; t++) keys.push(K(t, MC ? mcFrame(t) : RF ? refFrame(t) : frame(t), { ease: 'flow' }));
   // (the seam's last frame is the first one a cycle on: it gets the first one's correction)
   if (MC) { const L = keys[2 * T], c0 = keys[0]._cap?.bob; airBob(keys.slice(0, 2 * T), true);
-    if (L._cap) { if (c0 != null && !(L._cap.down.L || L._cap.down.R)) { L.bob = L._cap.bob + keys[0].bob - c0; for (const sd of ['L', 'R']) if (!L._cap.down[sd]) L['leg' + sd] = reachFoot(L, sd, L._cap.knee[sd]); } delete L._cap; } }
+    if (L._cap) { if (c0 != null && Math.abs(L._cap.bob + keys[0].bob - c0 - L.bob) > 1e-9) { L.bob = L._cap.bob + keys[0].bob - c0; for (const sd of ['L', 'R']) if (!L._cap.down[sd]) L['leg' + sd] = reachFoot(L, sd, L._cap.knee[sd]); } delete L._cap; } }
   // a heel never peels faster than PEEL deg a frame: where the leg asks for more, the peel starts earlier (the loop wraps)
   const PEEL = 16;
   const N = 2 * T;
