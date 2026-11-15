@@ -25,6 +25,9 @@ a build check, a manifest entry) in the same change. Drop a row once its mistake
 | A worktree's linked `node_modules` and `.pixi` never get committed | `.gitignore` names them without a trailing slash, so it matches the links too |
 | A change to rendering keeps `node .claude/skills/verify/draft.mjs films/verify-smoke` and `films/rea-xray` passing | judgment: CI has no GPU, so run them locally (seconds each) |
 | `core/` and `styles/` are never edited for one film; a film's changes stay in `films/<name>/` | judgment (AGENTS.md) |
+| A stick-man kit fault is fixed by `.agents/playbooks/stick-man-kit-fix.md` (5 whys, industry check, reviewer, before\|after proof page, Kai merges); a film runs under `stick-man-film.md` with one orchestrator session | pstack `check-playbooks.mjs` keeps the anchors valid; the rest is judgment |
+| No message to another session (`SendMessage`, `orca … send`) without Kai's go for that message | the `peer-message-gate` PreToolUse hook in the loaded user settings (asks every time; denies when nobody can answer) |
+| `stagegate.mjs` writes only inside a real film folder (a `--help` once littered the repo root with gate files) | `test/unit/stick-gates-voice.test.mjs` |
 
 Kai's own 3D reels (Blocky Kai skits, 3D listicles) are `/make-reel-3d` → `styles/kai-reel-3d/WORKFLOW.md`, dev only; stick-man
 story reels (three.js stick figures, like pilot A) are `/make-reel-stick-man` → `.claude/skills/make-reel-stick-man/SKILL.md`,

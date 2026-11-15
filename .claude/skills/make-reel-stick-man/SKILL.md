@@ -13,6 +13,7 @@ The standard process for a stick-man film (dev only).
 - Worked example: `styles/stick-man/examples/pilot-a/` (copy it to `films/pilot-a/` to replay it; its README says how).
 - Needs: `GOOGLE_API_KEY` in `.env` (voice), faster-whisper (align), `claude` on PATH (board judges).
 - Kai reads Vietnamese: replies and page text are Vietnamese; "Em đề xuất" marks your recommended option.
+- pstack: this film runs under `.agents/playbooks/stick-man-film.md` (one orchestrator session, state in `~/.claude/orchestrate/<film>/notes.md`); a kit or engine fault goes to `.agents/playbooks/stick-man-kit-fix.md` as its own PR. Start a session with `/pstack:poteto-mode`.
 
 Read [PROCESS.md](PROCESS.md) before step 1, `DIRECTOR.md` (library root) and [DEVELOP.md](DEVELOP.md) before stage 0, [SCRIPT.md](SCRIPT.md) before the script [1.1], [PREPRO.md](PREPRO.md) before stage 1, [PUBLISH.md](PUBLISH.md) for stage 5, and [DIAGNOSE.md](DIAGNOSE.md) whenever a result "doesn't land" and the cause isn't obvious.
 

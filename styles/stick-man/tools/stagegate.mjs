@@ -14,8 +14,11 @@ import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.resolve(HERE, '../../..');
 const [film, which = 'all'] = process.argv.slice(2);
-if (!film) { console.error('usage: stagegate.mjs films/<slug> <1|2a|2b|2c|3|4|5|6|all>'); process.exit(2); }
+const USAGE = 'usage: stagegate.mjs films/<slug> <1|2a|2b|2c|3|4|5|6|all>';
+if (!film || film.startsWith('-')) { console[film ? 'log' : 'error'](USAGE); process.exit(film === '--help' || film === '-h' ? 0 : 2); }
 const DIR = path.resolve(ROOT, film), F = p => path.join(DIR, p);
+// (a film folder that does not exist is a typo, never a new film: writing gate files there would litter the repo root)
+if (!fs.existsSync(path.join(DIR, 'storyboard.json')) && !fs.existsSync(path.join(DIR, 'review'))) { console.error(`${film}: not a film folder (no storyboard.json or review/)\n${USAGE}`); process.exit(2); }
 const SPEC = JSON.parse(fs.readFileSync(path.join(HERE, 'GATES.json'), 'utf8'));
 const local = fs.existsSync(F('review/gates.local.json')) ? JSON.parse(fs.readFileSync(F('review/gates.local.json'), 'utf8')) : {};
 const approvals = fs.existsSync(F('review/approvals.json')) ? JSON.parse(fs.readFileSync(F('review/approvals.json'), 'utf8')) : {};
