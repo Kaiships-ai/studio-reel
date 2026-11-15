@@ -60,6 +60,10 @@ export function mocapCycle(src, { legM, once = false, roll = true }) {
   const W = F.map((f, t) => { const o = {}; for (const [n, p] of Object.entries(f)) o[n] = isDir(n) ? p : mul(add(p, [v * t, 0, 0]), k); return o; });
   const hip0 = mix(W[0].LeftUpLeg, W[0].RightUpLeg, 0.5)[0]; for (const f of W) for (const [n, p] of Object.entries(f)) if (!isDir(n)) p[0] -= hip0;
   const advance = v * N * k;
+  // what the body stands on above the floor (src.surfaces, mocapJoin): scaled and placed as the joints are; a foot is
+  // down on the highest one under it, its print at that top
+  const surf = (src.surfaces || []).map(s => ({ x: s.x.map(x => x * k - hip0), y: s.y.map(y => y * k), top: s.top * k }));
+  const floorAt = p => Math.max(0, ...surf.filter(s => p[0] >= s.x[0] && p[0] <= s.x[1] && p[1] >= s.y[0] && p[1] <= s.y[1]).map(s => s.top));
   // stances: a foot whose ankle is near its rest height is down; it stays on one print (the mean of where it was)
   const prints = {};
   for (const sd of ['Left', 'Right']) {
@@ -69,7 +73,7 @@ export function mocapCycle(src, { legM, once = false, roll = true }) {
     // (the slower of its two moves, so the strike and the push-off frames still count)
     const spd = i => once ? Math.min(i > 0 ? len(V(at(i - 1), at(i)).slice(0, 2)) : 1, i < N - 1 ? len(V(at(i), at(i + 1)).slice(0, 2)) : 1)
       : Math.min(len(V(at(i - 1), at(i)).slice(0, 2)), len(V(at(i), at(i + 1)).slice(0, 2)));
-    const low = h => W.map((f, i) => f[sd + 'Foot'][2] < (rest + h) * k && spd(i) < STILL), dn = low(0.025);
+    const low = h => W.map((f, i) => f[sd + 'Foot'][2] - floorAt(f[sd + 'Foot']) < (rest + h) * k && spd(i) < STILL), dn = low(0.025);
     // A one-off moving over the ground: a foot standing still a while (8 frames or more) a few centimetres above the
     // capture's own floor is down too (Mixamo "Run To Stop" ends standing ~4 cm up; the hips' height comes from the knees,
     // base.js legBob, not from that floor). Only a spell with no low frame in it: a stance's own end (the heel lifting,
@@ -81,10 +85,10 @@ export function mocapCycle(src, { legM, once = false, roll = true }) {
     // stands on one print, the mean of where it was
     // a foot whose ankle stays within 3 cm all through (a heel raised as the weight shifts) never left the ground
     const hs = W.map(f => f[sd + 'Foot'][2]);
-    if (dn.every(Boolean) || Math.max(...hs) - Math.min(...hs) < 0.03 * k) { const m = W.map(f => f[sd + 'Foot']).reduce((a, b) => add(a, b)).map(x => x / N); prints[sd] = W.map(() => m); continue; }
+    if (dn.every(Boolean) || Math.max(...hs) - Math.min(...hs) < 0.03 * k) { const m = W.map(f => f[sd + 'Foot']).reduce((a, b) => add(a, b)).map(x => x / N); m[2] = floorAt(m); prints[sd] = W.map(() => m); continue; }
     for (let i = 0; i < N; i++) if (dn[i] && (once && i === 0 || !dn[(i - 1 + N) % N])) {
       const run = []; for (let j = i; dn[j % N] && run.length < N && !(once && j >= N); j++) run.push(j);
-      const at = run.map(j => add(W[j % N][sd + 'Foot'], [j >= N ? advance : 0, 0, 0])), m = mix(at[0], at.reduce((a, b) => add(a, b)).map(x => x / at.length), PIN);
+      const at = run.map(j => add(W[j % N][sd + 'Foot'], [j >= N ? advance : 0, 0, 0])), m = mix(at[0], at.reduce((a, b) => add(a, b)).map(x => x / at.length), PIN); m[2] = floorAt(m);
       for (const j of run) prints[sd][j % N] = j >= N ? add(m, [-advance, 0, 0]) : m;
     }
   }
@@ -97,7 +101,7 @@ export function mocapCycle(src, { legM, once = false, roll = true }) {
     let ea = t - 1; while (ea > t - N && up(ea)) ea--; let sb = t + 1; while (sb < t + N && up(sb)) sb++;
     const okA = once ? ea >= 0 && !up(ea) : !up(ea), okB = once ? sb < N && !up(sb) : !up(sb);
     // (a gap is the print less the ankle on one frame: the same wherever a loop's cycle puts that frame)
-    const gap = i => { const j = wrap(i), p = P[j], r = raw(sd, j); return [p[0] - r[0], p[1] - r[1], -r[2]]; };
+    const gap = i => { const j = wrap(i), p = P[j], r = raw(sd, j); return [p[0] - r[0], p[1] - r[1], p[2] - r[2]]; };
     const oA = okA ? gap(ea) : null, oB = okB ? gap(sb) : null, r = raw(sd, t);
     const w = okA && okB ? (t - ea) / (sb - ea) : okA ? 0 : 1, e = w * w * (3 - 2 * w);
     const o = oA && oB ? oA.map((v, q) => v + (oB[q] - v) * e) : oA || oB || [0, 0, 0];
@@ -125,7 +129,7 @@ export function mocapCycle(src, { legM, once = false, roll = true }) {
       return { raise, swing, elbow, roll };
     };
     const leg = sd => { const pr = prints[sd][t];
-      return pr ? { footW: [pr[0], pr[1], 0], pitch: footPitch(f, sd) } : { footW: swingAt(sd, t), pitch: footPitch(f, sd) }; };
+      return pr ? { footW: [pr[0], pr[1], pr[2]], pitch: footPitch(f, sd) } : { footW: swingAt(sd, t), pitch: footPitch(f, sd) }; };
     const knee = sd => { const a = nrm(V(f[sd + 'UpLeg'], f[sd + 'Leg'])), b = nrm(V(f[sd + 'Leg'], f[sd + 'Foot'])); return Math.acos(Math.max(-1, Math.min(1, dot(a, b)))) * DEG; };
     // a foot's turn: its toe's heading on the root's, less the rig's own toe-out (cast.js FOOT.out), + toward the right
     // A foot pointing near straight up or down (kicked up behind in a run) has no heading: its turn fades out as the toe
@@ -134,7 +138,7 @@ export function mocapCycle(src, { legM, once = false, roll = true }) {
       const y = Math.atan2(d[1], d[0]) * DEG - heading - (sd === 'Left' ? -FOOT_OUT : FOOT_OUT), w = Math.min(1, Math.max(0, (h - 0.5) / 0.4));
       return ((y + 540) % 360 - 180) * w * w * (3 - 2 * w); };
     const L = leg('Left'), R = leg('Right'); L.yaw = toe('Left'); R.yaw = toe('Right');
-    return { kneeL: knee('Left'), kneeR: knee('Right'), down: { L: !!prints.Left[t], R: !!prints.Right[t] }, hipZ: hm[2] - rest * k, pos: [hm[0], 0, 0], hipY: hm[1],
+    return { kneeL: knee('Left'), kneeR: knee('Right'), down: { L: !!prints.Left[t], R: !!prints.Right[t] }, hipZ: hm[2] - rest * k, hipFloor: floorAt(hm), handOn: ['Left', 'Right'].some(sd => { const h = f[sd + 'Hand'], t = floorAt(h); return t > 0 && h[2] - t < 0.1 * k; }), pos: [hm[0], 0, 0], hipY: hm[1],
       heading, pelvis: { yaw: pelvis.yaw, pitch: pelvis.pitch, roll: pelvis.roll }, spine: { twist: spine.yaw, bend: spine.pitch, side: spine.roll }, neck: { turn: neck.yaw, nod: neck.pitch, tilt: neck.roll },
       armL: arm('Left', -1), armR: arm('Right', 1), legL: L, legR: R };
   });
@@ -164,5 +168,58 @@ export function mocapCycle(src, { legM, once = false, roll = true }) {
   // the right print the cycle ends on (a capture of four steps has two right prints: the closing step starts from the
   // second, not the first)
   let rEnd = null; for (let i = N - 1; i >= 0 && !rEnd; i--) if (prints.Right[i] && !prints.Right[(i - 1 + N) % N]) rEnd = prints.Right[i];
-  return { frames, cycle: N, advance, scale: k, legSrc: Math.max(...F.map(legOf)), firstPrint: Lx, prints: { L: Lx, R: Rx, yL: prints.Left[0]?.[1] ?? -lane, yR: prints.Right[rIdx]?.[1] ?? lane, Rend: rEnd ? rEnd[0] : Rx, yRend: rEnd ? rEnd[1] : lane }, lane, standHip };
+  // the set's marks (src.marks) placed as the joints are: positions and sizes scaled, x from the first frame's hips
+  const place = m => Object.fromEntries(Object.entries(m).map(([n, v]) => [n, n === 'at' ? [v[0] * k - hip0, v[1] * k, v[2] * k] : typeof v === 'number' ? v * k : v]));
+  return { surfaces: surf, marks: (src.marks || []).map(place), frames, cycle: N, advance, scale: k, legSrc: Math.max(...F.map(legOf)), firstPrint: Lx, prints: { L: Lx, R: Rx, yL: prints.Left[0]?.[1] ?? -lane, yR: prints.Right[rIdx]?.[1] ?? lane, Rend: rEnd ? rEnd[0] : Rx, yRend: rEnd ? rEnd[1] : lane }, lane, standHip };
+}
+
+// Captures joined into one source, for an act no single capture holds (up onto a sill from one, over it and down from
+// another). parts, in order: { src, shift, settle, hold } or { bridge: n }. All in clip space, the captures' metres:
+//   shift [x, y, z]  moves a part to where the one before leaves the body (a ledge at another height, another place)
+//   settle [a, b]    the shift's height runs out as the hips fall from frame a to frame b: the body comes down off a
+//                    ledge lower than the capture's own, its fall the capture's shortened by that height (the hips'
+//                    own drop is the clock, so they never rise on the way down)
+//   hold [a, b]      the hands keep the whole shift till a and let go of it by b (they stay on the ledge while the body
+//                    lowers): each arm solved to reach them, its bones' lengths kept, the elbow bent the captured way
+//   bridge n         n frames from one part's last frame to the next's first: every bone turns from one to the other
+//                    (its length kept), the hips move straight, the bones' frames (_f, _u) turn with them
+// surfaces [{ x: [x0, x1], y: [y0, y1], top }]: what the body stands, kneels or lies on above the floor (the sole's
+// height on it); marks: the set's marks for it (index.js), in the same space. mocapCycle scales and places both.
+const TREE = { Spine1: 'Hips', Neck: 'Spine1', Head: 'Neck', HeadTop_End: 'Head', LeftArm: 'Neck', LeftForeArm: 'LeftArm', LeftHand: 'LeftForeArm',
+  RightArm: 'Neck', RightForeArm: 'RightArm', RightHand: 'RightForeArm', LeftUpLeg: 'Hips', LeftLeg: 'LeftUpLeg', LeftFoot: 'LeftLeg', LeftToeBase: 'LeftFoot',
+  RightUpLeg: 'Hips', RightLeg: 'RightUpLeg', RightFoot: 'RightLeg', RightToeBase: 'RightFoot' };
+const ease3m = w => (w = Math.max(0, Math.min(1, w)), w * w * (3 - 2 * w));
+// a two-bone arm (shoulder S, elbow E, hand H) reaching T: the elbow on the side it was bent to
+const reach2 = (S, E, H, T) => {
+  const l1 = len(V(S, E)), l2 = len(V(E, H)), d = V(S, T), L = Math.max(1e-6, Math.min(len(d), l1 + l2 - 1e-4)), dn = nrm(d);
+  const a = (l1 * l1 - l2 * l2 + L * L) / (2 * L), h = Math.sqrt(Math.max(0, l1 * l1 - a * a)), pe = V(S, E), pp = nrm(add(pe, mul(dn, -dot(pe, dn))));
+  return [add(add(S, mul(dn, a)), mul(pp, h)), add(S, mul(dn, L))];
+};
+export function mocapJoin(parts, { surfaces = [], marks = [], source } = {}) {
+  const out = [];
+  for (let p = 0; p < parts.length; p++) {
+    const P = parts[p];
+    if (P.bridge) continue;
+    const [sx, sy, sz] = P.shift || [0, 0, 0], F = P.src.frames.map(f => Object.fromEntries(Object.entries(f).map(([k, v]) => [k, toClip(v)])));
+    const hz = t => F[t].Hips[2], [sa, sb] = P.settle || [Infinity, Infinity], z0 = sa < F.length ? hz(sa) : 0, z1 = sb < F.length ? hz(sb) : 0;
+    const part = F.map((f, t) => {
+      const fb = t < sa ? 0 : t >= sb ? 1 : Math.max(0, Math.min(1, (z0 - hz(t)) / (z0 - z1))), o = [sx, sy, sz * (1 - fb)], g = {};
+      for (const [k, v] of Object.entries(f)) g[k] = /_[fu]$/.test(k) ? v : add(v, o);
+      if (P.hold) { const hf = ease3m((t - P.hold[0]) / (P.hold[1] - P.hold[0])), dz = sz * (1 - hf) - o[2];
+        for (const sd of ['Left', 'Right']) if (Math.abs(dz) > 1e-6) { const [E, H] = reach2(g[sd + 'Arm'], g[sd + 'ForeArm'], g[sd + 'Hand'], add(g[sd + 'Hand'], [0, 0, dz])); g[sd + 'ForeArm'] = E; g[sd + 'Hand'] = H; } }
+      return g;
+    });
+    const br = parts[p - 1]?.bridge;
+    if (br && out.length) {
+      const a = out[out.length - 1], b = part[0];
+      for (let i = 1; i <= br; i++) {
+        const e = ease3m(i / (br + 1)), g = { Hips: mix(a.Hips, b.Hips, e) };
+        for (const [k, par] of Object.entries(TREE)) if (a[k] && b[k]) { const da = V(a[par], a[k]), db = V(b[par], b[k]), l = len(da) + (len(db) - len(da)) * e; g[k] = add(g[par], mul(nrm(mix(nrm(da), nrm(db), e)), l)); }
+        for (const k of Object.keys(a)) if (/_[fu]$/.test(k)) g[k] = nrm(mix(a[k], b[k], e));
+        out.push(g);
+      }
+    }
+    out.push(...part);
+  }
+  return { source, fps: 30, frames: out.map(f => Object.fromEntries(Object.entries(f).map(([k, v]) => [k, toClip(v)]))), surfaces, marks };
 }

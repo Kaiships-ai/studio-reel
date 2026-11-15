@@ -35,7 +35,12 @@ export async function build(stage, opts = {}) {
       K.box([x + 0.95, -0.65, fl], [x + 1.05, 0.65, z + 0.45], car, { r: 0.02 });
       COLLIDE.push({ name: 'trunk-lip', lo: [x, -0.65, 0.18], hi: [x + 0.08, 0.65, z] });
     }
-    if (m.kind === 'window') {  // a wall with an opening: sill at z, top at m.top, m.width wide
+    if (m.kind === 'window' && m.axis === 'y') {  // the wall along x, its room face at y, m.depth deep toward -y; the opening round x
+      const d = m.depth * s, w = m.width * s / 2, top = m.top * s, H = Math.max(top + 0.5, 2.4), E = w + 0.7, y0 = y - d;
+      K.box([x - E, y0, 0], [x + E, y, z], glassWall, { r: 0.01 }); K.box([x - E, y0, top], [x + E, y, H], glassWall, { r: 0.01 });
+      K.box([x - E, y0, z], [x - w, y, top], glassWall, { r: 0.01 }); K.box([x + w, y0, z], [x + E, y, top], glassWall, { r: 0.01 });
+      COLLIDE.push({ name: 'wall-low', lo: [x - E, y0, 0], hi: [x + E, y, z] }, { name: 'wall-top', lo: [x - E, y0, top], hi: [x + E, y, H] });
+    } else if (m.kind === 'window') {  // a wall with an opening: sill at z, top at m.top, m.width wide
       // a see-through wall (30 %): the proof camera sees the body on both sides of it, the hands and the weight
       const d = (m.depth || 0.15) * s, w = (m.width || 0.8) * s / 2, top = m.top * s, H = Math.max(top + 0.5, 2.4), E = 1.1, block = glassWall;
       K.box([x, -E, 0], [x + d, E, z], block, { r: 0.01 }); K.box([x, -E, top], [x + d, E, H], block, { r: 0.01 });

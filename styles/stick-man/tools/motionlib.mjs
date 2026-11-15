@@ -91,7 +91,7 @@ export function checkClip(C, file) {
   const key = C.advance ? { f: 0, clip: C.clip, body: B, to: [C.introTravel + C.outroTravel + 2 * C.advance, 0] } : { f: 0, clip: C.clip, body: B, ...(C.loop ? { times: 2 } : {}) };
   const placed = placeClip(key, { pos: [0, 0], yaw: 90 }), keys = placed.keys, last = keys[keys.length - 1].f;
   const track = compileTrack(keys, {}, { pos: [0, 0], yaw: 90 }, 'kaiships'), fr = playActor(track, 0, last + 10);
-  let jMax = 0, jAt = null, slide = 0, slideAt = null; const over = [];
+  let jMax = 0, jAt = null, slide = 0, slideAt = null; const over = [], tops = (C.needs?.marks || []).filter(m => m.kind === 'window').map(m => m.at[2]);
   for (let f = 1; f < fr.length; f++) {
     const p = fr[f - 1], q = fr[f];
     // a foot in the air hangs off its shin: its pitch is a world angle that turns with the leg, not a joint, so it is not
@@ -107,7 +107,8 @@ export function checkClip(C, file) {
     if (!cap) for (const s of ['L', 'R']) if (`arm${s}.ik.0` in q && (q[`arm${s}.ikw`] ?? 1) > 0.5) {
       const d = Math.hypot(...[0, 1, 2].map(i => q[`arm${s}.ik.${i}`] - p[`arm${s}.ik.${i}`])) / ARM_W * 180 / Math.PI;
       if (d > jMax) { jMax = d; jAt = `${f} arm${s}.ik`; } if (d > JOINT_MAX) over.push(f); }
-    for (const s of ['L', 'R']) { const z0 = p[`leg${s}.footW.2`], z1 = q[`leg${s}.footW.2`]; if (z0 == null || z0 > 0.005 || z1 > 0.005) continue;
+    // (a foot planted on the floor, or on a sill the clip names: a window mark's at[2])
+    for (const s of ['L', 'R']) { const z0 = p[`leg${s}.footW.2`], z1 = q[`leg${s}.footW.2`], on = z => z <= 0.005 || tops.some(t => Math.abs(z - t) < 0.0005); if (z0 == null || !on(z0) || !on(z1)) continue;
       const d = 1000 * Math.hypot(q[`leg${s}.footW.0`] - p[`leg${s}.footW.0`], q[`leg${s}.footW.1`] - p[`leg${s}.footW.1`]); if (d > slide) { slide = d; slideAt = `${f} ${s}`; } }
   }
   if (jMax > JOINT_MAX) fails.push(`joint gate: ${jMax.toFixed(1)} deg/f at ${jAt} (max ${JOINT_MAX}); frames ${[...new Set(over)].slice(0, 8).join(' ')}`);

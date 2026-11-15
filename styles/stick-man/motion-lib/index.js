@@ -33,6 +33,7 @@ import Adult_Move_TurnLeft_Once_v01 from './body/adult/Adult_Move_TurnLeft_Once_
 import Adult_Trans_LieDown_Once_v01 from './body/adult/Adult_Trans_LieDown_Once_v01.js';
 import Adult_Idle_Sleep_Loop_v01 from './body/adult/Adult_Idle_Sleep_Loop_v01.js';
 import Adult_Trans_GetUp_Once_v01 from './body/adult/Adult_Trans_GetUp_Once_v01.js';
+import Adult_Trans_ClimbWindowDrop_Once_v01 from './body/adult/Adult_Trans_ClimbWindowDrop_Once_v01.js';
 import Adult_Move_CarryBag_Walk_Loop_v01 from './body/adult/Adult_Move_CarryBag_Walk_Loop_v01.js';
 import Adult_Move_PushHeavy_Loop_v01 from './body/adult/Adult_Move_PushHeavy_Loop_v01.js';
 import Adult_Idle_CarryBag_Loop_v01 from './body/adult/Adult_Idle_CarryBag_Loop_v01.js';
@@ -96,6 +97,7 @@ export const ALL = [
   Adult_Trans_LieDown_Once_v01,
   Adult_Idle_Sleep_Loop_v01,
   Adult_Trans_GetUp_Once_v01,
+  Adult_Trans_ClimbWindowDrop_Once_v01,
   Adult_Move_CarryBag_Walk_Loop_v01,
   Adult_Move_PushHeavy_Loop_v01,
   Adult_Idle_CarryBag_Loop_v01,
