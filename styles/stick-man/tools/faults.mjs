@@ -209,3 +209,38 @@ export function faceLines(rows, n) {
   return [`      face: pops ${x.pops.length}; rise min ${rmin ?? '-'} f over ${x.rises.length} changes; hold min ${hmin ?? '-'} f; changes ${x.changes.n} (${x.changes.per10.toFixed(1)} per 10 s, max ${x.changes.max10} in 10 s); takes ${x.takes.n} (max ${x.takes.max60} in 60 s, ${x.takes.max10} in 10 s); blinks ${x.blinks.n} (${x.blinks.perMin.toFixed(1)} a minute); eye lead ${x.eyeLead.map(e => e.lead).join(' ') || '-'} f; over ${x.frames} frames in frame`,
     `      face faults: ${x.faults.join('; ') || 'none'}`];
 }
+
+// The hoodie's cords (allout/hoodie.js, __dbg actors[n].cord: each cord's drawn tip against its top, root-local m). A cord
+// that swings changes its acceleration smoothly; a jittering one pushes back and forth, so consecutive accelerations point
+// opposite ways. shake = at each frame where they oppose, the smaller of the two (m/frame^2); a frame the cords do not carry
+// on from the last (the hoodie starts fresh, another act, a skipped frame) breaks the run; a camera cut does not (the
+// numbers are root-local, the same under any camera). Kai 17/11 (Hot Money ep01 r2 s4: "the cords jitter"): before the
+// fix the motion-lib carry walk, walk and turn read 0.20-0.37 (a period-2 flip) and s4's carry walk 0.09 median; after,
+// <= 0.0135 and 0.0004. A free swing reads ~0.01. The limit marks report frames to look at; it is not a gate yet.
+export const CORD_SHAKE_MAX = 0.015;
+// seq: [x, y, z] per frame (null: none); start[i]: frame i does not follow frame i - 1. Returns the shake per frame (0: none)
+export function shakeOf(seq, start = []) {
+  const out = seq.map(() => 0); let run = 0, a1 = null;
+  for (let i = 0; i < seq.length; i++) {
+    if (!seq[i] || start[i]) { run = 0; a1 = null; }
+    if (!seq[i]) continue;
+    if (++run < 3) continue;
+    const p = seq[i], q = seq[i - 1], r = seq[i - 2], a = [0, 1, 2].map(k => p[k] - 2 * q[k] + r[k]);
+    if (a1 && a[0] * a1[0] + a[1] * a1[1] + a[2] * a1[2] < 0) out[i] = Math.min(Math.hypot(...a), Math.hypot(...a1));
+    a1 = a;
+  }
+  return out;
+}
+export function cordShake(rows, n) {
+  const cords = rows.find(r => r.actors[n]?.cord)?.actors[n].cord.tips.length || 0; if (!cords) return null;
+  const start = rows.map((r, i) => !!(r.actors[n]?.cord?.fresh || (i && (r.act !== rows[i - 1].act || r.f !== rows[i - 1].f + 1))));
+  const per = rows.map(() => 0);
+  for (let c = 0; c < cords; c++) shakeOf(rows.map(r => r.actors[n]?.cord?.tips[c] || null), start).forEach((v, i) => { per[i] = Math.max(per[i], v); });
+  let max = 0, at = null; per.forEach((v, i) => { if (v > max) { max = v; at = rows[i].f; } });
+  return { max, at, over: rows.filter((r, i) => per[i] > CORD_SHAKE_MAX).map(r => r.f), frames: rows.filter(r => r.actors[n]?.cord).length };
+}
+// the report line for one actor (shot.mjs --report)
+export function cordLines(rows, n) {
+  const x = cordShake(rows, n); if (!x) return [];
+  return [`      cords: shake max ${x.max.toFixed(4)} m/frame^2${x.at != null ? ' (frame ' + x.at + ')' : ''} over ${x.frames} frames; frames over ${CORD_SHAKE_MAX}: ${compress(x.over) || 'none'}`];
+}
