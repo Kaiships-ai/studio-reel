@@ -568,7 +568,7 @@ export function hoodie(S, { down = false } = {}) {
   // ---------------------------------------------------------------- PHYS.on: the follow-through spring and the cords
   function step(t) {
     if (!ST.F || t === ST.t) return;
-    const F = ST.F, RW = ST.RW, RWi = RW.clone().invert(); let fresh = ST.t == null || t !== ST.t + 1;
+    const F = ST.F, RW = ST.RW, RWi = RW.clone().invert(); let fresh = ST.t == null || t !== ST.t + 1 || !ST.was;   // (no last frame to ease from or to measure a jump against: a first frame)
     // the peak's posed place (world) and the head centre (world), without lag
     const tgt = skin(F, PEAK.x, PEAK.y, PEAK.z, null, new THREE.Vector3()).applyMatrix4(F.Mc).applyMatrix4(RW);
     // cords: chains from the posed anchors, colliding with the body's volumes (+ the jersey) and the arm bones
@@ -593,11 +593,14 @@ export function hoodie(S, { down = false } = {}) {
     // as on a first frame, instead of easing them across it (Kai 17/11, Hot Money ep01 r2 s6: the bank cuts moved the wearer
     // 3.5 m; eased across in 8 sub-steps the cords were flung sideways and shook for 15 frames). d: the throat's world travel;
     // the turn is the chest's whole turn (its heading alone flips 180 deg when the chest pitches through level, a deep bow)
-    const mid = v => v[0].clone().add(v[1]).multiplyScalar(0.5), d = ST.was ? mid(anc).sub(mid(ST.was.anc.map(a => a.clone().applyMatrix4(ST.was.RW)))) : null;
-    const jump = !fresh && bodyJump(d, ST.dPrev, now.qc.angleTo(ST.was.qc));
+    const mid = v => v[0].clone().add(v[1]).multiplyScalar(0.5), d = fresh ? null : mid(anc).sub(mid(ST.was.anc.map(a => a.clone().applyMatrix4(ST.was.RW))));
+    const turn = fresh ? 0 : now.qc.angleTo(ST.was.qc), jump = !fresh && bodyJump(d, ST.dPrev, turn);
+    ST.jumpIn = fresh ? null : { d: d.clone(), dPrev: ST.dPrev?.clone() ?? null, turn };   // the rule's inputs: tools/cordjump.mjs
     if (jump) fresh = true;
     // the frame after a re-seat: the cords move off with the body (its travel this frame per sub-step) instead of being
-    // dragged from a standstill (a cut into a heave: s4 f819)
+    // dragged from a standstill (a cut into a heave: s4 f819). The hood's spring is not carried: from rest it builds the lag a
+    // move gives it within two frames (a run cut 3.5 m on: 4.4 deg against 4.2 uncut two frames on); given the body's speed it
+    // trails with none and takes three (1.2 deg the frame after, 3.1 the next)
     if (!fresh && ST.seated) ST.chains.forEach(ch => ch.carry(d.clone().divideScalar(SUB).toArray()));
     ST.dPrev = fresh ? null : d; ST.seated = jump;
     if (fresh) {

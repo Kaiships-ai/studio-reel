@@ -146,21 +146,39 @@ test('a cut that moves the wearer, eased across like a move (the fault this guar
 // 20 m/s, a stepped run on twos that starts from a hold (0.2 / 0.4 m a frame, s5 f1213-1220), a deep bow
 const car = f => at(0.67 * f);
 const twos = f => at(f < 10 ? 0 : 0.2 * (f - 10) + 0.2 * (f % 2 ? 1 : 0));
+// a hard stop: the car at 20 m/s stops dead on frame 20 (its travel changes by 0.67 m, the body stays put)
+const stop = f => at(0.67 * Math.min(f, 20));
 // a deep bow: the chest pitches from 60 to 120 deg over 20 frames (its heading alone flips 180 deg as it passes level)
 const bow = f => new THREE.Matrix4().makeRotationX(Math.PI / 180 * (60 + 3 * Math.min(20, f)));
-for (const [name, body] of [['a walk', walk], ['a turn', turn], ['a car at 20 m/s', car], ['a stepped run', twos], ['a deep bow', bow]]) {
+for (const [name, body] of [['a walk', walk], ['a turn', turn], ['a car at 20 m/s', car], ['a stepped run', twos], ['a hard stop', stop], ['a deep bow', bow]]) {
   test(`${name} is not a body jump: no frame re-seats the cord`, () => {
     assert.deepEqual(cordStep(body, 60, true).seated, []);
   });
 }
-test('bodyJump: a change of travel over 0.5 m in a frame (1.5 m with no history) or a turn over 90 deg is a jump; a steady fast travel is not', () => {
+test('bodyJump: a travel over 1 m in a frame, off last frame\'s by over 0.5 m (1.5 m with no history), or a turn over 90 deg is a jump; a change of travel alone is not', () => {
   const v = (x, y = 0, z = 0) => new THREE.Vector3(x, y, z);
   assert.equal(bodyJump(v(3.5), v(0)), true);
-  assert.equal(bodyJump(v(0.97), v(0)), true);
+  assert.equal(bodyJump(v(2.67), v(0.01)), true);    // s4 f816, the shortest of the four Hot Money cuts
+  assert.equal(bodyJump(v(1.2), v(0)), true);
   assert.equal(bodyJump(v(3.5), null), true);
-  assert.equal(bodyJump(v(0.97), null), false);
+  assert.equal(bodyJump(v(1.2), null), false);
+  assert.equal(bodyJump(v(0.97), v(0)), false);      // under a metre: eased across, as a move is
+  assert.equal(bodyJump(v(0), v(0.67)), false);      // a hard stop
+  assert.equal(bodyJump(v(0.67), v(0)), false);      // a launch
+  assert.equal(bodyJump(v(0.43), v(0)), false);      // a stepped run on twos from a hold
   assert.equal(bodyJump(v(0.7), v(0.7)), false);
-  assert.equal(bodyJump(v(0.4), v(0)), false);
+  assert.equal(bodyJump(v(1.3), v(1.2)), false);     // a fast car at a steady speed
   assert.equal(bodyJump(v(0), v(0), Math.PI), true);
   assert.equal(bodyJump(v(0), v(0), 12 * Math.PI / 180), false);
+});
+
+// the rule over real clips (tools/cordjump.mjs runs it over the whole library: no clip-body run fires): the fastest
+// library clips, played through the real rig in the real hoodie, never re-seat the cords
+test('the sprint, jump and get-up clips in the real hoodie: no frame is a body jump', async () => {
+  const { scanClip } = await import('../../styles/stick-man/tools/cordjump.mjs'), { getClip } = await import('../../styles/stick-man/motion-lib/index.js');
+  for (const name of ['Move_Sprint_Fwd_Loop', 'Act_Jump_Once', 'Trans_GetUp_Once']) {
+    const r = await scanClip(getClip(name));
+    assert.deepEqual(r.jumps, [], `${name}: frames ${r.jumps}`);
+    assert.ok(r.maxD > 0.1, `${name} moves (max travel ${r.maxD.toFixed(3)} m/frame)`);
+  }
 });

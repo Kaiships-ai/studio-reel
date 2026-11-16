@@ -91,13 +91,19 @@ const _v = new THREE.Vector3(), _ab = new THREE.Vector3(), _av = new THREE.Vecto
 // A body that jumps between two frames that follow each other (a cut that moves the wearer, a pose that snaps, an act whose
 // figure was posed elsewhere the frame before): a cloth must not be eased across it, it is re-seated at rest on the new pose
 // and settled, as on a first frame. d / dPrev: the pin's world travel this frame and last frame (m; dPrev null after a
-// restart: no history); turn: the body's heading change this frame (rad). A jump is a change of travel over JUMP_M in one
-// frame, a travel over JUMP_FAR on a frame with no history (the frame after a restart: a run that starts on the frame
-// before a cut), or a turn over JUMP_TURN. A fast car at a steady speed is no jump, and neither is a stepped run on twos
-// from a hold (0.2-0.43 m, Hot Money ep01 r2 s5 f1213-1220). Hot Money ep01 r2 s6 (Kai 17/11): the bank cuts moved the wearer
-// 3.5 m between two frames; eased across in 8 sub-steps, the cord was flung sideways and shook for 15 frames.
-export const JUMP_M = 0.5, JUMP_FAR = 1.5, JUMP_TURN = Math.PI / 2;
+// restart: no history); turn: the body's whole turn this frame (rad). A jump is a jump in place: a travel over JUMP_D in
+// one frame (30 m/s: no body on foot, and no car a film keys, gets there) that is also off what last frame's travel
+// predicted by over JUMP_M (a car already travelling that fast is not jumping) or, with no history, over JUMP_FAR; or a
+// turn over JUMP_TURN. A change of travel alone is not one: a hard stop (0.67 m/frame to 0) or a stepped run on twos from
+// a hold (0.2-0.43 m, Hot Money ep01 r2 s5 f1213-1220) changes the travel a lot but leaves the body within
+// a step of where it was.
+// Measured (tools/cordjump.mjs, every motion-lib clip on every body it plays on, the real rig in the real hoodie): the
+// most a clip travels in a frame is 0.23 m, its largest change of travel 0.16 m, its largest turn 17.8 deg; the cuts it
+// must catch moved the wearer 2.67-3.51 m (s4 f816, s5 f1210, s6 f1633, f1662). Hot Money ep01 r2 s6 (Kai 17/11): the
+// bank cuts moved the wearer 3.5 m between two frames; eased across in 8 sub-steps, the cord was flung sideways and shook
+// for 15 frames. A cut that moves the wearer less than JUMP_D is eased across, as a move is.
+export const JUMP_D = 1.0, JUMP_M = 0.5, JUMP_FAR = 1.5, JUMP_TURN = Math.PI / 2;
 export function bodyJump(d, dPrev, turn = 0) {
-  const far = dPrev ? Math.hypot(d.x - dPrev.x, d.y - dPrev.y, d.z - dPrev.z) > JUMP_M : d.length() > JUMP_FAR;
-  return far || Math.abs(turn) > JUMP_TURN;
+  const n = d.length(), off = dPrev ? Math.hypot(d.x - dPrev.x, d.y - dPrev.y, d.z - dPrev.z) > JUMP_M : n > JUMP_FAR;
+  return (n > JUMP_D && off) || Math.abs(turn) > JUMP_TURN;
 }
