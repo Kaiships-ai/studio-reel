@@ -148,6 +148,8 @@ test('rule 15: faceFaults passes a clean track and names every fault of a bad on
   // a jump back is a pop
   const bad = good.map(r => JSON.parse(JSON.stringify(r))); bad[40].actors.you.face.v[0] -= 8;
   assert.ok(faceFaults(bad, 'you').pops.length >= 1);
+  // a spike inside a take's anticipation or accent is a pop too (only the anticipation's own moves are exempt)
+  for (const [f, d] of [[72, 12], [72, -12], [76, -12]]) { const sp = good.map(r => JSON.parse(JSON.stringify(r))); sp[f].actors.you.face.v[0] += d; assert.ok(faceFaults(sp, 'you').pops.length >= 1, `spike ${d} deg at f${f}`); }
   // too many takes, too many changes
   const busy = T0('calm', ...Array.from({ length: 12 }, (_, i) => [20 + 25 * i, i % 2 ? 'calm' : 'shock']));
   const b = faceFaults(rowsOf(busy, 0, 330), 'you');

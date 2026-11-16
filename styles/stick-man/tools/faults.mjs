@@ -127,6 +127,7 @@ export const FACE_CHANGES_10S = [2, 6];     // changes per 10 s on screen (the f
 export const FACE_TAKES_MIN = 4, FACE_TAKES_10S = 1;   // take onsets per 60 s, per 10 s, per actor
 export const FACE_BLINKS_MIN = [12, 30];    // blinks per minute in frame (judged over >= 10 s in frame)
 export const FACE_EYE_LEAD = [0, 3];        // head onset minus pupil onset on a focus change, frames
+const ANTIC_FEAT = new Set([1, 2, 5]);   // brow height, lid, mouth width
 const FACE_FEAT = ['brow tilt', 'brow height', 'lid', 'white', 'eye size', 'mouth width'];
 const maxIn = (fs, w) => { let m = 0; for (let i = 0, j = 0; i < fs.length; i++) { while (fs[i] - fs[j] >= w) j++; m = Math.max(m, i - j + 1); } return m; };
 export function faceFaults(rows, n) {
@@ -148,8 +149,12 @@ export function faceFaults(rows, n) {
       const a = V(R[i - 1]), b = V(R[i]), ph = R[i].actors[n].face.phase;
       for (let k = 0; k < b.length; k++) {
         const d = b[k] - a[k], p = Math.abs(D[k]) > 0.02 ? (a[k] - c.S[k]) / D[k] : 0;
-        if (ph !== 'antic' && d * (Tg[k] - a[k]) < 0 && Math.abs(d) > FACE_POP_BACK && p < 0.8) out.pops.push({ f: R[i].f, k: FACE_FEAT[k], d: d * FACE_NORM[k], why: 'back' });
-        else if (ph !== 'antic' && ph !== 'accent' && Math.abs(D[k]) > 0.1 && d / D[k] > FACE_POP_STEP) out.pops.push({ f: R[i].f, k: FACE_FEAT[k], d: d * FACE_NORM[k], why: 'step' });
+        // a take's anticipation moves only the brow height, the lid and the mouth width on purpose (away from the
+        // target); its accent may carry a big share in one frame, never a step back
+        const antic = ph === 'antic' && ANTIC_FEAT.has(k);
+        if (!antic && d * (Tg[k] - a[k]) < 0 && Math.abs(d) > FACE_POP_BACK && p < 0.8) out.pops.push({ f: R[i].f, k: FACE_FEAT[k], d: d * FACE_NORM[k], why: 'back' });
+        else if (!antic && ph !== 'accent' && Math.abs(D[k]) > 0.1 && Math.abs(d) > FACE_POP_STEP * Math.abs(D[k])) out.pops.push({ f: R[i].f, k: FACE_FEAT[k], d: d * FACE_NORM[k], why: 'step' });
+        else if (ph === 'antic' && !ANTIC_FEAT.has(k) && Math.abs(d) > FACE_POP_BACK) out.pops.push({ f: R[i].f, k: FACE_FEAT[k], d: d * FACE_NORM[k], why: 'antic' });
       }
     }
     // progress of the whole face along the change: the projection on S -> where it settles (its first hold frame: the
