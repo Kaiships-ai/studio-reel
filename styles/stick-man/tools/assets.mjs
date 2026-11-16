@@ -1,19 +1,24 @@
 // Asset checks (stage 2, ◇3): the breakdown the shot list asks for, what the kit already has, the story states shot by
 // shot, and the set measured against the distances the story promises.
 //   node styles/stick-man/tools/assets.mjs films/<slug>        -> review/assets.md, exit 1 on a FAIL
-// Shot fields read: set, cast [], props [], state { key: value } (REEL_DATA.md, Shot list). Storyboard `measures`:
+// Shot fields read: set, cast [], props [], state { key: value }, reset [] (REEL_DATA.md, Shot list). Storyboard `measures`.
+// They are BREAKDOWN in fresh.mjs (kept out of the ◇2 review hash; a unit test fails when this file reads another field):
 //   [{ "name": "door 9 to trunk", "story": "34 steps", "meters": 25.5, "tol": 0.1, "module": "set/motel.js",
 //      "path": ["door9", [-0.9, -2.7], "breezeway", "trunk"] }]   (names = PLACES / MARKS / DOOR keys of the set module)
 import fs from 'node:fs'; import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadFilm } from './shotlist.mjs';
+import { BREAKDOWN } from './fresh.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.resolve(HERE, '../../..');
 const film = process.argv[2];
 if (!film) { console.error('usage: assets.mjs films/<slug>'); process.exit(2); }
 const DIR = path.resolve(ROOT, film);
 let L; try { L = loadFilm(DIR); } catch (e) { console.error(e.message); process.exit(2); }
-const { SB, shots, F } = L;
+const { F } = L;
+// only the breakdown (plus id, size, film): a field read here that is not in BREAKDOWN is undefined, never a silent read
+const only = (o, keys) => Object.fromEntries(keys.filter(k => k in o).map(k => [k, o[k]]));
+const SB = { film: L.SB.film, ...only(L.SB, BREAKDOWN.storyboard) }, shots = L.shots.map(s => ({ id: s.id, size: s.size, ...only(s, BREAKDOWN.shot) }));
 const out = [], add = (lvl, id, where, msg) => out.push({ lvl, id, where, msg });
 
 // ---- breakdown

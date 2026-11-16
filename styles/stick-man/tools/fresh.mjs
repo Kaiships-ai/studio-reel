@@ -1,6 +1,7 @@
 // Freshness of judged evidence (stagegate.mjs `newerThan`): a review is stale only when what it judged changed, not when
 // the file was touched. For a JSON file the tool hashes everything except metadata no viewer sees or hears (DROP below):
-//   storyboard.json  each shot's picked option is applied first, then `options` (the other picks) and `pick` are dropped
+//   storyboard.json  each shot's picked option is applied first, then `options` (the other picks) and `pick` are dropped,
+//                    and so is the asset breakdown (BREAKDOWN below: what assets.mjs reads for ◇3, never seen or heard)
 //   any .json        DROP keys are removed at every depth; key order and formatting do not count
 //   anything else    mtime only (the review must be newer than the file)
 // What a review was checked against is kept in review/.fresh.json: { "<review>": { "<target>": { hash, ev } } }, where
@@ -11,6 +12,9 @@
 import fs from 'node:fs'; import path from 'node:path'; import crypto from 'node:crypto';
 
 export const DROP = new Set(['notes', 'note', 'purpose', 'why', 'comments', 'comment']);
+// The ◇3 asset breakdown in storyboard.json (REEL_DATA.md): every field assets.mjs reads, and only those (a unit test
+// keeps the two in step). It lists what a shot needs; the picture and sound it describes are judged from the other fields.
+export const BREAKDOWN = { shot: ['set', 'cast', 'props', 'state', 'reset'], storyboard: ['measures'] };
 
 const strip = v => Array.isArray(v) ? v.map(strip)
   : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).filter(([k]) => !DROP.has(k)).map(([k, x]) => [k, strip(x)])) : v;
@@ -19,17 +23,22 @@ const canon = v => Array.isArray(v) ? `[${v.map(canon).join(',')}]`
 const sha = s => crypto.createHash('sha256').update(s).digest('hex').slice(0, 16);
 
 /** A parsed JSON file without what a reviewer did not judge (see the header). */
-export function judgedView(rel, data) {
-  if (path.basename(rel) === 'storyboard.json' && Array.isArray(data?.shots)) data = { ...data, shots: data.shots.map(s => {
-    const o = s.pick != null && s.options?.[s.pick], m = o ? { ...s, ...o } : { ...s };
-    delete m.options; delete m.pick; return m; }) };
+// `v1` keeps the storyboard's `measures`: records written before BREAKDOWN existed hashed it (isFresh accepts those once)
+export function judgedView(rel, data, v1 = false) {
+  if (path.basename(rel) === 'storyboard.json' && Array.isArray(data?.shots)) {
+    data = { ...data, shots: data.shots.map(s => {
+      const o = s.pick != null && s.options?.[s.pick], m = o ? { ...s, ...o } : { ...s };
+      for (const k of ['options', 'pick', ...BREAKDOWN.shot]) delete m[k];
+      return m; }) };
+    if (!v1) for (const k of BREAKDOWN.storyboard) delete data[k];
+  }
   return strip(data);
 }
 
 /** Hash of the judged view of `file` (absolute), or null when it is not a JSON file (mtime decides then). */
-export function judgedHash(file, rel = file) {
+export function judgedHash(file, rel = file, v1 = false) {
   if (!/\.json$/i.test(file) || !fs.existsSync(file)) return null;
-  try { return sha(canon(judgedView(rel, JSON.parse(fs.readFileSync(file, 'utf8'))))); } catch { return null; }
+  try { return sha(canon(judgedView(rel, JSON.parse(fs.readFileSync(file, 'utf8')), v1))); } catch { return null; }
 }
 
 /**
@@ -44,8 +53,11 @@ export function isFresh(dir, ev, n, book) {
   if (h == null) return tm > em ? { fresh: false, why: `older than ${n} (stale: review again)` } : { fresh: true, why: 'newer' };
   if (!book[ev] || typeof book[ev] !== 'object') book[ev] = {};
   const rec = book[ev][n];
-  if (rec && rec.ev === em) return rec.hash === h ? { fresh: true, why: 'same judged content' }
-    : { fresh: false, why: `${n} changed what a viewer sees or hears since this review (stale: review again)` };
+  if (rec && rec.ev === em) {
+    if (rec.hash === h) return { fresh: true, why: 'same judged content' };
+    if (rec.hash === judgedHash(F(n), n, true)) { rec.hash = h; return { fresh: true, why: 'same judged content (record moved to the breakdown-free hash)' }; }
+    return { fresh: false, why: `${n} changed what a viewer sees or hears since this review (stale: review again)` };
+  }
   if (tm > em) return { fresh: false, why: `older than ${n} and no record of what it judged (stale: review again)` };
   book[ev][n] = { hash: h, ev: em };
   return { fresh: true, why: 'newer (recorded)' };
