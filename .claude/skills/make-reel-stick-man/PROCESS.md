@@ -116,7 +116,7 @@ What follows is specific to this engine (execution pass).
 - **Anticipation.** `antic` 0.1-0.35 on wind-ups (a point, a nod, a head tilt, a scream). It shortens the action itself, so raise `t` with it.
 - **Moving holds.** Every key carries `cycle: BREATH` (chest and head drift), so no pose freezes. Takes use a fast tremble: `{ 'spine.side': [1.5, 4], 'neck.tilt': [2, 5] }`.
 - **Asymmetry.** Give poses `pelvis.roll` and `spine.side` opposite each other.
-- **Takes.** Pop the body up (`bob` up, then land a little low): the engine stretches on the rise and squashes on the landing. Fling the arms out and up, never into the head.
+- **Takes.** Pop the body up (`bob` up, then land a little low): the engine stretches on the rise and squashes on the landing. Fling the arms out and up, never into the head. The face times its own take (anticipation 5 f before the key, accent on the key): put the take's `expr` on the accent frame, not earlier; `small: true` for a quick take with no anticipation.
 - **Arm-solver traps.** A straight arm (`elbow` < 15) or a hand near the head or belly flips the IK. Keep `elbow` ≥ 15 and hands at least a fist away from the body. Measure: joint change ≤ 25°/frame.
 - **Measure** with `shot.mjs --film films/<slug> --frames 0-<last> --report review/pol-stats.txt --fast 1`.
   - Check `joint change top 5`, `frames over 25 deg`, `stance-foot slide` and `actor body inside`.
