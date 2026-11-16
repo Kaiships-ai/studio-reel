@@ -38,3 +38,4 @@ then render the shot. Clocks: one `text` entry per tick with the same `at`, `ent
   the arrowhead is skipped while the tip sits at that cut or off the frame, and a label on a hidden end is skipped.
 - A loupe draws its ring and leader line on every frame but its picture only after the caller hands it a render
   (`grabLoupe`), as `engine/play.js` does on frames outside a dissolve.
+- Animatic: a shot `text` with `box: true` or `{ color, alpha, pad }` and a `%` in the words renders (`animatic.mjs`, test `stick-animatic-text`); the box is a drawtext box, the words are not expanded.
