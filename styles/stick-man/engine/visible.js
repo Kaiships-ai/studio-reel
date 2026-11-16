@@ -29,7 +29,7 @@ export function pointVis(camera, scene, p, own = () => false) {
   ndc.copy(p).project(camera);
   if (!(ndc.z > -1 && ndc.z < 1) || Math.abs(ndc.x) > 1 + VIS_MARGIN || Math.abs(ndc.y) > 1 + VIS_MARGIN) return 'off';
   camera.getWorldPosition(eye); dir.subVectors(p, eye); const d = dir.length(); if (d < 1e-6) return 'in';
-  ray.set(eye, dir.divideScalar(d)); ray.near = 0; ray.far = Math.max(0, d - VIS_EPS);
+  ray.set(eye, dir.divideScalar(d)); ray.near = 0; ray.far = Math.max(0, d - VIS_EPS); ray.camera = camera;   // a Sprite's raycast reads it
   for (const h of ray.intersectObject(scene, true)) if (drawn(h, camera) && opaque(h) && !own(h.object)) return 'occluded';
   return 'in';
 }

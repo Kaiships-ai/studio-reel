@@ -41,6 +41,16 @@ than the hood's clearance).
   collider, the anchors and the tether targets of a sub-step use one eased pose (`hoodie.js` step: `lerpRigid` root +
   `jerseyAt` garment pose; the arms ride the eased root in this frame's pose). `shot.mjs` runs `__motion` before
   `__dbg` for each frame: the other order stepped the cloth back a frame and every row read a fresh cord.
+- Cut that moves the wearer: a body jump between two frames that follow each other (`cloth.js bodyJump`: the throat's
+  world travel changes by over 0.5 m in a frame, over 1.5 m on the frame after a restart, or the heading turns over 90 deg)
+  re-seats the cords and the hood at rest on the new pose and settles them (`hoodie.js` step, as on a first frame;
+  `__dbg` `cord.jump: true` on that frame); the next frame the cords move off with the body (`Cloth.carry`). Before the
+  17/11 fix the Hot Money ep01 r2 bank cuts (s6 f1633 and f1662, 3.5 m) were eased across in 8 sub-steps: the cord was
+  flung sideways and shook for 15 frames (`cords: shake` 0.56 at f1664). Check: `shot.mjs --film films/hm-ep01-r2/s6
+  --frames 1600-1700 --dbg …` reads `jump` on 1633 and 1662 only, and the rows before the first jump are byte-identical
+  to a run without the fix. A pose that snaps by a few cm at a cut (s6 f1971) is no jump and still flicks the cords.
+- The report runs on a multi-act film directed one shot per frame (every frame a cut: `faults.mjs camStats` prints
+  `camera speed at 720p: none`) and on a set with a sprite (`engine/visible.js` gives the ray its camera).
 - Nod close-up: a film whose lead nods 20 deg down and 18 up at a 3/4 close camera (the hood2 proof stage `?part=nod`)
   with `hoodstats=1`; read `rimOff` and `p99`.
 - The hm-ep01 clip-1 head turn close-up (`films/hm-ep01/review/rig/src`, `?clip=1&cam=close`, frames 66-110) is the
