@@ -34,6 +34,7 @@ then render the shot. Clocks: one `text` entry per tick with the same `at`, `ent
 ## Gotchas
 
 - `--mp4` needs a voice track: the proof page has none, so pass `--audio` with a silent wav.
-- Path labels and points behind the camera are skipped; a path segment with an end behind the camera is not drawn.
+- A path segment with an end behind the camera is cut at the camera's near plane, so only its visible part is drawn;
+  the arrowhead is skipped while the tip sits at that cut or off the frame, and a label on a hidden end is skipped.
 - A loupe draws its ring and leader line on every frame but its picture only after the caller hands it a render
   (`grabLoupe`), as `engine/play.js` does on frames outside a dissolve.

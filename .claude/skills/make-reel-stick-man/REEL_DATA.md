@@ -188,6 +188,8 @@ in kg (it enters the centre of mass), `x_yaw<side>` turns an upright prop about 
   0.6 reads at 360 px.
 - `dash`: `'dot'` (default) or `'dash'`. A path's `labels` are boxed, tilt 0, `labelSize` 44, `labelDy` −0.03 (share of
   the height above the end point).
+- A path through a point behind the camera is cut where it crosses the camera plane: only the part in front is drawn,
+  the arrowhead shows only while the tip is on a visible stretch and inside the frame, and a hidden end has no label.
 - Check one on the motion-lib proof page: `tools/shot.mjs --film styles/stick-man/motion-lib/proof --query
   "clip=Move_CarryBag_Walk_Loop&ov=<url-encoded JSON list>" --w 540 --h 960 --frames 0,30`.
 

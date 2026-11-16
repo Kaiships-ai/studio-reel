@@ -118,35 +118,53 @@ export function createOverlays({ stage, width, height, list = [] }) {
       g.restore();
     },
     // a dotted (or dashed) route through world points, projected each frame so it stays on the set as the camera moves;
-    // it draws on over `dur` frames, an arrowhead leads, and labels sit on its ends (the end label pops when it arrives)
+    // it draws on over `dur` frames, an arrowhead leads, and labels sit on its ends (the end label pops when it arrives).
+    // Each segment is cut at the near plane first: a point behind the camera projects mirrored onto the picture.
     path(g, o, f, { a }) {
-      const pts = o.world ? o.world.map(screen) : o.at.map(([x, y]) => [x * width, y * height, true]);
-      const seg = pts.slice(1).map((p, i) => Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]));
-      const total = seg.reduce((x, y) => x + y, 0), dur = o.dur ?? Math.round((o.to - o.from) * 0.6);
+      const cam = stage.camera, zc = -cam.near * 1.001, pts = o.world ?? o.at;
+      const view = p => new THREE.Vector3(p[0], p[2], -p[1]).applyMatrix4(cam.matrixWorldInverse);
+      const px = v => { const s = v.clone().applyMatrix4(cam.projectionMatrix); return [(s.x + 1) / 2 * width, (1 - s.y) / 2 * height]; };
+      const front = p => !o.world || view(p).z < zc;
+      const at = p => (o.world ? px(view(p)) : [p[0] * width, p[1] * height]);
+      const onFrame = ([x, y], m) => x >= -m && x <= width + m && y >= -m && y <= height + m;
+      const piece = (p, q) => {
+        if (!o.world) return { a: at(p), b: at(q), endReal: true };
+        const P = view(p), Q = view(q), pin = P.z < zc, qin = Q.z < zc;
+        if (!pin && !qin) return null;
+        const cut = () => P.clone().lerp(Q, (zc - P.z) / (Q.z - P.z));
+        return { a: px(pin ? P : cut()), b: px(qin ? Q : cut()), endReal: qin };
+      };
+      const pieces = pts.slice(1).map((q, i) => piece(pts[i], q)).filter(Boolean);
+      for (const s of pieces) s.len = Math.hypot(s.b[0] - s.a[0], s.b[1] - s.a[1]);
+      const total = pieces.reduce((x, s) => x + s.len, 0), dur = o.dur ?? Math.round((o.to - o.from) * 0.6);
       const grow = dur > 0 ? clamp01((f - o.from) / dur) : 1;
-      let left = 0, tip = pts[0], dir = 0;
       const lw = (o.width ?? 12) * k, dash = o.dash === 'dash' ? [lw * 2.4, lw * 1.8] : [0.01, lw * 2.2];
+      let tip = null;
       const line = () => {
-        g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); left = smooth(grow) * total; tip = pts[0];
-        for (let i = 0; i < seg.length && left > 0; i++) {
-          const p = pts[i], q = pts[i + 1], t = Math.min(1, left / (seg[i] || 1)); left -= seg[i];
-          tip = [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t]; dir = Math.atan2(q[1] - p[1], q[0] - p[0]);
-          if (p[2] && q[2]) g.lineTo(tip[0], tip[1]); else g.moveTo(tip[0], tip[1]);
+        g.beginPath(); let left = smooth(grow) * total, pen = null; tip = null;
+        for (const s of pieces) {
+          if (left <= 0) break;
+          const t = Math.min(1, left / (s.len || 1)); left -= s.len;
+          const x = s.a[0] + (s.b[0] - s.a[0]) * t, y = s.a[1] + (s.b[1] - s.a[1]) * t;
+          if (!pen || pen[0] !== s.a[0] || pen[1] !== s.a[1]) g.moveTo(s.a[0], s.a[1]);
+          g.lineTo(x, y); pen = [x, y];
+          tip = { x, y, dir: Math.atan2(s.b[1] - s.a[1], s.b[0] - s.a[0]), cut: t >= 1 && !s.endReal };
         }
       };
       g.save(); g.globalAlpha *= a; g.setLineDash(dash);
-      stroke(g, line, lw * 1.9, INK); stroke(g, line, lw, o.color ?? ORANGE);
+      if (total > 0) { stroke(g, line, lw * 1.9, INK); stroke(g, line, lw, o.color ?? ORANGE); }
       g.setLineDash([]);
-      if (o.arrow !== false && grow > 0) {
-        const h = lw * 3.2, head = () => { g.beginPath(); g.moveTo(tip[0] - h * Math.cos(dir - 0.55), tip[1] - h * Math.sin(dir - 0.55)); g.lineTo(tip[0], tip[1]);
-          g.lineTo(tip[0] - h * Math.cos(dir + 0.55), tip[1] - h * Math.sin(dir + 0.55)); };
+      const h = lw * 3.2;
+      if (o.arrow !== false && grow > 0 && tip && !tip.cut && onFrame([tip.x, tip.y], h)) {
+        const { x, y, dir } = tip, head = () => { g.beginPath(); g.moveTo(x - h * Math.cos(dir - 0.55), y - h * Math.sin(dir - 0.55)); g.lineTo(x, y);
+          g.lineTo(x - h * Math.cos(dir + 0.55), y - h * Math.sin(dir + 0.55)); };
         stroke(g, head, lw * 1.9, INK); stroke(g, head, lw, o.color ?? ORANGE);
       }
       g.restore();
       const [la, lb] = o.labels ?? [], lab = { size: o.labelSize ?? 44, tilt: 0, box: true }, up = (o.labelDy ?? -0.03) * height;
-      if (la && pts[0][2]) label(g, { ...lab, text: la }, pts[0][0], pts[0][1] + up, 1, a);
-      const end = pts[pts.length - 1], arrive = o.from + dur;
-      if (lb && end[2] && f >= arrive) label(g, { ...lab, text: lb }, end[0], end[1] + up, pop((f - arrive) / 5), a);
+      const p0 = pts[0], pn = pts[pts.length - 1], arrive = o.from + dur;
+      if (la && front(p0)) { const [x, y] = at(p0); label(g, { ...lab, text: la }, x, y + up, 1, a); }
+      if (lb && f >= arrive && front(pn)) { const [x, y] = at(pn); label(g, { ...lab, text: lb }, x, y + up, pop((f - arrive) / 5), a); }
     },
   };
 

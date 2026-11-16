@@ -3,7 +3,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import { createOverlays, envelope, valueAt } from '../../styles/stick-man/engine/overlays.js';
+import * as overlays from '../../styles/stick-man/engine/overlays.js';
+
+// a namespace import, so the file still loads against an overlays.js without the newer exports and each test fails on
+// its own assertion
+const { createOverlays } = overlays;
+const envelope = overlays.envelope ?? (() => ({})), valueAt = overlays.valueAt ?? (() => NaN);
 
 // a 2D context that records every draw with the scale and alpha in force; '1' is narrower than the other digits
 function recorder() {
@@ -17,7 +22,7 @@ function recorder() {
     setLineDash(d) { g.dash = d; },
     measureText: t => ({ width: [...t].reduce((w, c) => w + (c === '1' ? 20 : 34), 0) }),
     beginPath() { path = []; }, moveTo(x, y) { path.push(['M', x, y]); }, lineTo(x, y) { path.push(['L', x, y]); },
-    arc() {}, rect(x, y, w, h) { path.push(['R', x, y, w, h]); }, roundRect(x, y, w, h) { path.push(['R', x, y, w, h]); },
+    arc(x, y, r) { path.push(['A', x, y, r]); }, rect(x, y, w, h) { path.push(['R', x, y, w, h]); }, roundRect(x, y, w, h) { path.push(['R', x, y, w, h]); },
     fill() { ops.push({ op: 'fill', path, color: g.fillStyle, ...st }); },
     stroke() { ops.push({ op: 'stroke', path, color: g.strokeStyle, width: g.lineWidth, dash: g.dash, ...st }); },
     fillText(text, x, y) { ops.push({ op: 'fillText', text, x, y, color: g.fillStyle, font: g.font, ...st }); },
@@ -34,6 +39,8 @@ function camera(x = 0) {
   c.position.set(x, 1.2, 6); c.lookAt(x, 0.8, 0); c.updateMatrixWorld(); c.updateProjectionMatrix();
   return c;
 }
+// an overlays.js that makes its loupe canvas up front needs a document; this one is never drawn from
+globalThis.document ??= { createElement: () => ({ getContext: () => ({ clearRect() {}, drawImage() {} }) }) };
 const make = (list, width = 1080, height = 1920, stage = { camera: camera() }) => createOverlays({ stage, width, height, list });
 
 test('text: the default sound word still pops in from nothing and shrinks out', () => {
@@ -76,7 +83,7 @@ test('text box: a rounded box is filled under the text, in its colour and alpha,
 test('a clock that ticks keeps the same box: 3:57 then 3:51 (a narrow 1) on consecutive entries, no pop at the tick', () => {
   const clock = (from, to, text) => ({ kind: 'text', from, to, text, at: [0.78, 0.18], size: 65, tilt: 0, enter: 'none', box: { color: '#c62828' } });
   const ov = make([clock(0, 29, '3:57'), clock(30, 59, '3:51')]);
-  const box = f => frame(ov, f).find(o => o.op === 'fill').path[0];
+  const box = f => { const b = frame(ov, f).find(o => o.op === 'fill'); assert.ok(b, `a box on f${f}`); return b.path[0]; };
   assert.deepEqual(box(29), box(30));
   assert.deepEqual(texts(frame(ov, 29)).map(t => t.text), ['3:57']);
   assert.deepEqual(texts(frame(ov, 30)).map(t => [t.text, t.s]), [['3:51', 1]]);
@@ -85,7 +92,7 @@ test('a clock that ticks keeps the same box: 3:57 then 3:51 (a narrow 1) on cons
 test('meter: the bar fills to the keyed value and moves smoothly between keys', () => {
   const W = 0.6 * 1080;
   const ov = make([{ kind: 'meter', from: 0, to: 90, at: [0.5, 0.2], label: 'SUSPICION', keys: [[10, 10], [40, 35]], enter: 'none' }]);
-  const bar = f => { const fills = frame(ov, f).filter(o => o.op === 'fill'); return fills[fills.length - 1].path[0][3]; };
+  const bar = f => { const fills = frame(ov, f).filter(o => o.op === 'fill'); assert.ok(fills.length, `a bar on f${f}`); return fills[fills.length - 1].path[0][3]; };
   assert.ok(Math.abs(bar(0) - 0.10 * W) < 1e-6, 'held at the first key before it');
   assert.ok(Math.abs(bar(40) - 0.35 * W) < 1e-6);
   assert.ok(Math.abs(bar(90) - 0.35 * W) < 1e-6, 'held after the last key');
@@ -99,19 +106,19 @@ test('meter: label and value are at least 14 px on a 360 px wide phone, and the 
   const ov = make([{ kind: 'meter', from: 0, to: 30, at: [0.5, 0.2], label: 'SUSPICION', keys: [[0, 35]], unit: ' / 100', enter: 'none' }], 360, 640);
   const ops = frame(ov, 5);
   for (const t of texts(ops)) assert.ok(fontPx(t) >= 14, `${t.text} at ${fontPx(t)} px`);
-  assert.equal(texts(ops)[1].text, '35 / 100');
+  assert.equal(texts(ops)[1]?.text, '35 / 100');
   for (const o of ops.filter(x => x.op === 'fill')) { const [, x, , w] = o.path[0]; assert.ok(x >= 0 && x + w <= 360, 'inside the frame'); }
 });
 
 test('meter fades in by default', () => {
   const ov = make([{ kind: 'meter', from: 0, to: 30, at: [0.5, 0.2], label: 'S', keys: [[0, 50]] }]);
   assert.equal(frame(ov, 0).length, 0);
-  assert.ok(texts(frame(ov, 2))[0].a < 1);
+  assert.ok(texts(frame(ov, 2))[0]?.a < 1, 'half faded on f2');
   assert.equal(envelope({ kind: 'meter', from: 0, to: 30 }, 10).a, 1);
 });
 
 const STEPS = { kind: 'path', from: 0, to: 60, world: [[-1, 0, 0], [0, 1, 0], [1.5, 1, 0]], dur: 30, labels: ['DOOR 9', 'CAR'], enter: 'none' };
-const drawn = ops => { const s = ops.find(o => o.op === 'stroke' && o.dash.length); let len = 0;
+const drawn = ops => { const s = ops.find(o => o.op === 'stroke' && o.dash.length); assert.ok(s, 'a dotted line is drawn'); let len = 0;
   for (let i = 1; i < s.path.length; i++) if (s.path[i][0] === 'L') len += Math.hypot(s.path[i][1] - s.path[i - 1][1], s.path[i][2] - s.path[i - 1][2]);
   return { len, s }; };
 
@@ -148,4 +155,80 @@ test('path in screen space: at points as shares of the frame', () => {
   const { s, len } = drawn(frame(ov, 10));
   assert.deepEqual(s.path[0], ['M', 216, 960]);
   assert.ok(Math.abs(len - 648) < 1e-6);
+});
+
+const heads = ops => ops.filter(o => o.op === 'stroke' && !o.dash.length);
+const project = p => { const v = new THREE.Vector3(p[0], p[2], -p[1]).project(camera()); return [(v.x + 1) / 2 * 1080, (1 - v.y) / 2 * 1920]; };
+const points = ops => ops.filter(o => o.op === 'stroke').flatMap(o => o.path.map(([, x, y]) => [x, y]));
+const near = (p, q, tol = 1e-6) => Math.hypot(p[0] - q[0], p[1] - q[1]) < tol;
+
+test('path toward a point behind the camera: only the part in front is drawn, no arrowhead at the cut, no end label', () => {
+  const route = [[-0.5, 0, 0.5], [0.5, -8, 0.5]];
+  const ov = make([{ kind: 'path', from: 0, to: 60, world: route, dur: 30, labels: ['A', 'B'], enter: 'none' }]);
+  const ops = frame(ov, 40), { s, len } = drawn(ops);
+  assert.ok(len > 0, 'the front part is drawn');
+  assert.deepEqual(s.path[0].slice(1), project(route[0]), 'starts at the visible point');
+  const mirrored = project(route[1]);
+  assert.ok(!points(ops).some(p => near(p, mirrored, 1)), 'nothing reaches the mirrored projection');
+  const lead = project([0.1875, -5.5, 0.5]), [, x0, y0] = s.path[0], [, x1, y1] = s.path[s.path.length - 1];
+  const cross = (x1 - x0) * (lead[1] - y0) - (y1 - y0) * (lead[0] - x0);
+  assert.ok(Math.abs(cross) / Math.hypot(x1 - x0, y1 - y0) < 1, 'the drawn part lies on the true line toward the camera');
+  assert.equal(heads(ops).length, 0, 'no arrowhead where the line is cut');
+  assert.deepEqual(texts(ops).map(t => t.text), ['A'], 'no label for the hidden end');
+});
+
+test('path from a point behind the camera: no moveTo to the hidden start, the arrowhead lands on the real end', () => {
+  const route = [[0.5, -8, 0.5], [-0.5, 0, 0.5], [0.5, 0, 0.5]];
+  const ov = make([{ kind: 'path', from: 0, to: 60, world: route, dur: 30, labels: ['A', 'B'], enter: 'none' }]);
+  const ops = frame(ov, 40), { s } = drawn(ops);
+  assert.ok(!points(ops).some(p => near(p, project(route[0]), 1)), 'the hidden start is never a path point');
+  assert.ok(s.path.every(([, x, y]) => Number.isFinite(x) && Number.isFinite(y)));
+  const end = project(route[2]), hs = heads(ops);
+  assert.equal(hs.length, 2, 'ink and colour arrowhead');
+  assert.ok(near(hs[0].path[1].slice(1), end), `arrowhead tip on the last point (${hs[0].path[1].slice(1)} vs ${end})`);
+  assert.deepEqual(texts(ops).map(t => t.text), ['B'], 'only the visible end is labelled');
+});
+
+test('path to a point off screen: the arrowhead leads while on screen and goes once the tip leaves the frame', () => {
+  const route = [[-0.5, 0, 0.5], [8, 0, 0.5]];
+  assert.ok(project(route[1])[0] > 1080 * 1.5, 'the end is far off the right edge');
+  const ov = make([{ kind: 'path', from: 0, to: 60, world: route, dur: 30, labels: ['A', 'B'], enter: 'none' }]);
+  const early = frame(ov, 4), hs = heads(early);
+  assert.equal(hs.length, 2, 'arrowhead while the tip is on screen');
+  const [, tx, ty] = hs[0].path[1], { s } = drawn(early), [, lx, ly] = s.path[s.path.length - 1];
+  assert.ok(near([tx, ty], [lx, ly]) && tx >= 0 && tx <= 1080, 'the arrowhead sits on the line tip');
+  const done = frame(ov, 40);
+  assert.equal(heads(done).length, 0, 'no arrowhead once the tip is off the frame');
+});
+
+test('arrows with no enter: they pop in from nothing, overshoot, and shrink out (the old default)', () => {
+  const ov = make([{ kind: 'arrows', from: 0, to: 30, world: [0, 0, 0.8], axis: [1, 0, 0] }]);
+  const head = f => { const st = frame(ov, f).filter(o => o.op === 'stroke'); const p = st[0].path; return Math.hypot(p[2][1] - p[3][1], p[2][2] - p[3][2]); };
+  assert.equal(frame(ov, 0).length, 0, 'nothing on the first frame');
+  assert.equal(frame(ov, 30).length, 0, 'gone on the last frame');
+  const full = 44;
+  assert.ok(head(2) > 0 && head(2) > full * 0.5, `popping head ${head(2)}`);
+  assert.ok(Math.max(head(3), head(4)) > full, 'overshoots past full size');
+  assert.ok(Math.abs(head(10) - full) < 1e-6, 'settles at full size');
+  assert.ok(head(28) < full, 'shrinks out');
+});
+
+test('loupe with no enter: the ring pops in from nothing and shrinks out (the old default)', () => {
+  const ov = make([{ kind: 'loupe', from: 0, to: 30, look: [0, 0, 0.8], at: [0.5, 0.3], r: 0.2 }]);
+  const ring = f => frame(ov, f).find(o => o.op === 'stroke' && o.path[0]?.[0] === 'A')?.path[0][3];
+  assert.equal(frame(ov, 0).length, 0);
+  assert.ok(ring(2) > 0 && ring(2) < 0.2 * 1080 * 1.2);
+  assert.ok(Math.max(ring(3), ring(4)) > 0.2 * 1080, 'overshoots');
+  assert.ok(Math.abs(ring(10) - 0.2 * 1080) < 1e-6);
+  assert.ok(ring(28) < 0.2 * 1080);
+  assert.equal(frame(ov, 30).length, 0);
+});
+
+test('text with no enter: scale pops at entry and overshoots before it settles (the old default)', () => {
+  const ov = make([{ kind: 'text', from: 0, to: 30, text: 'BANG', at: [0.5, 0.3] }]);
+  const s = f => texts(frame(ov, f))[0].s;
+  assert.ok(s(1) < s(2) && s(2) < Math.max(s(3), s(4)));
+  assert.ok(Math.max(s(3), s(4)) > 1, 'overshoots');
+  assert.equal(s(5), 1);
+  assert.ok(s(28) < 1, 'shrinks out');
 });
