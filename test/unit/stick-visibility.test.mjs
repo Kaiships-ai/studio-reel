@@ -92,3 +92,11 @@ test('a mesh nearer the lens than its near plane is not drawn, so it hides nothi
   cam.near = 0.05; cam.updateProjectionMatrix();
   assert.equal(pointVis(cam, sc, p), 'in', 'the same card clipped by the near plane');
 });
+
+// Hot Money ep01 r2 s5 (17/11): a set with a sprite (the muzzle flash) crashed the report: three's Sprite.raycast reads
+// the raycaster's camera, which pointVis never set. A sprite is never a cover, and the point behind it stays seen.
+test('a sprite between the lens and a point does not crash the ray and does not hide the point', () => {
+  const s = new THREE.Scene(), sp = new THREE.Sprite(new THREE.SpriteMaterial()); sp.position.set(0, 0, -2); s.add(sp); s.updateMatrixWorld();
+  const cam = new THREE.PerspectiveCamera(50, 1, 0.05, 100); cam.updateMatrixWorld(); cam.updateProjectionMatrix();
+  assert.equal(pointVis(cam, s, new THREE.Vector3(0, 0, -5)), 'in');
+});
