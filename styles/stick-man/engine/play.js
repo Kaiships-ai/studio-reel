@@ -7,7 +7,13 @@ import * as THREE from 'three';
 import { createStage, B as toThree, lin, PLACE } from './look.js';
 import { makeStick, KAI, TELLER, GUARD, EXPR, HEAD_C } from './cast.js';
 import { VERBS, STAND, SIT, REST_ARM, W, lerp, lerp3, add3, angDiff, toLocal, smoother, hash, handEase } from './verbs.js';
-import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, exprAccent, bodyFollow, LATE, EXPR_LEAD, exprKeyAt, markOwner, isBodyVerb, autoActing, faceStateAt, visemeTrack, TAKES } from './acting.js';
+import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, exprAccent, bodyFollow, LATE, EXPR_LEAD, exprKeyAt, markOwner, isBodyVerb, autoActing, faceStateAt, visemeTrack, faceChanges, BLINKS, BLINK_GAP, focusEase } from './acting.js';
+import { mixFace, faceParams } from './faces.js';
+// face timing in the runtime (face-research.md rules 13-14): focus changes, free-blink shape
+const FOCUS_N = 12, PUPIL_K = 1.6, TURN_BLINK = 0.6;
+const ANXIOUS = new Set(['nervous', 'worried', 'angry', 'furious', 'panic', 'scream', 'shock', 'pain']);
+// per-key face options (acting.js changeClass) carried from a beat or an anim key onto its expression key
+const faceOpts = k => Object.fromEntries(['take', 'small', 'exprSpeed'].filter(n => k[n] != null).map(n => [n, k[n]]));
 import { createCamera } from './camera.js';
 import { pointVis, foldVis } from './visible.js';
 import { planShots } from './shotplan.js';
@@ -190,7 +196,7 @@ async function buildAct(R, X) {
     const a = byName[name]; if (!a) throw new Error(`anim: no cast entry ${name}`);
     const ks = keys.map(k => ({ ...k, f: frameOf(k.at || k) })).sort((x, y) => x.f - y.f);
     a.anim = { track: compileTrack(ks, { ...MOTION_POSES, ...(R.poses || {}) }, { pos: a.st0.slice(), yaw: a.c.yaw ?? 0 }, R.style), keys: ks, frames: null };
-    for (const k of ks) { if (k.expr) a.exprs.push({ f: k.f, expr: k.expr, word: null, cut: k.ease === 'snap' }); if (k.look) a.focusSegs.push({ from: k.f, target: k.look }); }
+    for (const k of ks) { if (k.expr) a.exprs.push({ f: k.f, expr: k.expr, word: null, cut: k.ease === 'snap', ...faceOpts(k) }); if (k.look) a.focusSegs.push({ from: k.f, target: k.look, cut: k.ease === 'snap' }); }
   }
   const animFrame = (a, f) => {
     const A = a.anim, f0 = F0 - 30; A.frames ||= playActor(A.track, f0, F1 + 1);
@@ -207,7 +213,7 @@ async function buildAct(R, X) {
     if (!a && PROPV[b.do]) { const out = PROPV[b.do](b, C); for (const s of out.segs) (segs[s.prop] ||= []).push(s); for (const q of out.cues || []) cues.push({ fr: q.f, name: q.name, strength: q.strength }); return; }
     if (!a) { if (!KEYV.has(b.do)) fx.push(b); if (b.do === 'blink') cues.push({ fr: b.at, name: 'sensor_beep', strength: 0.4 }); if (b.do === 'glint') cues.push({ fr: b.at, name: 'glint', strength: 0.4 }); return; }
     // the face leads its word by EXPR_LEAD frames (acting.js); `word` is kept for the expression-lead gate
-    if (b.expr) { const word = typeof b.f === 'number' ? null : frameOf({ ...b, offset: 0 }); a.exprs.push({ f: word == null ? b.at : Math.min(b.at, word - EXPR_LEAD), expr: b.expr, word }); }
+    if (b.expr) { const word = typeof b.f === 'number' ? null : frameOf({ ...b, offset: 0 }); a.exprs.push({ f: word == null ? b.at : Math.min(b.at, word - EXPR_LEAD), expr: b.expr, word, ...faceOpts(b) }); }
     if (b.look) a.focusSegs.push({ from: b.at, target: b.look });
     if (b.mark) a.owners.add.push(markOwner(b));
     if (!b.do || KEYV.has(b.do)) return;
@@ -238,11 +244,13 @@ async function buildAct(R, X) {
   for (const a of actors) {
     for (const k of Object.keys(a.owners)) a.owners[k].sort((x, y) => x.start - y.start);
     a.exprs.sort((x, y) => x.f - y.f);
-    // a take (shock, scream...) is wide-eyed: no blink inside one and none forced on a swap into or out of it
-    const take = f => TAKES.has(String(exprAt(a.exprs, f)).replace(/_[oO]$/, ''));
-    const swaps = a.exprs.slice(1).filter((e, i) => e.expr !== a.exprs[i].expr && !take(e.f) && !take(e.f - 1)).map(e => e.f);
-    a.blinks = blinkTrack(a.seed, F0 - 60, F1 + 60, swaps);
-    a.blinks.starts.splice(0, Infinity, ...a.blinks.starts.filter(b => ![0, 1, 2, 3].some(d => take(b + d))));
+    // blinks (acting.js blinkTrack): the change blinks belong to the face (faceStateAt); free blinks keep their distance
+    // from them, never land in a take's anticipation, accent or hold (frightened eyes stay open), come faster on an
+    // anxious face and less often on a listener
+    const ch = faceChanges(a.exprs);
+    a.quiet = ch.filter(c => c.quiet).map(c => c.quiet);
+    a.blinks = blinkTrack(a.seed, F0 - 60, F1 + 60, { forced: ch.filter(c => c.blink).map(c => c.blink), quiet: a.quiet,
+      gap: a.says?.length ? BLINK_GAP.talk : BLINK_GAP.listen, shapeAt: f => (ANXIOUS.has(String(exprAt(a.exprs, f)).replace(/_[oO]$/, '')) ? 'fast' : 'regular') });
     a.vis = a.says?.length ? visemeTrack(words, fps, a.says) : null;     // the mouth follows the letters of its lines
     a.focusSegs.sort((x, y) => x.from - y.from);
   }
@@ -406,13 +414,26 @@ async function buildAct(R, X) {
     const tgtPos = t => t === 'camera' ? camPos : byName[t] ? toB(byName[t].S.parts.head.getWorldPosition(hv)) : Array.isArray(t) ? t : t ? livePos(t) : camPos;
     const cur = focusAt(a, f, a.focusSegs, active), head = toB(a.S.parts.head.getWorldPosition(new THREE.Vector3()));
     const yaw = F.bodies[a.name].yaw, gz = x => gaze(head, yaw, tgtPos(x.prop || x.target));
-    let g = gz(cur), d = 0;
-    while (d < 3 && focusAt(a, f - d - 1, a.focusSegs, active).key === cur.key) d++;
-    if (d < 3) g = lerp3(gz(focusAt(a, f - d - 1, a.focusSegs, active)), g, smoother((d + 1) / 4));
+    // a focus change (acting.js focusEase, rule 14): the pupils dart first, the head follows; a big shift brings a long
+    // blink in the middle of the head move (ASK p. 87), unless the face is in a take
+    const g = gz(cur); let d = 0;
+    while (d < FOCUS_N && focusAt(a, f - d - 1, a.focusSegs, active).key === cur.key) d++;
+    let gH = g, gE = g, turnBlink = 0;
+    if (d < FOCUS_N && !focusAt(a, f - d, a.focusSegs, active).cut) {   // a look that changed on a cut is already there
+      const g0 = gz(focusAt(a, f - d - 1, a.focusSegs, active));
+      const w = focusEase(d); gE = lerp3(g0, g, w.eye); gH = lerp3(g0, g, w.head);
+      const b0 = f - d + 1, k = d - 1;
+      if (Math.abs(g[0] - g0[0]) + Math.abs(g[1] - g0[1]) > TURN_BLINK && k >= 0 && k < BLINKS.long.length && !a.quiet.some(([x, y]) => b0 < y && b0 + BLINKS.long.length > x)) turnBlink = BLINKS.long[k];
+    }
+    state.pupil = Math.max(-1, Math.min(1, PUPIL_K * (gE[0] - gH[0])));
     const sc = saccade(a.seed, f);
-    const blink = a.blinks.at(f);
-    const P = { expr: e, state, blink, look: g[0] + sc[0] + (cur.prop ? 0 : a.idleLook || 0), look_v: g[1] + sc[1], t: f, age: f - ek.f, cam: camPos };
+    const mix = mixFace(state), blink = Math.max(a.blinks.at(f), turnBlink, mix.blink);
+    const P = { expr: e, state, mix, blink, look: gH[0] + sc[0] + (cur.prop ? 0 : a.idleLook || 0), look_v: gH[1] + sc[1], t: f, age: f - ek.f, cam: camPos };
     a.S.face(P); a.face = P; a.lastExpr = e;
+    // the numbers the face QA reads (tools/faults.mjs faceFaults): the drawn face (before the blink), its target, the change
+    const F_ = mix.F, T_ = faceParams(state.b), r4 = x => +(+x).toFixed(4), c = state.change;
+    a.faceDbg = { v: [F_.brow[0], F_.brow[1], F_.lid, F_.white, F_.ry, F_.mw].map(r4), tgt: [T_.brow[0], T_.brow[1], T_.lid, T_.white, T_.ry, T_.mw].map(r4),
+      cls: c?.cls ?? null, kf: c?.kf ?? null, s: c?.s ?? null, phase: state.phase || 'hold', blink: r4(blink), pupil: r4(state.pupil), look: r4(gH[0]), focus: cur.key };
   }
 
   // where a named thing is right now: effect objects and set props by their world position, places by name
@@ -510,6 +531,7 @@ async function buildAct(R, X) {
         // a motion v2 actor acts from hand-set keys, not verbs: past its first key it is acting ('key')
         body: a.verbs.filter(x => x.start <= f && f < x.end && isBodyVerb(x)).map(x => x.name).pop() || (a.anim && a.anim.keys.length > 1 && f >= a.anim.keys[0].f ? 'key' : null), lead: !!a.lead,
         mouthA: +(a.S.faceStats?.mouth ?? 0).toFixed(5), faceKey: a.S.faceStats?.key ?? '', talking: !!a.talking,
+        face: a.faceDbg || null, headP: a.P ? [a.P.head_pitch || 0, a.P.head_dv || 0, a.P.head_tilt || 0].map(x => +(+x).toFixed(4)) : null,
         exprFrom: a.exprKey?.f > -1e8 ? a.exprKey.f : null, exprWord: a.exprKey?.word ?? null,
         headW: toB(c).map(x => +x.toFixed(4)), figH: +((sole - ys[0]) / height).toFixed(3),
         inFrame: a.S.root.visible && vz < 1 && box[2] > 0 && box[0] < width && box[3] > 0 && box[1] < height };

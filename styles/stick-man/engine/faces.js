@@ -153,11 +153,13 @@ function eye(g, F, ex, s, ey, blink, rim = false) {
     line(g, [[ex + s * w, ey + h], [ex - s * w * 0.85, ey + 0.004], [ex + s * w, ey - h]], 0.019);
     return;
   }
-  // oval / ring. The lid line cuts the top; blink 1 drops it to 0.65, blink 2 closes the eye to a short stroke.
+  // oval / ring. The lid line cuts the top. blink (0 open .. 1 shut; 2 = shut, from older callers) multiplies over the
+  // expression's lid (a blink on a half-lidded face closes the rest of the way); a shut eye is a short stroke.
+  const bl = Math.max(0, Math.min(1, blink || 0));
   let lid = Math.max(0, (F.lid || 0) + (s > 0 ? F.lidA || 0 : 0));
-  if (blink === 1) lid = Math.max(lid, 0.65);
+  if (bl > 0) lid = 1 - (1 - Math.min(1, lid)) * (1 - bl);
   const slope = Math.tan((F.lidTilt || 0) * DEG) * s, L = rx * 1.5;
-  if (blink === 2 || lid >= 0.96) {
+  if (bl >= 0.96 || lid >= 0.96) {
     const y = ey - ry * 0.18;
     taper(g, [[ex - L * 0.95, y + (-L * 0.95) * slope], [ex, y - 0.004], [ex + L * 0.95, y + (L * 0.95) * slope]], 0.0115, INK, 0.5);
     return;
@@ -302,28 +304,46 @@ export function faceParams(name) {
     skin: { blush: S.blush || 0, veins: 0, tears: S.tears || 0, socket: 0, gloom: 0 } };
 }
 const LIDDED = new Set(['oval']);
-// st = { a, b (expression names), u (0..1, may overshoot a little), life ({brow, tilt, lid, mw}: hold drift), talk ({open,
-// wide, round, teeth} or null), gasp (0..1 extra open in a change) }. Returns the drawable face and the blink it forces.
+// the feature groups that move on their own clocks (acting.js faceStateAt `uf`): the brows lead, the lids and eye size
+// follow, the mouth comes last (ASK p. 249); the gaze has its own fast clock
+const LIDG = new Set(['rx', 'ry', 'lid', 'lidTilt', 'lidA', 'low', 'white', 'pupil']), MOUTHG = new Set(['mw', 'mx', 'my', 'curve', 'rest', 'round']);
+// st = { a (an expression name, or a mixed face F from an earlier mixFace: the face on screen when this change began),
+// b (expression name), u (0..1, may overshoot), uf ({gaze, brow, lid, mouth}: per-feature clocks, default u), ug (gaze
+// clock), swapEye (true / false: the eye kind has swapped; null = swap at u 0.5 inside a squeeze), squeeze (false = no
+// lid squeeze through the change), antic (0..1: a take's anticipation: squint, brows down, mouth shut), blink (0..1),
+// pupil (gaze offset: the eyes leading a head turn), life ({brow, tilt, lid, mw}: hold drift), talk ({open, wide, round,
+// teeth} or null), gasp (0..1 extra open in a change) }. Returns the drawable face and the blink it forces (0..1).
 export function mixFace(st) {
-  const A = faceParams(st.a), B = faceParams(st.b ?? st.a), u = st.u ?? 1, uc = Math.max(0, Math.min(1, u)), L = st.life || {};
-  const m = (x, y) => x + (y - x) * u, F = { ...B };
-  // the eyes move on their own clock (st.ug, a 3-frame saccade) and along an arc, not a straight line: a pupil crossing
-  // from one side to the other dips a little at the middle, as an eyeball rolls (asset 2.6)
-  const ug = st.ug ?? u, mg = (x, y) => x + (y - x) * ug;
-  for (const k of NUM) F[k] = GAZE.has(k) ? mg(A[k], B[k]) : m(A[k], B[k]);
-  F.gy = -GAZE_ARC.k * Math.min(1, Math.abs(B.gx - A.gx) + 0.5 * Math.abs(B.cross - A.cross)) * Math.sin(Math.PI * Math.max(0, Math.min(1, ug)));
-  F.white = Math.max(0, Math.min(1, F.white)); F.bw = Math.max(0.6, F.bw);
-  F.brow = A.brow.map((x, i) => m(x, B.brow[i]));
-  F.skin = Object.fromEntries(Object.keys(A.skin).map(k => [k, Math.max(0, Math.min(1, A.skin[k] + (B.skin[k] - A.skin[k]) * uc))]));
-  F.eye = uc < 0.5 ? A.eye : B.eye; F.mouth = uc < 0.5 ? A.mouth : B.mouth;
+  const aObj = st.a && typeof st.a === 'object', A = aObj ? st.a : faceParams(st.a), B = faceParams(st.b ?? (aObj ? st.a.name : st.a));
+  const cl = x => Math.max(0, Math.min(1, x)), u = st.u ?? 1, U = st.uf || {}, L = st.life || {};
+  const ub = U.brow ?? u, ul = U.lid ?? u, um = U.mouth ?? u, ug = U.gaze ?? st.ug ?? u, uc = cl(ub), umc = cl(um), antic = st.antic || 0;
+  const F = { ...B };
+  // the eyes move on their own clock (a 3-frame saccade) and along an arc, not a straight line: a pupil crossing from
+  // one side to the other dips a little at the middle, as an eyeball rolls (asset 2.6)
+  for (const k of NUM) { const w = GAZE.has(k) ? ug : LIDG.has(k) ? ul : MOUTHG.has(k) ? um : ub; F[k] = A[k] + (B[k] - A[k]) * w; }
+  F.gy = -GAZE_ARC.k * Math.min(1, Math.abs(B.gx - A.gx) + 0.5 * Math.abs(B.cross - A.cross)) * Math.sin(Math.PI * cl(ug));
+  if (st.pupil) F.gx = Math.max(-1.2, Math.min(1.2, F.gx + st.pupil));
+  F.white = cl(F.white); F.bw = Math.max(0.6, F.bw);
+  F.brow = A.brow.map((x, i) => x + (B.brow[i] - x) * ub);
+  F.skin = Object.fromEntries(Object.keys(B.skin).map(k => [k, cl((A.skin[k] || 0) + (B.skin[k] - (A.skin[k] || 0)) * uc)]));
+  F.eye = st.swapEye == null ? (uc < 0.5 ? A.eye : B.eye) : st.swapEye ? B.eye : A.eye; F.mouth = umc < 0.5 ? A.mouth : B.mouth;
   F.lid = Math.max(0, Math.min(0.9, F.lid + (LIDDED.has(F.eye) ? (L.lid || 0) * (1 - F.white) : 0)));   // a ring eye has no idle lid drift: on a ring it draws a ruler line
   F.ry = Math.max(0.02, F.ry); F.rx = Math.max(0.02, F.rx); F.pupil = Math.max(0.008, F.pupil);
   F.brow[0] += L.tilt || 0; F.brow[1] += L.brow || 0; F.mw *= 1 + (L.mw || 0);
-  // the hidden swaps: eyes squeeze through a change of eye kind, the mouth passes through an open gasp
+  // a take's anticipation: the eyes squint, the brows drop, the mouth shuts and narrows (ASK p. 284)
+  if (antic > 0) {
+    if (LIDDED.has(F.eye)) F.lid = Math.min(0.9, F.lid + 0.30 * antic * (1 - F.white));
+    F.brow[1] -= 0.02 * antic; F.rest *= 1 - antic; F.mw *= 1 - 0.15 * antic;
+  }
+  // the hidden swaps (older callers): eyes squeeze through a change of eye kind, the mouth passes through an open gasp
   let blink = 0;
-  if (A.eye !== B.eye) { const c = Math.sin(Math.PI * uc) ** 2; blink = c > 0.8 ? 2 : c > 0.35 ? 1 : 0; }
-  else if (LIDDED.has(F.eye)) F.lid = Math.min(0.9, F.lid + 0.30 * Math.sin(Math.PI * uc) * (A.lid !== B.lid || A.ry !== B.ry || A.white !== B.white ? 1 : 0.4) * (uc < 1 ? 1 : 0) * (1 - 0.85 * F.white));
-  const gasp = (st.gasp || 0) + (A.mouth !== B.mouth && !st.talk ? 0.5 * Math.sin(Math.PI * uc) : 0);
+  if (A.eye !== B.eye && st.swapEye == null) blink = Math.sin(Math.PI * uc) ** 2;
+  else if (st.squeeze !== false && LIDDED.has(F.eye)) F.lid = Math.min(0.9, F.lid + 0.30 * Math.sin(Math.PI * uc) * (A.lid !== B.lid || A.ry !== B.ry || A.white !== B.white ? 1 : 0.4) * (uc < 1 ? 1 : 0) * (1 - 0.85 * F.white));
+  blink = Math.max(blink, st.blink || 0);
+  // the gasp: the mouth opens through a change of mouth kind (on the mouth's clock); a gasp that was under way when
+  // this change began closes out instead of vanishing
+  const gasp = ((st.gasp || 0) + (A.gasp || 0) * (1 - umc) + (A.mouth !== B.mouth && !st.talk ? 0.5 * Math.sin(Math.PI * umc) : 0)) * (1 - antic);
+  F.gasp = gasp;
   if (st.talk) {
     const v = st.talk, any = v.open > 0.04 ? 1 : 0;
     F.talk = { open: Math.min(1.1, v.open * (1 + 0.3 * F.rest) + 0.22 * F.rest * any + gasp * 0.3), wide: v.wide ?? 0, round: Math.max(v.round ?? 0, F.round * 0.6), teeth: v.teeth ?? 0 };
@@ -366,7 +386,7 @@ export function drawFaceState(g, F, blink = 0, t = 0, o = {}) {
   for (const s of [-1, 1]) {
     const ex = s * dx;
     eye(g, Fe, ex, s, ey, blink, !!o.glasses);
-    const by = ey + bh - (blink === 2 ? 0.008 : 0) + (s < 0 ? liftL : liftR);
+    const by = ey + bh - 0.008 * Math.max(0, Math.min(1, blink || 0)) + (s < 0 ? liftL : liftR);   // the brows dip as the lids close
     brow(g, ex, s, by, tilt, arch, F.bw || 1);
   }
   const y0 = Lo.my / K + (F.my || 0), x0 = F.mx || 0;
