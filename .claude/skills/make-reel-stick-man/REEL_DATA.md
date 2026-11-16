@@ -131,7 +131,28 @@ anim: { eng: polish([ hold(0, { ...KNEEL, pos: E0, yaw: -120, expr: 'sly', look:
 | `antic` | 0.1-0.35: a wind-up against the move; it shortens the action itself, so give the move enough `t` |
 | `t` | on the next key: move length in frames (default 7, strokes 4, big arm moves 14-22, a take 9) |
 | `cycle` | `{ 'channel': [amplitude, period, phase] }` on top until the next key (breath, tremble) |
-| `expr`, `look` | the face (EXPR names; takes = shock/scream/panic/pain/furious/angry land in 3 f, never blink) and the gaze target (an actor, a prop, `camera`) |
+| `expr`, `look` | the face (EXPR names; how each change is timed: [Face timing](#face-timing)) and the gaze target (an actor, a prop, `camera`) |
+| `take`, `small`, `exprSpeed` | on a key with `expr`: `take: true` makes any face a take, `take: false` makes a take face a fast change; `small: true` = a small take (no anticipation, 10 f); `exprSpeed: 'fast' \| 'normal' \| 'slow'` overrides the class. Beats take the same three fields |
+
+### Face timing
+
+`engine/acting.js` times every expression change by its class (films/hm-ep01-r2/review/face-research.md section 10).
+Frames are at 30 fps, counted from the key.
+
+| Class | Faces | Timing |
+|---|---|---|
+| take | shock, scream, panic, from a face that is not one of them | anticipation 5 f before the key (lids squint, brows drop, mouth shuts, head dips, on twos), accent 4 f on ones to a 20 % overshoot, hold 3 f, settle 8 f on twos. No blink until the settle |
+| small | any key with `small: true` | no anticipation, accent 4 f, done at 10 f, the head almost still |
+| fast | pain, furious, angry, manic, laugh, excited; take to take | 6 f, overshoot 10 % |
+| normal | every other face | 10 f, overshoot 4 %; pupils 1 f early, brows on the key, lids 1 f late, mouth 2 f late |
+| slow | sad, bored, sleep, cry; a take or fast face released into a calm one | 16 f |
+
+- A change that starts while another is still moving starts from the face on screen, so keys may come close without a
+  pop. They still need room to read: a change reaches 90 % and holds 6 f before the next key (the `face timing` gate).
+- A normal or slow change opens out of a blink that starts 1 f before the key (always when the eye kind changes, e.g.
+  oval to `^`). Free blinks: a speaker every 60-100 f, a listener every 90-150 f; 7 f, closing faster than opening.
+- A look at a new target: the pupils move first, the head follows 2 f later; a big shift brings a long blink.
+- Budget per actor: 2-6 changes per 10 s, at most 4 takes a minute and 1 per 10 s (`face timing` gate).
 
 Conventions: yaw 0 faces the camera side (-y), yaw -90 faces -x; `swing` + is forward. Keep `elbow` ≥ 15 and hands a fist
 away from head and belly (the IK flips otherwise). Off screen = a far `pos` on a key at a cut frame. `style: 'kaiships'`

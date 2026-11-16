@@ -15,7 +15,7 @@ import http from 'node:http'; import fs from 'node:fs'; import path from 'node:p
 import { fileURLToPath } from 'node:url';
 import { start, run } from '../../../kit/env.mjs';
 import { microanim } from './forensic/microanim.mjs';
-import { acting, joints, compress, holdLines, faultList, hiddenOf } from './faults.mjs';
+import { acting, joints, compress, holdLines, faultList, hiddenOf, faceLines } from './faults.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '../../..');                     // repo root: serves the page and node_modules/three
@@ -137,7 +137,7 @@ if (A.speed && !REEL) {
     `    longest run with no camera motion: ${best} frames${best ? ' (ends ' + bestAt + ')' : ''}; camera speed at 720p: peak ${peak.toFixed(1)} px/frame (frame ${peakAt}), median ${[...live].sort((a, b) => a - b)[live.length >> 1].toFixed(2)}`,
     `    (dissolve and flash-cut frames left out of the camera numbers: ${compress(cuts) || 'none'}; frames over 25 px/frame: ${compress(fast) || 'none'})`);
   for (const n of Object.keys(rows[0].actors)) {
-    const starts = rows.filter((r, i) => i > 0 && r.actors[n].blink === 1 && rows[i - 1].actors[n].blink === 0).map(r => r.f);
+    const starts = rows.filter((r, i) => i > 0 && r.actors[n].blink > 0 && !(rows[i - 1].actors[n].blink > 0)).map(r => r.f);
     const gaps = starts.slice(1).map((s, i) => s - starts[i]);
     let slide = 0, slideAt = null;
     rows.forEach(r => { for (const s of ['L', 'R']) { const m = r.motion.feet[n]?.[s]; if (m && m.planted && m.px > slide) { slide = m.px; slideAt = r.f; } } });
@@ -156,6 +156,8 @@ if (A.speed && !REEL) {
     // micro-animation (FORENSIC.md section 3; principles, the mouth range is a gate): head moves and holds, mouth range
     const mi = microanim(rows)[n];
     if (mi) L.push(`      micro: head moves ${mi.headMoves}, median ${mi.moveLenMedian ?? '-'} f; holds ${mi.holds}, median ${mi.holdMedian ?? '-'} f, longest ${mi.holdMax} f; mouth CV ${mi.mouthCV_talk == null ? '-' : mi.mouthCV_talk.toFixed(2)} over ${mi.talkFrames} talking frames`);
+    // the face (faults.mjs faceFaults): pops, rise and hold of each change, how often it changes, takes, blinks, eye lead
+    L.push(...faceLines(rows, n));
     L.push(`      body acting: ${lf.length ? (100 * (lf.length - idleF.length) / lf.length).toFixed(1) : '-'} % of ${lf.length} lead frames in frame; frames without: ${compress(idleF) || 'none'}`);
   }
   // (g) faces: distinct expressions on screen (>= 3 frames, open-mouth twins count as their base) and how early each change

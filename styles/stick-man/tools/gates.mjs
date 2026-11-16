@@ -69,6 +69,16 @@ if (actors.length) {
   else { const low = ba.filter(x => x[1] < 70), w = ba.reduce((a, b) => (b[1] < a[1] ? b : a));
     gate('body acting', !low.length, `lowest ${w[1]} % (${w[0]}, ${w[2]} f)${low.length ? '; under: ' + low.map(x => x[0]).join(', ') : ''}; ${ba.map(x => x[0] + ' ' + x[1]).join(', ')}`, '>= 70 % per lead'); }
 }
+// faces (faults.mjs faceFaults, face-research.md rule 15): no pop in any face, and every change rises, holds, and comes
+// as often as the reference (2-6 per 10 s, <= 4 takes a minute, 12-30 blinks a minute)
+const fpop = actors.map(([, n, b]) => { const m = /face: pops (\d+)/.exec(b); return m ? [n, +m[1]] : null; }).filter(Boolean);
+if (actors.length && !fpop.length) { missing('face pops'); missing('face timing'); }
+else if (fpop.length) {
+  const bad = fpop.filter(x => x[1] > 0);
+  gate('face pops', !bad.length, bad.length ? bad.map(x => `${x[0]} ${x[1]}`).join(', ') : '0', '0 per actor');
+  const ft = actors.map(([, n, b]) => [n, /face faults: (.*)/.exec(b)?.[1]]).filter(x => x[1] != null && x[1] !== 'none');
+  gate('face timing', !ft.length, ft.length ? ft.map(x => `${x[0]}: ${x[1]}`).join(' | ') : 'none', 'rise >= 6 f, hold >= 6 f, 2-6 changes / 10 s, <= 4 takes / min, 12-30 blinks / min');
+}
 // mouth range (FORENSIC.md fix 8: reference mouth-area CV 0.33-0.56, ours was 0.06-0.21): an actor who talks >= 30 frames
 // opens and closes the mouth for real. Head holds / moves are principles (report line "micro:"), not gates.
 const mouths = actors.map(([, n, b]) => { const m = /mouth CV ([\d.]+) over (\d+) talking frames/.exec(b); return m && +m[2] >= 30 ? [n, +m[1]] : null; }).filter(Boolean);

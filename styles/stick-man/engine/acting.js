@@ -1,8 +1,7 @@
 // The automatic acting layer: blinks, expression timing, idle life, eyes on whatever is moving, settle springs.
 // Nothing here is written in the reel data; all of it is a pure function of the frame and a per-actor seed.
 import { hash, clamp, smooth, smoother, settle, rightB, fwdB, angDiff } from './verbs.js';
-
-const BLINK = [1, 2, 2, 1];                                       // half, shut, shut, half
+import { EXPR, mixFace } from './faces.js';
 
 // ---------------------------------------------------------------- micro-animation timing (FORENSIC.md section 3)
 // Reference head moves: 12-15 f, a slow start (7 % of the travel in the first eighth: 0.07 0.21 0.34 0.48 0.63 0.75 0.86 1),
@@ -12,17 +11,34 @@ export const slowIn = x => { x = clamp(x, 0, 1); return 0.5 * x + 0.5 * smoother
 // a move with a small overshoot that settles back (follow-through): 1 + over at ~85 %, back to 1 at the end
 export const slowInOver = (x, over = 0.06) => slowIn(x) + over * Math.sin(Math.PI * clamp((x - 0.55) / 0.6, 0, 1)) * (x < 1.15 ? 1 : 0);
 
-// blink starts: seeded gaps of 15-45 frames (0.5-1.5 s), plus one centred on each expression swap
-export function blinkTrack(seed, f0, f1, swaps) {
-  const forced = swaps.map(s => s - 2), starts = [];
-  let f = f0 + Math.round(4 + 20 * hash(seed, 7));
-  for (let i = 0; f < f1; i++) {
-    if (!forced.some(s => Math.abs(s - f) < 10)) starts.push(f);
-    f += 15 + Math.round(30 * hash(seed, i, 11));
+// Blinks (face-research.md rule 12-13; Trutoiu 2011, Bentivoglio 1997). A blink closes fast and opens slowly; the value
+// is how far the lid is down (0 open .. 1 shut) and multiplies over the expression's own lid (faces.js eye). regular 7 f
+// = close 2, shut 1, open 4; fast 5 f (anxious, angry) = close 2, open 3; long 9 f (a change of thought, a big look) =
+// close 3, shut 2, open 4. Was [1, 2, 2, 1]: 4 f, symmetric, every 15-45 f (~60 a minute, 3x the reference).
+export const BLINKS = { regular: [0.5, 1, 1, 0.75, 0.5, 0.25, 0.1], fast: [0.5, 1, 0.66, 0.33, 0.1], long: [0.33, 0.66, 1, 1, 1, 0.75, 0.5, 0.25, 0.1] };
+// free blinks come a seeded gap after the last blink of any kind: a speaker every 60-100 f, a listener every 90-150 f
+// (~22 / ~15 a minute; people blink ~26 a minute talking, ~17 at rest; the reference ~22). One in ten is doubled.
+export const BLINK_GAP = { talk: [60, 100], listen: [90, 150] }, DOUBLE_BLINK = 0.1;
+export const blinkAt = (list, fr) => { let v = 0; for (const b of list) { const k = fr - b.f, S = BLINKS[b.shape] || BLINKS.regular; if (k >= 0 && k < S.length) v = Math.max(v, S[k]); } return v; };
+// o: { forced: [{f, shape}] (blinks another layer draws, e.g. the change blinks of faceChanges: free blinks keep their
+// distance), quiet: [[a, b)] (no free blink overlaps one: a take's anticipation, accent and hold), gap: [min, max],
+// shapeAt: f -> BLINKS name }. An array is read as the old expression-swap frames.
+export function blinkTrack(seed, f0, f1, o = {}) {
+  if (Array.isArray(o)) o = { forced: o.map(f => ({ f: f - 1 })) };
+  const F = (o.forced || []).slice().sort((a, b) => a.f - b.f), quiet = o.quiet || [], [g0, g1] = o.gap || BLINK_GAP.talk;
+  const shapeAt = o.shapeAt || (() => 'regular'), out = [];
+  const hit = (s, n) => quiet.find(([a, b]) => s < b && s + n > a);
+  let last = f0 - Math.round(g0 * hash(seed, 7)), k = 0;
+  for (let i = 0; ; i++) {
+    let s = last + g0 + Math.round((g1 - g0) * hash(seed, i, 11));
+    if (k < F.length && F[k].f < s + 20) { last = Math.max(last, F[k].f); k++; continue; }   // a forced blink is the next one
+    if (s >= f1) break;
+    const shape = shapeAt(s), n = BLINKS[shape].length;
+    for (let q = hit(s, n); q; q = hit(s, n)) s = q[1];                                     // after the take, never inside it
+    out.push({ f: s, shape }); last = s;
+    if (hash(seed, i, 13) < DOUBLE_BLINK && !hit(s + n + 2, n)) { out.push({ f: s + n + 2, shape }); last = s + n + 2; }
   }
-  starts.push(...forced);
-  starts.sort((a, b) => a - b);
-  return { starts, at: fr => { for (const s of starts) if (fr >= s && fr < s + 4) return BLINK[fr - s]; return 0; } };
+  return { starts: out.map(b => b.f), list: out, at: fr => blinkAt(out, fr) };
 }
 
 // [{f, expr}] sorted; the expression in force at frame f
@@ -63,8 +79,13 @@ export function focusAt(actor, f, focus, active) {
   let seg = null;
   for (const s of focus) if (s.from <= f) seg = s;
   const t = seg ? seg.target : actor.focus;
-  return { key: String(t), target: t, from: seg ? seg.from : -1e9 };
+  return { key: String(t), target: t, from: seg ? seg.from : -1e9, cut: !!seg?.cut };
 }
+
+// a focus change, d frames after it (rule 14): the pupils dart there in GAZE_T frames, the head starts HEAD_LAG frames
+// later and turns over HEAD_T frames (eyes lead, the heavier head lags 20-40 ms: Bizzi 1971). 0..1 each.
+export const HEAD_LAG = 2, HEAD_T = 5;
+export const focusEase = d => ({ eye: smoother(clamp((d + 1) / 3, 0, 1)), head: smoother(clamp((d + 1 - HEAD_LAG) / HEAD_T, 0, 1)) });
 
 // face slide (look, look_v) from the head toward a world point, in the figure's own frame
 export function gaze(headB, yaw, pB) {
@@ -100,29 +121,55 @@ export function idleBeats(seed, f) {
   }
 }
 
-// An expression change comes with a body accent on the same frame: a head lift or dip, a shoulder shrug, a tilt.
+// An expression change comes with a body accent on the same frame: a head lift or dip, a shoulder shrug, a tilt. Every
+// take and fast face has one (rule 10; it was missing for panic, scream, pain, angry and furious).
 const ACCENT = {
   shock: { head_dv: 0.05, head_pitch: -9, shrug: 0.08, pitch: -4 },
+  scream: { head_dv: 0.06, head_pitch: -12, shrug: 0.10, pitch: -5 },
+  panic: { head_dv: 0.04, head_pitch: -6, shrug: 0.10, tilt: 6 },
+  pain: { head_dv: -0.03, head_pitch: 8, shrug: 0.08, tilt: 6 },
+  angry: { head_pitch: 7, head_dv: -0.02, shrug: 0.04, lean: 3 }, furious: { head_pitch: 9, head_dv: -0.03, shrug: 0.07, lean: 4 },
+  manic: { head_dv: 0.04, head_pitch: -6, tilt: 9 }, laugh: { head_dv: 0.03, head_pitch: -8, shrug: 0.05, tilt: 5 },
+  excited: { head_dv: 0.05, head_pitch: -6, shrug: 0.06 },
+  sad: { head_pitch: 9, head_dv: -0.03, shrug: -0.03, tilt: 5 }, suspicious: { head_pitch: 4, tilt: -7, lean: -2 },
   worried: { shrug: 0.07, head_pitch: 6, head_dv: -0.02, tilt: 5 },
   happy: { head_dv: 0.03, shrug: 0.03, tilt: 7 }, grin: { head_dv: 0.03, shrug: 0.04, tilt: 7, pitch: -2 },
   closed: { head_pitch: 7, head_dv: -0.02, tilt: 6 }, calm: { head_pitch: 4, tilt: 4 },
   smug: { head_pitch: -5, tilt: 8, lean: 2 }, sly: { head_pitch: 3, tilt: -8, lean: -2 },
   stern: { head_pitch: 8, head_dv: -0.03, shrug: -0.02 }, neutral: { head_pitch: 4, head_dv: -0.015 },
 };
-// The accent is an attitude, not a twitch: a 3-frame anticipation the other way, a MOVE_T slow-in rise with a small
-// overshoot, held (breathing) until the next change or ACC_HOLD frames, then released over ACC_OUT frames. 1.6x the old
-// size (FORENSIC: our head moves travelled 0.5-0.7 W, the reference ~2.3 W on its big beats).
-const ACC_A = 3, ACC_HOLD = 60, ACC_OUT = 24, ACC_K = 2.0;
+// The accent is an attitude, not a twitch. Normal / slow change: a 3-frame anticipation the other way, a MOVE_T slow-in
+// rise with a small overshoot. Fast change: 2 f anticipation, a 6 f rise. Take: the take's own phases (dip in the
+// anticipation, up on ones on the face's accent frames, hold, settle on twos), so face and head hit together (ASK p. 286).
+// Small take: no anticipation, a third of the size. Held (breathing) until the next change or ACC_HOLD frames, then
+// released over ACC_OUT frames. 1.6x the old size (FORENSIC: the reference's big beats travel ~2.3 W).
+const ACC_A = 3, ACC_HOLD = 60, ACC_OUT = 24, ACC_K = 2.0, ACC_DIP = 0.3, SMALL_K = 0.3;
+const easeOut = x => 1 - (1 - clamp(x, 0, 1)) ** 2;
+const twos = (a, n) => clamp((a - (a % 2) + 2) / n, 0, 1);                 // on twos: a new value every 2nd frame
+function accentEnv(c, a) {
+  if (c.cls === 'take') {
+    const { accent, hold, settle, over } = TAKE, A = c.antic;
+    if (a < -A) return null;
+    if (a < 0) return -ACC_DIP * smooth(twos(a + A, A));
+    if (a < accent) return -ACC_DIP + (1 + over + ACC_DIP) * easeOut((a + 1) / accent);
+    if (a < accent + hold) return 1 + over;
+    return 1 + over * (1 - smooth(twos(a - accent - hold, settle)));
+  }
+  if (c.cls === 'small') { const { accent, total, over } = SMALL_TAKE; if (a < 0) return null;
+    return SMALL_K * (a < accent ? (1 + over) * easeOut((a + 1) / accent) : 1 + over * (1 - slowIn((a - accent + 1) / (total - accent)))); }
+  const fast = c.cls === 'fast', A = fast ? 2 : ACC_A, T = fast ? FACE_TIMING.fast.T : c.cls === 'slow' ? FACE_TIMING.slow.T : MOVE_T, d = a + A;
+  if (d < 0) return null;
+  return d < A ? -0.15 * smooth(d / A) : -0.15 + 1.15 * slowInOver((d - A) / T, 0.08 / 1.15);
+}
 export function exprAccent(track, f, seed) {
-  const o = {};
-  for (let j = 1; j < track.length; j++) {
-    const k = track[j]; if (k.expr === track[j - 1].expr) continue;
-    const d = f - k.f + ACC_A; if (d < 0) continue;
-    const next = track.slice(j + 1).find(x => x.expr !== k.expr), end = Math.min(next ? next.f - k.f : 1e9, ACC_HOLD);
-    if (d >= ACC_A + end + ACC_OUT) continue;
-    const up = d < ACC_A ? -0.15 * smooth(d / ACC_A) : -0.15 + 1.15 * slowInOver((d - ACC_A) / MOVE_T, 0.08 / 1.15);
-    const e = ACC_K * up * (d > ACC_A + end ? 1 - slowIn((d - ACC_A - end) / ACC_OUT) : 1), A = ACCENT[k.expr]; if (!A) continue;
-    const sg = hash(seed, k.f, 71) < 0.5 ? -1 : 1;
+  const o = {}, list = faceChanges(track);
+  for (const c of list) {
+    const A = ACCENT[baseOf(c.to)]; if (!A) continue;
+    const a = f - c.kf, env = accentEnv(c, a); if (env == null) continue;
+    const next = list[c.i + 1], end = Math.min(next ? next.kf - c.kf : 1e9, ACC_HOLD);
+    if (a >= end + ACC_OUT) continue;
+    const e = ACC_K * env * (a > end ? 1 - slowIn((a - end) / ACC_OUT) : 1);
+    const sg = hash(seed, c.kf, 71) < 0.5 ? -1 : 1;
     for (const [n, v] of Object.entries(A)) { const key = n === 'tilt' ? 'head_tilt' : n; o[key] = (o[key] || 0) + v * e * (n === 'tilt' || n === 'lean' ? sg : 1); }
   }
   return o;
@@ -285,23 +332,128 @@ export function visemeTrack(words, fps, lines) {
   };
 }
 
-// The face state at frame f: the expression change is in-betweened over FACE_T frames with the slow-in spacing and a
-// small overshoot (every frame a new drawing), the eyes squeeze and the mouth gasps through the swap (faces.js mixFace);
-// in a hold the brows, lids and mouth width drift on slow seeded sines, so a held face is alive but never twitches.
+// ---------------------------------------------------------------- the face, change by change (face-research.md section 10)
+// Every expression key starts a change of one class:
+//   take    shock / scream / panic from a non-take face: anticipation TAKE.antic f before the key (on twos: lids squint,
+//           brows drop, mouth shuts, head dips), accent on ones from the key to an overshoot, a hold at the extreme, a
+//           settle on twos (ASK pp. 284-286). Frightened eyes stay open: no blink in the anticipation, accent or hold.
+//   small   a key with `small: true`: the Rathbone take, no anticipation, a 4 f accent cushioned to 10 f (ASK p. 292).
+//   fast    6 f, overshoot 0.10: pain, furious, angry, manic, laugh, excited, and take -> take.
+//   normal  10 f, soft overshoot 0.04. slow 16 f: sad, bored, sleep, cry, and a tense face (take / fast) released
+//           into a calm one.
+//   cut     a key with `cut` (an `ease: 'snap'` anim key): the new face is already there.
+// A key overrides with `take: true | false`, `small: true` or `exprSpeed: 'fast' | 'normal' | 'slow'`.
+// Inside a normal / slow / fast change the features overlap (ASK p. 249, frames from the key): pupils 1 f early in 3 f,
+// brows on the key over T, lids and eye size 1 f late (T - 2), mouth 2 f late (T + 2); the head accent's anticipation
+// starts 3 f early (exprAccent). A normal / slow change opens out of a blink that starts 1 f before the key (when the
+// eye kind changes, or FORCED_BLINK_GAP frames after the last forced one); a change of eye kind swaps on the shut
+// frame (a fast change hides it in a fast blink), a change of mouth kind on the gasp's peak. A new change always starts
+// from the face on screen (rule 1): the mixed face of the change it interrupts, never that change's target (the SH240
+// pop).
+const baseOf = e => String(e || 'neutral').replace(/_[oO]$/, '');
+export const FACE_CLASS = {
+  take: new Set(['shock', 'scream', 'panic']),
+  fast: new Set(['pain', 'furious', 'angry', 'manic', 'laugh', 'excited']),
+  slow: new Set(['sad', 'bored', 'sleep', 'cry']),
+  calm: new Set(['neutral', 'calm', 'happy', 'grin', 'closed', 'deadpan', 'smug', 'proud', 'blush', 'sleep', 'bored', 'sad']),
+};
 export const FACE_T = 10;
-// a take (asset 2.5): a sudden face (a fright, a scream, a jolt of pain, a flash of rage) lands in 3 frames, not 10, so
-// it hits on the same frame as the body's jolt; the eyes (gaze) always move in 3 frames, ahead of the rest of the face
-export const TAKE_T = 3, TAKES = new Set(['shock', 'scream', 'panic', 'pain', 'furious', 'angry']), FACE_SPEED = { take: TAKE_T, gaze: 3 };
+const LAG = { gaze: -1, brow: 0, lid: 1, mouth: 2 }, LEN = { brow: 0, lid: -2, mouth: 2 };
+export const FACE_TIMING = {
+  fast: { T: 6, over: 0.10, lag: { gaze: -1, brow: 0, lid: 0, mouth: 1 }, len: { brow: 0, lid: 0, mouth: 0 } },
+  normal: { T: FACE_T, over: 0.04, lag: LAG, len: LEN },
+  slow: { T: 16, over: 0.04, lag: LAG, len: LEN },
+};
+export const TAKE = { antic: 5, accent: 4, hold: 3, settle: 8, over: 0.20 }, SMALL_TAKE = { accent: 4, total: 10, over: 0.10 };
+export const GAZE_T = 3, FORCED_BLINK_GAP = 60;
+// kept for older callers: a take's accent length, the take faces
+export const TAKE_T = TAKE.accent, TAKES = FACE_CLASS.take, FACE_SPEED = { take: TAKE_T, gaze: GAZE_T };
+
+export function changeClass(from, k) {
+  const to = baseOf(k.expr), fr = baseOf(from), takeFace = FACE_CLASS.take.has(to);
+  if (k.cut) return 'cut';
+  if (k.small) return 'small';
+  if (k.take === true || (k.take !== false && takeFace && !FACE_CLASS.take.has(fr))) return 'take';
+  if (k.exprSpeed) return k.exprSpeed;
+  if (takeFace || FACE_CLASS.fast.has(to)) return 'fast';
+  if (FACE_CLASS.slow.has(to) || ((FACE_CLASS.take.has(fr) || FACE_CLASS.fast.has(fr)) && FACE_CLASS.calm.has(to))) return 'slow';
+  return 'normal';
+}
+const eyeKind = e => (EXPR[e] || EXPR[baseOf(e)] || EXPR.neutral).eye;
+const MEMO = new WeakMap();
+// the changes of an expression track ([{f, expr, cut?, take?, small?, exprSpeed?}] sorted by f): { i, kf (key frame),
+// s (first frame anything moves), from, to, cls, antic, end (the face is exactly `to` from here), quiet ([a, b): no free
+// blink), blink ({f, shape} | null), swap (frame the eye kind swaps, or null: swap inside the squeeze) }
+export function faceChanges(track) {
+  const m = MEMO.get(track); if (m && m.n === track.length && m.last === track[track.length - 1]) return m.list;
+  const list = []; let from = track[0]?.expr || 'neutral', lastBlink = -1e9;
+  for (let j = 1; j < track.length; j++) {
+    const k = track[j]; if (k.expr === from) continue;
+    const cls = changeClass(from, k), kf = k.f, prev = list[list.length - 1];
+    let s = cls === 'take' ? kf - TAKE.antic : cls === 'cut' || cls === 'small' ? kf : kf + FACE_TIMING[cls].lag.gaze;
+    if (prev) s = Math.min(Math.max(s, prev.s + 1), Math.max(kf, prev.s + 1));
+    const c = { i: list.length, key: k, kf, s, from, to: k.expr, cls, antic: cls === 'take' ? kf - s : 0, quiet: null, blink: null, swap: null };
+    if (cls === 'cut') c.end = kf;
+    else if (cls === 'take') { c.end = kf + TAKE.accent + TAKE.hold + TAKE.settle; c.quiet = [s, kf + TAKE.accent + TAKE.hold]; c.swap = kf; }
+    else if (cls === 'small') { c.end = kf + SMALL_TAKE.total; c.quiet = [kf, kf + SMALL_TAKE.accent]; c.swap = kf; }
+    else {
+      const t = FACE_TIMING[cls];
+      c.end = kf + Math.max(...['brow', 'lid', 'mouth'].map(g => t.lag[g] + Math.ceil(1.15 * (t.T + t.len[g])))) + 1;
+      const kinds = eyeKind(from) !== eyeKind(k.expr);
+      // a fast change blinks only to hide a change of eye kind (a fast 5 f blink: its shut frame is the key)
+      if (kinds || (cls !== 'fast' && kf - 1 - lastBlink >= FORCED_BLINK_GAP)) { c.blink = { f: kf - 1, shape: cls === 'slow' ? 'long' : cls === 'fast' ? 'fast' : 'regular' }; lastBlink = kf - 1; }
+      if (kinds) c.swap = cls === 'fast' ? kf : kf + 1;                     // the shut frame of the change blink
+    }
+    list.push(c); from = k.expr;
+  }
+  MEMO.set(track, { n: track.length, last: track[track.length - 1], list });
+  return list;
+}
+// the change on screen at f (the last one that has started), or null
+export function changeAt(track, f) { let c = null; for (const x of faceChanges(track)) if (x.s <= f) c = x; else break; return c; }
+
+// the face of change c at frame f, without hold drift or lip-sync
+function changeState(track, c, f) {
+  const a = f - c.kf, b = c.to;
+  if (f >= c.end) return { a: b, b, u: 1, ug: 1, phase: 'hold', change: c };
+  const from = fromOf(track, c), base = { a: from, b, change: c, squeeze: false, swapEye: c.swap == null ? null : f >= c.swap };
+  if (c.cls === 'take') {
+    const { accent, hold, settle, over } = TAKE;
+    if (a < 0) return { ...base, u: 0, ug: 0, antic: smooth(twos(a + c.antic, c.antic)), phase: 'antic' };
+    if (a < accent) { const u = (1 + over) * easeOut((a + 1) / accent); return { ...base, u, ug: clamp((a + 1) / 2, 0, 1), antic: 1 - (a + 1) / accent, phase: 'accent' }; }
+    if (a < accent + hold) return { ...base, u: 1 + over, ug: 1, phase: 'hold' };
+    return { ...base, u: 1 + over * (1 - smooth(twos(a - accent - hold, settle))), ug: 1, phase: 'settle' };
+  }
+  if (c.cls === 'small') {
+    const { accent, total, over } = SMALL_TAKE;
+    const u = a < accent ? (1 + over) * easeOut((a + 1) / accent) : 1 + over * (1 - slowIn((a - accent + 1) / (total - accent)));
+    return { ...base, u, ug: clamp((a + 1) / 2, 0, 1), phase: a < accent ? 'accent' : 'settle' };
+  }
+  const t = FACE_TIMING[c.cls], g = n => slowInOver((a + 1 - t.lag[n]) / (t.T + t.len[n]), t.over);
+  const uf = { gaze: slowIn((a + 1 - t.lag.gaze) / GAZE_T), brow: g('brow'), lid: g('lid'), mouth: g('mouth') };
+  return { ...base, u: uf.brow, ug: uf.gaze, uf, phase: 'change' };
+}
+// where change c starts from: the face on screen the frame before it moves. A finished change gives its expression
+// name; an unfinished one gives its mixed face (faces.js mixFace accepts either as `a`)
+function fromOf(track, c) {
+  if ('from0' in c) return c.from0;
+  const list = faceChanges(track), p = list[c.i - 1], g = c.s - 1;
+  if (!p || g >= p.end) c.from0 = c.from;
+  else { const { F } = mixFace(changeState(track, p, g)); c.from0 = { ...F, name: c.from }; }
+  return c.from0;
+}
+
+// The face state at frame f (faces.js mixFace draws it): a, b (from / to: a name, or a mixed face for a), u (the brow
+// clock, the main one), uf ({gaze, brow, lid, mouth}: each feature's own clock), ug (gaze), antic (0..1: the take's
+// anticipation), swapEye, squeeze, blink (the change blink, 0..1), phase, change; in a hold the brows, lids and mouth
+// width drift on slow seeded sines, so a held face is alive but never twitches.
 export function faceStateAt(track, f, seed, talk = null) {
-  const k = exprKeyAt(track, f), i = track.indexOf(k), prev = track.slice(0, Math.max(0, i)).reverse().find(x => x.expr !== k.expr);
-  const T = TAKES.has(String(k.expr).replace(/_[oO]$/, '')) ? FACE_SPEED.take : FACE_T;
-  // the change starts at the first key of this run of the same expression: a second key that repeats it (a new body
-  // pose, same face) must not replay the change from the old face
-  let j = Math.max(0, i); while (j > 0 && track[j - 1].expr === k.expr) j--;
-  const age = f - track[j].f, ramp = prev && !track[j].cut && age >= 0 && age < T + 6;   // on a cut the new face is already there
-  const u = ramp ? slowInOver(age / T, T < FACE_T ? 0.14 : 0.10) : 1, ug = ramp ? slowInOver(age / FACE_SPEED.gaze, 0) : 1;
+  const k = exprKeyAt(track, f), c = changeAt(track, f);
+  const st = c ? changeState(track, c, f) : { a: k.expr, b: k.expr, u: 1, ug: 1, phase: 'hold', change: null };
+  let blink = 0;
+  if (c) for (const x of faceChanges(track).slice(Math.max(0, c.i - 1), c.i + 2)) if (x.blink) blink = Math.max(blink, blinkAt([x.blink], f));
   const ph = q => 6.283 * hash(seed, q);
   const life = { brow: 0.007 * Math.sin(6.283 * f / 47 + ph(81)), tilt: 2.2 * Math.sin(6.283 * f / 71 + ph(82)),
     lid: 0.05 * (0.5 + 0.5 * Math.sin(6.283 * f / 59 + ph(83))), mw: 0.05 * Math.sin(6.283 * f / 37 + ph(84)) };
-  return { a: ramp ? prev.expr : k.expr, b: k.expr, u, ug, life, talk: talk ? talk(f) : null, key: k };
+  return { ...st, blink, life, talk: talk ? talk(f) : null, key: k };
 }

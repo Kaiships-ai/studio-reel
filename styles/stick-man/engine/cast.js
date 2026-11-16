@@ -655,7 +655,7 @@ export function makeStick(spec) {
     const e = EXPR[P.expr] ? P.expr : 'neutral', E = EXPR[e], t = P.t || 0, age = P.age ?? 99;
     const marks = (E.marks || []).filter(([, life]) => !life || age < life).map(([k]) => [k, age]);
     for (const m of [...(P.marks || []), ...S.xmarks]) if (!marks.some(q => q[0] === m[0])) marks.push(m);
-    const mx = P.state ? mixFace(P.state) : null, blink = Math.max(P.blink || 0, mx ? mx.blink : 0);
+    const mx = P.mix || (P.state ? mixFace(P.state) : null), blink = Math.max(P.blink || 0, mx ? mx.blink : 0);
     let slide = null;
     if (FACE_2D.on && P.cam) {
       // where the lens is, seen from the head (head-local, +z = the face's front): the face slides toward the side it turns
@@ -672,7 +672,7 @@ export function makeStick(spec) {
     face.visible = !FACE_2D.on || !P.cam;
     FR.draw(e, blink, t, marks, P.cam ? B(...P.cam) : null, mx ? mx.F : null, slide);
     S.faceStats = FR.stats;
-    const ta = P.state && EXPR[P.state.a]?.tint, tb = E.tint, u = P.state ? Math.max(0, Math.min(1, P.state.u)) : 1;
+    const ta = P.state && EXPR[typeof P.state.a === 'string' ? P.state.a : P.state.a?.name]?.tint, tb = E.tint, u = P.state ? Math.max(0, Math.min(1, P.state.u)) : 1;
     const tk = tb ? Math.min(1, age / 6) * u : ta ? 1 - u : 0;   // a furious face flushes over 6 frames (and fades as it leaves)
     headSolid.material.color.copy(skin0); if (tk) headSolid.material.color.lerp(tintC.setRGB(...(tb || ta)), tk);
     if (headSolid.material.uniforms?.uFill) headSolid.material.uniforms.uFill.value = S.fill > 0 ? -1.08 + 2.2 * Math.min(1, S.fill) : -2;

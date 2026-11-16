@@ -113,3 +113,99 @@ export function holdLines(rows, hidden = new Map()) {
   }
   return L;
 }
+
+// ---------------------------------------------------------------- faces (films/hm-ep01-r2/review/face-research.md s. 8)
+// Judged on the drawn face numbers of __dbg (`face`: v = [brow tilt deg, brow height W, lid, white, eye ry W, mouth
+// width] before the blink, tgt = the same for the target expression, cls / kf / phase of the change on screen, blink
+// 0..1, pupil (the eyes' lead on a head turn), look (the head's turn), focus). Each number is scaled by FACE_NORM.
+export const FACE_NORM = [30, 0.1, 1, 1, 0.07, 1];
+export const FACE_POP_BACK = 0.05;          // a pop: one frame moves a feature away from its target by more than this, before 80 % of the change
+export const FACE_POP_STEP = 0.35;          // or carries more than 35 % of a feature's whole change in one frame (a take's accent may)
+export const FACE_RISE_MIN = 6;             // a normal / slow change rises 10 % -> 90 % in >= 6 f
+export const FACE_HOLD_MIN = 6;             // a change reaches 90 % and holds >= 6 f before the next one starts (rule 4)
+export const FACE_CHANGES_10S = [2, 6];     // changes per 10 s on screen (the floor is judged over >= 10 s in frame)
+export const FACE_TAKES_MIN = 4, FACE_TAKES_10S = 1;   // take onsets per 60 s, per 10 s, per actor
+export const FACE_BLINKS_MIN = [12, 30];    // blinks per minute in frame (judged over >= 10 s in frame)
+export const FACE_EYE_LEAD = [0, 3];        // head onset minus pupil onset on a focus change, frames
+const ANTIC_FEAT = new Set([1, 2, 5]);   // brow height, lid, mouth width
+const FACE_FEAT = ['brow tilt', 'brow height', 'lid', 'white', 'eye size', 'mouth width'];
+const maxIn = (fs, w) => { let m = 0; for (let i = 0, j = 0; i < fs.length; i++) { while (fs[i] - fs[j] >= w) j++; m = Math.max(m, i - j + 1); } return m; };
+export function faceFaults(rows, n) {
+  const R = rows.filter(r => r.actors[n]?.inFrame && r.actors[n].face), N = R.length, out = { frames: N, pops: [], rises: [], holds: [], antic: [], blinkShape: [], eyeLead: [] };
+  const V = r => r.actors[n].face.v.map((x, i) => x / FACE_NORM[i]), T = r => r.actors[n].face.tgt.map((x, i) => x / FACE_NORM[i]);
+  const joined = (a, b) => a && b && a.f === b.f - 1 && a.act === b.act && !b.motion?.cut;
+  // the changes: runs of rows with one change frame (kf), the start values S = the frame before the run
+  const ch = [];
+  for (let i = 0; i < N; i++) {
+    const fc = R[i].actors[n].face; if (fc.kf == null) continue;
+    if (!ch.length || ch[ch.length - 1].kf !== fc.kf) ch.push({ kf: fc.kf, cls: fc.cls, first: R[i].f, i0: i, S: joined(R[i - 1], R[i]) ? V(R[i - 1]) : null, rows: [] });
+    ch[ch.length - 1].rows.push(i);
+  }
+  for (const c of ch) {
+    if (c.cls === 'cut' || !c.S) continue;
+    const Tg = T(R[c.i0]), D = Tg.map((t, k) => t - c.S[k]), dd = D.reduce((s, x) => s + x * x, 0);
+    for (const i of c.rows) {
+      if (!joined(R[i - 1], R[i])) continue;
+      const a = V(R[i - 1]), b = V(R[i]), ph = R[i].actors[n].face.phase;
+      for (let k = 0; k < b.length; k++) {
+        const d = b[k] - a[k], p = Math.abs(D[k]) > 0.02 ? (a[k] - c.S[k]) / D[k] : 0;
+        // a take's anticipation moves only the brow height, the lid and the mouth width on purpose (away from the
+        // target); its accent may carry a big share in one frame, never a step back
+        const antic = ph === 'antic' && ANTIC_FEAT.has(k);
+        if (!antic && d * (Tg[k] - a[k]) < 0 && Math.abs(d) > FACE_POP_BACK && p < 0.8) out.pops.push({ f: R[i].f, k: FACE_FEAT[k], d: d * FACE_NORM[k], why: 'back' });
+        else if (!antic && ph !== 'accent' && Math.abs(D[k]) > 0.1 && Math.abs(d) > FACE_POP_STEP * Math.abs(D[k])) out.pops.push({ f: R[i].f, k: FACE_FEAT[k], d: d * FACE_NORM[k], why: 'step' });
+        else if (ph === 'antic' && !ANTIC_FEAT.has(k) && Math.abs(d) > FACE_POP_BACK) out.pops.push({ f: R[i].f, k: FACE_FEAT[k], d: d * FACE_NORM[k], why: 'antic' });
+      }
+    }
+    // progress of the whole face along the change: the projection on S -> where it settles (its first hold frame: the
+    // hold drift moves the end a little), or S -> the target when the next change cuts it short
+    const hi = c.rows.find(i => R[i].actors[n].face.phase === 'hold'), E = hi != null ? V(R[hi]).map((x, k) => x - c.S[k]) : D;
+    const ee = E.reduce((s, x) => s + x * x, 0) || dd;
+    const P = i => V(R[i]).reduce((s, x, k) => s + (x - c.S[k]) * E[k], 0) / ee;
+    const at = q => { const i = c.rows.find(j => P(j) >= q); return i == null ? null : R[i].f; };
+    c.f90 = dd > 0.01 ? at(0.9) : c.first;
+    if (dd > 0.01 && (c.cls === 'normal' || c.cls === 'slow')) { const a10 = at(0.1); if (a10 != null && c.f90 != null) out.rises.push({ kf: c.kf, rise: c.f90 - a10 }); }
+    if (c.cls === 'take') { const na = c.rows.filter(i => R[i].actors[n].face.phase === 'antic').length; if (na < 3) out.antic.push({ kf: c.kf, frames: na }); }
+  }
+  for (let j = 0; j + 1 < ch.length; j++) { const c = ch[j]; if (c.cls === 'cut' || !c.S) continue;
+    out.holds.push({ kf: c.kf, hold: c.f90 == null ? -(ch[j + 1].first - c.first) : ch[j + 1].first - c.f90 }); }
+  const starts = ch.map(c => c.first), takes = ch.filter(c => c.cls === 'take' || c.cls === 'small').map(c => c.kf);
+  // every new face counts, one that lands on a cut too (the viewer sees it change)
+  out.changes = { n: starts.length, per10: N ? 300 * starts.length / N : 0, max10: maxIn(starts, 300) };
+  out.takes = { n: takes.length, max60: maxIn(takes, 1800), max10: maxIn(takes, 300) };
+  // blinks: onsets in frame, closing frames (onset to the first full value) against opening frames (judged on blinks seen whole)
+  const bl = []; for (let i = 0; i < N; i++) { const b = R[i].actors[n].face.blink, pb = joined(R[i - 1], R[i]) ? R[i - 1].actors[n].face.blink : 0; if (b > 0 && !(pb > 0)) bl.push(i); }
+  for (const i of bl) {
+    let j = i, top = i; while (j + 1 < N && joined(R[j], R[j + 1]) && R[j + 1].actors[n].face.blink > 0) { j++; if (R[j].actors[n].face.blink > R[top].actors[n].face.blink + 1e-6) top = j; }
+    const close = top - i + 1, open = j - top, whole = joined(R[j], R[j + 1]) && !(R[j + 1].actors[n].face.blink > 0); if (whole && close >= open) out.blinkShape.push({ f: R[i].f, close, open });
+  }
+  out.blinks = { n: bl.length, perMin: N ? 1800 * bl.length / N : 0 };
+  // eye lead: on a focus change, the frame the pupils start to lead against the frame the head starts to turn
+  for (let i = 1; i < N; i++) {
+    const p = R[i - 1].actors[n].face, q = R[i].actors[n].face; if (p.focus == null || p.focus === q.focus || !joined(R[i - 1], R[i])) continue;
+    let pe = null, he = null;
+    for (let j = i; j < Math.min(N, i + 12); j++) { const x = R[j].actors[n].face; if (pe == null && Math.abs(x.pupil || 0) > 0.05) pe = R[j].f; if (he == null && Math.abs(x.look - p.look) > 0.01) he = R[j].f; }
+    if (he != null) out.eyeLead.push({ f: R[i].f, lead: pe == null ? 0 : he - pe });
+  }
+  const F = [];
+  if (out.pops.length) F.push(`pops ${out.pops.length} (frames ${compress([...new Set(out.pops.map(x => x.f))])})`);
+  const r = out.rises.filter(x => x.rise < FACE_RISE_MIN); if (r.length) F.push(`rise under ${FACE_RISE_MIN} f: ${r.map(x => `${x.rise} f (key ${x.kf})`).join(', ')}`);
+  const h = out.holds.filter(x => x.hold < FACE_HOLD_MIN); if (h.length) F.push(`hold under ${FACE_HOLD_MIN} f: ${h.map(x => `${x.hold} f (key ${x.kf})`).join(', ')}`);
+  if (out.changes.max10 > FACE_CHANGES_10S[1]) F.push(`${out.changes.max10} changes in 10 s (max ${FACE_CHANGES_10S[1]})`);
+  if (N >= 300 && out.changes.per10 < FACE_CHANGES_10S[0]) F.push(`${out.changes.per10.toFixed(1)} changes per 10 s (min ${FACE_CHANGES_10S[0]})`);
+  if (out.takes.max60 > FACE_TAKES_MIN) F.push(`${out.takes.max60} takes in 60 s (max ${FACE_TAKES_MIN})`);
+  if (out.takes.max10 > FACE_TAKES_10S) F.push(`${out.takes.max10} takes in 10 s (max ${FACE_TAKES_10S})`);
+  if (out.antic.length) F.push(`take without anticipation: ${out.antic.map(x => 'key ' + x.kf).join(', ')}`);
+  if (N >= 300 && (out.blinks.perMin < FACE_BLINKS_MIN[0] || out.blinks.perMin > FACE_BLINKS_MIN[1])) F.push(`${out.blinks.perMin.toFixed(1)} blinks a minute (${FACE_BLINKS_MIN.join('-')})`);
+  if (out.blinkShape.length) F.push(`blinks that do not close faster than they open: ${out.blinkShape.map(x => `${x.close}/${x.open} f (frame ${x.f})`).join(', ')}`);
+  const el = out.eyeLead.filter(x => x.lead < FACE_EYE_LEAD[0] || x.lead > FACE_EYE_LEAD[1]); if (el.length) F.push(`eye lead out of ${FACE_EYE_LEAD.join('..')} f: ${el.map(x => `${x.lead} f (frame ${x.f})`).join(', ')}`);
+  out.faults = F;
+  return out;
+}
+// the report lines for one actor (shot.mjs --report; gates.mjs reads "face: pops" and "face faults")
+export function faceLines(rows, n) {
+  const x = faceFaults(rows, n); if (!x.frames) return [];
+  const rmin = x.rises.length ? Math.min(...x.rises.map(r => r.rise)) : null, hmin = x.holds.length ? Math.min(...x.holds.map(h => h.hold)) : null;
+  return [`      face: pops ${x.pops.length}; rise min ${rmin ?? '-'} f over ${x.rises.length} changes; hold min ${hmin ?? '-'} f; changes ${x.changes.n} (${x.changes.per10.toFixed(1)} per 10 s, max ${x.changes.max10} in 10 s); takes ${x.takes.n} (max ${x.takes.max60} in 60 s, ${x.takes.max10} in 10 s); blinks ${x.blinks.n} (${x.blinks.perMin.toFixed(1)} a minute); eye lead ${x.eyeLead.map(e => e.lead).join(' ') || '-'} f; over ${x.frames} frames in frame`,
+    `      face faults: ${x.faults.join('; ') || 'none'}`];
+}

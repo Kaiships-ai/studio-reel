@@ -85,6 +85,8 @@ voice; `--strict 1` (WARN counts as FAIL) is for Kai to ask for, never a default
 | body acting | ≥ 70 % of a lead's frames | a motion v2 lead counts from its first key; a verb-driven lead needs body verbs |
 | expressions | ≥ 5 per 30 s | a strong face per line (`engine/faces.js` EXPR) |
 | expression lead | the face lands ≥ 3 frames before its word | put `expr` on the word's key |
+| face pops | 0 per actor: no frame jumps a face feature away from its target, or carries > 35 % of a change outside a take's accent | an engine fault: report it (`.agents/playbooks/stick-man-kit-fix.md`) |
+| face timing | each change rises 10-90 % in ≥ 6 f and holds ≥ 6 f before the next key; 2-6 changes per 10 s; ≤ 4 takes a minute and 1 per 10 s; 12-30 blinks a minute; eye lead 0-3 f | space or drop keys; `small: true` or `take: false` on extra takes (REEL_DATA.md, Face timing) |
 | close-up head x | 45-55 % of the width in `cu` frames | reframe |
 | mouth range | CV ≥ 0.4 while talking | talking characters only |
 | storyboard entries, acting plan, props / fx used | every line has an entry, an `act` and a prop or effect on ≥ 40 % of lines | complete `storyboard.json` |
