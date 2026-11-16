@@ -14,6 +14,9 @@ export class Cloth {
     this.x = new Float64Array(3 * n); this.p = new Float64Array(3 * n); this.contact = new Uint8Array(n);
   }
   set(i, v) { this.x.set(v, 3 * i); this.p.set(v, 3 * i); }
+  // give every free particle the velocity v (m per sub-step, [x, y, z]): a cloth re-seated at rest on a body that is moving
+  // starts moving with it instead of being dragged from a standstill on the next frame
+  carry(v) { for (let i = 0; i < this.n; i++) if (!this.pin[i]) for (let c = 0; c < 3; c++) this.p[3 * i + c] = this.x[3 * i + c] - v[c]; }
   // one sub-step of dt seconds: Verlet integration under gravity, then constraints, pins and collisions. pinAt(i) is
   // where particle i belongs on the body this sub-step: a pinned particle is put there; a free one is pulled toward it
   // by `tether` (times its own weight tw[i], 0..1) per iteration and never strays further than `reach` (3x for tw 0) (long-range attachment: a garment held on by its
@@ -84,3 +87,17 @@ export function lerpRigid(A, B, u, out = new THREE.Matrix4()) {
 }
 const _t0 = new THREE.Vector3(), _t1 = new THREE.Vector3(), _s0 = new THREE.Vector3(), _s1 = new THREE.Vector3(), _q0 = new THREE.Quaternion(), _q1 = new THREE.Quaternion();
 const _v = new THREE.Vector3(), _ab = new THREE.Vector3(), _av = new THREE.Vector3(), _cp = new THREE.Vector3();
+
+// A body that jumps between two frames that follow each other (a cut that moves the wearer, a pose that snaps, an act whose
+// figure was posed elsewhere the frame before): a cloth must not be eased across it, it is re-seated at rest on the new pose
+// and settled, as on a first frame. d / dPrev: the pin's world travel this frame and last frame (m; dPrev null after a
+// restart: no history); turn: the body's heading change this frame (rad). A jump is a change of travel over JUMP_M in one
+// frame, a travel over JUMP_FAR on a frame with no history (the frame after a restart: a run that starts on the frame
+// before a cut), or a turn over JUMP_TURN. A fast car at a steady speed is no jump, and neither is a stepped run on twos
+// from a hold (0.2-0.43 m, Hot Money ep01 r2 s5 f1213-1220). Hot Money ep01 r2 s6 (Kai 17/11): the bank cuts moved the wearer
+// 3.5 m between two frames; eased across in 8 sub-steps, the cord was flung sideways and shook for 15 frames.
+export const JUMP_M = 0.5, JUMP_FAR = 1.5, JUMP_TURN = Math.PI / 2;
+export function bodyJump(d, dPrev, turn = 0) {
+  const far = dPrev ? Math.hypot(d.x - dPrev.x, d.y - dPrev.y, d.z - dPrev.z) > JUMP_M : d.length() > JUMP_FAR;
+  return far || Math.abs(turn) > JUMP_TURN;
+}

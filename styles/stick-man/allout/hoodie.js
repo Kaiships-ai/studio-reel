@@ -23,7 +23,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { solid, W_M, HEAD_C, HEAD_H, HIP_V, SPINE_L, spineParams, bendPt, spineFrame } from '../engine/cast.js';
 import { PHYS } from '../engine/body.js';
-import { Cloth, lerpRigid } from './cloth.js';
+import { Cloth, lerpRigid, bodyJump } from './cloth.js';
 import { toon } from '../engine/look.js';
 import { HOOKS } from '../engine/play.js';
 
@@ -568,7 +568,7 @@ export function hoodie(S, { down = false } = {}) {
   // ---------------------------------------------------------------- PHYS.on: the follow-through spring and the cords
   function step(t) {
     if (!ST.F || t === ST.t) return;
-    const F = ST.F, RW = ST.RW, RWi = RW.clone().invert(), fresh = ST.t == null || t !== ST.t + 1;
+    const F = ST.F, RW = ST.RW, RWi = RW.clone().invert(); let fresh = ST.t == null || t !== ST.t + 1;
     // the peak's posed place (world) and the head centre (world), without lag
     const tgt = skin(F, PEAK.x, PEAK.y, PEAK.z, null, new THREE.Vector3()).applyMatrix4(F.Mc).applyMatrix4(RW);
     // cords: chains from the posed anchors, colliding with the body's volumes (+ the jersey) and the arm bones
@@ -588,6 +588,17 @@ export function hoodie(S, { down = false } = {}) {
     // the cords' soft tether turns with the chest's heading only (gravity keeps its direction when the body leans)
     { F.Mc.clone().premultiply(RW).decompose(_a, now.heading, _b); const f = new THREE.Vector3(0, 0, 1).applyQuaternion(now.heading); now.heading.setFromAxisAngle(Y_AX, Math.atan2(f.x, f.z)); }
     const anc = now.anc.map(a => a.clone().applyMatrix4(RW));
+    // a body jump between two frames that follow each other (a cut that moves the wearer, a pose that snaps, an act whose
+    // figure was posed elsewhere the frame before: cloth.js bodyJump) starts the cords and the hood afresh on the new pose,
+    // as on a first frame, instead of easing them across it (Kai 17/11, Hot Money ep01 r2 s6: the bank cuts moved the wearer
+    // 3.5 m; eased across in 8 sub-steps the cords were flung sideways and shook for 15 frames). d: the throat's world travel
+    const mid = v => v[0].clone().add(v[1]).multiplyScalar(0.5), d = ST.was ? mid(anc).sub(mid(ST.was.anc.map(a => a.clone().applyMatrix4(ST.was.RW)))) : null;
+    const jump = !fresh && bodyJump(d, ST.dPrev, now.heading.angleTo(ST.was.heading));
+    if (jump) fresh = true;
+    // the frame after a re-seat: the cords move off with the body (its travel this frame per sub-step) instead of being
+    // dragged from a standstill (a cut into a heave: s4 f819)
+    if (!fresh && ST.seated) ST.chains.forEach(ch => ch.carry(d.clone().divideScalar(SUB).toArray()));
+    ST.dPrev = fresh ? null : d; ST.seated = jump;
     if (fresh) {
       ST.P = tgt.clone(); ST.V = new THREE.Vector3(); ST.tgtPrev = tgt.clone(); ST.was = now;
       const qc = new THREE.Quaternion(); F.Mc.clone().premultiply(RW).decompose(_a, qc, _b);
@@ -628,7 +639,7 @@ export function hoodie(S, { down = false } = {}) {
     drawHood(ST.lag);
     ST.chains.forEach((ch, i) => { const pts = []; for (let j = 0; j < CORD_N; j++) pts.push(new THREE.Vector3(ch.x[3 * j], ch.x[3 * j + 1], ch.x[3 * j + 2]).applyMatrix4(RWi)); drawCord(cords[i], pts); });
     // the shot report's cord numbers (engine/play.js __dbg, tools/faults.mjs cordShake): each cord's drawn tip against its top, root-local m
-    ST.dbg = { fresh, tips: cords.map(c => c.sm[c.sm.length - 1].clone().sub(c.sm[0]).toArray().map(x => +x.toFixed(5))) };
+    ST.dbg = { fresh, ...(jump ? { jump: true } : {}), tips: cords.map(c => c.sm[c.sm.length - 1].clone().sub(c.sm[0]).toArray().map(x => +x.toFixed(5))) };
     if (!down && /hoodstats/.test(globalThis.location?.search || '')) console.error('HOODIE ' + JSON.stringify(stats(t, want, fresh)));
   }
   // how deep a root-local point is inside the jersey grown by `grow` (m; <= 0 outside). _jo is set to the point moved out
