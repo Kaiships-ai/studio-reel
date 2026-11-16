@@ -143,10 +143,12 @@ test('a cut that moves the wearer, eased across like a move (the fault this guar
   assert.ok(x > CORD_SHAKE_MAX, `shake ${x.toFixed(4)} m/frame^2`);
 });
 // continuous motion is never a jump, so its cords run exactly as before: a walk, a 12 deg/frame turn, a car at a steady
-// 20 m/s, a stepped run on twos that starts from a hold (0.2 / 0.4 m a frame, s5 f1213-1220)
+// 20 m/s, a stepped run on twos that starts from a hold (0.2 / 0.4 m a frame, s5 f1213-1220), a deep bow
 const car = f => at(0.67 * f);
 const twos = f => at(f < 10 ? 0 : 0.2 * (f - 10) + 0.2 * (f % 2 ? 1 : 0));
-for (const [name, body] of [['a walk', walk], ['a turn', turn], ['a car at 20 m/s', car], ['a stepped run', twos]]) {
+// a deep bow: the chest pitches from 60 to 120 deg over 20 frames (its heading alone flips 180 deg as it passes level)
+const bow = f => new THREE.Matrix4().makeRotationX(Math.PI / 180 * (60 + 3 * Math.min(20, f)));
+for (const [name, body] of [['a walk', walk], ['a turn', turn], ['a car at 20 m/s', car], ['a stepped run', twos], ['a deep bow', bow]]) {
   test(`${name} is not a body jump: no frame re-seats the cord`, () => {
     assert.deepEqual(cordStep(body, 60, true).seated, []);
   });

@@ -583,17 +583,18 @@ export function hoodie(S, { down = false } = {}) {
     // frame's walk on the first sub-step; Verlet made the push speed and the cord flipped between two shapes every frame:
     // Kai 17/11, Hot Money ep01 r2 s4.)
     const now = { RW, J: { B: F.B, qb: F.qb.clone(), bp: F.bp.clone() }, head: F.C.clone().applyMatrix4(F.Mc),
-      anc: cords.map(c => anchor(c)), caps: [], heading: new THREE.Quaternion() };
+      anc: cords.map(c => anchor(c)), caps: [], heading: new THREE.Quaternion(), qc: new THREE.Quaternion() };
     for (const sd of ['L', 'R']) { const r = ST.rig?.[sd]; if (!r?.shoulder) continue; const P3 = q => q.clone().multiplyScalar(W); now.caps.push([P3(r.shoulder.clone().lerp(r.elbow, 0.45)), P3(r.elbow)], [P3(r.elbow), P3(r.hand)]); }   // the upper arm from where it leaves the body
     // the cords' soft tether turns with the chest's heading only (gravity keeps its direction when the body leans)
-    { F.Mc.clone().premultiply(RW).decompose(_a, now.heading, _b); const f = new THREE.Vector3(0, 0, 1).applyQuaternion(now.heading); now.heading.setFromAxisAngle(Y_AX, Math.atan2(f.x, f.z)); }
+    { F.Mc.clone().premultiply(RW).decompose(_a, now.heading, _b); now.qc.copy(now.heading); const f = new THREE.Vector3(0, 0, 1).applyQuaternion(now.heading); now.heading.setFromAxisAngle(Y_AX, Math.atan2(f.x, f.z)); }
     const anc = now.anc.map(a => a.clone().applyMatrix4(RW));
     // a body jump between two frames that follow each other (a cut that moves the wearer, a pose that snaps, an act whose
     // figure was posed elsewhere the frame before: cloth.js bodyJump) starts the cords and the hood afresh on the new pose,
     // as on a first frame, instead of easing them across it (Kai 17/11, Hot Money ep01 r2 s6: the bank cuts moved the wearer
-    // 3.5 m; eased across in 8 sub-steps the cords were flung sideways and shook for 15 frames). d: the throat's world travel
+    // 3.5 m; eased across in 8 sub-steps the cords were flung sideways and shook for 15 frames). d: the throat's world travel;
+    // the turn is the chest's whole turn (its heading alone flips 180 deg when the chest pitches through level, a deep bow)
     const mid = v => v[0].clone().add(v[1]).multiplyScalar(0.5), d = ST.was ? mid(anc).sub(mid(ST.was.anc.map(a => a.clone().applyMatrix4(ST.was.RW)))) : null;
-    const jump = !fresh && bodyJump(d, ST.dPrev, now.heading.angleTo(ST.was.heading));
+    const jump = !fresh && bodyJump(d, ST.dPrev, now.qc.angleTo(ST.was.qc));
     if (jump) fresh = true;
     // the frame after a re-seat: the cords move off with the body (its travel this frame per sub-step) instead of being
     // dragged from a standstill (a cut into a heave: s4 f819)
