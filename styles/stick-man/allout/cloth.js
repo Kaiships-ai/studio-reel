@@ -14,6 +14,9 @@ export class Cloth {
     this.x = new Float64Array(3 * n); this.p = new Float64Array(3 * n); this.contact = new Uint8Array(n);
   }
   set(i, v) { this.x.set(v, 3 * i); this.p.set(v, 3 * i); }
+  // give every free particle the velocity v (m per sub-step, [x, y, z]): a cloth re-seated at rest on a body that is moving
+  // starts moving with it instead of being dragged from a standstill on the next frame
+  carry(v) { for (let i = 0; i < this.n; i++) if (!this.pin[i]) for (let c = 0; c < 3; c++) this.p[3 * i + c] = this.x[3 * i + c] - v[c]; }
   // one sub-step of dt seconds: Verlet integration under gravity, then constraints, pins and collisions. pinAt(i) is
   // where particle i belongs on the body this sub-step: a pinned particle is put there; a free one is pulled toward it
   // by `tether` (times its own weight tw[i], 0..1) per iteration and never strays further than `reach` (3x for tw 0) (long-range attachment: a garment held on by its
@@ -84,3 +87,23 @@ export function lerpRigid(A, B, u, out = new THREE.Matrix4()) {
 }
 const _t0 = new THREE.Vector3(), _t1 = new THREE.Vector3(), _s0 = new THREE.Vector3(), _s1 = new THREE.Vector3(), _q0 = new THREE.Quaternion(), _q1 = new THREE.Quaternion();
 const _v = new THREE.Vector3(), _ab = new THREE.Vector3(), _av = new THREE.Vector3(), _cp = new THREE.Vector3();
+
+// A body that jumps between two frames that follow each other (a cut that moves the wearer, a pose that snaps, an act whose
+// figure was posed elsewhere the frame before): a cloth must not be eased across it, it is re-seated at rest on the new pose
+// and settled, as on a first frame. d / dPrev: the pin's world travel this frame and last frame (m; dPrev null after a
+// restart: no history); turn: the body's whole turn this frame (rad). A jump is a jump in place: a travel over JUMP_D in
+// one frame (30 m/s: no body on foot, and no car a film keys, gets there) that is also off what last frame's travel
+// predicted by over JUMP_M (a car already travelling that fast is not jumping) or, with no history, over JUMP_FAR; or a
+// turn over JUMP_TURN. A change of travel alone is not one: a hard stop (0.67 m/frame to 0) or a stepped run on twos from
+// a hold (0.2-0.43 m, Hot Money ep01 r2 s5 f1213-1220) changes the travel a lot but leaves the body within
+// a step of where it was.
+// Measured (tools/cordjump.mjs, every motion-lib clip on every body it plays on, the real rig in the real hoodie): the
+// most a clip travels in a frame is 0.23 m, its largest change of travel 0.16 m, its largest turn 17.8 deg; the cuts it
+// must catch moved the wearer 2.67-3.51 m (s4 f816, s5 f1210, s6 f1633, f1662). Hot Money ep01 r2 s6 (Kai 17/11): the
+// bank cuts moved the wearer 3.5 m between two frames; eased across in 8 sub-steps, the cord was flung sideways and shook
+// for 15 frames. A cut that moves the wearer less than JUMP_D is eased across, as a move is.
+export const JUMP_D = 1.0, JUMP_M = 0.5, JUMP_FAR = 1.5, JUMP_TURN = Math.PI / 2;
+export function bodyJump(d, dPrev, turn = 0) {
+  const n = d.length(), off = dPrev ? Math.hypot(d.x - dPrev.x, d.y - dPrev.y, d.z - dPrev.z) > JUMP_M : n > JUMP_FAR;
+  return (n > JUMP_D && off) || Math.abs(turn) > JUMP_TURN;
+}

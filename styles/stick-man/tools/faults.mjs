@@ -244,3 +244,16 @@ export function cordLines(rows, n) {
   const x = cordShake(rows, n); if (!x) return [];
   return [`      cords: shake max ${x.max.toFixed(4)} m/frame^2${x.at != null ? ' (frame ' + x.at + ')' : ''} over ${x.frames} frames; frames over ${CORD_SHAKE_MAX}: ${compress(x.over) || 'none'}`];
 }
+
+// The report's camera numbers (shot.mjs --report (b)) from each row's motion.cam (px/frame at 720 wide): a cut frame (a
+// dissolve, an act cut, a flash cut, a shot cut) is an edit, not camera motion, and is left out, as is a frame without a
+// number. best / bestAt: the longest run under 0.01 px/frame and where it ends; peak / peakAt / median: null when no frame
+// has a camera number (a film directed one shot per frame: every frame is a cut; Hot Money ep01 r2 crashed the report)
+export function camStats(rows) {
+  const camPx = rows.map(r => (r.motion?.cut || !Number.isFinite(r.motion?.cam) ? NaN : r.motion.cam));
+  let run0 = 0, best = 0, bestAt = 0;
+  camPx.forEach((v, i) => { if (i === 0 || Number.isNaN(v)) return; if (v < 0.01) { run0++; if (run0 > best) { best = run0; bestAt = rows[i].f; } } else run0 = 0; });
+  const live = camPx.slice(1).filter(x => !Number.isNaN(x)), peak = live.length ? Math.max(...live) : null;
+  return { best, bestAt, peak, peakAt: peak == null ? null : rows[camPx.indexOf(peak, 1)].f, median: live.length ? [...live].sort((a, b) => a - b)[live.length >> 1] : null,
+    fast: rows.filter((r, i) => i > 0 && camPx[i] > 25).map(r => r.f), cuts: rows.filter(r => r.motion?.cut).map(r => r.f) };
+}

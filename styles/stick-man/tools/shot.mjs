@@ -15,7 +15,7 @@ import http from 'node:http'; import fs from 'node:fs'; import path from 'node:p
 import { fileURLToPath } from 'node:url';
 import { start, run } from '../../../kit/env.mjs';
 import { microanim } from './forensic/microanim.mjs';
-import { acting, joints, compress, holdLines, faultList, hiddenOf, faceLines, cordLines } from './faults.mjs';
+import { acting, joints, compress, holdLines, faultList, hiddenOf, faceLines, cordLines, camStats } from './faults.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '../../..');                     // repo root: serves the page and node_modules/three
@@ -131,12 +131,9 @@ if (A.speed && !REEL) {
   const vis = [], tags = await p.evaluate(g => g.map(([f, items]) => window.__vis(f, items)), [...byF].map(([f, ix]) => [f, ix.map(i => ({ actor: faults[i].actor, pts: faults[i].pts }))]));
   [...byF.values()].forEach((ix, k) => ix.forEach((i, j) => { vis[i] = tags[k][j]; }));
   const hidden = hiddenOf(faults, vis);
-  let run0 = 0, best = 0, bestAt = 0; const camPx = rows.map(r => r.motion.cut ? NaN : r.motion.cam);
-  camPx.forEach((v, i) => { if (i === 0 || Number.isNaN(v)) return; if (v < 0.01) { run0++; if (run0 > best) { best = run0; bestAt = rows[i].f; } } else run0 = 0; });
-  const live = camPx.slice(1).filter(x => !Number.isNaN(x)), peak = Math.max(...live), peakAt = rows[camPx.indexOf(peak)].f;
-  const fast = rows.filter((r, i) => i > 0 && camPx[i] > 25).map(r => r.f), cuts = rows.filter(r => r.motion.cut).map(r => r.f);
+  const { best, bestAt, peak, peakAt, median, fast, cuts } = camStats(rows);
   L.push(`(b) from __dbg over frames ${frames[0]}-${frames[frames.length - 1]}:`,
-    `    longest run with no camera motion: ${best} frames${best ? ' (ends ' + bestAt + ')' : ''}; camera speed at 720p: peak ${peak.toFixed(1)} px/frame (frame ${peakAt}), median ${[...live].sort((a, b) => a - b)[live.length >> 1].toFixed(2)}`,
+    `    longest run with no camera motion: ${best} frames${best ? ' (ends ' + bestAt + ')' : ''}; ${peak == null ? 'camera speed at 720p: none (every frame is a cut)' : `camera speed at 720p: peak ${peak.toFixed(1)} px/frame (frame ${peakAt}), median ${median.toFixed(2)}`}`,
     `    (dissolve and flash-cut frames left out of the camera numbers: ${compress(cuts) || 'none'}; frames over 25 px/frame: ${compress(fast) || 'none'})`);
   for (const n of Object.keys(rows[0].actors)) {
     const starts = rows.filter((r, i) => i > 0 && r.actors[n].blink > 0 && !(rows[i - 1].actors[n].blink > 0)).map(r => r.f);
