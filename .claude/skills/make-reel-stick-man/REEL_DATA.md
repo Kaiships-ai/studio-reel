@@ -59,6 +59,9 @@ stage 3 (`direct` cameras start from it). One entry per **shot**; the `lines` en
 
 ## Breakdown, acting and measures (on shots and the storyboard)
 
+The breakdown (`set`, `cast`, `props`, `state`, `reset`, `measures`) goes into `storyboard.json` itself: it is not in the
+hash that keeps the ◇2 reviews fresh (`BREAKDOWN` in `tools/fresh.mjs`), so adding it in stage 2 does not stale them.
+
 | Key | Meaning |
 |---|---|
 | shot `set`, `cast`, `props`, `state` | what the shot needs (`assets.mjs` builds the asset list from them); `state` = story states at this shot (`{ "in_car": 2, "trunk_holes": 3 }`), numeric states never go back without `reset: ["in_car"]` |
