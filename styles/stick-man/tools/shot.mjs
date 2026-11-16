@@ -15,7 +15,7 @@ import http from 'node:http'; import fs from 'node:fs'; import path from 'node:p
 import { fileURLToPath } from 'node:url';
 import { start, run } from '../../../kit/env.mjs';
 import { microanim } from './forensic/microanim.mjs';
-import { acting, joints, compress, holdLines, faultList, hiddenOf, faceLines } from './faults.mjs';
+import { acting, joints, compress, holdLines, faultList, hiddenOf, faceLines, cordLines } from './faults.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '../../..');                     // repo root: serves the page and node_modules/three
@@ -67,8 +67,10 @@ async function speed(list) {
 }
 // __dbg plus the page's motion numbers (camera px/frame at 720 wide, foot slide px/frame under the same camera)
 // dress = registered set-dressing pieces the camera sees in that frame (lib/sets/dress.js, dressing gate); --dress 1 adds their names
-const dbgAll = () => p.evaluate(([fr, names]) => fr.map(f => { const d = JSON.parse(window.__dbg(f)); const dress = window.__dressCount ? window.__dressCount() : null;
-  const dl = names && window.__dressList ? window.__dressList() : undefined; return { ...d, dress, ...(dl ? { dressList: dl } : {}), motion: window.__motion(f) }; }), [frames, !!A.dress]);
+// (__motion(f) poses f - 1 then f, so it runs first: after __dbg(f) it would step the physics back a frame, and a costume's
+// cloth (allout/hoodie.js) restarts from rest on a frame that does not follow the last one, so every row read a fresh cloth)
+const dbgAll = () => p.evaluate(([fr, names]) => fr.map(f => { const motion = window.__motion(f), d = JSON.parse(window.__dbg(f)); const dress = window.__dressCount ? window.__dressCount() : null;
+  const dl = names && window.__dressList ? window.__dressList() : undefined; return { ...d, dress, ...(dl ? { dressList: dl } : {}), motion }; }), [frames, !!A.dress]);
 
 if (A.speed && !REEL) {
   const n = Number(A.speed), r = await speed(Array.from({ length: n }, (_, i) => i));
@@ -158,6 +160,8 @@ if (A.speed && !REEL) {
     if (mi) L.push(`      micro: head moves ${mi.headMoves}, median ${mi.moveLenMedian ?? '-'} f; holds ${mi.holds}, median ${mi.holdMedian ?? '-'} f, longest ${mi.holdMax} f; mouth CV ${mi.mouthCV_talk == null ? '-' : mi.mouthCV_talk.toFixed(2)} over ${mi.talkFrames} talking frames`);
     // the face (faults.mjs faceFaults): pops, rise and hold of each change, how often it changes, takes, blinks, eye lead
     L.push(...faceLines(rows, n));
+    // the hoodie's cords (faults.mjs cordShake): the largest back-and-forth of a cord's tip, frames over the limit
+    L.push(...cordLines(rows, n));
     L.push(`      body acting: ${lf.length ? (100 * (lf.length - idleF.length) / lf.length).toFixed(1) : '-'} % of ${lf.length} lead frames in frame; frames without: ${compress(idleF) || 'none'}`);
   }
   // (g) faces: distinct expressions on screen (>= 3 frames, open-mouth twins count as their base) and how early each change

@@ -34,6 +34,13 @@ than the hood's clearance).
   (degrees the face opening slid off the face; ~24 deg at the 45 deg ROM-limit nod), `cordPen` 0 (m the drawn cord sinks into the jersey: the old number
   checked only the body volumes and read 0 while a cord went through the jersey), `cordFly` (m a cord's lower part
   stands off the jersey: ~0.05 after a fast turn, more in a run), `cordV` under 0.002 in a hold (settled, no jitter).
+- Cord shake: `shot.mjs --report` prints `cords: shake max <m/frame^2> (frame f) ...; frames over 0.015: ...` per hoodie
+  wearer (from `__dbg` `actors[n].cord`, faults.mjs `cordShake`; a report line, not a gate yet). Motion-lib carry walk,
+  walk and turn read ~0.01; before the 17/11 fix they read 0.2-0.37 (the tip flipped between two shapes every frame,
+  Kai: "the cords jitter"), because the jersey sat at this frame's pose while the anchor eased from the last one. Every
+  collider, the anchors and the tether targets of a sub-step use one eased pose (`hoodie.js` step: `lerpRigid` root +
+  `jerseyAt` garment pose; the arms ride the eased root in this frame's pose). `shot.mjs` runs `__motion` before
+  `__dbg` for each frame: the other order stepped the cloth back a frame and every row read a fresh cord.
 - Nod close-up: a film whose lead nods 20 deg down and 18 up at a 3/4 close camera (the hood2 proof stage `?part=nod`)
   with `hoodstats=1`; read `rimOff` and `p99`.
 - The hm-ep01 clip-1 head turn close-up (`films/hm-ep01/review/rig/src`, `?clip=1&cam=close`, frames 66-110) is the

@@ -23,7 +23,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { solid, W_M, HEAD_C, HEAD_H, HIP_V, SPINE_L, spineParams, bendPt, spineFrame } from '../engine/cast.js';
 import { PHYS } from '../engine/body.js';
-import { Cloth } from './cloth.js';
+import { Cloth, lerpRigid } from './cloth.js';
 import { toon } from '../engine/look.js';
 import { HOOKS } from '../engine/play.js';
 
@@ -576,31 +576,49 @@ export function hoodie(S, { down = false } = {}) {
       for (let k = 0; k + 1 < CORD_N; k++) Ed.push([k, k + 1, Math.hypot(...[0, 1, 2].map(j => pts[k + 1][j] - pts[k][j]))]);
       for (let k = 0; k + 2 < CORD_N; k++) Bd.push([k, k + 2, Math.hypot(...[0, 1, 2].map(j => pts[k + 2][j] - pts[k][j]))]);
       const pin = new Uint8Array(CORD_N); pin[0] = 1; return new Cloth(CORD_N, Ed, Bd, pin, { bend: 0.12, damp: 0.05, iters: 10, margin: 0.0275, tether: CORD_TETHER }); });
-    // the head's volume, and the jersey itself (the garment's own surface: the torso's volumes lie under it, so a cord kept
-    // off them alone floats in front of the jersey in one place and sinks into it in another)
-    const cols = ST.vols.filter(V => V.kind === 'head').map(V => p => { const l = p.clone().applyMatrix4(RWi).divideScalar(W), s = V.push(l, 0.012 / W); return s ? s.multiplyScalar(W).applyMatrix4(RW) : null; });
-    cols.push(p => { const l = p.clone().applyMatrix4(RWi), d = jerseyDepth(l, CORD_R + CORD_GAP); if (d <= 0) return null; return l.copy(_jo).applyMatrix4(RW); });
-    const caps = []; for (const sd of ['L', 'R']) { const r = ST.rig?.[sd]; if (!r?.shoulder) continue; const P3 = q => q.clone().multiplyScalar(W).applyMatrix4(RW); caps.push([P3(r.shoulder.clone().lerp(r.elbow, 0.45)), P3(r.elbow), 0.0138], [P3(r.elbow), P3(r.hand), 0.0138]); }   // the upper arm from where it leaves the body
-    const anc = cords.map(c => anchor(c).applyMatrix4(RW));
+    // One moment per sub-step: the anchors, the tether targets, the head, the jersey and the arms are all eased together from
+    // last frame's pose to this one's: the root's frame (cloth.js lerpRigid) and, inside it, the garment's own pose (the
+    // spine's bend, twist and squash, the body's place: jerseyAt), each kept root-local and put into the world through the
+    // eased root. (A jersey left at this frame's pose while the anchor eased from the last one pushed the cord a whole
+    // frame's walk on the first sub-step; Verlet made the push speed and the cord flipped between two shapes every frame:
+    // Kai 17/11, Hot Money ep01 r2 s4.)
+    const now = { RW, J: { B: F.B, qb: F.qb.clone(), bp: F.bp.clone() }, head: F.C.clone().applyMatrix4(F.Mc),
+      anc: cords.map(c => anchor(c)), caps: [], heading: new THREE.Quaternion() };
+    for (const sd of ['L', 'R']) { const r = ST.rig?.[sd]; if (!r?.shoulder) continue; const P3 = q => q.clone().multiplyScalar(W); now.caps.push([P3(r.shoulder.clone().lerp(r.elbow, 0.45)), P3(r.elbow)], [P3(r.elbow), P3(r.hand)]); }   // the upper arm from where it leaves the body
+    // the cords' soft tether turns with the chest's heading only (gravity keeps its direction when the body leans)
+    { F.Mc.clone().premultiply(RW).decompose(_a, now.heading, _b); const f = new THREE.Vector3(0, 0, 1).applyQuaternion(now.heading); now.heading.setFromAxisAngle(Y_AX, Math.atan2(f.x, f.z)); }
+    const anc = now.anc.map(a => a.clone().applyMatrix4(RW));
     if (fresh) {
-      ST.P = tgt.clone(); ST.V = new THREE.Vector3(); ST.tgtPrev = tgt.clone(); ST.ancPrev = anc.map(a => a.clone());
+      ST.P = tgt.clone(); ST.V = new THREE.Vector3(); ST.tgtPrev = tgt.clone(); ST.was = now;
       const qc = new THREE.Quaternion(); F.Mc.clone().premultiply(RW).decompose(_a, qc, _b);
       ST.chains.forEach((ch, i) => { const c = cords[i]; for (let j = 0; j < CORD_N; j++) ch.set(j, new THREE.Vector3(c.rest[j][0] - c.rest[0][0], c.rest[j][1] - c.rest[0][1], c.rest[j][2] - c.rest[0][2]).applyQuaternion(qc).add(anc[i]).toArray()); });
     }
-    const w = 2 * Math.PI * SPR_F, k = w * w, cdamp = 2 * SPR_Z * w, dt = 1 / (30 * SUB), qcW = new THREE.Quaternion();
-    // the cords' soft tether: each point is drawn a little toward where it hangs at rest below its anchor, turned with the
-    // chest's heading only (gravity keeps its direction when the body leans), so a cord swings after a fast turn and settles
-    // back to hanging instead of lying along the path its anchor travelled
-    { F.Mc.clone().premultiply(RW).decompose(_a, qcW, _b); const f = new THREE.Vector3(0, 0, 1).applyQuaternion(qcW); qcW.setFromAxisAngle(Y_AX, Math.atan2(f.x, f.z)); }
+    const was = ST.was;
+    const w = 2 * Math.PI * SPR_F, k = w * w, cdamp = 2 * SPR_Z * w, dt = 1 / (30 * SUB), qcW = new THREE.Quaternion(), Ru = new THREE.Matrix4(), Rui = new THREE.Matrix4(), hs = new THREE.Vector3();
+    const heads = ST.vols.filter(V => V.kind === 'head');
     const runs = fresh ? PRE : 1;
     for (let f = 0; f < runs; f++) for (let s = 0; s < SUB; s++) {
       const u = fresh ? 1 : (s + 1) / SUB, T = _a.lerpVectors(ST.tgtPrev, tgt, u);
       // the peak: semi-implicit Euler on a damped spring to its posed place
       ST.V.addScaledVector(_b.subVectors(T, ST.P).multiplyScalar(k).addScaledVector(ST.V, -cdamp), dt); ST.P.addScaledVector(ST.V, dt);
-      ST.chains.forEach((ch, i) => { const A = new THREE.Vector3().lerpVectors(ST.ancPrev[i], anc[i], u), c = cords[i], tg = c.rest.map((r, j) => j ? _t3.set(r[0] - c.rest[0][0], r[1] - c.rest[0][1], r[2] - c.rest[0][2]).applyQuaternion(qcW).add(A).toArray() : A.toArray());
+      // the body at this sub-step: the root's frame, the garment's pose, the head's shift from where it is this frame
+      lerpRigid(was.RW, RW, u, Ru); Rui.copy(Ru).invert();
+      const J = jerseyAt(was.J, now.J, u); hs.lerpVectors(was.head, now.head, u).sub(now.head);
+      // the head's volume, and the jersey itself (the garment's own surface: the torso's volumes lie under it, so a cord kept
+      // off them alone floats in front of the jersey in one place and sinks into it in another)
+      const cols = heads.map(V => p => { const l = p.clone().applyMatrix4(Rui).sub(hs).divideScalar(W), r = V.push(l, 0.012 / W); return r ? r.multiplyScalar(W).add(hs).applyMatrix4(Ru) : null; });
+      cols.push(p => { const l = p.clone().applyMatrix4(Rui), d = jerseyDepth(l, CORD_R + CORD_GAP, J); if (d <= 0) return null; return _jo.clone().applyMatrix4(Ru); });
+      // the arms ride the eased body in this frame's pose: they keep a cord from being drawn through them, but a limb's own
+      // swing is not swept through the cords (a forearm dropping 20 cm a frame, s4 f124, dragged a cord 8 cm and flicked it)
+      const caps = now.caps.map(([a, b]) => [a.clone().applyMatrix4(Ru), b.clone().applyMatrix4(Ru), 0.0138]);
+      // each point is drawn a little toward where it hangs at rest below its anchor, so a cord swings after a fast turn and
+      // settles back to hanging instead of lying along the path its anchor travelled
+      qcW.slerpQuaternions(was.heading, now.heading, u);
+      ST.chains.forEach((ch, i) => { const A = new THREE.Vector3().lerpVectors(was.anc[i], now.anc[i], u).applyMatrix4(Ru), c = cords[i], tg = c.rest.map((r, j) => j ? _t3.set(r[0] - c.rest[0][0], r[1] - c.rest[0][1], r[2] - c.rest[0][2]).applyQuaternion(qcW).add(A).toArray() : A.toArray());
         ch.sub(dt, j => tg[j], cols, caps); leash(ch); });
     }
-    ST.tgtPrev = tgt.clone(); ST.ancPrev = anc.map(a => a.clone()); ST.t = t;
+    ST.was = now;
+    ST.tgtPrev = tgt.clone(); ST.t = t;
     // the lag: the turn that carries the posed peak onto the sprung one, about the head centre, in the chest frame (scaled, soft-clamped)
     const C = F.C, McW = F.Mc.clone().premultiply(RW), McWi = McW.clone().invert();
     const a = tgt.clone().applyMatrix4(McWi).sub(C).normalize(), b = ST.P.clone().applyMatrix4(McWi).sub(C).normalize();
@@ -609,14 +627,16 @@ export function hoodie(S, { down = false } = {}) {
     ST.lag = ang > 1e-5 ? new THREE.Quaternion().slerpQuaternions(_I, lag, want / ang) : null;
     drawHood(ST.lag);
     ST.chains.forEach((ch, i) => { const pts = []; for (let j = 0; j < CORD_N; j++) pts.push(new THREE.Vector3(ch.x[3 * j], ch.x[3 * j + 1], ch.x[3 * j + 2]).applyMatrix4(RWi)); drawCord(cords[i], pts); });
+    // the shot report's cord numbers (engine/play.js __dbg, tools/faults.mjs cordShake): each cord's drawn tip against its top, root-local m
+    ST.dbg = { fresh, tips: cords.map(c => c.sm[c.sm.length - 1].clone().sub(c.sm[0]).toArray().map(x => +x.toFixed(5))) };
     if (!down && /hoodstats/.test(globalThis.location?.search || '')) console.error('HOODIE ' + JSON.stringify(stats(t, want, fresh)));
   }
   // how deep a root-local point is inside the jersey grown by `grow` (m; <= 0 outside). _jo is set to the point moved out
   // onto that surface (along the garment's elliptic radius at its rest height). The garment's warp (engine/cast.js bendPt:
   // the spine's twist, bend and squash) carries a rest point to the spine's frame at its height plus its offset in that
   // frame, so it is undone by finding the height whose frame's plane holds the point (a few Newton steps along the spine).
-  function jerseyDepth(l, grow) {
-    const F = ST.F, B = F.B; _jl.copy(l).sub(F.bp).applyQuaternion(_jq.copy(F.qb).invert()).divideScalar(W);
+  function jerseyDepth(l, grow, F = ST.F) {
+    const B = F.B; _jl.copy(l).sub(F.bp).applyQuaternion(_jq.copy(F.qb).invert()).divideScalar(W);
     let yr = _jl.y / B.s, fr = null;
     for (let k = 0; k < 6; k++) { fr = spineFrame(B, yr); _jt.copy(_jl).sub(fr.p); const dy = _jt.dot(_jw.copy(Y_AX).applyQuaternion(fr.q)) / B.s; yr += dy; if (Math.abs(dy) < 1e-5) break; }
     fr = spineFrame(B, yr); _jr.copy(_jl).sub(fr.p).applyQuaternion(fr.q.invert()).multiplyScalar(Math.sqrt(B.s));
@@ -626,6 +646,14 @@ export function hoodie(S, { down = false } = {}) {
     if (r < 1e-4 || r >= g) return g - r;
     _jw.set(x * g / r / W, y / W - HIP_V, z * g / r / W); bendPt(F.B, _jw); _jo.copy(_jw).multiplyScalar(W).applyQuaternion(F.qb).add(F.bp);
     return g - r;
+  }
+  // the garment's pose between two frames' (jerseyDepth reads B, qb, bp): the spine's bend as a vector (bend, side), its
+  // twist and squash, the body's place and turn, all eased at u
+  function jerseyAt(A, Bp, u) {
+    if (A === Bp || u >= 1) return Bp;
+    const fa = A.B.th * Math.cos(A.B.phi), sa = A.B.th * Math.sin(A.B.phi), fb = Bp.B.th * Math.cos(Bp.B.phi), sb = Bp.B.th * Math.sin(Bp.B.phi), f = fa + (fb - fa) * u, sd = sa + (sb - sa) * u;
+    return { B: { th: Math.hypot(f, sd), phi: Math.atan2(sd, f), tw: A.B.tw + (Bp.B.tw - A.B.tw) * u, s: A.B.s + (Bp.B.s - A.B.s) * u },
+      qb: A.qb.clone().slerp(Bp.qb, u), bp: A.bp.clone().lerp(Bp.bp, u) };
   }
   // a cord does not stretch: follow-the-leader from the anchor down (each point at most its rest length from the one above;
   // its previous position moves with it, so the correction adds no speed)
