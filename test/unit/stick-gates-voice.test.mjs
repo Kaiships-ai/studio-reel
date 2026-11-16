@@ -87,6 +87,41 @@ test('stagegate end to end: a metadata edit to storyboard.json leaves the judged
   JSON.parse(fs.readFileSync(path.join(d, 'review/.fresh.json'), 'utf8'));
 });
 
+// Hot Money round 2: adding the ◇3 breakdown to storyboard.json made ◇2a/◇2b stale, so assets.mjs and ◇2 could not
+// both pass on one film
+const MEASURES = [{ name: 'door to car', story: '20 steps', meters: 15, tol: 0.1, module: 'set/m.js', path: ['door', 'car'] }];
+test('freshness: the asset breakdown (set, cast, props, state, reset, measures) keeps a story review fresh', () => {
+  const d = tmp(), book = {}, base = { ...structuredClone(SB), measures: MEASURES };
+  put(d, 'storyboard.json', base, 1000); put(d, 'review/retell.md', 'by: agent:r1\n', 2000);
+  assert.equal(isFresh(d, 'review/retell.md', 'storyboard.json', book).fresh, true);
+  const bd = structuredClone(base);
+  bd.shots[0] = { ...bd.shots[0], set: 'motel', cast: ['YOU'], props: ['duffel'], state: { bags: 1 } };
+  bd.shots[1] = { ...bd.shots[1], set: 'motel', cast: ['YOU'], props: [], state: { bags: 0 }, reset: ['bags'] };
+  bd.measures[0].cheat = 'Kai approved a short run'; put(d, 'storyboard.json', bd, 3000);
+  assert.equal(isFresh(d, 'review/retell.md', 'storyboard.json', book).fresh, true, 'breakdown fields are not what a viewer sees');
+  bd.shots[1].options = { emo: { size: 'ECU', props: ['bag'] } }; bd.shots[1].pick = 'emo'; put(d, 'storyboard.json', bd, 4000);
+  assert.equal(isFresh(d, 'review/retell.md', 'storyboard.json', book).fresh, false, 'the picked size still counts');
+});
+
+test('freshness: a record made before the breakdown was dropped (it hashed measures) stays fresh once the breakdown lands', () => {
+  const d = tmp(), base = { ...structuredClone(SB), measures: MEASURES };
+  put(d, 'storyboard.json', base, 1000); put(d, 'review/retell.md', 'x', 2000);
+  const book = { 'review/retell.md': { 'storyboard.json': { hash: '98688048eba65eaf', ev: 2000000 } } };   // the hash main wrote
+  const bd = structuredClone(base); bd.shots[0].set = 'motel'; bd.shots[0].cast = ['YOU']; put(d, 'storyboard.json', bd, 3000);
+  assert.equal(isFresh(d, 'review/retell.md', 'storyboard.json', book).fresh, true);
+  assert.equal(book['review/retell.md']['storyboard.json'].hash, judgedHash(path.join(d, 'storyboard.json'), 'storyboard.json'), 're-recorded');
+  bd.shots[0].see = 'a different picture'; put(d, 'storyboard.json', bd, 4000);
+  assert.equal(isFresh(d, 'review/retell.md', 'storyboard.json', book).fresh, false);
+});
+
+test('fresh.mjs BREAKDOWN lists every field assets.mjs reads, and assets.mjs reads only those (plus id, size, film)', async () => {
+  const { BREAKDOWN } = await import('../../styles/stick-man/tools/fresh.mjs');
+  const src = fs.readFileSync(path.join(TOOLS, 'assets.mjs'), 'utf8');
+  const shot = new Set([...src.matchAll(/\bs\.([a-z_]+)\b/gi)].map(m => m[1])), film = new Set([...src.matchAll(/\bSB\.([a-z_]+)\b/gi)].map(m => m[1]));
+  assert.deepEqual([...shot].filter(k => !['id', 'size'].includes(k)).sort(), [...BREAKDOWN.shot].sort());
+  assert.deepEqual([...film].filter(k => k !== 'film').sort(), [...BREAKDOWN.storyboard].sort());
+});
+
 test('stagegate writes nothing outside a film: --help prints usage, a missing folder is refused', () => {
   const cwd = tmp(), gate = (...a) => run('node', [path.join(TOOLS, 'stagegate.mjs'), ...a], { capture: true, cwd });
   const help = gate('--help');
