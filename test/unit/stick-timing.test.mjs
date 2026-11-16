@@ -31,3 +31,18 @@ test('a brief missing one part in review/acting.json still fails', () => {
   const r = run(film({ SH010: { think: 'grab it', do: 'lifts the bag' } }));
   assert.equal(r.status, 1);
 });
+
+test('an unreadable review/acting.json fails A5 with a message, not a crash', () => {
+  const dir = film(); fs.mkdirSync(path.join(dir, 'review'), { recursive: true }); fs.writeFileSync(path.join(dir, 'review/acting.json'), '{bad');
+  const r = run(dir);
+  assert.equal(r.status, 1);
+  assert.match(fs.readFileSync(path.join(dir, 'review/timing.md'), 'utf8'), /acting\.json.*unreadable/);
+});
+
+test('a part on the shot and the rest in review/acting.json make one brief; a non-text value does not count', () => {
+  const dir = film({ SH010: { think: 'grab it', do: 'lifts the bag', change: 'confident -> dread' } });
+  const sb = { shots: [{ id: 'SH010', kind: 'action', acting: { think: 'just grab it' } }] };
+  fs.writeFileSync(path.join(dir, 'storyboard.json'), JSON.stringify(sb));
+  assert.equal(run(dir).status, 0);
+  assert.equal(run(film({ SH010: { think: true, do: 'x', change: 'y' } })).status, 1);
+});

@@ -3,7 +3,8 @@
 // Reads reel.js (motion v2 `anim`, after polish) and, when they exist, storyboard.json `shots` and review/acting.json
 // (acting briefs).
 // T1: share of moves with the same length per actor (polish's default T = 7 everywhere reads as a metronome)
-// A5: shots of kind action / reaction need `acting: { think, do, change }` before blocking (STAGE 3 [3.3a])
+// A5: shots of kind action / reaction need `acting: { think, do, change }` (non-empty text) before blocking (STAGE 3
+//     [3.3a]), on the shot or in review/acting.json
 import fs from 'node:fs'; import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadReel } from './reel_load.mjs';
@@ -33,10 +34,14 @@ if (fs.existsSync(F(A.reel || 'reel.js'))) {
 const SB = fs.existsSync(F('storyboard.json')) ? JSON.parse(fs.readFileSync(F('storyboard.json'), 'utf8')) : {};
 // [3.3a] writes the briefs to review/acting.json (shot id -> { think, do, change }) so storyboard.json, which earlier
 // gates hash, stays as locked; a brief on the shot itself still counts.
-const BRIEFS = fs.existsSync(F('review/acting.json')) ? JSON.parse(fs.readFileSync(F('review/acting.json'), 'utf8')) : {};
+let BRIEFS = {};
+if (fs.existsSync(F('review/acting.json'))) {
+  try { BRIEFS = JSON.parse(fs.readFileSync(F('review/acting.json'), 'utf8')); } catch { BRIEFS = null; }
+  if (!BRIEFS || typeof BRIEFS !== 'object' || Array.isArray(BRIEFS)) { add('FAIL', 'A5', 'review/acting.json', 'unreadable: it must be a JSON object, shot id -> { think, do, change }'); BRIEFS = {}; }
+}
 for (const s of SB.shots || []) if (['action', 'reaction'].includes(s.kind)) {
-  const a = s.acting || BRIEFS[s.id] || {};
-  const miss = ['think', 'do', 'change'].filter(k => !a[k]);
+  const a = { ...BRIEFS[s.id], ...s.acting };   // a field on the shot wins over the same field in review/acting.json
+  const miss = ['think', 'do', 'change'].filter(k => typeof a[k] !== 'string' || !a[k].trim());
   if (miss.length) add('FAIL', 'A5', s.id, `${s.kind} shot without an acting brief (${miss.join(', ')}): what the character thinks, does, and how it changes`);
 }
 const nF = out.filter(o => o.lvl === 'FAIL').length;

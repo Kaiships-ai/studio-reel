@@ -197,6 +197,11 @@
      "why": "per acting shot: think → do → change, and the pose thumbnails Kai approved"
     },
     {
+     "file": "review/acting.json",
+     "by": "self",
+     "why": "the same briefs as data (shot id → think, do, change) that timing.mjs checks for A5"
+    },
+    {
      "file": "review/board-verdict.json",
      "by": "self",
      "why": "board.mjs --judge 3 (lines shown)"
