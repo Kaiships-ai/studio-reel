@@ -173,8 +173,25 @@ in kg (it enters the centre of mass), `x_yaw<side>` turns an upright prop about 
 | Kind | Fields | Use |
 |---|---|---|
 | `loupe` | `from, to, look: [x, y, z], cam: { pos, aim, lens }, at: [kx, ky], r` | a magnifier with its own camera and a leader line to `look`; aim it side-on (a top view of a glowing rail reads as a blank disc) |
-| `text` | `from, to, text, at: [kx, ky] \| world: [x, y, z], size, tilt, shake` | a sound word that pops on the impact frame |
+| `text` | `from, to, text, at: [kx, ky] \| world: [x, y, z], dx, dy, size, tilt, shake, color, box, enter` | a sound word that pops on the impact frame; with `box` a label or a clock (below) |
 | `arrows` | `from, to, world, axis, len, gap, inward` | expansion; `inward: true` when ends grow into a gap, and the gap must close in the same frames |
+| `meter` | `from, to, at: [kx, ky], width, label, keys: [[f, value], ...], max, unit, color, size, enter` | a labelled bar on a dark panel (SUSPICION 35%); the value eases between keys and holds outside them |
+| `path` | `from, to, world: [[x, y, z], ...] \| at: [[kx, ky], ...], dur, dash, width, color, arrow, labels: [a, b], labelSize, labelDy` | a dotted route that draws on over `dur` frames (default 60 % of the span) with an arrowhead; world points stay on the set as the camera moves; `labels` sit on its ends, the end one pops when the line arrives |
+
+- `enter`: `'pop'` (the default for `text`: overshoot in over 5 frames, shrink out over the last 4), `'fade'` (the default
+  for `meter` and `path`), `'none'` (full size from `from` to `to`). Use `'none'` for a label carried across cuts and for
+  a clock: one entry per tick, each `enter: 'none'`, so nothing re-pops.
+- `box`: `true` (ink, 82 %) or `{ color, alpha, pad, r }` (`pad` and `r` in px at 1080 wide). Boxed text is white unless
+  `color` is set and has no ink outline. The box is measured with every digit as 0, so a ticking clock keeps one box.
+  A red clock: `box: { color: '#c62828', alpha: 0.92 }, tilt: 0`.
+- Sizes are px at 1080 wide: keep `size` ≥ 42 (14 px on a 360 px phone). A meter at the default `size` 46 and `width`
+  0.6 reads at 360 px.
+- `dash`: `'dot'` (default) or `'dash'`. A path's `labels` are boxed, tilt 0, `labelSize` 44, `labelDy` −0.03 (share of
+  the height above the end point).
+- A path through a point behind the camera is cut where it crosses the camera plane: only the part in front is drawn,
+  the arrowhead shows only while the tip is on a visible stretch and inside the frame, and a hidden end has no label.
+- Check one on the motion-lib proof page: `tools/shot.mjs --film styles/stick-man/motion-lib/proof --query
+  "clip=Move_CarryBag_Walk_Loop&ov=<url-encoded JSON list>" --w 540 --h 960 --frames 0,30`.
 
 ## Music (`audio/music.json`, `tools/sound.py`)
 

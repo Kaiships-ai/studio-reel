@@ -44,3 +44,4 @@ Each feature file: H1 title, one paragraph, then `Sub-features`, `How to get to 
 - [Presenter](./presenter.md): `character-designer.html` → a `character-spec v1` block → `src/character.js`.
 - [TMV episode](./tmv-episode.md): the paid TMV kit unzipped fresh installs, renders an episode, drives the cast designer and a two-episode series.
 - [TMV release](./tmv-release.md): `release/build.mjs --tier tmv` builds the TMV zip and gates it.
+- [Stick-man overlays](./stick-man-overlays.md): boxed labels, ticking clocks, the meter and the dotted path in `engine/overlays.js`.
