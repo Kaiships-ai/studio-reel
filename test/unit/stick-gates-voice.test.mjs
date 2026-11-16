@@ -120,6 +120,7 @@ test('fresh.mjs BREAKDOWN lists every field assets.mjs reads, and assets.mjs rea
   const shot = new Set([...src.matchAll(/\bs\.([a-z_]+)\b/gi)].map(m => m[1])), film = new Set([...src.matchAll(/\bSB\.([a-z_]+)\b/gi)].map(m => m[1]));
   assert.deepEqual([...shot].filter(k => !['id', 'size'].includes(k)).sort(), [...BREAKDOWN.shot].sort());
   assert.deepEqual([...film].filter(k => k !== 'film').sort(), [...BREAKDOWN.storyboard].sort());
+  assert.deepEqual([...src.matchAll(/\bL\.(\w+)/g)].map(m => m[0]).sort(), ['L.SB', 'L.SB', 'L.shots'], 'the loaded film is read only through the BREAKDOWN view');
 });
 
 test('stagegate writes nothing outside a film: --help prints usage, a missing folder is refused', () => {

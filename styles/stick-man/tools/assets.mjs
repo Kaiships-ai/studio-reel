@@ -8,13 +8,17 @@
 import fs from 'node:fs'; import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadFilm } from './shotlist.mjs';
+import { BREAKDOWN } from './fresh.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.resolve(HERE, '../../..');
 const film = process.argv[2];
 if (!film) { console.error('usage: assets.mjs films/<slug>'); process.exit(2); }
 const DIR = path.resolve(ROOT, film);
 let L; try { L = loadFilm(DIR); } catch (e) { console.error(e.message); process.exit(2); }
-const { SB, shots, F } = L;
+const { F } = L;
+// only the breakdown (plus id, size, film): a field read here that is not in BREAKDOWN is undefined, never a silent read
+const only = (o, keys) => Object.fromEntries(keys.filter(k => k in o).map(k => [k, o[k]]));
+const SB = { film: L.SB.film, ...only(L.SB, BREAKDOWN.storyboard) }, shots = L.shots.map(s => ({ id: s.id, size: s.size, ...only(s, BREAKDOWN.shot) }));
 const out = [], add = (lvl, id, where, msg) => out.push({ lvl, id, where, msg });
 
 // ---- breakdown
