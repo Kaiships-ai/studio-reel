@@ -10,6 +10,7 @@ import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os'
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { loadFilm, UI_BANDS, TEXT_SAFE } from './shotlist.mjs';
+import { textFilter } from './animatic-text.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const argv = process.argv.slice(2), A = {};
@@ -80,7 +81,7 @@ shots.forEach((s, si) => {
     } else {
       input = ['-f', 'lavfi', '-i', `color=c=0x6b6b6b:s=${W}x${H}:r=${fps}:d=${n / fps}`];
       if (font) {
-        vf.push(`drawtext=fontfile='${font}':textfile='${txt(`card${si}_${k}.txt`, `${s.id}  ${s.size ?? ''} ${s.lens ? s.lens + 'mm' : ''} ${s.move ?? ''}\n\n${wrap(s.see || s.purpose || '', 26)}`)}':fontcolor=white:fontsize=${fsz(0.026)}:line_spacing=${fsz(0.01)}:x=(w-tw)/2:y=(h-th)/2`);
+        vf.push(`drawtext=fontfile='${font}':expansion=none:textfile='${txt(`card${si}_${k}.txt`, `${s.id}  ${s.size ?? ''} ${s.lens ? s.lens + 'mm' : ''} ${s.move ?? ''}\n\n${wrap(s.see || s.purpose || '', 26)}`)}':fontcolor=white:fontsize=${fsz(0.026)}:line_spacing=${fsz(0.01)}:x=(w-tw)/2:y=(h-th)/2`);
         vf.push(`drawtext=fontfile='${font}':text='NO PANEL YET':fontcolor=0xffcc66:fontsize=${fsz(0.02)}:x=(w-tw)/2:y=h*0.3`);
       }
     }
@@ -89,13 +90,14 @@ shots.forEach((s, si) => {
     if (font) (s.text || []).forEach((t, ti) => {
       const [ax, ay] = t.at || [0.5, 0.4], t0 = (t.f0 ?? 0) - a, t1 = (t.dur != null ? (t.f0 ?? 0) + t.dur : s.n) - a;
       if (t1 <= 0 || t0 >= n) return;
-      const sz = fsz(t.size ?? 0.034), col = t.color || 'white', box = t.box || 'black@0.62';
-      vf.push(`drawtext=fontfile='${font}':textfile='${txt(`t${si}_${k}_${ti}.txt`, t.text)}':fontcolor=${col}:fontsize=${sz}:box=1:boxcolor=${box}:boxborderw=${Math.round(sz * 0.35)}:x=w*${ax}-tw/2:y=h*${ay}-th/2:enable='between(n,${Math.max(0, t0)},${Math.min(n, t1) - 1})'`);
+      const sz = fsz(t.size ?? 0.034);
+      vf.push(textFilter({ font, file: txt(`t${si}_${k}_${ti}.txt`, t.text), size: sz, color: t.color, box: t.box ?? 'black@0.62', W,
+        x: `w*${ax}-tw/2`, y: `h*${ay}-th/2`, enable: `between(n,${Math.max(0, t0)},${Math.min(n, t1) - 1})` }));
     });
     if (burn) {
       const head = `${s.id}${s.picked ? ' [' + s.picked + ']' : ''}  ${s.size ?? ''}${s.lens ? ' ' + s.lens + 'mm' : ''}${s.angle && s.angle !== 'eye' ? ' ' + s.angle : ''}${s.move && s.move !== 'static' ? ' ' + s.move : ''}`;
       vf.push(`drawbox=x=0:y=0:w=iw:h=${fsz(0.05)}:color=black@0.55:t=fill`);
-      vf.push(`drawtext=fontfile='${font}':textfile='${txt(`h${si}_${k}.txt`, head)}':fontcolor=white:fontsize=${fsz(0.022)}:x=${fsz(0.012)}:y=${fsz(0.014)}`);
+      vf.push(`drawtext=fontfile='${font}':expansion=none:textfile='${txt(`h${si}_${k}.txt`, head)}':fontcolor=white:fontsize=${fsz(0.022)}:x=${fsz(0.012)}:y=${fsz(0.014)}`);
       vf.push(`drawtext=fontfile='${font}':text='%{eif\\:n+${a + 1}\\:d}/${s.n}':fontcolor=0xffcc66:fontsize=${fsz(0.022)}:x=w-tw-${fsz(0.012)}:y=${fsz(0.014)}`);
     }
     vf.push('format=yuv420p');
