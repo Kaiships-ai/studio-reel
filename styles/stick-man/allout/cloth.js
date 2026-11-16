@@ -74,4 +74,13 @@ export class Cloth {
   // the edge stretched most: [i, j, stretch]
   worst() { const x = this.x; let w = [0, 0, -1]; for (const [i, j, r] of this.edges) { const s = Math.hypot(x[3 * j] - x[3 * i], x[3 * j + 1] - x[3 * i + 1], x[3 * j + 2] - x[3 * i + 2]) / r - 1; if (s > w[2]) w = [i, j, s]; } return w; }
 }
+// a body frame between two (rigid, uniformly scaled) frames A and B at u (0..1): position and scale eased linearly, the turn
+// along the shorter arc. Everything that moves with the body over a frame's sub-steps (a pinned point, a collider) rides
+// one such frame, so it is all at the same moment: a collider left at B while the pin is eased from A pushes the cloth a
+// whole frame's motion on the first sub-step, which Verlet turns into speed (a cord that flips shape every frame)
+export function lerpRigid(A, B, u, out = new THREE.Matrix4()) {
+  A.decompose(_t0, _q0, _s0); B.decompose(_t1, _q1, _s1);
+  return out.compose(_t0.lerp(_t1, u), _q0.slerp(_q1, u), _s0.lerp(_s1, u));
+}
+const _t0 = new THREE.Vector3(), _t1 = new THREE.Vector3(), _s0 = new THREE.Vector3(), _s1 = new THREE.Vector3(), _q0 = new THREE.Quaternion(), _q1 = new THREE.Quaternion();
 const _v = new THREE.Vector3(), _ab = new THREE.Vector3(), _av = new THREE.Vector3(), _cp = new THREE.Vector3();
