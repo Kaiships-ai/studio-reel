@@ -1,6 +1,7 @@
 // Shot-stage checks (◇4): timing that follows the beat instead of one default, and an acting brief for every acting shot.
 //   node styles/stick-man/tools/timing.mjs films/<slug> [--reel reel.js]     -> review/timing.md, exit 1 on a FAIL
-// Reads reel.js (motion v2 `anim`, after polish) and, when it exists, storyboard.json `shots` (acting briefs).
+// Reads reel.js (motion v2 `anim`, after polish) and, when they exist, storyboard.json `shots` and review/acting.json
+// (acting briefs).
 // T1: share of moves with the same length per actor (polish's default T = 7 everywhere reads as a metronome)
 // A5: shots of kind action / reaction need `acting: { think, do, change }` before blocking (STAGE 3 [3.3a])
 import fs from 'node:fs'; import path from 'node:path';
@@ -30,8 +31,11 @@ if (fs.existsSync(F(A.reel || 'reel.js'))) {
   }
 } else add('WARN', 'T0', 'reel.js', 'no reel.js yet: timing is checked once blocking exists');
 const SB = fs.existsSync(F('storyboard.json')) ? JSON.parse(fs.readFileSync(F('storyboard.json'), 'utf8')) : {};
+// [3.3a] writes the briefs to review/acting.json (shot id -> { think, do, change }) so storyboard.json, which earlier
+// gates hash, stays as locked; a brief on the shot itself still counts.
+const BRIEFS = fs.existsSync(F('review/acting.json')) ? JSON.parse(fs.readFileSync(F('review/acting.json'), 'utf8')) : {};
 for (const s of SB.shots || []) if (['action', 'reaction'].includes(s.kind)) {
-  const a = s.acting || {};
+  const a = s.acting || BRIEFS[s.id] || {};
   const miss = ['think', 'do', 'change'].filter(k => !a[k]);
   if (miss.length) add('FAIL', 'A5', s.id, `${s.kind} shot without an acting brief (${miss.join(', ')}): what the character thinks, does, and how it changes`);
 }

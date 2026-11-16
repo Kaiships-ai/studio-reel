@@ -77,7 +77,7 @@ Notes from Kai are acted on per shot. A note with no shot gets one question back
 | | **◇3** asset lock | | |
 | **3 Shot** | [3.1] camera pass (execution) | places the camera intent locked at ◇2b in 3D (lens, height, distance, move timing); skill `animation-camera-pass` again on rendered strips; 3 rendered options only where a locked intent fails in 3D; previs, lock check (PROCESS.md section 3). A change of size or side of the line needs Kai | option cards, previs video |
 | | [3.2] overlays | the storyboard's drawn layer (loupe, sound words, arrows) via `overlays` (REEL_DATA.md) | stills |
-| | [3.3a] acting brief | per action / reaction shot: think → do → change (`acting` on the shot) and 3-5 grey pose thumbnails; Kai approves the poses | `review/acting.md` |
+| | [3.3a] acting brief | per action / reaction shot: think → do → change in `review/acting.json` (shot id → brief; storyboard.json stays as locked so earlier gates hold) and 3-5 grey pose thumbnails; Kai approves the poses | `review/acting.md` |
 | | [3.3] blocking | key poses by hand, `ease: 'snap'`, every shot (REEL_DATA.md motion v2), with the temp sound from the animatic | video beside the animatic |
 | | Kai approves the blocking (on the page, may batch with [3.2]) | | |
 | | [3.4] polish | holds, eases, anticipation, moving holds, asymmetry; sạn hunt; camera pass again if a shot misses its purpose | blocking vs polish video + numbers |
