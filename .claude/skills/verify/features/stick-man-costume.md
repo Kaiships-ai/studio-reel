@@ -42,7 +42,7 @@ than the hood's clearance).
   `jerseyAt` garment pose; the arms ride the eased root in this frame's pose). `shot.mjs` runs `__motion` before
   `__dbg` for each frame: the other order stepped the cloth back a frame and every row read a fresh cord.
 - Cut that moves the wearer: a body jump between two frames that follow each other (`cloth.js bodyJump`: the throat's
-  world travel changes by over 0.5 m in a frame, over 1.5 m on the frame after a restart, or the heading turns over 90 deg)
+  world travel changes by over 0.5 m in a frame, over 1.5 m on the frame after a restart, or the chest turns over 90 deg)
   re-seats the cords and the hood at rest on the new pose and settles them (`hoodie.js` step, as on a first frame;
   `__dbg` `cord.jump: true` on that frame); the next frame the cords move off with the body (`Cloth.carry`). Before the
   17/11 fix the Hot Money ep01 r2 bank cuts (s6 f1633 and f1662, 3.5 m) were eased across in 8 sub-steps: the cord was
