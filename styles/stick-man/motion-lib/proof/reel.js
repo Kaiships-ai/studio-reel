@@ -1,7 +1,8 @@
 // The motion library's proof page (dev only): one clip on one body, physics on or off, a 3/4 camera that follows it.
 //   node styles/stick-man/tools/shot.mjs --film styles/stick-man/motion-lib/proof --w 540 --h 960 --query "clip=Act_PickUp_Once&body=adult&phys=0" --mp4 ...
 //   query: clip (a clip name), body (default the clip's own, else adult), phys=0 (PHYS.on false), times (loop cycles, default 2),
-//          swap (a film's prop for a clip's, as JSON: a prop kind or its contract, swap={"phone":{"mode":"up","grip":[0,0,0],"size":[0.406,0.098,0.07]}})
+//          swap (a film's prop for a clip's, as JSON: a prop kind or its contract, swap={"phone":{"mode":"up","grip":[0,0,0],"size":[0.406,0.098,0.07]}}),
+//          ov (an overlays list as JSON, drawn over the clip: engine/overlays.js)
 // tools/motionlib.mjs --proof renders every clip through this page.
 import { sizedBag, propSwap } from '/styles/stick-man/motion-lib/props.js';
 import { PHYS } from '/styles/stick-man/engine/body.js';
@@ -55,7 +56,7 @@ const direct = side ? track : [{ at: { f: 0 }, intent: 'ws', why: 'P1 · motion 
 
 export default {
   title: `motion-lib ${CLIP} ${BODY}`, fps: 30, glasses: false, steps: 'all', captions: { mode: 'word' }, style: 'kaiships', directDrift: 0,
-  lines: [], show: [{ from: 0 }], beats: [], overlays: [], frames: [0, last + 12], name: 'motionlib',
+  lines: [], show: [{ from: 0 }], beats: [], overlays: QS.get('ov') ? JSON.parse(QS.get('ov')) : [], frames: [0, last + 12], name: 'motionlib',
   look: { ao: 0.6, aoRadius: 0.5, shadowRadius: 2.0, sat: 1.0, con: 1.05, vig: 0.04, bloom: 0.05, hot: 0.1, ink: 2.4 },
   light: { sun: [1.0, 0.97, 0.93], power: 3.0, sky: [0.86, 0.86, 0.88], ground: [0.55, 0.55, 0.56], hemi: 0.5, fill: [0.95, 0.95, 1.0], fillPower: 0.4,
     sunDir: [0.35, 0.45, -0.85], background: [0.58, 0.58, 0.60] },
