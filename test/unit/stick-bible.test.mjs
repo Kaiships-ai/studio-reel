@@ -60,3 +60,15 @@ test('CATALOG.md is the current render of the two files', async () => {
   const r = await validate(b, { films: null, taste: null });
   assert.equal(fs.readFileSync(path.join(DIR, 'CATALOG.md'), 'utf8'), render(b, r), 'run node styles/stick-man/bible/catalog.mjs');
 });
+
+test('a kit part that provides a name its module does not define fails', () => {
+  const r = run('--dir', broken(b => { b.catalog.components.find(c => c.id === 'fx.phys').provides.make.push('nosuchfx'); }));
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /fx\.phys: styles\/stick-man\/lib\/props\/physfx\.js does not define nosuchfx/);
+});
+
+test('a hand pose two clips claim to replace fails: the checker names one clip to use instead', () => {
+  const r = run('--dir', broken(b => { b.catalog.components.find(c => c.id === 'clip.Act_PickUp_Once').covers.poses.push('SIT_LOW'); }));
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /clip\.Act_PickUp_Once: covers poses "SIT_LOW", which clip\.Idle_Sit_Loop covers already/);
+});

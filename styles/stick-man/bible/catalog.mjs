@@ -17,6 +17,7 @@ export const TIERS = ['primitive', 'semantic', 'component'];
 export const SOURCES = ['measured', 'inferred', 'kit-gate', 'kai', 'judgement'];
 const STATUS = { component: ['stable', 'trial', 'retired'], token: ['stable', 'trial'] };
 const ROOTS = ['R1', 'R2', 'R3', 'R4', 'R5'];
+export const COVERS = ['poses', 'moves', 'props'];
 const ID = /^[a-z0-9-]+(\.[A-Za-z0-9_-]+)+$/, ALIAS = /^\{([\w.-]+)\}$/, KAI_ID = /\b(?:S\d|M)-\d{3}\b/g;
 // the kit registries a catalog must cover in full: a part the kit has and the catalog does not is outside the closed set
 const REGISTRIES = [
@@ -127,7 +128,7 @@ export async function validate({ tokens, catalog }, { repo = REPO, films = path.
   }
 
   // ---- components
-  const C = catalog.components || [], byId = new Map();
+  const C = catalog.components || [], byId = new Map(), coveredBy = new Map();
   for (const c of C) { if (byId.has(c.id)) errors.push(`component ${c.id}: duplicate id`); byId.set(c.id, c); }
   for (const c of C) {
     const w = `component ${c.id}`;
@@ -151,11 +152,19 @@ export async function validate({ tokens, catalog }, { repo = REPO, films = path.
       if (!same(have, want)) errors.push(`${w}: bodies ${want.join(',')} but the kit has ${have.join(',')}`);
     }
     for (const v of c.variants || []) if (first?.parent && !(c.kit[0].key + v in first.parent)) errors.push(`${w}: the kit has no ${c.kit[0].key}${v}`);
-    if (c.provides && local && ctx.films) {
-      const r0 = c.kit[0], src = fs.readFileSync(path.join(ctx.films, r0.path.slice('films/'.length)), 'utf8');
-      for (const n of Object.values(c.provides).flat()) if (!new RegExp(`['.]${n}\\b`).test(src)) errors.push(`${w}: ${r0.path} does not define ${n}`);
+    if (c.provides && (!local || ctx.films)) {
+      const r0 = c.kit[0], src = fs.readFileSync(local ? path.join(ctx.films, r0.path.slice('films/'.length)) : path.join(repo, r0.path), 'utf8');
+      for (const n of Object.values(c.provides).flat()) if (!new RegExp(`['.]${n}\\b|^\\s*${n}\\s*[:(]`, 'm').test(src)) errors.push(`${w}: ${r0.path} does not define ${n}`);
     }
+    // covers: the hand poses, moves and film-made props this part replaces, which the checker names as "use instead"
+    for (const [k, list] of Object.entries(c.covers || {})) {
+      if (!COVERS.includes(k) || !Array.isArray(list) || list.some(n => typeof n !== 'string')) { errors.push(`${w}: covers.${k} is not one of ${COVERS.join(', ')} with a list of names`); continue; }
+      for (const n of list) { const was = coveredBy.get(`${k}:${n}`); if (was) errors.push(`${w}: covers ${k} "${n}", which ${was} covers already`); coveredBy.set(`${k}:${n}`, c.id); }
+    }
+    if (c.mark != null && (typeof c.mark !== 'string' || !c.mark)) errors.push(`${w}: mark is the text a shot's \`why\` carries for this part`);
   }
+  if (catalog.governs != null && (!Array.isArray(catalog.governs) || catalog.governs.some(g => typeof g !== 'string' || !/^[a-z0-9*-]+$/.test(g))))
+    errors.push(`governs: a list of film-slug patterns (letters, digits, - and *)`);
   for (const R of REGISTRIES) {
     const mod = await import(pathToFileURL(path.join(repo, R.path)).href);
     const covered = new Set(C.filter(c => c.kind === R.kind).map(c => c.kit?.[0]?.key));
@@ -177,7 +186,7 @@ const cell = s => String(s ?? '').replace(/\|/g, '/').replace(/\n/g, ' ');
 const show = v => v === null ? 'trống' : Array.isArray(v) ? `[${v.join(', ')}]` : v && typeof v === 'object' ? (v.min != null ? `${show(v.min)}-${show(v.max)}` : JSON.stringify(v)) : String(v);
 
 export function render({ tokens, catalog }, { stats, resolve }) {
-  const out = ['# Hot Money: danh mục (bản nháp chờ Kai duyệt)', '',
+  const out = ['# Hot Money: danh mục (Kai duyệt 17/11)', '',
     'Sinh từ `tokens.json` và `catalog.json` bởi `node styles/stick-man/bible/catalog.mjs`. Đừng sửa tay file này.', '',
     `${stats.tokens} token (${TIERS.map(t => `${stats.tiers[t] || 0} ${TIER_VI[t].toLowerCase()}`).join(', ')}), ${stats.gaps.length} chỗ trống. ` +
     `${stats.components} thành phần (${stats.status.stable || 0} ổn định, ${stats.status.trial || 0} thử, ${stats.status.retired || 0} bỏ), ${stats.filmLocal} nằm trong phim, chờ đưa vào kit.`, ''];
@@ -188,7 +197,8 @@ export function render({ tokens, catalog }, { stats, resolve }) {
     for (const c of L) {
       const ev = [...(c.evidence?.praise || []).map(i => '+' + i), ...(c.evidence?.complaints || []).map(i => '-' + i)].join(' ');
       const local = c.kit.some(r => r.path.startsWith('films/')) ? ' (phim)' : '';
-      out.push(`| \`${c.id}\` | ${cell(k === 'motion-clip' ? c.bodies.join(', ') : c.name)} | ${ST_VI[c.status]}${local} | ${cell(c.use)} | ${cell(c.never)} | ${ev} |`);
+      const instead = Object.values(c.covers || {}).flat();
+      out.push(`| \`${c.id}\` | ${cell(k === 'motion-clip' ? c.bodies.join(', ') : c.name)} | ${ST_VI[c.status]}${local} | ${cell(c.use)}${instead.length ? ` (thay cho ${cell(instead.join(', '))})` : ''} | ${cell(c.never)} | ${ev} |`);
     }
     out.push('');
   }

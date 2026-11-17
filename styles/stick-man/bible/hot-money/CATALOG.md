@@ -1,50 +1,50 @@
-# Hot Money: danh mục (bản nháp chờ Kai duyệt)
+# Hot Money: danh mục (Kai duyệt 17/11)
 
 Sinh từ `tokens.json` và `catalog.json` bởi `node styles/stick-man/bible/catalog.mjs`. Đừng sửa tay file này.
 
-117 token (50 giá trị gốc, 52 theo mục đích, 15 theo thành phần), 6 chỗ trống. 131 thành phần (21 ổn định, 110 thử, 0 bỏ), 17 nằm trong phim, chờ đưa vào kit.
+117 token (50 giá trị gốc, 52 theo mục đích, 15 theo thành phần), 6 chỗ trống. 144 thành phần (21 ổn định, 123 thử, 0 bỏ), 17 nằm trong phim, chờ đưa vào kit.
 
 ## Clip chuyển động (37)
 
 | id | thân | trạng thái | dùng khi | không bao giờ | Kai |
 |---|---|---|---|---|---|
-| `clip.Move_Run_Fwd_Loop` | adult, child, elder, heavy, thin | ổn định | chạy thoát, chạy đuổi | chạy bằng key tay | +S3-013 +S3-003 -S3-002 |
-| `clip.Move_Walk_Fwd_Loop` | adult, child, elder, heavy, thin | thử | đi bộ thường | đi bằng key tay khi có clip |  |
+| `clip.Move_Run_Fwd_Loop` | adult, child, elder, heavy, thin | ổn định | chạy thoát, chạy đuổi (thay cho DASH, C_RUNGUN) | chạy bằng key tay | +S3-013 +S3-003 -S3-002 |
+| `clip.Move_Walk_Fwd_Loop` | adult, child, elder, heavy, thin | thử | đi bộ thường (thay cho walk) | đi bằng key tay khi có clip |  |
 | `clip.Move_Sprint_Fwd_Loop` | adult | ổn định | chạy nước rút | dừng gấp không bước hãm | +S3-013 |
 | `clip.Act_Jump_Once` | adult | thử | nhảy tại chỗ | lăn nghiêng giữa không trung | -S3-007 |
 | `clip.Idle_Stand_Loop` | adult | ổn định | đứng chờ, nghe | đứng như tượng hơn 3 s | +S3-013 |
-| `clip.Idle_LookAround_Loop` | adult | thử | dò xét xung quanh | không có lý do trong truyện |  |
+| `clip.Idle_LookAround_Loop` | adult | thử | dò xét xung quanh (thay cho PEER) | không có lý do trong truyện |  |
 | `clip.Gest_Talk_Loop` | adult | thử | nhân vật tự nói | khi chỉ người dẫn chuyện nói |  |
 | `clip.Gest_Wave_Loop` | adult | thử | vẫy tay | lặp như tật |  |
 | `clip.Trans_SitDown_Once` | adult | ổn định | ngồi xuống | nhảy cóc vào tư thế ngồi | +S3-013 |
-| `clip.Idle_Sit_Loop` | adult | thử | ngồi chờ | ngồi im cả cảnh |  |
+| `clip.Idle_Sit_Loop` | adult | thử | ngồi chờ (thay cho SIT_TALL, SIT_LOW, SIT_GUARD) | ngồi im cả cảnh |  |
 | `clip.Trans_StandUp_Once` | adult | thử | đứng dậy | bật dậy không dồn lực |  |
 | `clip.Gest_PointSeated_Loop` | adult | thử | ngồi chỉ tay | lặp như tật |  |
-| `clip.Act_PickUp_Once` | adult | ổn định | nhặt túi, hộp | đồ có sẵn trong tay sau cắt | +S3-026 -S3-021 -S3-023 -S3-024 -S3-025 |
-| `clip.Move_TurnLeft_Once` | adult | thử | quay trái tại chỗ | xoay người trượt chân |  |
+| `clip.Act_PickUp_Once` | adult | ổn định | nhặt túi, hộp (thay cho REACH_LOW, HEAVE, HEAVE_UP, HEAVE_LO, HEAVE_SH) | đồ có sẵn trong tay sau cắt | +S3-026 -S3-021 -S3-023 -S3-024 -S3-025 |
+| `clip.Move_TurnLeft_Once` | adult | thử | quay trái tại chỗ (thay cho turn) | xoay người trượt chân |  |
 | `clip.Trans_LieDown_Once` | adult | thử | nằm xuống | tay chân xuyên giường |  |
 | `clip.Idle_Sleep_Loop` | adult | thử | ngủ | giữa cảnh hành động |  |
 | `clip.Trans_GetUp_Once` | adult | thử | ngồi dậy từ nằm | bật dậy không dồn lực |  |
 | `clip.Trans_JumpWindow_Once` | adult | ổn định | nhảy qua cửa sổ, cầm túi | tay xuyên tường | +S3-017 -S3-019 -S3-016 |
-| `clip.Act_Phone_Once` | adult | ổn định | rút, xem điện thoại | điện thoại hiện ra từ không | +S3-014 |
+| `clip.Act_Phone_Once` | adult | ổn định | rút, xem điện thoại (thay cho T_PHONE, D_PHONE) | điện thoại hiện ra từ không | +S3-014 |
 | `clip.Move_CarryBag_Walk_Loop` | adult | ổn định | đi xách túi nặng | túi nặng như giấy | +S3-014 +S3-022 -S3-018 -S3-039 |
 | `clip.Move_PushHeavy_Loop` | adult | thử | đẩy vật nặng | tay không chạm vật |  |
 | `clip.Idle_CarryBag_Loop` | adult | ổn định | đứng ôm túi | túi trượt khỏi tay | +S3-014 |
-| `clip.Act_PutDown_Once` | adult | ổn định | đặt túi xuống mặt | túi lơ lửng khi buông | +S3-026 -S3-021 -S3-039 |
+| `clip.Act_PutDown_Once` | adult | ổn định | đặt túi xuống mặt (thay cho PUT, LOWER) | túi lơ lửng khi buông | +S3-026 -S3-021 -S3-039 |
 | `clip.React_Startle_Once` | adult | thử | giật mình có nguyên nhân | giật mình vô cớ | -S3-042 -S3-043 |
 | `clip.Gest_LookBack_Once` | adult | thử | ngoái lại | lặp mỗi shot |  |
-| `clip.Act_PistolShoot_Once` | adult | ổn định | bắn súng ngắn | cầm súng như đồ chơi | +S3-014 |
-| `clip.Act_TorchReady_Loop` | adult, heavy, thin | thử | cầm đèn pin sẵn | đèn rung trong tay |  |
+| `clip.Act_PistolShoot_Once` | adult | ổn định | bắn súng ngắn (thay cho C_AIM2, C_FIRE2) | cầm súng như đồ chơi | +S3-014 |
+| `clip.Act_TorchReady_Loop` | adult, heavy, thin | thử | cầm đèn pin sẵn (thay cho C_LIGHT) | đèn rung trong tay |  |
 | `clip.Act_Drive_Loop` | adult | thử | lái xe | tay rời vô lăng |  |
-| `clip.Act_HandOver_Once` | adult | thử | đưa đồ cho người khác | đồ nhảy giữa hai tay |  |
-| `clip.Act_Consume_Once` | adult | thử | ăn, uống | không có đồ trong tay |  |
+| `clip.Act_HandOver_Once` | adult | thử | đưa đồ cho người khác (thay cho OFFER, PAY, PAY_OFF, T_TAKE, C_TAKE) | đồ nhảy giữa hai tay |  |
+| `clip.Act_Consume_Once` | adult | thử | ăn, uống (thay cho SIT_EAT) | không có đồ trong tay |  |
 | `clip.Gest_PhoneCall_Loop` | adult | ổn định | gọi điện | máy rời tai | +S3-014 |
 | `clip.Gest_LookBackCarry_Once` | adult | ổn định | ngoái lại khi xách túi | túi đứng yên khi thân quay | +S3-014 |
 | `clip.Move_WalkFlashlight_Loop` | adult, heavy, thin | thử | đi soi đèn pin | đèn chỉ lung tung |  |
 | `clip.Idle_Breath_Loop` | child, elder, heavy, thin | thử | đứng thở (thân khác adult) | cho adult (dùng Idle_Stand) |  |
 | `clip.Gest_LookUp_Once` | * | thử | ngước nhìn | không có gì ở trên |  |
 | `clip.Act_DropInTrunk_Once` | * | ổn định | thả túi vào cốp | túi biến mất sau khi thả | +S3-026 -S3-037 -S3-040 |
-| `clip.Act_PushBagOutWindow_Once` | * | ổn định | đẩy túi qua cửa sổ | túi xuyên khung cửa | +S3-026 |
+| `clip.Act_PushBagOutWindow_Once` | * | ổn định | đẩy túi qua cửa sổ (thay cho PUSH_OUT) | túi xuyên khung cửa | +S3-026 |
 
 ## Nét mặt (34)
 
@@ -114,19 +114,22 @@ Sinh từ `tokens.json` và `catalog.json` bởi `node styles/stick-man/bible/ca
 | `cam.move.solver` | giữ đầu trong khung, push-in, rung va chạm, mờ ống kính | thử | shot kit theo KIND | cắt đầu, góc thấp bó hẹp | -S2-003 -S2-026 |
 | `cam.move.camera-pass` | phương pháp camera-pass: đồ thị cường độ, 3 phương án | ổn định | lên kế hoạch máy mỗi shot | bỏ qua khi dựng cảnh mới | +S2-028 |
 
-## Đạo cụ (7)
+## Đạo cụ (10)
 
 | id | tên | trạng thái | dùng khi | không bao giờ | Kai |
 |---|---|---|---|---|---|
 | `prop.object` | đồ vật là vật thể: theo tay, rơi, nằm trên mặt | ổn định | mọi đồ được cầm | đồ hiện, mất, đổi cỡ | +S3-026 -S3-021 -S3-023 -S3-024 -S3-025 |
 | `prop.hand.bag` | túi tiền | thử | túi tiền | cầm như đồ chơi | -S3-021 -S3-039 |
-| `prop.hand.torch` | đèn pin | thử | đèn pin | cầm như đồ chơi |  |
-| `prop.hand.cash` | xấp tiền | thử | xấp tiền | cầm như đồ chơi |  |
+| `prop.hand.torch` | đèn pin | thử | đèn pin (thay cho flashlight) | cầm như đồ chơi |  |
+| `prop.hand.cash` | xấp tiền | thử | xấp tiền (thay cho bill, s6cash, s6cash2) | cầm như đồ chơi |  |
 | `prop.hand.cap` | mũ lưỡi trai | thử | mũ lưỡi trai | cầm như đồ chơi | -S3-051 |
-| `prop.hand.pistol` | súng ngắn | thử | súng ngắn | cầm như đồ chơi |  |
+| `prop.hand.pistol` | súng ngắn | thử | súng ngắn (thay cho s5revolver, s5revolver_fire, hm_revolver_lit) | cầm như đồ chơi |  |
 | `prop.bag-beat` | đời một túi theo đoạn: nằm, nhấc, ôm, đặt | thử (phim) | túi qua tay | túi mới sau mỗi cắt | +S3-061 -S3-037 -S3-040 |
+| `prop.hand.kit` | đồ cầm tay kit (cốc, búa, bút, điện thoại, loa...) | thử | đồ cầm tay có sẵn | cầm như đồ chơi |  |
+| `prop.hand.motion` | đồ cầm tay của thư viện chuyển động (túi ôm, thùng, bánh mì) | thử | đồ đi kèm clip | cỡ khác cỡ clip |  |
+| `prop.hand.allout` | đồ cầm tay allout, chiếu sáng thật (súng lục, vỉ thuốc, khăn) | thử | đồ cầm tay trong set allout | trộn với đồ có nét mực |  |
 
-## Bối cảnh (8)
+## Bối cảnh (12)
 
 | id | tên | trạng thái | dùng khi | không bao giờ | Kai |
 |---|---|---|---|---|---|
@@ -138,8 +141,12 @@ Sinh từ `tokens.json` và `catalog.json` bởi `node styles/stick-man/bible/ca
 | `set.dress` | bày bối cảnh kit | thử | đồ bày nền | bề mặt sạch, mới |  |
 | `set.grime` | bụi bẩn, ẩm, cũ | thử (phim) | mọi bối cảnh | vân sợi, nhiễu, đốm | +M-001 -S1-025 -S1-027 |
 | `set.camblock` | khối va chạm cho máy và người | thử (phim) | mọi cú bay | máy hoặc thân xuyên tường | -S2-002 -S1-002 |
+| `set.pieces` | món bày bối cảnh kit (ghế, thùng, đèn, biển...) | thử | đồ bày nền | món mới tinh, sạch bóng |  |
+| `set.allout-kit` | bộ dựng phòng allout (phòng, cửa sổ, nhãn) | thử | dựng phòng, cửa sổ | tường không có bề mặt |  |
+| `set.glb` | bối cảnh từ gói glb | thử | set dựng từ asset | asset không qua toon |  |
+| `set.kit` | bộ dựng set cơ bản | thử | sàn, tường, khối | khối trơn không chi tiết |  |
 
-## Nhân vật (4)
+## Nhân vật (6)
 
 | id | tên | trạng thái | dùng khi | không bao giờ | Kai |
 |---|---|---|---|---|---|
@@ -147,6 +154,8 @@ Sinh từ `tokens.json` và `catalog.json` bởi `node styles/stick-man/bible/ca
 | `cast.extras` | người qua đường kit | thử | đám đông, người qua | thay nhân vật chính |  |
 | `cast.hoodie` | áo hoodie từ bản vải Blender | ổn định | áo của "you" | nhiễu, tua, mép răng cưa | +S1-022 +S1-026 -S1-025 -S1-027 |
 | `cast.hood` | mũ trùm của phim | thử (phim) | mũ trùm trên đầu | mũ nổi trên sọ | +S1-022 -S1-021 |
+| `cast.hair` | tóc, mũ kit (mũ lưỡi trai, mũ bảo vệ, tóc xoăn, lưỡi trai che) | thử | đặt dáng nhân vật | mũ xuyên mũ trùm |  |
+| `cast.bodies` | năm thân của thư viện chuyển động | thử | mỗi nhân vật một thân | clip thân adult cho thân khác |  |
 
 ## Bộ xương (2)
 
@@ -173,7 +182,7 @@ Sinh từ `tokens.json` và `catalog.json` bởi `node styles/stick-man/bible/ca
 | `card.overlay.meter` | đồng hồ đo | thử | đồng hồ đo | thêm khối chữ thứ ba |  |
 | `card.overlay.path` | đường đi | thử | đường đi | thêm khối chữ thứ ba |  |
 
-## Hiệu ứng trong cảnh (8)
+## Hiệu ứng trong cảnh (12)
 
 | id | tên | trạng thái | dùng khi | không bao giờ | Kai |
 |---|---|---|---|---|---|
@@ -185,6 +194,10 @@ Sinh từ `tokens.json` và `catalog.json` bởi `node styles/stick-man/bible/ca
 | `fx.bars` | cột so sánh | thử | cột so sánh trong thế giới 3D | che mặt quá 0,3 s |  |
 | `fx.split` | chia đôi | thử | chia đôi trong thế giới 3D | che mặt quá 0,3 s |  |
 | `fx.stamp` | dấu đóng | thử | dấu đóng trong thế giới 3D | che mặt quá 0,3 s |  |
+| `fx.phys` | hiệu ứng vật lý kit: tia lửa, khói, nổ, nứt, vỡ | thử | đạn trúng, va chạm, khói | che mặt nhân vật |  |
+| `fx.story` | đạo cụ truyện động (story.js) | thử | đạo cụ kể chuyện có chuyển động | đạo cụ không có trong cảnh |  |
+| `fx.ao-anim` | prop bối cảnh tự chuyển động theo key (allout) | thử | nắp cốp, vật trong set chuyển động | chuyển động không theo frame |  |
+| `fx.make-kit` | hiệu ứng kit: túi sáng, bột, tiền bay, sao nổ, giọt, đồng hồ, sóng radio | thử | nhịp truyện cần hiệu ứng | thay cho hành động thật |  |
 
 ## Ánh sáng, màu (4)
 
@@ -261,7 +274,7 @@ Sinh từ `tokens.json` và `catalog.json` bởi `node styles/stick-man/bible/ca
 | `luma.dark.share.max` | 0.15 | share-of-runtime | giây tối tối đa | R3 | measured | ổn định |
 | `light.face.night` | trống | luma-0-255 | TRỐNG: TOKENS.md chỉ nói "trắng ngà, không tối hơn nền", chưa có số luma | R3 | kai S3-051 | thử |
 | `light.night.preset` | nightBright | preset | cảnh đêm | R3 | kai S3-061 M-001 | thử |
-| `palette.signature` | trống | rgb-linear | TRỐNG: TOKENS.md: 1 màu chữ ký + 1 màu lệch; Hot Money chưa chọn màu nào | R3 | inferred | thử |
+| `palette.signature` | trống | rgb-linear | TRỐNG: TOKENS.md: 1 màu chữ ký + 1 màu lệch; Hot Money chưa chọn màu nào (Kai 17/11: để trống, không chặn) | R3 | inferred | thử |
 | `palette.offColor` | trống | rgb-linear | TRỐNG: chưa chọn | R3 | inferred | thử |
 | `palette.flood.max` | trống | share-of-frame | TRỐNG: "phần lớn khung" chưa có % | R3 | kai S3-052 | thử |
 | `cut.hard.perMinute` | 1 | per-minute | nhịp cắt cứng | R4 | measured | ổn định |

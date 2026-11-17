@@ -9,6 +9,7 @@
 //   --film ... --serve 1                                               keep a server up and print the URL
 //   --film ... --cues audio/cues.json                                  sound cues from the picture: [{t, name, strength}]
 //   --mp4 ... --audio films/x/audio/mix.wav                           mux this track instead of vo/vo.wav
+//   --no-bible-check '<reason>'  render although bible/check.mjs blocks (prints a warning, logged in films/<slug>/bible-bypass.tsv)
 //   --fast 1 (report without the frame-difference pass), --w/--h (default 1080x1920), --query k=v (page flags); --help
 import { chromium } from 'playwright-core';
 import http from 'node:http'; import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os';
@@ -16,6 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { start, run } from '../../../kit/env.mjs';
 import { microanim } from './forensic/microanim.mjs';
 import { acting, joints, compress, holdLines, faultList, hiddenOf, faceLines, cordLines, camStats } from './faults.mjs';
+import { bibleGate } from '../bible/gate.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '../../..');                     // repo root: serves the page and node_modules/three
@@ -29,6 +31,12 @@ if (A.film) for (const f of ['reel.js', 'reel2.js']) {
   const fp = path.join(ROOT, A.film, f); if (!fs.existsSync(fp)) continue;
   const c = run('node', ['--check', fp], { capture: true });
   if (c.status) { console.error(`${A.film}/${f} does not parse:\n${(c.stderr || '').trim()}`); process.exit(1); }
+}
+// a film render (stills or mp4) uses only its bible's parts: bible/check.mjs must pass first (no bible for the film: no check)
+if (A.film && !A.serve && !A.cues && !A.dbg && !A.report) {
+  const g = bibleGate({ film: A.film, bypass: 'no-bible-check' in A ? (A['no-bible-check'] || 'no reason given') : null, frames: A.frames || '0' });
+  if (!g.ok) { console.error(g.text); process.exit(1); }
+  if (g.warn) console.warn(g.warn);
 }
 const W = Number(A.w || 1080), H = Number(A.h || 1920);
 const REEL = !!A.film, page = A.page || (REEL ? 'styles/stick-man/reel.html' : null);
