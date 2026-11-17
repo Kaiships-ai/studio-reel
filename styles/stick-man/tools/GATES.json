@@ -198,6 +198,12 @@
      "args": [
       "{film}"
      ]
+    },
+    {
+     "tool": "shotgate.mjs",
+     "args": [
+      "{film}"
+     ]
     }
    ],
    "evidence": [
@@ -234,6 +240,12 @@
     },
     {
      "tool": "cutgate.mjs",
+     "args": [
+      "{film}"
+     ]
+    },
+    {
+     "tool": "shotgate.mjs",
      "args": [
       "{film}"
      ]

@@ -15,7 +15,7 @@ const ANXIOUS = new Set(['nervous', 'worried', 'angry', 'furious', 'panic', 'scr
 // per-key face options (acting.js changeClass) carried from a beat or an anim key onto its expression key
 const faceOpts = k => Object.fromEntries(['take', 'small', 'exprSpeed'].filter(n => k[n] != null).map(n => [n, k[n]]));
 import { createCamera } from './camera.js';
-import { pointVis, foldVis } from './visible.js';
+import { pointVis, foldVis, opaque } from './visible.js';
 import { planShots } from './shotplan.js';
 import { createCaptions } from './captions.js';
 import { createOverlays } from './overlays.js';
@@ -595,6 +595,49 @@ async function buildAct(R, X) {
     // 0.2 % of the frame (the story gates check a line's storyboard props / fx against this list)
     stage.scene.updateMatrixWorld();
     out.seen = [...new Set([...Object.keys(props), ...Object.keys(fxo)])].filter(n => onScreen(fxo[n]?.obj || props[n]?.isObject3D && props[n] || props[n]?.mesh));
+    const tracked = [], held = new Set();
+    for (const n of Object.keys(props)) { const L = segs[n] || []; let i = L.length - 1; while (i > 0 && L[i].start > f) i--;
+      tracked.push([n, props[n]?.isObject3D ? props[n] : props[n]?.mesh]); if (L[i]?.mode === 'hand') held.add(n); }
+    for (const a of actors) for (const [id, o] of Object.entries(a.S.props || {})) {
+      tracked.push([`${a.name}:${id}`, o]); if ((a.S.propState?.[id]?.w ?? 1) >= 0.999) held.add(`${a.name}:${id}`); }
+    out.track = {};
+    for (const [id, o] of tracked) {
+      if (!o?.isObject3D) continue;
+      let shown = true; for (let q = o; q; q = q.parent) if (!q.visible) shown = false;
+      const inv = o.matrixWorld.clone().invert(), loc = new THREE.Box3(); box3.makeEmpty();
+      if (shown) o.traverseVisible(m => { if (!m.isMesh || !m.geometry) return; if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
+        bb.copy(m.geometry.boundingBox).applyMatrix4(m.matrixWorld); box3.union(bb); loc.union(bb.applyMatrix4(inv)); });
+      if (box3.isEmpty()) { out.track[id] = { shown: false }; continue; }
+      const c = box3.getCenter(new THREE.Vector3()), ls = loc.getSize(new THREE.Vector3()), pts = [c.clone()];
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      for (let i = 0; i < 8; i++) {
+        const q = new THREE.Vector3(i & 1 ? box3.max.x : box3.min.x, i & 2 ? box3.max.y : box3.min.y, i & 4 ? box3.max.z : box3.min.z);
+        pts.push(q.clone().lerp(c, 0.4)); cv.copy(q).project(stage.camera); if (cv.z >= 1 || cv.z <= -1) continue;
+        const px = (cv.x + 1) / 2 * width, py = (1 - cv.y) / 2 * height; x0 = Math.min(x0, px); x1 = Math.max(x1, px); y0 = Math.min(y0, py); y1 = Math.max(y1, py);
+      }
+      const own = h => { for (let q = h; q; q = q.parent) if (q === o) return true; return false; };
+      out.track[id] = { shown: true, held: held.has(id), on: foldVis(pts.map(p => pointVis(stage.camera, stage.scene, p, own))),
+        box: Number.isFinite(x0) ? [x0, y0, x1, y1].map(x => +x.toFixed(1)) : null, size: +(Math.max(ls.x, ls.y, ls.z) * o.matrixWorld.getMaxScaleOnAxis()).toFixed(4), dims: [ls.x, ls.y, ls.z].map(x => +(x * o.matrixWorld.getMaxScaleOnAxis()).toFixed(4)), c: toB(c).map(x => +x.toFixed(4)) };
+    }
+    out.cross = [];
+    const live = new Set(actors.filter(a => a.S.root.visible).map(a => a.S.root)), heldO = new Set(tracked.filter(([id]) => held.has(id)).map(([, o]) => o));
+    const skip = x => { if (!opaque(x)) return true; for (let q = x.object; q; q = q.parent) if (live.has(q) || heldO.has(q)) return true; return false; };
+    const now = {}, wp = o => o.getWorldPosition(new THREE.Vector3());
+    for (const a of actors) { if (!a.S.root.visible) continue;
+      const l = a.S.rigWorld(), mid = (u, v) => toThree(...u.map((x, i) => (x + v[i]) / 2));
+      const pts = { head: wp(a.S.parts.head), kneeL: toThree(...l.L.knee), kneeR: toThree(...l.R.knee), pelvis: mid(l.L.hip, l.R.hip), chest: mid(l.L.shoulder, l.R.shoulder) };
+      for (const [k, v] of Object.entries(pts)) now[`${a.name}.${k}`] = v; }
+    for (const [id, o] of tracked) if (held.has(id) && o?.visible) { box3.makeEmpty().setFromObject(o); if (!box3.isEmpty()) now[`prop ${id}`] = box3.getCenter(new THREE.Vector3()); }
+    const where = new Map(), walk = (o, d) => { if (live.has(o)) return; where.set(o, wp(o)); if (d < 5) for (const c of o.children) walk(c, d + 1); };
+    walk(stage.scene, 0);
+    const moved = h => { for (let q = h; q; q = q.parent) { const a = crossPrev?.where.get(q), b = where.get(q); if (a && b && a.distanceTo(b) > 0.01) return true; } return false; };
+    if (crossPrev?.f === f - 1) for (const [k, p] of Object.entries(now)) {
+      const q = crossPrev.pts[k]; if (!q) continue; const d = p.distanceTo(q); if (d < 1e-4) continue;
+      crossRay.set(q, p.clone().sub(q).divideScalar(d)); crossRay.near = 0; crossRay.far = d; crossRay.camera = stage.camera;
+      const h = crossRay.intersectObject(stage.scene, true).find(x => !skip(x) && !moved(x.object));
+      if (h) out.cross.push({ what: k, through: h.object.name || h.object.parent?.name || 'set', d: +d.toFixed(3), at: toB(h.point).map(x => +x.toFixed(3)) });
+    }
+    crossPrev = { f, pts: now, where };
     return out;
   }
   // the shot camera's view of a fault (engine/visible.js): items [{ actor, pts: [[x, y, z] Blender world] }], one state
@@ -611,6 +654,7 @@ async function buildAct(R, X) {
     });
   }
   const box3 = new THREE.Box3(), bb = new THREE.Box3(), cv = new THREE.Vector3(), frust = new THREE.Frustum(), pm = new THREE.Matrix4();
+  const crossRay = new THREE.Raycaster(); let crossPrev = null;
   function onScreen(o) {
     if (!o?.isObject3D) return false;
     for (let q = o; q; q = q.parent) if (!q.visible) return false;
@@ -764,6 +808,7 @@ export async function boot({ film, width, height }) {
     return out.sort((a, b) => a.t - b.t);
   };
   window.__T_END = (F1 + 1) / fps;
+  window.__F = [F0, F1];
   window.__frame = f => frame(f);
   frame(F0);
   window.__ready = true;

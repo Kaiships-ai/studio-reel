@@ -6,7 +6,7 @@
 node styles/stick-man/tools/stagegate.mjs films/<slug> <1|S|2a|2b|2c|3|4|5|6|all>   # review/gate-<id>.md
 ```
 
-Each gate in `styles/stick-man/tools/GATES.json` lists four kinds of evidence: **measured** (a tool that must exit 0: `develop.mjs`, `scriptlint.mjs`, `prepro.mjs --gate`, `assets.mjs` and `rigtest.mjs` (gate 3), `timing.mjs` and `facebeat.mjs` (gate 4: faces against the beat, repeated faces), `postcheck.mjs`, `cutgate.mjs`), **made** (the maker's files), **judged** (`by: agent:<id>` or `person:<name>`, fresh against what it reviewed: for a JSON file, everything but non-visible metadata (`notes`, `note`, `purpose`, `why`, `comments`; in `storyboard.json` also the options that are not picked, `pick`, and the asset breakdown `assets.mjs` reads: shot `set`, `cast`, `props`, `state`, `reset` and the storyboard's `measures`) hashes the same as when the review was first seen newer than it, recorded in `review/.fresh.json`; any other file, such as `vo/vo.wav`, must be older than the review; see `tools/fresh.mjs`) and **approved** (Kai in `review/approvals.json`, after the latest evidence). States: OPEN → READY FOR KAI → LOCK. A film may add evidence in `review/gates.local.json`, never remove any.
+Each gate in `styles/stick-man/tools/GATES.json` lists four kinds of evidence: **measured** (a tool that must exit 0: `develop.mjs`, `scriptlint.mjs`, `prepro.mjs --gate`, `assets.mjs` and `rigtest.mjs` (gate 3), `timing.mjs`, `facebeat.mjs` (gate 4: faces against the beat, repeated faces) and `shotgate.mjs` (gates 4 and 5), `postcheck.mjs`, `cutgate.mjs`), **made** (the maker's files), **judged** (`by: agent:<id>` or `person:<name>`, fresh against what it reviewed: for a JSON file, everything but non-visible metadata (`notes`, `note`, `purpose`, `why`, `comments`; in `storyboard.json` also the options that are not picked, `pick`, and the asset breakdown `assets.mjs` reads: shot `set`, `cast`, `props`, `state`, `reset` and the storyboard's `measures`) hashes the same as when the review was first seen newer than it, recorded in `review/.fresh.json`; any other file, such as `vo/vo.wav`, must be older than the review; see `tools/fresh.mjs`) and **approved** (Kai in `review/approvals.json`, after the latest evidence). States: OPEN → READY FOR KAI → LOCK. A film may add evidence in `review/gates.local.json`, never remove any.
 
 Freshness has one limit, first sight: the hash is recorded the first time `stagegate.mjs` runs after a review is
 written. If the reviewed file changes before that run, there is no record, the file is newer than the review and the
@@ -55,6 +55,46 @@ voice; `--strict 1` (WARN counts as FAIL) is for Kai to ask for, never a default
 | on-screen text | ≤ 15 characters/s, ≥ 25 f, inside the text-safe box (x 6-87 %, y 14-65 %) | readable on a phone, not under the app's UI |
 | continuity | no screen-direction flip or axis jump without a stated reason | reversed axes read as mistakes |
 | intensity | no visual peak before the climax after the hook | the climax needs somewhere to go |
+
+## Shot gate (◇4, ◇5)
+
+```sh
+node styles/stick-man/tools/shotgate.mjs films/<slug> [--in renders/<slug>_vN.mp4 --from <first frame>]   # review/shot-gate.md
+```
+
+Every frame of the film, frame against frame (`tools/shotfaults.mjs`). Each fault is sized as the viewer sees it: px on a
+720-tall phone frame through the shot's own camera, after the motion the neighbouring frames predict, times the share of
+it in view (inside the frame, not behind the figure's own head or torso, and in film mode not behind the set: `shot.mjs
+--vis`). Its frames are how long it stays on screen.
+
+What blocks comes from Kai's marks at playback speed (17/11, 12 strips from pilot-a and the bible film): he saw only a saw
+11 px into a rail for 3 frames, and none of the one-frame pops of 6 to 67 px, a phone that appears in a hand (47 px), a
+knee that snaps to a new pose (63 px) or a calendar page turning. So:
+
+- A fault gone again within 2 frames (out and back, a blink, a one-frame pop) is listed as watch and never blocks.
+- A contact (marked c: one thing into, through or off another) that lasts 3 frames blocks from 6 px.
+- A change that stays 3 frames (a jump to a new place, a prop or figure in or out, a size, a pose snap, a change at a cut)
+  blocks from 75 px, between the largest one Kai did not see (63 px) and the smallest one he complained about (97 px, S3-032).
+
+Each blocking second gets `review/shot-gate/strip_<s>s_f<F>.jpg`: 15 frames in a row, the fault on tile 6. A film
+assembled shot by shot passes its rows with `--rows`.
+
+| Fault | Measured |
+|---|---|
+| prop appears / vanishes | seen and ≥ 0.2 % of the frame; no cut, not through the frame edge under a still camera, not from behind a cover; px = its size on screen; frames = how long both the old and the new state last |
+| prop / figure jumps | the step into a frame lies outside the steps on either side of it in the shot, less the same measure 2 and 3 frames away (a speed-up, a landing or a sprint is no jump); what the steps around it leave of it is a jump to a new place, else it went out and back in one frame; a prop whose box changes shape (a page turning) is no jump |
+| prop resizes, prop changes at cut | size changes 15 % in a frame, or a carried prop's size across a cut; px = the change on screen |
+| prop gone after cut | a prop left at rest (moved < 1 cm the frame before) is not at its spot when the next shot of the place looks there; a moving prop may change place behind a cut |
+| prop floats (c) | within 15 frames of a hand letting go, vertical acceleration off −g by 60 % for 3 frames; px = distance from the fall gravity predicts |
+| figure appears / vanishes | inside the frame in one frame (not revealed by a pan); px = the figure's height on screen |
+| joint pops | a jointstep.mjs channel over 25° in a frame whose moving points jump off their path (as prop jumps); one that holds is a pose snap |
+| figure skates (c) | the body travels > 0.6 m/s for 8 frames while the stiller foot, within 10 cm of the floor, moves along > 50 %; px = its slide |
+| foot slides (c) | an ankle within 3 cm of the floor in two frames moves; px = the slide over the run |
+| body / prop passes through (c) | pelvis, chest, head, knees or a held prop crosses a set mesh the render draws opaque and that did not move (a light cone, glass or a hidden mesh is not a surface); it stays inside while past the crossing spot along the way it went in; px = how far |
+| hand off its grip, prop in the body (c) | over 2 cm, over 1 cm (shot report (h), (i)); px = the gap on screen |
+| body in the set (c) | a collision box; the engine gives no depth, so 3 frames decide |
+| camera jumps | inside a shot of a film assembled shot by shot (`edit` rows): 0.3 m and 3x its last step |
+| cord shakes (watch only, never blocks) | the shot report's cords line, 0.015 m/f² |
 
 ## Profiles
 
