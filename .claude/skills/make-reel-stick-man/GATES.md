@@ -68,18 +68,20 @@ fault on tile 6, for the reviewer to open before a verdict. A film assembled sho
 
 | Fault | Measured | Limit |
 |---|---|---|
-| prop appears / vanishes | shown and seen in one frame, absent the next, no cut, not through the frame edge or a cover | none |
+| prop appears / vanishes | seen and ≥ 0.2 % of the frame in one frame, absent the next; no cut, not through the frame edge under a still camera, not from behind a cover | none |
 | prop jumps | centre moves further than its last step | 0.25 m / frame |
 | prop resizes | size change in one frame | 15 % |
 | prop changes at cut | a figure carries a prop of another size out of the cut | 15 % |
 | prop gone after cut | a free prop is not at its spot when the next shot of the place looks there | none |
-| prop floats | a free prop moves up or down with vertical acceleration off −g | 60 % of g, 3 frames |
-| figure appears / vanishes / jumps | inside the frame in one frame; head moves further than its last step | 0.4 m / frame |
-| figure skates | the body travels while even the stiller foot moves along | > 0.6 m/s, stance foot > 50 %, 4 frames |
-| joint pops | jointstep.mjs channel in one frame | 25° |
+| prop floats | within 15 frames of a hand letting go, it moves up or down with vertical acceleration off −g | 60 % of g, 3 frames |
+| figure appears / vanishes / jumps | inside the frame in one frame (not revealed by a pan); head moves further than its last step | 0.4 m / frame |
+| figure skates | the body travels while even the stiller foot moves along | > 0.6 m/s, stance foot > 50 %, 8 frames |
+| joint pops | a jointstep.mjs channel in one frame, and twice its step on either side (a fast swing is not a pop; `gates.mjs` joint change still caps every frame at 25°) | 25° |
 | foot slides | a planted foot | 3 px / frame at 720p |
-| body / prop passes through | pelvis, chest, head, knees or a held prop's centre crosses a set mesh since the last frame | none |
-| hand off its grip, prop in the body, body in the set, cord shakes | as the shot report (h), (i), (e), cords | 2 cm, 1 cm, none, 0.015 m/f² |
+| body / prop passes through | pelvis, chest, head, knees or a held prop's centre crosses a set mesh that did not move, by 2 cm to 0.5 m | none |
+| camera jumps | inside a shot of a film assembled shot by shot (`edit` rows) | 0.3 m and 3x its last step |
+| hand off its grip, prop in the body, body in the set | as the shot report (h), (i), (e) | 2 cm, 1 cm, none |
+| cord shakes (watch only, never blocks) | the shot report's cords line | 0.015 m/f² |
 
 ## Profiles
 

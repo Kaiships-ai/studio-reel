@@ -1,7 +1,3 @@
-// The measured shot gate (◇4 shot lock, ◇5 deliver): every frame of the film through shotfaults.mjs, so a prop that
-// pops, jumps, floats or changes across a cut, a figure that pops in, slides, snaps or walks through the set stops the
-// gate before a reviewer or Kai has to find it. A fault the camera does not see (behind a cover, out of frame) is listed
-// as "ẩn" and never blocks. Each second with a blocking fault gets a 15-frame strip, every frame, the fault on tile 6.
 //   node styles/stick-man/tools/shotgate.mjs films/<slug>                     -> review/shot-gate.md + review/shot-gate/*.jpg
 //   ... [--in renders/x.mp4 [--from <film frame of the mp4's first frame>]]  strips cut from this render (default: the
 //                                                                              newest renders/*.mp4, else the frames are rendered)
@@ -31,18 +27,16 @@ if (!rowsFile) {
 const rows = fs.readFileSync(rowsFile, 'utf8').trim().split('\n').filter(Boolean).map(l => JSON.parse(l));
 const faults = shotFaults(rows, { W, H });
 
-// what the film camera sees of each figure fault (shot.mjs --vis, engine/visible.js)
-const probe = faults.filter(x => x.pts?.length && rows[0].actors[x.who]);
-if (!A.rows && probe.length) {
+const figureFaults = faults.filter(x => x.pts?.length && rows[0].actors[x.who]);
+if (!A.rows && figureFaults.length) {
   const vf = path.join(tmp, 'vis.json');
-  fs.writeFileSync(vf, JSON.stringify(probe.map(x => ({ F: x.F, actor: x.who, pts: x.pts }))));
+  fs.writeFileSync(vf, JSON.stringify(figureFaults.map(x => ({ F: x.F, actor: x.who, pts: x.pts }))));
   const r = node([SHOT, '--film', film, '--vis', vf, '--w', String(W), '--h', String(H)]);
   if (r.status) { console.error(`shot.mjs --vis failed:\n${(r.stderr || '').trim().split('\n').slice(-5).join('\n')}`); process.exit(2); }
-  JSON.parse(fs.readFileSync(vf, 'utf8')).forEach((v, i) => { probe[i].vis = v; });
+  JSON.parse(fs.readFileSync(vf, 'utf8')).forEach((v, i) => { figureFaults[i].vis = v; });
 }
 const secs = bySecond(faults), blocking = secs.filter(s => s.block);
 
-// strips: from the render when there is one, else the flagged frames rendered small
 const mp4 = A.in ? path.resolve(ROOT, A.in) : (fs.existsSync(F('renders')) ? fs.readdirSync(F('renders')).filter(f => f.endsWith('.mp4')).map(f => F('renders/' + f))
   .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs)[0] : null);
 const from = Number(A.from || 0), SD = F('review/shot-gate');

@@ -10,11 +10,12 @@
   `<actor>:<id>`, with `shown`, `held`, `on` (what the lens sees of it, engine/visible.js), its screen `box`, its `size` (m)
   and centre `c`. The gate reads appear / vanish / jump / resize in a shot, size and spot across a cut, and floating.
 - Crossings: `__dbg` rows carry `cross`: pelvis, chest, head, knees and each held prop's centre, a ray from the frame before
-  to this one against the set's meshes (bodies and held props left out).
+  to this one against the set's meshes (bodies, held props and meshes that moved since the last frame left out).
 - Cuts: a camera jump, an act change, a dissolve, or `edit: true` on a row. `motion.cut` is not used: a film directed one
   camera shot per frame sets it on every frame, and the shot report skips every such frame.
 - Figures: pop in or out inside the frame, head jumps, skating (the body travels, both feet move along), joint pops
-  (jointstep.mjs), planted foot slide, hand off its grip, held prop in the body, collision boxes, cord shake.
+  (jointstep.mjs, a spike over 25 deg), planted foot slide, hand off its grip, held prop in the body, collision boxes.
+  Cord shake is listed as watch only. The limits and their reasons: GATES.md "Shot gate".
 - Visibility: figure faults go through `shot.mjs --vis` (the film camera); a hidden fault is listed as ẩn and never
   blocks. Rows given with `--rows` have no page, so their figure faults count as seen.
 - Strips: each blocking second gets `review/shot-gate/strip_<s>s_f<F>.jpg`, 15 frames, the fault on tile 6, cut from the

@@ -1,6 +1,3 @@
-// The measured shot gate (styles/stick-man/tools/shotfaults.mjs) on synthetic __dbg rows, one case per fault Kai named on
-// Hot Money ep01 r2 v002 (16/11): the faults are found in a film directed one camera shot per frame (motion.cut on every
-// frame), and a cut, a walk, a fall or an entrance through the frame edge is not a fault.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { shotFaults, bySecond, cuts, G_FRAME } from '../../styles/stick-man/tools/shotfaults.mjs';
