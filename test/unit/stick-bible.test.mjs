@@ -72,3 +72,10 @@ test('a hand pose two clips claim to replace fails: the checker names one clip t
   assert.equal(r.status, 1);
   assert.match(r.stderr, /clip\.Act_PickUp_Once: covers poses "SIT_LOW", which clip\.Idle_Sit_Loop covers already/);
 });
+
+test('an empty films/ root leaves film-local parts unchecked instead of failing', async () => {
+  const films = fs.mkdtempSync(path.join(os.tmpdir(), 'films-'));
+  const r = await validate(loadBible(DIR), { films, taste: null });
+  assert.deepEqual(r.errors, []);
+  assert.ok(r.stats.unchecked > 0);
+});
