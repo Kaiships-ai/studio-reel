@@ -1,0 +1,26 @@
+{
+ "records": [
+  {
+   "brief": "kai-taste@afca3fd2b80e",
+   "model": "sonnet @medium",
+   "set": "hm-r2-v1",
+   "half": "test",
+   "seed": null,
+   "n": 5,
+   "hit": 0.4,
+   "falseAlarm": 0,
+   "ab": [
+    {
+     "id": "escape",
+     "ok": false
+    }
+   ],
+   "calibrated": false,
+   "why": [
+    "hit 40% < 70%",
+    "A/B escape: picked escB"
+   ],
+   "at": "2026-11-17T09:18:49.536Z"
+  }
+ ]
+}

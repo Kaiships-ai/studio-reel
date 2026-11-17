@@ -30,6 +30,12 @@ The agent's report is saved as the gate's judged evidence with front matter `by:
 - Every brief starts with Kai's taste: "Read `~/.claude/skills/kai-taste/SKILL.md` and the files it names. Judge as Kai
   would at 1x on a phone; name the root each finding breaks; never mark down what Kai praised." For a video, follow its
   Review procedure (`tools/look.sh`). Headless judges get the roots inline (`styles/stick-man/tools/taste.mjs`).
+- A video review counts at ◇5 only when its brief agreed with Kai: the report's front matter carries
+  `brief: <tag>` (`node styles/stick-man/tools/calibrate.mjs hash`), and `stagegate.mjs` reads that tag's record in
+  `styles/stick-man/tools/calibration.json`. A brief that never ran, or scored under the bar (70% of Kai's complaints
+  caught, at most 25% of his praised moments attacked, his pick in every A/B, on the test half only), is "uncalibrated"
+  and its review does not count. Score a brief change with `calibrate.mjs blind` (prompts with no answers in them) and `calibrate.mjs score <key>
+  <answers> --record`; the key is Kai's private replay set and stays outside the repo.
 - Give it files to read: per-shot strips, full frames, purposes. Never give it your conclusion.
 - It writes nothing to disk.
 - Review what it says against the frames yourself. A finding you disprove on a frame goes to Kai as "không phải sạn", with the frame number. A finding you can't disprove gets fixed.
@@ -169,6 +175,9 @@ Commands, profiles and thresholds: GATES.md. Always pass `--profile` (the defaul
 - Fix quality FAILs in data or kit. Fix measuring-tool gaps in the tool (`__dbg`), with a commit that says so.
 
 ## 10. Deliver (◇5)
+
+◇5 stays OPEN until `review/final-qa.md` carries `brief: <tag>` of a calibrated brief (section 2); while no brief has
+passed `calibrate.mjs score` on the test half, every film waits here.
 
 1. Render the final with Kai's last choices applied.
 2. Run `sheet.mjs --n 21`.
