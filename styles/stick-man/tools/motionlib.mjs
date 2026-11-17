@@ -222,7 +222,7 @@ export function propExcess(q, now) {
 // one clip through the real rig, physics on: the hand off its target while it grips (shot.mjs (h)) and a held prop
 // inside the body after the solve ((i)), per frame; and the props, the balance shift and the load frame to frame
 // obstacles: more set pieces ([{ name, lo, hi }], Blender metres, clip space): a film's own (a counter beside the actor, a wall)
-export async function rigClip(C, body = C.body || 'adult', { phys = true, obstacles = [] } = {}) {
+export async function rigClip(C, body = C.body || 'adult', { phys = true, obstacles = [], each = null } = {}) {
   const R = await rig(), S = R.cast.makeStick(R.bodySpec(guard(C.needs?.cap), body)), was = R.PHYS.on; R.PHYS.on = phys;
   S.obstacles = [...markColliders(C.needs?.marks, C.body ? 1 : (BODIES[body]?.spec.scale ?? 1)), ...obstacles];   // the clip's set pieces: hands stop on them
   const key = { ...(C.advance ? { f: 0, clip: C.clip, body, to: [C.introTravel + C.outroTravel + 2 * C.advance, 0] } : { f: 0, clip: C.clip, body, ...(C.loop ? { times: 2 } : {}) }), ...fitOf(C) };
@@ -239,7 +239,7 @@ export async function rigClip(C, body = C.body || 'adult', { phys = true, obstac
       const Q = Qat(f); Q.propRest = plan.at(f);
       // the balance shift: the pelvis with balance on minus the same frame with it off (physics on only)
       let pel0 = null; if (phys && R.PHYS.balance) { R.PHYS.balance = false; S.pose2(Q); pel0 = S.rigWorld().skel.pelvis; R.PHYS.balance = true; }
-      S.pose2(Q); const w = S.rigWorld();
+      S.pose2(Q); const w = S.rigWorld(); each?.(f, S, w, keys);
       const pel = w.skel.pelvis, bal = pel0 ? pel.map((x, i) => x - pel0[i]) : [0, 0, 0];
       if (prevBal) { const d = 100 * d3(bal, prevBal); if (d > o.bal) { o.bal = +d.toFixed(2); o.balAt = f; } }
       if (prevPel) { const d = 100 * d3(pel, prevPel); if (d > o.pelvis) { o.pelvis = +d.toFixed(2); o.pelvisAt = f; } }
