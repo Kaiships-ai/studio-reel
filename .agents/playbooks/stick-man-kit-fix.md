@@ -21,11 +21,14 @@ its owner re-renders after the merge.
 - **After** "Verify on the same surface." add: an independent reviewer (Sonnet, medium) reruns the gates and probes
   for a threshold loosened, a `JOINT_KNOWN` row added, or a fault hidden by another change. The builder fixes what
   holds up. `JOINT_KNOWN` may only shrink; a gate threshold never loosens.
+  The reviewer runs `draft.mjs` and `journeys.mjs` only in its own worktree, never in Kai's main checkout ([#139](https://github.com/Kaiships-ai/studio-reel/issues/139)).
 - **In** "Stage the commits so the failing repro lands before the fix" add: the gate or unit test that fails on
   `main` lands first, and the PR body carries before/after numbers per fault.
 - **Before** "Run **Opening a PR**." add: a proof page with one before|after video per fault (hstack of the two
   renders) plus code location and number, published as a private artifact and linked on the PR; update the Motion
   Lab artifact. Kai merges unless he said to.
+- **After** "Run **Opening a PR**." add: once Kai merges, fast-forward Kai's main checkout (`git fetch && git merge --ff-only origin/main`) without being
+  asked. If it is not a fast-forward, stop and report; his local changes stay.
 
 ## Kai's rules that override pstack defaults
 

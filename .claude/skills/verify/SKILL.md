@@ -22,6 +22,9 @@ page keeps its 1080x1920 viewport and Chromium's deviceScaleFactor (0.25) shrink
 render verify` on a test film yields a real 270x480 @ 12 fps MP4 (at most 15 s) in about 9 s for the starter.
 See `features/full-render.md` → `full.preset-test`.
 
+Run `draft.mjs` and `journeys.mjs` only inside your own worktree, never against Kai's main checkout: a reviewer once
+overwrote `films/*/out/verify/draft.mp4` there ([#139](https://github.com/Kaiships-ai/studio-reel/issues/139)).
+
 ## Doctor (run first, and whenever anything looks off)
 
 ```sh
