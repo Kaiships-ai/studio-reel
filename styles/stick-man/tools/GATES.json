@@ -221,6 +221,12 @@
      "args": [
       "{film}"
      ]
+    },
+    {
+     "tool": "cutgate.mjs",
+     "args": [
+      "{film}"
+     ]
     }
    ],
    "evidence": [

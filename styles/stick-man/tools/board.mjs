@@ -48,7 +48,7 @@ if (A.judge) await judge(Number(A.judge) || 3);
 
 async function renderBoard() {
   const last = await lastFrame();
-  const rows = dbgRows(last);
+  const rows = await dbgRows(last);
   const t0 = id => words.find(w => w.line === id)?.t0;
   const tiles = script.lines.map((l, i) => {
     const ws = words.filter(x => x.line === l.id), e = byId[l.id], key = e.still || e.on;
@@ -92,20 +92,11 @@ body { margin: 0; background: #fff; font: 13px/1.25 Helvetica, Arial, sans-serif
 }
 
 async function lastFrame() {
-  const imp = async f => (await import('./reel_load.mjs')).loadReel(path.dirname(F(f)), path.basename(F(f)));
-  const R1 = await imp('reel.js'), R2 = fs.existsSync(F('reel2.js')) ? await imp('reel2.js') : null;
-  return (R2 || R1).frames[1];
+  return (await (await import('./reel_load.mjs')).reelSpan(F('.')))[1];
 }
-// __dbg rows over the whole reel (seen lists per frame), cached in review/board-dbg.jsonl while the reel data is unchanged
-function dbgRows(last) {
-  const f = A.dbg ? path.resolve(A.dbg) : F('review/board-dbg.jsonl');
-  const newest = Math.max(...['reel.js', 'reel2.js', 'storyboard.json', 'vo/words.json'].filter(p => fs.existsSync(F(p))).map(p => fs.statSync(F(p)).mtimeMs));
-  if (!A.dbg && (!fs.existsSync(f) || fs.statSync(f).mtimeMs < newest)) {
-    fs.mkdirSync(path.dirname(f), { recursive: true });
-    const r = run('node', [path.join(HERE, 'shot.mjs'), '--film', film, '--frames', `0-${last}`, '--dbg', f, '--w', '540', '--h', '960'], { cwd: ROOT });
-    if (r.status) process.exit(r.status);
-  }
-  return fs.readFileSync(f, 'utf8').trim().split('\n').map(l => JSON.parse(l));
+async function dbgRows(last) {
+  if (A.dbg) return fs.readFileSync(path.resolve(A.dbg), 'utf8').trim().split('\n').map(l => JSON.parse(l));
+  return (await import('./reel_load.mjs')).cachedReelDbg(F('.'), last);
 }
 // peak = middle of the longest run of frames with the most listed props / fx seen (the later run on a tie);
 // nothing listed or nothing seen: 3/4 through the window. At least 8 frames from still A when the window allows.
