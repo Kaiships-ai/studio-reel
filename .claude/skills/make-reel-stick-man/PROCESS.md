@@ -27,6 +27,9 @@ Spawn a **fresh** agent for each check: `subagent_type: verifier`, `model: sonne
 
 The agent's report is saved as the gate's judged evidence with front matter `by: agent:<id>` and `of: <what it reviewed, version>` on its first lines (GATES.json names the files). The maker never writes a judged file.
 
+- Every brief starts with Kai's taste: "Read `~/.claude/skills/kai-taste/SKILL.md` and the files it names. Judge as Kai
+  would at 1x on a phone; name the root each finding breaks; never mark down what Kai praised." For a video, follow its
+  Review procedure (`tools/look.sh`). Headless judges get the roots inline (`styles/stick-man/tools/taste.mjs`).
 - Give it files to read: per-shot strips, full frames, purposes. Never give it your conclusion.
 - It writes nothing to disk.
 - Review what it says against the frames yourself. A finding you disprove on a frame goes to Kai as "không phải sạn", with the frame number. A finding you can't disprove gets fixed.

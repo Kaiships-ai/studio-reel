@@ -311,7 +311,7 @@ action (seven trips drawn as seven quick cuts), never as an equation alone. Show
 ## 5. Reviews (who checks what)
 
 Never judge your own work (PROCESS.md section 2). Add these prompts for stage 1; give the agent files, never your
-conclusion.
+conclusion. Every prompt starts with Kai's taste (`~/.claude/skills/kai-taste/SKILL.md`, PROCESS.md section 2).
 
 | Check | When | Prompt core |
 |---|---|---|

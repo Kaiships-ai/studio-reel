@@ -26,3 +26,6 @@ only says how pstack fits around it.
 8. Publish each finished piece at once. When a builder finishes, its output goes on the stage page in the same turn,
    marked "chờ soát độc lập"; the reviewer's verdict updates the page later. Kai never waits for a review, or for the
    rest of the batch, to see work that already exists (Kai 16/11: "không muốn gián đoạn flow state").
+9. Every reviewer brief, at every stage, starts with Kai's taste (`~/.claude/skills/kai-taste/SKILL.md`, PROCESS.md
+   section 2). A reviewer that judges only numbers misses what Kai sees (17/11: each builder had a reviewer, the cut was
+   still "cực kỳ nhiều sạn").
