@@ -10,7 +10,7 @@ flex in every frame; `--sheet` renders each clip's worst pose from the front, 3/
 - Face per beat: a face whose emotion family (`FAMILY`) the beat never names (`WORDS` over the beat's feel, lines and
   every shot's brief, purpose and picture) fails when held `HOLD` (15) frames on a head at least `MIN_FACE` (3 %) of the
   frame high. Neutral faces (deadpan, focus, stern, suspicious, ...) never fail. Film twins (`y_fear`) count as their kit face.
-- Repeats: a non-neutral face of one character in more than `REPEAT_MAX` (2) shots fails (kai-taste TOKENS "Repeats").
+- Repeats: a non-neutral face of one character taken up more than `REPEAT_MAX` (2) times fails (kai-taste TOKENS "Repeats"); a face held on across cuts is one take.
 - Rows: `shot.mjs --dbg` rows; a row may carry `sb` (its storyboard frame, for a re-timed picture) and `t` (its second in
   the cut). Shots come from `storyboard.json` and the film's `reel.js` `CUTS`; `--story` borrows another film's story.
 - Rig test: limits `HEAD_PCT` 5 (head height to width against round), `BONE_PCT` 3 (the arm's own `ARM_STRETCH`),

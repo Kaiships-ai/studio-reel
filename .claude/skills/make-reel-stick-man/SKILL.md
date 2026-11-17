@@ -149,7 +149,7 @@ A later stage's problem is fixed in the stage that caused it. Never jump ahead i
 | `styles/stick-man/tools/GATES.json`, `stagegate.mjs` | the evidence each gate needs, and the checker |
 | `styles/stick-man/tools/develop.mjs`, `scriptlint.mjs`, `assets.mjs`, `timing.mjs`, `postcheck.mjs`, `cutgate.mjs`, `retention.mjs` | the measured checks of stages 0, 1 (script), 2, 3, 4 and 5 |
 | `styles/stick-man/tools/retakes.mjs`, `calibrate.mjs` | Kai's notes per round (repeats, regressions), and whether a review brief agrees with Kai before its review counts |
-| `styles/stick-man/tools/rigtest.mjs`, `facebeat.mjs` | the rig test (gate 3: head shape, bone lengths, joint flex in every library clip; `--sheet` renders the turnaround) and faces against the story (gate 4: a face the beat never names, a face in more than 2 shots; reads `review/shot-rows.jsonl` from `shot.mjs --dbg`) |
+| `styles/stick-man/tools/rigtest.mjs`, `facebeat.mjs` | the rig test (gate 3: head shape, bone lengths, joint flex in every library clip; `--sheet` renders the turnaround) and faces against the story (gate 4: a face the beat never names, a face taken up more than 2 times; reads `review/shot-rows.jsonl` from `shot.mjs --dbg`) |
 | [PREPRO.md](PREPRO.md) | stage 1 in depth: flow, vocabulary, each step's standard, gate and mistakes, craft knowledge (story, staging in 9:16, explaining in pictures, continuity, timing), reviews, fidelity, gates, fixes per `prepro.mjs` check |
 | [DIAGNOSE.md](DIAGNOSE.md) | symptom → isolation test → cause → fix → stage, note translation, process smells, a worked example |
 | [AUDIT.md](AUDIT.md) | why the pre-production stage was rebuilt (Nov 2026), and the roadmap |

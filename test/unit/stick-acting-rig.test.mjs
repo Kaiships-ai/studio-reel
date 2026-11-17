@@ -1,4 +1,3 @@
-// Faces against the story (tools/facebeat.mjs) and the rig test (tools/rigtest.mjs): QA areas M7 and A2.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
@@ -6,8 +5,7 @@ import { familyOf, story, faceRuns, judge, HOLD, REPEAT_MAX } from '../../styles
 import { measure, measureAll, knownFails, RIG_KNOWN, HEAD_PCT } from '../../styles/stick-man/tools/rigtest.mjs';
 import { ALL } from '../../styles/stick-man/motion-lib/index.js';
 
-// a film with three shots: a cop searching doors (beat: the hunt), you lifting bags (effort), you seeing the light (fear)
-function film() {
+function threeBeatFilm() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'facebeat-'));
   fs.mkdirSync(path.join(dir, 'review'));
   fs.writeFileSync(path.join(dir, 'storyboard.json'), JSON.stringify({
@@ -19,9 +17,9 @@ function film() {
   fs.writeFileSync(path.join(dir, 'reel.js'), 'export const CUTS = [0, 40, 80, 120];\n');
   return dir;
 }
-// rows f0..f1 with each actor's face on a readable head (12 % of a 1920 frame)
+const READABLE_HEAD = [400, 400, 640, 630];
 const rows = (f0, f1, cast) => Array.from({ length: f1 - f0 + 1 }, (_, i) => ({ f: f0 + i,
-  actors: Object.fromEntries(Object.entries(cast).map(([who, expr]) => [who, { expr, inFrame: true, head: [400, 400, 640, 630] }])) }));
+  actors: Object.fromEntries(Object.entries(cast).map(([who, expr]) => [who, { expr, inFrame: true, head: READABLE_HEAD }])) }));
 
 test('a face is judged by its family: kit faces and film twins (y_fear) alike', () => {
   assert.equal(familyOf('smug'), 'smug');
@@ -31,7 +29,7 @@ test('a face is judged by its family: kit faces and film twins (y_fear) alike', 
 });
 
 test('Kai 16/11 S3-041..043: a smug, surprised or angry cop in a door-search beat is off the beat; a neutral one is not', () => {
-  const S = story(film());
+  const S = story(threeBeatFilm());
   for (const [expr, off] of [['smug', true], ['shock', true], ['angry', true], ['suspicious', false], ['y_deadpan', false]]) {
     const J = judge(faceRuns(rows(0, 39, { cop: expr }), S, 1920), S);
     assert.equal(J.mismatch.length, off ? 1 : 0, expr);
@@ -40,27 +38,33 @@ test('Kai 16/11 S3-041..043: a smug, surprised or angry cop in a door-search bea
 });
 
 test('a face the beat names passes: strain on the weight, fear on the dread', () => {
-  const S = story(film());
+  const S = story(threeBeatFilm());
   const J = judge(faceRuns([...rows(40, 79, { you: 'y_strain' }), ...rows(80, 119, { you: 'y_fear' })], S, 1920), S);
   assert.deepEqual(J.mismatch, []);
 });
 
 test('a face held under HOLD frames, or on a head too small to read, is not judged', () => {
-  const S = story(film());
+  const S = story(threeBeatFilm());
   assert.equal(judge(faceRuns(rows(0, HOLD - 2, { cop: 'smug' }), S, 1920), S).mismatch.length, 0);
   const tiny = rows(0, 39, { cop: 'smug' }).map(r => ({ ...r, actors: { cop: { ...r.actors.cop, head: [400, 400, 420, 430] } } }));
   assert.equal(judge(faceRuns(tiny, S, 1920), S).mismatch.length, 0);
 });
 
-test(`Kai 16/11 S3-053: one face in more than ${REPEAT_MAX} shots is over the repeat limit; neutral faces never count`, () => {
-  const S = story(film());
-  const J = judge(faceRuns([...rows(0, 39, { you: 'y_strain', cop: 'deadpan' }), ...rows(40, 79, { you: 'y_strain', cop: 'deadpan' }),
-    ...rows(80, 119, { you: 'y_strain', cop: 'deadpan' })], S, 1920), S);
+test(`Kai 16/11 S3-053: one face taken up more than ${REPEAT_MAX} times is over the repeat limit; neutral faces never count`, () => {
+  const S = story(threeBeatFilm());
+  const J = judge(faceRuns([...rows(0, 19, { you: 'y_strain', cop: 'deadpan' }), ...rows(20, 39, { you: 'y_focus', cop: 'deadpan' }),
+    ...rows(40, 59, { you: 'y_strain', cop: 'deadpan' }), ...rows(60, 79, { you: 'y_focus', cop: 'deadpan' }), ...rows(80, 99, { you: 'y_strain', cop: 'deadpan' })], S, 1920), S);
   assert.deepEqual(J.over.map(r => [r.who, r.expr, r.n]), [['you', 'y_strain', 3]]);
 });
 
+test('a face held on across cuts is one take, not one per shot', () => {
+  const S = story(threeBeatFilm());
+  const J = judge(faceRuns(rows(0, 119, { you: 'y_strain' }), S, 1920), S);
+  assert.deepEqual(J.reuse.map(r => [r.expr, r.n, r.shots]), [['y_strain', 1, ['SH140+SH150+SH160']]]);
+});
+
 test('a re-timed picture maps onto the storyboard through sb, and reports its own second through t', () => {
-  const S = story(film());
+  const S = story(threeBeatFilm());
   const R = rows(500, 539, { cop: 'smug' }).map((r, i) => ({ ...r, sb: i, t: 20 + i / 30 }));
   const J = judge(faceRuns(R, S, 1920), S);
   assert.deepEqual([J.mismatch[0].shot, J.mismatch[0].t0], ['SH140', 20]);

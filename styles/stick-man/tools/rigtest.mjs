@@ -21,13 +21,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.resolve(H
 //   FLEX_MIN   a joint bent backward (hyperextended), degrees.
 export const HEAD_PCT = 5, BONE_PCT = 3, FLEX_MAX = 160, FLEX_MIN = -2;
 // Clips over a limit on main 17/11, each with how far over it is per metric (head and bone: percentage points; flex:
-// degrees). A row passes while its clip stays at or under those numbers and fails when one grows; a listed clip that
-// passes clean fails too ("fixed: delete it"), so this list only shrinks. Kai sees every row on the rig sheet. Why:
-//   head  motion.js playActor squashes the head with the body (headSq = 0.6 x the hip-speed squash x the squash dial);
-//         cast.js scales the skull by it. A take-off or a landing makes the skull 6-13 % taller or flatter than round.
-//   bone  cast.js solves a leg with no reach limit (an arm stops at ARM_STRETCH): a key that puts the foot further
-//         from the hip than the leg reaches stretches thigh and shin alike, physics on or off (JumpWindow f 32: hip to
-//         ankle 0.907 m, the leg reaches 0.814 m).
+// degrees).
 export const RIG_KNOWN = {
   Adult_Move_Run_Fwd_Loop: { head: 1.2 },
   Adult_Move_Sprint_Fwd_Loop: { head: 1.6 },
@@ -72,12 +66,18 @@ export async function measure(C, body = C.body || 'adult') {
   if (over.head > 0) faults.push(`head ${worst.head.v.toFixed(1)} % off round at f ${worst.head.f} (max ${HEAD_PCT} %)`);
   if (over.bone > 0) faults.push(`${worst.bone.what} ${worst.bone.v.toFixed(1)} % off its length at f ${worst.bone.f} (max ${BONE_PCT} %)`);
   if (over.flex > 0) faults.push(`${worst.flex.what} at f ${worst.flex.f} (allowed ${FLEX_MIN}..${FLEX_MAX})`);
-  // the pose the sheet shows: the worst frame of the worst metric, else the key pose furthest from rest
-  const score = r => r.head / HEAD_PCT + r.bone / BONE_PCT + r.flex;
-  const pick = faults.length ? [worst.head, worst.bone, worst.flex].sort((a, b) => b.v - a.v)[0].f
-    : perFrame.filter(r => keyFrames.includes(r.f)).sort((a, b) => score(b) - score(a))[0]?.f ?? 0;
+  const pick = sheetFrame(worst, perFrame, keyFrames);
   return { name: C.name, clip: C.clip, body, frames: perFrame.length, keys: keyFrames.length, worst, over, faults, pick,
     head: +worst.head.v.toFixed(2), bone: +worst.bone.v.toFixed(2), flex: +worst.flex.v.toFixed(1) };
+}
+
+// the frame the rig sheet shows: the worst frame of the metric furthest over its limit, else the key pose furthest from rest
+const share = { head: v => v / HEAD_PCT, bone: v => v / BONE_PCT, flex: v => v };
+function sheetFrame(worst, perFrame, keyFrames) {
+  const [m, w] = Object.entries(worst).sort(([a, x], [b, y]) => share[b](y.v) - share[a](x.v))[0];
+  if (share[m](w.v) > 1 || m === 'flex' && w.v > 0) return w.f;
+  const score = r => share.head(r.head) + share.bone(r.bone) + share.flex(r.flex);
+  return perFrame.filter(r => keyFrames.includes(r.f)).sort((a, b) => score(b) - score(a))[0]?.f ?? 0;
 }
 
 // the RIG_KNOWN verdict for one measured clip: [] when it passes
@@ -95,7 +95,6 @@ export async function measureAll() {
 const VIEWS = [['front', 0], ['3/4', 45], ['side', 90], ['back', 180]];
 const shot = args => { const r = run('node', [path.join(HERE, 'shot.mjs'), '--film', 'styles/stick-man/motion-lib/proof', ...args], { capture: true });
   if (r.status) throw new Error(`shot.mjs ${args.join(' ')}\n${r.stderr || r.stdout}`); };
-// proof-page frames are the clip's frames moved on by its start (motion-lib/proof/reel.js F0)
 const PROOF_F0 = 6;
 export function sheet(rows, dir) {
   fs.mkdirSync(dir, { recursive: true });

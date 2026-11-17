@@ -5,7 +5,8 @@
 //   (1) a face that does not match its beat: a face of an emotion its beat (the beat's feel, lines, and every shot's
 //       brief, purpose and picture) never names, held
 //       HOLD frames or more on a readable head. Neutral faces (deadpan, focus, stern, suspicious ...) always pass.
-//   (2) a face that keeps coming back: one character's face (neutral ones excepted) in more than REPEAT_MAX shots.
+//   (2) a face that keeps coming back: one character's face (neutral ones excepted) taken up more than REPEAT_MAX times
+//       (a face held on across cuts is one take).
 // Both are visible faults (a face on screen 0.5 s or more; a film-wide repeat), so either fails (exit 1).
 //   node styles/stick-man/tools/facebeat.mjs films/<slug> [--rows review/shot-rows.jsonl] [--h 1920] [--story films/<slug>] [--out <dir>]
 //   rows: shot.mjs --film films/<slug> --frames <first>-<last> --dbg review/shot-rows.jsonl --w 1080 --h 1920 (--h = that height)
@@ -60,12 +61,11 @@ export function story(dir) {
     return { id: s.id, f0, f1, beat: b?.id ?? null, feel: b?.feel ?? '', change: br.change ?? '',
       own: [b?.name, b?.feel, l?.act, br.think, br.do, br.change, s.purpose, s.see].filter(Boolean).join(' · ') };
   }).filter(s => Number.isFinite(s.f0));
-  // a face is judged against its whole beat (every shot the beat's lines cut to), not its shot alone
   const beatText = {}; for (const s of shots) if (s.beat) beatText[s.beat] = [beatText[s.beat], s.own].filter(Boolean).join(' · ');
   return shots.map(s => ({ ...s, text: s.beat ? beatText[s.beat] : s.own }));
 }
 
-// runs of one face on one actor's readable head, inside one shot: { who, expr, fam, shot, f0, f1, t0, t1, n }
+// runs of one face on one actor's readable head, inside one shot: { who, expr, fam, shot, f0, f1 (storyboard), t0, t1, n, first, last (row frames) }
 export function faceRuns(rows, shots, H) {
   const shotAt = sb => shots.find(s => sb >= s.f0 && sb < s.f1) ?? null, runs = [], open = {};
   const close = who => { const r = open[who]; if (r) { runs.push(r); delete open[who]; } };
@@ -76,11 +76,20 @@ export function faceRuns(rows, shots, H) {
       const r = open[who];
       if (!seen) { close(who); continue; }
       if (r && r.expr === a.expr && r.shot === sh.id && row.f === r.last + 1) { r.n++; r.last = row.f; r.f1 = sb; r.t1 = t; continue; }
-      close(who); open[who] = { who, expr: a.expr, fam: familyOf(a.expr), shot: sh.id, f0: sb, f1: sb, t0: t, t1: t, n: 1, last: row.f };
+      close(who); open[who] = { who, expr: a.expr, fam: familyOf(a.expr), shot: sh.id, f0: sb, f1: sb, t0: t, t1: t, n: 1, first: row.f, last: row.f };
     }
   }
   for (const who of Object.keys(open)) close(who);
   return runs;
+}
+
+function takes(runs) {
+  const out = []; for (const r of [...runs].sort((a, b) => a.first - b.first)) {
+    const p = out.findLast(t => t.who === r.who);
+    if (p && p.expr === r.expr && p.last + 1 === r.first) { p.n += r.n; p.last = r.last; if (!p.shots.includes(r.shot)) p.shots.push(r.shot); }
+    else out.push({ who: r.who, expr: r.expr, fam: r.fam, t0: r.t0, first: r.first, last: r.last, n: r.n, shots: [r.shot] });
+  }
+  return out;
 }
 
 export function judge(runs, shots) {
@@ -88,8 +97,8 @@ export function judge(runs, shots) {
   const mismatch = held.filter(r => r.fam && r.fam !== 'neutral' && !WORDS[r.fam].test(byId[r.shot].text))
     .map(r => ({ ...r, beat: byId[r.shot].beat, feel: byId[r.shot].feel, change: byId[r.shot].change }));
   const unknown = [...new Set(held.filter(r => !r.fam).map(r => r.expr))];
-  const shotsOf = {}; for (const r of held) if (r.fam && r.fam !== 'neutral') (shotsOf[`${r.who} ${r.expr}`] ||= new Set()).add(r.shot);
-  const reuse = Object.entries(shotsOf).map(([k, s]) => ({ who: k.split(' ')[0], expr: k.split(' ')[1], shots: [...s], n: s.size }))
+  const seen = {}; for (const t of takes(runs)) if (t.n >= HOLD && t.fam && t.fam !== 'neutral') (seen[`${t.who} ${t.expr}`] ||= []).push(t);
+  const reuse = Object.entries(seen).map(([k, ts]) => ({ who: k.split(' ')[0], expr: k.split(' ')[1], shots: ts.map(t => t.shots.join('+')), t: ts.map(t => t.t0), n: ts.length }))
     .sort((a, b) => b.n - a.n);
   return { mismatch, reuse, over: reuse.filter(r => r.n > REPEAT_MAX), unknown, held: held.length };
 }
@@ -97,22 +106,22 @@ export function judge(runs, shots) {
 const sec = t => `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, '0')}`;
 if (path.resolve(process.argv[1] || '') === fileURLToPath(import.meta.url)) {
   const [film, ...rest] = process.argv.slice(2), A = {}; for (let i = 0; i < rest.length; i += 2) A[rest[i].replace(/^--/, '')] = rest[i + 1];
-  if (!film) { console.error('usage: facebeat.mjs films/<slug> [--rows review/shot-rows.jsonl] [--h 1920] [--story films/<slug>]'); process.exit(2); }
+  if (!film) { console.error('usage: facebeat.mjs films/<slug> [--rows review/shot-rows.jsonl] [--h 1920] [--story films/<slug>] [--out <dir>]'); process.exit(2); }
   const DIR = path.resolve(ROOT, film), rowsFile = path.resolve(DIR, A.rows || 'review/shot-rows.jsonl');
   if (!fs.existsSync(rowsFile)) { console.error(`facebeat: no ${path.relative(ROOT, rowsFile)}: run shot.mjs --film ${film} --frames <first>-<last> --dbg ${path.relative(ROOT, rowsFile)} first`); process.exit(1); }
   const rows = fs.readFileSync(rowsFile, 'utf8').trim().split('\n').map(l => JSON.parse(l)).sort((a, b) => a.f - b.f);
   const shots = story(path.resolve(ROOT, A.story || film)), runs = faceRuns(rows, shots, Number(A.h || 1920)), J = judge(runs, shots);
   const md = [`# Faces against the story · ${path.basename(DIR)}`, '',
-    `**${J.mismatch.length || J.over.length ? 'FAIL' : 'PASS'}**: ${J.mismatch.length} face(s) off the beat, ${J.over.length} face(s) in more than ${REPEAT_MAX} shots · ${J.held} faces held ${HOLD} f or more`, '',
+    `**${J.mismatch.length || J.over.length ? 'FAIL' : 'PASS'}**: ${J.mismatch.length} face(s) off the beat, ${J.over.length} face(s) taken up more than ${REPEAT_MAX} times · ${J.held} faces held ${HOLD} f or more`, '',
     '## Off the beat', '', '| Second | Who | Face | Shot | Beat feel | Shot change |', '| --- | --- | --- | --- | --- | --- |',
     ...J.mismatch.map(r => `| ${sec(r.t0)}-${sec(r.t1)} | ${r.who} | ${r.expr} (${r.fam}) | ${r.shot} | ${r.feel.replace(/\|/g, '/')} | ${r.change.replace(/\|/g, '/')} |`), '',
-    '## Faces per character', '', '| Who | Face | Shots | Count |', '| --- | --- | --- | --- |',
-    ...J.reuse.map(r => `| ${r.who} | ${r.expr} | ${r.shots.join(' ')} | ${r.n}${r.n > REPEAT_MAX ? ` (over ${REPEAT_MAX})` : ''} |`),
+    '## Faces per character', '', '| Who | Face | Takes (shots, first second) | Count |', '| --- | --- | --- | --- |',
+    ...J.reuse.map(r => `| ${r.who} | ${r.expr} | ${r.shots.map((s, i) => `${s} ${sec(r.t[i])}`).join(', ')} | ${r.n}${r.n > REPEAT_MAX ? ` (over ${REPEAT_MAX})` : ''} |`),
     ...(J.unknown.length ? ['', `Faces with no family (not judged): ${J.unknown.join(', ')}`] : [])];
   const OUT = path.resolve(A.out || path.join(DIR, 'review'));
   fs.mkdirSync(OUT, { recursive: true });
   fs.writeFileSync(path.join(OUT, 'faces.md'), md.join('\n') + '\n');
   fs.writeFileSync(path.join(OUT, 'faces.json'), JSON.stringify({ limits: { HOLD, MIN_FACE, REPEAT_MAX }, ...J }, null, 1) + '\n');
-  console.log(`review/faces.md: ${J.mismatch.length || J.over.length ? 'FAIL' : 'PASS'} · ${J.mismatch.length} off the beat, ${J.over.length} over ${REPEAT_MAX} shots (${J.over.map(r => `${r.who} ${r.expr} ×${r.n}`).join(', ') || '-'})`);
+  console.log(`review/faces.md: ${J.mismatch.length || J.over.length ? 'FAIL' : 'PASS'} · ${J.mismatch.length} off the beat, ${J.over.length} over ${REPEAT_MAX} takes (${J.over.map(r => `${r.who} ${r.expr} ×${r.n}`).join(', ') || '-'})`);
   process.exit(J.mismatch.length || J.over.length ? 1 : 0);
 }
