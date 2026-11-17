@@ -22,7 +22,7 @@ Read [PROCESS.md](PROCESS.md) before step 1, `DIRECTOR.md` (library root) and [D
 1. Do one numbered step, e.g. [3.1].
 2. Make the proof Kai can see: a still, a sheet, a video, or a number.
 3. When there is a choice, show 2-3 options. Each option is a picture next to the current state, never text only: grey panels or grey engine stills before ◇2a, real renders after. Mark one **Em đề xuất**.
-4. Before Kai sees it, a fresh independent agent challenges it:
+4. Before Kai sees it, a fresh independent agent challenges it, starting from Kai's taste (`~/.claude/skills/kai-taste/SKILL.md`, PROCESS.md section 2):
    - script: the fact check, the skeptic pass, the ear retell and the blind A/B (SCRIPT.md section 5);
    - board and animatic: the muted retell, the 5-second read, the explain audit and the swipe test (PREPRO.md section 5);
    - layout and camera: the camera-pass prompt;

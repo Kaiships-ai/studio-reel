@@ -16,6 +16,7 @@ import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os'
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { run } from '../../../kit/env.mjs';
+import { withTaste } from './taste.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.resolve(HERE, '../../..');
 const film = process.argv[2];
@@ -104,7 +105,7 @@ const judgeContent = [
   { type: 'text', text: 'OURS sheet 1 of 2:' }, img(oursOut[0]), { type: 'text', text: 'OURS sheet 2 of 2:' }, img(oursOut[1]),
   { type: 'text', text: `${PROMPT}\n\n${FORMAT}` }];
 const nRev = Number(A.reviews || 2);
-const jobs = Array.from({ length: nRev }, () => claude(judgeContent, 'You judge animation style. Reply with JSON only.'));
+const jobs = Array.from({ length: nRev }, () => claude(judgeContent, withTaste('You judge animation style. Reply with JSON only.')));
 if (doBlind) jobs.push(claude([...order.flatMap((_, j) => [{ type: 'text', text: `Tile ${j + 1}:` }, img(path.join(tmp, `tile_${String(j + 1).padStart(2, '0')}.jpg`))]),
   { type: 'text', text: `${BLIND}\n\n${BLIND_FMT}` }], 'You judge animation frames. Reply with JSON only.'));
 const R = await Promise.all(jobs);

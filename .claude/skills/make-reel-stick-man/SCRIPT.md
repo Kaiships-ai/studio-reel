@@ -191,6 +191,8 @@ sentence still leads with the money and the danger; each episode drops one small
 ## 5. Review prompts
 
 Give each reviewer only the script (and the fact sheet for [1.1b]); never your notes, intentions or earlier reviews.
+Each prompt starts with Kai's taste (`~/.claude/skills/kai-taste/SKILL.md`); for a script, root R6 (drama with a reason)
+and the hook pattern apply.
 Save the answer with a header `by: agent:<id>` and `of: <script file>`.
 
 - **[1.1b] Fact check.** "You are an independent fact checker; try to break it. For each factual claim (also implicit
