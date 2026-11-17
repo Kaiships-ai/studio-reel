@@ -18,7 +18,7 @@ flex in every frame; `--sheet` renders each clip's worst pose from the front, 3/
 - Rig test: limits `HEAD_PCT` 5 (head height to width against round, head not keeping its volume),
   `HEAD_SQUASH_PCT` 15 (same ratio while x·y·z stays within `HEAD_VOL_TOL` 1 % of the clip's first frame: the engine's
   squash and stretch; Kai chose this 17/11, "it is one frame; at real playback nobody notices"), `BONE_PCT` 3 (the arm's own `ARM_STRETCH`),
-  flex -2..160 deg. `RIG_KNOWN` lists the clips over a limit on 17/11 per metric (6, all leg stretch) and only shrinks.
+  flex -2..160 deg. `RIG_KNOWN` lists clips over a limit per metric and only shrinks; empty since the leg-reach fix (PR #132).
 - Gates: `rigtest.mjs` runs in gate 3 (Asset lock), `facebeat.mjs {film}` in gate 4 (Shot lock); both exit 1 on a fault.
 - The proof page's `view=turn&az=<deg>&at=<frame>` is a still camera round the body (az 0 = from ahead).
 
@@ -41,7 +41,7 @@ films/<slug>/review/shot-rows.jsonl`, then `node styles/stick-man/tools/stagegat
     join the dbg rows hm-ep01-r2's builds saved (S1-S3 v5, S4-S5 v7, S6-S7 s6), not a fresh render.
   - `node styles/stick-man/tools/facebeat.mjs films/hm-bible-s5 --rows $D/bible-rows.jsonl --story $D/story-hm-ep01-r2 --h 1280 --out /tmp/faces-bible`:
     PASS, 0 off the beat, most-used face 2 takes. The bible cut has no storyboard of its own; it plays hm-ep01-r2's S4-S5.
-  - `node styles/stick-man/tools/rigtest.mjs`: 13 of 52 over a limit, 0 not in RIG_KNOWN.
+  - `node styles/stick-man/tools/rigtest.mjs`: 0 of 52 over a limit, RIG_KNOWN empty (worst bone 2.3 % foreL, Act_DropInTrunk_Once f65).
 
 ## Gotchas
 
