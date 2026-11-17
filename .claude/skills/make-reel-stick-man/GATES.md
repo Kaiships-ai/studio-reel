@@ -21,6 +21,8 @@ node styles/stick-man/tools/gates.mjs --report <stats> --in <mp4> --film films/<
 
 `gates.mjs` prints PASS, FAIL or WAIVED for every gate, then the profile line, e.g. `profile pilot: 34 PASS, 0 blocking FAIL, 19 reference gates WAIVED`. It exits 1 on a blocking FAIL.
 
+A film under a show bible (`styles/stick-man/bible/<show>/catalog.json` names its slugs in `governs`, e.g. `hm-ep*`) is checked before every still or mp4 render: `shot.mjs` runs `node styles/stick-man/bible/check.mjs films/<slug>` and refuses to start while it reports a blocking finding (a part outside the catalog, a body action keyed by hand where the library has the clip). Fix the film, or add an entry with a reason to `films/<slug>/bible-exceptions.json`, which the report counts. `--no-bible-check '<reason>'` renders anyway and logs the reason in `films/<slug>/bible-bypass.tsv`.
+
 - **Never change a threshold.** Fix the film data or the kit. A gate that measures wrong is fixed in its tool, in its own commit.
 - **After 2 fix rounds on one gate**, stop and show Kai the FAIL with a still.
 
