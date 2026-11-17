@@ -178,10 +178,10 @@ export async function validate({ tokens, catalog }, { repo = REPO, films = path.
 }
 
 // ---- the human view (Vietnamese, few words)
-const KIND_VI = { 'motion-clip': 'Clip chuyển động', face: 'Nét mặt', 'camera-kind': 'Loại shot', 'camera-move': 'Di máy', prop: 'Đạo cụ', set: 'Bối cảnh',
+export const KIND_VI = { 'motion-clip': 'Clip chuyển động', face: 'Nét mặt', 'camera-kind': 'Loại shot', 'camera-move': 'Di máy', prop: 'Đạo cụ', set: 'Bối cảnh',
   cast: 'Nhân vật', rig: 'Bộ xương', 'caption-style': 'Phụ đề', 'card-2d': 'Thẻ 2D', fx: 'Hiệu ứng trong cảnh', 'look-preset': 'Ánh sáng, màu' };
-const TIER_VI = { primitive: 'Giá trị gốc', semantic: 'Theo mục đích', component: 'Theo thành phần' };
-const ST_VI = { stable: 'ổn định', trial: 'thử', retired: 'bỏ' };
+export const TIER_VI = { primitive: 'Giá trị gốc', semantic: 'Theo mục đích', component: 'Theo thành phần' };
+export const ST_VI = { stable: 'ổn định', trial: 'thử', retired: 'bỏ' };
 const cell = s => String(s ?? '').replace(/\|/g, '/').replace(/\n/g, ' ');
 const show = v => v === null ? 'trống' : Array.isArray(v) ? `[${v.join(', ')}]` : v && typeof v === 'object' ? (v.min != null ? `${show(v.min)}-${show(v.max)}` : JSON.stringify(v)) : String(v);
 
