@@ -45,3 +45,4 @@ Each feature file: H1 title, one paragraph, then `Sub-features`, `How to get to 
 - [TMV episode](./tmv-episode.md): the paid TMV kit unzipped fresh installs, renders an episode, drives the cast designer and a two-episode series.
 - [TMV release](./tmv-release.md): `release/build.mjs --tier tmv` builds the TMV zip and gates it.
 - [Stick-man overlays](./stick-man-overlays.md): boxed labels, ticking clocks, the meter and the dotted path in `engine/overlays.js`.
+- [Stick-man show bible](./stick-man-bible.md): `bible/check.mjs` holds a series to its parts catalog, and `shot.mjs` refuses to render a film that fails it.
