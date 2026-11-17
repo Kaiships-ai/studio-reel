@@ -21,6 +21,8 @@ An external surface is any of these: what ships in the zip (`kit.manifest`, `rel
 
 Smoke after an agent's merge, on `main` in a worktree: `node .claude/skills/verify/journeys.mjs --only=new-film,voice,sound-mix,chapters`. A red smoke points at the last merge: fix or revert it before the next one.
 
+Before each merge, merge the branch into a fresh `origin/main` in a scratch worktree, remove `films/`, and run the full unit tests (plus `rigtest.mjs` for a stick-man change). A PR that passed alone can still break `main` next to another (17/11: 4 PRs, then 6 failing tests; [#138](https://github.com/Kaiships-ai/studio-reel/issues/138)).
+
 ## Who does what
 
 - One builder and one independent reviewer per complex change, no more agents. Reviewers and fan-out readers run Sonnet at medium effort.

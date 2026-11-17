@@ -12,7 +12,8 @@ only says how pstack fits around it.
    splits the film across peer sessions.
 2. Keep the program state in `~/.claude/orchestrate/<film>/notes.md` (pstack Orchestrate): the current stage, each
    shot's state, open faults with their owner, Kai's decisions not yet in `DECISIONS.json`, and every live link.
-   Rewrite it after each step so a fresh session can pick up from it alone.
+   Rewrite it after each step so a fresh session can pick up from it alone. When an agent's PR merges or its work
+   ends, check the task list, stop its leftover background work and note that in `notes.md`.
 3. Log decisions with `show-me-your-work` in `films/<film>/decisions.tsv`.
 4. A kit or engine fault found mid-film goes to `stick-man-kit-fix.md` as its own PR. The film waits on the merge, then
    re-renders the shots that fault touched.
@@ -29,3 +30,5 @@ only says how pstack fits around it.
 9. Every reviewer brief, at every stage, starts with Kai's taste (`~/.claude/skills/kai-taste/SKILL.md`, PROCESS.md
    section 2). A reviewer that judges only numbers misses what Kai sees (17/11: each builder had a reviewer, the cut was
    still "cực kỳ nhiều sạn").
+10. When Kai asks whether more tooling is needed while the episode still doesn't land ("có thật sự cần không?"),
+   start no new tooling; the episode comes first.

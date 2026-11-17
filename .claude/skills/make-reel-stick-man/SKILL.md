@@ -31,7 +31,8 @@ Read [PROCESS.md](PROCESS.md) before step 1, `DIRECTOR.md` (library root) and [D
 
    Fix what holds up. Never score your own work.
 5. Put it on the stage page: status rows plus decision buttons. Kai picks there and may approve several steps at once.
-6. Read his picks from the page's db, lock them, and strip the rejected options and stale sections from the page.
+6. Every page where Kai marks, picks or rates declares the `db` capability on its first publish; read his picks back
+   with `ArtifactData`, never from localStorage alone ([#137](https://github.com/Kaiships-ai/studio-reel/issues/137)). Lock them, and strip the rejected options and stale sections from the page.
    A step is not done until the page shows it: republish in the same turn, unasked, with only the latest state on it
    (old drafts, superseded options and old review tables go; history lives in git and the files).
 7. Reply short in Vietnamese. End with the table `việc · đầu ra · bằng chứng · trạng thái`, then, as the very last block of every reply in a session that runs this skill, the progress bar, so Kai never loses track: one bar per stage 0-5, % = steps done (1) + steps in progress (0.5) over the stage's steps, the current step marked `◀`, and the open gates with their `stagegate.mjs` state, e.g.
@@ -100,6 +101,9 @@ repeats a closed note; show Kai its table with every new cut.
 A later stage's problem is fixed in the stage that caused it. Never jump ahead into the engine or the gates.
 
 **Every gate is checked by `node styles/stick-man/tools/stagegate.mjs films/<slug> <gate>`** (evidence list: `styles/stick-man/tools/GATES.json`). A gate is LOCK only when the measured checks pass, the maker's files exist, the judged evidence was written by someone else (`by: agent:<id>`) after the last change, and Kai approved it (`review/approvals.json`, copied from the stage page with its date). Show Kai a gate only when it says READY FOR KAI; never call a tool PASS an approval.
+
+A check the gate cannot measure fails, or passes only with a written waiver naming who signed it and when ([#135](https://github.com/Kaiships-ai/studio-reel/issues/135)).
+Every limit cites a film Kai picked and one he rejected; without a rejected sample its gate row says "builder judgment" ([#136](https://github.com/Kaiships-ai/studio-reel/issues/136)).
 
 ## Who checks what
 
