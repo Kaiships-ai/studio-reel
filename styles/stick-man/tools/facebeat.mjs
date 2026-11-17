@@ -7,10 +7,12 @@
 //       HOLD frames or more on a readable head. Neutral faces (deadpan, focus, stern, suspicious ...) always pass.
 //   (2) a face that keeps coming back: one character's face (neutral ones excepted) taken up more than REPEAT_MAX times
 //       (a face held on across cuts is one take).
-// Both are visible faults (a face on screen 0.5 s or more; a film-wide repeat), so either fails (exit 1).
+// Both are visible faults (a face on screen 0.5 s or more; a film-wide repeat), so either fails (exit 1). A story with no
+// shots, or faces none of its shots cover, is PARTIAL (exit 1): nothing was judged, so it never passes.
 //   node styles/stick-man/tools/facebeat.mjs films/<slug> [--rows review/shot-rows.jsonl] [--h 1920] [--story films/<slug>] [--out <dir>]
 //   rows: shot.mjs --film films/<slug> --frames <first>-<last> --dbg review/shot-rows.jsonl --w 1080 --h 1920 (--h = that height)
-//   --story: the film whose storyboard.json, review/acting.json and reel.js CUTS tell the story (default: the film itself).
+//   --story: the film whose storyboard.json, review/acting.json and reel.js CUTS tell the story (default: the film itself);
+//   a cut built outside its film (a bible cut) reads its story here.
 //   A row may carry sb (its frame on the storyboard's timeline, when the picture was re-timed) and t (its second in the
 //   cut): writes faces.md and faces.json to --out (default the film's review/).
 import fs from 'node:fs'; import path from 'node:path';
@@ -43,13 +45,15 @@ export const WORDS = {
   effort: /\b(strain|effort|heav|lift|weight|push|struggl|grit|haul|drag|exhaust|tired|sweat|pant|spent|kg|kilo|arms gone)/i,
 };
 const BY_FACE = Object.fromEntries(Object.entries(FAMILY).flatMap(([fam, faces]) => faces.map(f => [f, fam])));
+const displayPath = p => path.relative(ROOT, p).startsWith('..') ? p : path.relative(ROOT, p);
 // a face's family: its name, or its name without a film prefix (y_fear -> fear); null when the face is unknown
 export const familyOf = e => BY_FACE[e] ?? BY_FACE[String(e).replace(/^[a-z]+_/, '')] ?? null;
 
 // the story per shot: [{ id, f0, f1, text }] on the storyboard's timeline
 export function story(dir) {
   const read = p => fs.existsSync(path.join(dir, p)) ? JSON.parse(fs.readFileSync(path.join(dir, p), 'utf8')) : null;
-  const SB = read('storyboard.json'); if (!SB) throw new Error(`${dir}: no storyboard.json`);
+  const SB = read('storyboard.json');
+  if (!SB) throw new Error(`${displayPath(dir)} has no storyboard.json: pass --story films/<slug> for the film whose storyboard tells this cut's story`);
   const briefs = read('review/acting.json') || {};
   const reel = fs.existsSync(path.join(dir, 'reel.js')) ? fs.readFileSync(path.join(dir, 'reel.js'), 'utf8') : '';
   const cuts = (reel.match(/export const CUTS = \[([\d,\s]+)\]/)?.[1] || '').split(',').map(Number).filter(Number.isFinite);
@@ -83,6 +87,23 @@ export function faceRuns(rows, shots, H) {
   return runs;
 }
 
+export function coverage(rows, shots, H) {
+  let faced = 0, judged = 0;
+  for (const row of rows) {
+    const sb = row.sb ?? row.f;
+    if (!Object.values(row.actors || {}).some(a => a.inFrame && a.expr && a.head && (a.head[3] - a.head[1]) / H >= MIN_FACE)) continue;
+    faced++; if (shots.some(s => sb >= s.f0 && sb < s.f1)) judged++;
+  }
+  return { shots: shots.length, faced, judged };
+}
+
+export function verdict(J, cov) {
+  if (!cov.shots) return { status: 'PARTIAL', reason: 'the storyboard has no shots, so no face was judged' };
+  if (cov.faced && !cov.judged) return { status: 'PARTIAL', reason: `${cov.faced} frames show a face, none inside a storyboard shot` };
+  if (J.mismatch.length || J.over.length) return { status: 'FAIL', reason: '' };
+  return { status: 'PASS', reason: '' };
+}
+
 function takes(runs) {
   const out = []; for (const r of [...runs].sort((a, b) => a.first - b.first)) {
     const p = out.findLast(t => t.who === r.who);
@@ -110,9 +131,11 @@ if (path.resolve(process.argv[1] || '') === fileURLToPath(import.meta.url)) {
   const DIR = path.resolve(ROOT, film), rowsFile = path.resolve(DIR, A.rows || 'review/shot-rows.jsonl');
   if (!fs.existsSync(rowsFile)) { console.error(`facebeat: no ${path.relative(ROOT, rowsFile)}: run shot.mjs --film ${film} --frames <first>-<last> --dbg ${path.relative(ROOT, rowsFile)} first`); process.exit(1); }
   const rows = fs.readFileSync(rowsFile, 'utf8').trim().split('\n').map(l => JSON.parse(l)).sort((a, b) => a.f - b.f);
-  const shots = story(path.resolve(ROOT, A.story || film)), runs = faceRuns(rows, shots, Number(A.h || 1920)), J = judge(runs, shots);
+  let shots; try { shots = story(path.resolve(ROOT, A.story || film)); } catch (e) { console.error(`facebeat: ${e.message}`); process.exit(2); }
+  const H = Number(A.h || 1920), runs = faceRuns(rows, shots, H), J = judge(runs, shots), cov = coverage(rows, shots, H), V = verdict(J, cov);
+  const line = V.reason ? `${V.status}: ${V.reason}` : `${V.status} · ${J.mismatch.length} off the beat, ${J.over.length} over ${REPEAT_MAX} takes (${J.over.map(r => `${r.who} ${r.expr} ×${r.n}`).join(', ') || '-'})`;
   const md = [`# Faces against the story · ${path.basename(DIR)}`, '',
-    `**${J.mismatch.length || J.over.length ? 'FAIL' : 'PASS'}**: ${J.mismatch.length} face(s) off the beat, ${J.over.length} face(s) taken up more than ${REPEAT_MAX} times · ${J.held} faces held ${HOLD} f or more`, '',
+    `**${V.status}**${V.reason ? `: ${V.reason}` : ''} · ${J.mismatch.length} face(s) off the beat, ${J.over.length} face(s) taken up more than ${REPEAT_MAX} times · ${J.held} faces held ${HOLD} f or more · ${cov.judged} of ${cov.faced} face frames inside a shot`, '',
     '## Off the beat', '', '| Second | Who | Face | Shot | Beat feel | Shot change |', '| --- | --- | --- | --- | --- | --- |',
     ...J.mismatch.map(r => `| ${sec(r.t0)}-${sec(r.t1)} | ${r.who} | ${r.expr} (${r.fam}) | ${r.shot} | ${r.feel.replace(/\|/g, '/')} | ${r.change.replace(/\|/g, '/')} |`), '',
     '## Faces per character', '', '| Who | Face | Takes (shots, first second) | Count |', '| --- | --- | --- | --- |',
@@ -121,7 +144,7 @@ if (path.resolve(process.argv[1] || '') === fileURLToPath(import.meta.url)) {
   const OUT = path.resolve(A.out || path.join(DIR, 'review'));
   fs.mkdirSync(OUT, { recursive: true });
   fs.writeFileSync(path.join(OUT, 'faces.md'), md.join('\n') + '\n');
-  fs.writeFileSync(path.join(OUT, 'faces.json'), JSON.stringify({ limits: { HOLD, MIN_FACE, REPEAT_MAX }, ...J }, null, 1) + '\n');
-  console.log(`review/faces.md: ${J.mismatch.length || J.over.length ? 'FAIL' : 'PASS'} · ${J.mismatch.length} off the beat, ${J.over.length} over ${REPEAT_MAX} takes (${J.over.map(r => `${r.who} ${r.expr} ×${r.n}`).join(', ') || '-'})`);
-  process.exit(J.mismatch.length || J.over.length ? 1 : 0);
+  fs.writeFileSync(path.join(OUT, 'faces.json'), JSON.stringify({ limits: { HOLD, MIN_FACE, REPEAT_MAX }, ...V, coverage: cov, ...J }, null, 1) + '\n');
+  console.log(`${displayPath(path.join(OUT, 'faces.md'))}: ${line}`);
+  process.exit(V.status === 'PASS' ? 0 : 1);
 }

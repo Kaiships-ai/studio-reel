@@ -10,6 +10,8 @@ flex in every frame; `--sheet` renders each clip's worst pose from the front, 3/
 - Face per beat: a face whose emotion family (`FAMILY`) the beat never names (`WORDS` over the beat's feel, lines and
   every shot's brief, purpose and picture) fails when held `HOLD` (15) frames on a head at least `MIN_FACE` (3 %) of the
   frame high. Neutral faces (deadpan, focus, stern, suspicious, ...) never fail. Film twins (`y_fear`) count as their kit face.
+- Coverage: a storyboard with no shots, or rows whose faces fall in no shot, is PARTIAL (exit 1, the reason on its
+  first line), never PASS. A film with no `storyboard.json` stops with exit 2 and names `--story`.
 - Repeats: a non-neutral face of one character taken up more than `REPEAT_MAX` (2) times fails (kai-taste TOKENS "Repeats"); a face held on across cuts is one take.
 - Rows: `shot.mjs --dbg` rows; a row may carry `sb` (its storyboard frame, for a re-timed picture) and `t` (its second in
   the cut). Shots come from `storyboard.json` and the film's `reel.js` `CUTS`; `--story` borrows another film's story.
@@ -30,10 +32,20 @@ films/<slug>/review/shot-rows.jsonl`, then `node styles/stick-man/tools/stagegat
 - `node styles/stick-man/tools/rigtest.mjs [--json <file>] [--sheet <dir>]`: one line per clip, about 12 s without the
   sheet; the sheet is 208 small renders, one at a time (about 10 min).
 - Regression: `node --test test/unit/stick-acting-rig.test.mjs`.
+- The PR #131 numbers, rerun from saved rows (`D=~/.claude/orchestrate/hm-quality/step4-rows`, its README has the
+  join and the shot.mjs commands behind each rows file):
+  - `node styles/stick-man/tools/facebeat.mjs $D/story-hm-ep01-r2 --rows $D/v7-rows.jsonl --h 1280 --out /tmp/faces-v7`:
+    FAIL, 1 off the beat (1:20.4 y_defiant, SH340), over 2 takes y_strain 5, y_fear 5, y_shock 3, y_worried 3. The rows
+    join the dbg rows hm-ep01-r2's builds saved (S1-S3 v5, S4-S5 v7, S6-S7 s6), not a fresh render.
+  - `node styles/stick-man/tools/facebeat.mjs films/hm-bible-s5 --rows $D/bible-rows.jsonl --story $D/story-hm-ep01-r2 --h 1280 --out /tmp/faces-bible`:
+    PASS, 0 off the beat, most-used face 2 takes. The bible cut has no storyboard of its own; it plays hm-ep01-r2's S4-S5.
+  - `node styles/stick-man/tools/rigtest.mjs`: 13 of 52 over a limit, 0 not in RIG_KNOWN.
 
 ## Gotchas
 
 - `--h` must be the height the rows were rendered at (head size is read in pixels).
+- Gate 4 needs the rows first: `shot.mjs --dbg` is a manual step before `stagegate.mjs`; without them facebeat exits 1.
+- Nothing compares `RIG_KNOWN` with `origin/main`: a PR can raise a row and the test still passes. Review its diff.
 - The word lists decide what a beat "names": a beat written without emotion words ("the climax") lets more faces pass
   through its shots' briefs only.
 - The head squash is the motion layer's squash and stretch (motion.js `headSq`), not the clip: a RIG_KNOWN head row is

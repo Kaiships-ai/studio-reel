@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
-import { familyOf, story, faceRuns, judge, HOLD, REPEAT_MAX } from '../../styles/stick-man/tools/facebeat.mjs';
+import { familyOf, story, faceRuns, judge, coverage, verdict, HOLD, REPEAT_MAX } from '../../styles/stick-man/tools/facebeat.mjs';
+import { run } from '../../kit/env.mjs';
 import { measure, measureAll, knownFails, RIG_KNOWN, HEAD_PCT } from '../../styles/stick-man/tools/rigtest.mjs';
 import { ALL } from '../../styles/stick-man/motion-lib/index.js';
 
@@ -68,6 +69,39 @@ test('a re-timed picture maps onto the storyboard through sb, and reports its ow
   const R = rows(500, 539, { cop: 'smug' }).map((r, i) => ({ ...r, sb: i, t: 20 + i / 30 }));
   const J = judge(faceRuns(R, S, 1920), S);
   assert.deepEqual([J.mismatch[0].shot, J.mismatch[0].t0], ['SH140', 20]);
+});
+
+const FACEBEAT = path.resolve('styles/stick-man/tools/facebeat.mjs');
+const facebeat = (dir, rowsOf) => {
+  fs.mkdirSync(path.join(dir, 'review'), { recursive: true });
+  fs.writeFileSync(path.join(dir, 'review/shot-rows.jsonl'), rowsOf.map(r => JSON.stringify(r)).join('\n') + '\n');
+  return run('node', [FACEBEAT, dir], { capture: true });
+};
+
+test('a storyboard with no shots never passes: 60 frames of one held face is PARTIAL and blocks (pilot-a has film + lines only)', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'facebeat-'));
+  fs.writeFileSync(path.join(dir, 'storyboard.json'), JSON.stringify({ film: 'pilot-a', lines: [{ id: 'L1', text: 'a line' }] }));
+  const R = rows(0, 59, { you: 'smug' }), S = story(dir);
+  assert.deepEqual(verdict(judge(faceRuns(R, S, 1920), S), coverage(R, S, 1920)).status, 'PARTIAL');
+  const p = facebeat(dir, R);
+  assert.equal(p.status, 1);
+  assert.match(p.stdout, /PARTIAL: the storyboard has no shots/);
+});
+
+test('faces outside every shot of the story are PARTIAL, not PASS; faces inside a shot are judged as before', () => {
+  const S = story(threeBeatFilm()), late = rows(500, 559, { you: 'smug' }).map(r => ({ ...r, sb: r.f + 1000 }));
+  assert.deepEqual(coverage(late, S, 1920), { shots: 3, faced: 60, judged: 0 });
+  assert.equal(verdict(judge(faceRuns(late, S, 1920), S), coverage(late, S, 1920)).status, 'PARTIAL');
+  const inside = rows(40, 79, { you: 'y_strain' });
+  assert.equal(verdict(judge(faceRuns(inside, S, 1920), S), coverage(inside, S, 1920)).status, 'PASS');
+});
+
+test('a film with no storyboard.json says so and names --story, with no stack trace', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'facebeat-'));
+  const p = facebeat(dir, rows(0, 29, { you: 'smug' }));
+  assert.equal(p.status, 2);
+  assert.match(p.stderr, /has no storyboard\.json: pass --story films\/<slug>/);
+  assert.doesNotMatch(p.stderr, /at story \(/);
 });
 
 test('the rig test: a standing idle keeps a round head and its bones; a jump squashes the head past the limit', async () => {
