@@ -7,7 +7,9 @@
 // Evidence front matter (first lines of a markdown file):  by: agent:<id> | kai | self   ·   of: <what was reviewed + version>
 // Freshness (`newerThan`): a review goes stale when what it judged changed, by a content hash of the JSON fields a viewer
 // sees or hears (fresh.mjs; record in review/.fresh.json). Non-JSON targets fall back to mtime.
+// Calibration (`calibrated`): a review counts only when its `brief:` line names a brief that agreed with Kai (calibrate.mjs).
 import { isFresh } from './fresh.mjs';
+import { calibration } from './calibrate.mjs';
 import fs from 'node:fs'; import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -47,6 +49,7 @@ function checkGate(id) {
     if ((e.minWords || 0) > txt.split(/\s+/).length) miss.push(`under ${e.minWords} words`);
     if (e.by === 'independent' && !/^agent:|^person:/i.test(fm.by || '')) miss.push(`"by:" must name an independent reviewer (agent:<id> or person:<name>), not "${fm.by || 'nobody'}"`);
     for (const n of e.newerThan || []) { const r = isFresh(DIR, e.file, n, book); if (!r.fresh) miss.push(r.why); }
+    if (e.calibrated) { const c = calibration(fm.brief); if (!c.ok) miss.push(c.why); }
     rows.push({ kind: e.by === 'independent' ? 'judged' : 'made', what: e.file, ok: !miss.length, why: miss.length ? miss.join('; ') : (fm.of ? `of ${fm.of}` : 'ok') });
   }
   const ap = approvals[id];

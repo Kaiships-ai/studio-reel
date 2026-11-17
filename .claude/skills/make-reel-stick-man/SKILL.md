@@ -49,6 +49,10 @@ Read [PROCESS.md](PROCESS.md) before step 1, `DIRECTOR.md` (library root) and [D
    Read the gate states from the tool, never from memory.
 
 Notes from Kai are acted on per shot. A note with no shot gets one question back ("shot nào?"); a vague one is translated with DIAGNOSE.md section 2 before anything is changed.
+Every note goes into `films/<slug>/review/retakes.json` (round, shot, type: careless, style break, artistic or not
+addressed, and the shot gate's fault class when one fits) and stays open until Kai accepts the fix on a later round.
+`node styles/stick-man/tools/retakes.mjs films/<slug>` fails a round with more notes than the one before, or one that
+repeats a closed note; show Kai its table with every new cut.
 
 ## Stages, steps and gates
 
@@ -144,6 +148,7 @@ A later stage's problem is fixed in the stage that caused it. Never jump ahead i
 | [PUBLISH.md](PUBLISH.md) | stage 5: publish, retention mapped to shots, post-mortem, rules from evidence |
 | `styles/stick-man/tools/GATES.json`, `stagegate.mjs` | the evidence each gate needs, and the checker |
 | `styles/stick-man/tools/develop.mjs`, `scriptlint.mjs`, `assets.mjs`, `timing.mjs`, `postcheck.mjs`, `cutgate.mjs`, `retention.mjs` | the measured checks of stages 0, 1 (script), 2, 3, 4 and 5 |
+| `styles/stick-man/tools/retakes.mjs`, `calibrate.mjs` | Kai's notes per round (repeats, regressions), and whether a review brief agrees with Kai before its review counts |
 | [PREPRO.md](PREPRO.md) | stage 1 in depth: flow, vocabulary, each step's standard, gate and mistakes, craft knowledge (story, staging in 9:16, explaining in pictures, continuity, timing), reviews, fidelity, gates, fixes per `prepro.mjs` check |
 | [DIAGNOSE.md](DIAGNOSE.md) | symptom → isolation test → cause → fix → stage, note translation, process smells, a worked example |
 | [AUDIT.md](AUDIT.md) | why the pre-production stage was rebuilt (Nov 2026), and the roadmap |

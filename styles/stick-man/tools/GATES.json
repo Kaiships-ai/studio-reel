@@ -233,6 +233,7 @@
     {
      "file": "review/final-qa.md",
      "by": "independent",
+     "calibrated": true,
      "why": "full-speed, sound on, phone size, UI overlay on: retell + swipe test on the final"
     }
    ]
