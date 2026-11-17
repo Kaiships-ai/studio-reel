@@ -39,7 +39,7 @@ async function resolveRef(ref, ctx) {
   const film = ref.path.startsWith('films/');
   if (film && !ctx.films) return { unchecked: `films/ is not here (${ref.path})` };
   const abs = film ? path.join(ctx.films, ref.path.slice('films/'.length)) : path.join(ctx.repo, ref.path);
-  if (!fs.existsSync(abs)) return { error: `missing kit path ${ref.path}` };
+  if (!fs.existsSync(abs)) return film ? { unchecked: `${ref.path} is not here` } : { error: `missing kit path ${ref.path}` };
   const src = () => fs.readFileSync(abs, 'utf8');
   if (ref.text && !src().includes(ref.text)) return { error: `${ref.path} has no "${ref.text}"` };
   if (ref.pattern && !new RegExp(ref.pattern).test(src())) return { error: `${ref.path} does not match /${ref.pattern}/` };
@@ -150,7 +150,7 @@ export async function validate({ tokens, catalog }, { repo = REPO, films = path.
       if (!same(have, want)) errors.push(`${w}: bodies ${want.join(',')} but the kit has ${have.join(',')}`);
     }
     for (const v of c.variants || []) if (first?.parent && !(c.kit[0].key + v in first.parent)) errors.push(`${w}: the kit has no ${c.kit[0].key}${v}`);
-    if (c.provides && (!local || ctx.films)) {
+    if (c.provides && first && !first.error && !first.unchecked) {
       const r0 = c.kit[0], src = fs.readFileSync(local ? path.join(ctx.films, r0.path.slice('films/'.length)) : path.join(repo, r0.path), 'utf8');
       for (const n of Object.values(c.provides).flat()) if (!new RegExp(`['.]${n}\\b|^\\s*${n}\\s*[:(]`, 'm').test(src)) errors.push(`${w}: ${r0.path} does not define ${n}`);
     }
