@@ -176,8 +176,9 @@ Commands, profiles and thresholds: GATES.md. Always pass `--profile` (the defaul
 
 ## 10. Deliver (◇5)
 
-◇5 stays OPEN until `review/final-qa.md` carries `brief: <tag>` of a calibrated brief (section 2); while no brief has
-passed `calibrate.mjs score` on the test half, every film waits here.
+◇5 stays OPEN until `review/final-qa.md` carries `brief: <tag>` of a calibrated brief (section 2). While no brief has
+passed `calibrate.mjs score` on the test half, Kai's own OK counts in its place, recorded as `kai-ok` with its date
+(SKILL.md, Who checks what); `stagegate.mjs` prints it on every run.
 
 1. Render the final with Kai's last choices applied.
 2. Run `sheet.mjs --n 21`.
