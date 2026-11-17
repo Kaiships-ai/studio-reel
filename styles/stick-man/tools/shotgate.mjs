@@ -3,7 +3,8 @@
 //                                                                              newest renders/*.mp4, else the frames are rendered)
 //   ... --rows <rows.jsonl> [--w 404 --h 720]                                  judge __dbg rows made elsewhere (a film assembled
 //                                                                              shot by shot: no reel.js, so no visibility tags)
-// Exit 1 when a fault blocks: seen by the camera and large enough on a phone (shotfaults.mjs); the others are listed as watch.
+// Exit 1 when a fault blocks: seen by the camera, on screen 3 frames or more and large enough on a phone (shotfaults.mjs); the
+// others are listed as watch.
 import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { run } from '../../../kit/env.mjs';

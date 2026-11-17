@@ -1,18 +1,18 @@
 // A row, rows in film order: __dbg (engine/play.js) plus the film frame F (default f). A row with `edit: true` starts a shot the cut list
 // names (a film assembled shot by shot); otherwise a cut is an act change, a dissolve, or a camera jump.
 // Fault: { F, kind, who, what, px, frames, seen, sev, vis: 'in' | 'occluded' | 'off', watch?, pts? }. Every size is what the viewer
-// sees: px on a phone frame REF_H tall, after the motion the neighbouring frames predict is taken out. sev = px x frames (up to
-// MAX_FRAMES) x the share of the fault in view; a fault blocks when its sev reaches SEV_BLOCK, a contact only when it lasts
-// CONTACT_FRAMES frames and reaches CONTACT_PX in view. pts are Blender-world points for shotgate.mjs to ask the film camera about.
+// sees: px on a phone frame REF_H tall, after the motion the neighbouring frames predict is taken out; frames is how long it stays
+// on screen. sev = px x frames (up to MAX_FRAMES) x the share in view ranks them.
+// pts are Blender-world points for shotgate.mjs to ask the film camera about.
 import { jointSteps, JOINT_STEP_MAX, stepPoints } from './jointstep.mjs';
 import { GRIP_CM, PROP_CM, CORD_SHAKE_MAX, shakeOf } from './faults.mjs';
 
 export const FPS = 30;
 export const REF_H = 720;               // px are counted on a frame this tall (a phone at review size)
-export const SEV_BLOCK = 6;             // px x frames x seen share: one frame 6 px out of place, fully in view, blocks
-export const MAX_FRAMES = 5;            // a fault that lasts longer counts this many frames
-export const CONTACT_FRAMES = 3;        // a contact (a body or prop through something, a hand off its grip, a foot sliding) blocks when it lasts
-export const CONTACT_PX = 6;            // ... this many frames and reaches this far on screen ('body in the set' has no depth: its duration decides)
+export const HOLD_FRAMES = 3;           // a fault on screen this many frames is seen at 1x; a shorter one is watched
+export const CONTACT_PX = 6;            // a contact this far into or off what it touches, in view, blocks
+export const CHANGE_PX = 75;            // a change that stays blocks from this size in view
+export const MAX_FRAMES = 5;            // sev counts a fault that lasts longer as this many frames
 export const CAM_JUMP_M = 0.3;          // camera position + aim moved this far in one frame, and 3x its last step: a cut
 export const LENS_JUMP = 0.15;          // or the lens changed by this share in one frame
 export const STILL_CAM_M = 0.05;        // camera position + aim moved less than this in a frame: a still camera
@@ -33,7 +33,7 @@ export const TORSO_R = 0.11;            // m: a stick figure's torso as a rod th
 export const CROSS_MAX_M = 0.5;         // a point that moved further in a frame jumped (figure / prop jumps), it did not pass through
 export const INSIDE_MAX = 30;           // frames a point through a surface is followed
 
-export const CONTACT = new Set(['prop passes through', 'body passes through', 'body in the set', 'hand off its grip', 'prop in the body', 'foot slides', 'figure skates']);
+export const CONTACT = new Set(['prop passes through', 'body passes through', 'body in the set', 'hand off its grip', 'prop in the body', 'foot slides', 'figure skates', 'prop floats']);
 
 const F_ = r => r.F ?? r.f;
 const add = (a, b) => a.map((x, i) => x + b[i]), sub = (a, b) => a.map((x, i) => x - b[i]), mid = (a, b) => a.map((x, i) => (x + b[i]) / 2);
@@ -100,14 +100,24 @@ function excess(seq, cut) {
     return sub(v, add(a, ab.map(x => x * t)));
   });
 }
-// per frame i, that excess in px on screen less the same measure two and three frames away in the shot, so a fast but even move
-// (a sprint's arm, a train speeding up) is no jump; kept only where it peaks (a jump and its way back are one event), else 0
-function jumpPx(seq, cut, rows, W, H) {
-  const e = excess(seq, cut), shot = []; cut.forEach((c, i) => { shot[i] = (shot[i - 1] ?? 0) + (c ? 1 : 0); });
-  const raw = e.map((v, i) => (v ? screenPx(rows[i].camera, seq[i - 1], v, W, H) : null));
-  const sp = raw.map((x, i) => (x == null ? 0 : Math.max(0, x - Math.max(0, ...[i - 3, i - 2, i + 2, i + 3].map(j => (shot[j] === shot[i] ? raw[j] ?? 0 : 0))))));
-  return sp.map((x, i) => (x > 0 && x > (sp[i - 1] ?? 0) && x >= (sp[i + 1] ?? 0) ? x : 0));
+function holds(cut, n, i, dir, ok) {
+  let k = 0;
+  for (let j = i; j >= 0 && j < n && k < MAX_FRAMES && ok(j); j += dir) { k++; if (dir < 0 ? cut[j] : cut[j + 1]) break; }
+  return k;
 }
+function jumps(seq, cut, rows, W, H) {
+  const e = excess(seq, cut), shot = []; cut.forEach((c, i) => { shot[i] = (shot[i - 1] ?? 0) + (c ? 1 : 0); });
+  const onScreen = (v, i) => (v ? screenPx(rows[i].camera, seq[i - 1], v, W, H) : null);
+  const raw = e.map(onScreen), bg = raw.map((_, i) => Math.max(0, ...[i - 3, i - 2, i + 2, i + 3].map(j => (shot[j] === shot[i] ? raw[j] ?? 0 : 0))));
+  const out = raw.map((x, i) => (x == null ? 0 : Math.max(0, x - bg[i])));
+  return out.map((x, i) => {
+    if (!(x > 0 && x > (out[i - 1] ?? 0) && x >= (out[i + 1] ?? 0))) return null;
+    const left = [1, 2].every(k => shot[i + k] === shot[i]) ? [-1, 1, 2].reduce((s, k) => add(s, e[i + k] || [0, 0, 0]), e[i]) : null;
+    const stay = left ? Math.max(0, onScreen(left, i) - bg[i]) : 0, n = holds(cut, seq.length, i, 1, j => seq[j] != null);
+    return stay >= x / 2 && n >= HOLD_FRAMES ? { px: stay, frames: n } : { px: x, frames: 1 };
+  });
+}
+const jumpWhat = j => (j.frames > 1 ? `jumps ${fmt(j.px)} px to a new place and stays ${j.frames} f` : `jumps ${fmt(j.px)} px off its path and back`);
 
 const fault = o => ({ frames: 1, seen: 1, vis: 'in', ...o });
 
@@ -117,6 +127,7 @@ const boxPx = (box, W, H) => box ? Math.max(Math.min(box[2], W) - Math.max(box[0
 const big = (box, W, H) => box && (Math.min(box[2], W) - Math.max(box[0], 0)) * (Math.min(box[3], H) - Math.max(box[1], 0)) >= SEEN_AREA * W * H;
 const propState = p => (!p || !p.shown ? 'none' : p.on || 'off');
 const actorState = a => (a && a.inFrame ? 'in' : 'none');
+const reshapes = (a, b) => a?.dims && b?.dims && a.dims.some((x, k) => Math.abs(b.dims[k] - x) > SIZE_STEP * Math.max(x, b.dims[k], 1e-3));
 
 function cameraJumps(rows, cut, W, H, out) {
   for (let i = 2; i < rows.length; i++) {
@@ -124,43 +135,57 @@ function cameraJumps(rows, cut, W, H, out) {
     const cs = camStep(p, r), cs0 = camStep(rows[i - 2], p);
     if (cs > CAM_JUMP_M && cs > 3 * cs0) {
       const q = project(r.camera, p.camera.target, W, H);
-      out.push(fault({ F: F_(r), kind: 'camera jumps', who: 'camera', what: `the camera jumps ${fmt(cs)} m inside the shot (last step ${fmt(cs0)} m)`, px: q ? Math.hypot(q[0] * W / H, q[1]) * REF_H / 2 : REF_H }));
+      out.push(fault({ F: F_(r), kind: 'camera jumps', who: 'camera', what: `the camera jumps ${fmt(cs)} m inside the shot (last step ${fmt(cs0)} m)`,
+        px: q ? Math.hypot(q[0] * W / H, q[1]) * REF_H / 2 : REF_H, frames: holds(cut, rows.length, i, 1, () => true) }));
     }
   }
+}
+
+function inOut(S, cut, i, now, was) {
+  return Math.min(holds(cut, S.length, i, 1, j => now(S[j])), holds(cut, S.length, i - 1, -1, j => was(S[j])));
 }
 
 function props(rows, cut, W, H, out) {
   const ids = [...new Set(rows.flatMap(r => Object.keys(r.track || {})))];
   for (const id of ids) {
-    const T = rows.map(r => r.track?.[id]), pos = T.map(t => (t?.shown ? t.c : null)), jump = jumpPx(pos, cut, rows, W, H);
+    const T = rows.map(r => r.track?.[id]), pos = T.map(t => (t?.shown ? t.c : null)), jump = jumps(pos, cut, rows, W, H), st = T.map(propState);
     for (let i = 1; i < rows.length; i++) {
       if (cut[i]) continue;
-      const r = rows[i], a = T[i - 1], b = T[i], sa = propState(a), sb = propState(b), F = F_(r);
+      const r = rows[i], a = T[i - 1], b = T[i], sa = st[i - 1], sb = st[i], F = F_(r);
       const stillCamera = camStep(rows[i - 1], r) < STILL_CAM_M;
-      if (sb === 'in' && big(b.box, W, H) && (sa === 'none' || sa === 'off' && stillCamera && inside(b.box, W, H)))
-        out.push(fault({ F, kind: 'prop appears', who: id, what: `${id} appears in one frame (${sa === 'none' ? 'from nothing' : 'inside the frame'})`, px: boxPx(b.box, W, H) }));
-      if (sa === 'in' && big(a.box, W, H) && (sb === 'none' || sb === 'off' && stillCamera && inside(a.box, W, H)))
-        out.push(fault({ F, kind: 'prop vanishes', who: id, what: `${id} vanishes in one frame`, px: boxPx(a.box, W, H) }));
+      if (sb === 'in' && big(b.box, W, H) && (sa === 'none' || sa === 'off' && stillCamera && inside(b.box, W, H))) {
+        const frames = inOut(st, cut, i, s => s !== 'none', s => s === sa);
+        out.push(fault({ F, kind: 'prop appears', who: id, what: `${id} appears in one frame (${sa === 'none' ? 'from nothing' : 'inside the frame'}) for ${frames} f`, px: boxPx(b.box, W, H), frames }));
+      }
+      if (sa === 'in' && big(a.box, W, H) && (sb === 'none' || sb === 'off' && stillCamera && inside(a.box, W, H))) {
+        const frames = inOut(st, cut, i, s => s === sb, s => s !== 'none');
+        out.push(fault({ F, kind: 'prop vanishes', who: id, what: `${id} vanishes in one frame for ${frames} f`, px: boxPx(a.box, W, H), frames }));
+      }
       if (sa === 'none' || sb === 'none') continue;
       const seen = sb === 'in' || sa === 'in' ? 1 : 0, vis = seen ? 'in' : sb;
-      if (a.size > 0 && Math.abs(b.size / a.size - 1) > SIZE_STEP)
-        out.push(fault({ F, kind: 'prop resizes', who: id, what: `${id} size ${fmt(a.size)} -> ${fmt(b.size)} m in one frame`, px: metresPx(r.camera, b.c, Math.abs(b.size - a.size)), seen, vis }));
-      if (jump[i]) out.push(fault({ F, kind: 'prop jumps', who: id, what: `${id} jumps ${fmt(jump[i])} px off its path in one frame`, px: jump[i], seen, vis }));
+      if (a.size > 0 && Math.abs(b.size / a.size - 1) > SIZE_STEP) {
+        const near = (t, size) => t?.shown && Math.abs(t.size / size - 1) <= SIZE_STEP;
+        const frames = Math.min(holds(cut, rows.length, i, 1, j => near(T[j], b.size)), holds(cut, rows.length, i - 1, -1, j => near(T[j], a.size)));
+        out.push(fault({ F, kind: 'prop resizes', who: id, what: `${id} size ${fmt(a.size)} -> ${fmt(b.size)} m for ${frames} f`, px: metresPx(r.camera, b.c, Math.abs(b.size - a.size)), frames, seen, vis }));
+      }
+      if (jump[i] && !reshapes(a, b) && !reshapes(b, T[i + 1]))
+        out.push(fault({ F, kind: 'prop jumps', who: id, what: `${id} ${jumpWhat(jump[i])}`, ...jump[i], seen, vis }));
     }
   }
 }
 
 function figures(rows, cut, W, H, out) {
   for (const n of Object.keys(rows[0].actors)) {
-    const heads = rows.map(r => (r.actors[n]?.inFrame ? r.actors[n].headW || null : null)), jump = jumpPx(heads, cut, rows, W, H);
+    const heads = rows.map(r => (r.actors[n]?.inFrame ? r.actors[n].headW || null : null)), jump = jumps(heads, cut, rows, W, H);
+    const st = rows.map(r => actorState(r.actors[n]));
     for (let i = 1; i < rows.length; i++) {
       if (cut[i]) continue;
-      const r = rows[i], a = rows[i - 1].actors[n], b = r.actors[n], sa = actorState(a), sb = actorState(b), F = F_(r);
+      const r = rows[i], a = rows[i - 1].actors[n], b = r.actors[n], sa = st[i - 1], sb = st[i], F = F_(r);
       if (sb === 'in' && sa === 'none' && inside(b.head, W, H) && !(a?.head && offFrame(a.head, W, H)))
-        out.push(fault({ F, kind: 'figure appears', who: n, what: `${n} appears inside the frame in one frame`, px: (b.figH || 0) * REF_H }));
+        out.push(fault({ F, kind: 'figure appears', who: n, what: `${n} appears inside the frame in one frame`, px: (b.figH || 0) * REF_H, frames: inOut(st, cut, i, s => s === 'in', s => s === 'none') }));
       if (sa === 'in' && sb === 'none' && inside(a.head, W, H) && !(b?.head && offFrame(b.head, W, H)))
-        out.push(fault({ F, kind: 'figure vanishes', who: n, what: `${n} vanishes inside the frame in one frame`, px: (a.figH || 0) * REF_H }));
-      if (jump[i]) out.push(fault({ F, kind: 'figure jumps', who: n, what: `${n} jumps ${fmt(jump[i])} px off its path in one frame`, px: jump[i], seen: seenShare(r.camera, [heads[i]], W, H), pts: [heads[i]] }));
+        out.push(fault({ F, kind: 'figure vanishes', who: n, what: `${n} vanishes inside the frame in one frame`, px: (a.figH || 0) * REF_H, frames: inOut(st, cut, i, s => s === 'none', s => s === 'in') }));
+      if (jump[i]) out.push(fault({ F, kind: 'figure jumps', who: n, what: `${n} ${jumpWhat(jump[i])}`, ...jump[i], seen: seenShare(r.camera, [heads[i]], W, H), pts: [heads[i]] }));
     }
   }
 }
@@ -175,7 +200,7 @@ function goneAfterCut(rows, cut, W, H, out) {
       const q = project(r.camera, a.c, W, H);
       if (!q || Math.abs(q[0]) > 0.9 || Math.abs(q[1]) > 0.9) continue;
       if (Object.values(r.track || {}).some(b => b.shown && dist(b.c, a.c) < 0.6 && Math.abs(b.size / a.size - 1) < 0.5)) continue;
-      out.push(fault({ F: F_(r), kind: 'prop gone after cut', who: id, what: `${id} left at rest at (${a.c.map(x => x.toFixed(1)).join(', ')}) is not there when the next shot looks at that spot`, px: metresPx(r.camera, a.c, a.size) }));
+      out.push(fault({ F: F_(r), kind: 'prop gone after cut', who: id, what: `${id} left at rest at (${a.c.map(x => x.toFixed(1)).join(', ')}) is not there when the next shot looks at that spot`, px: metresPx(r.camera, a.c, a.size), frames: holds(cut, rows.length, i, 1, () => true) }));
     }
   }
 }
@@ -190,7 +215,7 @@ function changedAtCut(rows, cut, out) {
       if (a.length !== 1 || b.length !== 1) continue;
       const [ia, pa] = a[0], [ib, pb] = b[0], k = pb.size / pa.size - 1;
       if (Math.abs(k) > SIZE_STEP && (pa.on === 'in' || pb.on === 'in'))
-        out.push(fault({ F: F_(r), kind: 'prop changes at cut', who: n, what: `${n} carries ${ia} (${fmt(pa.size)} m) into the cut and ${ib} (${fmt(pb.size)} m) out of it`, px: metresPx(r.camera, pb.c, Math.abs(pb.size - pa.size)) }));
+        out.push(fault({ F: F_(r), kind: 'prop changes at cut', who: n, what: `${n} carries ${ia} (${fmt(pa.size)} m) into the cut and ${ib} (${fmt(pb.size)} m) out of it`, px: metresPx(r.camera, pb.c, Math.abs(pb.size - pa.size)), frames: holds(cut, rows.length, i, 1, () => true) }));
     }
   }
 }
@@ -239,11 +264,11 @@ function limbs(rows, cut, n, W, H, out) {
       if (d <= JOINT_STEP_MAX) continue;
       const win = Array.from({ length: 11 }, (_, u) => i - 5 + u), pose = win.map(j => L[j] || null), wc = win.map((j, u) => !u || !!cut[j] || !rows[j]);
       const wr = win.map(j => rows[Math.min(Math.max(j, 0), rows.length - 1)]);
-      const px = Math.max(0, ...stepPoints(k, l).map((_, u) => jumpPx(pose.map(q => (q ? stepPoints(k, q)[u] : null)), wc, wr, W, H)[5]));
-      if (!px) continue;
-      if (!w || px > w.px) w = { k, d, px, pts: [...stepPoints(k, m), ...stepPoints(k, l)], around: Math.max(side(i - 1, k), side(i + 1, k)) };
+      const j = stepPoints(k, l).map((_, u) => jumps(pose.map(q => (q ? stepPoints(k, q)[u] : null)), wc, wr, W, H)[5]).filter(Boolean).sort((x, y) => y.px - x.px)[0];
+      if (j && (!w || j.px > w.px)) w = { k, d, ...j, pts: [...stepPoints(k, m), ...stepPoints(k, l)], around: Math.max(side(i - 1, k), side(i + 1, k)) };
     }
-    if (w) out.push(fault({ F: F_(r), kind: 'joint pops', who: n, what: `${n} ${w.k} turns ${fmt(w.d)} deg in one frame (${fmt(w.around)} deg either side), ${fmt(w.px)} px off its path`, px: w.px, seen: seenShare(r.camera, w.pts, W, H, r.actors[n]), pts: w.pts }));
+    if (w) out.push(fault({ F: F_(r), kind: 'joint pops', who: n, what: `${n} ${w.k} turns ${fmt(w.d)} deg in one frame (${fmt(w.around)} deg either side), ${w.frames > 1 ? `snaps ${fmt(w.px)} px to a new pose for ${w.frames} f` : `${fmt(w.px)} px off its path and back`}`,
+      px: w.px, frames: w.frames, seen: seenShare(r.camera, w.pts, W, H, r.actors[n]), pts: w.pts }));
   }
   const ankle = (i, s) => rows[i].actors[n]?.limbs?.[s]?.ankle;
   for (const s of ['L', 'R']) runs(rows, cut, i => {
@@ -316,7 +341,7 @@ function crossings(rows, cut, W, H, out) {
 }
 
 export const severity = x => x.px * Math.min(x.frames, MAX_FRAMES) * x.seen;
-export const blocks = x => x.vis === 'in' && !x.watch && (CONTACT.has(x.kind) ? x.frames >= CONTACT_FRAMES && x.px * x.seen >= CONTACT_PX : x.sev >= SEV_BLOCK);
+export const blocks = x => x.vis === 'in' && !x.watch && x.frames >= HOLD_FRAMES && x.px * x.seen >= (CONTACT.has(x.kind) ? CONTACT_PX : CHANGE_PX);
 
 // every fault of the rows, by frame; W, H: the frame size the rows were measured at
 export function shotFaults(rows, { W = 1080, H = 1920 } = {}) {
