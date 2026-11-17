@@ -62,26 +62,29 @@ voice; `--strict 1` (WARN counts as FAIL) is for Kai to ask for, never a default
 node styles/stick-man/tools/shotgate.mjs films/<slug> [--in renders/<slug>_vN.mp4 --from <first frame>]   # review/shot-gate.md
 ```
 
-Every frame of the film, frame against frame (`tools/shotfaults.mjs`); a fault the shot's camera does not see is listed as
-ẩn and never blocks. Each second with a seen fault gets `review/shot-gate/strip_<s>s_f<F>.jpg`: 15 frames in a row, the
-fault on tile 6, for the reviewer to open before a verdict. A film assembled shot by shot passes its rows with `--rows`.
+Every frame of the film, frame against frame (`tools/shotfaults.mjs`). Each fault is sized as the viewer sees it: px on a
+720-tall phone frame through the shot's own camera, after the motion the neighbouring frames predict. Severity = px ×
+frames (up to 5) × the share of the fault in view (inside the frame, not behind the figure's own head or torso, and in film
+mode not behind the set: `shot.mjs --vis`). A fault blocks at severity 6; a contact (marked c) only when it lasts 3 frames
+and reaches 6 px. Each blocking second gets `review/shot-gate/strip_<s>s_f<F>.jpg`: 15 frames in a row, the fault on tile 6.
+A film assembled shot by shot passes its rows with `--rows`.
 
-| Fault | Measured | Limit |
-|---|---|---|
-| prop appears / vanishes | seen and ≥ 0.2 % of the frame in one frame, absent the next; no cut, not through the frame edge under a still camera, not from behind a cover | none |
-| prop jumps | centre moves further than its last step | 0.25 m / frame |
-| prop resizes | size change in one frame | 15 % |
-| prop changes at cut | a figure carries a prop of another size out of the cut | 15 % |
-| prop gone after cut | a free prop is not at its spot when the next shot of the place looks there | none |
-| prop floats | within 15 frames of a hand letting go, it moves up or down with vertical acceleration off −g | 60 % of g, 3 frames |
-| figure appears / vanishes / jumps | inside the frame in one frame (not revealed by a pan); head moves further than its last step | 0.4 m / frame |
-| figure skates | the body travels while even the stiller foot moves along | > 0.6 m/s, stance foot > 50 %, 8 frames |
-| joint pops | a jointstep.mjs channel in one frame, and twice its step on either side (a fast swing is not a pop; `gates.mjs` joint change still caps every frame at 25°) | 25° |
-| foot slides | a planted foot | 3 px / frame at 720p |
-| body / prop passes through | pelvis, chest, head, knees or a held prop's centre crosses a set mesh that did not move, by 2 cm to 0.5 m | none |
-| camera jumps | inside a shot of a film assembled shot by shot (`edit` rows) | 0.3 m and 3x its last step |
-| hand off its grip, prop in the body, body in the set | as the shot report (h), (i), (e) | 2 cm, 1 cm, none |
-| cord shakes (watch only, never blocks) | the shot report's cords line | 0.015 m/f² |
+| Fault | Measured |
+|---|---|
+| prop appears / vanishes | seen and ≥ 0.2 % of the frame, absent the next frame; no cut, not through the frame edge under a still camera, not from behind a cover; px = its size on screen |
+| prop / figure jumps | the step into a frame lies outside the steps on either side of it in the shot, less the same measure 2 and 3 frames away (a speed-up, a landing or a sprint is no jump; a move that starts at a cut is judged by the steps after it) |
+| prop resizes, prop changes at cut | size changes 15 % in a frame, or a carried prop's size across a cut; px = the change on screen |
+| prop gone after cut | a prop left at rest (moved < 1 cm the frame before) is not at its spot when the next shot of the place looks there; a moving prop may change place behind a cut |
+| prop floats | within 15 frames of a hand letting go, vertical acceleration off −g by 60 % for 3 frames; px = distance from the fall gravity predicts |
+| figure appears / vanishes | inside the frame in one frame (not revealed by a pan); px = the figure's height on screen |
+| joint pops | a jointstep.mjs channel over 25° in a frame whose moving points jump off their path (as prop jumps) |
+| figure skates (c) | the body travels > 0.6 m/s for 8 frames while the stiller foot, within 10 cm of the floor, moves along > 50 %; px = its slide |
+| foot slides (c) | an ankle within 3 cm of the floor in two frames moves; px = the slide over the run |
+| body / prop passes through (c) | pelvis, chest, head, knees or a held prop crosses a set mesh that did not move; it stays inside while past the crossing spot along the way it went in; px = how far |
+| hand off its grip, prop in the body (c) | over 2 cm, over 1 cm (shot report (h), (i)); px = the gap on screen |
+| body in the set (c) | a collision box; the engine gives no depth, so 3 frames decide |
+| camera jumps | inside a shot of a film assembled shot by shot (`edit` rows): 0.3 m and 3x its last step |
+| cord shakes (watch only, never blocks) | the shot report's cords line, 0.015 m/f² |
 
 ## Profiles
 
