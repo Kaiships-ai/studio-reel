@@ -25,16 +25,9 @@ const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.resolve(H
 //   FLEX_MAX   knee and elbow flex, degrees (0 = straight). Inferred: a human knee or elbow folds to about 150-160 deg.
 //   FLEX_MIN   a joint bent backward (hyperextended), degrees.
 export const HEAD_PCT = 5, HEAD_SQUASH_PCT = 15, HEAD_VOL_TOL = 0.01, BONE_PCT = 3, FLEX_MAX = 160, FLEX_MIN = -2;
-// Clips over a limit on main 17/11 (all leg stretch, until the leg-reach kit PR lands), each with how far over it is per metric (head and bone: percentage points; flex:
-// degrees).
-export const RIG_KNOWN = {
-  Adult_Idle_Sleep_Loop: { bone: 0.3 },
-  Adult_Trans_GetUp_Once: { bone: 0.3 },
-  Adult_Trans_JumpWindow_Once: { bone: 8.4 },
-  Heavy_Move_Run_Fwd_Loop: { bone: 1.4 },
-  Act_DropInTrunk_Once: { bone: 2.6 },
-  Act_PushBagOutWindow_Once: { bone: 2.4 },
-};
+// Clips over a limit, each with how far over it is per metric (head and bone: percentage points; flex: degrees). Empty since
+// the leg-reach kit fix (17/11); a row may only shrink or go.
+export const RIG_KNOWN = {};
 const METRICS = ['head', 'bone', 'flex'];
 const BONES = [['upper', 'shoulder', 'elbow'], ['fore', 'elbow', 'hand'], ['thigh', 'hip', 'knee'], ['shin', 'knee', 'ankle']];
 // one frame's head scale: how far off round it is (%), whether it keeps the rest volume, the limit that applies

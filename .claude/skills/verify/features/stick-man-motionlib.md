@@ -101,6 +101,13 @@ before, except where an old one had a hand forced off a target (now kept when re
 - Balance (rig B4) is weighed: `(1 - fall) (1 - x_raw) (1 - lean on a floor prop) x_stand`. `x_raw` (motion.js): a
   captured pose carries its own balance. `x_stand` (motion.js): both feet down, eased over 3 + 3 frames each side, so the
   solve never switches as a sole lands. `rigWorld().balanceCm`, `S.rig.balanceHip` (the hips' shift, W).
+- Leg reach (cast.js `ik`, the `pose2` reach pass): a leg never stretches. A foot past full reach stops short on the
+  hip-to-target line, the leg straight; a foot that stands (`x_plantL` / `x_plantR`, motion.js: one foot down, eased as
+  `x_stand`; a pose without it reads the foot's height) brings the hips to it instead, by how much it stands, and not while
+  `fall` has the floor or a seat carry the body. `S.rig[side]`: `footWant` (W), `past` (W past reach), `plant`. Measured
+  17/11 on all 52 clips: the worst leg bone went from 11.4 % (Trans_JumpWindow_Once f32 shin), 5.6 % (Act_DropInTrunk_Once),
+  5.5 % (Act_PushBagOutWindow_Once) and 4.4 % (Heavy run) to 1.1 % or less (the soft knee's own shortening); flat planted feet
+  move 0; a toe-off foot that was out of reach moves up to 2.4 mm; a lying foot stops up to 2.7 cm short, still.
 - gaitLoop on a capture: frames with both feet up keep the stance's hip correction (eased between stances), and the
   correction changes at most 0.01 W a frame, so the hips no longer jump as the last foot lifts (Move_PushHeavy_Loop loop
   frame 37: 8 cm) or as one foot leaves double support (Move_CarryBag_Walk_Loop's captured stop: 6 cm).
@@ -155,7 +162,8 @@ and `anim: { kid: [{ f: 0, clip: 'Move_Run_Fwd_Loop', body: 'child', to: [4, 0] 
   --query "clip=Act_PutDown_Once&phys=1" --frames 0-350 --report /tmp/putdown.txt --fast 1`; read (h) and (i): PASS.
 - A contact sheet: `node styles/stick-man/tools/motionlib.mjs --sheet Act --out /tmp/sheets`.
 - Everything (mp4s on and off, reports, sheets; minutes, one render process): `--proof <dir>`.
-- Regression: `node --test test/unit/stick-motionlib.test.mjs test/unit/stick-body.test.mjs test/unit/stick-motion.test.mjs`.
+- Regression: `node --test test/unit/stick-motionlib.test.mjs test/unit/stick-body.test.mjs test/unit/stick-motion.test.mjs
+  test/unit/stick-leg-reach.test.mjs`.
 
 ## Gotchas
 

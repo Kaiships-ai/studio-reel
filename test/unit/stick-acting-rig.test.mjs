@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { familyOf, story, faceRuns, judge, coverage, verdict, HOLD, REPEAT_MAX } from '../../styles/stick-man/tools/facebeat.mjs';
 import { run } from '../../kit/env.mjs';
-import { measure, measureAll, knownFails, headShape, RIG_KNOWN, HEAD_PCT, HEAD_SQUASH_PCT } from '../../styles/stick-man/tools/rigtest.mjs';
+import { measure, measureAll, knownFails, headShape, HEAD_PCT, HEAD_SQUASH_PCT } from '../../styles/stick-man/tools/rigtest.mjs';
 import { ALL } from '../../styles/stick-man/motion-lib/index.js';
 
 function threeBeatFilm() {
@@ -123,12 +123,13 @@ test('a 13 % head passes when it keeps its volume and fails when it does not', (
 });
 
 test('RIG_KNOWN only shrinks: a fault it does not list fails, a listed clip that grows fails, a fixed one must be deleted', () => {
-  const r = (over, faults = ['x']) => ({ name: 'Adult_Trans_JumpWindow_Once', over: { head: 0, bone: 0, flex: 0, ...over }, faults });
-  assert.deepEqual(knownFails(r({ bone: 8.4 }), RIG_KNOWN), []);
-  assert.equal(knownFails(r({ bone: 8.5 }), RIG_KNOWN).length, 1);
-  assert.equal(knownFails(r({ head: 0.5 }), RIG_KNOWN).length, 1);
-  assert.equal(knownFails(r({}, []), RIG_KNOWN).length, 1);
-  assert.equal(knownFails({ name: 'New_Clip', over: { head: 1, bone: 0, flex: 0 }, faults: ['head'] }, RIG_KNOWN).length, 1);
+  const known = { Listed_Clip: { bone: 8.4 } };
+  const r = (over, faults = ['x']) => ({ name: 'Listed_Clip', over: { head: 0, bone: 0, flex: 0, ...over }, faults });
+  assert.deepEqual(knownFails(r({ bone: 8.4 }), known), []);
+  assert.equal(knownFails(r({ bone: 8.5 }), known).length, 1);
+  assert.equal(knownFails(r({ head: 0.5 }), known).length, 1);
+  assert.equal(knownFails(r({}, []), known).length, 1);
+  assert.equal(knownFails({ name: 'New_Clip', over: { head: 1, bone: 0, flex: 0 }, faults: ['head'] }, known).length, 1);
 });
 
 test('every library clip passes the rig test or is listed in RIG_KNOWN at its measured size', async () => {

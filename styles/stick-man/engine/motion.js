@@ -16,7 +16,7 @@
 // and hat behind the body (overlapping action), overshoot and settle when it stops (follow-through), the hip's vertical
 // speed stretches the body and a landing squashes it (squash and stretch, volume kept), and a held pose breathes.
 // the kit's named poses (a film adds its own: act `poses`, or import this and assign)
-import { PHYS } from './body.js';
+import { PHYS, footDown } from './body.js';
 import { expandClips } from '../motion-lib/index.js';
 export const MOTION_POSES = {};
 // the style dials: how far this film bends each of the 12 principles, 0 = toward live simulation, 1 = toward stylised
@@ -228,10 +228,14 @@ export function playActor(track, F0, F1, opt = {}) {
   // figure-frame foot), off from STAND_PAD frames before a foot lifts to as many after it lands, eased over as many again
   // on each side: the balance solve fades in and out over a quarter second instead of switching as a sole touches (the
   // hips jumped 8-10 cm in the frame a stepping foot came down, Move_PushHeavy_Loop's first step, Elder_Move_Run)
-  const up = m => Math.max(...['L', 'R'].map(s => m[`leg${s}.footW.2`] ?? (m[`leg${s}.foot.1`] != null ? (m[`leg${s}.foot.1`] - 0.022) * W_M : 0)));
-  const s0 = frames.map(m => clamp(1 - (up(m) - 0.01) / 0.04, 0, 1)), n = frames.length, P = STAND_PAD;
-  const er = s0.map((_, i) => Math.min(...s0.slice(Math.max(0, i - P), Math.min(n, i + P + 1))));
-  frames.forEach((o, i) => { const win = er.slice(Math.max(0, i - P), Math.min(n, i + P + 1)); o.x_stand = win.reduce((a, b) => a + b, 0) / win.length; });
+  // (x_plantL, x_plantR: the same for one foot, cast.js leg reach: a foot that stands brings the hips down to it, one
+  // that has just landed or is about to lift stops short)
+  const up = (m, s) => m[`leg${s}.footW.2`] ?? (m[`leg${s}.foot.1`] != null ? (m[`leg${s}.foot.1`] - 0.022) * W_M : 0);
+  const n = frames.length, P = STAND_PAD, win = (a, i) => a.slice(Math.max(0, i - P), Math.min(n, i + P + 1));
+  const eased = h => { const s0 = frames.map(m => footDown(h(m))), er = s0.map((_, i) => Math.min(...win(s0, i)));
+    return er.map((_, i) => win(er, i).reduce((a, b) => a + b, 0) / win(er, i).length); };
+  const stand = eased(m => Math.max(up(m, 'L'), up(m, 'R'))), plant = ['L', 'R'].map(s => eased(m => up(m, s)));
+  frames.forEach((o, i) => { o.x_stand = stand[i]; o.x_plantL = plant[0][i]; o.x_plantR = plant[1][i]; });
   // timing: a stylised film holds each drawing for 2 frames ("on twos", 12 a second) or 3; a simulation runs on ones
   const step = CUR.timing >= 0.95 ? 3 : CUR.timing >= 0.7 ? 2 : 1;
   if (step > 1) for (let i = 0; i < frames.length; i++) frames[i] = frames[i - (i % step)];

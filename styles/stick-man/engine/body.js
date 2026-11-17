@@ -7,10 +7,12 @@
 // All positions are the figure's root space in W units (head width = 1), the space cast.js S.pose2 works in.
 import * as THREE from 'three';
 
-// Above this share of full reach a limb's joint eases toward straight and the hose stretches (rubber hose), so a target
-// is always reached exactly (feet never slide, props stay in the hand). Legs straighten fully (a standing leg never
-// flickers bent); arms keep a soft 12 deg bend and stretch, easing over a wide range so a fast reach never snaps.
+// Above this share of full reach a limb's joint eases toward straight, so a target inside reach is reached exactly (feet
+// never slide, props stay in the hand). Legs straighten fully (a standing leg never flickers bent) and never stretch
+// (cast.js ik); arms keep a soft 12 deg bend, easing over a wide range so a fast reach never snaps.
 export const SOFT = { leg: 0.965, arm: 0.96 };
+// how much a foot stands on the ground (0..1) from its height above it (m): fully up to 1 cm, not at all from 5 cm
+export const footDown = h => Math.max(0, Math.min(1, 1 - (h - 0.01) / 0.04));
 const smooth01 = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 // the hip-to-ankle distance (share of full leg length) at which the leg shows a knee flex of `flex` deg (cast.js ik)
 export function legReach(flex) {
