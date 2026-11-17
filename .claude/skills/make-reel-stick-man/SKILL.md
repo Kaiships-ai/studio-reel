@@ -88,7 +88,7 @@ Notes from Kai are acted on per shot. A note with no shot gets one question back
 | | [4.1] sound | `node styles/stick-man/tools/shot.mjs --film films/<slug> --cues films/<slug>/audio/cues.json`, `audio/music.json`, `python styles/stick-man/tools/sound.py films/<slug>` | levels + video |
 | | [4.2] render | `node styles/stick-man/tools/shot.mjs --film films/<slug> --frames 0-<last> --mp4 films/<slug>/renders/<slug>_vN.mp4 --audio films/<slug>/audio/mix.wav` | video + sheet |
 | | [4.3] gates | the two commands in GATES.md, always with `--profile` (Kai picks pilot or full) | gate table |
-| | [4.4] final QA + package | a fresh agent watches the final at 1x, sound on, phone size, `--safe 1` (retell + swipe test); `deliver/` cover, caption (skill `ig-caption`), subtitles, `CREDITS`, an alternative hook cut; `node styles/stick-man/tools/postcheck.mjs films/<slug>` | `review/final-qa.md`, package |
+| | [4.4] final QA + package | a fresh agent watches the final at 1x, sound on, phone size, `--safe 1` (retell + swipe test); `deliver/` cover, caption (skill `ig-caption`), subtitles, `CREDITS`, an alternative hook cut; `node styles/stick-man/tools/postcheck.mjs films/<slug>`; `node styles/stick-man/tools/cutgate.mjs films/<slug>` (at most 4 hard cuts in any 15 s, a take of 6.5 s or more, under 25 % low camera, no face cut off over 1 s) | `review/final-qa.md`, `review/cutgate.md`, package |
 | | **◇5** deliver | `sheet.mjs`, `LEDGER.md`, final mp4 and package on the page | final video |
 | **5 Publish + learn** | [5.1]-[5.6] | publish; retention at 24 h and 7 d mapped to shots (`retention.mjs`); post-mortem with DIAGNOSE.md; a cause seen twice becomes a proposed rule; update the series bible (PUBLISH.md) | `review/retention.md`, `review/retro.md` |
 | | **◇6** learn | | |
@@ -143,7 +143,7 @@ A later stage's problem is fixed in the stage that caused it. Never jump ahead i
 | [SCRIPT.md](SCRIPT.md) | the script stage [1.1] and ◇S: the steps, the writing rules R1-R10 and K1-K9 (formerly the `million-views-rule` skill), the review prompts, fixes per `scriptlint.mjs` check |
 | [PUBLISH.md](PUBLISH.md) | stage 5: publish, retention mapped to shots, post-mortem, rules from evidence |
 | `styles/stick-man/tools/GATES.json`, `stagegate.mjs` | the evidence each gate needs, and the checker |
-| `styles/stick-man/tools/develop.mjs`, `scriptlint.mjs`, `assets.mjs`, `timing.mjs`, `postcheck.mjs`, `retention.mjs` | the measured checks of stages 0, 1 (script), 2, 3, 4 and 5 |
+| `styles/stick-man/tools/develop.mjs`, `scriptlint.mjs`, `assets.mjs`, `timing.mjs`, `postcheck.mjs`, `cutgate.mjs`, `retention.mjs` | the measured checks of stages 0, 1 (script), 2, 3, 4 and 5 |
 | [PREPRO.md](PREPRO.md) | stage 1 in depth: flow, vocabulary, each step's standard, gate and mistakes, craft knowledge (story, staging in 9:16, explaining in pictures, continuity, timing), reviews, fidelity, gates, fixes per `prepro.mjs` check |
 | [DIAGNOSE.md](DIAGNOSE.md) | symptom → isolation test → cause → fix → stage, note translation, process smells, a worked example |
 | [AUDIT.md](AUDIT.md) | why the pre-production stage was rebuilt (Nov 2026), and the roadmap |

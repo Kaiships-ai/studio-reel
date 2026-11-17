@@ -63,11 +63,12 @@ const res = ids.map(checkGate);
 fs.mkdirSync(F('review'), { recursive: true });
 const bookOut = JSON.stringify(book, null, 1) + '\n';
 if (bookOut !== bookText && (bookText || Object.keys(book).length)) fs.writeFileSync(BOOK, bookOut);
+const verdictOf = x => String(x.why).match(/^exit \d+: .*?\b(FAIL|PARTIAL)\b/)?.[1];
 for (const r of res) {
   const md = [`# Gate ${r.id} · ${r.title}`, '', `**${r.state}**`, '', '| Kind | Evidence | OK | Why |', '| --- | --- | --- | --- |',
     ...r.rows.map(x => `| ${x.kind} | ${x.what} | ${x.ok ? 'PASS' : 'FAIL'} | ${String(x.why).replace(/\|/g, '/')} |`), '',
     'measured = tools · made = the maker\'s files · judged = an independent reviewer · approved = Kai. LOCK needs all four.'];
   fs.writeFileSync(F(`review/gate-${r.id}.md`), md.join('\n') + '\n');
-  console.log(`◇${r.id} ${r.state.padEnd(13)} ${r.rows.filter(x => !x.ok).map(x => `${x.kind}:${x.what}`).join(', ') || 'all evidence in'}`);
+  console.log(`◇${r.id} ${r.state.padEnd(13)} ${r.rows.filter(x => !x.ok).map(x => `${x.kind}:${x.what}${verdictOf(x) ? ` (${verdictOf(x)})` : ''}`).join(', ') || 'all evidence in'}`);
 }
 process.exit(res.every(r => r.state === 'LOCK') ? 0 : 1);
