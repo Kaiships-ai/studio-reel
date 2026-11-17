@@ -123,3 +123,11 @@ test('a bypass lets the render start, warns and logs the reason next to the film
   const log = fs.readFileSync(path.join(dir, 'bible-bypass.tsv'), 'utf8').trim().split('\t');
   assert.deepEqual(log.slice(1), [dir, '0-40', 'Kai wants the old cut once', 'BLOCK 1 blocking, 0 gaps, exceptions 0']);
 });
+
+test('an act with no name (an episode root stub) is reported under its file, and the markdown report prints', () => {
+  const dir = film('hm-ep89', [STAND, { f: 10, pose: 'SIT_LOW' }]);
+  fs.writeFileSync(path.join(dir, 'reel.js'), fs.readFileSync(path.join(dir, 'reel.js'), 'utf8').replace("name: 'a1', ", ''));
+  const r = spawnSync(process.execPath, [CHECK, dir], { encoding: 'utf8', timeout: 120000 });
+  assert.equal(r.status, 1, r.stderr);
+  assert.match(r.stdout, /\| `hand-keyed-action` \| hm-ep89\/reel\.js \/ you \|/);
+});

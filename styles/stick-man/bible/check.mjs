@@ -197,7 +197,7 @@ export function judge({ acts, rec, SPECS }, bible, film) {
   const moveClip = pose => { const id = cover.poses.get(pose); return id && byId.get(id).name.startsWith('Move_') ? id : null; };
 
   for (const { act: a, file } of acts) {
-    const act = a.name, [F0, F1] = a.frames, inAct = (f0, f1 = f0) => f1 >= F0 && f0 <= F1;
+    const act = a.name ?? file, [F0, F1] = a.frames, inAct = (f0, f1 = f0) => f1 >= F0 && f0 <= F1;
     const actFiles = [find(filmFiles, new RegExp(`name:\\s*'${esc(act)}'`))?.file, file, ...filmFiles];
     // ---- body actions, per actor: clip runs, runs of hand keys of one pose, stepTurns
     for (const [actor, keys] of Object.entries(a.anim || {})) {
