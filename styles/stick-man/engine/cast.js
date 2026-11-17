@@ -6,7 +6,7 @@ import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometr
 import { toon, lin, css, B, INK_RGB, INK_SUN, PLACE } from './look.js';
 import { EXPR, faceRig, mixFace } from './faces.js';
 import { makeHandProp } from '../lib/cast/handprops.js';
-import { SOFT, legReach, limitArm, limitBody, ROM, torsoSlices, ellipsoid, worldBox, solveArm, armPenetration, propPush, PHYS, centreOfMass, balanceShift, headWear, wearVolume } from './body.js';
+import { SOFT, footDown, legReach, limitArm, limitBody, ROM, torsoSlices, ellipsoid, worldBox, solveArm, armPenetration, propPush, PHYS, centreOfMass, balanceShift, headWear, wearVolume } from './body.js';
 
 const SPIN_Q = new THREE.Quaternion(), SPIN_AX = new THREE.Vector3(0, 1, 0), _camL = new THREE.Vector3();
 export const W_M = 0.60;                     // head width in metres
@@ -406,13 +406,16 @@ const ROUND = { leg: 0.40, arm: 0.50 };                          // bend roundne
 const V = (a) => new THREE.Vector3(a[0], a[1], a[2] || 0);
 // Arms never rubber-hose: exact two-bone geometry down to an elbow of ARM_MIN_FLEX; past that the bones stretch at most
 // ARM_STRETCH and the hand stops short of its target (the body's reach assist in pose() keeps targets inside reach).
+// Legs never stretch: a foot past full reach stops short on the hip-to-target line, the leg straight (a planted foot
+// brings the hips down to it instead, pose2's reach pass). The soft knee is already straight at full reach, so the
+// clamp starts without a pop. (A stretch let a clip's keys pull a shin 11 % long, Trans_JumpWindow_Once frame 32.)
 const ARM_MIN_FLEX = 15, ARM_STRETCH = 1.03;
 // Two equal bones root -> joint -> end; pole = the side the joint points to. Returns the joint, the flex (deg, 0 = straight)
-// and the end actually reached (an arm target past its reach is pulled in).
+// and the end actually reached (a target past its reach is pulled in).
 function ik(root, end, l, pole, soft, arm = false) {
   const ax = end.clone().sub(root); let d = Math.max(1e-6, ax.length()); ax.divideScalar(d);
-  const rs = Math.cos(ARM_MIN_FLEX / 2 * DEG);
-  if (arm && d > 2 * l * rs * ARM_STRETCH) { d = 2 * l * rs * ARM_STRETCH; end = root.clone().addScaledVector(ax, d); }
+  const rs = Math.cos(ARM_MIN_FLEX / 2 * DEG), reach = arm ? 2 * l * rs * ARM_STRETCH : 2 * l;
+  if (d > reach) { d = reach; end = root.clone().addScaledVector(ax, d); }
   const r = d / (2 * l), full = rr => 2 * Math.acos(Math.min(1, rr));
   const half = arm ? (r <= rs ? full(r) / 2 : ARM_MIN_FLEX / 2 * DEG) : r <= soft ? full(r) / 2 : full(soft) / 2 * (1 - sm(soft, 1, r));
   const perp = pole.clone().normalize(); perp.addScaledVector(ax, -perp.dot(ax));
@@ -791,7 +794,7 @@ export function makeStick(spec) {
       const hb = bt(sg * 0.14 * girth, HIP_V + 0.04), hip = V(twist([hb[0], hb[1], 0], P.hipTwist));
       const f0 = P['foot' + side] || [sg * 0.22, 0.022], foot = V(f0);
       const kp = P['kneeDir' + side] || P.kneeDir || [sg * 0.15, 0, 1];
-      const leg = ik(hip, foot, LIMB.thigh, V(kp), SOFT.leg);
+      const leg = ik(hip, foot, LIMB.thigh, V(kp), SOFT.leg); foot.copy(leg.end);
       const lp = hose(hip, leg.joint, foot, ROUND.leg, 13, true);
       const td = P['toe' + side] ?? sg, h = new THREE.Vector3(0.10 * td, 0, P.toeF ?? 0.07).normalize(), pt = (P['footPitch' + side] || 0) * DEG;
       h.applyAxisAngle(new THREE.Vector3(0, 1, 0), (P['footYaw' + side] ?? P.footYaw ?? 0) * DEG);   // + turns the toe toward the figure's right
@@ -932,6 +935,9 @@ export function makeStick(spec) {
         if (!PHYS.rom || df <= ROM.ankleDF[1] + 0.5 || pass) break;
         ptc -= (df - ROM.ankleDF[1]) * DEG; ankleLift = 1;
       }
+      const footWant = foot.clone(), past = Math.max(0, footWant.distanceTo(hipJ) - 2 * LT);
+      const plant = Q['x_plant' + side] ?? footDown((foot.y - gnd - 0.022) * W);
+      foot = leg.end;
       // the leg is a solid too (rig B5): a thigh or shin inside the trunk or the head turns its knee out round the
       // hip-foot line (the foot stays planted) by the smallest angle that clears, as knees open in a deep squat
       let legPen0 = 0, legPen = 0;
@@ -950,7 +956,7 @@ export function makeStick(spec) {
           if (best) leg = best; else legPen = w0.depth; }
       }
       rig[side] = { shoulder: sh, elbow, hand, elbowFlex: flex, pen0: sol.pen0, pen: sol.pen, limits: lim.hits + sol.limits + (side === 'L' ? LB.hits : 0) };
-      legs[side] = { sg, hipJ, foot, leg, kp, ptc, toeO, heelO, ankleLift, legPen0, legPen };
+      legs[side] = { sg, hipJ, foot, leg, kp, ptc, toeO, heelO, ankleLift, legPen0, legPen, footWant, past, plant };
     }
     // legs never pass through each other: two leg lines closer than two radii turn their knees apart (each away from the
     // other), smallest angle first; crossed feet still cross, but one shin passes in front of the other
@@ -969,7 +975,7 @@ export function makeStick(spec) {
         const P = X.kp.clone().applyAxisAngle(ax, -X.sg * k * 3 * DEG); X.leg = ik(X.hipJ, X.foot, LT, P, SOFT.leg); }
     }
     for (const [side, sg] of [['L', -1], ['R', 1]]) {
-      const { hipJ, foot, leg, ptc, toeO, heelO, ankleLift, legPen0, legPen } = legs[side];
+      const { hipJ, foot, leg, ptc, toeO, heelO, ankleLift, legPen0, legPen, footWant, past, plant } = legs[side];
       const lp = hose(hipJ, leg.joint, foot, ROUND.leg, 13, true);
       const toeL = foot.clone().add(toeO), heelL = foot.clone().add(heelO);
       const toe = toeL.clone().multiplyScalar(W);
@@ -983,7 +989,7 @@ export function makeStick(spec) {
       const shin = foot.clone().sub(leg.joint).normalize(), soleD = toeL.clone().sub(heelL).normalize();
       const ankleDF = 90 - Math.acos(Math.max(-1, Math.min(1, -shin.dot(soleD)))) / DEG;
       Object.assign(rig[side], { hip: hipJ, knee: leg.joint, ankle: foot, toe: toeL, heel: heelL, kneeFlex: leg.flex, footPitch: ptc / DEG,
-        hipFlex, hipAbd, ankleDF, heelUp: ankleLift, legPen0, legPen, legGap0: side === 'L' ? legHit : 0 });
+        hipFlex, hipAbd, ankleDF, heelUp: ankleLift, legPen0, legPen, legGap0: side === 'L' ? legHit : 0, footWant, past, plant });
     }
     // carried props (rig K5): a held prop is a solid too. It never passes through a thigh, a shin, the trunk or the head:
     // the hand holding it moves it out (that arm re-solved, bones keep their length) and the hand's gap from its target
@@ -1052,8 +1058,20 @@ export function makeStick(spec) {
         const b = balanceShift(S.com, ['L', 'R'].map(sd => S.rig[sd]), Q.ground || 0, st == null ? {} : { k: 1 }); if (!b) break;
         sx += b.x / 0.85; sz += b.z / 0.85; Q = { ...Q0, hip: { ...(Q0.hip || {}), x: (Q0.hip?.x || 0) + sx, z: (Q0.hip?.z || 0) + sz } }; r = pose2raw(Q);
       }
-      if (bw < 1 && (sx || sz)) { sx *= bw; sz *= bw; r = pose2raw({ ...Q0, hip: { ...(Q0.hip || {}), x: (Q0.hip?.x || 0) + sx, z: (Q0.hip?.z || 0) + sz } }); }
+      if (bw < 1 && (sx || sz)) { sx *= bw; sz *= bw; Q = { ...Q0, hip: { ...(Q0.hip || {}), x: (Q0.hip?.x || 0) + sx, z: (Q0.hip?.z || 0) + sz } }; r = pose2raw(Q); }
       shift = Math.hypot(sx, sz) * 0.85;
+    }
+    // a foot on the ground past its leg's reach brings the hips to it, as game foot placement and mocap retargets keep a
+    // contact by moving the pelvis (hips keyed high and back over flat feet, Act_DropInTrunk_Once frames 29-38: the legs
+    // were 5 % long); by how much the foot stands, so a foot lifting off the ground hands over to stopping short (ik). Not
+    // while a seat or the floor carries the body (fall): it lifted a sleeper's hips 3 cm off the floor (Idle_Sleep_Loop)
+    // (one leg a pass, the furthest: both feet pulling at once brought the hips twice as far and bent the knees)
+    const carried = 1 - c01(Q.fall);
+    for (let i = 0; i < 4 && carried > 0; i++) {
+      const g = ['L', 'R'].map(sd => S.rig[sd]).reduce((a, b) => b.past * b.plant > a.past * a.plant ? b : a);
+      if (g.past * g.plant * carried < 1e-5) break;
+      const pull = g.footWant.clone().sub(g.hip).setLength(g.past * g.plant * carried);
+      Q = { ...Q, bob: (Q.bob || 0) + pull.y, hip: { ...(Q.hip || {}), x: (Q.hip?.x || 0) + pull.x, z: (Q.hip?.z || 0) + pull.z } }; r = pose2raw(Q);
     }
     S.rig.balanceShift = shift; S.rig.balanceHip = [sx, sz];         // (the hips' shift, root space W: x to the right, z forward)
     return r;
