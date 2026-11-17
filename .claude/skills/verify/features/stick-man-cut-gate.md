@@ -33,5 +33,7 @@ At stage 5, `node styles/stick-man/tools/stagegate.mjs films/<slug> 5` runs `cut
 ## Gotchas
 
 - A film rendered in pieces (Hot Money ep01 r2 v7: acts from `s3` to `s6` cut together) has no single reel to read the
-  camera from: C3 and C4 then say "not measured" and only C1 and C2 judge it.
+  camera from, and a reel that does not load in Node (one that imports another film's files, like the Hot Money
+  bible films) cannot give its frame range: C3 and C4 then say "not measured", `review/cutgate.md` says why, and only
+  C1 and C2 judge it.
 - The cut threshold misses some soft cuts (look.sh found 3 of 4 hand-verified Rick cuts) and counts a white flash as a cut.

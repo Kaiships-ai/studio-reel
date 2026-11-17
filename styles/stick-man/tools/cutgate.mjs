@@ -120,14 +120,16 @@ async function filmMode(film) {
   const final = finals.at(-1);
   if (!final) { console.error(`${film}: no final render in renders/`); process.exit(1); }
   const { reelSpan, cachedReelDbg, DBG_W, DBG_H } = await import('./reel_load.mjs');
-  const mp4 = F(`renders/${final}`), dur = duration(mp4), [f0, f1] = await reelSpan(DIR);
-  const renderIsOneReel = Math.abs((f1 - f0 + 1) / 30 - dur) <= 1;
-  const rows = renderIsOneReel ? cachedReelDbg(DIR, f1).filter(r => r.f >= f0 && r.f <= f1) : null;
+  const mp4 = F(`renders/${final}`), dur = duration(mp4);
+  let f0 = 0, f1 = -1, unread = '';
+  try { [f0, f1] = await reelSpan(DIR); } catch (e) { unread = `the reel does not load in Node (${e.message.split('\n')[0]})`; }
+  if (!unread && Math.abs((f1 - f0 + 1) / 30 - dur) > 1) unread = `the reel spans frames ${f0}-${f1}, the render ${dur.toFixed(1)} s`;
+  const rows = unread ? null : cachedReelDbg(DIR, f1).filter(r => r.f >= f0 && r.f <= f1);
   const m = measure({ dur, scores: sceneScores(mp4), rows, W: DBG_W, H: DBG_H }), res = judge(m);
   const nF = res.filter(r => r.ok === false).length;
   fs.mkdirSync(F('review'), { recursive: true });
   fs.writeFileSync(F('review/cutgate.md'), [`# Camera and cut gate · ${final}`, '', `**${nF ? 'FAIL' : 'PASS'}**: ${nF} FAIL`, '', ...table(m, res),
-    renderIsOneReel ? '' : `Camera not read: the reel spans frames ${f0}-${f1}, the render ${dur.toFixed(1)} s.`,
+    unread ? `Camera not read: ${unread}.` : '',
     m.low?.length ? `Low camera frames: ${compress(m.low)}.` : '', m.faceCut?.length ? `Face cut off frames: ${compress(m.faceCut)}.` : ''].join('\n') + '\n');
   console.log(`review/cutgate.md: ${nF ? 'FAIL' : 'PASS'} · ${res.map(r => `${r.id} ${fmt(r.key, r.got)}`).join(', ')} · ${final}`);
   process.exit(nF ? 1 : 0);
