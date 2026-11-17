@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { familyOf, story, faceRuns, judge, coverage, verdict, HOLD, REPEAT_MAX } from '../../styles/stick-man/tools/facebeat.mjs';
 import { run } from '../../kit/env.mjs';
-import { measure, measureAll, knownFails, RIG_KNOWN, HEAD_PCT } from '../../styles/stick-man/tools/rigtest.mjs';
+import { measure, measureAll, knownFails, headShape, RIG_KNOWN, HEAD_PCT, HEAD_SQUASH_PCT } from '../../styles/stick-man/tools/rigtest.mjs';
 import { ALL } from '../../styles/stick-man/motion-lib/index.js';
 
 function threeBeatFilm() {
@@ -104,19 +104,29 @@ test('a film with no storyboard.json says so and names --story, with no stack tr
   assert.doesNotMatch(p.stderr, /at story \(/);
 });
 
-test('the rig test: a standing idle keeps a round head and its bones; a jump squashes the head past the limit', async () => {
+test('the rig test: a standing idle keeps a round head and its bones; a jump squashes the head with its volume kept, under the squash limit', async () => {
   const idle = await measure(ALL.find(c => c.name === 'Adult_Idle_Stand_Loop'));
   assert.ok(idle.head < 1 && idle.bone < 1, `idle head ${idle.head} %, bone ${idle.bone} %`);
   assert.deepEqual(idle.faults, []);
   const jump = await measure(ALL.find(c => c.name === 'Adult_Act_Jump_Once'));
-  assert.ok(jump.head > HEAD_PCT, `jump head ${jump.head} %`);
+  assert.ok(jump.head > HEAD_PCT && jump.head < HEAD_SQUASH_PCT, `jump head ${jump.head} %`);
+  assert.equal(jump.worst.head.kept, true);
+  assert.deepEqual(jump.faults, []);
+});
+
+test('a 13 % head passes when it keeps its volume and fails when it does not', () => {
+  const s = 1 / Math.cbrt(1.13), kept = headShape({ x: s, y: 1.13 * s, z: s });
+  assert.equal(kept.kept, true); assert.equal(kept.limit, HEAD_SQUASH_PCT); assert.ok(kept.over < 0, `over ${kept.over}`);
+  const tall = headShape({ x: 1, y: 1.13, z: 1 });
+  assert.equal(tall.kept, false); assert.equal(tall.limit, HEAD_PCT); assert.ok(tall.over > 0, `over ${tall.over}`);
+  assert.equal(headShape({ x: 1.3 * s, y: 1.3 * 1.13 * s, z: 1.3 * s }, 1.3 ** 3).kept, true);
 });
 
 test('RIG_KNOWN only shrinks: a fault it does not list fails, a listed clip that grows fails, a fixed one must be deleted', () => {
-  const r = (over, faults = ['x']) => ({ name: 'Adult_Act_Jump_Once', over: { head: 0, bone: 0, flex: 0, ...over }, faults });
-  assert.deepEqual(knownFails(r({ head: 8.3 }), RIG_KNOWN), []);
-  assert.equal(knownFails(r({ head: 8.4 }), RIG_KNOWN).length, 1);
-  assert.equal(knownFails(r({ bone: 0.5 }), RIG_KNOWN).length, 1);
+  const r = (over, faults = ['x']) => ({ name: 'Adult_Trans_JumpWindow_Once', over: { head: 0, bone: 0, flex: 0, ...over }, faults });
+  assert.deepEqual(knownFails(r({ bone: 8.4 }), RIG_KNOWN), []);
+  assert.equal(knownFails(r({ bone: 8.5 }), RIG_KNOWN).length, 1);
+  assert.equal(knownFails(r({ head: 0.5 }), RIG_KNOWN).length, 1);
   assert.equal(knownFails(r({}, []), RIG_KNOWN).length, 1);
   assert.equal(knownFails({ name: 'New_Clip', over: { head: 1, bone: 0, flex: 0 }, faults: ['head'] }, RIG_KNOWN).length, 1);
 });

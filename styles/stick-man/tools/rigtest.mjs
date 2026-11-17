@@ -14,56 +14,60 @@ import { rigClip } from './motionlib.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.resolve(HERE, '../../..');
 // Limits, each with its source:
-//   HEAD_PCT   the head's height-to-width ratio against the rest head, in %. Judgement: a round head that turns a few
-//              percent oval reads as squashed on a still (S3-011); 5 % is the line, not measured on Kai yet.
+//   HEAD_PCT   the head's height-to-width ratio against the rest head, in %, for a head that does not keep its volume.
+//              Judgement: a round head that turns a few percent oval reads as squashed on a still (S3-011).
+//   HEAD_SQUASH_PCT  the same ratio while the head keeps its volume (x*y*z within HEAD_VOL_TOL of the clip's first frame; a body's head is not
+//              always scale 1, the child's is 1.3): the engine's own
+//              squash and stretch (motion.js headSq), intended motion. Kai chose this on 17/11 (option B): "it is one
+//              frame; at real playback nobody notices".
+//   HEAD_VOL_TOL  1 %: the measured squash keeps x*y*z at 1.000, so 1 % only absorbs float noise.
 //   BONE_PCT   a bone's length against its rest length, in %. Kit: cast.js lets an arm stretch at most 3 % (ARM_STRETCH).
 //   FLEX_MAX   knee and elbow flex, degrees (0 = straight). Inferred: a human knee or elbow folds to about 150-160 deg.
 //   FLEX_MIN   a joint bent backward (hyperextended), degrees.
-export const HEAD_PCT = 5, BONE_PCT = 3, FLEX_MAX = 160, FLEX_MIN = -2;
-// Clips over a limit on main 17/11, each with how far over it is per metric (head and bone: percentage points; flex:
+export const HEAD_PCT = 5, HEAD_SQUASH_PCT = 15, HEAD_VOL_TOL = 0.01, BONE_PCT = 3, FLEX_MAX = 160, FLEX_MIN = -2;
+// Clips over a limit on main 17/11 (all leg stretch, until the leg-reach kit PR lands), each with how far over it is per metric (head and bone: percentage points; flex:
 // degrees).
 export const RIG_KNOWN = {
-  Adult_Move_Run_Fwd_Loop: { head: 1.2 },
-  Adult_Move_Sprint_Fwd_Loop: { head: 1.6 },
-  Adult_Act_Jump_Once: { head: 8.3 },
-  Adult_Trans_SitDown_Once: { head: 1.1 },
-  Adult_Trans_LieDown_Once: { head: 2.6 },
   Adult_Idle_Sleep_Loop: { bone: 0.3 },
-  Adult_Trans_GetUp_Once: { head: 3.2, bone: 0.3 },
-  Adult_Trans_JumpWindow_Once: { head: 7.6, bone: 8.4 },
-  Adult_Move_PushHeavy_Loop: { head: 0.5 },
-  Child_Move_Walk_Fwd_Loop: { head: 0.8 },
+  Adult_Trans_GetUp_Once: { bone: 0.3 },
+  Adult_Trans_JumpWindow_Once: { bone: 8.4 },
   Heavy_Move_Run_Fwd_Loop: { bone: 1.4 },
-  Act_DropInTrunk_Once: { head: 1.0, bone: 2.6 },
-  Act_PushBagOutWindow_Once: { head: 1.0, bone: 2.4 },
+  Act_DropInTrunk_Once: { bone: 2.6 },
+  Act_PushBagOutWindow_Once: { bone: 2.4 },
 };
 const METRICS = ['head', 'bone', 'flex'];
 const BONES = [['upper', 'shoulder', 'elbow'], ['fore', 'elbow', 'hand'], ['thigh', 'hip', 'knee'], ['shin', 'knee', 'ankle']];
+// one frame's head scale: how far off round it is (%), whether it keeps the rest volume, the limit that applies
+export function headShape({ x, y, z }, restVol = 1) {
+  const pct = 100 * Math.abs(y / x - 1), kept = Math.abs(x * y * z / restVol - 1) <= HEAD_VOL_TOL, limit = kept ? HEAD_SQUASH_PCT : HEAD_PCT;
+  return { pct, kept, limit, over: pct - limit };
+}
 const d3 = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 
 // one clip: the worst frame of each metric over every frame; the pose the sheet shows
 export async function measure(C, body = C.body || 'adult') {
-  let rest = null, keyFrames = [];
-  const worst = { head: { v: 0, f: null }, bone: { v: 0, f: null, what: '' }, flex: { v: 0, f: null, what: '' } };
+  let rest = null, restVol = null, keyFrames = [];
+  const worst = { head: { v: 0, f: null, limit: HEAD_PCT, kept: true, o: -Infinity }, bone: { v: 0, f: null, what: '' }, flex: { v: 0, f: null, what: '' } };
   const perFrame = [];
   await rigClip(C, body, { each: (f, S, w, keys) => {
     if (!keyFrames.length) keyFrames = [...new Set(keys.map(k => k.f))];
     const h = S.parts.head.parent.scale, len = Object.fromEntries(['L', 'R'].flatMap(s => BONES.map(([n, a, b]) => [`${n}${s}`, d3(w[s][a], w[s][b])])));
     rest ||= len;
-    const head = 100 * Math.abs(h.y / h.x - 1);
+    restVol ??= h.x * h.y * h.z;
+    const hs = headShape(h, restVol), head = hs.pct;
     let bone = 0, boneWhat = ''; for (const [k, v] of Object.entries(len)) { const p = 100 * Math.abs(v / rest[k] - 1); if (p > bone) { bone = p; boneWhat = k; } }
     let flex = 0, flexWhat = '';
     for (const s of ['L', 'R']) for (const [j, v] of [['knee', w[s].kneeFlex], ['elbow', w[s].elbowFlex]]) {
       const over = Math.max(v - FLEX_MAX, FLEX_MIN - v, 0); if (over > flex) { flex = over; flexWhat = `${j}${s} ${v.toFixed(0)} deg`; }
     }
     perFrame.push({ f, head, bone, flex });
-    if (head > worst.head.v) worst.head = { v: head, f };
+    if (hs.over > worst.head.o) worst.head = { v: head, f, limit: hs.limit, kept: hs.kept, o: hs.over };
     if (bone > worst.bone.v) worst.bone = { v: bone, f, what: boneWhat };
     if (flex > worst.flex.v) worst.flex = { v: flex, f, what: flexWhat };
   } });
-  const r1 = x => Math.round(x * 10) / 10, over = { head: Math.max(0, r1(r1(worst.head.v) - HEAD_PCT)), bone: Math.max(0, r1(r1(worst.bone.v) - BONE_PCT)), flex: r1(worst.flex.v) };
+  const r1 = x => Math.round(x * 10) / 10, over = { head: Math.max(0, r1(r1(worst.head.v) - worst.head.limit)), bone: Math.max(0, r1(r1(worst.bone.v) - BONE_PCT)), flex: r1(worst.flex.v) };
   const faults = [];
-  if (over.head > 0) faults.push(`head ${worst.head.v.toFixed(1)} % off round at f ${worst.head.f} (max ${HEAD_PCT} %)`);
+  if (over.head > 0) faults.push(`head ${worst.head.v.toFixed(1)} % off round at f ${worst.head.f} (max ${worst.head.limit} %, volume ${worst.head.kept ? 'kept' : 'not kept'})`);
   if (over.bone > 0) faults.push(`${worst.bone.what} ${worst.bone.v.toFixed(1)} % off its length at f ${worst.bone.f} (max ${BONE_PCT} %)`);
   if (over.flex > 0) faults.push(`${worst.flex.what} at f ${worst.flex.f} (allowed ${FLEX_MIN}..${FLEX_MAX})`);
   const pick = sheetFrame(worst, perFrame, keyFrames);
@@ -74,8 +78,9 @@ export async function measure(C, body = C.body || 'adult') {
 // the frame the rig sheet shows: the worst frame of the metric furthest over its limit, else the key pose furthest from rest
 const share = { head: v => v / HEAD_PCT, bone: v => v / BONE_PCT, flex: v => v };
 function sheetFrame(worst, perFrame, keyFrames) {
-  const [m, w] = Object.entries(worst).sort(([a, x], [b, y]) => share[b](y.v) - share[a](x.v))[0];
-  if (share[m](w.v) > 1 || m === 'flex' && w.v > 0) return w.f;
+  const sw = (m, w) => m === 'head' ? w.v / w.limit : share[m](w.v);
+  const [m, w] = Object.entries(worst).sort(([a, x], [b, y]) => sw(b, y) - sw(a, x))[0];
+  if (sw(m, w) > 1 || m === 'flex' && w.v > 0) return w.f;
   const score = r => share.head(r.head) + share.bone(r.bone) + share.flex(r.flex);
   return perFrame.filter(r => keyFrames.includes(r.f)).sort((a, b) => score(b) - score(a))[0]?.f ?? 0;
 }
@@ -111,7 +116,7 @@ export function sheet(rows, dir) {
   }
   const spec = path.join(tmp, 'sheet.json'), out = path.join(dir, 'rig-sheet.jpg');
   fs.writeFileSync(spec, JSON.stringify({ grid: cells, cols: 3, tile: [150, 266], out,
-    title: `rig sheet · ${rows.length} clips · worst key pose, front / 3-4 / side / back · red = over a limit (head ${HEAD_PCT} %, bone ${BONE_PCT} %, flex ${FLEX_MIN}..${FLEX_MAX})` }));
+    title: `rig sheet · ${rows.length} clips · worst key pose, front / 3-4 / side / back · red = over a limit (head ${HEAD_PCT} %, ${HEAD_SQUASH_PCT} % volume kept, bone ${BONE_PCT} %, flex ${FLEX_MIN}..${FLEX_MAX})` }));
   const py = run('python', [path.join(HERE, 'motionlib_sheet.py'), spec], { capture: true }); if (py.status) throw new Error(py.stderr);
   fs.rmSync(tmp, { recursive: true, force: true });
   return out;
@@ -121,7 +126,7 @@ if (path.resolve(process.argv[1] || '') === fileURLToPath(import.meta.url)) {
   const A = {}; for (let i = 2; i < process.argv.length; i += 2) A[process.argv[i].replace(/^--/, '')] = process.argv[i + 1];
   const rows = await measureAll(), fails = rows.flatMap(r => knownFails(r));
   for (const r of rows) console.log(`${r.faults.length ? (RIG_KNOWN[r.name] ? 'KNOWN' : 'FAIL ') : 'ok   '} ${r.name.padEnd(34)} head ${r.head.toFixed(1).padStart(5)} % (f ${r.worst.head.f})  bone ${r.bone.toFixed(1).padStart(5)} % ${r.worst.bone.what} (f ${r.worst.bone.f})  flex +${r.flex}${r.faults.length ? '  · ' + r.faults.join('; ') : ''}`);
-  if (A.json) fs.writeFileSync(path.resolve(A.json), JSON.stringify({ limits: { HEAD_PCT, BONE_PCT, FLEX_MIN, FLEX_MAX }, rows }, null, 1) + '\n');
+  if (A.json) fs.writeFileSync(path.resolve(A.json), JSON.stringify({ limits: { HEAD_PCT, HEAD_SQUASH_PCT, HEAD_VOL_TOL, BONE_PCT, FLEX_MIN, FLEX_MAX }, rows }, null, 1) + '\n');
   if (A.sheet) console.log(sheet(rows, path.resolve(A.sheet)));
   console.log(`rig test: ${rows.length} clips, ${rows.filter(r => r.faults.length).length} over a limit, ${fails.length} not in RIG_KNOWN${fails.length ? '\n' + fails.join('\n') : ''}`);
   process.exit(fails.length ? 1 : 0);
