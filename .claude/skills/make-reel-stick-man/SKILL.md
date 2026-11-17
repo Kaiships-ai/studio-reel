@@ -93,13 +93,59 @@ repeats a closed note; show Kai its table with every new cut.
 | | [4.2] render | `node styles/stick-man/tools/shot.mjs --film films/<slug> --frames 0-<last> --mp4 films/<slug>/renders/<slug>_vN.mp4 --audio films/<slug>/audio/mix.wav` | video + sheet |
 | | [4.3] gates | the two commands in GATES.md, always with `--profile` (Kai picks pilot or full) | gate table |
 | | [4.4] final QA + package | a fresh agent watches the final at 1x, sound on, phone size, `--safe 1` (retell + swipe test); `deliver/` cover, caption (skill `ig-caption`), subtitles, `CREDITS`, an alternative hook cut; `node styles/stick-man/tools/postcheck.mjs films/<slug>`; `node styles/stick-man/tools/cutgate.mjs films/<slug>` (at most 4 hard cuts in any 15 s, a take of 6.5 s or more, under 25 % low camera, no face cut off over 1 s) | `review/final-qa.md`, `review/cutgate.md`, package |
-| | **◇5** deliver | `sheet.mjs`, `LEDGER.md`, final mp4 and package on the page; stays OPEN until `review/final-qa.md` names a calibrated brief (`brief:`, PROCESS.md section 2) | final video |
+| | **◇5** deliver | `sheet.mjs`, `LEDGER.md`, final mp4 and package on the page; stays OPEN until `review/final-qa.md` names a calibrated brief (`brief:`, PROCESS.md section 2), or, while none is calibrated, Kai's own OK is recorded as `kai-ok` (Who checks what) | final video |
 | **5 Publish + learn** | [5.1]-[5.6] | publish; retention at 24 h and 7 d mapped to shots (`retention.mjs`); post-mortem with DIAGNOSE.md; a cause seen twice becomes a proposed rule; update the series bible (PUBLISH.md) | `review/retention.md`, `review/retro.md` |
 | | **◇6** learn | | |
 
 A later stage's problem is fixed in the stage that caused it. Never jump ahead into the engine or the gates.
 
 **Every gate is checked by `node styles/stick-man/tools/stagegate.mjs films/<slug> <gate>`** (evidence list: `styles/stick-man/tools/GATES.json`). A gate is LOCK only when the measured checks pass, the maker's files exist, the judged evidence was written by someone else (`by: agent:<id>`) after the last change, and Kai approved it (`review/approvals.json`, copied from the stage page with its date). Show Kai a gate only when it says READY FOR KAI; never call a tool PASS an approval.
+
+## Who checks what
+
+Each fault kind has one checker: a machine gate, the AI review at ◇5, or Kai. Kai watches only his rows; a fault that a
+gate or the AI review catches never waits on him. A row leaves Kai's column only when a replay of his notes shows the
+new checker catching them (`node styles/stick-man/tools/whochecks.mjs map <private map>`). The table is generated from
+`styles/stick-man/tools/WHOCHECKS.json`; `node styles/stick-man/tools/whochecks.mjs` fails when they differ.
+
+While no review brief is calibrated, ◇5 takes Kai's own OK in place of `review/final-qa.md`: copy it from the page into
+`review/approvals.json` as `"kai-ok": { "review/final-qa.md": { "at": "<kaiAt>", "note": "<his note>" } }`, newer than
+the last render. `stagegate.mjs` prints it on every run; once a brief is calibrated, kai-ok no longer counts.
+
+<!-- whochecks:begin (generated from styles/stick-man/tools/WHOCHECKS.json: node styles/stick-man/tools/whochecks.mjs --write) -->
+| Kind | Fault | Who | Tool | Gate | Measured limit | Source |
+| --- | --- | --- | --- | --- | --- | --- |
+| `pose-snap` | a joint snaps to a new pose and holds | machine | `shotgate.mjs` | ◇4 ◇5 | a change of 75 px or more (720-tall frame) that stays 3 frames; a spike gone within 2 frames only shows on the strip | Kai marked 12 strips 17/11: only a fault held 3 frames was seen; replay S3-032 hit |
+| `prop-appears` | a prop appears, vanishes or resizes inside a shot and stays | machine | `shotgate.mjs` | ◇4 ◇5 | a prop over 0.2 % of the frame, changed 75 px or 15 % in size, held 3 frames | replay S3-037 hit (v002 F784) |
+| `prop-floats` | a released prop falls without weight | machine | `shotgate.mjs` | ◇4 ◇5 | vertical acceleration off gravity by 0.6 g for 3 frames, within 15 frames of the hand letting go | replay S3-039 hit (v002 F860) |
+| `figure-skates` | a figure slides with no real steps | machine | `shotgate.mjs` | ◇4 ◇5 | the body travels over 0.6 m/s for 8 frames while the stiller foot near the floor moves over half as fast | replay S3-045 hit (v002 F1064) |
+| `body-through-set` | a body or prop passes through the set or another body | machine | `shotgate.mjs` | ◇4 ◇5 | 6 px or more into an opaque surface, held 3 frames | Kai saw strip 10 (11 px for 3 frames) 17/11; replay S3-046 hit (v002 F1214) |
+| `figure-jumps` | a figure pops into the frame or to a new place | machine | `shotgate.mjs` | ◇4 ◇5 | a jump of 75 px or more that stays 3 frames | replay S3-050 hit (v002 F1372); Kai did not see a 120 px one-frame jump 17/11 |
+| `too-many-cuts` | too many hard cuts, takes too short | machine | `cutgate.mjs` | ◇5 | at most 4 hard cuts in any 15 s, one take of 6.5 s or more | Kai picked the bible cut (4 cuts, 6.7 s) over v7 (11 cuts) 17/11; v002 16 cuts in 15 s fails |
+| `low-camera` | the camera looks up at the lead too often | machine | `cutgate.mjs` | ◇5 | at most 25 % of frames looking up over 5° at the lead's head | bible 1 % and v7 5 % passed, pilot-a 53 % fails; no rejected Hot Money cut has camera rows |
+| `face-cut-off` | the lead's face is cut off by the frame | machine | `cutgate.mjs` | ◇5 | no run over 1 s with less than half the head in frame | Kai 12/11 note; no rejected sample with camera rows yet |
+| `face-repeat` | the same face comes back too often | machine | `facebeat.mjs` | ◇4 | a non-neutral face in more than 2 takes | kai-taste Repeats; v7 rows: y_strain 5 takes fails (S3-053) |
+| `face-off-beat` | a face the beat's words never name | machine | `facebeat.mjs` | ◇4 | held 0.5 s or more on a readable head | v7 rows: 1 off the beat (SH340); no 16/11 note caught |
+| `library-unused` | a hand-keyed move where the motion library has a clip | machine | `check.mjs` | every render | any such move blocks the render of a Hot Money film | v7 16 of 156 actions from the library, blocked; bible cut 68 %, passes; Kai prefers the bible cut 17/11 |
+| `rig-deform` | a head squashes or a bone stretches in a library clip | machine | `rigtest.mjs` | ◇3 | head 15 % when its volume holds, else 5 %; bone length 3 %; knee and elbow -2° to 160° | Kai picked option B 17/11; 0 of 52 clips over since #132 |
+| `dark` | the film is too dark or one hue drowns it | AI review | `final-qa.md` | ◇5 | caught in both briefs, on a note the brief quotes (an upper bound) | AI trial 17/11: S3-058 hit 2 of 2; no gate measures light |
+| `angle` | the same camera angle over and over | AI review | `final-qa.md` | ◇5 | caught in both briefs, on a note the brief quotes (an upper bound) | AI trial 17/11: S3-060 hit 2 of 2; v002 has no camera rows for cutgate.mjs |
+| `motion-feel` | motion that feels jerky or stiff with no pose that snaps and holds | Kai |  | ◇4 ◇5 | no detector | S3-035: 0 joint pops in its window; AI 0 of 2 |
+| `prop-across-cut` | a prop jumps or vanishes across a cut | Kai |  | ◇4 ◇5 | no detector | S3-038 largest prop jump 2.9 px, S3-040 no prop gone after the cut; AI half on S3-038, 0 on S3-040 |
+| `grip-drag` | a held prop drags the arm, as if it holds the person | Kai |  | ◇4 ◇5 | no detector | S3-047: 0 grip faults in its window; AI half in one brief |
+| `cloth-jitter` | cords or cloth jitter | Kai |  | ◇4 | cord shake is shown, never blocks | S3-062: CORD_SHAKE_MAX is not a gate; slice rows are gone |
+| `acting` | a face that does not fit the moment, or flickers between faces | Kai |  | ◇4 | facebeat.mjs reads only the beat's words | S3-041 and S3-043 AI 0 of 2; v002 faces use names facebeat.mjs cannot read |
+| `scale-kind` | an effect or prop of the wrong size or kind | Kai |  | ◇3 ◇4 | no detector | S3-048 and S3-049 AI half in one brief |
+| `unreadable` | a face or action lost at phone size: blank, covered, a confusing shape | Kai |  | ◇4 ◇5 | cutgate.mjs C4 sees only the frame edge | S3-044, S3-051, S3-052 AI at most half |
+| `text-load` | too much text on screen | Kai |  | ◇2a ◇5 | prepro.mjs counts card time, not words on screen | S3-059 never replayed |
+| `story-feel` | the whole film's feel: frustrating, no climax | Kai |  | ◇2a ◇5 | no detector | S3-054, S3-064 |
+
+- **Every render**: machine `library-unused`.
+- **◇2a**: Kai watches `text-load`, `story-feel`.
+- **◇3**: machine `rig-deform` · Kai watches `scale-kind`.
+- **◇4**: machine `pose-snap`, `prop-appears`, `prop-floats`, `figure-skates`, `body-through-set`, `figure-jumps`, `face-repeat`, `face-off-beat` · Kai watches `motion-feel`, `prop-across-cut`, `grip-drag`, `cloth-jitter`, `acting`, `scale-kind`, `unreadable`.
+- **◇5**: machine `pose-snap`, `prop-appears`, `prop-floats`, `figure-skates`, `body-through-set`, `figure-jumps`, `too-many-cuts`, `low-camera`, `face-cut-off` · AI review `dark`, `angle` · Kai watches `motion-feel`, `prop-across-cut`, `grip-drag`, `unreadable`, `text-load`, `story-feel`.
+<!-- whochecks:end -->
 
 ## Rules (each was paid for)
 

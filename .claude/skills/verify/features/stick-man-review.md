@@ -12,6 +12,12 @@ to give twice is seen. `calibrate.mjs` scores a review brief against Kai's priva
   order; the seed and the map back to real ids go into the key's `blind` field only.
 - `calibrate.mjs score <key> <answers> --record`: the A/B is scored by the cut picked, not its position. Only `--half
   test` can set `calibrated`; `tune` and `all` record an uncalibrated row.
+- ◇5 while no brief is calibrated: `review/approvals.json` `"kai-ok": { "review/final-qa.md": { at, note } }` passes the
+  judged row as Kai's OK in place of the AI review, printed on every run, and goes stale behind a newer `renders/*.mp4`.
+  Once any brief is calibrated, kai-ok no longer counts and the row says so.
+- Who checks what: `whochecks.mjs` checks `WHOCHECKS.json` (each machine tool runs at its gate in `GATES.json`) and that
+  the make-reel-stick-man SKILL.md block is its render (`--write` regenerates it). `whochecks.mjs map <map.json>` puts
+  each of Kai's complaints in one cell and fails when that cell's checker missed it, or a Kai cell has a checker's hit.
 
 ## How to get to it (user POV)
 
@@ -20,7 +26,9 @@ A maker runs `node styles/stick-man/tools/retakes.mjs films/<slug>` after each c
 
 ## Driving it
 
-- `node --test test/unit/stick-retakes.test.mjs` covers every rule above with fixtures, no video.
+- `node --test test/unit/stick-retakes.test.mjs test/unit/stick-whochecks.test.mjs` covers every rule above with
+  fixtures, no video. The whochecks fixture holds the 31 complaint ids of the 16/11 review with their kinds and
+  evidence results only; the map with Kai's words is private (`~/.claude/orchestrate/hm-quality/who-checks/`).
 - A real calibration run costs paid blind reviewers: one job per clip and per A/B pair. Run it only for a brief change.
 
 ## Gotchas

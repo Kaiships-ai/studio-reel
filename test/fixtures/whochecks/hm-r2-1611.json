@@ -1,0 +1,455 @@
+{
+ "set": "hm-r2-1611",
+ "note": "Ids and fault kinds only: the private map with Kai's words stays outside the repo.",
+ "complaints": [
+  {
+   "id": "S3-032",
+   "row": "pose-snap",
+   "evidence": [
+    {
+     "by": "tools/shotgate.mjs",
+     "result": "hit",
+     "on": "block"
+    },
+    {
+     "by": "ai",
+     "result": "miss",
+     "on": "block1"
+    }
+   ]
+  },
+  {
+   "id": "S3-033",
+   "row": "acting",
+   "evidence": [
+    {
+     "by": "tools/facebeat.mjs",
+     "result": "untested",
+     "on": "polish v001",
+     "why": "not replayable"
+    }
+   ]
+  },
+  {
+   "id": "S3-034",
+   "row": "library-unused",
+   "evidence": [
+    {
+     "by": "bible/check.mjs",
+     "result": "untested",
+     "on": "polish v001",
+     "why": "not replayable"
+    },
+    {
+     "by": "bible/check.mjs",
+     "result": "hit",
+     "on": "v7"
+    }
+   ]
+  },
+  {
+   "id": "S3-035",
+   "row": "motion-feel",
+   "evidence": [
+    {
+     "by": "tools/shotgate.mjs",
+     "result": "miss",
+     "on": "v002"
+    },
+    {
+     "by": "ai",
+     "result": "miss",
+     "on": "v002"
+    }
+   ]
+  },
+  {
+   "id": "S3-036",
+   "row": "too-many-cuts",
+   "evidence": [
+    {
+     "by": "tools/cutgate.mjs",
+     "result": "hit",
+     "on": "v002"
+    },
+    {
+     "by": "ai",
+     "result": "hit",
+     "on": "v002",
+     "seen": true
+    }
+   ]
+  },
+  {
+   "id": "S3-037",
+   "row": "prop-appears",
+   "evidence": [
+    {
+     "by": "tools/shotgate.mjs",
+     "result": "hit",
+     "on": "v002"
+    },
+    {
+     "by": "ai",
+     "result": "miss",
+     "on": "v002",
+     "seen": true
+    }
+   ]
+  },
+  {
+   "id": "S3-038",
+   "row": "prop-across-cut",
+   "evidence": [
+    {
+     "by": "tools/shotgate.mjs",
+     "result": "miss",
+     "on": "v002"
+    },
+    {
+     "by": "ai",
+     "result": "miss",
+     "on": "v002"
+    }
+   ]
+  },
+  {
+   "id": "S3-039",
+   "row": "prop-floats",
+   "evidence": [
+    {
+     "by": "tools/shotgate.mjs",
+     "result": "hit",
+     "on": "v002"
+    },
+    {
+     "by": "ai",
+     "result": "miss",
+     "on": "v002",
+     "seen": true
+    }
+   ]
+  },
+  {
+   "id": "S3-040",
+   "row": "prop-across-cut",
+   "evidence": [
+    {
+     "by": "tools/shotgate.mjs",
+     "result": "miss",
+     "on": "v002"
+    },
+    {
+     "by": "ai",
+     "result": "miss",
+     "on": "v002",
+     "seen": true
+    }
+   ]
+  },
+  {
+   "id": "S3-041",
+   "row": "acting",
+   "evidence": [
+    {
+     "by": "tools/facebeat.mjs",
+     "result": "untested",
+     "on": "v002",
+     "why": "not replayable"
+    },
+    {
+     "by": "ai",
+     "result": "miss",
+     "on": "v002"
+    }
+   ]
+  },
+  {
+   "id": "S3-042",
+   "row": "acting",
+   "evidence": [
+    {
+     "by": "tools/facebeat.mjs",
+     "result": "untested",
+     "on": "v002",
+     "why": "not replayable"
+    }
+   ]
+  },
+  {
+   "id": "S3-043",
+   "row": "acting",
+   "evidence": [
+    {
+     "by": "tools/facebeat.mjs",
+     "result": "untested",
+     "on": "v002",
+     "why": "not replayable"
+    },
+    {
+     "by": "ai",
+     "result": "miss",
+     "on": "v002",
+     "seen": true
+    }
+   ]
+  },
+  {
+   "id": "S3-044",
+   "row": "unreadable",
+   "evidence": [
+    {
+     "by": "ai",
+     "result": "miss",
+     "on": "v002",
+     "seen": true
+    }
+   ]
+  },
+  {
+   "id": "S3-045",
+   "row": "figure-skates",
+   "evidence": [
+    {
+     "by": "tools/shotgate.mjs",
+     "result": "hit",
+     "on": "v002"
+    },
+    {
+     "by": "ai",
+     "result": "miss",
+     "on": "v002"
+    }
+   ]
+  },
+  {
+   "id": "S3-046",
+   "row": "body-through-set",
+   "evidence": [
+    {
+     "by": "tools/shotgate.mjs",
+     "result": "hit",
+     "on": "v002"
+    },
+    {
+     "by": "ai",
+     "result": "miss",
+     "on": "v002"
+    }
+   ]
+  },
+  {
+   "id": "S3-047",
+   "row": "grip-drag",
+   "evidence": [
+    {
+     "by": "tools/shotgate.mjs",
+     "result": "miss",
+     "on": "v002"
+    },
+    {
+     "by": "ai",
+     "result": "miss",
+     "on": "v002"
+    }
+   ]
+  },
+  {
+   "id": "S3-048",
+   "row": "scale-kind",
+   "evidence": [
+    {
+     "by": "ai",
+     "result": "miss",
+     "on": "v002"
+    }
+   ]
+  },
+  {
+   "id": "S3-049",
+   "row": "scale-kind",
+   "evidence": [
+    {
+     "by": "ai",
+     "result": "miss",
+     "on": "v002",
+     "seen": true
+    }
+   ]
+  },
+  {
+   "id": "S3-050",
+   "row": "figure-jumps",
+   "evidence": [
+    {
+     "by": "tools/shotgate.mjs",
+     "result": "hit",
+     "on": "v002"
+    },
+    {
+     "by": "ai",
+     "result": "hit",
+     "on": "v002"
+    }
+   ]
+  },
+  {
+   "id": "S3-051",
+   "row": "unreadable",
+   "evidence": [
+    {
+     "by": "tools/cutgate.mjs",
+     "result": "untested",
+     "on": "v002",
+     "why": "not replayable"
+    },
+    {
+     "by": "ai",
+     "result": "miss",
+     "on": "v002",
+     "seen": true
+    }
+   ]
+  },
+  {
+   "id": "S3-052",
+   "row": "unreadable",
+   "evidence": [
+    {
+     "by": "ai",
+     "result": "miss",
+     "on": "v002",
+     "seen": true
+    }
+   ]
+  },
+  {
+   "id": "S3-053",
+   "row": "face-repeat",
+   "evidence": [
+    {
+     "by": "tools/facebeat.mjs",
+     "result": "untested",
+     "on": "v002",
+     "why": "not replayable"
+    },
+    {
+     "by": "tools/facebeat.mjs",
+     "result": "hit",
+     "on": "v7"
+    },
+    {
+     "by": "ai",
+     "result": "hit",
+     "on": "v002"
+    }
+   ]
+  },
+  {
+   "id": "S3-054",
+   "row": "story-feel",
+   "evidence": []
+  },
+  {
+   "id": "S3-058",
+   "row": "dark",
+   "evidence": [
+    {
+     "by": "ai",
+     "result": "hit",
+     "on": "v002",
+     "seen": true
+    }
+   ]
+  },
+  {
+   "id": "S3-059",
+   "row": "text-load",
+   "evidence": []
+  },
+  {
+   "id": "S3-060",
+   "row": "angle",
+   "evidence": [
+    {
+     "by": "tools/cutgate.mjs",
+     "result": "untested",
+     "on": "v002",
+     "why": "not replayable"
+    },
+    {
+     "by": "ai",
+     "result": "hit",
+     "on": "v002",
+     "seen": true
+    }
+   ]
+  },
+  {
+   "id": "S3-062",
+   "row": "cloth-jitter",
+   "evidence": [
+    {
+     "by": "tools/shotgate.mjs",
+     "result": "untested",
+     "on": "slice v001",
+     "why": "not replayable"
+    },
+    {
+     "by": "ai",
+     "result": "miss",
+     "on": "slice1"
+    }
+   ]
+  },
+  {
+   "id": "S3-063",
+   "row": "body-through-set",
+   "evidence": [
+    {
+     "by": "tools/shotgate.mjs",
+     "result": "untested",
+     "on": "slice v001",
+     "why": "not replayable"
+    },
+    {
+     "by": "ai",
+     "result": "miss",
+     "on": "slice1"
+    }
+   ]
+  },
+  {
+   "id": "S3-064",
+   "row": "story-feel",
+   "evidence": []
+  },
+  {
+   "id": "S3-067",
+   "row": "library-unused",
+   "evidence": [
+    {
+     "by": "bible/check.mjs",
+     "result": "hit",
+     "on": "v7"
+    },
+    {
+     "by": "ai",
+     "result": "miss",
+     "on": "v7"
+    }
+   ]
+  },
+  {
+   "id": "S3-068",
+   "row": "library-unused",
+   "evidence": [
+    {
+     "by": "bible/check.mjs",
+     "result": "hit",
+     "on": "v7"
+    }
+   ]
+  }
+ ]
+}
