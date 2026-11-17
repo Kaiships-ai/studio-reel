@@ -165,6 +165,10 @@
      "args": [
       "{film}"
      ]
+    },
+    {
+     "tool": "rigtest.mjs",
+     "args": []
     }
    ],
    "evidence": [
@@ -185,6 +189,12 @@
    "run": [
     {
      "tool": "timing.mjs",
+     "args": [
+      "{film}"
+     ]
+    },
+    {
+     "tool": "facebeat.mjs",
      "args": [
       "{film}"
      ]
