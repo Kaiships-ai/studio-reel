@@ -86,6 +86,13 @@ test('a film driven by a catalog clip passes and counts it as library share', ()
   assert.ok(rep.findings.some(f => f.rule === 'trial-part' && f.what === 'clip.Idle_Sit_Loop'), 'trial parts are listed as info');
 });
 
+test('a Hot Money bible proof film (slug hm-bible-*) is held to the bible like an episode', () => {
+  const { status, rep } = check(film('hm-bible-z9', [STAND, { f: 10, pose: 'SIT_LOW' }, { f: 20, pose: 'SIT_LOW' }]));
+  assert.equal(status, 1);
+  assert.equal(rep.governed, true);
+  assert.ok(rep.findings.some(f => f.rule === 'hand-keyed-action' && f.instead === 'clip.Idle_Sit_Loop'));
+});
+
 test('a film no bible governs has nothing to check', () => {
   const { status, rep } = check(film('pilot-z', [STAND, { f: 10, pose: 'SIT_LOW' }]));
   assert.equal(status, 0);
