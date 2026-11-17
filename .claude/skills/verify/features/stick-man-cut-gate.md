@@ -15,25 +15,33 @@ its row in `styles/stick-man/tools/GATES.json`. It reads two sources:
 - C3: the camera looks up at the lead's head by more than 5° in at most 25 % of the frames with a lead in frame.
 - C4: no run longer than 1 s with less than half the lead's head box inside the frame.
 - Each limit's source (the Kai pick or note it comes from) is printed beside it in `review/cutgate.md`.
+- Verdicts: PASS (all four measured and in limits), FAIL, or PARTIAL (no FAIL, but C3 and C4 not measured because the
+  camera could not be read; the reason is printed). Only PASS exits 0.
+- A film rendered in parts (a stub `reel.js`, its parts in `s4/`, `s5/`, `s6/` ...) is read part by part: each part's
+  camera rows, the parts placed back to back in the render in the order of their names. Their total must match the
+  render within 1 s.
+- Reels that import another film (`/films/<other>/...`) or fetch a kit asset at load (the hoodie's `.glb`) load in Node.
 
 ## How to get to it (user POV)
 
 At stage 5, `node styles/stick-man/tools/stagegate.mjs films/<slug> 5` runs `cutgate.mjs` on the newest final render in
-`renders/` (the same file `postcheck.mjs` checks). A FAIL keeps ◇5 OPEN.
+`renders/` (the same file `postcheck.mjs` checks). A FAIL or a PARTIAL keeps ◇5 OPEN, and the ◇5 line shows which: `measured:cutgate.mjs (PARTIAL)`.
 
 ## Driving it
 
-- Film: `node styles/stick-man/tools/cutgate.mjs films/<slug>` writes `review/cutgate.md` and exits 1 on a FAIL.
+- Film: `node styles/stick-man/tools/cutgate.mjs films/<slug>` writes `review/cutgate.md` and exits 1 unless PASS.
 - Any mp4 (a reference clip, an old cut): `node styles/stick-man/tools/cutgate.mjs --mp4 <file>` prints the table;
   add `--dbg <jsonl> --w 720 --h 1280` for camera rows made at that size, `--json 1` for JSON.
-- Look for: the Hot Money bible escape cut passes (4 cuts in 15.4 s, take 6.7 s), the v7 escape cut fails (11 cuts,
-  take 2.3 s), and every Rick reference clip passes (0 or 1 cut a minute).
-- Regression: `node --test test/unit/stick-cutgate.test.mjs`.
+- Look for: the Hot Money bible film (`hm-bible-s5`, cut-A) passes with C3 1 % and C4 0.0 s read live; ep01 r2 v7 fails
+  C1 (11 cuts in 15 s) with C3 5 % and C4 0.1 s read from parts s4, s5, s6; `pilot-a` fails C3 at 53 % (its `low`
+  shots are real low angles). Every Rick reference clip passes C1 and C2 and is PARTIAL without `--dbg`.
+- Regression: `node --test test/unit/stick-cutgate.test.mjs test/unit/stick-reel-load.test.mjs`.
 
 ## Gotchas
 
-- A film rendered in pieces (Hot Money ep01 r2 v7: acts from `s3` to `s6` cut together) has no single reel to read the
-  camera from, and a reel that does not load in Node (one that imports another film's files, like the Hot Money
-  bible films) cannot give its frame range: C3 and C4 then say "not measured", `review/cutgate.md` says why, and only
-  C1 and C2 judge it.
+- Parts are read from their 3D camera rows: a 2D re-composite after the render (a crop, a split screen such as ep01's
+  room 2 / shop at render frames 2222-2289) is not seen, so C4 there reflects the 3D frame.
+- A film copy without its images (a plate `.png` left out) fails the camera pass in the browser: the gate says PARTIAL
+  with `shot.mjs --dbg exited 1`.
+- C3 measures the angle from the camera to the lead's head, so a ground-level camera on a lead 40 m away reads as level.
 - The cut threshold misses some soft cuts (look.sh found 3 of 4 hand-verified Rick cuts) and counts a white flash as a cut.

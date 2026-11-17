@@ -96,7 +96,7 @@ async function lastFrame() {
 }
 async function dbgRows(last) {
   if (A.dbg) return fs.readFileSync(path.resolve(A.dbg), 'utf8').trim().split('\n').map(l => JSON.parse(l));
-  return (await import('./reel_load.mjs')).cachedReelDbg(F('.'), last);
+  return (await import('./reel_load.mjs')).cachedReelDbg(F('.'), 0, last);
 }
 // peak = middle of the longest run of frames with the most listed props / fx seen (the later run on a tie);
 // nothing listed or nothing seen: 3/4 through the window. At least 8 frames from still A when the window allows.

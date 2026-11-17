@@ -1,6 +1,9 @@
 // Camera and cut gate (◇5) on the final render. Cuts and takes are measured on the mp4's pixels; camera height and faces
 // come from the film's camera data (__dbg), because the mp4 alone cannot tell how high the camera is or where a head is.
-//   node styles/stick-man/tools/cutgate.mjs films/<slug>          -> review/cutgate.md, exit 1 on a FAIL
+//   node styles/stick-man/tools/cutgate.mjs films/<slug>          -> review/cutgate.md, exit 1 unless PASS
+// A film rendered in parts (a stub reel.js, the parts in s4/, s5/, s6/ ...) is read part by part, the parts back to back
+// in the render in the order of their names. PARTIAL: no FAIL, but the camera could not be read, so C3 and C4 are not
+// measured; it blocks the gate like a FAIL, with the reason.
 //   node styles/stick-man/tools/cutgate.mjs --mp4 <file> [--dbg <jsonl> --w 720 --h 1280] [--json 1]
 //        any mp4 (a reference clip, an old cut); --dbg adds the camera rows, --w/--h are the size the rows were made at
 // A hard cut: the frame-to-frame scene score of ffmpeg (frames scaled to 270 wide) at or over 0.30; frames over it less
@@ -21,9 +24,9 @@ export const LIMITS = [
   { id: 'C2', what: 'longest take (s)', key: 'longestTake', min: 6.5,
     source: `${KAI_PICK}; v002's longest is 4.8 s; Rick clips 38-64 s` },
   { id: 'C3', what: 'low camera, share of lead frames', key: 'lowShare', max: 0.25,
-    source: '"góc máy toàn góc máy thấp" on v002 16/11, where about half the shots were low or dutch; the bible cut has 1 %; a low angle stays a beat tool (animation-camera-pass), so not 0' },
+    source: 'rejected: v002 16/11 "góc máy toàn góc máy thấp" (about half its shots labelled low or dutch; its reel data is gone), pilot-a 53 % (real low shots); passed without a note: v7 5 %, its escape cut 10 %, the bible cut 1 %; a low angle stays a beat tool (animation-camera-pass), so not 0' },
   { id: 'C4', what: 'longest face cut off (s)', key: 'faceCutRun', max: 1,
-    source: '"cam lia dưới, mà mặt nhân vật lại ở trên?" 12/11 (a held shot with the head out of frame); a frame or two passing during a flight is not seen' },
+    source: '"cam lia dưới, mà mặt nhân vật lại ở trên?" 12/11 (a held shot with the head out of frame, not measured); v7 0.1 s, the bible cut 0.03 s; a frame or two passing during a flight is not seen' },
 ];
 
 export function sceneScores(mp4) {
@@ -114,6 +117,24 @@ export function table(m, rows) {
 
 const readRows = f => fs.readFileSync(f, 'utf8').trim().split('\n').map(l => JSON.parse(l)).sort((a, b) => a.f - b.f);
 
+// Where the render's frames come from: [{ dir, f0, f1, at }], reel frames f0-f1 of dir are render frames at, at + 1, ...
+export async function segments(DIR, dur, reelSpan) {
+  const [r0, r1] = await reelSpan(DIR);
+  let segs = [{ dir: DIR, f0: r0, f1: r1, at: 0 }];
+  if (r1 - r0 < 30) {
+    const parts = fs.readdirSync(DIR).filter(d => /^s\d+$/.test(d) && fs.existsSync(path.join(DIR, d, 'reel.js'))).sort((a, b) => a.slice(1) - b.slice(1));
+    if (!parts.length) throw new Error(`the reel spans frames ${r0}-${r1} and there are no parts (s<n>/reel.js)`);
+    let at = 0; segs = [];
+    for (const d of parts) { const [f0, f1] = await reelSpan(path.join(DIR, d)); segs.push({ dir: path.join(DIR, d), f0, f1, at }); at += f1 - f0 + 1; }
+  }
+  const n = segs.reduce((a, s) => a + s.f1 - s.f0 + 1, 0);
+  if (Math.abs(n / 30 - dur) > 1) throw new Error(`${segs.map(s => `${path.relative(DIR, s.dir) || 'reel'} ${s.f0}-${s.f1}`).join(' + ')} is ${(n / 30).toFixed(1)} s, the render ${dur.toFixed(1)} s`);
+  return segs;
+}
+
+export const verdict = res => res.some(r => r.ok === false) ? 'FAIL' : res.some(r => r.ok == null) ? 'PARTIAL' : 'PASS';
+const unmeasured = res => res.filter(r => r.ok == null).map(r => r.id).join(', ');
+
 async function filmMode(film) {
   const DIR = path.resolve(ROOT, film), F = p => path.join(DIR, p);
   const finals = fs.existsSync(F('renders')) ? fs.readdirSync(F('renders')).filter(f => /final.*\.mp4$|_v\d+\.mp4$/.test(f)).sort() : [];
@@ -121,26 +142,29 @@ async function filmMode(film) {
   if (!final) { console.error(`${film}: no final render in renders/`); process.exit(1); }
   const { reelSpan, cachedReelDbg, DBG_W, DBG_H } = await import('./reel_load.mjs');
   const mp4 = F(`renders/${final}`), dur = duration(mp4);
-  let f0 = 0, f1 = -1, unread = '';
-  try { [f0, f1] = await reelSpan(DIR); } catch (e) { unread = `the reel does not load in Node (${e.message.split('\n')[0]})`; }
-  if (!unread && Math.abs((f1 - f0 + 1) / 30 - dur) > 1) unread = `the reel spans frames ${f0}-${f1}, the render ${dur.toFixed(1)} s`;
-  const rows = unread ? null : cachedReelDbg(DIR, f1).filter(r => r.f >= f0 && r.f <= f1);
-  const m = measure({ dur, scores: sceneScores(mp4), rows, W: DBG_W, H: DBG_H }), res = judge(m);
+  let rows = null, unread = '';
+  try {
+    rows = (await segments(DIR, dur, reelSpan)).flatMap(s => cachedReelDbg(s.dir, s.f0, s.f1)
+      .filter(r => r.f >= s.f0 && r.f <= s.f1).map(r => ({ ...r, f: s.at + r.f - s.f0 })));
+  } catch (e) { unread = e.message.split('\n')[0]; }
+  const m = measure({ dur, scores: sceneScores(mp4), rows, W: DBG_W, H: DBG_H }), res = judge(m), v = verdict(res);
   const nF = res.filter(r => r.ok === false).length;
   fs.mkdirSync(F('review'), { recursive: true });
-  fs.writeFileSync(F('review/cutgate.md'), [`# Camera and cut gate · ${final}`, '', `**${nF ? 'FAIL' : 'PASS'}**: ${nF} FAIL`, '', ...table(m, res),
+  fs.writeFileSync(F('review/cutgate.md'), [`# Camera and cut gate · ${final}`, '',
+    v === 'PARTIAL' ? `**PARTIAL**: cuts pass, ${unmeasured(res)} not measured, so this is not a PASS` : `**${v}**: ${nF} FAIL`, '', ...table(m, res),
     unread ? `Camera not read: ${unread}.` : '',
-    m.low?.length ? `Low camera frames: ${compress(m.low)}.` : '', m.faceCut?.length ? `Face cut off frames: ${compress(m.faceCut)}.` : ''].join('\n') + '\n');
-  console.log(`review/cutgate.md: ${nF ? 'FAIL' : 'PASS'} · ${res.map(r => `${r.id} ${fmt(r.key, r.got)}`).join(', ')} · ${final}`);
-  process.exit(nF ? 1 : 0);
+    m.low?.length ? `Low camera, render frames: ${compress(m.low)}.` : '', m.faceCut?.length ? `Face cut off, render frames: ${compress(m.faceCut)}.` : ''].join('\n') + '\n');
+  console.log(`review/cutgate.md: ${v} · ${res.map(r => `${r.id} ${fmt(r.key, r.got)}`).join(', ')} · ${final}${unread ? ` · camera not read: ${unread}` : ''}`);
+  process.exit(v === 'PASS' ? 0 : 1);
 }
 
 function fileMode(A) {
   const mp4 = path.resolve(A.mp4), rows = A.dbg ? readRows(path.resolve(A.dbg)) : null;
   const m = measure({ dur: duration(mp4), scores: sceneScores(mp4), rows, W: Number(A.w || 540), H: Number(A.h || 960) }), res = judge(m);
-  if (A.json) console.log(JSON.stringify({ file: mp4, ...m, results: res }));
-  else console.log([`${path.basename(mp4)}: ${res.some(r => r.ok === false) ? 'FAIL' : 'PASS'}`, ...table(m, res)].join('\n'));
-  process.exit(res.some(r => r.ok === false) ? 1 : 0);
+  const v = verdict(res);
+  if (A.json) console.log(JSON.stringify({ file: mp4, ...m, verdict: v, results: res }));
+  else console.log([`${path.basename(mp4)}: ${v}${v === 'PARTIAL' ? ` (${unmeasured(res)} not measured: give --dbg)` : ''}`, ...table(m, res)].join('\n'));
+  process.exit(v === 'PASS' ? 0 : 1);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { hardCuts, measure, judge } from '../../styles/stick-man/tools/cutgate.mjs';
+import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
+import { hardCuts, measure, judge, segments, verdict as verdictOf } from '../../styles/stick-man/tools/cutgate.mjs';
 
 const fps = 30;
 const scores = (dur, cutAt, extra = []) => Array.from({ length: Math.round(dur * fps) }, (_, i) => {
@@ -43,4 +44,22 @@ test('camera rows: a camera looking up at the lead is low; a head mostly out of 
   assert.deepEqual([verdict(m).C3, verdict(m).C4], [false, false]);
   const ok = measure({ dur: 4, scores: scores(4, []), rows: eye, W: 540, H: 960 });
   assert.deepEqual([verdict(ok).C3, verdict(ok).C4], [true, true]);
+});
+
+test('no camera rows is PARTIAL, never PASS; a FAIL still wins', () => {
+  const cutsOnly = measure({ dur: 65, scores: scores(65, [44]) });
+  assert.equal(verdictOf(judge(cutsOnly)), 'PARTIAL');
+  assert.equal(verdictOf(judge(measure({ dur: 15.4, scores: scores(15.4, [1, 2, 3, 4, 5, 6]) }))), 'FAIL');
+});
+
+test('a film rendered in parts reads s<n>/ back to back in the render, and refuses a span that is not the render', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cutgate-parts-'));
+  const span = { '.': [0, 0], s4: [0, 927], s5: [928, 1381], s6: [1307, 2375] };
+  for (const d of ['s4', 's5', 's6', 'look']) { fs.mkdirSync(path.join(dir, d)); fs.writeFileSync(path.join(dir, d, 'reel.js'), ''); }
+  const reelSpan = async d => span[path.relative(dir, d) || '.'];
+  try {
+    const segs = await segments(dir, 2451 / 30, reelSpan);
+    assert.deepEqual(segs.map(s => [path.basename(s.dir), s.f0, s.at]), [['s4', 0, 0], ['s5', 928, 928], ['s6', 1307, 1382]]);
+    await assert.rejects(segments(dir, 60, reelSpan), /is 81\.7 s, the render 60\.0 s/);
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
