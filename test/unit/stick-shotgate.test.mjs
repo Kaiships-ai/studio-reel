@@ -8,7 +8,7 @@ import { shotFaults, bySecond, cuts, G_FRAME } from '../../styles/stick-man/tool
 const W = 404, H = 720;
 const row = (f, o = {}) => ({ f, act: 'a', mix: null, set: 's', motion: { cut: true, feet: {} }, camera: { pos: [0, -5, 1.5], target: [0, 0, 1], fov: 60, lens: 24 },
   actors: { you: { inFrame: true, head: [180, 200, 220, 240], headW: [0, 0, 1.7], pos: [0, 0, 0], feet: { L: [-0.1, 0, 0], R: [0.1, 0, 0] }, ...o.you } },
-  props: o.props || {}, ...o.extra });
+  track: o.props || {}, ...o.extra });
 const bag = (c, o = {}) => ({ shown: true, held: false, on: 'in', box: [150, 300, 250, 400], size: 0.6, c, ...o });
 const kinds = fs => fs.map(x => x.kind);
 
@@ -31,8 +31,8 @@ test('a bag that appears or vanishes in one frame inside the shot is a fault; at
 test('a bag that jumps, or changes size in one frame, is a fault; one carried at a walk is not', () => {
   const walk = Array.from({ length: 8 }, (_, i) => row(i, { props: { b: bag([0.05 * i, 0, 0.6], { held: true }) } }));
   assert.deepEqual(shotFaults(walk, { W, H }), []);
-  walk[5].props.b = bag([1.2, 0, 0.6], { held: true });
-  walk[7].props.b = bag([0.35, 0, 0.6], { held: true, size: 0.4 });
+  walk[5].track.b = bag([1.2, 0, 0.6], { held: true });
+  walk[7].track.b = bag([0.35, 0, 0.6], { held: true, size: 0.4 });
   assert.deepEqual(kinds(shotFaults(walk, { W, H })), ['prop jumps', 'prop resizes'], 'the jump back is part of the same event');
 });
 
@@ -46,11 +46,13 @@ test('a carried bag that changes size across a cut, and a dropped bag gone when 
   assert.deepEqual(shotFaults([c, d], { W, H }), [], 'the next shot looks away from the spot');
 });
 
-test('a free bag that falls under gravity is fine; one that rises or sinks at a steady speed floats', () => {
-  const fall = Array.from({ length: 8 }, (_, i) => row(i, { props: { b: bag([0, 0, 1.2 - 0.5 * G_FRAME * i * i]) } }));
+test('a bag let go that falls under gravity is fine; one that rises or sinks at a steady speed floats', () => {
+  const fall = Array.from({ length: 8 }, (_, i) => row(i, { props: { b: bag([0, 0, 1.2 - 0.5 * G_FRAME * i * i], { held: i < 1 }) } }));
   assert.deepEqual(shotFaults(fall, { W, H }), []);
-  const drift = Array.from({ length: 8 }, (_, i) => row(i, { props: { b: bag([0, 0, 0.9 + 0.02 * i]) } }));
+  const drift = Array.from({ length: 8 }, (_, i) => row(i, { props: { b: bag([0, 0, 0.9 + 0.02 * i], { held: i < 1 }) } }));
   assert.deepEqual(kinds(shotFaults(drift, { W, H })), ['prop floats']);
+  const carried = Array.from({ length: 8 }, (_, i) => row(i, { props: { b: bag([0, 0, 0.9 + 0.02 * i]) } }));
+  assert.deepEqual(shotFaults(carried, { W, H }), [], 'never let go: the film moves it, no hand released it');
 });
 
 test('a body that travels with both feet moving along skates; a walk with a still stance foot does not', () => {

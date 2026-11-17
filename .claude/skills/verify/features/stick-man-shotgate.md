@@ -6,7 +6,7 @@
 
 ## Sub-features
 
-- Props by frame: `__dbg` rows carry `props` (engine/play.js `dbg`): every set prop by name and every hand prop as
+- Props by frame: `__dbg` rows carry `track` (engine/play.js `dbg`; a film may wrap `__dbg` and set its own `props`): every set prop by name and every hand prop as
   `<actor>:<id>`, with `shown`, `held`, `on` (what the lens sees of it, engine/visible.js), its screen `box`, its `size` (m)
   and centre `c`. The gate reads appear / vanish / jump / resize in a shot, size and spot across a cut, and floating.
 - Crossings: `__dbg` rows carry `cross`: pelvis, chest, head, knees and each held prop's centre, a ray from the frame before
