@@ -2,7 +2,8 @@
 // it, so a note he has to repeat is counted instead of lost.
 //   node styles/stick-man/tools/retakes.mjs films/<slug>     -> one line per round; exit 1 when the latest round fails
 // A round fails when Kai gave more notes on it than on the round before (version regression) or when one of its notes
-// repeats a note that was already closed (a re-open). The log is films/<slug>/review/retakes.json:
+// repeats a note that was already closed (a re-open). Every verdict shows the round's repeat count; an open repeat alone
+// does not fail it. The log is films/<slug>/review/retakes.json:
 //   { rounds: [{ id, of, at }],   in the order Kai saw them
 //     notes:  [{ id, round, where, type, class?, says, repeats?, closed?, closedBy? }] }
 // id is Kai's complaint id when he has one; says is a short paraphrase, never his words; repeats names the earlier note a
@@ -62,6 +63,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const rs = rounds(log);
   console.log('round\tnotes\trepeats\tcareless/style/artistic\tclosed\topen\tverdict');
   for (const r of rs) console.log([r.id, r.notes, r.repeats.length ? `${r.repeats.length} (${r.repeats.join(' ')})` : 0,
-    `${r.types.careless}/${r.types['style-break']}/${r.types.artistic}`, r.closed.length, r.open, r.ok ? 'PASS' : `FAIL: ${r.why.join('; ')}`].join('\t'));
+    `${r.types.careless}/${r.types['style-break']}/${r.types.artistic}`, r.closed.length, r.open, `${r.ok ? 'PASS' : `FAIL: ${r.why.join('; ')}`} · ${r.repeats.length} repeat${r.repeats.length === 1 ? '' : 's'}`].join('\t'));
   process.exit(rs.at(-1)?.ok === false ? 1 : 0);
 }

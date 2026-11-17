@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { ROOT, run } from '../../kit/env.mjs';
 import { problems, rounds } from '../../styles/stick-man/tools/retakes.mjs';
-import { score, scoreComplaint, falseAlarms, calibration, briefTag, loadAnswers } from '../../styles/stick-man/tools/calibrate.mjs';
+import { score, scoreComplaint, falseAlarms, calibration, briefTag, loadAnswers, blindMap } from '../../styles/stick-man/tools/calibrate.mjs';
 
 const TOOLS = path.join(ROOT, 'styles/stick-man/tools');
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'retake-'));
@@ -40,18 +40,20 @@ test('retakes.mjs exits on the latest round and refuses a broken log', () => {
   const d = tmp(), tool = path.join(TOOLS, 'retakes.mjs');
   put(d, 'review/retakes.json', { rounds: R.slice(0, 2), notes: [note('a', 'r1'), note('b', 'r2'), note('c', 'r2')] });
   const fail = run('node', [tool, d], { capture: true });
-  assert.equal(fail.status, 1); assert.match(fail.stdout, /r2\t2\t0\t.*FAIL: 2 notes after 1/);
-  put(d, 'review/retakes.json', { rounds: R.slice(0, 2), notes: [note('a', 'r1'), note('b', 'r1'), note('c', 'r2')] });
-  assert.equal(run('node', [tool, d], { capture: true }).status, 0);
+  assert.equal(fail.status, 1); assert.match(fail.stdout, /r2\t2\t0\t.*FAIL: 2 notes after 1 on r1: version regression · 0 repeats\n/);
+  put(d, 'review/retakes.json', { rounds: R.slice(0, 2), notes: [note('a', 'r1'), note('b', 'r1'), note('c', 'r2', { type: 'not-addressed', repeats: 'a' })] });
+  const pass = run('node', [tool, d], { capture: true });
+  assert.equal(pass.status, 0); assert.match(pass.stdout, /r2\t1\t1 \(c\)\t.*\tPASS · 1 repeat\n/, 'an open repeat shows in the verdict and does not fail it');
   put(d, 'review/retakes.json', { rounds: R, notes: [note('a', 'r7')] });
   assert.equal(run('node', [tool, d], { capture: true }).status, 2);
 });
 
-const KEY = { set: 't', clips: [{ id: 'v', video: '' }, { id: 'a', video: '' }, { id: 'b', video: '' }],
-  complaints: [{ id: 'K1', clip: 'v', t0: 10, t1: 11, kind: 'pop', half: 'test' }, { id: 'K2', clip: 'v', t0: 20, t1: 21, kind: 'clip', half: 'test' },
-    { id: 'K3', clip: 'v', kind: 'repeat', half: 'test' }, { id: 'K4', clip: 'v', t0: 30, t1: 31, kind: 'jerk', half: 'tune' }],
-  praise: [{ id: 'P1', clip: 'v', t0: 0, t1: 5, kinds: ['cutting'], half: 'test' }],
-  ab: [{ id: 'ab', a: 'a', b: 'b', pick: 'A', half: 'test' }] };
+const KEY = { set: 't', clips: [{ id: 'v002', video: '' }, { id: 'escA', video: '' }, { id: 'escB', video: '' }],
+  complaints: [{ id: 'K1', clip: 'v002', t0: 10, t1: 11, kind: 'pop', half: 'test' }, { id: 'K2', clip: 'v002', t0: 20, t1: 21, kind: 'clip', half: 'test' },
+    { id: 'K3', clip: 'v002', kind: 'repeat', half: 'test' }, { id: 'K4', clip: 'v002', t0: 30, t1: 31, kind: 'jerk', half: 'tune' }],
+  praise: [{ id: 'P1', clip: 'v002', t0: 0, t1: 5, kinds: ['cutting'], half: 'test' }],
+  ab: [{ id: 'escape', a: 'escA', b: 'escB', pick: 'escA', half: 'test' }],
+  blind: { seed: 1, clips: { c1: 'v002', c2: 'escB', c3: 'escA' }, ab: { ab1: { id: 'escape', A: 'escB', B: 'escA' } } } };
 const f = (t0, t1, kind, more = {}) => ({ t0, t1, kind, scope: 'moment', severity: 'High', ...more });
 
 test('a complaint is a hit for its kind at its time, half for another kind there, and film-wide only for a film-wide finding', () => {
@@ -69,31 +71,56 @@ test('a false alarm is a High or Medium finding of the praised kind inside the p
   assert.equal(falseAlarms(p, [f(2, 3, 'cutting', { severity: 'Low' }), f(2, 3, 'pop'), f(8, 9, 'cutting')]).length, 0);
 });
 
-test('a brief is calibrated only on the test half, at the threshold, with every A/B on Kai\'s side', () => {
-  const good = { clips: { v: { findings: [f(10, 11, 'pop'), f(20, 21, 'clip'), f(0, 80, 'repeat', { scope: 'film' })] } }, ab: { ab: 'A' } };
-  const s = score(KEY, good);
+const GOOD = { clips: { c1: { findings: [f(10, 11, 'pop'), f(20, 21, 'clip'), f(0, 80, 'repeat', { scope: 'film' }), f(30, 31, 'jerk')] } }, ab: { ab1: 'B' } };
+
+test('a brief is calibrated at the threshold, with every A/B on Kai\'s side', () => {
+  const s = score(KEY, GOOD);
   assert.equal(s.hit, 1); assert.equal(s.calibrated, true); assert.equal(s.complaints.length, 3, 'tune-half complaints are not scored');
-  const ab = score(KEY, { ...good, ab: { ab: 'B' } });
-  assert.equal(ab.calibrated, false); assert.match(ab.why.join(), /A\/B ab: picked B/);
-  const fa = score(KEY, { ...good, clips: { v: { findings: [...good.clips.v.findings, f(1, 2, 'cutting')] } } });
+  const fa = score(KEY, { ...GOOD, clips: { c1: { findings: [...GOOD.clips.c1.findings, f(1, 2, 'cutting')] } } });
   assert.equal(fa.falseAlarm, 1); assert.equal(fa.calibrated, false);
-  const low = score(KEY, { clips: { v: { findings: [f(10, 11, 'pop')] } }, ab: { ab: 'A' } });
+  const low = score(KEY, { clips: { c1: { findings: [f(10, 11, 'pop')] } }, ab: { ab1: 'B' } });
   assert.equal(low.calibrated, false); assert.match(low.why.join(), /hit 33% < 70%/);
+});
+
+test('only a test-half score can calibrate, on the command line and in the record a gate reads', () => {
+  for (const half of ['tune', 'all']) {
+    const s = score(KEY, GOOD, half);
+    assert.equal(s.hit, 1, `${half}: every complaint hit`); assert.equal(s.calibrated, false); assert.match(s.why.join(), /only the test half can calibrate/);
+  }
+  const d = tmp(), rec = path.join(d, 'calibration.json'), key = put(d, 'key.json', KEY);
+  put(d, 'answers/a.json', { brief: 'kai-taste@aaa', ...GOOD });
+  const r = run('node', [path.join(TOOLS, 'calibrate.mjs'), 'score', key, path.join(d, 'answers'), '--half', 'all', '--record'], { capture: true, env: { STICK_CALIBRATION: rec } });
+  assert.equal(r.status, 1, r.stdout); assert.match(r.stdout, /UNCALIBRATED: half all: only the test half can calibrate/);
+  assert.equal(JSON.parse(fs.readFileSync(rec, 'utf8')).records[0].calibrated, false);
+  const edited = put(d, 'edited.json', { records: [{ brief: 'kai-taste@aaa', half: 'tune', calibrated: true, hit: 1, falseAlarm: 0, why: [] }] });
+  assert.match(calibration('kai-taste@aaa', edited).why, /uncalibrated: .* on the tune half, not the test half/);
+});
+
+test('the A/B is scored by which cut was picked, not by its position, and the order is seeded per run', () => {
+  assert.equal(score(KEY, { ...GOOD, ab: { ab1: 'A' } }).calibrated, false, 'a reviewer that always answers A picks escB here');
+  assert.match(score(KEY, { ...GOOD, ab: { ab1: 'A' } }).why.join(), /A\/B escape: picked escB/);
+  const flipped = { ...KEY, blind: { ...KEY.blind, ab: { ab1: { id: 'escape', A: 'escA', B: 'escB' } } } };
+  assert.equal(score(flipped, { ...GOOD, ab: { ab1: 'A' } }).calibrated, true);
+  assert.deepEqual(blindMap(KEY, 7), blindMap(KEY, 7), 'one seed, one order');
+  const kaiAt = new Set(Array.from({ length: 20 }, (_, seed) => Object.entries(blindMap(KEY, seed).ab.ab1).find(([, v]) => v === 'escA')[0]));
+  assert.deepEqual([...kaiAt].sort(), ['A', 'B'], 'Kai\'s pick lands on both sides across seeds');
 });
 
 test('the blind prompt carries the videos and the brief, never Kai\'s answers', () => {
   const d = tmp(), brief = path.join(d, 'brief'), vid = put(d, 'src/x.mp4', 'v');
   put(d, 'brief/SKILL.md', '# taste');
-  const key = put(d, 'key.json', { ...KEY, clips: KEY.clips.map(c => ({ ...c, video: vid })) });
-  const r = run('node', [path.join(TOOLS, 'calibrate.mjs'), 'blind', key, path.join(d, 'out'), brief], { capture: true });
+  const { blind: _, ...plain } = KEY;
+  const key = put(d, 'key.json', { ...plain, clips: KEY.clips.map(c => ({ ...c, video: vid })) });
+  const r = run('node', [path.join(TOOLS, 'calibrate.mjs'), 'blind', key, path.join(d, 'out'), brief, '--seed', '42'], { capture: true });
   assert.equal(r.status, 0, r.stderr);
   const prompts = fs.readdirSync(path.join(d, 'out')).map(j => fs.readFileSync(path.join(d, 'out', j, 'PROMPT.md'), 'utf8'));
   assert.equal(prompts.length, 2, 'one clip job and one A/B job');
   for (const p of prompts) {
-    for (const id of ['K1', 'K2', 'K3', 'K4', 'P1', '"A"\n', 'src/x.mp4']) assert.ok(!p.includes(id), `prompt leaks ${JSON.stringify(id)}`);
+    for (const id of ['K1', 'K2', 'K3', 'K4', 'P1', '"A"\n', 'src/x.mp4', 'v002', 'escA', 'escB', 'escape']) assert.ok(!p.includes(id), `prompt leaks ${JSON.stringify(id)}`);
     assert.match(p, new RegExp(briefTag(brief)));
   }
   assert.ok(fs.existsSync(path.join(d, 'out/job2/A.mp4')) && fs.existsSync(path.join(d, 'out/job2/B.mp4')));
+  assert.deepEqual(JSON.parse(fs.readFileSync(key, 'utf8')).blind, blindMap(plain, 42), 'the seed and the map are kept in the private key');
 });
 
 test('answers with a kind outside the closed list are refused', () => {
@@ -103,8 +130,8 @@ test('answers with a kind outside the closed list are refused', () => {
 
 test('a review whose brief is not calibrated does not count at a gate', () => {
   const d = tmp(), rec = put(d, 'calibration.json', { records: [
-    { brief: 'kai-taste@aaa', calibrated: false, hit: 0.4, falseAlarm: 0, why: ['hit 40% < 70%'] },
-    { brief: 'kai-taste@bbb', calibrated: true, hit: 0.8, falseAlarm: 0, why: [] }] });
+    { brief: 'kai-taste@aaa', half: 'test', calibrated: false, hit: 0.4, falseAlarm: 0, why: ['hit 40% < 70%'] },
+    { brief: 'kai-taste@bbb', half: 'test', calibrated: true, hit: 0.8, falseAlarm: 0, why: [] }] });
   assert.match(calibration('kai-taste@aaa', rec).why, /uncalibrated: brief kai-taste@aaa scored hit 40%/);
   assert.match(calibration('kai-taste@ccc', rec).why, /never scored/);
   assert.match(calibration(undefined, rec).why, /no "brief:" line/);

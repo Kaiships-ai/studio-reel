@@ -93,7 +93,7 @@ repeats a closed note; show Kai its table with every new cut.
 | | [4.2] render | `node styles/stick-man/tools/shot.mjs --film films/<slug> --frames 0-<last> --mp4 films/<slug>/renders/<slug>_vN.mp4 --audio films/<slug>/audio/mix.wav` | video + sheet |
 | | [4.3] gates | the two commands in GATES.md, always with `--profile` (Kai picks pilot or full) | gate table |
 | | [4.4] final QA + package | a fresh agent watches the final at 1x, sound on, phone size, `--safe 1` (retell + swipe test); `deliver/` cover, caption (skill `ig-caption`), subtitles, `CREDITS`, an alternative hook cut; `node styles/stick-man/tools/postcheck.mjs films/<slug>`; `node styles/stick-man/tools/cutgate.mjs films/<slug>` (at most 4 hard cuts in any 15 s, a take of 6.5 s or more, under 25 % low camera, no face cut off over 1 s) | `review/final-qa.md`, `review/cutgate.md`, package |
-| | **◇5** deliver | `sheet.mjs`, `LEDGER.md`, final mp4 and package on the page | final video |
+| | **◇5** deliver | `sheet.mjs`, `LEDGER.md`, final mp4 and package on the page; stays OPEN until `review/final-qa.md` names a calibrated brief (`brief:`, PROCESS.md section 2) | final video |
 | **5 Publish + learn** | [5.1]-[5.6] | publish; retention at 24 h and 7 d mapped to shots (`retention.mjs`); post-mortem with DIAGNOSE.md; a cause seen twice becomes a proposed rule; update the series bible (PUBLISH.md) | `review/retention.md`, `review/retro.md` |
 | | **◇6** learn | | |
 

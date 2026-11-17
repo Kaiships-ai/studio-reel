@@ -5,6 +5,7 @@
    "model": "sonnet @medium",
    "set": "hm-r2-v1",
    "half": "test",
+   "seed": null,
    "n": 5,
    "hit": 0.4,
    "falseAlarm": 0,
@@ -17,7 +18,7 @@
    "calibrated": false,
    "why": [
     "hit 40% < 70%",
-    "A/B escape: picked B"
+    "A/B escape: picked escB"
    ],
    "at": "2026-11-17T09:18:49.536Z"
   }
