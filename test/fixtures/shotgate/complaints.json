@@ -1,0 +1,26 @@
+{
+ "note": "Kai's 16/11 complaints that can be replayed, each given one fault kind from his words and image before any detector output was read for the redesign. A hit is a blocking fault of one of the kind's detectors inside the window (film frames, both ends included). The halves alternate by id and were fixed before tuning: thresholds may move only on 'tune'.",
+ "kinds": {
+  "jerky body motion": ["joint pops"],
+  "prop appears": ["prop appears"],
+  "prop teleports": ["prop jumps"],
+  "prop floats": ["prop floats"],
+  "prop disappears": ["prop vanishes", "prop gone after cut"],
+  "figure slides": ["figure skates", "foot slides"],
+  "body through set": ["body passes through", "body in the set"],
+  "bad grip": ["hand off its grip", "prop in the body"],
+  "figure pops": ["figure appears", "figure jumps"]
+ },
+ "complaints": [
+  { "id": "S3-032", "half": "tune", "rows": "block", "where": "SH010", "frames": [0, 98], "kind": "jerky body motion", "said": "character moves jerkily in the blocking animatic" },
+  { "id": "S3-035", "half": "test", "rows": "v002", "where": "SH265", "frames": [1481, 1571], "kind": "jerky body motion", "said": "many places still move jerkily (~0:50)" },
+  { "id": "S3-037", "half": "tune", "rows": "v002", "where": "SH115", "frames": [773, 800], "kind": "prop appears", "said": "the bag appears out of nowhere" },
+  { "id": "S3-038", "half": "test", "rows": "v002", "where": "0:27-0:28", "frames": [810, 869], "kind": "prop teleports", "said": "the bag is beside him, a second later at the trunk" },
+  { "id": "S3-039", "half": "tune", "rows": "v002", "where": "SH125", "frames": [837, 869], "kind": "prop floats", "said": "the released bag has no weight" },
+  { "id": "S3-040", "half": "test", "rows": "v002", "where": "SH130", "frames": [870, 917], "kind": "prop disappears", "said": "the bag is gone right after it is dropped in" },
+  { "id": "S3-045", "half": "tune", "rows": "v002", "where": "SH170", "frames": [1045, 1085], "kind": "figure slides", "said": "the character is dragged along like a mouse cursor" },
+  { "id": "S3-046", "half": "test", "rows": "v002", "where": "SH200", "frames": [1202, 1226], "kind": "body through set", "said": "the character walks through the truck" },
+  { "id": "S3-047", "half": "tune", "rows": "v002", "where": "SH210", "frames": [1227, 1241], "kind": "bad grip", "said": "the gun looks like it holds the person" },
+  { "id": "S3-050", "half": "test", "rows": "v002", "where": "SH246", "frames": [1359, 1402], "kind": "figure pops", "said": "the character jumps into the frame in one frame" }
+ ]
+}
