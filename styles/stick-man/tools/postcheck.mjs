@@ -6,6 +6,7 @@
 import fs from 'node:fs'; import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { finalRender } from './renders.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const film = process.argv[2];
@@ -28,8 +29,7 @@ else {
   if (mj && sil && !JSON.stringify(mj).match(/silence|drop|wait/)) add('FAIL', 'S4', 'the sound plan has silences but audio/music.json has no silence, drop or wait section: the music arc ignores the plan');
 }
 // ---- the delivery package
-const finals = fs.existsSync(F('renders')) ? fs.readdirSync(F('renders')).filter(f => /final.*\.mp4$|_v\d+\.mp4$/.test(f)).sort() : [];
-const final = finals.at(-1);
+const final = finalRender(F('renders'));
 if (!final) add('FAIL', 'P1', 'no final render in renders/');
 for (const [f, why] of [['deliver/cover.jpg', 'the cover frame, chosen on purpose'], ['deliver/caption.txt', 'caption + hashtags (skill ig-caption)'],
   ['deliver/subtitles.srt', 'subtitles file'], ['CREDITS', 'voice, music samples, fonts and their licences (DIRECTOR.md §11)']])

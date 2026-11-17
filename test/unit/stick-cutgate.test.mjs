@@ -63,3 +63,11 @@ test('a film rendered in parts reads s<n>/ back to back in the render, and refus
     await assert.rejects(segments(dir, 60, reelSpan), /is 81\.7 s, the render 60\.0 s/);
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('the final render: a size-suffixed version counts, the highest version wins by number, final* wins', async () => {
+  const { pickFinal } = await import('../../styles/stick-man/tools/renders.mjs');
+  assert.equal(pickFinal(['hm-ep01-r2_v7_720.mp4', 'notes.txt']), 'hm-ep01-r2_v7_720.mp4');
+  assert.equal(pickFinal(['ep_v2.mp4', 'ep_v10.mp4', 'ep_v9_1080.mp4']), 'ep_v10.mp4');
+  assert.equal(pickFinal(['ep_v10.mp4', 'final.mp4']), 'final.mp4');
+  assert.equal(pickFinal(['ep.mp4', 'draft_720.mp4']), undefined);
+});

@@ -11,6 +11,7 @@
 // than half the lead's head box inside the frame. Cuts are counted in the worst 15 s window, not over the film.
 import fs from 'node:fs'; import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { finalRender } from './renders.mjs';
 import { run } from '../../../kit/env.mjs';
 import { compress } from './faults.mjs';
 
@@ -137,8 +138,7 @@ const unmeasured = res => res.filter(r => r.ok == null).map(r => r.id).join(', '
 
 async function filmMode(film) {
   const DIR = path.resolve(ROOT, film), F = p => path.join(DIR, p);
-  const finals = fs.existsSync(F('renders')) ? fs.readdirSync(F('renders')).filter(f => /final.*\.mp4$|_v\d+\.mp4$/.test(f)).sort() : [];
-  const final = finals.at(-1);
+  const final = finalRender(F('renders'));
   if (!final) { console.error(`${film}: no final render in renders/`); process.exit(1); }
   const { reelSpan, cachedReelDbg, DBG_W, DBG_H } = await import('./reel_load.mjs');
   const mp4 = F(`renders/${final}`), dur = duration(mp4);
