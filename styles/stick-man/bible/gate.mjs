@@ -26,7 +26,6 @@ export function bibleGate({ film, bypass = null, frames = '' }) {
 }
 
 const summary = rep => !rep.governed ? `no bible governs ${rep.film}` : `${rep.pass ? 'PASS' : 'BLOCK'} ${rep.summary.blocking} blocking, ${rep.summary.gaps} gaps, exceptions ${rep.summary.exceptions.used}`;
-// films/<slug>: the slug folder next to the part the render was given
 function filmDir(film, rel) {
   const abs = path.resolve(ROOT, film), parts = rel.split('/');
   return path.resolve(abs, ...parts.slice(1).map(() => '..'));

@@ -93,7 +93,6 @@ export async function validate({ tokens, catalog }, { repo = REPO, films = path.
   const checkIds = (where, list) => { for (const id of list || []) if (ids && !ids.has(id)) errors.push(`${where}: feedback id ${id} is not in kai-taste SKILL.md`); };
   const ref = async (where, r) => { const o = await resolveRef(r, ctx); if (o.error) errors.push(`${where}: ${o.error}`); if (o.unchecked) unchecked.add(where); return o; };
 
-  // ---- tokens
   const T = tokens.tokens || [], byName = new Map();
   for (const t of T) { if (byName.has(t.name)) errors.push(`token ${t.name}: duplicate name`); byName.set(t.name, t); }
   const resolve = (v, seen = []) => {
@@ -127,7 +126,6 @@ export async function validate({ tokens, catalog }, { repo = REPO, films = path.
     }
   }
 
-  // ---- components
   const C = catalog.components || [], byId = new Map(), coveredBy = new Map();
   for (const c of C) { if (byId.has(c.id)) errors.push(`component ${c.id}: duplicate id`); byId.set(c.id, c); }
   for (const c of C) {
@@ -177,7 +175,6 @@ export async function validate({ tokens, catalog }, { repo = REPO, films = path.
   return { errors, warnings, stats, resolve };
 }
 
-// ---- the human view (Vietnamese, few words)
 export const KIND_VI = { 'motion-clip': 'Clip chuyển động', face: 'Nét mặt', 'camera-kind': 'Loại shot', 'camera-move': 'Di máy', prop: 'Đạo cụ', set: 'Bối cảnh',
   cast: 'Nhân vật', rig: 'Bộ xương', 'caption-style': 'Phụ đề', 'card-2d': 'Thẻ 2D', fx: 'Hiệu ứng trong cảnh', 'look-preset': 'Ánh sáng, màu' };
 export const TIER_VI = { primitive: 'Giá trị gốc', semantic: 'Theo mục đích', component: 'Theo thành phần' };

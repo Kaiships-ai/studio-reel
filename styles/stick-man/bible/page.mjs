@@ -22,7 +22,6 @@ const ROOT_VI = { R1: 'Chuyển động như thật?', R2: 'Trông như thật?'
 const h = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const isRick = n => /^(rick|aim)-/.test(path.basename(n));
 
-// ------------------------------------------------------------------ kai-taste: roots, praise, example frames
 export function readTaste(dir) {
   const read = f => { const p = path.join(dir, f); return fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : ''; };
   const skill = read('SKILL.md'), ex = read('EXAMPLES.md');
@@ -49,7 +48,6 @@ export function readTaste(dir) {
   return { roots, praise, examples, dir };
 }
 
-// ------------------------------------------------------------------ faces: the kit's own drawFace, recorded as SVG
 // A canvas-2D stand-in that keeps the transform stack and turns every path into a device-space polygon, so the face on the
 // page is the one engine/faces.js draws in a film, not a copy of it.
 class SvgCtx {
@@ -106,7 +104,6 @@ export async function faceSVGs(names, repo = REPO) {
   return out;
 }
 
-// ------------------------------------------------------------------ token previews, keyed by unit
 const lin2srgb = c => Math.round(255 * Math.max(0, Math.min(1, c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055)));
 const pct = (v, max) => Math.max(0, Math.min(100, v / max * 100)).toFixed(1);
 const band = v => (v && typeof v === 'object' && !Array.isArray(v) && ('min' in v || 'max' in v)) ? v : null;
@@ -148,7 +145,6 @@ function preview(t, value) {
   return (PREVIEW[t.unit] && PREVIEW[t.unit](value)) || (typeof value === 'number' ? box(`<span class="chipv">${h(value)}</span>`) : box(`<span class="chipv">${h(show(value)).slice(0, 18)}</span>`));
 }
 
-// ------------------------------------------------------------------ the model the page is drawn from
 const ls = d => d && fs.existsSync(d) ? fs.readdirSync(d) : [];
 function gitLog(repo, rel) {
   const r = spawnSync('git', ['log', '--format=%h%x09%ad%x09%s', '--date=short', '--', rel], { cwd: repo, encoding: 'utf8', timeout: 20000 });
@@ -198,7 +194,6 @@ export async function buildModel({ dir = path.join(HERE, 'hot-money'), taste = p
   };
 }
 
-// ------------------------------------------------------------------ media: copy or shrink into <out>/media
 function measure(file) {
   const r = run('ffmpeg', ['-v', 'error', '-i', file, '-vf', 'scale=1:1:flags=area', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'], { capture: true, encoding: 'buffer', timeout: 20000 });
   if (r.status !== 0 || !r.stdout || r.stdout.length < 3) return null;
@@ -239,7 +234,6 @@ function gatherMedia(M, out) {
   }
 }
 
-// ------------------------------------------------------------------ HTML
 const tc = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 const badge = s => `<span class="st st-${s}">${h(ST_VI[s] || s)}</span>`;
 const rootChip = r => `<a class="rc" href="#${r}">${r}</a>`;
@@ -392,7 +386,6 @@ ${homeHTML(M)}${tokensHTML(M)}${componentsHTML(M)}${patternsHTML(M)}${assetsHTML
 </main></div><script>${JS}</script></body></html>`;
 }
 
-// the page carries every token and every part of the source, once
 export function coverage(html, { tokens, catalog }) {
   const got = attr => { const m = new Map(); for (const [, v] of html.matchAll(new RegExp(`${attr}="([^"]+)"`, 'g'))) { const k = v.replace(/&quot;/g, '"').replace(/&amp;/g, '&'); m.set(k, (m.get(k) || 0) + 1); } return m; };
   const T = got('data-token'), C = got('data-id');

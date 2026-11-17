@@ -35,7 +35,6 @@ const STRIDE_M = 0.6, TURN_DEG = 45, HAND_TRAVEL_M = 0.5;
 
 class UsageError extends Error {}
 
-// ---------------------------------------------------------------- arguments, film, bible, exceptions (the boundary)
 function parseArgs(argv) {
   const o = { json: false }, rest = [];
   for (let i = 0; i < argv.length; i++) {
@@ -93,7 +92,6 @@ const covers = (ex, f) => {
   return (ex.rule === '*' || ex.rule === f.rule) && [f.act, f.subject, f.what].every((v, i) => want[i] == null || want[i] === '*' || want[i] === v);
 };
 
-// ---------------------------------------------------------------- the catalog as lookups
 export function indexBible(catalog) {
   const C = catalog.components, byId = new Map(C.map(c => [c.id, c]));
   const first = (m, k, v) => { if (!m.has(k)) m.set(k, v); };
@@ -110,7 +108,6 @@ export function indexBible(catalog) {
   return { byId, provided, cover, places, named, marks: C.filter(c => c.mark).map(c => [c.mark, c.id]) };
 }
 
-// ---------------------------------------------------------------- loading the acts with every use recorded
 async function loadActs(film, parts, named) {
   const rec = { tracks: [], steps: [] };
   const toRel = u => { const f = u.startsWith('file:') ? fileURLToPath(u.split('?')[0]) : u; return f.startsWith(film.root + path.sep) ? f.slice(film.root.length + 1) : path.relative(REPO, f); };
@@ -161,11 +158,9 @@ async function loadActs(film, parts, named) {
   return { acts, rec, SPECS };
 }
 
-// ---------------------------------------------------------------- source lines (file:line for a finding)
 function sourceLines(root) {
   const cache = new Map();
   const lines = rel => { if (!cache.has(rel)) { const f = [path.join(root, rel), path.join(REPO, rel)].find(x => fs.existsSync(x)); cache.set(rel, f ? fs.readFileSync(f, 'utf8').split('\n') : []); } return cache.get(rel); };
-  // the first line in `files` (in order) matching every pattern
   return (files, ...res) => {
     for (const rel of files.filter(Boolean)) { const L = lines(rel), i = L.findIndex(l => res.every(r => r.test(l))); if (i >= 0) return { file: rel, line: i + 1 }; }
     return null;
@@ -177,7 +172,6 @@ const near = (name, names) => {
   return [...names].sort((a, b) => d(name, a) - d(name, b))[0];
 };
 
-// ---------------------------------------------------------------- the rules
 export function judge({ acts, rec, SPECS }, bible, film) {
   const { byId, provided, cover, places, marks, named } = bible;
   const findings = [], used = new Map(), lib = { clipActions: 0, handActions: 0, clipFrames: 0, handFrames: 0 };
@@ -186,7 +180,6 @@ export function judge({ acts, rec, SPECS }, bible, film) {
   const usedMost = kind => [...used].filter(([id]) => byId.get(id).kind === kind).sort((x, y) => y[1].uses - x[1].uses)[0]?.[0] || null;
   const use = (id, act, f0, f1 = f0) => { const u = used.get(id) || used.set(id, { uses: 0, acts: new Set(), f0, f1 }).get(id); u.uses++; u.acts.add(act); u.f0 = Math.min(u.f0, f0); u.f1 = Math.max(u.f1, f1); };
   const fromWhere = (o, loc) => ({ ...o, ...(loc || {}) });
-  // one entry per name, with its frame span and count (`extra` is kept from the first sighting)
   const tally = (m, k, f, extra) => { const e = m.get(k) || m.set(k, { f0: f, f1: f, n: 0, ...extra }).get(k); e.f0 = Math.min(e.f0, f); e.f1 = Math.max(e.f1, f); e.n++; };
   // a hand-keyed body action the clip `clipId` covers: off the bible when the clip exists for this body, a gap when not
   const handAction = (clipId, o) => {
@@ -199,7 +192,6 @@ export function judge({ acts, rec, SPECS }, bible, film) {
   for (const { act: a, file } of acts) {
     const act = a.name ?? file, [F0, F1] = a.frames, inAct = (f0, f1 = f0) => f1 >= F0 && f0 <= F1;
     const actFiles = [find(filmFiles, new RegExp(`name:\\s*'${esc(act)}'`))?.file, file, ...filmFiles];
-    // ---- body actions, per actor: clip runs, runs of hand keys of one pose, stepTurns
     for (const [actor, keys] of Object.entries(a.anim || {})) {
       const body = SPECS[a.cast?.[actor]?.spec]?.motionBody || 'adult', subject = actor;
       const ids = [...new Set(keys.map(k => k.__track).filter(n => n != null))];
@@ -247,7 +239,6 @@ export function judge({ acts, rec, SPECS }, bible, film) {
         const n = Math.max(0, Math.min(F1 + 1, L[i + 1]?.f0 ?? F1 + 1) - Math.max(F0, x.f0));
         if (x.type === 'clip') { lib.clipActions++; lib.clipFrames += n; } else { lib.handActions++; lib.handFrames += n; }
       });
-      // ---- faces and hand props on this actor's keys
       const faces = new Map(), props = new Map();
       if (a.cast?.[actor]?.expr) tally(faces, a.cast[actor].expr, F0);
       const lastBefore = keys.filter(k => k.f < F0).at(-1);
@@ -270,7 +261,6 @@ export function judge({ acts, rec, SPECS }, bible, film) {
           find(filmFiles, new RegExp(`BUILD\\.${esc(n)}\\b`)) || find(filmFiles, new RegExp(`x_hp[LRBH]_${esc(n)}\\b`))));
       }
     }
-    // ---- the camera
     const cams = new Map();
     for (const d of a.direct || []) {
       const f = d.at?.f ?? F0, kind = d.intent || d.kind;
@@ -286,7 +276,6 @@ export function judge({ acts, rec, SPECS }, bible, film) {
       const [rule, what] = k.split('|');
       add(rule, { act, what, f0: s.f0, f1: s.f1, count: s.n, ...(s.loc?.line ? s.loc : find(actFiles, /\bdirect:/) || { file }), instead: s.instead || usedMost('camera-move') });
     }
-    // ---- effects, overlays, set, look
     for (const [name, m] of Object.entries(a.make || {})) {
       const kind = m.kind || 'unnamed', id = byId.has(`fx.${kind}`) ? `fx.${kind}` : provided.make?.get(kind);
       if (id) use(id, act, F0, F1);
@@ -313,7 +302,6 @@ export function judge({ acts, rec, SPECS }, bible, film) {
     if (bad.length) add('look-not-in-catalog', fromWhere({ act, what: bad.join(', '), f0: F0, f1: F1, instead: [...new Set(looks)].join(' + ') || null, note: 'không lấy từ preset trong danh mục' },
       find(actFiles, new RegExp(`\\b(${bad.join('|')}):\\s*[A-Za-z_{.]`))));
   }
-  // ---- retired and trial parts: one finding per part
   for (const [id, u] of used) {
     const c = byId.get(id), o = { act: [...u.acts].join(', '), what: id, f0: u.f0, f1: u.f1, count: u.uses };
     if (c.status === 'retired') add('retired-part', { ...o, note: `Kai chê: ${(c.evidence?.complaints || []).join(', ')}`, instead: null });
@@ -323,7 +311,6 @@ export function judge({ acts, rec, SPECS }, bible, film) {
 
 }
 
-// every film file the acts load (their static imports), act files first: where a finding's line is looked up
 function filmImports(files, root) {
   const out = new Set();
   const walk = rel => {
@@ -336,7 +323,6 @@ function filmImports(files, root) {
   return [...out];
 }
 
-// the catalog sets a film's set module builds on, through its film-local imports
 function setsInside(spec, places, root, seen = new Set()) {
   if (seen.has(spec) || !spec.startsWith('/films/')) return [];
   seen.add(spec);
@@ -357,7 +343,6 @@ function merge(list) {
   return [...m.values()].sort((a, b) => SEV.indexOf(a.severity) - SEV.indexOf(b.severity) || b.count - a.count || a.f0 - b.f0);
 }
 
-// ---------------------------------------------------------------- the report
 export async function check({ target, parts, filmsRoot, bible: bibleDir }) {
   const film = locateFilm(target, filmsRoot);
   const dir = film.slug && bibleFor(film.slug, bibleDir);
