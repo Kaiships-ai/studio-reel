@@ -6,6 +6,8 @@
 //   --film ... --frames 0-344 --dbg dbg.jsonl                          __dbg + motion per frame, no render (+ dress: pieces seen;
 //                                                                       --dress 1 adds dressList, their names)
 //   --film ... --frames 0-344 --report review/p1-stats.txt --in renders/p1.mp4
+//   --film ... --frames all ...                                      every frame of the film (reel.js to reel2.js)
+//   --film ... --vis faults.json                                       tag [{F, actor, pts}] in / occluded / off from the film camera (in place)
 //   --film ... --serve 1                                               keep a server up and print the URL
 //   --film ... --cues audio/cues.json                                  sound cues from the picture: [{t, name, strength}]
 //   --mp4 ... --audio films/x/audio/mix.wav                           mux this track instead of vo/vo.wav
@@ -41,7 +43,7 @@ if (A.film && !A.serve && !A.cues && !A.dbg && !A.report) {
 const W = Number(A.w || 1080), H = Number(A.h || 1920);
 const REEL = !!A.film, page = A.page || (REEL ? 'styles/stick-man/reel.html' : null);
 if (!page) { console.error('give --film films/<slug> or --page <proof page>'); process.exit(2); }
-const frames = (A.frames || '0').split(',').flatMap(s => { const [a, b] = s.split('-').map(Number); return b == null ? [a] : Array.from({ length: b - a + 1 }, (_, i) => a + i); });
+let frames = A.frames === 'all' ? [] : (A.frames || '0').split(',').flatMap(s => { const [a, b] = s.split('-').map(Number); return b == null ? [a] : Array.from({ length: b - a + 1 }, (_, i) => a + i); });
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json', '.wav': 'audio/wav',
   '.ttf': 'font/ttf', '.woff2': 'font/woff2' };
@@ -60,6 +62,7 @@ const p = await ctx.newPage();
 p.on('pageerror', e => { console.error('pageerror:', e.message, '\n', e.stack || ''); process.exit(1); });
 p.on('console', m => { if (m.type() === 'error') console.error('console', m.text()); });
 await p.goto(url); await p.waitForFunction(() => window.__ready === true, null, { timeout: 180000 });
+if (A.frames === 'all') { const [a, b] = await p.evaluate(() => window.__F); frames = Array.from({ length: b - a + 1 }, (_, i) => a + i); }
 const shot = file => p.screenshot(/\.png$/i.test(file) ? { path: file } : { path: file, type: 'jpeg', quality: 92 });
 const render = f => p.evaluate(f => window.__frame(f), f);
 
@@ -93,6 +96,10 @@ if (A.speed && !REEL) {
   fs.mkdirSync(path.dirname(path.resolve(A.cues)), { recursive: true });
   fs.writeFileSync(A.cues, '[\n' + c.map(x => JSON.stringify(x)).join(',\n') + '\n]\n');
   console.log(`${A.cues}  ${c.length} cues`);
+} else if (A.vis) {
+  const items = JSON.parse(fs.readFileSync(A.vis, 'utf8'));
+  const tags = await p.evaluate(g => g.map(x => window.__vis(x.F, [{ actor: x.actor, pts: x.pts }])[0]), items);
+  fs.writeFileSync(A.vis, JSON.stringify(tags)); console.log(`${A.vis}  ${tags.length} faults tagged`);
 } else if (A.dbg) {
   const rows = await dbgAll();
   fs.mkdirSync(path.dirname(A.dbg), { recursive: true });

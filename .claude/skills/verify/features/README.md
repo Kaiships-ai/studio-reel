@@ -39,6 +39,7 @@ Each feature file: H1 title, one paragraph, then `Sub-features`, `How to get to 
 - [Full render and delivery](./full-render.md): the medium 720x1280 MP4 and cover; 1080x1920 only after the user's go.
 - [Stick-man review trust](./stick-man-review.md): the retake log per round, and the reviewer calibration ◇5 needs.
 - [Stick-man costume: the hoodie](./stick-man-costume.md): `costume: ['hoodie:grey']` on a stick-man cast entry.
+- [Stick-man measured shot gate](./stick-man-shotgate.md): `shotgate.mjs films/<slug>`, run by ◇4 and ◇5, blocks on faults between frames.
 - [Setup](./setup.md): `pixi run studio install | doctor`, the buyer's first run, on macOS, Windows and Linux.
 - [Progress file](./job-json.md): `films/<name>/job.json` after every step, for Lead Studio.
 - [Reel in another style](./any-style.md): `core/render/reel.mjs` builds and checks a reel made with `--style <slug>`.

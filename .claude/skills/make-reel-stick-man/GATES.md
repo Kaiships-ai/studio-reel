@@ -6,7 +6,7 @@
 node styles/stick-man/tools/stagegate.mjs films/<slug> <1|S|2a|2b|2c|3|4|5|6|all>   # review/gate-<id>.md
 ```
 
-Each gate in `styles/stick-man/tools/GATES.json` lists four kinds of evidence: **measured** (a tool that must exit 0: `develop.mjs`, `scriptlint.mjs`, `prepro.mjs --gate`, `assets.mjs` and `rigtest.mjs` (gate 3), `timing.mjs` and `facebeat.mjs` (gate 4: faces against the beat, repeated faces), `postcheck.mjs`, `cutgate.mjs`), **made** (the maker's files), **judged** (`by: agent:<id>` or `person:<name>`, fresh against what it reviewed: for a JSON file, everything but non-visible metadata (`notes`, `note`, `purpose`, `why`, `comments`; in `storyboard.json` also the options that are not picked, `pick`, and the asset breakdown `assets.mjs` reads: shot `set`, `cast`, `props`, `state`, `reset` and the storyboard's `measures`) hashes the same as when the review was first seen newer than it, recorded in `review/.fresh.json`; any other file, such as `vo/vo.wav`, must be older than the review; see `tools/fresh.mjs`) and **approved** (Kai in `review/approvals.json`, after the latest evidence). States: OPEN → READY FOR KAI → LOCK. A film may add evidence in `review/gates.local.json`, never remove any.
+Each gate in `styles/stick-man/tools/GATES.json` lists four kinds of evidence: **measured** (a tool that must exit 0: `develop.mjs`, `scriptlint.mjs`, `prepro.mjs --gate`, `assets.mjs` and `rigtest.mjs` (gate 3), `timing.mjs`, `facebeat.mjs` (gate 4: faces against the beat, repeated faces) and `shotgate.mjs` (gates 4 and 5), `postcheck.mjs`, `cutgate.mjs`), **made** (the maker's files), **judged** (`by: agent:<id>` or `person:<name>`, fresh against what it reviewed: for a JSON file, everything but non-visible metadata (`notes`, `note`, `purpose`, `why`, `comments`; in `storyboard.json` also the options that are not picked, `pick`, and the asset breakdown `assets.mjs` reads: shot `set`, `cast`, `props`, `state`, `reset` and the storyboard's `measures`) hashes the same as when the review was first seen newer than it, recorded in `review/.fresh.json`; any other file, such as `vo/vo.wav`, must be older than the review; see `tools/fresh.mjs`) and **approved** (Kai in `review/approvals.json`, after the latest evidence). States: OPEN → READY FOR KAI → LOCK. A film may add evidence in `review/gates.local.json`, never remove any.
 
 Freshness has one limit, first sight: the hash is recorded the first time `stagegate.mjs` runs after a review is
 written. If the reviewed file changes before that run, there is no record, the file is newer than the review and the
@@ -55,6 +55,31 @@ voice; `--strict 1` (WARN counts as FAIL) is for Kai to ask for, never a default
 | on-screen text | ≤ 15 characters/s, ≥ 25 f, inside the text-safe box (x 6-87 %, y 14-65 %) | readable on a phone, not under the app's UI |
 | continuity | no screen-direction flip or axis jump without a stated reason | reversed axes read as mistakes |
 | intensity | no visual peak before the climax after the hook | the climax needs somewhere to go |
+
+## Shot gate (◇4, ◇5)
+
+```sh
+node styles/stick-man/tools/shotgate.mjs films/<slug> [--in renders/<slug>_vN.mp4 --from <first frame>]   # review/shot-gate.md
+```
+
+Every frame of the film, frame against frame (`tools/shotfaults.mjs`); a fault the shot's camera does not see is listed as
+ẩn and never blocks. Each second with a seen fault gets `review/shot-gate/strip_<s>s_f<F>.jpg`: 15 frames in a row, the
+fault on tile 6, for the reviewer to open before a verdict. A film assembled shot by shot passes its rows with `--rows`.
+
+| Fault | Measured | Limit |
+|---|---|---|
+| prop appears / vanishes | shown and seen in one frame, absent the next, no cut, not through the frame edge or a cover | none |
+| prop jumps | centre moves further than its last step | 0.25 m / frame |
+| prop resizes | size change in one frame | 15 % |
+| prop changes at cut | a figure carries a prop of another size out of the cut | 15 % |
+| prop gone after cut | a free prop is not at its spot when the next shot of the place looks there | none |
+| prop floats | a free prop moves up or down with vertical acceleration off −g | 60 % of g, 3 frames |
+| figure appears / vanishes / jumps | inside the frame in one frame; head moves further than its last step | 0.4 m / frame |
+| figure skates | the body travels while even the stiller foot moves along | > 0.6 m/s, stance foot > 50 %, 4 frames |
+| joint pops | jointstep.mjs channel in one frame | 25° |
+| foot slides | a planted foot | 3 px / frame at 720p |
+| body / prop passes through | pelvis, chest, head, knees or a held prop's centre crosses a set mesh since the last frame | none |
+| hand off its grip, prop in the body, body in the set, cord shakes | as the shot report (h), (i), (e), cords | 2 cm, 1 cm, none, 0.015 m/f² |
 
 ## Profiles
 
