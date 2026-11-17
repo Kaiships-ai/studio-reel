@@ -15,7 +15,7 @@ const ray = new THREE.Raycaster(), ndc = new THREE.Vector3(), eye = new THREE.Ve
 const view = new THREE.Vector3();
 // a mesh the render draws at the hit: in front of the near plane is clipped away (a camera 12 cm from a sign sees past it)
 const drawn = (hit, camera) => -view.copy(hit.point).applyMatrix4(camera.matrixWorldInverse).z >= camera.near;
-const opaque = hit => {
+export const opaque = hit => {
   const o = hit.object;
   if (!o.isMesh || o.isSprite) return false;
   for (let q = o; q; q = q.parent) if (!q.visible) return false;

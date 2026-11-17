@@ -15,7 +15,7 @@ const ANXIOUS = new Set(['nervous', 'worried', 'angry', 'furious', 'panic', 'scr
 // per-key face options (acting.js changeClass) carried from a beat or an anim key onto its expression key
 const faceOpts = k => Object.fromEntries(['take', 'small', 'exprSpeed'].filter(n => k[n] != null).map(n => [n, k[n]]));
 import { createCamera } from './camera.js';
-import { pointVis, foldVis } from './visible.js';
+import { pointVis, foldVis, opaque } from './visible.js';
 import { planShots } from './shotplan.js';
 import { createCaptions } from './captions.js';
 import { createOverlays } from './overlays.js';
@@ -617,11 +617,11 @@ async function buildAct(R, X) {
       }
       const own = h => { for (let q = h; q; q = q.parent) if (q === o) return true; return false; };
       out.track[id] = { shown: true, held: held.has(id), on: foldVis(pts.map(p => pointVis(stage.camera, stage.scene, p, own))),
-        box: Number.isFinite(x0) ? [x0, y0, x1, y1].map(x => +x.toFixed(1)) : null, size: +(Math.max(ls.x, ls.y, ls.z) * o.matrixWorld.getMaxScaleOnAxis()).toFixed(4), c: toB(c).map(x => +x.toFixed(4)) };
+        box: Number.isFinite(x0) ? [x0, y0, x1, y1].map(x => +x.toFixed(1)) : null, size: +(Math.max(ls.x, ls.y, ls.z) * o.matrixWorld.getMaxScaleOnAxis()).toFixed(4), dims: [ls.x, ls.y, ls.z].map(x => +(x * o.matrixWorld.getMaxScaleOnAxis()).toFixed(4)), c: toB(c).map(x => +x.toFixed(4)) };
     }
     out.cross = [];
     const live = new Set(actors.filter(a => a.S.root.visible).map(a => a.S.root)), heldO = new Set(tracked.filter(([id]) => held.has(id)).map(([, o]) => o));
-    const skip = h => { if (!h.isMesh || h.isSprite) return true; for (let q = h; q; q = q.parent) if (live.has(q) || heldO.has(q) || !q.visible) return true; return false; };
+    const skip = x => { if (!opaque(x)) return true; for (let q = x.object; q; q = q.parent) if (live.has(q) || heldO.has(q)) return true; return false; };
     const now = {}, wp = o => o.getWorldPosition(new THREE.Vector3());
     for (const a of actors) { if (!a.S.root.visible) continue;
       const l = a.S.rigWorld(), mid = (u, v) => toThree(...u.map((x, i) => (x + v[i]) / 2));
@@ -634,7 +634,7 @@ async function buildAct(R, X) {
     if (crossPrev?.f === f - 1) for (const [k, p] of Object.entries(now)) {
       const q = crossPrev.pts[k]; if (!q) continue; const d = p.distanceTo(q); if (d < 1e-4) continue;
       crossRay.set(q, p.clone().sub(q).divideScalar(d)); crossRay.near = 0; crossRay.far = d; crossRay.camera = stage.camera;
-      const h = crossRay.intersectObject(stage.scene, true).find(x => !skip(x.object) && !moved(x.object));
+      const h = crossRay.intersectObject(stage.scene, true).find(x => !skip(x) && !moved(x.object));
       if (h) out.cross.push({ what: k, through: h.object.name || h.object.parent?.name || 'set', d: +d.toFixed(3), at: toB(h.point).map(x => +x.toFixed(3)) });
     }
     crossPrev = { f, pts: now, where };
