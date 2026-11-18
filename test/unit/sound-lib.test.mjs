@@ -76,6 +76,19 @@ test('an unknown name is guessed by what happens before what it happens to', { s
   assert.notEqual(got.trunk_open.as, 'step_wet', "'trunk' does not hold the word 'run'");
 });
 
+test('a name is matched in any case, spelling or number, and by whole words, never by the start of a word', { skip }, () => {
+  const QUIET = 'rustle';     // sound_lib.UNKNOWN: what a name with no known word plays
+  const want = {
+    Gunshot: 'gunshot', GUNSHOT: 'gunshot', gunshot_2: 'gunshot', gunshots: 'gunshot', 'gunshot-close': 'gunshot_close',
+    'gun shot': 'gun_shot', gun_shot_far: 'gunshot_close', gunfire: 'gunshot_close',
+    reveal: QUIET, review_sting: 'sting', password: QUIET, bypass: QUIET, carpet: QUIET, card_swipe: 'whoosh', cartoon: QUIET,
+    tired: QUIET, doorbell: 'ding', explosion: 'boom', cash_register: 'register', phone_ring: 'ding', crowd_cheer: 'crowd',
+  };
+  const got = resolve(Object.keys(want));
+  assert.deepEqual(Object.fromEntries(Object.keys(want).map(n => [n, got[n].as])), want);
+  for (const n of Object.keys(want)) assert.equal(got[n].how, 'guess', `${n} is not a NAMES entry as written, so the mixer reports it`);
+});
+
 test('the mixer plays a guessed name, warns about it and lists it in levels.txt', { skip: skip || (!E.tools?.ffmpeg && 'needs ffmpeg') }, () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sound-lib-test-'));
   try {
