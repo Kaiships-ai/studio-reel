@@ -30,7 +30,7 @@ Written by `refbench.mjs table` from the rows in this folder. Method and limits:
 | bed level (dBFS, median of 5 s sections) | -29.3 | -31.1 to -29.1 | -32.0 | -32.0 | -2.7 | -2.7 | 2.9 | no |
 | bed under the loud parts (dB) | 15.5 | 15.4 to 17.3 | 18.2 | 18.2 | +2.7 | +2.7 | 2.9 | no |
 | biggest bed drop between sections (dB) | 4.0 | 3.5 to 6.9 | 17.0 | 17.0 | +13.0 | +13.0 | 4.1 | yes (hm-ep01-r4_v1), yes (hm-ep01-r4_v2) |
-| bed in the 2 s before the payoff minus the median bed (dB) | 7.2 | 1.5 to 11.5 | 15.5 | 15.3 | +8.3 | +8.1 | 4.1 | yes (hm-ep01-r4_v1), yes (hm-ep01-r4_v2) |
+| bed in the 2 s before the payoff minus the median bed (dB) | 3.2 | 1.5 to 8.9 | 15.3 | 15.1 | +12.1 | +11.9 | 4.1 | yes (hm-ep01-r4_v1), yes (hm-ep01-r4_v2) |
 | effects / min (sfx stem, or a listening count) | 15.7 | 15.6 to 23.5 | 12.7 | n/a | -3.0 | n/a | 4.0 | no |
 | cuts with an effect within 0.1 s (needs a stem) | n/a | n/a | 0.25 | n/a | n/a | n/a | n/a | no floor |
 | blinks / 10 s (blind agent count) | 10.1 | 8.0 to 16.3 | 12.5 | 13.2 | +2.4 | +3.1 | 5.0 | no |

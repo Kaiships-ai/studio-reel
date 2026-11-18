@@ -1,6 +1,6 @@
 {
  "id": "hm-ep01-r4_v2",
- "source": "films/hm-ep01-r4/renders/hm-ep01-r4_v2.mp4",
+ "source": "hm-ep01-r4_v2.mp4",
  "silent": false,
  "video": {
   "w": 720,
@@ -52,7 +52,7 @@
   "bedPresence": 1,
   "bedDb": -32,
   "bedDrop": 17,
-  "bedAtPayoff": 15.3
+  "bedAtPayoff": 15.1
  },
  "shots": [
   {
@@ -364,5 +364,5 @@
   ],
   "sfxOnsets": null
  },
- "secs": 22.7
+ "secs": 28.5
 }

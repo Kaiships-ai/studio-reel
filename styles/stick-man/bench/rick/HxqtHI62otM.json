@@ -41,7 +41,7 @@
   "bedPresence": 1,
   "bedDb": -29.3,
   "bedDrop": 6.9,
-  "bedAtPayoff": 7.2
+  "bedAtPayoff": 3.2
  },
  "shots": [
   {
@@ -158,5 +158,5 @@
   ],
   "sfxOnsets": null
  },
- "secs": 18.2
+ "secs": 20.6
 }
