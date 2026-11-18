@@ -20,9 +20,10 @@ test('a held pose is never a statue: chest and head move by whole degrees over 1
   for (const c of ['neck.tilt', 'neck.turn']) assert.ok(range(offsets(h, c)) >= 2, `${c} ${range(offsets(h, c)).toFixed(2)} deg`);
 });
 
-test('breath and drift stay inside their bounds: a held look stays within 7 deg of its target, nothing swims or jitters', () => {
+test('breath and drift stay inside their bounds: a held look stays within 8 deg of its target, nothing swims or jitters', () => {
+  // the bounds of the default dose (life 0.75) that a blind panel judged alive and not jittery
   const h = hold();
-  const lim = { 'spine.bend': 3, 'spine.side': 5, 'neck.nod': 6, 'neck.tilt': 8, 'neck.turn': 7 };
+  const lim = { 'spine.bend': 3, 'spine.side': 6.5, 'neck.nod': 4, 'neck.tilt': 8.5, 'neck.turn': 8 };
   for (const c of CH) { const a = offsets(h, c).map(Math.abs); assert.ok(Math.max(...a) <= lim[c], `${c} peaks at ${Math.max(...a).toFixed(2)} deg`); }
   // low frequency only: nothing turns faster than a calm glance (2.5 deg a frame), and no shake (out and back, each swing over 0.25 deg,
   // inside 8 frames)
@@ -80,4 +81,14 @@ test('blinks keep their spacing: a listener every 90-150 frames, never two insid
   assert.ok(per10 >= 1.5 && per10 <= 3.6, `${per10.toFixed(1)} blinks per 10 s`);
   const gaps = s.slice(1).map((x, i) => x - s[i]);
   for (const g of gaps) assert.ok(g >= BLINK_GAP.listen[0] || g === BLINKS.regular.length + 2, `gap ${g}`);
+});
+
+test('a walk that stops into an action (2 f step keys, then the arms move on): the chest carries on past the stop, the head after it', () => {
+  const keys = []; for (let f = 0; f <= 20; f += 2) keys.push({ f, pose: 'stand', pos: [f * 0.04, 0] });
+  keys.push({ f: 26, pose: 'stand', pos: [0.8, 0], spine: { bend: 20 } }, { f: 80, pose: 'stand', pos: [0.8, 0] });
+  const tr = compileTrack(keys, poses, {}), fr = playActor(tr, 0, 40), over = c => fr.map((o, i) => o[c] - keyed(tr, i)[c]);
+  const peak = a => { let k = 20; for (let i = 20; i <= 32; i++) if (a[i] > a[k]) k = i; return k; };
+  const body = peak(over('spine.bend')), head = peak(over('neck.nod'));
+  assert.ok(over('spine.bend')[body] > 0.6, `the chest carries on ${over('spine.bend')[body].toFixed(2)} deg past the stop`);
+  assert.ok(head - body >= 2 && head - body <= 8, `body peaks at ${body}, head at ${head}`);
 });

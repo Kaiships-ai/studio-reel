@@ -22,10 +22,12 @@ flex in every frame; `--sheet` renders each clip's worst pose from the front, 3/
 - Gates: `rigtest.mjs` runs in gate 3 (Asset lock), `facebeat.mjs {film}` in gate 4 (Shot lock); both exit 1 on a fault.
 - The proof page's `view=turn&az=<deg>&at=<frame>` is a still camera round the body (az 0 = from ahead).
 - Moving hold (KIT-MICRO): every figure animated from keys (`anim`, motion.js `playActor`) gets `acting.js` `holdLife`
-  on top: a 3-4 s breath, two-octave head drift seeded per figure, a weight shift every 40-80 f (hips 3 cm, the head
-  `HOLD_LAG` 3 f behind), and a settle after each stop. Full while the keys hold, none while they move or on captured
-  (`raw`) keys. A film turns it off or up with the style dial `life` (0 off, 0.5 kit, 1 double). Measure it on a
-  locked camera: `refbench.mjs` "motion while the camera is still" (Rick band 1.21-3.67).
+  on top: a 3-4 s breath, two-octave head drift seeded per figure, a weight shift every 24-48 f (hips 3 cm, a tilt and
+  glance, almost no nod, the head `HOLD_LAG` 3 f behind), and a settle after each stop, a walk's last step included
+  (chest first, head 3 f later). Full while the keys hold, none while they move or on captured (`raw`) keys. A film
+  turns it off or up with the style dial `life` (0 off, 0.75 default, up to 2). Measure it on a locked camera:
+  `refbench.mjs` "motion while the camera is still" (Rick band 1.21-3.67), and check it reads: a blind A|B of 30-frame
+  strips at 30 fps against life 0, with no jitter call.
 
 ## How to get to it (user POV)
 
