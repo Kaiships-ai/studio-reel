@@ -126,12 +126,13 @@ export function idleBeats(seed, f) {
 // 1.6 deg and the head nods a third of it back. Head drift: two octaves per axis, the second half the size at about twice
 // the rate, periods and phases seeded per figure so two figures never move in step (one sine reads mechanical). Weight
 // shifts: a new small pose every 40-80 f, moved in MOVE_T frames with no kick (smoother): the hips 4 cm side to side, the
-// spine against them, a glance; the head follows the body HOLD_LAG frames late (overlap). Sized so a locked-camera hold
-// reads like the Rick clips' holds (styles/stick-man/bench: motion while the camera is still).
+// spine against them, a glance of a few degrees (a held look stays on its target); the head follows the body HOLD_LAG
+// frames late (overlap). Sized so a locked-camera hold reads like the Rick clips' holds (styles/stick-man/bench: motion
+// while the camera is still).
 export const HOLD_LAG = 3;
 function holdBeat(seed, i) {
   const h = k => 2 * hash(seed, i, k) - 1, alt = i % 2 ? 1 : -1, w = 0.6 + 0.4 * Math.abs(h(80));
-  return { hip: 0.07 * alt * w, side: 3.5 * alt * w, roll: -2 * alt * w, tilt: -3.5 * alt * w + 1.2 * h(81), turn: 7 * h(82), nod: 2.5 * h(83) };
+  return { hip: 0.07 * alt * w, side: 3.5 * alt * w, roll: -2 * alt * w, tilt: -3.5 * alt * w + 1.2 * h(81), turn: 4 * h(82), nod: 2.5 * h(83) };
 }
 function holdBeatAt(seed, f) {
   let t = IDLE_T0 + Math.round(20 * hash(seed, 79)), i = 0;
@@ -147,7 +148,7 @@ export function holdLife(seed, f) {
   const oct = (k, A, T) => A * Math.sin(6.283 * f / per(k, T) + ph(k + 1)) + 0.5 * A * Math.sin(6.283 * f / per(k + 2, 0.47 * T) + ph(k + 3));
   const b = holdBeatAt(seed, f), bh = holdBeatAt(seed, f - HOLD_LAG);
   return { 'spine.bend': 1.6 * br, bob: 0.007 * br, 'hip.x': b.hip, 'spine.side': b.side + oct(91, 1.0, 150), 'pelvis.roll': b.roll,
-    'neck.nod': -0.5 * br + oct(73, 1.3, 67) + bh.nod, 'neck.tilt': oct(77, 2.0, 101) + bh.tilt, 'neck.turn': oct(85, 2.6, 89) + bh.turn };
+    'neck.nod': -0.5 * br + oct(73, 1.3, 67) + bh.nod, 'neck.tilt': oct(77, 2.0, 101) + bh.tilt, 'neck.turn': oct(85, 1.8, 89) + bh.turn };
 }
 
 // An expression change comes with a body accent on the same frame: a head lift or dip, a shoulder shrug, a tilt. Every

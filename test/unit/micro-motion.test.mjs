@@ -20,9 +20,9 @@ test('a held pose is never a statue: chest and head move by whole degrees over 1
   for (const c of ['neck.tilt', 'neck.turn']) assert.ok(range(offsets(h, c)) >= 2, `${c} ${range(offsets(h, c)).toFixed(2)} deg`);
 });
 
-test('breath and drift stay inside their bounds (a hold never swims or jitters)', () => {
+test('breath and drift stay inside their bounds: a held look stays within 7 deg of its target, nothing swims or jitters', () => {
   const h = hold();
-  const lim = { 'spine.bend': 3, 'spine.side': 5, 'neck.nod': 6, 'neck.tilt': 8, 'neck.turn': 11 };
+  const lim = { 'spine.bend': 3, 'spine.side': 5, 'neck.nod': 6, 'neck.tilt': 8, 'neck.turn': 7 };
   for (const c of CH) { const a = offsets(h, c).map(Math.abs); assert.ok(Math.max(...a) <= lim[c], `${c} peaks at ${Math.max(...a).toFixed(2)} deg`); }
   // low frequency only: nothing turns faster than a calm glance (2.5 deg a frame), and no shake (out and back, each swing over 0.25 deg,
   // inside 8 frames)
