@@ -117,6 +117,18 @@ test('a bed that drops 20 dB for 2 s before a hit: the payoff, the dip and the b
   assert.ok(Math.abs(film.bedAtPayoff + 20) <= 3, `bed at the payoff ${film.bedAtPayoff} dB, expected -20`);
 });
 
+test('the bed at the payoff is read before the loud window, so the gaps inside a stuttering hit do not count', { skip }, async () => {
+  // a steady bed that stops for a burst of 20 ms shots every 150 ms (17.5-17.85 s): the loudest 400 ms holds the shots and
+  // the silence between them; the 2 s before it hold only the bed
+  const f = clip('stutter', ['-f', 'lavfi', '-i', `${SRC}:d=20`, '-f', 'lavfi', '-i', 'anoisesrc=color=pink:amplitude=0.1:r=48000:d=20:seed=7',
+    '-f', 'lavfi', '-i', "aevalsrc='if(between(t,17.5,17.85)*lt(mod(t-17.5,0.15),0.02),0.9*sin(2*PI*1000*t),0)':s=48000:d=20", '-filter_complex',
+    "[1]volume='if(between(t,17.5,18.5),0,1)':eval=frame[bed];[bed][2]amix=inputs=2:normalize=0:duration=first[a]",
+    '-map', '0:v', '-map', '[a]', '-c:a', 'aac', '-b:a', '192k', '-t', '20']);
+  const { film } = await measureVideo(f);
+  assert.ok(film.payoffT >= 17.8 && film.payoffT <= 18.1, `payoff at ${film.payoffT} s`);
+  assert.ok(Math.abs(film.bedAtPayoff) <= 3, `bed at the payoff ${film.bedAtPayoff} dB, expected about 0: the bed before the shots is the film's bed`);
+});
+
 test('a silent sound track reports silence: the row says so and the tool prints -inf', { skip }, async () => {
   const f = clip('silent', ['-f', 'lavfi', '-i', `${SRC}:d=3`, '-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=mono', '-c:a', 'aac', '-t', '3']);
   const row = await measureVideo(f);
