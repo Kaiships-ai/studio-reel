@@ -1,8 +1,8 @@
 // Far backdrop (KIT-DEPTH): rows of town blocks set 20-60 m out past a set's own walls, so the gap over a wall or down a
 // street shows a detailed far layer (window grids with a few lit panes, water tanks, a billboard, poles and wires) that the
 // lens blur and the air pass soften, instead of one flat colour. Pieces: assets/backdrop/ (tools/backdrop_blend.py).
-//   import { backdrop } from '/styles/stick-man/allout/sets/backdrop.js';
-//   await backdrop(stage, [{ piece: 'backdrop_skyline_a', at: [x, y, 0], rot: 90 }, ...], { tint });   // inside build()
+//   act.backdrop: { rows: [{ piece: 'backdrop_skyline_a', at: [x, y, 0], rot: 90 }, ...], tint }   (engine/play.js calls this)
+//   await backdrop(stage, rows, { tint });   // or from a set's own build()
 // tint multiplies the pieces' colours (a row may carry its own). The toon ramp ignores light intensity, so a night set
 // graded up 2-3x needs dark albedos: Hot Money's night lot reads right at about 0.17. Lit windows and signs keep their glow.
 // A piece's facade faces -y at rot 0 (Blender degrees about z); it never collides, casts no ink line, is not dressing.

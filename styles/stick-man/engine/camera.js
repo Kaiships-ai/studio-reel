@@ -24,10 +24,10 @@ const INSERTS = new Set(['insert', 'macro']);
 // distance (thin lens: f^2 / (N (s - f))). KIT-DEPTH: Rick clip depth ratio 1.80-2.20, ours 1.64 with every medium shot
 // sharp to the back wall. LENS_BAND keeps everything from 0.7x to 1.6x the focus distance sharp, so a subject whose head
 // sits behind the aim point (a flyCam flight) never softens; only what is well behind it blurs. A band makes play.js use
-// a 20 px blur radius instead of 14, so 1.26 = 1.8 x 14 / 20: a 30 mm medium shot at 4 m gets 0.32, a 17 mm wide at 6 m
-// 0.07 (readable); the 0.42 cap keeps a close shot from melting the set on a phone frame
+// a 20 px blur radius instead of 14. 0.9 and the 0.3 cap are set on the bench: the r4 lot medium shot (frames 590-760)
+// reads 2.02 (1.26 / 0.42 read 2.28, over the band); a 30 mm medium shot at 4 m gets 0.23, a 17 mm wide at 6 m 0.05
 export const LENS_BAND = [0.7, 1.6];
-export const lensBlur = (lens, dist) => clamp(1.26 * (lens / 30) ** 2 / Math.max(dist, 0.3), 0, 0.42);
+export const lensBlur = (lens, dist) => clamp(0.9 * (lens / 30) ** 2 / Math.max(dist, 0.3), 0, 0.3);
 const KIND = {
   two: { lens: 28, h: 1.25, size: 0.43, headY: 0.33, dof: 'lens' },
   ms: { lens: 30, h: 1.25, size: 0.43, headY: 0.32, dof: 'lens' },

@@ -14,7 +14,7 @@ const shot = (kind, opt = {}) => ({ f: 0, kind, subjects: ['you'], opt, push: 0,
 test('lensBlur grows with focal length, falls with distance, and is capped', () => {
   assert.ok(lensBlur(50, 4) > lensBlur(30, 4), 'a longer lens blurs more');
   assert.ok(lensBlur(30, 6) < lensBlur(30, 3), 'a farther focus blurs less');
-  assert.equal(lensBlur(80, 0.5), 0.42, 'capped so a phone frame keeps its world');
+  assert.equal(lensBlur(80, 0.5), 0.3, 'capped so a phone frame keeps its world');
   assert.ok(lensBlur(17, 6) < 0.1, 'a 17 mm wide at 6 m stays nearly sharp');
 });
 

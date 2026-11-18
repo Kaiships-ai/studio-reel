@@ -111,6 +111,9 @@ async function buildAct(R, X) {
   // the set's meshes and lights go into this act's group (shown only while the act is on screen)
   const group = new THREE.Group(), before = new Set(stage.scene.children), bg0 = stage.scene.background;
   const built = await SET.build(stage, { use: R.use || [], ...(R.setOpts || {}) });   // act.use: opt-in set props (street: police, bag)
+  // act.backdrop { rows: [{ piece, at, rot, tint }], tint }: far town rows past the set's walls (allout/sets/backdrop.js),
+  // loaded here so they are in place before the first frame and belong to this act's group like the set itself
+  if (R.backdrop) await (await import('../allout/sets/backdrop.js')).backdrop(stage, R.backdrop.rows, { tint: R.backdrop.tint });
   for (const c of [...stage.scene.children]) if (!before.has(c)) group.add(c);
   let background = stage.scene.background; stage.scene.background = bg0; stage.scene.add(group); group.visible = false;
   // act haze: { color (sRGB), near, far } m: distance fog toward the sky colour (aerial perspective), shown with the act
