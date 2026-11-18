@@ -4,7 +4,7 @@
 //   import { backdrop } from '/styles/stick-man/allout/sets/backdrop.js';
 //   await backdrop(stage, [{ piece: 'backdrop_skyline_a', at: [x, y, 0], rot: 90 }, ...], { tint });   // inside build()
 // tint multiplies the pieces' colours (a row may carry its own). The toon ramp ignores light intensity, so a night set
-// graded up 2-3x needs dark albedos: Hot Money's night lot reads right at about 0.3. Lit windows and signs keep their glow.
+// graded up 2-3x needs dark albedos: Hot Money's night lot reads right at about 0.17. Lit windows and signs keep their glow.
 // A piece's facade faces -y at rot 0 (Blender degrees about z); it never collides, casts no ink line, is not dressing.
 // It ignores the act's linear haze (full at 34-60 m, which flattens a far row to one colour); the stage's air pass, coloured
 // by the sky, fades it instead and keeps its windows and roofline readable under the blur.

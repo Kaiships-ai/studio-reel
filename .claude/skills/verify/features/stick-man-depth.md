@@ -20,7 +20,7 @@ Rick clip bench (`styles/stick-man/bench/TABLE.md`, depth ratio, luma, saturatio
 - Act `grade.sky` (`{ glow, clouds }` or `false`) and `grade.air` (`{ k, near, scale, desat }` or `false`) tune or turn
   off the dome and the air for one act.
 - `backdrop(stage, rows, { tint })`: a row `{ piece, at, rot, scale, tint }`. The toon ramp ignores light intensity, so a
-  night set graded up 2-3x needs a dark tint (about 0.3). Lit windows keep their glow. The pieces ignore the act's
+  night set graded up 2-3x needs a dark tint (about 0.17). Lit windows keep their glow. The pieces ignore the act's
   linear haze; the air pass fades them.
 - Captions and overlays are drawn on the 2D canvas over the WebGL one, so the blur never reaches a word.
 

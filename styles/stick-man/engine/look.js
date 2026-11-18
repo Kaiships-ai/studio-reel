@@ -381,7 +381,7 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1
         // at night the air scatters a darker colour than the glowing horizon (a far row stays a mid-dark mass with lit
         // windows, not a pale cut-out); by day it is the sky itself
         float day = smoothstep(0.08, 0.35, dot(uBg, vec3(0.2126, 0.7152, 0.0722)));
-        gl_FragColor = vec4(mix(g, skyAt(dir) * mix(0.55, 1.0, day), a), c.a);
+        gl_FragColor = vec4(mix(g, skyAt(dir) * mix(0.3, 1.0, day), a), c.a);
       }` });
   airPass.uniforms.tD.value = nrt.depthTexture;
   for (const n of ['uBg', 'uGlow', 'uCloud']) airPass.uniforms[n] = skyU[n];      // ShaderPass clones uniforms: share the sky's
