@@ -161,8 +161,9 @@ def check(plan, film, stem):
         ref = ys[f][int(d * FS):int((d + L) * FS)]; a = int(max(0, s['beat'] - 1.0) * FS)
         win = m[a:a + int((2.0 + L) * FS)]
         if len(win) < len(ref) or not ref.any(): continue
-        c = fftconvolve(win, ref[::-1], 'valid'); e = np.sqrt(fftconvolve(win ** 2, np.ones(len(ref)), 'valid')) + 1e-12
-        k = int(np.argmax(c / e)); rows.append((s['section'], s['beat'], a / FS + k / FS))
+        c = fftconvolve(win, ref[::-1], 'valid'); e = np.sqrt(np.maximum(fftconvolve(win ** 2, np.ones(len(ref)), 'valid'), 0))
+        r = np.where(e > 0.1 * e.max(), c / (e + 1e-12), -np.inf)       # lags over a silence would divide by nothing
+        rows.append((s['section'], s['beat'], a / FS + int(np.argmax(r)) / FS))
     print(f'{"section":10} {"beat":>7} {"cut in stem":>11} {"gap":>7}')
     for st, b, c in rows: print(f'{st:10} {b:7.2f} {c:11.3f} {c - b:+7.3f}')
     gaps = np.abs([c - b for _, b, c in rows])
