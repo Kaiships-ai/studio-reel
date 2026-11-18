@@ -989,7 +989,7 @@
     "text": "REPORT\nSENT",
     "bg": "#c8302a",
     "fg": "#ffffff",
-    "k": 0.5
+    "k": 0.2
    },
    "show": [
     12.3,

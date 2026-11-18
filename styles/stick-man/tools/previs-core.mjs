@@ -75,18 +75,21 @@ export function boundaries(shots, join = 'scene') {
 }
 
 // Camera keys for shots already placed in time ({ t0, t1, ...shot }) with their subject's position at both ends
-// (`from`, `to`: [x, z]). At a flight the camera leaves shot A `fly` seconds before B starts and settles `fly` after.
-export function cameraKeys(shots, kinds, { fly = 0.5, dir = 'L>R' } = {}) {
-  const keys = [];
-  shots.forEach((s, i) => {
+// (`from`, `to`: [x, z]). At a flight the camera leaves shot A before B starts and settles after it: half a second each
+// side, longer when the camera travels further (12 m/s, so a flight to another set reads as a flight, not a cut), never
+// more than 45 % of either shot.
+export function cameraKeys(shots, kinds, { fly = 0.5, dir = 'L>R', speed = 12 } = {}) {
+  const ends = shots.map(s => {
     const [e0, e1] = moveEnds(s.move, s.dir ?? dir);
     if (s.ots) { e0.az = (e0.az ?? 0) + 15; e1.az = (e1.az ?? 0) + 15; }   // on the partner, past your shoulder
-    const inFly = i > 0 && kinds[i - 1] === 'flight', outFly = kinds[i] === 'flight';
-    const half = Math.min(fly, (s.t1 - s.t0) * 0.3);
-    const a = inFly ? s.t0 + half : s.t0, b = outFly ? s.t1 - Math.min(fly, (shots[i + 1].t1 - shots[i + 1].t0) * 0.3) : s.t1;
-    keys.push([a, ...framing(s, s.from, e0)], [Math.max(a, b), ...framing(s, s.to, e1)]);
+    return [framing(s, s.from, e0), framing(s, s.to, e1)];
   });
-  return keys;
+  const half = kinds.map((k, i) => k !== 'flight' ? 0 : Math.min(Math.max(fly, Math.hypot(...[0, 1, 2].map(j => ends[i][1][j] - ends[i + 1][0][j])) / speed / 2),
+    (shots[i].t1 - shots[i].t0) * 0.45, (shots[i + 1].t1 - shots[i + 1].t0) * 0.45));
+  return shots.flatMap((s, i) => {
+    const a = s.t0 + (i ? half[i - 1] : 0), b = s.t1 - (half[i] ?? 0);
+    return [[a, ...ends[i][0]], [Math.max(a, b), ...ends[i][1]]];
+  });
 }
 
 // Takes from cut times: [{ t0, t1 }] and the numbers refbench and cutgate measure on a render.

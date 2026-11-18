@@ -108,3 +108,12 @@ test('a car in the props drives with the lead in a moving shot, and the cruiser 
   assert.equal(car.keys.at(-1)[1] - car.keys[0][1], 10, 'the car drives 10 m with you');
   assert.ok(cop.keys[0][1] < car.keys[0][1], 'the cruiser follows behind');
 });
+
+test('a flight to a set 40 m away takes longer than a flight inside one set', () => {
+  const two = (x) => [
+    { id: 'A', scene: 'S1', size: 'MS', lens: 27, move: 'static', t0: 0, t1: 8, from: [0, 0], to: [0, 0] },
+    { id: 'B', scene: 'S1', size: 'MS', lens: 27, move: 'static', t0: 8, t1: 16, from: [x, 0], to: [x, 0] }];
+  const span = x => { const k = cameraKeys(two(x), ['flight']); return k[2][0] - k[1][0]; };
+  assert.equal(span(1), 1, 'a short hop flies for 1 s');
+  assert.ok(span(40) > 3, `a flight across 40 m takes ${span(40).toFixed(1)} s`);
+});

@@ -84,7 +84,7 @@ export function autoWorld(shots, { join = 'scene', dir = 'L>R', x0 = 1000 } = {}
       if (!o.box.keys.length) props.push(o.box, o.tag);
       const [a, b] = drives ? [v.drive(subFrom, step), v.drive(subTo, step)] : [o.at, o.at];
       o.box.keys.push([s.t0, a[0], v.s[1] / 2, a[1]], [s.t1, b[0], v.s[1] / 2, b[1]]);
-      o.tag.keys.push([s.t0, a[0], v.s[1] + 0.4, a[1]], [s.t1, b[0], v.s[1] + 0.4, b[1]]);
+      o.tag.keys.push([s.t0, a[0], 2.5, a[1]], [s.t1, b[0], 2.5, b[1]]);   // above the heads
       o.box.show[1] = o.tag.show[1] = s.t1; o.at = b;
     }
     const lookAt = s.size === 'OTS' && cast[1] ? cast[1] : sub, subj = lookAt ? `${lookAt}@${z}` : null;
@@ -191,7 +191,7 @@ async function capture(worldFile, n, framesDir, only) {
 
 function writeEvidence(dir, name, row) {
   const file = path.join(dir, 'review/previs/previs.md'), rows = {};
-  if (fs.existsSync(file)) for (const m of fs.readFileSync(file, 'utf8').matchAll(/^\| `(.+?)` \|.*$/gm)) rows[m[1]] = m[0];
+  if (fs.existsSync(file)) for (const m of fs.readFileSync(file, 'utf8').matchAll(/^\| `(.+?)` \| `(.+?)` \|.*$/gm)) if (fs.existsSync(path.join(dir, m[2]))) rows[m[1]] = m[0];
   rows[name] = `| \`${name}\` | ${row.video} | ${row.dur.toFixed(1)} | ${row.r.cuts} | ${row.r.cutsPerMin} | ${row.r.medianTake} | ${row.r.longestTake} | ${row.r.worst15} | ${row.stages} |`;
   fs.writeFileSync(file, ['by: self', `of: previs.mjs on ${path.basename(dir)}, ${new Date().toISOString().slice(0, 16)}Z`, '',
     '# Previs and animatic', '', 'Grey blockouts with the camera path and the voice, made by `styles/stick-man/tools/previs.mjs`.', '',
