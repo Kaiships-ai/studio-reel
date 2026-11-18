@@ -274,6 +274,13 @@ def write(S, L, R, G, out, name):
     return paths
 
 
+def video_seconds(path):
+    probe = shutil.which('ffprobe', path=os.path.dirname(sound.FFMPEG)) or shutil.which('ffprobe') or 'ffprobe'
+    r = subprocess.run([probe, '-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=duration:format=duration', '-of', 'json', path],
+                       capture_output=True, text=True, check=True)
+    j = json.loads(r.stdout); return float(next((s['duration'] for s in j.get('streams', []) if 'duration' in s), j['format']['duration']))
+
+
 def mux(video, wav, out):
     subprocess.run([sound.FFMPEG, '-y', '-v', 'error', '-i', video, '-i', wav, '-map', '0:v:0', '-map', '1:a:0', '-c:v', 'copy',
                     '-c:a', 'aac', '-b:a', '256k', '-shortest', out], check=True)
@@ -310,7 +317,8 @@ def report(S, L, R, G, paths, ceil, mp4):
         out.append(f'  without {M["peak"]} {a0:.2f}-{z0:.2f}: sfx {lufs([x[cut] for x in (sL, sR)]):.1f}, music {lufs([x[cut] for x in (mL, mR)]):.1f} LUFS')
     out += [f'mix        {lv["mix"][0]:6.1f} LUFS   target -14 +-0.5 {ok(abs(lv["mix"][0] + 14) <= 0.5)}',
             f'true peak  {lv["mix"][1]:6.1f} dBTP   target <= -1   {ok(lv["mix"][1] <= -1)}']
-    if mp4: out.append(f'mp4        {mp4["I"]:6.1f} LUFS, true peak {mp4["tp"]:.1f} dBTP (AAC 256k, measured on {mp4["path"]}, {mp4["tries"]} encode(s))   target <= {MP4_TP:.1f}   {ok(mp4["tp"] <= MP4_TP)}')
+    if mp4: out.append(f'mp4        {mp4["I"]:6.1f} LUFS, true peak {mp4["tp"]:.1f} dBTP (AAC 256k, measured on {mp4["path"]}, {mp4["tries"]} encode(s))   '
+                       f'target -14 +-0.5, <= {MP4_TP:.1f}   {ok(mp4["tp"] <= MP4_TP and abs(mp4["I"] - MIX_LU) <= 0.5)}')
     out += [f'length     {N / SR:.3f} s   target {S["length"]:.3f}{" (music.json length)" if "length" in M else " (the voice)"}   {ok(abs(N / SR - S["length"]) < 0.001)}',
             f'words with SFX within 6 dB of the voice in 2-8 kHz: {len(hot)} {hot[:8]}   {ok(len(hot) <= 3)}',
             f'voice over everything else, 200-6000 Hz, voiced parts of each word: median {np.median(s):.1f} dB, 10th pct {np.percentile(s, 10):.1f} dB, '
@@ -338,16 +346,22 @@ def main():
     ap.add_argument('--mux', nargs=2, metavar=('VIDEO', 'OUT_MP4'))
     args = ap.parse_args(); film = args.film.rstrip('/'); out = args.out or os.path.join(film, 'audio')
     S = prepare(film, args)
+    if args.mux and abs((v := video_seconds(args.mux[0])) - S['N'] / SR) > 0.1:
+        sys.exit(f'mix.py: video {v:.3f} s and mix {S["N"] / SR:.3f} s differ by more than 0.1 s; '
+                 f'muxing would cut the longer one short (set music.json length to the video)')
     ceil = TP_CEIL; mp4 = None
     for tries in range(1, 4):
-        L, R, G = master(S, ceil); paths = write(S, L, R, G, out, args.name)
+        used = ceil; L, R, G = master(S, used); paths = write(S, L, R, G, out, args.name)
         if not args.mux: break
         I, tp = mux(args.mux[0], paths['mix'], args.mux[1]); mp4 = dict(I=I, tp=tp, path=args.mux[1], tries=tries)
-        print(f'mix.py: mp4 encode {tries}: {I:.1f} LUFS, true peak {tp:.1f} dBTP at limiter ceiling {ceil:.2f}')
+        print(f'mix.py: mp4 encode {tries}: {I:.1f} LUFS, true peak {tp:.1f} dBTP at limiter ceiling {used:.2f}')
         if tp <= MP4_TP: break
-        ceil -= tp - MP4_TP + 0.3
-    lines = report(S, L, R, G, paths, ceil, mp4)
+        ceil = used - (tp - MP4_TP + 0.3)
+    lines = report(S, L, R, G, paths, used, mp4)
     open(os.path.join(out, 'levels.txt' if args.name == 'mix' else f'levels-{args.name}.txt'), 'w').write('\n'.join(lines) + '\n'); print('\n'.join(lines[:16]))
+    if mp4 and (mp4['tp'] > MP4_TP or abs(mp4['I'] - MIX_LU) > 0.5):
+        sys.exit(f'mix.py: {mp4["path"]} is at {mp4["I"]:.1f} LUFS, true peak {mp4["tp"]:.1f} dBTP after {mp4["tries"]} encode(s); '
+                 f'targets {MIX_LU:.0f} +-0.5 LUFS and <= {MP4_TP:.1f} dBTP')
 
 
 if __name__ == '__main__':

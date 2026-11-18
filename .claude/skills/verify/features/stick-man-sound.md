@@ -26,7 +26,9 @@
   `glass_smash`, never "hot" on `gunshot`; the, a, an, of, to and and are ignored) or a cue sets `"keep": true`. Under any other word ("hit the car" under the gunshot) the word wins: Hot Money r4 goes from 4/255 words under
   +6 dB to 0/255, and the gunshots at 43.47 s and 43.8 s give up about 3 dB of transient.
 - `sound.mux`: `--mux <video> <out.mp4>` encodes AAC 256k, measures the mp4's true peak with ebur128 and, while it is over
-  −1.0 dBTP, lowers the limiter ceiling by the overshoot plus 0.3 dB and encodes again (3 encodes at most).
+  −1.0 dBTP, lowers the limiter ceiling by the overshoot plus 0.3 dB and encodes again (3 encodes at most). It exits
+  non-zero, saying why, when the final mp4 is over −1.0 dBTP or outside −14 ±0.5 LUFS, and before any encode when the video
+  and the mix differ by more than 0.1 s. `levels.txt` prints the ceiling of the last encode.
 
 ## How to get to it (user POV)
 
