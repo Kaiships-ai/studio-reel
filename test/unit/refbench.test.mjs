@@ -126,11 +126,13 @@ test('a silent sound track reports silence: the row says so and the tool prints 
   assert.match(r.stdout, /true peak \(dBFS\)\s+-inf \(silent\)/);
 });
 
-test('saturation and luma come from one print per frame: a long clip matches one-key passes', { skip }, () => {
-  const f = clip('long', ['-f', 'lavfi', '-i', 'testsrc2=s=180x320:r=30:d=100']);
+test('saturation and luma come from one print per frame: a long clip gives one value a frame, as one-key passes do', { skip }, () => {
+  // 100 s at 720 x 1280: two chained print filters interleave their buffers here and lose a value (2999 of 3000 frames)
+  const f = clip('long', ['-f', 'lavfi', '-i', 'testsrc2=s=720x1280:r=30:d=100']);
   const one = key => run('ffmpeg', ['-hide_banner', '-nostdin', '-v', 'error', '-i', f, '-an', '-vf', `scale=180:-2,signalstats,metadata=print:key=lavfi.signalstats.${key}:file=-`, '-f', 'null', '-'], { capture: true })
     .stdout.split('\n').map(l => l.match(new RegExp(`${key}=([\\d.]+)`))).filter(Boolean).map(m => Number(m[1]));
   const { Y, S } = lookStats(f);
+  assert.deepEqual([Y.length, S.length], [3000, 3000], 'one YAVG and one SATAVG for each of the 3000 frames');
   assert.deepEqual(Y, one('YAVG'));
   assert.deepEqual(S, one('SATAVG'));
 });
