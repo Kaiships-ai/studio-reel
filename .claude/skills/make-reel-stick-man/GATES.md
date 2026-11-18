@@ -39,6 +39,8 @@ node styles/stick-man/tools/scriptlint.mjs films/<slug>   # review/scriptlint.md
 ```sh
 node styles/stick-man/tools/prepro.mjs films/<slug>                 # review/prepro.md, review/intensity.svg, review/shots.csv
 node styles/stick-man/tools/animatic.mjs films/<slug> --v N --safe 1 # review/animatic_vNNN.mp4 + the CUTS line for reel.js
+node styles/stick-man/tools/previs.mjs films/<slug> --film           # review/previs/animatic.mp4 (3D blockout, temp music) + previs.md for ◇2b
+node styles/stick-man/tools/previs.mjs films/<slug> --scene <name>   # one scene: previs/<name>.json, or a storyboard scene id
 ```
 
 `prepro.mjs` exits 1 on a FAIL. Its checks (ids T, B, C, P, H, I) and the fix for each are in PREPRO.md section 8. A WARN

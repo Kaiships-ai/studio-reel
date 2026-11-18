@@ -117,6 +117,18 @@
    ],
    "evidence": [
     {
+     "file": "review/previs/previs.md",
+     "by": "self",
+     "why": "previs of the scenes and the whole-film animatic with temp music: camera path, hard cuts and camera flights, voice under (previs.mjs, SKILL.md [1.6p])",
+     "sections": [
+      "^#+ .*takes",
+      "`animatic`"
+     ],
+     "newerThan": [
+      "storyboard.json"
+     ]
+    },
+    {
      "file": "review/camplan.md",
      "by": "self",
      "why": "floor plan per scene: the 180° line and each shot's camera position (image linked inside)",
