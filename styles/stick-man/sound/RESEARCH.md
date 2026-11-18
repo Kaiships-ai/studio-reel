@@ -17,7 +17,7 @@ for the next film. The numbers come from `styles/stick-man/tools/refbench.mjs` (
 | Speech share | 100 % | 69 % | 69 % | Silero VAD |
 | Bed under the loud parts | 15.5 dB (15.4 to 17.3) | 18.2 | 17.5 / 19.2 / 17.5 | 50 ms blocks, 5 s sections |
 | Biggest bed drop between sections | 4.0 dB (3.5 to 6.9) | 17.0 | 17.6 / 16.0 / 17.9 | same |
-| Bed in the 2 s before the payoff, against the median bed | 7.2 dB (1.5 to 11.5) | 15.5 | 11.6 / 12.6 / 11.6 | same |
+| Bed in the 2 s before the payoff, against the median bed | 3.2 dB (1.5 to 8.9) | 15.3 | 11.6 / 12.2 / 11.6 | same |
 | Dip before the payoff | 2.0 dB (1.7 to 5.8) | -0.3 | 0.5 / 0.9 / 0.8 | short-term loudness, 3 s before the loudest moment |
 | Effects a listener hears, per minute | 15.7 (15.6 to 23.5) | 12.7 | A: 23.3 and 19.3 (two runs) | listening count (below) |
 
