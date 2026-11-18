@@ -69,3 +69,38 @@ test('a click track fit to a film cuts on its bar lines at every story beat and 
     }
   } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
 });
+
+// the fitted music placed as mix.py places it, then shifted late by `shift` s and cut to `length` s, as a 48 kHz stem
+const STEM = `import json, sys, numpy as np, soundfile as sf
+sys.path.insert(0, ${JSON.stringify(TOOLS)}); import mix
+film, plan, out, shift, length = sys.argv[1], json.load(open(sys.argv[2])), sys.argv[3], float(sys.argv[4]), float(sys.argv[5])
+T = plan['track']; y = mix.segments({T['file']: mix.decode(film + '/' + T['file'])}, T, int(30 * 48000))
+y = np.concatenate([np.zeros((int(shift * 48000), 2)), y])[:int(length * 48000)]
+sf.write(out, y, 48000)`;
+
+test('--check passes the fitted stem, and fails one a fifth of a second late or one it cannot measure', { skip }, () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sound-fit-check-'));
+  try {
+    const film = path.join(tmp, 'film'); fs.mkdirSync(path.join(film, 'audio'), { recursive: true });
+    assert.equal(run('python', ['-I', '-c', CLICKS, path.join(film, 'audio/clicks.wav')], { capture: true }).status, 0);
+    fs.writeFileSync(path.join(film, 'audio/music.json'), JSON.stringify({ arc: ARC, length: 30, mus_lu: -10 }));
+    fs.writeFileSync(path.join(film, 'audio/sound-plan.json'), JSON.stringify({ silences: SILENCE.map(t => ({ t })) }));
+    const plan = path.join(film, 'audio/music-fit.json');
+    assert.equal(run('python', ['-I', path.join(TOOLS, 'sound_fit.py'), film, path.join(film, 'audio/clicks.wav'), '--mus-lu', '-10', '--out', plan], { capture: true }).status, 0);
+    const check = (shift, length = 30) => {
+      const stem = path.join(tmp, `stem-${shift}-${length}.wav`);
+      const s = run('python', ['-I', '-c', STEM, film, plan, stem, String(shift), String(length)], { capture: true });
+      assert.equal(s.status, 0, s.stderr);
+      return run('python', ['-I', path.join(TOOLS, 'sound_fit.py'), film, stem, '--check', plan], { capture: true });
+    };
+    const on = check(0);
+    assert.equal(on.status, 0, on.stdout + on.stderr);
+    const late = check(0.2);
+    assert.notEqual(late.status, 0, `a stem 0.2 s late passed:\n${late.stdout}`);
+    assert.match(on.stdout, /5\/5 sections within 0\.033 s/);
+    assert.match(late.stdout, /chase\s+13\.00\s+13\.2\d\d\s+\+0\.2\d\d/, 'the gap is printed per section');
+    const cut = check(0, 20);
+    assert.notEqual(cut.status, 0, `a stem that stops before the last two sections passed:\n${cut.stdout}`);
+    assert.match(cut.stdout, /calm\s+23\.00\s+not measured/);
+  } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
+});
