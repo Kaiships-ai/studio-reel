@@ -121,6 +121,36 @@ export function idleBeats(seed, f) {
   }
 }
 
+// The moving hold of a figure animated from keys (motion.js playActor adds it while the keys hold). Degrees on the spine,
+// neck and pelvis, W on bob and hip.x. Breath: one cycle every 90-120 f (3-4 s, a person at rest), the chest bends
+// 1.6 deg and the head nods a third of it back. Head drift: two octaves per axis, the second half the size at about twice
+// the rate, periods and phases seeded per figure so two figures never move in step (one sine reads mechanical). Weight
+// shifts: a new small pose every 24-48 f, so every second of a hold has one readable event, moved in HOLD_MOVE frames
+// with no kick (smoother): the hips 3 cm side to side, the spine against them, a tilt and a glance of a few degrees (a
+// held look stays on its target), almost no nod (a nod tips a cap's crown to the lens and shows the hair through it);
+// the head follows the body HOLD_LAG frames late (overlap).
+export const HOLD_LAG = 3, HOLD_MOVE = 18;
+function holdBeat(seed, i) {
+  const h = k => 2 * hash(seed, i, k) - 1, alt = i % 2 ? 1 : -1, w = 0.6 + 0.4 * Math.abs(h(80));
+  return { hip: 0.05 * alt * w, side: 2.5 * alt * w, roll: -1.5 * alt * w, tilt: -2 * alt * w + 1.2 * h(81), turn: 2.5 * h(82), nod: 0.6 * h(83) };
+}
+function holdBeatAt(seed, f) {
+  let t = IDLE_T0 + Math.round(20 * hash(seed, 79)), i = 0;
+  for (;;) {
+    const gap = 24 + Math.round(24 * hash(seed, i, 78));
+    if (f < t + gap) return mixPose(holdBeat(seed, i - 1), holdBeat(seed, i), smoother((f - t) / HOLD_MOVE));
+    t += gap; i++;
+  }
+}
+export function holdLife(seed, f) {
+  const ph = k => 6.283 * hash(seed, k), per = (k, T) => T * (0.85 + 0.3 * hash(seed, k));
+  const br = Math.sin(6.283 * f / (90 + 30 * hash(seed, 71)) + ph(72));
+  const oct = (k, A, T) => A * Math.sin(6.283 * f / per(k, T) + ph(k + 1)) + 0.5 * A * Math.sin(6.283 * f / per(k + 2, 0.47 * T) + ph(k + 3));
+  const b = holdBeatAt(seed, f), bh = holdBeatAt(seed, f - HOLD_LAG);
+  return { 'spine.bend': 1.6 * br, bob: 0.007 * br, 'hip.x': b.hip, 'spine.side': b.side + oct(91, 1.0, 150), 'pelvis.roll': b.roll,
+    'neck.nod': -0.5 * br + oct(73, 0.6, 67) + bh.nod, 'neck.tilt': oct(77, 2.0, 101) + bh.tilt, 'neck.turn': oct(85, 1.8, 89) + bh.turn };
+}
+
 // An expression change comes with a body accent on the same frame: a head lift or dip, a shoulder shrug, a tilt. Every
 // take and fast face has one (rule 10; it was missing for panic, scream, pain, angry and furious).
 const ACCENT = {
