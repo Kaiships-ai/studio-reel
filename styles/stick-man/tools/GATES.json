@@ -216,6 +216,14 @@
      "args": [
       "{film}"
      ]
+    },
+    {
+     "tool": "kituse.mjs",
+     "args": [
+      "{film}",
+      "--gate",
+      "4"
+     ]
     }
    ],
    "evidence": [
@@ -260,6 +268,14 @@
      "tool": "shotgate.mjs",
      "args": [
       "{film}"
+     ]
+    },
+    {
+     "tool": "kituse.mjs",
+     "args": [
+      "{film}",
+      "--gate",
+      "5"
      ]
     }
    ],
