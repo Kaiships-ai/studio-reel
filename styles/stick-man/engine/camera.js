@@ -20,10 +20,18 @@ const CAPTION = [0.66, 0.78];
 // top, hat included, at least 4 % below the frame's top edge; the camera backs off until it is
 const HEAD_TOP = 0.40;
 const INSERTS = new Set(['insert', 'macro']);
+// lens blur sized like a real lens: the blur of a background at infinity grows with focal length squared over the focus
+// distance (thin lens: f^2 / (N (s - f))). KIT-DEPTH: Rick clip depth ratio 1.80-2.20, ours 1.64 with every medium shot
+// sharp to the back wall. LENS_BAND keeps everything from 0.7x to 1.6x the focus distance sharp, so a subject whose head
+// sits behind the aim point (a flyCam flight) never softens; only what is well behind it blurs. A band makes play.js use
+// a 20 px blur radius instead of 14. 0.9 and the 0.3 cap are set on the bench: the r4 lot medium shot (frames 590-760)
+// reads 2.02 (1.26 / 0.42 read 2.28, over the band); a 30 mm medium shot at 4 m gets 0.23, a 17 mm wide at 6 m 0.05
+export const LENS_BAND = [0.7, 1.6];
+export const lensBlur = (lens, dist) => clamp(0.9 * (lens / 30) ** 2 / Math.max(dist, 0.3), 0, 0.3);
 const KIND = {
-  two: { lens: 28, h: 1.25, size: 0.43, headY: 0.33, dof: 0 },
-  ms: { lens: 30, h: 1.25, size: 0.43, headY: 0.32, dof: 0 },
-  follow: { lens: 28, h: 1.22, size: 0.44, headY: 0.32, dof: 0 },
+  two: { lens: 28, h: 1.25, size: 0.43, headY: 0.33, dof: 'lens' },
+  ms: { lens: 30, h: 1.25, size: 0.43, headY: 0.32, dof: 'lens' },
+  follow: { lens: 28, h: 1.22, size: 0.44, headY: 0.32, dof: 'lens' },
   cu: { lens: 38, h: 1.38, head: 0.25, headY: 0.30, dof: 0.6 },
   insert: { lens: 40, h: 1.30, dof: 1 },
   wide: { lens: 26, h: 1.30, size: 0.26, headY: 0.36, dof: 0 },
@@ -198,9 +206,10 @@ export function createCamera({ aspect, side = [0, -1], bounds = null, zRange = [
       }
       c.pos[0] = best[0]; c.pos[1] = best[1];
     }
-    c.dof = K.dof; c.roll = c.roll || 0; c.band = K.band || null;
+    c.roll = c.roll || 0; c.band = K.dof === 'lens' ? LENS_BAND : K.band || null;
     c.focus = S.kind === 'insert' ? c.aim.slice() : S.kind === 'macro' ? (S.opt.label ? A(S.opt.label).center : A(S.subjects[0]).center)
       : S.kind === 'ots' ? A(S.subjects[0]).head : A(S.subjects[0]).head;
+    c.dof = K.dof === 'lens' ? lensBlur(c.lens, Math.hypot(...c.pos.map((x, i) => x - c.focus[i]))) : K.dof;
     return keep(c, S, A, 1, f);
   }
   // the orbit shots: where the camera looks from (azimuth, elevation) and how much it takes in, from the subjects

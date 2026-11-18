@@ -561,6 +561,8 @@ export function sky(K, { zenith = '#3f78d6', mid = '#6f9fe6', horizon = '#d9d2e6
   const m = new THREE.MeshBasicMaterial({ map: t, side: THREE.BackSide, depthWrite: false, fog: false }); m.userData.noToon = true; m.userData.rkSkip = true;
   const d = new THREE.Mesh(new THREE.SphereGeometry(r, 64, 32), m); d.frustumCulled = false; d.renderOrder = -10; d.userData.noPrepass = true; d.userData.noInk = true; d.userData.rkSkip = true;
   d.onBeforeRender = (rd, sc, cam) => { d.position.copy(cam.position); d.updateMatrixWorld(); };
+  // the act's background is what the stage's air pass (look.js) fades far surfaces toward: give it this sky's horizon
+  if (K.root.parent?.isScene) K.root.parent.background = col(horizon);
   K.root.add(d); return d;
 }
 

@@ -1,0 +1,61 @@
+{
+ "source": "backdrop.blend",
+ "pieces": {
+  "backdrop_skyline_a": {
+   "from": "backdrop_skyline_a",
+   "bytes": 100588,
+   "tris": 1280,
+   "materials": 14,
+   "lo": [
+    -16.15,
+    -0.4,
+    0.0
+   ],
+   "hi": [
+    16.15,
+    6.0,
+    18.412
+   ],
+   "decimate": 1.0,
+   "sec": 0.06
+  },
+  "backdrop_skyline_b": {
+   "from": "backdrop_skyline_b",
+   "bytes": 142632,
+   "tris": 1868,
+   "materials": 15,
+   "lo": [
+    -16.15,
+    -0.4,
+    0.0
+   ],
+   "hi": [
+    16.15,
+    6.0,
+    31.5
+   ],
+   "decimate": 1.0,
+   "sec": 0.03
+  },
+  "backdrop_roofline": {
+   "from": "backdrop_roofline",
+   "bytes": 122984,
+   "tris": 1602,
+   "materials": 12,
+   "lo": [
+    -16.1,
+    -1.505,
+    0.0
+   ],
+   "hi": [
+    16.002,
+    5.0,
+    11.8
+   ],
+   "decimate": 1.0,
+   "sec": 0.03
+  }
+ },
+ "total_bytes": 366204,
+ "sec": 0.12
+}

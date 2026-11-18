@@ -51,3 +51,4 @@ Each feature file: H1 title, one paragraph, then `Sub-features`, `How to get to 
 - [Stick-man show bible](./stick-man-bible.md): `bible/check.mjs` holds a series to its parts catalog, and `shot.mjs` refuses to render a film that fails it.
 - [Stick-man camera and cut gate](./stick-man-cut-gate.md): `cutgate.mjs` on the final render blocks ◇5 on cut bursts, short takes, low cameras and cut-off faces.
 - [Stick-man previs and temp-music animatic](./stick-man-previs.md): `previs.mjs` cuts a scene or the whole film as a grey 3D blockout with the camera path, cuts vs flights, a Vietnamese label bar and the voice and temp music under it; ◇2b needs its `previs.md`.
+- [Stick-man depth](./stick-man-depth.md): lens blur by the lens on every shot, a sky with form, air by distance, and far town rows (`allout/sets/backdrop.js`).
