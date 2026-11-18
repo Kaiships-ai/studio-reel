@@ -19,7 +19,7 @@ const list = names => names.length > 4 ? `${names.slice(0, 4).join(', ')} and ${
 export const KIT = [
   { id: 'life', gates: ['4', '5'], step: '[2.1] [3.4]', what: 'moving hold: every act sets the style dial `life` above 0',
     check: f => { const off = f.acts.filter(a => !(lifeOf(a.style) > 0)).map(a => a.name || '?');
-      return off.length ? `${off.length} of ${f.acts.length} acts set no \`life\` (${list(off)}): give each act style { ...STYLE_PRESETS.kaiships, life: 0.75 }` : null; } },
+      return off.length ? `${off.length} of ${f.acts.length} acts set no \`life\` (${list(off)}): the engine default 0.75 plays, but the film must set \`life\` on record: give each act style { ...STYLE_PRESETS.kaiships, life: 0.75 }` : null; } },
   { id: 'depth', gates: ['4', '5'], step: '[1.2] [2.2] [3.4b]', what: 'far backdrop rows behind the set: an act `backdrop: { rows, tint }` or a set that calls backdrop()',
     check: f => f.acts.some(a => a.backdrop?.rows?.length || setCallsBackdrop(a.setModule)) ? null
       : `no act has \`backdrop: { rows, tint }\` and no set calls backdrop() (${f.acts.length} acts): place the far town rows per set (stick-man-depth.md)` },
@@ -47,7 +47,7 @@ export const KIT = [
 ];
 
 export function waiverFor(decisions, id) {
-  return (decisions?.decisions || []).find(d => d.waives === id && d.status === 'approved' && d.by && Number.isFinite(Date.parse(d.at)));
+  return (decisions?.decisions || []).find(d => d.waives === id && d.status === 'approved' && d.by === 'kai' && Number.isFinite(Date.parse(d.at)));
 }
 
 export async function kitUse(dir, gate) {
@@ -58,7 +58,7 @@ export async function kitUse(dir, gate) {
   const decisions = json('DECISIONS.json');
   return KIT.filter(k => k.gates.includes(gate)).map(k => {
     const miss = k.check(film), w = miss && waiverFor(decisions, k.id);
-    return { id: k.id, step: k.step, what: k.what, ok: !miss || !!w, why: !miss ? 'in use' : w ? `waived: ${w.id || '?'} by ${w.by}, ${w.at} · ${w.decision || ''}` : miss };
+    return { id: k.id, step: k.step, what: k.what, ok: !miss || !!w, why: !miss ? 'in use' : w ? `waived: ${w.id || '?'} by ${w.by}, ${w.at} · ${w.decision || ''}` : miss + (!w && (decisions?.decisions || []).some(d => d.waives === k.id) ? ' (a waiver must be Kai\'s: approved, by "kai", dated)' : '') };
   });
 }
 
