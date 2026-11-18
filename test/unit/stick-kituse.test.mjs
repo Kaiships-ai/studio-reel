@@ -75,6 +75,6 @@ test('an approved waiver with who and when lets a film skip a feature; one witho
   const ok = kit(film({ acts: [{ ...ACT, backdrop: undefined }], decisions: [waiver] }));
   assert.equal(ok.code, 0, ok.out);
   assert.match(ok.row('depth'), /PASS depth\s+waived: W1 by kai, 2026-11-18/);
-  for (const bad of [{ ...waiver, status: 'proposed' }, { ...waiver, by: '' }, { ...waiver, at: 'soon' }, { ...waiver, waives: 'life' }])
+  for (const bad of [{ ...waiver, status: 'proposed' }, { ...waiver, by: '' }, { ...waiver, by: 'claude' }, { ...waiver, at: 'soon' }, { ...waiver, waives: 'life' }])
     assert.equal(kit(film({ acts: [{ ...ACT, backdrop: undefined }], decisions: [bad] })).code, 1, JSON.stringify(bad));
 });

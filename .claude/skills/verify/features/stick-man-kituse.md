@@ -15,7 +15,7 @@ One row per feature in `KIT`; `stagegate.mjs` runs it from `GATES.json` (gate 4 
 - `refbench` (◇5): `review/refbench.json` is the `refbench.mjs` row of the final render (`renders.mjs` `finalRender`),
   its `source` is that file and it is newer. On PASS, `review/kituse.md` ends with the film vs Rick gap table.
 - Waiver: an approved `DECISIONS.json` entry `{ "waives": "<feature>", "by": "kai", "at": "<date>", "status": "approved" }`
-  turns that FAIL into a PASS that prints who waived it and when. Without `by`, a date or `approved` it does not count.
+  turns that FAIL into a PASS that prints who waived it and when. Only Kai can waive: `by` must be `kai` (an agent's name does not count), with a date and `approved`.
 
 ## How to get to it (user POV)
 
