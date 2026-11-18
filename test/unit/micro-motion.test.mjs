@@ -22,10 +22,18 @@ test('a held pose is never a statue: chest and head move by whole degrees over 1
 
 test('breath and drift stay inside their bounds (a hold never swims or jitters)', () => {
   const h = hold();
-  const lim = { 'spine.bend': 3, 'spine.side': 3, 'neck.nod': 4, 'neck.tilt': 5, 'neck.turn': 6 };
+  const lim = { 'spine.bend': 3, 'spine.side': 5, 'neck.nod': 6, 'neck.tilt': 8, 'neck.turn': 11 };
   for (const c of CH) { const a = offsets(h, c).map(Math.abs); assert.ok(Math.max(...a) <= lim[c], `${c} peaks at ${Math.max(...a).toFixed(2)} deg`); }
-  // no frame-to-frame step larger than 0.6 deg: low frequency only
-  for (const c of CH) { const a = offsets(h, c), st = Math.max(...a.slice(1).map((x, i) => Math.abs(x - a[i]))); assert.ok(st <= 0.6, `${c} steps ${st.toFixed(2)} deg a frame`); }
+  // low frequency only: nothing turns faster than a calm glance (2.5 deg a frame), and no shake (out and back, each swing over 0.25 deg,
+  // inside 8 frames)
+  for (const c of CH) {
+    const a = offsets(h, c), v = a.slice(1).map((x, i) => x - a[i]).filter(x => Math.abs(x) > 1e-4);
+    assert.ok(Math.max(...v.map(Math.abs)) <= 2.5, `${c} moves ${Math.max(...v.map(Math.abs)).toFixed(2)} deg a frame`);
+    const turns = []; a.slice(2).forEach((x, i) => { const p = a[i + 1] - a[i], q = x - a[i + 1]; if (p * q < 0) turns.push(i + 1); });
+    const swing = i => Math.abs(a[turns[i + 1]] - a[turns[i]]);
+    const shakes = turns.slice(2).filter((t, i) => t - turns[i] < 8 && swing(i) > 0.25 && swing(i + 1) > 0.25);
+    assert.equal(shakes.length, 0, `${c} shakes ${shakes.length} times`);
+  }
 });
 
 test('the breath cycle is 3-4 s, like a person at rest', () => {
@@ -45,6 +53,12 @@ test('two figures do not breathe in step', () => {
   assert.ok(a.some((x, i) => Math.abs(x - b[i]) > 0.5), 'the same drift on both');
 });
 
+test('a baked clip (a key every frame, as motion capture plays) carries its own life: no layer on top', () => {
+  const keys = Array.from({ length: 121 }, (_, f) => ({ f, pose: 'stand', spine: { bend: 4 + 0.5 * Math.sin(f / 9) } }));
+  const tr = compileTrack(keys, poses, {}), fr = playActor(tr, 0, 120);
+  for (const c of ['spine.side', 'neck.tilt', 'neck.turn']) assert.ok(Math.max(...fr.map((o, i) => Math.abs((o[c] || 0) - (keyed(tr, i)[c] || 0)))) < 1e-9, c);
+});
+
 test('captured keys (mocap) carry their own life: no layer on top', () => {
   const tr = compileTrack([{ f: 0, pose: 'stand', raw: true }, { f: 120, pose: 'stand', raw: true }], poses, {});
   const fr = playActor(tr, 0, 120);
@@ -54,7 +68,7 @@ test('captured keys (mocap) carry their own life: no layer on top', () => {
 test('after a stop the body overshoots and settles first, the head a few frames later', () => {
   const tr = compileTrack([{ f: 0, pose: 'stand' }, { f: 10, pose: 'lean' }, { f: 80, pose: 'lean' }], poses, {});
   const fr = playActor(tr, 0, 40), over = c => fr.map((o, i) => o[c] - keyed(tr, i)[c]);
-  const peak = a => { let k = 10; for (let i = 10; i <= 30; i++) if (a[i] > a[k]) k = i; return k; };
+  const peak = a => { let k = 10; for (let i = 10; i <= 20; i++) if (a[i] > a[k]) k = i; return k; };
   const body = peak(over('spine.bend')), head = peak(over('neck.nod'));
   assert.ok(over('spine.bend')[body] > 0.6, `the chest carries on ${over('spine.bend')[body].toFixed(2)} deg past the key`);
   assert.ok(head - body >= 2 && head - body <= 8, `body peaks at ${body}, head at ${head}`);

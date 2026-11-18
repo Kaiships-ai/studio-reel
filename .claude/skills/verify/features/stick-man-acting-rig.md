@@ -21,6 +21,11 @@ flex in every frame; `--sheet` renders each clip's worst pose from the front, 3/
   flex -2..160 deg. `RIG_KNOWN` lists clips over a limit per metric and only shrinks; empty since the leg-reach fix (PR #132).
 - Gates: `rigtest.mjs` runs in gate 3 (Asset lock), `facebeat.mjs {film}` in gate 4 (Shot lock); both exit 1 on a fault.
 - The proof page's `view=turn&az=<deg>&at=<frame>` is a still camera round the body (az 0 = from ahead).
+- Moving hold (KIT-MICRO): every figure animated from keys (`anim`, motion.js `playActor`) gets `acting.js` `holdLife`
+  on top: a 3-4 s breath, two-octave head drift seeded per figure, a weight shift every 40-80 f (hips 3 cm, the head
+  `HOLD_LAG` 3 f behind), and a settle after each stop. Full while the keys hold, none while they move or on captured
+  (`raw`) keys. A film turns it off or up with the style dial `life` (0 off, 0.5 kit, 1 double). Measure it on a
+  locked camera: `refbench.mjs` "motion while the camera is still" (Rick band 1.21-3.67).
 
 ## How to get to it (user POV)
 
@@ -33,7 +38,7 @@ films/<slug>/review/shot-rows.jsonl`, then `node styles/stick-man/tools/stagegat
   `faces.md` (off-beat faces with their second, faces per character) and `faces.json`.
 - `node styles/stick-man/tools/rigtest.mjs [--json <file>] [--sheet <dir>]`: one line per clip, about 12 s without the
   sheet; the sheet is 208 small renders, one at a time (about 10 min).
-- Regression: `node --test test/unit/stick-acting-rig.test.mjs`.
+- Regression: `node --test test/unit/stick-acting-rig.test.mjs`; the moving hold: `node --test test/unit/micro-motion.test.mjs`.
 - The PR #131 numbers, rerun from saved rows (`D=~/.claude/orchestrate/hm-quality/step4-rows`, its README has the
   join and the shot.mjs commands behind each rows file):
   - `node styles/stick-man/tools/facebeat.mjs $D/story-hm-ep01-r2 --rows $D/v7-rows.jsonl --h 1280 --out /tmp/faces-v7`:

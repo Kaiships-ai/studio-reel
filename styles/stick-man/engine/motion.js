@@ -18,11 +18,13 @@
 // the kit's named poses (a film adds its own: act `poses`, or import this and assign)
 import { PHYS, footDown } from './body.js';
 import { expandClips } from '../motion-lib/index.js';
+import { holdLife, HOLD_LAG } from './acting.js';
 export const MOTION_POSES = {};
 // the style dials: how far this film bends each of the 12 principles, 0 = toward live simulation, 1 = toward stylised
 // animation, 0.5 = the kit as authored (a reel without `style` plays exactly as before). The body's physics (rig B1-B6)
 // is the floor under all of them: a dial bends the performance, never the anatomy.
-export const STYLE = { exaggeration: 0.5, timing: 0.5, squash: 0.5, anticipation: 0.5, followThrough: 0.5, slowInOut: 0.5, arcs: 0.5, secondary: 0.5 };
+// life: the moving hold (acting.js holdLife), 0 = off, 0.5 = the kit's breath, drift and weight shifts, 1 = twice that
+export const STYLE = { exaggeration: 0.5, timing: 0.5, squash: 0.5, anticipation: 0.5, followThrough: 0.5, slowInOut: 0.5, arcs: 0.5, secondary: 0.5, life: 0.5 };
 // named doses. kaiships: the dose Kai chose for the stick-man films (stage 2 · 2.0b, 2026-11-12): strong exaggeration for
 // a phone screen, smooth on ones, crisp ends, a clean frame. real / verse: the two ends it was compared against.
 export const STYLE_PRESETS = {
@@ -181,11 +183,46 @@ class Spring {
 const DRAG = [
   [/^neck\./, 0.55, 0.55], [/^arm[LR]\.(raise|swing)$/, 0.62, 0.5], [/^arm[LR]\.(elbow|roll)$/, 0.5, 0.45], [/^headSq$/, 0.7, 0.35],
 ];
+// the moving hold's weight per frame over [F0, F1] (0 while the keys move .. 1 held) and the stops it settles after. A key
+// segment holds when no angle changes faster than HOLD_RATE deg a frame and nothing travels faster than HOLD_RATE cm a
+// frame (a slow drift between two near poses is a hold); the layer fades in over HOLD_IN frames after the body stops and
+// out over HOLD_OUT before it moves again (an action plays as keyed: the joint gates judge it unchanged).
+// Keys BAKED frames apart or closer are a baked performance (a motion-capture clip: Idle_Stand_Loop, Gest_Talk_Loop):
+// it carries its own life, so the layer fades out over it, as it does on `raw` keys. A stop carries the last move's speed
+// into the settle: the chest keeps going SETTLE_K frames' worth of it and springs back (settleOut, which starts from zero
+// so nothing jumps), the head HOLD_LAG frames later.
+const HOLD_RATE = 0.35, HOLD_IN = 12, HOLD_OUT = 6, BAKED = 2, SETTLE_K = 1.2, SETTLE_MAX = 2.5, SETTLE_N = 16;
+const SETTLE_CH = ['spine.bend', 'spine.side', 'neck.nod', 'neck.tilt'];
+const CM = c => (/^pos\.|footW|\.ik\./.test(c) ? 100 : c === 'bob' || c === 'support' ? 60 : 1);
+const settleOut = d => (d < 0 ? 0 : Math.exp(-d / 4) * Math.sin(0.55 * d));
+function holdWeights(track, F0, F1) {
+  const rate = (A, B) => Math.max(0, ...Object.keys(B.m).map(c => CM(c) * Math.abs((B.m[c] ?? 0) - (A.m[c] ?? 0)) / Math.max(1, B.f - A.f)));
+  const n = F1 - F0 + 1, moving = new Array(n).fill(false), baked = new Array(n).fill(false), stops = [];
+  for (let i = 0; i + 1 < track.length; i++) {
+    const A = track[i], B = track[i + 1];
+    if (B.f - A.f <= BAKED) for (let f = Math.max(F0, A.f); f <= Math.min(F1, B.f); f++) baked[f - F0] = true;
+    if (B.ease === 'snap' || rate(A, B) < HOLD_RATE) continue;
+    for (let f = Math.max(F0, A.f); f < Math.min(F1 + 1, B.f); f++) moving[f - F0] = true;
+    const C = track[i + 2]; if (C && C.ease !== 'snap' && rate(B, C) >= HOLD_RATE) continue;
+    const v = {}; for (const c of SETTLE_CH) { const x = SETTLE_K * ((B.m[c] ?? 0) - (A.m[c] ?? 0)) / Math.max(1, B.f - A.f); if (Math.abs(x) > 0.05) v[c] = clamp(x, -SETTLE_MAX, SETTLE_MAX); }
+    stops.push({ f: B.f, v });
+  }
+  const sm = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+  const fade = on => { const since = [], until = [];
+    for (let i = 0, d = 1e9; i < n; i++) { d = on[i] ? 0 : d + 1; since[i] = d; }
+    for (let i = n - 1, d = 1e9; i >= 0; i--) { d = on[i] ? 0 : d + 1; until[i] = d; }
+    return since.map((s, i) => sm(s / HOLD_IN) * sm(until[i] / HOLD_OUT)); };
+  const still = fade(moving), own = fade(baked);
+  return { w: still.map((s, i) => own[i] * s), stops };
+}
+// a figure's own seed for its hold (two figures never breathe in step): where its first key stands
+const trackSeed = track => { const m = track[0]?.m || {}; return Math.round(1e3 * (17 + (m['pos.0'] || 0)) + 7919 * (m['pos.1'] || 0) + 31 * track.length) >>> 0; };
 // runs once per actor over [F0, F1]: returns the posed channel maps, one per frame
 export function playActor(track, F0, F1, opt = {}) {
   CUR = track.style || STYLE;
   const springs = {}, hat = { p: new Spring(0.32, 0.28), r: new Spring(0.32, 0.28) }, sq = new Spring(0.6, 0.3);
   const frames = [];
+  const held = holdWeights(track, F0, F1), seed = trackSeed(track);
   let prev = null, prev2 = null, rawW = 0;
   // a 'snap' key is a cut: the secondary layer starts fresh there (no arm or hat still swinging from the last shot's pose)
   const cuts = new Set(track.filter(t => t.ease === 'snap').map(t => t.f));
@@ -217,11 +254,15 @@ export function playActor(track, F0, F1, opt = {}) {
     const hp = (k['neck.nod'] || 0) + (k['spine.bend'] || 0) + (k['pelvis.pitch'] || 0), hr = (k['neck.tilt'] || 0) + (k['spine.side'] || 0) + (k['pelvis.roll'] || 0);
     o['hat.pitch'] = clamp(hat.p.step(hp) - hp, -22, 22) * dial('followThrough') + (k['hat.pitch'] || 0);
     o['hat.roll'] = clamp(hat.r.step(hr) - hr, -18, 18) * dial('followThrough') + (k['hat.roll'] || 0);
-    // a moving hold: a held pose breathes (chest up and down, the head drifts a little), never freezes
-    const t = f / 30;
-    const B2 = dial('secondary') * (1 - rawW);
-    o['spine.bend'] = (o['spine.bend'] || 0) + 0.8 * B2 * Math.sin(t * 2 * Math.PI * 0.28);
-    o['neck.tilt'] = (o['neck.tilt'] || 0) + 0.9 * B2 * Math.sin(t * 2 * Math.PI * 0.17 + 1.3);
+    // a moving hold: a held pose breathes, the head drifts and the weight shifts (acting.js holdLife), never freezes; after
+    // a stop the chest carries on a little and settles (follow-through), the head HOLD_LAG frames later
+    const L = dial('life') * (1 - rawW);
+    if (L) {
+      const life = holdLife(seed, f), w = L * held.w[f - F0];
+      for (const c in life) o[c] = (o[c] || 0) + w * life[c];
+      for (const s of held.stops) { const d = f - s.f; if (d < 0 || d > SETTLE_N + HOLD_LAG) continue;
+        for (const [c, v] of Object.entries(s.v)) o[c] = (o[c] || 0) + L * v * settleOut(c.startsWith('neck.') ? d - HOLD_LAG : d); }
+    }
     frames.push(o); prev2 = prev; prev = k;
   }
   // standing (x_stand, 0..1, cast.js balance): both feet on the ground, from the keyed feet (footW height in m, else the
