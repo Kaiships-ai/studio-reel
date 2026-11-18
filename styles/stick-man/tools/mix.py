@@ -346,9 +346,10 @@ def main():
     ap.add_argument('--mux', nargs=2, metavar=('VIDEO', 'OUT_MP4'))
     args = ap.parse_args(); film = args.film.rstrip('/'); out = args.out or os.path.join(film, 'audio')
     S = prepare(film, args)
-    if args.mux and abs((v := video_seconds(args.mux[0])) - S['N'] / SR) > 0.1:
-        sys.exit(f'mix.py: video {v:.3f} s and mix {S["N"] / SR:.3f} s differ by more than 0.1 s; '
+    if args.mux and abs(gap := (v := video_seconds(args.mux[0])) - S['N'] / SR) > 1 / 30:
+        sys.exit(f'mix.py: video {v:.3f} s and mix {S["N"] / SR:.3f} s differ by more than one frame; '
                  f'muxing would cut the longer one short (set music.json length to the video)')
+    if args.mux and gap: print(f'mix.py: video and mix differ by {gap * 1000:+.0f} ms; the mp4 ends with the shorter', file=sys.stderr)
     ceil = TP_CEIL; mp4 = None
     for tries in range(1, 4):
         used = ceil; L, R, G = master(S, used); paths = write(S, L, R, G, out, args.name)

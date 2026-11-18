@@ -28,7 +28,7 @@
 - `sound.mux`: `--mux <video> <out.mp4>` encodes AAC 256k, measures the mp4's true peak with ebur128 and, while it is over
   −1.0 dBTP, lowers the limiter ceiling by the overshoot plus 0.3 dB and encodes again (3 encodes at most). It exits
   non-zero, saying why, when the final mp4 is over −1.0 dBTP or outside −14 ±0.5 LUFS, and before any encode when the video
-  and the mix differ by more than 0.1 s. `levels.txt` prints the ceiling of the last encode.
+  and the mix differ by more than one frame (1/30 s); a smaller difference prints its size. `levels.txt` prints the ceiling of the last encode.
 
 ## How to get to it (user POV)
 
