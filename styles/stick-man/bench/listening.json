@@ -1,10 +1,38 @@
 {
  "method": "listening count: an audio model (gemini-3.8-flash, temperature 0.2) hears the whole clip and lists every sound effect it hears with its onset; the rate uses the file's own duration, not the model's. Counts what a listener hears, not the cues placed (our v1 places 225).",
- "spread_from": "two runs on the kit-A mix of Hot Money r4: 35 and 29 effects in 90.1 s (23.3 and 19.3 a minute)",
+ "spread_from": "provisional: the only repeat is two runs on the kit-A mix of Hot Money r4 (35 and 29 effects in 90.1 s, 23.3 and 19.3 a minute); every other video was counted once (repeats on 18 November hit the daily quota). Until each video has two runs, read a gap under 4.0 a minute as not proven, and treat 4.0 itself as unverified for the Rick clips.",
  "byVideo": {
-  "HxqtHI62otM": { "sfxPerMin": 15.6, "effects": 17, "seconds": 65.3, "spread": { "sfxPerMin": 4.0 } },
-  "LC8hYwUZ-kU": { "sfxPerMin": 23.5, "effects": 22, "seconds": 56.1, "spread": { "sfxPerMin": 4.0 } },
-  "VS1Z_Q-Klt8": { "sfxPerMin": 15.7, "effects": 17, "seconds": 64.9, "spread": { "sfxPerMin": 4.0 } },
-  "hm-ep01-r4_v1": { "sfxPerMin": 12.7, "effects": 19, "seconds": 90.1, "spread": { "sfxPerMin": 4.0 } }
+  "HxqtHI62otM": {
+   "sfxPerMin": 15.6,
+   "effects": 17,
+   "seconds": 65.3,
+   "spread": {
+    "sfxPerMin": 4.0
+   }
+  },
+  "LC8hYwUZ-kU": {
+   "sfxPerMin": 23.5,
+   "effects": 22,
+   "seconds": 56.1,
+   "spread": {
+    "sfxPerMin": 4.0
+   }
+  },
+  "VS1Z_Q-Klt8": {
+   "sfxPerMin": 15.7,
+   "effects": 17,
+   "seconds": 64.9,
+   "spread": {
+    "sfxPerMin": 4.0
+   }
+  },
+  "hm-ep01-r4_v1": {
+   "sfxPerMin": 12.7,
+   "effects": 19,
+   "seconds": 90.1,
+   "spread": {
+    "sfxPerMin": 4.0
+   }
+  }
  }
 }
