@@ -1,10 +1,11 @@
 # mix.py: the stick-man kit mixer. Voice + recorded sound effects (sound_lib.py) + beds + music, mastered to -14 LUFS. Method and
 # targets from hm-ep01 round 4: voice ride, word duck 2-8 kHz, word guard, hero transients kept, peak caps, true peak <= -1.6 dBTP.
-#   python styles/stick-man/tools/mix.py <film> [--music <track> | --music-stem <wav>] [--out <dir>] [--name mix] [--mux <video> <out.mp4>]
+#   python styles/stick-man/tools/mix.py <film> [--music <track> | --music-stem <wav>] [--music-plan <json>] [--out <dir>] [--name mix] [--mux <video> <out.mp4>]
 # reads  vo/vo.wav, vo/words.json, audio/cues.json [{t, name, strength, dur?, len?, gain?, pan?, lock?, seed?}],
 #        audio/ambience.json {amb: [[[a, z], kind, dB, what]], dips: [[a, z, dB]]} (optional), audio/sound-plan.json silences (optional),
 #        audio/music.json (optional): mus_lu, amb_lu, duck_db, contour, climb, vo_ride, protect, length, arc, sections [[name, a, z]],
-#        peak (a section name: the film's loudest moment), track {file, segments: [{src: [a, b], at}], xfade}
+#        peak (a section name: the film's loudest moment), track {file, segments: [{src: [a, b], at, file?, gain?}], xfade}
+#        (--music-plan <json> reads that file in place of audio/music.json; sound_fit.py writes one)
 # music, the first that applies: --music <track> | music.json track | --music-stem <wav> (placed as it is) | none
 # writes <out>/<name>.wav, <out>/stems/{vo_m,sfx,music,amb}.wav, <out>/levels.txt; with --mux an mp4 (AAC 256k, true peak <= -1 dBTP)
 import argparse, json, os, shutil, subprocess, sys
@@ -68,12 +69,12 @@ def fit(y, n):
     return np.pad(y, ((0, max(0, n - len(y))), (0, 0)))[:n]
 
 
-def segments(y, segs, xfade, n):
-    """cut a track into segments placed at film times; a segment's inner edges (not the film's first start or last end) get
+def segments(ys, T, n):
+    """cut tracks into segments placed at film times; a segment's inner edges (not the film's first start or last end) get
     equal-power ramps of xfade s, so a segment placed xfade s before the previous one ends crossfades into it"""
-    out = np.zeros((n, 2)); x = int(xfade * SR); e = int(0.012 * SR)
+    segs = T['segments']; out = np.zeros((n, 2)); x = int(T.get('xfade', 0.5) * SR); e = int(0.012 * SR)
     for i, s in enumerate(segs):
-        a, b = s['src']; seg = y[int(a * SR):int(b * SR)].copy(); k = len(seg)
+        a, b = s['src']; y = ys[s.get('file', T['file'])]; seg = y[int(a * SR):int(b * SR)] * 10 ** (s.get('gain', 0.0) / 20); k = len(seg)
         u_in = int(min(x if i else e, k // 2)); u_out = int(min(x if i < len(segs) - 1 else e, k // 2))
         seg[:u_in] *= np.sin(np.linspace(0, np.pi / 2, u_in))[:, None]; seg[k - u_out:] *= np.cos(np.linspace(0, np.pi / 2, u_out))[:, None]
         i0 = int(s['at'] * SR); m = max(0, min(k, n - i0)); out[i0:i0 + m] += seg[:m]
@@ -84,8 +85,8 @@ def music_source(film, M, args, n):
     """(label, (n, 2) music, frozen): a frozen stem is a finished mix stem and skips every envelope, duck and guard"""
     if args.music: return f'track {args.music} (--music)', fit(decode(args.music), n), False
     if M.get('track'):
-        T = M['track']; y = decode(os.path.join(film, T['file']))
-        return f'track {T["file"]}, {len(T["segments"])} segments (music.json)', segments(y, T['segments'], T.get('xfade', 0.5), n), False
+        T = M['track']; ys = {f: decode(os.path.join(film, f)) for f in {s.get('file', T['file']) for s in T['segments']}}
+        return f'track {" + ".join(sorted(ys))}, {len(T["segments"])} segments ({args.music_plan or "music.json"})', segments(ys, T, n), False
     if args.music_stem: return f'stem {args.music_stem} placed as it is (--music-stem)', fit(decode(args.music_stem), n), True
     return 'none', np.zeros((n, 2)), True
 
@@ -143,7 +144,7 @@ def prepare(film, args):
     if need: sys.exit(f'mix.py: {film} has no {" and no ".join(need)}; the mixer levels and ducks everything against the voice and its words')
     vo, sr = sf.read(os.path.join(film, 'vo/vo.wav'), always_2d=True); vo = vo.mean(1); assert sr == SR
     words = J(os.path.join(film, 'vo/words.json'))
-    cues = J(os.path.join(A, 'cues.json'), []); AM = J(os.path.join(A, 'ambience.json')); M = {**DEFAULTS, **J(os.path.join(A, 'music.json'), {})}
+    cues = J(os.path.join(A, 'cues.json'), []); AM = J(os.path.join(A, 'ambience.json')); M = {**DEFAULTS, **J(args.music_plan or os.path.join(A, 'music.json'), {})}
     length = float(M.get('length', len(vo) / SR)); N = int(round(length * SR))
     n20 = int(0.02 * SR)                                                 # ducking copy: trim each word span to its voiced 20 ms frames
     for wd in words:
@@ -326,6 +327,7 @@ def main():
     ap.add_argument('film'); ap.add_argument('--out'); ap.add_argument('--name', default='mix')
     ap.add_argument('--music', help='a licensed track (mp3/wav/ogg): levelled to the voice + mus_lu, then climb/contour/duck')
     ap.add_argument('--music-stem', help='a finished music stem, placed as it is (parity with an old mix)')
+    ap.add_argument('--music-plan', help='a music.json to use in place of <film>/audio/music.json (a sound_fit.py candidate)')
     ap.add_argument('--mux', nargs=2, metavar=('VIDEO', 'OUT_MP4'))
     args = ap.parse_args(); film = args.film.rstrip('/'); out = args.out or os.path.join(film, 'audio')
     S = prepare(film, args)
