@@ -24,6 +24,7 @@ FS, HOP, WIN = 12000, 120, 512                     # analysis at 12 kHz, 10 ms h
 FREQ = np.fft.rfftfreq(WIN, 1 / FS)
 GAIN = (-6.0, 3.0)            # a segment's level trim towards its section's lu, after the energy match
 METERS = (3, 4, 6, 7)
+END_DB = 24.0                 # the track ends where its 100 ms level falls this far under its loud bars
 
 
 def spectrum(x):
@@ -84,10 +85,10 @@ class Grid:
         self.meter = meter or (min(m for m in METERS if folds[m][0] >= 0.92 * top) if top >= 1.3 else 4)   # no clear accent: 4/4
         self.contrast, sc = folds[self.meter]; self.downbeats = self.beats[int(np.argmax(sc))::self.meter]
         self._p = np.concatenate([[0], np.cumsum(y.mean(1) ** 2)])
-        loud = np.nonzero(np.abs(y).max(1) > np.abs(y).max() * 10 ** (-50 / 20))[0]
-        self.end = min(self.dur, (loud[-1] + 1) / SR + 0.3) if len(loud) else self.dur
         bars = [self.level(a, b) for a, b in zip(self.downbeats[:-1], self.downbeats[1:])]
         self.ref = np.percentile(bars, 95) if bars else 0.0
+        w = np.arange(0, self.dur - 0.1, 0.1); on_ = [w_ for w_ in w if self.level(w_, w_ + 0.1) > self.ref - END_DB]
+        self.end = min(self.dur, on_[-1] + 0.1) if on_ else self.dur      # a long fade-out is not the ending: cut it where it is quiet
 
     def level(self, a, b):
         i, j = int(a * SR), max(int(a * SR) + 1, min(len(self._p) - 1, int(b * SR)))
@@ -134,7 +135,7 @@ def fit(sections, grids, which, film_end):
                 if z > g.end - 0.2: continue
             e = g.rel(d, z)
             rep = sum(max(0, min(z, u1) - max(d, u0)) for u0, u1 in used[key]) / (z - d)
-            cost = abs(e - s['lu']) + 3 * rep + short
+            cost = abs(e - s['lu']) + 6 * rep + short
             if best is None or cost < best[0]: best = (cost, d, z, e)
         if best is None: sys.exit(f'sound_fit.py: no bar of {key} fits {s["state"]} {s["a"]:.2f}-{s["b"]:.2f}')
         _, d, z, e = best; used[key].append((d, z))
