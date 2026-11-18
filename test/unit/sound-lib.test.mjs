@@ -134,3 +134,39 @@ sf.write(r'${path.join(film, 'vo/vo.wav')}', 0.1 * v / np.abs(v).max() * ((t % 1
     assert.ok(Math.abs(article - named) < 0.3, `an article before the name keeps the hit (${article} dB vs ${named} dB)`);
   } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
 });
+
+test('--mux fails, and says why, when the mp4 misses its loudness or true peak or the video and the mix differ in length', { skip: skip || (!E.tools?.ffmpeg && 'needs ffmpeg') }, () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sound-mux-test-'));
+  try {
+    const film = path.join(tmp, 'film'); fs.mkdirSync(path.join(film, 'vo'), { recursive: true }); fs.mkdirSync(path.join(film, 'audio'));
+    const voice = `import numpy as np, soundfile as sf; t = np.arange(3 * 48000) / 48000
+sf.write(r'${path.join(film, 'vo/vo.wav')}', 0.3 * np.sin(2 * np.pi * 220 * t) * ((t % 1) < 0.6), 48000)`;
+    assert.equal(run('python', ['-I', '-c', voice], { capture: true }).status, 0);
+    fs.writeFileSync(path.join(film, 'vo/words.json'), JSON.stringify([0, 1, 2].map(i => ({ t0: i, t1: i + 0.6, word: `w${i}`, line: 'L01' }))));
+    fs.writeFileSync(path.join(film, 'audio/cues.json'), JSON.stringify([{ t: 1.7, name: 'thud', strength: 0.5 }]));
+    const video = d => {
+      const f = path.join(tmp, `v${d}.mp4`);
+      assert.equal(run('ffmpeg', ['-v', 'error', '-y', '-f', 'lavfi', '-i', `color=black:s=64x64:r=30:d=${d}`, '-pix_fmt', 'yuv420p', '-c:v', 'libx264', f], { capture: true }).status, 0);
+      return f;
+    };
+    const short = run('python', ['-I', `${TOOLS}/mix.py`, film, '--mux', video(2), path.join(tmp, 'short.mp4')], { capture: true });
+    assert.notEqual(short.status, 0, 'a 2 s video under a 3 s mix is cut short, not muxed');
+    assert.match(short.stderr, /video 2\.000 s .* mix 3\.000 s/);
+
+    // an encoder that always lands at the given loudness and true peak, in place of AAC
+    const encode = (I, tp) => run('python', ['-I', '-c', `import sys; sys.path.insert(0, ${JSON.stringify(path.join(ROOT, TOOLS))}); import mix
+mix.mux = lambda video, wav, out: (${I}, ${tp})
+sys.argv = ['mix.py', ${JSON.stringify(film)}, '--mux', ${JSON.stringify(video(3))}, ${JSON.stringify(path.join(tmp, 'out.mp4'))}]; mix.main()`], { capture: true });
+    const hot = encode(-14.0, -0.4);
+    assert.notEqual(hot.status, 0, 'an mp4 still over -1.0 dBTP after the last encode fails');
+    assert.match(hot.stderr, /true peak -0\.4 dBTP/);
+    const used = [...hot.stdout.matchAll(/at limiter ceiling (-\d+\.\d+)/g)].map(m => m[1]);
+    assert.equal(used.length, 3, hot.stdout);
+    const levels = fs.readFileSync(path.join(film, 'audio/levels.txt'), 'utf8');
+    assert.match(levels, new RegExp(`limiter ceiling ${used.at(-1)} dBTP`), 'levels.txt prints the ceiling of the last encode');
+    const quiet = encode(-15.2, -2.0);
+    assert.notEqual(quiet.status, 0, 'an mp4 at -15.2 LUFS is outside -14 +-0.5');
+    assert.match(quiet.stderr, /-15\.2 LUFS/);
+    assert.equal(encode(-14.1, -1.3).status, 0, 'an mp4 within both targets passes');
+  } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
+});
