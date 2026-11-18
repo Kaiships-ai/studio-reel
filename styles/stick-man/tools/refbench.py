@@ -1,6 +1,6 @@
 # Pixel and audio measurements for refbench.mjs (the Rick clip benchmark). Started only by refbench.mjs through kit/env.mjs.
 #   python refbench.py frames <w> <h>      reads gray rawvideo frames on stdin, prints one JSON line per frame
-#   python refbench.py audio <wav> [<sfx stem wav>]   prints one JSON object (16 kHz mono wav)
+#   python refbench.py audio <wav> <start of the payoff's loud window s, -1 for none> [<sfx stem wav>]   prints one JSON object (16 kHz mono wav)
 # Method and limits of every number: styles/stick-man/bench/README.md.
 import json, sys
 import numpy as np
@@ -129,7 +129,7 @@ def onsets(a):
     return out
 
 
-def audio(wav, sfx=None):
+def audio(wav, at, sfx=None):
     import soundfile as sf
     from faster_whisper.vad import VadOptions, get_speech_timestamps
     a = sf.read(wav, dtype='float32')[0]
@@ -146,7 +146,10 @@ def audio(wav, sfx=None):
         beds.append(round(float(np.percentile(part, 10)), 1))
         voice.append(float(np.percentile(part, 90)))
     res = {'speechShare': round(speech_s / dur, 3), 'beds': beds,
-           'bedBelowLoud': round(float(np.median(voice) - np.median(beds)), 1) if beds else None}
+           'bedBelowLoud': round(float(np.median(voice) - np.median(beds)), 1) if beds else None, 'bedAtPayoff': None}
+    pre = L[max(int((at - 2) * 20), 0): int(at * 20)] if at >= 0 else L[:0]
+    if beds and len(pre) >= 10:
+        res['bedAtPayoff'] = round(float(np.percentile(pre, 10) - np.median(beds)), 1)
     if sfx:
         b = sf.read(sfx, dtype='float32')[0]
         n = min(len(a), len(b))
@@ -161,6 +164,6 @@ if __name__ == '__main__':
     if sys.argv[1] == 'frames':
         frames(int(sys.argv[2]), int(sys.argv[3]))
     elif sys.argv[1] == 'audio':
-        audio(sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else None)
+        audio(sys.argv[2], float(sys.argv[3]), sys.argv[4] if len(sys.argv) > 4 else None)
     else:
         sys.exit(f'unknown mode {sys.argv[1]}')
