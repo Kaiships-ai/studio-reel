@@ -1,13 +1,14 @@
 # sound_fit.py: cut a licensed music track to a stick-man film's story beats, on the track's own bar lines.
 #   python styles/stick-man/tools/sound_fit.py <film> <track> [--track2 <track> --track2-at a-b] [--bpm N] [--meter N]
 #          [--mus-lu dB] --out <music.json>
-#   python styles/stick-man/tools/sound_fit.py <film> <music stem.wav> --check <music.json>
+#   python styles/stick-man/tools/sound_fit.py <film> <music stem.wav> --check <music.json> [--tol s]
 # reads  <film>/audio/music.json arc [{t: [a, b], state, lu}], <film>/audio/sound-plan.json silences [{t: [a, b]}]
 # writes a copy of music.json whose track.segments ({src, at, file, gain}) mix.py --music-plan plays: one segment per arc section,
 #        starting on a downbeat that lands on the section start, cut from the part of the track whose level is nearest the
 #        section's lu; no music in a silence or a section in OFF; the last section ends on the track's own ending by the film's end.
 #        Without --mus-lu, mus_lu is set by mixing the film in process so the music stem sits at the kit's -26 LUFS.
-# --check finds each segment's downbeat in the mixed music stem by cross-correlation and prints how far it landed from its beat.
+# --check finds each segment's downbeat in the mixed music stem by cross-correlation and prints how far it landed from its beat;
+#        it fails when a cut is more than --tol s (one frame by default, 0.5 s at most) off its beat or cannot be measured.
 import argparse, json, os, sys
 import numpy as np, soundfile as sf
 from scipy.ndimage import gaussian_filter1d, uniform_filter1d
@@ -19,7 +20,7 @@ from sound_dsp import SR, lufs
 
 OFF = {'silence', 'drop', 'none'}
 XFADE = 0.05                  # an edit on a downbeat: the incoming bar's attack hides a 50 ms equal-power crossfade before it
-STEM_LU, LANE_S = -26.0, 0.5
+STEM_LU, LANE_S, FRAME = -26.0, 0.5, 1 / 30    # lane 7's 0.5 s is the outer limit; --check holds a cut to one frame
 FS, HOP, WIN = 12000, 120, 512                     # analysis at 12 kHz, 10 ms hop
 FREQ = np.fft.rfftfreq(WIN, 1 / FS)
 GAIN = (-6.0, 3.0)            # a segment's level trim towards its section's lu, after the energy match
@@ -72,7 +73,8 @@ class Grid:
             if sc.max() > best[0]: best = (sc.max(), P, phis[np.argmax(sc)])
         _, self.P, phi = best; self.bpm = 60 / self.P
         self.beats = phi + np.arange(int((self.dur - phi) / self.P) + 1) * self.P
-        self.hit = np.interp(self.beats, t, on).mean() / (np.interp(self.beats + self.P / 2, t, on).mean() + 1e-12)
+        on_b, off_b = np.interp(self.beats, t, on).mean(), np.interp(self.beats + self.P / 2, t, on).mean()
+        self.hit = on_b / (on_b + off_b + 1e-12)                       # share of onset on the beat: 0.5 = no pulse, 1 = clicks
         # downbeat: the beat in the bar with the strongest accent (bass onsets) and where chords change (chroma steadiest within bars)
         acc = np.interp(self.beats, t, low / (low.mean() + 1e-12) + 0.5 * on / (on.mean() + 1e-12))
         idx = np.searchsorted(t, self.beats); C = chroma(S); B = np.array([C[a:b].mean(0) for a, b in zip(idx[:-1], idx[1:])])
@@ -150,8 +152,9 @@ def stem_lufs(film, plan):
     _, _, G = mix.master(S, mix.TP_CEIL); return lufs([S['mL'] * G, S['mR'] * G])
 
 
-def check(plan, film, stem):
-    """lane 7: where each segment's downbeat sits in the mixed music stem, found by cross-correlating 1 s of source"""
+def check(plan, film, stem, tol=FRAME):
+    """lane 7: where each segment's downbeat sits in the mixed music stem, found by cross-correlating 1 s of source; True when
+    every cut is measured and within tol s of its beat"""
     T = load(plan)['track']; ys = {}
     m = resample_poly(mix.decode(stem).mean(1), 1, SR // FS); rows = []
     for s in T['segments']:
@@ -159,17 +162,19 @@ def check(plan, film, stem):
         if f not in ys: ys[f] = resample_poly(mix.decode(os.path.join(film, f)).mean(1), 1, SR // FS)
         d, L = s['downbeat'], min(1.0, s['src'][1] - s['downbeat'])
         ref = ys[f][int(d * FS):int((d + L) * FS)]; a = int(max(0, s['beat'] - 1.0) * FS)
-        win = m[a:a + int((2.0 + L) * FS)]
-        if len(win) < len(ref) or not ref.any(): continue
-        c = fftconvolve(win, ref[::-1], 'valid'); e = np.sqrt(np.maximum(fftconvolve(win ** 2, np.ones(len(ref)), 'valid'), 0))
-        r = np.where(e > 0.1 * e.max(), c / (e + 1e-12), -np.inf)       # lags over a silence would divide by nothing
-        rows.append((s['section'], s['beat'], a / FS + int(np.argmax(r)) / FS))
+        win = m[a:a + int((2.0 + L) * FS)]; cut = None
+        if len(win) >= len(ref) and ref.any() and win.any():
+            c = fftconvolve(win, ref[::-1], 'valid'); e = np.sqrt(np.maximum(fftconvolve(win ** 2, np.ones(len(ref)), 'valid'), 0))
+            r = np.where(e > 0.1 * e.max(), c / (e + 1e-12), -np.inf)   # lags over a silence would divide by nothing
+            cut = a / FS + int(np.argmax(r)) / FS
+        rows.append((s['section'], s['beat'], cut))
     print(f'{"section":10} {"beat":>7} {"cut in stem":>11} {"gap":>7}')
-    for st, b, c in rows: print(f'{st:10} {b:7.2f} {c:11.3f} {c - b:+7.3f}')
-    gaps = np.abs([c - b for _, b, c in rows])
-    print(f'lane 7: {len(rows)} section changes, largest gap {gaps.max():.3f} s, within {LANE_S} s: {(gaps <= LANE_S).sum()}/{len(rows)}'
-          f' ({100 * (gaps <= LANE_S).mean():.0f}%)   {"PASS" if (gaps <= LANE_S).all() else "FAIL"}')
-    return gaps
+    for st, b, c in rows: print(f'{st:10} {b:7.2f} ' + (f'{c:11.3f} {c - b:+7.3f}' if c is not None else f'{"not measured":>19}'))
+    gaps = np.array([abs(c - b) for _, b, c in rows if c is not None]); lost = sum(c is None for *_, c in rows)
+    ok = (gaps <= tol).sum(); passed = lost == 0 and ok == len(rows)
+    print(f'lane 7: {len(rows)} section changes, largest gap {gaps.max() if len(gaps) else float("nan"):.3f} s, '
+          f'{ok}/{len(rows)} sections within {tol:.3f} s, {lost} not measured   {"PASS" if passed else "FAIL"}')
+    return passed
 
 
 def main():
@@ -180,9 +185,11 @@ def main():
     ap.add_argument('--bpm2', type=float); ap.add_argument('--meter', type=int); ap.add_argument('--meter2', type=int)
     ap.add_argument('--mus-lu', type=float, help='keep this mus_lu (skip the in-process level pass)')
     ap.add_argument('--out'); ap.add_argument('--check', metavar='MUSIC_JSON')
+    ap.add_argument('--tol', type=float, default=FRAME, help=f'--check: largest gap a cut may have, s (default one frame; at most {LANE_S})')
     a = ap.parse_args(); film = a.film.rstrip('/')
     if a.check:
-        gaps = check(a.check, film, a.track); sys.exit(0 if (gaps <= LANE_S).all() else 1)
+        if not 0 < a.tol <= LANE_S: ap.error(f'--tol must be over 0 and at most the lane limit {LANE_S} s')
+        sys.exit(0 if check(a.check, film, a.track, a.tol) else 1)
     if not (a.track and a.out): ap.error('<track> and --out are needed')
     M, sections, film_end = music_sections(film)
     rel = lambda p: os.path.relpath(os.path.abspath(p), os.path.abspath(film))
@@ -193,7 +200,7 @@ def main():
         which = lambda s: rel(a.track2) if t0 <= s['a'] < t1 else rel(a.track)
     for k, g in grids.items():
         print(f'{k}: {g.bpm:.2f} BPM, {g.meter} beats a bar ({g.meter * g.P:.3f} s), first downbeat {g.downbeats[0]:.3f} s, '
-              f'downbeat contrast {g.contrast:.2f}, on-beat / off-beat onset {g.hit:.2f}, ends {g.end:.2f} s of {g.dur:.2f}')
+              f'downbeat contrast {g.contrast:.2f}, on-beat share of onset {g.hit:.2f}, ends {g.end:.2f} s of {g.dur:.2f}')
     segs = fit(sections, grids, which, film_end)
     out = dict(M, track=dict(file=rel(a.track), xfade=XFADE, segments=segs, fit=f'sound_fit.py, {len(segs)} sections'),
                mus_lu=a.mus_lu if a.mus_lu is not None else M.get('mus_lu', -8.5))

@@ -44,12 +44,15 @@
   with no guess; `Gunshot`, `gunshot_2` and `gunshot-close` play gunshots, `password` and `reveal` play the quiet
   default; an unknown `bag_swish` is a whoosh; a 3 s test film mixes to −14 LUFS and reports its guessed name.
 - `node --test test/unit/sound-fit.test.mjs`: a 100 BPM click track fit to a made-up arc cuts within one frame of a bar
-  line at every section start, plays the loud part under the loud section, and stays silent in the planned silences.
+  line at every section start, plays the loud part under the loud section, and stays silent in the planned silences;
+  `--check` passes the placed stem and fails it 0.2 s late or cut short.
 - A candidate for a real film: `sound_fit.py films/hm-ep01-r4 <track.mp3> --bpm <page tempo> --out
   films/hm-ep01-r4/audio/music-A.json` prints the tempo, beats a bar and, per section, the planned beat and the cut. Then
   `mix.py films/hm-ep01-r4 --music-plan films/hm-ep01-r4/audio/music-A.json --out films/hm-ep01-r4/audio/cand-A --mux <video>
   <out.mp4>`. Check where the cuts landed in the mixed stem with `sound_fit.py films/hm-ep01-r4
-  films/hm-ep01-r4/audio/cand-A/stems/music.wav --check films/hm-ep01-r4/audio/music-A.json` (lane 7: every cut within 0.5 s).
+  films/hm-ep01-r4/audio/cand-A/stems/music.wav --check films/hm-ep01-r4/audio/music-A.json`. It prints the gap per
+  section and fails when a cut is more than one frame (1/30 s, `--tol` to set, 0.5 s at most) off its beat or cannot be
+  measured.
 - Parity with Hot Money round 4 (the fixture is `films/hm-ep01-r4`, copied from that round's folder):
   `mix.py films/hm-ep01-r4 --music-stem films/hm-ep01-r4/audio/stems/music.wav --out /tmp/parity`. Expect the mix at
   −14.0 LUFS, true peak −1.6 dBTP, `recorded cues 222/225`, `guessed names ... none`.
