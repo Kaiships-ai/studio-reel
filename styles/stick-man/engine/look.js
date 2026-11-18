@@ -154,6 +154,37 @@ class ShaftPass extends Pass {
   }
 }
 
+// sky with form (KIT-DEPTH): an act's flat `light.background` colour becomes a dome behind every set. Zenith darker and
+// cooler, horizon lifted toward a dusty warm glow (at night the glow of the town on damp air, by day a pale haze), two
+// stretched cloud layers lit from the horizon side. Everything is derived from the one background colour, so an act's
+// data stays as it is. A set's own dome (rail-kit sky(), r 60) sits in front of this one (r 70).
+// Shared by the sky and the air pass: the colour of the sky at view direction d for background B.
+const SKY_GLSL = `
+  uniform vec3 uBg; uniform float uGlow, uCloud;
+  float sh(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+  float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
+    return mix(mix(sh(i), sh(i+vec2(1,0)), f.x), mix(sh(i+vec2(0,1)), sh(i+vec2(1,1)), f.x), f.y); }
+  float fbm(vec2 p){ float a = 0.0, w = 0.5; for (int i = 0; i < 5; i++) { a += w*vn(p); p = p*2.03 + 7.1; w *= 0.5; } return a; }
+  // the horizon is the background lifted by half, plus a glow in proportion to it (the act grade multiplies everything, so
+  // an absolute glow would blow out on a dark set graded up 2.75x), leaning a little cool
+  vec3 skyHorizon(){ float l = dot(uBg, vec3(0.2126, 0.7152, 0.0722));
+    return (uBg*1.5 + uGlow*l*vec3(0.30, 0.27, 0.22))*vec3(0.93, 0.98, 1.08); }
+  vec3 skyAt(vec3 d){
+    float l = dot(uBg, vec3(0.2126, 0.7152, 0.0722)), night = 1.0 - smoothstep(0.08, 0.35, l), h = d.y;
+    vec3 Z = uBg*0.62*vec3(0.94, 0.98, 1.08), H = skyHorizon();
+    vec3 c = mix(H, Z, smoothstep(-0.02, 0.6, h));
+    if (h > 0.0 && uCloud > 0.0) {
+      vec2 p = d.xz / (h + 0.12);
+      float a = smoothstep(0.50, 0.78, fbm(p*vec2(0.9, 2.6) + 3.0)), b = smoothstep(0.55, 0.80, fbm(p*vec2(2.2, 5.5) + 11.0));
+      float lit = 1.0 - smoothstep(0.0, 0.45, h);
+      vec3 cc = mix(mix(Z*1.25, H*1.18, lit), vec3(l*1.6 + 0.12)*vec3(1.0, 0.99, 0.97), (1.0 - night)*0.55);
+      c = mix(c, cc, uCloud*(0.75*a + 0.45*b*(1.0 - a))*smoothstep(0.0, 0.10, h));
+    }
+    return c;
+  }`;
+const SKY_V = 'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }';
+const SKY_F = SKY_GLSL + '\n varying vec3 vD; void main(){ gl_FragColor = vec4(skyAt(normalize(vD)), 1.0); }';
+
 // stick06 judge round 2 (lighting/shading 4/10 'flat, washed out, evenly lit'): sat 1.25 -> 1.38, con 1.12 -> 1.18, sky fill
 // 1.15 -> 0.85, sun lowered to <= 35 deg; set ink 2.6 -> 2.1 px (ink gate median 4 px; judge: set lines compete with figures);
 // round 3 ('washed out, hazy overlays'): highlight bloom 0.38 -> 0.28, shafts 0.032 -> 0.024
@@ -322,6 +353,39 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1
     dofPass.uniforms.maxR.value = (o.px ?? 14) * px * 0.75; dofPass.uniforms.gain.value = (o.gain ?? 2.0) * dofK; dofPass.enabled = true;   // lighter lens blur: the reference keeps the set readable
   }
 
+  // ---- sky dome (see SKY_GLSL): shown when the act's background is a colour; hidden from the prepass, so its depth reads as
+  // infinitely far (full lens blur, no ink, no AO)
+  const skyU = { uBg: { value: new THREE.Color() }, uGlow: { value: 1 }, uCloud: { value: 1 } };
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(70, 48, 24), new THREE.ShaderMaterial({ uniforms: skyU, vertexShader: SKY_V, fragmentShader: SKY_F,
+    side: THREE.BackSide, depthWrite: false, fog: false }));
+  Object.assign(sky, { frustumCulled: false, renderOrder: -20 }); Object.assign(sky.userData, { noPrepass: true, noInk: true });
+  sky.onBeforeRender = (rd, sc, cam) => { sky.position.copy(cam.position); sky.updateMatrixWorld(); };
+  scene.add(sky);
+  // ---- air (aerial perspective, KIT-DEPTH): far surfaces fade toward the sky colour in their own view direction and lose
+  // saturation, 1 - exp(-(z - near) / scale) (exponential, like fog; the in-scatter colour is the sky's, as in Genshin and BotW).
+  // At night the horizon glow is lighter than the dark set, so distance lifts and flattens instead of sinking to black.
+  const airPass = new ShaderPass({
+    uniforms: { tDiffuse: { value: null }, tD: { value: null }, cNear: { value: camera.near }, cFar: { value: camera.far }, invProj: { value: new THREE.Matrix4() },
+      camWorld: { value: new THREE.Matrix4() }, ...skyU, k: { value: 0.35 }, near: { value: 6 }, scale: { value: 30 }, desat: { value: 0.6 } },
+    vertexShader: FS_QUAD_V,
+    fragmentShader: `#include <packing>
+      uniform sampler2D tDiffuse, tD; uniform mat4 invProj, camWorld; uniform float cNear, cFar, k, near, scale, desat; varying vec2 vUv;
+      ${SKY_GLSL}
+      void main(){
+        vec4 c = texture2D(tDiffuse, vUv); float d = texture2D(tD, vUv).x;
+        if (d > 0.9999) { gl_FragColor = c; return; }
+        vec4 vp = invProj * vec4(vUv*2.0 - 1.0, d*2.0 - 1.0, 1.0); vp /= vp.w;
+        float z = -vp.z, a = k * (1.0 - exp(-max(0.0, z - near) / scale));
+        vec3 dir = normalize((camWorld * vec4(vp.xyz, 0.0)).xyz);
+        vec3 g = mix(c.rgb, vec3(dot(c.rgb, vec3(0.2126, 0.7152, 0.0722))), desat * a / max(k, 1e-3));
+        // at night the air scatters a darker colour than the glowing horizon (a far row stays a mid-dark mass with lit
+        // windows, not a pale cut-out); by day it is the sky itself
+        float day = smoothstep(0.08, 0.35, dot(uBg, vec3(0.2126, 0.7152, 0.0722)));
+        gl_FragColor = vec4(mix(g, skyAt(dir) * mix(0.55, 1.0, day), a), c.a);
+      }` });
+  airPass.uniforms.tD.value = nrt.depthTexture;
+  for (const n of ['uBg', 'uGlow', 'uCloud']) airPass.uniforms[n] = skyU[n];      // ShaderPass clones uniforms: share the sky's
+
   // ---- glow: only meshes marked glow() feed the bloom; everything else renders black but still hides them
   const gw = Math.round(width / 2), gh = Math.round(height / 2);
   const grt = new THREE.WebGLRenderTarget(width, height, { type: THREE.HalfFloatType });
@@ -404,6 +468,7 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1
   shaftPass.enabled = shafts > 0;
   composer.addPass(shaftPass);
   composer.addPass(inkPass);
+  composer.addPass(airPass);
   composer.addPass(dofPass);
   composer.addPass(mixPass);
   // highlights bloom too (lamps, sunlit white, specular), not only meshes marked glow()
@@ -422,7 +487,15 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1
     const U = gradePass.uniforms, sc = gr.shadow; U.uShadowC.value.set(...(sc?.c || [0, 0, 0])); U.uShadowK.value = sc?.k ?? 0;
     U.uShoulder.value = gr.shoulder ?? 0; U.uGrain.value = gr.grain ?? 0; U.uSoft.value = gr.soft ?? 0; U.uTime.value = o.t ?? 0; U.uBlur.value.set(...(o.blur || [0, 0]));
     INK_SUN.value.copy(sun.position).sub(sun.target.position).normalize();   // figure outlines thicken away from the sun (cast.js)
+    // act grade.sky { glow, clouds } or false; grade.air { k, near, scale, desat } or false (KIT-DEPTH; on by default)
+    const bg = scene.background?.isColor ? scene.background : null, SK = gr.sky ?? {}, AI = gr.air ?? {};
+    sky.visible = !!bg && SK !== false;
+    if (bg) skyU.uBg.value.copy(bg);
+    skyU.uGlow.value = SK.glow ?? 1; skyU.uCloud.value = SK.clouds ?? 1;
+    const AU = airPass.uniforms; airPass.enabled = !!bg && AI !== false && (AI.k ?? 0.35) > 0;
+    AU.k.value = AI.k ?? 0.35; AU.near.value = AI.near ?? 6; AU.scale.value = AI.scale ?? 30; AU.desat.value = AI.desat ?? 0.6;
     camera.updateMatrixWorld();
+    AU.invProj.value.copy(camera.projectionMatrixInverse); AU.camWorld.value.copy(camera.matrixWorld);
     autoToon();
     prepass();
     swap(m => m.userData.glow || (m.userData.noPrepass ? null : black), grt, new THREE.Color(0, 0, 0));
@@ -433,5 +506,5 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1
     return performance.now() - t0;
   }
   return { THREE, renderer, scene, camera, sun, hemi, fill, px, setSun, addBounce, setCamera, setDof, prop, glow, render, grab,
-    passes: { ink: inkPass, grade: gradePass, dof: dofPass, shafts: shaftPass, hot: hotPass, ao: stage.ao || null } };
+    sky, passes: { ink: inkPass, grade: gradePass, dof: dofPass, air: airPass, shafts: shaftPass, hot: hotPass, ao: stage.ao || null } };
 }
