@@ -110,9 +110,12 @@ hit reads shallow. A unit test drops a pink-noise bed by 20 dB for 2 s before a 
 These rows can tell whether the film goes quiet before its loudest hit. They cannot tell whether the loudest moment is
 the story's payoff: a shout or a music swell can be louder.
 
-**Bed at the payoff.** The bed level (the 10th percentile of 50 ms blocks, as below) in the 2 s before the payoff,
-minus the film's median bed. The same unit test reads -20 dB. It carries the 4.1 dB method error of a difference of
-two bed estimates, which is borrowed from the bed drop and not checked against stems for a 2 s window.
+**Bed at the payoff.** The bed level (the 10th percentile of 50 ms blocks, as below) in the 2 s before the payoff's
+loud 400 ms window starts, minus the film's median bed. The window ends where the loud one starts, so the hit itself
+and the gaps inside it (a burst of shots with silence between them) are not read as bed. The same unit test reads
+-20 dB; a second test plays a burst of 20 ms shots over a steady bed and reads about 0 dB. It carries the 4.1 dB method
+error of a difference of two bed estimates, which is borrowed from the bed drop and not checked against stems for a 2 s
+window.
 
 **Speech share.** This is the Silero voice detector bundled with faster-whisper. It can tell how much of the film has
 a voice. It reads the Rick clips as 100 % speech, because their narration runs from the first frame to the last with

@@ -16,7 +16,7 @@ const PY = path.join(HERE, 'refbench.py');
 const FW = 720, FH = 1280, TO_1080 = 1080 / 360, FPS = 30;
 // camera still / slow: median flow under 0.2 / 2 px a frame at 1080 wide
 const STILL = 0.2 / TO_1080, SLOW = 2 / TO_1080, MIN_PAIRS = 15, BED_PRESENT_DB = -45, SFX_ON_CUT_S = 0.1;
-const ABS_GATE = -70, PAYOFF_LOOKBACK = 3, DIP_DB = 10;
+const ABS_GATE = -70, PAYOFF_LOOKBACK = 3, DIP_DB = 10, MOMENTARY_S = 0.4;   // a momentary reading covers the 0.4 s before its time
 
 // The registry every table, test and page reads. methodErr: the error of an estimate checked against ground truth (the
 // bed rows against our v1 music and ambience stems: sd 2.9 dB a section, about 4.1 dB for a difference of two sections);
@@ -126,7 +126,7 @@ export function ebur128(mp4, { first = null, last = null } = {}) {
 // PAYOFF_LOOKBACK s before it, measured down from the film's median; its length is the longest run in that window
 // more than DIP_DB under the median.
 export function payoffStats(M) {
-  const film = M.filter(([t]) => t >= 0.4);
+  const film = M.filter(([t]) => t >= MOMENTARY_S);
   if (!film.length) return { payoffT: null, payoffDipDb: null, payoffDipS: null };
   const [tp] = film.reduce((best, x) => x[1] > best[1] ? x : best);
   const level = median(film.map(x => x[1])), win = film.filter(([t]) => t >= tp - PAYOFF_LOOKBACK && t < tp).map(x => x[1]);
@@ -146,7 +146,7 @@ export function audioRows(mp4, payoffT, sfxStem) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'refbench-'));
   try {
     const a = path.join(tmp, 'a.wav'); wav16k(mp4, a);
-    const args = ['-I', PY, 'audio', a, String(payoffT ?? -1)];
+    const args = ['-I', PY, 'audio', a, String(payoffT == null ? -1 : payoffT - MOMENTARY_S)];
     if (sfxStem) { const s = path.join(tmp, 's.wav'); wav16k(sfxStem, s); args.push(s); }
     const r = run('python', args, { capture: true });
     if (r.status) throw new Error(`refbench.py audio failed: ${r.stderr}`);

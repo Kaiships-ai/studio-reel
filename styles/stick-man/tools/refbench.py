@@ -1,6 +1,6 @@
 # Pixel and audio measurements for refbench.mjs (the Rick clip benchmark). Started only by refbench.mjs through kit/env.mjs.
 #   python refbench.py frames <w> <h>      reads gray rawvideo frames on stdin, prints one JSON line per frame
-#   python refbench.py audio <wav> <payoff s, -1 for none> [<sfx stem wav>]   prints one JSON object (16 kHz mono wav)
+#   python refbench.py audio <wav> <start of the payoff's loud window s, -1 for none> [<sfx stem wav>]   prints one JSON object (16 kHz mono wav)
 # Method and limits of every number: styles/stick-man/bench/README.md.
 import json, sys
 import numpy as np
