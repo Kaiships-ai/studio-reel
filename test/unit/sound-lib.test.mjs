@@ -34,6 +34,22 @@ const E = env();
 const ready = Boolean(E.tools?.python) && run('python', ['-I', '-c', 'import numpy, scipy, soundfile'], { capture: true }).status === 0;
 const skip = !ready && 'needs the pixi python (numpy, scipy, soundfile)';
 
+const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}/;
+
+test('every sound links its Freesound short page, and no committed sound file carries an email address', () => {
+  for (const [slot, e] of Object.entries(library)) assert.equal(e.page, `https://freesound.org/s/${e.id}/`, slot);
+  const files = fs.readdirSync(SOUND, { recursive: true }).map(f => path.join(SOUND, f)).filter(f => fs.statSync(f).isFile());
+  assert.ok(files.length > 60, `${files.length} sound files`);
+  for (const f of files) {
+    const audio = /\.(ogg|wav|flac|mp3)$/.test(f);
+    if (audio && !E.tools?.ffprobe) continue;
+    const text = audio   // compressed audio bytes can spell an address by chance: read its tags, where a name would be
+      ? run('ffprobe', ['-v', 'error', '-show_entries', 'format_tags:stream_tags', '-of', 'json', f], { capture: true }).stdout
+      : fs.readFileSync(f, 'utf8');
+    assert.doesNotMatch(text, EMAIL, path.relative(ROOT, f));
+  }
+});
+
 function resolve(names) {
   const r = run('python', ['-I', `${TOOLS}/sound_lib.py`, ...names], { capture: true });
   assert.equal(r.status, 0, r.stderr);
