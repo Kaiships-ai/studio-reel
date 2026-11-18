@@ -153,7 +153,7 @@ Props follow the same rules as the body.
 
 - **Cues.** `beats` entries `{ f, who, do: 'sound', name, strength }`. Names come from `tools/sound_bank.py`: saw, chug, clack, flutter, crank, groan, sting, whoosh, boom, …
   - A silence can be the point: the rival's train has no sound.
-- **Extract and mix.** Pull the cues with `shot.mjs --cues audio/cues.json`, then run `sound.py`.
+- **Extract and mix.** Pull the cues with `shot.mjs --cues audio/cues.json`, then mix with the kit mixer `mix.py` (SKILL.md [4.1]).
 - **`audio/music.json`.** The music arc, REEL_DATA.md "Music".
 - **Targets** (`audio/levels.txt`):
 
