@@ -147,7 +147,6 @@ def audio(wav, at, sfx=None):
         voice.append(float(np.percentile(part, 90)))
     res = {'speechShare': round(speech_s / dur, 3), 'beds': beds,
            'bedBelowLoud': round(float(np.median(voice) - np.median(beds)), 1) if beds else None, 'bedAtPayoff': None}
-    # bed in the 2 s before the payoff (``at`` s, from ebur128), against the film's median bed
     pre = L[max(int((at - 2) * 20), 0): int(at * 20)] if at >= 0 else L[:0]
     if beds and len(pre) >= 10:
         res['bedAtPayoff'] = round(float(np.percentile(pre, 10) - np.median(beds)), 1)
