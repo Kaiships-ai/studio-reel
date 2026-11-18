@@ -4,7 +4,7 @@ Every stick-man shot gets depth behind its subject without the act asking for it
 Rick clip bench (`styles/stick-man/bench/TABLE.md`, depth ratio, luma, saturation):
 
 - Lens blur by the lens. `lensBlur(lens, dist)` in `engine/camera.js` sizes the blur of a background at infinity like a
-  thin lens, 1.8 x (lens / 30)^2 / focus distance, capped at 0.6. The `two`, `ms` and `follow` presets and every
+  thin lens, 1.26 x (lens / 30)^2 / focus distance, capped at 0.42, sharp from 0.7x to 1.6x the focus distance. The `two`, `ms` and `follow` presets and every
   `allout/director.js` shot without its own `dof` use it, absolute `{ pos, aim }` flights included (focus on the aim).
 - Sky with form. When an act's background is a colour, `engine/look.js` draws a dome from it: zenith darker and cooler,
   horizon lifted, two stretched cloud layers. A set's own dome (`rail-kit` `sky()`, r 60) sits in front of it (r 70).

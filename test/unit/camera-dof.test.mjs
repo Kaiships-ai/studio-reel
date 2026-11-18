@@ -3,7 +3,7 @@
 // Both camera paths: the shot solver (engine/camera.js) and the hand-directed camera (allout/director.js).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createCamera, lensBlur } from '../../styles/stick-man/engine/camera.js';
+import { createCamera, lensBlur, LENS_BAND } from '../../styles/stick-man/engine/camera.js';
 import { createDirector } from '../../styles/stick-man/allout/director.js';
 
 const ANCHOR = { head: [0, 0, 1.6], top: [0, 0, 1.95], sole: [0, 0, 0], center: [0, 0, 1.0], yaw: 0 };
@@ -14,7 +14,7 @@ const shot = (kind, opt = {}) => ({ f: 0, kind, subjects: ['you'], opt, push: 0,
 test('lensBlur grows with focal length, falls with distance, and is capped', () => {
   assert.ok(lensBlur(50, 4) > lensBlur(30, 4), 'a longer lens blurs more');
   assert.ok(lensBlur(30, 6) < lensBlur(30, 3), 'a farther focus blurs less');
-  assert.equal(lensBlur(80, 0.5), 0.6, 'capped at 0.6 so a phone frame keeps its world');
+  assert.equal(lensBlur(80, 0.5), 0.42, 'capped so a phone frame keeps its world');
   assert.ok(lensBlur(17, 6) < 0.1, 'a 17 mm wide at 6 m stays nearly sharp');
 });
 
@@ -27,6 +27,7 @@ test('medium, two and follow presets blur by the lens; wide and close-up keep th
   }
   const two = cam.solve({ ...shot('two'), subjects: ['you', 'cop'] }, 0, n => n === 'you' ? ANCHOR : { ...ANCHOR, head: [1.2, 0, 1.6], top: [1.2, 0, 1.95], sole: [1.2, 0, 0] });
   assert.equal(two.dof, lensBlur(two.lens, dist(two)), 'two-shot dof is the lens blur');
+  assert.deepEqual(cam.solve(shot('ms'), 0, A).band, LENS_BAND, 'the subject keeps a wide sharp band round the focus');
   assert.equal(cam.solve(shot('cu'), 0, A).dof, 0.6, 'cu keeps its 0.6');
   assert.equal(cam.solve({ ...shot('wide'), size0: 0.26 }, 0, A).dof, 0, 'wide stays sharp');
 });
@@ -43,6 +44,8 @@ test('director shots without dof get the lens blur, absolute flights included', 
   assert.equal(orbit.dof, lensBlur(30, 4));
   const flight = dir([{ at: { f: 0 }, cam: { pos: [0, -5, 1.6], aim: [0, 0, 1.6], lens: 28 } }]).at(0);
   assert.equal(flight.dof, lensBlur(28, 5), 'an absolute { pos, aim } shot focuses on its aim');
+  assert.ok(LENS_BAND[1] >= 1.5, 'a head up to 1.5x the aim distance (behind a flight\'s aim point) stays sharp');
+  assert.deepEqual(flight.band, LENS_BAND);
 });
 
 test('director shots keep their own dof, and dofAuto still wins when the camera is close', () => {
