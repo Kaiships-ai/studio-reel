@@ -79,3 +79,24 @@ sf.write(r'${path.join(film, 'vo/vo.wav')}', 0.3 * np.sin(2 * np.pi * 220 * t) *
     for (const f of ['mix.wav', 'stems/sfx.wav', 'stems/music.wav', 'stems/amb.wav', 'stems/vo_m.wav']) assert.ok(fs.existsSync(path.join(film, 'audio', f)), f);
   } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
 });
+
+test('a hero hit keeps its transient over the word naming it, and gives way to any other word unless the cue says keep', { skip: skip || (!E.tools?.ffmpeg && 'needs ffmpeg') }, () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sound-guard-test-'));
+  try {
+    const mix = (word, cue) => {
+      const film = path.join(tmp, `${word}-${cue.keep ? 'keep' : 'plain'}`); fs.mkdirSync(path.join(film, 'vo'), { recursive: true }); fs.mkdirSync(path.join(film, 'audio'));
+      const voice = `import numpy as np, soundfile as sf; from scipy.signal import butter, sosfilt; t = np.arange(3 * 48000) / 48000
+v = sosfilt(butter(4, [300 / 24000, 3000 / 24000], 'band', output='sos'), np.random.default_rng(1).standard_normal(len(t)))
+sf.write(r'${path.join(film, 'vo/vo.wav')}', 0.1 * v / np.abs(v).max() * ((t % 1) < 0.6), 48000)`;
+      assert.equal(run('python', ['-I', '-c', voice], { capture: true }).status, 0);
+      fs.writeFileSync(path.join(film, 'vo/words.json'), JSON.stringify([0, 1, 2].map(i => ({ t0: i, t1: i + 0.6, word: i === 1 ? word : `w${i}`, line: 'L01' }))));
+      fs.writeFileSync(path.join(film, 'audio/cues.json'), JSON.stringify([{ t: 1.05, name: 'gunshot', strength: 1, lock: true, ...cue }]));
+      const r = run('python', ['-I', `${TOOLS}/mix.py`, film], { capture: true });
+      assert.equal(r.status, 0, r.stderr);
+      return Number(fs.readFileSync(path.join(film, 'audio/levels.txt'), 'utf8').match(/gunshot@1\.05 ([-+]\d+\.\d)/)[1]);
+    };
+    const named = mix('gunshot', {}), kept = mix('hit', { keep: true }), plain = mix('hit', {});
+    assert.ok(plain < named - 0.8, `over 'hit' the guard dips the hit (${plain} dB) more than over 'gunshot' (${named} dB)`);
+    assert.equal(kept, named, 'a cue with keep: true holds its transient like a hit over its own name');
+  } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
+});
