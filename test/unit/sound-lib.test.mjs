@@ -69,8 +69,8 @@ test('every Hot Money cue name plays a named design: a recorded file on disk, or
 });
 
 test('an unknown name is guessed by what happens before what it happens to', { skip }, () => {
-  const got = resolve(['bag_whoosh_2', 'duffel_swish', 'gun_draw_slow', 'trunk_open']);
-  assert.deepEqual([got.bag_whoosh_2.how, got.bag_whoosh_2.as, got.bag_whoosh_2.files], ['guess', 'whoosh', ['lib/whoosh.ogg']]);
+  const got = resolve(['bag_swish', 'duffel_swish', 'gun_draw_slow', 'trunk_open']);
+  assert.deepEqual([got.bag_swish.how, got.bag_swish.as, got.bag_swish.files], ['guess', 'whoosh', ['lib/whoosh.ogg']]);
   assert.equal(got.duffel_swish.as, 'whoosh');
   assert.equal(got.gun_draw_slow.as, 'gun_draw', 'a draw, not a gunshot');
   assert.notEqual(got.trunk_open.as, 'step_wet', "'trunk' does not hold the word 'run'");
@@ -98,12 +98,12 @@ sf.write(r'${path.join(film, 'vo/vo.wav')}', 0.3 * np.sin(2 * np.pi * 220 * t) *
     assert.equal(run('python', ['-I', '-c', voice], { capture: true }).status, 0);
     const words = [0, 1, 2].map(i => ({ t0: i, t1: i + 0.6, word: `w${i}`, line: 'L01' }));
     fs.writeFileSync(path.join(film, 'vo/words.json'), JSON.stringify(words));
-    fs.writeFileSync(path.join(film, 'audio/cues.json'), JSON.stringify([{ t: 0.7, name: 'bag_whoosh_2', strength: 0.5 }, { t: 1.7, name: 'thud', strength: 0.5 }]));
+    fs.writeFileSync(path.join(film, 'audio/cues.json'), JSON.stringify([{ t: 0.7, name: 'bag_swish', strength: 0.5 }, { t: 1.7, name: 'thud', strength: 0.5 }]));
     const r = run('python', ['-I', `${TOOLS}/mix.py`, film], { capture: true });
     assert.equal(r.status, 0, r.stderr);
-    assert.match(r.stderr, /WARNING cue name 'bag_whoosh_2' is not in sound_lib\.NAMES; guessed as 'whoosh'/);
+    assert.match(r.stderr, /WARNING cue name 'bag_swish' is not in sound_lib\.NAMES; guessed as 'whoosh'/);
     const levels = fs.readFileSync(path.join(film, 'audio/levels.txt'), 'utf8');
-    assert.match(levels, /recorded cues 2\/2;.*guessed names \(not in sound_lib\.NAMES\): \{'bag_whoosh_2': 'whoosh'\}/);
+    assert.match(levels, /recorded cues 2\/2;.*guessed names \(not in sound_lib\.NAMES\): \{'bag_swish': 'whoosh'\}/);
     assert.match(levels, /^mix\s+-14\.\d LUFS/m);
     for (const f of ['mix.wav', 'stems/sfx.wav', 'stems/music.wav', 'stems/amb.wav', 'stems/vo_m.wav']) assert.ok(fs.existsSync(path.join(film, 'audio', f)), f);
   } finally { fs.rmSync(tmp, { recursive: true, force: true }); }

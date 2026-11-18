@@ -3,7 +3,7 @@
 #   lookup(name) -> Sound(how, as_, fn): how is 'names' (in NAMES), 'synth' (in SYNTH) or 'guess' (keyword guess, reported)
 #   fn(rng, cue) -> mono float array at 48 kHz, peak 1;  bed(kind, n, rng) -> (L, R)
 #   python styles/stick-man/tools/sound_lib.py <cue name>...   prints how each name resolves and the library files it plays
-import json, os, sys
+import json, os, re, sys
 from math import gcd
 from typing import Callable, NamedTuple
 import numpy as np, soundfile as sf
@@ -309,32 +309,46 @@ NAMES = {
 }
 SYNTH = {'stab': stab, 'note': note, 'send': send,
          **{s: bank(s) for s in ('ping', 'beep', 'blip', 'poof', 'snore', 'scratch', 'sting', 'crowd')}}
-# an unknown name is guessed by its first matching word (a word starts one of the name's _ parts): what happens (action words) ranks before what it happens to (object
-# words), so 'bag_whoosh' is a whoosh, not a bag thump, and 'gun_draw' is a draw, not a shot
-ACTION = [('whoosh', 'whoosh'), ('swish', 'whoosh'), ('swing', 'whoosh'), ('grab', 'rustle'), ('draw', 'gun_draw'),
+# a name not in NAMES or SYNTH as written is normalised (lower case, '-' and ' ' to '_', no trailing number) and looked up again,
+# also without a plural s; failing that it is guessed by its first whole word in KEYWORDS (a plural s dropped). What happens
+# (action words) ranks before what it happens to (object words), so 'bag_whoosh' is a whoosh, 'gun_draw' a draw, 'gun_shot' a shot
+ACTION = [('whoosh', 'whoosh'), ('swish', 'whoosh'), ('swing', 'whoosh'), ('swipe', 'whoosh'), ('grab', 'rustle'), ('draw', 'gun_draw'),
           ('cock', 'gun_cock'), ('rack', 'gun_cock'), ('drop', 'bag_drop'), ('step', 'step_wet'), ('run', 'step_wet'),
           ('walk', 'step_wet'), ('slam', 'trunk_slam'), ('smash', 'glass_smash'), ('crash', 'crash_metal'), ('screech', 'tyre_screech'),
           ('skid', 'tyre_screech'), ('rev', 'engine_rev'), ('knock', 'knock'), ('thump', 'thud'), ('thud', 'thud'), ('hit', 'impact_metal'),
-          ('impact', 'impact_metal'), ('shot', 'gunshot_close'), ('fire', 'gunshot_close'), ('pass', 'car_by'), ('by', 'car_by'),
-          ('click', 'flashlight'), ('breath', 'breath'), ('scrape', 'scrape_metal'), ('rustle', 'rustle'), ('creak', 'creak'), ('zip', 'zip')]
+          ('impact', 'impact_metal'), ('shot', 'gunshot_close'), ('gunshot', 'gunshot_close'), ('gunfire', 'gunshot_close'),
+          ('fire', 'gunshot_close'), ('explosion', 'boom'), ('explode', 'boom'), ('blast', 'boom'), ('ring', 'ding'), ('cheer', 'crowd'),
+          ('pass', 'car_by'), ('by', 'car_by'), ('click', 'flashlight'), ('breath', 'breath'), ('scrape', 'scrape_metal'),
+          ('rustle', 'rustle'), ('creak', 'creak'), ('zip', 'zip')]
 OBJECT = [('bullet', 'bullet_flyby'), ('glass', 'glass'), ('window', 'glass'), ('engine', 'engine_rev'), ('tyre', 'tyres'),
-          ('tire', 'tyres'), ('siren', 'siren'), ('door', 'car_door'), ('lid', 'trunk_slam'), ('bag', 'bag_thump'), ('foot', 'step_wet'),
-          ('cloth', 'rustle'), ('paper', 'rustle'), ('light', 'flashlight'), ('gun', 'gun_cock'), ('car', 'car_by')]
+          ('tire', 'tyres'), ('siren', 'siren'), ('doorbell', 'ding'), ('bell', 'ding'), ('door', 'car_door'), ('lid', 'trunk_slam'),
+          ('bag', 'bag_thump'), ('foot', 'step_wet'), ('cloth', 'rustle'), ('paper', 'rustle'), ('light', 'flashlight'),
+          ('register', 'register'), ('till', 'register'), ('crowd', 'crowd'), ('sting', 'sting'), ('gun', 'gun_cock'), ('car', 'car_by')]
+KEYWORDS = ACTION + OBJECT; WORDS = {w for w, _ in KEYWORDS}
+UNKNOWN = 'rustle'                                 # a name with no known word: a quiet cloth sound, never a hit, reported by mix.py
 
 
 class Sound(NamedTuple):
-    how: str               # 'names' | 'synth' | 'guess'
-    as_: str               # the name whose design plays (the cue name itself unless guessed)
+    how: str               # 'names' | 'synth' | 'guess' (anything not in NAMES or SYNTH as written)
+    as_: str               # the name whose design plays
     fn: Callable
+
+
+def _design(name): return NAMES.get(name) or SYNTH[name]
+
+
+def _singular(word, known): return word[:-1] if word not in known and word.endswith('s') and word[:-1] in known else word
 
 
 def lookup(name):
     if name in NAMES: return Sound('names', name, NAMES[name])
     if name in SYNTH: return Sound('synth', name, SYNTH[name])
-    tokens = name.lower().split('_')
-    for word, target in ACTION + OBJECT:
-        if any(t.startswith(word) for t in tokens): return Sound('guess', target, NAMES[target])
-    return Sound('guess', 'thud', thud)
+    norm_ = re.sub(r'_*\d+$', '', re.sub(r'[- ]+', '_', name.strip().lower()))
+    norm_ = _singular(norm_, NAMES.keys() | SYNTH.keys())
+    if norm_ in NAMES or norm_ in SYNTH: return Sound('guess', norm_, _design(norm_))
+    words = {_singular(w, WORDS) for w in norm_.split('_')}
+    target = next((t for w, t in KEYWORDS if w in words), UNKNOWN)
+    return Sound('guess', target, _design(target))
 
 
 # ---------------------------------------------------------------- beds (stereo, recorded)

@@ -16,7 +16,7 @@ TOOLS = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, TOOLS)
 from sound_dsp import SR, lp, hp, bp, room, lufs, tp_limit, comp, kw
 import sound
 from sound import word_duck, words_hot, loudest150, ff, win_rms, db, HIT_DB, ROOM_S
-from sound_lib import lookup, BEDS, bed
+from sound_lib import lookup, BEDS, SYNTH, bed
 
 PIXI_FF = os.path.join(TOOLS, '..', '..', '..', '.pixi', 'envs', 'default', 'bin', 'ffmpeg')
 sound.FFMPEG = os.environ.get('FFMPEG') or shutil.which('ffmpeg') or PIXI_FF
@@ -165,7 +165,7 @@ def prepare(film, args):
     for i, c in enumerate(cues):
         rng = np.random.default_rng(c.get('seed', 1000 + i)); t = float(c['t']); s = lookup(c['name']); name = s.as_
         if s.how == 'guess': guessed[c['name']] = name
-        y = s.fn(rng, c); rec = s.how != 'synth'
+        y = s.fn(rng, c); rec = name not in SYNTH
         if rec:
             y = hp(room(np.pad(y, (0, int(0.3 * SR))), rng, d=0.3, wet=REC_ROOM.get(name, 0.06)), REC_HP.get(name, 50), 2)
             target = REC_LEVEL.get(name, HIT_DB)
