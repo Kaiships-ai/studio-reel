@@ -113,12 +113,14 @@ test('a hero hit keeps its transient over the word naming it, and gives way to a
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sound-guard-test-'));
   try {
     const mix = (word, cue) => {
-      const film = path.join(tmp, `${word}-${cue.keep ? 'keep' : 'plain'}`); fs.mkdirSync(path.join(film, 'vo'), { recursive: true }); fs.mkdirSync(path.join(film, 'audio'));
+      const film = path.join(tmp, `${word.replace(/ /g, '_')}-${cue.keep ? 'keep' : 'plain'}`); fs.mkdirSync(path.join(film, 'vo'), { recursive: true }); fs.mkdirSync(path.join(film, 'audio'));
       const voice = `import numpy as np, soundfile as sf; from scipy.signal import butter, sosfilt; t = np.arange(3 * 48000) / 48000
 v = sosfilt(butter(4, [300 / 24000, 3000 / 24000], 'band', output='sos'), np.random.default_rng(1).standard_normal(len(t)))
 sf.write(r'${path.join(film, 'vo/vo.wav')}', 0.1 * v / np.abs(v).max() * ((t % 1) < 0.6), 48000)`;
       assert.equal(run('python', ['-I', '-c', voice], { capture: true }).status, 0);
-      fs.writeFileSync(path.join(film, 'vo/words.json'), JSON.stringify([0, 1, 2].map(i => ({ t0: i, t1: i + 0.6, word: i === 1 ? word : `w${i}`, line: 'L01' }))));
+      const said = word.split(' '), at = [1, ...said.slice(1).map(() => 1.06)];     // a second word starts inside the hit's first 70 ms
+      const words = [{ t0: 0, t1: 0.6, word: 'w0' }, ...said.map((w, i) => ({ t0: at[i], t1: at[i + 1] ?? 1.6, word: w })), { t0: 2, t1: 2.6, word: 'w2' }];
+      fs.writeFileSync(path.join(film, 'vo/words.json'), JSON.stringify(words.map(w => ({ ...w, line: 'L01' }))));
       fs.writeFileSync(path.join(film, 'audio/cues.json'), JSON.stringify([{ t: 1.05, name: 'gunshot', strength: 1, lock: true, ...cue }]));
       const r = run('python', ['-I', `${TOOLS}/mix.py`, film], { capture: true });
       assert.equal(r.status, 0, r.stderr);
@@ -127,5 +129,8 @@ sf.write(r'${path.join(film, 'vo/vo.wav')}', 0.1 * v / np.abs(v).max() * ((t % 1
     const named = mix('gunshot', {}), kept = mix('hit', { keep: true }), plain = mix('hit', {});
     assert.ok(plain < named - 0.8, `over 'hit' the guard dips the hit (${plain} dB) more than over 'gunshot' (${named} dB)`);
     assert.equal(kept, named, 'a cue with keep: true holds its transient like a hit over its own name');
+    const hot = mix('hot', {}), article = mix('the gunshot', {});
+    assert.ok(hot < named - 0.8, `'hot' is not the name 'gunshot': the guard dips the hit (${hot} dB vs ${named} dB)`);
+    assert.ok(Math.abs(article - named) < 0.3, `an article before the name keeps the hit (${article} dB vs ${named} dB)`);
   } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
 });
