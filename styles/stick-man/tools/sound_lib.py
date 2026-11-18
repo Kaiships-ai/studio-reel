@@ -11,7 +11,7 @@ from scipy.signal import resample_poly, fftconvolve, butter, sosfilt
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sound_dsp import SR, NOTE, lp, hp, bp, ts, osc, put
-from sound_bank import BANK
+from sound_bank import BANK, _nz, _exp as _env
 
 KIT_SOUND = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'sound')
 LIB = json.load(open(os.path.join(KIT_SOUND, 'library.json')))
@@ -254,10 +254,6 @@ def step(slot):
 
 
 # ---------------------------------------------------------------- synthesised: the musical and interface blips only
-def _nz(rng, d): return rng.standard_normal(int(d * SR))
-def _env(d, tau, a=0.002): t = ts(d); return np.minimum(1, t / a) * np.exp(-t / tau)
-
-
 def stab(rng, c):                                  # a low minor cluster hit with a sub under it
     d = 1.0; t = ts(d); y = sum(osc(np.full(len(t), NOTE(m)), 'saw') for m in (38, 45, 51, 56))
     y = lp(y, 1800) * np.exp(-t / 0.35) + 1.5 * np.sin(2 * np.pi * NOTE(26) * t) * np.exp(-t / 0.4) + 0.5 * bp(_nz(rng, d), 300, 3000) * _env(d, 0.03)

@@ -196,7 +196,7 @@ def prepare(film, args):
     if AM:
         ga = 10 ** ((v_lu + M['amb_lu'] - lufs([am + aw, am - aw])) / 20); am, aw = am * ga * con * duck, aw * ga * con * duck
         am, aw = word_duck(am, vo, words), word_duck(aw, vo, words)
-    # ---- music: a track is levelled vs the voice and shaped like the score; a frozen stem is set back to the pre-master scale
+    # ---- music: a track is levelled vs the voice and shaped like the score; a frozen stem's pre-master copy only feeds the guard
     label, mus, frozen = music_source(film, M, args, N); mL, mR = mus[:, 0], mus[:, 1]; stem = (mL, mR) if frozen else None
     if not frozen:
         g = 10 ** ((v_lu + M['mus_lu'] - lufs([mL, mR])) / 20); e = g * con * duck * envdb(N, M['climb']); mL, mR = mL * e, mR * e
@@ -275,7 +275,7 @@ def mux(video, wav, out):
 def report(S, L, R, G, paths, ceil, mp4):
     N, M, rows, words = S['N'], S['M'], S['rows'], S['words']; st = stems(S, G); vo = st['vo_m'][0]
     (sL, sR), (mL, mR), (aL, aR) = st['sfx'], st['music'], st['amb']
-    lv = {k: ff(p) for k, p in paths.items()}
+    lv = {k: ff(p) if k == 'mix' or np.abs(st[k]).max() > 0 else (-np.inf, -np.inf) for k, p in paths.items()}   # ebur128 prints -inf for silence
     hot = sorted(set(words_hot(vo, sL, words)) | set(words_hot(vo, sR, words)))
     w20 = int(0.02 * SR); vb = bp(vo, 200, 6000, 4); k = len(vb) // w20
     bed_ = bp((mL + mR) / 2 + (aL + aR) / 2 + (sL + sR) / 2, 200, 6000, 4)
@@ -302,7 +302,7 @@ def report(S, L, R, G, paths, ceil, mp4):
         out.append(f'  without {M["peak"]} {a0:.2f}-{z0:.2f}: sfx {lufs([x[cut] for x in (sL, sR)]):.1f}, music {lufs([x[cut] for x in (mL, mR)]):.1f} LUFS')
     out += [f'mix        {lv["mix"][0]:6.1f} LUFS   target -14 +-0.5 {ok(abs(lv["mix"][0] + 14) <= 0.5)}',
             f'true peak  {lv["mix"][1]:6.1f} dBTP   target <= -1   {ok(lv["mix"][1] <= -1)}']
-    if mp4: out.append(f'mp4        {mp4["I"]:6.1f} LUFS, true peak {mp4["tp"]:.1f} dBTP (AAC 256k, measured on {mp4["path"]}, {mp4["tries"]} encode(s))   target <= {MP4_TP:.0f}   {ok(mp4["tp"] <= MP4_TP)}')
+    if mp4: out.append(f'mp4        {mp4["I"]:6.1f} LUFS, true peak {mp4["tp"]:.1f} dBTP (AAC 256k, measured on {mp4["path"]}, {mp4["tries"]} encode(s))   target <= {MP4_TP:.1f}   {ok(mp4["tp"] <= MP4_TP)}')
     out += [f'length     {N / SR:.3f} s   target {S["length"]:.3f}{" (music.json length)" if "length" in M else " (the voice)"}   {ok(abs(N / SR - S["length"]) < 0.001)}',
             f'words with SFX within 6 dB of the voice in 2-8 kHz: {len(hot)} {hot[:8]}   {ok(len(hot) <= 3)}',
             f'voice over everything else, 200-6000 Hz, voiced parts of each word: median {np.median(s):.1f} dB, 10th pct {np.percentile(s, 10):.1f} dB, '
@@ -310,7 +310,7 @@ def report(S, L, R, G, paths, ceil, mp4):
             f'  worst words: {[(round(float(a), 1), l, w_, round(t, 2)) for a, l, w_, t in worst]}',
             'big hits, loudest 150 ms of the sfx stem before -> after the word guard (dB): ' + ', '.join(f'{k_} {db(S["pre"][k_] / post[k_]) * -1:+.1f}' for k_ in S['pre'])]
     if S['silences']: out.append('silences (mix RMS dBFS): ' + ', '.join(f'{x["t"][0]:.2f}-{x["t"][1]:.2f} {rms(*x["t"]):.1f}' for x in S['silences']))
-    if M.get('arc'):
+    if M.get('arc') and np.abs(mL).max() > 0:
         mw = (mL + mR) / 2
         arc = [(x['state'], x['t'][0], db(np.sqrt((mw[int(x['t'][0] * SR):int(x['t'][1] * SR)] ** 2).mean()))) for x in M['arc'] if x['t'][1] - x['t'][0] > 0.05]
         out.append('music stem RMS per arc section (dBFS): ' + ', '.join(f'{st_} {a:.2f} {v:.1f}' for st_, a, v in arc if v > -60))
