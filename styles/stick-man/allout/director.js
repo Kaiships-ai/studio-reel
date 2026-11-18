@@ -19,8 +19,10 @@
 //   move    { from, to, dur, ease: 'inout' | 'out' | 'in' | 'linear' | 'whip' }
 //   kick    [{ at, amp }]: a short camera shake on an impact word
 //   drift   share of the camera-to-aim distance closed per second (a slow push); act `directDrift` sets it for every shot
-//   dof     { gain, band }: lens blur round the look target
+//   dof     { gain, band }: lens blur round the look target; without it the shot gets the lens's own blur (camera.js
+//           lensBlur: focal length and focus distance, focused on the look target or an absolute shot's aim), { gain: 0 } turns it off
 // Blender coordinates (x right, y into the set, z up), like the rest of the engine.
+import { lensBlur } from '../engine/camera.js';
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 const lerp = (a, b, t) => a + (b - a) * t;
 const lerp3 = (a, b, t) => a.map((x, i) => lerp(x, b[i], t));
@@ -145,8 +147,8 @@ export function createDirector(list, { frameOf, anchor, aspect, F1, dofAuto, dri
     let ox = 0, oy = 0;
     for (const q of S.kicks) { const d = f - q.f; if (d >= 0 && d < KICK.length) { ox += 9 * q.amp * KICK[d]; oy += 6 * q.amp * KICK[d]; } }
     // dofAuto (act look.dofAuto: { below (m), gain }): a shot without its own dof gets a lens blur when the camera is close
-    const near = dofAuto && !S.dof ? Math.hypot(...c.pos.map((x, i) => x - c.focus[i])) < (dofAuto.below ?? 2.2) : false;
-    const D = S.dof || (near ? { gain: dofAuto.gain ?? 0.35 } : null);
+    const dist = Math.hypot(...c.pos.map((x, i) => x - c.focus[i])), near = dofAuto && !S.dof ? dist < (dofAuto.below ?? 2.2) : false;
+    const D = S.dof || (near ? { gain: dofAuto.gain ?? 0.35 } : { gain: lensBlur(c.lens, dist) });
     return { ...c, offset: [ox, oy], dof: D ? (D.gain ?? 0.8) : 0, band: D?.band || null, shot: S.intent || 'shot', shotIndex: S.i, why: S.why || '' };
   }
   const kind = S => S.i === 0 ? 'cut' : (S.cut || 'move');
