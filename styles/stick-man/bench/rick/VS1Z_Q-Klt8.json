@@ -1,0 +1,90 @@
+{
+ "id": "VS1Z_Q-Klt8",
+ "source": "https://www.youtube.com/shorts/VS1Z_Q-Klt8",
+ "video": {
+  "w": 1080,
+  "h": 1920,
+  "fps": 30,
+  "hasAudio": true,
+  "dur": 64.9,
+  "frames": 1945
+ },
+ "cuts": [
+  3.07
+ ],
+ "film": {
+  "cutsPerMin": 0.9245,
+  "longestTake": 61.8328,
+  "medianTake": 32.4499,
+  "luma": 111.94,
+  "sat": 23.1171,
+  "sharpHi": 3.2257,
+  "sharpLo": 1.7057,
+  "depthRatio": 1.872,
+  "cameraMotion": 4.1268,
+  "stillShare": 0.0381,
+  "idleEnergy": 3.6269,
+  "idleStill": 3.6691,
+  "slowPairs": 604,
+  "lufsI": -14.1,
+  "lufs3": -13.9,
+  "lra": 2.1,
+  "truePeak": -2.2,
+  "speechShare": 0.998,
+  "bedBelowLoud": 17.3,
+  "bedPresence": 1,
+  "bedDb": -31.1,
+  "bedDrop": 4
+ },
+ "shots": [
+  {
+   "shot": 1,
+   "t0": 0,
+   "t1": 3.07,
+   "luma": 117,
+   "sat": 17.4,
+   "sharpHi": 3.0006,
+   "sharpLo": 1.0805,
+   "depthRatio": 2.323,
+   "cameraMotion": 2.6195,
+   "stillShare": 0.1,
+   "idleEnergy": 1.9342,
+   "idleStill": null,
+   "slowPairs": 40
+  },
+  {
+   "shot": 2,
+   "t0": 3.07,
+   "t1": 64.9,
+   "luma": 111.7,
+   "sat": 23.4,
+   "sharpHi": 3.2433,
+   "sharpLo": 1.7121,
+   "depthRatio": 1.866,
+   "cameraMotion": 4.2411,
+   "stillShare": 0.0351,
+   "idleEnergy": 3.747,
+   "idleStill": 4.0635,
+   "slowPairs": 564
+  }
+ ],
+ "audio": {
+  "curve": [],
+  "beds": [
+   -32.2,
+   -31.2,
+   -30.2,
+   -31.7,
+   -31.5,
+   -29.8,
+   -32.2,
+   -27,
+   -31,
+   -29.2,
+   -32.5,
+   -28.5
+  ],
+  "sfxOnsets": null
+ },
+ "secs": 18.5
+}
