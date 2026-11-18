@@ -1,7 +1,8 @@
 # mix.py: the stick-man kit mixer. Voice + recorded sound effects (sound_lib.py) + beds + music, mastered to -14 LUFS. Method and
 # targets from hm-ep01 round 4: voice ride, word duck 2-8 kHz, word guard, hero transients kept, peak caps, true peak <= -1.6 dBTP.
 #   python styles/stick-man/tools/mix.py <film> [--music <track> | --music-stem <wav>] [--music-plan <json>] [--out <dir>] [--name mix] [--mux <video> <out.mp4>]
-# reads  vo/vo.wav, vo/words.json, audio/cues.json [{t, name, strength, dur?, len?, gain?, pan?, lock?, seed?}],
+# reads  vo/vo.wav, vo/words.json, audio/cues.json [{t, name, strength, dur?, len?, gain?, pan?, lock?, keep?, seed?}]
+#        (keep: true holds a locked hero hit's transient over any word, not only one naming it),
 #        audio/ambience.json {amb: [[[a, z], kind, dB, what]], dips: [[a, z, dB]]} (optional), audio/sound-plan.json silences (optional),
 #        audio/music.json (optional): mus_lu, amb_lu, duck_db, contour, climb, vo_ride, protect, length, arc, sections [[name, a, z]],
 #        peak (a section name: the film's loudest moment), track {file, segments: [{src: [a, b], at, file?, gain?}], xfade}
@@ -36,6 +37,7 @@ REC_LEVEL = {'gunshot': 2.0, 'gunshot_close': 2.0, 'gunshot_slowmo': 1.0, 'crash
              'radio': -4.0, 'bullet_slowmo': -1.0, 'engine_idle': -8.0, 'engine_far': -6.0, 'street_bed': -10.0, 'steam_hiss': -8.0, 'tyres_wet': -6.0,
              'scrape_metal': -1.0, 'brake_squeal': -3.0, 'siren_stop': -5.0, 'engine_down': -5.0, 'slowmo': -2.0, 'tick': -2.0, 'gun_cock': -2.0, 'flashlight': -3.0, 'engine_int': -6.0}
 HERO = {'gunshot', 'gunshot_close', 'gunshot_slowmo', 'crash', 'glass_smash', 'crash_metal', 'slam', 'trunk_slam', 'impact', 'impact_metal', 'car_by'}
+STOP = {'the', 'a', 'an', 'of', 'to', 'and'}    # words that never name a hit nor cancel its keep
 BIG = ('gunshot', 'gunshot_close', 'slam', 'trunk_slam', 'crash', 'glass_smash', 'impact', 'impact_metal', 'crash_metal')
 PEAK_CAP = (2.0, 4.0)          # a recorded cue's sample peak <= the voice's loud peaks around it + 2 dB (+4 dB for a hero hit): a transient
                                # set by its 150 ms loudness must not drive the master limiter
@@ -229,9 +231,9 @@ def prepare(film, args):
     # ('hit the car' under the gunshot) the guard wins, unless the cue sets "keep": true
     keep = np.zeros(N); r10 = int(0.01 * SR)
     def names_it(r_):
-        a_, z_ = r_['i0'] / SR - 0.01, r_['i0'] / SR + 0.07
-        said = [wd['word'].strip('.,?!"\'').lower() for wd in words if wd['t1'] > a_ and wd['t0'] < z_]
-        return not said or all(w and w in r_['name'] for w in said)
+        a_, z_ = r_['i0'] / SR - 0.01, r_['i0'] / SR + 0.07; name = set(r_['name'].split('_')) | set(r_['cue'].lower().split('_'))
+        said = {wd['word'].strip('.,?!"\'').lower() for wd in words if wd['t1'] > a_ and wd['t0'] < z_} - STOP - {''}
+        return said <= name
     for r_ in rows:
         if r_['name'] in HERO and r_.get('lock') and (r_.get('keep') or names_it(r_)):
             a_, z_ = max(0, r_['i0'] - r10), min(N, r_['i0'] + int(0.07 * SR)); keep[a_:z_] = 1
