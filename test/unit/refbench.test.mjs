@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { ROOT, run, env } from '../../kit/env.mjs';
-import { measureVideo, bedStats, gapTable, METRICS } from '../../styles/stick-man/tools/refbench.mjs';
+import { measureVideo, bedStats, gapTable, tableMarkdown, payoffStats, lookStats, METRICS } from '../../styles/stick-man/tools/refbench.mjs';
 
 test('bed presence, level and the biggest drop come from the 5 s section levels', () => {
   assert.deepEqual(bedStats([-30, -30, -47, -30]), { bedPresence: 0.75, bedDb: -30, bedDrop: 17 });
@@ -23,6 +23,23 @@ test('agent counts fill the rows the pixels cannot measure', () => {
   const t = gapTable({ rick: [{ id: 'r', film: {} }], ours: [{ id: 'v1', film: {} }], counts: { r: { blinksPer10s: 3 }, v1: { blinksPer10s: 1 } } });
   assert.equal(t.find(r => r.key === 'blinksPer10s').ours[0].gap, -2);
   assert.equal(METRICS.length, new Set(METRICS.map(m => m.key)).size, 'metric keys are unique');
+});
+
+test('a listening count fills the effect rate and wins over a stem count, its spread is the floor', () => {
+  const t = gapTable({ rick: [{ id: 'r', film: {} }], ours: [{ id: 'v1', film: { sfxPerMin: 36 } }], listening: { r: { sfxPerMin: 20 }, v1: { sfxPerMin: 30 } }, floor: { sfxPerMin: 4 } });
+  const row = t.find(r => r.key === 'sfxPerMin');
+  assert.deepEqual([row.rickMedian, row.ours[0].v, row.ours[0].gap, row.ours[0].real], [20, 30, 10, true]);
+});
+
+test('a silent film reads "silent" for its true peak in the table', () => {
+  const t = gapTable({ rick: [{ id: 'r', film: { truePeak: -2 } }], ours: [{ id: 'mute', silent: true, film: { truePeak: null } }] });
+  const line = tableMarkdown(t, ['mute']).split('\n').find(l => l.startsWith('| true peak'));
+  assert.match(line, /\| silent \|/);
+});
+
+test('the payoff is the loudest moment; the dip before it is measured down from the film median', () => {
+  const M = Array.from({ length: 200 }, (_, i) => { const t = (i + 1) / 10; return [t, t > 15 && t <= 16.5 ? -60 : t > 17 && t <= 17.5 ? -10 : -30]; });
+  assert.deepEqual(payoffStats(M), { payoffT: 17.1, payoffDipDb: 30, payoffDipS: 1.5 });
 });
 
 const E = env();
@@ -69,11 +86,61 @@ test('a frozen frame reads a still camera and zero motion; the moving test patte
 });
 
 test('the first 3 s loudness reads the opening alone, 10 dB under the rest of the film', { skip }, async () => {
-  const tone = db => `sine=f=440:r=48000:d=3,volume=${db}dB`;
   const f = clip('tone', ['-f', 'lavfi', '-i', `${SRC}:d=6`, '-f', 'lavfi', '-i', tone(-30), '-f', 'lavfi', '-i', tone(-20),
     '-filter_complex', '[1][2]concat=n=2:v=0:a=1[a]', '-map', '0:v', '-map', '[a]', '-c:a', 'aac', '-b:a', '192k', '-t', '6']);
   const quiet = clip('quiet', ['-f', 'lavfi', '-i', `${SRC}:d=3`, '-f', 'lavfi', '-i', tone(-30), '-c:a', 'aac', '-b:a', '192k', '-t', '3']);
   const step = await measureVideo(f), q = await measureVideo(quiet);
   assert.ok(Math.abs(step.film.lufs3 - q.film.lufsI) <= 0.5, `opening ${step.film.lufs3} vs the quiet tone alone ${q.film.lufsI}`);
   assert.ok(step.film.lufsI > step.film.lufs3 + 5, `film ${step.film.lufsI} vs opening ${step.film.lufs3}`);
+});
+
+const tone = db => `sine=f=440:r=48000:d=3,volume=${db}dB`;
+
+test('the last 5 s and the 1 s loudness spread read a 10 dB step', { skip }, async () => {
+  const t5 = db => `sine=f=440:r=48000:d=5,volume=${db}dB`;
+  const step = await measureVideo(clip('step', ['-f', 'lavfi', '-i', `${SRC}:d=10`, '-f', 'lavfi', '-i', t5(-30), '-f', 'lavfi', '-i', t5(-20),
+    '-filter_complex', '[1][2]concat=n=2:v=0:a=1[a]', '-map', '0:v', '-map', '[a]', '-c:a', 'aac', '-b:a', '192k', '-t', '10']));
+  const loud = await measureVideo(clip('loud', ['-f', 'lavfi', '-i', `${SRC}:d=5`, '-f', 'lavfi', '-i', t5(-20), '-c:a', 'aac', '-b:a', '192k', '-t', '5']));
+  assert.ok(Math.abs(step.film.lufsEnd5 - loud.film.lufsI) <= 0.5, `last 5 s ${step.film.lufsEnd5} vs the loud tone alone ${loud.film.lufsI}`);
+  assert.ok(Math.abs(step.film.loudSpread - 10) <= 1, `spread ${step.film.loudSpread}, expected 10`);
+});
+
+test('a bed that drops 20 dB for 2 s before a hit: the payoff, the dip and the bed drop at the climax', { skip }, async () => {
+  const f = clip('payoff', ['-f', 'lavfi', '-i', `${SRC}:d=20`, '-f', 'lavfi', '-i', 'anoisesrc=color=pink:amplitude=0.1:r=48000:d=20:seed=7',
+    '-f', 'lavfi', '-i', 'sine=f=1000:r=48000:d=0.5', '-filter_complex',
+    "[1]volume='if(between(t,15.5,17.5),0.1,1)':eval=frame[bed];[2]adelay=17500,volume=-3dB[hit];[bed][hit]amix=inputs=2:normalize=0:duration=first[a]",
+    '-map', '0:v', '-map', '[a]', '-c:a', 'aac', '-b:a', '192k', '-t', '20']);
+  const { film } = await measureVideo(f);
+  assert.ok(film.payoffT >= 17.5 && film.payoffT <= 18.1, `payoff at ${film.payoffT} s`);
+  assert.ok(Math.abs(film.payoffDipDb - 20) <= 3, `dip ${film.payoffDipDb} dB, expected 20`);
+  assert.ok(Math.abs(film.payoffDipS - 2) <= 0.5, `dip ${film.payoffDipS} s, expected 2`);
+  assert.ok(Math.abs(film.bedAtPayoff + 20) <= 3, `bed at the payoff ${film.bedAtPayoff} dB, expected -20`);
+});
+
+test('a silent sound track reports silence: the row says so and the tool prints -inf', { skip }, async () => {
+  const f = clip('silent', ['-f', 'lavfi', '-i', `${SRC}:d=3`, '-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=mono', '-c:a', 'aac', '-t', '3']);
+  const row = await measureVideo(f);
+  assert.equal(row.silent, true);
+  assert.equal(row.film.truePeak, null);
+  const r = run('node', ['styles/stick-man/tools/refbench.mjs', f], { capture: true, cwd: ROOT });
+  assert.match(r.stdout, /true peak \(dBFS\)\s+-inf \(silent\)/);
+});
+
+test('saturation and luma come from one print per frame: a long clip matches one-key passes', { skip }, () => {
+  const f = clip('long', ['-f', 'lavfi', '-i', 'testsrc2=s=180x320:r=30:d=100']);
+  const one = key => run('ffmpeg', ['-hide_banner', '-nostdin', '-v', 'error', '-i', f, '-an', '-vf', `scale=180:-2,signalstats,metadata=print:key=lavfi.signalstats.${key}:file=-`, '-f', 'null', '-'], { capture: true })
+    .stdout.split('\n').map(l => l.match(new RegExp(`${key}=([\\d.]+)`))).filter(Boolean).map(m => Number(m[1]));
+  const { Y, S } = lookStats(f);
+  assert.deepEqual(Y, one('YAVG'));
+  assert.deepEqual(S, one('SATAVG'));
+});
+
+test('a variable-frame-rate clip reads the same per-shot luma as its constant-rate twin', { skip }, async () => {
+  const grey = (c, r) => ['-f', 'lavfi', '-i', `color=c=${c}:s=360x640:r=${r}:d=2`];
+  const shots = ['0x202020', '0xa0a0a0', '0x606060'];
+  const vfr = clip('vfr', [...grey(shots[0], 10), ...grey(shots[1], 30), ...grey(shots[2], 30), '-filter_complex', '[0][1][2]concat=n=3:v=1:a=0', '-fps_mode', 'vfr']);
+  const cfr = clip('cfr', [...grey(shots[0], 30), ...grey(shots[1], 30), ...grey(shots[2], 30), '-filter_complex', '[0][1][2]concat=n=3:v=1:a=0']);
+  const a = await measureVideo(vfr), b = await measureVideo(cfr);
+  assert.equal(a.shots.length, 3, `cuts at ${a.cuts}`);
+  assert.deepEqual(a.shots.map(s => s.luma), b.shots.map(s => s.luma));
 });
