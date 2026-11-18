@@ -1,0 +1,91 @@
+{
+ "id": "HxqtHI62otM",
+ "source": "https://www.youtube.com/shorts/HxqtHI62otM",
+ "video": {
+  "w": 1080,
+  "h": 1920,
+  "fps": 30,
+  "hasAudio": true,
+  "dur": 65.29,
+  "frames": 1957
+ },
+ "cuts": [
+  38.9
+ ],
+ "film": {
+  "cutsPerMin": 0.9189,
+  "longestTake": 38.9,
+  "medianTake": 32.6473,
+  "luma": 131.3347,
+  "sat": 24.6752,
+  "sharpHi": 3.0355,
+  "sharpLo": 1.6956,
+  "depthRatio": 1.799,
+  "cameraMotion": 2.9325,
+  "stillShare": 0.0405,
+  "idleEnergy": 3.571,
+  "idleStill": 1.893,
+  "slowPairs": 743,
+  "lufsI": -14.2,
+  "lufs3": -14.4,
+  "lra": 2.2,
+  "truePeak": -1.9,
+  "speechShare": 0.998,
+  "bedBelowLoud": 15.5,
+  "bedPresence": 1,
+  "bedDb": -29.3,
+  "bedDrop": 6.9
+ },
+ "shots": [
+  {
+   "shot": 1,
+   "t0": 0,
+   "t1": 38.9,
+   "luma": 128.2,
+   "sat": 21.1,
+   "sharpHi": 3.0116,
+   "sharpLo": 1.6896,
+   "depthRatio": 1.807,
+   "cameraMotion": 2.0922,
+   "stillShare": 0.0223,
+   "idleEnergy": 3.5673,
+   "idleStill": 2.2228,
+   "slowPairs": 551
+  },
+  {
+   "shot": 2,
+   "t0": 38.9,
+   "t1": 65.29,
+   "luma": 135.9,
+   "sat": 30,
+   "sharpHi": 3.1038,
+   "sharpLo": 1.7214,
+   "depthRatio": 1.791,
+   "cameraMotion": 5.1629,
+   "stillShare": 0.0673,
+   "idleEnergy": 3.5814,
+   "idleStill": 1.7312,
+   "slowPairs": 192
+  }
+ ],
+ "audio": {
+  "curve": [],
+  "beds": [
+   -29.3,
+   -28.5,
+   -30.3,
+   -30.1,
+   -27.4,
+   -26,
+   -26.8,
+   -33.7,
+   -28.9,
+   -33.7,
+   -25.6,
+   -31.8,
+   -30.7
+  ],
+  "sfxOnsets": null
+ },
+ "secs": 17.3
+}
