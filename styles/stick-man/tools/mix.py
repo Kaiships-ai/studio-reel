@@ -225,10 +225,15 @@ def prepare(film, args):
         am, aw, sL, sR, *mus_ = (lowsplit(x, gg) for x in shaped(am, aw, sL, sR))
         if mus_: mL, mR = mus_
     # a hero hit that lands on the word naming it ('smash', 'slam') keeps its first 70 ms (the transient) out of the guard: the word
-    # duck (2-8 kHz) already cleared the consonants; the guard's broadband dip took 3-4 dB off the very transient
+    # duck (2-8 kHz) already cleared the consonants; the guard's broadband dip took 3-4 dB off the very transient. Over any other word
+    # ('hit the car' under the gunshot) the guard wins, unless the cue sets "keep": true
     keep = np.zeros(N); r10 = int(0.01 * SR)
+    def names_it(r_):
+        a_, z_ = r_['i0'] / SR - 0.01, r_['i0'] / SR + 0.07
+        said = [wd['word'].strip('.,?!"\'').lower() for wd in words if wd['t1'] > a_ and wd['t0'] < z_]
+        return not said or all(w and w in r_['name'] for w in said)
     for r_ in rows:
-        if r_['name'] in HERO and r_.get('lock'):
+        if r_['name'] in HERO and r_.get('lock') and (r_.get('keep') or names_it(r_)):
             a_, z_ = max(0, r_['i0'] - r10), min(N, r_['i0'] + int(0.07 * SR)); keep[a_:z_] = 1
     keep = uniform_filter1d(keep, r10); sL, sR = sL * (1 - keep) + sL0 * keep, sR * (1 - keep) + sR0 * keep
     for a, z, d in M['protect']:

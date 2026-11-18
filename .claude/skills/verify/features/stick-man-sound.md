@@ -21,6 +21,10 @@
   or a `silence`, `drop` or `none` section, and the last section ends on the track's own ending by the film's end. Without
   `--mus-lu` it mixes the film in process to set `mus_lu` so the music stem sits at −26 LUFS. `mix.py --music-plan
   <json>` plays the result in place of `audio/music.json`.
+- `sound.guard`: a word under +7.5 dB against the rest gets everything above 180 Hz dipped. A locked hero hit keeps its
+  first 70 ms out of that dip only where the words it lands on name it ("smash" on `glass_smash`) or a cue sets `"keep":
+  true`. Under any other word ("hit the car" under the gunshot) the word wins: Hot Money r4 goes from 4/255 words under
+  +6 dB to 0/255, and the gunshots at 43.47 s and 43.8 s give up about 3 dB of transient.
 - `sound.mux`: `--mux <video> <out.mp4>` encodes AAC 256k, measures the mp4's true peak with ebur128 and, while it is over
   −1.0 dBTP, lowers the limiter ceiling by the overshoot plus 0.3 dB and encodes again (3 encodes at most).
 
