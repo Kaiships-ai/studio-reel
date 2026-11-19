@@ -516,3 +516,6 @@ export function faceRig(headW, opt = {}) {
     },
   };
 }
+// a face design's key: the numbers its expression draws with (EXPR entry), so a changed design or a new face reads as a new
+// key in the dbg rows (actors[n].exprDesign) and facebeat.mjs can hold it against the face sheet Kai approved
+export const designKey = name => hashKey(JSON.stringify(EXPR[name] || EXPR.neutral));

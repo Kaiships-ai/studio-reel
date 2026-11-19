@@ -8,7 +8,7 @@ import { createStage, B as toThree, lin, PLACE } from './look.js';
 import { makeStick, KAI, TELLER, GUARD, EXPR, HEAD_C } from './cast.js';
 import { VERBS, STAND, SIT, REST_ARM, W, lerp, lerp3, add3, angDiff, toLocal, smoother, hash, handEase } from './verbs.js';
 import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, exprAccent, bodyFollow, LATE, EXPR_LEAD, exprKeyAt, markOwner, isBodyVerb, autoActing, faceStateAt, visemeTrack, faceChanges, BLINKS, BLINK_GAP, focusEase } from './acting.js';
-import { mixFace, faceParams } from './faces.js';
+import { mixFace, faceParams, designKey } from './faces.js';
 // face timing in the runtime (face-research.md rules 13-14): focus changes, free-blink shape
 const FOCUS_N = 12, PUPIL_K = 1.6, TURN_BLINK = 0.6;
 const ANXIOUS = new Set(['nervous', 'worried', 'angry', 'furious', 'panic', 'scream', 'shock', 'pain']);
@@ -23,6 +23,7 @@ import { ACT, PROPV, MAKE, keyTracks } from './verbs_fx.js';
 import { POSE_VERBS, POSES } from './poses.js';
 import { compileTrack, playActor, toPose, MOTION_POSES } from './motion.js';
 import { propPlan } from './propobj.js';
+import { solidBoxes, restBoxes, inBoxes, drawnBox, boxPoints } from './solids.js';
 import * as EXTRAS from '../lib/cast/extras.js';
 import { PHYS } from '../lib/props/physfx.js';
 import { STORY } from '../lib/props/story.js';
@@ -37,6 +38,7 @@ const KEYV = new Set(['set', 'pulse', 'shake', 'fire', 'flash', 'sound']);
 const HAND_R = 0.040 * W;                                        // the hand dot's radius (cast.js)
 const THICK = { b1: 0.045, b2: 0.045, stack: 0.07, note: 0.003 };
 const toB = v => [v.x, -v.z, v.y];
+const PROP_IN_MAX = 1.5, PROP_IN_GRACE = 0.02;   // m: a prop this long or longer is a set piece; this far in is touching
 const norm = w => w.toLowerCase().replace(/[^a-z0-9']/g, '');
 
 async function getJSON(url) { try { const r = await fetch(url); return r.ok ? await r.json() : null; } catch { return null; } }
@@ -119,6 +121,9 @@ async function buildAct(R, X) {
   // act haze: { color (sRGB), near, far } m: distance fog toward the sky colour (aerial perspective), shown with the act
   const fog = R.haze ? new THREE.Fog(lin(...R.haze.color), R.haze.near ?? 12, R.haze.far ?? 160) : null;
   const props = built.props;
+  // the set's solids as built (engine/solids.js): every box mesh but the set props, plus COLLIDE. A prop lets go and lands
+  // on them (propobj.js S.rest); the dbg reports a prop inside one (out.propIn)
+  const solids = solidBoxes(group, new Set(Object.values(props || {}).map(o => (o?.isObject3D ? o : o?.mesh)).filter(Boolean))), restOn = restBoxes(solids, SET.COLLIDE || []);
   // per-place light (FORENSIC.md section 6: every reference place has its own light, per-shot YAVG std 23-25 vs ours 6-9):
   // act `light: { lit, shade (tints of the toon ramp's two ends), lamp (gain of the practical lights), sun, power, sky,
   // ground, hemi, fill, fillPower, background, bounce, lamps: [{at, rgb, power, dist}] }`
@@ -181,6 +186,7 @@ async function buildAct(R, X) {
     // glasses: per cast entry, else per reel (R1.glasses), else the spec's own (Q2: rims make every face read as round eyes)
     const gl = c.glasses ?? X.glasses, S = makeStick(gl == null ? SPECS[c.spec] : { ...SPECS[c.spec], glasses: gl }); group.add(S.root);
     S.obstacles = SET.COLLIDE || [];   // the set's solid pieces: hands and held props stop on them (cast.js worldBox)
+    S.rest = restOn;                   // what a prop out of the hand lands on: every solid the set built (propobj.js)
     const costume = c.costume ?? SPECS[c.spec].costume;   // a spec may wear a costume by default (a character's own clothes, e.g. 'hoodie:grey')
     if (costume) { if (!HOOKS.costume) throw new Error(`cast ${name}: costume needs import '/styles/stick-man/allout/costume.js'`); HOOKS.costume(S, costume, { group, name }); }   // role layers (belt, holster, hat, hoodie)
     const posture = c.posture || 'stand', base = posture === 'sit' ? SIT : STAND;
@@ -533,7 +539,7 @@ async function buildAct(R, X) {
         verb: [...a.verbs.filter(x => x.start <= f && f < x.end).map(x => x.name), ...(a.anim && a.anim.keys.length > 1 ? ['key'] : [])], head: box, feet, limbs: a.S.rigWorld(),
         // a motion v2 actor acts from hand-set keys, not verbs: past its first key it is acting ('key')
         body: a.verbs.filter(x => x.start <= f && f < x.end && isBodyVerb(x)).map(x => x.name).pop() || (a.anim && a.anim.keys.length > 1 && f >= a.anim.keys[0].f ? 'key' : null), lead: !!a.lead,
-        mouthA: +(a.S.faceStats?.mouth ?? 0).toFixed(5), faceKey: a.S.faceStats?.key ?? '', talking: !!a.talking,
+        mouthA: +(a.S.faceStats?.mouth ?? 0).toFixed(5), faceKey: a.S.faceStats?.key ?? '', exprDesign: designKey(a.face.expr), talking: !!a.talking,
         face: a.faceDbg || null, cord: a.S.hoodie?.dbg ?? null, headP: a.P ? [a.P.head_pitch || 0, a.P.head_dv || 0, a.P.head_tilt || 0].map(x => +(+x).toFixed(4)) : null,
         exprFrom: a.exprKey?.f > -1e8 ? a.exprKey.f : null, exprWord: a.exprKey?.word ?? null,
         headW: toB(c).map(x => +x.toFixed(4)), figH: +((sole - ys[0]) / height).toFixed(3),
@@ -603,14 +609,16 @@ async function buildAct(R, X) {
       tracked.push([n, props[n]?.isObject3D ? props[n] : props[n]?.mesh]); if (L[i]?.mode === 'hand') held.add(n); }
     for (const a of actors) for (const [id, o] of Object.entries(a.S.props || {})) {
       tracked.push([`${a.name}:${id}`, o]); if ((a.S.propState?.[id]?.w ?? 1) >= 0.999) held.add(`${a.name}:${id}`); }
-    out.track = {};
+    out.track = {}; const drawn = [];
     for (const [id, o] of tracked) {
       if (!o?.isObject3D) continue;
       let shown = true; for (let q = o; q; q = q.parent) if (!q.visible) shown = false;
-      const inv = o.matrixWorld.clone().invert(), loc = new THREE.Box3(); box3.makeEmpty();
+      box3.makeEmpty();
       if (shown) o.traverseVisible(m => { if (!m.isMesh || !m.geometry) return; if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
-        bb.copy(m.geometry.boundingBox).applyMatrix4(m.matrixWorld); box3.union(bb); loc.union(bb.applyMatrix4(inv)); });
+        box3.union(bb.copy(m.geometry.boundingBox).applyMatrix4(m.matrixWorld)); });
       if (box3.isEmpty()) { out.track[id] = { shown: false }; continue; }
+      const loc = drawnBox(o); if (loc.isEmpty()) loc.copy(box3).applyMatrix4(o.matrixWorld.clone().invert());
+      drawn.push([id, loc, o]);
       const c = box3.getCenter(new THREE.Vector3()), ls = loc.getSize(new THREE.Vector3()), pts = [c.clone()];
       let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
       for (let i = 0; i < 8; i++) {
@@ -622,6 +630,58 @@ async function buildAct(R, X) {
       out.track[id] = { shown: true, held: held.has(id), on: foldVis(pts.map(p => pointVis(stage.camera, stage.scene, p, own))),
         box: Number.isFinite(x0) ? [x0, y0, x1, y1].map(x => +x.toFixed(1)) : null, size: +(Math.max(ls.x, ls.y, ls.z) * o.matrixWorld.getMaxScaleOnAxis()).toFixed(4), dims: [ls.x, ls.y, ls.z].map(x => +(x * o.matrixWorld.getMaxScaleOnAxis()).toFixed(4)), c: toB(c).map(x => +x.toFixed(4)) };
     }
+    // a prop inside a head or a solid of the set (Hot Money ep01 r5: a bag carried up past the face, 27 cm into the head for
+    // 30 frames, and through the dresser and door 9's jamb; shotgate passed): each hand-sized prop's drawn box as a 4x4x4
+    // grid against every shown head (an ellipsoid 0.5 x 0.5 x 0.47 head widths) and every solid (engine/solids.js), its
+    // deepest point, 2 cm of grace (a prop laid on a top or held to an ear touches it)
+    out.propIn = [];
+    for (const [id, loc, o] of drawn) {
+      if (/^[^:]+:H/.test(id)) continue;                                  // worn on the head (a cap)
+      const sz = loc.getSize(new THREE.Vector3()).multiplyScalar(o.matrixWorld.getMaxScaleOnAxis());
+      if (Math.max(sz.x, sz.y, sz.z) > PROP_IN_MAX) continue;               // a door, a roof, a car: set pieces moved as props
+      const P = boxPoints(loc, o.matrixWorld), skipSelf = new Set([o]);
+      for (const a of actors) { if (!a.S.root.visible) continue;
+        const c = a.S.parts.head.getWorldPosition(new THREE.Vector3()), k = a.S.root.scale.x, hx = 0.5 * W * k, hy = 0.47 * W * k;
+        let d = 0, at = null;
+        for (const p of P) { const r = Math.hypot((p.x - c.x) / hx, (p.y - c.y) / hy, (p.z - c.z) / hx); if (r < 1 && (1 - r) * hy > d) { d = (1 - r) * hy; at = p; } }
+        if (d > PROP_IN_GRACE) out.propIn.push({ id, in: `${a.name}.head`, cm: +(d * 100).toFixed(1), at: toB(at).map(x => +x.toFixed(3)) }); }
+      for (const h of inBoxes(P, [...solids.filter(b => !skipSelf.has(b.mesh)), ...(SET.COLLIDE || [])], PROP_IN_GRACE))
+        out.propIn.push({ id, in: h.name, cm: +(h.depth * 100).toFixed(1), at: toB(h.at).map(x => +x.toFixed(3)) });
+    }
+    // an object cut by the camera's far plane inside the shot: a straight-edged hole where the sky dome (drawn first, no
+    // depth) shows through or a flat card draws over it (Hot Money r5 CHASE 1601-1637: motel.js's 220 x 60 m sky cards at
+    // 60-70 m against far 80 m). Every opaque mesh 2 m tall or more whose box reaches both nearer and further than far
+    // and whose near part is in the frustum; the floor and the dome (BackSide) are left out
+    out.farCut = [];
+    { const cam = stage.camera, far = cam.far, cp = cam.position, cb = new THREE.Box3(), q = new THREE.Vector3();
+      pm.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); frust.setFromProjectionMatrix(pm);
+      const liveR = new Set(actors.map(a => a.S.root)), fwd = cam.getWorldDirection(new THREE.Vector3());
+      stage.scene.traverseVisible(m => {
+        if (!m.isMesh || !m.geometry || m.isSprite) return;
+        for (let o = m; o; o = o.parent) if (liveR.has(o)) return;
+        const mt = Array.isArray(m.material) ? m.material[0] : m.material;
+        if (!mt || mt.side === THREE.BackSide || mt.transparent || mt.colorWrite === false || mt.blending === THREE.AdditiveBlending) return;
+        if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
+        cb.copy(m.geometry.boundingBox).applyMatrix4(m.matrixWorld);
+        if (cb.max.y - cb.min.y < 2) return;
+        // depth along the view axis, as the far plane clips (a plane, not a sphere: a card's top can be in while its middle is out)
+        let lo = Infinity, hi = -Infinity; for (let i = 0; i < 8; i++) { const z = q.set(i & 1 ? cb.max.x : cb.min.x, i & 2 ? cb.max.y : cb.min.y, i & 4 ? cb.max.z : cb.min.z).sub(cp).dot(fwd); lo = Math.min(lo, z); hi = Math.max(hi, z); }
+        if (!(lo < far && hi > far) || !frust.intersectsBox(cb)) return;
+        // what the lens sees of it near the cut: rays through a 12 x 21 grid of the frame; a ray counts when this mesh is
+        // the first thing drawn along it (the dome, drawn first with no depth, hides nothing) within 10 m of far
+        const rc = new THREE.Raycaster(), ndc = new THREE.Vector2(), seenAt = [];
+        rc.far = far * 2;
+        for (let gx = 0; gx < 12; gx++) for (let gy = 0; gy < 21; gy++) {
+          ndc.set(-1 + (gx + 0.5) / 6, -1 + (gy + 0.5) / 10.5); rc.setFromCamera(ndc, cam);
+          const h = rc.intersectObject(m, false)[0], z = h && h.point.clone().sub(cp).dot(fwd); if (!h || z > far || z < far - 10) continue;
+          const first = rc.intersectObject(stage.scene, true).find(x => opaque(x) && x.object.material?.depthWrite !== false && x.object.material?.side !== THREE.BackSide && ![...liveR].some(r => { for (let o = x.object; o; o = o.parent) if (o === r) return true; return false; }));
+          if (first?.object === m) seenAt.push(h.point);
+        }
+        if (!seenAt.length) return;
+        const mid = toB(cb.getCenter(new THREE.Vector3())).map(x => x.toFixed(0)).join(', ');
+        out.farCut.push({ name: `${m.name || m.parent?.name || m.geometry.type} at (${mid})`, at: toB(seenAt[seenAt.length >> 1]).map(x => +x.toFixed(2)), share: +(seenAt.length / 252).toFixed(3),
+          size: toB(cb.getSize(new THREE.Vector3())).map(x => +Math.abs(x).toFixed(1)), far: +far.toFixed(1) });
+      }); }
     out.cross = [];
     const live = new Set(actors.filter(a => a.S.root.visible).map(a => a.S.root)), heldO = new Set(tracked.filter(([id]) => held.has(id)).map(([, o]) => o));
     const skip = x => { if (!opaque(x)) return true; for (let q = x.object; q; q = q.parent) if (live.has(q) || heldO.has(q)) return true; return false; };

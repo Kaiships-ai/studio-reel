@@ -222,9 +222,10 @@ export function propExcess(q, now) {
 // one clip through the real rig, physics on: the hand off its target while it grips (shot.mjs (h)) and a held prop
 // inside the body after the solve ((i)), per frame; and the props, the balance shift and the load frame to frame
 // obstacles: more set pieces ([{ name, lo, hi }], Blender metres, clip space): a film's own (a counter beside the actor, a wall)
-export async function rigClip(C, body = C.body || 'adult', { phys = true, obstacles = [], each = null } = {}) {
+export async function rigClip(C, body = C.body || 'adult', { phys = true, obstacles = [], rest = null, each = null } = {}) {
   const R = await rig(), S = R.cast.makeStick(R.bodySpec(guard(C.needs?.cap), body)), was = R.PHYS.on; R.PHYS.on = phys;
   S.obstacles = [...markColliders(C.needs?.marks, C.body ? 1 : (BODIES[body]?.spec.scale ?? 1)), ...obstacles];   // the clip's set pieces: hands stop on them
+  if (rest) S.rest = [...S.obstacles, ...rest];   // what a prop let go lands on: a set's solids as engine/solids.js reads them
   const key = { ...(C.advance ? { f: 0, clip: C.clip, body, to: [C.introTravel + C.outroTravel + 2 * C.advance, 0] } : { f: 0, clip: C.clip, body, ...(C.loop ? { times: 2 } : {}) }), ...fitOf(C) };
   const keys = placeClip(key, { pos: [0, 0], yaw: 90 }).keys, track = compileTrack(keys, {}, { pos: [0, 0], yaw: 90 }, 'kaiships'), fr = playActor(track, 0, keys[keys.length - 1].f + 6);
   const lastF = keys[keys.length - 1].f, Qat = f => R.toPose(fr[Math.max(0, Math.min(fr.length - 1, f))], S.root.scale.x), plan = R.propPlan(track, Qat, S);
