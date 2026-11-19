@@ -3,7 +3,8 @@
 // (Hot Money ep01 r5: room 2's bed and nightstand were in COLLIDE_ROOM2, the engine read COLLIDE, and a hot dog let go
 // over the bed fell through it to the floor; the walls and the door jamb a bag swung through were in no list at all).
 //   solidBoxes(root, skip)   [{ name, mesh, box (its geometry's box) }]: the box meshes under root, outside skip (a set prop, an actor)
-//   restBoxes(boxes, COLLIDE) [{ name, lo, hi }] Blender metres: what a prop lands on and is stopped by (propobj.js)
+//   restBoxes(boxes, COLLIDE) [{ name, lo, hi }] Blender metres: what a prop lands on and is stopped by (propobj.js),
+//                            overhead boxes (bottom above OVERHEAD) left out
 //   inBoxes(pts, boxes)      the deepest box each point set is in, by the box's own (turned) axes (a COLLIDE { lo, hi } too)
 // A mesh with userData.hollow (a crate's open inside, a counter's knee space) is left out; so is an ink hull (BackSide)
 // and anything hidden.
@@ -28,8 +29,13 @@ export function solidBoxes(root, skip = new Set()) {
   return out;
 }
 
+// a box whose bottom is this high (Blender metres) is overhead (a ceiling, a lintel, a beam), never what a prop falls on
+// or into: propobj.js blocks a prop up to 0.5 m under a box, so a room-wide ceiling would shove a prop let go at 2 m
+// out of the room
+export const OVERHEAD = 1.8;
+
 // world corners of a box mesh as an axis-aligned box (Blender metres); a box turned off the axes is boxed loosely, so a
-// piece turned more than 5 deg about anything but the vertical is not a rest surface
+// piece turned more than 5 deg about anything but the vertical is not a rest surface; an overhead box is left out
 export function restBoxes(boxes, collide = []) {
   const out = [...collide], c = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3(), e = new THREE.Euler();
   for (const b of boxes) {
@@ -38,6 +44,7 @@ export function restBoxes(boxes, collide = []) {
     if (Math.abs(e.x) > 0.09 || Math.abs(e.z) > 0.09) continue;
     const bb = b.box.clone().applyMatrix4(b.mesh.matrixWorld);
     const lo = toB(bb.min), hi = toB(bb.max);
+    if (lo[2] > OVERHEAD) continue;
     out.push({ name: b.name, lo: [lo[0], hi[1], lo[2]], hi: [hi[0], lo[1], hi[2]] });
   }
   return out;

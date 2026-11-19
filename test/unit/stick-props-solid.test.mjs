@@ -27,6 +27,9 @@ test('class 2: the bait bill held out of the top of the frame (v3 LOAD-B 741-757
 
 test('class 3: a round 14 cm long (the r5 s5 bullet at scale 1) is out of scale, one at 2.5 cm (scale 0.18) is not; kinds come from names', () => {
   assert.equal(kindOf('bullet'), 'bullet'); assert.equal(kindOf('cop:Lpistol'), 'pistol'); assert.equal(kindOf('bagA'), null);
+  for (const [id, k] of [['bullet2', 'bullet'], ['you:Rhotdog', 'hotdog'], ['baitBill', 'bill'], ['bait_bill', 'bill'], ['billA', 'bill']]) assert.equal(kindOf(id), k, id);
+  for (const set of ['cupboard', 'billboard', 'billy', 'phonebooth', 'torchlight', 'hotdogStand']) assert.equal(kindOf(set), null, `${set} is a set piece, not a hand prop`);
+  assert.equal(scaleFault('cupboard', 1.8), null, 'a 1.8 m cupboard is never "prop out of scale"');
   assert.ok(scaleFault('bullet', 0.14)); assert.equal(scaleFault('bullet', 0.025), null); assert.equal(scaleFault('cop:Lpistol', 0.2615), null);
   const r = rows('v3-load-b')[5], at = r.track.bill?.c || [0, 0, 1];
   const fly = s => Array.from({ length: 6 }, (_, i) => ({ ...r, f: r.f + i, propIn: [], track: { bullet: { shown: true, held: false, on: 'in', box: [200, 300, 260, 330], size: s, dims: [s, s / 2.3, s / 2.3], c: at } } }));

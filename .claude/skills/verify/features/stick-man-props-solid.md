@@ -11,7 +11,9 @@ engine built, not a hand list a film keeps.
   geometry's own bounding box (a set may translate the geometry).
 - Rest surfaces (`engine/propobj.js`, `S.rest`): a prop let go falls until it lands on the floor or on the top of any
   of those solids, not only on `COLLIDE` (r5 ENDING-A: the hot dog fell through room 2's bed to the floor, bottom -0.05
-  m). A headless rig without a set keeps `S.obstacles`; `rigClip(..., { rest })` gives it a set's solids.
+  m). A box whose bottom is above 1.8 m (`solids.js OVERHEAD`: a ceiling, a lintel) is not a rest solid, so a prop let
+  go under a ceiling falls straight down instead of being shoved out of the room. A headless rig without a set keeps
+  `S.obstacles`; `rigClip(..., { rest })` gives it a set's solids.
 - Prop in a head or in the set (`__dbg` rows `propIn: [{ id, in, cm, at }]`, shotfaults kinds `prop in the head`,
   `prop in the set`): each hand-sized prop (under 1.5 m) as a 4x4x4 grid of points inset 15 % from its drawn box,
   against every shown head (ellipsoid 0.5 x 0.5 x 0.47 head widths) and every solid, 2 cm of grace. A cap worn on the
@@ -22,10 +24,12 @@ engine built, not a hand list a film keeps.
 - Prop leaves view (shotfaults `prop leaves view`): a prop in a hand (within 0.35 m of a hand of a figure in frame, or
   an `<actor>:` hand prop) that was seen whole in the 6 frames before leaves the frame while its holder stays in it,
   and comes back within 45 frames (r5 LOAD-B 691-714 and 741-757: the bait bill held up out of the top of the frame).
-- Prop out of scale (shotfaults `prop out of scale`, `lib/props/sizes.js REAL_SIZE`): a tracked prop whose name says
-  its kind (bullet, pistol, bill, hotdog, phone, torch, cup) and whose longest side is outside its real range by more
+- Prop out of scale (shotfaults `prop out of scale`, `lib/props/sizes.js REAL_SIZE`): a tracked prop whose name's last
+  word is its kind (bullet, pistol, bill, hotdog, phone, torch, cup; `bullet2`, `baitBill`, `billA` too, never
+  `cupboard` or `billboard`) and whose longest side is outside its real range by more
   than 1.25x, while in view. Only tracked props are seen: an object a set animates outside its `props` (the r5 s5
-  round) is invisible to every gate, so a story prop goes in the set's `props`.
+  round) is invisible to every gate, so a story prop goes in the set's `props`. The kit's own hand props of those kinds
+  are held to the table (`test/unit/stick-prop-sizes.test.mjs`).
 - Upright along the forearm (`engine/cast.js`, `userData.top`): an `'along'` prop that declares `top` (the kit pistol:
   `[0, 0, 1]`, the slide over the grip) is rolled about the forearm so that axis faces up, or forward when the forearm
   is near vertical. Before, the shortest arc from up left the roll to chance: the kit's own Act_PistolShoot_Once held the
@@ -38,14 +42,14 @@ engine built, not a hand list a film keeps.
 - Face sheet (`tools/facesheet.mjs`, `facebeat.mjs` (3)): rows carry `actors[n].exprDesign` (`faces.js designKey`, a hash
   of the expression's numbers). facebeat fails while a design held 15 frames on a readable head is not in
   `review/faces-approved.json` (by kai). `facesheet.mjs films/<slug>` writes `review/face-sheet.jpg` to show Kai;
-  `--approve "<his words>"` records his yes.
+  `--approve "<his words>" --sheet <hash>` records his yes, only for the sheet whose hash he saw stamped on the jpg.
 - Run logs (`tools/logline.mjs`): the one way to add a line to a run log; it records the line count and a hash in
   `.logchain.json` and refuses to append to a log whose first lines changed. `stagegate.mjs` runs the same check on the
   film folder at every gate (`run logs` row).
 
 ## Journeys
 
-- `node --test test/unit/stick-props-solid.test.mjs test/unit/stick-prop-rest.test.mjs test/unit/stick-prop-roll.test.mjs test/unit/stick-facesheet.test.mjs test/unit/stick-logline.test.mjs`
+- `node --test test/unit/stick-props-solid.test.mjs test/unit/stick-prop-rest.test.mjs test/unit/stick-prop-roll.test.mjs test/unit/stick-facesheet.test.mjs test/unit/stick-logline.test.mjs test/unit/stick-prop-sizes.test.mjs`
   (fixtures in `test/fixtures/hm-r5/`, cut from the r5 v3 and fixed rows).
 - A film: `node styles/stick-man/tools/shot.mjs --film films/<slug> --frames <a>-<b> --dbg review/shot-rows.jsonl --w 540 --h 960`,
   then `node styles/stick-man/tools/shotgate.mjs films/<slug> --rows review/shot-rows.jsonl --w 540 --h 960`: the new

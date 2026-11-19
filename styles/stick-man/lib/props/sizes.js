@@ -14,10 +14,14 @@ export const REAL_SIZE = {
 };
 // a measured size passes inside [lo / SIZE_TOL, hi * SIZE_TOL]: the drawn model, its ink and a stylised shape
 export const SIZE_TOL = 1.25;
-// the kind a prop id names: 'cop:Lpistol' -> pistol, 'bill' -> bill, 'bullet2' -> bullet; null when no kind matches
+// the kind a prop id names: its last word, without a number or a one-letter variant ('cop:Lpistol' -> pistol, 'bullet2',
+// 'baitBill', 'bait_bill', 'billA'). A longer word is not its kind: 'cupboard', 'billboard', 'phonebooth', 'torchlight',
+// 'hotdogStand' -> null, so a set piece named so is never held to a hand prop's size.
 export function kindOf(id) {
-  const n = String(id).replace(/^[^:]+:[LRBH]/, '').toLowerCase();
-  return Object.keys(REAL_SIZE).find(k => n === k || n.startsWith(k) || new RegExp(`(^|[^a-z])${k}`).test(n)) || null;
+  const words = String(id).replace(/^[^:]+:[LRBH]/, '').replace(/\d+$/, '').replace(/([a-z])(?=[A-Z])/g, '$1 ').split(/[^A-Za-z]+/).filter(Boolean);
+  if (words.length > 1 && /^[A-Z]$/.test(words.at(-1))) words.pop();
+  const last = (words.at(-1) || '').toLowerCase();
+  return Object.hasOwn(REAL_SIZE, last) ? last : null;
 }
 export function scaleFault(id, size) {
   const k = kindOf(id); if (!k || !(size > 0)) return null;
