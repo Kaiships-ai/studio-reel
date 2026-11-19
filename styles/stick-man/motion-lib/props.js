@@ -116,5 +116,5 @@ BUILD.pistol = () => {
   const g = new THREE.Group(), steel = [0.12, 0.12, 0.14];
   const slide = solid(new THREE.BoxGeometry(0.03, 0.17, 0.045), steel, 0.006); slide.position.set(0, 0.07, 0.03); g.add(slide);
   const grip = solid(new THREE.BoxGeometry(0.028, 0.05, 0.08), steel, 0.006); grip.position.set(0, 0, 0); g.add(grip);
-  g.userData = { mode: 'along', grip: [0, 0, 0], mass: 0.9 }; return g;
+  g.userData = { mode: 'along', grip: [0, 0, 0], top: [0, 0, 1], mass: 0.9 }; return g;   // top: the slide over the grip (+z)
 };
