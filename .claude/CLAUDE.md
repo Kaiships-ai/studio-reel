@@ -28,6 +28,13 @@ a build check, a manifest entry) in the same change. Drop a row once its mistake
 | A stick-man kit fault is fixed by `.agents/playbooks/stick-man-kit-fix.md` (5 whys, industry check, reviewer, before\|after proof page, Kai merges); a film runs under `stick-man-film.md` with one orchestrator session | pstack `check-playbooks.mjs` keeps the anchors valid; the rest is judgment |
 | No message to another session (`SendMessage`, `orca … send`) without Kai's go for that message | the `peer-message-gate` PreToolUse hook in the loaded user settings (asks every time; denies when nobody can answer) |
 | `stagegate.mjs` writes only inside a real film folder (a `--help` once littered the repo root with gate files) | `test/unit/stick-gates-voice.test.mjs` |
+| A stick-man prop never sits in a head or a set solid; the solids come from the set's box meshes plus `COLLIDE`, never a hand list only | `prop in the head` / `prop in the set` in `shotfaults.mjs` from `engine/play.js` `propIn`; `test/unit/stick-props-solid.test.mjs` |
+| A prop let go lands on every solid the set built | `engine/propobj.js` `S.rest` from `engine/solids.js`; `test/unit/stick-prop-rest.test.mjs` |
+| A held prop stays in frame while its holder does; a tracked prop keeps its real size | `prop leaves view`, `prop out of scale` (`lib/props/sizes.js`) in `shotfaults.mjs`; `test/unit/stick-props-solid.test.mjs` |
+| An `'along'` hand prop with a top declares `userData.top`; the engine keeps it up | `test/unit/stick-prop-roll.test.mjs` (the kit pistol in Act_PistolShoot_Once; the `ROLL_FREE` list only shrinks) |
+| A stick-man shot never shows an object cut by the camera's far plane; the dome is the only sky | `cut by the far plane` in `shotfaults.mjs` from `engine/play.js` `farCut`; `test/unit/stick-props-solid.test.mjs` |
+| No face design reaches a film before Kai approves its face sheet | `facebeat.mjs` (3) against `review/faces-approved.json` (`facesheet.mjs`); `test/unit/stick-facesheet.test.mjs` |
+| A run log only grows | `tools/logline.mjs` (refuses a changed log) and the `run logs` row of every `stagegate.mjs` gate; `test/unit/stick-logline.test.mjs` |
 
 Kai's own 3D reels (Blocky Kai skits, 3D listicles) are `/make-reel-3d` → `styles/kai-reel-3d/WORKFLOW.md`, dev only; stick-man
 story reels (three.js stick figures, like pilot A) are `/make-reel-stick-man` → `.claude/skills/make-reel-stick-man/SKILL.md`,

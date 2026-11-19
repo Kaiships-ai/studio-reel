@@ -4,6 +4,7 @@
 // sees: px on a phone frame REF_H tall, after the motion the neighbouring frames predict is taken out; frames is how long it stays
 // on screen. sev = px x frames (up to MAX_FRAMES) x the share in view ranks them.
 // pts are Blender-world points for shotgate.mjs to ask the film camera about.
+import { scaleFault } from '../lib/props/sizes.js';
 import { jointSteps, JOINT_STEP_MAX, stepPoints } from './jointstep.mjs';
 import { GRIP_CM, PROP_CM, CORD_SHAKE_MAX, shakeOf } from './faults.mjs';
 
@@ -33,7 +34,10 @@ export const TORSO_R = 0.11;            // m: a stick figure's torso as a rod th
 export const CROSS_MAX_M = 0.5;         // a point that moved further in a frame jumped (figure / prop jumps), it did not pass through
 export const INSIDE_MAX = 30;           // frames a point through a surface is followed
 
-export const CONTACT = new Set(['prop passes through', 'body passes through', 'body in the set', 'hand off its grip', 'prop in the body', 'foot slides', 'figure skates', 'prop floats']);
+export const HOLDER_M = 0.35;           // a prop this close to a hand of a figure in frame is in that hand
+export const LOST_MAX = 45;             // frames a held prop may be out of the frame and still count as one that comes back
+export const CONTACT = new Set(['prop passes through', 'body passes through', 'body in the set', 'hand off its grip', 'prop in the body', 'foot slides', 'figure skates', 'prop floats',
+  'prop in the head', 'prop in the set', 'prop leaves view', 'prop out of scale']);
 
 const F_ = r => r.F ?? r.f;
 const add = (a, b) => a.map((x, i) => x + b[i]), sub = (a, b) => a.map((x, i) => x - b[i]), mid = (a, b) => a.map((x, i) => (x + b[i]) / 2);
@@ -340,6 +344,69 @@ function crossings(rows, cut, W, H, out) {
   }, (w, frames) => out.push(fault({ F: F_(rows[w.i]), kind: 'body in the set', who: w.n, what: `${w.c} for ${frames} f`, px: w.px, frames, seen: seenShare(rows[w.i].camera, w.pts, W, H, rows[w.i].actors[w.n]), pts: w.pts })));
 }
 
+// a prop inside a head or a solid the set built (engine/play.js out.propIn: its drawn box against the ellipsoid of each
+// head and the box meshes and COLLIDE of the set), one fault per prop and piece and run of frames
+function propInside(rows, cut, W, H, out) {
+  const keys = [...new Set(rows.flatMap(r => (r.propIn || []).map(x => `${x.id}\t${x.in}`)))];
+  for (const k of keys) {
+    const [id, what] = k.split('\t'), head = what.endsWith('.head');
+    runs(rows, cut, i => {
+      const x = (rows[i].propIn || []).find(y => y.id === id && y.in === what); if (!x) return null;
+      return { px: metresPx(rows[i].camera, x.at, x.cm / 100), cm: x.cm, at: x.at, on: propState(rows[i].track?.[id]) };
+    }, (w, frames) => out.push(fault({ F: F_(rows[w.i]), kind: head ? 'prop in the head' : 'prop in the set', who: id,
+      what: `${id} ${fmt(w.cm)} cm into ${what} for ${frames} f; fix: ${head ? 'carry it clear of the head (low in front or out to the side)' : `move its path off ${what}, or, if it is not solid, mark its mesh userData.hollow (or drop it from COLLIDE)`}`,
+      px: w.px, frames, seen: w.on === 'in' ? seenShare(rows[w.i].camera, [w.at], W, H) : 0, vis: w.on === 'none' ? 'off' : w.on, pts: [w.at] })));
+  }
+}
+
+// a prop in a hand leaves the frame while the figure holding it stays in frame, and comes back: the framing crops what the
+// beat is about (Hot Money ep01 r5 LOAD-B 741-757: the bait bill held up over the head, out of the top of the frame)
+function leavesView(rows, cut, W, H, out) {
+  const ids = [...new Set(rows.flatMap(r => Object.keys(r.track || {})))];
+  const holder = (r, t) => { let best = null;
+    for (const [n, a] of Object.entries(r.actors)) { if (!a.inFrame || !a.limbs) continue;
+      for (const s of ['L', 'R']) { const h = a.limbs[s]?.hand, d = h && dist(h, t.c); if (d != null && d < HOLDER_M && (!best || d < best.d)) best = { n, d }; } }
+    return best?.n || null; };
+  for (const id of ids) {
+    const T = rows.map(r => r.track?.[id]), st = T.map(propState);
+    for (let i = 1; i < rows.length; i++) {
+      // seen whole before it went: big in one of the 6 frames before (it slides out through the edge, small on its way)
+      const before = [1, 2, 3, 4, 5, 6].map(k => i - k).filter(k => k >= 0 && st[k] === 'in' && !cut[k + 1]);
+      if (cut[i] || st[i - 1] !== 'in' || st[i] !== 'off' || !before.some(k => big(T[k].box, W, H))) continue;
+      const n = (id.includes(':') && rows[i - 1].actors[id.split(':')[0]]?.inFrame ? id.split(':')[0] : null) || holder(rows[i - 1], T[i - 1]); if (!n) continue;
+      let j = i; while (j < rows.length && !cut[j] && st[j] === 'off' && rows[j].actors[n]?.inFrame) j++;
+      if (j >= rows.length || cut[j] || st[j] !== 'in' || j - i > LOST_MAX) continue;
+      out.push(fault({ F: F_(rows[i]), kind: 'prop leaves view', who: id, what: `${id} in ${n}'s hand leaves the frame for ${j - i} f while ${n} stays in it, then comes back; fix: keep the hand and the prop in frame (lower the hand, or widen or tilt the shot)`,
+        px: Math.max(...before.map(k => boxPx(T[k].box, W, H))), frames: j - i }));
+      i = j;
+    }
+  }
+}
+
+// a prop whose kind has a real size (lib/props/sizes.js) drawn outside it while it is in view
+function outOfScale(rows, cut, W, H, out) {
+  const ids = [...new Set(rows.flatMap(r => Object.keys(r.track || {})))];
+  for (const id of ids) runs(rows, cut, i => {
+    const t = rows[i].track?.[id]; if (!t?.shown || t.on !== 'in') return null;
+    const s = scaleFault(id, t.size); return s ? { px: metresPx(rows[i].camera, t.c, s.over), size: t.size, s, c: t.c } : null;
+  }, (w, frames) => out.push(fault({ F: F_(rows[w.i]), kind: 'prop out of scale', who: id,
+    what: `${id} is ${fmt(w.size * 100)} cm long, a real ${w.s.kind} is ${fmt(w.s.want[0] * 100)}-${fmt(w.s.want[1] * 100)} cm (${w.s.src}); fix: build it at real size, or scale the shot (lens, distance), not the prop`,
+    px: w.px, frames, seen: seenShare(rows[w.i].camera, [w.c], W, H), pts: [w.c] })));
+}
+
+// an object the camera's far plane cuts inside the shot (engine/play.js out.farCut): a straight edge where the sky shows
+// through or a card draws over the sky dome. Sky lives at infinity: the engine's dome (look.js) is the only sky, and a
+// set's flat sky cards or far scenery come out or move inside far
+function farCuts(rows, cut, W, H, out) {
+  const names = [...new Set(rows.flatMap(r => (r.farCut || []).map(x => x.name)))];
+  for (const n of names) runs(rows, cut, i => {
+    const x = (rows[i].farCut || []).find(y => y.name === n); if (!x) return null;
+    return { px: Math.sqrt(x.share ?? 0) * REF_H, x };                                // the side of a square as big as what is seen of it
+  }, (w, frames) => out.push(fault({ F: F_(rows[w.i]), kind: 'cut by the far plane', who: n,
+    what: `${n} (${w.x.size.join(' x ')} m, ${fmt(100 * (w.x.share ?? 0))} % of the frame near the cut) crosses the camera's far plane (${w.x.far} m) for ${frames} f; fix: the engine's sky dome is the sky: hide flat sky cards, or keep scenery inside ${w.x.far} m`,
+    px: w.px, frames, pts: [w.x.at] })));
+}
+
 export const severity = x => x.px * Math.min(x.frames, MAX_FRAMES) * x.seen;
 export const blocks = x => x.vis === 'in' && !x.watch && x.frames >= HOLD_FRAMES && x.px * x.seen >= (CONTACT.has(x.kind) ? CONTACT_PX : CHANGE_PX);
 
@@ -350,7 +417,7 @@ export function shotFaults(rows, { W = 1080, H = 1920 } = {}) {
   cameraJumps(rows, cut, W, H, out); props(rows, cut, W, H, out); figures(rows, cut, W, H, out);
   goneAfterCut(rows, cut, W, H, out); changedAtCut(rows, cut, out); floating(rows, cut, W, H, out);
   for (const n of Object.keys(rows[0].actors)) { limbs(rows, cut, n, W, H, out); skating(rows, cut, n, W, H, out); cordShakes(rows, cut, n, out); }
-  crossings(rows, cut, W, H, out);
+  crossings(rows, cut, W, H, out); propInside(rows, cut, W, H, out); leavesView(rows, cut, W, H, out); outOfScale(rows, cut, W, H, out); farCuts(rows, cut, W, H, out);
   for (const x of out) x.sev = +severity(x).toFixed(2);
   return out.sort((a, b) => a.F - b.F);
 }

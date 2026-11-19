@@ -4,7 +4,8 @@
 //   w = 1   the prop is in the hand (cast.js handProps, as before)
 //   w = 0   before a grab it rests where the hand will take it (the hand's transform at the grab, set down on what is
 //           under it); after a release it starts where the hand let it go, with the hand's speed (and the clip's `toss`),
-//           and falls on gravity (9.8 m/s2, 30 fps) until it lands on the floor or on the top of a set piece (S.obstacles)
+//           and falls on gravity (9.8 m/s2, 30 fps) until it lands on the floor or on the top of a set piece (S.rest: every
+//           solid the set built, engine/solids.js; a headless rig without a set: S.obstacles)
 //   0 < w < 1   the two transforms blended (position lerp, quaternion slerp): the grab and the release ramps
 // Stateless per frame: the grab and release transforms are the rig's own at those frames, evaluated once per track and
 // cached, so a frame seeked out of order renders the same. One place for the proof page (play.js), the headless check
@@ -16,11 +17,12 @@ import * as THREE from 'three';
 
 const G = 9.8, FPS = 30, SUB = 4, ON = 0.999;
 const B2T = b => new THREE.Vector3(b[0], b[2], -b[1]);                     // Blender metres (z up) -> three.js world (y up)
+const solid = S => S.rest || S.obstacles || [];
 
 // the highest surface under a point (three.js world) at most `tol` above `y`: the floor (0) or a set piece's top
 function support(S, p, y, tol = 0.02) {
   let top = 0;
-  for (const o of S.obstacles || []) {
+  for (const o of solid(S)) {
     const bx = p.x, by = -p.z;
     if (bx > o.lo[0] && bx < o.hi[0] && by > o.lo[1] && by < o.hi[1] && o.hi[2] <= y + tol && o.hi[2] > top) top = o.hi[2];
   }
@@ -29,12 +31,12 @@ function support(S, p, y, tol = 0.02) {
 // a prop (three.js world origin p, its half extent e = [x, z] round it) overlapping a set piece's footprint below its top:
 // the side of a box a falling prop runs into (tested by its extent, not its origin: a bag's origin missed a thin wall
 // its body went through)
-const blocked = (S, p, bottom, e = [0, 0]) => (S.obstacles || []).some(o => -p.z + e[1] > o.lo[1] && -p.z - e[1] < o.hi[1] && p.x + e[0] > o.lo[0] && p.x - e[0] < o.hi[0] && bottom < o.hi[2] - 0.005 && bottom > o.lo[2] - 0.5);
+const blocked = (S, p, bottom, e = [0, 0]) => solid(S).some(o => -p.z + e[1] > o.lo[1] && -p.z - e[1] < o.hi[1] && p.x + e[0] > o.lo[0] && p.x - e[0] < o.hi[0] && bottom < o.hi[2] - 0.005 && bottom > o.lo[2] - 0.5);
 
 // a prop come to rest with its side in a set piece it lies below the top of (a bag landed in a trunk across its lip):
 // moved out sideways by the least way (Act_DropInTrunk_Once: 3 cm into the lip)
 function settle(S, p, bottom, e = [0, 0]) {
-  for (const o of S.obstacles || []) {
+  for (const o of solid(S)) {
     if (!(bottom < o.hi[2] - 0.005 && bottom > o.lo[2] - 0.5)) continue;
     const x0 = p.x - e[0], x1 = p.x + e[0], y0 = -p.z - e[1], y1 = -p.z + e[1];
     if (x1 <= o.lo[0] || x0 >= o.hi[0] || y1 <= o.lo[1] || y0 >= o.hi[1]) continue;

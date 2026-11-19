@@ -1,0 +1,25 @@
+- 19/11 16:08 LOAD-C r5/load-c.js built (4 acts D/E1a/E1b/E2, xfer r5/xfer/LOAD-C.json); stills checked side by side; 720 render running
+- 19/11 16:09 ENDING-A rendered: renders/r5/ENDING-A.mp4 (2204-2702, cards by r5/ending-cards.py; ENDING-A_raw.mp4 without cards), side sheet review/r5/ending-a-side.jpg; bible PASS, shotgate PASS, facebeat PASS (chờ soát độc lập). Starting B.
+- 19/11 16:14 LOAD-B re-render (walkway start, C_IN), side sheet review/r5/load-b-side.jpg
+- 19/11 16:24 BANKS renders/r5/BANKS.mp4 rendered (1710-2203, 494 f, no bible bypass); side sheet review/r5/banks-side.jpg
+- 19/11 16:24 BANKS gates: bible PASS, shotgate PASS (0 s to fix), facebeat PASS; review/r5/banks.md written (chờ soát độc lập)
+- 19/11 16:28 ENDING-B rendered: renders/r5/ENDING-B.mp4 (2204-2702, cards on; ENDING-B_raw.mp4), side sheet review/r5/ending-b-side.jpg; bible PASS, shotgate PASS, facebeat PASS. Report review/r5/ending.md (chờ soát độc lập).
+- 19/11 16:30 LOAD-B fix (knees off the bumper, step-turn to the trunk) re-render; shotgate PASS
+- 19/11 16:33 CHASE rendered 1347-1709 (renders/r5/CHASE.mp4), side sheet review/r5/chase-side.jpg, join to BANKS 1709|1710 identical (review/r5/chase-banks-join.jpg); gates: bible only set-not-in-catalog (bypass logged), facebeat PASS, shotgate rows 2 s (driver behind the pillar, ẩn); report review/r5/chase.md, chờ soát độc lập
+- 19/11 16:36 LOAD-A rendered renders/r5/LOAD-A.mp4 (204-500, 297 f); side sheet review/r5/load-a-side.jpg; bible pass, facebeat pass, shotgate 2 (dresser from OPEN's hand-over spot; roof9 fly-out unseen); report review/r5/load-a.md, chờ soát độc lập
+- 19/11 16:40 LOAD-B done: render + side sheet + review/r5/load-b.md; bible PASS, shotgate PASS, facebeat PASS; chờ soát độc lập
+- 19/11 16:43 GUN done: renders/r5/GUN.mp4 (1140-1346), review/r5/gun-side.jpg, review/r5/gun.md; bible PASS, shotgate PASS, facebeat PASS; chờ soát độc lập
+- 19/11 16:50 LOAD-C render renders/r5/LOAD-C.mp4 (884-1139, 256 f); shot gate PASS (rows mode), facebeat 1 (stale r4 storyboard), bible bypass logged (2 right turns, no clip); review/r5/load-c.md + load-c-side.jpg, chờ soát độc lập
+- 19/11 16:53 FILM A v1 assembled: renders/hm-ep01-r5_A_v1.mp4 (90.1 s; 9 segment renders + approved HUD + grade, kit mix: -14.0 LUFS, mp4 TP -1.5 dBTP, order gunshot > crash > smash > slam > voice); sheet review/r5/film-A-v1-side.jpg (joins 203|204, 1139|1140, 1709|1710 continuous). Chờ soát độc lập.
+- 19/11 16:55 FILM B v1 assembled: renders/hm-ep01-r5_B_v1.mp4 (-14.0 LUFS, TP -1.5). Chờ soát độc lập.
+- 19/11 17:19 FINAL GRADE + gates: A/B v1 rebuilt at grade sat 0.82 gamma 1.42 (refbench A: luma 111.5, sat 26.2, depth 1.73; B: 111.7, 26.4, 1.76); cutgate C1 7 FAIL (worst 15 s; BANKS door cuts), C2 16.7 C3 1% C4 0.2 PASS; kituse 4 PASS; postcheck: package made (deliver/ cover, caption draft, subtitles), FAIL only 720 size (by brief)
+- 19/11 17:32 REVIEW A v1 = NOT READY (2 block, 6 fix): fix round launched (LOAD-A+B, LOAD-C+GUN, CHASE-day/BANKS builders). SOUND FIX 8 done: r5/tools/master.py: gunshot -1.0 > crash -2.6 > smash -3.6 > slam -4.6 > voice -6.5 dBTP (PASS), -15.8 LUFS, LRA 3.0; final.sh muxes it with a TP check.
+- 19/11 17:36 ORCHESTRATOR CONTINUITY NOTE handled (wardrobe kept by design D14; one hero car car-r2 blue-grey 7KJ 418; BANKS door cuts; D03 OPEN $10,000,000 card + police spill)
+- 19/11 17:36 FIX car+door: BANKS door cuts moved 1811/1989/2074 -> 1806/1978/2058; BANKS re-render running
+- 19/11 17:43 FIX car+door done: renders/r5/BANKS.mp4 re-rendered (494 f); no frame > 1/3 near-black (max 0.328 @1805); bible PASS, shotgate PASS, facebeat PASS; sheets review/r5/banks-door-side.jpg, chase-car-side.jpg
+- 19/11 17:49 LOAD-C+GUN fix round: cool night light, hood gains per act, COP_NAVY, sprint to the window, E1/D camera pulled in, E2 turns as 44 deg steps, bullet cam side angle + copper nose, flares cut; full renders running
+- 19/11 17:58 LOAD-A/B fix round: lot relit, hoodie gains per act, LOAD-B run at a running stride + 44 mm lead, arms close from a step-back stance; LOAD-A re-render queued
+- 19/11 18:00 LOAD-C + GUN fix round done: renders/r5/LOAD-C.mp4, GUN.mp4; sheets load-c-side.jpg, gun-side.jpg; bible PASS both, shotgate PASS both, facebeat 1/2 off-beat vs r4 storyboard (kept)
+- 19/11 18:12 LOAD-A/B fix round done: renders/r5/LOAD-A.mp4 + LOAD-B.mp4, sheets load-a-side.jpg, load-b-side.jpg, load-ab-fix-before-after.jpg; bible PASS both, facebeat PASS both, shotgate B PASS, A 1 (roof9 false positive); chờ soát độc lập
+- 19/11 18:21 A v2 + B v2 built after the review fix round: renders/hm-ep01-r5_A_v2.mp4, _B_v2.mp4 (night colour balance per segment r5/balance.json; master: gunshot > crash > smash > slam > voice, -15.8 LUFS). Sheets review/r5/film-A-v2-side.jpg, film-A-v2-night.jpg. Report review/r5/REPORT.md. Chờ soát độc lập.
+- 19/11 20:05 v3 FIX ROUND (A v2 review): car paint lock in post (r5/matte.js, r5/tools/carfix.py), master v3, hot dog crosswise from 2204, ENDING A/B re-rendered. renders/hm-ep01-r5_A_v3.mp4, _B_v3.mp4. refbench A v3: luma 107.7, sat 20.9, depth 1.71. Chờ soát độc lập.

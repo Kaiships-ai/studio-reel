@@ -687,6 +687,7 @@ export function makeStick(spec) {
   // (three.js world), and x_hp is the weight that parents it to the hand (0 = at rest, 1 = in the hand, between = blended)
   const up = new THREE.Vector3(0, 1, 0), qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), ax = new THREE.Vector3();
   const _mA = new THREE.Matrix4(), _mI = new THREE.Matrix4(), _pA = new THREE.Vector3(), _qA = new THREE.Quaternion(), _sA = new THREE.Vector3(), _qR = new THREE.Quaternion();
+  const _tA = new THREE.Vector3(), _wA = new THREE.Vector3(), _cA = new THREE.Vector3();
   S.propState = {};
   function handProps(P, r) {
     for (const o of Object.values(S.props)) o.visible = false;
@@ -708,6 +709,16 @@ export function makeStick(spec) {
         if (U.mode === 'along') {                                 // +y out of the fist along the forearm, then pitched by tilt
           const d = r[side].hand.clone().sub(r[side].elbow).normalize(); if (U.flip) d.negate();
           qa.setFromUnitVectors(up, d); qb.setFromAxisAngle(ax.set(1, 0, 0), tilt); o.quaternion.copy(qa).multiply(qb);
+          // U.top: the prop's own axis that faces up in the hand (a pistol's slide, over its grip). The shortest arc from
+          // up leaves the roll about the forearm to chance: on an arm held forward it laid the pistol on its side (Hot Money
+          // ep01 r5 "cảnh sát cầm súng sai"). Rolled about the forearm so that axis points up; on a forearm steeper than
+          // 37-53 deg (a gun raised by the face) the roll eases back to the arc's, which keeps it off the head and cap
+          if (U.top) {
+            const t = _tA.set(...U.top).applyQuaternion(o.quaternion), want = _wA.copy(up).addScaledVector(d, -d.dot(up));
+            const s = Math.min(1, Math.max(0, (Math.abs(d.dot(up)) - 0.6) / 0.2)), k = 1 - s * s * (3 - 2 * s);
+            if (k > 0 && want.lengthSq() > 1e-6) { want.normalize(); t.addScaledVector(d, -t.dot(d)).normalize();
+              o.quaternion.premultiply(qa.setFromAxisAngle(d, k * Math.atan2(_cA.crossVectors(t, want).dot(d), t.dot(want)))); }
+          }
         } else {
           const t0 = U.tilt0 || [0, 0];
           qa.setFromAxisAngle(ax.set(0, 0, 1), -tilt + t0[1] * DEG); qb.setFromAxisAngle(ax.set(1, 0, 0), t0[0] * DEG); o.quaternion.copy(qa).multiply(qb);

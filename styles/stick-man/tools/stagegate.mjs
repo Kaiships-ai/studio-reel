@@ -11,6 +11,7 @@
 // While no brief has passed, Kai's own OK counts in its place: approvals.json "kai-ok": { "<file>": { at, note } }, shown on every run.
 import { isFresh } from './fresh.mjs';
 import { calibration, calibratedBrief } from './calibrate.mjs';
+import { checkLogs } from './logline.mjs';
 import fs from 'node:fs'; import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -53,6 +54,9 @@ function checkGate(id) {
     const last = (p.stdout || p.stderr || '').trim().split('\n').at(-1) || '';
     rows.push({ kind: 'measured', what: `${r.tool} ${r.args.slice(1).join(' ')}`.trim(), ok: p.status === 0, why: p.status === 0 ? last : `exit ${p.status}: ${last}` });
   }
+  // the film's run logs only grow (logline.mjs): one written over fails every gate until its lines are back
+  const logs = checkLogs(DIR);
+  rows.push({ kind: 'measured', what: 'run logs (logline.mjs --check)', ok: !logs.length, why: logs.length ? logs.map(x => x.why).join('; ') + '; fix: restore the lost lines, then append with logline.mjs' : 'append-only' });
   for (const e of ev) {
     const sub = e.calibrated ? kaiInPlace(e.file) : null;
     if (sub?.what) { rows.push(sub); continue; }
