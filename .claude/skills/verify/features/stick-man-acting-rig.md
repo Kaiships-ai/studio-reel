@@ -19,6 +19,11 @@ flex in every frame; `--sheet` renders each clip's worst pose from the front, 3/
   `HEAD_SQUASH_PCT` 15 (same ratio while x·y·z stays within `HEAD_VOL_TOL` 1 % of the clip's first frame: the engine's
   squash and stretch; Kai chose this 17/11, "it is one frame; at real playback nobody notices"), `BONE_PCT` 3 (the arm's own `ARM_STRETCH`),
   flex -2..160 deg. `RIG_KNOWN` lists clips over a limit per metric and only shrinks; empty since the leg-reach fix (PR #132).
+- Rigid hair and hats (Kai 20/11, Hot Money ep01 r5): hair and headwear never swing after the head. `cast.js` fixes
+  the hair group to the head (`S.parts.hair`, no per-frame transform) and `motion.js` sends no hat channel.
+  `test/unit/stick-rigid-hair.test.mjs` plays the clips that swung a cap furthest before (`Gest_LookUp_Once`,
+  `Adult_Act_Jump_Once`, `Act_PushBagOutWindow_Once`, 23-25 cm) with the guard's cap and fails on any cap mesh corner
+  that leaves its place in the head's frame by 0.01 mm. A hoodie's hood is cloth, not headwear here (`stick-man-costume.md`).
 - Gates: `rigtest.mjs` runs in gate 3 (Asset lock), `facebeat.mjs {film}` in gate 4 (Shot lock); both exit 1 on a fault.
 - The proof page's `view=turn&az=<deg>&at=<frame>` is a still camera round the body (az 0 = from ahead).
 - Moving hold (KIT-MICRO): every figure animated from keys (`anim`, motion.js `playActor`) gets `acting.js` `holdLife`

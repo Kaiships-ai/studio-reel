@@ -12,9 +12,10 @@
 //
 // Playback, per channel: cubic Hermite through the keys (arcs: every joint swings on a curve, no straight lerps), the
 // time between two keys warped by their ease (slow in / slow out); extremes get flat tangents (no overshoot from the
-// curve itself). Then the secondary layer, run straight ahead from the act's first frame: springs drag the head, arms
-// and hat behind the body (overlapping action), overshoot and settle when it stops (follow-through), the hip's vertical
-// speed stretches the body and a landing squashes it (squash and stretch, volume kept), and a held pose breathes.
+// curve itself). Then the secondary layer, run straight ahead from the act's first frame: springs drag the head and
+// arms behind the body (overlapping action), overshoot and settle when it stops (follow-through); hair and hats stay
+// rigid on the head (cast.js, Kai 20/11); the hip's vertical speed stretches the body and a landing squashes it (squash
+// and stretch, volume kept), and a held pose breathes.
 // the kit's named poses (a film adds its own: act `poses`, or import this and assign)
 import { PHYS, footDown } from './body.js';
 import { expandClips } from '../motion-lib/index.js';
@@ -233,14 +234,14 @@ const trackSeed = track => { const m = track[0]?.m || {}; return Math.round(1e3 
 // runs once per actor over [F0, F1]: returns the posed channel maps, one per frame
 export function playActor(track, F0, F1, opt = {}) {
   CUR = track.style || STYLE;
-  const springs = {}, hat = { p: new Spring(0.32, 0.28), r: new Spring(0.32, 0.28) }, sq = new Spring(0.6, 0.3);
+  const springs = {}, sq = new Spring(0.6, 0.3);
   const frames = [];
   const held = holdWeights(track, F0, F1), seed = trackSeed(track);
   let prev = null, prev2 = null, rawW = 0;
-  // a 'snap' key is a cut: the secondary layer starts fresh there (no arm or hat still swinging from the last shot's pose)
+  // a 'snap' key is a cut: the secondary layer starts fresh there (no arm still swinging from the last shot's pose)
   const cuts = new Set(track.filter(t => t.ease === 'snap').map(t => t.f));
   for (let f = F0; f <= F1; f++) {
-    if (cuts.has(f)) { for (const sp of Object.values(springs)) { sp.x = null; sp.v = 0; } for (const sp of [hat.p, hat.r, sq]) { sp.x = null; sp.v = 0; } prev = prev2 = null; }
+    if (cuts.has(f)) { for (const sp of Object.values(springs)) { sp.x = null; sp.v = 0; } sq.x = null; sq.v = 0; prev = prev2 = null; }
     const k = keyed(track, f);
     // exaggeration: every pose channel pushed further from (or pulled back toward) the act's rest pose
     const E = 0.4 + 1.2 * CUR.exaggeration, rest = track.rest || track[0].m;
@@ -263,10 +264,6 @@ export function playActor(track, F0, F1, opt = {}) {
     const want = clamp(1.0 * Math.abs(vy), 0, 0.10) - (vp < 0 ? clamp(5 * Math.max(0, ay), 0, 0.12) : 0);
     const auto = sq.step(want);
     const SQ = dial('squash'); o.sq = ((k.sq || 0) + auto) * SQ; o.headSq = ((o.headSq || 0) + 0.6 * auto) * SQ;
-    // the hat lags the head's swing (nod, tilt, the body's bend under it), then overshoots and settles
-    const hp = (k['neck.nod'] || 0) + (k['spine.bend'] || 0) + (k['pelvis.pitch'] || 0), hr = (k['neck.tilt'] || 0) + (k['spine.side'] || 0) + (k['pelvis.roll'] || 0);
-    o['hat.pitch'] = clamp(hat.p.step(hp) - hp, -22, 22) * dial('followThrough') + (k['hat.pitch'] || 0);
-    o['hat.roll'] = clamp(hat.r.step(hr) - hr, -18, 18) * dial('followThrough') + (k['hat.roll'] || 0);
     // a moving hold: a held pose breathes, the head drifts and the weight shifts (acting.js holdLife), never freezes; after
     // a stop the chest carries on a little and settles (follow-through), the head HOLD_LAG frames later; the settle keeps its
     // kit size above life 0.5 (the dose sizes the hold, a bigger overshoot read as a twitch)
