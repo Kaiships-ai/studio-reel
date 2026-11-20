@@ -1,0 +1,10 @@
+{ "world": "r5/xfer/CHASE.world.json", "t0": 44.6666, "frames": [1347, 1710],
+  "anchors": [
+    { "f0": 1347, "f1": 1514, "from": [112.827, 0, 0], "to": [-25.0, -20.5, -90],
+      "why": "take 1: the previs street runs south down round 4's street (x -30.5..-24); its junction (the truck) on round 4's side street (y -20.5); the camera side is the shop side (west), the side streets east; the street is extended north and south with round-4 pieces (r5/chase-set.js) so the 140 m run keeps its speed" },
+    { "f0": 1514, "f1": 1638, "from": [3000, -14, 180], "to": [-13.9, 14.8, 90],
+      "why": "take 2: the alley = round 4's service lane (y 12.6..17), the car 8.5 m in from the street, nose east; the camera at the lane mouth" },
+    { "f0": 1638, "f1": 1653, "from": [0, -0.17, 180], "to": [230, -12.0, 180], "dz": -0.25,
+      "why": "take 3 (lid, creep): the car parked nose to the s6 diner's front windows (DINER_X 230, front y -8.3), outside it; the previs diner is 5.8 m shallower than round 2's, so the car stands 5.8 m further out than BANKS's anchor puts it" },
+    { "f0": 1709, "f1": 1710, "from": [0, -11.08, 0], "to": [230, 4.74, 0],
+      "why": "take 3 end = BANKS's diner anchor (r5/xfer/BANKS.json, the previs TV on the diner's back-wall TV): the crane (1653-1709) blends into it, so 1709 is BANKS's camera at 1710 (no cut)" } ] }

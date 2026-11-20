@@ -1,6 +1,6 @@
 ---
 name: make-reel-stick-man
-description: Make a vertical (1080x1920, 30 fps) stick-man 3D film by the standard animation pipeline - Development, Pre-production, Asset, Shot, Post, Publish + learn - with Kai approving each step on one page per stage, real renders for every option, independent agents checking each pass, and characters that obey Disney's 12 principles and body physics at the 'kaiships' dose. Use when Kai asks for a stick-man reel or stick-man story film. Trigger: /make-reel-stick-man
+description: Make a vertical (1080x1920, 30 fps) stick-man 3D film by the standard animation pipeline - Development, Pre-production, Asset, Shot, Post, Publish + learn - with Kai approving each step on one page per stage, real renders for every option, independent agents checking each pass, and characters that obey Disney's 12 principles and body physics at the 'kaiships' dose. Use when Kai asks for a stick-man reel or stick-man story film, or gives a camera note on one ("previs", "thử góc máy", "máy quay …": the camera previs mode). Trigger: /make-reel-stick-man
 argument-hint: "<slug> <story idea or script>"
 ---
 
@@ -54,6 +54,39 @@ Every note goes into `films/<slug>/review/retakes.json` (round, shot, type: care
 addressed, and the shot gate's fault class when one fits) and stays open until Kai accepts the fix on a later round.
 `node styles/stick-man/tools/retakes.mjs films/<slug>` fails a round with more notes than the one before, or one that
 repeats a closed note; show Kai its table with every new cut.
+
+## Mode: thử góc máy (camera previs from the film's own engine)
+
+Triggers: "previs", "thử góc máy", "máy quay …" (a camera note such as "đoạn đua xe, máy quay dính tường nhà, nâng lên
+chút" or "cảnh ngân hàng thứ hai, máy gần quá"). Use it in any stage once the film renders in the engine.
+
+1. Run `node styles/stick-man/tools/camtry.mjs "<Kai's note, word for word>"` from the film's worktree, through the
+   render lock on Kai's Mac. Do not look up the film, the segment or the frames by hand: the tool finds them.
+   - The film is the newest one in `films/`, unless the note names one.
+   - The segment, take and frames come from the act tables `<round>/gen/<SEG>.js` (`FRAMES`, `CUTS`, `STAGES`), else
+     from `storyboard.json`.
+   - The camera anchors come from `<round>/xfer/<SEG>.json`.
+   - The tool boots the segment's test folder `films/<slug>-<seg>/` when it exists.
+2. Put its first line at the top of the reply. It is the readback: "Em hiểu là: phim X, đoạn Y, khung A-B, máy quay Z".
+   If the readback is wrong, run again with `--film`, `--frames A-B` or a clearer note. Never guess.
+3. The tool picks 3-4 variants from the note's words: V0 (the film camera), the asked move at one step and at two
+   steps, and the moves together. "chút" is a 0.5 m step, a number in metres sets the step. The film's engine renders
+   every variant. The tool writes to `<film>/review/camtry/<SEG>-<A>-<B>/`:
+   - `variants.mp4`: the variants side by side, with a red label where the camera touches a wall.
+   - `top.jpg`: the top view, with the camera path, the subject path and the buildings.
+   - `camtry.json`: the numbers. They are wall-touch frames, wall-fill frames, the nearest wall, the camera height, the
+     subject's screen height and the facade share.
+   - `section.html`: the stage-page section, with the clip, the top view, the numbers table and a pick box. The
+     recommended variant carries **Em đề xuất**.
+4. Put the section on the stage page and wait for Kai's pick.
+5. Run `node styles/stick-man/tools/camtry.mjs pick <out dir> <Vn>`. It writes the lift into the anchors' `dz` (the
+   whole anchor window, so the camera never pops) and reruns the generators of that act. Then re-render the act and
+   rerun its gates.
+   - A move the anchors cannot hold ("xa tường", "gần lại", "nhìn nhân vật") is refused with the reason. Make that
+     change in the act's camera by hand, from the numbers.
+   - `--dry 1` prints the change only.
+
+Feature map: `.claude/skills/verify/features/stick-man-camtry.md`.
 
 ## Stages, steps and gates
 
@@ -227,4 +260,5 @@ the last render. `stagegate.mjs` prints it on every run; once a brief is calibra
 | `templates/stage-page.html` | the stage page |
 | `styles/stick-man/tools/prepro.mjs`, `animatic.mjs`, `shotlist.mjs` | the pre-production checker, the animatic builder, and the shot-list loader they share |
 | `styles/stick-man/tools/previs.mjs`, `previs-core.mjs`, `previs.html`, `templates/previs-bank.json` | the 3D previs and temp-music animatic (grey blockout, camera path, cuts vs flights, label bar), its pure camera math, the page it captures, and a worked hand spec (Hot Money's three banks as one take) |
+| `styles/stick-man/tools/camtry.mjs`, `camtry-core.mjs`, `camtry.html`, `camtry-page.js` | the "thử góc máy" mode: a camera note resolved to film / segment / frames / anchors, the variants rendered by the film's own engine with wall numbers, and the pick written into the anchors |
 | `styles/stick-man/docs/` | kit reference: verbs, poses, faces, sets, Blender sets |
