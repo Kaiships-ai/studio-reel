@@ -39,6 +39,7 @@ test('a shot inside every default range passes, and only a Kai-approved script t
   assert.equal(gate(mp4, script(3)).verdict, 'PASS');
   const { approved, ...draft } = script(3);
   assert.equal(gate(mp4, draft).verdict, 'DRAFT');
+  assert.equal(gate(mp4, { ...draft, approved: { by: 'agent', at: '2026-11-21' } }).verdict, 'DRAFT');
 });
 
 test('an approved look the script declares passes; the same look undeclared fails flood and palette', () => {
@@ -55,6 +56,8 @@ test('G1: a luma jump at a cut inside one scene fails; across a scene change the
   assert.ok(Math.abs(res.findings[0].t - 2) < 0.2, 'the finding sits on the cut');
   const two = { ...script(4), scenes: [{ id: 'A', from: 0, to: 2, intent: 'room' }, { id: 'B', from: 2, to: 4, intent: 'lit room' }] };
   assert.deepEqual(failing(gate(mp4, two)), []);
+  const lit = script(4, { events: [{ from: 1.8, to: 2.2, why: 'lights on' }] });
+  assert.deepEqual(failing(gate(mp4, lit)), [], 'a cut inside a declared light event is exempt');
 });
 
 test('G2: a light that dims inside a shot fails, unless the script tags it as a light event', () => {
