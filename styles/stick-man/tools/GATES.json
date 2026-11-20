@@ -265,6 +265,12 @@
      ]
     },
     {
+     "tool": "colourgate.mjs",
+     "args": [
+      "{film}"
+     ]
+    },
+    {
      "tool": "shotgate.mjs",
      "args": [
       "{film}"

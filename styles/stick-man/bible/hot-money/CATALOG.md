@@ -2,7 +2,7 @@
 
 Sinh từ `tokens.json` và `catalog.json` bởi `node styles/stick-man/bible/catalog.mjs`. Đừng sửa tay file này.
 
-117 token (50 giá trị gốc, 52 theo mục đích, 15 theo thành phần), 6 chỗ trống. 147 thành phần (21 ổn định, 126 thử, 0 bỏ), 20 nằm trong phim, chờ đưa vào kit.
+117 token (50 giá trị gốc, 52 theo mục đích, 15 theo thành phần), 4 chỗ trống. 147 thành phần (21 ổn định, 126 thử, 0 bỏ), 20 nằm trong phim, chờ đưa vào kit.
 
 ## Clip chuyển động (37)
 
@@ -277,8 +277,8 @@ Sinh từ `tokens.json` và `catalog.json` bởi `node styles/stick-man/bible/ca
 | `luma.dark.share.max` | 0.15 | share-of-runtime | giây tối tối đa | R3 | measured | ổn định |
 | `light.face.night` | trống | luma-0-255 | TRỐNG: TOKENS.md chỉ nói "trắng ngà, không tối hơn nền", chưa có số luma | R3 | kai S3-051 | thử |
 | `light.night.preset` | nightBright | preset | cảnh đêm | R3 | kai S3-061 M-001 | thử |
-| `palette.signature` | trống | rgb-linear | TRỐNG: TOKENS.md: 1 màu chữ ký + 1 màu lệch; Hot Money chưa chọn màu nào (Kai 17/11: để trống, không chặn) | R3 | inferred | thử |
-| `palette.offColor` | trống | rgb-linear | TRỐNG: chưa chọn | R3 | inferred | thử |
+| `palette.signature` | color.amber = [1, 0.5, 0.14] | rgb-linear | màu chữ ký của phim (colour-script.json palette.signature: warm) | R3 | kai | ổn định |
+| `palette.offColor` | color.police.blue = [0.14, 0.26, 1] | rgb-linear | màu lệch duy nhất (colour-script.json palette.offColor: cool) | R3 | kai | ổn định |
 | `palette.flood.max` | trống | share-of-frame | TRỐNG: "phần lớn khung" chưa có % | R3 | kai S3-052 | thử |
 | `cut.hard.perMinute` | 1 | per-minute | nhịp cắt cứng | R4 | measured | ổn định |
 | `cut.hard.perMinute.max` | 2 | per-minute | trần cắt cứng | R4 | measured | ổn định |
