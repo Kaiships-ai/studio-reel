@@ -10,22 +10,26 @@
 import fs from 'node:fs'; import path from 'node:path';
 
 const low = s => String(s ?? '').toLowerCase().normalize('NFC');
+// notes come with or without Vietnamese marks ("nâng lên chút", "nang len chut"): every match runs on the folded text
+export const fold = s => low(s).normalize('NFD').replace(/\p{M}/gu, '').replace(/đ/g, 'd');
+// a whole word or phrase of the folded text: "load" never matches "download", "ket" never "ket qua" unless listed
+const wordRe = (alts, flags = 'u') => new RegExp(`(?<![\\p{L}\\d])(?:${alts})(?![\\p{L}\\d])`, flags);
+const hasWord = (text, words) => words.length > 0 && wordRe(words.map(w => fold(w).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')).test(fold(text));
 
 // what a director calls a part of a film, in Vietnamese and English; a segment matches a concept by its id or act name
-// (strong) and by its stage titles (weak)
+// (strong) and by its stage titles (weak); the note must hold one of the words, whole
 export const CONCEPTS = [
-  { key: 'chase', words: ['đua xe', 'rượt', 'đuổi', 'xe chạy', 'chase', 'race', 'lao ra'] },
-  { key: 'bank', words: ['ngân hàng', 'bank'] },
-  { key: 'open', words: ['mở đầu', 'đầu phim', 'cảnh đầu', 'mở màn', 'open', 'opening', 'intro', 'hook'] },
-  { key: 'ending', words: ['kết', 'cuối phim', 'cảnh cuối', 'ending', 'end card'] },
+  { key: 'chase', words: ['đua xe', 'cuộc đua', 'rượt', 'đuổi', 'xe chạy', 'chase', 'race', 'car chase', 'lao ra'] },
+  { key: 'bank', words: ['ngân hàng', 'bank', 'banks'] },
+  { key: 'open', words: ['mở đầu', 'đầu phim', 'cảnh đầu', 'mở màn', 'opening', 'intro', 'hook'] },
+  { key: 'ending', words: ['đoạn kết', 'cảnh kết', 'phần kết', 'kết phim', 'kết thúc', 'cuối phim', 'cảnh cuối', 'ending', 'end card'] },
   { key: 'gun', words: ['súng', 'đèn pin', 'gun', 'flashlight'] },
-  { key: 'load', words: ['chất túi', 'khuân', 'bê túi', 'nhấc túi', 'load'] },
+  { key: 'load', words: ['chất túi', 'khuân', 'bê túi', 'nhấc túi', 'loading', 'load the bags'] },
   { key: 'hide', words: ['núp', 'trốn', 'hẻm', 'hide', 'alley'] },
-  { key: 'day', words: ['sang ngày', 'ban ngày', 'day two'] },
+  { key: 'day', words: ['sang ngày', 'ban ngày', 'day two', 'next day'] },
 ];
-const END = '(?![\\p{L}\\d])';
-const ORDINALS = [['(thứ|số)\\s*(nhất|1)|đầu tiên|first', 1], ['(thứ|số)\\s*(hai|2)|second', 2], ['(thứ|số)\\s*(ba|3)|third', 3], ['(thứ|số)\\s*(tư|4)|fourth', 4]]
-  .map(([w, n]) => [new RegExp(`(${w})${END}`, 'u'), n]);
+const ORDINALS = [['(thu|so)\\s*(nhat|1)|dau tien|first', 1], ['(thu|so)\\s*(hai|2)|second', 2], ['(thu|so)\\s*(ba|3)|third', 3], ['(thu|so)\\s*(tu|4)|fourth', 4]]
+  .map(([w, n]) => [wordRe(w), n]);
 
 // ---- reading a film
 const arr = (text, name) => { const m = text.match(new RegExp(`^export const ${name} = (.*);\\s*$`, 'm')); return m ? JSON.parse(m[1]) : null; };
@@ -83,17 +87,21 @@ export function findFilm(filmsDir, request = '') {
 }
 
 // ---- the request -> where
-const has = (text, words) => words.some(w => text.includes(w));
 export function takesOf(seg) {
   const edges = [seg.frames[0], ...seg.cuts, seg.frames[1] + 1];
   return edges.slice(0, -1).map((a, i) => ({ n: i + 1, frames: [a, edges[i + 1] - 1], stages: seg.stages.filter(s => s[0] >= a && s[0] < edges[i + 1]) }));
 }
-export function resolve(request, index, { max = 100 } = {}) {
-  const q = low(request), why = [];
-  const concepts = CONCEPTS.filter(c => has(q, c.words) || q.includes(c.key));
-  const segText = s => low(`${s.id} ${s.name ?? ''} ${path.basename(s.gen ?? '')}`);
-  const score = s => concepts.reduce((n, c) => n + (segText(s).includes(c.key) || has(segText(s), c.words) ? 3 : 0)
-    + s.stages.filter(x => has(low(x[2]), [c.key, ...c.words])).length * 0.5, 0)
+// The film's segment the words name is the render window, whole. A narrower phrase (an ordinal on a named stage, "take
+// 2", "đoạn đầu/giữa/cuối") picks one take: the variants change only that take, widened to the anchor windows it
+// touches (a pick lifts whole windows), and the rest of the segment renders with the film camera, for context.
+const NARROW = [[wordRe('take\\s*(\\d+)'), (t, m) => t[+m[1] - 1]], [wordRe('(doan|phan|khuc|luc)\\s+dau(?!\\s*phim)'), t => t[0]],
+  [wordRe('(doan|phan|khuc|luc)\\s+giua'), t => t[Math.floor((t.length - 1) / 2)]], [wordRe('(doan|phan|khuc|luc)\\s+cuoi(?!\\s*phim)'), t => t.at(-1)]];
+export function resolve(request, index) {
+  const q = fold(request), why = [];
+  const concepts = CONCEPTS.filter(c => hasWord(q, c.words));
+  const segText = s => fold(`${s.id} ${s.name ?? ''} ${path.basename(s.gen ?? '')}`.replace(/[-_.]/g, ' '));
+  const score = s => concepts.reduce((n, c) => n + (hasWord(segText(s), [c.key, ...c.words]) ? 3 : 0)
+    + s.stages.filter(x => hasWord(x[2], [c.key, ...c.words])).length * 0.5, 0)
     + (low(s.id).length > 1 && new RegExp(`\\b${low(s.id).replace(/[^a-z0-9]/g, '.')}\\b`).test(q) ? 4 : 0)
     + (/\bb\b|phương án b|bản b/.test(q) && /-b$/i.test(s.id) ? 1 : 0);
   const ranked = index.segments.map(s => [score(s), s]).filter(([n]) => n > 0).sort((p, r) => r[0] - p[0]);
@@ -101,47 +109,54 @@ export function resolve(request, index, { max = 100 } = {}) {
   if (!seg) return { film: index.film, seg: null, why: [`không khớp đoạn nào: ${concepts.map(c => c.key).join(', ') || 'không có từ khoá'}`] };
   why.push(`đoạn ${seg.id}: khớp ${concepts.map(c => c.key).join(', ')}`);
   const takes = takesOf(seg), ord = ORDINALS.find(([re]) => re.test(q))?.[1];
-  // a stage the words name (the n-th one when an ordinal is given), else the take whose stages match the words best
-  const named = seg.stages.filter(st => concepts.some(c => has(low(st[2]), [c.key, ...c.words])));
-  let at = null;
-  if (ord && named.length >= ord) { at = named[ord - 1]; why.push(`thứ ${ord} trong ${named.length} khung "${concepts.map(c => c.key).join('/')}": ${at[2]}`); }
-  let take;
-  if (at) take = takes.find(t => at[0] >= t.frames[0] && at[0] <= t.frames[1]);
-  else {
-    const hits = t => t.stages.filter(st => concepts.some(c => has(low(st[2]), c.words))).length;
-    take = takes.reduce((b, t) => hits(t) > hits(b) ? t : b, takes[0]);
-  }
-  const start = at && at[0] > take.frames[0] ? at[0] : take.frames[0];
-  const window = [start, Math.min(take.frames[1], start + max - 1)];
-  const anchors = seg.xfer ? JSON.parse(fs.readFileSync(seg.xfer, 'utf8')).anchors.filter(a => a.f0 <= window[1] && a.f1 > window[0]) : [];
-  return { film: index.film, seg, take, window, anchors, stage: at ?? take.stages[0] ?? null, why };
+  const named = seg.stages.filter(st => concepts.some(c => hasWord(st[2], [c.key, ...c.words])));
+  let take = null, at = null;
+  if (ord && named.length >= ord) {
+    at = named[ord - 1]; take = takes.find(t => at[0] >= t.frames[0] && at[0] <= t.frames[1]);
+    why.push(`thứ ${ord} trong ${named.length} khung "${concepts.map(c => c.key).join('/')}": ${at[2]}`);
+  } else for (const [re, pickTake] of NARROW) { const m = q.match(re); if (m && (take = pickTake(takes, m))) { why.push(`"${m[0]}": take ${take.n}`); break; } }
+  const focus = take ? [at && at[0] > take.frames[0] ? at[0] : take.frames[0], take.frames[1]] : [...seg.frames];
+  const anchors = seg.xfer ? JSON.parse(fs.readFileSync(seg.xfer, 'utf8')).anchors.filter(a => a.f0 <= focus[1] && a.f1 > focus[0]) : [];
+  const change = [Math.max(seg.frames[0], Math.min(focus[0], ...anchors.map(a => a.f0))), Math.min(seg.frames[1], Math.max(focus[1], ...anchors.map(a => a.f1 - 1)))];
+  return { film: index.film, seg, takes, take, focus, change, window: [...seg.frames], anchors, stage: at ?? take?.stages[0] ?? null, why };
 }
 
 // ---- the request -> camera variants. up: metres up; away: metres back, horizontally, `from` the nearest wall (the note
 // names a wall; no wall within 12 m: from the aim) or from the aim; closer: metres toward the aim; aim: 'lift' (the aim
 // rises with the camera, a pedestal: what an anchor's dz does), 'film' (keep the film's aim point: the camera tilts),
 // 'hero' (the lead, chest height)
+// matched on the folded note (no marks), Vietnamese and plain English
 const MOVES = [
-  { key: 'up', re: /nâng|cao lên|lên cao|cao hơn|lên (chút|tí|xíu|một|1|2)|thấp quá/ },
-  { key: 'down', re: /hạ (máy|thấp|xuống)|hạ(?=\s|,|$)|thấp hơn|xuống thấp|cao quá/ },
-  { key: 'away', re: /ra xa|xa ra|lùi|tránh tường|cách tường|dính tường|sát tường|chạm tường|gần quá|đẩy ra/ },
-  { key: 'closer', re: /gần lại|lại gần|gần hơn|sát hơn|đẩy vào|tiến vào|xa quá/ },
-  { key: 'hero', re: /nhìn (vào|theo) (xe|anh|nhân vật|bạn)|giữ (xe|anh|nhân vật) giữa|bám (xe|anh)/ },
-];
-const AMOUNT = [[/chút|tí|xíu|nhẹ|một ít|a bit|slightly/, 0.5], [/nhiều|hẳn|a lot/, 1.5]];
+  { key: 'up', words: 'nang( len)?|cao len|len cao|cao hon|len (chut|ti|xiu|mot|1|2)|thap qua|raise|lift|higher|up|too low' },
+  { key: 'down', words: 'ha( (may|thap|xuong))?|thap hon|xuong thap|cao qua|lower|down|too high' },
+  { key: 'away', words: 'ra xa|xa ra|lui( lai| ra)?|tranh tuong|cach tuong|dinh tuong|sat tuong|cham tuong|gan qua|day ra|away|back off|pull back|further|too close|off the wall' },
+  { key: 'closer', words: 'gan lai|lai gan|gan hon|sat hon|day vao|tien vao|xa qua|closer|push in|too far' },
+  { key: 'hero', words: 'nhin (vao|theo) (xe|anh|nhan vat|ban)|giu (xe|anh|nhan vat) giua|bam (xe|anh)|look at (the )?(car|hero|lead)|follow (the )?(car|hero|lead)' },
+].map(m => ({ ...m, re: wordRe(m.words) }));
+const AMOUNT = [[wordRe('chut|ti|xiu|nhe|mot it|a bit|a little|slightly'), 0.5], [wordRe('nhieu|han|a lot'), 1.5]];
 const fmt = v => (Math.round(v * 10) / 10).toString().replace('.', ',');
-export function variantsFromWords(request) {
-  const q = low(request), metres = q.match(/(\d+(?:[.,]\d+)?)\s*(m\b|mét)/), step = metres ? +metres[1].replace(',', '.') : AMOUNT.find(([re]) => re.test(q))?.[1] ?? 1;
+// the camera moves a note asks for, its step in metres, and whether a wall is named; `vague` when no move is heard
+export function movesOf(request) {
+  const q = fold(request), metres = q.match(/(\d+(?:[.,]\d+)?)\s*(m|met|metres?|meters?)(?![\p{L}\d])/u);
+  const step = metres ? +metres[1].replace(',', '.') : AMOUNT.find(([re]) => re.test(q))?.[1] ?? null;
   const want = MOVES.filter(m => m.re.test(q)).map(m => m.key);
   if (want.includes('up') && want.includes('down')) want.splice(want.indexOf('down'), 1);
-  if (want.includes('away') && want.includes('closer')) want.splice(want.indexOf(/gần quá/.test(q) ? 'closer' : 'away'), 1);
-  const aim = want.includes('hero') ? 'hero' : 'lift', moves = want.filter(k => k !== 'hero'), from = /tường|wall/.test(q) ? 'wall' : 'aim';
+  if (want.includes('away') && want.includes('closer')) want.splice(want.indexOf(wordRe('gan qua|too close').test(q) ? 'closer' : 'away'), 1);
+  return { moves: want, step, from: wordRe('tuong|wall').test(q) ? 'wall' : 'aim', vague: !want.length };
+}
+const MOVE_NAME = { up: 'nâng', down: 'hạ', away: 'ra xa', closer: 'gần lại', hero: 'nhìn nhân vật' };
+export const heard = m => m.vague ? 'chưa rõ hướng máy, thử mặc định nâng/hạ' : `máy ${m.moves.map(k => MOVE_NAME[k]).join(' + ')}${m.step ? ` (bước ${fmt(m.step)} m)` : ''}`;
+export function variantsFromWords(request) {
+  const m = movesOf(request), step = m.step ?? (m.vague ? 0.5 : 1), from = m.from;
+  const aim = m.moves.includes('hero') ? 'hero' : 'lift', moves = m.moves.filter(k => k !== 'hero');
   const v = (k, s) => ({ up: k === 'up' ? s : k === 'down' ? -s : 0, away: k === 'away' ? s : 0, closer: k === 'closer' ? s : 0 });
   const label = o => [o.up > 0 && `nâng +${fmt(o.up)} m`, o.up < 0 && `hạ ${fmt(-o.up)} m`, o.away && `${from === 'wall' ? 'xa tường' : 'lùi ra'} ${fmt(o.away)} m`,
     o.closer && `gần lại ${fmt(o.closer)} m`, o.aim === 'hero' && 'nhìn nhân vật'].filter(Boolean).join(', ') || 'giữ nguyên';
-  // the first move asked at one and two steps, then every move asked at one step together
+  // the first move asked at one and two steps, then every move asked at one step together; a vague note gets the moves
+  // an anchor can hold (up one and two steps, down one step); "look at the lead" alone gets it level and lifted
   const out = [{ up: 0, away: 0, closer: 0, aim: 'film' }], sum = ks => ks.reduce((o, k) => { const d = v(k, step); return { up: o.up + d.up, away: o.away + d.away, closer: o.closer + d.closer }; }, v('', 0));
-  if (!moves.length) out.push({ ...v('', 0), aim: 'hero' });
+  if (m.vague) out.push({ ...v('up', step), aim: 'lift' }, { ...v('up', 2 * step), aim: 'lift' }, { ...v('down', step), aim: 'lift' });
+  else if (!moves.length) out.push({ ...v('', 0), aim: 'hero' }, { ...v('up', step), aim: 'hero' });
   else { out.push({ ...v(moves[0], step), aim }, { ...v(moves[0], 2 * step), aim }); if (moves.length > 1) out.push({ ...sum(moves), aim }); }
   return out.slice(0, 4).map((o, i) => ({ id: `V${i}`, label: `V${i}  ${label(o)}`, ...o, ...(o.away ? { from } : {}) }));
 }
@@ -149,16 +164,25 @@ export function variantsFromWords(request) {
 // ---- a picked variant -> the camera anchors. An anchor's dz lifts the camera and its aim together (xfer.mjs), so a
 // variant applies when it is a pure lift: up with aim 'lift' (or no change). Every anchor window the frame range touches
 // takes the whole dz: splitting a window would pop the camera at the split.
-export function applyPick(spec, variant, window) {
-  const unsupported = [];
-  if (variant.away) unsupported.push(`${variant.from === 'wall' ? 'xa tường' : 'lùi ra'} ${fmt(variant.away)} m (anchor chỉ có dz)`);
-  if (variant.closer) unsupported.push(`gần lại ${fmt(variant.closer)} m (anchor chỉ có dz)`);
-  if (variant.aim && !['lift', 'film'].includes(variant.aim)) unsupported.push(`nhìn ${variant.aim} (anchor không đổi điểm nhìn)`);
-  if (variant.up && variant.aim === 'film') unsupported.push('giữ điểm nhìn khi nâng (dz nâng cả điểm nhìn)');
+// why `pick` cannot write a variant into the anchors (empty: it can)
+export function refusals(variant) {
+  const out = [];
+  if (variant.away) out.push(`${variant.from === 'wall' ? 'xa tường' : 'lùi ra'} ${fmt(variant.away)} m (anchor chỉ có dz)`);
+  if (variant.closer) out.push(`gần lại ${fmt(variant.closer)} m (anchor chỉ có dz)`);
+  if (variant.aim && !['lift', 'film'].includes(variant.aim)) out.push(`nhìn ${variant.aim} (anchor không đổi điểm nhìn)`);
+  if (variant.up && variant.aim === 'film') out.push('giữ điểm nhìn khi nâng (dz nâng cả điểm nhìn)');
+  return out;
+}
+// `base` ({ "f0-f1": dz }) is each anchor's dz when the previs ran: a pick sets base + up, so picking twice never
+// stacks and picking V0 puts the anchors back
+export function applyPick(spec, variant, window, base = {}) {
+  const unsupported = refusals(variant);
   if (unsupported.length) return { ok: false, unsupported, spec, changed: [] };
   const changed = [], anchors = spec.anchors.map(a => {
-    if (!(a.f0 <= window[1] && a.f1 > window[0]) || !variant.up) return a;
-    const dz = +((a.dz ?? 0) + variant.up).toFixed(3); changed.push({ f0: a.f0, f1: a.f1, dz0: a.dz ?? 0, dz }); return { ...a, dz };
+    if (!(a.f0 <= window[1] && a.f1 > window[0])) return a;
+    const dz0 = a.dz ?? 0, dz = +((base[`${a.f0}-${a.f1}`] ?? dz0) + (variant.up || 0)).toFixed(3);
+    if (dz === dz0) return a;
+    changed.push({ f0: a.f0, f1: a.f1, dz0, dz }); return { ...a, dz };
   });
   return { ok: true, unsupported, spec: { ...spec, anchors }, changed };
 }
@@ -171,18 +195,24 @@ export function formatSpec(spec) {
 }
 
 // ---- the recommendation from the numbers ({ [id]: { wallTouchFrames, wallFillFrames } }). The note asked for a change:
-// the smallest asked change that touches no wall and fills the frame least; the film camera only when it touches and
-// fills less than every change
+// the smallest asked change that touches no wall and fills the frame least (the film camera only when it touches and
+// fills less); only variants `pick` can write compete, so the recommendation always applies with one command;
+// `manual` when no asked change can be written (the best one is shown, to change by hand)
 const size = v => Math.abs(v.up || 0) + Math.abs(v.away || 0) + Math.abs(v.closer || 0) + (v.aim === 'hero' ? 0.5 : 0);
 export function recommend(V, N) {
   const bad = v => [N[v.id].wallTouchFrames.length, N[v.id].wallFillFrames.length], worse = (p, q) => bad(p)[0] - bad(q)[0] || bad(p)[1] - bad(q)[1];
-  const [film, ...asked] = V, best = [...asked].sort((p, q) => worse(p, q) || size(p) - size(q))[0];
-  return !best || worse(film, best) < 0 ? film.id : best.id;
+  const rank = vs => [...vs].sort((p, q) => worse(p, q) || size(p) - size(q))[0];
+  const [film, ...asked] = V, ok = asked.filter(v => !refusals(v).length), best = rank(ok);
+  if (best) return { id: worse(film, best) < 0 ? film.id : best.id, manual: false };
+  const any = rank(asked);
+  return any && worse(any, film) < 0 ? { id: any.id, manual: true } : { id: film.id, manual: false };
 }
 
-export function readback(r) {
+export function readback(r, moves) {
   if (!r.seg) return `Em hiểu là: phim ${path.basename(r.film)}, chưa rõ đoạn nào (${r.why.join('; ')})`;
-  const t = r.take, anc = r.anchors.length ? r.anchors.map(a => `neo ${a.f0}-${a.f1 - 1}${a.dz ? ` dz ${a.dz}` : ''}`).join(', ') : 'không có neo xfer (máy quay trong file act)';
-  return `Em hiểu là: phim ${path.basename(r.film)}, đoạn ${r.seg.id} (${r.seg.frames.join('-')}), take ${t.n} (${t.frames.join('-')})`
-    + `${r.stage ? ` "${r.stage[2]}"` : ''}, khung ${r.window.join('-')}, máy quay ${anc}`;
+  const anc = r.anchors.length ? r.anchors.map(a => `neo ${a.f0}-${a.f1 - 1}${a.dz ? ` dz ${a.dz}` : ''}`).join(', ') : 'không có neo xfer (máy quay trong file act)';
+  const whole = r.change[0] <= r.window[0] && r.change[1] >= r.window[1];
+  const what = r.take ? `take ${r.take.n}${r.stage ? ` "${r.stage[2]}"` : ''}` : 'cả đoạn';
+  return `Em hiểu là: phim ${path.basename(r.film)}, đoạn ${r.seg.id}, xem cả đoạn khung ${r.window.join('-')} (${r.takes.length} take)`
+    + `, phương án đổi ${whole ? 'cả đoạn' : `khung ${r.change.join('-')} (${what})`}, máy quay ${anc}${moves ? `; ${heard(moves)}` : ''}`;
 }

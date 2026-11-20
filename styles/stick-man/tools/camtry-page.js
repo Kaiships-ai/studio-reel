@@ -35,18 +35,18 @@ function film(A, B) {
   return out;
 }
 
-// ---- walls: static meshes of the set (same place at the range's first, middle and last frame, visible in the middle,
-// not a sky dome or box), copied as double-sided proxies so a ray from inside a building still hits it
+// ---- walls: static meshes of the set (same place at every sample frame: each take's first, middle and last; visible at
+// one of them; not a sky dome or box), copied as double-sided proxies so a ray from inside a building still hits it
 let proxies = [], buildings = [];
 const shown = m => { for (let p = m; p; p = p.parent) if (!p.visible) return false; const mt = m.material; return !Array.isArray(mt) && !(mt?.visible === false || (mt?.transparent && mt.opacity < 0.05)); };
-function setup(A, B, pose) {
-  const snaps = [];
-  for (const f of [A, B, pose]) { dbg(f); scene.updateMatrixWorld(true); const s = new Map(); scene.traverse(m => { if (m.isMesh) s.set(m, m.matrixWorld.clone()); }); snaps.push(s); }
+function setup(frames) {
+  const snaps = [], seen = new Set();
+  for (const f of frames) { dbg(f); scene.updateMatrixWorld(true); const s = new Map(); scene.traverse(m => { if (m.isMesh) { s.set(m, m.matrixWorld.clone()); if (shown(m)) seen.add(m); } }); snaps.push(s); }
   const dbl = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
   proxies = []; buildings = [];
   scene.traverse(m => {
-    if (!m.isMesh || m.isInstancedMesh || m.isSkinnedMesh || !m.geometry?.attributes?.position || !shown(m)) return;
-    if (!snaps.every(s => s.get(m)?.equals(snaps[2].get(m)))) return;
+    if (!m.isMesh || m.isInstancedMesh || m.isSkinnedMesh || !m.geometry?.attributes?.position || !seen.has(m)) return;
+    if (!snaps.every(s => s.get(m)?.equals(snaps[0].get(m)))) return;
     const box = new THREE.Box3().setFromObject(m), s = box.getSize(new THREE.Vector3());
     if (box.max.y < 0.25 || !isFinite(s.x)) return;                         // ground, road, kerb paint
     if (s.y > 60 || Math.min(s.x, s.z) > 80) return;                         // a sky dome or sky box
@@ -91,19 +91,27 @@ function metric(c, subject) {
   return { minD: +minD.toFixed(2), who, top, inside, touch: inside || minD < 0.3, wallFill: +(wall / n).toFixed(2), facade: +(facade / n).toFixed(2), subjectH, z: +c.pos[2].toFixed(2) };
 }
 
-// one film frame, every variant side by side under a label bar; a null camera renders the film's own (keeps its roll)
-function tile(f, cams, labels, TW, TH, BAR) {
-  const cv = document.createElement('canvas'); cv.width = TW * cams.length; cv.height = TH + BAR; const g = cv.getContext('2d');
+// one film frame, every variant side by side under a label bar, over a strip: the segment's timeline, the frames the
+// variants change in yellow, the cuts as white ticks, this frame as a white needle. A `keep` camera renders the film's
+// own (keeps its roll)
+function tile(f, cams, labels, TW, TH, BAR, STRIP, S) {
+  const cv = document.createElement('canvas'); cv.width = TW * cams.length; cv.height = TH + BAR + STRIP; const g = cv.getContext('2d');
+  const on = f >= S.change[0] && f <= S.change[1];
   g.fillStyle = '#111'; g.fillRect(0, 0, cv.width, cv.height); const m = [];
   cams.forEach((c, i) => {
     over = c.keep ? null : c; window.__frame(f); over = null;
     g.drawImage(gl, i * TW, BAR, TW, TH);
     m.push(metric(c, c.subject));
     g.fillStyle = '#fff'; g.font = '600 15px -apple-system, system-ui, sans-serif'; g.fillText(labels[i], i * TW + 8, 18);
-    g.font = '500 11px ui-monospace, Menlo, monospace'; g.fillStyle = m[i].touch ? '#ff6b6b' : m[i].wallFill > 0.5 ? '#ffb84d' : '#9fe3c4';
-    g.fillText(`khung ${f} · cách tường ${m[i].minD > 15 ? '>15' : m[i].minD.toFixed(1)} m${m[i].touch ? ' · CHẠM' : ''}`, i * TW + 8, 34);
-    if (i) { g.fillStyle = '#333'; g.fillRect(i * TW - 1, 0, 2, cv.height); }
+    g.font = '500 11px ui-monospace, Menlo, monospace'; g.fillStyle = m[i].touch ? '#ff6b6b' : m[i].wallFill > 0.5 ? '#ffb84d' : on && i ? '#9fe3c4' : '#8a8f96';
+    g.fillText(`${f} · ${i && !on ? 'như phim · ' : ''}cách tường ${m[i].minD > 15 ? '>15' : m[i].minD.toFixed(1)} m${m[i].touch ? ' · CHẠM' : ''}`, i * TW + 8, 34);
+    if (i) { g.fillStyle = '#333'; g.fillRect(i * TW - 1, 0, 2, TH + BAR); }
   });
+  const y = TH + BAR, x = k => 8 + (k - S.A) / Math.max(1, S.B + 1 - S.A) * (cv.width - 16);
+  g.fillStyle = '#111'; g.fillRect(0, y, cv.width, STRIP); g.fillStyle = '#3a3f46'; g.fillRect(8, y + 8, cv.width - 16, 6);
+  g.fillStyle = '#ffd84d'; g.fillRect(x(S.change[0]), y + 8, x(S.change[1] + 1) - x(S.change[0]), 6);
+  g.fillStyle = '#fff'; for (const c of S.cuts) g.fillRect(x(c) - 1, y + 4, 2, 14);
+  g.fillRect(x(f + 0.5) - 1.5, y + 2, 3, 18);
   return { img: cv.toDataURL('image/jpeg', 0.9), m };
 }
 
@@ -116,7 +124,7 @@ function buildMap() {
   const shade = t => { const k = Math.round(Math.min(1, t / 15) * 10); if (!mats.has(k)) mats.set(k, new THREE.MeshBasicMaterial({ color: new THREE.Color(0x4a525c).lerp(new THREE.Color(0xb8c2cc), k / 10) })); return mats.get(k); };
   for (const p of proxies) { const m = new THREE.Mesh(p.geometry, p.userData.building ? shade(p.userData.top) : lowM); m.matrixAutoUpdate = false; m.matrix.copy(p.matrix); m.renderOrder = p.userData.top; mapScene.add(m); }
 }
-function map(path, touch, subject, label, TW, TH, BAR) {
+function map(path, touch, subject, label, TW, TH, BAR, changed) {
   if (!mapScene) buildMap();
   const pts = [...path, ...subject.filter(Boolean)], xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
   const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;
@@ -131,7 +139,7 @@ function map(path, touch, subject, label, TW, TH, BAR) {
   g.fillStyle = '#111'; g.fillRect(0, 0, TW, BAR); g.putImageData(img, 0, BAR);
   const px = p => [(p[0] - cx + hw) / (2 * hw) * TW, BAR + (cy + half - p[1]) / (2 * half) * TH];
   const line = (P, col, w) => { g.strokeStyle = col; g.lineWidth = w; g.beginPath(); let on = false; for (const p of P) { if (!p) { on = false; continue; } const q = px(p); on ? g.lineTo(...q) : g.moveTo(...q); on = true; } g.stroke(); };
-  line(subject, '#4dd0a0', 2); line(path, '#ffd84d', 2.5);
+  line(subject, '#4dd0a0', 2); line(path, '#7d6a2a', 2); line(path.map((p, k) => changed[k] ? p : null), '#ffd84d', 2.5);
   path.forEach((p, k) => { if (touch[k]) { const q = px(p); g.fillStyle = '#ff3b3b'; g.beginPath(); g.arc(q[0], q[1], 3.5, 0, 7); g.fill(); } });
   const a = px(path[0]); g.fillStyle = '#fff'; g.beginPath(); g.arc(a[0], a[1], 4, 0, 7); g.fill();
   g.fillStyle = '#fff'; g.font = '600 15px -apple-system, system-ui, sans-serif'; g.fillText(label, 8, 18);

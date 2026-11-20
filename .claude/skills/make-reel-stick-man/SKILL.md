@@ -67,24 +67,32 @@ chút" or "cảnh ngân hàng thứ hai, máy gần quá"). Use it in any stage 
      from `storyboard.json`.
    - The camera anchors come from `<round>/xfer/<SEG>.json`.
    - The tool boots the segment's test folder `films/<slug>-<seg>/` when it exists.
-2. Put its first line at the top of the reply. It is the readback: "Em hiểu là: phim X, đoạn Y, khung A-B, máy quay Z".
-   If the readback is wrong, run again with `--film`, `--frames A-B` or a clearer note. Never guess.
-3. The tool picks 3-4 variants from the note's words: V0 (the film camera), the asked move at one step and at two
-   steps, and the moves together. "chút" is a 0.5 m step, a number in metres sets the step. The film's engine renders
-   every variant. The tool writes to `<film>/review/camtry/<SEG>-<A>-<B>/`:
-   - `variants.mp4`: the variants side by side, with a red label where the camera touches a wall.
-   - `top.jpg`: the top view, with the camera path, the subject path and the buildings.
-   - `camtry.json`: the numbers. They are wall-touch frames, wall-fill frames, the nearest wall, the camera height, the
-     subject's screen height and the facade share.
+2. Put its first line at the top of the reply. It is the readback: "Em hiểu là: phim X, đoạn Y, xem cả đoạn khung A-B,
+   phương án đổi …, máy quay …; máy nâng …". If the readback is wrong, run again with `--film`, `--frames A-B` or a
+   clearer note. Never guess. "chưa rõ hướng máy" means the note named no camera move: say so to Kai with the default
+   set (up one and two steps, down one step).
+3. The clip is always the whole segment Kai names, every frame at 30 fps ("đoạn đua xe" is all of CHASE, every take).
+   A narrower phrase ("take 2", "đoạn đầu cuộc đua", "ngân hàng thứ hai") changes only that take, widened to the anchor
+   windows it touches; the rest plays with the film camera, for context. The tool picks 3-4 variants from the note's
+   words: V0 (the film camera), the asked move at one step and at two steps, and the moves together. "chút" is a 0.5 m
+   step, a number in metres sets the step. Notes work with or without marks and in plain English ("raise", "lower",
+   "closer", "away"). It writes to `<film>/review/camtry/<SEG>-<A>-<B>/`:
+   - `variants.mp4`: the variants side by side at 360x640 each, over a timeline strip (yellow: the frames the variants
+     change; white ticks: cuts; the needle: this frame). A red label marks a camera touching a wall.
+   - `top.jpg`: the top view, one row per take, one column per variant.
+   - `camtry.json`: the numbers over the changed frames. They are wall-touch frames, wall-fill frames, the nearest
+     wall, the camera height, the subject's screen height and the facade share. Also the run time.
    - `section.html`: the stage-page section, with the clip, the top view, the numbers table and a pick box. The
-     recommended variant carries **Em đề xuất**.
+     recommended variant carries **Em đề xuất**. It is always one `pick` can write; when no asked change can be, it
+     says "(áp tay)". A variant `pick` cannot write is marked "xem được, áp tay".
 4. Put the section on the stage page and wait for Kai's pick.
-5. Run `node styles/stick-man/tools/camtry.mjs pick <out dir> <Vn>`. It writes the lift into the anchors' `dz` (the
-   whole anchor window, so the camera never pops) and reruns the generators of that act. Then re-render the act and
-   rerun its gates.
+5. Run `node styles/stick-man/tools/camtry.mjs pick <out dir> <Vn>`. It sets the anchors' `dz` to their value at the
+   previs run plus the lift (the whole anchor window, so the camera never pops; picking twice never stacks; V0 puts
+   them back), keeps `<xfer>.bak`, and reruns the generators of that act. A failing generator puts the anchors and the
+   act back. It only writes inside the film folder. Then re-render the act and rerun its gates.
    - A move the anchors cannot hold ("xa tường", "gần lại", "nhìn nhân vật") is refused with the reason. Make that
      change in the act's camera by hand, from the numbers.
-   - `--dry 1` prints the change only.
+   - `--dry` prints the change only.
 
 Feature map: `.claude/skills/verify/features/stick-man-camtry.md`.
 
