@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
-import { run } from '../../kit/env.mjs';
+import { run, env } from '../../kit/env.mjs';
 import { gate, parseScript, W, H } from '../../styles/stick-man/tools/colourgate.mjs';
 
 // A synthetic shot at 144x256: two colour halves laid out in 8 px stripes (vertical or horizontal, so a change of
@@ -19,6 +19,9 @@ function frame(o) {
   return buf;
 }
 
+// CI's Linux runner has no ffmpeg in the folder; the clip tests need it to write and read the synthetic shots.
+const skip = !env().tools?.ffmpeg && 'needs ffmpeg';
+
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'colourgate-'));
 let n = 0;
 // shots: [{ s: seconds, at: t => frame options }]
@@ -34,7 +37,7 @@ const script = (to, scene = {}, extra = {}) => ({ palette: { signature: 'warm', 
   scenes: [{ id: 'A', from: 0, to, intent: 'test scene', ...scene }], ...extra });
 const failing = res => [...new Set(res.findings.filter(f => !f.waived).map(f => f.check))].sort();
 
-test('a shot inside every default range passes, and only a Kai-approved script turns no finding into PASS', () => {
+test('a shot inside every default range passes, and only a Kai-approved script turns no finding into PASS', { skip }, () => {
   const mp4 = clip([{ s: 3 }]);
   assert.equal(gate(mp4, script(3)).verdict, 'PASS');
   const { approved, ...draft } = script(3);
@@ -42,14 +45,14 @@ test('a shot inside every default range passes, and only a Kai-approved script t
   assert.equal(gate(mp4, { ...draft, approved: { by: 'agent', at: '2026-11-21' } }).verdict, 'DRAFT');
 });
 
-test('an approved look the script declares passes; the same look undeclared fails flood and palette', () => {
+test('an approved look the script declares passes; the same look undeclared fails flood and palette', { skip }, () => {
   const magenta = { a: [200, 70, 170], b: [180, 60, 160] };
   const mp4 = clip([{ s: 4, at: () => magenta }]);
   assert.deepEqual(failing(gate(mp4, script(4, { hues: ['pink'], flood: ['pink'] }))), []);
   assert.deepEqual(failing(gate(mp4, script(4))), ['G7', 'G8']);
 });
 
-test('G1: a luma jump at a cut inside one scene fails; across a scene change the wider limit holds', () => {
+test('G1: a luma jump at a cut inside one scene fails; across a scene change the wider limit holds', { skip }, () => {
   const mp4 = clip([{ s: 2 }, { s: 2, at: () => ({ gain: 1.45, stripes: 'h' }) }]);
   const res = gate(mp4, script(4));
   assert.deepEqual(failing(res), ['G1']);
@@ -60,46 +63,46 @@ test('G1: a luma jump at a cut inside one scene fails; across a scene change the
   assert.deepEqual(failing(gate(mp4, lit)), [], 'a cut inside a declared light event is exempt');
 });
 
-test('G2: a light that dims inside a shot fails, unless the script tags it as a light event', () => {
+test('G2: a light that dims inside a shot fails, unless the script tags it as a light event', { skip }, () => {
   const mp4 = clip([{ s: 3, at: t => ({ gain: t < 1.5 ? 1.3 : t < 1.7 ? 1.1 : 0.85 }) }]);
   assert.deepEqual(failing(gate(mp4, script(3))), ['G2']);
   assert.deepEqual(failing(gate(mp4, script(3, { events: [{ from: 1.3, to: 1.9, why: 'muzzle flash' }] }))), []);
 });
 
-test('G3: a cast outside the scene R/B range fails', () => {
+test('G3: a cast outside the scene R/B range fails', { skip }, () => {
   const mp4 = clip([{ s: 2, at: () => ({ a: [170, 110, 70], b: [150, 100, 60] }) }]);
   assert.deepEqual(failing(gate(mp4, script(2))), ['G3']);
   assert.deepEqual(failing(gate(mp4, script(2, { rb: [1.2, 3] }))), []);
 });
 
-test('G4: a washed-out shot fails the saturation floor', () => {
+test('G4: a washed-out shot fails the saturation floor', { skip }, () => {
   const mp4 = clip([{ s: 2, at: () => ({ a: [130, 120, 112], b: [112, 120, 130] }) }]);
   assert.deepEqual(failing(gate(mp4, script(2))), ['G4']);
 });
 
-test('G5: a dimmed hero white fails; a scene without the hero skips it', () => {
+test('G5: a dimmed hero white fails; a scene without the hero skips it', { skip }, () => {
   const mp4 = clip([{ s: 2, at: () => ({ hero: 165 }) }]);
   assert.deepEqual(failing(gate(mp4, script(2))), ['G5']);
   assert.deepEqual(failing(gate(mp4, script(2, { hero: false }))), []);
 });
 
-test('G6: hazy blacks fail the black level', () => {
+test('G6: hazy blacks fail the black level', { skip }, () => {
   const mp4 = clip([{ s: 2, at: () => ({ dark: 40 }) }]);
   assert.deepEqual(failing(gate(mp4, script(2))), ['G6']);
 });
 
-test('G7: one hue family flooding the frame longer than 3 s fails', () => {
+test('G7: one hue family flooding the frame longer than 3 s fails', { skip }, () => {
   const mp4 = clip([{ s: 4, at: () => ({ a: [200, 70, 170], b: [180, 60, 160] }) }]);
   assert.deepEqual(failing(gate(mp4, script(4, { hues: ['pink'] }))), ['G7']);
 });
 
-test('G8: colour outside the palette and the scene hues fails', () => {
+test('G8: colour outside the palette and the scene hues fails', { skip }, () => {
   const mp4 = clip([{ s: 2, at: () => ({ a: [80, 160, 90], b: [70, 150, 80] }) }]);
   assert.deepEqual(failing(gate(mp4, script(2))), ['G8']);
   assert.deepEqual(failing(gate(mp4, script(2, { hues: ['green'] }))), []);
 });
 
-test('G9: a dark film fails, and an approved Kai waiver in DECISIONS.json clears it', () => {
+test('G9: a dark film fails, and an approved Kai waiver in DECISIONS.json clears it', { skip }, () => {
   const mp4 = clip([{ s: 2, at: () => ({ gain: 0.45, dark: 30, hero: 0 }) }]);
   const s = script(2, { hero: false });
   assert.deepEqual(failing(gate(mp4, s)), ['G9']);
