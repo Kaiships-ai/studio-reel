@@ -600,15 +600,15 @@ export function makeStick(spec) {
   if (FACE_2D.on) face.visible = false;
   const skin0 = headSolid.material.color.clone(), tintC = new THREE.Color();
   if (spec.glasses) rig.add(glasses());
-  // hair and hats hang in their own group so the motion layer can swing them after the head (follow-through)
+  // hair and hats: one group fixed to the head (Kai 20/11: a cap that swung after the head's nods read as a wobble)
   const hairG = new THREE.Group(); head.add(hairG);
   for (const f of spec.hair || []) hairG.add(f());
   // hair, hats and glasses were built on the ellipsoid: give them the same head shape (in head space), geometry cloned
   head.updateMatrixWorld(true); _hm.copy(head.matrixWorld).invert();
   const skip = new Set([headSolid, face]); headSolid.traverse(o => skip.add(o)); FR.group.traverse(o => skip.add(o));
   head.traverse(o => { if (!o.isMesh || skip.has(o)) return; o.geometry = o.geometry.clone(); shapeHeadGeo(o.geometry, _hm.clone().multiply(o.matrixWorld)); });
-  hairG.position.y = HAT_LIFT;
-  // what the head wears, as a solid held props stop on (body.js headWear; the hat's swing after the head is left out)
+  hairG.position.y = HAT_LIFT; hairG.updateMatrix(); hairG.matrixAutoUpdate = false;
+  // what the head wears, as a solid held props stop on (body.js headWear)
   head.updateMatrixWorld(true); _hm.copy(head.matrixWorld).invert();
   const crown = [], sheets = []; hairG.traverse(o => { if (!o.isMesh || o.material?.transparent || o.material?.blending === THREE.AdditiveBlending) return;
     const P = o.geometry.attributes.position, m = _hm.clone().multiply(o.matrixWorld), at = i => new THREE.Vector3().fromBufferAttribute(P, i).applyMatrix4(m);
@@ -631,7 +631,7 @@ export function makeStick(spec) {
   contact.rotation.x = -Math.PI / 2; contact.scale.set(0.48 * W, 0.24 * W, 1); contact.position.set(0.03 * W, 0.004, 0);
   contact.userData.noPrepass = true; root.add(contact);
 
-  const S = { root, yaw: 0, hand: {}, parts: { head: headSolid, torso, toes, ankles, hands, face, marks: FR.group }, xmarks: [], props: {} };
+  const S = { root, yaw: 0, hand: {}, parts: { head: headSolid, torso, toes, ankles, hands, face, marks: FR.group, hair: hairG }, xmarks: [], props: {} };
   const inv = new THREE.Matrix4();
 
   // pos (Blender metres), and either yaw (deg, 0 = facing Blender -Y) or face (a Blender point to turn toward)
@@ -828,7 +828,7 @@ export function makeStick(spec) {
   // here moves a joint on its own (no reach assist, no hand smoothing). Keys: pos, yaw, bob (W), hip {x, z} (W shift),
   // pelvis {pitch, roll, yaw} (deg), spine {bend, side, twist} (deg), sq, neck {nod, tilt, turn} (deg), headSq,
   // arm{L,R} {raise, swing, elbow, roll, ik: [x, y, z] figure W, ikw, pole}, leg{L,R} {foot: [x, y, z] W, pitch, yaw, knee},
-  // hat {pitch, roll} (deg, the follow-through swing), plus the x_ keys (props, marks) and contact.
+  // plus the x_ keys (props, marks) and contact.
   let bent = null, slices = null;
   const _e = new THREE.Euler();
   S.pose2 = (Q0 = {}) => {
@@ -859,7 +859,6 @@ export function makeStick(spec) {
     const qTop = top.q.clone().multiply(qn), hOff = new THREE.Vector3(0, (HEAD_C[1] - HIP_V - SPINE_L + (HK - 1) * 0.5 * HEAD_H) * B.s, 0).applyQuaternion(qTop);
     head.position.copy(toRoot(top.p.clone().add(hOff))).multiplyScalar(W); head.quaternion.copy(qb.clone().multiply(qTop));
     const hs = Math.max(0.5, 1 + (Q.headSq || 0)); head.scale.set(HK / Math.sqrt(hs), HK * hs, HK / Math.sqrt(hs));
-    hairG.rotation.set((Q.hat?.pitch || 0) * DEG, 0, -(Q.hat?.roll || 0) * DEG);
     S.fill = Q.x_fill || 0;
     const rig = { pitch: (pv.pitch || 0) + (Q.spine?.bend || 0), roll: (pv.roll || 0) + (Q.spine?.side || 0), assist: 0,
       body: [Q.hip?.x || 0, Q.bob || 0, Q.spine?.twist || 0].map(x => +x.toFixed(3)), sq: Q.sq || 0, headSq: Q.headSq || 0 };
