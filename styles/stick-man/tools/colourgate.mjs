@@ -14,6 +14,7 @@ import { run } from '../../../kit/env.mjs';
 import { finalRender } from './renders.mjs';
 import { sceneScores, hardCuts, duration } from './cutgate.mjs';
 import { waiverFor } from './kituse.mjs';
+import { median } from './stats.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 export const W = 144, H = 256, FPS = 10, EDGE_S = 0.1;
@@ -102,7 +103,6 @@ export function parseScript(raw, dur) {
 }
 
 // ---------------------------------------------------------------- shots and their medians
-const median = v => { const s = v.filter(x => x != null).sort((a, b) => a - b); return s.length ? s[s.length >> 1] : null; };
 
 export function shots(samples, cutTimes, script) {
   const dur = script.scenes.at(-1).to;

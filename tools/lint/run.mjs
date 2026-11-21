@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Dev-only lint of core/, kit/, release/, test/, tmv/episode/ and the stick-man engine (oxlint, correctness rules plus
+// Dev-only lint of core/, kit/, release/, test/, tmv/episode/ and styles/stick-man/ (oxlint, correctness rules plus
 // no-unused-vars, config in this folder).
 // oxlint lives in this folder's own package.json, never the root one: buyers' `npm ci` must not download it.
 import { spawnSync } from 'node:child_process';
@@ -17,6 +17,6 @@ if (!existsSync(have) || JSON.parse(readFileSync(have, 'utf8')).version !== want
 }
 // kit/check-reel/src are classic scripts that share globals across files, so a name "unused" in one file is used in another.
 const args = ['-c', join(here, '.oxlintrc.json'), '--ignore-pattern', 'kit/check-reel/src/**', '--deny-warnings',
-  'core', 'kit', 'release', 'test', 'tmv/episode', 'styles/stick-man/engine'];
+  'core', 'kit', 'release', 'test', 'tmv/episode', 'styles/stick-man'];
 const r = spawnSync(join(here, 'node_modules/.bin/oxlint'), args, { cwd: root, stdio: 'inherit' });
 process.exit(r.status ?? 1);

@@ -7,7 +7,7 @@
 // --film adds the story gates (storyboard.json against __dbg: duration, sets, shot variety, shot grammar, props / fx use and presence,
 // and the judged board verdict review/board-verdict.json). Without --dbg it runs shot.mjs --dbg itself (~1 min).
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { run } from '../../../kit/env.mjs';
 import { decode, measure } from './look_measure.mjs';
 

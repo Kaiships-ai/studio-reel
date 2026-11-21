@@ -13,10 +13,10 @@
 //   --mp4 ... --audio films/x/audio/mix.wav                           mux this track instead of vo/vo.wav
 //   --no-bible-check '<reason>'  render although bible/check.mjs blocks (prints a warning, logged in films/<slug>/bible-bypass.tsv)
 //   --fast 1 (report without the frame-difference pass), --w/--h (default 1080x1920), --query k=v (page flags); --help
-import { chromium } from 'playwright-core';
-import http from 'node:http'; import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os';
+import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { start, run } from '../../../kit/env.mjs';
+import { serveFiles, launchGpu } from './pageserver.mjs';
 import { microanim } from './forensic/microanim.mjs';
 import { acting, joints, compress, holdLines, faultList, hiddenOf, faceLines, cordLines, camStats } from './faults.mjs';
 import { bibleGate } from '../bible/gate.mjs';
@@ -45,18 +45,11 @@ const REEL = !!A.film, page = A.page || (REEL ? 'styles/stick-man/reel.html' : n
 if (!page) { console.error('give --film films/<slug> or --page <proof page>'); process.exit(2); }
 let frames = A.frames === 'all' ? [] : (A.frames || '0').split(',').flatMap(s => { const [a, b] = s.split('-').map(Number); return b == null ? [a] : Array.from({ length: b - a + 1 }, (_, i) => a + i); });
 
-const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json', '.wav': 'audio/wav',
-  '.ttf': 'font/ttf', '.woff2': 'font/woff2' };
-const server = http.createServer((req, res) => {
-  const f = path.join(ROOT, decodeURIComponent(new URL(req.url, 'http://x').pathname));
-  if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404).end(); return; }
-  res.writeHead(200, { 'Content-Type': MIME[path.extname(f)] || 'application/octet-stream' }); fs.createReadStream(f).pipe(res);
-});
-await new Promise(r => server.listen(Number(A.port || 0), '127.0.0.1', r));
+const server = await serveFiles(ROOT, { port: Number(A.port || 0) });
 const base = `http://127.0.0.1:${server.address().port}/${page}`;
 if (A.serve) { console.log(`${base}?film=${A.film}`); await new Promise(() => {}); }
 const url = REEL ? `${base}?film=${A.film}&capture=1${A.query ? '&' + A.query : ''}` : `${base}?view=${A.view || 'a'}${A.query ? '&' + A.query : ''}`;
-const browser = await chromium.launch({ args: ['--use-angle=metal', '--ignore-gpu-blocklist', '--enable-gpu-rasterization'] });
+const browser = await launchGpu();
 const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
 const p = await ctx.newPage();
 p.on('pageerror', e => { console.error('pageerror:', e.message, '\n', e.stack || ''); process.exit(1); });

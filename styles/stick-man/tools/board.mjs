@@ -9,9 +9,9 @@
 //   storyboard "see" line, for Kai only), --render 0 (judge the existing board.jpg), --tag r1 (verdict file suffix)
 import { chromium } from 'playwright-core';
 import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os';
-import { spawn } from 'node:child_process';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { run } from '../../../kit/env.mjs';
+import { claudeJson } from './claude_headless.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.resolve(HERE, '../../..');
 const film = process.argv[2];
@@ -122,27 +122,10 @@ function peak(rows, a, b, want, fa) {
 // reel 1 (15 reviews): both-of-2 scored 80-100 %, 2-of-3 scored 100 % three times. Tokens per review go in the verdict.
 async function judge(n) {
   if (!fs.existsSync(out)) { console.error(`no ${path.relative(ROOT, out)}: run board.mjs first`); process.exit(2); }
-  const msg = JSON.stringify({ type: 'user', message: { role: 'user', content: [
+  const content = [
     { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: fs.readFileSync(out).toString('base64') } },
-    { type: 'text', text: prompt(out, true) }] } }) + '\n';
-  const bin = process.env.CLAUDE_BIN || 'claude';
-  const one = i => new Promise((res, rej) => {
-    const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'stick-judge-'));
-    const c = spawn(bin, ['-p', '--input-format', 'stream-json', '--output-format', 'stream-json', '--verbose', '--model', 'sonnet', '--effort', 'medium',
-      '--tools', '', '--strict-mcp-config', '--setting-sources', '', '--disable-slash-commands',
-      '--system-prompt', 'You review storyboards. Reply with JSON only.'], { cwd, stdio: ['pipe', 'pipe', 'pipe'] });
-    let so = '', se = ''; c.stdout.on('data', d => (so += d)); c.stderr.on('data', d => (se += d));
-    c.on('error', rej);
-    c.on('close', code => {
-      fs.rmSync(cwd, { recursive: true, force: true });
-      const resLine = so.split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).find(o => o?.type === 'result');
-      if (code || !resLine || resLine.is_error) return rej(new Error(`review ${i + 1}: claude exit ${code} ${se.slice(0, 300)} ${resLine?.result || ''}`));
-      const u = resLine.usage, tokens = u.input_tokens + u.cache_creation_input_tokens + u.cache_read_input_tokens + u.output_tokens;
-      const t = resLine.result, js = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1));
-      res({ ...js, tokens, cost_usd: resLine.total_cost_usd });
-    });
-    c.stdin.end(msg);
-  });
+    { type: 'text', text: prompt(out, true) }];
+  const one = i => claudeJson(content, 'You review storyboards. Reply with JSON only.').catch(e => { throw new Error(`review ${i + 1}: ${e.message}`); });
   const R = await Promise.all(Array.from({ length: n }, (_, i) => one(i)));
   const tag = A.tag ? `-${A.tag}` : '';
   R.forEach((r, i) => fs.writeFileSync(F(`review/board-verdict${tag}-j${i + 1}.json`), JSON.stringify(r) + '\n'));

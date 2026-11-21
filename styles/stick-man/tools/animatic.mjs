@@ -7,8 +7,8 @@
 //   phone-size viewing)  --opt SH040:emo,SH060:bold (render other camera-intent options)  --font <ttf>  --out <mp4>
 // It also prints the CUTS array for reel.js (the shot starts and the end frame), so stage 3 never re-detects cuts.
 import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os';
-import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { run } from '../../../kit/env.mjs';
 import { loadFilm, UI_BANDS, TEXT_SAFE } from './shotlist.mjs';
 import { textFilter } from './animatic-text.mjs';
 
@@ -24,10 +24,6 @@ const { fps, shots, last, F } = L;
 const [W, H] = String(A.size || '540x960').split('x').map(Number);
 const ver = String(A.v || '1').padStart(3, '0');
 const out = path.resolve(DIR, A.out || `review/animatic_v${ver}.mp4`);
-const pixiFF = path.join(ROOT, '.pixi/envs/default/bin/ffmpeg');
-const runs = bin => spawnSync(bin, ['-version'], { encoding: 'utf8' }).status === 0;
-const FF = fs.existsSync(pixiFF) && runs(pixiFF) ? pixiFF : 'ffmpeg';
-if (!runs(FF)) { console.error('ffmpeg not found (pixi env or PATH)'); process.exit(2); }
 const FONTS = [A.font, '/System/Library/Fonts/Supplemental/Arial Bold.ttf', '/System/Library/Fonts/Supplemental/Arial.ttf', '/Library/Fonts/Arial.ttf',
   '/System/Library/Fonts/Helvetica.ttc', '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
   '/usr/share/fonts/truetype/lato/Lato-Bold.ttf', 'C:/Windows/Fonts/arialbd.ttf'].filter(Boolean);
@@ -35,7 +31,7 @@ const font = FONTS.find(f => fs.existsSync(f));
 if (!font) console.warn('no font found (--font <ttf>): the burn-in and grey cards will have no text');
 const burn = A.burn !== '0' && !!font;
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'animatic-'));
-const ff = args => { const r = spawnSync(FF, ['-hide_banner', '-loglevel', 'error', '-y', ...args], { encoding: 'utf8' });
+const ff = args => { const r = run('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', ...args], { capture: true });
   if (r.status !== 0) { console.error(`ffmpeg failed: ${r.stderr || r.error}`); process.exit(1); } };
 const txt = (name, s) => { const p = path.join(tmp, name); fs.writeFileSync(p, s); return p.replace(/\\/g, '/').replace(/:/g, '\\:'); };
 const wrap = (s, n) => String(s).split(/\s+/).reduce((acc, w) => { const l = acc.at(-1); if ((l + ' ' + w).trim().length > n) acc.push(w); else acc[acc.length - 1] = (l + ' ' + w).trim(); return acc; }, ['']).join('\n');

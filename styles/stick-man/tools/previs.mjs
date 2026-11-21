@@ -10,10 +10,12 @@
 // A hand spec (films/<slug>/previs/<name>.json) is a world in previs-core.mjs's shape on its own clock from 0, plus
 // `shots` (the storyboard shots it replaces in --film) and optional `clock` / `audio_t0`. Every run rewrites
 // review/previs/previs.md (the evidence ◇2b asks for): one row per previs video with its takes and cut rhythm.
-import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os'; import http from 'node:http';
-import { spawnSync } from 'node:child_process';
+import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os';
 import { fileURLToPath } from 'node:url';
+import { run } from '../../../kit/env.mjs';
 import { boundaries, cameraKeys, rhythm, warp, SIZE_VI, moveVi, WALKS, track } from './previs-core.mjs';
+import { median } from './stats.mjs';
+import { serveFiles, launchGpu } from './pageserver.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.resolve(HERE, '../../..');
 const BENCH = path.join(HERE, '../bench');
@@ -148,32 +150,17 @@ export function filmWorld(sb, words, dur, specs, { join = 'scene' } = {}) {
 
 export function refs() {
   const rows = dir => { try { return fs.readdirSync(path.join(BENCH, dir)).filter(f => f.endsWith('.json')).map(f => JSON.parse(fs.readFileSync(path.join(BENCH, dir, f), 'utf8'))); } catch { return []; } };
-  const med = a => { const s = [...a].sort((x, y) => x - y); return s.length ? s[s.length >> 1] : null; };
   const rick = rows('rick'), ours = rows('ours').at(-1);
   if (!rick.length) return '';
-  return `Rick ${med(rick.map(r => r.film.cutsPerMin)).toFixed(1)}/phút · ${med(rick.map(r => r.film.medianTake)).toFixed(0)} s` +
+  return `Rick ${median(rick.map(r => r.film.cutsPerMin)).toFixed(1)}/phút · ${median(rick.map(r => r.film.medianTake)).toFixed(0)} s` +
     (ours ? `   ·   ${ours.id} ${ours.film.cutsPerMin.toFixed(1)}/phút · ${ours.film.medianTake.toFixed(1)} s` : '');
 }
 
-// ---- tools: ffmpeg (pixi first), the page, headless capture
-function ffmpeg() {
-  const pixi = path.join(ROOT, '.pixi/envs/default/bin/ffmpeg'), ok = b => spawnSync(b, ['-version']).status === 0;
-  const ff = fs.existsSync(pixi) && ok(pixi) ? pixi : 'ffmpeg';
-  if (!ok(ff)) throw new Error('ffmpeg not found (pixi env or PATH)');
-  return ff;
-}
-const probeDur = (ff, f) => { const r = spawnSync(ff, ['-i', f], { encoding: 'utf8' }); const m = /Duration: (\d+):(\d+):([\d.]+)/.exec(r.stderr); return m ? +m[1] * 3600 + +m[2] * 60 + +m[3] : null; };
+// ---- tools: ffmpeg (kit/env.mjs), the page, headless capture
+const probeDur = f => { const r = run('ffmpeg', ['-i', f], { capture: true }); const m = /Duration: (\d+):(\d+):([\d.]+)/.exec(r.stderr); return m ? +m[1] * 3600 + +m[2] * 60 + +m[3] : null; };
 
 async function capture(worldFile, n, framesDir, only) {
-  const { chromium } = await import('playwright-core');
-  const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json' };
-  const srv = http.createServer((q, s) => {
-    const p = path.join(ROOT, decodeURIComponent(new URL(q.url, 'http://x').pathname));
-    if (!p.startsWith(ROOT) || !fs.existsSync(p) || fs.statSync(p).isDirectory()) { s.writeHead(404).end(); return; }
-    s.writeHead(200, { 'content-type': MIME[path.extname(p)] || 'application/octet-stream' }); fs.createReadStream(p).pipe(s);
-  });
-  await new Promise(r => srv.listen(0, '127.0.0.1', r));
-  const b = await chromium.launch({ args: ['--use-angle=metal', '--ignore-gpu-blocklist', '--enable-gpu-rasterization'] });
+  const srv = await serveFiles(ROOT), b = await launchGpu();
   try {
     const pg = await b.newPage({ viewport: { width: 720, height: 1280 } });
     let err; pg.on('pageerror', e => { err = e; });
@@ -208,11 +195,11 @@ async function main() {
   if (!film || film.startsWith('-') || (!A.scene && !A.film)) { console.error(USAGE); process.exit(2); }
   const DIR = path.resolve(ROOT, film), F = p => path.resolve(DIR, p);
   if (!fs.existsSync(F('storyboard.json'))) { console.error(`${film}: no storyboard.json\n${USAGE}`); process.exit(2); }
-  const ff = ffmpeg(), t00 = Date.now();
+  const t00 = Date.now();
   const sb = JSON.parse(fs.readFileSync(F('storyboard.json'), 'utf8'));
   const words = fs.existsSync(F('vo/words.json')) ? JSON.parse(fs.readFileSync(F('vo/words.json'), 'utf8')) : null;
   const voice = fs.existsSync(F('vo/vo.wav')) ? F('vo/vo.wav') : null;
-  const filmDur = (voice && probeDur(ff, voice)) || (sb.last ?? 0) / (sb.fps ?? 30);
+  const filmDur = (voice && probeDur(voice)) || (sb.last ?? 0) / (sb.fps ?? 30);
   const specs = fs.existsSync(F('previs')) ? fs.readdirSync(F('previs')).filter(f => f.endsWith('.json')).map(f => ({ name: f.slice(0, -5), ...JSON.parse(fs.readFileSync(F(`previs/${f}`), 'utf8')) })) : [];
   const fps = sb.fps ?? 30, join = A.join || 'scene';
   let name, world, audioT0 = 0, music = null;
@@ -254,7 +241,7 @@ async function main() {
     if (A.stills) {
       const list = A.stills.split(',').map(Number);
       await capture(worldFile, n, tmp, list);
-      for (const f of list) spawnSync(ff, ['-v', 'error', '-y', '-i', path.join(tmp, `f${String(f).padStart(5, '0')}.jpg`), path.join(outDir, `${name}_f${f}.png`)]);
+      for (const f of list) run('ffmpeg', ['-v', 'error', '-y', '-i', path.join(tmp, `f${String(f).padStart(5, '0')}.jpg`), path.join(outDir, `${name}_f${f}.png`)], { capture: true });
       console.log(`stills: ${list.map(f => path.relative(ROOT, path.join(outDir, `${name}_f${f}.png`))).join(' ')}`);
       return;
     }
@@ -265,7 +252,7 @@ async function main() {
     if (music) { ins.push('-ss', String(Math.max(0, audioT0)), '-t', String(world.dur), '-i', music); filt.push(`[${voice ? 2 : 1}:a]aresample=48000,volume=${A['music-db'] ?? 0}dB[m]`); }
     if (voice && music) filt.push('[v][m]amix=inputs=2:duration=first:normalize=0[a]'); else if (voice) filt.push('[v]anull[a]'); else if (music) filt.push('[m]anull[a]');
     if (filt.length) maps.push('-filter_complex', filt.join(';'), '-map', '0:v', '-map', '[a]', '-c:a', 'aac', '-b:a', '160k');
-    const res = spawnSync(ff, ['-v', 'error', '-y', ...ins, ...maps, '-vf', `scale=${w}:${h}`, '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '20', '-t', String(world.dur), out], { encoding: 'utf8' });
+    const res = run('ffmpeg', ['-v', 'error', '-y', ...ins, ...maps, '-vf', `scale=${w}:${h}`, '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '20', '-t', String(world.dur), out], { capture: true });
     if (res.status !== 0) throw new Error(`ffmpeg: ${res.stderr}`);
     writeEvidence(DIR, name, { video: `\`${path.relative(DIR, out)}\``, dur: world.dur, r, stages: world.stages.length });
     console.log(`${path.relative(ROOT, out)} in ${((Date.now() - t00) / 1000).toFixed(1)} s · review/previs/previs.md`);

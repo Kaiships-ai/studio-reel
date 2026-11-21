@@ -10,6 +10,7 @@ import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path'
 import { fileURLToPath } from 'node:url';
 import { run, start } from '../../../kit/env.mjs';
 import { sceneScores, duration, measure as cutMeasure } from './cutgate.mjs';
+import { median } from './stats.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PY = path.join(HERE, 'refbench.py');
@@ -56,7 +57,6 @@ export const METRICS = [
   { key: 'depthPlanes', label: 'depth planes (blind agent count)', group: 'count', digits: 1 },
 ];
 
-const median = a => { const s = a.filter(x => x != null).sort((x, y) => x - y); if (!s.length) return null; const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 const mean = a => { const s = a.filter(x => x != null); return s.length ? s.reduce((x, y) => x + y, 0) / s.length : null; };
 const round = (v, d = 4) => v == null ? null : Math.round(v * 10 ** d) / 10 ** d;
 

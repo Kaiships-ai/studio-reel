@@ -11,9 +11,9 @@
 //           Ours is 3D world motion; the reference is screen motion with the camera removed: compare shapes, not decimals.
 //   dead    longest run in which no joint moved 1 mm and no angle 0.3 deg from where the run began (a truly still pose)
 import fs from 'node:fs';
+import { median } from '../stats.mjs';
 
 const W = 0.60, HOLD = 0.012;
-const med = xs => { const s = [...xs].sort((a, b) => a - b); return s.length ? (s.length % 2 ? s[s.length >> 1] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2) : null; };
 const cv = xs => { if (xs.length < 2) return null; const m = xs.reduce((a, b) => a + b, 0) / xs.length; if (m <= 0) return 0; return Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / xs.length) / m; };
 const d3 = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 const JOINTS = ['hip', 'knee', 'ankle', 'toe', 'shoulder', 'elbow', 'hand'], ANG = ['kneeFlex', 'elbowFlex', 'footPitch'];
@@ -66,9 +66,9 @@ export function microanim(rows) {
     out[n] = {
       frames: R.length,
       mouthCV_talk: cv(talk), mouthCV_all: cv(all), mouthMax: Math.max(...all), talkFrames: talk.length,
-      drawings12_afterChange: per12, drawings12_median: med(win12), drawings12_max: win12.length ? Math.max(...win12) : null,
-      headMoves: moves.length, moveLenMedian: med(moves.map(m => m.len)), bigTravelMean: big.length ? big.reduce((s, m) => s + m.travel, 0) / big.length : null,
-      holdMedian: med(holds.map(h => h.len)), holdMax: holds.length ? Math.max(...holds.map(h => h.len)) : 0, holds: holds.length,
+      drawings12_afterChange: per12, drawings12_median: median(win12), drawings12_max: win12.length ? Math.max(...win12) : null,
+      headMoves: moves.length, moveLenMedian: median(moves.map(m => m.len)), bigTravelMean: big.length ? big.reduce((s, m) => s + m.travel, 0) / big.length : null,
+      holdMedian: median(holds.map(h => h.len)), holdMax: holds.length ? Math.max(...holds.map(h => h.len)) : 0, holds: holds.length,
       speedP90_Wps: live.length ? live[Math.floor(0.9 * (live.length - 1))] * 30 : null, spacing,
       deadRun: dead, deadAt,
     };
