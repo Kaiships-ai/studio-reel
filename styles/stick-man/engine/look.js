@@ -190,7 +190,7 @@ const SKY_F = SKY_GLSL + '\n varying vec3 vD; void main(){ gl_FragColor = vec4(s
 // 1.15 -> 0.85, sun lowered to <= 35 deg; set ink 2.6 -> 2.1 px (ink gate median 4 px; judge: set lines compete with figures);
 // round 3 ('washed out, hazy overlays'): highlight bloom 0.38 -> 0.28, shafts 0.032 -> 0.024
 export function createStage({ width, height, faceInk = false, exposure = 0.88, ink = 2.1, sat = 1.38, con = 1.18, vig = 0.30, split = 0.7, bloom = 1.1,
-  hot = 0.28, shafts = 0.024, shaftK = 1.6, dofK = 0.55, ao = 0, aoRadius = 0.5, shadowRadius = 1.0, toneExp = null } = {}) {
+  hot = 0.28, shafts = 0.024, shaftK = 1.6, dofK = 0.55, ao = 0, aoRadius = 0.5, shadowRadius = 1.0 } = {}) {
   const stage = {};                                               // late-bound parts (setSun runs before the passes exist)
   const px = height / 1920;                                       // every pixel-size number scales with this
   const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: true });

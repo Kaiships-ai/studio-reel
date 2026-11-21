@@ -1,6 +1,6 @@
 // The automatic acting layer: blinks, expression timing, idle life, eyes on whatever is moving, settle springs.
 // Nothing here is written in the reel data; all of it is a pure function of the frame and a per-actor seed.
-import { hash, clamp, smooth, smoother, settle, rightB, fwdB, angDiff } from './verbs.js';
+import { hash, clamp, smooth, smoother, settle, rightB, fwdB } from './verbs.js';
 import { EXPR, mixFace, FACE_STYLE } from './faces.js';
 
 // ---------------------------------------------------------------- micro-animation timing (FORENSIC.md section 3)
@@ -22,9 +22,8 @@ export const BLINK_GAP = { talk: [60, 100], listen: [90, 150] }, DOUBLE_BLINK = 
 export const blinkAt = (list, fr) => { let v = 0; for (const b of list) { const k = fr - b.f, S = BLINKS[b.shape] || BLINKS.regular; if (k >= 0 && k < S.length) v = Math.max(v, S[k]); } return v; };
 // o: { forced: [{f, shape}] (blinks another layer draws, e.g. the change blinks of faceChanges: free blinks keep their
 // distance), quiet: [[a, b)] (no free blink overlaps one: a take's anticipation, accent and hold), gap: [min, max],
-// shapeAt: f -> BLINKS name }. An array is read as the old expression-swap frames.
+// shapeAt: f -> BLINKS name }.
 export function blinkTrack(seed, f0, f1, o = {}) {
-  if (Array.isArray(o)) o = { forced: o.map(f => ({ f: f - 1 })) };
   const F = (o.forced || []).slice().sort((a, b) => a.f - b.f), quiet = o.quiet || [], [g0, g1] = o.gap || BLINK_GAP.talk;
   const shapeAt = o.shapeAt || (() => 'regular'), out = [];
   const hit = (s, n) => quiet.find(([a, b]) => s < b && s + n > a);
@@ -220,7 +219,7 @@ function lean3(oL, oR) {
 export function bodyFollow(off, late) {
   const a = lean3(off.L, off.R), b = lean3(late.L, late.R);
   const o = { ...a, head_tilt: -0.9 * (a.lean - b.lean), head_pitch: -0.8 * (a.pitch - b.pitch) + 4 * clamp(-(late.L[1] + late.R[1]), 0, 1), arm: {} };
-  for (const [s, other, sg] of [['L', 'R', -1], ['R', 'L', 1]]) {
+  for (const [s, other] of [['L', 'R'], ['R', 'L']]) {
     const q = off[other];                                          // the free arm swings back against the busy one
     o.arm[s] = { fwd: clamp(-14 * q[2], -12, 6), out: clamp(6 * Math.abs(q[0]) + 4 * Math.max(0, q[1]), 0, 8), flex: clamp(10 * Math.hypot(...q), 0, 14) };
   }
@@ -229,8 +228,6 @@ export function bodyFollow(off, late) {
 
 // sum of settle springs after impacts / stops: [{f, amp}]
 export const springs = (events, f) => events.reduce((s, e) => s + e.amp * settle(f - e.f), 0);
-
-export { angDiff };
 
 // ---------------------------------------------------------------- faces lead the voice, marks, body acting (q2)
 // An expression change lands EXPR_LEAD frames before its word (the face reads first, then the sound): a beat's expr

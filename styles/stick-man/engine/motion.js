@@ -64,7 +64,6 @@ export function unflatten(m) {
   }
   return o;
 }
-const DISCRETE = new Set(['expr', 'look', 'props', 'ik']);
 const NON_POSE = new Set(['f', 'at', 'pose', 'ease', 'hold', 'antic', 'expr', 'look', 'props', 'clipProps', 'cycle', 'line', 'on', 'offset', 'nth', 'cue', 'snap', 'rest', 'raw']);
 
 // ---------------------------------------------------------------- the time warp between two keys

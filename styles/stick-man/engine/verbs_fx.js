@@ -3,7 +3,7 @@
 // Keyed values: beats `set` / `pulse` / `fire` / `flash` write per-frame numbers (or vectors) on an actor, a prop or an
 // effect object; MAKE builds the effect objects named in an act's `make` table and maps those values onto them.
 import * as THREE from 'three';
-import { STAND, W, clamp, smooth, smoother, lerp, lerp3, add3, fwdB, rightB, toLocal, toWorld, settle, angDiff } from './verbs.js';
+import { STAND, clamp, smooth, smoother, lerp, lerp3, add3, fwdB, toLocal, toWorld, settle, angDiff } from './verbs.js';
 import { makePowderBurst, makeFlyingBills, makeDyeSpray, makeRadioRings, makeBagGlow, makeArm, makeBill, flashAt, makeStarBurst, makeDroplets, makeCountdown } from '../lib/props/fx.js';
 import { makeDyePack, makeThermometer, snoreAt } from '../lib/props/dyepack.js';
 import { makeRays, makeFlow, makeShimmer, makeCutBox, makeCallout, makeBars, makeSplit, makeStamp } from '../lib/props/explain.js';
@@ -107,7 +107,7 @@ export const ACT = {
   },
 
   // a small guilty wave at chest height, head tipped
-  wave_small(p, st) {
+  wave_small(p) {
     const hand = p.hand || 'L', s = SIDE[hand], t0 = p.at, per = p.per ?? 7, n = p.n ?? 3;
     const owners = [{ chan: 'hand' + hand, start: t0, fade: 10, fn: f => {   // built-in ease: 10-frame raise, 14-frame drop
       const t = Math.max(0, f - t0 - 3), ph = Math.sin(2 * Math.PI * t / per) * (t < per * n ? 1 : 0);
@@ -126,7 +126,7 @@ export const ACT = {
   },
 
   // pull a prop out of a bag (or off a place) and raise it to `to` (figure-local hand target)
-  pluck(p, st, C) {
+  pluck(p, st) {
     const hand = p.hand || 'L', s = SIDE[hand], t0 = p.at, r = p.reach ?? 8, tg = t0 + r, up = Math.max(12, p.dur ?? 12);
     const to = p.to || [s * 0.26, 2.12, 0.74];
     st.hold[hand] = p.prop; st.handL_to = to;
@@ -144,7 +144,7 @@ export const ACT = {
   },
 
   // open the hand: the held paper flutters down to the floor
-  let_fall(p, st, C) {
+  let_fall(p, st) {
     const hand = p.hand || 'L', t0 = p.at, R = st.release, fall = p.dur ?? 42;
     const start = R ? toWorld(R.l, { pos: R.pos, yaw: R.yaw }) : add3(st.pos, [0, 0, 1.5]);
     start[2] += 0.02;

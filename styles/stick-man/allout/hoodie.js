@@ -421,7 +421,7 @@ export function hoodie(S, { down = false } = {}) {
   for (const m of [hood, garment]) m.children[0].userData.noPrepass = true;
   const D = down ? downGeos() : null;
   const downP = D ? [keep(solid(D.pad, CLOTH_MAT, INK, D.padOuter)), keep(solid(D.collar, CLOTH_MAT, INK * 0.8)), keep(new THREE.Mesh(D.edgeLine, INK_MAT)), keep(new THREE.Mesh(D.openLine, INK_MAT)), keep(solid(D.bunch, CLOTH_MAT, INK * 0.8))] : [];
-  // the face is a card drawn in front of the head (engine/cast.js FACE_2D) after the opaque pass; where the hood or its rim is
+  // the face is a card drawn in front of the head (engine/cast.js S.face) after the opaque pass; where the hood or its rim is
   // the nearest surface they are drawn again over it (same geometry, depth test EQUAL), so a brow or an eye that slides
   // under the hood's brim is covered by it instead of being painted on the fabric
   const overMat = (m => { m.vertexColors = true; m.transparent = true; m.depthWrite = false; m.depthFunc = THREE.EqualDepth; return m; })(mat(GREY));

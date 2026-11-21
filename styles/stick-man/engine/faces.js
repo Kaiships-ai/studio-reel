@@ -515,14 +515,14 @@ const back = x => { x = Math.max(0, Math.min(1, x)); const c = 2.2; return 1 + (
 // front) as a function of frame t and age (frames since it began). Returns [[card index, x, y, z, size, spin]].
 const MARKS = {
   sweat: { cards: ['sweat'], at: (w, t, a) => { const s = (a % 48) / 48; return [[0, 0.48 * w, 0.30 * w - 0.08 * w * s, 0.18 * w, 0.14 * w, 0.15]]; } },
-  anger: { cards: ['anger'], at: (w, t, a) => [[0, 0.40 * w, 0.42 * w, 0.22 * w, 0.18 * w, 0]] },
-  sparkle: { cards: ['sparkle', 'sparkle'], at: (w, t, a) => [0, 1].map(i => { const ph = t * 0.3 + i * 2.1, k = 0.6 + 0.4 * Math.max(0, Math.sin(ph));
+  anger: { cards: ['anger'], at: w => [[0, 0.40 * w, 0.42 * w, 0.22 * w, 0.18 * w, 0]] },
+  sparkle: { cards: ['sparkle', 'sparkle'], at: (w, t) => [0, 1].map(i => { const ph = t * 0.3 + i * 2.1, k = 0.6 + 0.4 * Math.max(0, Math.sin(ph));
     return [i, [0.62, -0.6][i] * w, [0.38, 0.55][i] * w, 0.15 * w, [0.15, 0.11][i] * w * k, 0]; }) },
-  question: { cards: ['question'], at: (w, t, a) => [[0, 0.52 * w, 0.76 * w, 0.1 * w, 0.34 * w, 0.12]] },
+  question: { cards: ['question'], at: w => [[0, 0.52 * w, 0.76 * w, 0.1 * w, 0.34 * w, 0.12]] },
   exclaim: { cards: ['exclaim'], at: (w, t, a) => [[0, 0.50 * w, 0.78 * w, 0.1 * w, 0.36 * w, -0.1 + (a < 10 ? 0.08 * Math.sin(a * 1.6) : 0)]] },
   steam: { cards: ['steam', 'steam'], at: (w, t, a) => [-1, 1].map((s, i) => { const u = ((a + i * 9) % 18) / 18; return [i, s * (0.55 + 0.2 * u) * w, (0.28 + 0.35 * u) * w, 0, (0.22 + 0.22 * u) * w * (u < 0.85 ? 1 : (1 - u) / 0.15), 0]; }) },
-  stars: { cards: ['star', 'star', 'star'], at: (w, t, a) => [0, 1, 2].map(i => { const ph = t * 0.16 + i * 2.094; return [i, 0.55 * w * Math.cos(ph), 0.62 * w + 0.05 * w * Math.sin(ph * 2), 0.3 * w * Math.sin(ph), 0.13 * w, ph]; }) },
-  zzz: { cards: ['zzz', 'zzz'], at: (w, t, a) => [0, 1].map(i => { const u = ((t + i * 20) % 40) / 40; return [i, (0.45 + 0.25 * u) * w, (0.45 + 0.45 * u) * w, 0.1 * w, (0.14 + 0.12 * u) * w * Math.min(1, (1 - u) * 4), 0.2]; }) },
+  stars: { cards: ['star', 'star', 'star'], at: (w, t) => [0, 1, 2].map(i => { const ph = t * 0.16 + i * 2.094; return [i, 0.55 * w * Math.cos(ph), 0.62 * w + 0.05 * w * Math.sin(ph * 2), 0.3 * w * Math.sin(ph), 0.13 * w, ph]; }) },
+  zzz: { cards: ['zzz', 'zzz'], at: (w, t) => [0, 1].map(i => { const u = ((t + i * 20) % 40) / 40; return [i, (0.45 + 0.25 * u) * w, (0.45 + 0.45 * u) * w, 0.1 * w, (0.14 + 0.12 * u) * w * Math.min(1, (1 - u) * 4), 0.2]; }) },
 };
 export const MARK_NAMES = Object.keys(MARKS);
 
@@ -544,7 +544,7 @@ export function faceRig(headW, opt = {}) {
     tex, group, stats,
     // marks: [[kind, age]], cam: camera position (three world) or null; F (optional) = a mixed face from mixFace(): drawn
     // instead of the named expression (redrawn whenever one of its numbers moves, i.e. a new drawing per frame of a change)
-    // slide = [yaw (rad), dy (W), alpha]: the flat 2D face (cast.js FACE_2D) turned round the ball of the head by yaw,
+    // slide = [yaw (rad), dy (W), alpha]: the flat 2D face (cast.js S.face) turned round the ball of the head by yaw,
     // strip by strip, clipped by the head's outline; alpha 0 = the back of the head
     draw(expr, blink, t, marks, cam, F = null, slide = null) {
       const E = EXPR[expr] || EXPR.neutral, live = !!(E.skin?.tears || F?.skin?.tears > 0.03);
