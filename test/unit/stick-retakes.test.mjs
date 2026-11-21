@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
+import crypto from 'node:crypto'; import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { ROOT, run } from '../../kit/env.mjs';
 import { problems, rounds } from '../../styles/stick-man/tools/retakes.mjs';
 import { score, scoreComplaint, falseAlarms, calibration, briefTag, loadAnswers, blindMap } from '../../styles/stick-man/tools/calibrate.mjs';
 
 const TOOLS = path.join(ROOT, 'styles/stick-man/tools');
-const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'retake-'));
+const tmp = () => (() => { const d = path.join(os.tmpdir(), 'retake-' + crypto.randomBytes(6).toString('hex')); fs.mkdirSync(d); return d; })(); // lowercase hex: can never spell K1..K4 or P1 (the leak test greps the prompt, which holds these paths)
 const put = (dir, rel, data) => { const p = path.join(dir, rel); fs.mkdirSync(path.dirname(p), { recursive: true });
   fs.writeFileSync(p, typeof data === 'string' ? data : JSON.stringify(data, null, 1)); return p; };
 const R = ['r1', 'r2', 'r3'].map(id => ({ id, of: id }));
