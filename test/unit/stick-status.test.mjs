@@ -25,11 +25,12 @@ test('status.mjs leads with the post copy and its approval, then stage, latest, 
   assert.ok(!/review <film>|version <film>/.test(r.stdout), 'only status and render are verbs');
 });
 
-test('status.mjs warns about an mp4 in deliver/ outside archive/', () => {
+test('status.mjs warns about an mp4 in deliver/ outside archive/, not about a hook cut', () => {
   const r = run(`${FX}/stray`);
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /WARNING {2}test\/fixtures\/worker-status\/stray\/deliver\/hook-alt\.mp4 sits in deliver\/ outside archive\//);
+  assert.match(r.stdout, /WARNING {2}test\/fixtures\/worker-status\/stray\/deliver\/old-cut\.mp4 sits in deliver\/ outside archive\//);
   assert.equal(r.stdout.match(/WARNING/g).length, 1);
+  assert.ok(!r.stdout.includes('hook-alt.mp4 sits'), 'deliver/hook-*.mp4 is an alternative hook cut, not a stray');
 });
 
 test('status.mjs --json gives the parsed file, both renders, the strays and the head', () => {

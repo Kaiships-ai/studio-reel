@@ -27,13 +27,13 @@ function fileInfo(p, key) {
   return { path: p, mb: +(st.size / 1e6).toFixed(1), modified: st.mtime.toLocaleString('sv-SE').slice(0, 16) };
 }
 
-// every mp4 under deliver/ outside archive/ that is not the post copy: a second candidate someone could post by mistake
+// every mp4 under deliver/ outside archive/ that is neither the post copy nor an alternative hook cut (PUBLISH.md [5.1], deliver/hook-*.mp4)
 function strayCuts(filmDir, postCopy) {
   const dir = path.join(filmDir, 'deliver'), out = [];
   const walk = d => {
     for (const e of fs.existsSync(d) ? fs.readdirSync(d, { withFileTypes: true }) : []) {
       const p = path.join(d, e.name);
-      if (e.isDirectory()) { if (p !== path.join(dir, 'archive')) walk(p); } else if (/\.mp4$/i.test(e.name) && (!postCopy || p !== path.resolve(ROOT, postCopy))) out.push(rel(p));
+      if (e.isDirectory()) { if (p !== path.join(dir, 'archive')) walk(p); } else if (/\.mp4$/i.test(e.name) && !/^hook-.*\.mp4$/i.test(e.name) && (!postCopy || p !== path.resolve(ROOT, postCopy))) out.push(rel(p));
     }
   };
   walk(dir);

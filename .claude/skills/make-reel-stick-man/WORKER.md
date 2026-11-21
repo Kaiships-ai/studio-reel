@@ -16,14 +16,10 @@ and report its message.
 - `render <film> [part] [--on pro]`: render the film or one part (`parts/<seg>`) at 720p with the film's build
   script (`latest.rebuild`).
   - Here: through the render lock, one heavy render at a time.
-  - `--on pro` (the Mac Pro, ssh `pro`): pull the latest code there first, copy the film over, render, copy back:
-    ```
-    ssh pro "cd \$PRO_REPO && git fetch -q origin && git checkout -q --detach origin/main && git rev-parse --short HEAD"
-    rsync -a --exclude renders/ films/<film>/ pro:\$PRO_REPO/films/<film>/
-    ssh pro "cd \$PRO_REPO && <the build script>"
-    rsync -a pro:\$PRO_REPO/films/<film>/renders/ films/<film>/renders/
-    ```
-    `PRO_REPO` is the studio-reel checkout on the Mac Pro. Put the printed commit in `kit_commit`.
+  - `--on pro` (the Mac Pro): ssh cannot read `~/Desktop` there (macOS privacy), so work through the Orca server
+    `mac-pro` (`orca terminal create --environment mac-pro …`) in `PRO_REPO=/Users/kienbeovl/Desktop/kaiships/studio-reel`:
+    pull `origin/main` (`git fetch -q origin && git checkout -q --detach origin/main`), copy `films/<film>/` over
+    (without `renders/`), run the film's build script, copy `renders/` back. Put the printed commit in `kit_commit`.
 
 Everything else comes as a free-form spec from Studio.
 
@@ -36,8 +32,10 @@ Everything else comes as a free-form spec from Studio.
   review (`.agents/playbooks/stick-man-kit-fix.md`).
 - Never set `approval.state` to `kai_approved` or `posted`. Only Kai approves; a new post copy starts as `waiting_kai`.
 - One post copy: `films/<film>/deliver/current.mp4` with its cover and caption beside it, named in `deliver.current`. Move the
-  cut it replaces into `deliver/archive/`. Delete nothing.
-- Work in a fresh worktree, never in Kai's main checkout.
+  cut it replaces into `deliver/archive/`. Alternative hook cuts (`deliver/hook-*.mp4`, PUBLISH.md [5.1]) may sit beside it.
+  Delete nothing.
+- Film work happens in `films/<film>/` of the main checkout (git-ignored). Kit code changes go in a fresh worktree + PR
+  with an independent review.
 
 ## Report: worker_done
 
