@@ -2,7 +2,7 @@
 // thin black tube limbs, hair and hats as solids. Each solid gets an inverted-hull outline, thick on the shadow side, thin on the lit side.
 // Units: W = head width. Pose numbers are in W, in the figure's own plane (u = its right as the camera sees it, v = up).
 import * as THREE from 'three';
-import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { toon, lin, css, B, INK_RGB, INK_SUN, PLACE } from './look.js';
 import { EXPR, faceRig, mixFace, FACE_STYLE } from './faces.js';
 import { makeHandProp } from '../lib/cast/handprops.js';
@@ -14,7 +14,6 @@ const W = W_M;
 const INK_T = 0.046 * W;                     // outline base width; the hull shader scales it 0.35-1.6x by the light (below):
                                              // reference rim 3.8-5.6 % of head width, thick/thin side ratio 1.65-2.47 (FORENSIC.md fix 7)
 const CREAM = [0.90, 0.87, 0.78];             // reference bodies: flat cream
-const HEAD_WHITE = [0.985, 0.965, 0.95];
 const HEAD_FLAT = [0.92, 0.905, 0.89];         // the unlit head sits a little under white so the grade's exposure keeps its soft wash (else it clips flat)      // reference heads are lighter than the body: lit sRGB (251, 246, 243), shade (230, 219, 231)
 const FILL_RGB = [0.20, 0.06, 0.48];            // rage purple, linear (= faces.js furious tint): the head fills from the chin up (verb face_fill)
 const LIMB_R = 0.046 * W / 2;                // limbs: reference legs and arms ~0.045-0.05 W (QlDPM f600), a bold line, not a thread
@@ -213,31 +212,12 @@ function glasses() {
   return g;
 }
 
-// spherical patch just above the head; UVs are the straight-on projection, so from the front it reads as the flat 2D face
-// ------------------------------------------------------------------ head silhouette
-// Not a perfect ellipsoid (Kai 11/11: "đầu tròn hoàn hảo quá"). Measured on the reference (pink f653, ref_close, hair incl.):
-// h/w 0.88, the widest row at 34 % from the top, a broad flattish crown (73 % of the width only 6 % down), then a long
-// taper to a narrower rounded chin (65 % of the width at 78 %, 48 % at 90 %). An ellipse is widest at 50 % and only 47 %
-// wide 6 % down. HEAD_S = the horizontal scale against our ellipsoid at height yn = y / HB (top +1), 85 % of the measured
-// difference, crown capped so hats and hair still fit; plus a 1 % lopsidedness and a 0.8 % three-lobe wobble so the
-// outline is drawn, not turned. Every head part (head, face patch, glasses, hair, hats) is deformed with the same map, so
-// the face layout and the hats stay on the new shape.
-const HEAD_S = [[1.0, 1.08], [0.8, 1.12], [0.64, 1.12], [0.48, 1.10], [0.32, 1.05], [0.16, 0.99], [0.0, 0.93], [-0.2, 0.88],
-  [-0.4, 0.83], [-0.6, 0.815], [-0.8, 0.83], [-0.92, 0.88], [-1.0, 0.95]];
-export function headScale(yn) {
-  yn = Math.max(-1, Math.min(1, yn)); let i = 0; while (i + 2 < HEAD_S.length && HEAD_S[i + 1][0] > yn) i++;
-  const [a, sa] = HEAD_S[i], [b, sb] = HEAD_S[i + 1], u = (a - yn) / (a - b); return sa + (sb - sa) * u * u * (3 - 2 * u);
-}
 // hats and hair sit HAT_LIFT higher than they were modelled so the brows always show (Kai, gate A 2026-11-12)
 export const HAT_LIFT = 0.035;
-const _hv = new THREE.Vector3(), _hm = new THREE.Matrix4(), _hi = new THREE.Matrix4();
-// deform a geometry whose vertices are in a frame M (-> head space); M null = head space already
-// Kai 11/11 (later): back to the original round head ("đầu hiện tại anh lại thấy không ok") -> off by default.
-export const HEAD_SHAPE = { on: false };
-// Kai 11/11: "the reference face and line are very 2D, ours is a 3D sphere". FACE_2D.on: the head is drawn flat (unlit
-// white, one thin shade crescent at the edge, no light gradient) and the face is a flat card that always faces the lens and
-// slides across the head disc as the head turns (clipped by its edge), instead of a texture wrapped round a sphere.
-export const FACE_2D = { on: true };
+const _hm = new THREE.Matrix4();
+// Kai 11/11: "the reference face and line are very 2D, ours is a 3D sphere". The head is drawn flat (unlit white, one thin
+// shade crescent at the edge, no light gradient) and, whenever a camera is given, the face is a flat card that always faces
+// the lens and slides across the head disc as the head turns (clipped by its edge), instead of a texture wrapped round a sphere.
 // flat head: unlit fill, a thin crescent of shade inside the silhouette on the side away from the key (screen down-right,
 // reference sRGB 251/246/243 lit, 230/219/231 shade), lightly tinted by the place light so a night head is not a lamp
 function flatHeadMat(rgb, shade) {
@@ -269,18 +249,8 @@ function flatHeadMat(rgb, shade) {
   m.color = U.uColor.value;            // S.face tints it for rage through .color, like the toon material
   return m;
 }
-function shapeHeadGeo(g, M = null) {
-  if (!HEAD_SHAPE.on) return;
-  const p = g.attributes.position; if (M) _hi.copy(M).invert();
-  for (let i = 0; i < p.count; i++) {
-    _hv.fromBufferAttribute(p, i); if (M) _hv.applyMatrix4(M);
-    const k = headScale(_hv.y / HB) * (1 + 0.010 * Math.tanh(_hv.x / (0.1 * W)) + 0.008 * Math.sin(3 * Math.atan2(_hv.z, _hv.x) + 0.7));
-    _hv.x *= k; _hv.z *= k; if (M) _hv.applyMatrix4(_hi); p.setXYZ(i, _hv.x, _hv.y, _hv.z);
-  }
-  p.needsUpdate = true; if (g.attributes.normal) g.computeVertexNormals(); g.computeBoundingSphere(); g.computeBoundingBox();
-}
 // the face shell: a unit front hemisphere (+z) kept as the base; aimShell lays it on the head toward the head-local lens
-// direction d (unit), shaped as shapeHeadGeo shapes the head, with the uv of each point its position across the lens
+// direction d (unit), on the head's ellipsoid, with the uv of each point its position across the lens
 const SHELL_R = 1.015, _shellM = new THREE.Matrix4(), _upL = new THREE.Vector3(), _sx = new THREE.Vector3(), _sy = new THREE.Vector3(), _sz = new THREE.Vector3(), _sp = new THREE.Vector3();
 function faceShell() {
   const g = new THREE.SphereGeometry(1, 40, 30, 0, Math.PI, 0, Math.PI);
@@ -295,17 +265,16 @@ function aimShell(g, d, up) {
   for (let i = 0; i < p.count; i++) {
     const bx = B0[3 * i], by = B0[3 * i + 1], bz = B0[3 * i + 2];
     _sp.set(0, 0, 0).addScaledVector(_sx, bx).addScaledVector(_sy, by).addScaledVector(_sz, bz).multiplyScalar(HA * SHELL_R); _sp.y *= HEAD_H;
-    if (HEAD_SHAPE.on) { const k = headScale(_sp.y / HB) * (1 + 0.010 * Math.tanh(_sp.x / (0.1 * W)) + 0.008 * Math.sin(3 * Math.atan2(_sp.z, _sp.x) + 0.7)); _sp.x *= k; _sp.z *= k; }
     p.setXYZ(i, _sp.x, _sp.y, _sp.z); uv.setXY(i, 0.5 + _sp.dot(_sx) / W, 0.5 + _sp.dot(_sy) / W);
   }
   p.needsUpdate = true; uv.needsUpdate = true; g.computeBoundingSphere();
 }
+// spherical patch just above the head; UVs are the straight-on projection, so from the front it reads as the flat 2D face
 function facePatch() {
   const R = 1.012, g = new THREE.SphereGeometry(HA * R, 48, 36, Math.PI / 2 - 0.95, 1.9, Math.PI / 2 - 0.80, 1.6);
   g.scale(1, HEAD_H, 1);
   const p = g.attributes.position, uv = g.attributes.uv;
   for (let i = 0; i < p.count; i++) uv.setXY(i, 0.5 + p.getX(i) / W, 0.5 + p.getY(i) / W);
-  shapeHeadGeo(g);                                               // uv kept from the ellipsoid: the layout follows the new shape
   return g;
 }
 
@@ -606,8 +575,8 @@ export function makeStick(spec) {
   torso.position.y = (TORSO.cy - TORSO.h / 2 - HIP_V) * W; body.add(torso);
 
   const head = new THREE.Group(); root.add(head);
-  const hg = new THREE.SphereGeometry(HA, 64, 40); hg.scale(1, HEAD_H, 1); shapeHeadGeo(hg);
-  const headSolid = solid(hg, FACE_2D.on ? flatHeadMat(spec.skin || HEAD_FLAT, [0.80, 0.77, 0.84]) : toon(spec.skin || HEAD_WHITE, { shade: [0.97, 0.95, 0.98], rim: 0, sheen: 0, broad: 0, rough: 1, soft: 0.65, rimLit: 0, char: 1, rimCool: rc }));
+  const hg = new THREE.SphereGeometry(HA, 64, 40); hg.scale(1, HEAD_H, 1);
+  const headSolid = solid(hg, flatHeadMat(spec.skin || HEAD_FLAT, [0.80, 0.77, 0.84]));
   headSolid.receiveShadow = false;   // no hard cast shadows from hair or hats on the face (a lit white triangle cut the face, ep01 f1240); the reference head is one soft white form
   head.add(headSolid);
   const rig = new THREE.Group(); head.add(rig);
@@ -627,16 +596,12 @@ export function makeStick(spec) {
   const card2d = new THREE.Mesh(shell ? faceShell() : new THREE.PlaneGeometry(W, W), new THREE.MeshBasicMaterial({ map: FR.tex, transparent: true, depthWrite: false,
     polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
   card2d.userData.noPrepass = true; card2d.userData.faceInk = true; card2d.renderOrder = shell ? 6 : 2; card2d.visible = false; head.add(card2d);   // after a set's additive light cards (5): ink stays ink under a lamp's glow
-  if (FACE_2D.on) face.visible = false;
+  face.visible = false;
   const skin0 = headSolid.material.color.clone(), tintC = new THREE.Color();
   if (spec.glasses) rig.add(glasses());
   // hair and hats: one group fixed to the head (Kai 20/11: a cap that swung after the head's nods read as a wobble)
   const hairG = new THREE.Group(); head.add(hairG);
   for (const f of spec.hair || []) hairG.add(f());
-  // hair, hats and glasses were built on the ellipsoid: give them the same head shape (in head space), geometry cloned
-  head.updateMatrixWorld(true); _hm.copy(head.matrixWorld).invert();
-  const skip = new Set([headSolid, face]); headSolid.traverse(o => skip.add(o)); FR.group.traverse(o => skip.add(o));
-  head.traverse(o => { if (!o.isMesh || skip.has(o)) return; o.geometry = o.geometry.clone(); shapeHeadGeo(o.geometry, _hm.clone().multiply(o.matrixWorld)); });
   hairG.position.y = HAT_LIFT; hairG.updateMatrix(); hairG.matrixAutoUpdate = false;
   // what the head wears, as a solid held props stop on (body.js headWear)
   head.updateMatrixWorld(true); _hm.copy(head.matrixWorld).invert();
@@ -690,7 +655,7 @@ export function makeStick(spec) {
     for (const m of [...(P.marks || []), ...S.xmarks]) if (!marks.some(q => q[0] === m[0])) marks.push(m);
     const mx = P.mix || (P.state ? mixFace(P.state) : null), blink = Math.max(P.blink || 0, mx ? mx.blink : 0);
     let slide = null;
-    if (FACE_2D.on && P.cam) {
+    if (P.cam) {
       // where the lens is, seen from the head (head-local, +z = the face's front): the face slides toward the side it turns
       // to, up / down with the lens height, and is gone when the lens sees the back of the head
       head.updateWorldMatrix(true, false); _camL.copy(B(...P.cam)); head.worldToLocal(_camL);
@@ -704,7 +669,7 @@ export function makeStick(spec) {
       if (shell) aimShell(card2d.geometry, d, _upL.set(0, 1, 0).transformDirection(_shellM.copy(head.matrixWorld).invert()));   // the world's up in the head (the flat card stood upright)
       else { card2d.position.copy(d).multiplyScalar(HA * 1.02); card2d.lookAt(B(...P.cam)); }
     } else card2d.visible = false;
-    face.visible = !FACE_2D.on || !P.cam;
+    face.visible = !P.cam;
     FR.draw(e, blink, t, marks, P.cam ? B(...P.cam) : null, mx ? mx.F : null, slide);
     S.faceStats = FR.stats; S.faceVis = slide ? +slide[2].toFixed(3) : 1;   // how much of the face the lens sees (0 = the back of the head)
     S.faceSlide = slide ? slide.map(v => +v.toFixed(3)) : null;   // [face yaw, dy, vis, sin(elevation)] for the dbg rows

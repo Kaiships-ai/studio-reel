@@ -211,7 +211,7 @@ export const VERBS = {
     return { end: opens.length ? opens[opens.length - 1][1] : p.at, owners, mouth: opens, say: p.line };
   },
 
-  look_at(p, st) { return { end: p.at + 3, owners: [], focus: { from: p.at, target: p.target ?? p.to } }; },
+  look_at(p) { return { end: p.at + 3, owners: [], focus: { from: p.at, target: p.target ?? p.to } }; },
 
   turn_to(p, st, C) {
     const y0 = st.yaw, y1 = p.yaw ?? C.yawTo(st.pos, C.point(p.to ?? p.target)), d = angDiff(y0, y1), T = p.dur ?? 10, pos = st.pos.slice();

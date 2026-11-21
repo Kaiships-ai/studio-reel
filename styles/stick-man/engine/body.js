@@ -168,7 +168,7 @@ export function ellipsoid(c, q, r, kind) {
     // the nearest way out, continuous in p: a head pushes a point straight out from its centre; a torso slice pushes
     // it out sideways in the slice's own plane (the torso is a stack of slices, so a hand slides over the belly at its
     // own height instead of popping over the top of a slice). Returns the point on the surface, or null if p is outside.
-    push(p, margin = 0, fallback = null) {
+    push(p, margin = 0) {
       l.copy(p).sub(c).applyQuaternion(qi);
       const R = r.map(x => x + margin);
       if (Math.hypot(l.x / R[0], l.y / R[1], l.z / R[2]) >= 1) return null;

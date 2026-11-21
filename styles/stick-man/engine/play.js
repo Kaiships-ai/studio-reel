@@ -5,7 +5,7 @@
 // cast, beats and camera; boot() shows the act whose window holds the frame and dissolves between them.
 import * as THREE from 'three';
 import { createStage, B as toThree, lin, PLACE } from './look.js';
-import { makeStick, KAI, TELLER, GUARD, EXPR, HEAD_C } from './cast.js';
+import { makeStick, KAI, TELLER, GUARD, HEAD_C } from './cast.js';
 import { VERBS, STAND, SIT, REST_ARM, W, lerp, lerp3, add3, angDiff, toLocal, smoother, hash, handEase } from './verbs.js';
 import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, exprAccent, bodyFollow, LATE, EXPR_LEAD, exprKeyAt, markOwner, isBodyVerb, autoActing, faceStateAt, visemeTrack, faceChanges, BLINKS, BLINK_GAP, focusEase, blinkAt, isTense, CHEW } from './acting.js';
 import { mixFace, faceParams, designKey, CLENCH, FACE_STYLE } from './faces.js';
@@ -341,7 +341,7 @@ async function buildAct(R, X) {
   }
   const env = {
     prop: propWorld, mouth: n => propWorld(n),
-    resolve: (t, f) => t.at ? { w: fenv.at(t.at), bend: t.bend, elbow: t.elbow } : t.prop ? { w: add3(propWorld(t.prop), [0, 0, t.up ?? (C.thick(t.prop) + 0.035)]), bend: t.bend } : t.mouth ? { w: add3(propWorld(t.mouth), [0, 0, t.up ?? 0.12]) } : t,
+    resolve: t => t.at ? { w: fenv.at(t.at), bend: t.bend, elbow: t.elbow } : t.prop ? { w: add3(propWorld(t.prop), [0, 0, t.up ?? (C.thick(t.prop) + 0.035)]), bend: t.bend } : t.mouth ? { w: add3(propWorld(t.mouth), [0, 0, t.up ?? 0.12]) } : t,
   };
 
   function poseActor(a, f) {
@@ -575,7 +575,7 @@ async function buildAct(R, X) {
     if (F.f !== f) poseAll(f);
     // light.camKey { az, el } (deg): the key light comes from beside and above the lens every shot (the cartoon cheat: the face
     // in the shot is lit, whichever way it faces), shadows fall away from the camera
-    if (LT?.camKey) { const F = cam.aim.map((x, i) => x - cam.pos[i]), h = Math.hypot(F[0], F[1]) || 1, a = Math.atan2(F[0], F[1]) + (LT.camKey.az ?? 30) * Math.PI / 180, e = (LT.camKey.el ?? 35) * Math.PI / 180;
+    if (LT?.camKey) { const F = cam.aim.map((x, i) => x - cam.pos[i]), a = Math.atan2(F[0], F[1]) + (LT.camKey.az ?? 30) * Math.PI / 180, e = (LT.camKey.el ?? 35) * Math.PI / 180;
       stage.setSun([Math.sin(a) * Math.cos(e), Math.cos(a) * Math.cos(e), -Math.sin(e)], R.sun?.center || SET.SUN_CENTER, R.sun?.half || SET.SUN_HALF); }
     const px = height / 1920;
     stage.camera.setViewOffset(width, height, cam.offset[0] * px, cam.offset[1] * px, width, height);
