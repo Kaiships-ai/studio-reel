@@ -12,6 +12,7 @@ import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os'
 import { fileURLToPath } from 'node:url';
 import { run } from '../../../kit/env.mjs';
 import { claudeJson } from './claude_headless.mjs';
+import { norm } from './shotlist.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.resolve(HERE, '../../..');
 const film = process.argv[2];
@@ -21,7 +22,6 @@ if (!film || film.startsWith('--')) { console.error(USAGE); process.exit(2); }
 const F = p => path.join(ROOT, film, p), read = p => JSON.parse(fs.readFileSync(F(p), 'utf8'));
 for (const p of ['storyboard.json', 'vo/script.json', 'vo/words.json']) if (!fs.existsSync(F(p))) { console.error(`missing ${film}/${p}`); process.exit(2); }
 const SB = read('storyboard.json'), script = read('vo/script.json'), words = read('vo/words.json');
-const norm = w => w.toLowerCase().replace(/[^a-z0-9']/g, '');
 const fps = 30, out = path.resolve(A.out || F('review/board.jpg'));
 const byId = Object.fromEntries(SB.lines.map(e => [e.id, e]));
 const missing = script.lines.filter(l => !byId[l.id]).map(l => l.id);

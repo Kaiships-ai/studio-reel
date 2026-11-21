@@ -11,7 +11,8 @@
 //     lines:   [[t, id]], rhythm?: { plan, refs } }
 // Keys hold before the first and after the last key and ease (smoothstep) between neighbours, like a hand-keyed blockout.
 
-export const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+import { clamp } from '../engine/mathx.js';
+export { clamp };
 export const smooth = (a, b, t) => { const x = clamp((t - a) / (b - a)); return x * x * (3 - 2 * x); };
 const lerp = (a, b, k) => a + (b - a) * k;
 

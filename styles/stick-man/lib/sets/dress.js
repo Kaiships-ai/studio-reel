@@ -1,8 +1,5 @@
-// Set dressing kit (SETS.md "Dressing"): small, specific, toon pieces built in code, placed in clusters that tell a
-// story (a bus stop with a bin and a poster, a lab bench with burners and a sink).
-//   const D = dressKit(stage, COLLIDE);                       // COLLIDE: the set's array; solid pieces push a box into it
-//   D.put('bench', [x, y, 0], rotDeg, { solid: true });       // a kit piece (PIECES below), Blender metres, deg about z
-//   D.sign([x, y, z], 'BUS', { w, h, bg, fg, face: rotDeg });  // a painted sign board
+// Toon dressing pieces built in code (PIECES), used as bare groups by lib/props/physfx.js through `pieceGroup`, plus the
+// `signTex` / `posterTex` painted cards.
 // Blender metres: x right, y into the scene, z up. A piece's origin is its bottom centre, its front faces -y.
 import * as THREE from 'three';
 import { B, lin, toon } from '../../engine/look.js';
@@ -293,42 +290,6 @@ export const PIECES = {
   net(p) { p.box([-0.8, -0.02, 0], [0.8, 0.02, 1.2], [0.4, 0.5, 0.45], { ink: false }); for (const x of [-0.8, 0.8]) p.cyl([x, 0, 0.7], 0.04, 1.4, 'woodD'); },
 };
 
-const BX = new THREE.Box3(), BB = new THREE.Box3();
-
-// ---------------------------------------------------------------- the kit a set uses
-export function dressKit(stage, collide = null) {
-  const { scene, prop } = stage;
-  const finish = (g, name, { ink = true, solid = false, pad = 0.02, grace } = {}) => {
-    g.traverse(x => { if (x.isMesh && x.material?.userData?.glowy) stage.glow(x, 0.4); });
-    scene.add(g);
-    if (ink) { g.traverse(x => { if (x.isMesh && !x.userData.noInk && !x.userData.noPrepass) prop(x); }); }
-    if (solid && collide) {
-      g.updateMatrixWorld(true); BX.makeEmpty();
-      g.traverse(x => { if (!x.isMesh || x.userData.noPrepass) return; if (!x.geometry.boundingBox) x.geometry.computeBoundingBox(); BB.copy(x.geometry.boundingBox).applyMatrix4(x.matrixWorld); if (BB.min.y < 1.8) BX.union(BB); });
-      if (!BX.isEmpty()) collide.push({ name: `${name}@${g.position.x.toFixed(1)},${(-g.position.z).toFixed(1)}`, lo: [BX.min.x - pad, -BX.max.z - pad, Math.max(0, BX.min.y)], hi: [BX.max.x + pad, -BX.min.z + pad, Math.min(BX.max.y, 1.9)], ...(grace != null ? { grace } : {}) });
-    }
-    return g;
-  };
-  const build = (kind, opts, g) => {
-    const p = P(g); p._g = g; p._sub = (k, at, rot, o) => { const s = new THREE.Group(); build(k, o, s); s.position.copy(B(...at)); s.rotation.y = rot * Math.PI / 180; g.add(s); };
-    if (!PIECES[kind]) throw new Error(`dress: no piece ${kind}`);
-    PIECES[kind](p, opts || {});
-  };
-  return {
-    // a kit piece at Blender [x, y, z], turned rot degrees about z; opts go to the piece, plus solid / ink / scale
-    put(kind, at, rot = 0, opts = {}) {
-      const g = new THREE.Group(); build(kind, opts, g);
-      g.position.copy(B(...at)); g.rotation.y = rot * Math.PI / 180; if (opts.scale) g.scale.setScalar(opts.scale);
-      return finish(g, opts.name || kind, opts);
-    },
-    // a painted sign board (in-world text): on a pole (pole > 0) or flat on a wall (pole 0)
-    sign(at, text, opts = {}) { return this.put('sign', at, opts.face ?? 0, { pole: 0, ...opts, text, name: opts.name || 'sign' }); },
-    // several pieces in a row: kinds = ['bin', 'bench', ...] from a to b
-    row(kinds, a, b, rot = 0, opts = {}) { const n = kinds.length; return kinds.map((k, i) => this.put(k, a.map((v, j) => v + (b[j] - v) * (n === 1 ? 0.5 : i / (n - 1))), rot, opts)); },
-  };
-}
-// a set's COLLIDE starts from its hand list on every build (two acts can build the same set)
-export function resetCollide(collide, base) { collide.length = 0; collide.push(...base.map(b => ({ ...b }))); }
 // a kit piece as a bare group (no scene, no registry): props and effects reuse the pieces (lib/props/physfx.js `fall`)
 export function pieceGroup(kind, opts = {}) {
   const g = new THREE.Group(), p = P(g); p._g = g;

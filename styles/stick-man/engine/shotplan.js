@@ -19,7 +19,7 @@ export const ROLE_SHOTS = {
   payoff: ['low', 'punch', 'dutch'],
 };
 // what follows a line's first shot inside the same line (opposite scale: far -> near, near -> far); wide and establishing
-// lead the near lists: the reference spends ~32 % of its runtime on them (gates.mjs 3c shot sizes)
+// lead the near lists: the reference spends ~32 % of its runtime on them
 export const FOLLOW = {
   aerial: ['low', 'profile', 'two'], est: ['low', 'punch', 'profile'], top: ['punch', 'low', 'cu'], macro: ['punch', 'low', 'cu'],
   cu: ['est', 'top', 'low', 'macro'], punch: ['est', 'top', 'low'], dutch: ['est', 'top', 'low', 'punch'], ms: ['est', 'punch', 'macro', 'top'], low: ['est', 'top', 'punch', 'macro', 'ots'],

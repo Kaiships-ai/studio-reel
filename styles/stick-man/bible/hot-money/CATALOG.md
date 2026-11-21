@@ -2,7 +2,7 @@
 
 Sinh từ `tokens.json` và `catalog.json` bởi `node styles/stick-man/bible/catalog.mjs`. Đừng sửa tay file này.
 
-117 token (50 giá trị gốc, 52 theo mục đích, 15 theo thành phần), 4 chỗ trống. 147 thành phần (21 ổn định, 126 thử, 0 bỏ), 20 nằm trong phim, chờ đưa vào kit.
+117 token (50 giá trị gốc, 52 theo mục đích, 15 theo thành phần), 4 chỗ trống. 145 thành phần (21 ổn định, 124 thử, 0 bỏ), 20 nằm trong phim, chờ đưa vào kit.
 
 ## Clip chuyển động (37)
 
@@ -129,7 +129,7 @@ Sinh từ `tokens.json` và `catalog.json` bởi `node styles/stick-man/bible/ca
 | `prop.hand.motion` | đồ cầm tay của thư viện chuyển động (túi ôm, thùng, bánh mì) | thử | đồ đi kèm clip | cỡ khác cỡ clip |  |
 | `prop.hand.allout` | đồ cầm tay allout, chiếu sáng thật (súng lục, vỉ thuốc, khăn) | thử | đồ cầm tay trong set allout | trộn với đồ có nét mực |  |
 
-## Bối cảnh (15)
+## Bối cảnh (13)
 
 | id | tên | trạng thái | dùng khi | không bao giờ | Kai |
 |---|---|---|---|---|---|
@@ -141,13 +141,11 @@ Sinh từ `tokens.json` và `catalog.json` bởi `node styles/stick-man/bible/ca
 | `set.s5-world` | thế giới s5 (bãi xe, cửa sổ, cảnh sát) | thử (phim) | cửa sổ phòng 9, xe cảnh sát tới, đạn, xe chạy | sửa riêng cho một act (đổi qua setOpts.s5) |  |
 | `set.s6-world` | thế giới s6 (phố, đại lý, ngân hàng, đêm) | thử (phim) | phố, đại lý, ngân hàng, phòng đêm | sửa riêng cho một act (đổi qua setOpts) |  |
 | `set.car` | xe | thử (phim) | xe Hot Money | sai tỉ lệ người 1,7 m | +S1-030 -S3-049 |
-| `set.dress` | bày bối cảnh kit | thử | đồ bày nền | bề mặt sạch, mới |  |
 | `set.grime` | bụi bẩn, ẩm, cũ | thử (phim) | mọi bối cảnh | vân sợi, nhiễu, đốm | +M-001 -S1-025 -S1-027 |
 | `set.camblock` | khối va chạm cho máy và người | thử (phim) | mọi cú bay | máy hoặc thân xuyên tường | -S2-002 -S1-002 |
 | `set.pieces` | món bày bối cảnh kit (ghế, thùng, đèn, biển...) | thử | đồ bày nền | món mới tinh, sạch bóng |  |
 | `set.allout-kit` | bộ dựng phòng allout (phòng, cửa sổ, nhãn) | thử | dựng phòng, cửa sổ | tường không có bề mặt |  |
 | `set.glb` | bối cảnh từ gói glb | thử | set dựng từ asset | asset không qua toon |  |
-| `set.kit` | bộ dựng set cơ bản | thử | sàn, tường, khối | khối trơn không chi tiết |  |
 
 ## Nhân vật (6)
 

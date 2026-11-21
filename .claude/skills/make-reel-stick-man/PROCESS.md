@@ -169,10 +169,10 @@ Props follow the same rules as the body.
 
 ## 9. Gates (4.3)
 
-Commands, profiles and thresholds: GATES.md. Always pass `--profile` (the default is `full`); Kai picks it.
+Commands and thresholds: GATES.md.
 
-- Show Kai the table: safety PASS, quality FAIL with a fix plan, reference FAIL with the reason.
-- Fix quality FAILs in data or kit. Fix measuring-tool gaps in the tool (`__dbg`), with a commit that says so.
+- Show Kai the table: what PASSed, each FAIL with its fix plan.
+- Fix FAILs in data or kit. Fix measuring-tool gaps in the tool (`__dbg`), with a commit that says so.
 
 ## 10. Deliver (◇5)
 

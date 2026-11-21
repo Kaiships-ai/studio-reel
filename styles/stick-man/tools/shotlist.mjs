@@ -15,7 +15,7 @@ export const TEXT_SAFE = { x0: 0.06, x1: 0.87, y0: 0.14, y1: 0.65 };
 // the UI bands drawn on the animatic with --safe 1 (TikTok in-feed template, scaled): top 7 %, bottom 25 %, right 13 %
 export const UI_BANDS = { top: 0.07, bottom: 0.25, right: 0.13, left: 0.04 };
 
-const norm = w => String(w).toLowerCase().replace(/[^a-z0-9']/g, '');
+export const norm = w => String(w).toLowerCase().replace(/[^a-z0-9']/g, '');
 export const lensN = s => Number(String(s.lens ?? '').replace(/mm$/i, ''));
 
 export function loadFilm(DIR, opts = {}) {

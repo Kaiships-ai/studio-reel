@@ -18,7 +18,7 @@ import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.resolve(HERE, '../../..');
 const [film, which = 'all'] = process.argv.slice(2);
-const USAGE = 'usage: stagegate.mjs films/<slug> <1|2a|2b|2c|3|4|5|6|all>';
+const USAGE = 'usage: stagegate.mjs films/<slug> <1|S|2a|2b|2c|3|4|5|6|all>';
 if (!film || film.startsWith('-')) { console[film ? 'log' : 'error'](USAGE); process.exit(film === '--help' || film === '-h' ? 0 : 2); }
 const DIR = path.resolve(ROOT, film), F = p => path.join(DIR, p);
 // (a film folder that does not exist is a typo, never a new film: writing gate files there would litter the repo root)

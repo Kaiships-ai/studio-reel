@@ -1,13 +1,9 @@
 # Script: the playbook (step [1.1], gate ◇S)
 
 The script is written, tested and locked before anyone draws a panel. This file is the script stage of the stick-man
-process. It contains the whole of the former `million-views-rule` skill (rules R1-R10 and K1-K9 keep their ids, so old
-notes still map) plus the steps, reviews and checks that turn those rules into a script that has been tested.
+process. It holds the rules R1-R10 and K1-K9 plus the steps, reviews and checks that turn those rules into a script that has been tested.
 
-**Why a stage of its own.** Hot Money ep. 1 script v4 passed every check the process had (develop.mjs PASS, ◇1 READY)
-and still had two logic holes a commenter would catch, a vote the script had already answered, a 27-second stop of the
-clock it had just started, and a set-up it never used. Nothing in the process read the script itself.
-The rules were there; the steps were missing (section 8).
+**Why a stage of its own.** Hot Money ep. 1 script v4 passed every check the process had and still had logic holes a commenter would catch. Nothing in the process read the script itself.
 
 ## 1. Where it sits
 
@@ -191,7 +187,7 @@ sentence still leads with the money and the danger; each episode drops one small
 ## 5. Review prompts
 
 Give each reviewer only the script (and the fact sheet for [1.1b]); never your notes, intentions or earlier reviews.
-Each prompt starts with Kai's taste (`~/.claude/skills/kai-taste/SKILL.md`); for a script, root R6 (drama with a reason)
+Each prompt starts with Kai's taste (`~/.claude/skills/kai-taste/SKILL.md`); for a script, the five roots and the drama line (a big move gets the closest look)
 and the hook pattern apply.
 Save the answer with a header `by: agent:<id>` and `of: <script file>`.
 
@@ -241,27 +237,15 @@ land) is what [1.1b], [1.1d] and [1.1e] are for.
 | `review/scriptlint.md`, `fact-check.md`, `skeptic.md`, `ear-retell.md`, `punchup.md`, `script-ab.md` | the evidence of ◇S |
 | `styles/stick-man/tools/scriptlint.mjs` | the checker |
 
-## 8. Mistakes we have paid for (Hot Money ep. 1, script v4)
+## 8. Mistakes we have paid for (Hot Money ep. 1)
 
-- **A stated fact the story ignored.** Line 10 says banks keep bait bills; day two takes the cash into three banks and
-  the bank catches you for something else. → [1.1b] asks where else each fact would catch you.
-- **A rule that answered the vote.** "Rule one: spend nothing in this town", then "hide or spend?". → R8, K7.
-- **The clock stopped.** A 4:00 countdown, then 10 lines (≈ 27 s) of explanation with no action by "you". → K2, S3.
-- **A razor-close sum that decided nothing.** 238 of 240 s was set up; the plan was broken by police who arrived for no
-  reason. → R5, R6, S7, S8.
-- **One word, two meanings.** "Clean money" meant laundered money, then legal money three lines later. → R1.
-- **A rewrite that fixed the causes and lost the viewer.** v4.1 gave every beat a cause, then lost the blind A/B: it
-  dropped the 34 steps (the sum could not be checked by ear), turned rule one into a metaphor and gave HIDE a cost nobody
-  understood. v4.2 kept v4's plain numbers and v4.1's causes, and won 5 of 6. → [1.1g]: never ship a rewrite on the
-  writer's word.
-- **The script was never reviewed.** v2 had an independent review; v4 had none, and the structure changed in between. → ◇S.
-- **Two rewrites lost the blind A/B to the old script** (v6 and v7 lost to v4). After one loss, merge: keep the winner and port
-  only the loser's proven fixes (v8 = v4 + 5 fixes won). → [1.1g].
-- **The real take had no climax pause.** The scratch voice carried a 2.4 s silence for the bullet shot; the TTS take did not,
-  and every bullet-cam cut collided. → mark planned pauses as `pause_after` on the line in `vo/script.json`; `pause.py films/<slug>` (after `align.py`) inserts them in `vo/vo.wav` and shifts `vo/words.json`, idempotently.
-- **Numbers read as digits.** Whisper wrote "238", "$9,000"; 28 words were estimated and ◇2a failed V2. → `align.py` now
-  turns digit tokens into words itself (`numwords.py`: "238" → "two hundred thirty-eight"); the script's `say` map
-  overrides a token that is read another way ("1980" → "nineteen eighty").
+Each rule above (R1-R8, K2, K7, S3, S7, S8) came from one of these. The ones that name a step or tool:
+
+- **A stated fact the story ignored.** [1.1b] asks where else each fact would catch you.
+- **A rewrite that fixed the causes and lost the viewer** (v4.1; v6 and v7 lost to v4 too). Never ship a rewrite on the writer's word: [1.1g] runs a blind A/B. After one loss, merge: keep the winner and port only the loser's proven fixes.
+- **The script was never reviewed.** v4 had no independent review. → ◇S.
+- **The real take had no climax pause.** The scratch voice carried a 2.4 s silence the TTS take did not. → mark planned pauses as `pause_after` on the line in `vo/script.json`; `pause.py films/<slug>` (after `align.py`) inserts them in `vo/vo.wav` and shifts `vo/words.json`.
+- **Numbers read as digits.** Whisper wrote "238", "$9,000"; 28 words were estimated and ◇2a failed V2. → `align.py` turns digit tokens into words (`numwords.py`); the script's `say` map overrides a token that is read another way ("1980" → "nineteen eighty").
 
 ## 9. Example (survival prompt)
 
@@ -285,5 +269,3 @@ land) is what [1.1b], [1.1d] and [1.1e] are for.
 > Two men are running at you. They'll reach you in ten seconds.
 > Ten steps. Ten seconds. Do you leave the money and run, or drag it to the car?
 
-**Why it works:** danger and reward in 12 words; the car key gives a goal; each beat causes the next; the men from the
-hook return as the rehook; 10 steps against 10 seconds is a razor-close tie that viewers will argue about.

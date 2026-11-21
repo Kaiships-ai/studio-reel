@@ -224,7 +224,7 @@ export function faceFaults(rows, n) {
   out.faults = F;
   return out;
 }
-// the report lines for one actor (shot.mjs --report; gates.mjs reads "face: pops" and "face faults")
+// the report lines for one actor (shot.mjs --report)
 export function faceLines(rows, n) {
   const x = faceFaults(rows, n); if (!x.frames) return [];
   const rmin = x.rises.length ? Math.min(...x.rises.map(r => r.rise)) : null, hmin = x.holds.length ? Math.min(...x.holds.map(h => h.hold)) : null;

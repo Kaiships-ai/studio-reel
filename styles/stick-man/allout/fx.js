@@ -23,7 +23,7 @@ MAKE.ao_follow = (stage, o, ctx) => {
 // ({ head: 'kip', up, fwd } follows the head); sag (m) droops each span; keys show 0..1, feed 0..1 (0 = the tip still
 // hangs in front of the mouth, 1 = all the way in). Rebuilt each frame (one tube, cheap).
 import * as THREE from 'three';
-import { lcg } from '../lib/util.js';
+import { lcg, parkMiller } from '../lib/util.js';
 MAKE.ao_tube = (stage, o, ctx) => {
   const m = new THREE.MeshStandardMaterial({ color: new THREE.Color().setRGB(0.04, 0.04, 0.05, THREE.SRGBColorSpace), roughness: 0.3, metalness: 0.1 });
   m.userData.noToon = true;
@@ -91,7 +91,7 @@ MAKE.ao_bullet = (stage, o, ctx) => {
 const TEXC = {};
 function softTex(kind) {
   if (TEXC[kind]) return TEXC[kind];
-  const cv = document.createElement('canvas'); cv.width = cv.height = 128; const g = cv.getContext('2d'), r = (s => () => (s = (s * 16807) % 2147483647) / 2147483647)(kind.length * 977 + 3);
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128; const g = cv.getContext('2d'), r = parkMiller(kind.length * 977 + 3);
   if (kind === 'flame') {
     const gr = g.createRadialGradient(64, 84, 4, 64, 74, 60); gr.addColorStop(0, 'rgba(255,255,240,1)'); gr.addColorStop(0.25, 'rgba(255,230,120,0.95)'); gr.addColorStop(0.6, 'rgba(255,140,30,0.6)'); gr.addColorStop(1, 'rgba(255,90,10,0)');
     g.fillStyle = gr; g.beginPath(); g.moveTo(64, 4); g.bezierCurveTo(92, 40, 112, 70, 100, 98); g.bezierCurveTo(90, 122, 38, 122, 28, 98); g.bezierCurveTo(16, 70, 36, 40, 64, 4); g.fill();

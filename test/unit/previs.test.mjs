@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import { track, framing, moveEnds, boundaries, cameraKeys, rhythm, labelAt, warp } from '../../styles/stick-man/tools/previs-core.mjs';
 import { filmShots, filmWorld, autoWorld, stagesFor, zonesOf } from '../../styles/stick-man/tools/previs.mjs';
 
-const BANK = JSON.parse(fs.readFileSync(new URL('../../.claude/skills/make-reel-stick-man/templates/previs-bank.json', import.meta.url), 'utf8'));
+const BANK = JSON.parse(fs.readFileSync(new URL('../fixtures/previs/bank.json', import.meta.url), 'utf8'));
 const near = (a, b, eps = 1e-6) => a.every((v, i) => Math.abs(v - b[i]) < eps);
 
 test('keys hold outside, ease between, and two keys at one time cut', () => {

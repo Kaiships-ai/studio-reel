@@ -7,7 +7,7 @@ better for it. Stage 5 turns retention and comments into named causes, and cause
 
 | Step | Do | Output |
 |---|---|---|
-| [5.1] Publish | Post the delivery package (◇5): the final, the cover, the caption, the subtitles. Note the hook used, the time, the platform. If there is an alternative hook cut, say which one ran where. | `review/publish.md` |
+| [5.1] Publish | Post the delivery package (◇5): the final, the cover, the caption, the subtitles. Note the hook used, the time, the platform. If there is an alternative hook cut, say which one ran where (the cut goes in `deliver/hook-*.mp4`, which `postcheck.mjs` P3 looks for). | `review/publish.md` |
 | [5.2] Read the numbers at 24 h and 7 d | Kai pastes the analytics screenshots (retention curve, average view %, views, comments split). Transcribe the curve to `t,pct` points, about one per 2-5 s. | `review/retention-24h.csv`, `-7d.csv` |
 | [5.3] Map to shots | `node styles/stick-man/tools/retention.mjs films/<slug> --csv review/retention-24h.csv --label 24h` puts each drop on a shot id. | `review/retention.md` |
 | [5.4] Post-mortem | For the 3 steepest drops: DIAGNOSE.md (isolation tests, cause, the stage that caused it). Compare with the animatic's swipe test: did we predict it? | `review/retro.md` |
@@ -25,7 +25,7 @@ better for it. Stage 5 turns retention and comments into named causes, and cause
 | A bump up | rewatches: a moment people replay | keep and repeat the device |
 | Strong to the end, few comments | the vote is weak | the two choices: both must cost something |
 
-## 3. The reference set grows from our own films
+## 3. Targets come from our own films
 
-The `reference` gate profile was measured from one outside short. Each published film adds its numbers (shot lengths,
+Each published film adds its numbers (shot lengths,
 card share, hook length) next to its retention; after a few films the targets come from what worked on this channel.

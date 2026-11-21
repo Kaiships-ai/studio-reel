@@ -14,13 +14,6 @@ review is stale. So run `stagegate.mjs` right after each review lands. An unread
 with a warning and treated as no record.
 
 
-```sh
-node styles/stick-man/tools/shot.mjs --film films/<slug> --frames 0-<last> --report films/<slug>/review/<slug>_vN-stats.txt --in <mp4>
-node styles/stick-man/tools/gates.mjs --report <stats> --in <mp4> --film films/<slug> --profile pilot|full --out films/<slug>/review/<slug>_vN-gates.txt
-```
-
-`gates.mjs` prints PASS, FAIL or WAIVED for every gate, then the profile line, e.g. `profile pilot: 34 PASS, 0 blocking FAIL, 19 reference gates WAIVED`. It exits 1 on a blocking FAIL.
-
 A film under a show bible (`styles/stick-man/bible/<show>/catalog.json` names its slugs in `governs`, e.g. `hm-ep*`) is checked before every still or mp4 render: `shot.mjs` runs `node styles/stick-man/bible/check.mjs films/<slug>` and refuses to start while it reports a blocking finding (a part outside the catalog, a body action keyed by hand where the library has the clip). Fix the film, or add an entry with a reason to `films/<slug>/bible-exceptions.json`, which the report counts. `--no-bible-check '<reason>'` renders anyway and logs the reason in `films/<slug>/bible-bypass.tsv`.
 
 - **Never change a threshold.** Fix the film data or the kit. A gate that measures wrong is fixed in its tool, in its own commit.
@@ -98,54 +91,7 @@ assembled shot by shot passes its rows with `--rows`.
 | camera jumps | inside a shot of a film assembled shot by shot (`edit` rows): 0.3 m and 3x its last step |
 | cord shakes (watch only, never blocks) | the shot report's cords line, 0.015 m/f² |
 
-## Profiles
-
-| Profile | Blocks | Gates |
-|---|---|---|
-| safety | always | the first table below |
-| quality | always | the second table below |
-| reference | only with `--profile full` | the third table below: numbers measured from one reference short; for an episode matched to that reference, when Kai picks it. `--profile pilot` prints them as WAIVED, read them as information |
-
-## Safety
-
-| Gate | Threshold | Fix |
-|---|---|---|
-| joint change | ≤ 25°/frame | the next key gets a longer `t`, less `antic`; `elbow` ≥ 15; hands a fist away from head and belly |
-| arm length ratio | ≤ 1.03 | the arm solver is stretching: change the target pose |
-| body contact | ≤ 0.1 cm into a head or torso | the engine solves contact. A FAIL means a pose aims through the body |
-| collisions | none | body point inside a set `COLLIDE` box: move the mark or the pose |
-| head never cut | never | reframe |
-| hand-prop gap | ≤ 2 px at 1080 | the prop needs `userData.grip` |
-| camera speed | ≤ 95 px/frame at 720p | a long move becomes a cut between the same framings |
-| mix loudness, true peak | −14 ± 0.5 LUFS, ≤ −1 dBTP | `mix.py` targets |
-| props / fx seen | every listed prop seen ≥ 3 frames in its line | frame it, or fix the storyboard entry |
-| board shown | ≥ 85 % of lines | fix the picture (PROCESS.md section 7), then judge again |
-
-## Quality
-
-| Gate | Threshold | Fix |
-|---|---|---|
-| frozen run | ≤ 8 frames with no joint moving 1 mm / 0.3° | every key carries `cycle: BREATH` |
-| body acting | ≥ 70 % of a lead's frames | a motion v2 lead counts from its first key; a verb-driven lead needs body verbs |
-| expressions | ≥ 5 per 30 s | a strong face per line (`engine/faces.js` EXPR) |
-| expression lead | the face lands ≥ 3 frames before its word | put `expr` on the word's key |
-| face pops | 0 per actor: no frame jumps a face feature away from its target, or carries > 35 % of a change outside a take's accent | an engine fault: report it (`.agents/playbooks/stick-man-kit-fix.md`) |
-| face timing | each change rises 10-90 % in ≥ 6 f and holds ≥ 6 f before the next key; 2-6 changes per 10 s; ≤ 4 takes a minute and 1 per 10 s; 12-30 blinks a minute; eye lead 0-3 f | space or drop keys; `small: true` or `take: false` on extra takes (REEL_DATA.md, Face timing) |
-| close-up head x | 45-55 % of the width in `cu` frames | reframe |
-| mouth range | CV ≥ 0.4 while talking | talking characters only |
-| storyboard entries, acting plan, props / fx used | every line has an entry, an `act` and a prop or effect on ≥ 40 % of lines | complete `storyboard.json` |
-| floating labels, fx in world | 0 floating stickers; every storyboard fx is a physical thing | words go on a sign, a calendar or an overlay that the picture backs |
-
-## Reference
-
-clear frames ≥ 94 % · still frames < 1 % · small-figure run ≤ 120 f · shadow contrast 0.235-0.388 · ink thickness 2-3 px · caption height / weight ·
-duration 60-80 s · distinct sets ≥ 3 · shot variety / types / type run · establishing and insert shot · wide share ≥ 30 % · low angle
-share ≥ 7 % · open on the verb · style judge ≥ 8.5 · blind test ≤ 8/12. The forensic gates measured on the mp4 (cuts, dissolves, rush,
-light per place, outline, mouth movement, bed in pauses) are gone: their script was never in the repo. Colour is not a reference gate: `colourgate.mjs`
-checks the final against the film's own colour script at ◇5. (Measurement details: comments in
-`styles/stick-man/tools/gates.mjs`.)
-
 ## Judged gates
 
 - **Board.** `node styles/stick-man/tools/board.mjs films/<slug> --judge 3`. It renders `review/board.jpg`, 2 stills per line: A on the entry's `still` word, B at the line's prop peak. 3 independent headless reviewers judge it; a line is shown when 2 of 3 say so. The result goes to `review/board-verdict.json`, which `gates.mjs` reads. Rerun after any change to the reel data.
-- **Style judge and blind test** (reference profile). `node styles/stick-man/tools/judge.mjs films/<slug> --in <mp4> --ref <private reference dir>`. The reference stays outside the repo.
+- **Style judge and blind test** `node styles/stick-man/tools/judge.mjs films/<slug> --in <mp4> --ref <private reference dir>`. The reference stays outside the repo.

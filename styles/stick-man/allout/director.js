@@ -23,10 +23,9 @@
 //           lensBlur: focal length and focus distance, focused on the look target or an absolute shot's aim), { gain: 0 } turns it off
 // Blender coordinates (x right, y into the set, z up), like the rest of the engine.
 import { lensBlur, LENS_BAND } from '../engine/camera.js';
-const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+import { DEG, clamp } from '../engine/mathx.js';
 const lerp = (a, b, t) => a + (b - a) * t;
 const lerp3 = (a, b, t) => a.map((x, i) => lerp(x, b[i], t));
-const DEG = Math.PI / 180;
 const EASE = {
   linear: t => t,
   inout: t => t * t * t * (t * (t * 6 - 15) + 10),

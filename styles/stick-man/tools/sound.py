@@ -1,26 +1,16 @@
-# sound.py: SFX + music + mix for a stick-man film. Method and numbers from styles/kai-reel-3d (SFX.md, LISTICLE.md step 7,
-# listicle/audio/sfx.py word_duck, listicle/review/levels.py), copied here, not imported.
-#   python styles/stick-man/tools/sound.py films/<slug>
-# reads  vo/vo.wav (48 kHz mono, timing untouched), vo/words.json, audio/cues.json [{t, name, strength 0..1}]
-# writes audio/sfx.wav, audio/music.wav, audio/vo_m.wav, audio/mix.wav (48 kHz stereo, voice + 0.5 s), audio/levels.txt, audio/preview.m4a
-# Targets (Kai-approved, reel63 v2): voice ~-14.6, SFX stem ~-21, music ~-26 (was -28 until the 11/11 forensic: the reference bed sits -10..-12 dB under the voice in pauses), mix -14 LUFS; each hit 4-8 dB under the voice around it;
-# duck ONLY the 2-8 kHz consonant band (STFT 1-12 kHz bins) inside words, never full band; true peak <= -1 dBTP.
-import json, os, re, shutil, subprocess, sys
-import numpy as np, soundfile as sf
+# sound.py: the shared levels and checks a film's own mixer imports (films/<slug>/audio/mix.py): word_duck, words_hot,
+# loudest150, ff, win_rms, db and the HIT_DB / LEVEL / HP / ROOM tables. Method and numbers from styles/kai-reel-3d (SFX.md,
+# listicle/audio/sfx.py word_duck, listicle/review/levels.py), copied here, not imported. It has no entry point.
+import os, re, shutil, subprocess, sys
+import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sound_dsp import SR, room, hp, bp, hb, lufs, true_peak, tp_limit, comp
-from sound_bank import BANK, siren
-from sound_music import music
+from sound_dsp import SR, hb
 
 FFMPEG = os.environ.get('FFMPEG') or shutil.which('ffmpeg') or 'ffmpeg'   # $FFMPEG, else the ffmpeg on PATH
-TAIL = 0.5
 HIT_DB = -4.3                                              # loudest 150 ms of a hit vs the median voice around it (full band)
 LEVEL = {'step_l': -5.0, 'step_r': -5.0, 'tick': -5.0, 'siren': -1.5, 'snore': -5.0, 'blip': -5.0, 'ping': -5.0, 'ting': -5.2}
 HP = {'thud': 70, 'poof': 45, 'clunk': 90, 'step_l': 70, 'step_r': 70, 'snore': 70}     # high-pass per sound (default 150 Hz)
-PAN = {'step_l': -0.2, 'step_r': 0.2, 'siren': -0.35, 'whoosh': 0.15, 'flutter': 0.2, 'ping': -0.1}
-SFX_LU, MUS_LU, MIX_LU, TP_CEIL = -6.4, -11.5, -14.0, -1.6   # MUS_LU -11.5 (was -13.4): bed in pauses -10..-12 dB vs voice   # stems relative to the voice; master; limiter ceiling (dBTP)
 ROOM_S, ROOM = 0.6, {'siren': 0.0, 'ding': 0.15, 'scratch': 0.12, 'sting': 0.2}   # a small room under every hit (wet)
-MAKEUP_DB = 8.0
 DUCK_MARGIN = -6.8                                         # SFX 2-8 kHz <= voice - 6.8 dB inside words (the check asks 6 dB)
 
 
@@ -86,87 +76,3 @@ def loudest150(x, a, b):
 def ff(path):
     o = subprocess.run([FFMPEG, '-nostats', '-i', path, '-af', 'ebur128=peak=true', '-f', 'null', '-'], capture_output=True, text=True).stderr
     return float(re.findall(r'I:\s+(-?[\d.]+) LUFS', o)[-1]), float(re.findall(r'Peak:\s+(-?[\d.]+) dBFS', o)[-1])
-
-
-def main(film):
-    A = os.path.join(film, 'audio'); os.makedirs(A, exist_ok=True)
-    vo, sr = sf.read(os.path.join(film, 'vo/vo.wav'), always_2d=True); vo = vo.mean(1); assert sr == SR, sr
-    words = json.load(open(os.path.join(film, 'vo/words.json'))); cues = json.load(open(os.path.join(A, 'cues.json')))
-    N = len(vo) + int(TAIL * SR); vo = np.pad(comp(vo), (0, N - len(vo)))       # leveller only: no timing change
-    # voice reference: 50 ms full-band RMS, speech = 200-6k band above 10 % of its max
-    vfb = win_rms(vo); vbd = win_rms(bp(vo, 200, 6000, 4)); sp = vbd > 0.1 * vbd.max(); tw = (np.arange(len(vfb)) + 0.5) * 0.05
-    def vmed(t, r=1.5):
-        m = sp & (np.abs(tw - t) < r); return np.median(vfb[m]) if m.sum() >= 6 else np.median(vfb[sp])
-    # ---------------- SFX: each hit set to HIT_DB (+ its strength) vs the voice around it; audio/music.json "hit_db" overrides it
-    # for a film matched to a reference that hits harder (rail reference: 15.6 broadband hits / 10 s)
-    mp0 = os.path.join(A, 'music.json'); HD = float((json.load(open(mp0)) if os.path.exists(mp0) else {}).get('hit_db', HIT_DB))
-    rows = []
-    for i, c in enumerate(cues):
-        rng = np.random.default_rng(1000 + i); name = c['name']; t = float(c['t'])
-        y = siren(rng, min(2.0, (N / SR) - t - 0.02)) if name == 'siren' else BANK[name](rng)
-        y = hp(room(np.pad(y, (0, int(ROOM_S * SR))), rng, d=ROOM_S, wet=ROOM.get(name, 0.5)), HP.get(name, 150), 2)
-        target = LEVEL.get(name, HD) + 10 * np.log10(max(float(c.get('strength', 1.0)), 0.05))
-        ref = vmed(t + 0.1); y = y * ref * 10 ** (target / 20) / loudest150(y, 0, len(y))
-        i0 = int(round(t * SR)); y = y[:N - i0]
-        rows.append(dict(c, i0=i0, n=len(y), y=y, set_db=target, ref=ref, g=1.0))
-    for r in rows:   # measuring window: the hit up to the next cue that starts later (at most 1 s), so a neighbour is not counted
-        nxt = [q['i0'] for q in rows if q['i0'] > r['i0']]; r['m'] = min(r['n'], SR, (min(nxt) - r['i0']) if nxt else SR)
-    # the consonant duck takes the 1-12 kHz part of any hit that sits on a word; re-level each hit until what is LEFT after the duck
-    # (its loudest 150 ms, mostly in the gaps between words) sits at its target, at most +MAKEUP_DB over the isolated level
-    def render(ch=None):
-        x = np.zeros(N)
-        for r in rows: x[r['i0']:r['i0'] + r['n']] += r['y'] * r['g'] * (1 if ch is None else min(1, 1 - ch * PAN.get(r['name'], 0.0)))
-        return x
-    pre_lu = lufs([render()] * 2)
-    for it in range(4):
-        sfx = word_duck(render(), vo, words)
-        for r in rows:
-            h = db(loudest150(sfx, r['i0'], r['i0'] + r['m']) / r['ref'])
-            r['g'] = min(10 ** (MAKEUP_DB / 20), r['g'] * 10 ** ((r['set_db'] - h) / 20 * 0.8))
-    # stereo: each side gets its own pan gain per hit, then its own consonant duck (so each channel passes the check by itself)
-    sL, sR = word_duck(render(1), vo, words), word_duck(render(-1), vo, words)
-    # ---------------- music, set relative to the voice
-    mp = os.path.join(A, 'music.json')
-    mL, mR, sec = music(words, N, plan=json.load(open(mp)) if os.path.exists(mp) else None)
-    mus_lu = float((json.load(open(mp)) if os.path.exists(mp) else {}).get('mus_lu', MUS_LU))   # music.json "mus_lu": a film's bed level vs the voice
-    v_lu = lufs([vo, vo]); m_lu = lufs([mL, mR]); g_m = 10 ** ((v_lu + mus_lu - m_lu) / 20); mL, mR = mL * g_m, mR * g_m
-    s_lu = lufs([sfx, sfx]); print(f'sfx vs voice: {pre_lu - v_lu:+.1f} LU before the duck, {s_lu - v_lu:+.1f} after (target {SFX_LU})')
-    # ---------------- master: gain to -14 LUFS through a true-peak limiter
-    G = 10 ** ((MIX_LU - lufs([vo + mL + sL, vo + mR + sR])) / 20)
-    for _ in range(6):
-        L, R = tp_limit([(vo + mL + sL) * G, (vo + mR + sR) * G], TP_CEIL); I = lufs([L, R])
-        if abs(I - MIX_LU) < 0.1: break
-        G *= 10 ** ((MIX_LU - I) / 20)
-    st = lambda a, b: np.stack([a, b], 1).astype(np.float32)
-    sf.write(os.path.join(A, 'mix.wav'), st(L, R), SR, subtype='PCM_24')
-    sf.write(os.path.join(A, 'sfx.wav'), st(sL * G, sR * G), SR, subtype='PCM_24')
-    sf.write(os.path.join(A, 'music.wav'), st(mL * G, mR * G), SR, subtype='PCM_24')
-    sf.write(os.path.join(A, 'vo_m.wav'), st(vo * G, vo * G), SR, subtype='PCM_24')
-    subprocess.run([FFMPEG, '-y', '-loglevel', 'error', '-i', os.path.join(A, 'mix.wav'), '-c:a', 'aac', '-b:a', '160k', os.path.join(A, 'preview.m4a')], check=True)
-    # ---------------- levels.txt
-    lv = {k: ff(os.path.join(A, f'{k}.wav')) for k in ('vo_m', 'sfx', 'music', 'mix')}
-    tp_pre = ff(os.path.join(A, 'preview.m4a'))[1]
-    hot = sorted(set(words_hot(vo * G, sL * G, words)) | set(words_hot(vo * G, sR * G, words)))
-    ok = lambda b: 'PASS' if b else 'FAIL'
-    out = [f'# levels for {film}  (ffmpeg ebur128; stems as they sit in the mix; {N / SR:.3f} s, {len(cues)} cues)',
-           f'voice      {lv["vo_m"][0]:6.1f} LUFS   target ~-14.6',
-           f'sfx stem   {lv["sfx"][0]:6.1f} LUFS   target -21 +-2   {ok(abs(lv["sfx"][0] + 21) <= 2)}',
-           f'music stem {lv["music"][0]:6.1f} LUFS   target -26 +-2   {ok(abs(lv["music"][0] + 26) <= 2)}',
-           f'mix        {lv["mix"][0]:6.1f} LUFS   target -14 +-0.5 {ok(abs(lv["mix"][0] + 14) <= 0.5)}',
-           f'true peak  {lv["mix"][1]:6.1f} dBTP   mix.wav (preview.m4a {tp_pre:.1f})   target <= -1   {ok(lv["mix"][1] <= -1)}',
-           f'words with SFX within 6 dB of the voice in 2-8 kHz: {len(hot)} {hot[:10]}   {ok(not hot)}',
-           f'music sections: A 0-{sec["playful_end"]:.2f}, build {sec["build"]:.2f}-{sec["build_end"]:.2f}, stop {sec["wait"]:.2f} (Wait), B {sec["see"]:.2f}-{sec["urgent"]:.2f}, '
-           f'urgent {sec["urgent"]:.2f}-{sec["so"]:.2f}, resolve {sec["so"]:.2f}-{sec["last"]:.2f} (last word)', '',
-           '# per cue: loudest 150 ms of the hit (full band, up to the next cue, <= 1 s) vs the median voice within 1.5 s; set = isolated, stem = after the consonant duck',
-           f'{"t":>7}  {"name":18} {"str":>4} {"set dB":>7} {"stem dB":>8}  band -8..-4']
-    hs = []
-    for r in rows:
-        a, b = r['i0'], r['i0'] + r['m']
-        h = db(loudest150(sfx, a, b) / r['ref']); hs.append(h)
-        out.append(f'{r["t"]:7.2f}  {r["name"]:18} {r.get("strength", 1):4.2f} {r["set_db"]:7.1f} {h:8.1f}  {"in" if -8 <= h <= -4 else "OUT"}')
-    hs = np.array(hs); out.append(f'hits: median {np.median(hs):.1f} dB, in -8..-4: {((hs >= -8) & (hs <= -4)).sum()}/{len(hs)}')
-    open(os.path.join(A, 'levels.txt'), 'w').write('\n'.join(out) + '\n'); print('\n'.join(out))
-
-
-if __name__ == '__main__':
-    main(sys.argv[1].rstrip('/'))

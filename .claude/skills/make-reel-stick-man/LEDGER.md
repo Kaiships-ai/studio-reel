@@ -21,6 +21,6 @@ Kit and engine changes (PRs, one line each on why):
 
 -
 
-Kai's decisions that set the film (look, dose, gate profile, waived gates):
+Kai's decisions that set the film (look, dose, waived gates):
 
 -

@@ -377,7 +377,7 @@ export function makeFlock(stage, { n = 6, span = 30, speed = 2.5, dir = [1, 0.2]
 }
 
 // ---------------------------------------------------------------- the MAKE kinds (engine/play.js registers them)
-// IN_WORLD: every kind a storyboard `fx` may list (gates.mjs "fx in world"); LABELS: floating text kinds, counted by the
+// IN_WORLD: every kind a storyboard `fx` may list; LABELS: floating text kinds, counted by the
 // label budget (<= 3 per 30 s, storyboard `labels`); DIAGRAM: floating marks that are neither (rings, arrows, rays, star)
 export const LABELS = ['stamp', 'callout', 'bars', 'split'];
 export const DIAGRAM = ['rings', 'flow', 'rays', 'star', 'shimmer'];
