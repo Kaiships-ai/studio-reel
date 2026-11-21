@@ -16,17 +16,6 @@ export const BILL_GREEN = [0.40, 0.70, 0.38];
 // ---------------------------------------------------------------- flash: white full frame for a few frames
 // flashAt(t) -> 0..1, 1 on the first frame, gone after `frames` frames
 export const flashAt = (t, { frames = 3, fps = 30 } = {}) => { if (t < 0) return 0; const f = t * fps; return f >= frames ? 0 : Math.pow(1 - f / frames, 0.7); };
-// optional overlay the stage can use: a screen-filling white quad (no ink, no bloom); set(value 0..1)
-export function makeFlash(stage) {
-  const mat = new THREE.ShaderMaterial({ uniforms: { a: { value: 0 } }, transparent: true, depthTest: false, depthWrite: false,
-    vertexShader: 'void main(){ gl_Position = vec4(position.xy, 0.0, 1.0); }',
-    fragmentShader: 'uniform float a; void main(){ gl_FragColor = vec4(1.0, 0.99, 0.96, a); }' });
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat);
-  m.frustumCulled = false; m.renderOrder = 999; m.userData.noPrepass = true; m.visible = false; stage.scene.add(m);
-  m.userData.set = v => { mat.uniforms.a.value = clamp01(v); m.visible = v > 0.001; };
-  return m;
-}
-
 // ---------------------------------------------------------------- red powder burst
 // opts at build: { seed, count, size } (size = radius of the full cloud, m). set(t): swells to full in ~1.2 s,
 // keeps drifting up and out slowly, lingers; after `life` s it thins away. Puffs are toon balls with their own outline.
@@ -116,8 +105,6 @@ export function makeFlyingBills(stage, { seed = 5, n = 16, scale = 1 } = {}) {
   g.userData.set = set; g.userData.count = n;
   return g;
 }
-// bills turn red one by one: bill i starts at start + i * step and takes `dur` s
-export const dyeOrder = (t, { start = 0, step = 0.12, dur = 0.25 } = {}) => i => clamp01((t - start - i * step) / dur);
 
 // ---------------------------------------------------------------- dye spray: short red streaks out of a point along +z
 // opts at build: { seed, n, spread (rad), reach (m) }. set(t, { on }) on = 0..1 strength.
@@ -177,7 +164,7 @@ export function makeRadioRings(stage, { count = 2, color = [0.55, 0.92, 1.0] } =
 
 // ---------------------------------------------------------------- red glow inside the bag
 // makeBagGlow(stage, bag?): if `bag` (the money bag group) is given the glow is put inside it and its sack blooms too.
-// set(strength 0..1). pulseAt(t) gives the three pulses before the burst.
+// set(strength 0..1).
 export function makeBagGlow(stage, bag = null) {
   const g = new THREE.Group();
   const blobMat = new THREE.MeshBasicMaterial({ color: lin(1.0, 0.10, 0.06).multiplyScalar(2.0) });
@@ -202,7 +189,6 @@ export function makeBagGlow(stage, bag = null) {
   g.userData.set = set;
   return g;
 }
-export const pulseAt = (t, { count = 3, period = 0.7 } = {}) => (t < 0 || t > count * period ? 0 : Math.pow(Math.sin(Math.PI * t / period), 2));
 
 // ---------------------------------------------------------------- a bare stick arm reaching into a tabletop shot
 // set({ shoulder, hand, bend }): Blender points (metres); bend lifts the elbow (fraction of the reach). No hand = hidden.
