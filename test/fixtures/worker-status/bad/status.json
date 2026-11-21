@@ -1,0 +1,8 @@
+{
+ "series": "fixture",
+ "ep": 3,
+ "film": "test/fixtures/worker-status/bad",
+ "status": "new",
+ "latest": {},
+ "worker_can": []
+}

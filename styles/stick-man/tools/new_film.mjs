@@ -1,5 +1,5 @@
-// Start a stick-man film: films/<slug>/ with vo/, audio/, renders/, review/, an empty vo/script.json, storyboard.json, reel.js
-// and the run ledger. Refuses to touch a folder that already exists.
+// Start a stick-man film: films/<slug>/ with vo/, audio/, renders/, review/, an empty vo/script.json, storyboard.json, reel.js,
+// status.json and the run ledger. Refuses to touch a folder that already exists.
 //   node styles/stick-man/tools/new_film.mjs stick02-<slug>
 import fs from 'node:fs'; import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -47,8 +47,13 @@ fs.writeFileSync(path.join(film, 'storyboard.json'), JSON.stringify({ film: slug
 // the decision log (DEVELOP.md section 5): every approved decision, checked at every gate by prepro.mjs D1/D2
 fs.writeFileSync(path.join(film, 'DECISIONS.json'), JSON.stringify({ film: slug, decisions: [] }, null, 1) + '\n');
 
+// where the film stands, for status.mjs and a worker started by Studio (WORKER.md)
+const status = fs.readFileSync(path.join(ROOT, '.claude/skills/make-reel-stick-man/templates/status.json'), 'utf8')
+  .replace(/<slug>/g, slug).replace('<date>', new Date().toISOString().slice(0, 10));
+fs.writeFileSync(path.join(film, 'status.json'), status);
+
 const tpl = path.join(ROOT, '.claude/skills/make-reel-stick-man/LEDGER.md');
 if (fs.existsSync(tpl)) fs.writeFileSync(path.join(film, 'LEDGER.md'), fs.readFileSync(tpl, 'utf8').replace(/<slug>/g, slug));
 
-console.log(`films/${slug}/  vo/script.json (empty lines), storyboard.json, reel.js (standard skeleton), LEDGER.md, audio/ renders/ review/`);
+console.log(`films/${slug}/  vo/script.json (empty lines), storyboard.json, reel.js (standard skeleton), status.json, LEDGER.md, audio/ renders/ review/`);
 console.log(`next: stage 0 (BRIEF.md, TREATMENT.md, beat board) on the Development page, then stage 1 (PREPRO.md): scene brief, script, shot list`);

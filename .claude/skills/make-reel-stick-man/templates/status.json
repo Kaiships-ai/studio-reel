@@ -1,0 +1,50 @@
+{
+  "series": "<series>",
+  "ep": 1,
+  "film": "films/<slug>",
+  "updated_at": "<date>",
+  "status": "new",
+  "stage": "0: Development (BRIEF.md, TREATMENT.md, beat board)",
+  "kit_commit": null,
+  "latest": {
+    "version": null,
+    "mp4": null,
+    "made": null,
+    "what": "nothing rendered yet",
+    "review_page": null
+  },
+  "deliver": {
+    "current": null,
+    "cover": null,
+    "caption": null,
+    "archive": "films/<slug>/deliver/archive/"
+  },
+  "approval": {
+    "state": "draft",
+    "by": null,
+    "at": null
+  },
+  "obsolete": [],
+  "needs": {
+    "item": "0",
+    "question": "Kai's story idea or script",
+    "post": "not approved"
+  },
+  "published": {
+    "r2": null,
+    "ig": null,
+    "yt": null
+  },
+  "worker_can": [
+    "render a whole-film version or one part (parts/<seg>) at 720p, here through the render lock or on the Mac Pro",
+    "run the gates: colourgate, cutgate, shotgate, facebeat, kituse, stagegate",
+    "make the review page with per-segment feedback boxes",
+    "fix notes from Kai into the next version (vN+1) with an independent review"
+  ],
+  "worker_cannot": [
+    "post anywhere or upload (Studio uploads to R2 and posts, after Kai taps Post)",
+    "message people or other sessions",
+    "render full-res 1080p unless Kai asks",
+    "edit kit code without a PR + independent review"
+  ]
+}

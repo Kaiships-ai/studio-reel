@@ -1,0 +1,41 @@
+{
+ "series": "fixture",
+ "ep": 2,
+ "film": "test/fixtures/worker-status/stray",
+ "status": "film_ready",
+ "stage": "K2: Kai reviews A v2",
+ "kit_commit": "abc1234",
+ "latest": {
+  "version": "A v2",
+  "mp4": "test/fixtures/worker-status/stray/renders/fx_A_v2.mp4",
+  "review_page": "https://example.invalid/review"
+ },
+ "deliver": {
+  "current": "test/fixtures/worker-status/stray/deliver/current.mp4",
+  "cover": null,
+  "caption": null
+ },
+ "approval": {
+  "state": "kai_approved",
+  "by": "Kai",
+  "at": "2026-11-22 10:00"
+ },
+ "obsolete": [
+  "fx_A_v1.mp4 is an old cut"
+ ],
+ "needs": {
+  "item": "K3",
+  "question": "tap Post"
+ },
+ "published": {
+  "r2": "https://example.invalid/fx.mp4",
+  "ig": null,
+  "yt": null
+ },
+ "worker_can": [
+  "render at 720p"
+ ],
+ "worker_cannot": [
+  "post anywhere"
+ ]
+}

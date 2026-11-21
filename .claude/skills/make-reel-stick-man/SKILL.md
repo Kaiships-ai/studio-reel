@@ -14,6 +14,7 @@ The standard process for a stick-man film (dev only).
 - Needs: `GOOGLE_API_KEY` in `.env` (voice), faster-whisper (align), `claude` on PATH (board judges).
 - Kai reads Vietnamese: replies and page text are Vietnamese; "Em đề xuất" marks your recommended option.
 - pstack: this film runs under `.agents/playbooks/stick-man-film.md` (one orchestrator session, state in `~/.claude/orchestrate/<film>/notes.md`); a kit or engine fault goes to `.agents/playbooks/stick-man-kit-fix.md` as its own PR. Start a session with `/pstack:poteto-mode`.
+- Started by Studio (the Orca bot) with a handoff? Follow [WORKER.md](WORKER.md): run `node styles/stick-man/tools/status.mjs films/<film>` first and trust it over memory.
 
 Read [PROCESS.md](PROCESS.md) before step 1, `DIRECTOR.md` (library root) and [DEVELOP.md](DEVELOP.md) before stage 0, [SCRIPT.md](SCRIPT.md) before the script [1.1], [PREPRO.md](PREPRO.md) before stage 1, [PUBLISH.md](PUBLISH.md) for stage 5, and [DIAGNOSE.md](DIAGNOSE.md) whenever a result "doesn't land" and the cause isn't obvious.
 
