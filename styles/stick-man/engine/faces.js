@@ -80,7 +80,7 @@ const OPEN = { flat: 'open', smile: 'open', grin: 'open_big', smirk: 'open_skew'
   skew: 'open_skew', stretch: 'stretch', grimace: 'teeth_open', tight: 'open_frown', big: 'big_open', big_open: 'big_open', scream: 'scream', sneer: 'open_frown' };
 for (const k of Object.keys(EXPR)) EXPR[k + '_o'] = { ...EXPR[k], mouth: OPEN[EXPR[k].mouth] || 'open', base: k };
 EXPR.sleep_o = { ...EXPR.sleep, mouth: 'o', mw: 0.6, base: 'sleep' };
-// wide-open twins (`<expr>_O`): the loud syllable and the middle of an expression ramp (`mouth movement` in tools/forensic/measure.py: reference mouth
+// wide-open twins (`<expr>_O`): the loud syllable and the middle of an expression ramp (reference mouth
 // area swings, CV 0.33-0.56). Bigger in width and drawn lower so the dark shape grows.
 for (const k of Object.keys(EXPR)) if (!k.endsWith('_o') && !k.endsWith('_O')) EXPR[k + '_O'] = { ...EXPR[k + '_o'], mw: 1.35 * (EXPR[k].mw || 1), my: (EXPR[k].my || 0) - 0.010, base: k };
 export const EXPR_NAMES = Object.keys(EXPR).filter(k => !k.endsWith('_o'));

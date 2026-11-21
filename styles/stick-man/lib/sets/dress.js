@@ -1,10 +1,8 @@
 // Set dressing kit (SETS.md "Dressing"): small, specific, toon pieces built in code, placed in clusters that tell a
-// story (a bus stop with a bin and a poster, a lab bench with burners and a sink). Every piece is ONE registered object:
-// the dressing gate counts how many distinct pieces the camera really sees (window.__dressCount, read by shot.mjs --dbg).
+// story (a bus stop with a bin and a poster, a lab bench with burners and a sink).
 //   const D = dressKit(stage, COLLIDE);                       // COLLIDE: the set's array; solid pieces push a box into it
 //   D.put('bench', [x, y, 0], rotDeg, { solid: true });       // a kit piece (PIECES below), Blender metres, deg about z
 //   D.sign([x, y, z], 'BUS', { w, h, bg, fg, face: rotDeg });  // a painted sign board
-//   const s = D.mark(); ...old set code...; D.since(s, 'counter')   // register meshes a set built by hand as one piece
 // Blender metres: x right, y into the scene, z up. A piece's origin is its bottom centre, its front faces -y.
 import * as THREE from 'three';
 import { B, lin, toon } from '../../engine/look.js';
@@ -295,57 +293,15 @@ export const PIECES = {
   net(p) { p.box([-0.8, -0.02, 0], [0.8, 0.02, 1.2], [0.4, 0.5, 0.45], { ink: false }); for (const x of [-0.8, 0.8]) p.cyl([x, 0, 0.7], 0.04, 1.4, 'woodD'); },
 };
 
-// ---------------------------------------------------------------- the registry the dressing gate reads
-const REG = []; let STAGE = null;
-const ray = new THREE.Raycaster(), V = new THREE.Vector3(), BX = new THREE.Box3(), BB = new THREE.Box3();
-export function register(name, objs) {
-  const id = REG.length + 1; REG.push({ id, name, objs });
-  for (const o of objs) o.traverse(x => { if (x.isMesh) x.userData.piece = id; });
-  return id;
-}
-// how many registered pieces the camera sees now: shown, in front, >= 0.04 % of the frame, and at least one of five
-// sample points not hidden behind something else (ray from the camera)
-function dressCount({ list = false } = {}) {
-  if (!STAGE) return 0;
-  const cam = STAGE.camera, scene = STAGE.scene; scene.updateMatrixWorld(); cam.updateMatrixWorld();
-  const meshes = []; scene.traverseVisible(o => { if (o.isMesh && !o.userData.noPrepass) meshes.push(o); });
-  const seen = [];
-  for (const P0 of REG) {
-    let shown = true;
-    for (const o of P0.objs) for (let q = o; q; q = q.parent) if (!q.visible) { shown = false; break; }
-    if (!shown || !P0.objs.some(o => o.parent)) continue;
-    BX.makeEmpty();
-    for (const o of P0.objs) o.traverseVisible(x => { if (!x.isMesh) return; if (!x.geometry.boundingBox) x.geometry.computeBoundingBox(); BB.copy(x.geometry.boundingBox).applyMatrix4(x.matrixWorld); BX.union(BB); });
-    if (BX.isEmpty()) continue;
-    let x0 = 1, y0 = 1, x1 = -1, y1 = -1, n = 0;
-    for (let i = 0; i < 8; i++) { V.set(i & 1 ? BX.max.x : BX.min.x, i & 2 ? BX.max.y : BX.min.y, i & 4 ? BX.max.z : BX.min.z).project(cam);
-      if (V.z >= 1 || V.z <= -1) continue; n++; x0 = Math.min(x0, V.x); x1 = Math.max(x1, V.x); y0 = Math.min(y0, V.y); y1 = Math.max(y1, V.y); }
-    if (!n) continue;
-    const w = Math.min(1, x1) - Math.max(-1, x0), h = Math.min(1, y1) - Math.max(-1, y0);
-    if (!(w > 0 && h > 0 && w * h / 4 >= 0.0004)) continue;
-    let vis = false;
-    for (const [u, v, t] of [[0.5, 0.5, 0.5], [0.25, 0.5, 0.3], [0.75, 0.5, 0.7], [0.5, 0.25, 0.8], [0.5, 0.75, 0.2]]) {
-      const pt = new THREE.Vector3(BX.min.x + u * (BX.max.x - BX.min.x), BX.min.y + t * (BX.max.y - BX.min.y), BX.min.z + v * (BX.max.z - BX.min.z));
-      const q = pt.clone().project(cam); if (q.z >= 1 || q.z <= -1 || Math.abs(q.x) > 1 || Math.abs(q.y) > 1) continue;
-      const d = pt.distanceTo(cam.position); ray.set(cam.position, pt.clone().sub(cam.position).normalize()); ray.far = d * 1.02;
-      const hit = ray.intersectObjects(meshes, false)[0];
-      if (!hit || hit.object.userData.piece === P0.id || hit.distance > d * 0.97) { vis = true; break; }
-    }
-    if (vis) seen.push(P0.name);
-  }
-  return list ? seen : seen.length;
-}
-if (typeof window !== 'undefined') { window.__dressCount = dressCount; window.__dressList = () => dressCount({ list: true }); }
+const BX = new THREE.Box3(), BB = new THREE.Box3();
 
 // ---------------------------------------------------------------- the kit a set uses
 export function dressKit(stage, collide = null) {
-  STAGE = stage;
   const { scene, prop } = stage;
   const finish = (g, name, { ink = true, solid = false, pad = 0.02, grace } = {}) => {
     g.traverse(x => { if (x.isMesh && x.material?.userData?.glowy) stage.glow(x, 0.4); });
     scene.add(g);
     if (ink) { g.traverse(x => { if (x.isMesh && !x.userData.noInk && !x.userData.noPrepass) prop(x); }); }
-    register(name, [g]);
     if (solid && collide) {
       g.updateMatrixWorld(true); BX.makeEmpty();
       g.traverse(x => { if (!x.isMesh || x.userData.noPrepass) return; if (!x.geometry.boundingBox) x.geometry.computeBoundingBox(); BB.copy(x.geometry.boundingBox).applyMatrix4(x.matrixWorld); if (BB.min.y < 1.8) BX.union(BB); });
@@ -369,10 +325,6 @@ export function dressKit(stage, collide = null) {
     sign(at, text, opts = {}) { return this.put('sign', at, opts.face ?? 0, { pole: 0, ...opts, text, name: opts.name || 'sign' }); },
     // several pieces in a row: kinds = ['bin', 'bench', ...] from a to b
     row(kinds, a, b, rot = 0, opts = {}) { const n = kinds.length; return kinds.map((k, i) => this.put(k, a.map((v, j) => v + (b[j] - v) * (n === 1 ? 0.5 : i / (n - 1))), rot, opts)); },
-    // register meshes a set built by hand: s = D.mark() before, D.since(s, 'counter') after
-    mark() { return new Set(scene.children); },
-    since(before, name) { const objs = scene.children.filter(c => !before.has(c)); if (objs.length) register(name, objs); return objs; },
-    register,
   };
 }
 // a set's COLLIDE starts from its hand list on every build (two acts can build the same set)

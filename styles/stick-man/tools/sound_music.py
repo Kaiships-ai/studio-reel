@@ -145,7 +145,7 @@ def music(words, n, seed=31, plan=None):
     rr = np.random.default_rng(seed + 1)
     L, R = room(b.L, rr, wet=0.10), room(b.R, rr, wet=0.10)
     L, R = [hp(lp(c, 5500, 2), 45, 2) for c in (L, R)]
-    # `bed in pauses` (forensic/measure.py): the reference bed fills the pauses - sustained bass under them (bass voice-minus-pause 3-6.5 dB)
+    # the reference bed fills the pauses - sustained bass under them (bass voice-minus-pause 3-6.5 dB)
     # and air on top (5-14 kHz shaker wash). A root drone follows the section's bass line; a soft 8th-note wash rides on top.
     tt = np.arange(n) / SR; bar = (tt // (4 * BEAT)).astype(int)
     root = np.where(tt < t_urg, np.array(F_BASS)[bar % 4], np.array(D_BASS)[bar % 4]).astype(float)

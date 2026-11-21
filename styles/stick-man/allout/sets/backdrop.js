@@ -16,7 +16,7 @@ export async function backdrop(stage, rows, { tint = [1, 1, 1] } = {}) {
   const g = glbKit(stage, 'backdrop', []);
   await g.load([...new Set(rows.map(r => r.piece))]);
   // a tint always keys the pieces' own toon materials (glb.js toonFrom), so fog = false never reaches a set's pieces
-  const out = rows.map(r => g.place(r.piece, r.at, r.rot ?? 0, { scale: r.scale ?? 1, ink: false, solid: false, dressing: false, tint: r.tint ?? tint }));
+  const out = rows.map(r => g.place(r.piece, r.at, r.rot ?? 0, { scale: r.scale ?? 1, ink: false, solid: false, tint: r.tint ?? tint }));
   for (const o of out) o.traverse(m => { if (m.isMesh) { m.material.fog = false; m.castShadow = false; } });
   return out;
 }

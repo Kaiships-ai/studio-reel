@@ -14,16 +14,15 @@ An act names its set by URL: `set: '<name>', setModule: '/styles/stick-man/allou
 
 Marks, places and COLLIDE boxes: the set file's `MARKS`, `PLACES` and `COLLIDE` (the source is the truth).
 
-## Dressing (the dressing gate: ≥ 16 pieces seen in 85 % of non-cu frames, GATES.md)
+## Dressing
 
-The gate counts pieces registered in `lib/sets/dress.js`, and its counter only runs once a set has called
-`dressKit(stage, COLLIDE)`. No set or film calls it today (the Hot Money sets dress with their own film-local code on
-`createKit`), so their dressing count reads 0. To be counted, call `const D = dressKit(stage, COLLIDE)` in `build()`,
-then `D.put(kind, [x, y, z], rotDeg, { solid: true, ...opts })` for one of the 130 kit pieces in `PIECES` (bench, bin,
+No gate counts dressing pieces (the old dressing-density gate was removed). No set or film calls `dressKit` today (the Hot
+Money sets dress with their own film-local code on `createKit`). To use the kit pieces, call `const D = dressKit(stage, COLLIDE)`
+in `build()`, then `D.put(kind, [x, y, z], rotDeg, { solid: true, ...opts })` for one of the 130 kit pieces in `PIECES` (bench, bin,
 pot, planter, tree, pine, palm, lamp, bollard, cone, crate(s), barrel, sign, aboard, poster, shelf, desk, lockers, clock,
 noticeboard, kiosk, cafetable, picnic, busstop, phonebooth, adcolumn, bike, swing, slide, speaker, truss, stage, banner,
 flasks, microscope, skeleton, sink, fishtank, boat, hut, dock, lighthouse, islet, cloud, pigeons, hopscotch, puddle,
-zebra, scatter ...), or `D.mark()` / `D.since(s, name)` to register meshes the set built itself with `createKit`. `solid`
+zebra, scatter ...). `solid`
 pieces push their own COLLIDE box. A code set's COLLIDE starts from `resetCollide(COLLIDE, BASE)` (two acts can build one
 set). `dressKit` pieces are toon-shaded and inked, unlike `createKit` pieces (status in the Hot Money bible: trial).
 
