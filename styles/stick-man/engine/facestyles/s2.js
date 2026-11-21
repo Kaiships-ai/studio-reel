@@ -1,5 +1,5 @@
 // Face style s2, the rubber face (Kai 21/11 on Hot Money ep01 r5 reel 1: "biểu cảm này quá ok rồi nhé. v6 ok, ưng 9.5/10").
-// A film picks it with `faceStyle: 's2'` in its reel.js; play.js then loads this module and calls use() before the stage is
+// The default face style (Kai 21/11): unless a film's reel.js sets faceStyle: 'kit', play.js loads this module and calls use() before the stage is
 // built. Its designs (EXPR entries with style 's2') are drawn here on the figure's face canvas (faces.js STYLE_DRAW); their
 // standard numbers (eye radii, lid, white, brow, mouth width, gaze) mean what they mean in faces.js, so the engine's change
 // clocks, anticipation, blinks and face gates read them; `x` carries what only s2 draws:

@@ -31,7 +31,7 @@ const DOT = { eye: 'oval', rx: 0.037, ry: 0.049 }, RING = { eye: 'oval', rx: 0.0
 // ring eyes v2 (Kai, gate A 2026-11-12): smaller and closer, big pupils that look somewhere (gx / cross), often one lid
 // lower (lidA); every brow sits BROW_DROP lower than its table height so it is never hidden under a hat brim
 const BROW_DROP = 0.03;
-// The film's face style (reel.js faceStyle, loaded by play.js from engine/facestyles/<name>.js): null = the kit's own faces,
+// The film's face style (reel.js faceStyle, set by engine/facestyles/index.js; s2 when left out): null = 'kit', the kit's own faces,
 // drawn and timed exactly as before styles existed. With a style on, the face engine also runs the rules that style was made
 // on (Hot Money r5 faces, 19-21/11): a shut eye that sags, a lid stroke that shortens as it lifts, no gasp between two shut
 // mouths, fear mouths that never open into a smile, teeth that grow in, face ink after the light cards and kept under the

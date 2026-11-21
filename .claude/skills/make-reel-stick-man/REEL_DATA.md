@@ -94,7 +94,7 @@ hash that keeps the ◇2 reviews fresh (`BREAKDOWN` in `tools/fresh.mjs`), so ad
 | `grade.sky`, `grade.air` | tune the engine's sky dome (`{ glow, clouds }`) and air (`{ k, near, scale, desat }`) for this act, or `false` turns one off (`.claude/skills/verify/features/stick-man-depth.md`) |
 | `backdrop` | `{ rows: [{ piece, at, rot, scale, tint }], tint }`: far town rows from `styles/stick-man/assets/backdrop/` past the set's walls; a dark `tint` about 0.17 at night. An act without it gets none; `kituse.mjs` id `depth` needs it in one act or a set that calls `backdrop()` (stick-man-depth.md) |
 | `style` | `{ ...STYLE_PRESETS.kaiships, life: 0.75 }`: Kai's dose of the 12 principles (`engine/motion.js` STYLE_PRESETS); physics stays the floor. `life` is the moving hold (0 off, up to 2); every act sets it (`kituse.mjs` id `life`) |
-| `faceStyle` | `'s2'`: the rubber face (`engine/facestyles/s2.js`, `y_` and `c_` designs); left out, the kit faces (`.claude/skills/verify/features/stick-man-face-style.md`) |
+| `faceStyle` | left out or `'s2'`: the rubber face, the default (`engine/facestyles/s2.js`, `y_` and `c_` designs); `'kit'`: the kit faces; any other name fails (`.claude/skills/verify/features/stick-man-face-style.md`) |
 | `cast` | `{ name: { spec, at, yaw, expr, focus, lead, costume } }` |
 | `anim` | the lead's acting: motion v2 keys (below) |
 | `direct` | the cameras (below) |

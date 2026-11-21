@@ -9,6 +9,7 @@ import { makeStick, KAI, TELLER, GUARD, HEAD_C } from './cast.js';
 import { VERBS, STAND, SIT, REST_ARM, W, DEG, lerp, lerp3, add3, angDiff, toLocal, smoother, hash, handEase } from './verbs.js';
 import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, exprAccent, bodyFollow, LATE, EXPR_LEAD, exprKeyAt, markOwner, isBodyVerb, autoActing, faceStateAt, visemeTrack, faceChanges, BLINKS, BLINK_GAP, focusEase, blinkAt, isTense, CHEW } from './acting.js';
 import { mixFace, faceParams, designKey, CLENCH, FACE_STYLE } from './faces.js';
+import { useFaceStyle } from './facestyles/index.js';
 // face timing in the runtime (face-research.md rules 13-14): focus changes, free-blink shape
 // TURN_BLINK: the gaze shift that blinks (the kit's own faces 0.6; under a face style 0.8, with NEAR and GAP, turnBlinkAt)
 const FOCUS_N = 12, PUPIL_K = 1.6, TURN_BLINK = 0.6, STYLE_TURN_BLINK = 0.8, TURN_BLINK_NEAR = [20, 10], TURN_BLINK_GAP = 90;
@@ -879,8 +880,8 @@ export async function boot({ film, width, height }) {
   const words = (await getJSON(`/${film}/vo/words.json`)) || (await getJSON(`/${film}/words.json`));
   if (!words) throw new Error(`no words.json in ${film}/vo or ${film}`);
   const fps = R1.fps || 30, F0 = R1.frames[0], F1 = R2 ? R2.frames[1] : R1.frames[1];
-  // the film's face style (reel.js faceStyle: 's2', engine/facestyles/): set before any figure or the stage is built
-  if (R1.faceStyle) (await import(`./facestyles/${R1.faceStyle}.js`)).use();
+  // the film's face style (reel.js faceStyle, engine/facestyles/index.js; left out = s2): set before any figure or the stage is built
+  await useFaceStyle(R1.faceStyle);
   const stage = createStage({ width, height, faceInk: !!FACE_STYLE.name, ...(R1.look || {}) });
   try { await document.fonts.load('900 100px InterReel'); } catch { /* falls back to the system sans */ }
   const cap = createCaptions({ words, lines: [...R1.lines, ...(R2?.lines || [])], fps, width, height, mode: R1.captions?.mode });
