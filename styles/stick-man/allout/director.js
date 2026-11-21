@@ -35,7 +35,7 @@ const EASE = {
   // a whip: almost all of the travel in the middle third (the eye can't follow it; the smear covers it)
   whip: t => { const u = clamp((t - 0.3) / 0.4, 0, 1); return u * u * (3 - 2 * u); },
   // ease-out with a small settle past the end and back (a punch that lands)
-  // hold, then rush (FORENSIC section 2: the reference holds, then moves at 40-100 px/f and settles): no smear, a crisp travel
+  // hold, then rush (reference study: the reference holds, then moves at 40-100 px/f and settles): no smear, a crisp travel
   rush: t => { const u = clamp((t - 0.12) / 0.7, 0, 1); return u * u * u * (u * (u * 6 - 15) + 10); },
   land: t => { const u = 1 - Math.pow(1 - t, 3); return u + 0.06 * Math.sin(Math.PI * clamp(t * 1.15, 0, 1)) * (1 - t); },
 };

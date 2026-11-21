@@ -7,7 +7,7 @@
 //   macro (prop insert, long lens, shallow focus on the prop / its label), low (hero angle from knee height),
 //   ots (over the shoulder of `fore`), profile (side-on tight two-shot, long lens), dutch (rolled close-up, panic),
 //   punch (cut-in close-up that snaps tighter over 14 frames: the gag hit).
-// Pace (FORENSIC.md fix 2): hold, then rush. Between shots the camera drifts (push-in), a shot change is a
+// Pace (reference study, `rush peak` in tools/forensic/measure.py): hold, then rush. Between shots the camera drifts (push-in), a shot change is a
 // 16-30 frame rush that peaks near RUSH px/frame (60 at 720 = 90 at 1080; reference move peak p90 97-106 at 1080), never over CAP.
 import * as THREE from 'three';
 import { B } from './look.js';

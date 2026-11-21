@@ -1,6 +1,6 @@
 // The stick-man micro-animation layer (styles/stick-man/engine/acting.js): the reference's move spacing (slow start, 12-15 f),
 // held idle beats instead of a constant fidget, word-driven mouths that open and close, and in-betweened face changes
-// (FORENSIC.md section 3 and fixes 8, 14).
+// (the reference study's micro-animation numbers).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { slowIn, MOVE_T, idleBeats, idleGap, phonemes, visemeTrack, faceStateAt, exprAccent, FACE_T, TAKE_T } from '../../styles/stick-man/engine/acting.js';

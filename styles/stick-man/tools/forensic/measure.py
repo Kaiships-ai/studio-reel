@@ -1,4 +1,4 @@
-"""Forensic measures of one rendered reel against the reference targets (FORENSIC.md, ranked fixes 1-10).
+"""Forensic measures of one rendered reel against the reference targets (the G table below).
 The scripts next to this file are the ones that measured the four reference shorts, so our numbers and theirs come
 from the same code. Used by tools/gates.mjs ("forensic gates"); also runs alone:
   python styles/stick-man/tools/forensic/measure.py <reel.mp4> --words films/x/vo/words.json [--out x-forensic.json] [--keep 1]
@@ -52,7 +52,7 @@ m = dict(
     mouth_cv=AC.get("mouth_area_cv_med"), mouth_tracks_pct=AC.get("mouth_tracks_pct"),
     bed_vs_voice_dB=AU["bed_minus_voice_dB"], bass_voice_minus_pause_dB=AU["low_band_speech_minus_pause_dB"], air_in_pause_dB=AU["hi_band_share_in_pause_dB"],
 )
-# targets: FORENSIC.md "Ranked fix list", Top 10 (reference ranges in brackets)
+# targets: the ten ranked fixes of the reference study (reference ranges in brackets)
 def rng(v, lo, hi): return v is not None and lo <= v <= hi
 G = [
     ("hard cuts", m["hard_cuts_per10s"] <= 0.2, f'{m["hard_cuts_per10s"]} /10 s ({kinds})', "<= 0.2 per 10 s (ref 0-0.15)"),

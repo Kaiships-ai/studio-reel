@@ -51,7 +51,7 @@ set). `dressKit` pieces are toon-shaded and inked, unlike `createKit` pieces (st
 | `chalk` | writing and a chalk bar chart drawn on a real board | draw, grow, n |
 | `speakers` | a row of speaker stacks rising one after another, cones pumping | grow, pump |
 
-Floating text (`stamp`, `callout`, `bars`, `split`) is banned (floating labels gate = 0, FORENSIC.md fix 9: 0 in 4 reference
+Floating text (`stamp`, `callout`, `bars`, `split`) is banned (floating labels gate = 0, the reference study found 0 in 4 reference
 videos). Turn a stamp into a `sign` (post, hang, board, plaque), a meter or chalk; turn rings / arrows into a shock, steam or a crack.
 
 ## Cast (`spec:` in `cast`)
@@ -96,7 +96,7 @@ imports `canvasTex` from the same file. Do not start a set from it.)
 
 1. Copy the template below to `allout/sets/<name>.js`, or to `films/<slug>/` for one film.
 2. Point the act at it: `set: '<name>', setModule: '/styles/stick-man/allout/sets/<name>.js'`, and add a row to the table above.
-3. Prove it: a two-line test film (synthetic `vo/words.json` like `films/stick-fxkit`), the cast on its marks,
+3. Prove it: a two-line test film (synthetic `vo/words.json` like `motion-lib/proof/vo/words.json`), the cast on its marks,
    `shot.mjs --frames 0,60 --out` stills, and `--report --fast 1` shows collisions none.
 
 ```js

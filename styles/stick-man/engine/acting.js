@@ -3,7 +3,7 @@
 import { hash, clamp, smooth, smoother, settle, rightB, fwdB } from './verbs.js';
 import { EXPR, mixFace, FACE_STYLE } from './faces.js';
 
-// ---------------------------------------------------------------- micro-animation timing (FORENSIC.md section 3)
+// ---------------------------------------------------------------- micro-animation timing (reference study, tools/forensic/microanim.mjs)
 // Reference head moves: 12-15 f, a slow start (7 % of the travel in the first eighth: 0.07 0.21 0.34 0.48 0.63 0.75 0.86 1),
 // then a long hold that still breathes. slowIn is that spacing (0.07 at 1/8, 0.50 at 1/2, 0.93 at 7/8).
 export const MOVE_T = 13;
@@ -171,7 +171,7 @@ const ACCENT = {
 // rise with a small overshoot. Fast change: 2 f anticipation, a 6 f rise. Take: the take's own phases (dip in the
 // anticipation, up on ones on the face's accent frames, hold, settle on twos), so face and head hit together (ASK p. 286).
 // Small take: no anticipation, a third of the size. Held (breathing) until the next change or ACC_HOLD frames, then
-// released over ACC_OUT frames. 1.6x the old size (FORENSIC: the reference's big beats travel ~2.3 W).
+// released over ACC_OUT frames. 1.6x the old size (reference study: the reference's big beats travel ~2.3 W).
 const ACC_A = 3, ACC_HOLD = 60, ACC_OUT = 24, ACC_K = 2.0, ACC_DIP = 0.3, SMALL_K = 0.3;
 const easeOut = x => 1 - (1 - clamp(x, 0, 1)) ** 2;
 // a take's accent eased at both ends (a face style may ask for it: TAKE.sine): the easeOut accent moved a third of the change in its first frame

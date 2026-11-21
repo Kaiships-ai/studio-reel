@@ -53,11 +53,10 @@ Walks: start a walk at `f: -14` (frame 0 lands mid-stride; `f: 0` pops the knees
 `wave_small` (a `gesture wave` popped 38.7 deg/f).
 
 Joint gate (≤ 25 deg/f): nod, tilt, shrug, wave, finger_wave, slump, idle, talk, look_at, turn_to are safe. fist_pump,
-point, cough, startle, wave_small used to pop 26-52 deg/f; they now carry the built-in ease above and pass (worst 24.4 deg/f,
-`films/stick-fxkit/review/verbs-after.txt`). Keep two body verbs of one hand ≥ their ease apart; a FAIL line lists the top 5
-frames.
+point, cough, startle, wave_small used to pop 26-52 deg/f; they now carry the built-in ease above and pass (worst 24.4 deg/f).
+Keep two body verbs of one hand ≥ their ease apart; a FAIL line lists the top 5 frames.
 
-## Body acting (`engine/poses.js`; proof sheet `films/stick05-q2-verbs/review/verbs_ms.jpg`)
+## Body acting (`engine/poses.js`)
 
 Every lead acts with the whole body (gate: ≥ 70 % of its frames). A pose rises with anticipation (3 f the other way),
 overshoots and settles, keeps moving in the hold, then releases; the arms trail the body by 2 f, the head by 4 f. A pose
@@ -176,7 +175,7 @@ with no `fwd` gets `fwd: 0.2` (at 0 the torso hides it); a `shimmer` behind him 
 | `thermo` | `at, scale`; keys `show` 0..1, `temp` (°F on a 50-420 scale: small real gaps do not read), `shake` | `set` show |
 | `pack`, `bill`, `arm`, `prop` | dye pack; one red bill; a bare arm (`shoulder`, keys `hand`, `bend`); a set prop's keyed parts (`prop, keys, phaseRate`) | `set` |
 
-## Explainer effects (`lib/props/explain.js`; proof sheet `films/stick-fxkit/review/fxkit_sheet.jpg`)
+## Explainer effects (`lib/props/explain.js`)
 
 Use one on the key word of every line that describes a process, a number or a comparison. All are toon with an ink outline.
 Defaults when a key is left out: rays `n 3, r 0.035, spread 0.22, grow 0.35 s, life ∞`; flow `r 0.035, pips 4, grow 0.7 s,
@@ -190,8 +189,8 @@ bars `h 0.6, w 0.16`; split `h 2.2, gap 1.3, lh 0.26`; stamp `h 0.32, tilt -8, l
 | `shimmer` | wavy heat lines rise off something hot | `at, w, h, n`; key `heat` 0..1 | `heat: { kind: 'shimmer', at: { head: 'bram', up: -0.7, fwd: -0.18 }, w: 1.0, h: 1.2 }` · `{ who: 'heat', do: 'set', key: 'heat', to: 1, dur: 10 }` |
 | `cutbox` | a cylinder or box swings its front half open to show the inside (section edges, a core with a gap round it) | `at, shape` (cylinder / box), `r, w, d, h, th, coreR, shell, cut, core`; keys `open`, `show` | `cut: { kind: 'cutbox', at: 'bench_top', r: 0.22, h: 0.55 }` · `{ who: 'cut', do: 'set', key: 'open', to: 1, dur: 18 }` |
 | `callout` | (banned in reels: use a `sign` plaque) a zoom ring round a detail with a leader and a label | `at, r, text, dir` ([x,y] in units of r), `h`; key `show` | `look: { kind: 'callout', at: [0.17, 0.85, 1.22], r: 0.11, text: 'AIR GAP', dir: [-2.4, 2] }` · `set show to 1, ease 'back'` |
-| `bars` | a bar chart grows, values count up with the bars | `at, values, labels, colors, max, h, w, unit`; keys `show, grow, v0, v1...` | `chart: { kind: 'bars', at: 'bench_top', values: [41, 12], labels: ['TIGHT', 'LOOSE'], unit: '°' }` · `set show 1, then grow 1 (dur 24)` |
-| `split` | two sides compared: an ink bar wipes in between them, a VS badge pops, labels slide in | `at, h, gap, labels, colors, lh, badge`; key `show` 0..1 | `vs: { kind: 'split', at: [0, -0.15, 0], h: 2.3, gap: 1.7, labels: ['WHITE', 'BLACK'] }` · `set show to 1, dur 24, ease 'linear'` |
+| `bars` | (banned in reels by the floating labels gate: use a `meter` or a `sign`) a bar chart grows, values count up with the bars | `at, values, labels, colors, max, h, w, unit`; keys `show, grow, v0, v1...` | `chart: { kind: 'bars', at: 'bench_top', values: [41, 12], labels: ['TIGHT', 'LOOSE'], unit: '°' }` · `set show 1, then grow 1 (dur 24)` |
+| `split` | (banned in reels by the floating labels gate: put each side on a `sign`) two sides compared: an ink bar wipes in between them, a VS badge pops, labels slide in | `at, h, gap, labels, colors, lh, badge`; key `show` 0..1 | `vs: { kind: 'split', at: [0, -0.15, 0], h: 2.3, gap: 1.7, labels: ['WHITE', 'BLACK'] }` · `set show to 1, dur 24, ease 'linear'` |
 | `stamp` | (banned in reels by the floating labels gate: use a `sign`) a big word or number slams in (`{n}` counts with key `n`); `tail: 'left'/'right'` makes it a speech bubble (quoted lines) | `at, text, h, color, tilt, frame, tail, life` | `same: { kind: 'stamp', at: [0, -0.5, 1.15], text: 'SAME', h: 0.55 }` · `do: 'fire'` |
 
 Sound names (`styles/stick-man/tools/sound_bank.py` BANK): slide thud rustle ting ding whoosh step_l step_r step beep tick poof

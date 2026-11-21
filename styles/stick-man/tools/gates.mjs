@@ -37,7 +37,7 @@ still == null ? missing('still frames') : gate('still frames', still < 1, `${sti
 
 // (b) camera speed
 const cam = /camera speed at 720p: peak ([\d.]+) px\/frame \(frame (\d+)\)/.exec(R);
-// a ceiling only (FORENSIC.md fix 2: the reference rushes at 97-106 px/f p90, max 142 at 1080 = 95 at 720; the old 25 px/f cap
+// a ceiling only (reference study: the reference rushes at 97-106 px/f p90, max 142 at 1080 = 95 at 720; the old 25 px/f cap
 // was the opposite of the reference). The rush itself is the forensic `rush peak` gate.
 cam ? gate('camera speed', Number(cam[1]) <= 95, `${cam[1]} px/f (frame ${cam[2]})`, '<= 95 px/f at 720p') : missing('camera speed');
 
@@ -79,7 +79,7 @@ else if (fpop.length) {
   const ft = actors.map(([, n, b]) => [n, /face faults: (.*)/.exec(b)?.[1]]).filter(x => x[1] != null && x[1] !== 'none');
   gate('face timing', !ft.length, ft.length ? ft.map(x => `${x[0]}: ${x[1]}`).join(' | ') : 'none', 'rise >= 6 f, hold >= 6 f, 2-6 changes / 10 s, <= 4 takes / min, 12-30 blinks / min');
 }
-// mouth range (FORENSIC.md fix 8: reference mouth-area CV 0.33-0.56, ours was 0.06-0.21): an actor who talks >= 30 frames
+// mouth range (`mouth movement` in forensic/measure.py: reference mouth-area CV 0.33-0.56, ours was 0.06-0.21): an actor who talks >= 30 frames
 // opens and closes the mouth for real. Head holds / moves are principles (report line "micro:"), not gates.
 const mouths = actors.map(([, n, b]) => { const m = /mouth CV ([\d.]+) over (\d+) talking frames/.exec(b); return m && +m[2] >= 30 ? [n, +m[1]] : null; }).filter(Boolean);
 if (mouths.length) { const w = mouths.reduce((a, b) => (b[1] < a[1] ? b : a)); gate('mouth range', w[1] >= 0.4, `lowest CV ${w[1]} (${w[0]})`, '>= 0.4 per talking actor'); }
@@ -215,7 +215,7 @@ const lines = [`gates for ${path.basename(A.in)} (report ${path.basename(A.repor
 const fails = G.filter(g => !g[2]).length;
 lines.push(fails ? `${fails} of ${G.length} gates FAIL` : `all ${G.length} gates PASS`);
 const SG = A.film ? await story(A.film) : [];
-// forensic gates (FORENSIC.md ranked fixes 1-10, measured on the mp4 by the scripts that measured the reference)
+// forensic gates (forensic/measure.py, measured on the mp4 by the scripts that measured the reference)
 const FG = [];
 if (A.film) {
   const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -224,7 +224,7 @@ if (A.film) {
   if (r.status || !fs.existsSync(out)) FG.push(['forensic', 'measure.py failed: ' + String(r.stderr || '').slice(-300), false, 'runs']);
   else for (const [n, ok, got, want] of JSON.parse(fs.readFileSync(out, 'utf8')).gates) FG.push([n, got, ok, want]);
 }
-if (FG.length) { const ff = FG.filter(g => !g[2]).length; lines.push('', 'forensic gates (FORENSIC.md fixes 1-10)', ...FG.map(fmt), ff ? `${ff} of ${FG.length} forensic gates FAIL` : `all ${FG.length} forensic gates PASS`); }
+if (FG.length) { const ff = FG.filter(g => !g[2]).length; lines.push('', 'forensic gates (tools/forensic/measure.py)', ...FG.map(fmt), ff ? `${ff} of ${FG.length} forensic gates FAIL` : `all ${FG.length} forensic gates PASS`); }
 if (SG.length) { const sf = SG.filter(g => !g[2]).length; lines.push('', `story gates (${A.film}/storyboard.json)`, ...SG.map(fmt), sf ? `${sf} of ${SG.length} story gates FAIL` : `all ${SG.length} story gates PASS`); }
 { const all = [...G, ...SG, ...FG], w = all.filter(waived).length, b = all.filter(g => !g[2] && !waived(g)).length;
   lines.push('', `profile ${PROFILE}: ${all.length - b - w} PASS, ${b} blocking FAIL${w ? `, ${w} reference gates WAIVED` : ''}`); }
@@ -283,12 +283,12 @@ async function story(film) {
   const est = kinds.filter(k => ['est', 'aerial'].includes(k)), ins = kinds.filter(k => ['insert', 'macro', 'top'].includes(k));
   sg('establishing shot', est.length > 0, est.join(', ') || 'none', '>= 1 est / aerial');
   sg('insert shot', ins.length > 0, ins.join(', ') || 'none', '>= 1 insert / macro / top');
-  // 3c shot sizes (FORENSIC.md fix 5): establishing + wide >= 30 % of frames, low angle >= 7 % (reference 32 %, 7.3 %)
+  // 3c shot sizes (reference study): establishing + wide >= 30 % of frames, low angle >= 7 % (reference 32 %, 7.3 %)
   const shareOf = ks => Math.round(1000 * rows.filter(r => ks.includes(kindOf(r))).length / rows.length) / 10;
   const ew = shareOf(['est', 'aerial', 'wide']), lo = shareOf(['low']);
   sg('wide share', ew >= 30, `${ew} % est / aerial / wide`, '>= 30 % of frames');
   sg('low angle share', lo >= 7, `${lo} % low`, '>= 7 % of frames');
-  // 3d open on the verb (FORENSIC.md fix 6): a character is mid-action (a body verb) in >= 10 of frames 0-20
+  // 3d open on the verb (reference study): a character is mid-action (a body verb) in >= 10 of frames 0-20
   const open = rows.filter(r => r.f <= 20 && Object.values(r.actors).some(a => a.inFrame && (a.verb || []).some(v => !['talk', 'look', 'blink'].includes(v)))).length;
   sg('open on the verb', open >= 10, `${open} of the first 21 frames show a body verb`, '>= 10 of frames 0-20');
   // 4 + 5 every line has an entry; its props / fx are seen (>= 3 frames in its window); >= 40 % of lines use one
@@ -319,7 +319,7 @@ async function story(film) {
   // floating labels: stamp / callout / bars / split entries seen >= 3 frames anywhere in the reel
   const LABELS = ['stamp', 'callout', 'bars', 'split'], DIAGRAM = ['rings', 'flow', 'rays', 'star', 'shimmer'];   // lib/props/physfx.js
   const lab = {}; for (const r of rows) for (const n of r.seen || []) if (LABELS.includes(makeKind(r.act, n))) lab[`${r.act}.${n}`] = (lab[`${r.act}.${n}`] || 0) + 1;
-  // 0 (FORENSIC.md fix 9): the reference has no text stickers in 4 videos; a fact goes on a sign, label, poster or paper
+  // 0: the reference has no text stickers in 4 videos; a fact goes on a sign, label, poster or paper
   const labs = Object.entries(lab).filter(([, c]) => c >= 3).map(([k]) => k);
   sg('floating labels', labs.length === 0, `${labs.length} (${labs.join(', ') || '-'})`, '0 (put it on a sign in the world)');
   // every storyboard fx is an in-world kind (labels go in the entry's `labels`, never in `fx`)

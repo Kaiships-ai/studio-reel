@@ -1,4 +1,4 @@
-// Micro-animation numbers from a reel's __dbg rows (shot.mjs --dbg out.jsonl), the same quantities FORENSIC.md section 3
+// Micro-animation numbers from a reel's __dbg rows (shot.mjs --dbg out.jsonl), the same quantities the reference study
 // measured on the reference (pink / jar / rail / pirate) and on our reels:
 //   node styles/stick-man/tools/forensic/microanim.mjs films/x/review/dbg.jsonl [--json out.json]
 // Per actor, frames where it is in frame (dissolve / cut frames end a run):
@@ -48,7 +48,7 @@ export function microanim(rows) {
     const holds = runs(x => x < HOLD, 6).map(([a, b]) => ({ f: rows[a].f, len: b - a }));
     const big = [...moves].sort((a, b) => b.travel - a.travel).slice(0, 6);
     const live = sp.filter(x => x != null).sort((a, b) => a - b);
-    // eighth-spacing of the biggest move (FORENSIC: ref 0.07 in the first eighth, ours 0.12)
+    // eighth-spacing of the biggest move (reference study: ref 0.07 in the first eighth, ours 0.12)
     let spacing = null;
     if (big[0]) { const i0 = rows.findIndex(r => r.f === big[0].f), seg = sp.slice(i0, i0 + big[0].len).map(x => x || 0), tot = seg.reduce((a, b) => a + b, 0);
       spacing = Array.from({ length: 8 }, (_, k) => +(seg.slice(0, Math.round(seg.length * (k + 1) / 8)).reduce((a, b) => a + b, 0) / tot).toFixed(2)); }

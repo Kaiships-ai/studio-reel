@@ -1,6 +1,6 @@
 // Building blocks for a set file (SETS.md "Add a new set in 15 minutes"): boxes, cylinders, spheres and painted cards in
 // Blender metres (x right, y into the scene, z up), each added to the scene with shadows and, for solid pieces, the ink
-// line. A set's build(stage, opts) starts with `const k = setKit(stage)` and returns { props }.
+// line. An older builder nothing uses: a new set starts with allout/kit.js `createKit` (SETS.md); dress.js imports canvasTex.
 import * as THREE from 'three';
 import { B, lin, std } from '../../engine/look.js';
 

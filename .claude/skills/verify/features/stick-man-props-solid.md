@@ -5,7 +5,7 @@ engine built, not a hand list a film keeps.
 
 ## Sub-features
 
-- Solids from the set's geometry (`engine/solids.js`): every opaque `BoxGeometry` mesh of the act (setKit `K.box`
+- Solids from the set's geometry (`engine/solids.js`): every opaque `BoxGeometry` mesh of the act (`createKit` `K.box`
   walls, furniture, floors, jambs), outside the set's props and the actors, plus the set's `COLLIDE`. A mesh with
   `userData.hollow` is left out, so are ink hulls (BackSide) and see-through or hidden meshes. Each box is judged by its
   geometry's own bounding box (a set may translate the geometry).

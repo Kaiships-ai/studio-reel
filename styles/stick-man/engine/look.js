@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 // sun direction (three world, toward the sun) for the light-driven figure outline (cast.js hull shader), set on each render
 export const INK_SUN = { value: new THREE.Vector3(0, 1, 0) };
-// per-place light (FORENSIC.md section 6: every reference place has its own light; ours had one flat daylight). The toon
+// per-place light (reference study: every reference place has its own light; ours had one flat daylight). The toon
 // ramp below is intensity-free (only the sun's direction and shadow pick the tone), so a place is lit through these shared
 // uniforms: lit / shade tint the two ends of the ramp, lamp adds the practical lights (point lights, fill) on top.
 // Defaults (1, 1, 0) leave every existing reel exactly as it was. Set per act by play.js from the act's `light`.
@@ -423,7 +423,7 @@ export function createStage({ width, height, faceInk = false, exposure = 0.88, i
         float l = dot(c, vec3(0.2126,0.7152,0.0722));
         c = mix(vec3(l), c, sat);
         // split tone: shade leans blue-lilac, light leans warm, like the sunlit reference sets
-        // (FORENSIC.md fix 16: reference shadow pixels are cool and saturated, hue 212-301 deg, sat 0.35-0.54; ours were warm
+        // (reference study: reference shadow pixels are cool and saturated, hue 212-301 deg, sat 0.35-0.54; ours were warm
         // or grey). Only the deep shadows lean blue (l < ~0.35): round 1 pushed the mids too and washed the frame purple
         float sh = 1.0 - smoothstep(0.05, 0.35, l), hi = smoothstep(0.55, 0.95, l);
         c *= mix(vec3(1.0), vec3(0.84, 0.92, 1.18), sh*split) * mix(vec3(1.0), vec3(1.03, 1.0, 0.95), hi*split);
