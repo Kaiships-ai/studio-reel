@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
-import { run } from '../../kit/env.mjs';
+import { run, env } from '../../kit/env.mjs';
 import { abtest, pickSides, verdictOf } from '../../styles/stick-man/tools/abtest.mjs';
 
 test('pickSides: the same seed gives the same sides, both sides are used, A and B are old and new', () => {
@@ -19,8 +19,9 @@ test('verdictOf maps the reviewer winner through the key and refuses a tie', () 
   assert.throws(() => verdictOf({ winner: 'tie' }, key), /not A or B/);
 });
 
+const T = env().tools, skip = !(T?.ffmpeg && T?.ffprobe) && 'needs ffmpeg (pixi run studio install)';
 const clip = (f, src, dur) => run('ffmpeg', ['-y', '-v', 'error', '-f', 'lavfi', '-i', `${src}=size=270x480:rate=30:duration=${dur}`, '-pix_fmt', 'yuv420p', f], { capture: true });
-test('abtest builds sbs.mp4 (720 x 640) and a sheet, records the key, never shows the reviewer which is new', async () => {
+test('abtest builds sbs.mp4 (720 x 640) and a sheet, records the key, never shows the reviewer which is new', { skip }, async () => {
   const d = fs.mkdtempSync(path.join(os.tmpdir(), 'abtest-')), old = path.join(d, 'old.mp4'), neu = path.join(d, 'new.mp4');
   assert.equal(clip(old, 'testsrc', 2).status, 0); assert.equal(clip(neu, 'smptebars', 3).status, 0);
   let seen;
