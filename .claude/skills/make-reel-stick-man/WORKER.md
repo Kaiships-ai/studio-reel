@@ -17,7 +17,7 @@ and report its message.
   script (`latest.rebuild`).
   - Here: through the render lock, one heavy render at a time.
   - `--on pro` (the Mac Pro): ssh cannot read `~/Desktop` there (macOS privacy), so work through the Orca server
-    `mac-pro` (`orca terminal create --environment mac-pro …`) in `PRO_REPO=/Users/kienbeovl/Desktop/kaiships/studio-reel`:
+    `mac-pro` (`orca terminal create --environment mac-pro --worktree path:$PRO_REPO --command …`), `PRO_REPO=/Users/kienbeovl/Desktop/ten-million-views/studio-reel`:
     pull `origin/main` (`git fetch -q origin && git checkout -q --detach origin/main`), copy `films/<film>/` over
     (without `renders/`), run the film's build script, copy `renders/` back. Put the printed commit in `kit_commit`.
 
