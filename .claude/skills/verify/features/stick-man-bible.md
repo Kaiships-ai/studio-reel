@@ -18,22 +18,24 @@ finding. Dev only: `styles/stick-man/` is under `[dev]` in `kit.manifest`.
 
 ## How to get to it (user POV)
 
-`node styles/stick-man/bible/check.mjs films/hm-ep01-r2 --parts s4,s5,s6` prints the report in Vietnamese (`--json`
+`node styles/stick-man/bible/check.mjs films/hm-ep01/parts/gun` prints the report in Vietnamese (`--json`
 for the data). Rendering a governed film (`shot.mjs --film films/<slug>/<part> ...`) runs the same check first.
 
 ## Driving it
 
-- Blocks: `node styles/stick-man/bible/check.mjs films/hm-ep01-r2 --parts s4,s5,s6` exits 1 with
-  `BLOCK · 53 blocking ... library share 16 clip / 140 hand-keyed actions (10%)`.
+- Blocks: `node styles/stick-man/bible/check.mjs films/hm-ep01/parts/gun` exits 1 with
+  `BLOCK · 18 blocking ... library share 6 clip / 24 hand-keyed actions (20%)`.
 - Passes: `node styles/stick-man/bible/check.mjs films/hm-bible-s5` exits 0 with `PASS ... (68%), 88% of actor-frames`.
-- Gate: `node styles/stick-man/tools/shot.mjs --film films/hm-ep01-r2/s5 --frames 1100 --w 720 --h 1280 --out f_%d.jpg`
-  exits 1 with `render refused: BLOCK 21 blocking` before a browser starts; the same command on `films/hm-bible-s5`
+- Gate: `node styles/stick-man/tools/shot.mjs --film films/hm-ep01/parts/gun --frames 1150 --w 720 --h 1280 --out f_%d.jpg`
+  exits 1 with `render refused: BLOCK 18 blocking` before a browser starts; the same command on `films/hm-bible-s5`
   writes the still.
 - Regression: `node --test test/unit/stick-bible*.test.mjs`.
 
 ## Gotchas
 
-- `films/hm-ep01-r2/reel.js` is a stub act with no name; the check reports it under its file. The episode's acts are in
-  its parts, so check it with `--parts` or one part at a time.
+- `films/hm-ep01/reel.js` is a stub act with no name; the check reports it under its file. The episode's acts are in
+  `films/hm-ep01/parts/<seg>`, so check one part at a time. The catalog's `kit` paths for Hot Money point at
+  `films/hm-ep01/shared/r2` (a film imports them as `/films/hm-ep01/shared/r2/...`). The folders under `shared/` are
+  import sources, not films.
 - The check imports the film's modules in node with stubs for `fetch` and a 2D canvas; a film that needs a real browser
   API at import time fails to load (exit 2) and the render is refused.

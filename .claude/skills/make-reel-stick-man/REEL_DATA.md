@@ -1,7 +1,7 @@
 # Reel data (`films/<slug>/storyboard.json`, `reel.js`)
 
 Plain data modules. `styles/stick-man/engine/play.js` reads `reel.js` and `vo/words.json`; every frame is a pure function of
-its number. Worked example: Hot Money ep01 r5 (films/hm-ep01-r5 once moved into the repo). `new_film.mjs` writes this skeleton.
+its number. Worked example: Hot Money ep01 (`films/hm-ep01`, git-ignored). `new_film.mjs` writes this skeleton.
 
 ## Storyboard (`storyboard.json`)
 
@@ -111,7 +111,7 @@ import { hold, polishAt } from '/styles/stick-man/lib/acting/keys.js';   // STAN
 export const CUTS = [0, 30, 60 /* ... */];   // the animatic's cut frames
 const polish = polishAt(CUTS);               // the poses stay; a key on a cut stays a snap; others hold, then move T frames before the next
 anim: { eng: polish([ hold(0, { ...KNEEL, pos: E0, yaw: -120, expr: 'sly', look: 'joint' }), hold(8, { stroke: 1, ... }), ... ]) }
-// KNEEL, E0 and the other pose / position constants: the film's own reel.js (Hot Money ep01 r5 (films/hm-ep01-r5 once moved into the repo))
+// KNEEL, E0 and the other pose / position constants: the film's own reel.js (Hot Money ep01 (`films/hm-ep01`, git-ignored))
 ```
 
 | Key field | Meaning |
@@ -128,7 +128,7 @@ anim: { eng: polish([ hold(0, { ...KNEEL, pos: E0, yaw: -120, expr: 'sly', look:
 
 ### Face timing
 
-`engine/acting.js` times every expression change by its class (films/hm-ep01-r2/review/face-research.md section 10).
+`engine/acting.js` times every expression change by its class (Hot Money's r2 face research, section 10).
 Frames are at 30 fps, counted from the key.
 
 | Class | Faces | Timing |

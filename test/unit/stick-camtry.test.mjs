@@ -221,3 +221,13 @@ test('--frames is checked: A-B, in order, inside the segment', async () => {
   assert.deepEqual([J.window, J.change], [[1400, 1500], [1400, 1500]]);
   fs.rmSync(out, { recursive: true, force: true });
 });
+
+test('a segment test film in films/<slug>/parts/<seg> is preferred over the sibling films/<slug>-<seg>', () => {
+  const lib = fs.mkdtempSync(path.join(os.tmpdir(), 'camtry-parts-')), film = path.join(lib, 'hm-ep01');
+  fs.cpSync(path.join(LIB, 'hm-ep01-r5'), film, { recursive: true });
+  fs.cpSync(path.join(LIB, 'hm-ep01-r5-chase'), path.join(lib, 'hm-ep01-chase'), { recursive: true });
+  const boot = () => path.relative(lib, resolve('đoạn đua xe, nâng lên chút', filmIndex(film)).seg.boot);
+  assert.equal(boot(), 'hm-ep01-chase', 'the old sibling form still works');
+  fs.cpSync(path.join(LIB, 'hm-ep01-r5-chase'), path.join(film, 'parts/chase'), { recursive: true });
+  assert.equal(boot(), path.join('hm-ep01', 'parts', 'chase'));
+});

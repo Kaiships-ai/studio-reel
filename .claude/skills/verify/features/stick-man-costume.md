@@ -48,8 +48,8 @@ than the hood's clearance).
   that frame); the next frame the cords move off with the body (`Cloth.carry`); the hood builds its lag again from rest
   within two frames. `node styles/stick-man/tools/cordjump.mjs` plays every motion-lib clip on every body it plays on in
   the real hoodie and lists the frames the rule fires on: none (largest travel 0.23 m/frame, change 0.16, turn 18 deg). Before the
-  17/11 fix the Hot Money ep01 r2 bank cuts (s6 f1633 and f1662, 3.5 m) were eased across in 8 sub-steps: the cord was
-  flung sideways and shook for 15 frames (`cords: shake` 0.56 at f1664). Check: `shot.mjs --film films/hm-ep01-r2/s6
+  17/11 fix the Hot Money ep01 bank cuts (s6 f1633 and f1662, 3.5 m) were eased across in 8 sub-steps: the cord was
+  flung sideways and shook for 15 frames (`cords: shake` 0.56 at f1664). Check: `shot.mjs --film films/hm-ep01/parts/banks
   --frames 1600-1700 --dbg …` reads `jump` on 1633 and 1662 only, and the rows before the first jump are byte-identical
   to a run without the fix. A pose that snaps by a few cm at a cut (s6 f1971) is no jump and still flicks the cords.
 - The report runs on a multi-act film directed one shot per frame (every frame a cut: `faults.mjs camStats` prints

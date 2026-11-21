@@ -1,4 +1,4 @@
-// Face changes stay smooth when keys come close together (films/hm-ep01-r2/review/face-research.md, rule 1): a new
+// Face changes stay smooth when keys come close together (Hot Money r2 face research, rule 1): a new
 // change blends from the face on screen, never from the previous target. SH240's keys (panic 0, shock 8, sad 12,
 // happy 17) made the brow jump -12.1 -> -19.8 deg in one frame, away from the new target.
 import test from 'node:test';
