@@ -17,8 +17,8 @@
 // a gasp, so each frame of a change is its own drawing (the reference redraws a face ~5 times in 12 frames).
 import * as THREE from 'three';
 import { css, INK_RGB } from './look.js';
+import { DEG, clamp } from './mathx.js';
 
-const DEG = Math.PI / 180;
 // Expression table. eye: oval (ink oval -> ring with `white` 1) | happy (^) | content (u, eyes shut softly) | pinch
 // (> <, squeezed shut). rx, ry = eye radii (W); lid = top lid cut 0..1 (0.5 = half the eye), lidTilt = deg (+ = inner
 // end lower: angry), lidA = extra lid on the figure's right eye (asymmetry), low = cheek push from below 0..1; white =
@@ -347,17 +347,17 @@ const LIDG = new Set(['rx', 'ry', 'lid', 'lidTilt', 'lidA', 'low', 'white', 'pup
 // teeth} or null), gasp (0..1 extra open in a change) }. Returns the drawable face and the blink it forces (0..1).
 export function mixFace(st) {
   const aObj = st.a && typeof st.a === 'object', A = aObj ? st.a : faceParams(st.a), B = faceParams(st.b ?? (aObj ? st.a.name : st.a));
-  const cl = x => Math.max(0, Math.min(1, x)), u = st.u ?? 1, U = st.uf || {}, L = st.life || {};
-  const ub = U.brow ?? u, ul = U.lid ?? u, um = U.mouth ?? u, ug = U.gaze ?? st.ug ?? u, uc = cl(ub), umc = cl(um), antic = st.antic || 0;
+  const u = st.u ?? 1, U = st.uf || {}, L = st.life || {};
+  const ub = U.brow ?? u, ul = U.lid ?? u, um = U.mouth ?? u, ug = U.gaze ?? st.ug ?? u, uc = clamp(ub), umc = clamp(um), antic = st.antic || 0;
   const F = { ...B };
   // the eyes move on their own clock (a 3-frame saccade) and along an arc, not a straight line: a pupil crossing from
   // one side to the other dips a little at the middle, as an eyeball rolls (asset 2.6)
   for (const k of NUM) { const w = GAZE.has(k) ? ug : LIDG.has(k) ? ul : MOUTHG.has(k) ? um : ub; F[k] = A[k] + (B[k] - A[k]) * w; }
-  F.gy = -GAZE_ARC.k * Math.min(1, Math.abs(B.gx - A.gx) + 0.5 * Math.abs(B.cross - A.cross)) * Math.sin(Math.PI * cl(ug));
+  F.gy = -GAZE_ARC.k * Math.min(1, Math.abs(B.gx - A.gx) + 0.5 * Math.abs(B.cross - A.cross)) * Math.sin(Math.PI * clamp(ug));
   if (st.pupil) F.gx = Math.max(-1.2, Math.min(1.2, F.gx + st.pupil));
-  F.white = cl(F.white); F.bw = Math.max(0.6, F.bw);
+  F.white = clamp(F.white); F.bw = Math.max(0.6, F.bw);
   F.brow = A.brow.map((x, i) => x + (B.brow[i] - x) * ub);
-  F.skin = Object.fromEntries(Object.keys(B.skin).map(k => [k, cl((A.skin[k] || 0) + (B.skin[k] - (A.skin[k] || 0)) * uc)]));
+  F.skin = Object.fromEntries(Object.keys(B.skin).map(k => [k, clamp((A.skin[k] || 0) + (B.skin[k] - (A.skin[k] || 0)) * uc)]));
   F.eye = st.swapEye == null ? (uc < 0.5 ? A.eye : B.eye) : st.swapEye ? B.eye : A.eye; F.mouth = umc < 0.5 ? A.mouth : B.mouth;
   F.lid = Math.max(0, Math.min(0.9, F.lid + (LIDDED.has(F.eye) ? (L.lid || 0) * (1 - F.white) : 0)));   // a ring eye has no idle lid drift: on a ring it draws a ruler line
   F.ry = Math.max(0.02, F.ry); F.rx = Math.max(0.02, F.rx); F.pupil = Math.max(0.008, F.pupil);
@@ -387,7 +387,7 @@ export function mixFace(st) {
   if (FACE_STYLE.name) {
     const XA = A.x || {}, XB = B.x || {}; F.x = {};
     for (const k of new Set([...Object.keys(XA), ...Object.keys(XB)])) { const a0 = XA[k] ?? 0, b0 = XB[k] ?? 0, w = k[0] === 'g' ? ug : k[0] === 'e' ? ul : k[0] === 'm' ? um : ub; F.x[k] = a0 + (b0 - a0) * w; }
-    F.style = B.style; F.antic = antic; F.mid = { b: Math.sin(Math.PI * cl(ub)), e: Math.sin(Math.PI * cl(ul)), m: Math.sin(Math.PI * cl(um)) };
+    F.style = B.style; F.antic = antic; F.mid = { b: Math.sin(Math.PI * clamp(ub)), e: Math.sin(Math.PI * clamp(ul)), m: Math.sin(Math.PI * clamp(um)) };
     F.dEye = Math.sign((B.ry + 0.5 * B.rx) - (A.ry + 0.5 * A.rx));
   }
   if (st.talk) {
@@ -453,9 +453,8 @@ export function drawFaceState(g, F, blink = 0, t = 0, o = {}) {
   skin(g, F.skin, ey, dx, t);
   // a mark that still reaches above the plate fades out whole (a brow cut flat or an eye cut in half by the brim reads as a
   // drawing error; a mark that is not there reads as covered)
-  const cl = x => Math.max(0, Math.min(1, x));
-  const browA = o.top == null ? 1 : cl(1 - ((ey + bh + Math.max(0, arch, liftL, liftR) + 0.03 * (F.bw || 1)) * K - o.top) / 0.035);
-  const eyeA = o.top == null ? 1 : cl(1 - ((ey + F.ry) * K - o.top) / 0.05);
+  const browA = o.top == null ? 1 : clamp(1 - ((ey + bh + Math.max(0, arch, liftL, liftR) + 0.03 * (F.bw || 1)) * K - o.top) / 0.035);
+  const eyeA = o.top == null ? 1 : clamp(1 - ((ey + F.ry) * K - o.top) / 0.05);
   for (const s of [-1, 1]) {
     const ex = s * dx;
     if (eyeA > 0.01) { g.globalAlpha = eyeA; eye(g, Fe, ex, s, ey, blink, !!o.glasses); }

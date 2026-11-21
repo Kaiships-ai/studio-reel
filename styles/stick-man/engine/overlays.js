@@ -11,18 +11,17 @@
 // enter: 'pop' (overshoot in over 5 frames, shrink out over the last 4), 'fade' (alpha in and out), 'none' (on for the
 // whole span: a label or clock carried across cuts or ticks)
 import * as THREE from 'three';
+import { clamp, smooth } from './mathx.js';
 
 const ORANGE = '#f08a2c', INK = '#141414', RED = '#e23b3b';
-const clamp01 = u => (u < 0 ? 0 : u > 1 ? 1 : u);
 const pop = u => (u < 0 ? 0 : u >= 1 ? 1 : 1 + 0.18 * Math.sin(Math.PI * u) * (1 - u) - Math.pow(1 - u, 3));   // overshoot, settle
-const smooth = u => u * u * (3 - 2 * u);
 const ENTER = { text: 'pop', loupe: 'pop', arrows: 'pop', meter: 'fade', path: 'fade' };
 
 // scale and alpha of an overlay on frame f
 export function envelope(o, f, from = o.from) {
-  const enter = o.enter ?? ENTER[o.kind] ?? 'pop', u = (f - from) / 5, out = clamp01((o.to - f) / 4);
+  const enter = o.enter ?? ENTER[o.kind] ?? 'pop', u = (f - from) / 5, out = clamp((o.to - f) / 4);
   if (enter === 'none') return { s: 1, a: 1 };
-  if (enter === 'fade') return { s: 1, a: Math.min(clamp01(u), out) };
+  if (enter === 'fade') return { s: 1, a: Math.min(clamp(u), out) };
   return { s: pop(u) * out, a: 1 };
 }
 
@@ -31,7 +30,7 @@ export function valueAt(keys, f) {
   if (!keys?.length) return 0;
   let i = 0; while (i < keys.length - 1 && keys[i + 1][0] <= f) i++;
   const [fa, va] = keys[i], [fb, vb] = keys[Math.min(keys.length - 1, i + 1)];
-  return fb > fa ? va + (vb - va) * smooth(clamp01((f - fa) / (fb - fa))) : va;
+  return fb > fa ? va + (vb - va) * smooth((f - fa) / (fb - fa)) : va;
 }
 
 export function createOverlays({ stage, width, height, list = [] }) {
@@ -104,7 +103,7 @@ export function createOverlays({ stage, width, height, list = [] }) {
     // a labelled bar on a dark panel: label left, value right, the bar below; the value moves smoothly between keys
     meter(g, o, f, { a }) {
       const px = (o.size ?? 46) * k, W = (o.width ?? 0.6) * width, pad = px * 0.45, barH = px * 0.72;
-      const max = o.max ?? 100, v = valueAt(o.keys, f), share = clamp01(v / max);
+      const max = o.max ?? 100, v = valueAt(o.keys, f), share = clamp(v / max);
       const pw = W + 2 * pad, ph = px + barH + 3 * pad, x0 = o.at[0] * width - pw / 2, y0 = o.at[1] * height - ph / 2;
       g.save(); g.globalAlpha *= a;
       g.save(); g.globalAlpha *= 0.82; g.fillStyle = INK; rrect(g, x0, y0, pw, ph, pad); g.fill(); g.restore();
@@ -137,7 +136,7 @@ export function createOverlays({ stage, width, height, list = [] }) {
       const pieces = pts.slice(1).map((q, i) => piece(pts[i], q)).filter(Boolean);
       for (const s of pieces) s.len = Math.hypot(s.b[0] - s.a[0], s.b[1] - s.a[1]);
       const total = pieces.reduce((x, s) => x + s.len, 0), dur = o.dur ?? Math.round((o.to - o.from) * 0.6);
-      const grow = dur > 0 ? clamp01((f - o.from) / dur) : 1;
+      const grow = dur > 0 ? clamp((f - o.from) / dur) : 1;
       const lw = (o.width ?? 12) * k, dash = o.dash === 'dash' ? [lw * 2.4, lw * 1.8] : [0.01, lw * 2.2];
       let tip = null;
       const line = () => {

@@ -272,7 +272,7 @@ const EXPR_POSES = { panic: ['flail', 'cower'], scream: ['flail', 'cower'], angr
   suspicious: ['arms_crossed', 'think'], deadpan: ['arms_crossed'], manic: ['flail', 'laugh'], closed: ['laugh', 'shrug'],
   laugh: ['laugh', 'celebrate'], skeptic: ['arms_crossed', 'think'], bored: ['arms_crossed', 'hands_on_hips'] };   // names added by the face rebuild
 const DEFAULT_POSES = ['hands_on_hips', 'present', 'arms_crossed', 'shrug', 'think', 'lean_in'];
-const norm = w => w.toLowerCase().replace(/[^a-z0-9'-]/g, '');
+const normKeepHyphen = w => w.toLowerCase().replace(/[^a-z0-9'-]/g, '');
 export function autoActing({ R, actors, words, fps, win }) {
   if (R.auto === false) return [];
   const out = [], subj = new Set((R.shots || []).flatMap(s => s.of || []));
@@ -290,7 +290,7 @@ export function autoActing({ R, actors, words, fps, win }) {
         const n = Math.max(1, Math.round(len / 48)), L = len / n;          // fewer, bigger poses, held longer
         for (let k = 0; k < n; k++) {
           const s = Math.round(g0 + k * L), e = Math.round(g0 + (k + 1) * L);
-          const said = words.filter(w => w.t1 * fps > s && w.t0 * fps < e + 6).map(w => norm(w.word));
+          const said = words.filter(w => w.t1 * fps > s && w.t0 * fps < e + 6).map(w => normKeepHyphen(w.word));
           const ex = exprKeyAt(a.exprs, s + 10).expr, cand = [];
           for (const w of said) for (const [re, ps] of TEXT_POSES) if (re.test(w)) cand.push(...ps);
           cand.push(...(EXPR_POSES[ex] || []), ...DEFAULT_POSES.slice((a.seed + i) % DEFAULT_POSES.length), ...DEFAULT_POSES);

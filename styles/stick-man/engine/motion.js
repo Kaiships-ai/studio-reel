@@ -20,6 +20,8 @@
 import { PHYS, footDown } from './body.js';
 import { expandClips } from '../motion-lib/index.js';
 import { holdLife, HOLD_LAG } from './acting.js';
+import { W_M } from './cast.js';
+import { DEG, clamp, smooth } from './mathx.js';
 export const MOTION_POSES = {};
 // the style dials: how far this film bends each of the 12 principles, 0 = toward live simulation, 1 = toward stylised
 // animation, 0.5 = the kit as authored (a reel without `style` plays exactly as before). The body's physics (rig B1-B6)
@@ -42,7 +44,6 @@ const dial = (k, lo = 0, hi = 2) => Math.max(lo, Math.min(hi, 2 * CUR[k]));
 // key and the landing key the height follows a parabola with g = 9.8 m/s2 and the travel a straight line at constant
 // speed, whatever keys an animator put in between. The time in the air is the animator's; the height it allows is not.
 export const G = 9.8, FPS = 30;
-const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 
 // ---------------------------------------------------------------- poses as flat channel maps
 // nested pose objects <-> flat maps ('armR.raise' -> 40); arrays index as 'legL.foot.0'
@@ -220,11 +221,10 @@ function holdWeights(track, F0, F1) {
     const x = clamp(SETTLE_WALK * 100 * travel(track[j], B), 0, SETTLE_MAX);
     stops.push({ f: B.f, v: { 'spine.bend': x, 'neck.nod': x } });
   }
-  const sm = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
   const fade = on => { const since = [], until = [];
     for (let i = 0, d = 1e9; i < n; i++) { d = on[i] ? 0 : d + 1; since[i] = d; }
     for (let i = n - 1, d = 1e9; i >= 0; i--) { d = on[i] ? 0 : d + 1; until[i] = d; }
-    return since.map((s, i) => sm(s / HOLD_IN) * sm(until[i] / HOLD_OUT)); };
+    return since.map((s, i) => smooth(s / HOLD_IN) * smooth(until[i] / HOLD_OUT)); };
   const still = fade(moving), own = fade(baked);
   return { w: still.map((s, i) => own[i] * s), stops };
 }
@@ -296,7 +296,6 @@ export function playActor(track, F0, F1, opt = {}) {
 // ---------------------------------------------------------------- from channels to the figure's pose (cast.js S.pose2)
 // footW (Blender world, planted) is turned into the figure frame from the frame's own root, so a planted foot stays put
 // scale: the figure's root scale (a child, a 'scale:k' costume), so a planted foot lands where it was keyed in metres
-const W_M = 0.60, DEG = Math.PI / 180;
 export function toPose(m, scale = 1) {
   const Q = unflatten(m);
   const pos = Q.pos || [0, 0], yaw = (Q.yaw || 0) * DEG;
