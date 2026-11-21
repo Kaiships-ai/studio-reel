@@ -439,7 +439,7 @@ export function coach(K, { parent = K.root, name = 'coach', color = [0.36, 0.13,
       c.fillStyle = 'rgba(255,255,255,0.18)'; c.beginPath(); c.moveTo(cx - ww / 2 + 6, y0 + ww / 2); c.lineTo(cx - ww / 6, y0 + ww / 2); c.lineTo(cx - ww / 2 + 6, y1 - 10); c.fill();
       c.fillStyle = 'rgba(255,215,140,0.25)'; c.fillRect(cx - ww / 2, y1 - 26, ww, 22); }
   });
-  const sideM = K.mat([1, 1, 1], 0.55, { map: side, physical: true, clearcoat: 0.25 }), body = K.mat(color, 0.6), dark = K.mat([0.07, 0.06, 0.06], 0.5, { metal: 0.3 }), gold = K.mat(trim, 0.3, { metal: 0.8 });
+  const body = K.mat(color, 0.6), dark = K.mat([0.07, 0.06, 0.06], 0.5, { metal: 0.3 }), gold = K.mat(trim, 0.3, { metal: 0.8 });
   const roofM = K.mat([0.16, 0.10, 0.08], 0.7), endM = K.mat(cc.clone().multiplyScalar(0.8).toArray(), 0.6, { map: tex(256, 256, (c, w, h) => { c.fillStyle = hx; c.fillRect(0, 0, w, h); for (let x = 0; x < w; x += 16) { c.fillStyle = 'rgba(0,0,0,0.3)'; c.fillRect(x, 0, 2, h); } }) });
   K.box([-W, 0.6, z0], [W, L - 0.6, z1], body, { parent: g, r: 0.04 });
   for (const sx of [-1, 1]) K.card([sx * (W + 0.006), L / 2, (z0 + z1) / 2], L - 1.2, z1 - z0, side, { parent: g, rotZ: sx * 90, env: 0.6 });

@@ -40,7 +40,7 @@ export const SURF = {
     const k = 0.92 + 0.12 * r(); const cc = col(c); g.fillStyle = `rgb(${255 * Math.min(1, cc.r ** (1 / 2.2) * k)},${255 * Math.min(1, cc.g ** (1 / 2.2) * k)},${255 * Math.min(1, cc.b ** (1 / 2.2) * k)})`; g.fillRect(i * s, j * s, s, s); }
     g.strokeStyle = hex(grout); g.lineWidth = 5; for (let i = 0; i <= n; i++) { g.beginPath(); g.moveTo(i * s, 0); g.lineTo(i * s, h); g.stroke(); g.beginPath(); g.moveTo(0, i * s); g.lineTo(w, i * s); g.stroke(); } }),
   // checker lino (two colours)
-  checker: (a, b, n = 8) => tex(512, 512, (g, w, h) => { const s = w / n; for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) { g.fillStyle = (i + j) % 2 ? hex(a) : hex(b); g.fillRect(i * s, j * s, s, s); } }),
+  checker: (a, b, n = 8) => tex(512, 512, (g, w) => { const s = w / n; for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) { g.fillStyle = (i + j) % 2 ? hex(a) : hex(b); g.fillRect(i * s, j * s, s, s); } }),
   // planks along u
   wood: (c, n = 6, seed = 3) => tex(512, 512, (g, w, h) => { const r = rng(seed), s = h / n, cc = col(c);
     for (let j = 0; j < n; j++) { const k = 0.85 + 0.25 * r(); g.fillStyle = `rgb(${255 * Math.min(1, cc.r ** (1 / 2.2) * k)},${255 * Math.min(1, cc.g ** (1 / 2.2) * k)},${255 * Math.min(1, cc.b ** (1 / 2.2) * k)})`; g.fillRect(0, j * s, w, s);

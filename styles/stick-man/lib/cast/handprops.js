@@ -5,21 +5,13 @@
 //   mode 'along' = its +y follows the forearm out of the fist (hammer, pencil, drumstick, megaphone)
 //   mode 'both'  = held between both hands, upright (box, crate)
 import * as THREE from 'three';
-import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
-import { toon, lin, INK_RGB } from '../../engine/look.js';
+import { toon, lin } from '../../engine/look.js';
+import { solid as inkSolid } from '../../engine/cast.js';
 
-const W = 0.60, INK_T = 0.032 * W;
-const hullMat = new THREE.MeshBasicMaterial({ color: lin(...INK_RGB), side: THREE.BackSide });
-function hull(geo) {
-  let g = geo.clone(); for (const k of Object.keys(g.attributes)) if (k !== 'position') g.deleteAttribute(k);
-  g = mergeVertices(g, 1e-5); g.computeVertexNormals();
-  const p = g.attributes.position, n = g.attributes.normal;
-  for (let i = 0; i < p.count; i++) p.setXYZ(i, p.getX(i) + n.getX(i) * INK_T, p.getY(i) + n.getY(i) * INK_T, p.getZ(i) + n.getZ(i) * INK_T);
-  return g;
-}
+const W = 0.60, INK_T = 0.032 * W;          // W = cast.js W_M, written out: cast.js imports this file, so W_M is not set yet here
+// a toon solid with the engine's light-aware ink hull (cast.js imports this file: inkSolid is only called after both load)
 function solid(geo, col, o = {}) {
-  const m = new THREE.Mesh(geo, toon(col, { sheen: 0.25, rough: 0.5, ...o })); m.castShadow = true; m.receiveShadow = true;
-  const h = new THREE.Mesh(hull(geo), hullMat); m.add(h); m.layers.enable(1); return m;
+  const m = inkSolid(geo, toon(col, { sheen: 0.25, rough: 0.5, ...o }), INK_T); m.layers.enable(1); return m;
 }
 const cyl = (r0, r1, h, n = 24) => new THREE.CylinderGeometry(r0, r1, h, n);
 

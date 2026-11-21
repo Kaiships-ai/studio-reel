@@ -4,7 +4,7 @@
 // audio/sound-plan.json: { "scenes": [ { "scene": "S5", "bed": "...", "foley": ["..."], "music": "build|hold|silence|drop|...",
 //   "silence": "why", "transition": "J|L|none" } ] }
 import fs from 'node:fs'; import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { run } from '../../../kit/env.mjs';
 import { fileURLToPath } from 'node:url';
 import { finalRender } from './renders.mjs';
 
@@ -38,7 +38,7 @@ const hooks = fs.existsSync(F('deliver')) ? fs.readdirSync(F('deliver')).filter(
 if (!hooks.length) add('WARN', 'P3', 'no alternative hook cut (deliver/hook-*.mp4) for an A/B test');
 // ---- the final file's spec
 if (final) {
-  const p = spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'stream=codec_type,width,height,r_frame_rate:format=duration', '-of', 'json', F(`renders/${final}`)], { encoding: 'utf8' });
+  const p = run('ffprobe', ['-v', 'error', '-show_entries', 'stream=codec_type,width,height,r_frame_rate:format=duration', '-of', 'json', F(`renders/${final}`)], { capture: true });
   if (p.status === 0) {
     const j = JSON.parse(p.stdout), v = j.streams.find(s => s.codec_type === 'video'), a = j.streams.find(s => s.codec_type === 'audio');
     if (!v || v.width !== 1080 || v.height !== 1920) add('FAIL', 'P4', `${final} is ${v?.width}x${v?.height}, not 1080x1920`);

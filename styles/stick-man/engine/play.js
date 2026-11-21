@@ -6,7 +6,7 @@
 import * as THREE from 'three';
 import { createStage, B as toThree, lin, PLACE } from './look.js';
 import { makeStick, KAI, TELLER, GUARD, HEAD_C } from './cast.js';
-import { VERBS, STAND, SIT, REST_ARM, W, lerp, lerp3, add3, angDiff, toLocal, smoother, hash, handEase } from './verbs.js';
+import { VERBS, STAND, SIT, REST_ARM, W, DEG, lerp, lerp3, add3, angDiff, toLocal, smoother, hash, handEase } from './verbs.js';
 import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, exprAccent, bodyFollow, LATE, EXPR_LEAD, exprKeyAt, markOwner, isBodyVerb, autoActing, faceStateAt, visemeTrack, faceChanges, BLINKS, BLINK_GAP, focusEase, blinkAt, isTense, CHEW } from './acting.js';
 import { mixFace, faceParams, designKey, CLENCH, FACE_STYLE } from './faces.js';
 // face timing in the runtime (face-research.md rules 13-14): focus changes, free-blink shape
@@ -39,13 +39,13 @@ const HAND_R = 0.040 * W;                                        // the hand dot
 const THICK = { b1: 0.045, b2: 0.045, stack: 0.07, note: 0.003 };
 const toB = v => [v.x, -v.z, v.y];
 const PROP_IN_MAX = 1.5, PROP_IN_GRACE = 0.02;   // m: a prop this long or longer is a set piece; this far in is touching
-const norm = w => w.toLowerCase().replace(/[^a-z0-9']/g, '');
+const normNoHyphen = w => w.toLowerCase().replace(/[^a-z0-9']/g, '');
 
 async function getJSON(url) { try { const r = await fetch(url); return r.ok ? await r.json() : null; } catch { return null; } }
 
 export function resolveBeatFrame(b, words, fps) {
   if (typeof b.f === 'number') return b.f;
-  const ws = words.filter(w => w.line === b.line && norm(w.word) === norm(b.on));
+  const ws = words.filter(w => w.line === b.line && normNoHyphen(w.word) === normNoHyphen(b.on));
   const w = ws[(b.nth || 1) - 1];
   if (!w) throw new Error(`beat: no "${b.on}" #${b.nth || 1} in ${b.line}`);
   return Math.max(0, Math.round(w.t0 * fps) + (b.offset ?? -2));
@@ -317,9 +317,9 @@ async function buildAct(R, X) {
       if (!F.posed.has(s.actor)) throw new Error(`prop ${n} needs ${s.actor} posed first (cast order)`);
       const hw = handWorld(s.actor, s.side), body = F.bodies[s.actor];
       const u = s.blend ? smoother((f - s.start) / s.blend) : 1, off = s.offFrom ? lerp3(s.offFrom, s.off, u) : s.off;
-      const Rv = [Math.cos(body.yaw * Math.PI / 180), Math.sin(body.yaw * Math.PI / 180)], Fv = [Rv[1], -Rv[0]];
+      const Rv = [Math.cos(body.yaw * DEG), Math.sin(body.yaw * DEG)], Fv = [Rv[1], -Rv[0]];
       const ow = s.offW || [Rv[0] * off[0] + Fv[0] * off[2], Rv[1] * off[0] + Fv[1] * off[2], off[1]];
-      if (!s.keepRot) rot = (body.yaw + (s.yaw || 0)) * Math.PI / 180;
+      if (!s.keepRot) rot = (body.yaw + (s.yaw || 0)) * DEG;
       tilt = s.tilt || [0, 0];
       // a carried prop swings a little with the steps, about the hand (the grip stays in the hand)
       if ((s.swing || o.userData.grip) && body.walking != null) {
@@ -519,11 +519,11 @@ async function buildAct(R, X) {
   const fenv = { at: spec => {
     if (Array.isArray(spec)) return spec;
     if (typeof spec === 'string') return livePos(spec);
-    if (spec.head) { const a = byName[spec.head], h = toB(a.S.parts.head.getWorldPosition(hv)), y = F.bodies[spec.head].yaw * Math.PI / 180;
+    if (spec.head) { const a = byName[spec.head], h = toB(a.S.parts.head.getWorldPosition(hv)), y = F.bodies[spec.head].yaw * DEG;
       const fw = spec.fwd || 0, sd = spec.side || 0;                // fwd: where he faces; side: toward his LEFT (screen right when he faces the camera)
       return [h[0] + Math.sin(y) * fw + Math.cos(y) * sd, h[1] - Math.cos(y) * fw + Math.sin(y) * sd, h[2] + (spec.up || 0)]; }
     // sole: the body channel's floor point (pos + yaw, no lean or bob): a holster on the hip that does not swing with the head
-    if (spec.sole) { const b = F.bodies[spec.sole] || bodyAt(byName[spec.sole], F.f), y = b.yaw * Math.PI / 180, fw = spec.fwd || 0, sd = spec.side || 0;
+    if (spec.sole) { const b = F.bodies[spec.sole] || bodyAt(byName[spec.sole], F.f), y = b.yaw * DEG, fw = spec.fwd || 0, sd = spec.side || 0;
       return [b.pos[0] + Math.sin(y) * fw + Math.cos(y) * sd, b.pos[1] - Math.cos(y) * fw + Math.sin(y) * sd, b.pos[2] + (spec.up || 0)]; }
     return add3(livePos(spec.prop), spec.off || [0, 0, 0]);
   } };
@@ -575,12 +575,12 @@ async function buildAct(R, X) {
     if (F.f !== f) poseAll(f);
     // light.camKey { az, el } (deg): the key light comes from beside and above the lens every shot (the cartoon cheat: the face
     // in the shot is lit, whichever way it faces), shadows fall away from the camera
-    if (LT?.camKey) { const F = cam.aim.map((x, i) => x - cam.pos[i]), a = Math.atan2(F[0], F[1]) + (LT.camKey.az ?? 30) * Math.PI / 180, e = (LT.camKey.el ?? 35) * Math.PI / 180;
+    if (LT?.camKey) { const F = cam.aim.map((x, i) => x - cam.pos[i]), a = Math.atan2(F[0], F[1]) + (LT.camKey.az ?? 30) * DEG, e = (LT.camKey.el ?? 35) * DEG;
       stage.setSun([Math.sin(a) * Math.cos(e), Math.cos(a) * Math.cos(e), -Math.sin(e)], R.sun?.center || SET.SUN_CENTER, R.sun?.half || SET.SUN_HALF); }
     const px = height / 1920;
     stage.camera.setViewOffset(width, height, cam.offset[0] * px, cam.offset[1] * px, width, height);
     stage.setCamera(cam.pos, cam.aim, cam.lens);
-    if (cam.roll) { stage.camera.rotateZ(cam.roll * Math.PI / 180); stage.camera.updateMatrixWorld(); }   // dutch tilt
+    if (cam.roll) { stage.camera.rotateZ(cam.roll * DEG); stage.camera.updateMatrixWorld(); }   // dutch tilt
     // depth of field: a band round the focus (macro: a thin one, so the prop and its label stay sharp and the room melts)
     if (cam.dof > 0.02) { const d = Math.hypot(...cam.pos.map((x, i) => x - cam.focus[i])), bd = cam.band || [0.86, 1.22];
       stage.setDof({ near: d * bd[0], far: d * bd[1], gain: 2.4 * cam.dof, px: cam.band ? 20 : 14 }); }
@@ -651,7 +651,7 @@ async function buildAct(R, X) {
     // actor against the set's collision boxes (1 cm grace), and torso against torso
     const torsoPts = a => { const r = a.S.rig, wq = q => toB(q.clone().multiplyScalar(W).applyMatrix4(a.S.root.matrixWorld));
       const hip = wq(r.L.hip.clone().add(r.R.hip).multiplyScalar(0.5)), sh = wq(r.L.shoulder.clone().add(r.R.shoulder).multiplyScalar(0.5));
-      const y = F.bodies[a.name].yaw * Math.PI / 180, Rv2 = [Math.cos(y), Math.sin(y)], Fv2 = [Math.sin(y), -Math.cos(y)], pts = [];
+      const y = F.bodies[a.name].yaw * DEG, Rv2 = [Math.cos(y), Math.sin(y)], Fv2 = [Math.sin(y), -Math.cos(y)], pts = [];
       for (const u of [0, 0.5, 1]) for (const sx of [-1, 0, 1]) for (const sy of [-1, 0, 1]) {
         const c = lerp3(hip, sh, u); pts.push([c[0] + Rv2[0] * 0.15 * sx + Fv2[0] * 0.11 * sy, c[1] + Rv2[1] * 0.15 * sx + Fv2[1] * 0.11 * sy, c[2] + (u - 0.5) * 0.06]); }
       return pts; };

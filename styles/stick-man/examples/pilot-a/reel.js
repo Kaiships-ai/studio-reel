@@ -12,13 +12,12 @@ import { hold, polishAt } from '/styles/stick-man/lib/acting/keys.js';
 const set = (who, key, to, f = -30, dur = 0, ease) => ({ f, who, do: 'set', key, to, dur, ...(ease ? { ease } : {}) });
 const anim = (...names) => Object.fromEntries(names.map(n => [n, { kind: 'ao_anim', prop: n }]));
 const JX = OX + 0.7175;                                   // the hero joint (blue right rail, y = 0)
-const E1 = [OX + 1.4, -0.15, 0], E0 = [OX + 1.05, -0.15, 0], M0 = [RX - 0.9, BK - 7.5, 0];
+const E0 = [OX + 1.05, -0.15, 0], M0 = [RX - 0.9, BK - 7.5, 0];
 // panel cut frames from the animatic (ffmpeg scene detect): 1.0 1.0 .9 1.5 1.2 1.4 1.8 1.1 1.6 1.5 1.4 1.1 1.9 1.1 2.0 s
 export const CUTS = [0, 30, 60, 87, 132, 168, 210, 264, 297, 345, 390, 432, 465, 522, 555, 615];
 const KNEEL = { bob: -0.48, spine: { bend: 28 }, neck: { nod: -18 }, armL: { raise: 22, swing: 60, elbow: 40 }, armR: { raise: 18, swing: 70, elbow: 25 },
   legL: { foot: [-0.22, 0.022, 0.45], knee: [-0.1, 0, 1] }, legR: { foot: [0.22, 0.06, -0.48], knee: [0.15, 0, 1], pitch: -60 }, x_hpR_saw: 1 };
 const SAW_UP = { armR: { raise: 30, swing: 20, elbow: 60 }, x_hpR_saw: 1 };
-const POINT = { armR: { raise: 70, swing: 40, elbow: 5 } };
 const CROSS = { armL: { raise: 40, swing: 10, elbow: 110, roll: 70 }, armR: { raise: 40, swing: 10, elbow: 110, roll: 70 }, x_hpR_saw: 0 };
 const HIPS = { armL: { raise: 40, swing: -15, elbow: 105, roll: 70 }, armR: { raise: 40, swing: -15, elbow: 105, roll: 70 }, x_hpR_saw: 0 };
 const polish = polishAt(CUTS);

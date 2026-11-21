@@ -6,19 +6,18 @@
 //   smoke, explosion, crack, shatter, sparks, steam, splash, fall, shock, meter, sign, chalk, speakers, flock
 // Positions: `at` is a Blender point / place / { head: who, ... } like every MAKE kind; sizes in metres.
 import * as THREE from 'three';
-import { lin, toon, INK_RGB } from '../../engine/look.js';
+import { lin, INK_RGB } from '../../engine/look.js';
+import { clamp } from '../../engine/mathx.js';
+import { lcg, toonCache } from '../util.js';
 import { pieceGroup, signTex } from '../sets/dress.js';
 
 const tB = p => new THREE.Vector3(p[0], p[2], -p[1]);
 const tSec = (v, f, fps) => { const t0 = v('t0'); return t0 == null ? -1 : (f - t0) / fps; };
-const clamp01 = x => Math.max(0, Math.min(1, x));
-const easeOut = x => 1 - Math.pow(1 - clamp01(x), 3);
-const back = x => { const t = clamp01(x), c = 1.7; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
-function lcg(seed) { let s = (seed * 9973 + 7) >>> 0 || 1; return () => (s = (s * 16807) % 2147483647) / 2147483647; }
+const easeOut = x => 1 - Math.pow(1 - clamp(x), 3);
+const back = x => { const t = clamp(x), c = 1.7; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
 const INK = lin(...INK_RGB);
 const HULL = new THREE.MeshBasicMaterial({ color: INK, side: THREE.BackSide });
-const MC = new Map();
-const tmat = (rgb, o = {}) => { const k = rgb.join(',') + JSON.stringify(o); if (!MC.has(k)) MC.set(k, toon(rgb, { rough: 0.8, sheen: 0.02, rim: 0.10, ...o })); return MC.get(k); };
+const tmat = toonCache({ rough: 0.8, sheen: 0.02, rim: 0.10 }), MC = new Map();
 const emat = (rgb, k = 1.6) => { const key = 'e' + rgb.join(',') + k; if (!MC.has(key)) MC.set(key, new THREE.MeshBasicMaterial({ color: lin(...rgb).multiplyScalar(k) })); return MC.get(key); };
 // an outlined ball: toon body + ink hull (thickness scales with the ball)
 function puff(rgb, seg = 14) {
@@ -41,7 +40,7 @@ export function makeSmoke(stage, { size = 1.0, count = 14, color = [0.86, 0.86, 
     g.visible = t >= 0 && t < life + 1; if (!g.visible) return;
     for (const p of P) {
       const u = t - p.delay; p.m.visible = u > 0; if (!p.m.visible) continue;
-      const grow = easeOut(u / 0.7), fade = 1 - clamp01((t - life) / 1.0);
+      const grow = easeOut(u / 0.7), fade = 1 - clamp((t - life) / 1.0);
       const s = Math.max(1e-3, p.rad * (0.35 + 0.65 * grow) * (1 + 0.25 * u / life) * (0.25 + 0.75 * fade));
       p.m.scale.setScalar(s);
       p.m.position.copy(p.dir).multiplyScalar(p.dist * grow).add(new THREE.Vector3(0.04 * Math.sin(u * 1.3 + p.wob), rise * u, 0.04 * Math.cos(u * 1.1 + p.wob)));
@@ -66,7 +65,7 @@ export function makeExplosion(stage, { size = 1.2, debris = 16, chunk = [0.32, 0
   }
   g.userData.set = t => {
     g.visible = t >= 0 && t < life + 2; if (!g.visible) return;
-    for (const p of fire) { const k = t < 0.12 ? t / 0.12 : 1, out = 1 - clamp01((t - 0.35) / 0.4); p.m.visible = out > 0.01;
+    for (const p of fire) { const k = t < 0.12 ? t / 0.12 : 1, out = 1 - clamp((t - 0.35) / 0.4); p.m.visible = out > 0.01;
       p.m.scale.setScalar(Math.max(1e-3, p.rad * (0.3 + 0.9 * easeOut(k)) * out)); p.m.position.copy(p.o).multiplyScalar(0.5 + 0.8 * easeOut(t / 0.5)); }
     smoke.userData.set(t - 0.15);
     const G = 9.8;
@@ -104,8 +103,8 @@ export function makeCrack(stage, { size = 1.0, branches = 7, color = INK_RGB, gl
   const chips = []; for (let i = 0; i < 4; i++) { const c = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), tmat([0.6, 0.58, 0.55])); const h = new THREE.Mesh(c.geometry, HULL); h.scale.setScalar(1.2); c.add(h); g.add(c); chips.push({ c, vx: (r() - 0.5) * 1.2, vz: -0.4 - r() * 0.8, s: 0.04 + r() * 0.04 }); }
   g.userData.set = t => {
     g.visible = t >= 0; if (!g.visible) return;
-    const k = clamp01(t / 0.18);
-    for (const s of segs) { const u = clamp01((k - s.userData.at * 0.8) / 0.25); s.visible = u > 0; s.scale.set(Math.max(1e-3, s.userData.L * u), s.userData.w, 1); }
+    const k = clamp(t / 0.18);
+    for (const s of segs) { const u = clamp((k - s.userData.at * 0.8) / 0.25); s.visible = u > 0; s.scale.set(Math.max(1e-3, s.userData.L * u), s.userData.w, 1); }
     if (cloud) cloud.userData.set(t);
     for (const c of chips) { const tt = Math.min(t, 0.9); c.c.visible = t < 1.4; c.c.scale.setScalar(c.s);
       if (face === 'ground') c.c.position.set(c.vx * tt, 0.05 + 1.2 * tt - 4.9 * tt * tt > 0 ? 0.05 + 1.2 * tt - 4.9 * tt * tt : 0.02, c.vz * tt * -0.6);
@@ -212,7 +211,7 @@ export function makeShock(stage, { size = 3, n = 18, color = [0.78, 0.70, 0.58],
     B2.push({ m, a: r() * 6.28, up: 1 + r() * 1.5, sp: 0.5 + r() }); }
   g.userData.set = t => {
     g.visible = t >= 0 && t < life + 0.5; if (!g.visible) return;
-    const k = easeOut(t / life), fade = 1 - clamp01((t - life * 0.6) / (life * 0.5));
+    const fade = 1 - clamp((t - life * 0.6) / (life * 0.5));
     for (const p of P) { const kk = easeOut((t - p.lag) / life), R = size * kk; p.m.visible = t > p.lag; p.m.position.set(Math.cos(p.a) * R, p.s * 0.5, Math.sin(p.a) * R); p.m.scale.setScalar(Math.max(1e-3, p.s * (0.5 + 1.1 * kk) * fade)); }
     for (const b of B2) { const tt = Math.min(t, 1.4), R = size * 0.8 * b.sp * easeOut(tt / 0.8); b.m.position.set(Math.cos(b.a) * R, Math.max(0.01, b.up * tt - 2.5 * tt * tt), Math.sin(b.a) * R); b.m.rotation.set(tt * 7, tt * 4, tt * 3); }
   };
@@ -246,13 +245,13 @@ export function makeMeter(stage, { style = 'db', max = 180, unit = 'dB', label =
     const nd = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.17, 0.006), M([0.85, 0.08, 0.06])); nd.position.y = 0.085; needle.add(nd);
     cyl(0.022, 0.02, [0.1, 0.1, 0.12], 0, y0 + 0.08, 0.11, Math.PI / 2);
     lcd.position.set(0, y0 - 0.2, 0.082); lcd.scale.set(0.34, 0.13, 1); body.add(lcd);
-    if (style === 'db') { const mic = cyl(0.05, 0.22, [0.15, 0.15, 0.17], 0, y0 + 0.42, 0); const ball = new THREE.Mesh(new THREE.SphereGeometry(0.075, 14, 8), M([0.25, 0.25, 0.28])); ball.position.set(0, y0 + 0.55, 0); body.add(ball); }
+    if (style === 'db') { cyl(0.05, 0.22, [0.15, 0.15, 0.17], 0, y0 + 0.42, 0); const ball = new THREE.Mesh(new THREE.SphereGeometry(0.075, 14, 8), M([0.25, 0.25, 0.28])); ball.position.set(0, y0 + 0.55, 0); body.add(ball); }
     const lab = new THREE.Mesh(new THREE.PlaneGeometry(0.44, 0.07), new THREE.MeshBasicMaterial({ map: signTex(label, { bg: [0.05, 0.05, 0.06], fg: [1, 1, 1], border: null, w: 512, h: 80 }) })); lab.position.set(0, y0 + 0.27, 0.082); lab.userData.noPrepass = true; body.add(lab);
   } else if (style === 'lcd') {
     box(0.6, 0.34, 0.2, [0.2, 0.2, 0.22], 0, 0.17, 0); lcd.position.set(0, 0.18, 0.102); lcd.scale.set(0.5, 0.2, 1); body.add(lcd);
     for (const [x, c] of [[-0.22, [0.9, 0.1, 0.1]], [0.0, [0.1, 0.5, 0.9]], [0.22, [0.95, 0.8, 0.2]]]) { const w = cyl(0.012, 0.5, c, x, 0.1, 0.12, Math.PI / 2); w.rotation.z = 1.3; }
   } else if (style === 'thermo') {
-    box(0.24, h, 0.06, [0.96, 0.95, 0.9], 0, h / 2, 0); const tube = cyl(0.03, h * 0.8, [0.85, 0.9, 0.95], 0, h * 0.52, 0.04);
+    box(0.24, h, 0.06, [0.96, 0.95, 0.9], 0, h / 2, 0); cyl(0.03, h * 0.8, [0.85, 0.9, 0.95], 0, h * 0.52, 0.04);
     const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.06, 14, 8), M([0.9, 0.1, 0.08])); bulb.position.set(0, h * 0.1, 0.04); body.add(bulb);
     mercury = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1, 10), M([0.9, 0.1, 0.08])); mercury.position.set(0, h * 0.12, 0.05); body.add(mercury);
     for (let i = 0; i < 9; i++) box(0.06, 0.008, 0.01, [0.05, 0.05, 0.06], -0.07, h * (0.18 + i * 0.085), 0.035);
@@ -262,7 +261,7 @@ export function makeMeter(stage, { style = 'db', max = 180, unit = 'dB', label =
   g.userData.set = ({ show = 1, n = 0, jit = 0 } = {}) => {
     g.visible = show > 0.01; if (!g.visible) return;
     body.position.y = -1.2 * scale * (1 - back(show)) * (style === 'thermo' ? 0 : 1); body.scale.setScalar(scale * (style === 'thermo' ? Math.max(1e-3, back(show)) : 1));
-    const k = clamp01(n / max);
+    const k = clamp(n / max);
     if (needle) needle.rotation.z = Math.PI * 0.75 - k * Math.PI * 1.5 + 0.06 * Math.sin(jit * 40) * (k > 0.6 ? 1 : 0.2);
     if (mercury) { const L = Math.max(0.01, h * 0.72 * k); mercury.scale.y = L; mercury.position.y = h * 0.12 + L / 2; }
     const s = Math.round(n); if (s !== last) { draw(s); last = s; }
@@ -284,7 +283,7 @@ export function makeSign(stage, { text = 'SIGN', sub = null, w = 1.0, h = 0.5, b
   const cv = document.createElement('canvas'), tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
   cv.width = 512; cv.height = Math.max(64, Math.round(512 * h / w));
   const face = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.8 })); face.position.set(0, y0, 0.027); face.userData.noPrepass = true; body.add(face);
-  let last = null; const css = c => `rgb(${c.map(x => Math.round(255 * Math.pow(clamp01(x), 1 / 2.2))).join(',')})`;
+  let last = null; const css = c => `rgb(${c.map(x => Math.round(255 * Math.pow(clamp(x), 1 / 2.2))).join(',')})`;
   const draw = s => { const c = cv.getContext('2d'), W = cv.width, H = cv.height; c.fillStyle = css(bg); c.fillRect(0, 0, W, H); c.strokeStyle = css(fg); c.lineWidth = H * 0.05; c.strokeRect(H * 0.05, H * 0.05, W - H * 0.1, H - H * 0.1);
     let px = Math.floor(H * (sub ? 0.46 : 0.62)); c.font = `900 ${px}px InterReel, Arial, sans-serif`; const tw = c.measureText(s).width; if (tw > W * 0.86) { px = Math.floor(px * W * 0.86 / tw); c.font = `900 ${px}px InterReel, Arial, sans-serif`; }
     c.fillStyle = css(fg); c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(s, W / 2, H * (sub ? 0.42 : 0.53));
@@ -312,7 +311,7 @@ export function makeChalk(stage, { w = 2.4, h = 1.1, lines = [], bars = null, la
   const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
   const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }));
   m.userData.noPrepass = true; const g = new THREE.Group(); g.add(m);
-  const css = (c, a = 1) => `rgba(${c.map(x => Math.round(255 * Math.pow(clamp01(x), 1 / 2.2))).join(',')},${a})`;
+  const css = (c, a = 1) => `rgba(${c.map(x => Math.round(255 * Math.pow(clamp(x), 1 / 2.2))).join(',')},${a})`;
   let last = '';
   const draw = (dr, gr, n) => {
     const key = `${dr.toFixed(3)}|${gr.toFixed(3)}|${n}`; if (key === last) return; last = key;
@@ -320,17 +319,17 @@ export function makeChalk(stage, { w = 2.4, h = 1.1, lines = [], bars = null, la
     c.save(); const total = lines.length + (bars ? 1 : 0); let shown = dr * total;
     c.fillStyle = css(color, 0.92); c.strokeStyle = css(color, 0.9); c.lineCap = 'round'; c.lineJoin = 'round';
     const lh = bars ? H * 0.2 : H / Math.max(1, lines.length) * 0.8;
-    lines.forEach((t, i) => { const k = clamp01(shown - i); if (k <= 0) return; const s = t.replace('{n}', String(Math.round(n)));
+    lines.forEach((t, i) => { const k = clamp(shown - i); if (k <= 0) return; const s = t.replace('{n}', String(Math.round(n)));
       c.font = `700 ${Math.floor(lh * 0.8)}px "Comic Sans MS", "Chalkboard SE", Arial, sans-serif`; c.textAlign = 'left'; c.textBaseline = 'middle';
       const tw = c.measureText(s).width, x0 = (W - tw) / 2, y = lh * (i + 0.6);
       c.save(); c.beginPath(); c.rect(x0 - 5, y - lh / 2, tw * k + 10, lh); c.clip(); c.fillText(s, x0, y); c.restore(); });
     if (bars && shown > lines.length) {
-      const k = clamp01(shown - lines.length), top = lh * (lines.length + 0.2), base = H * 0.93, mx = max || Math.max(...bars), bw = W / (bars.length * 1.8);
+      const k = clamp(shown - lines.length), top = lh * (lines.length + 0.2), base = H * 0.93, mx = max || Math.max(...bars), bw = W / (bars.length * 1.8);
       c.lineWidth = 6; c.beginPath(); c.moveTo(W * 0.08, top); c.lineTo(W * 0.08, base); c.lineTo(W * 0.08 + (W * 0.86) * k, base); c.stroke();
       bars.forEach((v, i) => { const x = W * 0.12 + i * (W * 0.84 / bars.length) + bw * 0.3, bh = (base - top - 30) * (v / mx) * easeOut(gr);
         if (bh > 2) { c.strokeStyle = css(i === bars.length - 1 ? yellow : color, 0.9); c.lineWidth = 7; c.strokeRect(x, base - bh, bw, bh);
           for (let yy = base - 12; yy > base - bh; yy -= 16) { c.beginPath(); c.moveTo(x + 4, yy); c.lineTo(x + bw - 4, yy - 10); c.stroke(); } }
-        c.fillStyle = css(color, 0.9); c.font = `700 ${Math.floor(H * 0.08)}px "Comic Sans MS", Arial, sans-serif`; c.textAlign = 'center'; c.fillText(labels[i] || '', x + bw / 2, base + H * 0.0 - 6 - bh - H * 0.04); });
+        c.fillStyle = css(color, 0.9); c.font = `700 ${Math.floor(H * 0.08)}px "Comic Sans MS", Arial, sans-serif`; c.textAlign = 'center'; c.fillText(labels[i] || '', x + bw / 2, base - 6 - bh - H * 0.04); });
     }
     c.restore(); tex.needsUpdate = true;
   };
@@ -355,7 +354,7 @@ export function makeSpeakers(stage, { n = 5, step = 0.42, labels = [], h0 = 0.25
   }
   g.userData.set = ({ grow = 0, show = 1, t = 0, pump = 0 } = {}) => {
     g.visible = show > 0.01 && grow > 0.001; if (!g.visible) return;
-    for (const p of S) { const k = back(clamp01(grow * n - p.i)); p.s.visible = k > 0.01; p.s.scale.set(1, Math.max(1e-3, k), 1);
+    for (const p of S) { const k = back(clamp(grow * n - p.i)); p.s.visible = k > 0.01; p.s.scale.set(1, Math.max(1e-3, k), 1);
       const z = 1 + (pump > 0 ? 0.25 * pump * (p.i + 1) / n * Math.max(0, Math.sin(t * 28 + p.i)) : 0); for (const c of p.cones) c.scale.set(z, 1, z); }
   };
   g.userData.set({}); return g;
@@ -382,7 +381,6 @@ export function makeFlock(stage, { n = 6, span = 30, speed = 2.5, dir = [1, 0.2]
 // label budget (<= 3 per 30 s, storyboard `labels`); DIAGRAM: floating marks that are neither (rings, arrows, rays, star)
 export const LABELS = ['stamp', 'callout', 'bars', 'split'];
 export const DIAGRAM = ['rings', 'flow', 'rays', 'star', 'shimmer'];
-const groundZ = (o, p) => (o.ground ?? 0) - p[2];
 export const PHYS = {
   smoke: (stage, o, ctx) => { const g = makeSmoke(stage, o); ctx.group.add(g); return { obj: g, apply: (v, f, env) => { g.position.copy(tB(env.at(o.at))); g.userData.set(tSec(v, f, ctx.fps)); } }; },
   explosion: (stage, o, ctx) => { const p0 = ctx.point(Array.isArray(o.at) || typeof o.at === 'string' ? o.at : [0, 0, 0]);

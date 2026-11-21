@@ -4,12 +4,11 @@
 //   hand targets:   { w: [x,y,z] } world, { l: [u,v,z] } figure-local (W units), { rest: true }, plus optional bend
 //   prop segments:  { prop, start, mode: 'rest' | 'hand' | 'fn' | 'bag', ... }
 import { W_M, LIMB, legReach } from './cast.js';
+import { DEG, clamp, smooth, lerp } from './mathx.js';
 
-export const W = W_M, DEG = Math.PI / 180;
-export const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
-export const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+export { DEG, clamp, smooth, lerp };
+export const W = W_M;
 export const smoother = x => { x = clamp(x, 0, 1); return x * x * x * (x * (x * 6 - 15) + 10); };
-export const lerp = (a, b, t) => a + (b - a) * t;
 export const lerp3 = (a, b, t) => a.map((x, i) => x + (b[i] - x) * t);
 export const add3 = (a, b) => a.map((x, i) => x + b[i]);
 export const angDiff = (a, b) => ((b - a) % 360 + 540) % 360 - 180;

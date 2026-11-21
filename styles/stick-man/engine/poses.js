@@ -8,11 +8,10 @@
 //   plus elbow (pole) and bend; props {L|R|B: kind} (lib/cast/handprops.js), tilt {L|R: deg}; cycle(t) = moving hold.
 // Every verb takes `at` (frame), `hold` (frames held, default per pose), `dur` (action frames), `out` (release frames),
 // `hand` ('L' mirrors a one-handed pose), `amp` (0..1.5 size). VERBS.md "Body acting" has one line and an example each.
-import { STAND, SIT, clamp, smooth, smoother, lerp, toLocal } from './verbs.js';
+import { STAND, SIT, DEG, clamp, smooth, smoother, lerp, toLocal } from './verbs.js';
 import { HEAD_C, HIP_V } from './cast.js';
 import { slowIn, MOVE_T } from './acting.js';
 
-const DEG = Math.PI / 180;
 export const LAG_A = 2, LAG_H = 4;
 const BODY = ['bob', 'lean', 'pitch', 'dx', 'shTwist', 'hipTwist', 'shrug', 'footPitchL', 'footPitchR'];
 const HEAD = ['head_pitch', 'head_tilt', 'head_dx', 'head_dv'];

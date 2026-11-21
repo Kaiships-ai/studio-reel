@@ -15,13 +15,13 @@
 // Designs: y_ the lead's faces, c_ a second character's (Hot Money's cop).
 import { EXPR, STYLE_DRAW, FACE_STYLE, DRAW_KIT as K, mixFace } from '../faces.js';
 import { FACE_TIMING, TAKE, SMALL_TAKE, BLINKS, CHEW } from '../acting.js';
+import { DEG, clamp, lerp } from '../mathx.js';
 
-const DEG = Math.PI / 180, cl = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x)), lerp = (a, b, w) => a + (b - a) * w;
-const sineIO = x => 0.5 - 0.5 * Math.cos(Math.PI * cl(x));
+const sineIO = x => 0.5 - 0.5 * Math.cos(Math.PI * clamp(x));
 const chewPh = (F, t, late = 0) => (F.chewX || 0) * Math.sin(Math.PI * (t - late) / CHEW.T) ** 2;
 const chewSide = (t, late = 0) => Math.sin(Math.PI * (t - late) / CHEW.T);
-const bump = (a, a0, len) => Math.sin(Math.PI * cl((a - a0) / len)) ** 2;
-const r2k = F => cl(Math.sqrt(230 / Math.max(40, F.hpx || 230)), 1, 1.75);
+const bump = (a, a0, len) => Math.sin(Math.PI * clamp((a - a0) / len)) ** 2;
+const r2k = F => clamp(Math.sqrt(230 / Math.max(40, F.hpx || 230)), 1, 1.75);
 const LEAD = 0.50, LEAD_M = 0.30, RAMP_LEAD = 0.18, RAMP_LEAD_M = 0.10;
 const SHUT = 0.6;   // the crunch share at which the squint has closed to a line (beyond it the line bends into > <)
 const DARTS = [-0.9, 0.8, -0.3, 0.95, -0.7, 0.2, 0.85, -0.6];
@@ -50,8 +50,8 @@ function plate3(top, bot, P) {
   R.sh = lo <= hi ? Math.min(Math.max(0, lo), hi) : lo;
   let over = bt * R.sc + R.sh - top;
   if (over > 0 && P.lift > 0) { const lc = Math.min(over / R.sc, P.lift); R.lk = 1 - lc / P.lift; over -= lc * R.sc; }
-  R.browA = cl(1 - over / 0.035);
-  R.eyeA = cl(1 - (P.eyeTop * R.sc + R.sh - top) / 0.05);
+  R.browA = clamp(1 - over / 0.035);
+  R.eyeA = clamp(1 - (P.eyeTop * R.sc + R.sh - top) / 0.05);
   return R;
 }
 // the head's turn (o.sl = [face yaw rad, dy, vis, sin elevation]): the marks follow the skull to YK (a hood's side rim is
@@ -69,7 +69,7 @@ function turn(o) {
   if (o.edge && ya > yk2) { const e2 = YK + (yk2 - YK) * YS; eff = ya >= yc ? ya : e2 + (ya - yk2) * (yc - e2) / (yc - yk2); }
   const m = x => Math.min(1, Math.max(0, x - (o.topKnee || 0)) / 0.3);
   const [f0, f1] = o.edge ? TUNE.yfCap : [TUNE.yf0, TUNE.yf1];
-  return { a: cl((f1 - ya) / (f1 - f0)), ux: R0 * Math.sin(sg * (eff - ya)),
+  return { a: clamp((f1 - ya) / (f1 - f0)), ux: R0 * Math.sin(sg * (eff - ya)),
     top: o.top == null ? null : o.top + (o.topSide || 0) * (m(ya) - m(eff)), bot: (o.edge ? TUNE.botCap : TUNE.botHood) - (sl ? sl[1] : 0) };
 }
 // a take into a design with x.zRamp = N: its accent re-timed over N frames from the key, eased at both ends (eyes on the
@@ -89,7 +89,7 @@ function mouthDrop(F) {
   const X = F.x, open = Math.max(X.mOpen || 0, F.talk ? F.talk.open : 0), c = X.mC ?? 0;
   if ((F.chewX || 0) > 0.02) return 0.08;
   if ((X.mGrim || 0) > 0.02) return 0.045;
-  if (open >= 0.06) return c > 0.4 ? 0.040 + 0.110 * cl(open, 0, 1.2) - 0.034 * c + 0.01 : 0.016 + 0.105 * cl(open, 0, 1.2);
+  if (open >= 0.06) return c > 0.4 ? 0.040 + 0.110 * clamp(open, 0, 1.2) - 0.034 * c + 0.01 : 0.016 + 0.105 * clamp(open, 0, 1.2);
   return 0.03;
 }
 function crescent(g, ex, s, by, tilt, arch, half, th, end = 0.25) {
@@ -98,7 +98,7 @@ function crescent(g, ex, s, by, tilt, arch, half, th, end = 0.25) {
   K.taper(g, pts, th, K.INK, end);
 }
 // the line an eye closes to: tilted like the brow, sagging a little (sk: the sag's share); mid(uu) is its height at uu = (x - ex) / w
-const shutMid = (s, w, tilt, sk = 1) => { const tin = -Math.tan(cl(tilt, -30, 30) * DEG) * 0.55, sag = 0.18 * w * sk; return uu => -tin * w * s * uu - sag * (1 - uu * uu); };
+const shutMid = (s, w, tilt, sk = 1) => { const tin = -Math.tan(clamp(tilt, -30, 30) * DEG) * 0.55, sag = 0.18 * w * sk; return uu => -tin * w * s * uu - sag * (1 - uu * uu); };
 // the shut eye bending into a chevron pointing at the nose (cr 0..1); at cr 0 it is the squint's last line
 function shutEye(g, ex, s, y, w, k, tilt, cr, sk = 1) {
   const mid = shutMid(s, w, tilt, sk), h = 0.95 * w, apex = ex - s * w * 0.80, pts = [];
@@ -121,15 +121,15 @@ function almondPts(ex, yc, w, hT, hB, e, mid, q) {
 // harder all through the hold, no face key of its own; a change out of it starts from the squeeze's end)
 const crunch = F => (F.x.eCr || 0) + (F.x.eCrR || 0) * (F.chg?.A?.x?.eCrR ? 1 : sineIO(((F.age ?? 0) - 4) / 20));
 function eye4(g, F, ex, s, ey, blink, t, k, tilt, gxs, life) {
-  const mid0 = F.mid ? F.mid.e : 0, st = cl(1 + 0.22 * mid0 * (F.dEye || 0) - 0.30 * (F.antic || 0) + (F.x.eSt || 0) + life - 0.18 * cl(chewPh(F, t, 1)), 0.5, 1.5);
-  const cr = cl(crunch(F)), cq = cl(cr / SHUT), bl = cl(blink), q = 1 - (1 - cq) * (1 - bl);
+  const mid0 = F.mid ? F.mid.e : 0, st = clamp(1 + 0.22 * mid0 * (F.dEye || 0) - 0.30 * (F.antic || 0) + (F.x.eSt || 0) + life - 0.18 * clamp(chewPh(F, t, 1)), 0.5, 1.5);
+  const cr = clamp(crunch(F)), cq = clamp(cr / SHUT), bl = clamp(blink), q = 1 - (1 - cq) * (1 - bl);
   const rx = F.rx * st ** -0.6 * (1 + 0.10 * bl), ry0 = F.ry * st, w = rx * (1 - 0.08 * q), yc = ey - ry0 * 0.10 * q, h = ry0 * (1 - q);
   // a squeeze (not a blink) closes to a straight level line: a sagging line read sleepy, one tilted like worried brows sad
   const tE = tilt * (1 - cq), sk = 1 - cq;
-  if (q >= 0.999 || h < 0.006) { shutEye(g, ex, s, yc, w, k * (1 + (F.x.shutDK || 0)), tE, cl((cr - SHUT) / (1 - SHUT)), sk); return; }
+  if (q >= 0.999 || h < 0.006) { shutEye(g, ex, s, yc, w, k * (1 + (F.x.shutDK || 0)), tE, clamp((cr - SHUT) / (1 - SHUT)), sk); return; }
   const mid = shutMid(s, w, tE, sk), e = 0.5 + 0.35 * cq, lw = 0.018 * k, pts = almondPts(ex, yc, w, h, h, e, mid, q);
   // the design's lids (a lid share L from the top, a raised lower lid) clip the almond, never below a white slit
-  const L = Math.min(0.89, cl(F.lid, 0, 0.92)), slope = Math.tan((F.lidTilt || 0) * DEG) * s, low = cl(F.low || 0);
+  const L = Math.min(0.89, clamp(F.lid, 0, 0.92)), slope = Math.tan((F.lidTilt || 0) * DEG) * s, low = clamp(F.low || 0);
   let top = yc + h * (1 - 2 * L), lowY = yc - h + low * h * 1.2;
   const minOpen = (0.056 + 0.012 * (k - 1)) * (1 - q);
   if (top - lowY < minOpen) { const c = Math.min(Math.max((top + lowY) / 2, yc - h + minOpen / 2), yc + h - minOpen / 2); top = c + minOpen / 2; lowY = c - minOpen / 2; }
@@ -138,9 +138,9 @@ function eye4(g, F, ex, s, ey, blink, t, k, tilt, gxs, life) {
   g.beginPath(); g.moveTo(ex - 0.3, top + m0 - 0.3 * slope); g.lineTo(ex + 0.3, top + m0 + 0.3 * slope); g.lineTo(ex + 0.3, lowY + m0); g.lineTo(ex - 0.3, lowY + m0); g.closePath(); g.clip();
   K.fill(g, pts, K.WHITE);
   g.save(); K.path(g, pts, true); g.clip();
-  const wP = cl(F.prev ? F.prev[0].white : F.white || 0), kp = 1 + 0.45 * (k - 1);
+  const wP = clamp(F.prev ? F.prev[0].white : F.white || 0), kp = 1 + 0.45 * (k - 1);
   const prx = 0.033 * (1 - 0.42 * wP) * kp, pry = 0.049 * (1 - 0.42 * wP) * kp * (1 - 0.35 * q);
-  const look = cl((F.gx || 0) + (F.cross || 0) * s - 0.12 * s + (F.x.gJit || 0) * dart(t), -1.2, 1.2) * (1 - cq) * cl(((top - lowY) / Math.max(1e-4, 2 * h) - 0.35) / 0.40);   // a squeezed or narrowed eye looks nearly straight (a pupil at the end of a slit read sly: the scrutiny's eye beside the bill read as a grin)
+  const look = clamp((F.gx || 0) + (F.cross || 0) * s - 0.12 * s + (F.x.gJit || 0) * dart(t), -1.2, 1.2) * (1 - cq) * clamp(((top - lowY) / Math.max(1e-4, 2 * h) - 0.35) / 0.40);   // a squeezed or narrowed eye looks nearly straight (a pupil at the end of a slit read sly: the scrutiny's eye beside the bill read as a grin)
   const px = ex + gxs + look * Math.max(0, w - prx - 0.004) * 0.92;
   const lo = Math.max(lowY, yc - h) + m0, hi = Math.min(top, yc + h) + m0, open = hi - lo;
   let py = yc + m0 - 0.014 * (1 - q) + ((F.gy || 0) + (F.x.gY || 0)) * Math.max(0, h - pry - 0.01) * 0.8;
@@ -150,10 +150,10 @@ function eye4(g, F, ex, s, ey, blink, t, k, tilt, gxs, life) {
   g.restore();
   K.path(g, pts, true); g.lineWidth = lw; g.strokeStyle = K.INK; g.stroke();
   g.restore();
-  const kk = cl((L - 0.10) / 0.12), ch = w * Math.sqrt(Math.max(0, 1 - ((top - yc) / h) ** 2)) * 1.06;
+  const kk = clamp((L - 0.10) / 0.12), ch = w * Math.sqrt(Math.max(0, 1 - ((top - yc) / h) ** 2)) * 1.06;
   if (kk > 0.02 && ch > 0.004) K.line(g, [[ex - ch, top + m0 - ch * slope], [ex + ch, top + m0 + ch * slope]], 0.016 * k * (0.4 + 0.6 * kk));
   // a raised lower lid draws its own line (the clip cut the rim open and the eye read as a broken "(")
-  const kl = cl((low - 0.04) / 0.10), cb = w * Math.sqrt(Math.max(0, 1 - ((lowY - yc) / h) ** 2)) * 1.02;
+  const kl = clamp((low - 0.04) / 0.10), cb = w * Math.sqrt(Math.max(0, 1 - ((lowY - yc) / h) ** 2)) * 1.02;
   if (kl > 0.02 && cb > 0.004) K.line(g, [[ex - cb, lowY + m0], [ex + cb, lowY + m0]], 0.016 * k * (0.4 + 0.6 * kl));
 }
 // the bracket at a mouth corner (a dimple), its size fixed
@@ -171,7 +171,7 @@ function mouth4(g, F, t, y0, k, glp) {
   if (cx > 0.02) return chewMouth6(g, F, X, mw, t, y0, k, cx);
   const open = Math.max(X.mOpen || 0, F.talk ? F.talk.open : 0), breathOpen = F.talk && F.talk.open > (X.mOpen || 0);
   const c = breathOpen ? Math.min(X.mC ?? 0, TUNE.breathC) : X.mC ?? 0;   // a breath opens the mouth arched down (an open D on the alert face read as a smile)
-  const sk = X.mSk || 0, grim = cl(X.mGrim || 0), pul = (X.mPul || 0) * Math.sin(2 * Math.PI * t / 11);
+  const sk = X.mSk || 0, grim = clamp(X.mGrim || 0), pul = (X.mPul || 0) * Math.sin(2 * Math.PI * t / 11);
   const w = 0.105 * (mw || 1) * (1 + 0.10 * (F.breathX || 0) * grim) * (1 + 0.07 * pul) * (1 - 0.22 * glp);
   const x0 = F.mx || 0, y = y0 + 0.016 * glp;
   const corner = sd => [x0 + sd * w, y + c * 0.024 + sk * 0.020 * sd - 0.010 * grim];
@@ -186,22 +186,22 @@ function mouth4(g, F, t, y0, k, glp) {
     g.restore();
   } else if (open >= 0.06 && c > 0.4) return grin(g, X, x0, y, w, c, open, sk, k);
   else if (open >= 0.06) {
-    const h = 0.014 + 0.105 * cl(open, 0, 1.2), up = curve(0.004), dn = curve(-h).reverse(), pts = [...up, ...dn];
+    const h = 0.014 + 0.105 * clamp(open, 0, 1.2), up = curve(0.004), dn = curve(-h).reverse(), pts = [...up, ...dn];
     K.fill(g, pts, K.INK);
-    const tt = Math.max(X.mTeeth || 0, cl((open - 0.35) / 0.2));
+    const tt = Math.max(X.mTeeth || 0, clamp((open - 0.35) / 0.2));
     if (tt > 0.02) { g.save(); K.path(g, pts, true); g.clip(); K.fill(g, [...curve(0.004), ...curve(-0.020 * tt).reverse()], K.WHITE); g.restore(); }
-  } else K.taper(g, curve(0), (0.0175 + 0.008 * cl(X.mPr || 0) + 0.003 * glp) * k, K.INK, 0.7);
+  } else K.taper(g, curve(0), (0.0175 + 0.008 * clamp(X.mPr || 0) + 0.003 * glp) * k, K.INK, 0.7);
   for (const sd of [-1, 1]) { const [xc, yc] = corner(sd); bracket(g, xc, yc, sd, k); }
 }
 // the dare's grin: a wide open D, its corners pulled up into dimples, a strip of top teeth
 function grin(g, X, x0, y, w, c, open, sk, k) {
-  const lift = 0.034 * c, h = 0.040 + 0.110 * cl(open, 0, 1.2), cy = sd => y + lift + sk * 0.014 * sd;
+  const lift = 0.034 * c, h = 0.040 + 0.110 * clamp(open, 0, 1.2), cy = sd => y + lift + sk * 0.014 * sd;
   const L = [x0 - w, cy(-1)], R = [x0 + w, cy(1)];
   const top = K.bez(L, [x0 - w * 0.45, y + lift * 0.10], [x0 + w * 0.45, y + lift * 0.10], R, 18);
   const bot = K.bez(R, [x0 + w * 0.80, y - h], [x0 - w * 0.80, y - h], L, 22);
   const pts = [...top, ...bot];
   K.fill(g, pts, K.INK);
-  const tt = cl(X.mTeeth || 0);
+  const tt = clamp(X.mTeeth || 0);
   if (tt > 0.02) { g.save(); K.path(g, pts, true); g.clip();
     K.fill(g, [...K.bez([x0 - w, cy(-1) + 0.01], [x0 - w * 0.45, y + lift * 0.10 + 0.01], [x0 + w * 0.45, y + lift * 0.10 + 0.01], [x0 + w, cy(1) + 0.01], 18),
       ...K.bez([x0 + w, cy(1) - 0.034 * tt], [x0 + w * 0.45, y + lift * 0.10 - 0.040 * tt], [x0 - w * 0.45, y + lift * 0.10 - 0.040 * tt], [x0 - w, cy(-1) - 0.034 * tt], 18)], K.WHITE);
@@ -224,7 +224,7 @@ function cheekC(g, xc, yc, k, gr, pf) {
 // a little and the mouth opens into a round dark gap, its top lip lifting, then mashes shut into a wide lumpy smile (the
 // comic note: a cold hot dog, and he is enjoying it anyway)
 function chewMouth6(g, F, X, mw, t, y0, k, cx) {
-  const ph = chewPh(F, t), side = chewSide(t), op = cx * cl((ph - 0.25) / 0.75), c = (X.mC ?? 0) + 0.45 * cx * (1 - op);
+  const ph = chewPh(F, t), side = chewSide(t), op = cx * clamp((ph - 0.25) / 0.75), c = (X.mC ?? 0) + 0.45 * cx * (1 - op);
   const w = 0.105 * (mw || 1) * 0.90 * (1 - 0.10 * op), x0 = (F.mx || 0) - 0.070 * cx + 0.014 * cx * side, y = y0 + 0.020 * cx - 0.030 * ph;
   const corner = sd => [x0 + sd * w, y + c * 0.022 + 0.012 * cx * side * sd];
   const curve = (kq = 0, e = 1) => { const pts = []; for (let i = 0; i <= 18; i++) { const u = i / 18, q = 2 * u - 1, [, yl] = corner(-1), [, yr] = corner(1);
@@ -232,14 +232,14 @@ function chewMouth6(g, F, X, mw, t, y0, k, cx) {
   if (op > 0.03) { const h = 0.020 + 0.170 * op; K.fill(g, [...curve(0.024 * op, 0.5), ...curve(-h, 0.5).reverse()], K.INK, 0.012 * k); }
   else K.taper(g, curve(0), 0.028 * k, K.INK, 0.6);
   const [xl, yl] = corner(-1), [xr, yr] = corner(1);
-  cheekC(g, xl, yl, k, cl(cx / 0.9), 1 - cl(chewPh(F, t, 1) / Math.max(cx, 1e-3)));
+  cheekC(g, xl, yl, k, clamp(cx / 0.9), 1 - clamp(chewPh(F, t, 1) / Math.max(cx, 1e-3)));
   bracket(g, xr, yr, 1, k, 0.018);
 }
 function sweat(g, sw, k) {
   if (sw < 0.03) return;
-  const r = 0.024 * cl(sw * 1.25), x = 0.188, y = 0.040, pts = [];
+  const r = 0.024 * clamp(sw * 1.25), x = 0.188, y = 0.040, pts = [];
   for (let i = 0; i <= 20; i++) { const a = -Math.PI / 2 + (i / 20) * 2 * Math.PI, tip = Math.max(0, Math.sin(a)) ** 3; pts.push([x + r * Math.cos(a) * (1 - 0.85 * tip), y + r * Math.sin(a) + 1.4 * r * tip]); }
-  g.globalAlpha = cl(sw * 2); K.fill(g, pts, K.WHITE, 0.011 * k);
+  g.globalAlpha = clamp(sw * 2); K.fill(g, pts, K.WHITE, 0.011 * k);
   g.beginPath(); g.ellipse(x - r * 0.30, y - r * 0.15, r * 0.20, r * 0.30, 0, 0, 2 * Math.PI); g.fillStyle = K.INK; g.globalAlpha *= 0.25; g.fill(); g.globalAlpha = 1;
 }
 function face6(g, F, blink, t, o, T) {
@@ -261,34 +261,34 @@ function face6(g, F, blink, t, o, T) {
   const bS = s => s === cock ? wig + 0.012 * sly : -0.006 * sly;
   // each chew: the brows bob up and the lower lids lift (a munch he enjoys; v4's brows dipped and read droopy)
   const chp = chewPh(F, t, 1), bob = 0.030 * chp;
-  let Fe = chp > 0.001 ? { ...F, low: cl((F.low || 0) + 0.30 * chp) } : F;
+  let Fe = chp > 0.001 ? { ...F, low: clamp((F.low || 0) + 0.30 * chp) } : F;
   // a ramp take's anticipation drops the lids over round eyes with their pupils (a squeezed eye beside the bill, v5, and a
   // squashed one, v4, read as a smirking mouth)
-  const aq = C?.B?.x?.zRamp || F.rampA ? cl(F.antic || 0) : 0;
+  const aq = C?.B?.x?.zRamp || F.rampA ? clamp(F.antic || 0) : 0;
   const aL = (F.rampA ? F.aLid : C?.B?.x?.aLid) ?? 0.16;   // (x.aLid: how far the anticipation drops the lids)
   if (aq > 0.001) Fe = { ...Fe, antic: 0, lid: Math.min(0.42, (Fe.lid || 0) + aL * aq), low: (Fe.low || 0) + 0.05 * aq * aL / 0.16 };
   if (sly > 0.001) Fe = { ...Fe, lid: (Fe.lid || 0) + 0.12 * sly, low: (Fe.low || 0) + 0.14 * sly };
   const Fm = sly > 0.001 ? { ...F, x: { ...F.x, mSk: (F.x.mSk || 0) + 0.30 * sly, mC: (F.x.mC ?? 0) + 0.15 * sly } } : F;
-  const gxs = 0.030 * (F.x.gSh || 0) * cl(F.gx || 0, -1, 1);
+  const gxs = 0.030 * (F.x.gSh || 0) * clamp(F.gx || 0, -1, 1);
   const ey = F.x.eY || 0, my = -0.218 + (F.my || 0);
   const tiltUp = Math.abs(Math.tan(tilt * DEG)) * 0.068;
   const stE = 1 + 0.22 * (F.mid ? F.mid.e : 0) * (F.dEye || 0) + (F.x.eSt || 0) + life;   // (a change's stretch: tall eyes pushed the brows into the rim, OPEN 22)
-  const ryMax = F.ry * Math.max(1.08, stE) * (1 - 0.45 * cl(crunch(F) / SHUT)), th0 = 0.028 * (F.bw || 1);
+  const ryMax = F.ry * Math.max(1.08, stE) * (1 - 0.45 * clamp(crunch(F) / SHUT)), th0 = 0.028 * (F.bw || 1);
   const browTop = ey + bh0 + Math.max(0, arch, lL, lR) + wag + wig + 0.012 * sly + bUp + bob + tiltUp + th0 + (o.edge ? 0.040 : 0.050);
   // the eye's real top (a > < chevron stands taller than the squint it came from) and the brow's lowest point (a tilted
   // crescent's low end, half its stroke): the brows never close onto the eyes (on > < they merged into squiggles)
-  const eyeTop = Math.max(ryMax, 0.95 * F.rx * 1.05 * cl((crunch(F) - SHUT) / (1 - SHUT))) + 0.004;
+  const eyeTop = Math.max(ryMax, 0.95 * F.rx * 1.05 * clamp((crunch(F) - SHUT) / (1 - SHUT))) + 0.004;
   const P = plate3(T.top, T.bot - (F.x.pBot || 0), { scMin: F.x.pScMin, scMin2: F.x.pScMin2, browTop, eyeTop: ey + eyeTop, mouthBot: my - mouthDrop(F), roomGap: bh0 - tiltUp - 0.5 * th0 - eyeTop, lift: Math.max(0, lL, lR) });
   const k = r2k(F) / Math.sqrt(P.sc), th = th0 * k ** 0.85;
   g.save(); g.translate(T.ux, P.sh); g.scale(P.sc, P.sc);
   for (const s of [-1, 1]) {
     const ex = s * dx + gxs;
     if (P.eyeA > 0.01) { g.globalAlpha = P.eyeA; eye4(g, Fe, ex, s, ey, blink, t, k, tilt, 0, life); }
-    const by = ey + bh0 - P.cut + P.lk * (s < 0 ? lL : lR) + wag * (s > 0 ? 1 : 0.75) + bS(s) + bUp + bob - 0.006 * cl(blink);
+    const by = ey + bh0 - P.cut + P.lk * (s < 0 ? lL : lR) + wag * (s > 0 ? 1 : 0.75) + bS(s) + bUp + bob - 0.006 * clamp(blink);
     if (P.browA > 0.01) { g.globalAlpha = P.browA; crescent(g, ex - gxs * 0.4 + s * (0.012 - bIn), s, by, tilt, arch, 0.068, th, 0.28); }
     g.globalAlpha = 1;
   }
-  if (P.eyeA > 0.01) sweat(g, cl(F.x.sw || 0), k);
+  if (P.eyeA > 0.01) sweat(g, clamp(F.x.sw || 0), k);
   mouth4(g, Fm, t, my + P.mUp, k, glp);
   g.restore();
 }

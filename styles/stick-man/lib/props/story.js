@@ -15,12 +15,12 @@
 // Positions: `at` like every MAKE kind (place, prop, [x,y,z] Blender, {head}); `yaw` deg; `scale`.
 import * as THREE from 'three';
 import { lin, toon, INK_RGB } from '../../engine/look.js';
+import { clamp } from '../../engine/mathx.js';
+import { lcg, toonCache } from '../util.js';
 
 const tB = p => new THREE.Vector3(p[0], p[2], -p[1]);
-const cl = x => Math.max(0, Math.min(1, x));
 const HULL = new THREE.MeshBasicMaterial({ color: lin(...INK_RGB), side: THREE.BackSide });
-const MC = new Map();
-const mat = (rgb, o = {}) => { const k = rgb.join(',') + JSON.stringify(o); if (!MC.has(k)) MC.set(k, toon(rgb, { rough: 0.8, sheen: 0.05, rim: 0.08, ...o })); return MC.get(k); };
+const mat = toonCache({ rough: 0.8, sheen: 0.05, rim: 0.08 });
 // an inked solid (toon body + inverted hull); own material when `own` (keyed colour)
 function ink(geo, rgb, o = {}, own = false, t = 0.012) {
   const m = new THREE.Mesh(geo, own ? toon(rgb, { rough: 0.8, sheen: 0.05, ...o }) : mat(rgb, o)); m.castShadow = true; m.receiveShadow = true;
@@ -39,7 +39,6 @@ function label(text, sub, w, h, bg = '#f6f1e2', fg = '#16161c') {
   const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
   const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85 })); m.userData.noPrepass = true; return m;
 }
-function lcg(seed) { let s = (seed * 9973 + 7) >>> 0 || 1; return () => (s = (s * 16807) % 2147483647) / 2147483647; }
 // a little spiral bacterium (helix tube), green
 const helixGeo = (() => { const pts = []; for (let i = 0; i <= 24; i++) { const a = i / 24 * Math.PI * 5; pts.push(new THREE.Vector3(0.008 * Math.cos(a), (i / 24 - 0.5) * 0.06, 0.008 * Math.sin(a))); }
   return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, 0.0045, 6, false); })();
@@ -73,13 +72,13 @@ export function makeStomach(stage, { scale = 1, tag = 'MODEL', sub = 'HUMAN STOM
   g.userData.set = ({ show = 1, inflame = 0, bugs: bg = 0, ulcer = 0, pills: pl = 0, t = 0 } = {}) => {
     g.visible = show > 0.01; if (!g.visible) return;
     body.scale.setScalar(scale * Math.max(1e-3, show < 1 ? 1 - Math.pow(1 - show, 3) : 1));
-    lining.material.color.copy(healthy).lerp(red, cl(inflame)); shell.material.color.copy(hs).lerp(hr, cl(inflame));
-    S.scale.setScalar(1 + 0.06 * cl(inflame) + 0.015 * cl(inflame) * Math.sin(t * 6));
-    bugs.forEach((m, i) => { const k = cl((bg - m.userData.d) / 0.6); m.visible = k > 0.02; if (!m.visible) return;
+    lining.material.color.copy(healthy).lerp(red, clamp(inflame)); shell.material.color.copy(hs).lerp(hr, clamp(inflame));
+    S.scale.setScalar(1 + 0.06 * clamp(inflame) + 0.015 * clamp(inflame) * Math.sin(t * 6));
+    bugs.forEach((m, i) => { const k = clamp((bg - m.userData.d) / 0.6); m.visible = k > 0.02; if (!m.visible) return;
       m.scale.setScalar(k * (1.2 + 0.25 * Math.sin(t * 9 + m.userData.ph))); m.position.copy(m.userData.p).multiplyScalar(1 + 0.6 * (1 - k)); m.rotation.set(m.userData.ph + t * 3, t * 2 + i, 0.4 * Math.sin(t * 7 + i)); });
-    crater.scale.setScalar(Math.max(1e-3, cl(ulcer))); glow.scale.setScalar(Math.max(1e-3, cl(ulcer))); crater.visible = glow.visible = ulcer > 0.02;
+    crater.scale.setScalar(Math.max(1e-3, clamp(ulcer))); glow.scale.setScalar(Math.max(1e-3, clamp(ulcer))); crater.visible = glow.visible = ulcer > 0.02;
     glow.material.color.setRGB(1.6, 0.4, 0.16).multiplyScalar(0.7 + 0.3 * Math.sin(t * 8));
-    pills.forEach((p, i) => { const u = cl(pl * 1.6 - i * 0.12); p.visible = u > 0; p.position.set(p.userData.x, 0.42 - 0.5 * u * u, -0.02); p.rotation.z = u * 4 + i; });
+    pills.forEach((p, i) => { const u = clamp(pl * 1.6 - i * 0.12); p.visible = u > 0; p.position.set(p.userData.x, 0.42 - 0.5 * u * u, -0.02); p.rotation.z = u * 4 + i; });
   };
   g.userData.set({}); return g;
 }
@@ -95,7 +94,7 @@ export function makePetri(stage, { scale = 1, text = 'BIOPSY', sub = 'FREMANTLE 
   stage.prop(body); body.scale.setScalar(scale);
   g.userData.set = ({ show = 1, grow = 0, t = 0 } = {}) => {
     g.visible = show > 0.01; if (!g.visible) return;
-    cols.forEach((m, i) => { const k = cl((grow - m.userData.d * 0.7) / 0.3); m.visible = k > 0.02; m.scale.setScalar(Math.max(1e-3, k * 1.6)); m.rotation.x = 0.3 * Math.sin(t * 6 + i); });
+    cols.forEach((m, i) => { const k = clamp((grow - m.userData.d * 0.7) / 0.3); m.visible = k > 0.02; m.scale.setScalar(Math.max(1e-3, k * 1.6)); m.rotation.x = 0.3 * Math.sin(t * 6 + i); });
   };
   g.userData.set({}); return g;
 }
@@ -109,7 +108,7 @@ export function makeMedal(stage, { scale = 1, text = 'NOBEL', sub = '2005' } = {
   g.userData.set = ({ show = 1, glint = 0, t = 0 } = {}) => {
     g.visible = show > 0.01; if (!g.visible) return;
     body.scale.setScalar(scale * Math.max(1e-3, show)); body.rotation.y = 0.35 * Math.sin(t * 1.3);
-    disc.material.emissive = lin(1.0, 0.8, 0.3).multiplyScalar(0.6 * cl(glint));
+    disc.material.emissive = lin(1.0, 0.8, 0.3).multiplyScalar(0.6 * clamp(glint));
   };
   g.userData.set({}); return g;
 }
@@ -186,7 +185,7 @@ export function makePillbox(stage, { text = '2 WEEKS', sub = 'ANTIBIOTICS', scal
   stage.prop(b); b.scale.setScalar(scale);
   g.userData.set = ({ show = 1, spill = 0 } = {}) => {
     g.visible = show > 0.01; if (!g.visible) return; b.scale.setScalar(scale * Math.max(1e-3, show));
-    pills.forEach((p, i) => { const u = cl(spill * 1.5 - i * 0.08); p.visible = u > 0; p.position.set(0.15 + 0.05 * i * u, 0.012 + 0.2 * Math.sin(Math.PI * u) * (1 - u), 0.06 * Math.sin(i * 2.1) * u); p.rotation.set(i, u * 5, i * 0.7); });
+    pills.forEach((p, i) => { const u = clamp(spill * 1.5 - i * 0.08); p.visible = u > 0; p.position.set(0.15 + 0.05 * i * u, 0.012 + 0.2 * Math.sin(Math.PI * u) * (1 - u), 0.06 * Math.sin(i * 2.1) * u); p.rotation.set(i, u * 5, i * 0.7); });
   };
   g.userData.set({}); return g;
 }
@@ -200,7 +199,7 @@ export function makeBeakerSet(stage, { text = 'BEEF BROTH', sub = 'H. PYLORI', s
   stage.prop(b); b.scale.setScalar(scale);
   g.userData.set = ({ show = 1, level = 1, tip = 0 } = {}) => {
     g.visible = show > 0.01; if (!g.visible) return;
-    const h = Math.max(0.004, (H - 0.02) * cl(level)); liq.scale.y = h; liq.position.y = 0.006 + h / 2; liq.visible = level > 0.02; b.rotation.z = -tip * Math.PI / 180;
+    const h = Math.max(0.004, (H - 0.02) * clamp(level)); liq.scale.y = h; liq.position.y = 0.006 + h / 2; liq.visible = level > 0.02; b.rotation.z = -tip * Math.PI / 180;
   };
   g.userData.set({}); return g;
 }

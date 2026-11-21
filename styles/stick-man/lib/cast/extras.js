@@ -2,25 +2,13 @@
 // engine/cast.js as it is; the new hats are built here the same way cast.js builds its own (solid + ink hull).
 //   const S = makeStick(PASSERS[0]);  dye(S, k) recolours a live figure (head first, then body, then limbs).
 import * as THREE from 'three';
-import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { toon, lin, INK_RGB } from '../../engine/look.js';
-import { KAI, W_M, HEAD_H, hairCap, guardCap, curls, bandana, flatCap } from '../../engine/cast.js';
+import { W_M, HEAD_H, hairCap, guardCap, flatCap, solid as inkSolid, lathe } from '../../engine/cast.js';
+import { DEG } from '../../engine/mathx.js';
+import { canvasTex } from '../sets/kit.js';
 
-const W = W_M, HA = 0.5 * W, HB = 0.5 * HEAD_H * W, INK_T = 0.036 * W, DEG = Math.PI / 180;
-const hullMat = new THREE.MeshBasicMaterial({ color: lin(...INK_RGB), side: THREE.BackSide });
-function hullGeo(geo, t) {
-  let g = geo.clone();
-  for (const k of Object.keys(g.attributes)) if (k !== 'position') g.deleteAttribute(k);
-  g = mergeVertices(g, 1e-5); g.computeVertexNormals();
-  const p = g.attributes.position, n = g.attributes.normal;
-  for (let i = 0; i < p.count; i++) p.setXYZ(i, p.getX(i) + n.getX(i) * t, p.getY(i) + n.getY(i) * t, p.getZ(i) + n.getZ(i) * t);
-  return g;
-}
-function solid(geo, mat, t = INK_T) {
-  const m = new THREE.Mesh(geo, mat); m.castShadow = true; m.receiveShadow = true;
-  const h = new THREE.Mesh(hullGeo(geo, t), hullMat); h.castShadow = false; m.add(h); return m;
-}
-function lathe(profile, seg = 64) { const g = new THREE.LatheGeometry(profile.map(([r, y]) => new THREE.Vector2(Math.max(0, r), y)), seg); g.rotateY(Math.PI); return g; }
+const W = W_M, HA = 0.5 * W, HB = 0.5 * HEAD_H * W, INK_T = 0.036 * W;
+const solid = (geo, mat) => inkSolid(geo, mat, INK_T);   // the engine's light-aware ink hull at these hats' base width
 // dome over the head from latitude lat0 up to the crown, `out` metres off the head surface
 function dome(lat0, out) {
   const pr = [[0, -0.2 * W]];
@@ -110,10 +98,6 @@ export function dye(S, k) {
 }
 
 // ---------------------------------------------------------------- hand props (origin at the grip; caller marks them with stage.prop)
-function canvasTex(w, h, draw) {
-  const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const g = cv.getContext('2d'); draw(g, w, h);
-  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
-}
 // folded newspaper held by its bottom edge, front page facing +z
 export function newspaper() {
   const g = new THREE.Group();

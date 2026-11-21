@@ -13,10 +13,10 @@
 // labelled right, or wrong if the reviewer swapped the two names (max of the two: 12 = fully told apart, 6 = chance).
 // Target <= 8 / 12.
 import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os';
-import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { run } from '../../../kit/env.mjs';
 import { withTaste } from './taste.mjs';
+import { claudeJson } from './claude_headless.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.resolve(HERE, '../../..');
 const film = process.argv[2];
@@ -81,32 +81,15 @@ fs.writeFileSync(path.join(tmp, 'job.json'), JSON.stringify(job));
 const py = run('python', [path.join(HERE, 'judge_sheets.py'), path.join(tmp, 'job.json')], { capture: true });
 if (py.status) { console.error('judge_sheets.py failed', py.stderr); process.exit(1); }
 
-// ---------------------------------------------------------------- headless reviews (as board.mjs: fresh claude -p, no tools)
+// ---------------------------------------------------------------- headless reviews (claude_headless.mjs)
 const img = p => ({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: fs.readFileSync(p).toString('base64') } });
-function claude(content, system) {
-  return new Promise((res, rej) => {
-    const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'stick-judge-r-'));
-    const c = spawn(process.env.CLAUDE_BIN || 'claude', ['-p', '--input-format', 'stream-json', '--output-format', 'stream-json', '--verbose', '--model', 'sonnet', '--effort', 'medium',
-      '--tools', '', '--strict-mcp-config', '--setting-sources', '', '--disable-slash-commands', '--system-prompt', system], { cwd, stdio: ['pipe', 'pipe', 'pipe'] });
-    let so = '', se = ''; c.stdout.on('data', d => (so += d)); c.stderr.on('data', d => (se += d)); c.on('error', rej);
-    c.on('close', code => {
-      fs.rmSync(cwd, { recursive: true, force: true });
-      const r = so.split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).find(o => o?.type === 'result');
-      if (code || !r || r.is_error) return rej(new Error(`claude exit ${code} ${se.slice(0, 300)} ${r?.result || ''}`));
-      const u = r.usage, tokens = u.input_tokens + u.cache_creation_input_tokens + u.cache_read_input_tokens + u.output_tokens;
-      try { const t = r.result; res({ ...JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1)), tokens, cost_usd: r.total_cost_usd }); }
-      catch (e) { rej(new Error('reply is not JSON: ' + String(r.result).slice(0, 300))); }
-    });
-    c.stdin.end(JSON.stringify({ type: 'user', message: { role: 'user', content } }) + '\n');
-  });
-}
 const judgeContent = [
   { type: 'text', text: 'REFERENCE sheet 1 of 2:' }, img(refOut[0]), { type: 'text', text: 'REFERENCE sheet 2 of 2:' }, img(refOut[1]),
   { type: 'text', text: 'OURS sheet 1 of 2:' }, img(oursOut[0]), { type: 'text', text: 'OURS sheet 2 of 2:' }, img(oursOut[1]),
   { type: 'text', text: `${PROMPT}\n\n${FORMAT}` }];
 const nRev = Number(A.reviews || 2);
-const jobs = Array.from({ length: nRev }, () => claude(judgeContent, withTaste('You judge animation style. Reply with JSON only.')));
-if (doBlind) jobs.push(claude([...order.flatMap((_, j) => [{ type: 'text', text: `Tile ${j + 1}:` }, img(path.join(tmp, `tile_${String(j + 1).padStart(2, '0')}.jpg`))]),
+const jobs = Array.from({ length: nRev }, () => claudeJson(judgeContent, withTaste('You judge animation style. Reply with JSON only.')));
+if (doBlind) jobs.push(claudeJson([...order.flatMap((_, j) => [{ type: 'text', text: `Tile ${j + 1}:` }, img(path.join(tmp, `tile_${String(j + 1).padStart(2, '0')}.jpg`))]),
   { type: 'text', text: `${BLIND}\n\n${BLIND_FMT}` }], 'You judge animation frames. Reply with JSON only.'));
 const R = await Promise.all(jobs);
 const reviews = R.slice(0, nRev), blind = doBlind ? R[nRev] : null;

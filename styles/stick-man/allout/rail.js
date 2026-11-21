@@ -6,7 +6,7 @@
 //   beats: { who: 'boss', do: 'face_fill', dur: 14, hold: 60 }  (pair with expr 'angry', then 'furious' for the steam)
 // Colours are linear (like cast.js). Units in poses: head widths (W = 0.6 m), figure-local (x right, y up, z forward).
 import * as THREE from 'three';
-import { solid, lathe, W_M, HEAD_H, hairCap } from '../engine/cast.js';
+import { solid, lathe, W_M, hairCap } from '../engine/cast.js';
 import { toon } from '../engine/look.js';
 import { POSES, POSE_VERBS, compilePose } from '../engine/poses.js';
 import { STAND, smooth, lerp } from '../engine/verbs.js';
@@ -14,7 +14,7 @@ import { ACT, MAKE } from '../engine/verbs_fx.js';
 import { SPECS } from '../engine/play.js';
 import { BUILD } from '../lib/cast/handprops.js';
 
-const W = W_M, HA = 0.5 * W, HB = 0.5 * HEAD_H * W, DEG = Math.PI / 180;
+const W = W_M, HA = 0.5 * W, DEG = Math.PI / 180;
 const L = c => c.map(x => (x <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4)));   // sRGB -> linear
 const mat = (rgb, o = {}) => toon(rgb, { sheen: 0, rough: 1, char: 1, ...o });
 const stripes = (a, b, n = 18) => { const cv = document.createElement('canvas'); cv.width = 512; cv.height = 64; const g = cv.getContext('2d');

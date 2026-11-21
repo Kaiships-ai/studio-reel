@@ -12,7 +12,7 @@ import { run } from '../../../kit/env.mjs';
 import { ALL } from '../motion-lib/index.js';
 import { rigClip } from './motionlib.mjs';
 
-const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.resolve(HERE, '../../..');
+const HERE = path.dirname(fileURLToPath(import.meta.url));
 // Limits, each with its source:
 //   HEAD_PCT   the head's height-to-width ratio against the rest head, in %, for a head that does not keep its volume.
 //              Judgement: a round head that turns a few percent oval reads as squashed on a still (S3-011).
@@ -99,7 +99,7 @@ export function sheet(rows, dir) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'rigtest-')), cells = [];
   for (const r of rows) {
     const f = r.pick + PROOF_F0, files = [];
-    for (const [v, az] of VIEWS) {
+    for (const [, az] of VIEWS) {
       const file = path.join(tmp, `${r.name}_${az}_%d.jpg`);
       shot(['--w', '360', '--h', '640', '--query', `clip=${r.clip}&body=${r.body}&view=turn&az=${az}&at=${f}`, '--frames', String(f), '--out', file]);
       files.push(file.replace('%d', String(f)));

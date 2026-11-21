@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { toon, lin, css, B, INK_RGB, INK_SUN, PLACE } from './look.js';
+import { DEG } from './mathx.js';
 import { EXPR, faceRig, mixFace, FACE_STYLE } from './faces.js';
 import { makeHandProp } from '../lib/cast/handprops.js';
 import { SOFT, footDown, legReach, limitArm, limitBody, ROM, torsoSlices, ellipsoid, worldBox, solveArm, armPenetration, propPush, PHYS, centreOfMass, balanceShift, headWear, wearVolume } from './body.js';
@@ -20,7 +21,6 @@ const LIMB_R = 0.046 * W / 2;                // limbs: reference legs and arms ~
 export const HEAD_C = [0.0, 2.43], HEAD_H = 0.94, HIP_V = 1.34, SHOULDER_V = 2.00;
 export const TORSO = { cx: 0.0, cy: 1.72, w: 0.57, h: 0.90, depth: 0.80 };
 const HA = 0.5 * W, HB = 0.5 * HEAD_H * W;   // head half width / half height (m)
-const DEG = Math.PI / 180;
 const LOOK_RAD = 0.36;                       // face slide per unit of `look`
 
 // Faces (expressions, skin marks, head-attached emotion marks): faces.js. Hand props: lib/cast/handprops.js.

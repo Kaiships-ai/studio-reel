@@ -4,19 +4,16 @@
 // scene and marks it with stage.prop() for the ink line; decals are noPrepass so the ink skips them.
 import * as THREE from 'three';
 import { lin, std, toon } from '../../engine/look.js';
+import { clamp } from '../../engine/mathx.js';
+import { canvasTex } from '../sets/kit.js';
 
-function canvasTex(w, h, draw) {
-  const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const g = cv.getContext('2d'); draw(g, w, h);
-  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
-}
 function mesh(g, geo, mat, x, y, z) { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = m.receiveShadow = true; g.add(m); return m; }
 function decal(g, w, h, map, x, y, z, flat = true) {
   const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ map, roughness: 0.6 }));
   if (flat) m.rotation.x = -Math.PI / 2;
   m.position.set(x, y, z); m.receiveShadow = true; m.userData.noPrepass = true; g.add(m); return m;
 }
-const clamp01 = x => Math.max(0, Math.min(1, x));
-const ease = x => { const t = clamp01(x); return t * t * (3 - 2 * t); };
+const ease = x => { const t = clamp(x); return t * t * (3 - 2 * t); };
 
 // ---------------------------------------------------------------- (b) the dye pack
 // set({ awake, snore, alarm, dial, count }):
@@ -87,12 +84,12 @@ export function makeDyePack(stage) {
   const set = ({ awake = 0, snore = 0, alarm = 0, dial: d = 0, count = 10 } = {}) => {
     const a = awake >= 0.5 ? 1 : 0;
     if (a !== lastAwake) { face.material.map = faces[a]; face.material.needsUpdate = true; lastAwake = a; }
-    const k = clamp01(alarm);
+    const k = clamp(alarm);
     ledMat.color.copy(G0).lerp(R0, k).multiplyScalar(1.2 + 1.8 * k);
     led.userData.glow.color.copy(lg0).lerp(R0, k).multiplyScalar(1.0 + 2.5 * k);
     halo.intensity = 0.25 * k;
-    bubble.visible = !a && snore > 0.02; bubble.scale.setScalar(0.4 + 1.2 * clamp01(snore));
-    const s = ease(d * 1.4) * (1 + 0.15 * Math.sin(Math.PI * clamp01(d * 1.4))); dial.scale.setScalar(Math.max(1e-3, s)); dial.visible = d > 0.001;
+    bubble.visible = !a && snore > 0.02; bubble.scale.setScalar(0.4 + 1.2 * clamp(snore));
+    const s = ease(d * 1.4) * (1 + 0.15 * Math.sin(Math.PI * clamp(d * 1.4))); dial.scale.setScalar(Math.max(1e-3, s)); dial.visible = d > 0.001;
     const n = Math.max(0, Math.min(10, Math.round(count)));
     if (n !== last) { dt.userData.draw(n); last = n; }
   };
@@ -140,10 +137,10 @@ export function makeThermometer(stage, { H = 0.56 } = {}) {
     c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(`${n}°`, 256, 104); rt.needsUpdate = true;
   };
   const set = ({ temp, k } = {}) => {
-    const t = temp != null ? temp : 70 + 330 * clamp01(k ?? 0), tt = Math.max(T0, Math.min(T1, t));
+    const t = temp != null ? temp : 70 + 330 * clamp(k ?? 0), tt = Math.max(T0, Math.min(T1, t));
     const top = yOf(tt), h = Math.max(0.002, top - y0 + 0.01);
     col.scale.y = h; col.position.y = y0 - 0.01 + h / 2;
-    const hot = clamp01((tt - 200) / 200);
+    const hot = clamp((tt - 200) / 200);
     redMat.emissiveIntensity = 0.12 * hot; bulbGlow.setRGB(1.0, 0.08, 0.04).multiplyScalar(0.5 * hot); colGlow.copy(bulbGlow);
     const n = Math.round(tt); if (n !== last) { draw(n); last = n; }
   };
