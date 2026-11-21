@@ -16,15 +16,9 @@ Marks, places and COLLIDE boxes: the set file's `MARKS`, `PLACES` and `COLLIDE` 
 
 ## Dressing
 
-No gate counts dressing pieces (the old dressing-density gate was removed). No set or film calls `dressKit` today (the Hot
-Money sets dress with their own film-local code on `createKit`). To use the kit pieces, call `const D = dressKit(stage, COLLIDE)`
-in `build()`, then `D.put(kind, [x, y, z], rotDeg, { solid: true, ...opts })` for one of the 130 kit pieces in `PIECES` (bench, bin,
-pot, planter, tree, pine, palm, lamp, bollard, cone, crate(s), barrel, sign, aboard, poster, shelf, desk, lockers, clock,
-noticeboard, kiosk, cafetable, picnic, busstop, phonebooth, adcolumn, bike, swing, slide, speaker, truss, stage, banner,
-flasks, microscope, skeleton, sink, fishtank, boat, hut, dock, lighthouse, islet, cloud, pigeons, hopscotch, puddle,
-zebra, scatter ...). `solid`
-pieces push their own COLLIDE box. A code set's COLLIDE starts from `resetCollide(COLLIDE, BASE)` (two acts can build one
-set). `dressKit` pieces are toon-shaded and inked, unlike `createKit` pieces (status in the Hot Money bible: trial).
+No gate counts dressing pieces (the old dressing-density gate was removed). Sets dress with their own code on `createKit`
+(`allout/kit.js`). The 130 toon pieces in `lib/sets/dress.js` `PIECES` (bench, bin, pot, crate, sign, ...) are used only as
+bare groups by the `fall` effect (`lib/props/physfx.js`, `pieceGroup`).
 
 | Rule | Why |
 |---|---|
@@ -89,9 +83,6 @@ and all Hot Money sets do): physically lit, bevelled, never inked (look rules in
 anim`; the module also exports `room` (floor, walls, ceiling), `windowY`, `SURF` (plaster, weathered, tiles, checker,
 wood, brick, grad textures), `tex` and `label`. A film's own set lives in `films/<slug>/` and is named by its URL the
 same way. For a richer example read `allout/sets/canyon-edge.js` (story props with keys, `K.anim`).
-
-(`lib/sets/kit.js` `setKit` is an older toon-and-ink builder that nothing uses. It is kept only because `dress.js`
-imports `canvasTex` from the same file. Do not start a set from it.)
 
 1. Copy the template below to `allout/sets/<name>.js`, or to `films/<slug>/` for one film.
 2. Point the act at it: `set: '<name>', setModule: '/styles/stick-man/allout/sets/<name>.js'`, and add a row to the table above.

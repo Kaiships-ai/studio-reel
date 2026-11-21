@@ -11,8 +11,7 @@ before any render. The camera math is pure and shared with the page: `previs-cor
   camera from each shot's size, angle, lens and move.
 - Cut policy (`--join scene|none|all`, default `scene`): inside a scene the camera flies from one shot's framing to the
   next; between scenes it cuts. A shot's own `join: "cut" | "flight"` wins.
-- Hand spec (`films/<slug>/previs/<name>.json`, worked example `templates/previs-bank.json` in the make-reel-stick-man
-  skill): explicit set blocks, figure paths, head and arm keys, props and camera keys. `--scene <name>` renders it alone;
+- Hand spec (`films/<slug>/previs/<name>.json`, worked example `test/fixtures/previs/bank.json`): explicit set blocks, figure paths, head and arm keys, props and camera keys. `--scene <name>` renders it alone;
   in `--film` it replaces the shots it lists in `shots`, with a cut on each side.
 - Label bar: stage title and line in Vietnamese at the bottom, the clock and the voice line on the right, a top
   timeline with a tall red tick per hard cut and a small tick per flight, a red CẮT tag for 0.5 s after a cut. The film
@@ -32,8 +31,8 @@ names `review/previs/previs.md` when it is missing.
   voice's length) and prints its takes. `--music <wav>` and `--music-db -6` set the temp music.
 - `node styles/stick-man/tools/previs.mjs films/<slug> --scene <name | scene id>` writes `review/previs/<name>.mp4`.
 - `--stills 0,90,300` writes only those frames as png; `--world-only 1` writes only the compiled world json.
-- Look for: on a copy of Hot Money ep01 r4 (storyboard, `vo/`, `audio/stems/music.wav`, `previs/bank.json` from the
-  template), `--scene bank` takes seconds and matches the hand-made `review/previs-banks/previs_banks_A.mp4` frame for
+- Look for: on a copy of Hot Money ep01 r4 (storyboard, `vo/`, `audio/stems/music.wav`, `previs/bank.json` copied from
+  `test/fixtures/previs/bank.json`), `--scene bank` takes seconds and matches the hand-made `review/previs-banks/previs_banks_A.mp4` frame for
   frame (PSNR peaks at offset 0); `--film` gives 90.1 s with 7 hard cuts (4.7 a minute, median take 11.5 s).
 - Regression: `node --test test/unit/previs.test.mjs`.
 

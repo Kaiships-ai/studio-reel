@@ -25,9 +25,10 @@ import { solid, W_M, HEAD_C, HEAD_H, HIP_V, SPINE_L, spineParams, bendPt, spineF
 import { PHYS } from '../engine/body.js';
 import { Cloth, lerpRigid, bodyJump } from './cloth.js';
 import { toon } from '../engine/look.js';
+import { DEG } from '../engine/mathx.js';
 import { HOOKS } from '../engine/play.js';
 
-const W = W_M, DEG = Math.PI / 180, HEAD_Y = HEAD_C[1] * W, PIV_Y = (HIP_V + SPINE_L) * W, HA_M = 0.5 * W, HB_M = 0.5 * HEAD_H * W;
+const W = W_M, HEAD_Y = HEAD_C[1] * W, PIV_Y = (HIP_V + SPINE_L) * W, HA_M = 0.5 * W, HB_M = 0.5 * HEAD_H * W;
 const SRC = await new GLTFLoader().loadAsync('/styles/stick-man/assets/costume/hoodie_grey.glb').then(g => g.scene);
 const PIECES = {};
 SRC.traverse(o => { if (o.isMesh) PIECES[o.name] = o; });

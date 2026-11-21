@@ -1,4 +1,4 @@
-// Load a film's reel data (reel.js / reel2.js) in Node for the tools (gates.mjs, board.mjs). Reel files may import the
+// Load a film's reel data (reel.js / reel2.js) in Node for the tools (board.mjs, kituse.mjs, cutgate.mjs). Reel files may import the
 // browser kit or another film by absolute URL ('/styles/stick-man/allout/rail.js', '/films/<other>/s4/face2.js'): a resolve
 // hook maps '/styles/', '/lib/' and '/films/' to the library root, fetch and Request read root-absolute URLs from disk (a
 // costume's .glb loads at import), and a few browser globals are stubbed so those modules evaluate (only data is read).

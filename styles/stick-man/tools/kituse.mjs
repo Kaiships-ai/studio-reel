@@ -77,7 +77,7 @@ if (path.resolve(process.argv[1] || '') === fileURLToPath(import.meta.url)) {
   fs.mkdirSync(path.join(dir, 'review'), { recursive: true });
   fs.writeFileSync(path.join(dir, 'review/kituse.md'), [`# Kit use · ${path.basename(dir)} · ◇${gate}`, '', `**${bad.length ? 'FAIL' : 'PASS'}**`, '',
     '| Feature | Step | OK | Why |', '| --- | --- | --- | --- |', ...rows.map(r => `| ${r.id} | ${r.step} | ${r.ok ? 'PASS' : 'FAIL'} | ${r.why.replace(/\|/g, '/')} |`),
-    '', 'A feature a film does not use needs an approved DECISIONS.json entry with `waives: <feature>`, `by` and `at`.', ...bench].join('\n') + '\n');
+    '', 'A feature a film does not use needs an approved DECISIONS.json entry `{ "waives": "<id>", "by": "kai", "at": "<date>", "status": "approved" }`.', ...bench].join('\n') + '\n');
   for (const r of rows) console.log(`${r.ok ? 'PASS' : 'FAIL'} ${r.id.padEnd(10)} ${r.why}`);
   console.log(`review/kituse.md: ${bad.length ? `FAIL · missing ${bad.map(r => r.id).join(', ')}` : 'PASS'}`);
   process.exit(bad.length ? 1 : 0);

@@ -31,7 +31,7 @@ picture should do.
 
 ## 2. Translating notes
 
-| The note says | Usually means (camera-pass codes) | Ask back (one question) |
+| The note says | Usually means (camera-pass codes, defined in `.claude/skills/animation-camera-pass`) | Ask back (one question) |
 |---|---|---|
 | "chưa tới", "not there", "flat" | C flat: one size/lens/angle; or the climax isn't the visual peak | "Which shot should hit hardest?" |
 | "khó hiểu", "confusing" | A unclear: missing cause or source shot, no establishing, two focal points | "At which shot did you lose it?" |
@@ -111,16 +111,3 @@ picture should do.
 | Tuning numbers to pass | the gate passes, the film doesn't improve | never loosen a threshold; change the picture |
 | Many versions, no changelog | nobody knows what a round fixed | 3-5 lines per version |
 | Same issue a third round | the cause is upstream | stop after 2 rounds, show Kai the still, go up a stage |
-
-## 5. Worked example: Hot Money, episode 1 (animatic v3)
-
-| Symptom | Test | Cause | Stage | Fix |
-|---|---|---|---|---|
-| 6.6-33.8 s is six cards in a row, the clock barely moves | C5, swipe test | the retention template boarded literally; no picture pass | 1.1, 1.4 | Problem 1 explained during trip one (tag 25 KG, step counter, clock running); Problem 2 moved to the bank scene; ≤ 8 s of cards |
-| "Who shoots?" | muted retell | bullet-cam with no source shot | 1.4 | add the cop's reverse with the gun, eyeline matched to the flashlight shot |
-| "Where did $27,000 go?" | muted retell | the counter changes with no action | 1.4 | three quick deposit inserts, counter drops on each |
-| Recap feels flat | C3/C4, board sheet | three shots with the same framing, about 16 s | 1.4 | wide (isolation) → CU (cost) → insert (bait bill) → split HIDE / SPEND |
-| DAY 3 on a panel, no day three in the voice | script ↔ shot table | text not tied to the script | 1.4 | panel text lives in `text` and is checked per line |
-| Captions at the bottom edge | `--safe 1` | no safe-zone standard | 1.4 | move into the text-safe box |
-| "Camera later, in stage 3" | shot list | camera intent deferred | 1.6 | camera-intent pass, ◇2b |
-| Timing locked on a robot voice (83 s vs ~86 s) | voice lengths | scratch voice used for lock | 1.5 | final voice before ◇2a |

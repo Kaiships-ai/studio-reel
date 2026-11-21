@@ -8,11 +8,12 @@
 import * as THREE from 'three';
 import { solid, lathe, W_M, HEAD_H, HAT_LIFT } from '../engine/cast.js';
 import { toon } from '../engine/look.js';
+import { DEG } from '../engine/mathx.js';
 import { HOOKS } from '../engine/play.js';
 import { ACT } from '../engine/verbs_fx.js';
 import { POSE_VERBS } from '../engine/poses.js';
 
-const W = W_M, HB = 0.5 * HEAD_H * W, DEG = Math.PI / 180;
+const W = W_M, HB = 0.5 * HEAD_H * W;
 const hex = (h, d) => { if (!h) return d; const n = parseInt(h, 16); return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255]; };
 const mat = rgb => toon(rgb, { sheen: 0, rough: 1, char: 1 });
 
