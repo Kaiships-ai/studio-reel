@@ -23,6 +23,7 @@ MAKE.ao_follow = (stage, o, ctx) => {
 // ({ head: 'kip', up, fwd } follows the head); sag (m) droops each span; keys show 0..1, feed 0..1 (0 = the tip still
 // hangs in front of the mouth, 1 = all the way in). Rebuilt each frame (one tube, cheap).
 import * as THREE from 'three';
+import { lcg } from '../lib/util.js';
 MAKE.ao_tube = (stage, o, ctx) => {
   const m = new THREE.MeshStandardMaterial({ color: new THREE.Color().setRGB(0.04, 0.04, 0.05, THREE.SRGBColorSpace), roughness: 0.3, metalness: 0.1 });
   m.userData.noToon = true;
@@ -32,7 +33,7 @@ MAKE.ao_tube = (stage, o, ctx) => {
   return { obj: g, apply: (v, f, env) => {
     const show = v('show', 0), feed = Math.max(0, Math.min(1, v('feed', 0)));
     g.visible = show > 0.5; if (!g.visible) return;
-    const a = env.at(o.from), b = o.via ? env.at(o.via) : null, t = env.at(o.to), sag = o.sag ?? 0.3;
+    const a = env.at(o.from), b = o.via ? env.at(o.via) : null, sag = o.sag ?? 0.3;
     const mo = env.at({ ...o.to, fwd: (o.to.fwd || 0) + 0.28 * (1 - feed), up: (o.to.up || 0) - 0.1 * (1 - feed) });
     const pts = b ? [a, mid(a, b, sag), b, mid(b, mo, sag * 0.4), mo] : [a, mid(a, mo, sag), mo];
     if (mesh) { mesh.geometry.dispose(); g.remove(mesh); }
@@ -102,7 +103,6 @@ function softTex(kind) {
 }
 const sprite = (kind, rgb, add) => { const m = new THREE.SpriteMaterial({ map: softTex(kind), color: new THREE.Color().setRGB(...rgb, THREE.SRGBColorSpace), transparent: true,
   depthWrite: false, blending: add ? THREE.AdditiveBlending : THREE.NormalBlending, fog: !add }); m.userData.noToon = true; const sp = new THREE.Sprite(m); sp.userData.noPrepass = true; sp.userData.noInk = true; return sp; };
-const lcg = seed => { let s = (seed * 9973 + 7) >>> 0 || 1; return () => (s = (s * 16807) % 2147483647) / 2147483647; };
 const easeOut = x => 1 - Math.pow(1 - Math.min(1, Math.max(0, x)), 3);
 
 // ao_puff: soft smoke / dust / muzzle fire on `fire` (t0): puffs burst out, grow, drift up and fade. build { at, size (m),

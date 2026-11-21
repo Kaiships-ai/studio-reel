@@ -6,16 +6,16 @@
 // Wired into reels by MAKE in engine/verbs_fx.js (kinds rays, flow, shimmer, cutbox, callout, bars, split, stamp).
 import * as THREE from 'three';
 import { lin, toon, INK_RGB } from '../../engine/look.js';
+import { clamp } from '../../engine/mathx.js';
 
-const clamp01 = x => Math.max(0, Math.min(1, x));
-const ease = x => { const t = clamp01(x); return t * t * (3 - 2 * t); };
-const easeOut = x => 1 - Math.pow(1 - clamp01(x), 3);
-const back = x => { const t = clamp01(x), c = 1.9; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
+const ease = x => { const t = clamp(x); return t * t * (3 - 2 * t); };
+const easeOut = x => 1 - Math.pow(1 - clamp(x), 3);
+const back = x => { const t = clamp(x), c = 1.9; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
 const INK = lin(...INK_RGB);
 const hullMat = new THREE.MeshBasicMaterial({ color: INK, side: THREE.BackSide });
 const inkMat = () => new THREE.MeshBasicMaterial({ color: INK });
 const flat = rgb => new THREE.MeshBasicMaterial({ color: lin(...rgb) });
-const css = (c, a = 1) => `rgba(${c.map(x => Math.round(255 * Math.pow(clamp01(x), 1 / 2.2))).join(',')},${a})`;   // linear -> sRGB
+const css = (c, a = 1) => `rgba(${c.map(x => Math.round(255 * Math.pow(clamp(x), 1 / 2.2))).join(',')},${a})`;   // linear -> sRGB
 const Y = new THREE.Vector3(0, 1, 0);
 const B = p => new THREE.Vector3(p[0], p[2], -p[1]);                // Blender metres -> three
 // a flat overlay mesh (labels, rings, cards): drawn on top, no ink prepass, no shadow
@@ -127,7 +127,7 @@ export function makeFlow(stage, { path = [[0, 0, 0], [0.3, 0, 0.4], [0, 0, 0.8]]
   const pipCol = medium === 'money' ? [1.0, 0.82, 0.20] : col.map(x => Math.min(1, 0.45 + 0.6 * x)), pm = flat(pipCol);
   const P = Array.from({ length: pips }, () => { const p = ball(r * (medium === 'money' ? 1.15 : 0.8), pm, 0.010); g.add(p); return p; });
   const per = RAD * 6;
-  const draw = (a, b) => { const s = Math.floor(clamp01(a) * SEG) * per, e = Math.ceil(clamp01(b) * SEG) * per;
+  const draw = (a, b) => { const s = Math.floor(clamp(a) * SEG) * per, e = Math.ceil(clamp(b) * SEG) * per;
     for (const m of [tube, hull]) m.geometry.setDrawRange(s, Math.max(0, e - s)); };
   const set = (t, { grow = 0.7, life = Infinity } = {}) => {
     g.visible = t >= 0; if (!g.visible) return;
@@ -165,7 +165,7 @@ export function makeShimmer(stage, { w = 0.5, h = 0.7, n = 3, color = [1.0, 0.45
         if (a < 0.01) discard; gl_FragColor = vec4(col, a); }` });
   const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat); m.position.y = h / 2; m.userData.noPrepass = true; m.castShadow = false; m.renderOrder = 4;
   const g = new THREE.Group(); g.add(m);
-  const set = ({ heat = 0, t = 0 } = {}) => { g.visible = heat > 0.01; U.uA.value = clamp01(heat); U.uT.value = t; };
+  const set = ({ heat = 0, t = 0 } = {}) => { g.visible = heat > 0.01; U.uA.value = clamp(heat); U.uT.value = t; };
   set({}); g.userData.set = set;
   return g;
 }
@@ -205,7 +205,7 @@ export function makeCutBox(stage, { shape = 'cylinder', r = 0.28, w = 0.6, d = 0
   body.add(hinge);
   const set = ({ open = 0, show = 1 } = {}) => {
     g.visible = show > 0.01; if (!g.visible) return;
-    body.scale.setScalar(Math.max(1e-3, show)); hinge.rotation.y = 1.75 * clamp01(open);
+    body.scale.setScalar(Math.max(1e-3, show)); hinge.rotation.y = 1.75 * clamp(open);
   };
   set({}); g.userData.set = set;
   return g;

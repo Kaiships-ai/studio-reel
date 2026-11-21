@@ -4,10 +4,10 @@
 // Groups are positioned by the caller (scene units); sizes are metres.
 import * as THREE from 'three';
 import { lin, toon, std, INK_RGB } from '../../engine/look.js';
+import { clamp } from '../../engine/mathx.js';
 
-const clamp01 = x => Math.max(0, Math.min(1, x));
-const ease = x => { const t = clamp01(x); return t * t * (3 - 2 * t); };
-const easeOut = x => 1 - Math.pow(1 - clamp01(x), 3);
+const ease = x => { const t = clamp(x); return t * t * (3 - 2 * t); };
+const easeOut = x => 1 - Math.pow(1 - clamp(x), 3);
 const hash = (i, k, seed) => { const s = Math.sin(i * 12.9898 + k * 78.233 + seed * 37.719) * 43758.5453; return s - Math.floor(s); };
 const hullMat = new THREE.MeshBasicMaterial({ color: lin(...INK_RGB), side: THREE.BackSide });
 export const DYE_RGB = [0.82, 0.05, 0.06];
@@ -86,7 +86,7 @@ export function makeFlyingBills(stage, { seed = 5, n = 16, scale = 1 } = {}) {
         // spread wide (they pass the lens to the sides, not over the face), a low arc that sinks as they come
         b.m.position.set(b.v[0] * 0.9 * e + toward[0] * sp * tt, 0.10 * b.v[1] * e - 0.9 * tt * tt + toward[1] * sp * tt, b.v[2] * 0.9 * e + toward[2] * sp * tt);
         b.m.rotation.set(b.w[0] * tt * 1.6 + b.ph, b.w[1] * tt, b.w[2] * tt * 1.6);
-        const d = typeof dyed === 'function' ? dyed(i) : dyed; b.mat.color.copy(G).lerp(R, clamp01(d)); return;
+        const d = typeof dyed === 'function' ? dyed(i) : dyed; b.mat.color.copy(G).lerp(R, clamp(d)); return;
       }
       // time of landing: march (pure, fixed steps) until y < ground
       const y = tt => (b.v[1] + GR / K) * (1 - Math.exp(-K * tt)) / K - GR * tt / K;
@@ -98,7 +98,7 @@ export function makeFlyingBills(stage, { seed = 5, n = 16, scale = 1 } = {}) {
       if (t >= tl) b.m.rotation.set(0, b.w[1] * tl, 0);
       else b.m.rotation.set(b.w[0] * tt + 0.4 * Math.sin(5 * tt + b.ph), b.w[1] * tt, b.w[2] * tt);
       const d = typeof dyed === 'function' ? dyed(i) : Array.isArray(dyed) ? (dyed[i] ?? 0) : dyed;
-      b.mat.color.copy(G).lerp(R, clamp01(d));
+      b.mat.color.copy(G).lerp(R, clamp(d));
     });
   };
   set(-1);
@@ -176,7 +176,7 @@ export function makeBagGlow(stage, bag = null) {
   if (sack) { sack.material.emissive = lin(1.0, 0.10, 0.06); sack.material.emissiveIntensity = 0; }
   const B0 = blobMat.color.clone(), G0 = blob.userData.glow.color.clone();
   const set = s => {
-    const k = clamp01(s);
+    const k = clamp(s);
     blob.visible = k > 0.01; blob.scale.setScalar(0.6 + 0.5 * k);
     blobMat.color.copy(B0).multiplyScalar(0.5 + k); blob.userData.glow.color.copy(G0).multiplyScalar(k * 1.5);
     light.intensity = 3.0 * k;
@@ -219,7 +219,7 @@ export function makeBill(stage, { scale = 1.3 } = {}) {
   const m = new THREE.Mesh(new THREE.BoxGeometry(0.155 * scale, 0.002 * scale, 0.066 * scale), mat); m.castShadow = m.receiveShadow = true;
   const g = new THREE.Group(); g.add(m);
   g.userData.grip = [0.062 * scale, 0, 0];                       // pinched near one end
-  g.userData.set = ({ red = 0 } = {}) => { mat.color.copy(G).lerp(R, clamp01(red)); };
+  g.userData.set = ({ red = 0 } = {}) => { mat.color.copy(G).lerp(R, clamp(red)); };
   return g;
 }
 

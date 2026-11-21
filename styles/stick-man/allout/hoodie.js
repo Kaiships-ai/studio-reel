@@ -47,7 +47,7 @@ const ONE = new THREE.Vector3(1, 1, 1);
 // ---------------------------------------------------------------- the garment: the study's body profile
 // The kit torso (an egg, radius 0.171, 0.54 m tall from y 0.762) plus 1.8 cm of jersey; below the belly it hangs straight,
 // blouses a little and rolls in over the ribbed hem band. DEPTH: the front-back squash of the kit torso.
-const DEPTH = 0.8, R2 = 0.189, H2 = 0.576, Z0 = 0.744, SH_BOT = 0.826, SH_TOP = 1.318, BAND = [0.776, 0.838], RB = 0.1755;
+const DEPTH = 0.8, R2 = 0.189, H2 = 0.576, Z0 = 0.744, SH_TOP = 1.318, BAND = [0.776, 0.838], RB = 0.1755;
 const sstep = (e0, e1, x) => { const t = Math.max(0, Math.min(1, (x - e0) / (e1 - e0))); return t * t * (3 - 2 * t); };
 function shellR(z) {
   const h = z - Z0, rr = h < R2 ? Math.sqrt(Math.max(0, R2 ** 2 - (R2 - h) ** 2)) : h > H2 - R2 ? Math.sqrt(Math.max(0, R2 ** 2 - (h - (H2 - R2)) ** 2)) : R2;
@@ -135,7 +135,6 @@ function lineGeos() {
   const ring = (f, n = 256) => { const pts = []; for (let i = 0; i < n; i++) { const th = i / n * Math.PI * 2, p = f(th); pts.push(p); } return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, true), n, LINE_R, 6, true); };
   // the top of the hem band (under the blouse lip) and the hem's bottom edge, notches and all
   const bandTop = ring(th => { const p = onSurf(th, BAND[1] - 0.001, 0.0025); p.y = shapeHem(p.x, p.y, p.z); return p; });
-  const hemEdge = ring(th => { const p = onSurf(th, BAND[0], 0.0015); p.y = shapeHem(p.x, BAND[0], p.z) + 0.001; return p; }, 512);
   // the kangaroo pocket: sides slanted in to the top edge
   const pk = [], side = (sg, up) => { for (let i = 0; i <= 8; i++) { const t = up ? i / 8 : 1 - i / 8, y = 0.868 + t * 0.15, hw = 0.150 - t * 0.055; pk.push([sg * Math.asin(Math.min(1, hw / shellR(y))), y]); } };
   side(-1, true); for (let i = 1; i < 10; i++) { const x = -0.095 + 0.19 * i / 10; pk.push([Math.asin(x / shellR(1.018)), 1.018]); } side(1, false);
@@ -279,7 +278,7 @@ function backPt(x, y, out = 0) {       // a point on the (untucked) garment's ba
 }
 const dnT = (u, v) => DN.t0 + DN.t1 * Math.pow(Math.max(0, 1 - u * u), 0.7) * (1 - 0.55 * v);
 function downGeos() {
-  const NU = 28, NV = 22, pos = [], idx = [], outer = [];
+  const NU = 28, NV = 22, pos = [], idx = [];
   const P = (u, v) => { const y = DN.yTop + (DN.yBot + 0.004 - DN.yTop) * v; return backPt(u * dnW(y), y, dnT(u, v)); };
   for (let j = 0; j <= NV; j++) for (let i = 0; i <= NU; i++) { const p = P(-1 + 2 * i / NU, j / NV); pos.push(p.x, p.y, p.z); }
   for (let j = 0; j < NV; j++) for (let i = 0; i < NU; i++) { const a = j * (NU + 1) + i, b = a + 1, c = a + NU + 1, d = c + 1; idx.push(a, c, b, b, c, d); }
@@ -372,7 +371,7 @@ const restOf = m => [m, ...m.children.filter(c => c.isMesh && !c.userData.over)]
 //          angle up to ~NOD_SAT (tanh), past that the head turns inside the hood (a full follow of the dosed 45 deg nod
 //          stretches the back of the hood 25 %); what cuts into the hood is pushed out (below)
 // The skirt is kept on the jersey and the hood off the head by a push-out (continuous in position: no ripples).
-const Y_LO = 1.095, Y_HI = 1.40, TW_TOP = 1.0, TW_BOT = 0.75, TW_Y0 = 1.095, TW_THROAT = 0.3, KS = 0.25;
+const Y_HI = 1.40, TW_TOP = 1.0, TW_BOT = 0.75, TW_Y0 = 1.095, TW_THROAT = 0.3, KS = 0.25;
 const wShift = y => 0.1 + 0.9 * sstep(1.10, 1.40, y);
 const wRot = y => KS * sstep(1.10, 1.40, y), NOD_SAT = 26 * DEG, NOD_Y = [1.15, 1.35], NOD_DIR = 40 * DEG, NOD_EPS = 0.15;
 const TWIST = (() => { const P = PIECES.hood.geometry.attributes.position, n = 80, dy = (Y_HI - TW_Y0) / n, r = new Float64Array(n).fill(0.05);
@@ -388,7 +387,7 @@ const HEAD_GAP = 0.006, JERSEY_GAP = 0.003, ARM_R = 0.0138 + 0.010;   // the arm
 const _ab = new THREE.Vector3(), _av = new THREE.Vector3(), _cp = new THREE.Vector3();
 const CORD_TETHER = 0.004, CORD_GAP = 0.006, _t3 = new THREE.Vector3(), _jl = new THREE.Vector3(), _jr = new THREE.Vector3(), _jw = new THREE.Vector3(), _jt = new THREE.Vector3(), _jo = new THREE.Vector3(), _jq = new THREE.Quaternion();
 
-const _v = new THREE.Vector3(), _n = new THREE.Vector3(), _a = new THREE.Vector3(), _b = new THREE.Vector3(), _q = new THREE.Quaternion(), _q2 = new THREE.Quaternion(), _qi = new THREE.Quaternion();
+const _v = new THREE.Vector3(), _n = new THREE.Vector3(), _a = new THREE.Vector3(), _b = new THREE.Vector3(), _q = new THREE.Quaternion(), _q2 = new THREE.Quaternion();
 const Y_AX = new THREE.Vector3(0, 1, 0);
 // swing-twist split of q about y (twist applied first, in the head's own frame): q = S * T
 function swingTwist(q) {
@@ -657,7 +656,7 @@ export function hoodie(S, { down = false } = {}) {
     fr = spineFrame(B, yr); _jr.copy(_jl).sub(fr.p).applyQuaternion(fr.q.invert()).multiplyScalar(Math.sqrt(B.s));
     const x = _jr.x * W, y = (yr + HIP_V) * W, z = _jr.z * W;
     if (y > SH_TOP - 0.01 || y < BAND[0]) return -Infinity;   // above the shoulders or below the hem: no jersey there
-    const th = Math.atan2(x, z / DEPTH), r = Math.hypot(x, z / DEPTH), g = (y < BAND[1] ? RB : shellR(y)) * (down ? 1 : tuck(y)) + grow;   // the jersey as drawn, less the seam under the hood's skirt (a shelf a cord must not catch on)
+    const r = Math.hypot(x, z / DEPTH), g = (y < BAND[1] ? RB : shellR(y)) * (down ? 1 : tuck(y)) + grow;   // the jersey as drawn, less the seam under the hood's skirt (a shelf a cord must not catch on)
     if (r < 1e-4 || r >= g) return g - r;
     _jw.set(x * g / r / W, y / W - HIP_V, z * g / r / W); bendPt(F.B, _jw); _jo.copy(_jw).multiplyScalar(W).applyQuaternion(F.qb).add(F.bp);
     return g - r;
@@ -680,7 +679,7 @@ export function hoodie(S, { down = false } = {}) {
   // numbers: the hood's deepest vertex inside a body volume (m), its edges' stretch (p99, max), the peak's lag (deg) and
   // its motion relative to the posed peak (m/frame), the cords' stretch
   function stats(t, lagA, fresh) {
-    const RWi = ST.RW.clone().invert(), A = hq.g.attributes.position.array; let pen = 0, penAt = -1;
+    const A = hq.g.attributes.position.array; let pen = 0, penAt = -1;
     for (let i = 0; i < A.length / 3; i++) { if (H.out[i]) continue; _v.set(A[3 * i], A[3 * i + 1], A[3 * i + 2]).divideScalar(W);
       for (const V of ST.vols) { const h = V.test(_v, 0); if (h && h.depth * W > pen) { pen = h.depth * W; penAt = i; } } }
     const st = [], so = []; for (let e = 0; e < E.length; e += 3) { const a = E[e], b = E[e + 1]; if (H.out[a] && H.out[b]) so.push(Math.hypot(A[3 * a] - A[3 * b], A[3 * a + 1] - A[3 * b + 1], A[3 * a + 2] - A[3 * b + 2]) / E[e + 2] - 1); st.push(Math.hypot(A[3 * a] - A[3 * b], A[3 * a + 1] - A[3 * b + 1], A[3 * a + 2] - A[3 * b + 2]) / E[e + 2] - 1); }

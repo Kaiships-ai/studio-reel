@@ -9,6 +9,7 @@
 import * as THREE from 'three';
 import { B, lin, toon } from '../../engine/look.js';
 import { canvasTex } from './kit.js';
+import { parkMiller } from '../util.js';
 
 const MATS = new Map();
 // shared toon material per colour (same ramp as the .glb pieces)
@@ -31,7 +32,6 @@ export const C = {
   glass: [0.62, 0.84, 0.94], paper: [0.98, 0.96, 0.88], navy: [0.10, 0.16, 0.36], mint: [0.50, 0.85, 0.70],
 };
 const m = c => tm(Array.isArray(c) ? c : C[c]);
-function lcg(seed) { let s = seed >>> 0 || 1; return () => (s = (s * 16807) % 2147483647) / 2147483647; }
 
 // ---------------------------------------------------------------- painted textures (signs, posters, labels in the world)
 const TEX = new Map();
@@ -56,7 +56,7 @@ export function posterTex(title, { bg = [0.95, 0.45, 0.62], fg = [0.05, 0.05, 0.
   const key = 'poster' + JSON.stringify([title, bg, fg, shape, seed]);
   if (TEX.has(key)) return TEX.get(key);
   const css = c => `rgb(${c.map(x => Math.round(255 * Math.pow(Math.max(0, Math.min(1, x)), 1 / 2.2))).join(',')})`;
-  const r = lcg(seed * 977);
+  const r = parkMiller(seed * 977);
   const t = canvasTex(256, 360, (g, W, H) => {
     g.fillStyle = css(bg); g.fillRect(0, 0, W, H);
     g.fillStyle = 'rgba(255,255,255,0.85)';
@@ -136,7 +136,7 @@ export const PIECES = {
   picnic(p) { p.box([-0.9, -0.35, 0.72], [0.9, 0.35, 0.77], 'woodL'); for (const y of [-0.62, 0.62]) p.box([-0.9, y - 0.14, 0.42], [0.9, y + 0.14, 0.46], 'woodL');
     for (const x of [-0.7, 0.7]) { p.box([x - 0.04, -0.75, 0], [x + 0.04, 0.75, 0.05], 'wood'); p.box([x - 0.04, -0.05, 0], [x + 0.04, 0.05, 0.72], 'wood'); } p.box([-0.2, -0.1, 0.77], [0.2, 0.15, 0.79], [0.9, 0.3, 0.3]); p.cyl([0.4, 0, 0.84], 0.05, 0.14, 'yellow'); },
   fountain(p) { p.cyl([0, 0, 0.45], 0.16, 0.9, 'stone', { r2: 0.12 }); p.cyl([0, 0, 0.95], 0.28, 0.12, 'stone', { r2: 0.3 }); p.cyl([0.08, 0, 1.05], 0.03, 0.12, 'steel'); },
-  flowerbed(p, { w = 2.4, c = 'pink', seed = 3 } = {}) { const r = lcg(seed); p.box([-w / 2, -0.45, 0], [w / 2, 0.45, 0.12], 'soil', { ink: false });
+  flowerbed(p, { w = 2.4, c = 'pink', seed = 3 } = {}) { const r = parkMiller(seed); p.box([-w / 2, -0.45, 0], [w / 2, 0.45, 0.12], 'soil', { ink: false });
     for (let i = 0; i < 12; i++) { const x = -w / 2 + 0.15 + r() * (w - 0.3), y = -0.35 + r() * 0.7; p.cyl([x, y, 0.2], 0.012, 0.25, 'green', { seg: 4, ink: false }); p.sph([x, y, 0.34], 0.07, [c, 'yellow', 'white', 'red'][i % 4], { seg: 8 }); } },
   fence(p, { w = 3, c = 'white' } = {}) { for (let x = -w / 2; x <= w / 2 + 1e-6; x += 0.25) { p.box([x - 0.04, -0.02, 0], [x + 0.04, 0.02, 0.8], c); p.cone([x, 0, 0.84], 0.05, 0.08, c, { seg: 4 }); }
     for (const z of [0.25, 0.6]) p.box([-w / 2, 0.02, z - 0.03], [w / 2, 0.05, z + 0.03], c); },
@@ -144,13 +144,13 @@ export const PIECES = {
   bikerack(p) { for (let i = 0; i < 4; i++) p.tor([-0.6 + i * 0.4, 0, 0.36], 0.32, 0.025, 'steel'); },
   bike(p, { c = 'blue' } = {}) { for (const x of [-0.5, 0.5]) { p.tor([x, 0, 0.34], 0.32, 0.03, 'black'); p.cyl([x, 0, 0.34], 0.03, 0.06, 'steel', { axis: 'y', seg: 8 }); }
     p.cyl([0, 0, 0.55], 0.03, 1.0, c, { axis: 'x' }); p.box([-0.52, -0.02, 0.34], [-0.48, 0.02, 0.85], c); p.box([0.48, -0.02, 0.34], [0.52, 0.02, 0.95], c); p.box([-0.62, -0.08, 0.85], [-0.38, 0.08, 0.9], 'black'); p.box([0.48, -0.25, 0.95], [0.52, 0.25, 0.98], 'black'); },
-  birds(p, { n = 4, seed = 2 } = {}) { const r = lcg(seed); for (let i = 0; i < n; i++) { const x = (r() - 0.5) * 3, z = r() * 1.2, s = 0.12 + r() * 0.08;
+  birds(p, { n = 4, seed = 2 } = {}) { const r = parkMiller(seed); for (let i = 0; i < n; i++) { const x = (r() - 0.5) * 3, z = r() * 1.2, s = 0.12 + r() * 0.08;
     for (const d of [-1, 1]) { const w = new THREE.Mesh(new THREE.BoxGeometry(s, 0.015, 0.03), m('black')); w.position.copy(B(x + d * s * 0.45, 0, z + s * 0.18)); w.rotation.z = d * 0.45; w.castShadow = false; w.userData.noInk = true; p._g.add(w); } } },
   awning(p, { w = 3, c = 'red' } = {}) { const n = Math.round(w / 0.35); for (let i = 0; i < n; i++) { const x0 = -w / 2 + i * w / n; const s = p.box([x0, -1.0, 2.5], [x0 + w / n, 0, 2.56], i % 2 ? c : 'white'); s.rotation.x = 0; }
     p.box([-w / 2, -1.02, 2.3], [w / 2, -0.98, 2.56], c); for (const x of [-w / 2 + 0.05, w / 2 - 0.05]) p.box([x - 0.02, -1.0, 2.3], [x + 0.02, 0, 2.34], 'iron'); },
   acunit(p) { p.box([-0.4, -0.3, 0], [0.4, 0.3, 0.6], 'steel'); p.cyl([0, -0.31, 0.3], 0.22, 0.02, 'greyD', { axis: 'y', seg: 18 }); for (let i = 0; i < 4; i++) p.box([-0.2, -0.32, 0.14 + i * 0.1], [0.2, -0.315, 0.16 + i * 0.1], 'black'); },
   pipe(p, { h = 3 } = {}) { p.cyl([0, 0, h / 2], 0.05, h, 'steel'); for (const z of [0.3, h / 2, h - 0.3]) p.box([-0.07, -0.02, z - 0.03], [0.07, 0.06, z + 0.03], 'greyD'); },
-  shelf(p, { w = 1.4, h = 2.0, seed = 4, items = 'books' } = {}) { const r = lcg(seed); p.box([-w / 2, 0, 0], [w / 2, 0.36, 0.05], 'woodD');
+  shelf(p, { w = 1.4, h = 2.0, seed = 4, items = 'books' } = {}) { const r = parkMiller(seed); p.box([-w / 2, 0, 0], [w / 2, 0.36, 0.05], 'woodD');
     for (const x of [-w / 2, w / 2 - 0.04]) p.box([x, 0, 0], [x + 0.04, 0.36, h], 'woodD'); p.box([-w / 2, 0.32, 0], [w / 2, 0.36, h], 'wood');
     const rows = Math.floor(h / 0.48); for (let k = 1; k <= rows; k++) { const z = k * h / (rows + 0.2); p.box([-w / 2, 0, z - 0.03], [w / 2, 0.34, z], 'woodD');
       let x = -w / 2 + 0.06; const zb = (k - 1) * h / (rows + 0.2) + 0.05;
@@ -161,13 +161,13 @@ export const PIECES = {
   table(p, { w = 1.4, d = 0.8, h = 0.76, c = 'woodL' } = {}) { p.box([-w / 2, -d / 2, h - 0.05], [w / 2, d / 2, h], c); for (const [x, y] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) p.box([x * (w / 2 - 0.08) - 0.03, y * (d / 2 - 0.08) - 0.03, 0], [x * (w / 2 - 0.08) + 0.03, y * (d / 2 - 0.08) + 0.03, h - 0.05], 'woodD'); },
   chair(p, { c = 'red' } = {}) { p.box([-0.22, -0.22, 0.44], [0.22, 0.22, 0.48], c); p.box([-0.22, 0.18, 0.48], [0.22, 0.22, 0.92], c); for (const [x, y] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) p.box([x * 0.19 - 0.02, y * 0.19 - 0.02, 0], [x * 0.19 + 0.02, y * 0.19 + 0.02, 0.44], 'steel'); },
   stool(p, { c = 'red' } = {}) { p.cyl([0, 0, 0.36], 0.04, 0.72, 'steel'); p.cyl([0, 0, 0.74], 0.2, 0.08, c); p.cyl([0, 0, 0.03], 0.2, 0.06, 'steel'); p.tor([0, 0, 0.3], 0.14, 0.015, 'steel', { axis: 'z' }); },
-  desk(p, { c = 'woodL', seed = 1 } = {}) { const r = lcg(seed); PIECES.table(p, { w: 1.1, d: 0.6, h: 0.74, c }); p.box([-0.5, -0.25, 0.5], [0.5, 0.28, 0.53], 'steel');
+  desk(p, { c = 'woodL', seed = 1 } = {}) { const r = parkMiller(seed); PIECES.table(p, { w: 1.1, d: 0.6, h: 0.74, c }); p.box([-0.5, -0.25, 0.5], [0.5, 0.28, 0.53], 'steel');
     p.box([-0.35, -0.1, 0.74], [-0.05, 0.12, 0.76], 'paper'); p.box([0.1, -0.05, 0.74], [0.35, 0.15, 0.8], ['red', 'blue', 'green'][Math.floor(r() * 3)]); p.cyl([0.4, -0.15, 0.79], 0.012, 0.1, 'yellow', { axis: 'x', seg: 6 });
     p._sub('chair', [0, -0.55, 0], 0, { c: 'blue' }); },
   lockers(p, { n = 4, c = 'teal' } = {}) { for (let i = 0; i < n; i++) { const x0 = -n * 0.2 + i * 0.4; p.box([x0, 0, 0], [x0 + 0.39, 0.45, 1.9], c); p.box([x0 + 0.08, -0.01, 1.55], [x0 + 0.3, 0, 1.7], 'greyD'); p.box([x0 + 0.3, -0.03, 0.95], [x0 + 0.33, 0, 1.1], 'steel'); } },
   clock(p, { r = 0.25 } = {}) { p.cyl([0, 0, 0], r, 0.05, 'white', { axis: 'y', seg: 24 }); p.tor([0, -0.02, 0], r, 0.025, 'black'); p.box([-0.01, -0.04, 0], [0.01, -0.035, r * 0.7], 'black'); p.box([0, -0.045, -0.01], [r * 0.5, -0.04, 0.01], 'black'); },
   extinguisher(p) { p.cyl([0, 0, 0.3], 0.09, 0.5, 'red'); p.sph([0, 0, 0.55], 0.09, 'red'); p.box([-0.02, -0.02, 0.6], [0.02, 0.02, 0.68], 'black'); p.box([0, -0.1, 0.64], [0.12, -0.07, 0.66], 'black'); },
-  noticeboard(p, { w = 1.2, h = 0.8, seed = 5 } = {}) { const r = lcg(seed); p.box([-w / 2, 0, 0], [w / 2, 0.04, h], [0.70, 0.50, 0.30]); p.box([-w / 2 - 0.03, -0.01, -0.03], [w / 2 + 0.03, 0.05, 0.02], 'woodD');
+  noticeboard(p, { w = 1.2, h = 0.8, seed = 5 } = {}) { const r = parkMiller(seed); p.box([-w / 2, 0, 0], [w / 2, 0.04, h], [0.70, 0.50, 0.30]); p.box([-w / 2 - 0.03, -0.01, -0.03], [w / 2 + 0.03, 0.05, 0.02], 'woodD');
     for (let i = 0; i < 7; i++) { const x = -w / 2 + 0.1 + r() * (w - 0.35), z = 0.08 + r() * (h - 0.3), pw = 0.14 + r() * 0.12; p.box([x, -0.012, z], [x + pw, -0.005, z + pw * 1.3], [C.paper, C.yellow, C.pink, C.mint, C.white][i % 5], { ink: false }); p.sph([x + pw / 2, -0.02, z + pw * 1.25], 0.012, 'red', { ink: false, seg: 6 }); } },
   vending(p, { c = 'red' } = {}) { p.box([-0.45, -0.4, 0], [0.45, 0.4, 1.9], c); p.box([-0.38, -0.41, 0.6], [0.2, -0.4, 1.8], 'glass');
     for (let k = 0; k < 4; k++) for (let i = 0; i < 4; i++) p.cyl([-0.32 + i * 0.13, -0.3, 0.7 + k * 0.28], 0.04, 0.16, [C.yellow, C.blue, C.green, C.orange][(i + k) % 4], { seg: 8 }); p.box([0.25, -0.41, 1.2], [0.4, -0.4, 1.6], 'greyD'); p.box([-0.35, -0.41, 0.2], [0.2, -0.4, 0.4], 'black'); },
@@ -180,12 +180,12 @@ export const PIECES = {
   truss(p, { w = 8, h = 5 } = {}) { for (const x of [-w / 2, w / 2]) p.box([x - 0.15, -0.15, 0], [x + 0.15, 0.15, h], 'greyD'); p.box([-w / 2, -0.15, h - 0.3], [w / 2, 0.15, h], 'greyD');
     for (let x = -w / 2 + 0.8; x < w / 2; x += 1.2) { p.cyl([x, -0.25, h - 0.45], 0.14, 0.3, 'black', { seg: 10 }); p.cyl([x, -0.38, h - 0.45], 0.11, 0.02, [1.0, 0.9, 0.5], { axis: 'y', seg: 10 }); } },
   stage(p, { w = 8, d = 3, c = 'black' } = {}) { p.box([-w / 2, -d / 2, 0], [w / 2, d / 2, 0.8], c); p.box([-w / 2, -d / 2 - 0.02, 0.6], [w / 2, -d / 2, 0.8], 'red'); },
-  bunting(p, { w = 6, seed = 1 } = {}) { const n = Math.round(w / 0.3); p.box([-w / 2, -0.005, -0.005], [w / 2, 0.005, 0.005], 'black', { ink: false });
+  bunting(p, { w = 6 } = {}) { const n = Math.round(w / 0.3); p.box([-w / 2, -0.005, -0.005], [w / 2, 0.005, 0.005], 'black', { ink: false });
     for (let i = 0; i < n; i++) { const x = -w / 2 + (i + 0.5) * w / n, sag = 0.4 * (1 - Math.pow((x / (w / 2)), 2)); const t = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.22, 3), m([C.red, C.yellow, C.blue, C.green, C.pink][i % 5]));
       t.rotation.x = Math.PI; t.position.copy(B(x, 0, -sag - 0.11)); p._g.add(t); t.castShadow = false; } },
   // lab bits
   burner(p) { p.cyl([0, 0, 0.02], 0.06, 0.04, 'greyD'); p.cyl([0, 0, 0.1], 0.02, 0.16, 'steel'); p.cone([0, 0, 0.22], 0.025, 0.08, [0.4, 0.7, 1.0], { seg: 8 }); },
-  flasks(p, { seed = 2 } = {}) { const r = lcg(seed); for (let i = 0; i < 4; i++) { const x = -0.3 + i * 0.2, col = [C.green, C.pink, C.blue, C.yellow][Math.floor(r() * 4)];
+  flasks(p, { seed = 2 } = {}) { const r = parkMiller(seed); for (let i = 0; i < 4; i++) { const x = -0.3 + i * 0.2, col = [C.green, C.pink, C.blue, C.yellow][Math.floor(r() * 4)];
     if (i % 2) { p.cyl([x, 0, 0.08], 0.07, 0.16, 'glass', { r2: 0.03, seg: 10 }); p.cyl([x, 0, 0.05], 0.06, 0.08, col, { r2: 0.045, seg: 10 }); p.cyl([x, 0, 0.2], 0.025, 0.08, 'glass', { seg: 8 }); }
     else { p.cyl([x, 0, 0.12], 0.035, 0.24, 'glass', { seg: 10 }); p.cyl([x, 0, 0.07], 0.032, 0.12, col, { seg: 10 }); } } p.box([-0.4, -0.08, 0], [0.4, 0.08, 0.02], 'steel'); },
   microscope(p) { p.box([-0.1, -0.12, 0], [0.1, 0.12, 0.03], 'greyD'); p.box([-0.02, 0.05, 0.03], [0.02, 0.09, 0.3], 'greyD'); p.cyl([0, 0.02, 0.32], 0.035, 0.18, 'white', { axis: 'y', seg: 10 }); p.box([-0.07, -0.08, 0.12], [0.07, 0.04, 0.14], 'black'); },
@@ -219,26 +219,26 @@ export const PIECES = {
     const c = p.card([0, -0.08, 0.5], 0.5, 0.75, signTex(text, { bg, fg, w: 256, h: 384, border: null })); c.rotation.x = 0.18; p.box([-0.3, 0.1, 0], [0.3, 0.14, 0.9], 'woodD').rotation.x = -0.18; },
   poster(p, { title = 'SHOW', bg, shape, seed, w = 0.6, h = 0.85 } = {}) { p.card([0, 0, h / 2], w, h, posterTex(title, { bg, shape, seed })); },
   frame(p, { w = 0.6, h = 0.45, seed = 1 } = {}) { p.box([-w / 2 - 0.04, 0, -0.04], [w / 2 + 0.04, 0.03, h + 0.04], 'woodD'); p.card([0, -0.002, h / 2], w, h, posterTex('', { bg: [[0.4, 0.7, 0.9], [0.9, 0.7, 0.4], [0.5, 0.8, 0.5]][seed % 3], shape: ['circle', 'star', 'stripes'][seed % 3], seed })); },
-  window(p, { w = 1.2, h = 1.4, sky = true } = {}) { p.card([0, 0, h / 2], w, h, signTex('', { bg: [0.55, 0.78, 0.95], border: null, w: 64, h: 64 }));
+  window(p, { w = 1.2, h = 1.4 } = {}) { p.card([0, 0, h / 2], w, h, signTex('', { bg: [0.55, 0.78, 0.95], border: null, w: 64, h: 64 }));
     for (const x of [-w / 2, 0, w / 2]) p.box([x - 0.04, -0.05, 0], [x + 0.04, 0.0, h], 'white'); for (const z of [0, h / 2, h]) p.box([-w / 2 - 0.04, -0.05, z - 0.04], [w / 2 + 0.04, 0.0, z + 0.04], 'white'); p.box([-w / 2 - 0.1, -0.15, -0.06], [w / 2 + 0.1, 0.0, 0.0], 'white'); },
   ceilinglight(p, { w = 1.4 } = {}) { p.box([-w / 2, -0.15, 0], [w / 2, 0.15, 0.08], 'steel'); p.box([-w / 2 + 0.05, -0.12, -0.01], [w / 2 - 0.05, 0.12, 0.0], [1.0, 0.98, 0.9], { ink: false }); for (const x of [-w / 3, w / 3]) p.box([x - 0.005, -0.005, 0.08], [x + 0.005, 0.005, 0.6], 'greyD'); },
   cashregister(p) { p.box([-0.22, -0.2, 0], [0.22, 0.2, 0.12], 'greyD'); p.box([-0.2, -0.15, 0.12], [0.2, 0.15, 0.25], 'greyD'); p.box([-0.12, 0.02, 0.25], [0.12, 0.1, 0.4], 'black'); p.box([-0.1, 0.015, 0.3], [0.1, 0.02, 0.37], [0.4, 1.0, 0.5], { ink: false }); },
   stanchions(p, { w = 2 } = {}) { for (const x of [-w / 2, 0, w / 2]) { p.cyl([x, 0, 0.02], 0.15, 0.04, 'brass'); p.cyl([x, 0, 0.5], 0.03, 1.0, 'brass'); p.sph([x, 0, 1.0], 0.05, 'brass'); }
-    for (const [a, b] of [[-w / 2, 0], [0, w / 2]]) { const r = p.cyl([(a + b) / 2, 0, 0.88], 0.025, (b - a), 'red', { axis: 'x', seg: 8 }); } },
+    for (const [a, b] of [[-w / 2, 0], [0, w / 2]]) p.cyl([(a + b) / 2, 0, 0.88], 0.025, (b - a), 'red', { axis: 'x', seg: 8 }); },
   atm(p) { p.box([-0.4, -0.3, 0], [0.4, 0.3, 1.7], 'greyD'); p.box([-0.3, -0.31, 1.0], [0.3, -0.3, 1.4], [0.3, 0.7, 0.9], { ink: false }); p.box([-0.25, -0.4, 0.85], [0.25, -0.3, 0.95], 'steel'); p.box([-0.2, -0.31, 1.5], [0.2, -0.3, 1.62], 'green'); },
   plantbig(p) { PIECES.pot(p, { c: 'cream', s: 1.6 }); },
   lifering(p) { p.tor([0, -0.05, 0], 0.3, 0.07, 'red'); for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + 0.78; p.box([Math.cos(a) * 0.3 - 0.04, -0.13, Math.sin(a) * 0.3 - 0.04], [Math.cos(a) * 0.3 + 0.04, -0.12, Math.sin(a) * 0.3 + 0.04], 'white'); } },
   bollardsea(p) { p.cyl([0, 0, 0.25], 0.16, 0.5, 'black', { r2: 0.13 }); p.cyl([0, 0, 0.52], 0.22, 0.06, 'black'); },
   rope(p) { for (let i = 0; i < 3; i++) p.tor([0, 0, 0.04 + i * 0.05], 0.25 - i * 0.03, 0.03, [0.8, 0.7, 0.45], { axis: 'z' }); },
   // ground clutter in an area w x d: daisies | leaves | pebbles | litter (one piece: "the lawn is lived in")
-  scatter(p, { w = 3, d = 2, kind = 'daisies', n = 18, seed = 6 } = {}) { const r = lcg(seed);
+  scatter(p, { w = 3, d = 2, kind = 'daisies', n = 18, seed = 6 } = {}) { const r = parkMiller(seed);
     for (let i = 0; i < n; i++) { const x = (r() - 0.5) * w, y = (r() - 0.5) * d;
       if (kind === 'daisies') { p.sph([x, y, 0.03], 0.035, i % 3 ? 'white' : 'yellow', { sz: 0.4, seg: 6, ink: false }); p.sph([x + 0.06, y, 0.06], 0.05, 'leaf', { sz: 1.3, seg: 5, ink: false }); }
       else if (kind === 'leaves') p.box([x - 0.05, y - 0.04, 0.003], [x + 0.05, y + 0.04, 0.01], [C.orange, C.yellow, C.terracotta][i % 3], { ink: false });
       else if (kind === 'pebbles') p.sph([x, y, 0.02], 0.04 + r() * 0.05, [C.stone, C.grey, C.sand][i % 3], { sz: 0.5, seg: 6 });
       else p.box([x - 0.06, y - 0.04, 0.003], [x + 0.06, y + 0.04, 0.01], [C.paper, C.white, C.red][i % 3], { ink: false }); } },
   ball(p, { c = 'red', r = 0.12 } = {}) { p.sph([0, 0, r], r, c, { seg: 14 }); p.tor([0, 0, r], r * 1.01, r * 0.12, 'white', { axis: 'y' }); },
-  fruitstand(p) { PIECES.table(p, { w: 1.6, d: 0.8, h: 0.8, c: 'woodL' }); const r = lcg(11);
+  fruitstand(p) { PIECES.table(p, { w: 1.6, d: 0.8, h: 0.8, c: 'woodL' });
     for (let i = 0; i < 3; i++) { const x = -0.55 + i * 0.55; p.box([x - 0.24, -0.3, 0.8], [x + 0.24, 0.3, 0.98], 'woodL'); const col = [C.red, C.orange, C.yellow][i];
       for (let k = 0; k < 6; k++) p.sph([x - 0.15 + (k % 3) * 0.15, -0.12 + Math.floor(k / 3) * 0.2, 1.02], 0.07, col, { seg: 8 }); }
     for (const x of [-0.75, 0.75]) p.cyl([x, 0.35, 1.25], 0.02, 1.0, 'woodD'); p.box([-0.85, -0.2, 1.75], [0.85, 0.45, 1.8], 'green');
@@ -249,7 +249,7 @@ export const PIECES = {
   conduit(p, { w = 4 } = {}) { p.cyl([0, -0.05, 0], 0.035, w, 'steel', { axis: 'x' }); for (let x = -w / 2 + 0.6; x < w / 2; x += 1.6) p.box([x - 0.1, -0.1, -0.1], [x + 0.1, 0, 0.1], 'steel'); },
   exitsign(p) { p.box([-0.2, -0.06, 0], [0.2, 0, 0.18], 'white'); p.card([0, -0.062, 0.09], 0.36, 0.14, signTex('EXIT', { bg: [0.1, 0.6, 0.25], fg: [1, 1, 1], border: null, w: 256, h: 100 }), { lit: false }); },
   wallbox(p, { c = 'steel' } = {}) { p.box([-0.15, -0.08, 0], [0.15, 0, 0.25], c); p.box([-0.1, -0.085, 0.08], [0.1, -0.08, 0.18], 'greyD'); p.sph([0.08, -0.09, 0.04], 0.015, 'red', { seg: 6 }); },
-  notes(p, { w = 1.0, seed = 3 } = {}) { const r = lcg(seed); for (let i = 0; i < 4; i++) { const x = -w / 2 + i * w / 3.5, z = r() * 0.25; const c = p.box([x, -0.004, z], [x + 0.16, 0, z + 0.2], [C.paper, C.yellow, C.pink, C.white][i], { ink: false }); c.rotation.y = (r() - 0.5) * 0.3; } },
+  notes(p, { w = 1.0, seed = 3 } = {}) { const r = parkMiller(seed); for (let i = 0; i < 4; i++) { const x = -w / 2 + i * w / 3.5, z = r() * 0.25; const c = p.box([x, -0.004, z], [x + 0.16, 0, z + 0.2], [C.paper, C.yellow, C.pink, C.white][i], { ink: false }); c.rotation.y = (r() - 0.5) * 0.3; } },
   goggles(p) { p.box([-0.16, -0.1, 0], [0.16, 0.1, 0.1], 'yellow'); for (const x of [-0.07, 0.07]) p.cyl([x, -0.02, 0.13], 0.045, 0.04, [0.6, 0.85, 1.0], { axis: 'y', seg: 10 }); },
   book(p, { c = 'red' } = {}) { p.box([-0.12, -0.09, 0], [0.12, 0.09, 0.03], c); p.box([-0.11, -0.095, 0.004], [0.11, 0.09, 0.026], 'paper', { ink: false }); },
   adcolumn(p, { seed = 2 } = {}) { p.cyl([0, 0, 1.4], 0.42, 2.8, 'greyD', { seg: 18 }); p.cyl([0, 0, 2.9], 0.5, 0.2, 'green', { seg: 18 }); p.cone([0, 0, 3.15], 0.4, 0.3, 'green', { seg: 18 });
@@ -268,7 +268,7 @@ export const PIECES = {
   roadmark(p, { len = 6 } = {}) { for (let x = -len / 2; x < len / 2; x += 1.5) p.box([x, -0.06, 0.002], [x + 0.8, 0.06, 0.006], 'white', { ink: false }); },
   meterpost(p) { p.cyl([0, 0, 0.6], 0.035, 1.2, 'greyD'); p.box([-0.09, -0.07, 1.2], [0.09, 0.07, 1.5], 'steel'); p.box([-0.06, -0.075, 1.32], [0.06, -0.07, 1.42], [0.6, 0.9, 0.6], { ink: false }); p.sph([0, 0, 1.52], 0.09, 'steel', { sz: 0.6 }); },
   skateboard(p, { c = 'red' } = {}) { p.box([-0.4, -0.1, 0.06], [0.4, 0.1, 0.08], c); for (const x of [-0.28, 0.28]) for (const y of [-0.08, 0.08]) p.cyl([x, y, 0.03], 0.03, 0.03, 'white', { axis: 'y', seg: 8 }); },
-  pigeons(p, { n = 4, seed = 3 } = {}) { const r = lcg(seed); for (let i = 0; i < n; i++) { const x = (r() - 0.5) * 1.2, y = (r() - 0.5) * 0.8, a = r() * 6;
+  pigeons(p, { n = 4, seed = 3 } = {}) { const r = parkMiller(seed); for (let i = 0; i < n; i++) { const x = (r() - 0.5) * 1.2, y = (r() - 0.5) * 0.8, a = r() * 6;
     p.sph([x, y, 0.09], 0.08, [0.55, 0.56, 0.62], { sx: 1.0, sz: 0.75, seg: 8 }); p.sph([x + Math.cos(a) * 0.07, y + Math.sin(a) * 0.07, 0.17], 0.04, [0.40, 0.42, 0.50], { seg: 8 }); p.cone([x + Math.cos(a) * 0.11, y + Math.sin(a) * 0.11, 0.17], 0.012, 0.03, 'orange', { seg: 4 }); } },
   puddle(p, { w = 1.0, d = 0.6 } = {}) { const x = p.cyl([0, 0, 0.003], 0.5, 0.004, [0.45, 0.62, 0.80], { seg: 18, ink: false }); x.scale.set(w, 1, d); },
   hopscotch(p) { for (const [x, y] of [[0, 0], [0, 0.55], [-0.28, 1.1], [0.28, 1.1], [0, 1.65], [-0.28, 2.2], [0.28, 2.2]]) { p.box([x - 0.26, y - 0.26, 0.002], [x + 0.26, y + 0.26, 0.004], 'white', { ink: false }); p.box([x - 0.22, y - 0.22, 0.004], [x + 0.22, y + 0.22, 0.006], [0.70, 0.62, 0.60], { ink: false }); } },
@@ -288,7 +288,7 @@ export const PIECES = {
   cup(p) { p.cyl([0, 0, 0.06], 0.045, 0.12, 'white', { r2: 0.055, seg: 10 }); p.cyl([0, 0, 0.125], 0.057, 0.015, 'woodD', { seg: 10 }); },
   hangbasket(p) { p.cyl([0, 0, 0.6], 0.006, 1.2, 'greyD', { seg: 4 }); p.sph([0, 0, 0.0], 0.24, 'woodL', { sz: 0.6, seg: 10 }); p.sph([0, 0, 0.12], 0.22, 'leaf', { seg: 10 }); for (let i = 0; i < 5; i++) p.sph([Math.cos(i) * 0.18, Math.sin(i) * 0.18, 0.16], 0.05, ['pink', 'red', 'yellow'][i % 3], { seg: 6 }); },
   cardboard(p) { p.box([-0.3, -0.22, 0], [0.3, 0.22, 0.38], [0.72, 0.55, 0.36]); p.box([-0.3, -0.005, 0.38], [0.3, 0.005, 0.385], [0.85, 0.75, 0.5], { ink: false }); },
-  cloud(p, { s = 1, seed = 4 } = {}) { const r = lcg(seed); for (let i = 0; i < 6; i++) p.sph([(i - 2.5) * 0.7 * s, (r() - 0.5) * 0.4 * s, (0.3 + 0.4 * Math.sin(i * 1.1)) * s], (0.5 + 0.35 * r()) * s, i % 2 ? 'white' : [0.86, 0.90, 0.97], { seg: 10, sz: 0.75 }); },
+  cloud(p, { s = 1, seed = 4 } = {}) { const r = parkMiller(seed); for (let i = 0; i < 6; i++) p.sph([(i - 2.5) * 0.7 * s, (r() - 0.5) * 0.4 * s, (0.3 + 0.4 * Math.sin(i * 1.1)) * s], (0.5 + 0.35 * r()) * s, i % 2 ? 'white' : [0.86, 0.90, 0.97], { seg: 10, sz: 0.75 }); },
   zebra(p, { w = 3, n = 6 } = {}) { for (let i = 0; i < n; i++) { const x = -w / 2 + (i + 0.25) * w / n; p.box([x, -1.2, 0.004], [x + w / n * 0.5, 1.2, 0.01], 'white', { ink: false }); } },
   hubcap(p) { p.cyl([0, 0, 0.015], 0.16, 0.03, 'steel', { seg: 14 }); p.cyl([0, 0, 0.03], 0.05, 0.02, 'greyD', { seg: 10 }); },
   patch(p, { w = 1.4, d = 0.9 } = {}) { p.box([-w / 2, -d / 2, 0.003], [w / 2, d / 2, 0.008], [0.16, 0.18, 0.28], { ink: false }); for (let i = 0; i < 3; i++) p.box([-w / 2 + i * 0.4, -0.02, 0.008], [-w / 2 + i * 0.4 + 0.5, 0.02, 0.01], 'black', { ink: false }); },

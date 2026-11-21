@@ -4,7 +4,8 @@
 import * as THREE from 'three';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { toon, lin, INK_RGB } from '../../engine/look.js';
-import { KAI, W_M, HEAD_H, hairCap, guardCap, curls, bandana, flatCap } from '../../engine/cast.js';
+import { W_M, HEAD_H, hairCap, guardCap, flatCap } from '../../engine/cast.js';
+import { canvasTex } from '../sets/kit.js';
 
 const W = W_M, HA = 0.5 * W, HB = 0.5 * HEAD_H * W, INK_T = 0.036 * W, DEG = Math.PI / 180;
 const hullMat = new THREE.MeshBasicMaterial({ color: lin(...INK_RGB), side: THREE.BackSide });
@@ -110,10 +111,6 @@ export function dye(S, k) {
 }
 
 // ---------------------------------------------------------------- hand props (origin at the grip; caller marks them with stage.prop)
-function canvasTex(w, h, draw) {
-  const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const g = cv.getContext('2d'); draw(g, w, h);
-  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
-}
 // folded newspaper held by its bottom edge, front page facing +z
 export function newspaper() {
   const g = new THREE.Group();
