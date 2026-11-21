@@ -107,20 +107,9 @@ hash that keeps the ◇2 reviews fresh (`BREAKDOWN` in `tools/fresh.mjs`), so ad
 ## Motion v2 keys (`anim`): blocking and polish
 
 ```js
-const STAND = { bob: 0, sq: 0, spine: { bend: 0, side: 0, twist: 0 }, neck: { nod: 0, tilt: 0, turn: 0 }, pelvis: { pitch: 0, roll: 0, yaw: 0 },
-  armL: { raise: 12, swing: 0, elbow: 15, roll: 0 }, armR: { raise: 12, swing: 0, elbow: 15, roll: 0 },
-  legL: { foot: [-0.22, 0.022, 0], pitch: 0, knee: [-0.15, 0, 1] }, legR: { foot: [0.22, 0.022, 0], pitch: 0, knee: [0.15, 0, 1] } };
-const BREATH = { 'spine.bend': [1.5, 40], 'neck.tilt': [1.5, 53, 1] };              // a moving hold: no pose ever freezes
-const hold = (f, extra) => ({ f, pose: STAND, cycle: BREATH, ...extra, ease: 'snap' });   // blocking: every key held
-const BLOCKING = new URLSearchParams(globalThis.location?.search || '').get('blocking') === '1';   // ?blocking=1 = the approved blocking
-function polish(keys) {                    // the poses stay; a key on a cut stays a snap; others hold, then move T frames before the next
-  if (BLOCKING) return keys;
-  return keys.map((k, i) => {
-    const nx = keys[i + 1], cut = CUTS.includes(k.f), sameShot = nx && !CUTS.includes(nx.f);
-    const T = nx?.t ?? (k.stroke ? 4 : 7), { stroke, antic, t, ...rest } = k;
-    return { ...rest, ease: cut ? 'snap' : 'slow', ...(antic ? { antic } : {}), ...(sameShot && nx.f - k.f > T + 2 ? { hold: nx.f - k.f - T } : {}) };
-  });
-}
+import { hold, polishAt } from '/styles/stick-man/lib/acting/keys.js';   // STAND, BREATH, hold, polishAt; ?blocking=1 = the approved blocking
+export const CUTS = [0, 30, 60 /* ... */];   // the animatic's cut frames
+const polish = polishAt(CUTS);               // the poses stay; a key on a cut stays a snap; others hold, then move T frames before the next
 anim: { eng: polish([ hold(0, { ...KNEEL, pos: E0, yaw: -120, expr: 'sly', look: 'joint' }), hold(8, { stroke: 1, ... }), ... ]) }
 // KNEEL, E0 and the other pose / position constants: styles/stick-man/examples/pilot-a/reel.js
 ```

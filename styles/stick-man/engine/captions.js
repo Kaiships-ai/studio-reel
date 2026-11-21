@@ -5,7 +5,7 @@ const MAX_WORDS = 3, MAX_CHARS = 14;
 // (tools/look_measure.mjs): glyph stem 15-16 px, black stroke median 7 px (5-9), text rows centred at 70.2-70.6 % of the
 // height, a wide heavy face. Ours at 800 / 6 px measured stem 13, stroke 6: thinner and narrower (judge t1 "small").
 export const CAP = { size: 74, weight: 900, stroke: 8, track: 1.5 };   // stroke 8 drawn measures 7 (anti-aliased edge)
-// trailing punctuation stays ("pink.", "minutes,": FORENSIC.md captions); only quote marks go
+// trailing punctuation stays ("pink.", "minutes,", as the reference captions do); only quote marks go
 const clean = w => w.replace(/^["“]+|["”]+$/g, '');
 
 // mode 'word' (reel `captions: { mode: 'word' }`): one content word a caption, the small words before it ride with it

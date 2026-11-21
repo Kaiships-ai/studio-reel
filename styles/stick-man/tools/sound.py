@@ -18,7 +18,7 @@ HIT_DB = -4.3                                              # loudest 150 ms of a
 LEVEL = {'step_l': -5.0, 'step_r': -5.0, 'tick': -5.0, 'siren': -1.5, 'snore': -5.0, 'blip': -5.0, 'ping': -5.0, 'ting': -5.2}
 HP = {'thud': 70, 'poof': 45, 'clunk': 90, 'step_l': 70, 'step_r': 70, 'snore': 70}     # high-pass per sound (default 150 Hz)
 PAN = {'step_l': -0.2, 'step_r': 0.2, 'siren': -0.35, 'whoosh': 0.15, 'flutter': 0.2, 'ping': -0.1}
-SFX_LU, MUS_LU, MIX_LU, TP_CEIL = -6.4, -11.5, -14.0, -1.6   # MUS_LU -11.5 (was -13.4): bed in pauses -10..-12 dB vs voice (FORENSIC.md fix 10)   # stems relative to the voice; master; limiter ceiling (dBTP)
+SFX_LU, MUS_LU, MIX_LU, TP_CEIL = -6.4, -11.5, -14.0, -1.6   # MUS_LU -11.5 (was -13.4): bed in pauses -10..-12 dB vs voice (`bed in pauses` in forensic/measure.py)   # stems relative to the voice; master; limiter ceiling (dBTP)
 ROOM_S, ROOM = 0.6, {'siren': 0.0, 'ding': 0.15, 'scratch': 0.12, 'sting': 0.2}   # a small room under every hit (wet)
 MAKEUP_DB = 8.0
 DUCK_MARGIN = -6.8                                         # SFX 2-8 kHz <= voice - 6.8 dB inside words (the check asks 6 dB)

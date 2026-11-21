@@ -141,7 +141,7 @@ export function makeShatter(stage, { w = 1.2, h = 1.0, n = 18, seed = 11, ground
 }
 
 // ---------------------------------------------------------------- sparks: hot streaks thrown from a point
-// light ({rgb, power, dist}): the burst lights the set and the faces near it (FORENSIC.md section 7: reference FX cast
+// light ({rgb, power, dist}): the burst lights the set and the faces near it (reference study: reference FX cast
 // light and stay in the set) - a point light that flashes up in 2 frames and dies with the sparks, flickering
 export function makeSparks(stage, { n = 16, speed = 3.0, color = [1.0, 0.80, 0.25], seed = 13, life = 0.7, light = null } = {}) {
   const g = new THREE.Group(), r = lcg(seed), S = [], m = emat(color, 2.0);

@@ -159,9 +159,8 @@ cheapest to fix now.
 **[1.4b] Rough panels.** One panel per **key**: a static shot needs one; a moving shot needs its start and end frame; an
 action needs anticipation, the extreme and the result (pose-to-pose); a reveal needs before and after. Panels carry
 camera arrows (move), character arrows (travel), the text that will be on screen (in its real place), and the shot id.
-Keep them grey: sketches, or engine stills of proxy characters in a draft set with the light turned flat. (A one-flag
-grey preview mode in the engine is on the roadmap in AUDIT.md; until it exists, a draft set without the chosen look is
-fine.)
+Keep them grey: sketches, or engine stills of proxy characters in a draft set with the light turned flat. (`tools/previs.mjs`
+renders a grey blockout; a draft set without the chosen look is also fine.)
 
 **[1.4c] Board pitch + read test.** Present the board in order with the voice read aloud (Kai or a fresh agent). Then
 the muted read test: a fresh agent sees only the panels and retells the story beat by beat with want / obstacle /

@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { propPlan } from '../../styles/stick-man/engine/propobj.js';
 import { solidBoxes, restBoxes, inBoxes } from '../../styles/stick-man/engine/solids.js';
 
-// room 2's bed as the set builds it (films/hm-ep01-r2 setKit K.box: an axis-aligned BoxGeometry), Blender lo/hi
+// room 2's bed as the set builds it (films/hm-ep01-r2, a kit K.box: an axis-aligned BoxGeometry), Blender lo/hi
 const B = (x, y, z) => new THREE.Vector3(x, z, -y);
 function kbox(lo, hi, name) { const a = B(...lo), b = B(...hi), m = new THREE.Mesh(new THREE.BoxGeometry(Math.abs(b.x - a.x), Math.abs(b.y - a.y), Math.abs(b.z - a.z)), new THREE.MeshBasicMaterial());
   m.position.copy(a).add(b).multiplyScalar(0.5); m.name = name; return m; }

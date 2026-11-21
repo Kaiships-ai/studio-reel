@@ -37,7 +37,7 @@ export function editCuts(rows) {
 // Acting numbers for one actor from __dbg rows (frames where it is in frame, cut frames left out):
 // frozen = longest DEAD run: every joint within 1 mm and every angle within 0.3 deg of where the run began (a hold that
 // breathes is alive: the old test, 2 mm / 0.5 deg against the frame before, called a breathing hold frozen and so pushed
-// the kit toward constant fidget, while reference holds last up to 86 f - FORENSIC.md section 3, fix 14);
+// the kit toward constant fidget, while reference holds last up to 86 f, tools/forensic/microanim.mjs);
 // ratio = (shoulder-elbow + elbow-hand) / rest arm length.
 export const GRIP_CM = 2, PROP_CM = 1;                                  // (h) a gripping hand off its target, (i) a held prop in the body
 const JOINTS = ['hip', 'knee', 'ankle', 'toe', 'shoulder', 'elbow', 'hand'], ANG = ['kneeFlex', 'elbowFlex', 'footPitch'], ARM = 2 * 0.5125 * 0.60;   // rest arm length (m) = 2 x cast.js LIMB.upper x W_M

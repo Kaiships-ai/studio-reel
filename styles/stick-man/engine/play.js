@@ -27,7 +27,7 @@ import { solidBoxes, restBoxes, inBoxes, drawnBox, boxPoints } from './solids.js
 import * as EXTRAS from '../lib/cast/extras.js';
 import { PHYS } from '../lib/props/physfx.js';
 import { STORY } from '../lib/props/story.js';
-// default acting size: the reference's big beats travel ~2.3 head widths, ours ~0.5-0.7 (FORENSIC.md section 3), so every pose plays 1.2x unless an act or cast entry says otherwise
+// default acting size: the reference's big beats travel ~2.3 head widths, ours ~0.5-0.7 (reference study), so every pose plays 1.2x unless an act or cast entry says otherwise
 const ACT_AMP = 1.2;
 Object.assign(MAKE, PHYS, STORY);                               // story props that animate (lib/props/story.js)                                       // physical FX kinds (SETS.md "Physical effects")
 
@@ -124,7 +124,7 @@ async function buildAct(R, X) {
   // the set's solids as built (engine/solids.js): every box mesh but the set props, plus COLLIDE. A prop lets go and lands
   // on them (propobj.js S.rest); the dbg reports a prop inside one (out.propIn)
   const solids = solidBoxes(group, new Set(Object.values(props || {}).map(o => (o?.isObject3D ? o : o?.mesh)).filter(Boolean))), restOn = restBoxes(solids, SET.COLLIDE || []);
-  // per-place light (FORENSIC.md section 6: every reference place has its own light, per-shot YAVG std 23-25 vs ours 6-9):
+  // per-place light (reference study: every reference place has its own light, per-shot YAVG std 23-25 vs ours 6-9):
   // act `light: { lit, shade (tints of the toon ramp's two ends), lamp (gain of the practical lights), sun, power, sky,
   // ground, hemi, fill, fillPower, background, bounce, lamps: [{at, rgb, power, dist}] }`
   // recolours the shared sun / sky / fill while this act is on screen, scales the set's own bounce lights, and hangs
@@ -899,7 +899,7 @@ export async function boot({ film, width, height }) {
   const capG = cap.canvas.getContext('2d');
   // windows: act k is on screen from its `from`; a dissolve of n frames is centred on that frame
   const fr = x => typeof x === 'number' ? x : resolveBeatFrame(x, words, fps);
-  // place changes dissolve (FORENSIC.md fix 1: the reference cross-dissolves, median ~9 f, almost never hard-cuts)
+  // place changes dissolve (`dissolves` in tools/forensic/measure.py: the reference cross-dissolves, median ~9 f, almost never hard-cuts)
   // `whip: n` instead of `dissolve`: an n-frame whip pan (a horizontal smear peaking mid-transition, then the cross-fade)
   const wins = acts.flatMap((A, k) => defs[k].show.map(w => ({ A, a: fr(w.from), whip: w.whip ? (w.dir ?? 1) : 0, n: w.whip ?? w.dissolve ?? (A === acts[0] && w.from === F0 ? 0 : 9) }))).sort((x, y) => x.a - y.a);
   const at = f => {

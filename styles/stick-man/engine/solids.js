@@ -1,5 +1,5 @@
 // The set's solid pieces, read from what the set built instead of from a hand list: every box mesh of the act (the
-// allout/kit.js and setKit K.box walls, furniture, floors, jambs) plus the set's COLLIDE. A hand list misses what nobody wrote into it
+// allout/kit.js createKit K.box walls, furniture, floors, jambs) plus the set's COLLIDE. A hand list misses what nobody wrote into it
 // (Hot Money ep01 r5: room 2's bed and nightstand were in COLLIDE_ROOM2, the engine read COLLIDE, and a hot dog let go
 // over the bed fell through it to the floor; the walls and the door jamb a bag swung through were in no list at all).
 //   solidBoxes(root, skip)   [{ name, mesh, box (its geometry's box) }]: the box meshes under root, outside skip (a set prop, an actor)

@@ -2,7 +2,7 @@
 // pure function of (expression, blink, frame, age). Head-attached marks (sweat drop, steam, zzz, and a few quiet extras)
 // are flat camera-facing cards parented to the head.
 //
-// The face grammar is the reference's (Ricks Clips shorts, studied frame by frame; FORENSIC.md sections 3-4):
+// The face grammar is the reference's (Ricks Clips shorts, studied frame by frame):
 //   - five marks and no more: two eyes, two brows, one mouth. No highlights, no colour in the eyes, no skin effects
 //     except a soft blush and, rarely, small tears. Rage turns the whole head purple (tint) with steam; it never adds
 //     veins or red eyes.
@@ -80,7 +80,7 @@ const OPEN = { flat: 'open', smile: 'open', grin: 'open_big', smirk: 'open_skew'
   skew: 'open_skew', stretch: 'stretch', grimace: 'teeth_open', tight: 'open_frown', big: 'big_open', big_open: 'big_open', scream: 'scream', sneer: 'open_frown' };
 for (const k of Object.keys(EXPR)) EXPR[k + '_o'] = { ...EXPR[k], mouth: OPEN[EXPR[k].mouth] || 'open', base: k };
 EXPR.sleep_o = { ...EXPR.sleep, mouth: 'o', mw: 0.6, base: 'sleep' };
-// wide-open twins (`<expr>_O`): the loud syllable and the middle of an expression ramp (FORENSIC.md fix 8: reference mouth
+// wide-open twins (`<expr>_O`): the loud syllable and the middle of an expression ramp (`mouth movement` in tools/forensic/measure.py: reference mouth
 // area swings, CV 0.33-0.56). Bigger in width and drawn lower so the dark shape grows.
 for (const k of Object.keys(EXPR)) if (!k.endsWith('_o') && !k.endsWith('_O')) EXPR[k + '_O'] = { ...EXPR[k + '_o'], mw: 1.35 * (EXPR[k].mw || 1), my: (EXPR[k].my || 0) - 0.010, base: k };
 export const EXPR_NAMES = Object.keys(EXPR).filter(k => !k.endsWith('_o'));
@@ -313,7 +313,7 @@ function skin(g, S, ey, dx, t) {
 // ------------------------------------------------------------------ continuous faces (micro-animation layer)
 // A face is a set of numbers (eye radii, lid, lid tilt, cheek push, white, pupil, gaze, brow tilt / height / arch / lifts,
 // brow weight, mouth width / shift, skin alphas) plus two discrete picks (eye kind, mouth kind). Between two expressions
-// every number is in-betweened, so each frame of a change is its own drawing (FORENSIC.md section 3: the reference redraws a
+// every number is in-betweened, so each frame of a change is its own drawing (tools/forensic/microanim.mjs: the reference redraws a
 // face 5 times in 12 frames). The ink oval opens into a ring continuously (deadpan -> shock is one morph); a discrete pick
 // that differs is hidden inside an in-between: the eyes squeeze shut and the mouth passes through an open gasp at the
 // swap. Talking draws a parametric mouth from visemes (acting.js) with a real open / close range.

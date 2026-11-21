@@ -23,7 +23,7 @@ test('a hook opens on an aerial / est that hands over within 40 frames', () => {
   assert.ok(s[1].f - s[0].f <= 40 && !SMALL.has(s[1].shot));
 });
 
-test('no line repeats the kind the line before ended on, and no framing holds over maxSeg (84 f): irregular holds, not a 1 s grid (FORENSIC.md fix 3)', () => {
+test('no line repeats the kind the line before ended on, and no framing holds over maxSeg (84 f): irregular holds, not a 1 s grid (`shot length CV` in tools/forensic/measure.py)', () => {
   const L = [line('l01', 0, 100), line('l02', 100, 200), line('l03', 200, 300), line('l04', 300, 400)];
   const out = planShots(L), s = out['0'];
   for (let i = 1; i < s.length; i++) assert.notEqual(s[i].shot, s[i - 1].shot, `shots ${i - 1}-${i}`);

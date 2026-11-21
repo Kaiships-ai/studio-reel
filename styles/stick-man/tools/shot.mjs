@@ -167,7 +167,7 @@ if (A.speed && !REEL) {
       `      head cut by the top edge: ${compress(rows.filter(r => { const a = r.actors[n]; return a.inFrame && a.head[1] < 0; }).map(r => r.f)) || 'never'}`);
     // body acting: the share of this lead's in-frame frames with a body verb running (GATES.md "Acting gates")
     const lf = rows.filter(r => r.actors[n].inFrame && r.actors[n].lead), idleF = lf.filter(r => !r.actors[n].body).map(r => r.f);
-    // micro-animation (FORENSIC.md section 3; principles, the mouth range is a gate): head moves and holds, mouth range
+    // micro-animation (tools/forensic/microanim.mjs; principles, the mouth range is a gate): head moves and holds, mouth range
     const mi = microanim(rows)[n];
     if (mi) L.push(`      micro: head moves ${mi.headMoves}, median ${mi.moveLenMedian ?? '-'} f; holds ${mi.holds}, median ${mi.holdMedian ?? '-'} f, longest ${mi.holdMax} f; mouth CV ${mi.mouthCV_talk == null ? '-' : mi.mouthCV_talk.toFixed(2)} over ${mi.talkFrames} talking frames`);
     // the face (faults.mjs faceFaults): pops, rise and hold of each change, how often it changes, takes, blinks, eye lead

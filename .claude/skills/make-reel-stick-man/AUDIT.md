@@ -44,19 +44,16 @@ the weakest stage was the one that mattered most.
 | `REEL_DATA.md` | the shot list format (`scenes`, `shots`, options) |
 | `GATES.md` | pre-production checks and thresholds |
 | `LEDGER.md` | ◇2a / ◇2b / ◇2c rows |
-| `styles/stick-man/tools/prepro.mjs`, `animatic.mjs`, `shotlist.mjs` (new, kit: needs a PR) | the checker (coverage, timing, cards, text, safe zone, continuity, intensity flags, `intensity.svg`) and the animatic builder |
+| `styles/stick-man/tools/prepro.mjs`, `animatic.mjs`, `shotlist.mjs` | the checker (coverage, timing, cards, text, safe zone, continuity, intensity flags, `intensity.svg`) and the animatic builder |
 
-## Roadmap (kit tasks, in order of value)
+## Roadmap (status 21 Nov 2026)
 
-1. **Grey preview mode** in the engine (`?look=flat`): proxy figures, flat light, no grade, so [1.4b] panels and [1.6]
-   options can be rendered from the floor plan in seconds.
-2. **Stage page: shot cards** in `templates/stage-page.html`: one card per shot (panel, purpose, size/lens/move, story vs
-   visual), a note box per shot, the intensity graph on top.
-3. **`board.mjs` reads `shots`**: stills per shot as well as per line; the muted retell prompt as a `--retell` mode.
-4. **`gates.mjs` reads `review/prepro.md`**: the pre-production checks also run at stage 4, so nothing regresses.
-5. **`shotplan.js` respects the shot list**: the auto planner only fills shots the list leaves empty, and takes the
-   scene's `feel` and the shot's `story` into its choice.
-6. **Retrofit Hot Money ep. 1** with the new stage 1 as the second worked example (`examples/hm-ep01/`).
+1. **Grey preview**: done as `tools/previs.mjs`, a grey three.js blockout of a scene or the whole film. The engine has
+   no `?look=flat` flag.
+2. **Still open**: shot cards in `templates/stage-page.html`; `board.mjs` stills per shot (today two per spoken line,
+   no retell mode); `gates.mjs` running the `review/prepro.md` checks at stage 4 (today it does not read that file).
+3. **`shotplan.js`** plans only the storyboard lines that name no shot. It does not read a scene's `feel` or a shot's
+   `story`.
 
 ## First run: Hot Money episode 1 (13 Nov 2026)
 

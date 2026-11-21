@@ -35,7 +35,7 @@ the standard pose there.
 
 | Rule | Check |
 |---|---|
-| File name `<Body>_<Group>_<Action>_<Loop\|Once>_v01.js`; shared clips have no body prefix. Groups: Idle, Move, Act, Trans, React, Gest. Body clips live in `body/<body>/`, shared in `shared/{interact,transition,react,extra}/` | naming |
+| File name `<Body>_<Group>_<Action>_<Loop\|Once>_v01.js`; shared clips have no body prefix. Groups: Idle, Move, Act, Trans, React, Gest. Body clips live in `body/<body>/`, shared in `shared/interact/` (Act) and `shared/extra/` (any group); the naming check also takes `shared/transition/` (Trans) and `shared/react/` (React), not made yet | naming |
 | A record: `name, clip, body?, group, loop, frames, base, end?, style: 'kaiships', needs: { props, hands, marks? }, keys` | record |
 | A loop is seamless: its last key is its first, moved on by `advance` (travelling loops) | loop seam |
 | A one-off starts on its `base` and ends on its `end` (default `base`); a travelling loop's first and closing steps too. Standard poses: STAND, SIT, CARRY (`base.js`) | base |

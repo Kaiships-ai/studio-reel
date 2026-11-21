@@ -2,7 +2,7 @@
 // Pure data in, shot specs out (the same shape as an act's `shots`), so it runs in node tests and in the page.
 // Roles (storyboard `role`, else guessed from the line): hook, setup, fact / number, compare, reaction, twist, panic,
 // explain, payoff.
-// A line over ~2.6 s gets a second shot on its key word (`on` / `still`). Rhythm (FORENSIC.md fixes 1-3, 5): a new line
+// A line over ~2.6 s gets a second shot on its key word (`on` / `still`). Rhythm (the cut, rush and shot-length targets in tools/forensic/measure.py): a new line
 // opens with a cross-dissolve (9 f) when it changes scale family, else the camera rushes to the new framing (camera.js);
 // a framing may hold up to ~3 s (`maxSeg`) and the camera rushes 4-6 times per 10 s, so shot lengths swing (reference shot-length CV 0.57-1.31); est / aerial /
 // top hand over within ~3 s (small-figure run gate); the hook line rushes by frame ~18 (first move <= f30).
@@ -19,7 +19,7 @@ export const ROLE_SHOTS = {
   payoff: ['low', 'punch', 'dutch'],
 };
 // what follows a line's first shot inside the same line (opposite scale: far -> near, near -> far); wide and establishing
-// lead the near lists: the reference spends ~32 % of its runtime on them (FORENSIC.md fix 5)
+// lead the near lists: the reference spends ~32 % of its runtime on them (gates.mjs 3c shot sizes)
 export const FOLLOW = {
   aerial: ['low', 'profile', 'two'], est: ['low', 'punch', 'profile'], top: ['punch', 'low', 'cu'], macro: ['punch', 'low', 'cu'],
   cu: ['est', 'top', 'low', 'macro'], punch: ['est', 'top', 'low'], dutch: ['est', 'top', 'low', 'punch'], ms: ['est', 'punch', 'macro', 'top'], low: ['est', 'top', 'punch', 'macro', 'ots'],
