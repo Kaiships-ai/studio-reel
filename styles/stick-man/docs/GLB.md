@@ -1,7 +1,9 @@
 # Sets from Blender (.glb)
 
 Blender is the asset workshop: model or reuse kit pieces there, export them once, dress a three.js set with them. The
-reel engine never renders in Blender. Packs live in `styles/stick-man/assets/<pack>/` (none is kept in the kit today).
+reel engine never renders in Blender. Packs live in `styles/stick-man/assets/<pack>/`. Two are kept: `backdrop` (three
+far town rows + `manifest.json`, loaded by `allout/sets/backdrop.js`) and `costume` (`hoodie_grey.glb`, loaded by
+`allout/hoodie.js`).
 
 ## Recipe (6 steps)
 

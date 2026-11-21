@@ -1,7 +1,8 @@
-# allout: the reference-look build (ep 1 first)
+# allout: the set kit and opt-in modules every stick-man film uses
 
-Goal: a stick-man episode a viewer cannot tell from the reference. The kit's own sets, props, camera planner and gates
-stay as they are; an act opts in with two keys.
+Live engine code, not a one-off study: `engine/play.js` loads the set module, `director.js` and `sets/backdrop.js` from
+here, and every set builds on `kit.js` `createKit` (how-to: `docs/SETS.md`). An act or a cast entry opts in with the keys
+below; one without them renders as before.
 
 | Key (act data) | What it does | File |
 |---|---|---|
@@ -13,6 +14,7 @@ stay as they are; an act opts in with two keys.
 | `import '/styles/stick-man/allout/handprops.js'` | glass beaker (with the bugs you can see), gold medal, culture bottle, stamp, 14-day blister, hanky hand props (no ink) | handprops.js |
 | `make: { t: { kind: 'ao_tube', from, via, to } }` | a cable from a fixed point through a hand into a mouth (keys show, feed) | fx.js |
 | `make: { f: { kind: 'ao_flies', at: { head: 'kip' } } }` | flies buzzing round a head (key on) | fx.js |
+| `backdrop: { rows: [{ piece, at, rot, tint, scale }], tint }` | far town rows 20-60 m past the set's walls (pieces `backdrop_skyline_a`, `backdrop_skyline_b`, `backdrop_roofline`); never collide, no ink, not dressing; `tint` darkens them for a night set | sets/backdrop.js, assets/backdrop/ (engine/play.js hook) |
 | shot `travel: 'rush'` | hold, then a crisp travel (no smear); 'land' arrives with a small settle | director.js |
 
 Look rules the sets follow: physically lit standard materials (never toonified, never inked: only the cast is inked),
@@ -34,7 +36,7 @@ Finish kit (from the private master study, 11/11; each is opt-in, an act without
 | motion blur | act `look.mblur: { px, k }` (only when the image travels faster than px per frame at 1080) | engine/play.js, look.js |
 | light | act `light: { sunDir, camKey: { az, el } }` (a lower key; the key rides the camera so the face in shot is lit) | engine/play.js |
 | soft fx | `make: { kind: 'ao_puff' }` (soft smoke / dust / fire sprites, no ink), `ao_aura` (flame tongues + a warm light), `ao_debris` (pebbles at the feet) | fx.js |
-| costume | `import costume.js`; cast `costume: ['belt', 'holster', 'holster:L', 'hat:cowboy' \| 'hat:flat' \| 'hat:bowler']`; verb `lose_hat` (the hat flies off) | costume.js |
+| costume | `import costume.js`; cast `costume: ['belt', 'holster', 'holster:L', 'hat:cowboy' \| 'hat:flat' \| 'hat:bowler' \| 'hat:top']` (each hat may add `:rrggbb`); verb `lose_hat` (the hat flies off) | costume.js |
 | hoodie | `import costume.js` then `hoodie.js`; cast or spec `costume: ['hoodie:grey']` (hood up) \| `['hoodie:grey:down']` (hood folded on the back); the hood is skinned between chest and head, its back peak springs and the cords swing (`PHYS.on`); a spec's own `costume` is worn by default | hoodie.js, cloth.js, assets/costume/hoodie_grey.glb |
 | acting | act `actingAmp` / cast `amp` (all pose sizes) | engine/poses.js |
 | sets | `K.planks`, `SURF.weathered`, `K.extras` (background people), `K.skyDome` (a sky that rides the camera), card `fog` | kit.js |
