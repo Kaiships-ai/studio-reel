@@ -23,7 +23,7 @@ lamps against a cool fill, a painted self-lit backdrop for skies and streets, an
 with their own keys.
 
 Sets: `canyon-edge` (two rival lines on a ledge: the blue gapped line, the purple tight line that buckles
-over the lip; spread `EDGE_LOOK` for its approved light; used by `examples/pilot-a`).
+over the lip; spread `EDGE_LOOK` for its approved light).
 
 Finish kit (from the private master study, 11/11; each is opt-in, an act without it renders as before):
 

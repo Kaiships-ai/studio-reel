@@ -1,14 +1,14 @@
 # Reel data (`films/<slug>/storyboard.json`, `reel.js`)
 
 Plain data modules. `styles/stick-man/engine/play.js` reads `reel.js` and `vo/words.json`; every frame is a pure function of
-its number. Worked example: `styles/stick-man/examples/pilot-a/`. `new_film.mjs` writes this skeleton.
+its number. Worked example: Hot Money ep01 r5 (films/hm-ep01-r5 once moved into the repo). `new_film.mjs` writes this skeleton.
 
 ## Storyboard (`storyboard.json`)
 
 One entry per `vo/script.json` line; the board and the story gates read it.
 
 ```json
-{ "film": "pilot-a", "lines": [
+{ "film": "my-film", "lines": [
   { "id": "l01", "see": "The engineer kneels on his own blue railway and saws a small gap in the rail.",
     "set": "edge", "props": ["joint"], "act": { "eng": ["saw@gap"] }, "still": "gap" } ] }
 ```
@@ -111,7 +111,7 @@ import { hold, polishAt } from '/styles/stick-man/lib/acting/keys.js';   // STAN
 export const CUTS = [0, 30, 60 /* ... */];   // the animatic's cut frames
 const polish = polishAt(CUTS);               // the poses stay; a key on a cut stays a snap; others hold, then move T frames before the next
 anim: { eng: polish([ hold(0, { ...KNEEL, pos: E0, yaw: -120, expr: 'sly', look: 'joint' }), hold(8, { stroke: 1, ... }), ... ]) }
-// KNEEL, E0 and the other pose / position constants: styles/stick-man/examples/pilot-a/reel.js
+// KNEEL, E0 and the other pose / position constants: the film's own reel.js (Hot Money ep01 r5 (films/hm-ep01-r5 once moved into the repo))
 ```
 
 | Key field | Meaning |

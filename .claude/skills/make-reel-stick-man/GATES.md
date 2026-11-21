@@ -69,7 +69,7 @@ Every frame of the film, frame against frame (`tools/shotfaults.mjs`). Each faul
 it in view (inside the frame, not behind the figure's own head or torso, and in film mode not behind the set: `shot.mjs
 --vis`). Its frames are how long it stays on screen.
 
-What blocks comes from Kai's marks at playback speed (17/11, 12 strips from pilot-a and the bible film): he saw only a saw
+What blocks comes from Kai's marks at playback speed (17/11, 12 strips from the old pilot A and the bible film): he saw only a saw
 11 px into a rail for 3 frames, and none of the one-frame pops of 6 to 67 px, a phone that appears in a hand (47 px), a
 knee that snaps to a new pose (63 px) or a calendar page turning. So:
 

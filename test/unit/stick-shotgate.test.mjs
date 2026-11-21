@@ -100,9 +100,9 @@ test('faults group by second; a second blocks only when a fault the camera sees 
   assert.deepEqual(s.map(x => [x.s, x.block]), [[1, true], [2, false], [3, false], [4, true]]);
 });
 
-// Mutation test: faults put into the clean rows of pilot-a (a film Kai approved, styles/stick-man/examples/pilot-a, rows from
+// Mutation test: faults put into the clean rows of an approved film (rows kept in test/fixtures/shotgate, from
 // shot.mjs --dbg at 404x720) where the thing is in the frame.
-const clean = () => zlib.gunzipSync(fs.readFileSync(new URL('../fixtures/shotgate/pilot-a.jsonl.gz', import.meta.url))).toString().trim().split('\n').map(l => JSON.parse(l));
+const clean = () => zlib.gunzipSync(fs.readFileSync(new URL('../fixtures/shotgate/clean-film.jsonl.gz', import.meta.url))).toString().trim().split('\n').map(l => JSON.parse(l));
 const base = clean(), cut = cuts(base), baseBlocks = blocking(base), baseKeys = new Set(baseBlocks.map(x => `${x.F} ${x.kind}`));
 const mid = (i, before = 3, after = 6) => i >= before && i + after < base.length && !cut.slice(i - before + 1, i + after + 1).some(Boolean);
 const quiet = i => !baseBlocks.some(x => Math.abs(x.F - i) < 8);
@@ -160,10 +160,10 @@ const mutate = (M, newBlock) => { let hit = 0, total = 0; const list = [];
   }
   return { hit, total, list }; };
 
-test("Kai's marks at playback speed (17/11): of 12 strips he saw only pilot-a's saw in the rail at 0:00; the gate blocks that second and nothing else in either film", () => {
+test("Kai's marks at playback speed (17/11): of 12 strips he saw only the saw of the approved film in the rail at 0:00; the gate blocks that second and nothing else in either film", () => {
   const rows = name => zlib.gunzipSync(fs.readFileSync(new URL(`../fixtures/shotgate/${name}.jsonl.gz`, import.meta.url))).toString().trim().split('\n').map(l => JSON.parse(l));
   const blockedSeconds = (rs, w, h) => bySecond(shotFaults(rs, { W: w, H: h })).filter(s => s.block).map(s => s.s);
-  assert.deepEqual(blockedSeconds(base, W, H), [0], 'pilot-a: the saw 11 px into the rail for 3 frames; not the calendar page at 0:09 or the train at 0:19');
+  assert.deepEqual(blockedSeconds(base, W, H), [0], 'approved film: the saw 11 px into the rail for 3 frames; not the calendar page at 0:09 or the train at 0:19');
   assert.deepEqual(blockedSeconds(rows('hm-bible-s5'), 540, 960), [], 'bible: one-frame pops, a phone 47 px into a hand, a knee snap of 63 px, a pelvis through a light cone');
 });
 

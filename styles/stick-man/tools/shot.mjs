@@ -1,7 +1,7 @@
 // Frame capture for the stick-man pages: headless Chromium (Metal ANGLE), one worker, JPEG q92 or PNG by extension.
 //   node styles/stick-man/tools/shot.mjs --page styles/stick-man/faces.html --frames 12 --out faces.jpg   (a proof page)
 // Reel page (styles/stick-man/reel.html) when --film is given:
-//   --film films/pilot-a --frames 0-344 --out f_%d.jpg        stills
+//   --film films/<slug> --frames 0-344 --out f_%d.jpg        stills
 //   --film ... --frames 0-344 --mp4 renders/p1.mp4 [--w 540 --h 960]    mp4 with the voice from the right offset
 //   --film ... --frames 0-344 --dbg dbg.jsonl                          __dbg + motion per frame, no render (+ dress: pieces seen;
 //                                                                       --dress 1 adds dressList, their names)

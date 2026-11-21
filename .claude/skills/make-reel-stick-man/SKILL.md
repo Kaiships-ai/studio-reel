@@ -10,7 +10,7 @@ The standard process for a stick-man film (dev only).
 
 - Run from the library root with `.pixi/envs/default/bin/node` and `.pixi/envs/default/bin/python` (written `node` / `python` below), never `pixi run`.
 - Work in a fresh worktree. `films/` is git-ignored; kit and engine changes go in PRs, and Kai merges.
-- Worked example: `styles/stick-man/examples/pilot-a/` (copy it to `films/pilot-a/` to replay it; its README says how).
+- Reference film for the current process: Hot Money ep01 r5 (films/hm-ep01-r5 once moved into the repo). Start a new film with `node styles/stick-man/tools/new_film.mjs`.
 - Needs: `GOOGLE_API_KEY` in `.env` (voice), faster-whisper (align), `claude` on PATH (board judges).
 - Kai reads Vietnamese: replies and page text are Vietnamese; "Em đề xuất" marks your recommended option.
 - pstack: this film runs under `.agents/playbooks/stick-man-film.md` (one orchestrator session, state in `~/.claude/orchestrate/<film>/notes.md`); a kit or engine fault goes to `.agents/playbooks/stick-man-kit-fix.md` as its own PR. Start a session with `/pstack:poteto-mode`.
@@ -177,7 +177,7 @@ the last render. `stagegate.mjs` prints it on every run; once a brief is calibra
 | `face-unapproved` | a face design Kai has not seen on a face sheet | machine | `facebeat.mjs` | ◇4 | any expression design held 15 frames on a readable head that is not in review/faces-approved.json | Hot Money ep01 r5 s1 round 2 (19/11 22:49): new faces shown in the film first, rolled back |
 | `figure-jumps` | a figure pops into the frame or to a new place | machine | `shotgate.mjs` | ◇4 ◇5 | a jump of 75 px or more that stays 3 frames | replay S3-050 hit (v002 F1372); Kai did not see a 120 px one-frame jump 17/11 |
 | `too-many-cuts` | too many hard cuts, takes too short | machine | `cutgate.mjs` | ◇5 | at most 4 hard cuts in any 15 s, one take of 6.5 s or more | Kai picked the bible cut (4 cuts, 6.7 s) over v7 (11 cuts) 17/11; v002 16 cuts in 15 s fails |
-| `low-camera` | the camera looks up at the lead too often | machine | `cutgate.mjs` | ◇5 | at most 25 % of frames looking up over 5° at the lead's head | bible 1 % and v7 5 % passed, pilot-a 53 % fails; no rejected Hot Money cut has camera rows |
+| `low-camera` | the camera looks up at the lead too often | machine | `cutgate.mjs` | ◇5 | at most 25 % of frames looking up over 5° at the lead's head | bible 1 % and v7 5 % passed, an old pilot at 53 % fails; no rejected Hot Money cut has camera rows |
 | `face-cut-off` | the lead's face is cut off by the frame | machine | `cutgate.mjs` | ◇5 | no run over 1 s with less than half the head in frame | Kai 12/11 note; no rejected sample with camera rows yet |
 | `face-repeat` | the same face comes back too often | machine | `facebeat.mjs` | ◇4 | a non-neutral face in more than 2 takes | kai-taste Repeats; v7 rows: y_strain 5 takes fails (S3-053) |
 | `face-off-beat` | a face the beat's words never name | machine | `facebeat.mjs` | ◇4 | held 0.5 s or more on a readable head | v7 rows: 1 off the beat (SH340); no 16/11 note caught |

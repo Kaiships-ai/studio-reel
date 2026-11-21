@@ -21,7 +21,7 @@ const script = {
 fs.writeFileSync(path.join(film, 'vo', 'script.json'), JSON.stringify(script, null, 1) + '\n');
 
 const reel = `// ${slug}: reel data for the standard process (.claude/skills/make-reel-stick-man: SKILL.md, PROCESS.md, REEL_DATA.md).
-// Older worked example (not gate-clean today): styles/stick-man/examples/pilot-a/reel.js. Fill it stage by stage: cameras (direct) at the camera pass,
+// Fill it stage by stage: cameras (direct) at the camera pass,
 // overlays, then the lead's key poses (anim: hold, then polish). Direction: yaw 0 faces -y, yaw -90 faces -x, swing + = forward.
 import { hold, polishAt } from '/styles/stick-man/lib/acting/keys.js';
 export const CUTS = [0];                 // the animatic's cut frames (PROCESS.md section 3), last entry = the end frame

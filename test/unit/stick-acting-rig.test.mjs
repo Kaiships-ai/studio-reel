@@ -90,9 +90,9 @@ const facebeat = (dir, rowsOf) => {
   return run('node', [FACEBEAT, dir], { capture: true });
 };
 
-test('a storyboard with no shots never passes: 60 frames of one held face is PARTIAL and blocks (pilot-a has film + lines only)', () => {
+test('a storyboard with no shots never passes: 60 frames of one held face is PARTIAL and blocks (a storyboard with film + lines only)', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'facebeat-'));
-  fs.writeFileSync(path.join(dir, 'storyboard.json'), JSON.stringify({ film: 'pilot-a', lines: [{ id: 'L1', text: 'a line' }] }));
+  fs.writeFileSync(path.join(dir, 'storyboard.json'), JSON.stringify({ film: 'demo', lines: [{ id: 'L1', text: 'a line' }] }));
   const R = rows(0, 59, { you: 'smug' }), S = story(dir);
   assert.deepEqual(verdict(judge(faceRuns(R, S, 1920), S), coverage(R, S, 1920)).status, 'PARTIAL');
   const p = facebeat(dir, R);

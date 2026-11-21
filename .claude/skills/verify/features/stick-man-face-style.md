@@ -28,8 +28,8 @@ A film's `reel.js`: `export default { ...act, faceStyle: 's2' }` (or a film face
 
 - Unit: `node --test test/unit/stick-face-s2.test.mjs` (designs present and drawn, turned-away faces hidden, a shut
   blink draws lines, no one-frame pops and the eye shut share on Hot Money reel-1 rows).
-- Kit faces unchanged: render a kit film (`films/pilot-a`, copied from `styles/stick-man/examples/pilot-a`) on `main` and on
-  the branch, `shot.mjs --film films/pilot-a --frames 30,100,180,250,330,420,500,590 --out f_%d.png --w 720 --h 1280` and
+- Kit faces unchanged: render a kit film (one made with `node styles/stick-man/tools/new_film.mjs`, or Hot Money ep01 r5 once it is in `films/`) on `main` and on
+  the branch, `shot.mjs --film films/<slug> --frames 30,100,180,250,330,420,500,590 --out f_%d.png --w 720 --h 1280` and
   `--frames 0-615 --dbg rows.jsonl`; the rows match and the stills differ only by render noise (compare a second `main` run).
 - The face-gate fixes on this film: `facebeat.mjs` takes each shot's end from the next storyboard shot (not the reel's
   segment `CUTS`); `faults.mjs` `editCuts` counts a one-shot-per-frame camera as one flight; `facesheet.mjs` passes
