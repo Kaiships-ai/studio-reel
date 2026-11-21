@@ -1,5 +1,5 @@
 // The lead's acting keys in a reel.js (make-reel-stick-man REEL_DATA.md "Motion v2 keys"): blocking with hold(), then
-// polish. Films made by tools/new_film.mjs and examples/pilot-a import these, so a change to the recipe lands in one place.
+// polish. Films made by tools/new_film.mjs import these, so a change to the recipe lands in one place.
 export const STAND = { bob: 0, sq: 0, spine: { bend: 0, side: 0, twist: 0 }, neck: { nod: 0, tilt: 0, turn: 0 }, pelvis: { pitch: 0, roll: 0, yaw: 0 },
   armL: { raise: 12, swing: 0, elbow: 15, roll: 0 }, armR: { raise: 12, swing: 0, elbow: 15, roll: 0 },
   legL: { foot: [-0.22, 0.022, 0], pitch: 0, knee: [-0.15, 0, 1] }, legR: { foot: [0.22, 0.022, 0], pitch: 0, knee: [0.15, 0, 1] } };

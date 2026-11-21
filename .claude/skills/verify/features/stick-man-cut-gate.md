@@ -33,8 +33,7 @@ At stage 5, `node styles/stick-man/tools/stagegate.mjs films/<slug> 5` runs `cut
 - Any mp4 (a reference clip, an old cut): `node styles/stick-man/tools/cutgate.mjs --mp4 <file>` prints the table;
   add `--dbg <jsonl> --w 720 --h 1280` for camera rows made at that size, `--json 1` for JSON.
 - Look for: the Hot Money bible film (`hm-bible-s5`, cut-A) passes with C3 1 % and C4 0.0 s read live; ep01 r2 v7 fails
-  C1 (11 cuts in 15 s) with C3 5 % and C4 0.1 s read from parts s4, s5, s6; `pilot-a` fails C3 at 53 % (its `low`
-  shots are real low angles). Every Rick reference clip passes C1 and C2 and is PARTIAL without `--dbg`.
+  C1 (11 cuts in 15 s) with C3 5 % and C4 0.1 s read from parts s4, s5, s6; a film with 53 % low shots fails C3. Every Rick reference clip passes C1 and C2 and is PARTIAL without `--dbg`.
 - Regression: `node --test test/unit/stick-cutgate.test.mjs test/unit/stick-reel-load.test.mjs`.
 
 ## Gotchas

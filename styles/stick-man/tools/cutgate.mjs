@@ -25,7 +25,7 @@ export const LIMITS = [
   { id: 'C2', what: 'longest take (s)', key: 'longestTake', min: 6.5,
     source: `${KAI_PICK}; v002's longest is 4.8 s; Rick clips 38-64 s` },
   { id: 'C3', what: 'low camera, share of lead frames', key: 'lowShare', max: 0.25,
-    source: 'rejected: v002 16/11 "góc máy toàn góc máy thấp" (about half its shots labelled low or dutch; its reel data is gone), pilot-a 53 % (real low shots); passed without a note: v7 5 %, its escape cut 10 %, the bible cut 1 %; a low angle stays a beat tool (animation-camera-pass), so not 0' },
+    source: 'rejected: v002 16/11 "góc máy toàn góc máy thấp" (about half its shots labelled low or dutch; its reel data is gone), an old pilot film 53 % (real low shots); passed without a note: v7 5 %, its escape cut 10 %, the bible cut 1 %; a low angle stays a beat tool (animation-camera-pass), so not 0' },
   { id: 'C4', what: 'longest face cut off (s)', key: 'faceCutRun', max: 1,
     source: '"cam lia dưới, mà mặt nhân vật lại ở trên?" 12/11 (a held shot with the head out of frame, not measured); v7 0.1 s, the bible cut 0.03 s; a frame or two passing during a flight is not seen' },
 ];

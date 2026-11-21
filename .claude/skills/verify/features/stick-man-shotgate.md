@@ -19,7 +19,7 @@ enough on a phone (px on a 720-tall frame × share in view, GATES.md "Shot gate"
   away, in px through the shot's camera; history never resets at a cut. What the steps around it leave of it is a jump to a
   new place (frames = how long it stays), else it went out and back (1 frame). A prop whose `dims` change by 15 % in the
   frame changed shape (a calendar page turning) and is no jump. A prop moving into a cut may change place behind it.
-- What blocks (Kai's marks at playback speed, 17/11, on 12 strips of pilot-a and the bible film; he saw only #10, a saw
+- What blocks (Kai's marks at playback speed, 17/11, on 12 strips of an approved film and the bible film; he saw only #10, a saw
   11 px into a rail for 3 frames): a fault gone within 2 frames is watch only; a contact that holds 3 frames blocks from
   `CONTACT_PX` 6; a change that holds 3 frames blocks from `CHANGE_PX` 75 (the largest change he did not see held 63 px, a
   knee snapping to a new pose; the smallest he complained about held 97 px, S3-032). The same day, on a head squash: "it is
@@ -47,7 +47,7 @@ enough on a phone (px on a 720-tall frame × share in view, GATES.md "Shot gate"
   order with `F` and `edit: true` on each shot's first row.
 - Unit check: `node --test test/unit/stick-shotgate.test.mjs`: one synthetic case per fault and the non-faults (a cut, the
   frame edge, a cover, a walk, a fall, a speed-up, a ride in a car, a one-frame blink, a page turning), and a mutation test
-  on pilot-a's clean rows (`test/fixtures/shotgate/pilot-a.jsonl.gz`): 30 faults that stay (a prop moved, grown or gone
+  on the clean rows of an approved film (`test/fixtures/shotgate/clean-film.jsonl.gz`): 30 faults that stay (a prop moved, grown or gone
   for good, an arm snapped to a new pose, a body through a surface, a foot slide) need 90 % blocked, and 15 one-frame
   spikes (a prop out and back, a prop gone for a frame, an elbow pop) need 90 % passed.
 - Kai's replayable complaints, each with a fault kind and a tune / test half fixed before tuning:
@@ -59,7 +59,7 @@ enough on a phone (px on a 720-tall frame × share in view, GATES.md "Shot gate"
 - The crossing probe needs consecutive frames from one page: the first frame of a page (each `--dbg` run, each
   per-frame page) has no crossing row.
 - A prop's `c` is its bounding box centre: a prop that changes shape moves it. A shape change of 15 % in a frame reads as
-  no jump; a slow one (train cars tipping over a lip, 3 to 7 % a frame) still moves the centre and is listed (pilot-a 0:19,
+  no jump; a slow one (train cars tipping over a lip, 3 to 7 % a frame) still moves the centre and is listed (seen at 0:19 of that film,
   10 px, watch).
 - A prop whose builder swaps its object between shots (a hug bag, then a hand bag) is judged across the cut by size, not
   by name.

@@ -87,5 +87,5 @@ briefs), `postcheck.mjs` (sound plan, delivery package, file spec), `retention.m
 Proof on real data: the v5 redesign broke 5 decisions Kai approved in season-1.md Ep1 (a cut inside the approved
 no-cut first 3 s, HUD "BAGS" instead of "IN CAR", no SUSPICION, 2D cards under the approved share, no split-screen ending);
 the motel set's run measures 11.3 m against the story's 34 steps ≈ 15 m; the repo's voice is from an older script (30 V1
-FAILs); pilot-a's delivery lacks a sound plan, cover, caption, subtitles and CREDITS. Open: grey preview mode, per-shot
+FAILs); the old pilot A delivery lacked a sound plan, cover, caption, subtitles and CREDITS. Open: grey preview mode, per-shot
 stage-page cards, a light-separation measure (kit PRs), and real retention numbers.

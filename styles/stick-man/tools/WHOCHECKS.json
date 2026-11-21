@@ -44,7 +44,7 @@
     "source": "Kai picked the bible cut (4 cuts, 6.7 s) over v7 (11 cuts) 17/11; v002 16 cuts in 15 s fails" },
   { "id": "low-camera", "fault": "the camera looks up at the lead too often", "checker": "machine", "tool": "tools/cutgate.mjs", "gates": ["5"],
     "limit": "at most 25 % of frames looking up over 5° at the lead's head",
-    "source": "bible 1 % and v7 5 % passed, pilot-a 53 % fails; no rejected Hot Money cut has camera rows" },
+    "source": "bible 1 % and v7 5 % passed, an old pilot at 53 % fails; no rejected Hot Money cut has camera rows" },
   { "id": "face-cut-off", "fault": "the lead's face is cut off by the frame", "checker": "machine", "tool": "tools/cutgate.mjs", "gates": ["5"],
     "limit": "no run over 1 s with less than half the head in frame",
     "source": "Kai 12/11 note; no rejected sample with camera rows yet" },
