@@ -78,6 +78,17 @@ blur sigma 4 against sigma 8 gives a ratio of about 2. These rows can tell how m
 frame. They cannot tell which cell is the subject, because a sharp prop behind a soft face reads the same as the
 reverse. Painted-in softness (a soft-textured backdrop) reads like lens blur.
 
+**Set and sky detail** (per shot, against the Rick band). On the same 20 px cells, set detail is the share of cells
+outside the caption and HUD bands with an edge (95th-percentile gradient 6 grey levels a pixel or more). Sky detail is
+the same share in the band 10 to 35 % down the frame, where a sky or a far set sits in a vertical shot. Each shot's
+value is the median over its frames. `refbench.mjs bands styles/stick-man/bench <row.json>` lists every shot of a row
+against the band of the six Rick shots (min to max) and exits 1 when a shot is under it: barer than any Rick shot.
+Over the band is not a fault. Hot Money A v3 (19/11) had 5 of 17 shots under, among them the chase hideout (sky 0.36)
+and the banks, where Kai wrote "cheap background", "the sky has no life" and "no city behind". A v9 has 3 of 14
+under (32.8 to 50.5 s, set detail 0.49 to 0.53), and the sky and banks shots Kai had rebuilt sit in the band. These rows
+can tell a set of flat blocks or an empty sky from a dressed one. They cannot tell good dressing from noise: grain,
+rain or a busy texture read as detail too. The band comes from 6 shots, so it is a floor to beat, not a target.
+
 **Motion** (camera motion, camera still share, motion inside slow shots, motion while the camera is still).
 Lucas-Kanade flow runs on 20 px cells at 360x640 on every frame pair, with the caption and HUD bands left out and the
 pairs across a hard cut skipped. Camera motion is the median cell speed. A pair counts as still under 0.2 px a frame

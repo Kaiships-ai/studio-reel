@@ -12,6 +12,8 @@ Written by `refbench.mjs table` from the rows in this folder. Method and limits:
 | sharpest edges (1/px) | 3.035 | 2.243 to 3.226 | 2.294 | 2.303 | 2.459 | -0.742 | -0.732 | -0.577 | 0.123 | no |
 | softest edges, background (1/px) | 1.696 | 1.012 to 1.706 | 1.406 | 1.411 | 1.438 | -0.290 | -0.285 | -0.258 | 0.107 | no |
 | depth ratio (sharp / soft) | 1.87 | 1.80 to 2.20 | 1.65 | 1.64 | 1.69 | -0.23 | -0.23 | -0.18 | 0.07 | yes (hm-ep01-r4_v1), yes (hm-ep01-r4_v2), yes (hm-ep01-r5_A_v9) |
+| set detail (share of 20 px cells with an edge) | 0.66 | 0.58 to 0.75 | n/a | n/a | 0.64 | n/a | n/a | -0.02 | n/a | no floor |
+| sky detail (the same, in the sky band 10-35 % down) | 0.77 | 0.61 to 0.80 | n/a | n/a | 0.76 | n/a | n/a | -0.01 | n/a | no floor |
 | camera motion (px/frame @1080) | 4.13 | 2.93 to 5.96 | 6.37 | 6.58 | 2.72 | +2.24 | +2.45 | -1.40 | 0.04 | yes (hm-ep01-r4_v1), yes (hm-ep01-r4_v2), yes (hm-ep01-r5_A_v9) |
 | camera still (share of frames) | 0.04 | 0.04 to 0.10 | 0.00 | 0.00 | 0.32 | -0.04 | -0.04 | +0.28 | 0.00 | yes (hm-ep01-r4_v1), yes (hm-ep01-r4_v2), yes (hm-ep01-r5_A_v9) |
 | motion inside slow shots, pan removed (px/frame @1080) | 3.57 | 2.79 to 3.63 | 4.34 | 4.15 | 4.05 | +0.77 | +0.58 | +0.48 | 0.12 | yes (hm-ep01-r4_v1), yes (hm-ep01-r4_v2), yes (hm-ep01-r5_A_v9) |

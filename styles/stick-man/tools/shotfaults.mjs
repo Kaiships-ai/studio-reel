@@ -34,6 +34,7 @@ export const TORSO_R = 0.11;            // m: a stick figure's torso as a rod th
 export const CROSS_MAX_M = 0.5;         // a point that moved further in a frame jumped (figure / prop jumps), it did not pass through
 export const INSIDE_MAX = 30;           // frames a point through a surface is followed
 
+export const ACROSS_CUT_M = 0.15;      // a held prop off where its holder's carry takes it across a cut by more than this jumps at the cut
 export const HOLDER_M = 0.35;           // a prop this close to a hand of a figure in frame is in that hand
 export const LOST_MAX = 45;             // frames a held prop may be out of the frame and still count as one that comes back
 export const CONTACT = new Set(['prop passes through', 'body passes through', 'body in the set', 'hand off its grip', 'prop in the body', 'foot slides', 'figure skates', 'prop floats',
@@ -205,6 +206,37 @@ function goneAfterCut(rows, cut, W, H, out) {
       if (!q || Math.abs(q[0]) > 0.9 || Math.abs(q[1]) > 0.9) continue;
       if (Object.values(r.track || {}).some(b => b.shown && dist(b.c, a.c) < 0.6 && Math.abs(b.size / a.size - 1) < 0.5)) continue;
       out.push(fault({ F: F_(r), kind: 'prop gone after cut', who: id, what: `${id} left at rest at (${a.c.map(x => x.toFixed(1)).join(', ')}) is not there when the next shot looks at that spot`, px: metresPx(r.camera, a.c, a.size), frames: holds(cut, rows.length, i, 1, () => true) }));
+    }
+  }
+}
+
+// a held prop on screen at a cut inside one scene (same act and set, film time running on) that the next shot shows off
+// its holder by more than the carry predicts (from the other hand, up over the head), or drops while its holder is still
+// in frame and the next shot looks where it should be. A free prop may be cheated at a cut (an editor moves the train);
+// one left at rest is goneAfterCut's, a carried prop swapped for another changedAtCut's
+function acrossCut(rows, cut, W, H, out) {
+  const holderOf = (r, id, t) => { const n = id.includes(':') ? id.split(':')[0] : null; if (n && r.actors[n]) return n;
+    let best = null; for (const [k, a] of Object.entries(r.actors)) for (const sd of ['L', 'R']) { const h = a.limbs?.[sd]?.hand, d = h && dist(h, t.c); if (d != null && d < HOLDER_M && (!best || d < best.d)) best = { k, d }; }
+    return best?.k ?? null; };
+  for (let i = 2; i < rows.length; i++) {
+    const r = rows[i], p = rows[i - 1], q = rows[i - 2];
+    if (!cut[i] || cut[i - 1] || r.act !== p.act || r.set !== p.set || F_(r) !== F_(p) + 1) continue;
+    for (const [id, a] of Object.entries(p.track || {})) {
+      const a0 = q.track?.[id], b = r.track?.[id], n = a.shown && a.held && a.c ? holderOf(p, id, a) : null;
+      const P = k => rows[k].actors[n]?.pos;
+      if (!n || !a0?.shown || !a0.c || !P(i - 2) || !P(i - 1) || !rows[i].actors[n]?.inFrame || !P(i)) continue;
+      const off0 = sub(a0.c, P(i - 2)), off1 = sub(a.c, P(i - 1)), pred = add(P(i), add(off1, sub(off1, off0))), frames = holds(cut, rows.length, i, 1, () => true);
+      if (!b?.shown) {
+        const at = project(r.camera, pred, W, H);
+        if (a.on !== 'in' || !at || Math.abs(at[0]) > 0.9 || Math.abs(at[1]) > 0.9) continue;
+        out.push(fault({ F: F_(r), kind: 'prop vanishes at cut', who: id, what: `${id} in ${n}'s hand into the cut is gone in the next shot, which looks where it should be; fix: keep it shown across the cut`,
+          px: metresPx(r.camera, pred, a.size), frames }));
+        continue;
+      }
+      const d = dist(b.c, pred);
+      if (d <= ACROSS_CUT_M || (a.on !== 'in' && b.on !== 'in')) continue;
+      out.push(fault({ F: F_(r), kind: 'prop jumps at cut', who: id, what: `${id} is ${fmt(d * 100)} cm off where ${n}'s carry takes it across the cut; fix: match its place in the hand on both sides of the cut`,
+        px: metresPx(r.camera, b.c, d), frames, seen: b.on === 'in' ? 1 : 0, vis: b.on === 'in' ? 'in' : b.on }));
     }
   }
 }
@@ -415,7 +447,7 @@ export function shotFaults(rows, { W = 1080, H = 1920 } = {}) {
   if (!rows.length) return [];
   const cut = cuts(rows), out = [];
   cameraJumps(rows, cut, W, H, out); props(rows, cut, W, H, out); figures(rows, cut, W, H, out);
-  goneAfterCut(rows, cut, W, H, out); changedAtCut(rows, cut, out); floating(rows, cut, W, H, out);
+  goneAfterCut(rows, cut, W, H, out); acrossCut(rows, cut, W, H, out); changedAtCut(rows, cut, out); floating(rows, cut, W, H, out);
   for (const n of Object.keys(rows[0].actors)) { limbs(rows, cut, n, W, H, out); skating(rows, cut, n, W, H, out); cordShakes(rows, cut, n, out); }
   crossings(rows, cut, W, H, out); propInside(rows, cut, W, H, out); leavesView(rows, cut, W, H, out); outOfScale(rows, cut, W, H, out); farCuts(rows, cut, W, H, out);
   for (const x of out) x.sev = +severity(x).toFixed(2);

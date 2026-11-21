@@ -10,6 +10,7 @@ TEXTURE = 6.0        # a cell counts for sharpness when its 95th-percentile grad
 FLOW_TEXTURE = 70.0  # min eigenvalue of the structure tensor (per cell) for a flow vector to count
 CAPTION = (0.60, 0.80)  # caption band and top HUD band, left out of sharpness and flow: words pop in and out
 HUD = (0.0, 0.10)
+SKY = (0.10, 0.35)   # the band of the frame a sky or far set fills in a vertical shot, under the HUD band
 
 
 def rows_kept(h, step):
@@ -39,6 +40,18 @@ def sharpness(g, keep):
         return None
     hi, lo = np.percentile(s, 90), np.percentile(s, 25)
     return {'sharpHi': round(float(hi), 4), 'sharpLo': round(float(lo), 4), 'depthRatio': round(float(hi / max(lo, 1e-6)), 3)}
+
+
+def detail(g, keep):
+    # Set detail = the share of cells (outside caption and HUD) with an edge, p95 |gradient| >= TEXTURE: a set of flat
+    # blocks leaves most cells empty. Sky detail = the same share in the sky band (stars, moon, clouds, a far skyline).
+    gx = np.zeros_like(g); gy = np.zeros_like(g)
+    gx[:, 1:-1] = (g[:, 2:] - g[:, :-2]) / 2
+    gy[1:-1, :] = (g[2:, :] - g[:-2, :]) / 2
+    T = np.percentile(cells(np.hypot(gx, gy), CELL), 95, axis=2) >= TEXTURE
+    ys = (np.arange(T.shape[0]) + 0.5) / T.shape[0]
+    sky = (ys >= SKY[0]) & (ys < SKY[1])
+    return {'setDetail': round(float(T[keep].mean()), 4), 'skyDetail': round(float(T[sky].mean()), 4)}
 
 
 def blur3(a):
@@ -89,6 +102,7 @@ def frames(w, h):
             s = sharpness(small, keep)
             if s:
                 row.update(s)
+            row.update(detail(small, keep))
         if prev is not None:
             f = flow(prev, small, keep)
             if f is not None:

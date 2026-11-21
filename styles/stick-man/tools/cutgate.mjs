@@ -17,6 +17,10 @@ import { compress } from './faults.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 export const CUT_SCORE = 0.30, CUT_MERGE_S = 0.2, WINDOW_S = 15, LOW_DEG = 5, FACE_VISIBLE = 0.5;
+// an angle family: where the camera stands around the lead (front, left, back, right: 90° sectors of the lead's facing),
+// how it looks (low: up at the head over LOW_DEG, high: down over HIGH_DEG, else eye) and how big the head is (close:
+// 20 % of the frame height or more, wide: under 8 %, else medium), read at the middle lead frame of each take
+export const HIGH_DEG = 20, CLOSE_H = 0.2, WIDE_H = 0.08, ANGLE_WINDOW = 5;
 
 const KAI_PICK = 'Kai 17/11 picked the bible escape cut (4 cuts in 15.4 s, longest take 6.7 s) over v7 (11 cuts, 2.3 s)';
 export const LIMITS = [
@@ -28,6 +32,8 @@ export const LIMITS = [
     source: 'rejected: v002 16/11 "góc máy toàn góc máy thấp" (about half its shots labelled low or dutch; its reel data is gone), an old pilot film 53 % (real low shots); passed without a note: v7 5 %, its escape cut 10 %, the bible cut 1 %; a low angle stays a beat tool (animation-camera-pass), so not 0' },
   { id: 'C4', what: 'longest face cut off (s)', key: 'faceCutRun', max: 1,
     source: '"cam lia dưới, mà mặt nhân vật lại ở trên?" 12/11 (a held shot with the head out of frame, not measured); v7 0.1 s, the bible cut 0.03 s; a frame or two passing during a flight is not seen' },
+  { id: 'C5', what: `takes in one angle family, most in any ${ANGLE_WINDOW} in a row`, key: 'angleRepeat', max: 3,
+    source: 'was the AI review\'s "angle" row (S3-060 hit 2 of 2, no camera rows then); Hot Money A v9 banks run three back, eye-level, medium takes in a row (58.6-73.5 s) inside the 80 % Kai approved; four is a pattern a viewer reads as the same shot' },
 ];
 
 export function sceneScores(mp4) {
@@ -78,6 +84,30 @@ export function viewRows(rows, W, H) {
   });
 }
 
+const SIDES = ['front', 'left', 'back', 'right'];
+export function angleFamily(r, H) {
+  const a = Object.values(r.actors).find(x => x.lead && x.inFrame && x.headW && x.head && x.pos);
+  if (!a) return null;
+  const c = r.camera.pos, rel = ((Math.atan2(c[1] - a.pos[1], c[0] - a.pos[0]) * 180 / Math.PI - (a.yaw ?? 0)) % 360 + 360) % 360;
+  const up = lookUp(c, a.headW), h = (a.head[3] - a.head[1]) / H;
+  return `${SIDES[Math.round(rel / 90) % 4]} ${up > LOW_DEG ? 'low' : up < -HIGH_DEG ? 'high' : 'eye'} ${h >= CLOSE_H ? 'close' : h < WIDE_H ? 'wide' : 'medium'}`;
+}
+
+// per take (render frames between cuts), its angle family; the most takes of one family in any ANGLE_WINDOW in a row
+export function angles(rows, cuts, dur, H, fps = 30) {
+  const edges = [0, ...cuts.map(c => Math.round(c.t * fps)), Math.round(dur * fps)], byF = new Map(rows.map(r => [r.f, r]));
+  const takes = edges.slice(1).map((b, k) => {
+    const lead = []; for (let f = edges[k]; f < b; f++) { const r = byF.get(f); if (r && angleFamily(r, H)) lead.push(r); }
+    return { t0: edges[k] / fps, t1: b / fps, family: lead.length ? angleFamily(lead[lead.length >> 1], H) : null };
+  });
+  let worst = { n: 0, family: null, from: 0 };
+  takes.forEach((_, i) => {
+    const win = takes.slice(i, i + ANGLE_WINDOW).filter(t => t.family), n = {};
+    for (const t of win) { n[t.family] = (n[t.family] || 0) + 1; if (n[t.family] > worst.n) worst = { n: n[t.family], family: t.family, from: takes[i].t0 }; }
+  });
+  return { takes, worst };
+}
+
 export function worstWindow(cuts) {
   let best = { n: 0, from: 0 };
   for (const c of cuts) { const n = cuts.filter(d => d.t >= c.t && d.t < c.t + WINDOW_S).length; if (n > best.n) best = { n, from: c.t }; }
@@ -95,7 +125,9 @@ export function measure({ dur, scores, rows = null, W, H, fps = 30 }) {
   const m = { dur, cuts, cutsPerMin: cuts.length * 60 / dur, worstWindow: win.n, win, longestTake: take.s, take };
   if (!rows) return m;
   const v = viewRows(rows, W, H), low = v.filter(x => x.up > LOW_DEG).map(x => x.f), faceCut = v.filter(x => x.face < FACE_VISIBLE).map(x => x.f);
-  return { ...m, leadFrames: v.length, low, lowShare: v.length ? low.length / v.length : 0, faceCut, faceCutRun: longestRun(faceCut) / fps };
+  const ang = angles(rows, cuts, dur, H, fps);
+  return { ...m, leadFrames: v.length, low, lowShare: v.length ? low.length / v.length : 0, faceCut, faceCutRun: longestRun(faceCut) / fps,
+    angleTakes: ang.takes, angleRepeat: ang.worst.n, angleWorst: ang.worst };
 }
 
 export function judge(m) {
@@ -113,7 +145,8 @@ export function table(m, rows) {
   return ['| Check | Got | Limit | Result | Limit from |', '| --- | --- | --- | --- | --- |',
     ...rows.map(r => `| ${r.id} ${r.what} | ${fmt(r.key, r.got)} | ${want(r)} | ${r.ok == null ? 'not measured' : r.ok ? 'PASS' : 'FAIL'} | ${r.source} |`), '',
     `Hard cuts (${m.cuts.length} in ${m.dur.toFixed(1)} s, ${m.cutsPerMin.toFixed(1)} a minute): ${m.cuts.map(c => c.t.toFixed(2)).join(' ') || 'none'}.`,
-    `Worst ${WINDOW_S} s from ${m.win.from.toFixed(1)} s. Longest take ${m.take.from.toFixed(1)}-${m.take.to.toFixed(1)} s.`];
+    `Worst ${WINDOW_S} s from ${m.win.from.toFixed(1)} s. Longest take ${m.take.from.toFixed(1)}-${m.take.to.toFixed(1)} s.`,
+    ...(m.angleTakes ? ['', `Angle families by take: ${m.angleTakes.map(t => `${t.t0.toFixed(1)} ${t.family ?? 'no lead'}`).join(' · ')}.${m.angleWorst.n ? ` Most: ${m.angleWorst.n} x ${m.angleWorst.family} from ${m.angleWorst.from.toFixed(1)} s.` : ''}`] : [])];
 }
 
 const readRows = f => fs.readFileSync(f, 'utf8').trim().split('\n').map(l => JSON.parse(l)).sort((a, b) => a.f - b.f);
