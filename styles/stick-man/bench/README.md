@@ -12,7 +12,7 @@ the numbers measured from them.
 | File | What it holds |
 | --- | --- |
 | `rick/<id>.json` | One row per Rick clip: film-level metrics, one row per shot, the loudness curve, the 5 s bed levels. |
-| `ours/<film>.json` | The same rows for our renders (round 4 v1 and v2). |
+| `ours/<film>.json` | The same rows for our renders: Hot Money round 4 v1 and v2 (18/11), round 5 A v9 (21/11, no stems, so the two effect rows read n/a). |
 | `noise-<clip>.json` | The noise floor: the same clip measured twice, then three re-encodes. |
 | `counts.json` | Blinks and depth planes, counted by two blind agents on 30-frame strips. |
 | `listening.json` | Effects a minute, counted by listening (a person or an audio model), when it exists. |
@@ -20,7 +20,7 @@ the numbers measured from them.
 
 ## Rebuild
 
-Run these from the repository root. One clip takes 15 to 23 s on an M-series Mac (18 November: Rick 18.2, 15.4 and 18.9 s, our v1 22.6 s, v2 22.7 s). The noise command measures five copies, about 2 to 4 min.
+Run these from the repository root. One clip takes 15 to 35 s on an M-series Mac. The noise command measures five copies, about 2 to 4 min.
 
 ```sh
 ~/.local/bin/yt-dlp -f "bv*[ext=mp4]+ba[ext=m4a]" --merge-output-format mp4 -o "<cache>/%(id)s.mp4" https://www.youtube.com/shorts/HxqtHI62otM

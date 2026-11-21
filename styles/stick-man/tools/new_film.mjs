@@ -21,23 +21,11 @@ const script = {
 fs.writeFileSync(path.join(film, 'vo', 'script.json'), JSON.stringify(script, null, 1) + '\n');
 
 const reel = `// ${slug}: reel data for the standard process (.claude/skills/make-reel-stick-man: SKILL.md, PROCESS.md, REEL_DATA.md).
-// Worked example: styles/stick-man/examples/pilot-a/reel.js. Fill it stage by stage: cameras (direct) at the camera pass,
+// Older worked example (not gate-clean today): styles/stick-man/examples/pilot-a/reel.js. Fill it stage by stage: cameras (direct) at the camera pass,
 // overlays, then the lead's key poses (anim: hold, then polish). Direction: yaw 0 faces -y, yaw -90 faces -x, swing + = forward.
+import { hold, polishAt } from '/styles/stick-man/lib/acting/keys.js';
 export const CUTS = [0];                 // the animatic's cut frames (PROCESS.md section 3), last entry = the end frame
-const STAND = { bob: 0, sq: 0, spine: { bend: 0, side: 0, twist: 0 }, neck: { nod: 0, tilt: 0, turn: 0 }, pelvis: { pitch: 0, roll: 0, yaw: 0 },
-  armL: { raise: 12, swing: 0, elbow: 15, roll: 0 }, armR: { raise: 12, swing: 0, elbow: 15, roll: 0 },
-  legL: { foot: [-0.22, 0.022, 0], pitch: 0, knee: [-0.15, 0, 1] }, legR: { foot: [0.22, 0.022, 0], pitch: 0, knee: [0.15, 0, 1] } };
-const BREATH = { 'spine.bend': [1.5, 40], 'neck.tilt': [1.5, 53, 1] };
-const hold = (f, extra) => ({ f, pose: STAND, cycle: BREATH, ...extra, ease: 'snap' });
-const BLOCKING = new URLSearchParams(globalThis.location?.search || '').get('blocking') === '1';
-function polish(keys) {
-  if (BLOCKING) return keys;
-  return keys.map((k, i) => {
-    const nx = keys[i + 1], cut = CUTS.includes(k.f), sameShot = nx && !CUTS.includes(nx.f);
-    const T = nx?.t ?? (k.stroke ? 4 : 7), { stroke, antic, t, ...rest } = k;
-    return { ...rest, ease: cut ? 'snap' : 'slow', ...(antic ? { antic } : {}), ...(sameShot && nx.f - k.f > T + 2 ? { hold: nx.f - k.f - T } : {}) };
-  });
-}
+const polish = polishAt(CUTS);         // hold() and polish: styles/stick-man/lib/acting/keys.js
 export default {
   title: '${slug}', fps: 30, glasses: false, style: 'kaiships', directDrift: 0.07,
   frames: [0, 0],          // [first, last]; last = the "last frame" line of vo/voice-qa.md
