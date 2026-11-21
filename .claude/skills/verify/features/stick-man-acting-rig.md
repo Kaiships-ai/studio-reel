@@ -51,9 +51,9 @@ films/<slug>/review/shot-rows.jsonl`, then `node styles/stick-man/tools/stagegat
   join and the shot.mjs commands behind each rows file):
   - `node styles/stick-man/tools/facebeat.mjs $D/story-hm-ep01-r2 --rows $D/v7-rows.jsonl --h 1280 --out /tmp/faces-v7`:
     FAIL, 1 off the beat (1:20.4 y_defiant, SH340), over 2 takes y_strain 5, y_fear 5, y_shock 3, y_worried 3. The rows
-    join the dbg rows hm-ep01-r2's builds saved (S1-S3 v5, S4-S5 v7, S6-S7 s6), not a fresh render.
+    join the dbg rows the r2 builds saved (S1-S3 v5, S4-S5 v7, S6-S7 s6), not a fresh render.
   - `node styles/stick-man/tools/facebeat.mjs films/hm-bible-s5 --rows $D/bible-rows.jsonl --story $D/story-hm-ep01-r2 --h 1280 --out /tmp/faces-bible`:
-    PASS, 0 off the beat, most-used face 2 takes. The bible cut has no storyboard of its own; it plays hm-ep01-r2's S4-S5.
+    PASS, 0 off the beat, most-used face 2 takes. The bible cut has no storyboard of its own; it plays r2's S4-S5 (`films/hm-ep01/shared/r2`).
   - `node styles/stick-man/tools/rigtest.mjs`: 0 of 52 over a limit, RIG_KNOWN empty (worst bone 2.3 % foreL, Act_DropInTrunk_Once f65).
 
 ## Gotchas

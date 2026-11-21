@@ -53,7 +53,7 @@ the stage page, and Kai picks there.
 
 ## Driving it
 
-- `node styles/stick-man/tools/camtry.mjs "đoạn đua xe, máy quay dính tường nhà, nâng lên chút" --film films/hm-ep01-r5
+- `node styles/stick-man/tools/camtry.mjs "đoạn đua xe, máy quay dính tường nhà, nâng lên chút" --film films/hm-ep01
   --dry` prints the readback (whole CHASE 1347-1709, 3 takes, change "cả đoạn", the four anchors) and the variants (V3
   marked "xem được, áp tay") and writes `camtry.json`, in a second, with no render.
 - Without `--dry`, on Hot Money ep01 r5 (worktree `hm-r5b`, 20/11 files): the whole CHASE, 363 frames x 4 variants at

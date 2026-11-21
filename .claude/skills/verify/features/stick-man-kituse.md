@@ -25,9 +25,9 @@ One row per feature in `KIT`; `stagegate.mjs` runs it from `GATES.json` (gate 4 
 
 - `node --test test/unit/stick-kituse.test.mjs`: a complete film passes ◇5 with its bench table; each missing feature
   fails with its reason; ◇4 checks only `life` and `depth`; a waiver passes only when approved, signed and dated.
-- Hot Money round 4 (`films/hm-ep01-r4`, with `hm-ep01-r2` and `hm-ep01-r3` beside it for its imports):
-  `kituse.mjs films/hm-ep01-r4 --gate 5` fails `life` (14 of 14 acts), `depth`, `music` (mixed by a film-local mixer) and
-  `refbench`; `sound-plan` passes. About 1 s.
+- Hot Money ep01 (`films/hm-ep01`, its imports in `shared/r2` to `r4`):
+  `kituse.mjs films/hm-ep01 --gate 5` passes `life` and `depth`; it fails `sound-plan`, `music` and `refbench` until
+  their files are written. About 1 s.
 
 ## Gotchas
 

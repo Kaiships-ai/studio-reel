@@ -136,7 +136,7 @@ export function holdLines(rows, hidden = new Map()) {
   return L;
 }
 
-// ---------------------------------------------------------------- faces (films/hm-ep01-r2/review/face-research.md s. 8)
+// ---------------------------------------------------------------- faces (Hot Money r2 face research, s. 8)
 // Judged on the drawn face numbers of __dbg (`face`: v = [brow tilt deg, brow height W, lid, white, eye ry W, mouth
 // width] before the blink, tgt = the same for the target expression, cls / kf / phase of the change on screen, blink
 // 0..1, pupil (the eyes' lead on a head turn), look (the head's turn), focus). Each number is scaled by FACE_NORM.

@@ -46,7 +46,11 @@ export function filmIndex(filmDir) {
   const sb = fs.existsSync(path.join(film, 'storyboard.json')) ? JSON.parse(fs.readFileSync(path.join(film, 'storyboard.json'), 'utf8')) : null;
   const fps = sb?.fps ?? 30, segments = [];
   const rounds = fs.readdirSync(film).filter(d => /^r\d+$/.test(d) && fs.existsSync(path.join(film, d, 'gen'))).sort((a, b) => +b.slice(1) - +a.slice(1));
-  const testFolder = seg => { const t = path.join(filmsDir, `${slug}-${seg.toLowerCase()}`); return fs.existsSync(path.join(t, 'reel.js')) ? t : null; };
+  // a segment's test film: films/<slug>/parts/<seg> (preferred), else the older sibling films/<slug>-<seg>
+  const testFolder = seg => {
+    const id = seg.toLowerCase();
+    return [path.join(film, 'parts', id), path.join(filmsDir, `${slug}-${id}`)].find(t => fs.existsSync(path.join(t, 'reel.js'))) ?? null;
+  };
   if (rounds.length) {
     const R = rounds[0];
     for (const f of fs.readdirSync(path.join(film, R, 'gen')).filter(f => f.endsWith('.js')).sort()) {
@@ -75,7 +79,7 @@ function clampStages(stages, a, b) {
   return [...(before && !inside.some(s => s[0] === a) ? [[a, before[1], before[2]]] : []), ...inside];
 }
 
-// the film to work on: the request names one ("hm-ep01-r4"), else the newest film in films/ (a folder with a reel.js and
+// the film to work on: the request names one ("hm-ep01"), else the newest film in films/ (a folder with a reel.js and
 // its own storyboard.json or generated acts; a segment test folder has neither)
 export function findFilm(filmsDir, request = '') {
   const films = fs.readdirSync(filmsDir).map(d => path.join(filmsDir, d)).filter(d => fs.existsSync(path.join(d, 'reel.js'))

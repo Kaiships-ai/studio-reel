@@ -7,6 +7,8 @@ per metric, and every later kit or film fix aims at closing one of those gaps.
 A reference is a bar only. The Rick mp4 files and their frames never enter git or a shipped file. This folder keeps
 the numbers measured from them.
 
+The `hm-ep01-r4_*` and `hm-ep01-r5_*` rows came from film folders since merged into `films/hm-ep01`; the ids stay as history.
+
 ## What is here
 
 | File | What it holds |

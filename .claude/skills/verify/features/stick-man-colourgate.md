@@ -51,7 +51,7 @@ path. A FAIL or a DRAFT keeps ◇5 OPEN.
   check, every finding with its shot, time, number and limit, and a per-shot table) and `review/colour.json`.
 - Any mp4: `node styles/stick-man/tools/colourgate.mjs --mp4 <file> --script <colour-script.json> [--decisions <json>]`
   prints the same report, and `--json 1` prints JSON.
-- Look for: Hot Money ep01 r5 A v6 (`hm-ep01-r5_A_v6.mp4`, 90.1 s) with the draft script in the PR that added the gate.
+- Look for: Hot Money ep01 A v6 (`hm-ep01_A_v6.mp4`, 90.1 s) with the draft script in the PR that added the gate.
   It FAILs with LOAD-A R/B 1.98, the LOAD-A dim at 10.3 s, the LOAD-A to LOAD-B step at 16.7 s, the day-two hero white
   at 162-167, and a film mean luma of 95. OPEN magenta and the night chase pass, because the script declares them.
   The run takes about 4 s.

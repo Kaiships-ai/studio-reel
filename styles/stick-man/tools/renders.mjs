@@ -1,5 +1,5 @@
 // The film's final render in renders/: a final*.mp4 wins; otherwise the highest _v<N> by number, with an optional size
-// suffix (hm-ep01-r2_v7_720.mp4, Kai renders 720 by rule). Shared by postcheck.mjs and cutgate.mjs.
+// suffix (hm-ep01_A_v9_720.mp4, Kai renders 720 by rule). Shared by postcheck.mjs and cutgate.mjs.
 import fs from 'node:fs';
 
 const VERSION = /_v(\d+)(?:_\d+)?\.mp4$/;

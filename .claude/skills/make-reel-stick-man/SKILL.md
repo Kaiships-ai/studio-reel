@@ -10,7 +10,7 @@ The standard process for a stick-man film (dev only).
 
 - Run from the library root with `.pixi/envs/default/bin/node` and `.pixi/envs/default/bin/python` (written `node` / `python` below), never `pixi run`.
 - Work in a fresh worktree. `films/` is git-ignored; kit and engine changes go in PRs, and Kai merges.
-- Reference film for the current process: Hot Money ep01 r5 (films/hm-ep01-r5 once moved into the repo). Start a new film with `node styles/stick-man/tools/new_film.mjs`.
+- Reference film for the current process: Hot Money ep01 (`films/hm-ep01`, git-ignored). Start a new film with `node styles/stick-man/tools/new_film.mjs`.
 - Needs: `GOOGLE_API_KEY` in `.env` (voice), faster-whisper (align), `claude` on PATH (board judges).
 - Kai reads Vietnamese: replies and page text are Vietnamese; "Em đề xuất" marks your recommended option.
 - pstack: this film runs under `.agents/playbooks/stick-man-film.md` (one orchestrator session, state in `~/.claude/orchestrate/<film>/notes.md`); a kit or engine fault goes to `.agents/playbooks/stick-man-kit-fix.md` as its own PR. Start a session with `/pstack:poteto-mode`.

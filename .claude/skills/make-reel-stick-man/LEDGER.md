@@ -2,7 +2,7 @@
 
 Filled by stage, as each gate passes. One row per stage. "Proof" is what Kai saw. "Kai" is his words or his pick on the stage page, with the date.
 
-Log minutes per stage and the number of rounds per gate. Example: the ledger of Hot Money ep01 r5 (films/hm-ep01-r5 once moved into the repo).
+Log minutes per stage and the number of rounds per gate. Example: the ledger of Hot Money ep01 (`films/hm-ep01`, git-ignored).
 
 | Stage | Output | Proof | Rounds | Kai |
 |---|---|---|---|---|
