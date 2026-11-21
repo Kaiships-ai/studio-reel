@@ -93,5 +93,5 @@ assembled shot by shot passes its rows with `--rows`.
 
 ## Judged gates
 
-- **Board.** `node styles/stick-man/tools/board.mjs films/<slug> --judge 3`. It renders `review/board.jpg`, 2 stills per line: A on the entry's `still` word, B at the line's prop peak. 3 independent headless reviewers judge it; a line is shown when 2 of 3 say so. The result goes to `review/board-verdict.json`, which `gates.mjs` reads. Rerun after any change to the reel data.
+- **Board.** `node styles/stick-man/tools/board.mjs films/<slug> --judge 3`. It renders `review/board.jpg`, 2 stills per line: A on the entry's `still` word, B at the line's prop peak. 3 independent headless reviewers judge it; a line is shown when 2 of 3 say so. The result goes to `review/board-verdict.json`. Rerun after any change to the reel data.
 - **Style judge and blind test** `node styles/stick-man/tools/judge.mjs films/<slug> --in <mp4> --ref <private reference dir>`. The reference stays outside the repo.
