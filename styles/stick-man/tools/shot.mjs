@@ -12,6 +12,11 @@
 //   --mp4 ... --audio films/x/audio/mix.wav                           mux this track instead of vo/vo.wav
 //   --no-bible-check '<reason>'  render although bible/check.mjs blocks (prints a warning, logged in films/<slug>/bible-bypass.tsv)
 //   --fast 1 (report without the frame-difference pass), --w/--h (default 1080x1920), --query k=v (page flags); --help
+// Render by purpose (tools/render/tiers.mjs): --tier dbg|still|proof|review|final sets the size and the look
+//   dbg (T0) data only; still (T1) 1080x1920 stills, --scenes 1 = the middle frame of each storyboard shot in --frames;
+//   proof (T2) 480x854 cheap look; review (T3) 720x1280, what pixel gates read; final (T4) 1080x1920 with --kai-ok "<quote>"
+//   A tier with pixels holds the machine's render lock (tools/render/lock.mjs; --lock-wait <s>, default 3600) and needs
+//   --min-free-gb (default 5) free; a tier mp4 is reused when its inputs match (tools/render/cache.mjs; --no-cache 1 re-renders)
 import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { start, run } from '../../../kit/env.mjs';
@@ -19,6 +24,9 @@ import { serveFiles, launchGpu } from './pageserver.mjs';
 import { microanim } from './forensic/microanim.mjs';
 import { acting, joints, compress, holdLines, faultList, hiddenOf, faceLines, cordLines, camStats } from './faults.mjs';
 import { bibleGate } from '../bible/gate.mjs';
+import { resolveTier, sceneFrames } from './render/tiers.mjs';
+import * as cache from './render/cache.mjs';
+import { acquire, freeGB } from './render/lock.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '../../..');                     // repo root: serves the page and node_modules/three
@@ -27,6 +35,8 @@ if (process.argv.length < 3 || process.argv.includes('--help')) {
   process.exit(process.argv.includes('--help') ? 0 : 2);
 }
 const A = {}; for (let i = 2; i < process.argv.length; i += 2) A[process.argv[i].replace(/^--/, '')] = process.argv[i + 1];
+const T = resolveTier(A);
+if (T?.error) { console.error(T.error); process.exit(2); }
 // a syntax error in the reel data shows in the page only as "pageerror" with no line: check the files first
 if (A.film) for (const f of ['reel.js', 'reel2.js']) {
   const fp = path.join(ROOT, A.film, f); if (!fs.existsSync(fp)) continue;
@@ -39,20 +49,44 @@ if (A.film && !A.serve && !A.cues && !A.dbg && !A.report) {
   if (!g.ok) { console.error(g.text); process.exit(1); }
   if (g.warn) console.warn(g.warn);
 }
-const W = Number(A.w || 1080), H = Number(A.h || 1920);
+const W = Number(A.w || T?.w || 1080), H = Number(A.h || T?.h || 1920), QUERY = [T?.query, A.query].filter(Boolean).join('&');
 const REEL = !!A.film, page = A.page || (REEL ? 'styles/stick-man/reel.html' : null);
 if (!page) { console.error('give --film films/<slug> or --page <proof page>'); process.exit(2); }
 let frames = A.frames === 'all' ? [] : (A.frames || '0').split(',').flatMap(s => { const [a, b] = s.split('-').map(Number); return b == null ? [a] : Array.from({ length: b - a + 1 }, (_, i) => a + i); });
+if (A.scenes) {
+  const picks = sceneFrames(path.join(ROOT, A.film), A.frames && A.frames !== 'all' ? [Math.min(...frames), Math.max(...frames)] : null);
+  if (!picks.length) { console.error(`--scenes: no storyboard shot has its middle frame in ${A.frames}`); process.exit(1); }
+  console.log(`scenes: ${picks.map(s => `${s.id} ${s.f}`).join(', ')}`); frames = picks.map(s => s.f);
+}
+// a tier mp4: the inputs that make it (tools/render/cache.mjs); the files the page loads are added as it renders
+const CACHE = T?.pixels && A.mp4 && !A['no-cache'] && REEL;
+const inputs = CACHE && { tier: T.tier, w: W, h: H, query: QUERY, frames: A.frames || '0', film: A.film, kit: cache.kitStamp(ROOT),
+  bible: cache.bibleStamp(ROOT, path.join(ROOT, A.film)), words: cache.fileHash(path.join(ROOT, A.film, 'vo', 'words.json')),
+  audio: cache.fileHash(A.audio ? path.resolve(A.audio) : path.join(ROOT, A.film, 'vo', 'vo.wav')) };
+if (CACHE) {
+  const c = cache.check(ROOT, path.resolve(A.mp4), inputs);
+  if (c.hit) { console.log(`${A.mp4}  cache hit: ${c.why}`); process.exit(0); }
+  console.log(`cache miss: ${c.why}`);
+}
+if (T?.pixels) {
+  const outDir = path.dirname(path.resolve(A.mp4 || A.out || 'shot.jpg')), need = Number(A['min-free-gb'] ?? 5);
+  fs.mkdirSync(outDir, { recursive: true });
+  const free = freeGB(outDir);
+  if (free < need) { console.error(`only ${free.toFixed(1)} GB free under ${outDir}, a ${T.tier} render needs ${need} GB (--min-free-gb)`); process.exit(1); }
+  await acquire({ what: `${A.film || page} ${T.tier} ${A.mp4 || A.out || ''}`.trim(), waitMs: 1000 * Number(A['lock-wait'] ?? 3600) });
+}
 
 const server = await serveFiles(ROOT, { port: Number(A.port || 0) });
 const base = `http://127.0.0.1:${server.address().port}/${page}`;
 if (A.serve) { console.log(`${base}?film=${A.film}`); await new Promise(() => {}); }
-const url = REEL ? `${base}?film=${A.film}&capture=1${A.query ? '&' + A.query : ''}` : `${base}?view=${A.view || 'a'}${A.query ? '&' + A.query : ''}`;
+const url = REEL ? `${base}?film=${A.film}&capture=1${QUERY ? '&' + QUERY : ''}` : `${base}?view=${A.view || 'a'}${QUERY ? '&' + QUERY : ''}`;
 const browser = await launchGpu();
 const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
 const p = await ctx.newPage();
 p.on('pageerror', e => { console.error('pageerror:', e.message, '\n', e.stack || ''); process.exit(1); });
 p.on('console', m => { if (m.type() === 'error') console.error('console', m.text()); });
+const deps = new Set();
+if (CACHE) p.on('request', r => { const u = new URL(r.url()); if (u.host === `127.0.0.1:${server.address().port}`) deps.add(decodeURIComponent(u.pathname).replace(/^\//, '')); });
 await p.goto(url); await p.waitForFunction(() => window.__ready === true, null, { timeout: 180000 });
 if (A.frames === 'all') { const [a, b] = await p.evaluate(() => window.__F); frames = Array.from({ length: b - a + 1 }, (_, i) => a + i); }
 const shot = file => p.screenshot(/\.png$/i.test(file) ? { path: file } : { path: file, type: 'jpeg', quality: 92 });
@@ -111,6 +145,7 @@ if (A.speed && !REEL) {
     if (f % 60 === 0) process.stdout.write(`frame ${f}\n`);
   }
   ff.stdin.end(); await done;
+  if (CACHE) cache.save(ROOT, path.resolve(A.mp4), inputs, deps);
   console.log(`${A.mp4}  ${n} frames ${W}x${H}  page ${(ms / n).toFixed(1)} ms/frame, with JPEG ${((Date.now() - t0) / n).toFixed(1)} ms/frame`);
 } else if (A.report) {
   const L = [], pct = (a, b) => (100 * a / b).toFixed(1) + ' %';

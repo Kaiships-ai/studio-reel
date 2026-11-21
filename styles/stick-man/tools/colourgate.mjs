@@ -7,6 +7,8 @@
 // saturation 0-1, R/B = mean red over mean blue, black = 2nd percentile luma, hero white = pixels with luma > 140 and
 // chroma under 15 % (the hoodie and white props), hue families of the pixels with S >= .25 and V >= .2.
 // Verdicts: PASS, FAIL (a finding not waived), DRAFT (no finding, but the script is not approved by Kai). Only PASS exits 0.
+// Needs T3 pixels (shot.mjs --tier review, 720x1280 full quality or larger): a T2 proof (480p, no lens blur, low shadows) or
+// anything under 720 wide is refused with exit 2 (tools/render/tiers.mjs pixelGateError). gate() itself measures any mp4.
 // A finding is waived by an approved DECISIONS.json entry { "waives": "colourgate.G9", "by": "kai", "at": "<date>" }.
 import fs from 'node:fs'; import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,6 +17,7 @@ import { finalRender } from './renders.mjs';
 import { sceneScores, hardCuts, duration } from './cutgate.mjs';
 import { waiverFor } from './kituse.mjs';
 import { median } from './stats.mjs';
+import { renderInfo, pixelGateError } from './render/tiers.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 export const W = 144, H = 256, FPS = 10, EDGE_S = 0.1;
@@ -239,6 +242,8 @@ function main(argv) {
     if (!fs.existsSync(scriptFile)) { console.error(`${first}: no colour-script.json (write it at [1.7] from .claude/skills/make-reel-stick-man/templates/colour-script.json, Kai approves it)`); process.exit(1); }
     if (fs.existsSync(path.join(DIR, 'DECISIONS.json'))) decisions = readJson(path.join(DIR, 'DECISIONS.json'));
   }
+  const low = pixelGateError(renderInfo(mp4), 'colourgate');
+  if (low) { console.error(low); process.exit(2); }
   let res;
   try { res = gate(mp4, readJson(scriptFile), decisions); } catch (e) { console.error(`colour-script.json: ${e.message}`); process.exit(2); }
   const md = report(res, path.basename(mp4), res.script), line = `${res.verdict} · ${CHECKS.map(c => `${c.id} ${res.findings.filter(f => f.check === c.id && !f.waived).length}`).join(', ')} · ${path.basename(mp4)}`;
