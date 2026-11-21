@@ -80,12 +80,6 @@ export const BRAM = { name: 'Bram', shirt: [0.17, 0.18, 0.24],   // black reads 
 export const WARREN = { name: 'Warren', shirt: [1, 1, 1], glasses: true, hair: [hairCap([0.58, 0.58, 0.60])], clothes: [{ tie: [0.42, 0.08, 0.10], stripe: [0.70, 0.30, 0.30] }] };
 export const OFFICER = { name: 'Officer', shirt: [0.44, 0.60, 0.90], hair: [guardCap([0.04, 0.06, 0.16])],
   clothes: [{ tie: [0.04, 0.06, 0.16], stripe: [0.04, 0.06, 0.16] }, { uniform: { seam: [0.16, 0.26, 0.52] } }] };
-// static red versions (when a live recolour is not wanted)
-export const KAI_HALF_RED = { ...KAI, name: 'Kai half red', skin: [1.0, 0.50, 0.48], shirt: [1.0, 0.55, 0.52],
-  hair: [curls([0.42, 0.10, 0.05]), bandana()], clothes: [{ vest: [0.95, 0.16, 0.05], strap: [0.30, 0.20, 0.08] }] };
-export const KAI_RED = { ...KAI, name: 'Kai red', skin: [0.95, 0.10, 0.09], shirt: [0.92, 0.12, 0.10],
-  hair: [curls([0.36, 0.03, 0.02]), bandana([0.70, 0.02, 0.03])], clothes: [{ vest: [0.70, 0.04, 0.03], strap: [0.30, 0.02, 0.02] }] };
-
 // ---------------------------------------------------------------- live dye: recolour a figure made by makeStick
 // dye(S, k): k 0..1. Head and hair go red first (k 0..0.5), then the torso (0.3..0.8), then limbs (0.6..1.0).
 // Works on the figure's own toon materials; limbs get their own material the first time (the ink one is shared).
@@ -133,22 +127,5 @@ export function newspaper() {
   const paper = new THREE.MeshStandardMaterial({ color: lin(0.86, 0.85, 0.80), roughness: 0.9 }), front = new THREE.MeshStandardMaterial({ map, roughness: 0.9 });
   const m = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.34, 0.012), [paper, paper, paper, paper, front, paper]);
   m.position.set(0, 0.15, 0); m.castShadow = m.receiveShadow = true; g.add(m);
-  return g;
-}
-// paper shopping bag hanging from its handles (origin at the top of the handles)
-export function shoppingBag(col = [0.72, 0.50, 0.30]) {
-  const g = new THREE.Group(), kraft = new THREE.MeshStandardMaterial({ color: lin(...col), roughness: 0.9 });
-  const label = canvasTex(256, 256, (c, w, h) => {
-    c.fillStyle = `rgb(${col.map(v => Math.round(255 * Math.pow(v, 1 / 2.2))).join(',')})`; c.fillRect(0, 0, w, h);
-    c.fillStyle = 'rgb(176,64,82)'; c.beginPath(); c.arc(w / 2, h * 0.52, 70, 0, Math.PI * 2); c.fill();
-    c.fillStyle = 'rgb(250,246,236)'; c.font = 'bold 34px Georgia, serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('LARKSPUR', w / 2, h * 0.52);
-  });
-  const face = new THREE.MeshStandardMaterial({ map: label, roughness: 0.9 });
-  const body = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.32, 0.14), [kraft, kraft, kraft, kraft, face, kraft]);
-  body.position.set(0, -0.12 - 0.16, 0); body.castShadow = body.receiveShadow = true; g.add(body);
-  const hm = new THREE.MeshStandardMaterial({ color: lin(0.20, 0.10, 0.05), roughness: 0.8 });
-  for (const z of [0.05, -0.05]) {
-    const h = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.008, 6, 20, Math.PI), hm); h.position.set(0, -0.12, z); h.castShadow = true; g.add(h);
-  }
   return g;
 }
