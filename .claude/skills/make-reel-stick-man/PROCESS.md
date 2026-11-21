@@ -117,7 +117,7 @@ What follows is specific to this engine (execution pass).
 - Put a character off screen with `pos` far away on a key at a cut frame. A non-cut key slides him across the frame.
 
 **Polish** (`polish(keys)` in REEL_DATA.md): the blocking poses stay. Then:
-- **Cut keys.** A key on a cut stays `snap`. The engine restarts follow-through, the hat lag and the face there.
+- **Cut keys.** A key on a cut stays `snap`. The engine restarts follow-through and the face there.
 - **Timing.**
   - Every other key holds until T frames before the next key, then moves.
   - T = 7 by default, 4 for fast repeats such as saw strokes.

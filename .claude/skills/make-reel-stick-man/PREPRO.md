@@ -225,6 +225,11 @@ After ◇2a, from the locked shots: one frame per scene (more where the light ch
 Colour and value carry the curve: contrast rises with intensity, the climax owns the strongest contrast or the one
 unique colour, the release goes calm. Check against the look's limits at phone size.
 
+Then write the same in numbers, `colour-script.json` (SKILL.md [1.7], template
+`.claude/skills/make-reel-stick-man/templates/colour-script.json`): per scene the intent, R/B, saturation and black
+ranges, the hue families, the light events that may jump. Kai signs it (`approved: { by: "kai", at }`); ◇2c stays OPEN
+without the signature, and `colourgate.mjs` checks the final against it at ◇5.
+
 ---
 
 ## 4. Craft knowledge
@@ -348,7 +353,7 @@ A final-looking render before ◇2a is allowed only as a **style frame** for [1.
 |---|---|---|---|
 | ◇2a story + timing | scenes, shot order, length, voice | animatic vN (burn-in), `prepro.md`, `intensity.svg`, muted and sound-on retells, swipe test | prepro PASS on the final voice; retells get every beat; no swipe stretch Kai agrees with; Kai approves |
 | ◇2b shot lock | camera intent per shot (size, angle, lens class, move, axis side) | camera-intent pass OUT-1/3/4/5, options rendered in the animatic, the 3D previs and temp-music animatic (`previs.mjs`, `review/previs/previs.md`) | every shot CAM INTENT LOCK; climax is the visual peak; no continuity FAIL |
-| ◇2c look + design | look, characters, sets, props, colour script | style frames on locked shots, sheets, colour script | Kai approves; nothing in it changes a locked shot |
+| ◇2c look + design | look, characters, sets, props, colour script | style frames on locked shots, sheets, colour script strip + `colour-script.json` signed by Kai | Kai approves; nothing in it changes a locked shot |
 
 A shot added after Kai locked the story scores gets a score between its nearest locked neighbours (inclusive); K1 then reports it as INFO "added after lock, interpolated" instead of a FAIL, as long as every locked score, scene feel and shot scene is unchanged and no more than two shots are added between the same two locked shots (more is a FAIL: re-lock with Kai). Tell Kai in the same reply (his curve does not change, it gains a point). A lock written before this rule has only a hash: re-lock once with `prepro.mjs --lock-story kai`. Kai may approve the three on one page in one sitting; each keeps its own row and evidence. ◇2c is never approved before
 ◇2a. ◇2 is open when all three are.

@@ -91,7 +91,10 @@ hash that keeps the ◇2 reviews fresh (`BREAKDOWN` in `tools/fresh.mjs`), so ad
 | `CUTS` (export) | the animatic's cut frames, last entry = the end frame; `animatic.mjs` prints it from the shot list |
 | `set`, `setModule`, `setOpts` | the place: `setModule: '/styles/stick-man/allout/sets/<name>.js'` (sets in `styles/stick-man/allout/README.md`) |
 | `look`, `light`, `grade` | the approved look of the set (e.g. canyon-edge `EDGE_LOOK.look / .light / .grade`) |
-| `style` | `'kaiships'`: Kai's dose of the 12 principles (`engine/motion.js` STYLE_PRESETS); physics stays the floor |
+| `grade.sky`, `grade.air` | tune the engine's sky dome (`{ glow, clouds }`) and air (`{ k, near, scale, desat }`) for this act, or `false` turns one off (`.claude/skills/verify/features/stick-man-depth.md`) |
+| `backdrop` | `{ rows: [{ piece, at, rot, scale, tint }], tint }`: far town rows from `styles/stick-man/assets/backdrop/` past the set's walls; a dark `tint` about 0.17 at night. An act without it gets none; `kituse.mjs` id `depth` needs it in one act or a set that calls `backdrop()` (stick-man-depth.md) |
+| `style` | `{ ...STYLE_PRESETS.kaiships, life: 0.75 }`: Kai's dose of the 12 principles (`engine/motion.js` STYLE_PRESETS); physics stays the floor. `life` is the moving hold (0 off, up to 2); every act sets it (`kituse.mjs` id `life`) |
+| `faceStyle` | `'s2'`: the rubber face (`engine/facestyles/s2.js`, `y_` and `c_` designs); left out, the kit faces (`.claude/skills/verify/features/stick-man-face-style.md`) |
 | `cast` | `{ name: { spec, at, yaw, expr, focus, lead, costume } }` |
 | `anim` | the lead's acting: motion v2 keys (below) |
 | `direct` | the cameras (below) |
@@ -126,7 +129,7 @@ anim: { eng: polish([ hold(0, { ...KNEEL, pos: E0, yaw: -120, expr: 'sly', look:
 |---|---|
 | `f` | frame (CUTS for the first key of a shot) |
 | `pose` + overrides | joint channels: `pos [x, y]`, `yaw`, `bob`, `spine {bend, side, twist}`, `neck {nod, tilt, turn}`, `pelvis`, `armL/armR {raise, swing (+ forward), elbow, roll}`, `legL/legR`, props (`x_hpR_saw: 1`) |
-| `ease` | `snap` (a cut: no in-between, follow-through, hat lag and face start fresh), `slow` (slow in/out), `flow`, `in`, `out` |
+| `ease` | `snap` (a cut: no in-between, follow-through and face start fresh), `slow` (slow in/out), `flow`, `in`, `out` |
 | `hold` | frames held before moving (polish writes it) |
 | `antic` | 0.1-0.35: a wind-up against the move; it shortens the action itself, so give the move enough `t` |
 | `t` | on the next key: move length in frames (default 7, strokes 4, big arm moves 14-22, a take 9) |
@@ -190,7 +193,8 @@ in kg (it enters the centre of mass), `x_yaw<side>` turns an upright prop about 
 (Blender metres; `allout/director.js`). Always write `cut: 'cut'` (the default `move` glides 16 frames between shots).
 `intent` is the shot kind the gates read (`est`, `wide`, `ws`, `ms`, `mcu`, `cu`, `low`, `insert`, `top`); `why` starts with
 `P<n> · PURPOSE`. Camera-pass options: `OPT = { <shot>: { safe, emo, bold } }`, `KAI` picks, `?opt=<shot>:<name>` renders one
-(PROCESS.md section 3). A move must not pass through geometry and stays ≤ 95 px/f at 720p; bigger = a cut.
+(PROCESS.md section 3). A move must not pass through geometry and stays ≤ 95 px/f at 720p; bigger = a cut. A shot's `dof: { gain, band }` sets its lens blur round the look target and always wins over the lens's own
+blur; `dof: { gain: 0 }` turns it off (stick-man-depth.md).
 
 ## Overlays (`overlays`, `engine/overlays.js`)
 
@@ -217,12 +221,13 @@ in kg (it enters the centre of mass), `x_yaw<side>` turns an upright prop about 
 - Check one on the motion-lib proof page: `tools/shot.mjs --film styles/stick-man/motion-lib/proof --query
   "clip=Move_CarryBag_Walk_Loop&ov=<url-encoded JSON list>" --w 540 --h 960 --frames 0,30`.
 
-## Music (`audio/music.json`, `tools/sound.py`)
+## Music (`audio/music.json`, `tools/mix.py`)
 
-Section starts in seconds or `[line, word]` (word without punctuation), in this order: `playful_end` < `build` < `build_end`
-< `wait` < `see` < `urgent` < `so`. Pilot A: `{ "playful_end": 8.7, "build": ["l03", "Then"], "build_end": 11.3, "wait":
-["l04", "On"], "see": ["l04", "his"], "urgent": ["l05", "The"], "so": ["l05", "snake"] }`. playful = teasing opening, build =
-rising, wait = dead stop on the turn, see = back and curious, urgent = driving drums, so = resolve chord on the last word.
+The kit mixer `mix.py` reads `audio/music.json` (or `--music-plan <json>`): `arc` `[{ t: [a, b], state, lu }]` (the music
+arc on the intensity curve), `sections` `[[name, a, z]]`, `peak` (the section that is the film's loudest moment), the
+levels `mus_lu`, `amb_lu`, `duck_db`, and `track { file, segments: [{ src: [a, b], at, file?, gain? }], xfade }`.
+`sound_fit.py <film> <track> --out <json>` writes the `track` segments from the arc, cut on the track's bar lines; the
+full key list is the header of `styles/stick-man/tools/mix.py`.
 
 ## Errors
 
@@ -231,4 +236,4 @@ rising, wait = dead stop on the turn, see = back and curious, urgent = driving d
 | `pageerror` / syntax | `node --check films/<slug>/reel.js`; read the URL with `globalThis.location?.search` (board.mjs imports reel.js in Node) |
 | `unknown ease "…"` | a `set` beat ease not in the list above |
 | `beat: no "<word>" #1 in l03` | `on` is not a spoken word of that line |
-| `StopIteration` in sound.py | a music.json word with punctuation or out of order |
+| `mix.py: … has no vo/vo.wav` (or `vo/words.json`) | the voice is not recorded and aligned yet: the mixer levels and ducks everything against the voice and its words |

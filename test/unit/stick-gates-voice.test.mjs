@@ -245,3 +245,17 @@ test('pause.py: a run stopped after replacing vo.wav (pauses.json still pending)
   const after = JSON.parse(fs.readFileSync(A('pauses.json'), 'utf8'));
   assert.equal(after.pending, undefined); assert.deepEqual(after.applied, [['l02', 1.2]]);
 });
+
+test('stagegate ◇2c: the colour script must exist and be signed by Kai, so a missing script is caught before ◇5', () => {
+  const d = tmp();
+  put(d, 'storyboard.json', SB); put(d, 'review/look.md', 'by: self\n'); put(d, 'review/colour-script.md', 'by: self\n');
+  const row = () => { run('node', [path.join(TOOLS, 'stagegate.mjs'), d, '2c'], { capture: true });
+    return fs.readFileSync(path.join(d, 'review/gate-2c.md'), 'utf8').match(/^\| made \| colour-script\.json \| (PASS|FAIL) \| (.*) \|$/m); };
+  assert.equal(row()[1], 'FAIL'); assert.match(row()[2], /missing/);
+  put(d, 'colour-script.json', { film: 'x', approved: { by: '', at: '' }, scenes: [] });
+  assert.equal(row()[1], 'FAIL', 'the unsigned template');
+  put(d, 'colour-script.json', { film: 'x', approved: { by: 'agent:a1', at: '2026-11-21' }, scenes: [] });
+  assert.equal(row()[1], 'FAIL', 'signed by someone other than Kai');
+  put(d, 'colour-script.json', { film: 'x', approved: { by: 'kai', at: '2026-11-21', quote: 'ok' }, scenes: [] });
+  assert.equal(row()[1], 'PASS');
+});
