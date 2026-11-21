@@ -1,9 +1,10 @@
 # Stick-man face style s2
 
-A stick-man film picks a face style with `faceStyle: 's2'` in its `reel.js` default export. `engine/play.js` `boot` loads
-`engine/facestyles/s2.js` and calls its `use()` before any figure or the stage is built. s2 is the rubber face Kai approved
-on Hot Money ep01 r5 reel 1 (21/11, "v6 ok, ưng 9.5/10"). A film that picks nothing renders exactly as before styles
-existed: every rule below is behind `faces.js` `FACE_STYLE.name`.
+s2 is the kit's default face style (Kai 21/11: "s2 thành mặc định"; new face work goes into s2). `engine/play.js` `boot`
+calls `engine/facestyles/index.js` `useFaceStyle(reel.js faceStyle)` before any figure or the stage is built: left out or
+`'s2'` loads `engine/facestyles/s2.js` and calls its `use()`; `'kit'` loads nothing and the film renders exactly as before
+styles existed (every rule below is behind `faces.js` `FACE_STYLE.name`); any other name throws. s2 is the rubber face Kai
+approved on Hot Money ep01 r5 reel 1 (21/11, "v6 ok, ưng 9.5/10").
 
 ## Sub-features
 
@@ -21,16 +22,18 @@ existed: every rule below is behind `faces.js` `FACE_STYLE.name`.
 
 ## How to get to it (user POV)
 
-A film's `reel.js`: `export default { ...act, faceStyle: 's2' }` (or a film face layer that returns it), then beats with
-`expr: 'y_fear', take: true` and the like.
+Any film: beats with `expr: 'y_fear', take: true` and the like (`new_film.mjs` writes no `faceStyle`: s2). A film that
+keeps the old faces: `export default { ...act, faceStyle: 'kit' }`. The design sheet: `shot.mjs --page
+styles/stick-man/faces.html --view a --frames 12 --w 1560 --h 1300 --out faces.jpg` (s2; `--query style=kit` the kit's).
 
 ## Driving it
 
-- Unit: `node --test test/unit/stick-face-s2.test.mjs` (designs present and drawn, turned-away faces hidden, a shut
+- Unit: `node --test test/unit/stick-face-default.test.mjs` (left out = s2, `'kit'` = no style, an unknown name throws)
+  and `test/unit/stick-face-s2.test.mjs` (designs present and drawn, turned-away faces hidden, a shut
   blink draws lines, no one-frame pops and the eye shut share on Hot Money reel-1 rows).
-- Kit faces unchanged: render a kit film (one made with `node styles/stick-man/tools/new_film.mjs`, or Hot Money ep01 r5 once it is in `films/`) on `main` and on
-  the branch, `shot.mjs --film films/<slug> --frames 30,100,180,250,330,420,500,590 --out f_%d.png --w 720 --h 1280` and
-  `--frames 0-615 --dbg rows.jsonl`; the rows match and the stills differ only by render noise (compare a second `main` run).
+- Kit faces unchanged: a film without `faceStyle` rendered on a commit before the s2 default, and the same film with
+  `faceStyle: 'kit'` on the branch: `shot.mjs --film films/<slug> --frames all --dbg rows.jsonl --w 720 --h 1280`; the rows
+  match. An s2 film (`faceStyle: 's2'`) and the same film with the key left out give the same rows.
 - The face-gate fixes on this film: `facebeat.mjs` takes each shot's end from the next storyboard shot (not the reel's
   segment `CUTS`); `faults.mjs` `editCuts` counts a one-shot-per-frame camera as one flight; `facesheet.mjs` passes
   `--query` and `--no-bible-check` on to `shot.mjs` and writes `review/face-sheet.json` only once the sheet image exists.

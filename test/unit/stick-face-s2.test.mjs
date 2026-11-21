@@ -1,5 +1,5 @@
 // Face style s2 (styles/stick-man/engine/facestyles/s2.js), the rubber face Kai approved 21/11 on Hot Money ep01 r5 reel 1
-// ("v6 ok, ưng 9.5/10"). A film picks it with reel.js faceStyle: 's2'; a film that picks nothing keeps the kit's faces.
+// ("v6 ok, ưng 9.5/10"), the default face style; a film with reel.js faceStyle: 'kit' keeps the kit's faces.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import zlib from 'node:zlib';

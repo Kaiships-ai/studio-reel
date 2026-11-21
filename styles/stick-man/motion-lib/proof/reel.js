@@ -59,7 +59,7 @@ const direct = turn ? [{ at: { f: 0 }, intent: 'ws', why: 'P1 · rig turnaround'
   ...(x1 - x0 > 0.4 ? { to: cam(x1), move: { from: { f: F0 }, dur: Math.max(10, last - F0), ease: 'inout' } } : {}) }];
 
 export default {
-  title: `motion-lib ${CLIP} ${BODY}`, fps: 30, glasses: false, steps: 'all', captions: { mode: 'word' }, style: 'kaiships', directDrift: 0,
+  title: `motion-lib ${CLIP} ${BODY}`, fps: 30, glasses: false, faceStyle: 'kit', steps: 'all', captions: { mode: 'word' }, style: 'kaiships', directDrift: 0,
   lines: [], show: [{ from: 0 }], beats: [], overlays: QS.get('ov') ? JSON.parse(QS.get('ov')) : [], frames: [0, last + 12], name: 'motionlib',
   look: { ao: 0.6, aoRadius: 0.5, shadowRadius: 2.0, sat: 1.0, con: 1.05, vig: 0.04, bloom: 0.05, hot: 0.1, ink: 2.4 },
   light: { sun: [1.0, 0.97, 0.93], power: 3.0, sky: [0.86, 0.86, 0.88], ground: [0.55, 0.55, 0.56], hemi: 0.5, fill: [0.95, 0.95, 1.0], fillPower: 0.4,

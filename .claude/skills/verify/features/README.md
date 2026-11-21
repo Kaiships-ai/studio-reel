@@ -53,4 +53,4 @@ Each feature file: H1 title, one paragraph, then `Sub-features`, `How to get to 
 - [Stick-man previs and temp-music animatic](./stick-man-previs.md): `previs.mjs` cuts a scene or the whole film as a grey 3D blockout with the camera path, cuts vs flights, a Vietnamese label bar and the voice and temp music under it; ◇2b needs its `previs.md`.
 - [Stick-man depth](./stick-man-depth.md): lens blur by the lens on every shot, a sky with form, air by distance, and far town rows (`allout/sets/backdrop.js`).
 - [Stick-man kit use gate](./stick-man-kituse.md): `kituse.mjs` blocks ◇4 and ◇5 of a film with no `life`, no far backdrop, no sound plan, no credited kit music or no Rick bench of its final, unless `DECISIONS.json` waives it.
-- [Stick-man face style s2](./stick-man-face-style.md): `faceStyle: 's2'` in a film's reel.js draws its faces in the rubber style Kai approved on Hot Money reel 1; a film that picks none keeps the kit faces exactly.
+- [Stick-man face style s2](./stick-man-face-style.md): every film draws its faces in s2, the rubber style Kai approved on Hot Money reel 1, unless its reel.js sets `faceStyle: 'kit'` (the old kit faces, exactly).

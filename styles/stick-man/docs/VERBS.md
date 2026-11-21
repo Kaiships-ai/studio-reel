@@ -119,10 +119,11 @@ Each face is drawn in code per figure (eye kind, flat or tilted lids, cheek push
 marks painted on (blush, red veins, tears, dark sockets, gloom lines) and head-attached mark cards. Every face has an
 open-mouth twin for talking. A face change lands 4 f before its word, with a body accent and a blink.
 
-**Face style.** A film may swap the kit faces for a face style with `faceStyle: 's2'` in its `reel.js` default export.
+**Face style.** Every film draws its faces in s2 unless its `reel.js` default export says otherwise (Kai 21/11).
 s2 (`engine/facestyles/s2.js`, #156) is the rubber face Kai approved on Hot Money reel 1: 27 designs, `y_` for the lead
-and `c_` for a second character (`expr: 'y_fear'`), with its own change timing, blinks and chew. A film that sets no
-`faceStyle` keeps the kit faces below exactly. Details: `.claude/skills/verify/features/stick-man-face-style.md`.
+and `c_` for a second character (`expr: 'y_fear'`), with its own change timing, blinks and chew. New face work goes into
+s2. `faceStyle: 'kit'` keeps the kit faces below exactly; any other name fails the render. Details:
+`.claude/skills/verify/features/stick-man-face-style.md`.
 
 | `expr` | Look | Marks |
 |---|---|---|
