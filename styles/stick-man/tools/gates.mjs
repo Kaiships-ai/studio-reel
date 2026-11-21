@@ -17,7 +17,7 @@ if (!A.report || !A.in) { console.error('usage: gates.mjs --report <stats.txt> -
 // WAIVED instead of FAIL, and never set the exit code; safety and quality gates block as always. Thresholds never change.
 const PROFILE = A.profile || 'full';
 if (!['full', 'pilot'].includes(PROFILE)) { console.error(`unknown --profile ${PROFILE} (full | pilot)`); process.exit(2); }
-const REFERENCE_GATES = new Set(['clear frames', 'still frames', 'small-figure run', 'colour SATAVG', 'shadow contrast', 'colour per shot', 'ink thickness',
+const REFERENCE_GATES = new Set(['clear frames', 'still frames', 'small-figure run', 'shadow contrast', 'ink thickness',
   'caption height', 'caption weight', 'hard cuts', 'dissolves', 'rush peak', 'time in moves', 'shot length CV', 'light per place', 'first move',
   'outline thick/thin', 'mouth movement', 'bed in pauses', 'duration', 'distinct sets', 'shot variety', 'shot types', 'shot type run',
   'establishing shot', 'insert shot', 'wide share', 'low angle share', 'open on the verb', 'dressing density', 'style judge', 'blind test']);
@@ -123,40 +123,28 @@ const I = num(/I:\s+(-?[\d.]+) LUFS/, sum), TP = num(/Peak:\s+(-?[\d.]+) dBFS/, 
 I == null ? missing('mix loudness') : gate('mix loudness', Math.abs(I + 14) <= 0.5, `${I} LUFS`, '-14 +-0.5 LUFS');
 TP == null ? missing('true peak') : gate('true peak', TP <= -1, `${TP} dBTP`, '<= -1 dBTP');
 
-// colour: signalstats on 2 frames a second, median over the samples
+// signalstats on 2 frames a second for the shadow contrast gate (colour is checked by colourgate.mjs at ◇5, not here)
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'stick-gates-')), mt = path.join(tmp, 'c.txt');
 run('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-i', path.resolve(A.in), '-vf',
   `fps=2,signalstats,metadata=print:file=${mt.replace(/\\/g, '/').replace(/:/g, '\\:')}`, '-f', 'null', '-']);
 const ct = fs.existsSync(mt) ? fs.readFileSync(mt, 'utf8') : ''; fs.rmSync(tmp, { recursive: true, force: true });
-const col1 = k => ct.split('\n').filter(l => l.includes(`.${k}=`)).map(l => Number(l.split('=')[1])).sort((a, b) => a - b);
 const med = v => v[v.length >> 1];
-const Y = col1('YAVG'), S = col1('SATAVG');
-if (!Y.length) missing('colour'); else {
-  // (the old `colour YAVG median 109-163` gate is gone: jar 104 and rail 107 failed it; brightness per place is the forensic
-  // `light per place` gate: shot YAVG std >= 20, a shot under 95, median 105-130)
-  gate('colour SATAVG', med(S) >= 19 && med(S) <= 47, `median ${med(S).toFixed(1)} (range ${S[0].toFixed(0)}-${S[S.length - 1].toFixed(0)})`, 'median 19-47');
-}
 
 // ---------------------------------------------------------------- look gates (GATES.md "Look gates")
 // Reference numbers measured with the same code (tools/look_measure.mjs, ffmpeg signalstats) on ref-private frames:
 // 60 tiles of the two 30-tile reference sheets (colour, contrast) and 3 full-size frames (ink, caption).
-// per shot (11/11 forensic): measured with this same signalstats code on the four full reference videos (2 a second):
-// YAVG p5-p95 61-168, SAT p5-p95 13-54, YLOW min 17 (pink's black frame excluded); the old 84-158 / 36-101 came from 60
-// sheet tiles and failed every dark place the reference has
-const LOOK = { ink: [2, 3], ratio: [0.235, 0.388], cap: 54, capTol: 0.10,
-  shot: { YAVG: [60, 170], SATAVG: [13, 54], YLOW: [17, 101] } };
+const LOOK = { ink: [2, 3], ratio: [0.235, 0.388], cap: 54, capTol: 0.10 };
 {
-  // per-sample signalstats (2 a second) in order; mp4 is tv range, the reference stills full range: convert to full
+  // per-sample signalstats (2 a second) in order
   const per = []; let cur = null;
   for (const l of ct.split('\n')) {
     if (l.startsWith('frame:')) { cur = {}; per.push(cur); continue; }
     const m = /signalstats\.(\w+)=([\d.]+)/.exec(l); if (m && cur) cur[m[1]] = Number(m[2]);
   }
-  const fy = v => (v - 16) * 255 / 219, fc = v => v * 255 / 224;
   const ratios = per.filter(x => x.YHIGH > 16).map(x => (x.YLOW - 16) / (x.YHIGH - 16)).sort((a, b) => a - b);
   ratios.length ? gate('shadow contrast', med(ratios) >= LOOK.ratio[0] && med(ratios) <= LOOK.ratio[1],
     `median ${med(ratios).toFixed(3)} (range ${ratios[0].toFixed(2)}-${ratios[ratios.length - 1].toFixed(2)})`, `P10/P90 luma ${LOOK.ratio.join('-')}`) : missing('shadow contrast');
-  // per shot: needs __dbg (shot index per frame)
+  // needs __dbg (frame rows)
   const rows = await lookDbg();
   // body contact (engine/body.js): no hand or arm inside a head or a torso, measured after the contact solve
   if (rows) {
@@ -168,19 +156,9 @@ const LOOK = { ink: [2, 3], ratio: [0.235, 0.388], cap: 54, capTol: 0.10,
     }
     gate('body contact', pen <= 0.1 && !bad, `max ${pen.toFixed(2)} cm${at ? ` (${at})` : ''}${bad ? `, ${bad} broken poses` : ''}`, '<= 0.1 cm into head / torso');
   }
-  if (!rows) { missing('colour per shot'); missing('caption height'); }
+  if (!rows) { missing('caption height'); }
   else {
-    const byF = new Map(rows.map(r => [r.f, r])), shots = new Map();
-    per.forEach((x, i) => { const r = byF.get(Math.round(i * 15)); if (!r) return; const k = `${r.act ?? ''}#${r.shotI} ${r.set}`;
-      (shots.get(k) || shots.set(k, []).get(k)).push(x); });
-    const bad = [];
-    for (const [k, xs] of shots) {
-      if (xs.length < 2) continue;
-      const m3 = { YAVG: med(xs.map(x => fy(x.YAVG)).sort((a, b) => a - b)), SATAVG: med(xs.map(x => fc(x.SATAVG)).sort((a, b) => a - b)), YLOW: med(xs.map(x => fy(x.YLOW)).sort((a, b) => a - b)) };
-      const off = Object.entries(LOOK.shot).filter(([q, [lo, hi]]) => m3[q] < lo || m3[q] > hi).map(([q]) => `${q} ${m3[q].toFixed(0)}`);
-      if (off.length) bad.push(`${k}: ${off.join(', ')}`);
-    }
-    gate('colour per shot', !bad.length, bad.length ? `out: ${bad.join('; ')}` : `${shots.size} shots in range`, 'YAVG 60-170, SAT 13-54, YLOW 17-101');
+    const byF = new Map(rows.map(r => [r.f, r]));
     // ink + caption on 1 frame a second at 1080x1920
     const fr = decode(A.in, 1), ink = [], cap = [], stem = [], strk = [];
     fr.forEach((rgb, i) => { const m = measure(rgb); if (m.inkRuns > 50) ink.push(m.inkPx); if (m.capStem) stem.push(m.capStem); if (m.capStroke) strk.push(m.capStroke);
