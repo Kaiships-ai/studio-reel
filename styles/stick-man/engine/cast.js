@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { toon, lin, css, B, INK_RGB, INK_SUN, PLACE } from './look.js';
-import { EXPR, faceRig, mixFace } from './faces.js';
+import { EXPR, faceRig, mixFace, FACE_STYLE } from './faces.js';
 import { makeHandProp } from '../lib/cast/handprops.js';
 import { SOFT, footDown, legReach, limitArm, limitBody, ROM, torsoSlices, ellipsoid, worldBox, solveArm, armPenetration, propPush, PHYS, centreOfMass, balanceShift, headWear, wearVolume } from './body.js';
 
@@ -278,6 +278,27 @@ function shapeHeadGeo(g, M = null) {
     _hv.x *= k; _hv.z *= k; if (M) _hv.applyMatrix4(_hi); p.setXYZ(i, _hv.x, _hv.y, _hv.z);
   }
   p.needsUpdate = true; if (g.attributes.normal) g.computeVertexNormals(); g.computeBoundingSphere(); g.computeBoundingBox();
+}
+// the face shell: a unit front hemisphere (+z) kept as the base; aimShell lays it on the head toward the head-local lens
+// direction d (unit), shaped as shapeHeadGeo shapes the head, with the uv of each point its position across the lens
+const SHELL_R = 1.015, _shellM = new THREE.Matrix4(), _upL = new THREE.Vector3(), _sx = new THREE.Vector3(), _sy = new THREE.Vector3(), _sz = new THREE.Vector3(), _sp = new THREE.Vector3();
+function faceShell() {
+  const g = new THREE.SphereGeometry(1, 40, 30, 0, Math.PI, 0, Math.PI);
+  g.userData.base = g.attributes.position.array.slice(); g.userData.d = null;
+  return g;
+}
+function aimShell(g, d, up) {
+  const last = g.userData.d, k = [d.x, d.y, d.z, up.x, up.y, up.z]; if (last && k.every((v, i) => Math.abs(v - last[i]) < 1e-5)) return;
+  g.userData.d = k;
+  _sz.copy(d); _sx.copy(up).cross(_sz); if (_sx.lengthSq() < 1e-6) _sx.set(1, 0, 0); _sx.normalize(); _sy.crossVectors(_sz, _sx);
+  const B0 = g.userData.base, p = g.attributes.position, uv = g.attributes.uv;
+  for (let i = 0; i < p.count; i++) {
+    const bx = B0[3 * i], by = B0[3 * i + 1], bz = B0[3 * i + 2];
+    _sp.set(0, 0, 0).addScaledVector(_sx, bx).addScaledVector(_sy, by).addScaledVector(_sz, bz).multiplyScalar(HA * SHELL_R); _sp.y *= HEAD_H;
+    if (HEAD_SHAPE.on) { const k = headScale(_sp.y / HB) * (1 + 0.010 * Math.tanh(_sp.x / (0.1 * W)) + 0.008 * Math.sin(3 * Math.atan2(_sp.z, _sp.x) + 0.7)); _sp.x *= k; _sp.z *= k; }
+    p.setXYZ(i, _sp.x, _sp.y, _sp.z); uv.setXY(i, 0.5 + _sp.dot(_sx) / W, 0.5 + _sp.dot(_sy) / W);
+  }
+  p.needsUpdate = true; uv.needsUpdate = true; g.computeBoundingSphere();
 }
 function facePatch() {
   const R = 1.012, g = new THREE.SphereGeometry(HA * R, 48, 36, Math.PI / 2 - 0.95, 1.9, Math.PI / 2 - 0.80, 1.6);
@@ -590,13 +611,22 @@ export function makeStick(spec) {
   headSolid.receiveShadow = false;   // no hard cast shadows from hair or hats on the face (a lit white triangle cut the face, ep01 f1240); the reference head is one soft white form
   head.add(headSolid);
   const rig = new THREE.Group(); head.add(rig);
-  const FR = faceRig(W, { glasses: !!spec.glasses });
+  // spec.faceTop (W): the top of the face plate a hood or a cap leaves open (faces.js drawFaceState o.top); spec.faceTurn:
+  // how far the face slides round the head with the skull's yaw (0.8 default; a hood's opening wants the marks further in)
+  // (spec.faceTopSide / faceTopUp: how much lower that top is in profile / seen from above; spec.faceEdge: [z0, ramp] where the face fades going round)
+  const FR = faceRig(W, { glasses: !!spec.glasses, top: spec.faceTop, topSide: spec.faceTopSide, topKnee: spec.faceTopKnee, topUp: spec.faceTopUp, edge: spec.faceEdge, edgeKnee: spec.faceEdgeKnee }), TURN = spec.faceTurn ?? 0.8;
   const face = new THREE.Mesh(facePatch(), new THREE.MeshBasicMaterial({ map: FR.tex, transparent: true, depthWrite: false,
     polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
-  face.userData.noPrepass = true; face.renderOrder = 2; rig.add(face); head.add(FR.group);
-  const card2d = new THREE.Mesh(new THREE.PlaneGeometry(W, W), new THREE.MeshBasicMaterial({ map: FR.tex, transparent: true, depthWrite: false,
+  face.userData.noPrepass = true; face.userData.faceInk = true; face.renderOrder = 2; rig.add(face); head.add(FR.group);
+  // the 2D face's card. Under a face style (faces.js FACE_STYLE): a shell on the head (the head's own shape, 1.5 % out)
+  // turned to the lens each frame, its texture laid on along the lens direction, so it shows exactly what the flat card
+  // showed but at the head's depth: a cap's band, a hood's rim or hair in front of the face hides the marks behind it (the
+  // flat card stood in front of the head and painted eyes over the hair band, Hot Money r5 diner / hot dog). The kit's own
+  // faces keep the flat card
+  const shell = !!FACE_STYLE.name;
+  const card2d = new THREE.Mesh(shell ? faceShell() : new THREE.PlaneGeometry(W, W), new THREE.MeshBasicMaterial({ map: FR.tex, transparent: true, depthWrite: false,
     polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
-  card2d.userData.noPrepass = true; card2d.renderOrder = 2; card2d.visible = false; head.add(card2d);
+  card2d.userData.noPrepass = true; card2d.userData.faceInk = true; card2d.renderOrder = shell ? 6 : 2; card2d.visible = false; head.add(card2d);   // after a set's additive light cards (5): ink stays ink under a lamp's glow
   if (FACE_2D.on) face.visible = false;
   const skin0 = headSolid.material.color.clone(), tintC = new THREE.Color();
   if (spec.glasses) rig.add(glasses());
@@ -669,12 +699,15 @@ export function makeStick(spec) {
       // the face turns 80% as far as the skull (the cartoon cheat that keeps it on the ball in profile, approved at 1.3);
       // each feature hides itself as it goes round the edge, the whole face only at the back of the head
       const vis = Math.max(0, Math.min(1, (Math.cos(yaw) + 0.35) / 0.3));
-      slide = [-0.8 * yaw, -0.40 * Math.sin(el) * HEAD_H, vis];
-      card2d.visible = true; card2d.position.copy(d).multiplyScalar(HA * 1.02); card2d.lookAt(B(...P.cam));
+      slide = [-TURN * yaw, -0.40 * Math.sin(el) * HEAD_H, vis, ...(shell || spec.faceTopUp ? [Math.sin(el)] : [])];
+      card2d.visible = true;
+      if (shell) aimShell(card2d.geometry, d, _upL.set(0, 1, 0).transformDirection(_shellM.copy(head.matrixWorld).invert()));   // the world's up in the head (the flat card stood upright)
+      else { card2d.position.copy(d).multiplyScalar(HA * 1.02); card2d.lookAt(B(...P.cam)); }
     } else card2d.visible = false;
     face.visible = !FACE_2D.on || !P.cam;
     FR.draw(e, blink, t, marks, P.cam ? B(...P.cam) : null, mx ? mx.F : null, slide);
-    S.faceStats = FR.stats;
+    S.faceStats = FR.stats; S.faceVis = slide ? +slide[2].toFixed(3) : 1;   // how much of the face the lens sees (0 = the back of the head)
+    S.faceSlide = slide ? slide.map(v => +v.toFixed(3)) : null;   // [face yaw, dy, vis, sin(elevation)] for the dbg rows
     const ta = P.state && EXPR[typeof P.state.a === 'string' ? P.state.a : P.state.a?.name]?.tint, tb = E.tint, u = P.state ? Math.max(0, Math.min(1, P.state.u)) : 1;
     const tk = tb ? Math.min(1, age / 6) * u : ta ? 1 - u : 0;   // a furious face flushes over 6 frames (and fades as it leaves)
     headSolid.material.color.copy(skin0); if (tk) headSolid.material.color.lerp(tintC.setRGB(...(tb || ta)), tk);

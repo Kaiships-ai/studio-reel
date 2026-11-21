@@ -1,7 +1,7 @@
 // The automatic acting layer: blinks, expression timing, idle life, eyes on whatever is moving, settle springs.
 // Nothing here is written in the reel data; all of it is a pure function of the frame and a per-actor seed.
 import { hash, clamp, smooth, smoother, settle, rightB, fwdB, angDiff } from './verbs.js';
-import { EXPR, mixFace } from './faces.js';
+import { EXPR, mixFace, FACE_STYLE } from './faces.js';
 
 // ---------------------------------------------------------------- micro-animation timing (FORENSIC.md section 3)
 // Reference head moves: 12-15 f, a slow start (7 % of the travel in the first eighth: 0.07 0.21 0.34 0.48 0.63 0.75 0.86 1),
@@ -175,6 +175,8 @@ const ACCENT = {
 // released over ACC_OUT frames. 1.6x the old size (FORENSIC: the reference's big beats travel ~2.3 W).
 const ACC_A = 3, ACC_HOLD = 60, ACC_OUT = 24, ACC_K = 2.0, ACC_DIP = 0.3, SMALL_K = 0.3;
 const easeOut = x => 1 - (1 - clamp(x, 0, 1)) ** 2;
+// a take's accent eased at both ends (a face style may ask for it: TAKE.sine): the easeOut accent moved a third of the change in its first frame
+const sineIO = x => 0.5 - 0.5 * Math.cos(Math.PI * clamp(x, 0, 1));
 const twos = (a, n) => clamp((a - (a % 2) + 2) / n, 0, 1);                 // on twos: a new value every 2nd frame
 function accentEnv(c, a) {
   if (c.cls === 'take') {
@@ -395,7 +397,16 @@ export const FACE_TIMING = {
   slow: { T: 16, over: 0.04, lag: LAG, len: LEN },
 };
 export const TAKE = { antic: 5, accent: 4, hold: 3, settle: 8, over: 0.20 }, SMALL_TAKE = { accent: 4, total: 10, over: 0.10 };
-export const GAZE_T = 3, FORCED_BLINK_GAP = 60;
+// tense faces blink fast (5 f, 3 of them past half shut): a long or regular blink on a frightened face read as sleepy
+// (Hot Money r5 faces review). A name counts without a film prefix (h_worried = worried). The kit's own faces keep their
+// older, shorter list (ANXIOUS) and the 60 f forced-blink gap; under a face style (faces.js FACE_STYLE) the gap is 150 f:
+// with turn blinks too the eyes blinked 40-50 a minute (Hot Money r5)
+export const TENSE = new Set(['nervous', 'worried', 'angry', 'furious', 'panic', 'scream', 'shock', 'pain', 'scared', 'fear', 'strain']);
+const ANXIOUS = new Set(['nervous', 'worried', 'angry', 'furious', 'panic', 'scream', 'shock', 'pain']);
+export const isTense = e => FACE_STYLE.name ? TENSE.has(String(e || '').replace(/_[oO]$/, '').replace(/^[a-z]_/, '')) : ANXIOUS.has(String(e).replace(/_[oO]$/, ''));
+export const GAZE_T = 3, FORCED_BLINK_GAP = 60, STYLE_BLINK_GAP = 150;
+// a chew's length (f) and how far a shut mouth opens (a face style changes them; play.js chews every CHEW.T frames)
+export const CHEW = { T: 9, open: 0.30 };
 // kept for older callers: a take's accent length, the take faces
 export const TAKE_T = TAKE.accent, TAKES = FACE_CLASS.take, FACE_SPEED = { take: TAKE_T, gaze: GAZE_T };
 
@@ -431,7 +442,7 @@ export function faceChanges(track) {
       c.end = kf + Math.max(...['brow', 'lid', 'mouth'].map(g => t.lag[g] + Math.ceil(1.15 * (t.T + t.len[g])))) + 1;
       const kinds = eyeKind(from) !== eyeKind(k.expr);
       // a fast change blinks only to hide a change of eye kind (a fast 5 f blink: its shut frame is the key)
-      if (kinds || (cls !== 'fast' && kf - 1 - lastBlink >= FORCED_BLINK_GAP)) { c.blink = { f: kf - 1, shape: cls === 'slow' ? 'long' : cls === 'fast' ? 'fast' : 'regular' }; lastBlink = kf - 1; }
+      if (kinds || (cls !== 'fast' && kf - 1 - lastBlink >= (FACE_STYLE.name ? STYLE_BLINK_GAP : FORCED_BLINK_GAP))) { c.blink = { f: kf - 1, shape: cls === 'fast' || (FACE_STYLE.name && isTense(k.expr)) ? 'fast' : cls === 'slow' ? 'long' : 'regular' }; lastBlink = kf - 1; }
       if (kinds) c.swap = cls === 'fast' ? kf : kf + 1;                     // the shut frame of the change blink
     }
     list.push(c); from = k.expr;
@@ -450,13 +461,13 @@ function changeState(track, c, f) {
   if (c.cls === 'take') {
     const { accent, hold, settle, over } = TAKE;
     if (a < 0) return { ...base, u: 0, ug: 0, antic: smooth(twos(a + c.antic, c.antic)), phase: 'antic' };
-    if (a < accent) { const u = (1 + over) * easeOut((a + 1) / accent); return { ...base, u, ug: clamp((a + 1) / 2, 0, 1), antic: 1 - (a + 1) / accent, phase: 'accent' }; }
+    if (a < accent) { const u = (1 + over) * (TAKE.sine ? sineIO : easeOut)((a + 1) / accent); return { ...base, u, ug: clamp((a + 1) / 2, 0, 1), antic: 1 - (a + 1) / accent, phase: 'accent' }; }
     if (a < accent + hold) return { ...base, u: 1 + over, ug: 1, phase: 'hold' };
     return { ...base, u: 1 + over * (1 - smooth(twos(a - accent - hold, settle))), ug: 1, phase: 'settle' };
   }
   if (c.cls === 'small') {
     const { accent, total, over } = SMALL_TAKE;
-    const u = a < accent ? (1 + over) * easeOut((a + 1) / accent) : 1 + over * (1 - slowIn((a - accent + 1) / (total - accent)));
+    const u = a < accent ? (1 + over) * (SMALL_TAKE.sine ? sineIO : easeOut)((a + 1) / accent) : 1 + over * (1 - slowIn((a - accent + 1) / (total - accent)));
     return { ...base, u, ug: clamp((a + 1) / 2, 0, 1), phase: a < accent ? 'accent' : 'settle' };
   }
   const t = FACE_TIMING[c.cls], g = n => slowInOver((a + 1 - t.lag[n]) / (t.T + t.len[n]), t.over);

@@ -7,13 +7,13 @@ import * as THREE from 'three';
 import { createStage, B as toThree, lin, PLACE } from './look.js';
 import { makeStick, KAI, TELLER, GUARD, EXPR, HEAD_C } from './cast.js';
 import { VERBS, STAND, SIT, REST_ARM, W, lerp, lerp3, add3, angDiff, toLocal, smoother, hash, handEase } from './verbs.js';
-import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, exprAccent, bodyFollow, LATE, EXPR_LEAD, exprKeyAt, markOwner, isBodyVerb, autoActing, faceStateAt, visemeTrack, faceChanges, BLINKS, BLINK_GAP, focusEase } from './acting.js';
-import { mixFace, faceParams, designKey } from './faces.js';
+import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, exprAccent, bodyFollow, LATE, EXPR_LEAD, exprKeyAt, markOwner, isBodyVerb, autoActing, faceStateAt, visemeTrack, faceChanges, BLINKS, BLINK_GAP, focusEase, blinkAt, isTense, CHEW } from './acting.js';
+import { mixFace, faceParams, designKey, CLENCH, FACE_STYLE } from './faces.js';
 // face timing in the runtime (face-research.md rules 13-14): focus changes, free-blink shape
-const FOCUS_N = 12, PUPIL_K = 1.6, TURN_BLINK = 0.6;
-const ANXIOUS = new Set(['nervous', 'worried', 'angry', 'furious', 'panic', 'scream', 'shock', 'pain']);
+// TURN_BLINK: the gaze shift that blinks (the kit's own faces 0.6; under a face style 0.8, with NEAR and GAP, turnBlinkAt)
+const FOCUS_N = 12, PUPIL_K = 1.6, TURN_BLINK = 0.6, STYLE_TURN_BLINK = 0.8, TURN_BLINK_NEAR = [20, 10], TURN_BLINK_GAP = 90;
 // per-key face options (acting.js changeClass) carried from a beat or an anim key onto its expression key
-const faceOpts = k => Object.fromEntries(['take', 'small', 'exprSpeed'].filter(n => k[n] != null).map(n => [n, k[n]]));
+const faceOpts = k => Object.fromEntries(['take', 'small', 'exprSpeed', 'cut'].filter(n => k[n] != null).map(n => [n, k[n]]));
 import { createCamera } from './camera.js';
 import { pointVis, foldVis, opaque } from './visible.js';
 import { planShots } from './shotplan.js';
@@ -224,6 +224,10 @@ async function buildAct(R, X) {
     // the face leads its word by EXPR_LEAD frames (acting.js); `word` is kept for the expression-lead gate
     if (b.expr) { const word = typeof b.f === 'number' ? null : frameOf({ ...b, offset: 0 }); a.exprs.push({ f: word == null ? b.at : Math.min(b.at, word - EXPR_LEAD), expr: b.expr, word, ...faceOpts(b) }); }
     if (b.look) a.focusSegs.push({ from: b.at, target: b.look });
+    // face channels from beats (a face layer that leaves the body keys alone): chew / breath (0..1, eased over t frames
+    // from the value before) and a forced blink ('regular' | 'fast' | 'long')
+    for (const n of ['chew', 'breath']) if (b[n] != null) (a.faceKeys ||= []).push({ f: b.at, n, v: b[n], t: b.t ?? 6 });
+    if (b.blink) (a.blinkBeats ||= []).push({ f: b.at, shape: b.blink === true ? 'regular' : b.blink });
     if (b.mark) a.owners.add.push(markOwner(b));
     if (!b.do || KEYV.has(b.do)) return;
     const V = VERBS[b.do] || ACT[b.do]; if (!V) throw new Error(`unknown verb ${b.do}`);
@@ -258,8 +262,16 @@ async function buildAct(R, X) {
     // anxious face and less often on a listener
     const ch = faceChanges(a.exprs);
     a.quiet = ch.filter(c => c.quiet).map(c => c.quiet);
-    a.blinks = blinkTrack(a.seed, F0 - 60, F1 + 60, { forced: ch.filter(c => c.blink).map(c => c.blink), quiet: a.quiet,
-      gap: a.says?.length ? BLINK_GAP.talk : BLINK_GAP.listen, shapeAt: f => (ANXIOUS.has(String(exprAt(a.exprs, f)).replace(/_[oO]$/, '')) ? 'fast' : 'regular') });
+    // no free blink runs over the act's first frames: a cut never opens on lids half way through a blink
+    // a look somewhere new may blink (turnBlinkAt), so a free blink keeps its distance from every look change too (Hot
+    // Money r5 diner: a turn blink, a free blink 13 f later and its double, three blinks in 48 frames)
+    // (both under a face style only: the kit's own faces blink as before)
+    a.focusSegs.sort((x, y) => x.from - y.from);
+    const looks = !FACE_STYLE.name ? [] : a.focusSegs.filter((s, i) => !s.cut && s.from > F0 + 3 && (i === 0 || String(s.target) !== String(a.focusSegs[i - 1].target))).map(s => ({ f: s.from }));
+    a.blinks = blinkTrack(a.seed, F0 - 60, F1 + 60, { forced: [...ch.filter(c => c.blink).map(c => c.blink), ...(a.blinkBeats || []), ...looks], quiet: FACE_STYLE.name ? [...a.quiet, [F0 - 12, F0 + 3]] : a.quiet,
+      gap: a.says?.length ? BLINK_GAP.talk : BLINK_GAP.listen, shapeAt: f => (isTense(exprAt(a.exprs, f)) ? 'fast' : 'regular') });
+    if (a.faceKeys) a.faceKeys.sort((x, y) => x.f - y.f);
+    a.blinkStarts = [...a.blinks.starts, ...ch.filter(c => c.blink).map(c => c.blink.f), ...(a.blinkBeats || []).map(b => b.f)];
     a.vis = a.says?.length ? visemeTrack(words, fps, a.says) : null;     // the mouth follows the letters of its lines
     a.focusSegs.sort((x, y) => x.from - y.from);
   }
@@ -407,6 +419,34 @@ async function buildAct(R, X) {
     a.S.pose(P); F.posed.add(a.name); a.P = P;
   }
 
+  // a face channel (beats' chew / breath) at f: each key eases from the value before it to its own over its t frames
+  function faceChan(a, n, f) {
+    let v = 0;
+    for (const k of a.faceKeys || []) { if (k.n !== n) continue; if (k.f > f) break; v = v + (k.v - v) * smoother(Math.min(1, (f - k.f + 1) / Math.max(1, k.t))); }
+    return v;
+  }
+  // turn blinks (ASK p. 87): a gaze shift over TURN_BLINK brings one long blink in the head move. Hot Money r5 A v6 had the
+  // lids half shut on 17 % of the hero's frames (29-31 % in the close-ups, 51 blinks a minute, closures up to 15 f): every
+  // look key also changed the face, so a change blink and a turn blink ran into one long closure, and the next glance
+  // restarted a blink half way (the lids flickered open for a frame). Now a shift blinks only when no other blink starts
+  // within TURN_BLINK_NEAR of it, and only the first big shift in TURN_BLINK_GAP frames does (a run of glances is one
+  // blink); a later glance never restarts one under way. Stateless: every frame looks back over the focus changes.
+  function turnBlinkAt(a, f, gz) {
+    const L = BLINKS.long.length, key = x => focusAt(a, x, a.focusSegs, active).key, big = c => {
+      const p = focusAt(a, c - 1, a.focusSegs, active), q = focusAt(a, c, a.focusSegs, active);
+      if (p.key === q.key || q.cut) return false;
+      const g0 = gz(p), g1 = gz(q); return Math.abs(g1[0] - g0[0]) + Math.abs(g1[1] - g0[1]) > STYLE_TURN_BLINK;
+    };
+    const near = b0 => (a.blinkStarts || []).some(s => s >= b0 - TURN_BLINK_NEAR[0] && s <= b0 + TURN_BLINK_NEAR[1]) || a.quiet.some(([x, y]) => b0 < y && b0 + L > x);
+    const memo = (a.turnMemo ||= new Map()), isBig = c => { if (!memo.has(c)) memo.set(c, key(c) !== key(c - 1) && big(c)); return memo.get(c); };
+    for (let c = f; c > f - L; c--) {
+      if (!isBig(c)) continue;
+      let first = true; for (let e = c - 1; e >= c - TURN_BLINK_GAP && first; e--) if (isBig(e)) first = false;
+      if (!first || near(c + 1) || c <= F0 + 3) continue;   // the act's own first look is not a glance
+      const k = f - (c + 1), S = isTense(exprAt(a.exprs, c + 1)) ? BLINKS.fast : BLINKS.long; return k >= 0 && k < S.length ? S[k] : 0;
+    }
+    return 0;
+  }
   function faceActor(a, f, camPos) {
     const ek = exprKeyAt(a.exprs, f), e = ek.expr; a.exprKey = ek;
     const id = idle(a.seed, f, a.posture);
@@ -415,10 +455,21 @@ async function buildAct(R, X) {
     // the mouth follows the visemes of the actor's lines, and a held face drifts a little (brows, lids, mouth width)
     const state = faceStateAt(a.exprs, f, a.seed, a.vis);
     if (!state.talk && e === 'sleep' && id.snore) state.talk = { open: 0.3, wide: 0, round: 1, teeth: 0 };
-    // chewing (a clip's x_chew channel: how hard, 0..1, motion-lib Act_Consume_Once): the lips part and close every 9
-    // frames (~3.3 chews a second), wide, not round
-    const chew = (a.P?.x_chew || 0) * Math.sin(Math.PI * f / 9) ** 2;
-    if (!state.talk && chew > 0.02) state.talk = { open: chew, wide: 0.35, round: 0.1, teeth: 0 };
+    // chewing (a clip's x_chew channel or a chew beat: how hard, 0..1, motion-lib Act_Consume_Once): one chew every CHEW.T
+    // frames (the kit's faces 9 f; a face style sets its own, s2 19 f, ~1.6 a second, the human rate), wide, not round;
+    // under a face style a shut mouth (no rest opening) chews shut: the jaw drops, the lips squash wide and slide side to side
+    const xc = Math.max(a.P?.x_chew || 0, faceChan(a, 'chew', f)), ph = Math.sin(Math.PI * f / CHEW.T) ** 2, chew = xc * ph, shut = !!FACE_STYLE.name && !faceParams(e).rest;
+    if (!state.talk && chew > 0.02 && !shut) state.talk = { open: chew, wide: 0.35, round: 0.1, teeth: 0 };
+    // a shut mouth chews as a dark slit that parts and closes (never the open lens: an open chew read as a smile)
+    const bite = xc > 0.06 ? Math.max(0, (ph - 0.4) / 0.6) * xc : 0;   // the open half of each chew
+    // (0.06-0.21 open was a slit width change nobody saw at phone size: the jaw now drops to about a third open)
+    if (!state.talk && bite > 0.02 && shut) state.talk = { open: 0.06 + CHEW.open * bite, wide: 0.25, round: 0.3, teeth: 0 };
+    // breathing hard (x_breath 0..1): the mouth opens and closes about twice a second, its corners from the face
+    const xb = Math.max(a.P?.x_breath || 0, faceChan(a, 'breath', f)), br = xb * (0.55 + 0.45 * Math.sin(2 * Math.PI * f / 14));
+    // a clenched mouth pants through its teeth: it widens and drops on each breath, never opens (an open lens swapping
+    // with the grimace's teeth flickered twice a second)
+    const clench = CLENCH.has(faceParams(e).mouth) || (state.phase === 'change' && CLENCH.has(faceParams(state.change?.from).mouth));   // (and while a change leaves the teeth)
+    if (!state.talk && xb > 0.02 && !clench) state.talk = { open: br, wide: 0.1, round: 0.25, teeth: 0 };
     a.talking = !!state.talk;
     const tgtPos = t => t === 'camera' ? camPos : byName[t] ? toB(byName[t].S.parts.head.getWorldPosition(hv)) : Array.isArray(t) ? t : t ? livePos(t) : camPos;
     const cur = focusAt(a, f, a.focusSegs, active), head = toB(a.S.parts.head.getWorldPosition(new THREE.Vector3()));
@@ -431,17 +482,34 @@ async function buildAct(R, X) {
     if (d < FOCUS_N && !focusAt(a, f - d, a.focusSegs, active).cut) {   // a look that changed on a cut is already there
       const g0 = gz(focusAt(a, f - d - 1, a.focusSegs, active));
       const w = focusEase(d); gE = lerp3(g0, g, w.eye); gH = lerp3(g0, g, w.head);
-      const b0 = f - d + 1, k = d - 1;
-      if (Math.abs(g[0] - g0[0]) + Math.abs(g[1] - g0[1]) > TURN_BLINK && k >= 0 && k < BLINKS.long.length && !a.quiet.some(([x, y]) => b0 < y && b0 + BLINKS.long.length > x)) turnBlink = BLINKS.long[k];
+      const b0 = f - d + 1, k = d - 1;   // the kit's own faces: every big shift blinks long, unless a quiet span is under way
+      if (!FACE_STYLE.name && Math.abs(g[0] - g0[0]) + Math.abs(g[1] - g0[1]) > TURN_BLINK && k >= 0 && k < BLINKS.long.length && !a.quiet.some(([x, y]) => b0 < y && b0 + BLINKS.long.length > x)) turnBlink = BLINKS.long[k];
     }
+    if (FACE_STYLE.name) turnBlink = turnBlinkAt(a, f, gz);
     state.pupil = Math.max(-1, Math.min(1, PUPIL_K * (gE[0] - gH[0])));
     const sc = saccade(a.seed, f);
-    const mix = mixFace(state), blink = Math.max(a.blinks.at(f), turnBlink, mix.blink);
+    const mix = mixFace(state), blink = Math.max(a.blinks.at(f), turnBlink, mix.blink, a.blinkBeats ? blinkAt(a.blinkBeats, f) : 0);
+    const mwFace = mix.F.mw;   // the face's own mouth width, before a chew squashes it (the face QA judges the face, as with talking)
+    if (clench && xb > 0.02 && !state.talk) { mix.F.mw *= 1 + 0.10 * br; mix.F.my = (mix.F.my || 0) - 0.010 * br; }
+    if (xc > 0.02 && shut && (!state.talk || bite > 0.02)) { mix.F.mw *= 1 + 0.35 * chew; mix.F.my = (mix.F.my || 0) - 0.022 * chew; mix.F.mx += 0.012 * xc * Math.sin(Math.PI * f / CHEW.T); }
+    if (FACE_STYLE.name) { mix.F.chewX = xc > 0.02 ? xc : 0; mix.F.breathX = xb > 0.02 ? br : 0; }   // a face style draws its own chew and breath
+    // a face style's design also gets the face 1 and 2 frames ago (its own overlap inside a take, where every feature
+    // shares one clock), the change class and phase, the frames since the face's key, and the head's height on screen (px
+    // at 1920 high: marks thicken on a small face so they still read on a phone)
+    if (mix.F.style) {
+      mix.F.prev = [1, 2].map(k => { const s = faceStateAt(a.exprs, f - k, a.seed, null), p = mixFace(s).F; return { white: p.white, brow: p.brow, mw: p.mw, x: p.x, u: s.u ?? 1 }; });
+      mix.F.cls = state.change?.cls ?? null; mix.F.ph = state.phase || 'hold'; mix.F.age = f - ek.f;
+      // the change under way (its frame from the key, its clock, from and to), so a style can lead a feature through it
+      const ch = state.change, side = x => typeof x === 'object' ? x : faceParams(x);
+      mix.F.chg = ch && f < ch.end ? { cls: ch.cls, a: f - ch.kf, antic: ch.antic, u: state.u ?? 1, A: side(state.a), B: side(state.b), b: typeof state.b === 'string' ? state.b : state.b?.name } : null;
+      const hd = Math.hypot(...head.map((x, i) => x - camPos[i])) || 1;
+      mix.F.hpx = Math.round(0.94 * W / (2 * hd * Math.tan(stage.camera.fov * Math.PI / 360)) * 1920);
+    }
     const P = { expr: e, state, mix, blink, look: gH[0] + sc[0] + (cur.prop ? 0 : a.idleLook || 0), look_v: gH[1] + sc[1], t: f, age: f - ek.f, cam: camPos };
     a.S.face(P); a.face = P; a.lastExpr = e;
     // the numbers the face QA reads (tools/faults.mjs faceFaults): the drawn face (before the blink), its target, the change
     const F_ = mix.F, T_ = faceParams(state.b), r4 = x => +(+x).toFixed(4), c = state.change;
-    a.faceDbg = { v: [F_.brow[0], F_.brow[1], F_.lid, F_.white, F_.ry, F_.mw].map(r4), tgt: [T_.brow[0], T_.brow[1], T_.lid, T_.white, T_.ry, T_.mw].map(r4),
+    a.faceDbg = { v: [F_.brow[0], F_.brow[1], F_.lid, F_.white, F_.ry, mwFace].map(r4), tgt: [T_.brow[0], T_.brow[1], T_.lid, T_.white, T_.ry, T_.mw].map(r4),
       cls: c?.cls ?? null, kf: c?.kf ?? null, s: c?.s ?? null, phase: state.phase || 'hold', blink: r4(blink), pupil: r4(state.pupil), look: r4(gH[0]), focus: cur.key };
   }
 
@@ -539,7 +607,7 @@ async function buildAct(R, X) {
         verb: [...a.verbs.filter(x => x.start <= f && f < x.end).map(x => x.name), ...(a.anim && a.anim.keys.length > 1 ? ['key'] : [])], head: box, feet, limbs: a.S.rigWorld(),
         // a motion v2 actor acts from hand-set keys, not verbs: past its first key it is acting ('key')
         body: a.verbs.filter(x => x.start <= f && f < x.end && isBodyVerb(x)).map(x => x.name).pop() || (a.anim && a.anim.keys.length > 1 && f >= a.anim.keys[0].f ? 'key' : null), lead: !!a.lead,
-        mouthA: +(a.S.faceStats?.mouth ?? 0).toFixed(5), faceKey: a.S.faceStats?.key ?? '', exprDesign: designKey(a.face.expr), talking: !!a.talking,
+        mouthA: +(a.S.faceStats?.mouth ?? 0).toFixed(5), faceVis: a.S.faceVis ?? null, faceSlide: a.S.faceSlide ?? null, faceKey: a.S.faceStats?.key ?? '', exprDesign: designKey(a.face.expr), talking: !!a.talking,
         face: a.faceDbg || null, cord: a.S.hoodie?.dbg ?? null, headP: a.P ? [a.P.head_pitch || 0, a.P.head_dv || 0, a.P.head_tilt || 0].map(x => +(+x).toFixed(4)) : null,
         exprFrom: a.exprKey?.f > -1e8 ? a.exprKey.f : null, exprWord: a.exprKey?.word ?? null,
         headW: toB(c).map(x => +x.toFixed(4)), figH: +((sole - ys[0]) / height).toFixed(3),
@@ -811,7 +879,9 @@ export async function boot({ film, width, height }) {
   const words = (await getJSON(`/${film}/vo/words.json`)) || (await getJSON(`/${film}/words.json`));
   if (!words) throw new Error(`no words.json in ${film}/vo or ${film}`);
   const fps = R1.fps || 30, F0 = R1.frames[0], F1 = R2 ? R2.frames[1] : R1.frames[1];
-  const stage = createStage({ width, height, ...(R1.look || {}) });
+  // the film's face style (reel.js faceStyle: 's2', engine/facestyles/): set before any figure or the stage is built
+  if (R1.faceStyle) (await import(`./facestyles/${R1.faceStyle}.js`)).use();
+  const stage = createStage({ width, height, faceInk: !!FACE_STYLE.name, ...(R1.look || {}) });
   try { await document.fonts.load('900 100px InterReel'); } catch { /* falls back to the system sans */ }
   const cap = createCaptions({ words, lines: [...R1.lines, ...(R2?.lines || [])], fps, width, height, mode: R1.captions?.mode });
   const X = { stage, words, fps, F0, F1, width, height, cap, glasses: R1.glasses, directDrift: R1.directDrift, travelWhoosh: R1.travelWhoosh }, bg0 = stage.scene.background;
