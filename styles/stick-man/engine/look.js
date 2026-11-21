@@ -93,7 +93,7 @@ export function toonify(m, o = {}) {
 // set-surface defaults for toonify (every MeshStandardMaterial a set or prop makes without toon()); SET_LOOK is the
 // one place to tune them for all sets at once
 export const SET_LOOK = { soft: 1.0, gain: 1.0, shade: [0.36, 0.43, 0.72], sheen: 0.45, rim: 0.0 };
-// act `grade` (colour per shot gate, GATES.md): exp scales the finished frame, lift raises the shadows toward white
+// act `grade` (checked by colourgate.mjs at ◇5): exp scales the finished frame, lift raises the shadows toward white
 // (lift * (1 - c)), gam < 1 brightens the mids, sat scales saturation, haze scales the light-shaft density.
 
 export function std(rgb, rough, o = {}) {

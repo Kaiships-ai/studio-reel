@@ -138,12 +138,12 @@ assembled shot by shot passes its rows with `--rows`.
 
 ## Reference
 
-clear frames ≥ 94 % · still frames < 1 % · small-figure run ≤ 120 f · colour SATAVG median 19-47 · colour per shot (YAVG
-60-170, SAT 13-54, YLOW 17-101) · shadow contrast 0.235-0.388 · ink thickness 2-3 px · caption height / weight · hard cuts
+clear frames ≥ 94 % · still frames < 1 % · small-figure run ≤ 120 f · shadow contrast 0.235-0.388 · ink thickness 2-3 px · caption height / weight · hard cuts
 ≤ 0.2 per 10 s · dissolves ≥ 50 % · rush peak ≥ 90 px/f · time in moves ≥ 30 % · shot length CV ≥ 0.6 · light per place ·
 first move ≤ f30 · outline thick/thin 1.7-2.5 · mouth movement · bed in pauses −12..−10 dB · duration 60-80 s · distinct
 sets ≥ 3 · shot variety / types / type run · establishing and insert shot · wide share ≥ 30 % · low angle share ≥ 7 % · open
-on the verb · dressing density ≥ 16 pieces · style judge ≥ 8.5 · blind test ≤ 8/12. (Measurement details: comments in
+on the verb · dressing density ≥ 16 pieces · style judge ≥ 8.5 · blind test ≤ 8/12. Colour is not a reference gate: `colourgate.mjs`
+checks the final against the film's own colour script at ◇5. (Measurement details: comments in
 `styles/stick-man/tools/gates.mjs` and `tools/forensic/`.)
 
 ## Judged gates
