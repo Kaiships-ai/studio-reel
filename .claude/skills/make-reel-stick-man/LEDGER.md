@@ -1,10 +1,10 @@
 # Ledger · <slug>
 
-Filled by stage, as each gate passes. One row per stage. "Proof" is what Kai saw. "Kai" is his words or his pick on the stage page, with the date.
+Filled by stage, as each gate passes. One row per stage. "Proof" is what the approver saw. "Approved" is the reviewer's id and verdict, or Kai's words at his touchpoint (K1 at ◇2b, K2 at ◇5), with the date.
 
 Log minutes per stage and the number of rounds per gate. Example: the ledger of Hot Money ep01 (`films/hm-ep01`, git-ignored).
 
-| Stage | Output | Proof | Rounds | Kai |
+| Stage | Output | Proof | Rounds | Approved |
 |---|---|---|---|---|
 | 0 Development | `BRIEF.md`, `TREATMENT.md`, beat board | page | | |
 | 1 Pre-production · ◇2a | scene brief, script + picture pass, shot list, board, final voice, animatic | animatic vN, `prepro.md` PASS, retells, swipe test | | |

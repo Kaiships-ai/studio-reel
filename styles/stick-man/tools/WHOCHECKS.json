@@ -2,7 +2,7 @@
  "about": "Who checks each fault kind of a stick-man film: a machine gate (tool + gate), the AI reviewer (review/final-qa.md at ◇5) or Kai. A row's checker is the one whose measured result catches the kind; Kai keeps what neither catches reliably. whochecks.mjs renders this into the make-reel-stick-man SKILL.md and checks a complaint map against it.",
  "checkers": {
   "machine": "a tool that must exit 0 at the gate (GATES.json run), or a render that shot.mjs refuses",
-  "ai": "the independent AI review at ◇5 (review/final-qa.md); while no brief is calibrated, Kai's OK counts in its place (kai-ok)",
+  "ai": "the independent AI review at ◇5 (review/final-qa.md); advisory until its brief passes calibrate.mjs, and never in place of Kai at K2",
   "kai": "Kai watches at 1x on a phone and says OK or names the shot"
  },
  "rows": [

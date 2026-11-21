@@ -99,12 +99,12 @@ note answerable: *does this shot serve the feel of its scene?*
 3. Write each beat as **want → obstacle → outcome** (the three words Kai's read test already uses).
 4. Give each beat a target story intensity 1-10 and mark the climax beat. Draw the intended curve before any panel exists:
    hook spike, a dip to explain, rises at each flip, the climax as the peak, a release, the CTA.
-5. Kai confirms the feel lines (they are `(est.)` until he does).
+5. An independent reviewer confirms the feel lines (they are `(est.)` until it does; `prepro.mjs --lock-story agent:<id>`).
 
 **Standard.** Every scene has feel, whose, key, question. Exactly one climax. No two adjacent scenes with the same feel and
 the same intensity (that is a FLAT film in waiting).
 **Output.** `storyboard.json` → `scenes` (REEL_DATA.md) + the intended curve as a one-line table on the page.
-**Gate.** Kai confirms the feel lines.
+**Gate.** The reviewer confirms the feel lines.
 **Mistakes.**
 - Feel lines that are topics ("the bank scene") → they describe content, not emotion → rewrite as an audience feeling
   ("smug relief that turns into dread").
@@ -204,7 +204,7 @@ size, lens, move, frame in shot, version and timecode. Each version is a new fil
    turn; text on screen long enough to read (4.6). Shorten what the story pass found slow.
 3. **Camera-intent pass** (the 2D camera pass). With the final voice in: the intensity curve (`review/intensity.svg`),
    continuity (axis, screen direction, eyelines), shot size progression, 30° rule, safe zone. For each flagged shot, 3
-   options (safe / emotional / bold) as panels in the animatic, Kai picks. This fixes the camera's *intent* (size,
+   options (safe / emotional / bold) as panels in the animatic, the camera-pass reviewer picks (Kai sees the result at K1). This fixes the camera's *intent* (size,
    angle, lens class, move, side of the line). Stage 3 executes it in 3D and only refines placement.
 4. **Test screening.** A fresh agent (and, when possible, a person who has not read the script) watches muted, then
    with sound: retell, the question "where would you swipe away?", the HIDE/SPEND-style choice if the film ends on one.
@@ -226,7 +226,7 @@ unique colour, the release goes calm. Check against the look's limits at phone s
 
 Then write the same in numbers, `colour-script.json` (SKILL.md [1.7], template
 `.claude/skills/make-reel-stick-man/templates/colour-script.json`): per scene the intent, R/B, saturation and black
-ranges, the hue families, the light events that may jump. Kai signs it (`approved: { by: "kai", at }`); ◇2c stays OPEN
+ranges, the hue families, the light events that may jump. It carries the S1 signature (`approved: { by: "kai", at }`, the date Kai picked the series look); ◇2c stays OPEN
 without the signature, and `colourgate.mjs` checks the final against it at ◇5.
 
 ---
@@ -350,9 +350,9 @@ A final-looking render before ◇2a is allowed only as a **style frame** for [1.
 
 | Gate | Locks | Evidence on the page | Pass when |
 |---|---|---|---|
-| ◇2a story + timing | scenes, shot order, length, voice | animatic vN (burn-in), `prepro.md`, `intensity.svg`, muted and sound-on retells, swipe test | prepro PASS on the final voice; retells get every beat; no swipe stretch Kai agrees with; Kai approves |
+| ◇2a story + timing | scenes, shot order, length, voice | animatic vN (burn-in), `prepro.md`, `intensity.svg`, muted and sound-on retells, swipe test | prepro PASS on the final voice; retells get every beat; no swipe stretch the reviewer agrees with; the reviewer approves |
 | ◇2b shot lock | camera intent per shot (size, angle, lens class, move, axis side) | camera-intent pass OUT-1/3/4/5, options rendered in the animatic, the 3D previs and temp-music animatic (`previs.mjs`, `review/previs/previs.md`) | every shot CAM INTENT LOCK; climax is the visual peak; no continuity FAIL |
-| ◇2c look + design | look, characters, sets, props, colour script | style frames on locked shots, sheets, colour script strip + `colour-script.json` signed by Kai | Kai approves; nothing in it changes a locked shot |
+| ◇2c look + design | look, characters, sets, props, colour script | style frames on locked shots, sheets, colour script strip + `colour-script.json` with the S1 signature | the reviewer approves; nothing in it changes a locked shot |
 
 A shot added after Kai locked the story scores gets a score between its nearest locked neighbours (inclusive); K1 then reports it as INFO "added after lock, interpolated" instead of a FAIL, as long as every locked score, scene feel and shot scene is unchanged and no more than two shots are added between the same two locked shots (more is a FAIL: re-lock with Kai). Tell Kai in the same reply (his curve does not change, it gains a point). A lock written before this rule has only a hash: re-lock once with `prepro.mjs --lock-story kai`. Kai may approve the three on one page in one sitting; each keeps its own row and evidence. ◇2c is never approved before
 ◇2a. ◇2 is open when all three are.

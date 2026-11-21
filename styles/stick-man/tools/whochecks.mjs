@@ -1,6 +1,6 @@
 // Who checks each fault kind of a stick-man film (WHOCHECKS.json): a machine gate, the AI review at ◇5, or Kai.
-//   node styles/stick-man/tools/whochecks.mjs                -> the registry is sound and SKILL.md shows it as generated; exit 1 otherwise
-//   node styles/stick-man/tools/whochecks.mjs --write        -> rewrites the block in SKILL.md from the registry
+//   node styles/stick-man/tools/whochecks.mjs                -> the registry is sound and GATES.md shows it as generated; exit 1 otherwise
+//   node styles/stick-man/tools/whochecks.mjs --write        -> rewrites the block in GATES.md from the registry
 //   node styles/stick-man/tools/whochecks.mjs map <map.json> -> every complaint in one cell, backed by its measured evidence
 // map.json: { set, complaints: [{ id, row, evidence: [{ by: <registry tool> | "ai", result: "hit" | "miss" | "untested", on?, ref?, why?, seen? }] }] }
 import fs from 'node:fs'; import path from 'node:path';
@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url)), STYLE = path.resolve(HERE, '..');
 export const REGISTRY = path.join(HERE, 'WHOCHECKS.json');
-export const SKILL = path.resolve(HERE, '../../../.claude/skills/make-reel-stick-man/SKILL.md');
+export const DOC = path.resolve(HERE, '../../../.claude/skills/make-reel-stick-man/GATES.md');
 const BEGIN = '<!-- whochecks:begin (generated from styles/stick-man/tools/WHOCHECKS.json: node styles/stick-man/tools/whochecks.mjs --write) -->';
 const END = '<!-- whochecks:end -->';
 const CELLS = ['machine', 'ai', 'kai'], WHO = { machine: 'machine', ai: 'AI review', kai: 'Kai' };
@@ -78,12 +78,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.log(bad.length ? `FAIL: ${bad.length} problem(s)` : 'PASS: every complaint sits in one cell its evidence supports');
     process.exit(bad.length ? 1 : 0);
   }
-  const bad = problems(reg, gates), want = render(reg, gates), text = fs.readFileSync(SKILL, 'utf8'), have = block(text);
+  const bad = problems(reg, gates), want = render(reg, gates), text = fs.readFileSync(DOC, 'utf8'), have = block(text);
   if (args.includes('--write') && !bad.length) {
-    fs.writeFileSync(SKILL, have ? text.replace(have, want) : text);
-    if (!have) bad.push(`SKILL.md has no block between ${BEGIN} and ${END}`);
-  } else if (have !== want) bad.push('SKILL.md does not show WHOCHECKS.json as generated: run whochecks.mjs --write');
+    fs.writeFileSync(DOC, have ? text.replace(have, want) : text);
+    if (!have) bad.push(`GATES.md has no block between ${BEGIN} and ${END}`);
+  } else if (have !== want) bad.push('GATES.md does not show WHOCHECKS.json as generated: run whochecks.mjs --write');
   for (const b of bad) console.log(`FAIL ${b}`);
-  if (!bad.length) console.log(`PASS: ${reg.rows.length} rows, SKILL.md matches`);
+  if (!bad.length) console.log(`PASS: ${reg.rows.length} rows, GATES.md matches`);
   process.exit(bad.length ? 1 : 0);
 }

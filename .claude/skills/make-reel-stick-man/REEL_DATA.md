@@ -66,7 +66,7 @@ hash that keeps the ◇2 reviews fresh (`BREAKDOWN` in `tools/fresh.mjs`), so ad
 |---|---|
 | shot `set`, `cast`, `props`, `state` | what the shot needs (`assets.mjs` builds the asset list from them); `state` = story states at this shot (`{ "in_car": 2, "trunk_holes": 3 }`), numeric states never go back without `reset: ["in_car"]` |
 | shot `acting` | `{ think, do, change }` for every action / reaction shot, before blocking (`timing.mjs` A5) |
-| storyboard `measures` | `[{ name, story: "34 steps", meters, tol, module: "set/motel.js", path: ["door9", [x, y], "trunk"] }]`: the set measured against the story (`assets.mjs` A4); `cheat: "why"` only when Kai approved it |
+| storyboard `measures` | `[{ name, story: "34 steps", meters, tol, module: "set/motel.js", path: ["door9", [x, y], "trunk"] }]`: the set measured against the story (`assets.mjs` A4); `cheat: "why"` only when the reviewer approved it |
 
 ## Decision log (`films/<slug>/DECISIONS.json`)
 
