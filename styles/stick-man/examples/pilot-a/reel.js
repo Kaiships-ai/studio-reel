@@ -1,6 +1,6 @@
-// Pilot A (12/11, every gate approved by Kai): the worked example of the standard process (make-reel-stick-man SKILL.md).
+// Pilot A (12/11, every gate approved by Kai): an older worked example (README.md says what today's gates need that it lacks).
 // 20.5 s, set canyon-edge, style 'kaiships'. Cameras from two camera passes (OPT / KAI below), overlays (loupe, CLACK,
-// arrows), blocking keys (hold) and polish (polish()), sound beats, final look A. Copy to films/<slug>/ and adapt.
+// arrows), blocking keys (hold) and polish (polish()), sound beats, final look A.
 // Direction conventions (motion v2 actors): yaw 0 faces the camera side (-y); yaw -120 faces -x (toward the blue rail);
 // arm swing + = forward.
 import '/styles/stick-man/allout/handprops.js';
@@ -8,38 +8,20 @@ import '/styles/stick-man/allout/fx.js';
 import '/styles/stick-man/allout/costume.js';
 import '/styles/stick-man/allout/rail.js';
 import { OX, RX, BK, EDGE_LOOK } from '/styles/stick-man/allout/sets/canyon-edge.js';
+import { hold, polishAt } from '/styles/stick-man/lib/acting/keys.js';
 const set = (who, key, to, f = -30, dur = 0, ease) => ({ f, who, do: 'set', key, to, dur, ...(ease ? { ease } : {}) });
 const anim = (...names) => Object.fromEntries(names.map(n => [n, { kind: 'ao_anim', prop: n }]));
 const JX = OX + 0.7175;                                   // the hero joint (blue right rail, y = 0)
 const E1 = [OX + 1.4, -0.15, 0], E0 = [OX + 1.05, -0.15, 0], M0 = [RX - 0.9, BK - 7.5, 0];
 // panel cut frames from the animatic (ffmpeg scene detect): 1.0 1.0 .9 1.5 1.2 1.4 1.8 1.1 1.6 1.5 1.4 1.1 1.9 1.1 2.0 s
 export const CUTS = [0, 30, 60, 87, 132, 168, 210, 264, 297, 345, 390, 432, 465, 522, 555, 615];
-const STAND = { bob: 0, sq: 0, spine: { bend: 0, side: 0, twist: 0 }, neck: { nod: 0, tilt: 0, turn: 0 }, pelvis: { pitch: 0, roll: 0, yaw: 0 },
-  armL: { raise: 12, swing: 0, elbow: 15, roll: 0 }, armR: { raise: 12, swing: 0, elbow: 15, roll: 0 },
-  legL: { foot: [-0.22, 0.022, 0], pitch: 0, knee: [-0.15, 0, 1] }, legR: { foot: [0.22, 0.022, 0], pitch: 0, knee: [0.15, 0, 1] } };
 const KNEEL = { bob: -0.48, spine: { bend: 28 }, neck: { nod: -18 }, armL: { raise: 22, swing: 60, elbow: 40 }, armR: { raise: 18, swing: 70, elbow: 25 },
   legL: { foot: [-0.22, 0.022, 0.45], knee: [-0.1, 0, 1] }, legR: { foot: [0.22, 0.06, -0.48], knee: [0.15, 0, 1], pitch: -60 }, x_hpR_saw: 1 };
 const SAW_UP = { armR: { raise: 30, swing: 20, elbow: 60 }, x_hpR_saw: 1 };
 const POINT = { armR: { raise: 70, swing: 40, elbow: 5 } };
 const CROSS = { armL: { raise: 40, swing: 10, elbow: 110, roll: 70 }, armR: { raise: 40, swing: 10, elbow: 110, roll: 70 }, x_hpR_saw: 0 };
 const HIPS = { armL: { raise: 40, swing: -15, elbow: 105, roll: 70 }, armR: { raise: 40, swing: -15, elbow: 105, roll: 70 }, x_hpR_saw: 0 };
-// a moving hold: every held pose breathes (chest and head drift) unless the key sets its own cycle
-const BREATH = { 'spine.bend': [1.5, 40], 'neck.tilt': [1.5, 53, 1] };
-const hold = (f, extra) => ({ f, pose: STAND, cycle: BREATH, ...extra, ease: 'snap' });
-// 3.4 POLISH: the blocking keys stay the poses; a key on a cut stays a snap (no in-between across a cut), every other key
-// holds its pose until T frames before the next one and moves on the kaiships dose (slow in/out, arcs, follow-through
-// from engine/motion.js); antic on the keys that need a wind-up. ?blocking=1 plays the approved blocking for comparison.
-const BLOCKING = new URLSearchParams(globalThis.location?.search || '').get('blocking') === '1';
-const T_MOVE = { default: 7, stroke: 4 };
-function polish(keys) {
-  if (BLOCKING) return keys;
-  return keys.map((k, i) => {
-    const nx = keys[i + 1], cut = CUTS.includes(k.f), sameShot = nx && !CUTS.includes(nx.f);
-    const T = nx?.t ?? (k.stroke ? T_MOVE.stroke : T_MOVE.default);
-    const { stroke, antic, t, ...rest } = k;
-    return { ...rest, ease: cut ? 'snap' : (k.flow ? 'flow' : 'slow'), ...(antic ? { antic } : {}), ...(sameShot && nx.f - k.f > T + 2 ? { hold: nx.f - k.f - T } : {}) };
-  });
-}
+const polish = polishAt(CUTS);
 // camera pass (stage 3 · 3.0b): three options per flagged shot, picked with ?opt=1:emo,4:safe (proof renders) or PICK below
 const P = (pos, aim, lens, roll) => ({ pos, aim, lens, ...(roll ? { roll } : {}) });
 const kick = (...fs) => fs.map(f => ({ at: { f }, amp: 0.7 }));
