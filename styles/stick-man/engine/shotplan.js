@@ -2,7 +2,7 @@
 // Pure data in, shot specs out (the same shape as an act's `shots`), so it runs in node tests and in the page.
 // Roles (storyboard `role`, else guessed from the line): hook, setup, fact / number, compare, reaction, twist, panic,
 // explain, payoff.
-// A line over ~2.6 s gets a second shot on its key word (`on` / `still`). Rhythm (the cut, rush and shot-length targets in tools/forensic/measure.py): a new line
+// A line over ~2.6 s gets a second shot on its key word (`on` / `still`). Rhythm (the cut, rush and shot-length targets from the reference study): a new line
 // opens with a cross-dissolve (9 f) when it changes scale family, else the camera rushes to the new framing (camera.js);
 // a framing may hold up to ~3 s (`maxSeg`) and the camera rushes 4-6 times per 10 s, so shot lengths swing (reference shot-length CV 0.57-1.31); est / aerial /
 // top hand over within ~3 s (small-figure run gate); the hook line rushes by frame ~18 (first move <= f30).

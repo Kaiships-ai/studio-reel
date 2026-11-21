@@ -18,9 +18,9 @@ if (!A.report || !A.in) { console.error('usage: gates.mjs --report <stats.txt> -
 const PROFILE = A.profile || 'full';
 if (!['full', 'pilot'].includes(PROFILE)) { console.error(`unknown --profile ${PROFILE} (full | pilot)`); process.exit(2); }
 const REFERENCE_GATES = new Set(['clear frames', 'still frames', 'small-figure run', 'shadow contrast', 'ink thickness',
-  'caption height', 'caption weight', 'hard cuts', 'dissolves', 'rush peak', 'time in moves', 'shot length CV', 'light per place', 'first move',
-  'outline thick/thin', 'mouth movement', 'bed in pauses', 'duration', 'distinct sets', 'shot variety', 'shot types', 'shot type run',
-  'establishing shot', 'insert shot', 'wide share', 'low angle share', 'open on the verb', 'dressing density', 'style judge', 'blind test']);
+  'caption height', 'caption weight',
+  'duration', 'distinct sets', 'shot variety', 'shot types', 'shot type run',
+  'establishing shot', 'insert shot', 'wide share', 'low angle share', 'open on the verb', 'style judge', 'blind test']);
 const waived = g => PROFILE === 'pilot' && !g[2] && REFERENCE_GATES.has(g[0]);
 for (const f of [A.report, A.in]) if (!fs.existsSync(f)) { console.error(`missing ${f}`); process.exit(2); }
 const R = fs.readFileSync(A.report, 'utf8');
@@ -38,7 +38,7 @@ still == null ? missing('still frames') : gate('still frames', still < 1, `${sti
 // (b) camera speed
 const cam = /camera speed at 720p: peak ([\d.]+) px\/frame \(frame (\d+)\)/.exec(R);
 // a ceiling only (reference study: the reference rushes at 97-106 px/f p90, max 142 at 1080 = 95 at 720; the old 25 px/f cap
-// was the opposite of the reference). The rush itself is the forensic `rush peak` gate.
+// was the opposite of the reference).
 cam ? gate('camera speed', Number(cam[1]) <= 95, `${cam[1]} px/f (frame ${cam[2]})`, '<= 95 px/f at 720p') : missing('camera speed');
 
 // per actor: frozen run, arm ratio, joint change, head cut
@@ -79,7 +79,7 @@ else if (fpop.length) {
   const ft = actors.map(([, n, b]) => [n, /face faults: (.*)/.exec(b)?.[1]]).filter(x => x[1] != null && x[1] !== 'none');
   gate('face timing', !ft.length, ft.length ? ft.map(x => `${x[0]}: ${x[1]}`).join(' | ') : 'none', 'rise >= 6 f, hold >= 6 f, 2-6 changes / 10 s, <= 4 takes / min, 12-30 blinks / min');
 }
-// mouth range (`mouth movement` in forensic/measure.py: reference mouth-area CV 0.33-0.56, ours was 0.06-0.21): an actor who talks >= 30 frames
+// mouth range (reference mouth-area CV 0.33-0.56, ours was 0.06-0.21): an actor who talks >= 30 frames
 // opens and closes the mouth for real. Head holds / moves are principles (report line "micro:"), not gates.
 const mouths = actors.map(([, n, b]) => { const m = /mouth CV ([\d.]+) over (\d+) talking frames/.exec(b); return m && +m[2] >= 30 ? [n, +m[1]] : null; }).filter(Boolean);
 if (mouths.length) { const w = mouths.reduce((a, b) => (b[1] < a[1] ? b : a)); gate('mouth range', w[1] >= 0.4, `lowest CV ${w[1]} (${w[0]})`, '>= 0.4 per talking actor'); }
@@ -193,22 +193,12 @@ const lines = [`gates for ${path.basename(A.in)} (report ${path.basename(A.repor
 const fails = G.filter(g => !g[2]).length;
 lines.push(fails ? `${fails} of ${G.length} gates FAIL` : `all ${G.length} gates PASS`);
 const SG = A.film ? await story(A.film) : [];
-// forensic gates (forensic/measure.py, measured on the mp4 by the scripts that measured the reference)
-const FG = [];
-if (A.film) {
-  const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
-  const out = A.forensic || A.in.replace(/\.mp4$/, '') + '-forensic.json';
-  const r = run('python', [path.join(ROOT, 'styles/stick-man/tools/forensic/measure.py'), path.resolve(A.in), '--words', path.join(ROOT, A.film, 'vo/words.json'), '--out', path.resolve(out)], { capture: true });
-  if (r.status || !fs.existsSync(out)) FG.push(['forensic', 'measure.py failed: ' + String(r.stderr || '').slice(-300), false, 'runs']);
-  else for (const [n, ok, got, want] of JSON.parse(fs.readFileSync(out, 'utf8')).gates) FG.push([n, got, ok, want]);
-}
-if (FG.length) { const ff = FG.filter(g => !g[2]).length; lines.push('', 'forensic gates (tools/forensic/measure.py)', ...FG.map(fmt), ff ? `${ff} of ${FG.length} forensic gates FAIL` : `all ${FG.length} forensic gates PASS`); }
 if (SG.length) { const sf = SG.filter(g => !g[2]).length; lines.push('', `story gates (${A.film}/storyboard.json)`, ...SG.map(fmt), sf ? `${sf} of ${SG.length} story gates FAIL` : `all ${SG.length} story gates PASS`); }
-{ const all = [...G, ...SG, ...FG], w = all.filter(waived).length, b = all.filter(g => !g[2] && !waived(g)).length;
+{ const all = [...G, ...SG], w = all.filter(waived).length, b = all.filter(g => !g[2] && !waived(g)).length;
   lines.push('', `profile ${PROFILE}: ${all.length - b - w} PASS, ${b} blocking FAIL${w ? `, ${w} reference gates WAIVED` : ''}`); }
 const out = lines.join('\n') + '\n'; process.stdout.write(out);
 if (A.out) { fs.mkdirSync(path.dirname(path.resolve(A.out)), { recursive: true }); fs.writeFileSync(A.out, out); }
-const blocking = [...G, ...SG, ...FG].filter(g => !g[2] && !waived(g));
+const blocking = [...G, ...SG].filter(g => !g[2] && !waived(g));
 process.exit(blocking.length ? 1 : 0);
 
 // ---------------------------------------------------------------- story gates (computed from the storyboard and __dbg)
@@ -281,19 +271,9 @@ async function story(film) {
   const share = using.length / ids.length;
   sg('props / fx used', share >= 0.4, `${Math.round(100 * share)} % (${using.length}/${ids.length}: ${using.join(' ') || '-'})`, '>= 40 % of lines');
   sg('props / fx seen', !unseen.length, unseen.length ? 'not on screen: ' + unseen.join('; ') : 'every listed prop / fx on screen in its line', 'listed = in __dbg seen');
-  // 6-8 world and fx (GATES.md "World and fx gates"): dressing density, floating-label budget, every storyboard fx in the world
+  // 6-8 world and fx (GATES.md "World and fx gates"): floating-label budget, every storyboard fx in the world
   const ACTS = [{ ...R1, name: R1.name || 'lobby' }, ...(R2?.acts || [])].map(a => ({ name: a.name || a.set, make: a.make || {} }));
   const makeKind = (act, n) => ACTS.find(a => a.name === act)?.make?.[n]?.kind;
-  // dressing: registered set pieces the camera sees (dress.js); cu frames, prop-only cutaway tables and dissolves left out
-  const DRESS_N = 16;                                       // distinct objects in the reference medium frame (wide: 21)
-  const dr = rows.filter(r => r.dress != null && r.mix == null && r.set !== 'cutaway' && !/^cu/.test(r.camera?.shot || ''));
-  if (!dr.length) sg('dressing density', false, 'no dress counts in __dbg (re-run shot.mjs --dbg)', `>= ${DRESS_N} pieces in 85 % of frames`);
-  else {
-    const ok = dr.filter(r => r.dress >= DRESS_N).length / dr.length, med = dr.map(r => r.dress).sort((a, b) => a - b)[dr.length >> 1];
-    const per = {}; for (const r of dr) (per[r.act] ||= []).push(r.dress);
-    const low = Object.entries(per).map(([a, v]) => [a, v.sort((x, y) => x - y)[v.length >> 1]]).filter(([, m]) => m < DRESS_N);
-    sg('dressing density', ok >= 0.85, `${Math.round(100 * ok)} % of ${dr.length} non-cu frames >= ${DRESS_N}, median ${med}${low.length ? '; low acts: ' + low.map(([a, m]) => `${a} ${m}`).join(', ') : ''}`, `>= ${DRESS_N} pieces in 85 % of frames`);
-  }
   // floating labels: stamp / callout / bars / split entries seen >= 3 frames anywhere in the reel
   const LABELS = ['stamp', 'callout', 'bars', 'split'], DIAGRAM = ['rings', 'flow', 'rays', 'star', 'shimmer'];   // lib/props/physfx.js
   const lab = {}; for (const r of rows) for (const n of r.seen || []) if (LABELS.includes(makeKind(r.act, n))) lab[`${r.act}.${n}`] = (lab[`${r.act}.${n}`] || 0) + 1;

@@ -13,7 +13,7 @@ const SPIN_Q = new THREE.Quaternion(), SPIN_AX = new THREE.Vector3(0, 1, 0), _ca
 export const W_M = 0.60;                     // head width in metres
 const W = W_M;
 const INK_T = 0.046 * W;                     // outline base width; the hull shader scales it 0.35-1.6x by the light (below):
-                                             // reference rim 3.8-5.6 % of head width, thick/thin side ratio 1.65-2.47 (`outline thick/thin` in tools/forensic/measure.py)
+                                             // reference rim 3.8-5.6 % of head width, thick/thin side ratio 1.65-2.47
 const CREAM = [0.90, 0.87, 0.78];             // reference bodies: flat cream
 const HEAD_FLAT = [0.92, 0.905, 0.89];         // the unlit head sits a little under white so the grade's exposure keeps its soft wash (else it clips flat)      // reference heads are lighter than the body: lit sRGB (251, 246, 243), shade (230, 219, 231)
 const FILL_RGB = [0.20, 0.06, 0.48];            // rage purple, linear (= faces.js furious tint): the head fills from the chin up (verb face_fill)

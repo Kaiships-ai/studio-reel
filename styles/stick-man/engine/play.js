@@ -899,7 +899,7 @@ export async function boot({ film, width, height }) {
   const capG = cap.canvas.getContext('2d');
   // windows: act k is on screen from its `from`; a dissolve of n frames is centred on that frame
   const fr = x => typeof x === 'number' ? x : resolveBeatFrame(x, words, fps);
-  // place changes dissolve (`dissolves` in tools/forensic/measure.py: the reference cross-dissolves, median ~9 f, almost never hard-cuts)
+  // place changes dissolve (the reference cross-dissolves, median ~9 f, almost never hard-cuts)
   // `whip: n` instead of `dissolve`: an n-frame whip pan (a horizontal smear peaking mid-transition, then the cross-fade)
   const wins = acts.flatMap((A, k) => defs[k].show.map(w => ({ A, a: fr(w.from), whip: w.whip ? (w.dir ?? 1) : 0, n: w.whip ?? w.dissolve ?? (A === acts[0] && w.from === F0 ? 0 : 9) }))).sort((x, y) => x.a - y.a);
   const at = f => {
