@@ -64,6 +64,18 @@ test('a face held on across cuts is one take, not one per shot', () => {
   assert.deepEqual(J.reuse.map(r => [r.expr, r.n, r.shots]), [['y_strain', 1, ['SH140+SH150+SH160']]]);
 });
 
+test('Hot Money r5: a storyboard that times every shot keeps its own shots; the reel\'s segment CUTS never stretch them', () => {
+  const dir = threeBeatFilm();
+  const SB = JSON.parse(fs.readFileSync(path.join(dir, 'storyboard.json'), 'utf8'));
+  SB.shots = [{ id: 'SH140', f0: 0 }, { id: 'SH150', f0: 124 }, { id: 'SH160', f0: 203 }];
+  fs.writeFileSync(path.join(dir, 'storyboard.json'), JSON.stringify(SB));
+  fs.writeFileSync(path.join(dir, 'reel.js'), 'export const CUTS = [0, 501, 570];\n');
+  const S = story(dir);
+  assert.deepEqual(S.map(s => [s.id, s.f0, s.f1]), [['SH140', 0, 124], ['SH150', 124, 203], ['SH160', 203, Infinity]]);
+  const J = judge(faceRuns(rows(130, 169, { you: 'y_strain' }), S, 1920), S);
+  assert.deepEqual(J.mismatch, [], 'strain at 130-169 is judged in SH150 (the weight), not in SH140 (the search)');
+});
+
 test('a re-timed picture maps onto the storyboard through sb, and reports its own second through t', () => {
   const S = story(threeBeatFilm());
   const R = rows(500, 539, { cop: 'smug' }).map((r, i) => ({ ...r, sb: i, t: 20 + i / 30 }));

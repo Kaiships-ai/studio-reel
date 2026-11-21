@@ -41,7 +41,8 @@ engine built, not a hand list a film keeps.
   cards at 60-70 m drew near-black over the dome with a straight edge).
 - Face sheet (`tools/facesheet.mjs`, `facebeat.mjs` (3)): rows carry `actors[n].exprDesign` (`faces.js designKey`, a hash
   of the expression's numbers). facebeat fails while a design held 15 frames on a readable head is not in
-  `review/faces-approved.json` (by kai). `facesheet.mjs films/<slug>` writes `review/face-sheet.jpg` to show Kai;
+  `review/faces-approved.json` (by kai). `facesheet.mjs films/<slug> [--query k=v] [--no-bible-check '<reason>']` writes
+  `review/face-sheet.jpg` to show Kai (the flags as the rows' render had them; `face-sheet.json` only once the jpg exists);
   `--approve "<his words>" --sheet <hash>` records his yes, only for the sheet whose hash he saw stamped on the jpg.
 - Run logs (`tools/logline.mjs`): the one way to add a line to a run log; it records the line count and a hash in
   `.logchain.json` and refuses to append to a log whose first lines changed. `stagegate.mjs` runs the same check on the

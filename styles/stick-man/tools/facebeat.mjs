@@ -62,9 +62,13 @@ export function story(dir) {
   const cuts = (reel.match(/export const CUTS = \[([\d,\s]+)\]/)?.[1] || '').split(',').map(Number).filter(Number.isFinite);
   const lineOf = {}; for (const l of SB.lines || []) for (const s of l.shots || []) lineOf[s] = l;
   const beatOf = {}; for (const sc of SB.scenes || []) for (const b of sc.beats || []) for (const l of b.lines || []) beatOf[l] = b;
+  // a shot starts at its own f0 on the storyboard's timeline; only a shot without one takes the reel's cut of that index.
+  // Each shot ends where the next one starts (Hot Money r5: CUTS were the 16 segment cuts, so with f1 taken from CUTS the
+  // first shot ran 0-500 and the ending fell in "the climax")
+  const starts = (SB.shots || []).map((s, i) => s.f0 ?? cuts[i]);
   const shots = (SB.shots || []).map((s, i) => {
     const l = lineOf[s.id], b = l && beatOf[l.id], br = { ...briefs[s.id], ...s.acting };
-    const f0 = s.f0 ?? cuts[i], f1 = cuts[i + 1] ?? SB.shots[i + 1]?.f0 ?? Infinity;
+    const f0 = starts[i], f1 = starts[i + 1] ?? cuts[i + 1] ?? Infinity;
     return { id: s.id, f0, f1, beat: b?.id ?? null, feel: b?.feel ?? '', change: br.change ?? '',
       own: [b?.name, b?.feel, l?.act, br.think, br.do, br.change, s.purpose, s.see].filter(Boolean).join(' · ') };
   }).filter(s => Number.isFinite(s.f0));

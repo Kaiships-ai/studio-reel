@@ -13,6 +13,27 @@ export const compress = list => {
   return o.join(', ');
 };
 
+// The rows that are edits. A row's motion.cut covers dissolves, act cuts, flash cuts and shot cuts; a shot cut whose camera
+// goes on along its own path (same act, no dissolve, position, aim and lens within CUT_CONT of where the last two frames
+// put them; one frame of history allows a step of CUT_CONT.step) is one camera flying, not an edit: a film keyed one shot
+// per frame (Hot Money r5 flyCam) flagged every frame as a cut, and every gate below then judged nothing. On r5 reel 1
+// a car chase's shake reached 0.36 m off its path, its real cuts 0.7 m and more with a 10 % lens jump, a snap zoom 6 % a frame. Rows without a camera
+// keep the flag they carry.
+export const CUT_CONT = { m: 0.5, step: 1.0, lens: 0.1 };
+export function editCuts(rows) {
+  const out = new Set(), cam = r => r?.camera?.pos && (r.camera.target || r.camera.aim) ? r.camera : null;
+  const pos = c => c.pos, aim = c => c.target || c.aim, lens = c => [Math.log(c.lens || 1)], off = (A, B) => Math.hypot(...A.map((x, k) => x - B[k]));
+  rows.forEach((r, i) => {
+    if (!r.motion?.cut) return;
+    const p = rows[i - 1], q = rows[i - 2], c = cam(r), cp = cam(p);
+    if (!(p && p.f === r.f - 1 && p.act === r.act && r.mix == null && r.motion.shotCut && c && cp)) { out.add(r); return; }
+    const cq = q && q.f === p.f - 1 && q.act === r.act && !out.has(p) ? cam(q) : null, lim = cq ? CUT_CONT.m : CUT_CONT.step;
+    const ahead = g => (cq ? g(cp).map((x, k) => 2 * x - g(cq)[k]) : g(cp));   // where the last two frames put this one
+    if (off(pos(c), ahead(pos)) > lim || off(aim(c), ahead(aim)) > lim || off(lens(c), ahead(lens)) > CUT_CONT.lens) out.add(r);
+  });
+  return out;
+}
+
 // Acting numbers for one actor from __dbg rows (frames where it is in frame, cut frames left out):
 // frozen = longest DEAD run: every joint within 1 mm and every angle within 0.3 deg of where the run began (a hold that
 // breathes is alive: the old test, 2 mm / 0.5 deg against the frame before, called a breathing hold frozen and so pushed
@@ -22,13 +43,14 @@ export const GRIP_CM = 2, PROP_CM = 1;                                  // (h) a
 const JOINTS = ['hip', 'knee', 'ankle', 'toe', 'shoulder', 'elbow', 'hand'], ANG = ['kneeFlex', 'elbowFlex', 'footPitch'], ARM = 2 * 0.5125 * 0.60;   // rest arm length (m) = 2 x cast.js LIMB.upper x W_M
 const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 export function acting(rows, n) {
+  const E = editCuts(rows);
   let run = 1, frozen = 0, frozenAt = null, ratio = 0, ratioAt = null, anchor = null;
   for (let i = 0; i < rows.length; i++) {
     const a = rows[i].actors[n], l = a.limbs; if (!a.inFrame || !l) { run = 1; continue; }
     for (const s of ['L', 'R']) { const q = (dist(l[s].shoulder, l[s].elbow) + dist(l[s].elbow, l[s].hand)) / ARM; if (q > ratio) { ratio = q; ratioAt = rows[i].f; } }
     const p = rows[i - 1]?.actors[n];
     // a sleeping face is meant to be still: it never counts toward a frozen run
-    if (!p || !p.inFrame || !p.limbs || rows[i].motion.cut || rows[i].act !== rows[i - 1].act || a.expr === 'sleep') { run = 1; anchor = a; continue; }
+    if (!p || !p.inFrame || !p.limbs || E.has(rows[i]) || rows[i].act !== rows[i - 1].act || a.expr === 'sleep') { run = 1; anchor = a; continue; }
     const q = (anchor || p).limbs, qa = anchor || p;
     let moved = dist(a.headW, qa.headW) > 0.001 || Math.abs(l.torsoLean - q.torsoLean) > 0.3 || Math.abs(l.torsoRoll - q.torsoRoll) > 0.3;
     for (const s of ['L', 'R']) {
@@ -42,8 +64,8 @@ export function acting(rows, n) {
 }
 
 // the frame pairs a joint step is measured on: both posed, one act, no cut, not asleep
-const stepPairs = (rows, n) => rows.flatMap((r, i) => { const a = r.actors[n], p = rows[i - 1]?.actors[n];
-  return a.limbs && p?.limbs && !r.motion.cut && r.act === rows[i - 1].act && a.expr !== 'sleep' ? [[r.f, p.limbs, a.limbs]] : []; });
+const stepPairs = (rows, n, E = editCuts(rows)) => rows.flatMap((r, i) => { const a = r.actors[n], p = rows[i - 1]?.actors[n];
+  return a.limbs && p?.limbs && !E.has(r) && r.act === rows[i - 1].act && a.expr !== 'sleep' ? [[r.f, p.limbs, a.limbs]] : []; });
 
 // Every fault frame of the rows: { f, actor, kind: 'h' | 'i' | 'j', key, d, pts }.
 //   h  a gripping hand off its target: key L/R, d cm; pts the hand, its target and what it holds
@@ -51,14 +73,14 @@ const stepPairs = (rows, n) => rows.flatMap((r, i) => { const a = r.actors[n], p
 //   j  a joint over JOINT_STEP_MAX in one frame: key the channel, d deg; pts the joints and bones it moves, where they were
 //      and where they went (a limb that drops behind the counter in the pop is seen leaving)
 export function faultList(rows) {
-  const out = [];
+  const out = [], E = editCuts(rows);
   for (const n of Object.keys(rows[0].actors)) {
     for (const r of rows) {
-      const l = r.actors[n].limbs; if (!l || r.motion.cut) continue;
+      const l = r.actors[n].limbs; if (!l || E.has(r)) continue;
       for (const s of ['L', 'R']) if (l[s]?.grip && l[s].targetGapCm > GRIP_CM) out.push({ f: r.f, actor: n, kind: 'h', key: s, d: l[s].targetGapCm, pts: [l[s].hand, ...(l[s].target ? [l[s].target] : []), ...(l[s].heldPts || [])] });
       if (l.propPenCm > PROP_CM) out.push({ f: r.f, actor: n, kind: 'i', key: l.propIn || 'prop', d: l.propPenCm, pts: l.propPts || [l.L.hand, l.R.hand] });
     }
-    for (const [f, m, l] of stepPairs(rows, n)) for (const [k, d] of jointSteps(m, l)) if (d > JOINT_STEP_MAX) out.push({ f, actor: n, kind: 'j', key: k, d, pts: [...stepPoints(k, m), ...stepPoints(k, l)] });
+    for (const [f, m, l] of stepPairs(rows, n, E)) for (const [k, d] of jointSteps(m, l)) if (d > JOINT_STEP_MAX) out.push({ f, actor: n, kind: 'j', key: k, d, pts: [...stepPoints(k, m), ...stepPoints(k, l)] });
   }
   return out;
 }
@@ -86,7 +108,7 @@ export function joints(rows, n, hidden = new Map()) {
 
 // (h) and (i): the report lines for every actor in the rows; a fault in `hidden` (hiddenOf) is listed, not judged
 export function holdLines(rows, hidden = new Map()) {
-  const L = [];
+  const L = [], E = editCuts(rows);
   // (h) a hand that grips (an ik target, a held prop) stays on its target: the solver's distance from where the hand was
   // keyed (rig K4); (i) a held prop inside a leg, the trunk or the head, before and after the solve (rig K5)
   L.push(`(h) hand off its target while it grips (ik / held prop), max cm where the camera sees it (FAIL > ${GRIP_CM}):`);
@@ -96,7 +118,7 @@ export function holdLines(rows, hidden = new Map()) {
     let g = 0, gAt = null, gN = 0, p0 = 0, p1 = 0, pAt = null, kg = 0, bal = 0; const over = [], pOver = [], hG = [], hP = [];
     const gone = (f, kind, key) => hidden.get(`${n} ${f} ${kind} ${key}`);
     for (const r of rows) {
-      const l = r.actors[n].limbs; if (!l || r.motion.cut) continue;
+      const l = r.actors[n].limbs; if (!l || E.has(r)) continue;
       for (const s of ['L', 'R']) if (l[s]?.grip) { const d = l[s].targetGapCm || 0, h = gone(r.f, 'h', s); if (h) { hG.push(h); continue; }
         gN++; if (d > g) { g = d; gAt = `${r.f} ${s}`; } if (d > GRIP_CM) over.push(r.f); }
       if (l.propPenCm0 > p0) p0 = l.propPenCm0;
@@ -133,7 +155,7 @@ const maxIn = (fs, w) => { let m = 0; for (let i = 0, j = 0; i < fs.length; i++)
 export function faceFaults(rows, n) {
   const R = rows.filter(r => r.actors[n]?.inFrame && r.actors[n].face), N = R.length, out = { frames: N, pops: [], rises: [], holds: [], antic: [], blinkShape: [], eyeLead: [] };
   const V = r => r.actors[n].face.v.map((x, i) => x / FACE_NORM[i]), T = r => r.actors[n].face.tgt.map((x, i) => x / FACE_NORM[i]);
-  const joined = (a, b) => a && b && a.f === b.f - 1 && a.act === b.act && !b.motion?.cut;
+  const E = editCuts(rows), joined = (a, b) => a && b && a.f === b.f - 1 && a.act === b.act && !E.has(b);
   // the changes: runs of rows with one change frame (kf), the start values S = the frame before the run
   const ch = [];
   for (let i = 0; i < N; i++) {
@@ -250,10 +272,10 @@ export function cordLines(rows, n) {
 // number. best / bestAt: the longest run under 0.01 px/frame and where it ends; peak / peakAt / median: null when no frame
 // has a camera number (a film directed one shot per frame: every frame is a cut; Hot Money ep01 r2 crashed the report)
 export function camStats(rows) {
-  const camPx = rows.map(r => (r.motion?.cut || !Number.isFinite(r.motion?.cam) ? NaN : r.motion.cam));
+  const E = editCuts(rows), camPx = rows.map(r => (E.has(r) || !Number.isFinite(r.motion?.cam) ? NaN : r.motion.cam));
   let run0 = 0, best = 0, bestAt = 0;
   camPx.forEach((v, i) => { if (i === 0 || Number.isNaN(v)) return; if (v < 0.01) { run0++; if (run0 > best) { best = run0; bestAt = rows[i].f; } } else run0 = 0; });
   const live = camPx.slice(1).filter(x => !Number.isNaN(x)), peak = live.length ? Math.max(...live) : null;
   return { best, bestAt, peak, peakAt: peak == null ? null : rows[camPx.indexOf(peak, 1)].f, median: live.length ? [...live].sort((a, b) => a - b)[live.length >> 1] : null,
-    fast: rows.filter((r, i) => i > 0 && camPx[i] > 25).map(r => r.f), cuts: rows.filter(r => r.motion?.cut).map(r => r.f) };
+    fast: rows.filter((r, i) => i > 0 && camPx[i] > 25).map(r => r.f), cuts: rows.filter(r => E.has(r)).map(r => r.f) };
 }

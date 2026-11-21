@@ -13,6 +13,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { SavePass } from 'three/addons/postprocessing/SavePass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
 
@@ -188,7 +189,7 @@ const SKY_F = SKY_GLSL + '\n varying vec3 vD; void main(){ gl_FragColor = vec4(s
 // stick06 judge round 2 (lighting/shading 4/10 'flat, washed out, evenly lit'): sat 1.25 -> 1.38, con 1.12 -> 1.18, sky fill
 // 1.15 -> 0.85, sun lowered to <= 35 deg; set ink 2.6 -> 2.1 px (ink gate median 4 px; judge: set lines compete with figures);
 // round 3 ('washed out, hazy overlays'): highlight bloom 0.38 -> 0.28, shafts 0.032 -> 0.024
-export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1.38, con = 1.18, vig = 0.30, split = 0.7, bloom = 1.1,
+export function createStage({ width, height, faceInk = false, exposure = 0.88, ink = 2.1, sat = 1.38, con = 1.18, vig = 0.30, split = 0.7, bloom = 1.1,
   hot = 0.28, shafts = 0.024, shaftK = 1.6, dofK = 0.55, ao = 0, aoRadius = 0.5, shadowRadius = 1.0, toneExp = null } = {}) {
   const stage = {};                                               // late-bound parts (setSun runs before the passes exist)
   const px = height / 1920;                                       // every pixel-size number scales with this
@@ -464,9 +465,23 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1
       gbuf(...a); for (const o of hid) o.visible = true;
     };
     composer.addPass(aoPass); stage.ao = aoPass; }
+  const faceSave = new SavePass(new THREE.WebGLRenderTarget(width, height, { type: THREE.HalfFloatType }));
   const shaftPass = stage.shafts = new ShaftPass(width, height, camera, sun, nrt.depthTexture, { dens: shafts, maxD: 22, g: 0.35, k: shaftK });
   shaftPass.enabled = shafts > 0;
+  if (faceInk) composer.addPass(faceSave);   // the scene's own colour, before the shafts, the haze and the blooms add light (inkKeep)
   composer.addPass(shaftPass);
+  // ---- faceInk (on under a face style, play.js): face ink keeps its colour under the blooms: the faces alone (meshes with userData.faceInk, depth-tested against the
+  // scene drawn black) give a mask; after the blooms the masked pixels take back the scene's own colour (faceSave, before the shafts, the haze and the blooms) (a
+  // lamp's halo turned the eye nearer it brown and left the other dark, Hot Money r5 ending)
+  const mrt = new THREE.WebGLRenderTarget(gw, gh), maskMats = new WeakMap();
+  const maskMat = m => { let x = maskMats.get(m); if (!x) { x = new THREE.ShaderMaterial({ uniforms: { map: { value: m.material.map } }, transparent: true, depthWrite: false,
+    polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+    // (the log depth chunks: the stage's renderer writes a logarithmic depth, a plain shader's depth lost to every mesh)
+    vertexShader: '#include <common>\n#include <logdepthbuf_pars_vertex>\nvarying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);\n#include <logdepthbuf_vertex>\n}',
+    fragmentShader: '#include <logdepthbuf_pars_fragment>\nuniform sampler2D map; varying vec2 vUv; void main(){\n#include <logdepthbuf_fragment>\ngl_FragColor = vec4(1.0, 1.0, 1.0, texture2D(map, vUv).a); }' }); maskMats.set(m, x); } return x; };
+  const inkKeep = new ShaderPass({ uniforms: { tDiffuse: { value: null }, tS: { value: null }, tM: { value: null } }, vertexShader: FS_QUAD_V,
+    fragmentShader: 'uniform sampler2D tDiffuse, tS, tM; varying vec2 vUv; void main(){ vec4 c = texture2D(tDiffuse, vUv); gl_FragColor = vec4(mix(c.rgb, texture2D(tS, vUv).rgb, texture2D(tM, vUv).r), c.a); }' });
+  inkKeep.uniforms.tS.value = faceSave.renderTarget.texture; inkKeep.uniforms.tM.value = mrt.texture;
   composer.addPass(inkPass);
   composer.addPass(airPass);
   composer.addPass(dofPass);
@@ -475,6 +490,7 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1
   const hotPass = new UnrealBloomPass(new THREE.Vector2(gw, gh), hot, 0.5, 1.4);
   hotPass.enabled = hot > 0;
   composer.addPass(hotPass);
+  if (faceInk) composer.addPass(inkKeep);
   composer.addPass(new OutputPass());
   composer.addPass(gradePass);
 
@@ -500,6 +516,13 @@ export function createStage({ width, height, exposure = 0.88, ink = 2.1, sat = 1
     prepass();
     swap(m => m.userData.glow || (m.userData.noPrepass ? null : black), grt, new THREE.Color(0, 0, 0));
     bloomComposer.render();
+    // (a figure's inverted-hull outline is a back-faced shell round the head: drawn front-faced in black it hid the face)
+    // (round 3: a see-through card in front of a face (a bill held up to the light) hides the face's ink from the restore, as
+    // an opaque mesh does; only additive glows and faint sheets stay out. The bill showed the eye behind it in full ink)
+    const maskOf = m => { if (m.userData.faceInk) return maskMat(m); const mt = Array.isArray(m.material) ? m.material[0] : m.material;
+      if (m.userData.noPrepass || mt?.side === THREE.BackSide) return null;
+      return mt?.transparent && (mt.blending === THREE.AdditiveBlending || (mt.opacity ?? 1) < 0.35) ? null : black; };
+    if (faceInk) swap(maskOf, mrt, new THREE.Color(0, 0, 0));
     mixPass.uniforms.tB.value = bloomComposer.readBuffer.texture;
     composer.render();
     gl.finish(); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, one);

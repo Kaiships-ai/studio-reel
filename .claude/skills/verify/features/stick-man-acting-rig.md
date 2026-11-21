@@ -14,7 +14,8 @@ flex in every frame; `--sheet` renders each clip's worst pose from the front, 3/
   first line), never PASS. A film with no `storyboard.json` stops with exit 2 and names `--story`.
 - Repeats: a non-neutral face of one character taken up more than `REPEAT_MAX` (2) times fails (kai-taste TOKENS "Repeats"); a face held on across cuts is one take.
 - Rows: `shot.mjs --dbg` rows; a row may carry `sb` (its storyboard frame, for a re-timed picture) and `t` (its second in
-  the cut). Shots come from `storyboard.json` and the film's `reel.js` `CUTS`; `--story` borrows another film's story.
+  the cut). Shots come from `storyboard.json` (each shot runs from its `f0` to the next shot's) and, for a shot with no
+  `f0`, the film's `reel.js` `CUTS`; `--story` borrows another film's story.
 - Rig test: limits `HEAD_PCT` 5 (head height to width against round, head not keeping its volume),
   `HEAD_SQUASH_PCT` 15 (same ratio while x·y·z stays within `HEAD_VOL_TOL` 1 % of the clip's first frame: the engine's
   squash and stretch; Kai chose this 17/11, "it is one frame; at real playback nobody notices"), `BONE_PCT` 3 (the arm's own `ARM_STRETCH`),

@@ -31,6 +31,13 @@ const DOT = { eye: 'oval', rx: 0.037, ry: 0.049 }, RING = { eye: 'oval', rx: 0.0
 // ring eyes v2 (Kai, gate A 2026-11-12): smaller and closer, big pupils that look somewhere (gx / cross), often one lid
 // lower (lidA); every brow sits BROW_DROP lower than its table height so it is never hidden under a hat brim
 const BROW_DROP = 0.03;
+// The film's face style (reel.js faceStyle, loaded by play.js from engine/facestyles/<name>.js): null = the kit's own faces,
+// drawn and timed exactly as before styles existed. With a style on, the face engine also runs the rules that style was made
+// on (Hot Money r5 faces, 19-21/11): a shut eye that sags, a lid stroke that shortens as it lifts, no gasp between two shut
+// mouths, fear mouths that never open into a smile, teeth that grow in, face ink after the light cards and kept under the
+// blooms (look.js inkKeep), the face card a shell at the head's depth (cast.js), strips tiled on whole pixels, tense faces
+// blinking fast, fewer forced and turn blinks, a human chew rate and breath and chew beats (acting.js, play.js)
+export const FACE_STYLE = { name: null };
 export const EXPR = {
   neutral: { ...DOT, brow: [0, 0.125, 0.008, 0, 0.006], mouth: 'flat', mx: 0.008 },
   calm: { ...DOT, lid: 0.34, brow: [-3, 0.120, 0.010, 0, 0.006], mouth: 'smile', mw: 0.7 },
@@ -70,7 +77,7 @@ export const EXPR = {
 // open-mouth twins (`<expr>_o`) are shown while a word is being said: each mouth opens in its own way
 const OPEN = { flat: 'open', smile: 'open', grin: 'open_big', smirk: 'open_skew', smirk_l: 'open_skew', frown: 'open_frown', wobble: 'open_frown',
   o: 'o_big', wavy: 'scream_small', teeth: 'teeth_open', teeth_grin: 'teeth_open', bar: 'teeth_open', sad_open: 'wail', wail: 'wail',
-  skew: 'open_skew', big: 'big_open', big_open: 'big_open', scream: 'scream', sneer: 'open_frown' };
+  skew: 'open_skew', stretch: 'stretch', grimace: 'teeth_open', tight: 'open_frown', big: 'big_open', big_open: 'big_open', scream: 'scream', sneer: 'open_frown' };
 for (const k of Object.keys(EXPR)) EXPR[k + '_o'] = { ...EXPR[k], mouth: OPEN[EXPR[k].mouth] || 'open', base: k };
 EXPR.sleep_o = { ...EXPR.sleep, mouth: 'o', mw: 0.6, base: 'sleep' };
 // wide-open twins (`<expr>_O`): the loud syllable and the middle of an expression ramp (FORENSIC.md fix 8: reference mouth
@@ -159,9 +166,16 @@ function eye(g, F, ex, s, ey, blink, rim = false) {
   let lid = Math.max(0, (F.lid || 0) + (s > 0 ? F.lidA || 0 : 0));
   if (bl > 0) lid = 1 - (1 - Math.min(1, lid)) * (1 - bl);
   const slope = Math.tan((F.lidTilt || 0) * DEG) * s, L = rx * 1.5;
-  if (bl >= 0.96 || lid >= 0.96) {
+  if ((bl >= 0.96 || lid >= 0.96) && !FACE_STYLE.name) {
     const y = ey - ry * 0.18;
     taper(g, [[ex - L * 0.95, y + (-L * 0.95) * slope], [ex, y - 0.004], [ex + L * 0.95, y + (L * 0.95) * slope]], 0.0115, INK, 0.5);
+    return;
+  }
+  if (bl >= 0.96 || lid >= 0.96) {
+    // a shut eye is a lid line that sags in the middle (the lashes' curve): a straight stroke under a brow read as a second
+    // brow, two dashes per eye (Hot Money r5 faces review: "eyes squash into streaks")
+    const y = ey - ry * 0.12, w = L * 0.9, sag = ry * 0.28;
+    taper(g, bez([ex - w, y - w * slope + sag * 0.15], [ex - w * 0.45, y - sag * 1.25], [ex + w * 0.45, y - sag * 1.25], [ex + w, y + w * slope + sag * 0.15], 14), 0.0125, INK, 0.5);
     return;
   }
   const top = ey + ry * (1 - 2 * lid), lowK = F.low || 0, white = Math.max(0, Math.min(1, F.white || 0));
@@ -185,7 +199,10 @@ function eye(g, F, ex, s, ey, blink, rim = false) {
   g.restore();
   // the lid: a thick straight stroke, longer than the eye (fades in from nothing so a ramp has no pop)
   const k = Math.min(1, lid / (0.12 + 0.25 * white));                                     // (a ring eye drops its lid faster)
-  if (k > 0.02) line(g, [[ex - L, top - L * slope], [ex + L, top + L * slope]], LW * (0.4 + 0.6 * k));
+  // (round 3: a light lid is a short line on the eye's top, not a long dash hanging past it: as the lid lifts the stroke
+  // shortens with its weight; a long thin stroke over a wide eye read as a brow broken off, Hot Money r5 faces review)
+  const Lk = FACE_STYLE.name ? L * (0.62 + 0.38 * k) : L;
+  if (k > 0.02) line(g, [[ex - Lk, top - Lk * slope], [ex + Lk, top + Lk * slope]], LW * (0.4 + 0.6 * k));
   if (lowK >= 0.4) taper(g, Array.from({ length: 9 }, (_, i) => { const a = Math.PI * (0.30 + 0.40 * i / 8); return [ex + rx * 1.1 * Math.cos(a), cheekY + ry * 0.9 * Math.sin(a)]; }), 0.007, INK, 0.4);
 }
 
@@ -247,6 +264,20 @@ function mouth(g, kind, mw = 1, x0 = 0, y0 = -0.15) {
         ...bez([X(w), y + 0.016], [X(w * 0.62), y - h * 1.25], [X(-w * 0.62), y - h * 1.25], [X(-w), y + 0.016], 16)];
       cav(g, pts); teethBand(pts, y + 0.016, 0.022); path(g, pts, true); g.lineWidth = 0.011; g.strokeStyle = INK; g.stroke(); break;
     }
+    // fear (FACS AU20 + 25): wide, the corners pulled down and out, the top lip arched; never the smile lens above
+    case 'stretch': { const w = 0.070, cy = y - 0.016;
+      cav(g, [...bez([X(-w), cy - 0.012], [X(-w * 0.5), cy + 0.022], [X(w * 0.5), cy + 0.022], [X(w), cy - 0.012], 14),
+        ...bez([X(w), cy - 0.012], [X(w * 0.55), cy - 0.036], [X(-w * 0.55), cy - 0.036], [X(-w), cy - 0.012], 14)]); break; }
+    // the eek grimace: clenched teeth in a wide mouth whose corners drop (fear held in, effort)
+    case 'grimace': { const w = 0.090 * mw, cy = y - 0.010;
+      const pts = [...bez([X(-0.090), cy - 0.016], [X(-0.040), cy + 0.026], [X(0.040), cy + 0.026], [X(0.090), cy - 0.016], 14),
+        ...bez([X(0.090), cy - 0.016], [X(0.050), cy - 0.040], [X(-0.050), cy - 0.040], [X(-0.090), cy - 0.016], 14)];
+      fill(g, pts, WHITE, 0.015); g.save(); path(g, pts, true); g.clip();
+      line(g, bez([X(-0.090), cy - 0.014], [X(-0.040), cy + 0.004], [X(0.040), cy + 0.004], [X(0.090), cy - 0.014], 12), 0.009);
+      for (let i = 1; i < 6; i++) { const x = x0 - w + 2 * w * i / 6; line(g, [[x, cy + 0.03], [x, cy - 0.05]], 0.009); }
+      g.restore(); break; }
+    // lips pressed thin (AU23 + 24): a long flat line, the corners a hair down
+    case 'tight': taper(g, bez([X(-0.050), y - 0.006], [X(-0.020), y + 0.004], [X(0.020), y + 0.004], [X(0.050), y - 0.006], 14), 0.0115); break;
     case 'open': cav(g, lens(0.040, 0.032)); break;
     case 'open_skew': cav(g, lens(0.040, 0.030, 0, 0.004).map(([px, py]) => [px, py + (px - x0) * 0.22])); break;
     case 'open_frown': cav(g, lens(0.036, 0.022, -0.010, 0.010)); break;
@@ -287,9 +318,10 @@ function skin(g, S, ey, dx, t) {
 // that differs is hidden inside an in-between: the eyes squeeze shut and the mouth passes through an open gasp at the
 // swap. Talking draws a parametric mouth from visemes (acting.js) with a real open / close range.
 const CURVE = { smile: 1, grin: 1, big: 1, big_open: 1, open_big: 0.8, teeth_grin: 1, smirk: 0.5, smirk_l: 0.5, frown: -1, wobble: -0.6,
-  sad_open: -1, wail: -1, wavy: -0.4, open_frown: -0.8, skew: 0.2, sneer: -0.6 };
+  sad_open: -1, wail: -1, stretch: -2.4, grimace: -1.6, tight: -0.4, wavy: -0.4, open_frown: -0.8, skew: 0.2, sneer: -0.6 };
 const REST_OPEN = { o: 0.40, o_big: 0.55, grin: 0.2, big: 0.55, big_open: 0.8, open_big: 0.55, scream: 1, scream_small: 0.7, teeth: 0.2,
-  teeth_grin: 0.25, teeth_open: 0.55, sad_open: 0.3, wail: 0.7, open: 0.35, open_skew: 0.35, open_frown: 0.25, bar: 0.15 };
+  teeth_grin: 0.25, teeth_open: 0.55, stretch: 0.45, grimace: 0.3, sad_open: 0.3, wail: 0.7, open: 0.35, open_skew: 0.35, open_frown: 0.25, bar: 0.15 };
+export const CLENCH = new Set(['grimace', 'teeth', 'bar']);
 const ROUND = { o: 1, o_big: 1, scream: 0.6, scream_small: 0.6, sleep: 0.5 };
 const NUM = ['rx', 'ry', 'lid', 'lidTilt', 'lidA', 'low', 'white', 'pupil', 'gx', 'cross', 'bw', 'mw', 'mx', 'my', 'curve', 'rest', 'round'];
 const GAZE = new Set(['gx', 'cross']);
@@ -299,7 +331,7 @@ export function faceParams(name) {
   return { eye: E.eye, rx: E.rx, ry: E.ry, lid: E.lid || 0, lidTilt: E.lidTilt || 0, lidA: E.lidA || 0, low: E.low || 0,
     white: E.white || 0, pupil: E.pupil ?? 0.020, gx: E.gx || 0, cross: E.cross || 0, brow: [bt, bh, ba, bl, br], bw: E.bw || 1,
     mouth: E.mouth, mw: E.mw || 1, mx: E.mx || 0, my: E.my || 0, curve: CURVE[E.mouth] || 0, rest: REST_OPEN[E.mouth] || 0,
-    round: ROUND[E.mouth] || 0,
+    round: ROUND[E.mouth] || 0, ...(FACE_STYLE.name ? { style: E.style || null, x: E.x || {} } : {}),
     // veins / socket / gloom stay in the shape for older callers; the reference grammar never paints them
     skin: { blush: S.blush || 0, veins: 0, tears: S.tears || 0, socket: 0, gloom: 0 } };
 }
@@ -342,8 +374,22 @@ export function mixFace(st) {
   blink = Math.max(blink, st.blink || 0);
   // the gasp: the mouth opens through a change of mouth kind (on the mouth's clock); a gasp that was under way when
   // this change began closes out instead of vanishing
-  const gasp = ((st.gasp || 0) + (A.gasp || 0) * (1 - umc) + (A.mouth !== B.mouth && !st.talk ? 0.5 * Math.sin(Math.PI * umc) : 0)) * (1 - antic);
+  // between two shut mouths (no rest opening on either side) there is nothing to gasp: the mouth narrows through the swap
+  // and the new shape grows out of the small one (a shut-to-shut gasp flashed an open mouth on a closed face)
+  // a clenched mouth (teeth shut) counts as shut here: a gasp into a grimace flashed an open mouth for 2 f before the teeth
+  const shut = M => !M.rest || CLENCH.has(M.mouth), shutSwap = !!FACE_STYLE.name && A.mouth !== B.mouth && shut(A) && shut(B);
+  if (shutSwap && !A.rest && !B.rest) F.mw *= 1 - 0.12 * Math.sin(Math.PI * umc) ** 2;   // (into a grimace the width already grows)
+  const gasp = ((st.gasp || 0) + (A.gasp || 0) * (1 - umc) + (A.mouth !== B.mouth && !shutSwap && !st.talk ? 0.5 * Math.sin(Math.PI * umc) : 0)) * (1 - antic);
   F.gasp = gasp;
+  // a face style (STYLE_DRAW) draws from its own numbers too (E.x): each blends (0 where a design leaves it out) on the clock its first letter names (g gaze,
+  // e eyes and lids, m mouth, anything else the brows), so the style's overlap is the engine's; the style also gets the
+  // anticipation, how far into each feature's change the face is (mid: 0 at the ends, 1 half way) and which way the eyes grow
+  if (FACE_STYLE.name) {
+    const XA = A.x || {}, XB = B.x || {}; F.x = {};
+    for (const k of new Set([...Object.keys(XA), ...Object.keys(XB)])) { const a0 = XA[k] ?? 0, b0 = XB[k] ?? 0, w = k[0] === 'g' ? ug : k[0] === 'e' ? ul : k[0] === 'm' ? um : ub; F.x[k] = a0 + (b0 - a0) * w; }
+    F.style = B.style; F.antic = antic; F.mid = { b: Math.sin(Math.PI * cl(ub)), e: Math.sin(Math.PI * cl(ul)), m: Math.sin(Math.PI * cl(um)) };
+    F.dEye = Math.sign((B.ry + 0.5 * B.rx) - (A.ry + 0.5 * A.rx));
+  }
   if (st.talk) {
     const v = st.talk, any = v.open > 0.04 ? 1 : 0;
     F.talk = { open: Math.min(1.1, v.open * (1 + 0.3 * F.rest) + 0.22 * F.rest * any + gasp * 0.3), wide: v.wide ?? 0, round: Math.max(v.round ?? 0, F.round * 0.6), teeth: v.teeth ?? 0 };
@@ -358,13 +404,16 @@ function vmouth(g, F, x0, y0) {
   const T = F.talk, mw = F.mw;
   if (T.open < 0.06) { mouth(g, F.mouth, mw, x0, y0); return; }
   const y = y0 + 0.008, w = 0.064 * mw * (1 + 0.40 * T.wide - 0.38 * T.round) + 0.018 * T.open, h = 0.012 + 0.085 * T.open, c = 0.012 * F.curve * (1 - 0.5 * T.round);
-  const lip = 0.004 + 0.25 * h * T.round;
+  // a fear mouth (curve < 0) arches its top lip and flattens the bottom, so an open mouth never reads as a smile
+  const neg = FACE_STYLE.name ? Math.min(1, Math.max(0, -F.curve) / 2.4) : 0, lip = 0.004 + 0.25 * h * T.round + 0.030 * neg, dep = 1.3 - 0.55 * neg;
   const top = bez([x0 - w, y + c], [x0 - w * 0.45, y + lip], [x0 + w * 0.45, y + lip], [x0 + w, y + c], 14);
-  const bot = bez([x0 + w, y + c], [x0 + w * 0.62, y - h * 1.3 + 0.3 * c], [x0 - w * 0.62, y - h * 1.3 + 0.3 * c], [x0 - w, y + c], 16);
+  const bot = bez([x0 + w, y + c], [x0 + w * 0.62, y - h * dep + 0.3 * c], [x0 - w * 0.62, y - h * dep + 0.3 * c], [x0 - w, y + c], 16);
   const pts = [...top, ...bot];
   if (T.open > 0.22) cav(g, pts); else fill(g, pts);                                       // barely open: a dark slit; open: the cavity
   g.save(); path(g, pts, true); g.clip();
-  if (T.round < 0.6 && T.open > 0.30) { g.fillStyle = WHITE; g.fillRect(x0 - w, y + lip - 0.016 - 0.006 * T.teeth, 2 * w, 0.02); }
+  // the top teeth grow in with the opening (a strip that switched on at open 0.30 flickered on a breathing mouth)
+  const tk = !FACE_STYLE.name ? +(T.round < 0.6 && T.open > 0.30) : Math.min(1, Math.max(0, (T.open - 0.26) / 0.14)) * Math.min(1, Math.max(0, (0.7 - T.round) / 0.2));
+  if (tk > 0.02) { g.fillStyle = WHITE; g.fillRect(x0 - w, y + lip - 0.016 * tk - 0.006 * T.teeth, 2 * w, 0.02 * tk); }
   if (T.teeth > 0.3) { g.fillStyle = WHITE; g.fillRect(x0 - w, y - h * 1.0, 2 * w, 0.014); }
   g.restore();
 }
@@ -374,25 +423,51 @@ function vmouth(g, F, x0, y0) {
 // are big and bold (an eye is 0.10-0.12 W wide, a lid stroke 0.03 W thick), which is also what still reads on a phone.
 // o.glasses: the eyes sit in the rim centres (cast.js glasses(): +-0.15, 0.02, radius 0.112), ring eyes shrink to fit
 // inside, the brows clear the rims and the mouth drops a little; the expression still reads through brows and mouth.
+const BROW_GAP = 0.045, BROW_MIN = 0.030, TOP_SHIFT = 0.08;
 export const LAYOUT = { K: 1.25, ey: 0.0, dx: 0.118, my: -0.175, glasses: { K: 1.12, ey: 0.02, dx: 0.150, my: -0.185, maxR: 0.086, browMin: 0.165 } };
+// a face style (engine/facestyles/) registers STYLE_DRAW[name](g, F, blink, t, o): it draws a face whose design names that
+// style (EXPR entry `style`), in final W units on the same canvas; DRAW_KIT lends it the drawing helpers
+export const STYLE_DRAW = {};
 export function drawFaceState(g, F, blink = 0, t = 0, o = {}) {
-  const Lo = o.glasses ? LAYOUT.glasses : LAYOUT, K = Lo.K, ey = Lo.ey / K, dx = Lo.dx / K;
+  if (F.style && STYLE_DRAW[F.style]) { g.save(); g.lineCap = g.lineJoin = 'round'; STYLE_DRAW[F.style](g, F, blink, t, o); g.restore(); return; }
+  const Lo = o.glasses ? LAYOUT.glasses : LAYOUT, K = Lo.K, dx = Lo.dx / K;
+  let ey = Lo.ey / K;
   g.save(); g.scale(K, K);
   g.lineCap = g.lineJoin = 'round';
-  skin(g, F.skin, ey, dx, t);
   let Fe = F;
   if (Lo.maxR) { const k = Math.min(1, Lo.maxR / K / Math.max(F.rx, F.ry)); if (k < 1) Fe = { ...F, rx: F.rx * k, ry: F.ry * k, pupil: F.pupil * Math.max(0.8, k) }; }
-  const [tilt, bh0, arch = 0, liftL = 0, liftR = 0] = F.brow, bh = Lo.browMin ? Math.max(bh0, Lo.browMin / K) + 0.004 : bh0;
+  const [tilt, bh0, arch = 0, liftL = 0, liftR = 0] = F.brow;
+  let bh = Lo.browMin ? Math.max(bh0, Lo.browMin / K) + 0.004 : bh0;
+  // o.top (W, final units): the face plate a hood or a cap leaves open. A brow that would reach above it comes down toward
+  // the eye (never closer than BROW_GAP over the eye's top), then the eyes and brows come down together (at most
+  // TOP_SHIFT), so no mark is half under the brim or smeared over the hair band; the mouth stays
+  // (round 3: the eyes and brows first come down together, keeping their gap; the gap only closes past TOP_SHIFT. Closing
+  // it first drew every face under a hood with its brows on its lids: stern, and two streaks per eye in a blink)
+  if (o.top != null) {
+    let over = (ey + bh + Math.max(0, arch, liftL, liftR) + 0.03 * (F.bw || 1)) * K - o.top;
+    if (over > 0) { const sh = Math.min(over / K, TOP_SHIFT, Math.max(0, ey - F.ry - (Lo.my / K + (F.my || 0) + 0.05))); ey -= sh; over -= sh * K; }   // (never down onto the mouth)
+    if (over > 0) { const cut = Math.min(over / K, Math.max(0, bh - (F.ry + BROW_GAP))); bh -= cut; over -= cut * K; }
+    // then the gap closes to BROW_MIN before the brows fade: a brow fading under a hood is a grey smudge (Hot Money r5)
+    if (over > 0) { const cut = Math.min(over / K, Math.max(0, bh - (F.ry + BROW_MIN))); bh -= cut; over -= cut * K; }
+  }
+  skin(g, F.skin, ey, dx, t);
+  // a mark that still reaches above the plate fades out whole (a brow cut flat or an eye cut in half by the brim reads as a
+  // drawing error; a mark that is not there reads as covered)
+  const cl = x => Math.max(0, Math.min(1, x));
+  const browA = o.top == null ? 1 : cl(1 - ((ey + bh + Math.max(0, arch, liftL, liftR) + 0.03 * (F.bw || 1)) * K - o.top) / 0.035);
+  const eyeA = o.top == null ? 1 : cl(1 - ((ey + F.ry) * K - o.top) / 0.05);
   for (const s of [-1, 1]) {
     const ex = s * dx;
-    eye(g, Fe, ex, s, ey, blink, !!o.glasses);
+    if (eyeA > 0.01) { g.globalAlpha = eyeA; eye(g, Fe, ex, s, ey, blink, !!o.glasses); }
     const by = ey + bh - 0.008 * Math.max(0, Math.min(1, blink || 0)) + (s < 0 ? liftL : liftR);   // the brows dip as the lids close
-    brow(g, ex, s, by, tilt, arch, F.bw || 1);
+    if (browA > 0.01) { g.globalAlpha = browA; brow(g, ex, s, by, tilt, arch, F.bw || 1); }
+    g.globalAlpha = 1;
   }
   const y0 = Lo.my / K + (F.my || 0), x0 = F.mx || 0;
   if (F.talk) vmouth(g, F, x0, y0); else mouth(g, F.mouth, F.mw, x0, y0);
   g.restore();
 }
+export const DRAW_KIT = { bez, taper, fill, line, path, ellPts, INK, WHITE, LW };
 export function drawFace(g, expr, blink = 0, t = 0, o = {}) { drawFaceState(g, faceParams(expr), blink, t, o); }
 
 // ------------------------------------------------------------------ head-attached marks (flat cards, quiet ink style)
@@ -433,7 +508,7 @@ function cardTex(kind) {
 const PLANE = new THREE.PlaneGeometry(1, 1);
 function card(kind) {
   const m = new THREE.Mesh(PLANE, new THREE.MeshBasicMaterial({ map: cardTex(kind), transparent: true, depthWrite: false, alphaTest: 0.02 }));
-  m.userData.noPrepass = true; m.renderOrder = 3; m.castShadow = false; m.visible = false; return m;
+  m.userData.noPrepass = true; m.renderOrder = FACE_STYLE.name ? 7 : 3; m.castShadow = false; m.visible = false; return m;
 }
 const back = x => { x = Math.max(0, Math.min(1, x)); const c = 2.2; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
 // Each mark: the cards it uses and where they go (head-local metres for a head of width w; x = the figure's right, z = its
@@ -479,7 +554,12 @@ export function faceRig(headW, opt = {}) {
       if (k !== key) {
         key = k;
         const paint = () => { g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 512, 512); g.setTransform(512, 0, 0, -512, 256, 256);
-          if (F) drawFaceState(g, F, blink, t, opt); else drawFace(g, expr, blink, t, opt); };
+          // a hood or a cap covers more of the face as the head turns away (opt.topSide, reached 0.3 rad past the turn
+          // opt.topKnee) and as the lens looks down on it (opt.topUp at sin(elevation) 1, sl[3])
+          const turn = Math.max(0, Math.abs(sl ? sl[0] : 0) - (opt.topKnee || 0)), top = opt.top == null ? null
+            : opt.top - (opt.topSide || 0) * Math.min(1, turn / 0.3) - (opt.topUp || 0) * Math.max(0, sl ? sl[3] || 0 : 0);
+          const o2 = { ...opt, top: top ?? opt.top, sl };   // (sl: a face style may answer the turn itself)
+          if (F) drawFaceState(g, F, blink, t, o2); else drawFace(g, expr, blink, t, o2); };
         paint(); stats.mouth = darkMouth(); stats.key = k.length > 64 ? hashKey(k) : k;   // measured on the face itself, not where it turned
         if (sl && (sl[0] || sl[1] || sl[2] < 1)) {
           // the face drawn on the ball of the head (asset 2.4): each vertical strip of the flat drawing sits at its own
@@ -490,12 +570,24 @@ export function faceRig(headW, opt = {}) {
           if (sl[2] > 0.01) {
             g.save(); g.beginPath(); g.ellipse(256, 256, 0.462 * 512, 0.432 * 512, 0, 0, Math.PI * 2); g.clip();
             const R = 0.462, N = 120, px = u => 256 + 512 * u, dyp = -512 * sl[1];
+            // (round 3: the strips tile on whole pixels, each one's right edge the next one's left: strips that overlapped by
+            // 0.6 px doubled the alpha of a fading mark at every seam, and a brow fading under a hood drew as grey stripes)
+            const xs = Array.from({ length: N + 1 }, (_, i) => { const u = -R + 2 * R * i / N, a = Math.asin(Math.max(-1, Math.min(1, u / R))) + sl[0];
+              return Math.cos(a) < 0 ? null : Math.round(px(R * Math.sin(a))); });
             for (let i = 0; i < N; i++) {
               const u0 = -R + 2 * R * i / N, u1 = u0 + 2 * R / N, a0 = Math.asin(u0 / R) + sl[0], a1 = Math.asin(Math.min(1, u1 / R)) + sl[0];
-              const z = Math.cos((a0 + a1) / 2); if (z < 0.08) continue;
-              const x0 = px(R * Math.sin(a0)), x1 = px(R * Math.sin(a1)); if (x1 - x0 < 0.05) continue;
-              g.globalAlpha = Math.min(1, (z - 0.08) / 0.25) * sl[2];
-              g.drawImage(off, px(u0), 0, px(u1) - px(u0), 512, x0, dyp, x1 - x0 + 0.6, 512);
+              // opt.edge = [z0, ramp]: where a strip going round the head starts to fade (0.08 = the head's own edge; a
+              // hood's rim is further in, so a mark going round fades out before the rim cuts it in half)
+              // (opt.edgeKnee: the earlier fade comes in over 0.12 rad of turn past it, so a near-frontal face keeps both eyes)
+              const ek = opt.edge && opt.edgeKnee != null ? Math.max(0, Math.min(1, (Math.abs(sl[0]) - opt.edgeKnee) / 0.12)) : 1;
+              const z = Math.cos((a0 + a1) / 2), [Z0, ZR] = opt.edge ? [0.08 + (opt.edge[0] - 0.08) * ek, 0.25 + (opt.edge[1] - 0.25) * ek] : [0.08, 0.25]; if (z < Z0) continue;
+              if (!FACE_STYLE.name) {   // the kit's own faces: strips overlap by 0.6 px, as before styles
+                const x0 = px(R * Math.sin(a0)), x1 = px(R * Math.sin(a1)); if (x1 - x0 < 0.05) continue;
+                g.globalAlpha = Math.min(1, (z - Z0) / ZR) * sl[2]; g.drawImage(off, px(u0), 0, px(u1) - px(u0), 512, x0, dyp, x1 - x0 + 0.6, 512); continue;
+              }
+              const x0 = xs[i], x1 = xs[i + 1]; if (x0 == null || x1 == null || x1 - x0 < 1) continue;
+              g.globalAlpha = Math.min(1, (z - Z0) / ZR) * sl[2];
+              g.drawImage(off, px(u0), 0, px(u1) - px(u0), 512, x0, dyp, x1 - x0, 512);
             }
             g.restore();
           }

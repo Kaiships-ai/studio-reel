@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs'; import zlib from 'node:zlib'; import os from 'node:os'; import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { faceDesigns, unapproved, approvalLine, sheetHash } from '../../styles/stick-man/tools/facesheet.mjs';
+import { faceDesigns, unapproved, approvalLine, sheetHash, shotArgs } from '../../styles/stick-man/tools/facesheet.mjs';
 
 const TOOLS = fileURLToPath(new URL('../../styles/stick-man/tools/', import.meta.url));
 const node = (tool, ...args) => spawnSync(process.execPath, [path.join(TOOLS, tool), ...args], { encoding: 'utf8', timeout: 60000 });
@@ -72,3 +72,29 @@ test('facesheet --approve: needs the hash of the sheet Kai saw; a sheet made aga
   assert.equal(ok.status, 0, ok.stderr);
   assert.equal(JSON.parse(fs.readFileSync(approved, 'utf8')).sheet, sheetHash(remade));
 });
+
+// Hot Money r5 s2 faces, 21/11: the sheet's stills were refused by the bible check (a set the catalog lacks, which the film's
+// own renders passed with a logged --no-bible-check) and could not ask for the face style the rows were rendered with
+// (?facestyle=s2r), and before failing the tool had already rewritten review/face-sheet.json
+test('facesheet: the stills render with the page flags and the logged bible bypass of the rows\' render', () => {
+  const a = shotArgs('films/x', [12, 40], '/tmp/f_%d.jpg', 720, 1280, { query: 'gunglare=v6&facestyle=s2r', 'no-bible-check': 'set not in the catalog yet' });
+  const at = k => a[a.indexOf(k) + 1];
+  assert.equal(at('--query'), 'gunglare=v6&facestyle=s2r');
+  assert.equal(at('--no-bible-check'), 'set not in the catalog yet');
+  assert.equal(at('--frames'), '12,40');
+  const plain = shotArgs('films/x', [12], '/tmp/f_%d.jpg', 720, 1280, {});
+  assert.ok(!plain.includes('--query') && !plain.includes('--no-bible-check'), 'nothing added when not asked');
+});
+
+test('facesheet: a render that fails leaves review/face-sheet.json as it was', t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'facesheet-fail-')); t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(dir, 'review'));
+  fs.writeFileSync(path.join(dir, 'review/shot-rows.jsonl'), rows.map(r => JSON.stringify(r)).join('\n') + '\n');
+  fs.writeFileSync(path.join(dir, 'reel.js'), 'export default {\n');
+  const before = '{"hash":"kai-saw-this"}\n';
+  fs.writeFileSync(path.join(dir, 'review/face-sheet.json'), before);
+  const r = node('facesheet.mjs', path.relative(fileURLToPath(new URL('../../', import.meta.url)), dir), '--h', String(H));
+  assert.equal(r.status, 2, r.stdout + r.stderr); assert.match(r.stderr, /shot\.mjs failed/);
+  assert.equal(fs.readFileSync(path.join(dir, 'review/face-sheet.json'), 'utf8'), before);
+});
+
