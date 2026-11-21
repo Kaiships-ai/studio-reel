@@ -16,7 +16,7 @@ the storyboard `act` field and for `expr` on keys.
 | `nth` | which occurrence of `on` in the line (default 1) | `nth: 2` |
 | `f` | an absolute frame instead of a word (set-up before the first word only) | `{ f: 0, who: 'kai', do: 'hold', ... }` |
 | `who` | an actor in `cast`, a prop in the set, an effect in `make`, or `'screen'` | `who: 'teller'` |
-| `expr` | face from here on (lands 4 f before its word); the 29 faces are in "Faces" below | `expr: 'manic'` |
+| `expr` | face from here on (lands 4 f before its word); the 31 faces are in "Faces" below | `expr: 'manic'` |
 | `mark` | a head-attached emotion mark for 36 f, or `[kind, frames]`: sweat anger sparkle question exclaim steam stars zzz | `mark: 'question'` |
 | `look` | gaze target: actor, prop, place, or `'camera'` | `look: 'note'` |
 | `sound`, `strength`, `soundAt` | add a sound cue (bank name, 0-1, frames late) | `sound: 'tick', strength: 0.5` |
@@ -120,10 +120,15 @@ Each face is drawn in code per figure (eye kind, flat or tilted lids, cheek push
 marks painted on (blush, red veins, tears, dark sockets, gloom lines) and head-attached mark cards. Every face has an
 open-mouth twin for talking. A face change lands 4 f before its word, with a body accent and a blink.
 
+**Face style.** A film may swap the kit faces for a face style with `faceStyle: 's2'` in its `reel.js` default export.
+s2 (`engine/facestyles/s2.js`, #156) is the rubber face Kai approved on Hot Money reel 1: 27 designs, `y_` for the lead
+and `c_` for a second character (`expr: 'y_fear'`), with its own change timing, blinks and chew. A film that sets no
+`faceStyle` keeps the kit faces below exactly. Details: `.claude/skills/verify/features/stick-man-face-style.md`.
+
 | `expr` | Look | Marks |
 |---|---|---|
-| neutral calm happy grin closed | the everyday range (dot eyes, smile, toothy grin, ^^ eyes) | |
-| smug sly suspicious deadpan | half lids, one brow up, smirk / cat mouth / flat | |
+| neutral calm happy grin closed laugh | the everyday range (dot eyes, smile, toothy grin, ^^ eyes; laugh: ^^ eyes, a big open mouth, a light blush) | |
+| smug sly suspicious deadpan skeptic bored | half lids (heavy on bored), one brow up, smirk / cat mouth / flat | |
 | stern angry furious | brows in a hard V, gritted teeth, red veins; furious flushes violet | anger (+ steam) |
 | worried nervous panic scream | brows up, wobble / teeth grin / wavy / screaming mouth, white eyes with tiny pupils, gloom lines | sweat |
 | shock | white eyes, pupils, O mouth | ! for 26 f |

@@ -166,6 +166,15 @@
      "file": "review/colour-script.md",
      "by": "self",
      "why": "one frame per scene on the intensity curve"
+    },
+    {
+     "file": "colour-script.json",
+     "by": "self",
+     "sections": [
+      "\"approved\"\\s*:\\s*\\{[^}]*\"by\"\\s*:\\s*\"kai\"",
+      "\"approved\"\\s*:\\s*\\{[^}]*\"at\"\\s*:\\s*\"\\d{4}-\\d\\d-\\d\\d"
+     ],
+     "why": "the colour script in numbers ([1.7]) signed by Kai (approved: { by: \"kai\", at }); colourgate.mjs checks the final against it at ◇5"
     }
    ]
   },

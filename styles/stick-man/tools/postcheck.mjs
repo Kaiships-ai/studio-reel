@@ -47,7 +47,7 @@ if (final) {
   } else add('WARN', 'P4', 'ffprobe not available: file spec not checked');
   const lv = fs.existsSync(F('audio/levels.txt')) ? fs.readFileSync(F('audio/levels.txt'), 'utf8') : '';
   const lufs = Number(lv.match(/(-?\d+(?:\.\d+)?)\s*LUFS/i)?.[1]);
-  if (!lv) add('FAIL', 'P5', 'audio/levels.txt missing: run sound.py');
+  if (!lv) add('FAIL', 'P5', `audio/levels.txt missing: run python styles/stick-man/tools/mix.py films/${path.basename(DIR)}`);
   else if (Number.isFinite(lufs) && Math.abs(lufs + 14) > 0.5) add('FAIL', 'P5', `mix at ${lufs} LUFS (target −14 ± 0.5)`);
 }
 const nF = out.filter(o => o.lvl === 'FAIL').length;
