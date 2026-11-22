@@ -10,7 +10,7 @@ import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path'
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { run, start } from '../../../../kit/env.mjs';
 import { W, H } from './valuegate.mjs';
-import { SOURCES, DIM } from '../../kit/look/ablate.js';
+import { SOURCES, DIM } from '#kit/look/ablate.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 const SHOT = path.join(ROOT, 'styles/stick-man/tools/render/shot.mjs');
