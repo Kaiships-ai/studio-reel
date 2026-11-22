@@ -5,7 +5,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const TOOL = path.join(ROOT, 'styles/stick-man/tools/status.mjs');
+const TOOL = path.join(ROOT, 'styles/stick-man/tools/run/status.mjs');
 const FX = 'test/fixtures/worker-status';
 const run = (...args) => spawnSync(process.execPath, [TOOL, ...args], { cwd: ROOT, encoding: 'utf8' });
 

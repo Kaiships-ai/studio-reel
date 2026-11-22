@@ -1,7 +1,7 @@
 # Stick-man camera and cut gate
 
-`styles/stick-man/tools/cutgate.mjs` measures the final render of a stick-man film and blocks gate ◇5 (Deliver) through
-its row in `styles/stick-man/tools/GATES.json`. It reads two sources:
+`styles/stick-man/tools/gates/cutgate.mjs` measures the final render of a stick-man film and blocks gate ◇5 (Deliver) through
+its row in `styles/stick-man/tools/gates/GATES.json`. It reads two sources:
 
 - The mp4's pixels give the hard cuts (ffmpeg scene score of 0.30 or more at 270 px wide, frames under 0.2 s apart
   merged) and the takes between them.
@@ -24,13 +24,13 @@ its row in `styles/stick-man/tools/GATES.json`. It reads two sources:
 
 ## How to get to it (user POV)
 
-At stage 5, `node styles/stick-man/tools/stagegate.mjs films/<slug> 5` runs `cutgate.mjs` on the newest final render in
+At stage 5, `node styles/stick-man/tools/gates/stagegate.mjs films/<slug> 5` runs `cutgate.mjs` on the newest final render in
 `renders/` (the same file `postcheck.mjs` checks). A FAIL or a PARTIAL keeps ◇5 OPEN, and the ◇5 line shows which: `measured:cutgate.mjs (PARTIAL)`.
 
 ## Driving it
 
-- Film: `node styles/stick-man/tools/cutgate.mjs films/<slug>` writes `review/cutgate.md` and exits 1 unless PASS.
-- Any mp4 (a reference clip, an old cut): `node styles/stick-man/tools/cutgate.mjs --mp4 <file>` prints the table;
+- Film: `node styles/stick-man/tools/gates/cutgate.mjs films/<slug>` writes `review/cutgate.md` and exits 1 unless PASS.
+- Any mp4 (a reference clip, an old cut): `node styles/stick-man/tools/gates/cutgate.mjs --mp4 <file>` prints the table;
   add `--dbg <jsonl> --w 720 --h 1280` for camera rows made at that size, `--json 1` for JSON.
 - Look for: the Hot Money bible film (`hm-bible-s5`, cut-A) passes with C3 1 % and C4 0.0 s read live; ep01 r2 v7 fails
   C1 (11 cuts in 15 s) with C3 5 % and C4 0.1 s read from parts s4, s5, s6; a film with 53 % low shots fails C3. Every Rick reference clip passes C1 and C2 and is PARTIAL without `--dbg`.

@@ -24,7 +24,7 @@ engine built, not a hand list a film keeps.
 - Prop leaves view (shotfaults `prop leaves view`): a prop in a hand (within 0.35 m of a hand of a figure in frame, or
   an `<actor>:` hand prop) that was seen whole in the 6 frames before leaves the frame while its holder stays in it,
   and comes back within 45 frames (r5 LOAD-B 691-714 and 741-757: the bait bill held up out of the top of the frame).
-- Prop out of scale (shotfaults `prop out of scale`, `lib/props/sizes.js REAL_SIZE`): a tracked prop whose name's last
+- Prop out of scale (shotfaults `prop out of scale`, `kit/props/sizes.js REAL_SIZE`): a tracked prop whose name's last
   word is its kind (bullet, pistol, bill, hotdog, phone, torch, cup; `bullet2`, `baitBill`, `billA` too, never
   `cupboard` or `billboard`) and whose longest side is outside its real range by more
   than 1.25x, while in view. Only tracked props are seen: an object a set animates outside its `props` (the r5 s5
@@ -39,12 +39,12 @@ engine built, not a hand list a film keeps.
   near part in the frustum. The dome (BackSide, drawn first, no depth) is left out, so is the floor. The engine's dome is
   the only sky: a set's flat sky cards are hidden or come out (r5 CHASE 1481-1513, 1613-1637: motel.js's 220 x 60 m
   cards at 60-70 m drew near-black over the dome with a straight edge).
-- Face sheet (`tools/facesheet.mjs`, `facebeat.mjs` (3)): rows carry `actors[n].exprDesign` (`faces.js designKey`, a hash
+- Face sheet (`tools/series/facesheet.mjs`, `facebeat.mjs` (3)): rows carry `actors[n].exprDesign` (`faces.js designKey`, a hash
   of the expression's numbers). facebeat fails while a design held 15 frames on a readable head is not in
   `review/faces-approved.json` (by kai). `facesheet.mjs films/<slug> [--query k=v] [--no-bible-check '<reason>']` writes
   `review/face-sheet.jpg` to show Kai (the flags as the rows' render had them; `face-sheet.json` only once the jpg exists);
   `--approve "<his words>" --sheet <hash>` records his yes, only for the sheet whose hash he saw stamped on the jpg.
-- Run logs (`tools/logline.mjs`): the one way to add a line to a run log; it records the line count and a hash in
+- Run logs (`tools/run/logline.mjs`): the one way to add a line to a run log; it records the line count and a hash in
   `.logchain.json` and refuses to append to a log whose first lines changed. `stagegate.mjs` runs the same check on the
   film folder at every gate (`run logs` row).
 
@@ -52,8 +52,8 @@ engine built, not a hand list a film keeps.
 
 - `node --test test/unit/stick-props-solid.test.mjs test/unit/stick-prop-rest.test.mjs test/unit/stick-prop-roll.test.mjs test/unit/stick-facesheet.test.mjs test/unit/stick-logline.test.mjs test/unit/stick-prop-sizes.test.mjs`
   (fixtures in `test/fixtures/hm-r5/`, cut from the r5 v3 and fixed rows).
-- A film: `node styles/stick-man/tools/shot.mjs --film films/<slug> --frames <a>-<b> --dbg review/shot-rows.jsonl --w 540 --h 960`,
-  then `node styles/stick-man/tools/shotgate.mjs films/<slug> --rows review/shot-rows.jsonl --w 540 --h 960`: the new
+- A film: `node styles/stick-man/tools/render/shot.mjs --film films/<slug> --frames <a>-<b> --dbg review/shot-rows.jsonl --w 540 --h 960`,
+  then `node styles/stick-man/tools/gates/shotgate.mjs films/<slug> --rows review/shot-rows.jsonl --w 540 --h 960`: the new
   kinds (and `cut by the far plane`) appear in `review/shot-gate.md` with a `fix:` in the text.
 
 ## Watch

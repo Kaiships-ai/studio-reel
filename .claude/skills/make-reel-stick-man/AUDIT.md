@@ -13,11 +13,11 @@ Where the pre-production stage lives and what is still open. History is in git.
 | `REEL_DATA.md` | the shot list format (`scenes`, `shots`, options) |
 | `GATES.md` | pre-production checks and thresholds |
 | `LEDGER.md` | ◇2a / ◇2b / ◇2c rows |
-| `styles/stick-man/tools/prepro.mjs`, `animatic.mjs`, `shotlist.mjs` | the checker (coverage, timing, cards, text, safe zone, continuity, intensity flags, `intensity.svg`) and the animatic builder |
+| `styles/stick-man/tools/gates/prepro.mjs`, `animatic.mjs`, `shotlist.mjs` | the checker (coverage, timing, cards, text, safe zone, continuity, intensity flags, `intensity.svg`) and the animatic builder |
 
 ## Roadmap (status 21 Nov 2026)
 
-1. **Grey preview**: done as `tools/previs.mjs`, a grey three.js blockout of a scene or the whole film. The engine has
+1. **Grey preview**: done as `tools/run/previs.mjs`, a grey three.js blockout of a scene or the whole film. The engine has
    no `?look=flat` flag.
 2. **Still open**: shot cards in `templates/stage-page.html`; `board.mjs` stills per shot (today two per spoken line,
    no retell mode).

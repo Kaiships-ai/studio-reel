@@ -12,7 +12,7 @@ its owner re-renders after the merge.
 - **Before** "Reproduce it yourself on the matching surface" add: write the fault as Kai sees it, one row per fault,
   with the clip, the shot and the number (`motionlib.mjs` gate or `shot.mjs` report line).
 - **Replace** "Reproduce it yourself on the matching surface" with: render the clip on the proof page
-  (`motionlib.mjs --proof <dir> --only <clip> [--fit json]`, `tools/shot.mjs --film styles/stick-man/motion-lib/proof
+  (`motionlib.mjs --proof <dir> --only <clip> [--fit json]`, `tools/render/shot.mjs --film styles/stick-man/motion-lib/proof
   --query "clip=…&phys=1&view=side" --mp4 …`) in a detached worktree at `main`. That render is the "before".
 - **After** "Binary-search the cause." add: a 5-whys pass by a fresh sub-agent, down to the first layer that went wrong
   (key data, retarget, solver, gate). A per-clip patch for a layer fault is not a fix.

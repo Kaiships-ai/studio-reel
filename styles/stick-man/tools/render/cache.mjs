@@ -1,4 +1,4 @@
-// Segment cache for tools/shot.mjs --tier ... --mp4: a part render is reused only when everything that made it is the same.
+// Segment cache for tools/render/shot.mjs --tier ... --mp4: a part render is reused only when everything that made it is the same.
 // The key (sha256) covers: the kit (git trees of styles/stick-man and kit/ at HEAD, plus any uncommitted change there), the
 // tier, size and page query, the frame range, the voice timing (vo/words.json), the bible (styles/stick-man/bible/<series>/
 // data and the film's bible-exceptions.json), the audio track muxed in, and every file the page loaded while rendering

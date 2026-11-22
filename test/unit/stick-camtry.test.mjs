@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { filmIndex, findFilm, resolve, movesOf, variantsFromWords, applyPick, formatSpec, readback, recommend } from '../../styles/stick-man/tools/camtry-core.mjs';
+import { filmIndex, findFilm, resolve, movesOf, variantsFromWords, applyPick, formatSpec, readback, recommend } from '../../styles/stick-man/tools/run/camtry-core.mjs';
 
 // a copy of Hot Money ep01 r5's act tables (r5/gen/*.js heads), its CHASE anchors and its CHASE test folder
 const LIB = fileURLToPath(new URL('../fixtures/camtry/library', import.meta.url));
@@ -159,7 +159,7 @@ function pickFixture(tool = "import fs from 'node:fs'; fs.writeFileSync(new URL(
   return { tmp, film, out, J, dz, done: () => fs.rmSync(tmp, { recursive: true, force: true }) };
 }
 const pickCli = async (...args) => { const { run } = await import('../../kit/env.mjs');
-  return run('node', [fileURLToPath(new URL('../../styles/stick-man/tools/camtry.mjs', import.meta.url)), 'pick', ...args], { capture: true }); };
+  return run('node', [fileURLToPath(new URL('../../styles/stick-man/tools/run/camtry.mjs', import.meta.url)), 'pick', ...args], { capture: true }); };
 
 test('pick writes the anchors, keeps a backup, reruns the generator; the same pick twice does not stack; V0 puts it back', async () => {
   const x = pickFixture();
@@ -209,7 +209,7 @@ test('a failing generator puts the anchors and the act back', async () => {
 });
 
 test('--frames is checked: A-B, in order, inside the segment', async () => {
-  const { run } = await import('../../kit/env.mjs'), cli = fileURLToPath(new URL('../../styles/stick-man/tools/camtry.mjs', import.meta.url));
+  const { run } = await import('../../kit/env.mjs'), cli = fileURLToPath(new URL('../../styles/stick-man/tools/run/camtry.mjs', import.meta.url));
   const film = path.join(LIB, 'hm-ep01-r5'), out = fs.mkdtempSync(path.join(os.tmpdir(), 'camtry-'));
   for (const bad of ['abc', '1500-1400', '1000-1500', '1400-1800']) {
     const r = run('node', [cli, 'đoạn đua xe, nâng lên', '--film', film, '--frames', bad, '--out', out, '--dry'], { capture: true });

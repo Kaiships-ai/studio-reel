@@ -79,7 +79,7 @@ before, except where an old one had a hand forced off a target (now kept when re
   to its grip socket).
 - `shot.mjs --report` lines (h) hand off its target while gripping (FAIL > 2 cm) and (i) held prop inside the body
   (FAIL > 1 cm after the solve).
-- Faults by the shot's camera (`tools/faults.mjs`, `engine/visible.js`, `window.__vis`): every (h), (i) and joint-step
+- Faults by the shot's camera (`tools/gates/faults.mjs`, `engine/visible.js`, `window.__vis`): every (h), (i) and joint-step
   fault frame is tagged `in`, `occluded` or `off` from the camera of that render. The tag uses the points that show the
   fault: the hand, its target and the props it holds (`rigWorld()` `L/R.target`, `heldPts`), the prop's box
   (`propPts`), and the joints and bones a channel moves (`jointstep.mjs` `stepPoints`). A ray hits only opaque meshes
@@ -130,17 +130,17 @@ and `anim: { kid: [{ f: 0, clip: 'Move_Run_Fwd_Loop', body: 'child', to: [4, 0] 
   fits (2.2) sit in the body (physics off).
 - A film that swaps in its own, bigger prop is not gated (ep01 SH172's 1.53x `hm_pistol`: 1.46 cm in the cap, the hand
   5.27 cm off): PR H.
-- tools/mocap_contact.mjs now eases the hand's offset from the capture, not its position; only `ref/reach/pistol_head.js`
+- tools/run/mocap_contact.mjs now eases the hand's offset from the capture, not its position; only `ref/reach/pistol_head.js`
   is baked that way. The other tables change on their next bake.
 
 ## Driving it
 
-- Offline checks of every clip: `node styles/stick-man/tools/motionlib.mjs` (one PASS line a clip, exit 0); each line ends
+- Offline checks of every clip: `node styles/stick-man/tools/gates/motionlib.mjs` (one PASS line a clip, exit 0); each line ends
   with the clip run through cast.js headless (fake 2D canvases) with its set pieces, physics on and off: grip cm, prop cm,
   held frames, the solved joints' largest change a frame. It fails a clip that holds an undeclared prop, declares one it
   never holds, acts on a thing (`OBJECT_ACT`) without one, moves its root faster than 4 cm a frame outside the capture, or
   starts off its origin. The solved-joint gate (`jointExcess`, `jointFails`, physics on and off) uses the film report's
-  own measure, `tools/jointstep.mjs` (`jointSteps`, shared with `shot.mjs`): every flex (knee, elbow, foot pitch), the
+  own measure, `tools/gates/jointstep.mjs` (`jointSteps`, shared with `shot.mjs`): every flex (knee, elbow, foot pitch), the
   torso's lean and roll and the four limb bones' directions turn at most 25 deg a frame, with no allowance for a capture
   that turns faster. `JOINT_KNOWN` lists the 12 rows it fails today with their measured excess over 25 (runs' and leaps'
   knees and feet, see the comments):
@@ -155,12 +155,12 @@ and `anim: { kid: [{ f: 0, clip: 'Move_Run_Fwd_Loop', body: 'child', to: [4, 0] 
   frame (`BAL_CM`: only the balance shift, pelvis balance on minus off; the raw pelvis speed is reported, not gated), the
   load steps at most 35 % a frame (`MASS_STEP`; holdKeys' linear ramp is 25 %, a keyed release eased by the dose peaks
   higher: Act_DropInTrunk_Once is 34 %).
-- The bag clips at a film's bag: `node styles/stick-man/tools/motionlib.mjs --proof <dir> --only Act_PushBagOutWindow_Once --fit
+- The bag clips at a film's bag: `node styles/stick-man/tools/gates/motionlib.mjs --proof <dir> --only Act_PushBagOutWindow_Once --fit
   '{"sill":0.8,"top":1.9,"width":1.0,"depth":0.138,"bag":{"w":0.36,"l":0.62,"h":0.30,"grip":0.415}}'` (the proof page plays a
   kit bag of that size); the side view: shot.mjs `--query "clip=Act_PushBagOutWindow_Once&fit=...&view=side&wide=1"`.
-- One clip in the browser: `node styles/stick-man/tools/shot.mjs --film styles/stick-man/motion-lib/proof --w 540 --h 960
+- One clip in the browser: `node styles/stick-man/tools/render/shot.mjs --film styles/stick-man/motion-lib/proof --w 540 --h 960
   --query "clip=Act_PutDown_Once&phys=1" --frames 0-350 --report /tmp/putdown.txt --fast 1`; read (h) and (i): PASS.
-- A contact sheet: `node styles/stick-man/tools/motionlib.mjs --sheet Act --out /tmp/sheets`.
+- A contact sheet: `node styles/stick-man/tools/gates/motionlib.mjs --sheet Act --out /tmp/sheets`.
 - Everything (mp4s on and off, reports, sheets; minutes, one render process): `--proof <dir>`.
 - Regression: `node --test test/unit/stick-motionlib.test.mjs test/unit/stick-body.test.mjs test/unit/stick-motion.test.mjs
   test/unit/stick-leg-reach.test.mjs`.

@@ -30,14 +30,14 @@ a build check, a manifest entry) in the same change. Drop a row once its mistake
 | `stagegate.mjs` writes only inside a real film folder (a `--help` once littered the repo root with gate files) | `test/unit/stick-gates-voice.test.mjs` |
 | A stick-man prop never sits in a head or a set solid; the solids come from the set's box meshes plus `COLLIDE`, never a hand list only | `prop in the head` / `prop in the set` in `shotfaults.mjs` from `engine/play.js` `propIn`; `test/unit/stick-props-solid.test.mjs` |
 | A prop let go lands on every solid the set built | `engine/propobj.js` `S.rest` from `engine/solids.js`; `test/unit/stick-prop-rest.test.mjs` |
-| A held prop stays in frame while its holder does; a tracked prop keeps its real size | `prop leaves view`, `prop out of scale` (`lib/props/sizes.js`) in `shotfaults.mjs`; `test/unit/stick-props-solid.test.mjs` |
+| A held prop stays in frame while its holder does; a tracked prop keeps its real size | `prop leaves view`, `prop out of scale` (`kit/props/sizes.js`) in `shotfaults.mjs`; `test/unit/stick-props-solid.test.mjs` |
 | An `'along'` hand prop with a top declares `userData.top`; the engine keeps it up | `test/unit/stick-prop-roll.test.mjs` (the kit pistol in Act_PistolShoot_Once; the `ROLL_FREE` list only shrinks) |
 | A stick-man shot never shows an object cut by the camera's far plane; the dome is the only sky | `cut by the far plane` in `shotfaults.mjs` from `engine/play.js` `farCut`; `test/unit/stick-props-solid.test.mjs` |
 | No face design reaches a film before its face sheet is approved at S2 | `facebeat.mjs` (3) against `review/faces-approved.json` (`facesheet.mjs`); `test/unit/stick-facesheet.test.mjs` |
-| Kai's stick-man touchpoints are exactly S1 S2 K1 K2 K3 Post; every other gate locks on machine checks + an independent reviewer's READY, and an AI verdict never locks K1 (◇2b) or K2 (◇5) | `touchpoints` and `approver` in `styles/stick-man/tools/GATES.json`, `stagegate.mjs`; `test/unit/stick-touchpoints.test.mjs` |
+| Kai's stick-man touchpoints are exactly S1 S2 K1 K2 K3 Post; every other gate locks on machine checks + an independent reviewer's READY, and an AI verdict never locks K1 (◇2b) or K2 (◇5) | `touchpoints` and `approver` in `styles/stick-man/tools/gates/GATES.json`, `stagegate.mjs`; `test/unit/stick-touchpoints.test.mjs` |
 | Every row of the make-reel-stick-man Rules table names the tool, test or independent review that enforces it; SKILL.md stays ≤ 200 lines | `test/unit/stick-touchpoints.test.mjs` |
 | K2 v1 passes with ≤ 5 Kai notes; each note gets a WHOCHECKS kind and a check before the next episode; 2 rounds on one shot and fault kind force K3 | `firstrun.mjs` (◇1), `retakes.mjs --premise` (◇4, ◇5); `test/unit/stick-touchpoints.test.mjs` |
-| A run log only grows | `tools/logline.mjs` (refuses a changed log) and the `run logs` row of every `stagegate.mjs` gate; `test/unit/stick-logline.test.mjs` |
+| A run log only grows | `tools/run/logline.mjs` (refuses a changed log) and the `run logs` row of every `stagegate.mjs` gate; `test/unit/stick-logline.test.mjs` |
 
 Kai's own 3D reels (Blocky Kai skits, 3D listicles) are `/make-reel-3d` → `styles/kai-reel-3d/WORKFLOW.md`, dev only; stick-man
 story reels (three.js stick figures, like pilot A) are `/make-reel-stick-man` → `.claude/skills/make-reel-stick-man/SKILL.md`,

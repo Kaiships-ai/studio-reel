@@ -1,7 +1,7 @@
 # Stick-man faces against the story, and the rig test
 
-Two checks for Kai's acting and rig complaints (QA areas M7 and A2). `tools/facebeat.mjs` compares each face the
-picture draws with the beat it plays and counts how often each character's face comes back. `tools/rigtest.mjs` plays
+Two checks for Kai's acting and rig complaints (QA areas M7 and A2). `tools/gates/facebeat.mjs` compares each face the
+picture draws with the beat it plays and counts how often each character's face comes back. `tools/gates/rigtest.mjs` plays
 every motion-library clip through the real rig and measures the head's shape, the bones' lengths and the knee and elbow
 flex in every frame; `--sheet` renders each clip's worst pose from the front, 3/4, side and back.
 
@@ -37,24 +37,24 @@ flex in every frame; `--sheet` renders each clip's worst pose from the front, 3/
 
 ## How to get to it (user POV)
 
-At gate 4 of a stick-man film: `node styles/stick-man/tools/shot.mjs --film films/<slug> --frames <first>-<last> --dbg
-films/<slug>/review/shot-rows.jsonl`, then `node styles/stick-man/tools/stagegate.mjs films/<slug> 4`.
+At gate 4 of a stick-man film: `node styles/stick-man/tools/render/shot.mjs --film films/<slug> --frames <first>-<last> --dbg
+films/<slug>/review/shot-rows.jsonl`, then `node styles/stick-man/tools/gates/stagegate.mjs films/<slug> 4`.
 
 ## Driving it
 
-- `node styles/stick-man/tools/facebeat.mjs films/<slug> [--rows <jsonl>] [--h <frame height>] [--out <dir>]`: writes
+- `node styles/stick-man/tools/gates/facebeat.mjs films/<slug> [--rows <jsonl>] [--h <frame height>] [--out <dir>]`: writes
   `faces.md` (off-beat faces with their second, faces per character) and `faces.json`.
-- `node styles/stick-man/tools/rigtest.mjs [--json <file>] [--sheet <dir>]`: one line per clip, about 12 s without the
+- `node styles/stick-man/tools/gates/rigtest.mjs [--json <file>] [--sheet <dir>]`: one line per clip, about 12 s without the
   sheet; the sheet is 208 small renders, one at a time (about 10 min).
 - Regression: `node --test test/unit/stick-acting-rig.test.mjs`; the moving hold: `node --test test/unit/micro-motion.test.mjs`.
 - The PR #131 numbers, rerun from saved rows (`D=~/.claude/orchestrate/hm-quality/step4-rows`, its README has the
   join and the shot.mjs commands behind each rows file):
-  - `node styles/stick-man/tools/facebeat.mjs $D/story-hm-ep01-r2 --rows $D/v7-rows.jsonl --h 1280 --out /tmp/faces-v7`:
+  - `node styles/stick-man/tools/gates/facebeat.mjs $D/story-hm-ep01-r2 --rows $D/v7-rows.jsonl --h 1280 --out /tmp/faces-v7`:
     FAIL, 1 off the beat (1:20.4 y_defiant, SH340), over 2 takes y_strain 5, y_fear 5, y_shock 3, y_worried 3. The rows
     join the dbg rows the r2 builds saved (S1-S3 v5, S4-S5 v7, S6-S7 s6), not a fresh render.
-  - `node styles/stick-man/tools/facebeat.mjs films/hm-bible-s5 --rows $D/bible-rows.jsonl --story $D/story-hm-ep01-r2 --h 1280 --out /tmp/faces-bible`:
+  - `node styles/stick-man/tools/gates/facebeat.mjs films/hm-bible-s5 --rows $D/bible-rows.jsonl --story $D/story-hm-ep01-r2 --h 1280 --out /tmp/faces-bible`:
     PASS, 0 off the beat, most-used face 2 takes. The bible cut has no storyboard of its own; it plays r2's S4-S5 (`films/hm-ep01/shared/r2`).
-  - `node styles/stick-man/tools/rigtest.mjs`: 0 of 52 over a limit, RIG_KNOWN empty (worst bone 2.3 % foreL, Act_DropInTrunk_Once f65).
+  - `node styles/stick-man/tools/gates/rigtest.mjs`: 0 of 52 over a limit, RIG_KNOWN empty (worst bone 2.3 % foreL, Act_DropInTrunk_Once f65).
 
 ## Gotchas
 

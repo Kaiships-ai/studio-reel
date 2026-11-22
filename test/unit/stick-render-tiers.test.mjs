@@ -31,7 +31,7 @@ test('each tier sets its size; T0 makes no pixels; T4 needs Kai\'s words', () =>
 });
 
 test('shot.mjs refuses a T4 render without --kai-ok before it opens a browser', () => {
-  const r = spawnSync(process.execPath, ['styles/stick-man/tools/shot.mjs', '--film', 'films/none', '--tier', 'final', '--mp4', 'x.mp4'], { cwd: ROOT, encoding: 'utf8', timeout: 30000 });
+  const r = spawnSync(process.execPath, ['styles/stick-man/tools/render/shot.mjs', '--film', 'films/none', '--tier', 'final', '--mp4', 'x.mp4'], { cwd: ROOT, encoding: 'utf8', timeout: 30000 });
   assert.equal(r.status, 2); assert.match(r.stderr, /kai-ok/);
 });
 

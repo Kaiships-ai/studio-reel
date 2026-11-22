@@ -1,7 +1,7 @@
 // What a series' bible folder may hold, and the check for a new series' skeleton (bible/_template/).
 //   node styles/stick-man/bible/series.mjs <series.json>   -> lists what is missing or still a placeholder
 // A series is data: names, hashes, palettes, clip lists. A number that decides pass or fail (a limit, a threshold) is a
-// kit gate's job (tools/GATES.json, WHOCHECKS.json) so every series is held to the same bar. thresholdKeys() finds such keys;
+// kit gate's job (tools/gates/GATES.json, WHOCHECKS.json) so every series is held to the same bar. thresholdKeys() finds such keys;
 // the boundary test (test/unit/stick-boundary.test.mjs) fails CI on any in bible/<series>/*.json.
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';

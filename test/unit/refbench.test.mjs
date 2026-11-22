@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { ROOT, run, env } from '../../kit/env.mjs';
-import { measureVideo, bedStats, gapTable, tableMarkdown, payoffStats, lookStats, METRICS, shotBands } from '../../styles/stick-man/tools/refbench.mjs';
+import { measureVideo, bedStats, gapTable, tableMarkdown, payoffStats, lookStats, METRICS, shotBands } from '../../styles/stick-man/tools/review/refbench.mjs';
 
 test('bed presence, level and the biggest drop come from the 5 s section levels', () => {
   assert.deepEqual(bedStats([-30, -30, -47, -30]), { bedPresence: 0.75, bedDb: -30, bedDrop: 17 });
@@ -149,7 +149,7 @@ test('a silent sound track reports silence: the row says so and the tool prints 
   const row = await measureVideo(f);
   assert.equal(row.silent, true);
   assert.equal(row.film.truePeak, null);
-  const r = run('node', ['styles/stick-man/tools/refbench.mjs', f], { capture: true, cwd: ROOT });
+  const r = run('node', ['styles/stick-man/tools/review/refbench.mjs', f], { capture: true, cwd: ROOT });
   assert.match(r.stdout, /true peak \(dBFS\)\s+-inf \(silent\)/);
 });
 

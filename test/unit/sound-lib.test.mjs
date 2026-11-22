@@ -51,7 +51,7 @@ test('every sound links its Freesound short page, and no committed sound file ca
 });
 
 function resolve(names) {
-  const r = run('python', ['-I', `${TOOLS}/sound_lib.py`, ...names], { capture: true });
+  const r = run('python', ['-I', `${TOOLS}/run/sound_lib.py`, ...names], { capture: true });
   assert.equal(r.status, 0, r.stderr);
   return JSON.parse(r.stdout);
 }
@@ -99,7 +99,7 @@ sf.write(r'${path.join(film, 'vo/vo.wav')}', 0.3 * np.sin(2 * np.pi * 220 * t) *
     const words = [0, 1, 2].map(i => ({ t0: i, t1: i + 0.6, word: `w${i}`, line: 'L01' }));
     fs.writeFileSync(path.join(film, 'vo/words.json'), JSON.stringify(words));
     fs.writeFileSync(path.join(film, 'audio/cues.json'), JSON.stringify([{ t: 0.7, name: 'bag_swish', strength: 0.5 }, { t: 1.7, name: 'thud', strength: 0.5 }]));
-    const r = run('python', ['-I', `${TOOLS}/mix.py`, film], { capture: true });
+    const r = run('python', ['-I', `${TOOLS}/run/mix.py`, film], { capture: true });
     assert.equal(r.status, 0, r.stderr);
     assert.match(r.stderr, /WARNING cue name 'bag_swish' is not in sound_lib\.NAMES; guessed as 'whoosh'/);
     const levels = fs.readFileSync(path.join(film, 'audio/levels.txt'), 'utf8');
@@ -122,7 +122,7 @@ sf.write(r'${path.join(film, 'vo/vo.wav')}', 0.1 * v / np.abs(v).max() * ((t % 1
       const words = [{ t0: 0, t1: 0.6, word: 'w0' }, ...said.map((w, i) => ({ t0: at[i], t1: at[i + 1] ?? 1.6, word: w })), { t0: 2, t1: 2.6, word: 'w2' }];
       fs.writeFileSync(path.join(film, 'vo/words.json'), JSON.stringify(words.map(w => ({ ...w, line: 'L01' }))));
       fs.writeFileSync(path.join(film, 'audio/cues.json'), JSON.stringify([{ t: 1.05, name: 'gunshot', strength: 1, lock: true, ...cue }]));
-      const r = run('python', ['-I', `${TOOLS}/mix.py`, film], { capture: true });
+      const r = run('python', ['-I', `${TOOLS}/run/mix.py`, film], { capture: true });
       assert.equal(r.status, 0, r.stderr);
       return Number(fs.readFileSync(path.join(film, 'audio/levels.txt'), 'utf8').match(/gunshot@1\.05 ([-+]\d+\.\d)/)[1]);
     };
@@ -149,12 +149,12 @@ sf.write(r'${path.join(film, 'vo/vo.wav')}', 0.3 * np.sin(2 * np.pi * 220 * t) *
       assert.equal(run('ffmpeg', ['-v', 'error', '-y', '-f', 'lavfi', '-i', `color=black:s=64x64:r=30:d=${d}`, '-pix_fmt', 'yuv420p', '-c:v', 'libx264', f], { capture: true }).status, 0);
       return f;
     };
-    const short = run('python', ['-I', `${TOOLS}/mix.py`, film, '--mux', video(2), path.join(tmp, 'short.mp4')], { capture: true });
+    const short = run('python', ['-I', `${TOOLS}/run/mix.py`, film, '--mux', video(2), path.join(tmp, 'short.mp4')], { capture: true });
     assert.notEqual(short.status, 0, 'a 2 s video under a 3 s mix is cut short, not muxed');
     assert.match(short.stderr, /video 2\.000 s .* mix 3\.000 s/);
 
     // an encoder that always lands at the given loudness and true peak, in place of AAC
-    const encode = (I, tp) => run('python', ['-I', '-c', `import sys; sys.path.insert(0, ${JSON.stringify(path.join(ROOT, TOOLS))}); import mix
+    const encode = (I, tp) => run('python', ['-I', '-c', `import sys; sys.path.insert(0, ${JSON.stringify(path.join(ROOT, TOOLS, 'run'))}); import mix
 mix.mux = lambda video, wav, out: (${I}, ${tp})
 sys.argv = ['mix.py', ${JSON.stringify(film)}, '--mux', ${JSON.stringify(video(3))}, ${JSON.stringify(path.join(tmp, 'out.mp4'))}]; mix.main()`], { capture: true });
     const hot = encode(-14.0, -0.4);

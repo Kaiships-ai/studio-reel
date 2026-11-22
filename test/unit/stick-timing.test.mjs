@@ -5,7 +5,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const TOOL = path.join(ROOT, 'styles/stick-man/tools/timing.mjs');
+const TOOL = path.join(ROOT, 'styles/stick-man/tools/gates/timing.mjs');
 const film = briefs => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'timing-'));
   fs.writeFileSync(path.join(dir, 'storyboard.json'), JSON.stringify({ shots: [{ id: 'SH010', kind: 'action' }, { id: 'SH020', kind: 'card' }] }));

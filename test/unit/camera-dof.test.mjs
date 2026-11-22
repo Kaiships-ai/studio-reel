@@ -1,10 +1,10 @@
 // Lens blur per shot (KIT-DEPTH): a medium shot blurs the set behind the subject like a real lens (focal length squared
 // over focus distance), a wide stays readable, a close-up keeps its preset, and a shot that names its own blur keeps it.
-// Both camera paths: the shot solver (engine/camera.js) and the hand-directed camera (allout/director.js).
+// Both camera paths: the shot solver (engine/camera.js) and the hand-directed camera (kit/acting/director.js).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createCamera, lensBlur, LENS_BAND } from '../../styles/stick-man/engine/camera.js';
-import { createDirector } from '../../styles/stick-man/allout/director.js';
+import { createDirector } from '../../styles/stick-man/kit/acting/director.js';
 
 const ANCHOR = { head: [0, 0, 1.6], top: [0, 0, 1.95], sole: [0, 0, 0], center: [0, 0, 1.0], yaw: 0 };
 const A = () => ANCHOR;

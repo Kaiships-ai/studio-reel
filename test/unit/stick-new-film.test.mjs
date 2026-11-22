@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs'; import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { loadReel } from '../../styles/stick-man/tools/reel_load.mjs';
-import { hold, polishAt, STAND, BREATH } from '../../styles/stick-man/lib/acting/keys.js';
+import { loadReel } from '../../styles/stick-man/tools/render/reel_load.mjs';
+import { hold, polishAt, STAND, BREATH } from '../../styles/stick-man/kit/acting/keys.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -12,12 +12,12 @@ test('new_film.mjs writes a film whose reel.js loads with the shared acting keys
   const films = path.join(ROOT, 'films'), hadFilms = fs.existsSync(films);
   const slug = `new-film-test-${process.pid}`, dir = path.join(films, slug);
   try {
-    execFileSync(process.execPath, [path.join(ROOT, 'styles/stick-man/tools/new_film.mjs'), slug], { stdio: 'pipe' });
+    execFileSync(process.execPath, [path.join(ROOT, 'styles/stick-man/tools/run/new_film.mjs'), slug], { stdio: 'pipe' });
     for (const f of ['reel.js', 'storyboard.json', 'DECISIONS.json', 'vo/script.json', 'status.json']) assert.ok(fs.existsSync(path.join(dir, f)), f);
     const reel = await loadReel(dir, 'reel.js');
     assert.equal(reel.title, slug);
     assert.equal(JSON.parse(fs.readFileSync(path.join(dir, 'status.json'), 'utf8')).film, `films/${slug}`);
-    assert.match(fs.readFileSync(path.join(dir, 'reel.js'), 'utf8'), /from '\/styles\/stick-man\/lib\/acting\/keys\.js'/);
+    assert.match(fs.readFileSync(path.join(dir, 'reel.js'), 'utf8'), /from '\/styles\/stick-man\/kit\/acting\/keys\.js'/);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
     if (!hadFilms) fs.rmSync(films, { recursive: true, force: true });

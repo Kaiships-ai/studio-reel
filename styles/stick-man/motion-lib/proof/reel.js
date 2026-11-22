@@ -1,9 +1,9 @@
 // The motion library's proof page (dev only): one clip on one body, physics on or off, a 3/4 camera that follows it.
-//   node styles/stick-man/tools/shot.mjs --film styles/stick-man/motion-lib/proof --w 540 --h 960 --query "clip=Act_PickUp_Once&body=adult&phys=0" --mp4 ...
+//   node styles/stick-man/tools/render/shot.mjs --film styles/stick-man/motion-lib/proof --w 540 --h 960 --query "clip=Act_PickUp_Once&body=adult&phys=0" --mp4 ...
 //   query: clip (a clip name), view (side | turn: see below), body (default the clip's own, else adult), phys=0 (PHYS.on false), times (loop cycles, default 2),
 //          swap (a film's prop for a clip's, as JSON: a prop kind or its contract, swap={"phone":{"mode":"up","grip":[0,0,0],"size":[0.406,0.098,0.07]}}),
 //          ov (an overlays list as JSON, drawn over the clip: engine/overlays.js)
-// tools/motionlib.mjs --proof renders every clip through this page.
+// tools/gates/motionlib.mjs --proof renders every clip through this page.
 import { sizedBag, propSwap } from '/styles/stick-man/motion-lib/props.js';
 import { PHYS } from '/styles/stick-man/engine/body.js';
 import { SPECS } from '/styles/stick-man/engine/play.js';
@@ -52,7 +52,7 @@ const SEG = 4, track = [];
 if (side) for (let f = 0; f < last + 12; f += SEG) track.push({ at: { f }, intent: 'ws', why: 'P1 · motion library proof (side, tracking)', cut: 'cut', cam: cam(xAt(f)),
   to: cam(xAt(f + SEG)), move: { from: { f }, dur: SEG, ease: 'linear' } });
 // &view=turn&az=<deg>&at=<frame>: a still camera round the body where it is at that frame, az 0 = from ahead (the face),
-// 90 = from its left, 180 = from behind (tools/rigtest.mjs: the rig sheet's turnaround)
+// 90 = from its left, 180 = from behind (tools/gates/rigtest.mjs: the rig sheet's turnaround)
 const turn = QS.get('view') === 'turn', az = Number(QS.get('az') || 0) * Math.PI / 180, at = Number(QS.get('at') || F0);
 const orbit = x => ({ pos: [x + 3.2 * k * Math.cos(az), 3.2 * k * Math.sin(az), 1.15 * k], aim: [x, 0, 1.05 * k], lens: 40 });
 const direct = turn ? [{ at: { f: 0 }, intent: 'ws', why: 'P1 · rig turnaround', cut: 'cut', cam: orbit(xAt(at)) }] : side ? track : [{ at: { f: 0 }, intent: 'ws', why: 'P1 · motion library proof', cut: 'cut', cam: cam(x0),

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import zlib from 'node:zlib';
-import { shotFaults, bySecond, cuts, blocks, project, G_FRAME, PLANTED_Z, REF_H, CHANGE_PX } from '../../styles/stick-man/tools/shotfaults.mjs';
+import { shotFaults, bySecond, cuts, blocks, project, G_FRAME, PLANTED_Z, REF_H, CHANGE_PX } from '../../styles/stick-man/tools/gates/shotfaults.mjs';
 
 const W = 404, H = 720;
 const row = (f, o = {}) => ({ f, act: 'a', mix: null, set: 's', motion: { cut: true, feet: {} }, camera: { pos: [0, -5, 1.5], target: [0, 0, 1], fov: 60, lens: 24 },

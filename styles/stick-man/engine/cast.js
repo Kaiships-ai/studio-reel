@@ -6,7 +6,7 @@ import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { toon, lin, css, B, INK_RGB, INK_SUN, PLACE } from './look.js';
 import { DEG } from './mathx.js';
 import { EXPR, faceRig, mixFace, FACE_STYLE } from './faces.js';
-import { makeHandProp } from '../lib/cast/handprops.js';
+import { makeHandProp } from '#kit/cast/handprops.js';
 import { SOFT, footDown, legReach, limitArm, limitBody, ROM, torsoSlices, ellipsoid, worldBox, solveArm, armPenetration, propPush, PHYS, centreOfMass, balanceShift, headWear, wearVolume } from './body.js';
 
 const SPIN_Q = new THREE.Quaternion(), SPIN_AX = new THREE.Vector3(0, 1, 0), _camL = new THREE.Vector3();
@@ -23,7 +23,7 @@ export const TORSO = { cx: 0.0, cy: 1.72, w: 0.57, h: 0.90, depth: 0.80 };
 const HA = 0.5 * W, HB = 0.5 * HEAD_H * W;   // head half width / half height (m)
 const LOOK_RAD = 0.36;                       // face slide per unit of `look`
 
-// Faces (expressions, skin marks, head-attached emotion marks): faces.js. Hand props: lib/cast/handprops.js.
+// Faces (expressions, skin marks, head-attached emotion marks): faces.js. Hand props: kit/cast/handprops.js.
 export { EXPR, EXPR_NAMES, MARK_NAMES, baseExpr } from './faces.js';
 
 const inkMat = new THREE.MeshBasicMaterial({ color: lin(...INK_RGB) });

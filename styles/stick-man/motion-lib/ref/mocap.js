@@ -1,5 +1,5 @@
 // Motion capture onto the stick-man rig. A source is a cycle of joint positions taken from a rigged animation (Mixamo
-// FBX, dumped by tools/mocap_dump.py in Blender: Blender world metres, the character facing -Y, its left at +X, Z up,
+// FBX, dumped by tools/run/mocap_dump.py in Blender: Blender world metres, the character facing -Y, its left at +X, Z up,
 // recorded in place). mocapCycle turns it into this rig's pose channels a frame, for one body:
 //   - the in-place cycle is put back on the ground: the body travels at the speed its planted feet slide back
 //   - everything is scaled by this body's leg against the source's (hip joint to ankle)
@@ -55,7 +55,7 @@ export function mocapCycle(src, { legM, once = false, roll = true }) {
   const down = i => F[i].LeftFoot[2] < rest + 0.02;
   let s0 = 0; if (!once) for (let i = 0; i < N; i++) if (down(i) && !down((i - 1 + N) % N)) { s0 = i; break; }   // a one-off keeps its order
   F = [...F.slice(s0), ...F.slice(0, s0)];
-  // <Bone>_f / _u are directions (a bone's forward and up, tools/mocap_dump.py), not positions: they are not moved or scaled
+  // <Bone>_f / _u are directions (a bone's forward and up, tools/run/mocap_dump.py), not positions: they are not moved or scaled
   const isDir = n => /_[fu]$/.test(n);
   const W = F.map((f, t) => { const o = {}; for (const [n, p] of Object.entries(f)) o[n] = isDir(n) ? p : mul(add(p, [v * t, 0, 0]), k); return o; });
   const hip0 = mix(W[0].LeftUpLeg, W[0].RightUpLeg, 0.5)[0]; for (const f of W) for (const [n, p] of Object.entries(f)) if (!isDir(n)) p[0] -= hip0;
@@ -235,7 +235,7 @@ export function mocapJoin(parts, { surfaces = [], marks = [], source } = {}) {
   return { source, fps: 30, frames: out.map(f => Object.fromEntries(Object.entries(f).map(([k, v]) => [k, toClip(v)]))), surfaces, marks };
 }
 
-// A capture moving a limb faster than the style allows a frame (tools/jointstep.mjs: 25 deg/f for an elbow or a knee's
+// A capture moving a limb faster than the style allows a frame (tools/gates/jointstep.mjs: 25 deg/f for an elbow or a knee's
 // flex, or a bone's direction), slowed there: each such step is split into as many frames as it needs, the joints moved
 // in a straight line between the two captured frames (the bones' frames _f, _u turned with them). Frames after it come
 // later by as many: a reach table keyed by frame is baked on the slowed clip. Mixamo "Shooting Gun" snaps the elbow

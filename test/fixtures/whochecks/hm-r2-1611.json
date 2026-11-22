@@ -7,7 +7,7 @@
    "row": "pose-snap",
    "evidence": [
     {
-     "by": "tools/shotgate.mjs",
+     "by": "tools/gates/shotgate.mjs",
      "result": "hit",
      "on": "block"
     },
@@ -23,7 +23,7 @@
    "row": "acting",
    "evidence": [
     {
-     "by": "tools/facebeat.mjs",
+     "by": "tools/gates/facebeat.mjs",
      "result": "untested",
      "on": "polish v001",
      "why": "not replayable"
@@ -52,7 +52,7 @@
    "row": "motion-feel",
    "evidence": [
     {
-     "by": "tools/shotgate.mjs",
+     "by": "tools/gates/shotgate.mjs",
      "result": "miss",
      "on": "v002"
     },
@@ -68,7 +68,7 @@
    "row": "too-many-cuts",
    "evidence": [
     {
-     "by": "tools/cutgate.mjs",
+     "by": "tools/gates/cutgate.mjs",
      "result": "hit",
      "on": "v002"
     },
@@ -85,7 +85,7 @@
    "row": "prop-appears",
    "evidence": [
     {
-     "by": "tools/shotgate.mjs",
+     "by": "tools/gates/shotgate.mjs",
      "result": "hit",
      "on": "v002"
     },
@@ -102,7 +102,7 @@
    "row": "prop-across-cut",
    "evidence": [
     {
-     "by": "tools/shotgate.mjs",
+     "by": "tools/gates/shotgate.mjs",
      "result": "miss",
      "on": "v002"
     },
@@ -118,7 +118,7 @@
    "row": "prop-floats",
    "evidence": [
     {
-     "by": "tools/shotgate.mjs",
+     "by": "tools/gates/shotgate.mjs",
      "result": "hit",
      "on": "v002"
     },
@@ -135,7 +135,7 @@
    "row": "prop-across-cut",
    "evidence": [
     {
-     "by": "tools/shotgate.mjs",
+     "by": "tools/gates/shotgate.mjs",
      "result": "miss",
      "on": "v002"
     },
@@ -152,7 +152,7 @@
    "row": "acting",
    "evidence": [
     {
-     "by": "tools/facebeat.mjs",
+     "by": "tools/gates/facebeat.mjs",
      "result": "untested",
      "on": "v002",
      "why": "not replayable"
@@ -169,7 +169,7 @@
    "row": "acting",
    "evidence": [
     {
-     "by": "tools/facebeat.mjs",
+     "by": "tools/gates/facebeat.mjs",
      "result": "untested",
      "on": "v002",
      "why": "not replayable"
@@ -181,7 +181,7 @@
    "row": "acting",
    "evidence": [
     {
-     "by": "tools/facebeat.mjs",
+     "by": "tools/gates/facebeat.mjs",
      "result": "untested",
      "on": "v002",
      "why": "not replayable"
@@ -211,7 +211,7 @@
    "row": "figure-skates",
    "evidence": [
     {
-     "by": "tools/shotgate.mjs",
+     "by": "tools/gates/shotgate.mjs",
      "result": "hit",
      "on": "v002"
     },
@@ -227,7 +227,7 @@
    "row": "body-through-set",
    "evidence": [
     {
-     "by": "tools/shotgate.mjs",
+     "by": "tools/gates/shotgate.mjs",
      "result": "hit",
      "on": "v002"
     },
@@ -243,7 +243,7 @@
    "row": "grip-drag",
    "evidence": [
     {
-     "by": "tools/shotgate.mjs",
+     "by": "tools/gates/shotgate.mjs",
      "result": "miss",
      "on": "v002"
     },
@@ -282,7 +282,7 @@
    "row": "figure-jumps",
    "evidence": [
     {
-     "by": "tools/shotgate.mjs",
+     "by": "tools/gates/shotgate.mjs",
      "result": "hit",
      "on": "v002"
     },
@@ -298,7 +298,7 @@
    "row": "unreadable",
    "evidence": [
     {
-     "by": "tools/cutgate.mjs",
+     "by": "tools/gates/cutgate.mjs",
      "result": "untested",
      "on": "v002",
      "why": "not replayable"
@@ -328,13 +328,13 @@
    "row": "face-repeat",
    "evidence": [
     {
-     "by": "tools/facebeat.mjs",
+     "by": "tools/gates/facebeat.mjs",
      "result": "untested",
      "on": "v002",
      "why": "not replayable"
     },
     {
-     "by": "tools/facebeat.mjs",
+     "by": "tools/gates/facebeat.mjs",
      "result": "hit",
      "on": "v7"
     },
@@ -372,7 +372,7 @@
    "row": "angle",
    "evidence": [
     {
-     "by": "tools/cutgate.mjs",
+     "by": "tools/gates/cutgate.mjs",
      "result": "untested",
      "on": "v002",
      "why": "not replayable"
@@ -390,7 +390,7 @@
    "row": "cloth-jitter",
    "evidence": [
     {
-     "by": "tools/shotgate.mjs",
+     "by": "tools/gates/shotgate.mjs",
      "result": "untested",
      "on": "slice v001",
      "why": "not replayable"
@@ -407,7 +407,7 @@
    "row": "body-through-set",
    "evidence": [
     {
-     "by": "tools/shotgate.mjs",
+     "by": "tools/gates/shotgate.mjs",
      "result": "untested",
      "on": "slice v001",
      "why": "not replayable"

@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ALL } from '../../styles/stick-man/motion-lib/index.js';
-import { rigClip } from '../../styles/stick-man/tools/motionlib.mjs';
+import { rigClip } from '../../styles/stick-man/tools/gates/motionlib.mjs';
 
 const HAIR_MM = 0.01;
 const corners = (a, b) => [0, 1, 2, 3, 4, 5, 6, 7].map(n => a.clone().set(n & 1 ? b.x : a.x, n & 2 ? b.y : a.y, n & 4 ? b.z : a.z));

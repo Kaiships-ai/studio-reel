@@ -1,10 +1,10 @@
-// The costume cloth (styles/stick-man/allout/cloth.js, the hoodie's cords): a pinned chain falls under gravity, stays
+// The costume cloth (styles/stick-man/kit/cast/cloth.js, the hoodie's cords): a pinned chain falls under gravity, stays
 // outside a body volume it drapes over, keeps its length, and gives the same result from the same start.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import { Cloth, lerpRigid, bodyJump } from '../../styles/stick-man/allout/cloth.js';
-import { shakeOf, CORD_SHAKE_MAX } from '../../styles/stick-man/tools/faults.mjs';
+import { Cloth, lerpRigid, bodyJump } from '../../styles/stick-man/kit/cast/cloth.js';
+import { shakeOf, CORD_SHAKE_MAX } from '../../styles/stick-man/tools/gates/faults.mjs';
 
 const N = 10, SEG = 0.04, C = new THREE.Vector3(0, -0.2, 0.05), R = 0.1;
 // a sphere collider: a point inside (plus margin) goes to its surface
@@ -62,7 +62,7 @@ function cordOn(body, n, eased) {
   }
   return tips;
 }
-// the tip's shake against the body (tools/faults.mjs, the shot report's cord number): the largest back-and-forth, m/frame^2
+// the tip's shake against the body (tools/gates/faults.mjs, the shot report's cord number): the largest back-and-forth, m/frame^2
 const shake = tips => Math.max(...shakeOf(tips.map(v => v.toArray())));
 
 test('lerpRigid eases position, turn and scale between two body frames', () => {
@@ -100,7 +100,7 @@ const at = (x, deg = 0) => new THREE.Matrix4().compose(new THREE.Vector3(x, 0, 0
 // held at the curb, then on the cut (frame 20) 3.5 m away and turned 30 deg: held there, or walking from there (a cut into motion)
 const cutHeld = f => (f < 20 ? at(0) : at(3.5, 30));
 const cutWalk = f => (f < 20 ? at(0) : walk(f - 20).premultiply(at(3.5, 30)));
-// the hoodie's cord step (allout/hoodie.js step) on a body frame per frame; reseat: what a body jump does. Returns the tip
+// the hoodie's cord step (kit/cast/hoodie.js step) on a body frame per frame; reseat: what a body jump does. Returns the tip
 // in the body frame per frame and the frames that re-seated
 function cordStep(body, n, reseat) {
   const edges = [], bends = []; for (let i = 0; i < N - 1; i++) edges.push([i, i + 1, 0.025]); for (let i = 0; i < N - 2; i++) bends.push([i, i + 2, 0.05]);
@@ -172,10 +172,10 @@ test('bodyJump: a travel over 1 m in a frame, off last frame\'s by over 0.5 m (1
   assert.equal(bodyJump(v(0), v(0), 12 * Math.PI / 180), false);
 });
 
-// the rule over real clips (tools/cordjump.mjs runs it over the whole library: no clip-body run fires): the fastest
+// the rule over real clips (tools/gates/cordjump.mjs runs it over the whole library: no clip-body run fires): the fastest
 // library clips, played through the real rig in the real hoodie, never re-seat the cords
 test('the sprint, jump and get-up clips in the real hoodie: no frame is a body jump', async () => {
-  const { scanClip } = await import('../../styles/stick-man/tools/cordjump.mjs'), { getClip } = await import('../../styles/stick-man/motion-lib/index.js');
+  const { scanClip } = await import('../../styles/stick-man/tools/gates/cordjump.mjs'), { getClip } = await import('../../styles/stick-man/motion-lib/index.js');
   for (const name of ['Move_Sprint_Fwd_Loop', 'Act_Jump_Once', 'Trans_GetUp_Once']) {
     const r = await scanClip(getClip(name));
     assert.deepEqual(r.jumps, [], `${name}: frames ${r.jumps}`);

@@ -1,9 +1,9 @@
-// The shot report's camera numbers (styles/stick-man/tools/faults.mjs camStats, shot.mjs --report (b)). Hot Money ep01 r2
+// The shot report's camera numbers (styles/stick-man/tools/gates/faults.mjs camStats, shot.mjs --report (b)). Hot Money ep01 r2
 // (Kai 17/11): a film directed one shot per frame (every frame a cut) crashed the report at shot.mjs:136 (rows[-1]: no
 // frame had a camera number), so s4, s5 and s6 could not get the kit's own report.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { camStats } from '../../styles/stick-man/tools/faults.mjs';
+import { camStats } from '../../styles/stick-man/tools/gates/faults.mjs';
 
 const row = (f, cam, cut = false) => ({ f, motion: { cam, cut } });
 

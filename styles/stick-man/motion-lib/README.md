@@ -3,7 +3,7 @@
 Ready-made motion v2 clips for the stick-man rig: background characters, and the blocking start for a lead (the lead's
 acting stays hand-keyed: REEL_DATA.md "Motion v2"). One skeleton (`engine/cast.js`) for every body; a body type is its
 proportions plus its own way of moving. Catalogue: `styles/stick-man/docs/MOTION-LIB.md`. Checker:
-`node styles/stick-man/tools/motionlib.mjs`.
+`node styles/stick-man/tools/gates/motionlib.mjs`.
 
 ## Use
 
@@ -31,7 +31,7 @@ playback, the `style` dose and the body's physics apply exactly as to hand keys.
 `footW` (metres, planted) like the clips: a carried `footW` channel overrides `foot`. `base.js` `stand(body, x)` gives
 the standard pose there.
 
-## Rules (checked by `tools/motionlib.mjs` and `test/unit/stick-motionlib.test.mjs`)
+## Rules (checked by `tools/gates/motionlib.mjs` and `test/unit/stick-motionlib.test.mjs`)
 
 | Rule | Check |
 |---|---|
@@ -56,7 +56,7 @@ the standard pose there.
 | `bodies.js` | the five body types: proportions for the rig, mass, stance, posture, walk / run / breath numbers |
 | `props.js` | the hand props the clips name (bag, torch, cash, cap) |
 | `body/`, `shared/` | the clips |
-| `proof/` | the proof page: one clip on one body, physics on or off (`tools/motionlib.mjs --proof`, `--sheet`) |
+| `proof/` | the proof page: one clip on one body, physics on or off (`tools/gates/motionlib.mjs --proof`, `--sheet`) |
 
 Changes to existing films: `toPose(m, scale)` puts a scaled figure's planted feet (`footW`) where they are keyed; before,
 they landed `scale` times further from the root (a `scale:1.12` cop: 1.6 cm wider each side, `films/motionlib-proof/cop_feet.png`).

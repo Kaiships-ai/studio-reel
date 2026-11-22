@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
-import { familyOf, story, faceRuns, judge, coverage, verdict, HOLD, REPEAT_MAX } from '../../styles/stick-man/tools/facebeat.mjs';
+import { familyOf, story, faceRuns, judge, coverage, verdict, HOLD, REPEAT_MAX } from '../../styles/stick-man/tools/gates/facebeat.mjs';
 import { run } from '../../kit/env.mjs';
-import { measure, measureAll, knownFails, headShape, HEAD_PCT, HEAD_SQUASH_PCT } from '../../styles/stick-man/tools/rigtest.mjs';
+import { measure, measureAll, knownFails, headShape, HEAD_PCT, HEAD_SQUASH_PCT } from '../../styles/stick-man/tools/gates/rigtest.mjs';
 import { ALL } from '../../styles/stick-man/motion-lib/index.js';
 
 function threeBeatFilm() {
@@ -83,7 +83,7 @@ test('a re-timed picture maps onto the storyboard through sb, and reports its ow
   assert.deepEqual([J.mismatch[0].shot, J.mismatch[0].t0], ['SH140', 20]);
 });
 
-const FACEBEAT = path.resolve('styles/stick-man/tools/facebeat.mjs');
+const FACEBEAT = path.resolve('styles/stick-man/tools/gates/facebeat.mjs');
 const facebeat = (dir, rowsOf) => {
   fs.mkdirSync(path.join(dir, 'review'), { recursive: true });
   fs.writeFileSync(path.join(dir, 'review/shot-rows.jsonl'), rowsOf.map(r => JSON.stringify(r)).join('\n') + '\n');

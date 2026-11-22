@@ -3,7 +3,7 @@
 import { hash, clamp, smooth, smoother, settle, rightB, fwdB } from './verbs.js';
 import { EXPR, mixFace, FACE_STYLE } from './faces.js';
 
-// ---------------------------------------------------------------- micro-animation timing (reference study, tools/forensic/microanim.mjs)
+// ---------------------------------------------------------------- micro-animation timing (reference study, tools/review/microanim.mjs)
 // Reference head moves: 12-15 f, a slow start (7 % of the travel in the first eighth: 0.07 0.21 0.34 0.48 0.63 0.75 0.86 1),
 // then a long hold that still breathes. slowIn is that spacing (0.07 at 1/8, 0.50 at 1/2, 0.93 at 7/8).
 export const MOVE_T = 13;

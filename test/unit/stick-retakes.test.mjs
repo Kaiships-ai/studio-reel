@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto'; import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { ROOT, run } from '../../kit/env.mjs';
-import { problems, rounds } from '../../styles/stick-man/tools/retakes.mjs';
-import { score, scoreComplaint, falseAlarms, calibration, briefTag, loadAnswers, blindMap } from '../../styles/stick-man/tools/calibrate.mjs';
+import { problems, rounds } from '../../styles/stick-man/tools/review/retakes.mjs';
+import { score, scoreComplaint, falseAlarms, calibration, briefTag, loadAnswers, blindMap } from '../../styles/stick-man/tools/review/calibrate.mjs';
 
 const TOOLS = path.join(ROOT, 'styles/stick-man/tools');
 const tmp = () => (() => { const d = path.join(os.tmpdir(), 'retake-' + crypto.randomBytes(6).toString('hex')); fs.mkdirSync(d); return d; })(); // lowercase hex: can never spell K1..K4 or P1 (the leak test greps the prompt, which holds these paths)
@@ -37,7 +37,7 @@ test('the log is checked before it is counted: types, classes, repeats and closi
 });
 
 test('retakes.mjs exits on the latest round and refuses a broken log', () => {
-  const d = tmp(), tool = path.join(TOOLS, 'retakes.mjs');
+  const d = tmp(), tool = path.join(TOOLS, 'review/retakes.mjs');
   put(d, 'review/retakes.json', { rounds: R.slice(0, 2), notes: [note('a', 'r1'), note('b', 'r2'), note('c', 'r2')] });
   const fail = run('node', [tool, d], { capture: true });
   assert.equal(fail.status, 1); assert.match(fail.stdout, /r2\t2\t0\t.*FAIL: 2 notes after 1 on r1: version regression · 0 repeats\n/);
@@ -89,7 +89,7 @@ test('only a test-half score can calibrate, on the command line and in the recor
   }
   const d = tmp(), rec = path.join(d, 'calibration.json'), key = put(d, 'key.json', KEY);
   put(d, 'answers/a.json', { brief: 'kai-taste@aaa', ...GOOD });
-  const r = run('node', [path.join(TOOLS, 'calibrate.mjs'), 'score', key, path.join(d, 'answers'), '--half', 'all', '--record'], { capture: true, env: { STICK_CALIBRATION: rec } });
+  const r = run('node', [path.join(TOOLS, 'review/calibrate.mjs'), 'score', key, path.join(d, 'answers'), '--half', 'all', '--record'], { capture: true, env: { STICK_CALIBRATION: rec } });
   assert.equal(r.status, 1, r.stdout); assert.match(r.stdout, /UNCALIBRATED: half all: only the test half can calibrate/);
   assert.equal(JSON.parse(fs.readFileSync(rec, 'utf8')).records[0].calibrated, false);
   const edited = put(d, 'edited.json', { records: [{ brief: 'kai-taste@aaa', half: 'tune', calibrated: true, hit: 1, falseAlarm: 0, why: [] }] });
@@ -111,7 +111,7 @@ test('the blind prompt carries the videos and the brief, never Kai\'s answers', 
   put(d, 'brief/SKILL.md', '# taste');
   const { blind: _, ...plain } = KEY;
   const key = put(d, 'key.json', { ...plain, clips: KEY.clips.map(c => ({ ...c, video: vid })) });
-  const r = run('node', [path.join(TOOLS, 'calibrate.mjs'), 'blind', key, path.join(d, 'out'), brief, '--seed', '42'], { capture: true });
+  const r = run('node', [path.join(TOOLS, 'review/calibrate.mjs'), 'blind', key, path.join(d, 'out'), brief, '--seed', '42'], { capture: true });
   assert.equal(r.status, 0, r.stderr);
   const prompts = fs.readdirSync(path.join(d, 'out')).map(j => fs.readFileSync(path.join(d, 'out', j, 'PROMPT.md'), 'utf8'));
   assert.equal(prompts.length, 2, 'one clip job and one A/B job');
@@ -136,13 +136,13 @@ test('a review whose brief is not calibrated is advisory at a gate: shown as unc
   assert.match(calibration('kai-taste@ccc', rec).why, /never scored/);
   assert.match(calibration(undefined, rec).why, /no "brief:" line/);
   assert.equal(calibration('kai-taste@bbb', rec).ok, true);
-  const gates = JSON.parse(fs.readFileSync(path.join(TOOLS, 'GATES.json'), 'utf8'));
+  const gates = JSON.parse(fs.readFileSync(path.join(TOOLS, 'gates/GATES.json'), 'utf8'));
   assert.equal(gates.gates['5'].evidence.find(e => e.file === 'review/final-qa.md').calibrated, true);
   const film = tmp(); put(film, 'storyboard.json', { fps: 30, shots: [] });
   put(film, 'review/final-qa.md', 'by: agent:x\nbrief: kai-taste@aaa\n\n# QA\n');
-  const g = run('node', [path.join(TOOLS, 'stagegate.mjs'), film, '5'], { capture: true, env: { STICK_CALIBRATION: rec } });
+  const g = run('node', [path.join(TOOLS, 'gates/stagegate.mjs'), film, '5'], { capture: true, env: { STICK_CALIBRATION: rec } });
   assert.match(fs.readFileSync(path.join(film, 'review/gate-5.md'), 'utf8'), /advisory \| review\/final-qa\.md brief \| PASS \| advisory only: uncalibrated: brief kai-taste@aaa/, g.stdout);
   put(film, 'review/final-qa.md', 'by: agent:x\nbrief: kai-taste@bbb\n\n# QA\n');
-  run('node', [path.join(TOOLS, 'stagegate.mjs'), film, '5'], { capture: true, env: { STICK_CALIBRATION: rec } });
+  run('node', [path.join(TOOLS, 'gates/stagegate.mjs'), film, '5'], { capture: true, env: { STICK_CALIBRATION: rec } });
   assert.match(fs.readFileSync(path.join(film, 'review/gate-5.md'), 'utf8'), /judged \| review\/final-qa\.md \| PASS/);
 });

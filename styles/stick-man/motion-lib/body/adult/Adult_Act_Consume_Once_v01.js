@@ -2,7 +2,7 @@
 // CC0, ref/ual/consume.js) on this body, every captured frame; the food a hot dog in the left fist all through
 // (motion-lib/props.js hotdog). Hot Money ep01 (SH248).
 // This figure's face sits 0.28 m ahead of its head's centre (the capture's ~0.10 m), so the captured hand stops ~0.33 m
-// short of the mouth: its last stretch is baked onto the mouth (ref/reach/consume_mouth.js, tools/mocap_reach.mjs; re-run
+// short of the mouth: its last stretch is baked onto the mouth (ref/reach/consume_mouth.js, tools/run/mocap_reach.mjs; re-run
 // it when the clip changes). Then the jaw works: chewing from the bite to the end (x_chew, base.js chewKeys).
 import { mocapClip, reachKeys, chewKeys, holdKeys } from '../../base.js';
 import SRC from '../../ref/ual/consume.js';

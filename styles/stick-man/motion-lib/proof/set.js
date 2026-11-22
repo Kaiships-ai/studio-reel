@@ -3,7 +3,7 @@
 // they rest, are taken and fall on their own, so the set draws none.
 // Clip space is world space here: the actor starts at the origin facing +x. opts: { marks, sc } (sc = the body's size
 // for a shared clip). Reached through proof/reel.js only.
-import { createKit } from '/styles/stick-man/allout/kit.js';
+import { createKit } from '/styles/stick-man/kit/sets/kit.js';
 import { markColliders } from '/styles/stick-man/motion-lib/base.js';
 
 export const SUN_DIR = [0.35, 0.45, -0.85], SUN_CENTER = [1.0, 0, 0.6], SUN_HALF = 5;

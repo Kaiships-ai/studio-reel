@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import fs from 'node:fs';
-import { checkAll, checkClip, NAME_RE, clipFiles, catalogue, CATALOGUE, OBJECT_ACT } from '../../styles/stick-man/tools/motionlib.mjs';
+import { checkAll, checkClip, NAME_RE, clipFiles, catalogue, CATALOGUE, OBJECT_ACT } from '../../styles/stick-man/tools/gates/motionlib.mjs';
 import { ALL, getClip, placeClip, expandClips } from '../../styles/stick-man/motion-lib/index.js';
 import { BODIES } from '../../styles/stick-man/motion-lib/bodies.js';
 import { compileTrack, playActor, toPose, STYLE_PRESETS } from '../../styles/stick-man/engine/motion.js';
@@ -120,7 +120,7 @@ test('K5: a carried load pulls the centre of mass toward it by its share of the 
 });
 
 // ------------------------------------------------------------------ the same rules through the real rig (cast.js, headless)
-import { rigClip, rigStick, GRIP_CM, PROP_CM, physicsFails, BAL_CM, propExcess, PROP_SLIP_CM } from '../../styles/stick-man/tools/motionlib.mjs';
+import { rigClip, rigStick, GRIP_CM, PROP_CM, physicsFails, BAL_CM, propExcess, PROP_SLIP_CM } from '../../styles/stick-man/tools/gates/motionlib.mjs';
 import { holdKeys } from '../../styles/stick-man/motion-lib/base.js';
 
 // props as scene objects (engine/propobj.js) and the balance solve (Hot Money ep01: the bag jumped 20 cm as it was set
@@ -242,7 +242,7 @@ test('rig: a hand that reaches into the set stops on it (a sill: on its top), wi
 });
 
 test('docs/MOTION-LIB.md is the catalogue the clips make (motionlib.mjs --catalogue), every clip in it', () => {
-  assert.equal(fs.readFileSync(CATALOGUE, 'utf8'), catalogue(), 'run: node styles/stick-man/tools/motionlib.mjs --catalogue');
+  assert.equal(fs.readFileSync(CATALOGUE, 'utf8'), catalogue(), 'run: node styles/stick-man/tools/gates/motionlib.mjs --catalogue');
   for (const C of ALL) assert.ok(catalogue().includes(`| \`${C.clip}\` | ${C.body || 'any'}`), C.name);
 });
 
@@ -294,15 +294,15 @@ test('support: a clip played on a surface (a clip key pos [x, y, h]) rests on it
 });
 
 // ------------------------------------------------------------------ the solved-joint gate: the film's own measure
-import { jointExcess, jointFails, JOINT_KNOWN } from '../../styles/stick-man/tools/motionlib.mjs';
-import { jointSteps, JOINT_STEP_MAX } from '../../styles/stick-man/tools/jointstep.mjs';
+import { jointExcess, jointFails, JOINT_KNOWN } from '../../styles/stick-man/tools/gates/motionlib.mjs';
+import { jointSteps, JOINT_STEP_MAX } from '../../styles/stick-man/tools/gates/jointstep.mjs';
 
 test('joint gate: the library judges joints with the film report\'s measure, one copy of it', () => {
   // Hot Money ep01: the film report read foot pitch 36.6 deg/f (SH060, SH130) and elbow 35.1 (SH172) on clips the gate
   // passed: the gate had its own, shorter list of joints and let a joint turn as fast as its capture did
   for (const f of ['faults.mjs', 'motionlib.mjs']) {
-    const src = fs.readFileSync(new URL(`../../styles/stick-man/tools/${f}`, import.meta.url), 'utf8');
-    assert.match(src, /from '\.\/jointstep\.mjs'/, `${f} uses tools/jointstep.mjs`);
+    const src = fs.readFileSync(new URL(`../../styles/stick-man/tools/gates/${f}`, import.meta.url), 'utf8');
+    assert.match(src, /from '\.\/jointstep\.mjs'/, `${f} uses tools/gates/jointstep.mjs`);
     assert.doesNotMatch(src, /\[\['shoulder', 'elbow'\], \['elbow', 'hand'\]/, `${f} keeps no joint list of its own`);
   }
   const m = { torsoLean: 0, torsoRoll: 0, L: {}, R: {} }, l = { torsoLean: 0, torsoRoll: 30, L: {}, R: {} };
@@ -424,7 +424,7 @@ test('HandOver fit { top }: the cash is set down on a 1.12 m counter', async () 
 // ------------------------------------------------------------------ PR E: the clips that hold a bag take its size
 
 test('bag size: a clip key that swaps in a film bag fits the clip to that bag, read off the prop (no numbers in the film)', async () => {
-  const { BUILD } = await import('../../styles/stick-man/lib/cast/handprops.js'), { bagMesh, sizedBag } = await import('../../styles/stick-man/motion-lib/props.js');
+  const { BUILD } = await import('../../styles/stick-man/kit/cast/handprops.js'), { bagMesh, sizedBag } = await import('../../styles/stick-man/motion-lib/props.js');
   const { propSize } = await import('../../styles/stick-man/motion-lib/index.js');
   assert.deepEqual(propSize('bag'), { w: 0.2, h: 0.26, l: 0.46, grip: 0.31 }, 'the kit bag names its size');
   // a film's bag with no size of its own: measured from its meshes (the ink hull too), the grip from the box's bottom
@@ -442,7 +442,7 @@ test('bag size: a clip key that swaps in a film bag fits the clip to that bag, r
 });
 
 test('bag size: a swapped bag with no size yet (its mesh is built later) fails the fitted clip, never plays the kit bag\'s keys', async () => {
-  const { BUILD } = await import('../../styles/stick-man/lib/cast/handprops.js');
+  const { BUILD } = await import('../../styles/stick-man/kit/cast/handprops.js');
   const empty = size => () => { const g = new THREE.Group(); g.userData = { mode: 'up', grip: [0, 0.415, 0], mass: 25, ...(size ? { size } : {}) }; return g; };
   BUILD.test_late_bag = empty();
   BUILD.test_late_bag_sized = empty([0.36, 0.30, 0.62]);

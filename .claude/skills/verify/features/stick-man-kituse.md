@@ -1,6 +1,6 @@
 # Stick-man kit use gate
 
-`styles/stick-man/tools/kituse.mjs` blocks ◇4 and ◇5 of a stick-man film that skips a kit feature every film needs.
+`styles/stick-man/tools/gates/kituse.mjs` blocks ◇4 and ◇5 of a stick-man film that skips a kit feature every film needs.
 One row per feature in `KIT`; `stagegate.mjs` runs it from `GATES.json` (gate 4 with `--gate 4`, gate 5 with `--gate 5`).
 
 ## Sub-features
@@ -19,7 +19,7 @@ One row per feature in `KIT`; `stagegate.mjs` runs it from `GATES.json` (gate 4 
 
 ## How to get to it (user POV)
 
-`node styles/stick-man/tools/stagegate.mjs films/<slug> 4` (or `5`); alone: `node styles/stick-man/tools/kituse.mjs films/<slug> --gate 4|5`.
+`node styles/stick-man/tools/gates/stagegate.mjs films/<slug> 4` (or `5`); alone: `node styles/stick-man/tools/gates/kituse.mjs films/<slug> --gate 4|5`.
 
 ## Driving it
 

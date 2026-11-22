@@ -103,7 +103,7 @@ set prop) keeps its prop; the rest of the pose still plays. Joint gate: every po
 | `eat` | a drumstick to the mouth every 22 f, the other hand on the belly | `{ who: 'kai', do: 'eat' }` |
 | `phone` | a phone held to the ear, head tipped | `{ who: 'kai', do: 'phone' }` |
 
-Hand props (`lib/cast/handprops.js`: cup hammer pencil pad drumstick apple phone megaphone box) belong to the figure and are
+Hand props (`kit/cast/handprops.js`: cup hammer pencil pad drumstick apple phone megaphone box) belong to the figure and are
 parented to the hand each frame (gap 0 by construction); a pose shows them through the pose keys `x_hp<L|R|B>_<kind>`.
 
 **Auto-acting** (`acting.js autoActing`): after the beats compile, every lead's frames that no body verb covers get poses,
@@ -113,7 +113,7 @@ shade_eyes, police / boss → hands_on_hips, numbers → present), then from the
 arms_crossed, dizzy → wobble ...), then a default rotation. A lead = cast `lead: true`, a `talk` beat, or a shot subject;
 `lead: false` opts out, act `auto: false` turns it off. Explicit beats always win.
 
-## Faces (`engine/faces.js`; proof sheet `node styles/stick-man/tools/shot.mjs --page styles/stick-man/faces.html --frames 12 --w 1600 --h 840 --out faces.jpg`)
+## Faces (`engine/faces.js`; proof sheet `node styles/stick-man/tools/render/shot.mjs --page styles/stick-man/faces.html --frames 12 --w 1600 --h 840 --out faces.jpg`)
 
 Each face is drawn in code per figure (eye kind, flat or tilted lids, cheek push, tapered brows, mouth shape) with skin
 marks painted on (blush, red veins, tears, dark sockets, gloom lines) and head-attached mark cards. Every face has an
@@ -176,7 +176,7 @@ with no `fwd` gets `fwd: 0.2` (at 0 the torso hides it); a `shimmer` behind him 
 | `thermo` | `at, scale`; keys `show` 0..1, `temp` (°F on a 50-420 scale: small real gaps do not read), `shake` | `set` show |
 | `pack`, `bill`, `arm`, `prop` | dye pack; one red bill; a bare arm (`shoulder`, keys `hand`, `bend`); a set prop's keyed parts (`prop, keys, phaseRate`) | `set` |
 
-## Explainer effects (`lib/props/explain.js`)
+## Explainer effects (`kit/fx/explain.js`)
 
 Use one on the key word of every line that describes a process, a number or a comparison. All are toon with an ink outline.
 Defaults when a key is left out: rays `n 3, r 0.035, spread 0.22, grow 0.35 s, life ∞`; flow `r 0.035, pips 4, grow 0.7 s,
@@ -194,7 +194,7 @@ bars `h 0.6, w 0.16`; split `h 2.2, gap 1.3, lh 0.26`; stamp `h 0.32, tilt -8, l
 | `split` | (banned in reels by the floating labels gate: put each side on a `sign`) two sides compared: an ink bar wipes in between them, a VS badge pops, labels slide in | `at, h, gap, labels, colors, lh, badge`; key `show` 0..1 | `vs: { kind: 'split', at: [0, -0.15, 0], h: 2.3, gap: 1.7, labels: ['WHITE', 'BLACK'] }` · `set show to 1, dur 24, ease 'linear'` |
 | `stamp` | (banned in reels by the floating labels gate: use a `sign`) a big word or number slams in (`{n}` counts with key `n`); `tail: 'left'/'right'` makes it a speech bubble (quoted lines) | `at, text, h, color, tilt, frame, tail, life` | `same: { kind: 'stamp', at: [0, -0.5, 1.15], text: 'SAME', h: 0.55 }` · `do: 'fire'` |
 
-Sound names (`styles/stick-man/tools/sound_bank.py` BANK): slide thud rustle ting ding whoosh step_l step_r step beep tick poof
+Sound names (`styles/stick-man/tools/run/sound_bank.py` BANK): slide thud rustle ting ding whoosh step_l step_r step beep tick poof
 hiss scratch pop snore clunk blip ping sizzle slide_whistle_up flutter wah siren sting.
 
 ## Shots (`shots: [...]` in an act)

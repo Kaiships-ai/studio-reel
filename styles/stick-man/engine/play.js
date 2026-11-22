@@ -25,14 +25,14 @@ import { POSE_VERBS, POSES } from './poses.js';
 import { compileTrack, playActor, toPose, MOTION_POSES } from './motion.js';
 import { propPlan } from './propobj.js';
 import { solidBoxes, restBoxes, inBoxes, drawnBox, boxPoints } from './solids.js';
-import * as EXTRAS from '../lib/cast/extras.js';
-import { PHYS } from '../lib/props/physfx.js';
-import { STORY } from '../lib/props/story.js';
+import * as EXTRAS from '#kit/cast/extras.js';
+import { PHYS } from '#kit/fx/physfx.js';
+import { STORY } from '#kit/props/story.js';
 // default acting size: the reference's big beats travel ~2.3 head widths, ours ~0.5-0.7 (reference study), so every pose plays 1.2x unless an act or cast entry says otherwise
 const ACT_AMP = 1.2;
-Object.assign(MAKE, PHYS, STORY);                               // story props that animate (lib/props/story.js)                                       // physical FX kinds (SETS.md "Physical effects")
+Object.assign(MAKE, PHYS, STORY);                               // story props that animate (kit/props/story.js)                                       // physical FX kinds (SETS.md "Physical effects")
 
-// every cast spec exported by lib/cast/extras.js (an object with a name and a shirt) registers itself by its export name
+// every cast spec exported by kit/cast/extras.js (an object with a name and a shirt) registers itself by its export name
 const dye = EXTRAS.dye;
 export const SPECS = { KAI, TELLER, GUARD, ...Object.fromEntries(Object.entries(EXTRAS).filter(([, v]) => v && typeof v === 'object' && !Array.isArray(v) && v.name && v.shirt)) };
 const KEYV = new Set(['set', 'pulse', 'shake', 'fire', 'flash', 'sound']);
@@ -52,7 +52,7 @@ export function resolveBeatFrame(b, words, fps) {
   return Math.max(0, Math.round(w.t0 * fps) + (b.offset ?? -2));
 }
 
-// opt-in module hooks (allout/costume.js sets HOOKS.costume)
+// opt-in module hooks (kit/cast/costume.js sets HOOKS.costume)
 export const HOOKS = {};
 // where a Blender point lands on screen (0..1, y down) for a { pos, aim, lens } camera; null behind it
 function projUV(c, p, aspect) {
@@ -108,15 +108,15 @@ function chain(list, f, val, env, hand = false) {
 
 async function buildAct(R, X) {
   const { stage, words, fps, F0, F1, width, height } = X;
-  // act.setModule: the set module by URL (styles/stick-man/allout/sets/<name>.js)
+  // act.setModule: the set module by URL (styles/stick-man/kit/sets/<name>.js)
   if (!R.setModule) throw new Error(`act ${R.set || ''} has no setModule (SETS.md)`);
   const SET = await import(R.setModule);
   // the set's meshes and lights go into this act's group (shown only while the act is on screen)
   const group = new THREE.Group(), before = new Set(stage.scene.children), bg0 = stage.scene.background;
   const built = await SET.build(stage, { use: R.use || [], ...(R.setOpts || {}) });   // act.use: opt-in set props (street: police, bag)
-  // act.backdrop { rows: [{ piece, at, rot, tint }], tint }: far town rows past the set's walls (allout/sets/backdrop.js),
+  // act.backdrop { rows: [{ piece, at, rot, tint }], tint }: far town rows past the set's walls (kit/sets/backdrop.js),
   // loaded here so they are in place before the first frame and belong to this act's group like the set itself
-  if (R.backdrop) await (await import('../allout/sets/backdrop.js')).backdrop(stage, R.backdrop.rows, { tint: R.backdrop.tint });
+  if (R.backdrop) await (await import('#kit/sets/backdrop.js')).backdrop(stage, R.backdrop.rows, { tint: R.backdrop.tint });
   for (const c of [...stage.scene.children]) if (!before.has(c)) group.add(c);
   let background = stage.scene.background; stage.scene.background = bg0; stage.scene.add(group); group.visible = false;
   // act haze: { color (sRGB), near, far } m: distance fog toward the sky colour (aerial perspective), shown with the act
@@ -189,7 +189,7 @@ async function buildAct(R, X) {
     S.obstacles = SET.COLLIDE || [];   // the set's solid pieces: hands and held props stop on them (cast.js worldBox)
     S.rest = restOn;                   // what a prop out of the hand lands on: every solid the set built (propobj.js)
     const costume = c.costume ?? SPECS[c.spec].costume;   // a spec may wear a costume by default (a character's own clothes, e.g. 'hoodie:grey')
-    if (costume) { if (!HOOKS.costume) throw new Error(`cast ${name}: costume needs import '/styles/stick-man/allout/costume.js'`); HOOKS.costume(S, costume, { group, name }); }   // role layers (belt, holster, hat, hoodie)
+    if (costume) { if (!HOOKS.costume) throw new Error(`cast ${name}: costume needs import '/styles/stick-man/kit/cast/costume.js'`); HOOKS.costume(S, costume, { group, name }); }   // role layers (belt, holster, hat, hoodie)
     const posture = c.posture || 'stand', base = posture === 'sit' ? SIT : STAND;
     const pos = point(c.at).slice(); pos[2] = pos[2] || 0;
     const st = { name, pos, yaw: c.yaw ?? 0, posture, hold: { L: null, R: null }, handW: {}, sling: null, ampScale: c.amp ?? R.actingAmp ?? ACT_AMP };
@@ -508,7 +508,7 @@ async function buildAct(R, X) {
     }
     const P = { expr: e, state, mix, blink, look: gH[0] + sc[0] + (cur.prop ? 0 : a.idleLook || 0), look_v: gH[1] + sc[1], t: f, age: f - ek.f, cam: camPos };
     a.S.face(P); a.face = P; a.lastExpr = e;
-    // the numbers the face QA reads (tools/faults.mjs faceFaults): the drawn face (before the blink), its target, the change
+    // the numbers the face QA reads (tools/gates/faults.mjs faceFaults): the drawn face (before the blink), its target, the change
     const F_ = mix.F, T_ = faceParams(state.b), r4 = x => +(+x).toFixed(4), c = state.change;
     a.faceDbg = { v: [F_.brow[0], F_.brow[1], F_.lid, F_.white, F_.ry, mwFace].map(r4), tgt: [T_.brow[0], T_.brow[1], T_.lid, T_.white, T_.ry, T_.mw].map(r4),
       cls: c?.cls ?? null, kf: c?.kf ?? null, s: c?.s ?? null, phase: state.phase || 'hold', blink: r4(blink), pupil: r4(state.pupil), look: r4(gH[0]), focus: cur.key };
@@ -531,8 +531,8 @@ async function buildAct(R, X) {
   const camera = createCamera({ aspect: width / height, side: SET.CAMERA_SIDE, bounds: R.cameraRoom || SET.CAMERA_ROOM, zRange: R.zRange,
     zMax: R.zMax ?? SET.CAMERA_ZMAX, actors: actors.map(a => a.name) });
   // compile sees the real scene at each shot change (everything is a pure function of the frame)
-  // act.direct: hand-directed camera (allout/director.js): every shot names its intent, cuts are cuts, a move has a trigger
-  const DIR = R.direct ? (await import('../allout/director.js')).createDirector(R.direct, { frameOf, aspect: width / height, F1, dofAuto: R.look?.dofAuto ?? X.dofAuto, drift: R.directDrift ?? X.directDrift ?? 0,
+  // act.direct: hand-directed camera (kit/acting/director.js): every shot names its intent, cuts are cuts, a move has a trigger
+  const DIR = R.direct ? (await import('#kit/acting/director.js')).createDirector(R.direct, { frameOf, aspect: width / height, F1, dofAuto: R.look?.dofAuto ?? X.dofAuto, drift: R.directDrift ?? X.directDrift ?? 0,
     anchor: (n, f) => { if (F.f !== f) poseAll(f); return anchor(n, f, livePos); } }) : null;
   // a whoosh under every camera travel (act `travelWhoosh`, strength 0..1; off by default): the reference has an SFX on
   // almost every visible action, camera rushes included (15.6 hits / 10 s, REF_SPEC.md rail)
@@ -867,11 +867,11 @@ function autoShots(defs, SB, words, fps, F1, ids) {
   for (const [k, list] of Object.entries(out)) defs[+k].shots = [...(defs[+k].shots || []), ...list];
 }
 
-// internal cue names -> the sound bank (tools/sound_bank.py); steps alternate left / right
+// internal cue names -> the sound bank (tools/run/sound_bank.py); steps alternate left / right
 const SOUND = { cash_lift: 'rustle', bundle_drop: 'thud', paper_slide: 'slide', swoosh: 'whoosh', sensor_beep: 'beep', glint: 'ting' };
 const BANK = new Set(['slide', 'thud', 'rustle', 'ting', 'ding', 'whoosh', 'step_l', 'step_r', 'beep', 'tick', 'poof', 'hiss', 'scratch', 'pop', 'snore',
   'clunk', 'blip', 'ping', 'sizzle', 'slide_whistle_up', 'flutter', 'wah', 'siren', 'sting',
-  'saw', 'chug', 'whistle', 'clack', 'groan', 'boom', 'crowd', 'crank']);   // = tools/sound_bank.py BANK (test/unit/stick-sound-bank.test.mjs)
+  'saw', 'chug', 'whistle', 'clack', 'groan', 'boom', 'crowd', 'crank']);   // = tools/run/sound_bank.py BANK (test/unit/stick-sound-bank.test.mjs)
 
 export async function boot({ film, width, height }) {
   const R1 = (await import(`/${film}/reel.js`)).default;
@@ -913,7 +913,7 @@ export async function boot({ film, width, height }) {
     const wp = s.whip ? 0.22 * s.whip * Math.sin(Math.PI * s.u) : 0, wu = s.whip ? Math.min(1, Math.max(0, (s.u - 0.3) / 0.4)) : s.u;
     if (s.prev) { show(s.prev); s.prev.update(f); ms += stage.render({ flash: s.prev.flash(f), grade: s.prev.grade, whip: wp }); stage.grab(); }
     const sm = s.prev ? null : s.cur.shotMix(f);                   // a shot dissolve inside the act: the outgoing camera first
-    const sw = sm?.whip ? 0.22 * sm.whip * Math.sin(Math.PI * (sm.ws ?? sm.u)) : 0;   // a whip between two shots of one place (allout/director.js)
+    const sw = sm?.whip ? 0.22 * sm.whip * Math.sin(Math.PI * (sm.ws ?? sm.u)) : 0;   // a whip between two shots of one place (kit/acting/director.js)
     if (sm) { show(s.cur); s.cur.update(f, sm.i); ms += stage.render({ flash: s.cur.flash(f), grade: s.cur.grade, whip: sw }); stage.grab(); }
     const lo = !s.prev && !sm ? s.cur.ov.loupeAt(f) : null;       // a loupe: one extra render from its own camera first
     if (lo) { show(s.cur); s.cur.update(f); stage.setCamera(lo.cam.pos, lo.cam.aim, lo.cam.lens ?? 50); stage.setDof(null);

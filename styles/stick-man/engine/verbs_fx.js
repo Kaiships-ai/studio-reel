@@ -4,9 +4,9 @@
 // effect object; MAKE builds the effect objects named in an act's `make` table and maps those values onto them.
 import * as THREE from 'three';
 import { STAND, clamp, smooth, smoother, lerp, lerp3, add3, fwdB, toLocal, toWorld, settle, angDiff } from './verbs.js';
-import { makePowderBurst, makeFlyingBills, makeDyeSpray, makeRadioRings, makeBagGlow, makeArm, makeBill, flashAt, makeStarBurst, makeDroplets, makeCountdown } from '../lib/props/fx.js';
-import { makeDyePack, makeThermometer, snoreAt } from '../lib/props/dyepack.js';
-import { makeRays, makeFlow, makeShimmer, makeCutBox, makeCallout, makeBars, makeSplit, makeStamp } from '../lib/props/explain.js';
+import { makePowderBurst, makeFlyingBills, makeDyeSpray, makeRadioRings, makeBagGlow, makeArm, makeBill, flashAt, makeStarBurst, makeDroplets, makeCountdown } from '#kit/fx/burst.js';
+import { makeDyePack, makeThermometer, snoreAt } from '#kit/props/dyepack.js';
+import { makeRays, makeFlow, makeShimmer, makeCutBox, makeCallout, makeBars, makeSplit, makeStamp } from '#kit/fx/explain.js';
 import { POSE_VERBS } from './poses.js';
 
 const SIDE = { L: -1, R: 1 };
@@ -305,7 +305,7 @@ export const MAKE = {
     const g = makeArm(stage, o); ctx.group.add(g); stage.prop(g);
     return { obj: g, apply: v => g.userData.set({ shoulder: v('shoulder', o.shoulder), hand: v('hand'), bend: v('bend', 0.12) }) };
   },
-  // ---- explainer kit (lib/props/explain.js); VERBS.md "Explainer effects" has one line and an example each
+  // ---- explainer kit (kit/fx/explain.js); VERBS.md "Explainer effects" has one line and an example each
   // light rays: fire = shoot from `from` to `hit`; with `out` they bounce on, with absorb: true they sink in
   rays: (stage, o, ctx) => {
     const g = makeRays(stage, o); ctx.group.add(g); let a = null;

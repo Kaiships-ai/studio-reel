@@ -1,5 +1,5 @@
 // Render on the Mac Pro: renders never run on the MacBook Air. Syncs the episode folder there, pulls origin/main in the Pro's
-// checkout, runs tools/shot.mjs with the arguments after `--`, and copies what it wrote back into the local films/<ep>/.
+// checkout, runs tools/render/shot.mjs with the arguments after `--`, and copies what it wrote back into the local films/<ep>/.
 //   node styles/stick-man/tools/render/pro.mjs [--dry-run 1] -- --film films/hm-ep01/parts/gun --frames 1140-1346 --tier review --mp4 films/hm-ep01/renders/gun.mp4
 //   node styles/stick-man/tools/render/pro.mjs --remote <job dir>      (on the Pro, from its checkout: what the Orca terminal runs)
 // How: ssh cannot read ~/Desktop on the Pro, so the episode goes as a tarball (without renders/ and deliver/, so the Pro keeps
@@ -16,7 +16,7 @@ import { freeGB } from './lock.mjs';
 import { gitEnv } from './cache.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
-const SHOT = 'styles/stick-man/tools/shot.mjs', SELF = 'styles/stick-man/tools/render/pro.mjs';
+const SHOT = 'styles/stick-man/tools/render/shot.mjs', SELF = 'styles/stick-man/tools/render/pro.mjs';
 export const DEFAULTS = { env: 'mac-pro', host: 'pro', repo: '/Users/kienbeovl/Desktop/kaiships/studio-reel', 'timeout-min': 120, 'min-free-gb': 5 };
 const OUT_FLAGS = ['mp4', 'out', 'dbg', 'report', 'cues'];
 

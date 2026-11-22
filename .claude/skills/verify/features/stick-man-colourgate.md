@@ -1,8 +1,8 @@
 # Stick-man colour gate
 
-`styles/stick-man/tools/colourgate.mjs` checks the final render of a stick-man film against the film's own colour
+`styles/stick-man/tools/gates/colourgate.mjs` checks the final render of a stick-man film against the film's own colour
 script, `films/<slug>/colour-script.json`, and blocks gate ◇5 (Deliver) through its row in
-`styles/stick-man/tools/GATES.json`. A look the script declares passes. A colour change the script does not motivate
+`styles/stick-man/tools/gates/GATES.json`. A look the script declares passes. A colour change the script does not motivate
 fails.
 
 The colour script is written at [1.7] from `.claude/skills/make-reel-stick-man/templates/colour-script.json`. It holds
@@ -41,15 +41,15 @@ tokens `palette.signature` and `palette.offColor` point at `color.amber` and `co
 
 ## How to get to it (user POV)
 
-At stage 5, `node styles/stick-man/tools/stagegate.mjs films/<slug> 5` runs `colourgate.mjs` on the newest final
+At stage 5, `node styles/stick-man/tools/gates/stagegate.mjs films/<slug> 5` runs `colourgate.mjs` on the newest final
 render in `renders/`, the same file `cutgate.mjs` checks. A film with no `colour-script.json` fails with the template
 path. A FAIL or a DRAFT keeps ◇5 OPEN.
 
 ## Driving it
 
-- Film: `node styles/stick-man/tools/colourgate.mjs films/<slug>` writes `review/colourgate.md` (verdict, one row per
+- Film: `node styles/stick-man/tools/gates/colourgate.mjs films/<slug>` writes `review/colourgate.md` (verdict, one row per
   check, every finding with its shot, time, number and limit, and a per-shot table) and `review/colour.json`.
-- Any mp4: `node styles/stick-man/tools/colourgate.mjs --mp4 <file> --script <colour-script.json> [--decisions <json>]`
+- Any mp4: `node styles/stick-man/tools/gates/colourgate.mjs --mp4 <file> --script <colour-script.json> [--decisions <json>]`
   prints the same report, and `--json 1` prints JSON.
 - Look for: Hot Money ep01 A v6 (`hm-ep01_A_v6.mp4`, 90.1 s) with the draft script in the PR that added the gate.
   It FAILs with LOAD-A R/B 1.98, the LOAD-A dim at 10.3 s, the LOAD-A to LOAD-B step at 16.7 s, the day-two hero white

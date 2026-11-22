@@ -5,8 +5,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto'; import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { ROOT, env, run } from '../../kit/env.mjs';
-import { isFresh, judgedHash } from '../../styles/stick-man/tools/fresh.mjs';
-import { storyLockDiff } from '../../styles/stick-man/tools/storylock.mjs';
+import { isFresh, judgedHash } from '../../styles/stick-man/tools/gates/fresh.mjs';
+import { storyLockDiff } from '../../styles/stick-man/tools/gates/storylock.mjs';
 
 const TOOLS = path.join(ROOT, 'styles/stick-man/tools');
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'stick-'));
@@ -72,7 +72,7 @@ test('stagegate end to end: a metadata edit to storyboard.json leaves the judged
   const d = tmp();
   put(d, 'storyboard.json', SB, 1000);
   for (const f of ['retell.md', 'swipe.md']) put(d, `review/${f}`, 'by: agent:fresh-1\nof: storyboard v1\n\n# Guesses\n', 2000);
-  const gate = () => { run('node', [path.join(TOOLS, 'stagegate.mjs'), d, '2a'], { capture: true }); return fs.readFileSync(path.join(d, 'review/gate-2a.md'), 'utf8'); };
+  const gate = () => { run('node', [path.join(TOOLS, 'gates/stagegate.mjs'), d, '2a'], { capture: true }); return fs.readFileSync(path.join(d, 'review/gate-2a.md'), 'utf8'); };
   assert.match(gate(), /\| judged \| review\/retell\.md \| PASS \|/);
   const meta = structuredClone(SB); meta.shots[0].options = { emo: { lens: 135 } }; put(d, 'storyboard.json', meta, 3000);
   assert.match(gate(), /\| judged \| review\/retell\.md \| PASS \|/);
@@ -81,7 +81,7 @@ test('stagegate end to end: a metadata edit to storyboard.json leaves the judged
   const before = fs.statSync(path.join(d, 'review/.fresh.json')).mtimeMs; fs.utimesSync(path.join(d, 'review/.fresh.json'), 10, 10);
   gate(); assert.equal(fs.statSync(path.join(d, 'review/.fresh.json')).mtimeMs, 10000, 'not rewritten when nothing changed'); assert.ok(before);
   put(d, 'review/.fresh.json', '{ not json');
-  const p = run('node', [path.join(TOOLS, 'stagegate.mjs'), d, '2a'], { capture: true });
+  const p = run('node', [path.join(TOOLS, 'gates/stagegate.mjs'), d, '2a'], { capture: true });
   assert.match(p.stderr, /unreadable/); assert.equal(p.signal, null);
   assert.match(fs.readFileSync(path.join(d, 'review/gate-2a.md'), 'utf8'), /\| judged \| review\/retell\.md \| FAIL \|/, 'no record: mtime decides');
   JSON.parse(fs.readFileSync(path.join(d, 'review/.fresh.json'), 'utf8'));
@@ -115,8 +115,8 @@ test('freshness: a record made before the breakdown was dropped (it hashed measu
 });
 
 test('fresh.mjs BREAKDOWN lists every field assets.mjs reads, and assets.mjs reads only those (plus id, size, film)', async () => {
-  const { BREAKDOWN } = await import('../../styles/stick-man/tools/fresh.mjs');
-  const src = fs.readFileSync(path.join(TOOLS, 'assets.mjs'), 'utf8');
+  const { BREAKDOWN } = await import('../../styles/stick-man/tools/gates/fresh.mjs');
+  const src = fs.readFileSync(path.join(TOOLS, 'gates/assets.mjs'), 'utf8');
   const shot = new Set([...src.matchAll(/\bs\.([a-z_]+)\b/gi)].map(m => m[1])), film = new Set([...src.matchAll(/\bSB\.([a-z_]+)\b/gi)].map(m => m[1]));
   assert.deepEqual([...shot].filter(k => !['id', 'size'].includes(k)).sort(), [...BREAKDOWN.shot].sort());
   assert.deepEqual([...film].filter(k => k !== 'film').sort(), [...BREAKDOWN.storyboard].sort());
@@ -124,7 +124,7 @@ test('fresh.mjs BREAKDOWN lists every field assets.mjs reads, and assets.mjs rea
 });
 
 test('stagegate writes nothing outside a film: --help prints usage, a missing folder is refused', () => {
-  const cwd = tmp(), gate = (...a) => run('node', [path.join(TOOLS, 'stagegate.mjs'), ...a], { capture: true, cwd });
+  const cwd = tmp(), gate = (...a) => run('node', [path.join(TOOLS, 'gates/stagegate.mjs'), ...a], { capture: true, cwd });
   const help = gate('--help');
   assert.equal(help.status, 0); assert.match(help.stdout, /usage: stagegate/);
   const miss = path.join(cwd, 'no-such-film'), p = gate(miss, '3');
@@ -134,7 +134,7 @@ test('stagegate writes nothing outside a film: --help prints usage, a missing fo
 });
 
 test('GATES.json: the 2a reviews that hear the voice go stale with a new take', async () => {
-  const g = JSON.parse(fs.readFileSync(path.join(TOOLS, 'GATES.json'), 'utf8')).gates['2a'].evidence, by = f => g.find(e => e.file === f).newerThan;
+  const g = JSON.parse(fs.readFileSync(path.join(TOOLS, 'gates/GATES.json'), 'utf8')).gates['2a'].evidence, by = f => g.find(e => e.file === f).newerThan;
   for (const f of ['review/watch-1x.md', 'review/swipe.md']) assert.ok(by(f).includes('vo/vo.wav') && by(f).includes('vo/words.json'), f);
   assert.ok(by('review/retell.md').includes('vo/words.json'));
 });
@@ -171,7 +171,7 @@ test('K1 with scene ids: a locked shot moved to another scene FAILs, the same sc
 test('align: whisper digit tokens become the words a script writes', { skip: !hasPython() && 'no pixi python' }, () => {
   const cases = { '238': 'two hundred thirty-eight', '$9,000': 'nine thousand', '100,000': 'one hundred thousand', '1,': 'one',
     '10,000': 'ten thousand', '34': 'thirty-four', '2,500,000': 'two million five hundred thousand', '50%': 'fifty percent', '7.': 'seven', 'ten': null, '3.5': null };
-  const p = run('python', ['-c', `import sys, json; sys.path.insert(0, ${JSON.stringify(TOOLS)}); from numwords import words; print(json.dumps({k: words(k) for k in json.loads(sys.argv[1])}))`, JSON.stringify(Object.keys(cases))], { capture: true });
+  const p = run('python', ['-c', `import sys, json; sys.path.insert(0, ${JSON.stringify(path.join(TOOLS, 'run'))}); from numwords import words; print(json.dumps({k: words(k) for k in json.loads(sys.argv[1])}))`, JSON.stringify(Object.keys(cases))], { capture: true });
   assert.equal(p.status, 0, p.stderr);
   assert.deepEqual(JSON.parse(p.stdout), cases);
 });
@@ -183,7 +183,7 @@ test('pause.py: pause_after inserts silence after the line, shifts later words, 
     { line: 'l02', i: 0, word: 'Three', t0: 0.7, t1: 0.9 }, { line: 'l03', i: 0, word: 'Four', t0: 1.3, t1: 1.6 }]);
   const mk = `import wave, sys; w = wave.open(sys.argv[1], 'wb'); w.setnchannels(1); w.setsampwidth(2); w.setframerate(${rate}); w.writeframes(b'\\x01\\x00' * 2000); w.close()`;
   assert.equal(run('python', ['-c', mk, path.join(d, 'vo/vo.wav')], { capture: true }).status, 0);
-  const pause = () => { const p = run('python', [path.join(TOOLS, 'pause.py'), d], { capture: true }); assert.equal(p.status, 0, p.stderr); };
+  const pause = () => { const p = run('python', [path.join(TOOLS, 'run/pause.py'), d], { capture: true }); assert.equal(p.status, 0, p.stderr); };
   const frames = `import wave, sys; w = wave.open(sys.argv[1]); d = w.readframes(w.getnframes()); print(w.getnframes(), d[2200:2202].hex(), d[1998:2000].hex())`;
   pause();
   const [n, mid, before] = run('python', ['-c', frames, path.join(d, 'vo/vo.wav')], { capture: true }).stdout.trim().split(' ');
@@ -207,7 +207,7 @@ test('pause.py: pause_after inserts silence after the line, shifts later words, 
   assert.equal(fs.readdirSync(path.join(d, 'vo')).filter(f => /\.(tmp|new)$/.test(f)).length, 0, 'no temp files left');
   // the no-pause take deleted while pauses.json exists: an error, never a copy of the paused take
   fs.rmSync(path.join(d, 'vo/vo-nopause.wav'));
-  const p = run('python', [path.join(TOOLS, 'pause.py'), d], { capture: true });
+  const p = run('python', [path.join(TOOLS, 'run/pause.py'), d], { capture: true });
   assert.notEqual(p.status, 0); assert.match(p.stderr, /vo-nopause\.wav is missing/);
   assert.ok(!fs.existsSync(path.join(d, 'vo/vo-nopause.wav')));
 });
@@ -220,7 +220,7 @@ test('pause.py: a 32-bit float wav is a clear error', { skip: !hasPython() && 'n
   const mk = `import struct, sys; n = 100; d = b'\\0' * 4 * n
 open(sys.argv[1], 'wb').write(b'RIFF' + struct.pack('<I', 36 + len(d)) + b'WAVEfmt ' + struct.pack('<IHHIIHH', 16, 3, 1, 1000, 4000, 4, 32) + b'data' + struct.pack('<I', len(d)) + d)`;
   assert.equal(run('python', ['-c', mk, path.join(d, 'vo/vo.wav')], { capture: true }).status, 0);
-  const p = run('python', [path.join(TOOLS, 'pause.py'), d], { capture: true });
+  const p = run('python', [path.join(TOOLS, 'run/pause.py'), d], { capture: true });
   assert.notEqual(p.status, 0); assert.match(p.stderr, /32-bit float wav must be converted/);
 });
 
@@ -231,7 +231,7 @@ test('pause.py: a run stopped after replacing vo.wav (pauses.json still pending)
       { line: 'l02', i: 0, word: 'Three', t0: 0.7, t1: 0.9 }, { line: 'l03', i: 0, word: 'Four', t0: 1.3, t1: 1.6 }]);
     const mk = "import wave, sys; w = wave.open(sys.argv[1], 'wb'); w.setnchannels(1); w.setsampwidth(2); w.setframerate(1000); w.writeframes(b'\\x01\\x00' * 2000); w.close()";
     assert.equal(run('python', ['-c', mk, path.join(d, 'vo/vo.wav')], { capture: true }).status, 0);
-    const p = run('python', [path.join(TOOLS, 'pause.py'), d], { capture: true }); assert.equal(p.status, 0, p.stderr); return d; };
+    const p = run('python', [path.join(TOOLS, 'run/pause.py'), d], { capture: true }); assert.equal(p.status, 0, p.stderr); return d; };
   const a = mkFilm(0.5), b = mkFilm(1.2), A = f => path.join(a, 'vo', f);
   const h = f => crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex').slice(0, 16);
   // the state a crash leaves: vo.wav and words.json already the 1.2 s output, pauses.json still the 0.5 s record + pending
@@ -239,7 +239,7 @@ test('pause.py: a run stopped after replacing vo.wav (pauses.json still pending)
   const book = JSON.parse(fs.readFileSync(A('pauses.json'), 'utf8')); book.pending = { wav: h(A('vo.wav')), words: h(A('words.json')) };
   fs.writeFileSync(A('pauses.json'), JSON.stringify(book));
   const sc = JSON.parse(fs.readFileSync(A('script.json'), 'utf8')); sc.lines[1].pause_after = 1.2; fs.writeFileSync(A('script.json'), JSON.stringify(sc));
-  const p = run('python', [path.join(TOOLS, 'pause.py'), a], { capture: true }); assert.equal(p.status, 0, p.stderr);
+  const p = run('python', [path.join(TOOLS, 'run/pause.py'), a], { capture: true }); assert.equal(p.status, 0, p.stderr);
   assert.equal(fs.readFileSync(A('vo.wav')).length, fs.readFileSync(path.join(b, 'vo/vo.wav')).length, 'not paused twice (the paused take was not taken as a new one)');
   assert.deepEqual(JSON.parse(fs.readFileSync(A('words.json'), 'utf8')).map(w => w.t0), [0.1, 0.35, 0.7, 2.5]);
   const after = JSON.parse(fs.readFileSync(A('pauses.json'), 'utf8'));
@@ -249,7 +249,7 @@ test('pause.py: a run stopped after replacing vo.wav (pauses.json still pending)
 test('stagegate ◇2c: the colour script must exist and be signed by Kai, so a missing script is caught before ◇5', () => {
   const d = tmp();
   put(d, 'storyboard.json', SB); put(d, 'review/look.md', 'by: self\n'); put(d, 'review/colour-script.md', 'by: self\n');
-  const row = () => { run('node', [path.join(TOOLS, 'stagegate.mjs'), d, '2c'], { capture: true });
+  const row = () => { run('node', [path.join(TOOLS, 'gates/stagegate.mjs'), d, '2c'], { capture: true });
     return fs.readFileSync(path.join(d, 'review/gate-2c.md'), 'utf8').match(/^\| made \| colour-script\.json \| (PASS|FAIL) \| (.*) \|$/m); };
   assert.equal(row()[1], 'FAIL'); assert.match(row()[2], /missing/);
   put(d, 'colour-script.json', { film: 'x', approved: { by: '', at: '' }, scenes: [] });

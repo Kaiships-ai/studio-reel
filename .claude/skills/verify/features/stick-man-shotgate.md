@@ -1,7 +1,7 @@
 # Stick-man measured shot gate
 
-`styles/stick-man/tools/shotgate.mjs films/<slug>` judges every frame of a stick-man film against the frame before
-(`tools/shotfaults.mjs`) and exits 1 while a fault blocks: seen by the camera, on screen 3 frames or more, and large
+`styles/stick-man/tools/gates/shotgate.mjs films/<slug>` judges every frame of a stick-man film against the frame before
+(`tools/gates/shotfaults.mjs`) and exits 1 while a fault blocks: seen by the camera, on screen 3 frames or more, and large
 enough on a phone (px on a 720-tall frame × share in view, GATES.md "Shot gate"). `stagegate.mjs` runs it at ◇4 (shot lock) and
 ◇5 (deliver), so a film with a bag that pops, a figure that skates or a body through a truck cannot lock either gate.
 
@@ -36,12 +36,12 @@ enough on a phone (px on a 720-tall frame × share in view, GATES.md "Shot gate"
 
 ## How to get to it (user POV)
 
-`node styles/stick-man/tools/stagegate.mjs films/<slug> 4` lists `measured:shotgate.mjs` as FAIL until
+`node styles/stick-man/tools/gates/stagegate.mjs films/<slug> 4` lists `measured:shotgate.mjs` as FAIL until
 `review/shot-gate.md` says PASS. The make-reel-stick-man stage table names it at [3.5].
 
 ## Driving it
 
-- `node styles/stick-man/tools/shotgate.mjs films/<slug>`: runs `shot.mjs --frames all --dbg review/shot-rows.jsonl` at
+- `node styles/stick-man/tools/gates/shotgate.mjs films/<slug>`: runs `shot.mjs --frames all --dbg review/shot-rows.jsonl` at
   540x960, then `shot.mjs --vis`, then the strips; prints `review/shot-gate.md: PASS|FAIL · n second(s) to fix (kinds)`.
 - Rows made elsewhere (a film assembled shot by shot, one page per shot): `--rows <jsonl> --w <px> --h <px>`, rows in film
   order with `F` and `edit: true` on each shot's first row.

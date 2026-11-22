@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { run, env } from '../../kit/env.mjs';
-import { gate, parseScript, W, H } from '../../styles/stick-man/tools/colourgate.mjs';
+import { gate, parseScript, W, H } from '../../styles/stick-man/tools/gates/colourgate.mjs';
 
 // A synthetic shot at 144x256: two colour halves laid out in 8 px stripes (vertical or horizontal, so a change of
 // layout reads as a hard cut), a dark band (the black level) and a white box (the hero), all inside the uncropped rows.

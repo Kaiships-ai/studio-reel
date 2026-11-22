@@ -3,9 +3,9 @@
 // forward its slide lay to the side; the kit's own Act_PistolShoot_Once held it on its side at every aim frame.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { rigClip } from '../../styles/stick-man/tools/motionlib.mjs';
+import { rigClip } from '../../styles/stick-man/tools/gates/motionlib.mjs';
 import { getClip } from '../../styles/stick-man/motion-lib/index.js';
-import { BUILD } from '../../styles/stick-man/lib/cast/handprops.js';
+import { BUILD } from '../../styles/stick-man/kit/cast/handprops.js';
 import '../../styles/stick-man/motion-lib/props.js';
 
 // 'along' props whose roll does not show (round, or symmetric about the forearm) or that no film has needed upright yet;

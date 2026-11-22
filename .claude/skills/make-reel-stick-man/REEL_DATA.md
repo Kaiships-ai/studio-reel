@@ -17,13 +17,13 @@ One entry per `vo/script.json` line; the board and the story gates read it.
 |---|---|
 | `see` | what a viewer with the sound off must see on this line |
 | `still` | the word board still A is taken on: the frame that carries the line's meaning (it can be another shot than the spoken key word) |
-| `act` | the lead's body action, `{ actor: ['pose@word'] }`, pose names from `engine/poses.js` and `allout/` |
+| `act` | the lead's body action, `{ actor: ['pose@word'] }`, pose names from `engine/poses.js` and `kit/cast/rail.js` |
 | `props`, `fx` | set props and `make` effects that carry the line (each seen ≥ 3 frames in its window) |
 | `set` | the set the line plays on |
 
 ## Shot list (`storyboard.json` → `scenes`, `shots`)
 
-Written in stage 1 ([1.0] scenes, [1.4a] shots), read by `tools/prepro.mjs` (checks), `tools/animatic.mjs` (the cut) and
+Written in stage 1 ([1.0] scenes, [1.4a] shots), read by `tools/gates/prepro.mjs` (checks), `tools/run/animatic.mjs` (the cut) and
 stage 3 (`direct` cameras start from it). One entry per **shot**; the `lines` entries above stay one per voice line.
 
 ```json
@@ -60,7 +60,7 @@ stage 3 (`direct` cameras start from it). One entry per **shot**; the `lines` en
 ## Breakdown, acting and measures (on shots and the storyboard)
 
 The breakdown (`set`, `cast`, `props`, `state`, `reset`, `measures`) goes into `storyboard.json` itself: it is not in the
-hash that keeps the ◇2 reviews fresh (`BREAKDOWN` in `tools/fresh.mjs`), so adding it in stage 2 does not stale them.
+hash that keeps the ◇2 reviews fresh (`BREAKDOWN` in `tools/gates/fresh.mjs`), so adding it in stage 2 does not stale them.
 
 | Key | Meaning |
 |---|---|
@@ -89,7 +89,7 @@ hash that keeps the ◇2 reviews fresh (`BREAKDOWN` in `tools/fresh.mjs`), so ad
 |---|---|
 | `title`, `fps: 30`, `frames: [0, last]` | `last` = the "last frame" line of `vo/voice-qa.md` |
 | `CUTS` (export) | the animatic's cut frames, last entry = the end frame; `animatic.mjs` prints it from the shot list |
-| `set`, `setModule`, `setOpts` | the place: `setModule: '/styles/stick-man/allout/sets/<name>.js'` (sets in `styles/stick-man/allout/README.md`) |
+| `set`, `setModule`, `setOpts` | the place: `setModule: '/styles/stick-man/kit/sets/<name>.js'` (sets in `styles/stick-man/kit/README.md`) |
 | `look`, `light`, `grade` | the approved look of the set (e.g. canyon-edge `EDGE_LOOK.look / .light / .grade`) |
 | `grade.sky`, `grade.air` | tune the engine's sky dome (`{ glow, clouds }`) and air (`{ k, near, scale, desat }`) for this act, or `false` turns one off (`.claude/skills/verify/features/stick-man-depth.md`) |
 | `backdrop` | `{ rows: [{ piece, at, rot, scale, tint }], tint }`: far town rows from `styles/stick-man/assets/backdrop/` past the set's walls; a dark `tint` about 0.17 at night. An act without it gets none; `kituse.mjs` id `depth` needs it in one act or a set that calls `backdrop()` (stick-man-depth.md) |
@@ -100,14 +100,14 @@ hash that keeps the ◇2 reviews fresh (`BREAKDOWN` in `tools/fresh.mjs`), so ad
 | `direct` | the cameras (below) |
 | `directDrift` | share of camera-to-aim distance closed per second (0.07: held shots never freeze) |
 | `make` | set props keyed by beats: `{ joint: { kind: 'ao_anim', prop: 'joint' } }` |
-| `beats` | prop keys `{ f, who, do: 'set', key, to, dur, ease }` (ease: smoother, smooth, linear, step, out, in, back) and sounds `{ f, who, do: 'sound', name, strength }` (names: `styles/stick-man/tools/sound_bank.py`) |
+| `beats` | prop keys `{ f, who, do: 'set', key, to, dur, ease }` (ease: smoother, smooth, linear, step, out, in, back) and sounds `{ f, who, do: 'sound', name, strength }` (names: `styles/stick-man/tools/run/sound_bank.py`) |
 | `overlays` | the drawn layer (below) |
 | `lines`, `glasses`, `captions` | script line ids; `glasses: false`; `captions: { mode: 'word' }` |
 
 ## Motion v2 keys (`anim`): blocking and polish
 
 ```js
-import { hold, polishAt } from '/styles/stick-man/lib/acting/keys.js';   // STAND, BREATH, hold, polishAt; ?blocking=1 = the approved blocking
+import { hold, polishAt } from '/styles/stick-man/kit/acting/keys.js';   // STAND, BREATH, hold, polishAt; ?blocking=1 = the approved blocking
 export const CUTS = [0, 30, 60 /* ... */];   // the animatic's cut frames
 const polish = polishAt(CUTS);               // the poses stay; a key on a cut stays a snap; others hold, then move T frames before the next
 anim: { eng: polish([ hold(0, { ...KNEEL, pos: E0, yaw: -120, expr: 'sly', look: 'joint' }), hold(8, { stroke: 1, ... }), ... ]) }
@@ -179,7 +179,7 @@ in kg (it enters the centre of mass), `x_yaw<side>` turns an upright prop about 
 ## Hand-directed cameras (`direct`)
 
 `{ at: { f }, intent, why, cut: 'cut', cam: { pos, aim, lens, roll }, to, move: { from, dur, ease }, kick: [{ at, amp }] }`
-(Blender metres; `allout/director.js`). Always write `cut: 'cut'` (the default `move` glides 16 frames between shots).
+(Blender metres; `kit/acting/director.js`). Always write `cut: 'cut'` (the default `move` glides 16 frames between shots).
 `intent` is the shot kind the gates read (`est`, `wide`, `ws`, `ms`, `mcu`, `cu`, `low`, `insert`, `top`); `why` starts with
 `P<n> · PURPOSE`. Camera-pass options: `OPT = { <shot>: { safe, emo, bold } }`, `KAI` picks, `?opt=<shot>:<name>` renders one
 (PROCESS.md section 3). A move must not pass through geometry and stays ≤ 95 px/f at 720p; bigger = a cut. A shot's `dof: { gain, band }` sets its lens blur round the look target and always wins over the lens's own
@@ -207,16 +207,16 @@ blur; `dof: { gain: 0 }` turns it off (stick-man-depth.md).
   the height above the end point).
 - A path through a point behind the camera is cut where it crosses the camera plane: only the part in front is drawn,
   the arrowhead shows only while the tip is on a visible stretch and inside the frame, and a hidden end has no label.
-- Check one on the motion-lib proof page: `tools/shot.mjs --film styles/stick-man/motion-lib/proof --query
+- Check one on the motion-lib proof page: `tools/render/shot.mjs --film styles/stick-man/motion-lib/proof --query
   "clip=Move_CarryBag_Walk_Loop&ov=<url-encoded JSON list>" --w 540 --h 960 --frames 0,30`.
 
-## Music (`audio/music.json`, `tools/mix.py`)
+## Music (`audio/music.json`, `tools/run/mix.py`)
 
 The kit mixer `mix.py` reads `audio/music.json` (or `--music-plan <json>`): `arc` `[{ t: [a, b], state, lu }]` (the music
 arc on the intensity curve), `sections` `[[name, a, z]]`, `peak` (the section that is the film's loudest moment), the
 levels `mus_lu`, `amb_lu`, `duck_db`, and `track { file, segments: [{ src: [a, b], at, file?, gain? }], xfade }`.
 `sound_fit.py <film> <track> --out <json>` writes the `track` segments from the arc, cut on the track's bar lines; the
-full key list is the header of `styles/stick-man/tools/mix.py`.
+full key list is the header of `styles/stick-man/tools/run/mix.py`.
 
 ## Errors
 

@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#engine/*": "./engine/*",
+    "#kit/*": "./kit/*",
+    "#motion-lib/*": "./motion-lib/*",
+    "#tools/*": "./tools/*"
+  }
+}

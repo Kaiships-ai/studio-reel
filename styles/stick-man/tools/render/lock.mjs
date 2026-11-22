@@ -1,4 +1,4 @@
-// One heavy render at a time per machine (tools/shot.mjs pixel tiers take it). The lock is a JSON file the holder rewrites
+// One heavy render at a time per machine (tools/render/shot.mjs pixel tiers take it). The lock is a JSON file the holder rewrites
 // every `beatMs`. On this host a lock is stale when its process is gone (a live holder is never taken over, whatever its
 // beat); from another host, when its beat is older than `ttlMs`. A stale lock is taken over by one process at a time, under
 // a `<lock>.takeover` guard created exclusively, so a killed render never blocks the machine and two takers never both win.

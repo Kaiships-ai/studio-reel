@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { LIMB } from '../../styles/stick-man/engine/cast.js';
 import { getClip } from '../../styles/stick-man/motion-lib/index.js';
-import { rigClip, rigStick } from '../../styles/stick-man/tools/motionlib.mjs';
+import { rigClip, rigStick } from '../../styles/stick-man/tools/gates/motionlib.mjs';
 
 const BONE_PCT = 3, d3 = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 const bones = g => [d3(g.hip.toArray(), g.knee.toArray()), d3(g.knee.toArray(), g.ankle.toArray())];

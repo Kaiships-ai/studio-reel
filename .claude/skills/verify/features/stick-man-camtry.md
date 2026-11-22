@@ -1,6 +1,6 @@
 # Stick-man "thử góc máy" (camera previs from the film's own engine)
 
-`styles/stick-man/tools/camtry.mjs` takes a director's camera note in plain words and finds the film, segment, take,
+`styles/stick-man/tools/run/camtry.mjs` takes a director's camera note in plain words and finds the film, segment, take,
 frame window and camera anchors it means. It renders 3-4 camera variants through the film's own engine (headless
 Chrome, real GPU) and writes the clip, a top view, wall numbers and a stage-page section. `pick` writes the chosen
 variant into the anchors and regenerates the act. The word logic is pure: `camtry-core.mjs`. The page is
@@ -53,7 +53,7 @@ the stage page, and Kai picks there.
 
 ## Driving it
 
-- `node styles/stick-man/tools/camtry.mjs "đoạn đua xe, máy quay dính tường nhà, nâng lên chút" --film films/hm-ep01
+- `node styles/stick-man/tools/run/camtry.mjs "đoạn đua xe, máy quay dính tường nhà, nâng lên chút" --film films/hm-ep01
   --dry` prints the readback (whole CHASE 1347-1709, 3 takes, change "cả đoạn", the four anchors) and the variants (V3
   marked "xem được, áp tay") and writes `camtry.json`, in a second, with no render.
 - Without `--dry`, on Hot Money ep01 r5 (worktree `hm-r5b`, 20/11 files): the whole CHASE, 363 frames x 4 variants at
@@ -61,7 +61,7 @@ the stage page, and Kai picks there.
   frames at 30 fps, and a 3 x 4 top view. V0, V1 and V2 touch a wall at 1439-1443 (take 1, "4 NGÃ TƯ", 0.02 m from an
   8.4 m building); V3 (off the wall) touches none. The recommendation is V1, with the note that only V3 clears the
   wall and must be changed by hand. Camera heights 1.49 / 1.99 / 2.49 / 1.99 m.
-- `node styles/stick-man/tools/camtry.mjs pick <out> V1 --dry` prints the dz change for every anchor window. Without
+- `node styles/stick-man/tools/run/camtry.mjs pick <out> V1 --dry` prints the dz change for every anchor window. Without
   `--dry`, it writes the anchors file and reruns `r5/tools/xfer.mjs CHASE` and `r5/xfer/chase-extra.mjs`. A second
   `pick … V1` prints "neo đã đúng".
 - Regression: `node --test test/unit/stick-camtry.test.mjs` (fixture `test/fixtures/camtry/library/`: the r5 act heads,

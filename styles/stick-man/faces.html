@@ -5,13 +5,13 @@
 html, body { margin: 0; background: #ddd; }
 canvas { display: block; }
 </style>
-<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/","#engine/":"/styles/stick-man/engine/","#kit/":"/styles/stick-man/kit/","#motion-lib/":"/styles/stick-man/motion-lib/","#tools/":"/styles/stick-man/tools/"}}</script>
 </head><body>
 <canvas id="c"></canvas>
 <script type="module">
 // Proof sheet of a face style's designs on a flat head disc, plus the head-attached mark cards: the default s2
 // (engine/facestyles/s2.js), or ?style=kit for every kit expression (engine/faces.js).
-//   node styles/stick-man/tools/shot.mjs --page styles/stick-man/faces.html --view a --frames 12 --w 1560 --h 1300 --out faces.jpg [--query style=kit]
+//   node styles/stick-man/tools/render/shot.mjs --page styles/stick-man/faces.html --view a --frames 12 --w 1560 --h 1300 --out faces.jpg [--query style=kit]
 import { EXPR_NAMES, EXPR, drawFace, MARK_NAMES } from './engine/faces.js';
 import { useFaceStyle } from './engine/facestyles/index.js';
 const style = await useFaceStyle(new URLSearchParams(location.search).get('style') || undefined);

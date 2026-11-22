@@ -1,10 +1,10 @@
-// The blind A|B tool (styles/stick-man/tools/abtest.mjs): sides shuffled by seed, a key file, a side-by-side clip and a
+// The blind A|B tool (styles/stick-man/tools/review/abtest.mjs): sides shuffled by seed, a key file, a side-by-side clip and a
 // contact sheet at phone size, a verdict mapped back through the key. The reviewer is a stub; no model is called.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { run, env } from '../../kit/env.mjs';
-import { abtest, pickSides, verdictOf } from '../../styles/stick-man/tools/abtest.mjs';
+import { abtest, pickSides, verdictOf } from '../../styles/stick-man/tools/review/abtest.mjs';
 
 test('pickSides: the same seed gives the same sides, both sides are used, A and B are old and new', () => {
   assert.deepEqual([pickSides(7).A, pickSides(7).B], [pickSides(7).A, pickSides(7).B]);

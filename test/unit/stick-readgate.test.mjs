@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { ROOT, run, env } from '../../kit/env.mjs';
-import { frameStat, leadBoxes, measure, judge, measureFile, PW, PH, MIN_FACE_PX } from '../../styles/stick-man/tools/readgate.mjs';
+import { frameStat, leadBoxes, measure, judge, measureFile, PW, PH, MIN_FACE_PX } from '../../styles/stick-man/tools/gates/readgate.mjs';
 
 const verdict = m => Object.fromEntries(judge(m).map(r => [r.id, r.ok]));
 const grey = (y, box = null, inner = y) => {

@@ -3,10 +3,10 @@
 Coordinates are Blender metres (x right, y into the scene, z up). A mark is where a figure's root stands; a place is a
 prop spot or hand target. `at` / `to` take a mark or place name, a prop name, or `[x, y, z]`.
 
-## Sets (`setModule` in an act; files in `styles/stick-man/allout/sets/`)
+## Sets (`setModule` in an act; files in `styles/stick-man/kit/sets/`)
 
-An act names its set by URL: `set: '<name>', setModule: '/styles/stick-man/allout/sets/<name>.js'` (`make: { prop: { kind:
-'ao_anim', prop } }`, keys via `set` beats; kit in `styles/stick-man/allout/README.md`).
+An act names its set by URL: `set: '<name>', setModule: '/styles/stick-man/kit/sets/<name>.js'` (`make: { prop: { kind:
+'ao_anim', prop } }`, keys via `set` beats; kit in `styles/stick-man/kit/README.md`).
 
 | Set | Looks like | Props (`set` beat keys) | Look |
 |---|---|---|---|
@@ -17,8 +17,8 @@ Marks, places and COLLIDE boxes: the set file's `MARKS`, `PLACES` and `COLLIDE` 
 ## Dressing
 
 No gate counts dressing pieces (the old dressing-density gate was removed). Sets dress with their own code on `createKit`
-(`allout/kit.js`). The 130 toon pieces in `lib/sets/dress.js` `PIECES` (bench, bin, pot, crate, sign, ...) are used only as
-bare groups by the `fall` effect (`lib/props/physfx.js`, `pieceGroup`).
+(`kit/sets/kit.js`). The 130 toon pieces in `kit/sets/dress.js` `PIECES` (bench, bin, pot, crate, sign, ...) are used only as
+bare groups by the `fall` effect (`kit/fx/physfx.js`, `pieceGroup`).
 
 | Rule | Why |
 |---|---|
@@ -27,7 +27,7 @@ bare groups by the `fall` effect (`lib/props/physfx.js`, `pieceGroup`).
 | Keep the cast's floor and walk paths clear (each set's comment names them); `collisions none` on the proof | gate |
 | Ground-level pieces on a .glb pavement sit at z 0.012 | the kit pavement top is a few mm over 0 |
 
-## Physical effects (`lib/props/physfx.js`, MAKE kinds; the "fx in world" gate)
+## Physical effects (`kit/fx/physfx.js`, MAKE kinds; the "fx in world" gate)
 
 | Kind | What happens | Keys |
 |---|---|---|
@@ -53,12 +53,12 @@ videos). Turn a stamp into a `sign` (post, hang, board, plaque), a meter or chal
 |---|---|---|
 | `KAI` | the lead (smug robber in reel 1) | `engine/cast.js` |
 | `TELLER`, `GUARD` | bank staff | `engine/cast.js` |
-| `MABEL`, `OTIS`, `JUNE` | passers-by (sun hat, beanie, bun + glasses) | `lib/cast/extras.js` |
-| `OFFICER` | police officer | `lib/cast/extras.js` |
+| `MABEL`, `OTIS`, `JUNE` | passers-by (sun hat, beanie, bun + glasses) | `kit/cast/extras.js` |
+| `OFFICER` | police officer | `kit/cast/extras.js` |
 
 Cast entry keys: `spec, at, yaw, expr, focus` (who they look at by default), `posture: 'sit'`, `watch: false` (does not
 glance at the action), `head_tilt`. Kai turning red is the keyed value `{ who: 'kai', do: 'set', key: 'dye', to: 1 }`.
-Also `WREN` (all white, sun hat), `BRAM` (all black, hair cap). A new character: export a spec from `lib/cast/extras.js`
+Also `WREN` (all white, sun hat), `BRAM` (all black, hair cap). A new character: export a spec from `kit/cast/extras.js`
 (keys `name, shirt` required; `hair, clothes, glasses, skin` optional) and it registers itself under its export name (no
 engine edit). A pure-black shirt renders dark grey under the toon shade: fine for "black".
 
@@ -77,21 +77,21 @@ engine edit). A pure-black shirt renders dark grey under the toon shade: fine fo
 ## Add a new set in 15 minutes
 
 A topic set (kitchen, desert, office) is a floor, walls, 25+ dressing pieces, COLLIDE boxes and marks. Never reword a
-script to dodge a missing set. Every set builds on `allout/kit.js` `createKit` (`canyon-edge`, the motion-lib proof set
-and all Hot Money sets do): physically lit, bevelled, never inked (look rules in `allout/README.md`). It gives
+script to dodge a missing set. Every set builds on `kit/sets/kit.js` `createKit` (`canyon-edge`, the motion-lib proof set
+and all Hot Money sets do): physically lit, bevelled, never inked (look rules in `kit/README.md`). It gives
 `K.mat, glass, glow, box, cube, cyl, sphere, lathe, torus, card, group, point, spot, area, planks, extras, skyDome, prop,
 anim`; the module also exports `room` (floor, walls, ceiling), `windowY`, `SURF` (plaster, weathered, tiles, checker,
 wood, brick, grad textures), `tex` and `label`. A film's own set lives in `films/<slug>/` and is named by its URL the
-same way. For a richer example read `allout/sets/canyon-edge.js` (story props with keys, `K.anim`).
+same way. For a richer example read `kit/sets/canyon-edge.js` (story props with keys, `K.anim`).
 
-1. Copy the template below to `allout/sets/<name>.js`, or to `films/<slug>/` for one film.
-2. Point the act at it: `set: '<name>', setModule: '/styles/stick-man/allout/sets/<name>.js'`, and add a row to the table above.
+1. Copy the template below to `kit/sets/<name>.js`, or to `films/<slug>/` for one film.
+2. Point the act at it: `set: '<name>', setModule: '/styles/stick-man/kit/sets/<name>.js'`, and add a row to the table above.
 3. Prove it: a two-line test film (synthetic `vo/words.json` like `motion-lib/proof/vo/words.json`), the cast on its marks,
    `shot.mjs --frames 0,60 --out` stills, and `--report --fast 1` shows collisions none.
 
 ```js
 // <name>: one line on what it looks like. Blender metres: x right, y into the scene, z up; camera on the y < 0 side.
-import { createKit, room, SURF } from '/styles/stick-man/allout/kit.js';
+import { createKit, room, SURF } from '/styles/stick-man/kit/sets/kit.js';
 export const SUN_DIR = [0.35, 0.45, -0.82];                    // direction the light travels (front-left, high)
 export const SUN_CENTER = [0, 0.5, 0.8], SUN_HALF = 6.0;         // one fixed shadow fit
 export const MARKS = { left: [-0.9, -0.3, 0], right: [0.9, -0.3, 0], center: [0, -0.3, 0] };   // where figures stand
@@ -117,17 +117,17 @@ export async function build(stage, { use = [] } = {}) {          // use: the act
 A whole set dressed from Blender kit pieces (export, toon, auto COLLIDE, timing): [GLB.md](GLB.md).
 
 Blender is the asset workshop only (never per-frame renders). Model with Blender's origin at the grip (hand props) or the
-bottom centre (others), real metres, flat toon colours, then export `styles/stick-man/lib/props/<name>.glb` (glTF binary,
+bottom centre (others), real metres, flat toon colours, then export `styles/stick-man/kit/props/<name>.glb` (glTF binary,
 +Y up, apply transforms). Load it in the set's `build()`:
 
 ```js
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-const g = (await new GLTFLoader().loadAsync('/styles/stick-man/lib/props/<name>.glb')).scene;
+const g = (await new GLTFLoader().loadAsync('/styles/stick-man/kit/props/<name>.glb')).scene;
 g.traverse(m => { if (m.isMesh) m.castShadow = m.receiveShadow = true; });
 g.userData.grip = [0, 0, 0];                 // hand props only
 g.position.set(...PLACES.<name>); stage.scene.add(g); stage.prop(g);   // add, ink
 g.userData.rest = { pos: g.position.clone(), rot: g.rotation.clone() };  // so `move` / `hold` can start from it
 ```
 
-Prefer a prop built in code (see `lib/props/*.js`: pure functions, `userData.set(params)`) when it needs keyed parts.
+Prefer a prop built in code (see `kit/props/*.js`, `kit/fx/*.js`: pure functions, `userData.set(params)`) when it needs keyed parts.
 Only our own designs: no brand, no third-party model without a licence note in `THIRD_PARTY_NOTICES.md`.

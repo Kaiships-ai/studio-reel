@@ -194,7 +194,7 @@ export function mocapClip({ body = 'adult', src, base = 'STAND', end = base, eas
   // The seat is where the captured body sits: under its pelvis while it is down (fall), its top at the lowest the hips
   // come as the film shows them (the dose pushes bob from STAND, the clip's rest) less the seat of the trousers (SIT's own
   // numbers: hips 0.042 m over the seat). Physics: no frame with the pelvis over the seat goes lower than that, the
-  // standard SIT keys included (they rest on this seat; tools/motionlib.mjs checks a SIT pose by its seat)
+  // standard SIT keys included (they rest on this seat; tools/gates/motionlib.mjs checks a SIT pose by its seat)
   let marks = [...setMarks];
   const sat = seated ? mid.filter(k => k.fall >= 1) : [];         // (a body lying on the floor has no seat)
   if (sat.length) {
@@ -612,7 +612,7 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
     ...(MC ? { captured: [cap[0][0], cap[cap.length - 1][1]] } : {}) };
 }
 
-// a hand baked onto a part of the head (tools/mocap_reach.mjs: [f, ik x, y, z, ikw] a frame) put on a clip's keys
+// a hand baked onto a part of the head (tools/run/mocap_reach.mjs: [f, ik x, y, z, ikw] a frame) put on a clip's keys
 // pole: where the elbow points while the hand is on (a table with pole: null keeps the arm's own elbow; a row may name its own: [f, x, y, z, w, pole x, y, z]) (the figure frame: x out to the figure's right, y up, z ahead); a
 // hand brought up to the face drops its elbow down and out, never up in front (the solve's default flips there)
 export const reachKeys = (keys, { hand, rows, pole: tp }, pole = tp === null ? null : [hand === 'L' ? -0.5 : 0.5, -1, 0.3]) => { const at = new Map(rows.map(r => [r[0], r])), arm = 'arm' + hand;
@@ -626,7 +626,7 @@ export const chewKeys = (keys, a, b, { open = 0.5, ramp = 6 } = {}) => keys.map(
 
 // the solid pieces of a clip's set marks (Blender world = clip space, metres; s = the body's size; ledge: cast.js worldBox),
 // one list for the rig's contact solve (cast.js S.obstacles), the proof set (proof/set.js) and the headless check
-// (tools/motionlib.mjs), so the check sees what the render does: a window's wall below the sill, above the top and either
+// (tools/gates/motionlib.mjs), so the check sees what the render does: a window's wall below the sill, above the top and either
 // side of the opening (axis 'y': the wall along x, its room face at at[1], depth toward -y); a trunk lip; a counter
 export function markColliders(marks = [], s = 1) {
   const out = [];
@@ -651,7 +651,7 @@ export function markColliders(marks = [], s = 1) {
 // the blend between the two is shortest there), so the prop and its load (x_kg<side> = kg on every key; cast.js weighs
 // it by the attach weight) never switch in one frame.
 // Every key names the channel (a channel a key does not name carries on from the key before). A clip that holds a prop
-// declares it (needs.props, needs.hands) and uses this: tools/motionlib.mjs fails a clip whose keys hold a prop it does
+// declares it (needs.props, needs.hands) and uses this: tools/gates/motionlib.mjs fails a clip whose keys hold a prop it does
 // not declare, or declare one they never hold.
 export const RAMP = 4;
 export const holdKeys = (keys, side, kind, { from = -Infinity, to = Infinity, kg, ramp = RAMP } = {}) => keys.map(k => {

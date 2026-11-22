@@ -1,6 +1,6 @@
 # New series template
 
-A series is data. A kit gate (`tools/GATES.json`, `tools/WHOCHECKS.json`) holds every series to the same bar; the series
+A series is data. A kit gate (`tools/gates/GATES.json`, `tools/gates/WHOCHECKS.json`) holds every series to the same bar; the series
 folder only says what is true of this show. Kit code never names a series, and no film imports from another film
 (`test/unit/stick-boundary.test.mjs`).
 
@@ -11,9 +11,9 @@ Do this in a series-setup run the day before the first episode, not inside an ep
 | Section | What goes in it |
 |---|---|
 | `characters` | each character: id, name, body type, role, face design, costume |
-| `facesApproved` | the hash of the face sheet the person approved (`tools/facesheet.mjs`), the sheet path, who and when. `hash: null` = no face reaches a film |
+| `facesApproved` | the hash of the face sheet the person approved (`tools/series/facesheet.mjs`), the sheet path, who and when. `hash: null` = no face reaches a film |
 | `palette` | ink and hero colours, the accents, colours that may never appear |
-| `colourScript` | per scene: mood, key light, hue, light events that excuse a colour move (what `tools/colourgate.mjs` reads) |
+| `colourScript` | per scene: mood, key light, hue, light events that excuse a colour move (what `tools/gates/colourgate.mjs` reads) |
 | `sets` | each set: id, file, day or night, what is solid |
 | `sound` | music bed, sound-effect bank, mix target |
 | `voice` | engine, who speaks with which voice, delivery style |

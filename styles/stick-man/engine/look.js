@@ -186,7 +186,7 @@ const SKY_GLSL = `
 const SKY_V = 'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }';
 const SKY_F = SKY_GLSL + '\n varying vec3 vD; void main(){ gl_FragColor = vec4(skyAt(normalize(vD)), 1.0); }';
 
-// Render quality, picked once by the page before createStage (reel.html ?q=, set by tools/shot.mjs --tier). `proof` is the
+// Render quality, picked once by the page before createStage (reel.html ?q=, set by tools/render/shot.mjs --tier). `proof` is the
 // cheap 480p watch (tools/render/tiers.mjs T2): no MSAA, a 1024 sun shadow map, no lens blur. Every light stays: capping them
 // (8 point + 4 spot, the nearest in view) saved ~30 % of the frame but dropped the warm car light from the hm-ep01 gun shot (22/11).
 export const QUALITY = {

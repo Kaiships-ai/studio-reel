@@ -3,10 +3,10 @@
 ## Every gate: evidence first
 
 ```sh
-node styles/stick-man/tools/stagegate.mjs films/<slug> <1|S|2a|2b|2c|3|4|5|6|all>   # review/gate-<id>.md
+node styles/stick-man/tools/gates/stagegate.mjs films/<slug> <1|S|2a|2b|2c|3|4|5|6|all>   # review/gate-<id>.md
 ```
 
-Each gate in `styles/stick-man/tools/GATES.json` lists four kinds of evidence: **measured** (a tool that must exit 0: `develop.mjs`, `scriptlint.mjs`, `prepro.mjs --gate`, `assets.mjs` and `rigtest.mjs` (gate 3), `timing.mjs`, `facebeat.mjs` (gate 4: faces against the beat, repeated faces) and `shotgate.mjs` (gates 4 and 5), `kituse.mjs` (gates 4 and 5, one id per feature: `life` the moving hold, `depth` the far backdrop, `sound-plan`, `music` a credited kit music track, `refbench` the Rick bench of the final; a skipped one needs a `DECISIONS.json` waiver `{ "waives": "<id>", "by": "kai", "at", "status": "approved" }`), `postcheck.mjs`, `cutgate.mjs`, `colourgate.mjs` (gate 5: the final against the film's approved `colour-script.json`)), **made** (the maker's files), **judged** (`by: agent:<id>` or `person:<name>`, fresh against what it reviewed: for a JSON file, everything but non-visible metadata (`notes`, `note`, `purpose`, `why`, `comments`; in `storyboard.json` also the options that are not picked, `pick`, and the asset breakdown `assets.mjs` reads: shot `set`, `cast`, `props`, `state`, `reset` and the storyboard's `measures`) hashes the same as when the review was first seen newer than it, recorded in `review/.fresh.json`; any other file, such as `vo/vo.wav`, must be older than the review; see `tools/fresh.mjs`) and **approved** (`review/approvals.json`, after the latest evidence: an independent reviewer with `verdict: "READY"` at a process gate, Kai at K1 ◇2b with `hook` and at K2 ◇5 with `notes`). A calibrated review row is **advisory**: shown, never blocking. States: OPEN → READY FOR REVIEW or READY FOR KAI K1/K2 → LOCK. A film may add evidence in `review/gates.local.json`, never remove any.
+Each gate in `styles/stick-man/tools/gates/GATES.json` lists four kinds of evidence: **measured** (a tool that must exit 0: `develop.mjs`, `scriptlint.mjs`, `prepro.mjs --gate`, `assets.mjs` and `rigtest.mjs` (gate 3), `timing.mjs`, `facebeat.mjs` (gate 4: faces against the beat, repeated faces) and `shotgate.mjs` (gates 4 and 5), `kituse.mjs` (gates 4 and 5, one id per feature: `life` the moving hold, `depth` the far backdrop, `sound-plan`, `music` a credited kit music track, `refbench` the Rick bench of the final; a skipped one needs a `DECISIONS.json` waiver `{ "waives": "<id>", "by": "kai", "at", "status": "approved" }`), `postcheck.mjs`, `cutgate.mjs`, `colourgate.mjs` (gate 5: the final against the film's approved `colour-script.json`)), **made** (the maker's files), **judged** (`by: agent:<id>` or `person:<name>`, fresh against what it reviewed: for a JSON file, everything but non-visible metadata (`notes`, `note`, `purpose`, `why`, `comments`; in `storyboard.json` also the options that are not picked, `pick`, and the asset breakdown `assets.mjs` reads: shot `set`, `cast`, `props`, `state`, `reset` and the storyboard's `measures`) hashes the same as when the review was first seen newer than it, recorded in `review/.fresh.json`; any other file, such as `vo/vo.wav`, must be older than the review; see `tools/gates/fresh.mjs`) and **approved** (`review/approvals.json`, after the latest evidence: an independent reviewer with `verdict: "READY"` at a process gate, Kai at K1 ◇2b with `hook` and at K2 ◇5 with `notes`). A calibrated review row is **advisory**: shown, never blocking. States: OPEN → READY FOR REVIEW or READY FOR KAI K1/K2 → LOCK. A film may add evidence in `review/gates.local.json`, never remove any.
 
 Freshness has one limit, first sight: the hash is recorded the first time `stagegate.mjs` runs after a review is
 written. If the reviewed file changes before that run, there is no record, the file is newer than the review and the
@@ -22,7 +22,7 @@ A film under a show bible (`styles/stick-man/bible/<show>/catalog.json` names it
 ## Script (◇S)
 
 ```sh
-node styles/stick-man/tools/scriptlint.mjs films/<slug>   # review/scriptlint.md; fixes: SCRIPT.md section 6
+node styles/stick-man/tools/gates/scriptlint.mjs films/<slug>   # review/scriptlint.md; fixes: SCRIPT.md section 6
 ```
 
 ◇S needs scriptlint PASS, `vo/beats.json` and `vo/facts.json`, and four reviews by agents, each newer than `vo/script.json`: `review/fact-check.md`, `review/skeptic.md`, `review/ear-retell.md`, `review/script-ab.md` (the new script must win). Then an independent reviewer approves (`verdict: "READY"`).
@@ -30,10 +30,10 @@ node styles/stick-man/tools/scriptlint.mjs films/<slug>   # review/scriptlint.md
 ## Pre-production (stage 1)
 
 ```sh
-node styles/stick-man/tools/prepro.mjs films/<slug>                 # review/prepro.md, review/intensity.svg, review/shots.csv
-node styles/stick-man/tools/animatic.mjs films/<slug> --v N --safe 1 # review/animatic_vNNN.mp4 + the CUTS line for reel.js
-node styles/stick-man/tools/previs.mjs films/<slug> --film           # review/previs/animatic.mp4 (3D blockout, temp music) + previs.md for ◇2b
-node styles/stick-man/tools/previs.mjs films/<slug> --scene <name>   # one scene: previs/<name>.json, or a storyboard scene id
+node styles/stick-man/tools/gates/prepro.mjs films/<slug>                 # review/prepro.md, review/intensity.svg, review/shots.csv
+node styles/stick-man/tools/run/animatic.mjs films/<slug> --v N --safe 1 # review/animatic_vNNN.mp4 + the CUTS line for reel.js
+node styles/stick-man/tools/run/previs.mjs films/<slug> --film           # review/previs/animatic.mp4 (3D blockout, temp music) + previs.md for ◇2b
+node styles/stick-man/tools/run/previs.mjs films/<slug> --scene <name>   # one scene: previs/<name>.json, or a storyboard scene id
 ```
 
 `prepro.mjs` exits 1 on a FAIL. Its checks (ids T, B, C, P, H, I) and the fix for each are in PREPRO.md section 8. A WARN
@@ -54,10 +54,10 @@ voice; `--strict 1` (WARN counts as FAIL) is for Kai to ask for, never a default
 ## Shot gate (◇4, ◇5)
 
 ```sh
-node styles/stick-man/tools/shotgate.mjs films/<slug> [--in renders/<slug>_vN.mp4 --from <first frame>]   # review/shot-gate.md
+node styles/stick-man/tools/gates/shotgate.mjs films/<slug> [--in renders/<slug>_vN.mp4 --from <first frame>]   # review/shot-gate.md
 ```
 
-Every frame of the film, frame against frame (`tools/shotfaults.mjs`). Each fault is sized as the viewer sees it: px on a
+Every frame of the film, frame against frame (`tools/gates/shotfaults.mjs`). Each fault is sized as the viewer sees it: px on a
 720-tall phone frame through the shot's own camera, after the motion the neighbouring frames predict, times the share of
 it in view (inside the frame, not behind the figure's own head or torso, and in film mode not behind the set: `shot.mjs
 --vis`). Its frames are how long it stays on screen.
@@ -93,15 +93,15 @@ assembled shot by shot passes its rows with `--rows`.
 
 ## Judged gates
 
-- **Board.** `node styles/stick-man/tools/board.mjs films/<slug> --judge 3`. It renders `review/board.jpg`, 2 stills per line: A on the entry's `still` word, B at the line's prop peak. 3 independent headless reviewers judge it; a line is shown when 2 of 3 say so. The result goes to `review/board-verdict.json`. Rerun after any change to the reel data.
-- **Style judge and blind test** `node styles/stick-man/tools/judge.mjs films/<slug> --in <mp4> --ref <private reference dir>`. The reference stays outside the repo.
+- **Board.** `node styles/stick-man/tools/review/board.mjs films/<slug> --judge 3`. It renders `review/board.jpg`, 2 stills per line: A on the entry's `still` word, B at the line's prop peak. 3 independent headless reviewers judge it; a line is shown when 2 of 3 say so. The result goes to `review/board-verdict.json`. Rerun after any change to the reel data.
+- **Style judge and blind test** `node styles/stick-man/tools/review/judge.mjs films/<slug> --in <mp4> --ref <private reference dir>`. The reference stays outside the repo.
 
 ## Who checks what
 
-Generated from `styles/stick-man/tools/WHOCHECKS.json` (SKILL.md, Who checks what). Kai's rows are the faults he still
+Generated from `styles/stick-man/tools/gates/WHOCHECKS.json` (SKILL.md, Who checks what). Kai's rows are the faults he still
 sees at K1 and K2; each one gets a check before the next episode (`firstrun.mjs check`).
 
-<!-- whochecks:begin (generated from styles/stick-man/tools/WHOCHECKS.json: node styles/stick-man/tools/whochecks.mjs --write) -->
+<!-- whochecks:begin (generated from styles/stick-man/tools/gates/WHOCHECKS.json: node styles/stick-man/tools/gates/whochecks.mjs --write) -->
 | Kind | Fault | Who | Tool | Gate | Measured limit | Source |
 | --- | --- | --- | --- | --- | --- | --- |
 | `pose-snap` | a joint snaps to a new pose and holds | machine | `shotgate.mjs` | ◇4 ◇5 | a change of 75 px or more (720-tall frame) that stays 3 frames; a spike gone within 2 frames only shows on the strip | Kai marked 12 strips 17/11: only a fault held 3 frames was seen; replay S3-032 hit |
@@ -111,7 +111,7 @@ sees at K1 and K2; each one gets a check before the next episode (`firstrun.mjs 
 | `body-through-set` | a body or prop passes through the set or another body | machine | `shotgate.mjs` | ◇4 ◇5 | 6 px or more into an opaque surface, held 3 frames | Kai saw strip 10 (11 px for 3 frames) 17/11; replay S3-046 hit (v002 F1214) |
 | `prop-in-head` | a prop passes through a head, or sits inside a wall, a piece of furniture or a jamb | machine | `shotgate.mjs` | ◇4 ◇5 | a hand-sized prop's inset box 2 cm or more into a head ellipsoid or a set solid (box meshes + COLLIDE), 6 px, held 3 frames | Hot Money ep01 r5 v3 LOAD-A: bag in the head 18 f, in the dresser, the bed and door 9's jamb (bench rows, PR kit/correct-hm-r5) |
 | `prop-leaves-view` | a prop in a hand leaves the frame while its holder stays in it, and comes back | machine | `shotgate.mjs` | ◇4 ◇5 | seen whole in the 6 frames before, out of the frame 3 frames or more, back within 45 | Hot Money ep01 r5 v3 LOAD-B 691-714, 741-757: the bait bill out of the top of the frame |
-| `prop-out-of-scale` | a tracked prop drawn at a size its real kind never has (a round bigger than the gun) | machine | `shotgate.mjs` | ◇4 ◇5 | longest side outside lib/props/sizes.js REAL_SIZE by 1.25x, in view, 6 px, 3 frames; untracked objects are not seen | Hot Money ep01 r5 GUN: round 14 cm beside a 23 cm slide |
+| `prop-out-of-scale` | a tracked prop drawn at a size its real kind never has (a round bigger than the gun) | machine | `shotgate.mjs` | ◇4 ◇5 | longest side outside kit/props/sizes.js REAL_SIZE by 1.25x, in view, 6 px, 3 frames; untracked objects are not seen | Hot Money ep01 r5 GUN: round 14 cm beside a 23 cm slide |
 | `far-plane-cut` | an object cut by the camera's far plane inside the shot (a straight edge in the sky), or a set's flat sky card over the engine's sky dome | machine | `shotgate.mjs` | ◇4 ◇5 | an opaque mesh 2 m tall or more reaching past far with its near part in view, 6 px, 3 frames | Hot Money ep01 r5 CHASE 1481-1513, 1613-1637: motel.js sky cards 220 x 60 m at 60-70 m, far 80 m (review/r5/p2/f1) |
 | `face-unapproved` | a face design Kai has not seen on a face sheet | machine | `facebeat.mjs` | ◇4 | any expression design held 15 frames on a readable head that is not in review/faces-approved.json | Hot Money ep01 r5 s1 round 2 (19/11 22:49): new faces shown in the film first, rolled back |
 | `figure-jumps` | a figure pops into the frame or to a new place | machine | `shotgate.mjs` | ◇4 ◇5 | a jump of 75 px or more that stays 3 frames | replay S3-050 hit (v002 F1372); Kai did not see a 120 px one-frame jump 17/11 |

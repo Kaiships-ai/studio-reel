@@ -1,7 +1,7 @@
 # Rick clip benchmark
 
 Kai's bar for a stick-man film is the three "Rick clip" shorts. This folder turns that bar into numbers. One tool,
-`styles/stick-man/tools/refbench.mjs`, measures the Rick clips and our renders the same way. `TABLE.md` holds the gap
+`styles/stick-man/tools/review/refbench.mjs`, measures the Rick clips and our renders the same way. `TABLE.md` holds the gap
 per metric, and every later kit or film fix aims at closing one of those gaps.
 
 A reference is a bar only. The Rick mp4 files and their frames never enter git or a shipped file. This folder keeps
@@ -26,10 +26,10 @@ Run these from the repository root. One clip takes 15 to 35 s on an M-series Mac
 
 ```sh
 ~/.local/bin/yt-dlp -f "bv*[ext=mp4]+ba[ext=m4a]" --merge-output-format mp4 -o "<cache>/%(id)s.mp4" https://www.youtube.com/shorts/HxqtHI62otM
-node styles/stick-man/tools/refbench.mjs <cache>/HxqtHI62otM.mp4 --url https://www.youtube.com/shorts/HxqtHI62otM --out styles/stick-man/bench/rick/HxqtHI62otM.json
-node styles/stick-man/tools/refbench.mjs films/<film>/renders/<film>_v1.mp4 --stems films/<film>/audio/stems --out styles/stick-man/bench/ours/<film>_v1.json
-node styles/stick-man/tools/refbench.mjs noise <mp4> --out styles/stick-man/bench/noise-<clip>.json
-node styles/stick-man/tools/refbench.mjs table styles/stick-man/bench
+node styles/stick-man/tools/review/refbench.mjs <cache>/HxqtHI62otM.mp4 --url https://www.youtube.com/shorts/HxqtHI62otM --out styles/stick-man/bench/rick/HxqtHI62otM.json
+node styles/stick-man/tools/review/refbench.mjs films/<film>/renders/<film>_v1.mp4 --stems films/<film>/audio/stems --out styles/stick-man/bench/ours/<film>_v1.json
+node styles/stick-man/tools/review/refbench.mjs noise <mp4> --out styles/stick-man/bench/noise-<clip>.json
+node styles/stick-man/tools/review/refbench.mjs table styles/stick-man/bench
 ```
 
 The three clips are `HxqtHI62otM`, `LC8hYwUZ-kU` and `VS1Z_Q-Klt8`. YouTube serves them at 1080x1920, 30 fps. The

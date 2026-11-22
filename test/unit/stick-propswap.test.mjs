@@ -3,7 +3,7 @@
 // had the hand 40 cm off its target and the handset 15.7 cm in the head).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { checkAll, rigClip, keyed, GRIP_CM, PROP_CM } from '../../styles/stick-man/tools/motionlib.mjs';
+import { checkAll, rigClip, keyed, GRIP_CM, PROP_CM } from '../../styles/stick-man/tools/gates/motionlib.mjs';
 import { getClip } from '../../styles/stick-man/motion-lib/index.js';
 import { propSwap } from '../../styles/stick-man/motion-lib/props.js';
 

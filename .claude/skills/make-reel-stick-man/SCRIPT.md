@@ -22,12 +22,12 @@ The structure was locked at ◇1. Here the words are written, tested and locked.
 |---|---|---|---|
 | [1.1a] Beat outline | One beat per story move: `want`, `obstacle`, `outcome`, and the `link` to the beat before (`but` / `so`) with `because` (what in the beat before causes it). List the plants (anything set up that must pay off) and the vote options with their planted costs. Write this before any sentence. | `vo/beats.json` (REEL_DATA.md) | `scriptlint.mjs` S7-S9 |
 | [1.1b] Fact sheet | Every real fact: the claim, the lines that say it, a source you opened, the number recomputed, the wrong move by "you" it is tied to (K1), and **where else in the story this fact would catch you** (a fact you state must not be ignored later). | `vo/facts.json` | a fresh agent: `review/fact-check.md` |
-| [1.1c] Draft | Write `vo/script.json` from the beats with the rules in section 3. Give each line a `class` (action, reaction, twist, fact, number, compare, rule, recap, CTA). Run `node styles/stick-man/tools/scriptlint.mjs films/<slug>` until it has no FAIL. Keep each draft (`review/script-drafts/vN.json`) with a 3-line changelog; every pass cuts. | script + `review/scriptlint.md` | the tool |
+| [1.1c] Draft | Write `vo/script.json` from the beats with the rules in section 3. Give each line a `class` (action, reaction, twist, fact, number, compare, rule, recap, CTA). Run `node styles/stick-man/tools/gates/scriptlint.mjs films/<slug>` until it has no FAIL. Keep each draft (`review/script-drafts/vN.json`) with a 3-line changelog; every pass cuts. | script + `review/scriptlint.md` | the tool |
 | [1.1d] Skeptic pass | A fresh agent reads the script as the viewer who argues in the comments: every "but why?", every beat that just happens, every set-up not used, whether the vote is truly open. Each note is answered in the script or written off with a reason. | `review/skeptic.md` | the agent |
 | [1.1e] Table read + ear retell | Record a scratch take (`voice.py`) or, before a voice exists, give the timed text to a fresh agent who reads each line once, never back (simulated listening; say so in the file). It retells the story, the numbers it kept and lost, where it got lost, the words it would not get on first hearing. | `review/ear-retell.md` | the agent |
 | [1.1f] Punch-up | For every line flagged in [1.1c]-[1.1e]: three rewrites (**safe**: fixes the note with the least change; **vivid**: a stronger picture in common words; **bold**: a different idea that still keeps the beat). Mark one **Em đề xuất**. A fresh judge picks; the picks are on the episode page. | `review/punchup.md` | reviewer |
 | [1.1g] Blind A/B | A fresh agent gets the last locked script and the new one as X and Y (order random, no labels, no notes) and judges which keeps a phone viewer watching, which is clearer, which vote splits comments more. If the new one does not win, keep the old one and write why. | `review/script-ab.md` | the agent |
-| ◇S | `node styles/stick-man/tools/stagegate.mjs films/<slug> S`: scriptlint PASS, beats and facts made, the four reviews by agents and newer than the script, the reviewer's READY. | `review/approvals.json` | reviewer |
+| ◇S | `node styles/stick-man/tools/gates/stagegate.mjs films/<slug> S`: scriptlint PASS, beats and facts made, the four reviews by agents and newer than the script, the reviewer's READY. | `review/approvals.json` | reviewer |
 | [1.1p] Picture pass | PREPRO.md [1.1]: per line `see` and an explain device. Starts from the locked script. | `storyboard.json` `lines` | `prepro.mjs` |
 
 The reviewer of [1.1b], [1.1d], [1.1e] and [1.1g] is never the writer, and gets only what a viewer would get (no notes,
@@ -235,7 +235,7 @@ land) is what [1.1b], [1.1d] and [1.1e] are for.
 | `vo/beats.json` | `beats[]` (`id`, `name`, `kind`, `lines`, `link`, `because`, `want`, `obstacle`, `outcome`, `human` on the recap), `plants[]` (`id`, `what`, `set`, `paid` = a line or `epN+`), `vote` (`lines`, `options[]` with `word` and `cost` = a plant id) |
 | `vo/facts.json` | `facts[]`: `id`, `claim`, `lines`, `source` {`name`, `url`}, `check`, `move` |
 | `review/scriptlint.md`, `fact-check.md`, `skeptic.md`, `ear-retell.md`, `punchup.md`, `script-ab.md` | the evidence of ◇S |
-| `styles/stick-man/tools/scriptlint.mjs` | the checker |
+| `styles/stick-man/tools/gates/scriptlint.mjs` | the checker |
 
 ## 8. Mistakes we have paid for (Hot Money ep. 1)
 

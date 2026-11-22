@@ -1,12 +1,12 @@
-// The kit's own hand props are the sizes of the real things they name (lib/props/sizes.js REAL_SIZE), measured as the
+// The kit's own hand props are the sizes of the real things they name (kit/props/sizes.js REAL_SIZE), measured as the
 // shot gate measures a tracked prop (engine/solids.js drawnBox: the drawn mesh, ink hull left out). A kit prop a film
 // carries by its kind name would otherwise block that film as "prop out of scale" (shotfaults.mjs).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import { BUILD } from '../../styles/stick-man/lib/cast/handprops.js';
+import { BUILD } from '../../styles/stick-man/kit/cast/handprops.js';
 import '../../styles/stick-man/motion-lib/props.js';
-import { kindOf, scaleFault } from '../../styles/stick-man/lib/props/sizes.js';
+import { kindOf, scaleFault } from '../../styles/stick-man/kit/props/sizes.js';
 import { drawnBox } from '../../styles/stick-man/engine/solids.js';
 
 test('prop sizes: every kit hand prop whose name is a kind is inside that kind\'s real size', () => {
