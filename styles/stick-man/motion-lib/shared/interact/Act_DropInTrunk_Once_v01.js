@@ -16,7 +16,7 @@
 // further out and 0.7 of the handle's extra height up, and the bag is heaved up as it leaves the fingers (toss up 10 m/s a
 // metre of extra depth: 1.6 m/s for 0.36) so it clears the further lip and lands on the trunk floor. Swung out ahead of the
 // leg, a longer and wider bag goes out that much wider (its inner corner clear of the thigh). Measured with
-// tools/motionlib.mjs fitChecks at Hot Money ep01's duffel (0.36 x 0.62, handle 0.415) on a 0.85 m lip: every gate passes.
+// tools/gates/motionlib.mjs fitChecks at Hot Money ep01's duffel (0.36 x 0.62, handle 0.415) on a 0.85 m lip: every gate passes.
 import { stand, carry, K, merge, CARRY_KG } from '../../base.js';
 import { BAG as KIT } from '../../props.js';
 

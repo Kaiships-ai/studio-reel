@@ -1,6 +1,6 @@
 # Stick-man previs and temp-music animatic
 
-`styles/stick-man/tools/previs.mjs` turns a film's storyboard into a grey three.js blockout, captures it in headless
+`styles/stick-man/tools/run/previs.mjs` turns a film's storyboard into a grey three.js blockout, captures it in headless
 Chrome and lays the recorded voice (and, for the whole film, temp music) under it. Kai judges cuts and camera from it
 before any render. The camera math is pure and shared with the page: `previs-core.mjs`. The page is `previs.html`.
 
@@ -27,9 +27,9 @@ names `review/previs/previs.md` when it is missing.
 
 ## Driving it
 
-- `node styles/stick-man/tools/previs.mjs films/<slug> --film` writes `review/previs/animatic.mp4` (720x1280, the
+- `node styles/stick-man/tools/run/previs.mjs films/<slug> --film` writes `review/previs/animatic.mp4` (720x1280, the
   voice's length) and prints its takes. `--music <wav>` and `--music-db -6` set the temp music.
-- `node styles/stick-man/tools/previs.mjs films/<slug> --scene <name | scene id>` writes `review/previs/<name>.mp4`.
+- `node styles/stick-man/tools/run/previs.mjs films/<slug> --scene <name | scene id>` writes `review/previs/<name>.mp4`.
 - `--stills 0,90,300` writes only those frames as png; `--world-only 1` writes only the compiled world json.
 - Look for: on a copy of Hot Money ep01 r4 (storyboard, `vo/`, `audio/stems/music.wav`, `previs/bank.json` copied from
   `test/fixtures/previs/bank.json`), `--scene bank` takes seconds and matches the hand-made `review/previs-banks/previs_banks_A.mp4` frame for

@@ -10,8 +10,8 @@ The standard process for a stick-man film (dev only).
 
 - Run from the library root with `.pixi/envs/default/bin/node` and `.pixi/envs/default/bin/python` (written `node` / `python` below), never `pixi run`.
 - The film lives in `films/<film>/` of the main checkout (git-ignored). Kit and engine changes go in a fresh worktree and a PR, merged after an independent review says CLEAN and CI is green (`.agents/playbooks/stick-man-kit-fix.md`).
-- Started by Studio (the Orca bot)? Follow [WORKER.md](WORKER.md): run `node styles/stick-man/tools/status.mjs films/<film>` first and trust it over memory.
-- Start a new film with `node styles/stick-man/tools/new_film.mjs`. Needs: `GOOGLE_API_KEY` in `.env` (voice), faster-whisper (align), `claude` on PATH (board judges).
+- Started by Studio (the Orca bot)? Follow [WORKER.md](WORKER.md): run `node styles/stick-man/tools/run/status.mjs films/<film>` first and trust it over memory.
+- Start a new film with `node styles/stick-man/tools/run/new_film.mjs`. Needs: `GOOGLE_API_KEY` in `.env` (voice), faster-whisper (align), `claude` on PATH (board judges).
 - Kai reads Vietnamese: replies and page text are Vietnamese; "Em đề xuất" marks your recommended option.
 - pstack: the film runs under `.agents/playbooks/stick-man-film.md`. Start a session with `/pstack:poteto-mode`.
 
@@ -39,7 +39,7 @@ side, never text or numbers alone; if two options do not differ clearly at phone
   verdict is on the page, and it may lock a process gate, never K1 or K2 (`stagegate.mjs` refuses an agent there).
 - **80 % on the first run.** K2 v1 with at most 5 Kai notes passes; more fails. Kai's note count is the measure, never an
   agent score. Each note gets a `kind` (a `WHOCHECKS.json` row) and a `root` (kai-taste R1-R5) in `review/retakes.json`.
-  When the episode posts, `node styles/stick-man/tools/firstrun.mjs add films/<film> --rounds <n> --minutes <m>` appends
+  When the episode posts, `node styles/stick-man/tools/series/firstrun.mjs add films/<film> --rounds <n> --minutes <m>` appends
   its row to `styles/stick-man/bench/first-run.tsv`. The next episode's ◇1 runs `firstrun.mjs check`: a note kind still
   checked only by Kai fails until it has a machine or AI check.
 - **PREMISE.** Notes on the same shot and fault kind in 2 rounds mean the fix direction is wrong. `retakes.mjs` (run at
@@ -67,7 +67,7 @@ side, never text or numbers alone; if two options do not differ clearly at phone
 
 Kai's notes come at K1 and K2, per segment. A note with no shot gets one question back ("shot nào?"); a vague one is
 translated with DIAGNOSE.md section 2. Every note goes into `films/<film>/review/retakes.json` (round, `where` = the
-shot, type, `kind`, `root`) and stays open until a later round closes it. `node styles/stick-man/tools/retakes.mjs
+shot, type, `kind`, `root`) and stays open until a later round closes it. `node styles/stick-man/tools/review/retakes.mjs
 films/<film>` fails a round with more notes than the one before, one that repeats a closed note, and an open PREMISE.
 
 ## Mode: thử góc máy (camera previs from the film's own engine)
@@ -75,7 +75,7 @@ films/<film>` fails a round with more notes than the one before, one that repeat
 Triggers: "previs", "thử góc máy", "máy quay …" (a camera note such as "đoạn đua xe, máy quay dính tường nhà, nâng lên
 chút"). Use it in any stage once the film renders in the engine.
 
-1. `node styles/stick-man/tools/camtry.mjs "<Kai's note, word for word>"` through the render lock. Never look up the film, segment or frames by hand.
+1. `node styles/stick-man/tools/run/camtry.mjs "<Kai's note, word for word>"` through the render lock. Never look up the film, segment or frames by hand.
 2. Its first line is the readback ("Em hiểu là: phim X, đoạn Y …"); put it at the top of the reply. Wrong readback: rerun with `--film`, `--frames A-B` or a clearer note.
 3. Show `variants.mp4`, `top.jpg` and `section.html` from `<film>/review/camtry/<SEG>-<A>-<B>/`; then `camtry.mjs pick <out dir> <Vn>` and re-render the act and its gates.
 
@@ -95,8 +95,8 @@ Every step in detail: PROCESS.md section 12. A later stage's problem is fixed in
 | **4 Post** | [4.0] sound plan · [4.1] sound · [4.2] render 720p · [4.3] gates · [4.4] final QA + package | **◇5 deliver = K2** | **Kai (K2)** |
 | **5 Publish + learn** | Post (Kai taps, Studio posts) · [5.1]-[5.6] retention, post-mortem, bench row, bible update (PUBLISH.md) | ◇6 learn | reviewer |
 
-**Every gate is checked by `node styles/stick-man/tools/stagegate.mjs films/<film> <gate>`** (evidence and approver:
-`styles/stick-man/tools/GATES.json`). A gate is LOCK when its measured checks pass, the maker's files exist, the judged
+**Every gate is checked by `node styles/stick-man/tools/gates/stagegate.mjs films/<film> <gate>`** (evidence and approver:
+`styles/stick-man/tools/gates/GATES.json`). A gate is LOCK when its measured checks pass, the maker's files exist, the judged
 evidence was written by someone else (`by: agent:<id>`) after the last change, and its approver signed
 `review/approvals.json` after the latest evidence: an independent reviewer with `verdict: "READY"` at a process gate,
 Kai at K1 and K2. States: OPEN → READY FOR REVIEW or READY FOR KAI K1/K2 → LOCK. Read them from the tool, never from
@@ -105,7 +105,7 @@ memory. A check the gate cannot measure fails, or passes only with a waiver Kai 
 ## Who checks what
 
 Each fault kind has one checker: a machine gate, the AI review, or Kai. The table is generated from
-`styles/stick-man/tools/WHOCHECKS.json` into [GATES.md](GATES.md) (`node styles/stick-man/tools/whochecks.mjs --write`;
+`styles/stick-man/tools/gates/WHOCHECKS.json` into [GATES.md](GATES.md) (`node styles/stick-man/tools/gates/whochecks.mjs --write`;
 without `--write` it fails when they differ). A row leaves Kai's column only when a replay of his notes shows the new
 checker catching them (`whochecks.mjs map <private map>`). A Kai note in a new kind becomes a row and a check before the
 next episode (`firstrun.mjs check`).
@@ -161,7 +161,8 @@ never committed.
 | [GATES.md](GATES.md) | gate commands, thresholds, fixes for a FAIL, and the generated Who checks what table |
 | [WORKER.md](WORKER.md) | the Studio contract: status.json, verbs, worker rules, the `worker_done` report |
 | [DIAGNOSE.md](DIAGNOSE.md), [REEL_DATA.md](REEL_DATA.md), [LEDGER.md](LEDGER.md) | symptom → cause → stage; `storyboard.json` and `reel.js` keys; the ledger template |
-| `styles/stick-man/tools/GATES.json`, `stagegate.mjs` | each gate's evidence and approver, the touchpoints, and the checker |
-| `styles/stick-man/tools/retakes.mjs`, `firstrun.mjs`, `calibrate.mjs` | Kai's notes per round and PREMISE, the first-run bench, whether a review brief agrees with Kai |
-| `styles/stick-man/tools/` | the measured checks of each stage (develop, scriptlint, prepro, assets, timing, shotgate, facebeat, kituse, cutgate, colourgate, postcheck, refbench, retention), previs and camtry |
+| `styles/stick-man/tools/gates/GATES.json`, `stagegate.mjs` | each gate's evidence and approver, the touchpoints, and the checker |
+| `styles/stick-man/tools/review/retakes.mjs`, `tools/series/firstrun.mjs`, `tools/review/calibrate.mjs` | Kai's notes per round and PREMISE, the first-run bench, whether a review brief agrees with Kai |
+| `styles/stick-man/tools/` ([README](../../../styles/stick-man/tools/README.md)) | one folder per stage of the work: `run/` (make the pieces), `render/`, `gates/` (the measured checks of each stage), `review/`, `series/` |
+| `styles/stick-man/kit/` ([README](../../../styles/stick-man/kit/README.md)) | what films build with: `sets/`, `cast/`, `props/`, `acting/`, `fx/`; imported as `#kit/...` inside `styles/stick-man/` |
 | `templates/stage-page.html`, `styles/stick-man/docs/` | the episode page; kit reference: verbs, poses, faces, sets, Blender sets |

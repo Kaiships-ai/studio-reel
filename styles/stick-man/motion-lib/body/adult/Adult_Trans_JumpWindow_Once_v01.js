@@ -29,11 +29,11 @@ const armed = (out = OUT) => k => { const g = 0.8 * Math.min(ease(k.f / 14), eas
   const tgt = n => CA[n] + (out[n] - CA[n]) * l;
   return { ...k, ...BAG, armR: { ...a, raise: a.raise + (tgt('raise') - a.raise) * w, swing: a.swing + (tgt('swing') - a.swing) * w, elbow: a.elbow + (tgt('elbow') - a.elbow) * w, roll: a.roll * (1 - w) } }; };
 // the left hand, flung low as the body goes over, comes down on the sill and pushes off it (the set's physics, baked:
-// ref/reach/jumpwindow_sill.js, tools/mocap_contact.mjs; re-run it when the clip or the window changes)
+// ref/reach/jumpwindow_sill.js, tools/run/mocap_contact.mjs; re-run it when the clip or the window changes)
 // Fitted to the set's window (the clip key's `fit: { sill, top, width }`, metres on this body; index.js placeClip): the
 // flight (the frames both feet are off the floor, FLY) rises by the sill's height over the capture's (the hips, the feet
 // in the air, the left hand's rest on the sill), so the trailing foot clears a higher sill by as much; the window mark
-// takes the set's numbers, and tools/motionlib.mjs checks the body against its walls (a top too low for the head, a
+// takes the set's numbers, and tools/gates/motionlib.mjs checks the body against its walls (a top too low for the head, a
 // width too narrow for the legs fail there, by name)
 // the left leg's tuck at take-off (the capture: knee 3 deg straight, then 65 a frame later, foot up 23 cm): its foot's
 // path between TUCK[0] and TUCK[1] re-timed as one eased move, so the knee folds over the span (a hit-in, not a pop)

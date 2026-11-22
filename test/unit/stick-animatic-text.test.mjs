@@ -3,7 +3,7 @@ import test from 'node:test'; import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { boxOf, ffColor, textFilter } from '../../styles/stick-man/tools/animatic-text.mjs';
+import { boxOf, ffColor, textFilter } from '../../styles/stick-man/tools/run/animatic-text.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const base = { font: '/f.ttf', file: '/t.txt', size: 30, W: 540, x: 'w*0.5-tw/2', y: 'h*0.4-th/2', enable: 'between(n,0,9)' };
@@ -35,7 +35,7 @@ test('animatic renders a shot whose text has %, a colon, a quote and an object b
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'animatic-text-'));
   fs.writeFileSync(path.join(dir, 'storyboard.json'), JSON.stringify({ fps: 30, shots: [{ id: 'SH010', size: 'MS', move: 'static', dur: 6,
     text: [{ text: "SUSPICION 35%: it's 100%\\ done", at: [0.5, 0.4], box: { color: '#c62828', alpha: 0.92, pad: 20 } }, { text: '50% %{n}', box: true }] }] }));
-  const r = spawnSync('node', [path.join(ROOT, 'styles/stick-man/tools/animatic.mjs'), dir, '--v', '1', '--size', '216x384'], { encoding: 'utf8' });
+  const r = spawnSync('node', [path.join(ROOT, 'styles/stick-man/tools/run/animatic.mjs'), dir, '--v', '1', '--size', '216x384'], { encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
   assert.ok(fs.existsSync(path.join(dir, 'review/animatic_v001.mp4')));
   fs.rmSync(dir, { recursive: true, force: true });

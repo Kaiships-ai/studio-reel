@@ -313,7 +313,7 @@ function skin(g, S, ey, dx, t) {
 // ------------------------------------------------------------------ continuous faces (micro-animation layer)
 // A face is a set of numbers (eye radii, lid, lid tilt, cheek push, white, pupil, gaze, brow tilt / height / arch / lifts,
 // brow weight, mouth width / shift, skin alphas) plus two discrete picks (eye kind, mouth kind). Between two expressions
-// every number is in-betweened, so each frame of a change is its own drawing (tools/forensic/microanim.mjs: the reference redraws a
+// every number is in-betweened, so each frame of a change is its own drawing (tools/review/microanim.mjs: the reference redraws a
 // face 5 times in 12 frames). The ink oval opens into a ring continuously (deadpan -> shock is one morph); a discrete pick
 // that differs is hidden inside an in-between: the eyes squeeze shut and the mouth passes through an open gasp at the
 // swap. Talking draws a parametric mouth from visemes (acting.js) with a real open / close range.

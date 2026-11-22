@@ -1,6 +1,6 @@
 # Stick-man sound library and mixer
 
-`styles/stick-man/tools/mix.py` mixes a stick-man film from its voice, its cue list and the kit's recorded sound library
+`styles/stick-man/tools/run/mix.py` mixes a stick-man film from its voice, its cue list and the kit's recorded sound library
 (`styles/stick-man/sound/`: 62 CC0 recordings from Freesound, OGG, `library.json` and `CREDITS`). It masters to
 −14 LUFS with true peak at or under −1.6 dBTP on the wav, and with `--mux` to −1 dBTP or lower on the AAC in the mp4.
 
@@ -14,7 +14,7 @@
 - `sound.music`: the first that applies is used: `--music <track>` (levelled to the voice + `mus_lu`, then climb, contour
   and duck), `music.json` `track` (segments of one track placed at film times, equal-power crossfades), `--music-stem <wav>`
   (a finished stem placed as it is), or none. `levels.txt` line 2 names the source.
-- `sound.fit`: `styles/stick-man/tools/sound_fit.py <film> <track> --out <music.json>` reads the track's tempo and bar
+- `sound.fit`: `styles/stick-man/tools/run/sound_fit.py <film> <track> --out <music.json>` reads the track's tempo and bar
   grid and writes a `music.json` copy whose `track.segments` give each arc section the part of the track nearest its `lu`,
   starting on a downbeat that lands on the section start. A segment may name its own `file` (`--track2 <track> --track2-at
   a-b` plays a second track under the sections that start in that span) and a `gain`. No music plays in a planned silence
@@ -32,10 +32,10 @@
 
 ## How to get to it (user POV)
 
-- A film with `vo/vo.wav`, `vo/words.json` and `audio/cues.json`: `.pixi/envs/default/bin/python styles/stick-man/tools/mix.py
+- A film with `vo/vo.wav`, `vo/words.json` and `audio/cues.json`: `.pixi/envs/default/bin/python styles/stick-man/tools/run/mix.py
   films/<slug>` (from a worktree; `pixi run python` in the main checkout). It writes `audio/mix.wav`, `audio/stems/` and
   `audio/levels.txt`.
-- How one cue name plays: `python styles/stick-man/tools/sound_lib.py <name>...` prints `how` (names, synth, guess), the
+- How one cue name plays: `python styles/stick-man/tools/run/sound_lib.py <name>...` prints `how` (names, synth, guess), the
   design it uses and the library files it reads.
 
 ## Driving it

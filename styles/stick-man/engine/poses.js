@@ -5,7 +5,7 @@
 //   pose keys (W units, deg): bob, lean (+ = toward the figure's right), pitch (+ = forward), dx, shTwist, hipTwist,
 //   shrug, head_pitch (+ = chin down), head_tilt, head_dx, head_dv; feet {L, R}: absolute figure-local targets;
 //   hands {L, R}: { l } figure frame | { t } torso frame (moves with the lean) | { h } head frame (moves with the head),
-//   plus elbow (pole) and bend; props {L|R|B: kind} (lib/cast/handprops.js), tilt {L|R: deg}; cycle(t) = moving hold.
+//   plus elbow (pole) and bend; props {L|R|B: kind} (kit/cast/handprops.js), tilt {L|R: deg}; cycle(t) = moving hold.
 // Every verb takes `at` (frame), `hold` (frames held, default per pose), `dur` (action frames), `out` (release frames),
 // `hand` ('L' mirrors a one-handed pose), `amp` (0..1.5 size). VERBS.md "Body acting" has one line and an example each.
 import { STAND, SIT, DEG, clamp, smooth, smoother, lerp, toLocal } from './verbs.js';
@@ -143,7 +143,7 @@ export const POSES = {
   wobble: { A: 3, T: 10, hold: 40, body: { bob: -0.05, head_pitch: 4 },
     feet: { L: [-0.30, 0.022, 0.02], R: [0.30, 0.022, 0.0] }, hands: { L: { t: [-0.50, 1.66, 0.20], elbow: [-0.5, -1, 0] }, R: { t: [0.50, 1.66, 0.20], elbow: [0.5, -1, 0] } },
     cycle: t => ({ lean: 9 * Math.sin(t * 0.21), dx: 0.05 * Math.sin(t * 0.21), head_tilt: -7 * Math.sin(t * 0.21 - 0.8), pitch: 4 * Math.cos(t * 0.21) }) },
-  // prop handling (hand props are the figure's own: lib/cast/handprops.js)
+  // prop handling (hand props are the figure's own: kit/cast/handprops.js)
   pour: { A: 3, T: 10, hold: 40, props: { R: 'cup' }, body: { pitch: 8, head_pitch: 10, lean: 3 },
     hands: { R: { t: [0.36, 1.92, 0.56], elbow: [0.9, -0.5, -0.1] }, L: HIP_HAND(-1) },
     tiltKeys: { R: [[0, 0], [12, 0], [22, 75], [46, 75], [56, 0]] } },

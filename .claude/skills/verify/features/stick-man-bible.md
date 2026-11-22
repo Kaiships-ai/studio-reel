@@ -4,7 +4,7 @@ A show bible is a closed catalog of the parts one series may use: motion clips, 
 sets, looks, effects and overlays (`styles/stick-man/bible/<show>/catalog.json`, design tokens in `tokens.json`). The
 catalog's `governs` list names the film slugs it holds (`hm-ep*`, `hm-bible-*` for Hot Money). `bible/check.mjs` loads a
 governed film's acts in node and reports every part outside the catalog with its file and line and the part to use
-instead. `tools/shot.mjs` runs that check before any still or mp4 render of a film and refuses to start on a blocking
+instead. `tools/render/shot.mjs` runs that check before any still or mp4 render of a film and refuses to start on a blocking
 finding. Dev only: `styles/stick-man/` is under `[dev]` in `kit.manifest`.
 
 ## Sub-features
@@ -26,7 +26,7 @@ for the data). Rendering a governed film (`shot.mjs --film films/<slug>/<part> .
 - Blocks: `node styles/stick-man/bible/check.mjs films/hm-ep01/parts/gun` exits 1 with
   `BLOCK · 18 blocking ... library share 6 clip / 24 hand-keyed actions (20%)`.
 - Passes: `node styles/stick-man/bible/check.mjs films/hm-bible-s5` exits 0 with `PASS ... (68%), 88% of actor-frames`.
-- Gate: `node styles/stick-man/tools/shot.mjs --film films/hm-ep01/parts/gun --frames 1150 --w 720 --h 1280 --out f_%d.jpg`
+- Gate: `node styles/stick-man/tools/render/shot.mjs --film films/hm-ep01/parts/gun --frames 1150 --w 720 --h 1280 --out f_%d.jpg`
   exits 1 with `render refused: BLOCK 18 blocking` before a browser starts; the same command on `films/hm-bible-s5`
   writes the still.
 - Regression: `node --test test/unit/stick-bible*.test.mjs`.

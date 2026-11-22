@@ -1,12 +1,12 @@
-// Render by purpose: what each tier of tools/shot.mjs --tier makes, and what a pixel gate may read.
+// Render by purpose: what each tier of tools/render/shot.mjs --tier makes, and what a pixel gate may read.
 //   T0 dbg     data only (__dbg rows, reports, cues): no pixels
 //   T1 still   one sharp frame per storyboard shot (--scenes 1) or the --frames given, full quality with lens blur, 1080x1920
 //   T2 proof   480x854, engine/look.js QUALITY.proof (no MSAA, small shadow map, no lens blur; every light kept): a cheap 1x watch
 //   T3 review  720x1280, full quality: what Kai watches and what the pixel gates (colourgate, refbench) read
-//   T4 final   1080x1920, full quality, only with --kai-ok "<Kai's words>"
+//   T4 final   1080x1920, full quality, only with --kai-ok "<Kai's words>" (normally for Post)
 import fs from 'node:fs'; import path from 'node:path';
 import { run } from '../../../../kit/env.mjs';
-import { loadFilm } from '../shotlist.mjs';
+import { loadFilm } from '#tools/run/shotlist.mjs';
 
 export const TIERS = {
   dbg: { id: 'T0', pixels: false },
@@ -30,7 +30,7 @@ export function resolveTier(A) {
   if (!t.pixels && !mode) return { error: `--tier dbg (T0) makes data only: add --dbg <rows.jsonl> (or --report, --vis, --cues), no --mp4 or --out` };
   if (!t.pixels && (A.mp4 || A.out)) return { error: '--tier dbg (T0) makes no pixels: drop --mp4/--out' };
   if (t.stillsOnly && A.mp4) return { error: '--tier still (T1) makes stills: use --out <dir>/f_%d.png, or --tier proof|review for an mp4' };
-  if (t.needsKai && !String(A['kai-ok'] || '').trim()) return { error: '--tier final (T4, 1080x1920) renders only on Kai\'s ask: add --kai-ok "<his words>"' };
+  if (t.needsKai && !String(A['kai-ok'] || '').trim()) return { error: '--tier final (T4, 1080x1920) renders only on Kai\'s ask (normally for Post): add --kai-ok "<his words>"' };
   if (A.scenes && A.tier !== 'still') return { error: '--scenes picks one still per shot: use it with --tier still' };
   return { tier: A.tier, id: t.id, pixels: t.pixels, w: t.w, h: t.h, query: t.query || null };
 }

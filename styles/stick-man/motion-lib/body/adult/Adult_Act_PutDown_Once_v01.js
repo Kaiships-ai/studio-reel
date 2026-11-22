@@ -6,7 +6,7 @@ import { mocapClip, holdKeys, CARRY_KG } from '../../base.js';
 import SRC from '../../ref/mixamo/putting_down.js';
 
 const M = mocapClip({ body: 'adult', src: SRC, base: 'CARRY', end: 'STAND' });
-// (the fist's lowest frame, measured through the rig with tools/motionlib.mjs rigClip; re-measure when the clip changes)
+// (the fist's lowest frame, measured through the rig with tools/gates/motionlib.mjs rigClip; re-measure when the clip changes)
 const RELEASE = 165;
 const keys = holdKeys(M.keys, 'R', 'bag', { to: RELEASE, kg: CARRY_KG });
 export default { name: 'Adult_Act_PutDown_Once', clip: 'Act_PutDown_Once', body: 'adult', group: 'Act', loop: false, frames: M.frames, base: 'CARRY', end: 'STAND', style: 'kaiships',

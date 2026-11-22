@@ -1,6 +1,6 @@
 # Stick-man render tiers
 
-`styles/stick-man/tools/shot.mjs --tier <tier>` renders a stick-man film for one purpose at the size and look that
+`styles/stick-man/tools/render/shot.mjs --tier <tier>` renders a stick-man film for one purpose at the size and look that
 purpose needs. The tiers live in `styles/stick-man/tools/render/tiers.mjs`. Without `--tier`, every old flag works as
 before.
 
@@ -33,12 +33,12 @@ before.
 
 ## Driving it
 
-- `node styles/stick-man/tools/shot.mjs --film films/hm-ep01/parts/gun --frames 1200-1209 --tier proof --mp4 <dir>/c.mp4`
+- `node styles/stick-man/tools/render/shot.mjs --film films/hm-ep01/parts/gun --frames 1200-1209 --tier proof --mp4 <dir>/c.mp4`
   run twice prints `cache miss: no earlier render with a sidecar`, then `cache hit: same inputs`. With `--frames
   1200-1210` it prints `cache miss: frames changed`.
-- `node styles/stick-man/tools/colourgate.mjs --mp4 <dir>/c.mp4 --script films/hm-ep01/colour-script.json` exits 2
+- `node styles/stick-man/tools/gates/colourgate.mjs --mp4 <dir>/c.mp4 --script films/hm-ep01/colour-script.json` exits 2
   with "needs a T3 review render".
-- `node styles/stick-man/tools/shot.mjs --film films/hm-ep01/parts/gun --frames 1140-1346 --tier dbg --dbg <rows>`
+- `node styles/stick-man/tools/render/shot.mjs --film films/hm-ep01/parts/gun --frames 1140-1346 --tier dbg --dbg <rows>`
   writes rows byte-identical to the same command without `--tier`.
 - Regression: `node --test test/unit/stick-render-tiers.test.mjs`.
 

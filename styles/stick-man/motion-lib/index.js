@@ -11,7 +11,7 @@
 import * as THREE from 'three';
 import { BODIES } from './bodies.js';
 import { BASES } from './base.js';
-import { BUILD } from '../lib/cast/handprops.js';
+import { BUILD } from '#kit/cast/handprops.js';
 import Adult_Move_Run_Fwd_Loop_v01 from './body/adult/Adult_Move_Run_Fwd_Loop_v01.js';
 import Adult_Move_Walk_Fwd_Loop_v01 from './body/adult/Adult_Move_Walk_Fwd_Loop_v01.js';
 import Adult_Move_Sprint_Fwd_Loop_v01 from './body/adult/Adult_Move_Sprint_Fwd_Loop_v01.js';
@@ -139,7 +139,7 @@ for (const c of ALL) (CLIPS[c.clip] ||= {})[zeroed(c).body || '*'] = c;
 export const CLIP_NAMES = Object.keys(CLIPS);
 // a clip fitted to its set (the clip key's `fit`, e.g. { lip: 0.85 } for a trunk, { sill, top, width } for a window; and
 // to the bag it holds, fit.bag, propFit below): a
-// clip record with `fit(opts)` makes the fitted version (checked by tools/motionlib.mjs on every fit in its `fitChecks`)
+// clip record with `fit(opts)` makes the fitted version (checked by tools/gates/motionlib.mjs on every fit in its `fitChecks`)
 const FITTED = new Map();
 export function fitClip(C, fit) {
   if (!fit) return C;

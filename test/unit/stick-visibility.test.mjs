@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import * as THREE from 'three';
-import { faultList, hiddenOf, holdLines, joints } from '../../styles/stick-man/tools/faults.mjs';
+import { faultList, hiddenOf, holdLines, joints } from '../../styles/stick-man/tools/gates/faults.mjs';
 import { pointVis, foldVis } from '../../styles/stick-man/engine/visible.js';
 
 const FX = JSON.parse(fs.readFileSync(new URL('../fixtures/stick-sh245/rows.json', import.meta.url), 'utf8'));

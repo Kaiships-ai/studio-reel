@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { track, framing, moveEnds, boundaries, cameraKeys, rhythm, labelAt, warp } from '../../styles/stick-man/tools/previs-core.mjs';
-import { filmShots, filmWorld, autoWorld, stagesFor, zonesOf } from '../../styles/stick-man/tools/previs.mjs';
+import { track, framing, moveEnds, boundaries, cameraKeys, rhythm, labelAt, warp } from '../../styles/stick-man/tools/run/previs-core.mjs';
+import { filmShots, filmWorld, autoWorld, stagesFor, zonesOf } from '../../styles/stick-man/tools/run/previs.mjs';
 
 const BANK = JSON.parse(fs.readFileSync(new URL('../fixtures/previs/bank.json', import.meta.url), 'utf8'));
 const near = (a, b, eps = 1e-6) => a.every((v, i) => Math.abs(v - b[i]) < eps);

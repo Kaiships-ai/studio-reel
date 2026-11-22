@@ -145,7 +145,7 @@ export function worldBox(lo, hi, toW, fromW, k, kind = 'set', ledge = 0) {
 
 // where a captured elbow sticks out to, as an ik pole (root space, W): its offset from the middle of its own shoulder-hand
 // line. A near straight arm (under 0.1 W off its line, ~25 deg of flex) has no side of its own, so it eases onto a
-// person's resting one: out, a little down, back (cast.js S.pose's default). tools/mocap_contact.mjs and mocap_reach.mjs
+// person's resting one: out, a little down, back (cast.js S.pose's default). tools/run/mocap_contact.mjs and mocap_reach.mjs
 // bake it into their tables, so the hand going onto ik keeps the capture's own elbow
 export function elbowSide(off, side) {
   const n = new THREE.Vector3(side === 'L' ? -0.6 : 0.6, -0.2, -0.75).normalize(), w = Math.max(0, Math.min(1, (off.length() - 0.02) / 0.08)), s = w * w * (3 - 2 * w);

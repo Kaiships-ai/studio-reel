@@ -1,5 +1,5 @@
 // The set's solid pieces, read from what the set built instead of from a hand list: every box mesh of the act (the
-// allout/kit.js createKit K.box walls, furniture, floors, jambs) plus the set's COLLIDE. A hand list misses what nobody wrote into it
+// kit/sets/kit.js createKit K.box walls, furniture, floors, jambs) plus the set's COLLIDE. A hand list misses what nobody wrote into it
 // (Hot Money ep01 r5: room 2's bed and nightstand were in COLLIDE_ROOM2, the engine read COLLIDE, and a hot dog let go
 // over the bed fell through it to the floor; the walls and the door jamb a bag swung through were in no list at all).
 //   solidBoxes(root, skip)   [{ name, mesh, box (its geometry's box) }]: the box meshes under root, outside skip (a set prop, an actor)
@@ -17,7 +17,7 @@ const shown = o => { for (let q = o; q; q = q.parent) if (!q.visible) return fal
 export function solidBoxes(root, skip = new Set()) {
   const out = [];
   root.traverse(m => {
-    if (!m.isMesh || !(m.geometry instanceof THREE.BoxGeometry) || m.userData.hollow || under(m, skip)) return;   // RoundedBoxGeometry too (allout/kit.js K.box)
+    if (!m.isMesh || !(m.geometry instanceof THREE.BoxGeometry) || m.userData.hollow || under(m, skip)) return;   // RoundedBoxGeometry too (kit/sets/kit.js K.box)
     const mats = Array.isArray(m.material) ? m.material : [m.material];
     // drawn opaque (as engine/visible.js opaque, less the visibility: an act's group is hidden while it is built)
     if (mats.every(x => !x || x.side === THREE.BackSide || x.visible === false || x.colorWrite === false || x.transparent || (x.opacity ?? 1) < 0.99 || x.blending === THREE.AdditiveBlending)) return;

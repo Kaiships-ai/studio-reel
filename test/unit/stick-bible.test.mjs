@@ -64,7 +64,7 @@ test('CATALOG.md is the current render of the two files', async () => {
 test('a kit part that provides a name its module does not define fails', () => {
   const r = run('--dir', broken(b => { b.catalog.components.find(c => c.id === 'fx.phys').provides.make.push('nosuchfx'); }));
   assert.equal(r.status, 1);
-  assert.match(r.stderr, /fx\.phys: styles\/stick-man\/lib\/props\/physfx\.js does not define nosuchfx/);
+  assert.match(r.stderr, /fx\.phys: styles\/stick-man\/kit\/fx\/physfx\.js does not define nosuchfx/);
 });
 
 test('a hand pose two clips claim to replace fails: the checker names one clip to use instead', () => {

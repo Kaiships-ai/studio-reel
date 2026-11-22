@@ -6,10 +6,10 @@ import { mocapClip, holdKeys, bagBend, CARRY_KG } from '../../base.js';
 import SRC from '../../ref/mixamo/picking_up.js';
 
 const M = mocapClip({ body: 'adult', src: SRC, base: 'STAND', end: 'CARRY' });
-// (the fist's lowest frame, measured through the rig with tools/motionlib.mjs rigClip; re-measure when the clip changes)
+// (the fist's lowest frame, measured through the rig with tools/gates/motionlib.mjs rigClip; re-measure when the clip changes)
 const GRAB = 105;
 // the bag arm carried 35 deg wider over the bend and the knees 0.17 W deeper so the wider arm still reaches the floor
-// (base.js bagBend), measured with tools/motionlib.mjs: without the wider arm the bag hangs into the leg on the way up
+// (base.js bagBend), measured with tools/gates/motionlib.mjs: without the wider arm the bag hangs into the leg on the way up
 // (the fist 8 cm off its grip over frames 146-180, the bag 7 cm in the leg with physics off); without the deeper knees
 // the fist stops short of the bag on the floor (it slides 2.3 cm a frame into the hand at the grab)
 const keys = bagBend(holdKeys(M.keys, 'R', 'bag', { from: GRAB, kg: CARRY_KG }), 'R', { out: [35, 55, 170, 220], deg: 35, dip: 0.17 });

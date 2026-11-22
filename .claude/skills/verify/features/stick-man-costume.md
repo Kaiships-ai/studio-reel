@@ -2,7 +2,7 @@
 
 A stick-man cast entry (or its spec) wears `costume: ['hoodie:grey']` (hood up) or `['hoodie:grey:down']` (hood folded
 on the upper back). The garment replaces the torso's surface and bends with the spine; the hood is skinned between chest
-and head; with `PHYS.on` the hood's back peak springs and the cords swing (`allout/cloth.js`). A cast entry without a
+and head; with `PHYS.on` the hood's back peak springs and the cords swing (`kit/cast/cloth.js`). A cast entry without a
 costume renders exactly as before.
 
 ## Sub-features
@@ -21,14 +21,14 @@ costume renders exactly as before.
 
 ## How to get to it (user POV)
 
-In a film's `reel.js`: `import '/styles/stick-man/allout/costume.js'; import '/styles/stick-man/allout/hoodie.js'`, then a
+In a film's `reel.js`: `import '/styles/stick-man/kit/cast/costume.js'; import '/styles/stick-man/kit/cast/hoodie.js'`, then a
 cast entry `{ spec: 'ENGINEER', costume: ['hoodie:grey'] }`. Give the spec `hair: []` for the hood up (a hair cap is bigger
 than the hood's clearance).
 
 ## Driving it
 
 - A sheet: a film with six static figures (hood up at yaw 0/45/90/180, hood down with a red `flatCap`), one direct shot per
-  frame, then `node styles/stick-man/tools/shot.mjs --film films/<name> --frames 0-5 --w 540 --h 960 --out f_%d.png`.
+  frame, then `node styles/stick-man/tools/render/shot.mjs --film films/<name> --frames 0-5 --w 540 --h 960 --out f_%d.png`.
 - Numbers: add `--query hoodstats=1` on a moving shot and read the `HOODIE` lines: `pen` 0 (m into the body), `p99`
   under 0.15 (edge stretch), `cord` about 0 (cord stretch), `rimOff` under ~5 deg in a head turn and ~12 deg on a 26 deg nod
   (degrees the face opening slid off the face; ~24 deg at the 45 deg ROM-limit nod), `cordPen` 0 (m the drawn cord sinks into the jersey: the old number
@@ -46,7 +46,7 @@ than the hood's clearance).
   the chest turns over 90 deg; a hard stop or a stepped run changes the travel but is no jump) re-seats the cords and
   the hood at rest on the new pose and settles them (`hoodie.js` step, as on a first frame; `__dbg` `cord.jump: true` on
   that frame); the next frame the cords move off with the body (`Cloth.carry`); the hood builds its lag again from rest
-  within two frames. `node styles/stick-man/tools/cordjump.mjs` plays every motion-lib clip on every body it plays on in
+  within two frames. `node styles/stick-man/tools/gates/cordjump.mjs` plays every motion-lib clip on every body it plays on in
   the real hoodie and lists the frames the rule fires on: none (largest travel 0.23 m/frame, change 0.16, turn 18 deg). Before the
   17/11 fix the Hot Money ep01 bank cuts (s6 f1633 and f1662, 3.5 m) were eased across in 8 sub-steps: the cord was
   flung sideways and shook for 15 frames (`cords: shake` 0.56 at f1664). Check: `shot.mjs --film films/hm-ep01/parts/banks

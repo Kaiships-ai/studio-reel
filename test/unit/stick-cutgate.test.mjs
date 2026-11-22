@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
-import { hardCuts, measure, judge, segments, verdict as verdictOf } from '../../styles/stick-man/tools/cutgate.mjs';
+import { hardCuts, measure, judge, segments, verdict as verdictOf } from '../../styles/stick-man/tools/gates/cutgate.mjs';
 
 const fps = 30;
 const scores = (dur, cutAt, extra = []) => Array.from({ length: Math.round(dur * fps) }, (_, i) => {
@@ -78,7 +78,7 @@ test('a film rendered in parts reads s<n>/ back to back in the render, and refus
 });
 
 test('the final render: a size-suffixed version counts, the highest version wins by number, final* wins', async () => {
-  const { pickFinal } = await import('../../styles/stick-man/tools/renders.mjs');
+  const { pickFinal } = await import('../../styles/stick-man/tools/render/renders.mjs');
   assert.equal(pickFinal(['hm-ep01-r2_v7_720.mp4', 'notes.txt']), 'hm-ep01-r2_v7_720.mp4');
   assert.equal(pickFinal(['ep_v2.mp4', 'ep_v10.mp4', 'ep_v9_1080.mp4']), 'ep_v10.mp4');
   assert.equal(pickFinal(['ep_v10.mp4', 'final.mp4']), 'final.mp4');

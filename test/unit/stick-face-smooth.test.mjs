@@ -26,7 +26,7 @@ test('rule 1: an interrupted change blends from the face on screen (SH240 keys: 
 
 // ---------------------------------------------------------------- rules 2-14: timing, overlap, takes, blinks, gaze
 import * as acting from '../../styles/stick-man/engine/acting.js';
-import { faceFaults } from '../../styles/stick-man/tools/faults.mjs';
+import { faceFaults } from '../../styles/stick-man/tools/gates/faults.mjs';
 const { exprAccent, blinkTrack } = acting;
 const T0 = (...keys) => [{ f: -1e9, expr: keys[0] }, ...keys.slice(1).map(([f, expr, o]) => ({ f, expr, ...o }))];
 const st = (track, f) => faceStateAt(track, f, 7, null);

@@ -24,7 +24,7 @@ then render the shot. Clocks: one `text` entry per tick with the same `at`, `ent
 ## Driving it
 
 - Proof render on the motion-lib proof page, which takes an overlays list as `ov` (URL-encoded JSON):
-  `node styles/stick-man/tools/shot.mjs --film styles/stick-man/motion-lib/proof --w 540 --h 960 --frames 0-119
+  `node styles/stick-man/tools/render/shot.mjs --film styles/stick-man/motion-lib/proof --w 540 --h 960 --frames 0-119
   --audio <silent.wav> --mp4 <out.mp4> --query "clip=Move_CarryBag_Walk_Loop&body=adult&ov=<json>"`. Look for: the
   clock box the same at each tick, the meter bar rising, the path drawing on and staying on the floor as the camera
   follows, the end label popping on arrival.

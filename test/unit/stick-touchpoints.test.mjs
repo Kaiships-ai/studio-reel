@@ -5,11 +5,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { ROOT, run } from '../../kit/env.mjs';
-import { premises } from '../../styles/stick-man/tools/retakes.mjs';
-import { row, read, open, HEADER, TSV } from '../../styles/stick-man/tools/firstrun.mjs';
+import { premises } from '../../styles/stick-man/tools/review/retakes.mjs';
+import { row, read, open, HEADER, TSV } from '../../styles/stick-man/tools/series/firstrun.mjs';
 
-const TOOLS = path.join(ROOT, 'styles/stick-man/tools'), SKILL_DIR = path.join(ROOT, '.claude/skills/make-reel-stick-man');
-const GATES = JSON.parse(fs.readFileSync(path.join(TOOLS, 'GATES.json'), 'utf8'));
+const TOOLS = path.join(ROOT, 'styles/stick-man/tools'), TOOL_DIRS = fs.readdirSync(TOOLS).map(d => path.join(TOOLS, d)).filter(d => fs.statSync(d).isDirectory()), SKILL_DIR = path.join(ROOT, '.claude/skills/make-reel-stick-man');
+const GATES = JSON.parse(fs.readFileSync(path.join(TOOLS, 'gates/GATES.json'), 'utf8'));
 const TOUCHPOINTS = ['S1', 'S2', 'K1', 'K2', 'K3', 'Post'];
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'touch-'));
 const put = (dir, rel, data, t) => { const p = path.join(dir, rel); fs.mkdirSync(path.dirname(p), { recursive: true });
@@ -28,7 +28,7 @@ test('GATES.json lists exactly the six Kai touchpoints, and only K1 (◇2b) and 
 const ASK = /\bKai (approves|signs|confirms|merges|picks|chooses|decides|accepts|reviews|OKs)\b|\bKai's call\b|\b(wait|waits|waiting) (on|for) Kai\b|\buntil Kai\b|\bneeds Kai\b|\bshow Kai\b|READY FOR KAI(?! (K1|K2|\$\{))|kai-ok|--lock-story kai/i;
 test('every approval point in the skill, its playbook and the tools\' messages names one of the six touchpoints', () => {
   const files = [...fs.readdirSync(SKILL_DIR).filter(f => f.endsWith('.md')).map(f => path.join(SKILL_DIR, f)), path.join(ROOT, '.agents/playbooks/stick-man-film.md'),
-    ...fs.readdirSync(TOOLS).filter(f => /\.(mjs|js|py)$/.test(f)).map(f => path.join(TOOLS, f))];
+    ...TOOL_DIRS.flatMap(d => fs.readdirSync(d).filter(f => /\.(mjs|js|py)$/.test(f)).map(f => path.join(d, f)))];
   const bad = [];
   for (const f of files) fs.readFileSync(f, 'utf8').split('\n').forEach((l, i) => {
     if (ASK.test(l) && !new RegExp(`\\b(${TOUCHPOINTS.join('|')})\\b`).test(l)) bad.push(`${path.relative(ROOT, f)}:${i + 1}: ${l.trim().slice(0, 120)}`);
@@ -42,18 +42,18 @@ test('SKILL.md stays short and every Rules row names the check that enforces it'
   const rules = text.split(/^## Rules.*$/m)[1].split(/^## /m)[0].split('\n').filter(l => /^\| (?!Rule \||---)/.test(l));
   assert.ok(rules.length >= 10, 'the Rules table is found');
   const judged = new Set(Object.values(GATES.gates).flatMap(g => (g.evidence || []).filter(e => e.by === 'independent').map(e => e.file)));
-  const enforces = p => /\.(mjs|js|py)$/.test(p) ? [path.join(TOOLS, p), path.join(ROOT, p)].some(x => fs.existsSync(x)) : judged.has(p);
+  const enforces = p => /\.(mjs|js|py)$/.test(p) ? [TOOLS, ...TOOL_DIRS].map(d => path.join(d, p)).concat(path.join(ROOT, p)).some(x => fs.existsSync(x)) : judged.has(p);
   const bad = rules.filter(l => { const cell = l.split('|').at(-2); return ![...cell.matchAll(/`([^`]+)`/g)].some(m => enforces(m[1].split(' ')[0])); });
   assert.deepEqual(bad.map(l => l.slice(0, 100)), [], 'a rule enforced by nothing repeats: name the tool, the test or the independent review (GATES.json) that checks it');
 });
 
-const gateRow = (d, id) => { run('node', [path.join(TOOLS, 'stagegate.mjs'), d, id], { capture: true });
+const gateRow = (d, id) => { run('node', [path.join(TOOLS, 'gates/stagegate.mjs'), d, id], { capture: true });
   const md = fs.readFileSync(path.join(d, `review/gate-${id}.md`), 'utf8');
   return { state: md.match(/^\*\*(.*)\*\*$/m)[1], approved: md.match(/^\| approved \| review\/approvals\.json \| (PASS|FAIL) \| (.*) \|$/m).slice(1), md }; };
 
 test('DECISIONS.json: the maker never approves its own decision; a reviewer or Kai at a touchpoint does', () => {
   const d = tmp(), dec = by => { put(d, 'DECISIONS.json', { decisions: [{ id: 'D1', decision: 'x', status: 'approved', by }] });
-    run('node', [path.join(TOOLS, 'develop.mjs'), d], { capture: true }); return fs.readFileSync(path.join(d, 'review/develop.md'), 'utf8'); };
+    run('node', [path.join(TOOLS, 'gates/develop.mjs'), d], { capture: true }); return fs.readFileSync(path.join(d, 'review/develop.md'), 'utf8'); };
   assert.match(dec('self'), /\| FAIL \| D0 \| D1: approved by "self"/);
   for (const by of ['agent:rev-1', 'kai']) assert.doesNotMatch(dec(by), /D1: approved by/);
 });
@@ -74,7 +74,7 @@ test('a process gate locks on an independent reviewer\'s READY, never on a self-
 
 test('◇5 runs readgate as a blocking check and soundgate as advisory: a soundgate FAIL is shown, never blocks', () => {
   const run5 = Object.fromEntries(GATES.gates['5'].run.map(r => [r.tool, !!r.advisory]));
-  assert.equal(run5['readgate.mjs'], false); assert.equal(run5['soundgate.mjs'], true);
+  assert.equal(run5['tools/gates/readgate.mjs'], false); assert.equal(run5['tools/gates/soundgate.mjs'], true);
   const d = tmp(); put(d, 'storyboard.json', {}, 1000);
   const md = gateRow(d, '5').md;
   assert.match(md, /^\| measured \| readgate\.mjs \| FAIL \|/m);
@@ -103,7 +103,7 @@ test('PREMISE: the same shot and fault kind open after 2 rounds forces K3; a clo
   const k3 = { ...structuredClone(two), k3: [{ shot: 'SH040', kind: 'prop-across-cut', round: 'v2', pick: 'insert a close-up', at: '2026-11-22' }] };
   assert.deepEqual(premises(k3), []);
   k3.notes.push(n('c', 'v3')); assert.deepEqual(premises(k3), [], 'the new approach gets its own 2 rounds');
-  const d = tmp(), tool = path.join(TOOLS, 'retakes.mjs');
+  const d = tmp(), tool = path.join(TOOLS, 'review/retakes.mjs');
   assert.equal(run('node', [tool, d, '--premise'], { capture: true }).status, 0, 'no log yet');
   put(d, 'review/retakes.json', two);
   const p = run('node', [tool, d, '--premise'], { capture: true });
@@ -122,8 +122,8 @@ test('first-run bench: v1 with at most 5 Kai notes passes; every note names its 
   assert.deepEqual(open('hm-ep03', rows, { 'story-feel': 'ai', 'too-many-cuts': 'machine' }).kinds, []);
   const d = tmp(), tsv = path.join(d, 'b.tsv'), film = path.join(d, 'hm-ep02');
   put(film, 'review/retakes.json', { rounds: R, notes: notes(2) });
-  const add = () => run('node', [path.join(TOOLS, 'firstrun.mjs'), 'add', film, '--rounds', '1', '--minutes', '170', '--tsv', tsv], { capture: true });
+  const add = () => run('node', [path.join(TOOLS, 'series/firstrun.mjs'), 'add', film, '--rounds', '1', '--minutes', '170', '--tsv', tsv], { capture: true });
   assert.equal(add().status, 0); assert.equal(add().status, 1, 'append-only: one row per episode');
-  const chk = run('node', [path.join(TOOLS, 'firstrun.mjs'), 'check', path.join(d, 'hm-ep03'), '--tsv', tsv], { capture: true });
+  const chk = run('node', [path.join(TOOLS, 'series/firstrun.mjs'), 'check', path.join(d, 'hm-ep03'), '--tsv', tsv], { capture: true });
   assert.equal(chk.status, 1); assert.match(chk.stdout, /hm-ep02 notes of kind story-feel still have no machine or AI check/);
 });

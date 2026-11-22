@@ -59,7 +59,7 @@ async function resolveRef(ref, ctx) {
       for (const r of ref.requires || []) await import(pathToFileURL(path.join(ctx.repo, r)).href);
       mod = await import(pathToFileURL(abs).href);
     } catch (e) {
-      // a browser-only kit module (allout/hoodie.js loads its glb on import): its source names the export or not
+      // a browser-only kit module (kit/cast/hoodie.js loads its glb on import): its source names the export or not
       if (ref.key != null) return { error: `${ref.path} cannot load in node to check key "${ref.key}" (${e.message.split('\n')[0]})` };
       return exported();
     }

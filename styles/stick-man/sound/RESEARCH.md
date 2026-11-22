@@ -2,7 +2,7 @@
 
 Kai's bar for a stick-man film is the three "Rick clip" shorts. Round 4 of Hot Money ep01 scored 7/10, and Kai and a
 friend both named music and sound as a large part of the gap. This file holds what we measured, how, and what it means
-for the next film. The numbers come from `styles/stick-man/tools/refbench.mjs` (method and limits in
+for the next film. The numbers come from `styles/stick-man/tools/review/refbench.mjs` (method and limits in
 `../bench/README.md`) and from listening runs by an audio model. Each claim names its source.
 
 ## What Rick does that we do not
@@ -85,7 +85,7 @@ Freesound CC0 drum build (only the 64 kbps preview was reachable without a login
   `"<Title>" Kevin MacLeod (incompetech.com) · Licensed under Creative Commons: By Attribution 4.0 · https://creativecommons.org/licenses/by/4.0/ · edited`.
 - Risk: the author registers these tracks in YouTube Content ID, and claims follow a missing credit. Nothing we found
   says how Meta treats them. Kai decides whether that risk is acceptable.
-- The fit: `styles/stick-man/tools/sound_fit.py` cuts a track on its bar lines so each section of the film's music arc
+- The fit: `styles/stick-man/tools/run/sound_fit.py` cuts a track on its bar lines so each section of the film's music arc
   starts on a downbeat, plays the louder parts under the louder states, and keeps the planned silences silent.
 
 ## Does a better track change retention?

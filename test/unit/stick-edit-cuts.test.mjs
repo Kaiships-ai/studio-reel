@@ -1,9 +1,9 @@
-// Which rows are edits (styles/stick-man/tools/faults.mjs editCuts). Hot Money ep01 r5 keyed its camera one shot per frame
+// Which rows are edits (styles/stick-man/tools/gates/faults.mjs editCuts). Hot Money ep01 r5 keyed its camera one shot per frame
 // (flyCam: every frame a 'cut' shot), so every row carried motion.cut and faceFaults, acting, joints and camStats judged
 // nothing on the whole reel (the face round had to re-derive cuts in a film tool).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { editCuts, faceFaults, camStats } from '../../styles/stick-man/tools/faults.mjs';
+import { editCuts, faceFaults, camStats } from '../../styles/stick-man/tools/gates/faults.mjs';
 import { rowsOf } from './stick-face-smooth.test.mjs';
 
 const T0 = (...keys) => [{ f: -1e9, expr: keys[0] }, ...keys.slice(1).map(([f, expr, o]) => ({ f, expr, ...o }))];

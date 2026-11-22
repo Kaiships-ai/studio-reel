@@ -2,19 +2,19 @@
 
 Blender is the asset workshop: model or reuse kit pieces there, export them once, dress a three.js set with them. The
 reel engine never renders in Blender. Packs live in `styles/stick-man/assets/<pack>/`. Two are kept: `backdrop` (three
-far town rows + `manifest.json`, loaded by `allout/sets/backdrop.js`) and `costume` (`hoodie_grey.glb`, loaded by
-`allout/hoodie.js`).
+far town rows + `manifest.json`, loaded by `kit/sets/backdrop.js`) and `costume` (`hoodie_grey.glb`, loaded by
+`kit/cast/hoodie.js`).
 
 ## Recipe (6 steps)
 
 | # | Step | How |
 |---|---|---|
 | 1 | Pick objects | One piece = one kit master collection `KIT_<group>_<name>[_<variant>]` (or one object). Read the kit's README/PROGRESS for names. Work on a COPY of the .blend in `export/`; never save over the source. |
-| 2 | Export | `Blender -b <copy.blend> --python styles/stick-man/tools/export_glb.py -- --out styles/stick-man/assets/<pack> --pieces facades_corner_shop,street_tree,...` Headless only. Writes `<name>.glb` per piece (group and variant hash dropped) + `manifest.json` (bytes, tris, bounds). |
+| 2 | Export | `Blender -b <copy.blend> --python styles/stick-man/tools/run/export_glb.py -- --out styles/stick-man/assets/<pack> --pieces facades_corner_shop,street_tree,...` Headless only. Writes `<name>.glb` per piece (group and variant hash dropped) + `manifest.json` (bytes, tris, bounds). |
 | 3 | Load | In the set: `const g = glbKit(stage, '<pack>', COLLIDE); await g.load([...names])` inside `build()`. The loader awaits every file and texture before `build()` returns, so frames are deterministic and `__ready` comes after the load. |
 | 4 | Toon | Automatic in `g.place(name, [x, y, z], rotDeg)`: every material becomes `look.js` `toon()`, the painted map (windows, brick, shelves, signs) times the toon ramp, or a flat colour; `_e_` materials keep a soft glow; ink line and shadows on. `{ ink: false }` for floors and far backdrops, `{ tint: [r, g, b] }` to warm a night-painted texture. |
 | 5 | Collide | Automatic: `place()` pushes one box per piece into the set's `COLLIDE` from the triangles crossing the body band z 0.05-1.8 m (lamp arms and awnings overhead do not block the pavement). `{ solid: false }` for floors and backdrops; add hand boxes for code-built pieces. |
-| 6 | Register | The set lives in `allout/sets/<name>.js` (an act's `setModule`), a row in SETS.md, `SHOTS` presets in the set (below), then prove it: two figures on the marks, `shot.mjs --frames ... --out` stills, `--report` with collisions none, frame YAVG 109-163. |
+| 6 | Register | The set lives in `kit/sets/<name>.js` (an act's `setModule`), a row in SETS.md, `SHOTS` presets in the set (below), then prove it: two figures on the marks, `shot.mjs --frames ... --out` stills, `--report` with collisions none, frame YAVG 109-163. |
 
 What the exporter does per piece: flattens collection instances, applies modifiers (evaluated mesh), meshes curves and
 text, bakes world transforms, merges into one mesh, triangulates. A material whose colour comes from an image keeps it:

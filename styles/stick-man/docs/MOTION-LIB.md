@@ -2,13 +2,13 @@
 
 The 52 clips of `styles/stick-man/motion-lib` (rules and use: its README.md). An anim key `{ f, clip, body, to?, times? }`
 plays one (REEL_DATA.md). `frames` = one cycle or the whole one-off at 30 fps; `base` = the standard pose it starts (→ ends) on;
-`props` = what the hands hold (`x_hp<L|R|B>_<prop>`, motion-lib/props.js and lib/cast/handprops.js; a film swaps its own with
+`props` = what the hands hold (`x_hp<L|R|B>_<prop>`, motion-lib/props.js and kit/cast/handprops.js; a film swaps its own with
 the key's `swap`), on which hand; `set` = the set pieces it needs (the proof page builds them at the sizes the clip names in
 `needs.marks`).
 
-Made by `node styles/stick-man/tools/motionlib.mjs --catalogue` from the clips themselves: do not edit by hand.
+Made by `node styles/stick-man/tools/gates/motionlib.mjs --catalogue` from the clips themselves: do not edit by hand.
 
-Proof: `node styles/stick-man/tools/motionlib.mjs --proof <dir>` (every clip at 540x960, physics on and off, `shot.mjs --report`
+Proof: `node styles/stick-man/tools/gates/motionlib.mjs --proof <dir>` (every clip at 540x960, physics on and off, `shot.mjs --report`
 numbers, one contact sheet per group).
 
 Physics gates (every clip, physics on and off, through the real rig): a prop moves no more than its hand (times its attach

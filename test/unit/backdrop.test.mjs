@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as THREE from 'three';
-import { backdrop, BACKDROP_PIECES } from '../../styles/stick-man/allout/sets/backdrop.js';
+import { backdrop, BACKDROP_PIECES } from '../../styles/stick-man/kit/sets/backdrop.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 // the page serves the repo root: answer the loader's /styles/... requests from disk

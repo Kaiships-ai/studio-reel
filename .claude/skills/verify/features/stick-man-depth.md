@@ -5,13 +5,13 @@ Rick clip bench (`styles/stick-man/bench/TABLE.md`, depth ratio, luma, saturatio
 
 - Lens blur by the lens. `lensBlur(lens, dist)` in `engine/camera.js` sizes the blur of a background at infinity like a
   thin lens, 0.9 x (lens / 30)^2 / focus distance, capped at 0.3, sharp from 0.7x to 1.6x the focus distance. The `two`, `ms` and `follow` presets and every
-  `allout/director.js` shot without its own `dof` use it, absolute `{ pos, aim }` flights included (focus on the aim).
+  `kit/acting/director.js` shot without its own `dof` use it, absolute `{ pos, aim }` flights included (focus on the aim).
 - Sky with form. When an act's background is a colour, `engine/look.js` draws a dome from it: zenith darker and cooler,
   horizon lifted, two stretched cloud layers. A set's own dome (`rail-kit` `sky()`, r 60) sits in front of it (r 70).
 - Air. A pass after the ink and before the lens blur fades far surfaces toward the sky colour in their view direction
   and takes out saturation, 1 - exp(-(z - 6 m) / 30 m), at most 0.35. At night it scatters a darker colour than the glow.
 - Far backdrop. An act's `backdrop: { rows, tint }` makes `engine/play.js` place town rows from `assets/backdrop/`
-  (built by `tools/backdrop_blend.py`, exported by `tools/export_glb.py`) 20-60 m out, past the set's walls. They load
+  (built by `tools/run/backdrop_blend.py`, exported by `tools/run/export_glb.py`) 20-60 m out, past the set's walls. They load
   right after the set's `build()`, so they are in place before the first frame and belong to that act. Opt-in: an act
   without the key gets none.
 
@@ -33,8 +33,8 @@ Any stick-man film picks up the lens blur, sky and air on its next render. An ac
 ## Driving it
 
 - Unit: `node --test test/unit/camera-dof.test.mjs test/unit/backdrop.test.mjs`.
-- Stills: `node styles/stick-man/tools/shot.mjs --film films/<slug> --frames <f,...> --w 720 --h 1280 --out <dir>/f_%d.png`,
-  then the bench on a render: `node styles/stick-man/tools/refbench.mjs <mp4> --out <json>`.
+- Stills: `node styles/stick-man/tools/render/shot.mjs --film films/<slug> --frames <f,...> --w 720 --h 1280 --out <dir>/f_%d.png`,
+  then the bench on a render: `node styles/stick-man/tools/review/refbench.mjs <mp4> --out <json>`.
 - Look for: the background behind a medium shot softens while the face ink stays crisp; over a wall the sky shows a
   gradient and clouds; a far row reads as a mass with a few lit windows, not a flat colour.
 

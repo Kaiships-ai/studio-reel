@@ -28,9 +28,9 @@ export function seriesNamesIn(file, src) {
 }
 // WHOCHECKS.json row library-unused says "a Hot Money film" in its limit text, which the skill doc shows verbatim
 // (.claude/skills/make-reel-stick-man, checked by stick-whochecks.test.mjs). Reword both together, then delete this row.
-const NAMES_ALLOWED = new Set(['styles/stick-man/tools/WHOCHECKS.json']);
+const NAMES_ALLOWED = new Set(['styles/stick-man/tools/gates/WHOCHECKS.json']);
 test('kit code (engine, lib, allout, tools) names no series outside comments and provenance fields', () => {
-  const files = ['engine', 'lib', 'allout', 'tools'].flatMap(d => walk(path.join(SM, d))).filter(f => /\.(js|mjs|py|json)$/.test(f));
+  const files = ['engine', 'kit', 'tools'].flatMap(d => walk(path.join(SM, d))).filter(f => /\.(js|mjs|py|json)$/.test(f));
   assert.ok(files.length > 50);
   assert.deepEqual(files.filter(f => !NAMES_ALLOWED.has(rel(f))).flatMap(f => seriesNamesIn(rel(f), fs.readFileSync(f, 'utf8'))), []);
 });

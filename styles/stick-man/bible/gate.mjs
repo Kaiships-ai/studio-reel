@@ -1,4 +1,4 @@
-// The render gate: a film render (stills or an mp4 from tools/shot.mjs --film) starts only when the bible check
+// The render gate: a film render (stills or an mp4 from tools/render/shot.mjs --film) starts only when the bible check
 // (bible/check.mjs) passes. A bypass needs a reason; it prints a warning and adds a line to films/<slug>/bible-bypass.tsv.
 import fs from 'node:fs';
 import path from 'node:path';

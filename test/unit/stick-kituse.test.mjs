@@ -7,12 +7,12 @@ import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path'
 import { spawnSync } from 'node:child_process';
 import { ROOT } from '../../kit/env.mjs';
 
-const TOOL = path.join(ROOT, 'styles/stick-man/tools/kituse.mjs');
+const TOOL = path.join(ROOT, 'styles/stick-man/tools/gates/kituse.mjs');
 const put = (dir, rel, data, t) => { const p = path.join(dir, rel); fs.mkdirSync(path.dirname(p), { recursive: true });
   fs.writeFileSync(p, typeof data === 'string' ? data : JSON.stringify(data, null, 1)); if (t) fs.utimesSync(p, t, t); };
 const ACT = { name: 'room', frames: [0, 99], style: { life: 0.75 }, backdrop: { rows: [{ piece: 'backdrop_skyline_a', at: [0, 0, -40] }], tint: 0.17 } };
 const reel = acts => `export default ${JSON.stringify({ frames: [0, 99], acts })};\n`;
-const LEVELS = '# levels for films/t (kit mixer styles/stick-man/tools/mix.py; ffmpeg ebur128)\n' +
+const LEVELS = '# levels for films/t (kit mixer styles/stick-man/tools/run/mix.py; ffmpeg ebur128)\n' +
   'voice: vo/vo.wav;  music: track audio/black_vortex.mp3, 9 segments (music.json);  ambience: none;  limiter ceiling -1.60 dBTP\n';
 
 function film({ acts = [ACT], plan = true, levels = LEVELS, credits = 'Music: "Black Vortex" Kevin MacLeod (black_vortex.mp3), CC BY 4.0\n', bench = true, decisions } = {}) {
@@ -42,7 +42,7 @@ const MISSING = {
   depth: [{ acts: [{ ...ACT, backdrop: undefined }] }, /no act has `backdrop/],
   'sound-plan': [{ plan: false }, /audio\/sound-plan\.json is missing/],
   music: [{ levels: null }, /audio\/levels\.txt is missing/],
-  'music outside the kit mixer': [{ levels: LEVELS.replace('kit mixer styles/stick-man/tools/mix.py', 'round 4') }, /not written by the kit mixer/, 'music'],
+  'music outside the kit mixer': [{ levels: LEVELS.replace('kit mixer styles/stick-man/tools/run/mix.py', 'round 4') }, /not written by the kit mixer/, 'music'],
   'music as a placed stem': [{ levels: LEVELS.replace(/music: .*?;/, 'music: stem audio/old.wav placed as it is (--music-stem);') }, /music source is "stem/, 'music'],
   'music not credited': [{ credits: 'Voice: Gemini\n' }, /black_vortex\.mp3 is not named in CREDITS/, 'music'],
   refbench: [{ bench: false }, /review\/refbench\.json is missing: node \S*refbench\.mjs .*t_v1\.mp4/],

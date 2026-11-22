@@ -159,7 +159,7 @@ cheapest to fix now.
 **[1.4b] Rough panels.** One panel per **key**: a static shot needs one; a moving shot needs its start and end frame; an
 action needs anticipation, the extreme and the result (pose-to-pose); a reveal needs before and after. Panels carry
 camera arrows (move), character arrows (travel), the text that will be on screen (in its real place), and the shot id.
-Keep them grey: sketches, or engine stills of proxy characters in a draft set with the light turned flat. (`tools/previs.mjs`
+Keep them grey: sketches, or engine stills of proxy characters in a draft set with the light turned flat. (`tools/run/previs.mjs`
 renders a grey blockout; a draft set without the chosen look is also fine.)
 
 **[1.4c] Board pitch + read test.** Present the board in order with the voice read aloud (Kai or a fresh agent). Then
@@ -193,7 +193,7 @@ stage 3 → lock on the final voice; if it's not available, the gate waits.
 
 ### [1.6] Animatic
 
-**Build.** `node styles/stick-man/tools/animatic.mjs films/<slug> --v N --safe 1`: shots cut at their frames, panels
+**Build.** `node styles/stick-man/tools/run/animatic.mjs films/<slug> --v N --safe 1`: shots cut at their frames, panels
 held in order, the move faked in 2D, grey cards with the shot's words where a panel is missing, burn-in of shot id,
 size, lens, move, frame in shot, version and timecode. Each version is a new file; write a 3-5 line changelog.
 

@@ -27,8 +27,8 @@ approver signed (Kai at K1 ◇2b and K2 ◇5, an independent reviewer's READY el
 
 ## How to get to it (user POV)
 
-A maker runs `node styles/stick-man/tools/retakes.mjs films/<slug>` after each round of Kai's notes, and
-`node styles/stick-man/tools/stagegate.mjs films/<slug> 5` reads `calibration.json` for the advisory brief row.
+A maker runs `node styles/stick-man/tools/review/retakes.mjs films/<slug>` after each round of Kai's notes, and
+`node styles/stick-man/tools/gates/stagegate.mjs films/<slug> 5` reads `calibration.json` for the advisory brief row.
 
 ## Driving it
 

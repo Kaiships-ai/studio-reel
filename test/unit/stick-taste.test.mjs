@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { ROOT } from '../../kit/env.mjs';
-import { tasteRoots, withTaste } from '../../styles/stick-man/tools/taste.mjs';
+import { tasteRoots, withTaste } from '../../styles/stick-man/tools/review/taste.mjs';
 
 const home = skill => { const h = fs.mkdtempSync(path.join(os.tmpdir(), 'taste-'));
   if (skill) { fs.mkdirSync(path.join(h, '.claude/skills/kai-taste'), { recursive: true }); fs.writeFileSync(path.join(h, '.claude/skills/kai-taste/SKILL.md'), skill); }
@@ -28,5 +28,5 @@ test('every review brief in the stick-man skill and playbook starts from kai-tas
   for (const f of ['.claude/skills/make-reel-stick-man/SKILL.md', '.claude/skills/make-reel-stick-man/PROCESS.md',
     '.claude/skills/make-reel-stick-man/PREPRO.md', '.claude/skills/make-reel-stick-man/SCRIPT.md', '.agents/playbooks/stick-man-film.md'])
     assert.match(fs.readFileSync(path.join(ROOT, f), 'utf8'), /~\/\.claude\/skills\/kai-taste\/SKILL\.md/, f);
-  assert.match(fs.readFileSync(path.join(ROOT, 'styles/stick-man/tools/judge.mjs'), 'utf8'), /withTaste\(/);
+  assert.match(fs.readFileSync(path.join(ROOT, 'styles/stick-man/tools/review/judge.mjs'), 'utf8'), /withTaste\(/);
 });

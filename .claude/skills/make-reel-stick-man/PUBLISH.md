@@ -9,7 +9,7 @@ better for it. Stage 5 turns retention and comments into named causes, and cause
 |---|---|---|
 | [5.1] Publish | Post the delivery package (◇5): the final, the cover, the caption, the subtitles. Note the hook used, the time, the platform. If there is an alternative hook cut, say which one ran where (the cut goes in `deliver/hook-*.mp4`, which `postcheck.mjs` P3 looks for). | `review/publish.md` |
 | [5.2] Read the numbers at 24 h and 7 d | Kai pastes the analytics screenshots (retention curve, average view %, views, comments split). Transcribe the curve to `t,pct` points, about one per 2-5 s. | `review/retention-24h.csv`, `-7d.csv` |
-| [5.3] Map to shots | `node styles/stick-man/tools/retention.mjs films/<slug> --csv review/retention-24h.csv --label 24h` puts each drop on a shot id. | `review/retention.md` |
+| [5.3] Map to shots | `node styles/stick-man/tools/series/retention.mjs films/<slug> --csv review/retention-24h.csv --label 24h` puts each drop on a shot id. | `review/retention.md` |
 | [5.4] Post-mortem | For the 3 steepest drops: DIAGNOSE.md (isolation tests, cause, the stage that caused it). Compare with the animatic's swipe test: did we predict it? | `review/retro.md` |
 | [5.5] Rules | A cause seen twice (two films, or two drops) becomes a proposed rule or a tool check, with the evidence, and lands as a WHOCHECKS row plus its check in a kit PR (independent review). | `review/retro.md` "Rules proposed" |
 | [5.6] Series state | Update the series bible: what the audience voted, what the world now holds (money, wounds, the face on TV). The next episode's [0.1] reads it. | `plot/` |

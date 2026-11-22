@@ -1,5 +1,5 @@
 // The bible check (styles/stick-man/bible/check.mjs) on small fixture films, and the render gate that runs it before
-// tools/shot.mjs renders a film. A film under the Hot Money bible (slug hm-ep*) may only use catalog parts: a body action
+// tools/render/shot.mjs renders a film. A film under the Hot Money bible (slug hm-ep*) may only use catalog parts: a body action
 // keyed by hand where the library has the clip for that body blocks, a missing clip for the body is a gap, an exception
 // silences a finding and is counted.
 import test from 'node:test';
@@ -10,7 +10,7 @@ import { ROOT } from '../../kit/env.mjs';
 import { bibleGate } from '../../styles/stick-man/bible/gate.mjs';
 
 const CHECK = path.join(ROOT, 'styles/stick-man/bible/check.mjs');
-const SHOT = path.join(ROOT, 'styles/stick-man/tools/shot.mjs');
+const SHOT = path.join(ROOT, 'styles/stick-man/tools/render/shot.mjs');
 const LIB = `export function buildTrack(keys) { return { keys: keys.map(k => ({ ...k })), use: [] }; }\n`;
 
 // a films root with one film: lib.js (a buildTrack) and reel.js holding one act with `keys` for actor `you`

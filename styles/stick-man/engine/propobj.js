@@ -9,7 +9,7 @@
 //   0 < w < 1   the two transforms blended (position lerp, quaternion slerp): the grab and the release ramps
 // Stateless per frame: the grab and release transforms are the rig's own at those frames, evaluated once per track and
 // cached, so a frame seeked out of order renders the same. One place for the proof page (play.js), the headless check
-// (tools/motionlib.mjs rigClip) and films: a track whose clips hold no props has no spans and renders as before.
+// (tools/gates/motionlib.mjs rigClip) and films: a track whose clips hold no props has no spans and renders as before.
 //   track.props   [{ id, key, f0, f1, toss }] from motion-lib/index.js placeClip (one per prop a clip key holds)
 //   Qat(f)        the figure's pose at track frame f (cast.js S.pose2 input)
 //   plan.at(f)    { [id]: { p, q, v } } (three.js world: rest position, quaternion, its speed m/s) for cast.js (Q.propRest)

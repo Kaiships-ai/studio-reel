@@ -30,7 +30,7 @@ for k in range(int((120 - ${FIRST}) * ${BPM} / 60)):
 sf.write(sys.argv[1], np.stack([y, y], 1), sr)`;
 
 const PLACE = `import json, sys, numpy as np
-sys.path.insert(0, ${JSON.stringify(TOOLS)}); import mix
+sys.path.insert(0, ${JSON.stringify(path.join(TOOLS, 'run'))}); import mix
 film, plan = sys.argv[1], json.load(open(sys.argv[2])); T = plan['track']
 y = mix.segments({T['file']: mix.decode(film + '/' + T['file'])}, T, int(30 * 48000)).mean(1)
 print(json.dumps(np.abs(y).tolist()[::48]))`;
@@ -43,7 +43,7 @@ test('a click track fit to a film cuts on its bar lines at every story beat and 
     fs.writeFileSync(path.join(film, 'audio/music.json'), JSON.stringify({ arc: ARC, length: 30, mus_lu: -10 }));
     fs.writeFileSync(path.join(film, 'audio/sound-plan.json'), JSON.stringify({ silences: SILENCE.map(t => ({ t })) }));
     const out = path.join(film, 'audio/music-fit.json');
-    const r = run('python', ['-I', path.join(TOOLS, 'sound_fit.py'), film, path.join(film, 'audio/clicks.wav'), '--mus-lu', '-10', '--out', out], { capture: true });
+    const r = run('python', ['-I', path.join(TOOLS, 'run/sound_fit.py'), film, path.join(film, 'audio/clicks.wav'), '--mus-lu', '-10', '--out', out], { capture: true });
     assert.equal(r.status, 0, r.stderr);
     assert.match(r.stdout, /100\.0\d BPM, 4 beats a bar/);
     const plan = JSON.parse(fs.readFileSync(out, 'utf8'));
@@ -72,7 +72,7 @@ test('a click track fit to a film cuts on its bar lines at every story beat and 
 
 // the fitted music placed as mix.py places it, then shifted late by `shift` s and cut to `length` s, as a 48 kHz stem
 const STEM = `import json, sys, numpy as np, soundfile as sf
-sys.path.insert(0, ${JSON.stringify(TOOLS)}); import mix
+sys.path.insert(0, ${JSON.stringify(path.join(TOOLS, 'run'))}); import mix
 film, plan, out, shift, length = sys.argv[1], json.load(open(sys.argv[2])), sys.argv[3], float(sys.argv[4]), float(sys.argv[5])
 T = plan['track']; y = mix.segments({T['file']: mix.decode(film + '/' + T['file'])}, T, int(30 * 48000))
 y = np.concatenate([np.zeros((int(shift * 48000), 2)), y])[:int(length * 48000)]
@@ -86,12 +86,12 @@ test('--check passes the fitted stem, and fails one a fifth of a second late or 
     fs.writeFileSync(path.join(film, 'audio/music.json'), JSON.stringify({ arc: ARC, length: 30, mus_lu: -10 }));
     fs.writeFileSync(path.join(film, 'audio/sound-plan.json'), JSON.stringify({ silences: SILENCE.map(t => ({ t })) }));
     const plan = path.join(film, 'audio/music-fit.json');
-    assert.equal(run('python', ['-I', path.join(TOOLS, 'sound_fit.py'), film, path.join(film, 'audio/clicks.wav'), '--mus-lu', '-10', '--out', plan], { capture: true }).status, 0);
+    assert.equal(run('python', ['-I', path.join(TOOLS, 'run/sound_fit.py'), film, path.join(film, 'audio/clicks.wav'), '--mus-lu', '-10', '--out', plan], { capture: true }).status, 0);
     const check = (shift, length = 30) => {
       const stem = path.join(tmp, `stem-${shift}-${length}.wav`);
       const s = run('python', ['-I', '-c', STEM, film, plan, stem, String(shift), String(length)], { capture: true });
       assert.equal(s.status, 0, s.stderr);
-      return run('python', ['-I', path.join(TOOLS, 'sound_fit.py'), film, stem, '--check', plan], { capture: true });
+      return run('python', ['-I', path.join(TOOLS, 'run/sound_fit.py'), film, stem, '--check', plan], { capture: true });
     };
     const on = check(0);
     assert.equal(on.status, 0, on.stdout + on.stderr);

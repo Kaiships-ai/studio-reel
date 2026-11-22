@@ -2,7 +2,7 @@
 // (Mixamo "Talking On A Cell Phone", ref/mixamo/talking_on_a_cell_phone.js: its first 203 frames and its last 114, the
 // long middle of the call cut where the two match within 8 cm, joined by a 6-frame bridge) on this body. Hot Money ep01.
 // This figure's head is bigger than the capture's: the hand's last stretch to the ear is baked (ref/reach/phone_ear.js,
-// tools/mocap_reach.mjs; re-run it when the clip changes). The phone is in the right fist all through.
+// tools/run/mocap_reach.mjs; re-run it when the clip changes). The phone is in the right fist all through.
 import { mocapClip, reachKeys } from '../../base.js';
 import { mocapJoin } from '../../ref/mocap.js';
 import CALL from '../../ref/mixamo/talking_on_a_cell_phone.js';

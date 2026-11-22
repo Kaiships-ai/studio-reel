@@ -1,10 +1,10 @@
-// A run log only grows (styles/stick-man/tools/logline.mjs). Hot Money ep01 r5, 19/11 23:08: a fix-round builder wrote
+// A run log only grows (styles/stick-man/tools/run/logline.mjs). Hot Money ep01 r5, 19/11 23:08: a fix-round builder wrote
 // review/r5/progress.md over with 4 lines; the 25 lines before it (16:08-20:05) are test/fixtures/hm-r5/progress-before.md,
 // what it left is progress-after-overwrite.md.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
-import { appendLine, logBroken, checkLogs } from '../../styles/stick-man/tools/logline.mjs';
+import { appendLine, logBroken, checkLogs } from '../../styles/stick-man/tools/run/logline.mjs';
 
 const fx = n => fs.readFileSync(new URL(`../fixtures/hm-r5/${n}`, import.meta.url), 'utf8').trim().split('\n');
 

@@ -2,7 +2,7 @@
 // word t0. Drawn on a 2D canvas over the WebGL one (round-joined stroke, which CSS text-stroke cannot do).
 const MAX_WORDS = 3, MAX_CHARS = 14;
 // px at 1080 wide; stroke = px outside the glyph; track = letter spacing. Measured 11/11 on 28 reference frames
-// (tools/look_measure.mjs): glyph stem 15-16 px, black stroke median 7 px (5-9), text rows centred at 70.2-70.6 % of the
+// (tools/gates/look_measure.mjs): glyph stem 15-16 px, black stroke median 7 px (5-9), text rows centred at 70.2-70.6 % of the
 // height, a wide heavy face. Ours at 800 / 6 px measured stem 13, stroke 6: thinner and narrower (judge t1 "small").
 export const CAP = { size: 74, weight: 900, stroke: 8, track: 1.5 };   // stroke 8 drawn measures 7 (anti-aliased edge)
 // trailing punctuation stays ("pink.", "minutes,", as the reference captions do); only quote marks go

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs'; import zlib from 'node:zlib';
 import { EXPR, STYLE_DRAW, FACE_STYLE, faceParams, mixFace } from '../../styles/stick-man/engine/faces.js';
 import { faceStateAt, FACE_TIMING, CHEW, TAKE } from '../../styles/stick-man/engine/acting.js';
-import { faceFaults } from '../../styles/stick-man/tools/faults.mjs';
+import { faceFaults } from '../../styles/stick-man/tools/gates/faults.mjs';
 
 const kitNormal = FACE_TIMING.normal, kitChew = { ...CHEW }, kitTake = { ...TAKE };
 const S2 = await import('../../styles/stick-man/engine/facestyles/s2.js');

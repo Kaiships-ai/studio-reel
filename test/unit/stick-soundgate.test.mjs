@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { ROOT, run, env } from '../../kit/env.mjs';
-import { onset, orderCheck, hits, classOf, measure, judge, ORDER, SR } from '../../styles/stick-man/tools/soundgate.mjs';
+import { onset, orderCheck, hits, classOf, measure, judge, ORDER, SR } from '../../styles/stick-man/tools/gates/soundgate.mjs';
 
 const verdict = m => Object.fromEntries(judge(m).map(r => [r.id, r.ok]));
 const burst = (len, at) => { const x = new Float32Array(len * SR); for (const [t, a, d = 0.1] of at) for (let i = Math.round(t * SR); i < Math.round((t + d) * SR); i++) x[i] += a * Math.sin(i / 7); return x; };

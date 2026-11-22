@@ -5,7 +5,7 @@
 //   node styles/stick-man/bible/page.mjs --out <dir> [--dir <bible dir>] [--taste <kai-taste dir>] [--media <dir>]
 //        [--proof <dir>]... [--films <films root>] [--report <checker report.json>]
 // --media holds clips/<name>.mp4 + poster/<name>.jpg (rick-* is the gold bar, ours-<ver>-* our cuts) and strip/<tag>_<sec>.jpg
-// (the colour script). --proof is a motion-lib proof folder (<Clip>_phys1.mp4, tools/motionlib.mjs --proof); default: the
+// (the colour script). --proof is a motion-lib proof folder (<Clip>_phys1.mp4, tools/gates/motionlib.mjs --proof); default: the
 // two under the films root. Everything missing shows as an empty state, never as a made-up picture.
 import fs from 'node:fs';
 import os from 'node:os';

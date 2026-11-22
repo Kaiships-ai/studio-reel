@@ -1,4 +1,4 @@
-// The hand props the motion library's clips name (needs.props), registered into the kit's BUILD (lib/cast/handprops.js).
+// The hand props the motion library's clips name (needs.props), registered into the kit's BUILD (kit/cast/handprops.js).
 // A film imports this, or maps a clip's prop to its own with the clip key's `swap: { bag: 'duffel' }`.
 //   bag    one heavy duffel (25 kg in the clips: x_kg<side>), hung from the fist by its handle, long side forward
 //   torch  a flashlight along the forearm, a dim lit lens and a soft spot
@@ -13,7 +13,7 @@
 // film's own prop (swap) sets its grip and mode the same way and needs no offset of its own.
 // Sizes in metres, Blender up = +y here (three.js), the figure's forward = +z.
 import * as THREE from 'three';
-import { BUILD } from '../lib/cast/handprops.js';
+import { BUILD } from '#kit/cast/handprops.js';
 import { lin } from '../engine/look.js';
 
 const hullMat = new THREE.MeshBasicMaterial({ color: lin(0.05, 0.05, 0.07), side: THREE.BackSide });
@@ -44,7 +44,7 @@ export function bagMesh(col = [0.16, 0.20, 0.30], d = BAG) {
 const bagData = d => ({ mode: 'up', grip: [0, d.grip, 0], size: [d.w, d.h, d.l], mass: 25 });
 BUILD.bag = () => { const g = bagMesh(); g.userData = bagData(BAG); return g; };
 // a kit bag of another size, registered once under a name of its own (bag_<w>x<l>x<h>_<grip>, mm): a clip key fitted with
-// `fit: { bag: { w, l, h, grip } }` and no film prop of its own plays it (tools/motionlib.mjs fitChecks, the proof page)
+// `fit: { bag: { w, l, h, grip } }` and no film prop of its own plays it (tools/gates/motionlib.mjs fitChecks, the proof page)
 export function sizedBag({ w = BAG.w, l = BAG.l, h = BAG.h, grip = BAG.grip } = {}) {
   const mm = v => Math.round(v * 1000), kind = `bag_${mm(w)}x${mm(l)}x${mm(h)}_${mm(grip)}`, d = { w, l, h, grip };
   BUILD[kind] ||= () => { const g = bagMesh(undefined, d); g.userData = bagData(d); return g; };
@@ -52,7 +52,7 @@ export function sizedBag({ w = BAG.w, l = BAG.l, h = BAG.h, grip = BAG.grip } = 
 }
 // A film's own prop known by its contract alone (its mesh is built later, with its set): a box `size` [w, h, l] (m, along
 // the prop's x, y, z) centred on its origin, held at `grip` in `mode`, registered once under a name of its own. A clip
-// key's swap names a prop kind or gives such a contract (tools/motionlib.mjs propChecks and --check, the proof page's swap);
+// key's swap names a prop kind or gives such a contract (tools/gates/motionlib.mjs propChecks and --check, the proof page's swap);
 // a bag a clip fits itself to is sizedBag's (its bottom at y 0).
 export function heldProp({ mode = 'up', grip = [0, 0, 0], size, mass = 0.3 }) {
   const mm = v => v.map(x => Math.round(x * 1000)).join('x'), kind = `prop_${mode}_${mm(size)}_${mm(grip)}`;

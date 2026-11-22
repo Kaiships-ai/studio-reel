@@ -1,0 +1,124 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Previs</title>
+<script type="importmap">{"imports":{"#engine/":"/styles/stick-man/engine/","#kit/":"/styles/stick-man/kit/","#motion-lib/":"/styles/stick-man/motion-lib/","#tools/":"/styles/stick-man/tools/"}}</script>
+<style>html,body{margin:0;background:#000}canvas{display:block}</style></head>
+<body><canvas id="out" width="720" height="1280"></canvas>
+<script type="module">
+// Draws one previs world (previs-core.mjs) frame by frame: grey blockout, box figures, the camera path, and the label bar.
+// previs.mjs serves the repo root and opens this page with ?world=<path of the compiled world json>.
+import * as THREE from '/node_modules/three/build/three.module.js';
+import { track, track1, shown, labelAt } from './previs-core.mjs';
+
+const world = await (await fetch('/' + new URLSearchParams(location.search).get('world'))).json();
+const W = 720, H = 1280, FPS = world.fps, N = Math.round(world.dur * FPS), D = Math.PI / 180;
+const r = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+r.setSize(W, H); r.setPixelRatio(1);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(world.bg ?? '#8a8c90');
+scene.fog = new THREE.Fog(world.bg ?? '#8a8c90', ...(world.fog ?? [12, 30]));
+scene.add(new THREE.HemisphereLight(0xf2f2f2, 0x6a6864, 1.6));
+const sun = new THREE.DirectionalLight(0xffffff, 1.5); sun.position.set(-4, 8, 6); scene.add(sun);
+const cam = new THREE.PerspectiveCamera(78, W / H, 0.05, 80);
+
+const mat = c => new THREE.MeshLambertMaterial({ color: c });
+const textTex = (txt, w, h, bg, fg, size) => {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d'); g.fillStyle = bg; g.fillRect(0, 0, w, h);
+  g.fillStyle = fg; g.font = `700 ${size}px Helvetica, Arial, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  String(txt).split('\n').forEach((l, i, a) => g.fillText(l, w / 2, h / 2 + (i - (a.length - 1) / 2) * size * 1.1));
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+};
+const box = (s, c, p, parent = scene) => {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(...s), c instanceof THREE.Material ? c : mat(c));
+  m.position.set(...p); parent.add(m); return m;
+};
+function board(s, label, p, parent = scene) {
+  const px = 256, w = Math.max(64, Math.round(px * s[0] / Math.max(s[0], s[1]) * 2)), h = Math.max(32, Math.round(px * s[1] / Math.max(s[0], s[1]) * 2));
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(s[0], s[1]), new THREE.MeshBasicMaterial({ map: textTex(label.text, w, h, label.bg ?? '#3b3c3e', label.fg ?? '#e8e8e8', Math.round(h * (label.k ?? 0.6) / String(label.text).split('\n').length)) }));
+  m.position.set(...p); parent.add(m); return m;
+}
+function floor(b) {
+  const fc = document.createElement('canvas'); fc.width = fc.height = 256; const g = fc.getContext('2d');
+  g.fillStyle = b.c; g.fillRect(0, 0, 256, 256); g.fillStyle = b.floor.c2 ?? b.c; g.fillRect(0, 0, 128, 128); g.fillRect(128, 128, 128, 128);
+  const t = new THREE.CanvasTexture(fc); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(...b.floor.tiles); t.colorSpace = THREE.SRGBColorSpace;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(b.s[0], b.s[2]), new THREE.MeshLambertMaterial({ map: t }));
+  m.rotation.x = -Math.PI / 2; m.position.set(...b.p); scene.add(m); return m;
+}
+const blocks = world.blocks.map(b => ({ b, m: b.floor ? floor(b) : b.label ? board(b.s, b.label, b.p)
+  : box(b.s, b.o != null ? new THREE.MeshLambertMaterial({ color: b.c, transparent: true, opacity: b.o }) : b.c, b.p) }));
+
+function figure({ body = '#55575b', skin = '#b9a48f', pants = '#3f4044', cap = null, h = 1.75 }, tag) {
+  const root = new THREE.Group(); scene.add(root);
+  const s = h / 1.75, hip = new THREE.Group(); hip.position.y = 0.9 * s; root.add(hip);
+  const legs = [-0.1, 0.1].map(x => { const p = new THREE.Group(); p.position.set(x * s, 0, 0); hip.add(p); box([0.15 * s, 0.9 * s, 0.17 * s], pants, [0, -0.45 * s, 0], p); return p; });
+  box([0.44 * s, 0.6 * s, 0.24 * s], body, [0, 0.3 * s, 0], hip);
+  const neck = new THREE.Group(); neck.position.set(0, 0.63 * s, 0); hip.add(neck);
+  box([0.24 * s, 0.27 * s, 0.25 * s], skin, [0, 0.15 * s, 0], neck);
+  box([0.16 * s, 0.035 * s, 0.01], '#2a2a2a', [0, 0.18 * s, 0.13 * s], neck);           // eye strip: which way the face is
+  if (cap) { box([0.27 * s, 0.09 * s, 0.28 * s], cap, [0, 0.32 * s, 0], neck); box([0.26 * s, 0.025 * s, 0.14 * s], cap, [0, 0.28 * s, 0.19 * s], neck); }
+  const arms = [-0.29, 0.29].map(x => { const p = new THREE.Group(); p.position.set(x * s, 0.56 * s, 0); hip.add(p); box([0.12 * s, 0.62 * s, 0.13 * s], body, [0, -0.29 * s, 0], p); return p; });
+  if (tag) { const t = board([0.5, 0.16], { text: tag, bg: '#202224', fg: '#f2c84b' }, [0, 0.62 * s, 0], neck); t.renderOrder = 2; }
+  return { root, hip, legs, neck, arms, s };
+}
+const figs = world.figures.map(f => ({ f, g: figure(f.look ?? {}, f.tag) }));
+const props = world.props.map(p => ({ p, m: p.label ? board(p.s, p.label, [0, -9, 0]) : box(p.s, p.c, [0, -9, 0]) }));
+
+function pose(t) {
+  for (const { b, m } of blocks) m.visible = shown(b, t);
+  for (const { f, g } of figs) {
+    g.root.visible = shown(f, t);
+    if (!g.root.visible) continue;
+    const [x, z] = track(f.path, t), [x2, z2] = track(f.path, t + 0.05);
+    const v = Math.hypot(x2 - x, z2 - z) / 0.05, walk = v > 0.05, ph = t * 9.5;
+    g.root.position.set(x, 0, z);
+    g.root.rotation.y = (f.face ? track1(f.face, t) : walk ? Math.atan2(x2 - x, z2 - z) / D : 0) * D;
+    g.legs.forEach((l, i) => l.rotation.x = walk ? Math.sin(ph + i * Math.PI) * 0.55 : 0);
+    const [al, ar] = f.arms ? track(f.arms, t) : [0, 0];
+    g.arms.forEach((a, i) => a.rotation.x = (walk ? -Math.sin(ph + i * Math.PI) * 0.45 : 0) + (i ? ar : al) * D);
+    g.hip.position.y = 0.9 * g.s + (walk ? Math.abs(Math.sin(ph)) * 0.03 : 0);
+    const [yaw, pitch] = f.head ? track(f.head, t) : [0, 0];
+    g.neck.rotation.set(pitch * D, yaw * D, 0);
+  }
+  for (const { p, m } of props) { m.visible = shown(p, t); if (m.visible) m.position.set(...track(p.keys, t)); }
+  const [px, py, pz, lx, ly, lz, fov] = track(world.camera, t);
+  cam.position.set(px, py, pz); cam.fov = fov; cam.updateProjectionMatrix(); cam.lookAt(lx, ly, lz);
+}
+
+// ---- 2D pass: the 3D frame, a top timeline with a tick per stage (tall red = hard cut), the label bar
+const out = document.getElementById('out').getContext('2d');
+const BAR = 112, T = world.dur, TOP = world.rhythm ? 106 : 44;
+function draw(f) {
+  const t = f / FPS; pose(t); r.render(scene, cam);
+  out.drawImage(r.domElement, 0, 0);
+  const x0 = 24, x1 = W - 24, ty = 22, L = labelAt(world, t);
+  out.fillStyle = 'rgba(0,0,0,0.55)'; out.fillRect(0, 0, W, TOP);
+  out.fillStyle = '#d8d8d8'; out.fillRect(x0, ty, x1 - x0, 2);
+  for (const s of world.stages) {
+    const x = x0 + (x1 - x0) * s.t / T;
+    if (s.kind === 'cut') { out.fillStyle = '#e0473c'; out.fillRect(x - 1.5, ty - 11, 3, 24); }
+    else { out.fillStyle = '#d8d8d8'; out.fillRect(x - 1, ty - 7, 2, 16); }
+  }
+  out.fillStyle = '#f0a83a'; out.beginPath(); out.arc(x0 + (x1 - x0) * t / T, ty + 1, 7, 0, 7); out.fill();
+  out.textBaseline = 'middle';
+  if (world.rhythm) {
+    const p = world.rhythm.plan;
+    out.font = '600 22px Helvetica, Arial, sans-serif'; out.fillStyle = '#f2c84b';
+    out.fillText(`bản này: cắt ${p.cutsPerMin}/phút · take giữa ${p.medianTake} s · dài nhất ${p.longestTake} s`, x0, 58);
+    out.font = '400 20px Helvetica, Arial, sans-serif'; out.fillStyle = '#b0b0b0'; out.fillText(world.rhythm.refs, x0, 88);
+  }
+  if (L.kind === 'cut' && L.sinceStage < 0.5) {
+    out.fillStyle = '#e0473c'; out.fillRect(W - 128, TOP + 12, 104, 44);
+    out.fillStyle = '#fff'; out.font = '700 28px Helvetica, Arial, sans-serif'; out.textAlign = 'center'; out.fillText('CẮT', W - 76, TOP + 35); out.textAlign = 'left';
+  }
+  out.fillStyle = '#000'; out.fillRect(0, H - BAR, W, BAR);
+  out.fillStyle = '#f2c84b'; out.font = '700 34px Helvetica, Arial, sans-serif'; out.fillText(L.title, 26, H - BAR / 2 - 16);
+  out.font = '500 28px Helvetica, Arial, sans-serif'; out.fillText(L.sub, 26, H - BAR / 2 + 22, W - 290);
+  out.textAlign = 'right'; out.fillStyle = '#9a9a9a'; out.font = '400 20px Helvetica, Arial, sans-serif';
+  out.fillText(L.right1, W - 24, H - BAR / 2 - 16); out.fillText(L.right2, W - 24, H - BAR / 2 + 22);
+  out.textAlign = 'left';
+}
+window.N = N;
+window.frame = f => { draw(f); return document.getElementById('out').toDataURL('image/jpeg', 0.9); };
+draw(0);
+window.ready = true;
+</script></body></html>

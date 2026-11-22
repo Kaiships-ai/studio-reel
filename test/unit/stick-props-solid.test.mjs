@@ -4,8 +4,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import zlib from 'node:zlib';
-import { shotFaults, blocks } from '../../styles/stick-man/tools/shotfaults.mjs';
-import { scaleFault, kindOf } from '../../styles/stick-man/lib/props/sizes.js';
+import { shotFaults, blocks } from '../../styles/stick-man/tools/gates/shotfaults.mjs';
+import { scaleFault, kindOf } from '../../styles/stick-man/kit/props/sizes.js';
 
 const W = 540, H = 960;
 const rows = n => zlib.gunzipSync(fs.readFileSync(new URL(`../fixtures/hm-r5/${n}.jsonl.gz`, import.meta.url))).toString().trim().split('\n').map(l => JSON.parse(l));
