@@ -125,16 +125,19 @@ const out = p => new Promise(res => { let o = ''; p.stdout.on('data', d => { o +
 
 test('render lock: a reader never sees a half-written lock', async () => {
   // a plain `wx` write shows an empty file for a moment; a racer read it as stale and removed it (two holders on CI)
-  const file = path.join(tmp(), 'render.lock'), until = Date.now() + 600;
+  // the reader starts first and reads until the locker is done (both give up after 30 s, so a crash never hangs the suite)
+  const dir = tmp(), file = path.join(dir, 'render.lock'), ready = path.join(dir, 'ready'), done = path.join(dir, 'done');
   const [n, seen] = await Promise.all([
-    out(node(`import { tryLock, release } from '${lockUrl}'; let n = 0;
-      while (Date.now() < ${until}) { const r = tryLock({ file: process.argv[1] }); if (r.ok) { release(process.argv[1], r.lock); n++; } }
-      process.stdout.write(String(n));`, [file])),
-    out(node(`import fs from 'node:fs'; let torn = 0, seen = 0;
-      while (Date.now() < ${until}) { let s; try { s = fs.readFileSync(process.argv[1], 'utf8'); } catch { continue; } seen++; try { JSON.parse(s); } catch { torn++; } }
-      process.stdout.write(torn + ' ' + seen);`, [file]))]);
+    out(node(`import fs from 'node:fs'; import { tryLock, release } from '${lockUrl}'; let n = 0; const end = Date.now() + 30000;
+      while (!fs.existsSync(process.argv[3]) && Date.now() < end) {}
+      for (let i = 0; i < 3000; i++) { const r = tryLock({ file: process.argv[1] }); if (r.ok) { release(process.argv[1], r.lock); n++; } }
+      fs.writeFileSync(process.argv[2], ''); process.stdout.write(String(n));`, [file, done, ready])),
+    out(node(`import fs from 'node:fs'; let torn = 0, seen = 0; const end = Date.now() + 30000; fs.writeFileSync(process.argv[3], '');
+      while (!fs.existsSync(process.argv[2]) && Date.now() < end) { let s; try { s = fs.readFileSync(process.argv[1], 'utf8'); } catch { continue; } seen++; try { JSON.parse(s); } catch { torn++; } }
+      process.stdout.write(torn + ' ' + seen);`, [file, done, ready]))]);
   const [torn, reads] = seen.split(' ').map(Number);
-  assert.ok(Number(n) > 100 && reads > 100, `the locker and the reader overlapped (${n} locks, ${reads} reads)`);
+  assert.equal(Number(n), 3000, 'one locker alone always gets the lock');
+  assert.ok(reads > 0, `the reader saw the lock (${reads} reads)`);
   assert.equal(torn, 0, `${torn} of ${reads} reads saw a half-written lock`);
 });
 

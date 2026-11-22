@@ -4,11 +4,15 @@
 // a `<lock>.takeover` guard created exclusively, so a killed render never blocks the machine and two takers never both win.
 // The lock appears whole: written to a temp file, then hard-linked into place (link fails if the lock exists). A plain
 // `wx` write shows an empty file for a moment, which a racer read as stale and removed (two holders on CI, 22/11).
+// A taker removes only the exact text it judged stale; a lock that is gone is created again, never removed: a racer
+// could link a new lock in between, and removing "nothing" took that new holder's lock (two holders, 22/11).
 // Waiters poll; the order among them is not a queue.
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path'; import crypto from 'node:crypto';
 
 export const LOCK = process.env.STICK_RENDER_LOCK || path.join(os.homedir(), '.cache', 'stick-man', 'render.lock');
-const read = f => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return null; } };
+const text = f => { try { return fs.readFileSync(f, 'utf8'); } catch (e) { if (e.code === 'ENOENT') return null; throw e; } };
+const parse = s => { try { return JSON.parse(s); } catch { return null; } };
+const read = f => parse(text(f));
 const alive = pid => { try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } };
 
 export function stale(L, now = Date.now(), ttlMs = 120000) {
@@ -23,9 +27,10 @@ export function tryLock({ file = LOCK, what = '', ttlMs = 120000, now = Date.now
   const me = { token: crypto.randomUUID(), host: os.hostname(), pid: process.pid, what, started: now, beat: now };
   for (let i = 0; i < 3; i++) {
     if (create(file, me)) return { ok: true, lock: me };
-    const L = read(file);
+    const was = text(file); if (was === null) continue;   // freed meanwhile: create again
+    const L = parse(was);
     if (!stale(L, now, ttlMs)) return { ok: false, holder: L };
-    if (!takeover(file, L)) return { ok: false, holder: L };
+    if (!takeover(file, was)) return { ok: false, holder: L };
   }
   return { ok: false, holder: read(file) };
 }
@@ -39,9 +44,9 @@ function create(file, me) {
   finally { fs.rmSync(tmp, { force: true }); }
 }
 
-// remove the stale lock L, holding the guard; false when another process is taking it over
+// remove the stale lock whose text is `was`, holding the guard; false when another process is taking it over
 const GUARD_MS = 30000;
-function takeover(file, L) {
+function takeover(file, was) {
   const guard = file + '.takeover';
   try { fs.writeFileSync(guard, String(Date.now()), { flag: 'wx' }); }
   catch (e) {
@@ -51,7 +56,8 @@ function takeover(file, L) {
     if (Date.now() - at > GUARD_MS) fs.rmSync(guard, { force: true });
     return false;
   }
-  try { if (JSON.stringify(read(file)) === JSON.stringify(L)) fs.rmSync(file, { force: true }); }
+  // only a guard holder removes a lock and the file exists while we hold it, so nobody can create between read and remove
+  try { if (text(file) === was) fs.rmSync(file, { force: true }); }
   finally { fs.rmSync(guard, { force: true }); }
   return true;
 }
