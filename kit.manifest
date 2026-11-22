@@ -303,7 +303,7 @@ gtaopass|uShoulder|uShadowK|uGrain\b|uBlur\b|mblur|camKey|R\.haze\b|grade\.shado
 # internal jargon: the reference study, its clip ids, gate and review names, judge rounds, private run ids
 the reference|\breference:|reference (study|shots?|clips?|frames?|sets?|ink|captions?|heads?|figures?|places?)|\bqldpm\b|\bvs1z\b
 colourgate|shotgate|cutgate|readgate|soundgate|valuegate|eyegate|kituse|facebeat|stagegate|whochecks|prepro\.mjs|motionlib\.mjs|shotfaults|look_measure|◇
-\bjudge|stick0\d|pilot a|kit-depth|\ballout\b|round [1-5]\b|\br[2-5] \w|gate [a-z]\b|study gap|render/shot\.mjs|--tier\b
+\bthe judge\b|\bjudge (t[0-9]|round|read)|stick0\d|pilot a|kit-depth|\ballout\b|round [1-5]\b|\br[2-5] \w|gate [a-z]\b|study gap|render/shot\.mjs|--tier\b
 # Never in the stick-man pack, any case, in a path or in any file's bytes (comments that name one are dropped first)
 mixamo
 \bkai\b

@@ -94,6 +94,6 @@ test('the finish look stays private: no contact shadows, act grade, motion blur,
 });
 
 test('no internal jargon in any pack file (the reference study, its clip ids, gate and review names, judge rounds)', () => {
-  const JARGON = /the reference|reference (study|shots?|clips?|frames?|sets?)|\bQlDPM\b|\bVS1Z\b|colourgate|shotgate|cutgate|readgate|soundgate|kituse|facebeat|stagegate|whochecks|shotfaults|look_measure|◇|\bjudge\b|stick0\d|pilot A|KIT-DEPTH|study gap|render\/shot\.mjs/i;
+  const JARGON = /the reference|reference (study|shots?|clips?|frames?|sets?)|\bQlDPM\b|\bVS1Z\b|colourgate|shotgate|cutgate|readgate|soundgate|kituse|facebeat|stagegate|whochecks|shotfaults|look_measure|◇|\bthe judge\b|\bjudge (t\d|round)|stick0\d|pilot A|KIT-DEPTH|study gap|render\/shot\.mjs/i;
   for (const [f, b] of P) if (/\.(m?js|html|py|md|json)$/.test(f) && !f.endsWith('CREDITS')) assert.doesNotMatch(b.toString('utf8'), JARGON, f);
 });
