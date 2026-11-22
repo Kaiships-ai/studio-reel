@@ -230,6 +230,12 @@
      ]
     },
     {
+     "tool": "tools/gates/facegate.mjs",
+     "args": [
+      "{film}"
+     ]
+    },
+    {
      "tool": "tools/gates/shotgate.mjs",
      "args": [
       "{film}"

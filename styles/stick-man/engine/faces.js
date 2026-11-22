@@ -532,8 +532,10 @@ export function faceRig(headW, opt = {}) {
   const off = document.createElement('canvas'); off.width = off.height = 512; const og = off.getContext('2d');
   const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
   const group = new THREE.Group(), cards = {};
-  // measurement for __dbg (the forensic mouth numbers): dark mouth area (W^2, ink pixels below the eyes) and the drawing key
-  const stats = { mouth: 0, key: '' };
+  // measurement for __dbg (the forensic mouth numbers): dark mouth area (W^2, ink pixels below the eyes) and the drawing key;
+  // stretch: how much wider than drawn the widest-stretched mark came out on the head this frame (the strips' own scale over
+  // every column that has ink or white in it and shows at half alpha or more; 1 = as drawn; tools/gates/facegate.mjs)
+  const stats = { mouth: 0, key: '', stretch: 1 };
   const darkMouth = () => { const d = g.getImageData(150, 318, 212, 150).data; let n = 0;
     for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 128 && d[i] + d[i + 1] + d[i + 2] < 200) n++; return n / (512 * 512); };
   let key = '';
@@ -560,21 +562,27 @@ export function faceRig(headW, opt = {}) {
           const o2 = { ...opt, top: top ?? opt.top, sl };   // (sl: a face style may answer the turn itself)
           if (F) drawFaceState(g, F, blink, t, o2); else drawFace(g, expr, blink, t, o2); };
         paint(); stats.mouth = darkMouth(); stats.key = k.length > 64 ? hashKey(k) : k;   // measured on the face itself, not where it turned
+        stats.stretch = 1;
         if (sl && (sl[0] || sl[1] || sl[2] < 1)) {
           // the face drawn on the ball of the head (asset 2.4): each vertical strip of the flat drawing sits at its own
           // longitude, turned by the face's yaw (sl[0], rad), so features squeeze as they go round, the far eye slides
-          // behind the edge and fades, the near one stays: a profile, not a drawing sliding off a disc
+          // behind the edge and fades, the near one stays: a profile, not a drawing sliding off a disc. A face style that
+          // holds its marks back from a hood's rim names the yaw it wraps at (STYLE_DRAW[style].wrap): the whole drawing is
+          // wrapped at that yaw, never slid across the flat canvas first (a mark from the drawing's edge came out 4x wide)
+          const SW = FACE_STYLE.name && STYLE_DRAW[(F || E).style]?.wrap, yw = SW ? SW({ ...opt, sl }) : sl[0];
           og.clearRect(0, 0, 512, 512); og.drawImage(cv, 0, 0);
+          const od = og.getImageData(0, 0, 512, 512).data, inked = new Uint8Array(512);
+          for (let i = 3; i < od.length; i += 4) if (od[i] > 32) inked[((i - 3) >> 2) & 511] = 1;
           g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 512, 512);
           if (sl[2] > 0.01) {
             g.save(); g.beginPath(); g.ellipse(256, 256, 0.462 * 512, 0.432 * 512, 0, 0, Math.PI * 2); g.clip();
             const R = 0.462, N = 120, px = u => 256 + 512 * u, dyp = -512 * sl[1];
             // (round 3: the strips tile on whole pixels, each one's right edge the next one's left: strips that overlapped by
             // 0.6 px doubled the alpha of a fading mark at every seam, and a brow fading under a hood drew as grey stripes)
-            const xs = Array.from({ length: N + 1 }, (_, i) => { const u = -R + 2 * R * i / N, a = Math.asin(Math.max(-1, Math.min(1, u / R))) + sl[0];
+            const xs = Array.from({ length: N + 1 }, (_, i) => { const u = -R + 2 * R * i / N, a = Math.asin(Math.max(-1, Math.min(1, u / R))) + yw;
               return Math.cos(a) < 0 ? null : Math.round(px(R * Math.sin(a))); });
             for (let i = 0; i < N; i++) {
-              const u0 = -R + 2 * R * i / N, u1 = u0 + 2 * R / N, a0 = Math.asin(u0 / R) + sl[0], a1 = Math.asin(Math.min(1, u1 / R)) + sl[0];
+              const u0 = -R + 2 * R * i / N, u1 = u0 + 2 * R / N, a0 = Math.asin(u0 / R) + yw, a1 = Math.asin(Math.min(1, u1 / R)) + yw;
               // opt.edge = [z0, ramp]: where a strip going round the head starts to fade (0.08 = the head's own edge; a
               // hood's rim is further in, so a mark going round fades out before the rim cuts it in half)
               // (opt.edgeKnee: the earlier fade comes in over 0.12 rad of turn past it, so a near-frontal face keeps both eyes)
@@ -586,6 +594,10 @@ export function faceRig(headW, opt = {}) {
               }
               const x0 = xs[i], x1 = xs[i + 1]; if (x0 == null || x1 == null || x1 - x0 < 1) continue;
               g.globalAlpha = Math.min(1, (z - Z0) / ZR) * sl[2];
+              if (g.globalAlpha >= 0.5 && inked.subarray(Math.floor(px(u0)), Math.ceil(px(u1))).some(Boolean)) {
+                const um = (u0 + u1) / 2, am = Math.asin(um / R);
+                stats.stretch = Math.max(stats.stretch, Math.cos(am + yw) / Math.cos(am));
+              }
               g.drawImage(off, px(u0), 0, px(u1) - px(u0), 512, x0, dyp, x1 - x0, 512);
             }
             g.restore();

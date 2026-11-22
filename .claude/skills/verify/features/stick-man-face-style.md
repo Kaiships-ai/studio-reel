@@ -18,7 +18,13 @@ approved on Hot Money ep01 r5 reel 1 (21/11, "v6 ok, ưng 9.5/10").
   one turn blink per run of glances (`play.js` `turnBlinkAt`), chew and breath beats (`{ chew, breath, t }` on a beat).
 - The drawer reads `F.prev` (the face 1 and 2 frames ago), `F.chg` (the change under way, with the target's name `b`),
   `F.hpx` (head height in px at 1920) and `o.sl` (the head's turn): past yaw 1.34 under a hood, 1.45 under a cap, no face.
-- dbg rows add `faceVis` and `faceSlide` per actor.
+- dbg rows add `faceVis`, `faceSlide` and `faceStretch` per actor (`faceStretch`: how much wider than drawn the most
+  stretched mark came out on the head that frame, measured on the face texture after the strips wrapped it; 1 = as drawn).
+- The turn (Kai 22/11, Hot Money A v10a: a face crammed on the hood's edge, a teller's eye a wide black band): s2's
+  `turn()` holds the marks back from a hood's rim by naming the yaw to wrap at (`STYLE_DRAW.s2.wrap`, signed `eff`);
+  `faces.js` wraps the whole drawing at that yaw. It never slides the flat drawing first (that took marks from the
+  drawing's edge and un-foreshortened them, up to 7.5x). `tools/gates/facegate.mjs` fails a readable face whose
+  `faceStretch` is over 1.3 for 3 frames (◇5).
 
 ## How to get to it (user POV)
 
@@ -47,6 +53,10 @@ styles/stick-man/faces.html --view a --frames 12 --w 1560 --h 1300 --out faces.j
   segment `CUTS`); `faults.mjs` `editCuts` counts a one-shot-per-frame camera as one flight; `facesheet.mjs` passes
   `--query` and `--no-bible-check` on to `shot.mjs` and writes `review/face-sheet.json` only once the sheet image exists.
 
+- `node styles/stick-man/tools/gates/facegate.mjs --rows <rows.jsonl> [--rows-size 720x1280]`: `FAIL <actor> f<a>-<b>`
+  per stretched run, `facegate PASS (<n> readable faces measured)`; rows without `faceStretch` exit 2.
+  `node --test test/unit/stick-facegate.test.mjs`: s2 never translates its drawing, no mark > 1.2x at any turn for the
+  hood, cap and bare plates, and the gate fails v10a's teller (frames 2144-2165).
 - `node styles/stick-man/tools/gates/eyegate.mjs` prints one row per design (pupil share, white above) and `eyegate PASS`;
   `node --test test/unit/stick-eyes.test.mjs` checks the drawn pupil equals `eyegeom.js` and that v9's eye (`EYE_V9`) fails.
 
