@@ -6,7 +6,7 @@
 //           or a lamp's spark is shorter, a lamp's hot core smaller)
 //   blown object (Kai 22/11, "the money bags and the lamps keep blowing out"): any one object, whatever share of the frame
 //           it is. A connected region (after a 3x3 opening, so caption and HUD strokes drop out; the figures' own boxes are
-//           left out, a stick figure is flat white by design) of colourless (saturation < BLOWN.sat), detail-less (3x3 luma
+//           left out: a stick head and torso are flat white by design) of colourless (saturation < BLOWN.sat), detail-less (3x3 luma
 //           range <= BLOWN.lc) pixels as bright as BLOWN.white or BLOWN.over above the frame's median, of BLOWN.area px or
 //           more at W x H, or of clipped pixels (>= BLOWN.clip) of BLOWN.clipArea px or more, held >= HOLD s. A bag at 1 % of the
 //           frame passes the glare share and fails here.
@@ -58,7 +58,7 @@ export function regions(m, w, h) {
     out.push({ n, box: [x0, y0, x1, y1] }); }
   return out.sort((a, b) => b.n - a.n);
 }
-// the largest blown object of one frame (BLOWN above): { n, box, kind: 'clipped' | 'white' } or null; boxes = the figures' heads to skip
+// the largest blown object of one frame (BLOWN above): { n, box, kind: 'clipped' | 'white' } or null; boxes = the figures' heads and torsos to skip
 export function blownObject(px, Y, w, h, boxes = [], crop = CROP) {
   const y0 = Math.floor(crop.top * h), y1 = Math.ceil((1 - crop.bottom) * h), inFig = new Uint8Array(w * h);
   for (const [a, b, e, d] of boxes) for (let y = Math.max(0, Math.floor(b)); y < Math.min(h, Math.ceil(d)); y++) for (let x = Math.max(0, Math.floor(a)); x < Math.min(w, Math.ceil(e)); x++) inFig[y * w + x] = 1;
@@ -98,9 +98,12 @@ export function subjectBoxes(row, w = W, h = H, RW = 1080, RH = 1920) {
     return [(cx - hw) * w / RW, y0 * h / RH, (cx + hw) * w / RW, (y1 + 3 * hh) * h / RH];
   });
 }
-// the figures' heads only (a stick head is flat white by design; the body box would also hide a bag held at the chest)
+// the figures' heads and torsos (a stick head and the white hoodie are flat by design: the toon ramp's lit band); the box
+// stops 1.6 head-heights below the head, so a bag held at the waist or in a hand still counts
 export function headBoxes(row, w = W, h = H, RW = 1080, RH = 1920) {
-  return Object.values(row?.actors || {}).filter(a => a.inFrame !== false && a.head).map(({ head: [x0, y0, x1, y1] }) => [x0 * w / RW, y0 * h / RH, x1 * w / RW, y1 * h / RH]);
+  return Object.values(row?.actors || {}).filter(a => a.inFrame !== false && a.head).map(({ head: [x0, y0, x1, y1] }) => {
+    const cx = (x0 + x1) / 2, hw = (x1 - x0) * 0.6, hh = y1 - y0;
+    return [(cx - hw) * w / RW, y0 * h / RH, (cx + hw) * w / RW, (y1 + 1.6 * hh) * h / RH]; });
 }
 // samples [{ t, glare, clip, crush }] -> faults held >= HOLD s: [{ kind, from, to, peak }]
 export function faults(S) {

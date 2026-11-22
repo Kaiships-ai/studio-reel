@@ -53,7 +53,7 @@ path. A FAIL or a DRAFT keeps ◇5 OPEN.
   more than 3 % of the frame (a hot pool, not an evenly lit day lobby), or > 1 % of pixels at the clip, held >= 0.5 s.
   Crushed subject: > 8 % of a subject's box at luma <= 10 (boxes from the rows' head boxes, widened and run down for the
   body), held >= 0.5 s. Blown object (Kai 22/11: "the money bags and the lamps keep blowing out"): any one connected
-  region, after a 3x3 opening (caption and HUD strokes drop out; the figures' heads, flat white by design, are left out),
+  region, after a 3x3 opening (caption and HUD strokes drop out; the figures' heads and torsos, flat white by design, are left out; a bag at the waist or in a hand still counts),
   of colourless (saturation < 0.2), detail-less (3x3 luma range <= 4) pixels at luma >= 200 or >= 80 over the frame's
   median, of 30 px or more at 180x320, or of clipped pixels (>= 248) of 6 px or more, held >= 0.5 s; whatever its share of
   the frame (a bag at 1 % passes the glare share and fails here). The FAIL line names the region's box. The light budget
