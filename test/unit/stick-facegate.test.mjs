@@ -110,19 +110,19 @@ test('faces.js wraps an s2 face at the yaw s2 names and measures the stretch of 
 
 // Kai 23/11 (Ep1 v12, 1:12): the blond teller on the phone, her face held near-frontal while her bare head turned 0.4 -> 1.14
 // rad and tilted 13 deg: faceLag and faceRoll as the engine measured them there (before the fix), and the gate's verdicts
-const LAG12 = [0.07, 0.2, 0.46, 0.77, 0.73, 0.57, 0.47, 0.5, 0.44, 0.39, 0.33, 0.22, 0.12, 0.05];
+const LAG12 = [0.137, 0.193, 0.284, 0.414, 0.554, 0.673, 0.752, 0.785, 0.77, 0.722, 0.659, 0.61, 0.587, 0.574];   // f2142-2155, kit 6fcf14c
 test('facegate fails a bare head whose face turns less than the head (v12 teller), never a hood holding its marks back', () => {
   const rows = LAG12.map((g, i) => ({ f: 2142 + i, actors: { t: { inFrame: true, head: [80, 300, 520, 700], faceVis: 1, faceStretch: 1.06, faceLag: g, faceRoll: 0, facePlate: null } } }));
   const R = facegate(rows, 1280);
-  assert.deepEqual(R.faults.map(f => [f.kind, f.from, f.to]), [['slides (turn)', 2143, 2153]]);
+  assert.deepEqual(R.faults.map(f => [f.kind, f.from, f.to]), [['slides (turn)', 2142, 2155]]);
   const hood = rows.map(r => ({ ...r, actors: { t: { ...r.actors.t, facePlate: 'hood' } } }));
   assert.equal(facegate(hood, 1280).ok, true);
 });
 
-test('facegate fails a face that stays level while its head tilts', () => {
-  const rows = [0, 3, 8, 11, 13, 13, 12, 9, 4, 1].map((d, i) => ({ f: 2160 + i, actors: { t: { inFrame: true, head: [80, 300, 520, 700], faceVis: 1, faceStretch: 1, faceLag: 0, faceRoll: d, facePlate: 'hood' } } }));
+test('facegate fails a face that stays level while its head tilts (the v12 teller f2175-2186, kit 6fcf14c)', () => {
+  const rows = [2.6, 10.9, 12.8, 14.4, 15.6, 16.5, 17.3, 18, 18.5, 18.6, 18.4, 3].map((d, i) => ({ f: 2175 + i, actors: { t: { inFrame: true, head: [80, 300, 520, 700], faceVis: 1, faceStretch: 1, faceLag: 0, faceRoll: d, facePlate: 'hood' } } }));
   const R = facegate(rows, 1280);
-  assert.deepEqual(R.faults.map(f => [f.kind, f.from, f.to]), [['slides (tilt)', 2162, 2167]]);
+  assert.deepEqual(R.faults.map(f => [f.kind, f.from, f.to]), [['slides (tilt)', 2176, 2185]]);
 });
 
 test('a bare head (no hood or cap) turns its face all the way with the skull; a hood still holds its marks back', () => {

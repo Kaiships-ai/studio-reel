@@ -428,6 +428,8 @@ export const LAYOUT = { K: 1.25, ey: 0.0, dx: 0.118, my: -0.175, glasses: { K: 1
 // a face style (engine/facestyles/) registers STYLE_DRAW[name](g, F, blink, t, o): it draws a face whose design names that
 // style (EXPR entry `style`), in final W units on the same canvas; DRAW_KIT lends it the drawing helpers
 export const STYLE_DRAW = {};
+// where a style face on a bare head starts to fade going round it: [z0, ramp] as opt.edge (a cap's is [0.58, 0.12])
+export const BARE_EDGE = [0.40, 0.15];
 export function drawFaceState(g, F, blink = 0, t = 0, o = {}) {
   if (F.style && STYLE_DRAW[F.style]) { g.save(); g.lineCap = g.lineJoin = 'round'; STYLE_DRAW[F.style](g, F, blink, t, o); g.restore(); return; }
   const Lo = o.glasses ? LAYOUT.glasses : LAYOUT, K = Lo.K, dx = Lo.dx / K;
@@ -588,8 +590,11 @@ export function faceRig(headW, opt = {}) {
               // opt.edge = [z0, ramp]: where a strip going round the head starts to fade (0.08 = the head's own edge; a
               // hood's rim is further in, so a mark going round fades out before the rim cuts it in half)
               // (opt.edgeKnee: the earlier fade comes in over 0.12 rad of turn past it, so a near-frontal face keeps both eyes)
-              const ek = opt.edge && opt.edgeKnee != null ? Math.max(0, Math.min(1, (Math.abs(sl[0]) - opt.edgeKnee) / 0.12)) : 1;
-              const z = Math.cos((a0 + a1) / 2), [Z0, ZR] = opt.edge ? [0.08 + (opt.edge[0] - 0.08) * ek, 0.25 + (opt.edge[1] - 0.25) * ek] : [0.08, 0.25]; if (z < Z0) continue;
+              // (a style face on a bare head turns all the way with it: BARE_EDGE fades its far eye out before it thins to a
+              // sliver on the head's outline, as a cap's edge does; Kai 23/11, Ep1 v12 teller on the phone)
+              const edge = opt.edge || (SW && opt.top == null ? BARE_EDGE : null);
+              const ek = edge && opt.edgeKnee != null ? Math.max(0, Math.min(1, (Math.abs(sl[0]) - opt.edgeKnee) / 0.12)) : 1;
+              const z = Math.cos((a0 + a1) / 2), [Z0, ZR] = edge ? [0.08 + (edge[0] - 0.08) * ek, 0.25 + (edge[1] - 0.25) * ek] : [0.08, 0.25]; if (z < Z0) continue;
               if (!FACE_STYLE.name) {   // the kit's own faces: strips overlap by 0.6 px, as before styles
                 const x0 = px(R * Math.sin(a0)), x1 = px(R * Math.sin(a1)); if (x1 - x0 < 0.05) continue;
                 g.globalAlpha = Math.min(1, (z - Z0) / ZR) * sl[2]; g.drawImage(off, px(u0), 0, px(u1) - px(u0), 512, x0, dyp, x1 - x0 + 0.6, 512); continue;
