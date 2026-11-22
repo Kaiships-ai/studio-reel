@@ -5,11 +5,13 @@
 //           GLARE.share of the frame, or pixels at the clip (luma >= 250) cover more than CLIP.share; held >= HOLD s (a muzzle flash
 //           or a lamp's spark is shorter, a lamp's hot core smaller)
 //   blown object (Kai 22/11, "the money bags and the lamps keep blowing out"): any one object, whatever share of the frame
-//           it is. A connected region (after a 3x3 opening, so caption and HUD strokes drop out; the figures' own boxes are
-//           left out: a stick head and torso are flat white by design) of colourless (saturation < BLOWN.sat), detail-less (3x3 luma
+//           it is. A connected region (after a 3x3 opening, so caption and HUD strokes drop out; the figures' own white is
+//           left out: head, hood, torso and sleeves, projected from the rows' joints (FIGURE), so a bag in the hand still counts) of colourless (saturation < BLOWN.sat), detail-less (3x3 luma
 //           range <= BLOWN.lc) pixels as bright as BLOWN.white or BLOWN.over above the frame's median, of BLOWN.area px or
 //           more at W x H, or of clipped pixels (>= BLOWN.clip) of BLOWN.clipArea px or more, held >= HOLD s. A bag at 1 % of the
 //           frame passes the glare share and fails here.
+//   light rides a figure (Kai 23/11, A v11 0:16: "light comes FROM the character"): from the rows' `lights` alone, a light
+//           that is not a lamp the figure carries and travels with a figure's head (RIDE): its pool slides over every wall
 //   crushed shadows on a subject: inside the subject's box (from the render's rows: each actor's head box, widened 1.6x and
 //           run down 3 head heights for the body) more than CRUSH.share of the pixels are near black (luma <= 10)
 // Pictures are sampled at FPS a second at W x H with the HUD bands cropped (top 10 %, bottom 12 %).
@@ -142,7 +144,8 @@ export function lightRides(rows) {
   const out = [], byId = new Map();
   rows.forEach((r, i) => { for (const l of r.lights || []) if (!l.carried) (byId.get(l.id) || byId.set(l.id, []).get(l.id)).push({ i, f: r.f, pos: l.pos, r }); });
   for (const [id, seq] of byId) { let run = null;
-    for (let k = 0; k < seq.length; k++) { const a = seq[k], b = seq.find((x, j) => j > k && x.f - a.f >= RIDE.span); if (!b || b.f - a.f > 2 * RIDE.span) continue;
+    for (let k = 0, j = 0; k < seq.length; k++) { const a = seq[k]; while (j < seq.length && seq[j].f - a.f < RIDE.span) j++;
+      const b = seq[j]; if (!b || b.f - a.f > 2 * RIDE.span) continue;
       const who = Object.entries(a.r.actors || {}).find(([n, x]) => x.headW && b.r.actors?.[n]?.headW && Math.hypot(...x.headW.map((v, i) => v - a.pos[i])) <= RIDE.near);
       if (!who) continue;
       const dA = b.r.actors[who[0]].headW.map((v, i) => v - who[1].headW[i]), dL = b.pos.map((v, i) => v - a.pos[i]), mv = Math.hypot(...dA);
