@@ -1,5 +1,8 @@
 // Colour gate (◇5) on the final render, against the film's colour script (colour-script.json, Kai-approved at [1.7]).
-// A look the script declares passes; a colour change the script does not motivate fails.
+// A look the script declares passes; a colour change the script does not motivate fails. Every range comes from the
+// script: brightness is per scene (a scene's `luma`), never a film-wide floor, so a night film can be dark where the
+// script says so (Kai 22/11, Hot Money ep01: a mean-luma >= 100 floor pulled every new look back to the old one).
+// The script's look is made in the acts' light and grade at render time, never by a grade on the rendered picture.
 //   node styles/stick-man/tools/gates/colourgate.mjs films/<slug>   -> review/colourgate.md + review/colour.json, exit 1 unless PASS
 //   node styles/stick-man/tools/gates/colourgate.mjs --mp4 <file> --script <colour-script.json> [--decisions <json>] [--json 1]
 // Shots: hard cuts measured on the mp4 (cutgate.mjs), the script's `cuts` and every scene start. Pictures are sampled at
@@ -10,6 +13,8 @@
 // Needs T3 pixels (shot.mjs --tier review, 720x1280 full quality or larger): a T2 proof (480p, no lens blur, low shadows) or
 // anything under 720 wide is refused with exit 2 (tools/render/tiers.mjs pixelGateError). gate() itself measures any mp4.
 // A finding is waived by an approved DECISIONS.json entry { "waives": "colourgate.G9", "by": "kai", "at": "<date>" }.
+// G9 checks each scene's median luma against its `luma` [min, max]; a scene without `luma` is listed as unchecked. A
+// film-wide floor runs only when the script asks for one: `defaults.film: { luma, dark, darkShare }`.
 import fs from 'node:fs'; import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { run } from '../../../../kit/env.mjs';
@@ -32,7 +37,6 @@ export const DEFAULTS = {
   cut: { same: { luma: 25, sat: 0.15 }, scene: { luma: 50, sat: 0.25 } },
   inShot: { luma: 25, window: 0.5 },
   flood: { share: 0.9, seconds: 3 }, offPalette: 0.2,
-  film: { luma: 100, dark: 70, darkShare: 0.15 },
   crop: { top: 0.10, bottom: 0.12 },
 };
 
@@ -91,6 +95,7 @@ export function parseScript(raw, dur) {
     at = s.to;
     return { id: s.id, from: s.from, to: s.to, intent: s.intent,
       rb: range(s.rb || D.rb, `${w} rb`), sat: range(s.sat || D.sat, `${w} sat`), black: range(s.black || D.black, `${w} black`),
+      luma: s.luma ? range(s.luma, `${w} luma`) : null,
       hero: s.hero === false ? false : { ...D.hero, ...s.hero, rb: range(s.hero?.rb || D.hero.rb, `${w} hero.rb`) },
       allowed: [...new Set([...palette, ...families(s.hues, `${w} hues`)])], flood: families(s.flood, `${w} flood`) };
   });
@@ -182,13 +187,22 @@ export const CHECKS = [
         ? [{ t: s.from, shot: s.i, got: `${(share * 100).toFixed(0)} % off (${off.filter(k => s.hues[k] > 0.05).map(k => `${k} ${(s.hues[k] * 100).toFixed(0)} %`).join(', ')})`,
           limit: `<= ${script.D.offPalette * 100} %, allowed ${s.scene.allowed.join(', ')}` }] : [];
     }) },
-  { id: 'G9', what: 'film: mean luma and dark seconds',
+  { id: 'G9', what: 'brightness: each scene\'s median luma against its luma range (a film-wide floor only if the script sets one)',
     run: ({ samples, script }) => {
+      const out = [];
+      for (const sc of script.scenes) {
+        if (!sc.luma) continue;
+        const xs = samples.filter(x => x.t >= sc.from && x.t < sc.to);
+        if (!xs.length) continue;
+        const L = median(xs.map(x => x.L));
+        if (outside(L, sc.luma)) out.push({ t: sc.from, got: `${sc.id} median luma ${f2(L)}`, limit: `${sc.id} ${sc.luma.join('-')}` });
+      }
+      if (!script.D.film) return out;
       const { luma, dark, darkShare } = script.D.film, mean = samples.reduce((a, x) => a + x.L, 0) / samples.length;
       const secs = new Map(); for (const x of samples) (secs.get(Math.floor(x.t)) || secs.set(Math.floor(x.t), []).get(Math.floor(x.t))).push(x.L);
       const darkS = [...secs.values()].filter(v => v.reduce((a, b) => a + b, 0) / v.length < dark).length / secs.size;
-      return [mean < luma && { t: 0, got: `mean luma ${f2(mean)}`, limit: `>= ${luma}` },
-        darkS > darkShare && { t: 0, got: `${(darkS * 100).toFixed(1)} % dark seconds`, limit: `<= ${darkShare * 100} % under luma ${dark}` }].filter(Boolean);
+      return [...out, luma != null && mean < luma && { t: 0, got: `mean luma ${f2(mean)}`, limit: `>= ${luma} (script defaults.film)` },
+        darkShare != null && darkS > darkShare && { t: 0, got: `${(darkS * 100).toFixed(1)} % dark seconds`, limit: `<= ${darkShare * 100} % under luma ${dark} (script defaults.film)` }].filter(Boolean);
     } },
 ];
 
@@ -210,6 +224,7 @@ export function report(res, name, script) {
     res.verdict === 'DRAFT' ? '**DRAFT**: no finding, but colour-script.json is not approved by Kai (`approved: { by: "kai", at }`), so this is not a PASS'
       : `**${res.verdict}**: ${open} finding${open === 1 ? '' : 's'} on ${new Set(res.findings.filter(f => !f.waived && f.shot != null).map(f => f.shot)).size} shots${script.approved ? '' : ' (script not approved by Kai)'}`, '',
     '| Check | Findings |', '| --- | --- |', ...CHECKS.map(c => `| ${c.id} ${c.what} | ${by[c.id].length || 'PASS'} |`), '',
+    ...(script.scenes.some(s => !s.luma) ? [`Brightness not checked (no \`luma\` in the script): ${script.scenes.filter(s => !s.luma).map(s => s.id).join(', ')}`, ''] : []),
     '| Check | Shot | Time | Got | Limit | Waived |', '| --- | --- | --- | --- | --- | --- |',
     ...res.findings.map(f => `| ${f.check} | ${f.shot ?? 'film'} | ${f.t.toFixed(1)} s | ${f.got} | ${f.limit} | ${f.waived || ''} |`), '',
     '| Shot | Time | Scene | L | S | R/B | black | hero | hues (coloured share) |', '| --- | --- | --- | --- | --- | --- | --- | --- | --- |',

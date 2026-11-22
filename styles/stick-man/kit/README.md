@@ -9,6 +9,7 @@ Live engine code, not a one-off study. Each file sits in the folder of what it i
 | `props/` | story props that stand in the set: `story.js`, `dyepack.js`, and `sizes.js` (the real sizes `shotfaults.mjs` holds props to) |
 | `acting/` | what plays over time: `keys.js` (the lead's acting keys), `director.js` (the hand-directed camera) |
 | `fx/` | effects: `make.js` (the `ao_*` MAKE kinds), `physfx.js` (physical effects in the world), `explain.js` (explainer effects), `burst.js` (the burst) |
+| `look/` | how a picture is lit: `exposure.js` (`exposureWarnings`: an act's `grade.exp` over 1.5 clips after tone mapping; `engine/play.js` warns, light the place instead) |
 
 Code inside `styles/stick-man/` imports these by alias, `#kit/<folder>/<file>.js` (also `#engine/`, `#motion-lib/`,
 `#tools/`): node reads `styles/stick-man/package.json` "imports", the pages (`reel.html`, `faces.html`, the camtry and
