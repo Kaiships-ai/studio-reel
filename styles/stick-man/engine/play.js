@@ -782,8 +782,15 @@ async function buildAct(R, X) {
     stage.scene.traverse(o => {
       if (!(o.isPointLight || o.isSpotLight) || !(o.intensity > 0)) return;
       for (let q = o; q; q = q.parent) if (!q.visible) return;
-      let carried = false; for (let q = o.parent; q && q.parent && q.parent !== stage.scene && !carried; q = q.parent) carried = /^hp_/.test(q.name || '') || !!q.userData?.prop || !!q.userData?.rest || shows(q);
       const P = o.getWorldPosition(new THREE.Vector3()); if (!heads.some(h => h.distanceTo(P) < 4)) return;
+      // a hand prop or a held prop first: a lamp in the hand; a figure's root first: a light on its own body (not carried);
+      // neither: carried when a group between it and the act's group shows a mesh (a car, a fixture)
+      let carried = null, onMesh = false;
+      for (let q = o.parent; q && q.parent && q.parent !== stage.scene && carried === null; q = q.parent) {
+        if (/^hp_/.test(q.name || '') || q.userData?.prop || q.userData?.rest) carried = true;
+        else if (q.userData?.stick) carried = false;
+        else onMesh ||= shows(q); }
+      carried ??= onMesh;
       out.lights.push({ id: o.uuid.slice(0, 8), pos: toB(P).map(x => +x.toFixed(3)), power: +o.intensity.toFixed(2), carried });
     });
     return out;
