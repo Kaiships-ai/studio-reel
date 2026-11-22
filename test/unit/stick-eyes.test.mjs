@@ -3,7 +3,7 @@
 // every design to LIMITS. These tests fail when the drawing drifts from the numbers or a design brings the stare back.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { EYE, EYE_V9, judge, eyeGeom, pupil, LIMITS } from '../../styles/stick-man/engine/eyegeom.js';
+import { EYE, EYE_V9, judge, eyeGeom, pupil, LIMITS, squeezes } from '../../styles/stick-man/engine/eyegeom.js';
 import { STYLE_DRAW, mixFace } from '../../styles/stick-man/engine/faces.js';
 import { faceStateAt } from '../../styles/stick-man/engine/acting.js';
 import { eyegate } from '../../styles/stick-man/tools/gates/eyegate.mjs';
@@ -49,4 +49,31 @@ test('s2 draws the pupil eyegeom.js computes', () => {
     assert.ok(Math.abs(got.rx - want.prx) < 1e-6 && Math.abs(got.ry - want.pry) < 1e-6, `${name}: drawn ${got.rx},${got.ry} want ${want.prx},${want.pry}`);
   }
   assert.ok(EYE.prx > EYE_V9.prx && EYE.shrink < EYE_V9.shrink);
+});
+
+// the lid and the pupil as drawn: the first moveTo of the face is the left eye's lid clip (its y is the lid's top for a
+// design with no lid tilt at q 0), the first ink ellipse its pupil; their white-above share equals eyeGeom's
+test('s2 draws the lid where eyegeom.js puts it: the white above the pupil matches, design by design', () => {
+  S2.use();
+  for (const name of ['y_alert', 'y_worried', 'y_focus', 'c_shout', 'y_fear']) {
+    const D = S2.DESIGNS[name]; let top = null, pup = null, fill = null;
+    const g = new Proxy({ canvas: { width: 512, height: 512 }, getTransform: () => ({}) }, {
+      get(t, k) {
+        if (k in t) return t[k];
+        if (k === 'moveTo') return (x, y) => { if (top == null) top = y; };
+        if (k === 'ellipse') return (x, y, rx, ry) => { if (!pup) pup = { y, ry, pending: true }; };
+        if (k === 'fill') return () => { if (pup?.pending) { if (fill === 'ink') pup.pending = false; else pup = null; } };
+        return () => {};
+      },
+      set(t, k, v) { if (k === 'fillStyle') fill = /^rgb\(250/.test(String(v)) ? 'white' : 'ink'; t[k] = v; return true; } });
+    const { F } = mixFace(faceStateAt([{ f: -1e9, expr: name }], 100, 7, null));
+    STYLE_DRAW.s2(g, { ...F, age: 60, hpx: 230 }, 0, 100, {});
+    const h = D.ry * (1 + (D.x?.eSt || 0)), drawn = Math.max(0, top - (pup.y + pup.ry)) / (2 * h), want = eyeGeom(D).whiteAbove;
+    assert.ok(Math.abs(drawn - want) < 0.01, `${name}: drawn white above ${drawn.toFixed(3)} vs eyegeom ${want.toFixed(3)}`);
+  }
+});
+
+test('a design that squeezes is not judged as an open eye', () => {
+  assert.ok(squeezes(S2.DESIGNS.y_set) && judge(S2.DESIGNS.y_set).squeeze);
+  assert.ok(!squeezes(S2.DESIGNS.y_lens));
 });

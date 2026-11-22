@@ -18,8 +18,10 @@ test('a night frame with a hot pool round a door is glare; the same frame withou
   assert.equal(faults(run(hot, []))[0].kind, 'glare');
 });
 
-test('an evenly bright day frame (a white lobby) is not glare', () => {
-  assert.ok(frameValues(frame(205), W, H).glare <= GLARE.share);
+test('the same bright patch is glare in a night frame and not in a bright day frame (the median sets the bar)', () => {
+  const patch = [[10, 80, 70, 170, 238]];
+  assert.ok(frameValues(frame(70, patch), W, H).glare > GLARE.share);
+  assert.ok(frameValues(frame(185, patch), W, H).glare <= GLARE.share);
 });
 
 test('a subject crushed to black in its box fails; a readable one passes; a short flash is not held long enough', () => {

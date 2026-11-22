@@ -25,6 +25,6 @@ export async function eyegate() {
 if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   const R = await eyegate(), json = process.argv.includes('--json');
   if (json) console.log(JSON.stringify(R, null, 1));
-  else for (const r of R.rows) console.log(`${r.ok ? 'ok  ' : 'FAIL'} ${r.kind.padEnd(8)} ${r.name.padEnd(14)} pupil ${(r.pupilW * 100).toFixed(0).padStart(3)}%${r.whiteAbove == null ? '' : `  white above ${(r.whiteAbove * 100).toFixed(0).padStart(2)}%`}${r.bad.length ? '  ' + r.bad.join('; ') : ''}`);
+  else for (const r of R.rows) console.log(r.squeeze ? `--   ${r.kind.padEnd(8)} ${r.name.padEnd(14)} squeezes (no open eye to judge)` : `${r.ok ? 'ok  ' : 'FAIL'} ${r.kind.padEnd(8)} ${r.name.padEnd(14)} pupil ${(r.pupilW * 100).toFixed(0).padStart(3)}%${r.whiteAbove == null ? '' : `  white above ${(r.whiteAbove * 100).toFixed(0).padStart(2)}%`}${r.bad.length ? '  ' + r.bad.join('; ') : ''}`);
   console.log(R.ok ? 'eyegate PASS' : 'eyegate FAIL'); process.exit(R.ok ? 0 : 1);
 }

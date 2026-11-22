@@ -49,8 +49,8 @@ path. A FAIL or a DRAFT keeps ◇5 OPEN.
   the mp4 at 4 fps, HUD bands cropped. Glare: the blurred picture is >= 200 luma and >= 90 above the frame's median on
   more than 3 % of the frame (a hot pool, not an evenly lit day lobby), or > 1 % of pixels at the clip, held >= 0.5 s.
   Crushed subject: > 8 % of a subject's box at luma <= 10 (boxes from the rows' head boxes, widened and run down for the
-  body), held >= 0.5 s. `node styles/stick-man/tools/gates/valuegate.mjs --mp4 <file> --rows <rows.jsonl>` exits 1 on a
-  fault; `test/unit/stick-valuegate.test.mjs` covers a hot pool, an even bright frame, a crushed and a lit subject, a flash.
+  body), held >= 0.5 s. It runs at ◇5 beside colourgate (`GATES.json`): `node styles/stick-man/tools/gates/valuegate.mjs
+  films/<slug>` (final render, review/shot-rows.jsonl) or `--mp4 <file> --rows <rows.jsonl>`; exits 1 on a fault; `test/unit/stick-valuegate.test.mjs` covers a hot pool, an even bright frame, a crushed and a lit subject, a flash.
 
 ## Driving it
 

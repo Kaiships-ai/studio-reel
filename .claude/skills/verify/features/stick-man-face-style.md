@@ -29,7 +29,9 @@ styles/stick-man/faces.html --view a --frames 12 --w 1560 --h 1300 --out faces.j
 - Eyes (Kai 22/11, Hot Money ep01 A v9: "creepy" wide eyes): `engine/eyegeom.js` sets the open eye's pupil (`EYE.prx` x
   `EYE.pry`, a wide-eyed design shrinks it by `EYE.shrink`) and the upper lid's rest on the pupil's top (`restLid`: at most
   `capA` of the eye's height of white above the pupil, `capShock` for a design with white >= 0.6); `eye4` draws with it and
-  eases the rest lid out as the eye closes. The catch light sits at the pupil's upper edge. `tools/gates/eyegate.mjs` holds
+  eases the rest lid out as the eye closes. The catch light sits at the pupil's upper edge. The lid's crease line now
+  draws for the rest lid too, so a calm face shows its lid resting on the pupil (intended). A design that squeezes
+  (x.eCr / x.eCrR) has no open eye and is not judged; the gate checks the held open eye, not every frame of a take. `tools/gates/eyegate.mjs` holds
   every s2 design and every kit ring eye to `LIMITS` (calm: pupil >= 55 % of the eye's width, <= 10 % white above it;
   fear/shock: >= 42 %, <= 30 %) and exits 1 on a failure.
 

@@ -155,6 +155,8 @@ function eye4(g, F, ex, s, ey, blink, t, k, tilt, gxs, life) {
   g.restore();
   K.path(g, pts, true); g.lineWidth = lw; g.strokeStyle = K.INK; g.stroke();
   g.restore();
+  // the upper lid's crease line: drawn for any lid past 0.10, the rest lid included, so a calm face now shows its lid resting
+  // on the pupil (Kai 22/11 before|after: the stare is gone, the face reads relaxed)
   const kk = clamp((L - 0.10) / 0.12), ch = w * Math.sqrt(Math.max(0, 1 - ((top - yc) / h) ** 2)) * 1.06;
   if (kk > 0.02 && ch > 0.004) K.line(g, [[ex - ch, top + m0 - ch * slope], [ex + ch, top + m0 + ch * slope]], 0.016 * k * (0.4 + 0.6 * kk));
   // a raised lower lid draws its own line (the clip cut the rim open and the eye read as a broken "(")

@@ -53,7 +53,11 @@ export function eyeGeom(D, E = EYE) {
 // the limits the check holds every open-eyed design to. A calm face: the pupil fills more than half the eye and the lid
 // all but touches it; a fear or shock face (white >= shockWhite) may show white above, never a pin-prick pupil
 export const LIMITS = { calm: { pupilW: 0.55, whiteAbove: 0.10 }, shock: { pupilW: 0.42, whiteAbove: 0.30 } };
+// a design-time check of the held, open eye: a design that squeezes (x.eCr, x.eCrR: drawn as a line or > <, no pupil) has
+// no open eye to judge; takes, blinks and live gaze move the numbers for a few frames around the hold
+export const squeezes = D => (D.x?.eCr || 0) > 0 || (D.x?.eCrR || 0) > 0;
 export function judge(D, E = EYE) {
+  if (squeezes(D)) return { pupilW: null, whiteAbove: null, whiteBelow: null, lid: null, wP: D.white || 0, ok: true, bad: [], squeeze: true };
   const g = eyeGeom(D, E), L = g.wP >= E.shockWhite ? LIMITS.shock : LIMITS.calm, bad = [];
   if (g.pupilW < L.pupilW) bad.push(`pupil ${(g.pupilW * 100).toFixed(0)}% of the eye's width (< ${L.pupilW * 100}%)`);
   if (g.whiteAbove > L.whiteAbove) bad.push(`white above the pupil ${(g.whiteAbove * 100).toFixed(0)}% of the eye (> ${L.whiteAbove * 100}%)`);

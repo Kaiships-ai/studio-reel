@@ -7,10 +7,15 @@
 //   crushed shadows on a subject: inside the subject's box (from the render's rows: each actor's head box, widened 1.6x and
 //           run down 3 head heights for the body) more than CRUSH.share of the pixels are near black (luma <= 10)
 // Pictures are sampled at FPS a second at W x H with the HUD bands cropped (top 10 %, bottom 12 %).
+//   node styles/stick-man/tools/gates/valuegate.mjs films/<slug>       the final render in renders/, rows from review/shot-rows.jsonl
 //   node styles/stick-man/tools/gates/valuegate.mjs --mp4 <file> [--rows <rows.jsonl>] [--json 1]   -> exit 1 on a fault
-import fs from 'node:fs';
-import { pathToFileURL } from 'node:url';
+// Run at ◇5 (GATES.json, beside colourgate). Without rows the subjects are not checked (the report says so).
+import fs from 'node:fs'; import path from 'node:path';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 import { run } from '../../../../kit/env.mjs';
+import { finalRender } from '#tools/render/renders.mjs';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 
 export const W = 180, H = 320, FPS = 4, CROP = { top: 0.10, bottom: 0.12 };
 export const GLARE = { luma: 200, over: 90, share: 0.03, radius: 9 }, CLIP = { luma: 250, share: 0.01 }, CRUSH = { luma: 10, share: 0.08 }, HOLD = 0.5;
@@ -68,10 +73,20 @@ export function valuegate(mp4, rows = []) {
   return { ok: !found.length, faults: found, samples: S.length };
 }
 if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
-  const A = {}; for (let i = 2; i < process.argv.length; i += 2) A[process.argv[i].replace(/^--/, '')] = process.argv[i + 1];
-  if (!A.mp4) { console.error('usage: valuegate.mjs --mp4 <file> [--rows <rows.jsonl>] [--json 1]'); process.exit(2); }
-  const rows = A.rows ? fs.readFileSync(A.rows, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)) : [];
-  const R = valuegate(A.mp4, rows);
+  const argv = process.argv.slice(2), A = {};
+  let mp4, rowsFile;
+  if (argv[0] && !argv[0].startsWith('--')) {
+    const DIR = path.resolve(ROOT, argv[0]), final = finalRender(path.join(DIR, 'renders'));
+    if (!final) { console.error(`${argv[0]}: no final render in renders/`); process.exit(1); }
+    mp4 = path.join(DIR, 'renders', final); const r = path.join(DIR, 'review', 'shot-rows.jsonl'); rowsFile = fs.existsSync(r) ? r : null;
+    for (let i = 1; i < argv.length; i += 2) A[argv[i].replace(/^--/, '')] = argv[i + 1];
+  } else {
+    for (let i = 0; i < argv.length; i += 2) A[argv[i].replace(/^--/, '')] = argv[i + 1];
+    mp4 = A.mp4; rowsFile = A.rows;
+  }
+  if (!mp4) { console.error('usage: valuegate.mjs films/<slug> | --mp4 <file> [--rows <rows.jsonl>] [--json 1]'); process.exit(2); }
+  const rows = rowsFile ? fs.readFileSync(rowsFile, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)) : [];
+  const R = valuegate(mp4, rows);
   if (A.json) console.log(JSON.stringify(R, null, 1));
   else { for (const f of R.faults) console.log(`FAIL ${f.kind} ${f.from}-${f.to} s (peak ${(f.peak * 100).toFixed(1)} %)`); console.log(`valuegate ${R.ok ? 'PASS' : 'FAIL'} (${R.samples} samples${rows.length ? '' : ', no rows: subjects not checked'})`); }
   process.exit(R.ok ? 0 : 1);
