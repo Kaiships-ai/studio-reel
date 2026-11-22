@@ -33,7 +33,7 @@ export const LIMITS = [
   { id: 'C4', what: 'longest face cut off (s)', key: 'faceCutRun', max: 1,
     source: '"cam lia dưới, mà mặt nhân vật lại ở trên?" 12/11 (a held shot with the head out of frame, not measured); v7 0.1 s, the bible cut 0.03 s; a frame or two passing during a flight is not seen' },
   { id: 'C5', what: `takes in one angle family, most in any ${ANGLE_WINDOW} in a row`, key: 'angleRepeat', max: 3,
-    source: 'was the AI review\'s "angle" row (S3-060 hit 2 of 2, no camera rows then); Hot Money A v9 banks run three back, eye-level, medium takes in a row (58.6-73.5 s) inside the 80 % Kai approved; four is a pattern a viewer reads as the same shot' },
+    source: 'was the AI review\'s "angle" row (S3-060 hit 2 of 2, no camera rows then); a film Kai approved (its A v9) banks run three back, eye-level, medium takes in a row (58.6-73.5 s) inside the 80 % Kai approved; four is a pattern a viewer reads as the same shot' },
 ];
 
 export function sceneScores(mp4) {
