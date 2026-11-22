@@ -16,7 +16,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { SavePass } from 'three/addons/postprocessing/SavePass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
-import { budgetMaterial, isFigurePart, ROLL, ROLL_GLSL, GLOW_MAX, expLinear } from '#kit/look/highlights.js';
+import { budgetMaterial, isFigurePart, ROLL, ROLL_GLSL, GLOW_MAX, PRACTICAL, expLinear } from '#kit/look/highlights.js';
 
 export const PROPS = 1;                                            // layer that gets the ink line
 export const B = (x, y, z) => new THREE.Vector3(x, z, -y);         // Blender Z-up -> three Y-up
@@ -75,8 +75,11 @@ export function toonify(m, o = {}) {
       #endif
       vec3 col = diffuseColor.rgb * mix(shade, uGain * mix(vec3(1.0), sunC, 0.7 * uSoft) * pLit, k * (1.0 - fr));
       // practical light: everything direct except the sun (lamps, sparks, fill), only where a place asks for it (uLamp);
-      // clamped so a lamp or a spark burst lights a local patch and never blows a surface out to white (judge t1)
-      col += min(uLamp * max(reflectedLight.directDiffuse - sunPart, vec3(0.0)), vec3(0.35 + 0.25 * (1.0 - uChar)));
+      // it rolls off toward a cap so a lamp or a spark burst lights a local patch and never blows a surface out to white
+      // (judge t1). A soft knee, not a hard min (Kai 23/11, A v11 0:00: a lamp 1 m over a door added the same +0.6 over the
+      // whole door top, a flat patch at 201 whether the lamp was at full power or 0.4)
+      { vec3 pl = uLamp * max(reflectedLight.directDiffuse - sunPart, vec3(0.0)); float cap = 0.35 + 0.25 * (1.0 - uChar), kn = ${PRACTICAL.knee.toFixed(3)} * cap;
+        vec3 ex = max(pl - vec3(kn), 0.0); col += min(pl, vec3(kn)) + ex / (1.0 + ex / (cap - kn)); }
       col += reflectedLight.directSpecular * uSheen * mix(1.0, shw, uSoft) + totalEmissiveRadiance;
       col += vec3(1.0, 0.97, 0.92) * uBroad * k * pow(saturate(dot(geometryNormal, normalize(sunD + geometryViewDir))), 5.0);
       // cool rim on dark places for dark figures (material rimCool x the place's rim 0..1)

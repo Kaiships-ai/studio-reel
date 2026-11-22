@@ -21,6 +21,10 @@ export const BUDGET = { albedo: 0.8, emissive: 0.04 };
 // so a white surface is bright but never at the glare line (235); a ceiling of 1.15 put every white head at ~242
 export const ROLL = { knee: 0.55, ceil: 0.85 };
 export const GLOW_MAX = 0.35;
+// a toon set surface's practical light (lamps, sparks: engine/look.js) rolls off from knee x its cap toward the cap, never a
+// hard min: the hard cap made a flat patch the same brightness at any lamp power (Kai 23/11, A v11 0:00: the door under a lamp)
+export const PRACTICAL = { knee: 0.4 };
+export function practicalRoll(v, cap) { const kn = PRACTICAL.knee * cap; if (v <= kn) return v; const e = v - kn; return kn + e / (1 + e / (cap - kn)); }
 export const EXP_GAMMA = 2.2;
 
 // a mesh is part of a stick figure (its own HDR cap in the toon shader) only if no prop sits between it and the figure's
