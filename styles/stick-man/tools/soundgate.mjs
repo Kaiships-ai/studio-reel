@@ -27,7 +27,7 @@ const SYNC_SRC = 'ITU-R BT.1359: sound 90 ms before or 185 ms after the picture 
 
 export const LIMITS = [
   { id: 'S1', what: 'loudness order of the classes, then the voice', key: 'orderOk',
-    source: 'Hot Money r5 sound plan: gunshot > crash > smash > slam > voice (r5/tools/hierarchy.py), Kai 18/11 "cheap SFX"; the order is the film\'s, from audio/sound-plan.json "order"' },
+    source: 'the sound plan of one film (its r5): gunshot > crash > smash > slam > voice (r5/tools/hierarchy.py), Kai 18/11 "cheap SFX"; the order is the film\'s, from audio/sound-plan.json "order"' },
   { id: 'S2', what: `hits off the picture (early > ${EARLY_MS} ms or late > ${LATE_MS} ms)`, key: 'offSync', max: 0, source: SYNC_SRC },
   { id: 'S3', what: `hits missing from the sfx stem (window under ${MISSING_DB} dBFS)`, key: 'missing', max: 0, source: 'Kai 19/11 A v3 s2: "tự nhiên mất phần slam"' },
 ];

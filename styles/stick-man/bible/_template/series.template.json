@@ -1,0 +1,25 @@
+{
+  "$schema": "stick-man/series-template@1",
+  "series": "<fill>",
+  "characters": [
+    { "id": "<fill>", "name": "<fill>", "body": "<fill>", "role": "lead", "faceDesign": "<fill>", "costume": "<fill>" }
+  ],
+  "facesApproved": { "hash": null, "sheet": "<fill>", "approvedBy": null, "date": null },
+  "palette": {
+    "ink": "<fill>", "hero": "<fill>", "accents": ["<fill>"], "forbidden": []
+  },
+  "colourScript": {
+    "scenes": [
+      { "id": "<fill>", "mood": "<fill>", "keyLight": "<fill>", "hue": "<fill>", "lightEvents": [] }
+    ]
+  },
+  "sets": [
+    { "id": "<fill>", "file": "<fill>", "dayNight": "<fill>", "solids": "<fill>" }
+  ],
+  "sound": { "musicBed": "<fill>", "sfxBank": "<fill>", "mixTarget": "<fill>" },
+  "voice": { "engine": "<fill>", "cast": { "<fill>": "<fill>" }, "style": "<fill>" },
+  "episodeFrame": { "hook": "<fill>", "beats": ["<fill>"], "outro": "<fill>", "runtime": "<fill>" },
+  "referenceClips": [
+    { "id": "<fill>", "source": "<fill>", "why": "<fill>" }
+  ]
+}
