@@ -26,6 +26,15 @@ Any film: beats with `expr: 'y_fear', take: true` and the like (`new_film.mjs` w
 keeps the old faces: `export default { ...act, faceStyle: 'kit' }`. The design sheet: `shot.mjs --page
 styles/stick-man/faces.html --view a --frames 12 --w 1560 --h 1300 --out faces.jpg` (s2; `--query style=kit` the kit's).
 
+- Eyes (Kai 22/11, Hot Money ep01 A v9: "creepy" wide eyes): `engine/eyegeom.js` sets the open eye's pupil (`EYE.prx` x
+  `EYE.pry`, a wide-eyed design shrinks it by `EYE.shrink`) and the upper lid's rest on the pupil's top (`restLid`: at most
+  `capA` of the eye's height of white above the pupil, `capShock` for a design with white >= 0.6); `eye4` draws with it and
+  eases the rest lid out as the eye closes. The catch light sits at the pupil's upper edge. The lid's crease line now
+  draws for the rest lid too, so a calm face shows its lid resting on the pupil (intended). A design that squeezes
+  (x.eCr / x.eCrR) has no open eye and is not judged; the gate checks the held open eye, not every frame of a take. `tools/gates/eyegate.mjs` holds
+  every s2 design and every kit ring eye to `LIMITS` (calm: pupil >= 55 % of the eye's width, <= 10 % white above it;
+  fear/shock: >= 42 %, <= 30 %) and exits 1 on a failure.
+
 ## Driving it
 
 - Unit: `node --test test/unit/stick-face-default.test.mjs` (left out = s2, `'kit'` = no style, an unknown name throws)
@@ -37,6 +46,9 @@ styles/stick-man/faces.html --view a --frames 12 --w 1560 --h 1300 --out faces.j
 - The face-gate fixes on this film: `facebeat.mjs` takes each shot's end from the next storyboard shot (not the reel's
   segment `CUTS`); `faults.mjs` `editCuts` counts a one-shot-per-frame camera as one flight; `facesheet.mjs` passes
   `--query` and `--no-bible-check` on to `shot.mjs` and writes `review/face-sheet.json` only once the sheet image exists.
+
+- `node styles/stick-man/tools/gates/eyegate.mjs` prints one row per design (pupil share, white above) and `eyegate PASS`;
+  `node --test test/unit/stick-eyes.test.mjs` checks the drawn pupil equals `eyegeom.js` and that v9's eye (`EYE_V9`) fails.
 
 ## Gotchas
 

@@ -16,6 +16,7 @@
 import { EXPR, STYLE_DRAW, FACE_STYLE, DRAW_KIT as K, mixFace } from '../faces.js';
 import { FACE_TIMING, TAKE, SMALL_TAKE, BLINKS, CHEW } from '../acting.js';
 import { DEG, clamp, lerp } from '../mathx.js';
+import { EYE, pupil, restLid } from '../eyegeom.js';
 
 const sineIO = x => 0.5 - 0.5 * Math.cos(Math.PI * clamp(x));
 const chewPh = (F, t, late = 0) => (F.chewX || 0) * Math.sin(Math.PI * (t - late) / CHEW.T) ** 2;
@@ -128,8 +129,13 @@ function eye4(g, F, ex, s, ey, blink, t, k, tilt, gxs, life) {
   const tE = tilt * (1 - cq), sk = 1 - cq;
   if (q >= 0.999 || h < 0.006) { shutEye(g, ex, s, yc, w, k * (1 + (F.x.shutDK || 0)), tE, clamp((cr - SHUT) / (1 - SHUT)), sk); return; }
   const mid = shutMid(s, w, tE, sk), e = 0.5 + 0.35 * cq, lw = 0.018 * k, pts = almondPts(ex, yc, w, h, h, e, mid, q);
-  // the design's lids (a lid share L from the top, a raised lower lid) clip the almond, never below a white slit
-  const L = Math.min(0.89, clamp(F.lid, 0, 0.92)), slope = Math.tan((F.lidTilt || 0) * DEG) * s, low = clamp(F.low || 0);
+  // the pupil (engine/eyegeom.js: big enough to fill the eye, a wide-eyed design shrinks it only a little)
+  const wP = clamp(F.prev ? F.prev[0].white : F.white || 0), kp = 1 + 0.45 * (k - 1), { prx, pry } = pupil(wP, kp, q);
+  const pyc = -0.014 * (1 - q) + ((F.gy || 0) + (F.x.gY || 0)) * Math.max(0, h - pry - 0.01) * 0.8;
+  // the design's lids (a lid share L from the top, a raised lower lid) clip the almond, never below a white slit; the upper
+  // lid rests on the pupil's top (eyegeom.js restLid: white above it only for fear and shock), eased out as the eye closes
+  const L0 = Math.min(0.89, clamp(F.lid, 0, 0.92)), L = L0 + (restLid(L0, h, pyc, pry, wP) - L0) * (1 - q);
+  const slope = Math.tan((F.lidTilt || 0) * DEG) * s, low = clamp(F.low || 0);
   let top = yc + h * (1 - 2 * L), lowY = yc - h + low * h * 1.2;
   const minOpen = (0.056 + 0.012 * (k - 1)) * (1 - q);
   if (top - lowY < minOpen) { const c = Math.min(Math.max((top + lowY) / 2, yc - h + minOpen / 2), yc + h - minOpen / 2); top = c + minOpen / 2; lowY = c - minOpen / 2; }
@@ -138,18 +144,19 @@ function eye4(g, F, ex, s, ey, blink, t, k, tilt, gxs, life) {
   g.beginPath(); g.moveTo(ex - 0.3, top + m0 - 0.3 * slope); g.lineTo(ex + 0.3, top + m0 + 0.3 * slope); g.lineTo(ex + 0.3, lowY + m0); g.lineTo(ex - 0.3, lowY + m0); g.closePath(); g.clip();
   K.fill(g, pts, K.WHITE);
   g.save(); K.path(g, pts, true); g.clip();
-  const wP = clamp(F.prev ? F.prev[0].white : F.white || 0), kp = 1 + 0.45 * (k - 1);
-  const prx = 0.033 * (1 - 0.42 * wP) * kp, pry = 0.049 * (1 - 0.42 * wP) * kp * (1 - 0.35 * q);
   const look = clamp((F.gx || 0) + (F.cross || 0) * s - 0.12 * s + (F.x.gJit || 0) * dart(t), -1.2, 1.2) * (1 - cq) * clamp(((top - lowY) / Math.max(1e-4, 2 * h) - 0.35) / 0.40);   // a squeezed or narrowed eye looks nearly straight (a pupil at the end of a slit read sly: the scrutiny's eye beside the bill read as a grin)
   const px = ex + gxs + look * Math.max(0, w - prx - 0.004) * 0.92;
   const lo = Math.max(lowY, yc - h) + m0, hi = Math.min(top, yc + h) + m0, open = hi - lo;
-  let py = yc + m0 - 0.014 * (1 - q) + ((F.gy || 0) + (F.x.gY || 0)) * Math.max(0, h - pry - 0.01) * 0.8;
+  let py = yc + m0 + pyc;
   py = open > 2 * pry ? Math.min(Math.max(py, lo + pry), hi - pry) : (lo + hi) / 2;
   g.beginPath(); g.ellipse(px, py, prx, pry, 0, 0, 2 * Math.PI); g.fillStyle = K.INK; g.fill();
-  if (wP < 0.7 && open > 1.6 * pry && pry > 0.012) { g.beginPath(); g.ellipse(px + prx * 0.34, py + pry * 0.40, prx * 0.28, pry * 0.22, 0, 0, 2 * Math.PI); g.fillStyle = K.WHITE; g.fill(); }
+  const [cx, cy, cw, ch2] = EYE.catch;   // the catch light at the pupil's upper edge (centred, it read as a ring)
+  if (wP < 0.7 && open > 1.6 * pry && pry > 0.012) { g.beginPath(); g.ellipse(px + prx * cx, py + pry * cy, prx * cw, pry * ch2, 0, 0, 2 * Math.PI); g.fillStyle = K.WHITE; g.fill(); }
   g.restore();
   K.path(g, pts, true); g.lineWidth = lw; g.strokeStyle = K.INK; g.stroke();
   g.restore();
+  // the upper lid's crease line: drawn for any lid past 0.10, the rest lid included, so a calm face now shows its lid resting
+  // on the pupil (Kai 22/11 before|after: the stare is gone, the face reads relaxed)
   const kk = clamp((L - 0.10) / 0.12), ch = w * Math.sqrt(Math.max(0, 1 - ((top - yc) / h) ** 2)) * 1.06;
   if (kk > 0.02 && ch > 0.004) K.line(g, [[ex - ch, top + m0 - ch * slope], [ex + ch, top + m0 + ch * slope]], 0.016 * k * (0.4 + 0.6 * kk));
   // a raised lower lid draws its own line (the clip cut the rim open and the eye read as a broken "(")

@@ -224,6 +224,12 @@
      ]
     },
     {
+     "tool": "tools/gates/valuegate.mjs",
+     "args": [
+      "{film}"
+     ]
+    },
+    {
      "tool": "tools/gates/shotgate.mjs",
      "args": [
       "{film}"
