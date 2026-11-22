@@ -1,5 +1,5 @@
 {
- "about": "Evidence each gate needs before it can LOCK (stagegate.mjs). measured = a tool run that must exit 0; made = the maker's own files; judged = by: agent:<id> or person:<name>, never the maker; approved = review/approvals.json by the gate's approver: \"kai\" only at a Kai touchpoint (touch), else an independent reviewer whose verdict is READY. A calibrated review is advisory: its calibration is shown, never blocks. A film may add evidence in review/gates.local.json, never remove it.",
+ "about": "Evidence each gate needs before it can LOCK (stagegate.mjs). measured = a tool run that must exit 0; made = the maker's own files; judged = by: agent:<id> or person:<name>, never the maker; approved = review/approvals.json by the gate's approver: \"kai\" only at a Kai touchpoint (touch), else an independent reviewer whose verdict is READY. A run or calibrated review marked advisory is shown, never blocks: its result is on the gate page. A film may add evidence in review/gates.local.json, never remove it.",
  "touchpoints": [
   {
    "id": "S1",
@@ -38,8 +38,8 @@
   {
    "id": "K3",
    "title": "change of approach",
-   "per": "when retakes.mjs reports PREMISE (2 failed rounds on one shot and fault kind)",
-   "records": "review/retakes.json k3: [{ shot, kind, pick, at }]",
+   "per": "when retakes.mjs reports PREMISE (2 failed rounds on one shot and fault kind), or a gate FAIL can only end by a waiver or by dropping a decision Kai approved",
+   "records": "a PREMISE pick: review/retakes.json k3: [{ shot, kind, round, pick, at }]; a waiver or override: DECISIONS.json { waives | conflict, by: \"kai\", at, status: \"approved\" } (kituse.mjs, colourgate.mjs, scriptlint.mjs)",
    "gate": null
   },
   {
@@ -243,6 +243,20 @@
       "{film}",
       "--premise"
      ]
+    },
+    {
+     "tool": "readgate.mjs",
+     "args": [
+      "{film}"
+     ]
+    },
+    {
+     "tool": "soundgate.mjs",
+     "args": [
+      "{film}"
+     ],
+     "advisory": true,
+     "why": "advisory until its S2 sync is checked by ear: it flags the deliberately pre-rolled glass smash on Hot Money ep01 A v9"
     }
    ],
    "evidence": [

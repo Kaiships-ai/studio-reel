@@ -25,9 +25,10 @@ test('GATES.json lists exactly the six Kai touchpoints, and only K1 (◇2b) and 
 
 // Present-tense approval words; a line that names one must say which touchpoint it is. History ("Kai picked … 17/11")
 // lives in WHOCHECKS sources and is not an approval point.
-const ASK = /\bKai (approves|signs|confirms|merges|picks|chooses|decides|accepts)\b|\b(wait|waits|waiting) (on|for) Kai\b|\buntil Kai\b|\bneeds Kai\b|\bshow Kai\b|READY FOR KAI(?! (K1|K2))|kai-ok|--lock-story kai/i;
-test('every approval point in the skill and its playbook names one of the six touchpoints', () => {
-  const files = [...fs.readdirSync(SKILL_DIR).filter(f => f.endsWith('.md')).map(f => path.join(SKILL_DIR, f)), path.join(ROOT, '.agents/playbooks/stick-man-film.md')];
+const ASK = /\bKai (approves|signs|confirms|merges|picks|chooses|decides|accepts|reviews|OKs)\b|\bKai's call\b|\b(wait|waits|waiting) (on|for) Kai\b|\buntil Kai\b|\bneeds Kai\b|\bshow Kai\b|READY FOR KAI(?! (K1|K2|\$\{))|kai-ok|--lock-story kai/i;
+test('every approval point in the skill, its playbook and the tools\' messages names one of the six touchpoints', () => {
+  const files = [...fs.readdirSync(SKILL_DIR).filter(f => f.endsWith('.md')).map(f => path.join(SKILL_DIR, f)), path.join(ROOT, '.agents/playbooks/stick-man-film.md'),
+    ...fs.readdirSync(TOOLS).filter(f => /\.(mjs|js|py)$/.test(f)).map(f => path.join(TOOLS, f))];
   const bad = [];
   for (const f of files) fs.readFileSync(f, 'utf8').split('\n').forEach((l, i) => {
     if (ASK.test(l) && !new RegExp(`\\b(${TOUCHPOINTS.join('|')})\\b`).test(l)) bad.push(`${path.relative(ROOT, f)}:${i + 1}: ${l.trim().slice(0, 120)}`);
@@ -69,6 +70,15 @@ test('a process gate locks on an independent reviewer\'s READY, never on a self-
   assert.equal(gateRow(d, '6').state, 'LOCK');
   put(d, 'review/retro.md', 'by: self\n\n# Rules proposed\nmore\n');
   assert.match(gateRow(d, '6').approved[1], /before the latest evidence changed/);
+});
+
+test('◇5 runs readgate as a blocking check and soundgate as advisory: a soundgate FAIL is shown, never blocks', () => {
+  const run5 = Object.fromEntries(GATES.gates['5'].run.map(r => [r.tool, !!r.advisory]));
+  assert.equal(run5['readgate.mjs'], false); assert.equal(run5['soundgate.mjs'], true);
+  const d = tmp(); put(d, 'storyboard.json', {}, 1000);
+  const md = gateRow(d, '5').md;
+  assert.match(md, /^\| measured \| readgate\.mjs \| FAIL \|/m);
+  assert.match(md, /^\| advisory \| soundgate\.mjs \| PASS \| advisory only: exit 1: /m);
 });
 
 test('K1 and K2 lock only on Kai: an agent READY is advisory there, and K1 names the hook, K2 the note count', () => {

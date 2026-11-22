@@ -8,6 +8,7 @@
 // Evidence front matter (first lines of a markdown file):  by: agent:<id> | kai | self   ·   of: <what was reviewed + version>
 // Freshness (`newerThan`): a review goes stale when what it judged changed, by a content hash of the JSON fields a viewer
 // sees or hears (fresh.mjs; record in review/.fresh.json). Non-JSON targets fall back to mtime.
+// A run with `advisory: true` is shown as an advisory row and never blocks (a new gate until it is trusted).
 // Calibration (`calibrated`): advisory. The row says whether the review's `brief:` agreed with Kai (calibrate.mjs); it
 // never blocks, because no brief has yet passed on enough of Kai's notes to stand in for him.
 // approvals.json: { "<gate>": { by: "kai", at, ...touch fields } } at a Kai gate, { by: "agent:<id>", at, verdict: "READY" } elsewhere.
@@ -63,7 +64,8 @@ function checkGate(id) {
     const args = r.args.map(a => a.replace('{film}', DIR));
     const p = spawnSync(process.execPath, [path.join(HERE, r.tool), ...args], { encoding: 'utf8' });
     const last = (p.stdout || p.stderr || '').trim().split('\n').at(-1) || '';
-    rows.push({ kind: 'measured', what: `${r.tool} ${r.args.slice(1).join(' ')}`.trim(), ok: p.status === 0, why: p.status === 0 ? last : `exit ${p.status}: ${last}` });
+    const what = `${r.tool} ${r.args.slice(1).join(' ')}`.trim(), why = p.status === 0 ? last : `exit ${p.status}: ${last}`;
+    rows.push(r.advisory ? { kind: 'advisory', what, ok: true, why: `${p.status === 0 ? 'PASS' : 'advisory only'}: ${why}` } : { kind: 'measured', what, ok: p.status === 0, why });
   }
   // the film's run logs only grow (logline.mjs): one written over fails every gate until its lines are back
   const logs = checkLogs(DIR);

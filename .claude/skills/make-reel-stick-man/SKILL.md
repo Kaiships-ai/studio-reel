@@ -29,7 +29,7 @@ other approval is machine checks plus an independent reviewer. The list lives in
 | **S2** face sheet | once per series, and for a new character | `facesheet.mjs` sheet: the face designs on every beat's expression | the faces | `review/faces-approved.json` (`facesheet.mjs --approve`) |
 | **K1** previs + hook | every episode, before the build | the whole-film previs on the real voice + temp music, 3 hook options rendered side by side | the hook, and notes per segment | `approvals.json` `"2b": { by: "kai", at, hook }` |
 | **K2** whole film | every episode: v1, then after one fix round | the 720p film at 1x with sound, a note box per segment, beside the last version | notes per segment, or OK | `approvals.json` `"5": { by: "kai", at, notes }` + `review/retakes.json` |
-| **K3** change of approach | only when `retakes.mjs` reports PREMISE (2 failed rounds on one shot and fault kind) | 2-3 truly different approaches rendered side by side | one approach (or a waiver) | `retakes.json` `k3: [{ shot, kind, round, pick, at }]` |
+| **K3** change of approach | when `retakes.mjs` reports PREMISE (2 failed rounds on one shot and fault kind), or a gate FAIL can only end by a waiver or by dropping a decision Kai approved | 2-3 truly different approaches rendered side by side, the waiver among them | one approach, or the waiver | a PREMISE pick: `retakes.json` `k3: [{ shot, kind, round, pick, at }]`; a waiver or override: `DECISIONS.json` `{ waives \| conflict, by: "kai", at, status: "approved" }`, which `kituse.mjs`, `colourgate.mjs` and `scriptlint.mjs` read |
 | **Post** | every episode | the post copy in Studio | taps Post; Studio posts | `status.json` approval (Studio writes it) |
 
 Before any touchpoint the machine gates pass and an independent reviewer has checked the work. Show only renders side by
@@ -100,7 +100,7 @@ Every step in detail: PROCESS.md section 12. A later stage's problem is fixed in
 evidence was written by someone else (`by: agent:<id>`) after the last change, and its approver signed
 `review/approvals.json` after the latest evidence: an independent reviewer with `verdict: "READY"` at a process gate,
 Kai at K1 and K2. States: OPEN → READY FOR REVIEW or READY FOR KAI K1/K2 → LOCK. Read them from the tool, never from
-memory. A check the gate cannot measure fails, or passes only with a K3 waiver ([#135](https://github.com/Kaiships-ai/studio-reel/issues/135)).
+memory. A check the gate cannot measure fails, or passes only with a waiver Kai gave at K3 (`DECISIONS.json`, [#135](https://github.com/Kaiships-ai/studio-reel/issues/135)).
 
 ## Who checks what
 
@@ -136,7 +136,7 @@ independent review. Why each rule exists, with the film that paid for it, is in 
 | Explain in pictures first; a card last, ≤ 8 s of cards in a row and ≤ 25 % of the film | `prepro.mjs` |
 | Words, numbers and faces stay in the text-safe box (x 6-87 %, y 14-65 %) on every frame, zooms included | `animatic.mjs` |
 | The animatic is locked on the final voice, timed in frames, with burn-in | `prepro.mjs` |
-| Approved decisions live in `DECISIONS.json` and are checked at every gate; dropping one is a K3 | `develop.mjs` |
+| Approved decisions live in `DECISIONS.json` and are checked at every gate; dropping one Kai approved goes to him at K3 | `develop.mjs` |
 | The confirmed scene feels and story scores are locked (`prepro.mjs --lock-story agent:<id>`); a later change is a FAIL | `prepro.mjs` |
 | An overlay or an on-screen counter claims only what the picture and the story math show, changing on the word that causes it | `review/final-qa.md` |
 | A hand, a strike or a tool lands on a real target and holds 2-4 frames | `shotgate.mjs` |

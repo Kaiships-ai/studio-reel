@@ -5,7 +5,7 @@
 //   node styles/stick-man/tools/prepro.mjs films/<slug>                -> review/prepro.md, review/intensity.svg, review/shots.csv
 //   options: --fps 30  --out review/prepro.md  --last <frame>  --strict 1 (WARN counts as FAIL)  --opt SH040:emo (check another option)
 //   --gate 2a | 2b   the gate checks on top (story lock, final voice, decisions placed; options on flagged shots)
-//   --lock-story kai   record Kai's confirmation of the scene feels and story scores (review/locks.json)
+//   --lock-story agent:<id>   record an independent reviewer's confirmation of the scene feels and story scores (review/locks.json)
 // Exit code 1 when any FAIL. Every finding names its check id (T1, C5 ...) so PREPRO.md section 8 gives the fix.
 import fs from 'node:fs'; import path from 'node:path'; import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
@@ -151,7 +151,7 @@ for (const d of DEC?.decisions || []) {
   if (!refs.length && !(w.cues || []).length && !w.note) add(A.gate ? 'FAIL' : 'WARN', 'D1', d.id, `approved decision not placed anywhere: ${d.decision}`);
   for (const r of refs) if (!ids.has(r) && !sids.has(r)) add('FAIL', 'D1', d.id, `placed on ${r}, which is not in the shot list: ${d.decision}`);
   // D2: decisions that can be checked by the machine say how (`check`); a broken one is a FAIL whatever the other rules say,
-  // because Kai approved it. A conflict with a skill rule is Kai's call, not the agent's.
+  // because it was approved. A conflict with a skill rule is decided by an independent reviewer, never the maker.
   for (const c of (d.status === 'approved' ? d.check || [] : [])) {
     const inScope = s => !c.scenes || c.scenes.includes(s.scene), texts = s => (s.text || []).map(t => String(t.text)).join(' ');
     const fail = m => add('FAIL', 'D2', d.id, `${m} (approved: ${d.decision})`);
@@ -165,9 +165,9 @@ for (const d of DEC?.decisions || []) {
     else add('WARN', 'D2', d.id, `unknown check type ${c.type}`);
   }
 }
-// a skill rule that an approved decision overrides is reported once, so Kai decides which one stands
+// a skill rule that an approved decision overrides is reported once, so the reviewer decides which one stands
 for (const d of DEC?.decisions || []) for (const c of d.check || []) if (d.status === 'approved' && c.type === 'sizeShare' && c.size === 'CARD' && c.min > 0.25)
-  add('WARN', 'D3', d.id, `conflicts with the skill rule "cards ≤ 25 % / ≤ 8 s in a row" (C5): Kai picks which stands, and the loser is recorded in DECISIONS.json`);
+  add('WARN', 'D3', d.id, `conflicts with the skill rule "cards ≤ 25 % / ≤ 8 s in a row" (C5): an independent reviewer picks which stands, and the loser is recorded in DECISIONS.json`);
 // K1: Kai's confirmation of the scene feels and story scores is locked; any later change is a FAIL until he confirms again.
 // One exception: a shot added after the lock whose score lies between its two locked neighbours' (inclusive), at most
 // two per gap, is INFO (storylock.mjs). The hash keeps the pre-scene-id format, so a hash-only lock still compares.
@@ -183,7 +183,7 @@ if (locks.story && (Array.isArray(locks.story.shots) || locks.story.hash !== sto
   for (const m of k.info) add('INFO', 'K1', 'story', m);
 }
 if (A.gate === '2a' || A.gate === '2b') {
-  if (!locks.story) add('FAIL', 'K1', 'story', 'Kai has not confirmed the scene feels and story scores (prepro.mjs --lock-story kai after he does)');
+  if (!locks.story) add('FAIL', 'K1', 'story', 'no reviewer has confirmed the scene feels and story scores (prepro.mjs --lock-story agent:<id> after an independent reviewer does)');
   if (estimated) add('FAIL', 'V2', 'vo/words.json', 'word times are estimated (scratch voice): lock on the final voice');
   if (!DEC) add('FAIL', 'D1', 'DECISIONS.json', 'no decision log: the treatment decisions must be listed and placed');
 }

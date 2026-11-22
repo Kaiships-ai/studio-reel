@@ -18,7 +18,7 @@ episode page. This playbook only says how pstack fits around it. A Studio worker
 4. A kit or engine fault found mid-film goes to `stick-man-kit-fix.md` as its own PR. The film waits on the merge, then
    re-renders the shots that fault touched.
 5. Kai is asked only at his six touchpoints: S1 look and S2 face sheet once per series, K1 previs + hook and K2 the
-   whole film every episode, K3 when `retakes.mjs` reports PREMISE, and Post. There show 2-3 rendered options side
+   whole film every episode, K3 when `retakes.mjs` reports PREMISE or only a waiver can end a FAIL, and Post. There show 2-3 rendered options side
    by side, mark "Em đề xuất", and wait. Every other choice is made by an independent reviewer and logged; pstack's
    "never block on the human" covers it.
 6. Close each stage with `stagegate.mjs films/<film> <gate>`: a process gate locks on an independent reviewer's READY,
