@@ -772,6 +772,27 @@ async function buildAct(R, X) {
       if (h) out.cross.push({ what: k, through: h.object.name || h.object.parent?.name || 'set', d: +d.toFixed(3), at: toB(h.point).map(x => +x.toFixed(3)) });
     }
     crossPrev = { f, pts: now, where };
+    // lights within 4 m of a figure (valuegate 'light rides a figure', Kai 23/11: "light comes FROM the character"). `carried`:
+    // the light sits on a visible object (a hand prop, a car, a gun's flash, a lamp fixture: a group between it and the act's
+    // group that holds a visible mesh); a light hung straight off the act with nothing to show for it is an invisible key
+    out.px = [width, height];
+    out.lights = [];
+    const heads = actors.filter(a => a.S.root.visible).map(a => a.S.parts.head.getWorldPosition(new THREE.Vector3()));
+    const shows = q => { const st = [q]; while (st.length) { const x = st.pop(); if (!x.visible) continue; if (x.isMesh) return true; st.push(...x.children); } return false; };
+    stage.scene.traverse(o => {
+      if (!(o.isPointLight || o.isSpotLight) || !(o.intensity > 0)) return;
+      for (let q = o; q; q = q.parent) if (!q.visible) return;
+      const P = o.getWorldPosition(new THREE.Vector3()); if (!heads.some(h => h.distanceTo(P) < 4)) return;
+      // a hand prop or a held prop first: a lamp in the hand; a figure's root first: a light on its own body (not carried);
+      // neither: carried when a group between it and the act's group shows a mesh (a car, a fixture)
+      let carried = null, onMesh = false;
+      for (let q = o.parent; q && q.parent && q.parent !== stage.scene && carried === null; q = q.parent) {
+        if (/^hp_/.test(q.name || '') || q.userData?.prop || q.userData?.rest) carried = true;
+        else if (q.userData?.stick) carried = false;
+        else onMesh ||= shows(q); }
+      carried ??= onMesh;
+      out.lights.push({ id: o.uuid.slice(0, 8), pos: toB(P).map(x => +x.toFixed(3)), power: +o.intensity.toFixed(2), carried });
+    });
     return out;
   }
   // the shot camera's view of a fault (engine/visible.js): items [{ actor, pts: [[x, y, z] Blender world] }], one state

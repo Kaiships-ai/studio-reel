@@ -1,7 +1,8 @@
 // Value gate (Kai 22/11, Hot Money ep01: a burnt glare patch round a door; subjects must read, never crushed to black).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { frameValues, faults, subjectBoxes, headBoxes, W, H, FPS, GLARE, CRUSH, BLOWN } from '../../styles/stick-man/tools/gates/valuegate.mjs';
+import { frameValues, faults, subjectBoxes, headBoxes, figureMask, lightRides, W, H, FPS, GLARE, CRUSH, BLOWN, RIDE } from '../../styles/stick-man/tools/gates/valuegate.mjs';
+import { project } from '../../styles/stick-man/tools/gates/shotfaults.mjs';
 
 // a w x h rgb24 frame of grey g, with rectangles [x0, y0, x1, y1, grey] painted on
 const frame = (g, rects = []) => {
@@ -64,4 +65,45 @@ test('a few clipped pixels together fail; a lamp glowing at median + 80 in a dar
   const lamp = paint(frame(60), 120, 100, 132, 112, () => 150);
   assert.equal(frameValues(lamp, W, H).blown?.kind, 'white');
   assert.equal(frameValues(paint(frame(60), 120, 100, 132, 112, () => 130), W, H).blown, null, 'a lamp at median + 70 keeps its glow');
+});
+
+// a figure facing the lens 5 m away (Blender world, z up), as engine/play.js rows give it: headW, limbs (rigWorld), the camera
+const side = (x, hand) => ({ shoulder: [x * 0.18, 0, 1.25], elbow: [x * 0.3, 0, 1.0], hand, hip: [x * 0.12, 0, 0.8] });
+const figRow = (hand = [0.42, -0.05, 0.78]) => ({ f: 0, camera: { pos: [0, -5, 1.2], target: [0, 0, 1.0], fov: 40 },
+  actors: { you: { headW: [0, 0, 1.6], head: [0, 0, 1, 1], inFrame: true, limbs: { L: side(-1, [-0.36, 0, 0.75]), R: side(1, hand) } } } });
+const at = (row, P) => { const n = project(row.camera, P, W, H); return [Math.round((n[0] + 1) / 2 * W), Math.round((1 - n[1]) / 2 * H)]; };
+
+test("the figure mask (Kai 23/11, A v11 0:12) covers the head, hood and torso from the rows' joints and leaves a bag in the hand out", () => {
+  const row = figRow(), m = figureMask(row), on = P => { const [x, y] = at(row, P); return m[y * W + x]; };
+  assert.ok(m instanceof Uint8Array, 'rows with joints give a mask');
+  assert.equal(on([0, 0, 1.6]), 1, 'the head'); assert.equal(on([0, 0, 1.0]), 1, 'the torso'); assert.equal(on([0.42, -0.05, 0.62]), 0, 'under the hand: the bag');
+  const [bx, by] = at(row, [0.42, -0.05, 0.62]), [tx, ty] = at(row, [0, 0, 1.0]);
+  const fr = paint(paint(frame(100), tx - 6, ty - 10, tx + 6, ty + 10, () => 225), bx - 5, by - 5, bx + 5, by + 5, () => 225);   // flat white torso and bag
+  const b = frameValues(fr, W, H, [], { top: 0, bottom: 0 }, m).blown;
+  assert.ok(b && b.box[0] >= bx - 6 && b.box[2] <= bx + 6, 'only the bag is blown');
+});
+
+test("the figure mask follows the camera's view offset as three.js shifts the picture (play.js setViewOffset)", () => {
+  const row = figRow(), off = { ...row, camera: { ...row.camera, offset: [60, -40] } }, a = figureMask(row), b = figureMask(off);
+  const [x, y] = at(row, [0, 0, 1.0]), dx = Math.round(-60 * H / 1920), dy = Math.round(40 * H / 1920);   // three: dx = -offset x h / 1920
+  assert.equal(a[y * W + x], 1); assert.equal(b[(y + dy) * W + x + dx], 1, 'the torso moved with the picture');
+  assert.ok(!(figureMask({ ...row, camera: { pos: [0, 0, 6], target: [0, 0, 0], fov: 40 } }) instanceof Uint8Array), 'straight down: the head boxes instead');
+});
+
+test('head boxes read the render size the rows were made at (a 720 x 1280 render, not 1080 x 1920)', () => {
+  const [a] = headBoxes({ px: [720, 1280], actors: { you: { head: [360, 640, 400, 680] } } });
+  assert.ok(Math.abs((a[0] + a[2]) / 2 - W / 2) < 6, 'centred at a 720-px row');
+});
+
+test('light rides a figure (Kai 23/11, A v11 0:16 "light comes FROM the character"): a light travelling with a head fails; a set lamp and a carried lamp pass', () => {
+  const rows = Array.from({ length: 41 }, (_, f) => { const x = 2 * f / 40;
+    return { f, actors: { you: { headW: [x, 0, 1.6] } }, lights: [
+      { id: 'key', pos: [x + 0.2, -0.9, 1.9], power: 10, carried: false },        // the film's hero key, 0.9 m toward the lens
+      { id: 'lamp', pos: [1, 1.5, 2.4], power: 4, carried: false },             // a practical on the wall
+      { id: 'torch', pos: [x + 0.3, -0.2, 1.1], power: 6, carried: true }] };   // a flashlight in the hand
+  });
+  const out = lightRides(rows);
+  assert.deepEqual(out.map(x => x.id), ['key']);
+  assert.equal(out[0].who, 'you'); assert.ok(out[0].to - out[0].from >= RIDE.span);
+  assert.deepEqual(lightRides(rows.map(r => ({ ...r, actors: { you: { headW: [0, 0, 1.6] } }, lights: r.lights.map(l => ({ ...l, pos: [0.2, -0.9, 1.9] })) }))), [], 'a figure standing still with a light by it: no travel, no fault');
 });
