@@ -106,11 +106,6 @@ export function calibration(tag, file = RECORD) {
     : { ok: false, why: `uncalibrated: brief ${tag} scored ${r.half === 'test' ? r.why.join('; ') : `on the ${r.half} half, not the test half`}` };
 }
 
-export function calibratedBrief(file = RECORD) {
-  const recs = fs.existsSync(file) ? readJson(file).records || [] : [];
-  return [...new Set(recs.map(r => r.brief))].filter(b => calibration(b, file).ok).at(-1) || null;
-}
-
 function rng(seed) {
   let a = seed >>> 0;
   return () => { a = (a + 0x6d2b79f5) >>> 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 2 ** 32; };

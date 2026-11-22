@@ -14,7 +14,7 @@
 //   --fast 1 (report without the frame-difference pass), --w/--h (default 1080x1920), --query k=v (page flags); --help
 // Render by purpose (tools/render/tiers.mjs): --tier dbg|still|proof|review|final sets the size and the look
 //   dbg (T0) data only; still (T1) 1080x1920 stills, --scenes 1 = the middle frame of each storyboard shot in --frames;
-//   proof (T2) 480x854 cheap look; review (T3) 720x1280, what pixel gates read; final (T4) 1080x1920 with --kai-ok "<quote>"
+//   proof (T2) 480x854 cheap look; review (T3) 720x1280, what pixel gates read; final (T4) 1080x1920 only on Kai's own request, normally for Post: --kai-ok "<his words>"
 //   A tier with pixels holds the machine's render lock (tools/render/lock.mjs; --lock-wait <s>, default 3600) and needs
 //   --min-free-gb (default 5) free; a tier mp4 is reused when its inputs match (tools/render/cache.mjs; --no-cache 1 re-renders)
 import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os';

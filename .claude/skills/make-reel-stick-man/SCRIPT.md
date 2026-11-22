@@ -9,7 +9,7 @@ process. It holds the rules R1-R10 and K1-K9 plus the steps, reviews and checks 
 
 ```
 ◇1 treatment ─► [1.0] scene brief ─► [1.1a] beats ─► [1.1b] facts ─► [1.1c] draft + scriptlint ─► [1.1d] skeptic
-   ─► [1.1e] table read + ear retell ─► [1.1f] punch-up (Kai picks) ─► [1.1g] blind A/B ─► ◇S script lock
+   ─► [1.1e] table read + ear retell ─► [1.1f] punch-up (a fresh judge picks) ─► [1.1g] blind A/B ─► ◇S script lock
    ─► [1.1p] picture pass ─► [1.4] storyboard
 ```
 
@@ -25,9 +25,9 @@ The structure was locked at ◇1. Here the words are written, tested and locked.
 | [1.1c] Draft | Write `vo/script.json` from the beats with the rules in section 3. Give each line a `class` (action, reaction, twist, fact, number, compare, rule, recap, CTA). Run `node styles/stick-man/tools/scriptlint.mjs films/<slug>` until it has no FAIL. Keep each draft (`review/script-drafts/vN.json`) with a 3-line changelog; every pass cuts. | script + `review/scriptlint.md` | the tool |
 | [1.1d] Skeptic pass | A fresh agent reads the script as the viewer who argues in the comments: every "but why?", every beat that just happens, every set-up not used, whether the vote is truly open. Each note is answered in the script or written off with a reason. | `review/skeptic.md` | the agent |
 | [1.1e] Table read + ear retell | Record a scratch take (`voice.py`) or, before a voice exists, give the timed text to a fresh agent who reads each line once, never back (simulated listening; say so in the file). It retells the story, the numbers it kept and lost, where it got lost, the words it would not get on first hearing. | `review/ear-retell.md` | the agent |
-| [1.1f] Punch-up | For every line flagged in [1.1c]-[1.1e]: three rewrites (**safe**: fixes the note with the least change; **vivid**: a stronger picture in common words; **bold**: a different idea that still keeps the beat). Mark one **Em đề xuất**. Kai picks on the stage page. | `review/punchup.md` | Kai |
+| [1.1f] Punch-up | For every line flagged in [1.1c]-[1.1e]: three rewrites (**safe**: fixes the note with the least change; **vivid**: a stronger picture in common words; **bold**: a different idea that still keeps the beat). Mark one **Em đề xuất**. A fresh judge picks; the picks are on the episode page. | `review/punchup.md` | reviewer |
 | [1.1g] Blind A/B | A fresh agent gets the last locked script and the new one as X and Y (order random, no labels, no notes) and judges which keeps a phone viewer watching, which is clearer, which vote splits comments more. If the new one does not win, keep the old one and write why. | `review/script-ab.md` | the agent |
-| ◇S | `node styles/stick-man/tools/stagegate.mjs films/<slug> S`: scriptlint PASS, beats and facts made, the four reviews by agents and newer than the script, Kai approved. | `review/approvals.json` | Kai |
+| ◇S | `node styles/stick-man/tools/stagegate.mjs films/<slug> S`: scriptlint PASS, beats and facts made, the four reviews by agents and newer than the script, the reviewer's READY. | `review/approvals.json` | reviewer |
 | [1.1p] Picture pass | PREPRO.md [1.1]: per line `see` and an explain device. Starts from the locked script. | `storyboard.json` `lines` | `prepro.mjs` |
 
 The reviewer of [1.1b], [1.1d], [1.1e] and [1.1g] is never the writer, and gets only what a viewer would get (no notes,
@@ -208,7 +208,7 @@ Save the answer with a header `by: agent:<id>` and `of: <script file>`.
 
 ## 6. Fixes for each `scriptlint.mjs` check
 
-A FAIL Kai chooses to keep is never patched away: record it in `DECISIONS.json` as an approved decision whose `conflict` names the checks (`{"rule": "scriptlint S3 … S4 …", "winner": "<its id>", "by": "kai"}`); the lint then reports it as KAI, not FAIL.
+A FAIL kept on purpose (Kai's call at K3) is never patched away: record it in `DECISIONS.json` as an approved decision whose `conflict` names the checks (`{"rule": "scriptlint S3 … S4 …", "winner": "<its id>", "by": "kai"}`); the lint then reports it as KAI, not FAIL.
 
 | Id | Check | Fix |
 |---|---|---|

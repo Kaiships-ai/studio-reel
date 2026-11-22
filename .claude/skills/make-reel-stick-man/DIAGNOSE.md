@@ -110,4 +110,4 @@ picture should do.
 | Fixing downstream | polish can't fix a missing shot | fix in the stage that caused it |
 | Tuning numbers to pass | the gate passes, the film doesn't improve | never loosen a threshold; change the picture |
 | Many versions, no changelog | nobody knows what a round fixed | 3-5 lines per version |
-| Same issue a third round | the cause is upstream | stop after 2 rounds, show Kai the still, go up a stage |
+| Same issue a third round | the premise is wrong | `retakes.mjs` reports PREMISE after 2 rounds: K3 with 2-3 different approaches, go up a stage |

@@ -15,7 +15,7 @@ rules, formerly the `million-views-rule` skill) before [0.1]; this file adds the
 | [0.3] Hook test | A fresh agent sees the 2-3 hooks as a thumbnail + the first line each, picks the one it would keep watching and says why. When the channel exists, Kai can post a trial reel. | `review/hook-test.md` (`by: agent:<id>`) |
 | [0.4] Beat board | The whole story in about 12 panels, one beat each, grey. | panels |
 | [0.5] Decision log | Every decision the treatment and Kai's notes set, with a check where a tool can verify it. | `DECISIONS.json` |
-| ◇1 | `stagegate.mjs films/<slug> 1` READY FOR KAI, then Kai approves. | `review/approvals.json` |
+| ◇1 | `stagegate.mjs films/<slug> 1` READY FOR REVIEW, then an independent reviewer writes `verdict: "READY"`. | `review/approvals.json` |
 
 ## 2. Standards (what `develop.mjs` and the gate check)
 
@@ -30,7 +30,7 @@ rules, formerly the `million-views-rule` skill) before [0.1]; this file adds the
 ## 3. The structure is locked at ◇1
 
 Changing the structure after ◇1 (a race becoming a knowledge series, a new ending) reopens ◇1: the treatment, the
-decision log and the hook test are redone, and Kai approves again. A script change that keeps the structure is stage 1.
+decision log and the hook test are redone, and the reviewer approves ◇1 again. A script change that keeps the structure is stage 1.
 
 ## 4. What only the picture says
 
@@ -41,10 +41,11 @@ more each time). They are decisions: they go in `DECISIONS.json` with `where`, s
 
 `DECISIONS.json` is the memory between stages. Its rules:
 
-- An agent may add decisions as `proposed`; only Kai makes them `approved` (on the stage page; copy his pick and the date).
+- An agent may add decisions as `proposed`; an independent reviewer makes them `approved` (`by: "agent:<id>"`), or Kai at a touchpoint (`by: "kai"`, copy his pick and the date from the page). The maker never approves its own.
 - A decision is dropped only by Kai (`status: dropped`, `droppedBy: kai`, why). Silently not doing it is a FAIL (D1/D2).
 - When an approved decision conflicts with a skill rule (D3: Kai approved 2D explainer cards, the skill caps cards at
-  25 %), the tool reports the conflict and Kai picks; the loser is recorded on the decision.
+  25 %), the tool reports the conflict and the reviewer picks, or it goes to Kai as K3 when it changes what he already
+  approved; the loser is recorded on the decision.
 
 ## 6. Fixes for each `develop.mjs` check
 
@@ -56,7 +57,7 @@ more each time). They are decisions: they go in `DECISIONS.json` with `where`, s
 | T3 | no benchmark, or no learn / not-take | [0.0] |
 | T4 | fewer than 2 hooks | write hooks of different types |
 | T5 | no intensity curve | a beat table with 1-10 and the climax |
-| D0 | DECISIONS.json missing or malformed; a decision approved by someone other than Kai | [0.5]; only Kai approves |
+| D0 | DECISIONS.json missing or malformed; a decision approved by the maker | [0.5]; an independent reviewer (`agent:<id>`) or Kai at a touchpoint approves |
 
 ## 7. Mistakes we have paid for
 

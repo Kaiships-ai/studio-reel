@@ -1,8 +1,8 @@
 {
- "about": "Who checks each fault kind of a stick-man film: a machine gate (tool + gate), the AI reviewer (review/final-qa.md at ◇5) or Kai. A row's checker is the one whose measured result catches the kind; Kai keeps what neither catches reliably. whochecks.mjs renders this into the make-reel-stick-man SKILL.md and checks a complaint map against it.",
+ "about": "Who checks each fault kind of a stick-man film: a machine gate (tool + gate), the AI reviewer (review/final-qa.md at ◇5) or Kai. A row's checker is the one whose measured result catches the kind; Kai keeps what neither catches reliably. whochecks.mjs renders this into the make-reel-stick-man GATES.md and checks a complaint map against it.",
  "checkers": {
   "machine": "a tool that must exit 0 at the gate (GATES.json run), or a render that shot.mjs refuses",
-  "ai": "the independent AI review at ◇5 (review/final-qa.md); while no brief is calibrated, Kai's OK counts in its place (kai-ok)",
+  "ai": "the independent AI review at ◇5 (review/final-qa.md); advisory until its brief passes calibrate.mjs, and never in place of Kai at K2",
   "kai": "Kai watches at 1x on a phone and says OK or names the shot"
  },
  "rows": [
@@ -72,6 +72,12 @@
   { "id": "angle", "fault": "the same camera angle over and over", "checker": "machine", "tool": "tools/cutgate.mjs", "gates": ["5"],
     "limit": "C5: at most 3 takes of one angle family (side around the lead, low / eye / high, close / medium / wide) in any 5 takes in a row",
     "source": "AI trial 17/11: S3-060 hit 2 of 2 with no camera rows; Hot Money ep01 A v9 banks: 3 back, eye-level, medium takes in a row, inside the 80 % Kai approved 20/11" },
+  { "id": "glare", "fault": "glare or burnt highlights at phone size", "checker": "machine", "tool": "tools/readgate.mjs", "gates": ["5"],
+    "limit": "R1: at most 3 % of the frame over Y 235 over any 0.5 s", "source": "Kai A v3 19/11 'quá chói, cháy sáng' in 7 of 9 segments (takes 4-33 %); A v9 2.1 %" },
+  { "id": "hero-small-or-dim", "fault": "the lead too dim against the background, or too small to read on a phone", "checker": "machine", "tool": "tools/readgate.mjs", "gates": ["5"],
+    "limit": "R2: head Y / ring Y >= 0.9 in every take the lead holds 0.5 s; R3: head under 18 px at 640 for at most 3 s", "source": "guesses to recalibrate; A v9 0.98 and 0.9 s" },
+  { "id": "sound-order-sync", "fault": "a hit quieter than the next class or the voice, off the picture, or missing", "checker": "machine", "tool": "tools/soundgate.mjs", "gates": ["5"],
+    "limit": "S1 order of the sound plan; S2 attack within 90 ms early / 185 ms late (ITU-R BT.1359); S3 no hit under -40 dBFS in the sfx stem; advisory at ◇5 until S2 is checked by ear", "source": "Kai 18/11 cheap SFX, 19/11 the first slam missing; A v9 S2 flags the glass smash" },
   { "id": "motion-feel", "fault": "motion that feels jerky or stiff with no pose that snaps and holds", "checker": "kai", "gates": ["4", "5"],
     "limit": "no detector",
     "source": "S3-035: 0 joint pops in its window; AI 0 of 2" },

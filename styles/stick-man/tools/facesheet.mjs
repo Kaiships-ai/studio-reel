@@ -1,4 +1,4 @@
-// The face sheet Kai approves before a film shows a new face (Hot Money ep01 r5, 19/11: a fix round swapped the hero's
+// The face sheet Kai approves at S2 before a film shows a new face (Hot Money ep01 r5, 19/11: a fix round swapped the hero's
 // faces for a new set, Kai saw them first in the film, "xấu thậm tệ", and they were rolled back). A face design is an
 // expression name and the numbers it draws with (engine/faces.js designKey, in the dbg rows as actors[n].exprDesign).
 //   node styles/stick-man/tools/facesheet.mjs films/<slug> [--rows review/shot-rows.jsonl] [--h 1920] [--query k=v] [--no-bible-check '<reason>']
@@ -54,7 +54,7 @@ export function approvalLine(designs, approved, film) {
   const miss = unapproved(designs, approved);
   if (!miss.length) return null;
   const why = !approved ? 'no face sheet approved by Kai (review/faces-approved.json)' : approved.by !== 'kai' ? 'review/faces-approved.json is not by kai' : `${miss.length} face design(s) not on the sheet Kai approved ${approved.at}`;
-  return `${why}: ${miss.map(key).join(', ')}; fix: node styles/stick-man/tools/facesheet.mjs ${film}, show Kai review/face-sheet.jpg, then --approve "<his words>" --sheet <its hash>`;
+  return `${why}: ${miss.map(key).join(', ')}; fix: node styles/stick-man/tools/facesheet.mjs ${film}, show Kai review/face-sheet.jpg (S2), then --approve "<his words>" --sheet <its hash>`;
 }
 
 if (path.resolve(process.argv[1] || '') === fileURLToPath(import.meta.url)) {
@@ -63,7 +63,7 @@ if (path.resolve(process.argv[1] || '') === fileURLToPath(import.meta.url)) {
   const DIR = path.resolve(ROOT, film), F = p => path.join(DIR, p), rowsFile = path.resolve(DIR, A.rows || 'review/shot-rows.jsonl');
   if (A.approve != null) {
     if (!fs.existsSync(F('review/face-sheet.json'))) { console.error('facesheet: no review/face-sheet.json: make the sheet and show it to Kai first'); process.exit(2); }
-    if (!A.approve.trim()) { console.error('facesheet: --approve needs Kai\'s own words'); process.exit(2); }
+    if (!A.approve.trim()) { console.error('facesheet: --approve needs Kai\'s own words from S2'); process.exit(2); }
     const sheet = JSON.parse(fs.readFileSync(F('review/face-sheet.json'), 'utf8')), hash = sheetHash(sheet.designs);
     if (!A.sheet) { console.error(`facesheet: --approve needs --sheet <the hash on the face-sheet.jpg Kai saw>`); process.exit(2); }
     if (A.sheet !== hash) { console.error(`facesheet: Kai saw sheet ${A.sheet}, review/face-sheet.json is now sheet ${hash}: show him the new review/face-sheet.jpg`); process.exit(2); }

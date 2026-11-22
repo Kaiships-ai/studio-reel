@@ -239,7 +239,7 @@ function main(argv) {
     const DIR = path.resolve(ROOT, first), final = finalRender(path.join(DIR, 'renders'));
     if (!final) { console.error(`${first}: no final render in renders/`); process.exit(1); }
     mp4 = path.join(DIR, 'renders', final); scriptFile = path.join(DIR, 'colour-script.json'); out = DIR;
-    if (!fs.existsSync(scriptFile)) { console.error(`${first}: no colour-script.json (write it at [1.7] from .claude/skills/make-reel-stick-man/templates/colour-script.json, Kai approves it)`); process.exit(1); }
+    if (!fs.existsSync(scriptFile)) { console.error(`${first}: no colour-script.json (write it at [1.7] from .claude/skills/make-reel-stick-man/templates/colour-script.json, signed with the series look Kai picked at S1)`); process.exit(1); }
     if (fs.existsSync(path.join(DIR, 'DECISIONS.json'))) decisions = readJson(path.join(DIR, 'DECISIONS.json'));
   }
   const low = pixelGateError(renderInfo(mp4), 'colourgate');

@@ -128,7 +128,7 @@ test('answers with a kind outside the closed list are refused', () => {
   assert.throws(() => loadAnswers(d), /kind "sloppy"/);
 });
 
-test('a review whose brief is not calibrated does not count at a gate', () => {
+test('a review whose brief is not calibrated is advisory at a gate: shown as uncalibrated, never blocking', () => {
   const d = tmp(), rec = put(d, 'calibration.json', { records: [
     { brief: 'kai-taste@aaa', half: 'test', calibrated: false, hit: 0.4, falseAlarm: 0, why: ['hit 40% < 70%'] },
     { brief: 'kai-taste@bbb', half: 'test', calibrated: true, hit: 0.8, falseAlarm: 0, why: [] }] });
@@ -141,7 +141,7 @@ test('a review whose brief is not calibrated does not count at a gate', () => {
   const film = tmp(); put(film, 'storyboard.json', { fps: 30, shots: [] });
   put(film, 'review/final-qa.md', 'by: agent:x\nbrief: kai-taste@aaa\n\n# QA\n');
   const g = run('node', [path.join(TOOLS, 'stagegate.mjs'), film, '5'], { capture: true, env: { STICK_CALIBRATION: rec } });
-  assert.match(fs.readFileSync(path.join(film, 'review/gate-5.md'), 'utf8'), /judged \| review\/final-qa\.md \| FAIL \| uncalibrated: brief kai-taste@aaa/, g.stdout);
+  assert.match(fs.readFileSync(path.join(film, 'review/gate-5.md'), 'utf8'), /advisory \| review\/final-qa\.md brief \| PASS \| advisory only: uncalibrated: brief kai-taste@aaa/, g.stdout);
   put(film, 'review/final-qa.md', 'by: agent:x\nbrief: kai-taste@bbb\n\n# QA\n');
   run('node', [path.join(TOOLS, 'stagegate.mjs'), film, '5'], { capture: true, env: { STICK_CALIBRATION: rec } });
   assert.match(fs.readFileSync(path.join(film, 'review/gate-5.md'), 'utf8'), /judged \| review\/final-qa\.md \| PASS/);

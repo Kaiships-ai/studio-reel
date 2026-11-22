@@ -1,5 +1,6 @@
 // Development checks (◇1, DEVELOP.md): the treatment has what a treatment must have, and every decision it sets is in
-// DECISIONS.json with who approved it, so later stages can be checked against it (prepro.mjs D1).
+// DECISIONS.json with who approved it, so later stages can be checked against it (prepro.mjs D1). A decision is approved
+// by an independent reviewer (agent:<id>, person:<name>) at a process step, or by Kai at a touchpoint (GATES.json).
 //   node styles/stick-man/tools/develop.mjs films/<slug>        -> review/develop.md, exit 1 on a FAIL
 import fs from 'node:fs'; import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -52,7 +53,7 @@ if (!D) add('FAIL', 'D0', 'DECISIONS.json is missing: list the decisions the tre
 else for (const d of D.decisions || []) {
   if (!d.id || !d.decision) add('FAIL', 'D0', `a decision without id or text: ${JSON.stringify(d).slice(0, 80)}`);
   if (!['approved', 'proposed', 'dropped'].includes(d.status)) add('FAIL', 'D0', `${d.id}: status must be approved, proposed or dropped`);
-  if (d.status === 'approved' && d.by !== 'kai') add('FAIL', 'D0', `${d.id}: approved by "${d.by || '?'}", only Kai approves`);
+  if (d.status === 'approved' && d.by !== 'kai' && !/^(agent|person):/i.test(d.by || '')) add('FAIL', 'D0', `${d.id}: approved by "${d.by || '?'}": an independent reviewer (agent:<id>) or Kai at a touchpoint approves`);
 }
 const nF = out.filter(o => o.lvl === 'FAIL').length;
 fs.mkdirSync(F('review'), { recursive: true });
