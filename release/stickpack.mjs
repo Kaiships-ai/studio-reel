@@ -7,7 +7,6 @@
 //   [stick_forbid]  regexes (any case) that must not appear in any pack file, path or bytes, binaries included
 // Comments that name a [stick_forbid] word are dropped from shipped code (the engine's comments cite private films and
 // people); code that names one fails the build. A clip file left out is also dropped from the motion library's registry.
-import { createRequire } from 'node:module';
 
 export const OVERLAY = 'packs/stick-man/';
 const TEXT = /\.(md|mjs|js|json|html|css|py|txt|toml|sh)$|(^|\/)(CREDITS|LICENSE[^/]*)$/;
@@ -26,11 +25,43 @@ export function parseEdit(line) {
   return { path: p[0], re: p[1], to: p[2].replace(/ $/, '').replace(/\\n/g, '\n') };
 }
 
-// drop the comments (or the parts of them) that match `bad`; JS through acorn, so strings and regexes are never touched
+// the comments of a JS module as acorn's onComment gives them ({ type: 'Line' | 'Block', value, start, end }), with no
+// dependency (the release build runs on a bare node): strings, template literals (with nested ${}) and regex literals
+// are skipped. test/unit/build-stickpack.test.mjs holds it to acorn on every shipped file.
+export function jsComments(t) {
+  const out = [], n = t.length, stack = [];   // stack: open template literals awaiting their closing ${ ... }
+  let i = 0, prev = '';                       // prev: the last significant token kind, for regex vs division
+  const isId = c => /[\w$\u0080-\uffff]/.test(c);
+  const regexOK = () => prev === '' || prev === 'op' || prev === 'kw';
+  const KW = new Set(['return', 'typeof', 'instanceof', 'in', 'of', 'new', 'delete', 'void', 'throw', 'case', 'do', 'else', 'yield', 'await']);
+  while (i < n) {
+    const c = t[i], d = t[i + 1];
+    if (c === '/' && d === '/') { const e = t.indexOf('\n', i); const end = e < 0 ? n : e; out.push({ type: 'Line', value: t.slice(i + 2, end), start: i, end }); i = end; continue; }
+    if (c === '/' && d === '*') { const e = t.indexOf('*/', i + 2); const end = e < 0 ? n : e + 2; out.push({ type: 'Block', value: t.slice(i + 2, end - 2), start: i, end }); i = end; continue; }
+    if (c === '"' || c === "'") { i++; while (i < n && t[i] !== c) i += t[i] === '\\' ? 2 : 1; i++; prev = 'val'; continue; }
+    if (c === '`' || (c === '}' && stack.length && stack[stack.length - 1] === 0)) {
+      if (c === '}') stack.pop(); i++;
+      while (i < n && t[i] !== '`') { if (t[i] === '\\') { i += 2; continue; } if (t[i] === '$' && t[i + 1] === '{') { stack.push(0); i += 2; break; } i++; }
+      if (t[i] === '`') { i++; prev = 'val'; } else prev = 'op';
+      continue;
+    }
+    if (c === '{') { if (stack.length) stack[stack.length - 1]++; i++; prev = 'op'; continue; }
+    if (c === '}') { if (stack.length) stack[stack.length - 1]--; i++; prev = 'val'; continue; }
+    if (c === '/' && regexOK()) {
+      i++; let cls = false;
+      while (i < n && (t[i] !== '/' || cls) && t[i] !== '\n') { if (t[i] === '\\') i++; else if (t[i] === '[') cls = true; else if (t[i] === ']') cls = false; i++; }
+      i++; while (i < n && /[a-z]/i.test(t[i])) i++; prev = 'val'; continue;
+    }
+    if (/\s/.test(c)) { i++; continue; }
+    if (isId(c)) { let j = i; while (j < n && isId(t[j])) j++; const w = t.slice(i, j); prev = KW.has(w) ? 'kw' : 'val'; i = j; continue; }
+    prev = c === ')' || c === ']' ? 'val' : 'op'; i++;
+  }
+  return out;
+}
+
+// drop the comments (or the parts of them) that match `bad`; strings and regexes are never touched
 export function scrubJs(text, bad) {
-  const acorn = createRequire(import.meta.url)('acorn');
-  const comments = [];
-  acorn.parse(text, { ecmaVersion: 'latest', sourceType: 'module', allowHashBang: true, onComment: comments });
+  const comments = jsComments(text);
   let out = text;
   for (const c of comments.reverse()) {
     if (!bad.some(r => r.test(c.value))) continue;

@@ -9,7 +9,7 @@ import { join, dirname, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { parseManifest } from '../../release/build.mjs';
-import { buildStick, scrubJs, scrubHash, pruneRegistry, parseEdit } from '../../release/stickpack.mjs';
+import { buildStick, scrubJs, scrubHash, pruneRegistry, parseEdit, jsComments, stickSources } from '../../release/stickpack.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..');
 const files = spawnSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], { cwd: ROOT, encoding: 'utf8' }).stdout.split('\0').filter(f => f && existsSync(join(ROOT, f)));
@@ -69,4 +69,15 @@ test('the scrub drops a bad comment or its bad parenthetical, never code', () =>
   assert.equal(scrubHash('x = 1  # Kai tuned this\n# from mixamo\ny = 2\n', bad), 'x = 1\ny = 2\n');
   assert.equal(pruneRegistry("import A from './body/a.js';\nimport B from './body/b.js';\nexport const ALL = [\n  A,\n  B,\n];", p => p.endsWith('/a.js')), "import A from './body/a.js';\nexport const ALL = [\n  A,\n];");
   assert.deepEqual(parseEdit('a/b.js :: x => y :: z'), { path: 'a/b.js', re: 'x => y', to: 'z' });
+});
+
+test("the build's own comment finder agrees with acorn on every shipped JS file (the build runs without node_modules)", () => {
+  const acorn = createRequire(import.meta.url)('acorn'), { picked, overlay } = stickSources(files, m), bad = [];
+  for (const f of [...picked, ...overlay].filter(f => /\.m?js$/.test(f))) {
+    const t = readFileSync(join(ROOT, f), 'utf8'), want = [];
+    acorn.parse(t, { ecmaVersion: 'latest', sourceType: 'module', allowHashBang: true, onComment: want });
+    const got = jsComments(t), key = c => `${c.type}:${c.start}:${c.end}`;
+    if (got.map(key).join() !== want.map(key).join()) bad.push(`${f}: ${got.length} comments found, acorn ${want.length}; first difference at ${(got.find((c, i) => key(c) !== key(want[i] || {})) || want[got.length] || {}).start}`);
+  }
+  assert.deepEqual(bad, []);
 });
