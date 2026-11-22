@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { ROOT } from '../../kit/env.mjs';
 import { resolveTier, pixelGateError, sceneFrames } from '../../styles/stick-man/tools/render/tiers.mjs';
 import * as cache from '../../styles/stick-man/tools/render/cache.mjs';
@@ -119,28 +119,50 @@ test('render lock: one holder, a stale or dead holder is taken over, release fre
   assert.equal(d.ok, true); release(file, d.lock); assert.equal(fs.existsSync(file), false);
 });
 
+const lockUrl = new URL('../../styles/stick-man/tools/render/lock.mjs', import.meta.url).href;
+const node = (code, args = []) => spawn(process.execPath, ['--input-type=module', '-e', code, ...args]);
+const out = p => new Promise(res => { let o = ''; p.stdout.on('data', d => { o += d; }); p.on('close', () => res(o)); });
+
+test('render lock: a reader never sees a half-written lock', async () => {
+  // a plain `wx` write shows an empty file for a moment; a racer read it as stale and removed it (two holders on CI)
+  // the reader starts first and reads until the locker is done (both give up after 30 s, so a crash never hangs the suite)
+  const dir = tmp(), file = path.join(dir, 'render.lock'), ready = path.join(dir, 'ready'), done = path.join(dir, 'done');
+  const [n, seen] = await Promise.all([
+    out(node(`import fs from 'node:fs'; import { tryLock, release } from '${lockUrl}'; let n = 0; const end = Date.now() + 30000;
+      while (!fs.existsSync(process.argv[3]) && Date.now() < end) {}
+      for (let i = 0; i < 3000; i++) { const r = tryLock({ file: process.argv[1] }); if (r.ok) { release(process.argv[1], r.lock); n++; } }
+      fs.writeFileSync(process.argv[2], ''); process.stdout.write(String(n));`, [file, done, ready])),
+    out(node(`import fs from 'node:fs'; let torn = 0, seen = 0; const end = Date.now() + 30000; fs.writeFileSync(process.argv[3], '');
+      while (!fs.existsSync(process.argv[2]) && Date.now() < end) { let s; try { s = fs.readFileSync(process.argv[1], 'utf8'); } catch { continue; } seen++; try { JSON.parse(s); } catch { torn++; } }
+      process.stdout.write(torn + ' ' + seen);`, [file, done, ready]))]);
+  const [torn, reads] = seen.split(' ').map(Number);
+  assert.equal(Number(n), 3000, 'one locker alone always gets the lock');
+  assert.ok(reads > 0, `the reader saw the lock (${reads} reads)`);
+  assert.equal(torn, 0, `${torn} of ${reads} reads saw a half-written lock`);
+});
+
 test('render lock: many processes on one stale lock, never two holders', async () => {
-  const dir = tmp(), file = path.join(dir, 'render.lock'), N = 6, ROUNDS = 20;
-  const lockUrl = new URL('../../styles/stick-man/tools/render/lock.mjs', import.meta.url).href;
-  const child = path.join(dir, 'race.mjs');
-  fs.writeFileSync(child, `import { tryLock } from '${lockUrl}';
-const at = Number(process.argv[3]); while (Date.now() < at) {}
-const r = tryLock({ file: process.argv[2], what: String(process.pid) });
-process.stdout.write(r.ok ? 'HELD' : 'no');
-while (Date.now() < at + 1500) {}   // a holder stays alive (a dead one is rightly taken over)`);
-  const { spawn } = await import('node:child_process');
+  const file = path.join(tmp(), 'render.lock'), N = 6, ROUNDS = 20;
+  // all start on one instant; a holder stays alive until every racer has tried (a dead one is rightly taken over)
+  const racer = `import { tryLock } from '${lockUrl}';
+    const at = Number(process.argv[2]); while (Date.now() < at) {}
+    process.stdout.write(tryLock({ file: process.argv[1], what: String(process.pid) }).ok ? 'HELD' : 'no');
+    process.stdin.resume();`;
   let doubles = 0, none = 0;
   for (let r = 0; r < ROUNDS; r++) {
     fs.writeFileSync(file, JSON.stringify({ token: 'dead', host: os.hostname(), pid: 999999, what: 'killed render', started: 0, beat: 0 }));
-    const at = Date.now() + 400;
-    const outs = await Promise.all(Array.from({ length: N }, () => new Promise(res => {
-      const p = spawn(process.execPath, [child, file, String(at)]); let o = ''; p.stdout.on('data', d => { o += d; }); p.on('close', () => res(o)); })));
+    const at = String(Date.now() + 400);
+    const ps = Array.from({ length: N }, () => node(racer, [file, at]));
+    const said = ps.map(p => new Promise(res => p.stdout.once('data', d => res(String(d)))));
+    const outs = await Promise.all(said);
+    for (const p of ps) p.stdin.end();
+    await Promise.all(ps.map(p => new Promise(res => (p.exitCode !== null ? res() : p.on('close', res)))));
     const held = outs.filter(o => o === 'HELD').length;
     if (held > 1) doubles++; if (held === 0) none++;
     fs.rmSync(file, { force: true });
   }
   assert.equal(doubles, 0, `${doubles} of ${ROUNDS} rounds had two holders`);
-  assert.ok(none < ROUNDS, 'someone takes the stale lock over');
+  assert.equal(none, 0, 'every round, someone takes the stale lock over');
 });
 
 test('Mac Pro job: outputs stay in the episode, the plan syncs, pulls and copies back', () => {
