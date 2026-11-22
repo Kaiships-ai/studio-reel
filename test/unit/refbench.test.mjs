@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { ROOT, run, env } from '../../kit/env.mjs';
-import { measureVideo, bedStats, gapTable, tableMarkdown, payoffStats, lookStats, METRICS } from '../../styles/stick-man/tools/refbench.mjs';
+import { measureVideo, bedStats, gapTable, tableMarkdown, payoffStats, lookStats, METRICS, shotBands } from '../../styles/stick-man/tools/refbench.mjs';
 
 test('bed presence, level and the biggest drop come from the 5 s section levels', () => {
   assert.deepEqual(bedStats([-30, -30, -47, -30]), { bedPresence: 0.75, bedDb: -30, bedDrop: 17 });
@@ -42,6 +42,14 @@ test('the payoff is the loudest moment; the dip before it is measured down from 
   assert.deepEqual(payoffStats(M), { payoffT: 17.1, payoffDipDb: 30, payoffDipS: 1.5 });
 });
 
+test('a shot under the Rick shots\' set or sky band is flagged; in or over the band is not', () => {
+  const rick = [{ shots: [{ setDetail: 0.56, skyDetail: 0.49 }, { setDetail: 0.75, skyDetail: 0.81 }] }];
+  const b = shotBands(rick, { shots: [{ shot: 1, setDetail: 0.6, skyDetail: 0.9 }, { shot: 2, setDetail: 0.5, skyDetail: 0.6 }, { shot: 3, setDetail: 0.7, skyDetail: 0.36 }, { shot: 4 }] });
+  assert.deepEqual(b.band, { setDetail: [0.56, 0.75], skyDetail: [0.49, 0.81] });
+  assert.deepEqual(b.shots.map(x => [x.setDetail.under, x.skyDetail.under]), [[false, false], [true, false], [false, true], [false, false]]);
+  assert.equal(b.under, 2);
+});
+
 const E = env();
 const ready = fs.existsSync(E.tools?.ffmpeg ?? '') && run('python', ['-I', '-c', 'import numpy, scipy, soundfile, faster_whisper'], { capture: true }).status === 0;
 const skip = !ready && 'needs the pixi ffmpeg and python (numpy, scipy, soundfile, faster_whisper)';
@@ -75,6 +83,13 @@ test('blurring the background lowers its edge sharpness and raises the depth rat
   const s8 = await measureVideo(clip('s8', ['-f', 'lavfi', '-i', `${SRC}:d=1`, '-vf', 'gblur=sigma=8']));
   const ratio = s4.film.sharpHi / s8.film.sharpHi;
   assert.ok(ratio > 1.4 && ratio < 2.6, `sigma 4 vs 8 gives a sharpness ratio of ${ratio.toFixed(2)}, expected about 2`);
+});
+
+test('a flat colour has no set or sky detail; the test pattern has both', { skip }, async () => {
+  const flat = await measureVideo(clip('bare', ['-f', 'lavfi', '-i', 'color=0x506070:s=720x1280:r=30:d=1']));
+  const busy = await measureVideo(clip('busy', ['-f', 'lavfi', '-i', `${SRC}:d=1`]));
+  assert.deepEqual([flat.film.setDetail, flat.film.skyDetail], [0, 0]);
+  assert.ok(busy.film.setDetail > 0.1 && busy.film.skyDetail > 0.1, `test pattern ${busy.film.setDetail} / ${busy.film.skyDetail}`);
 });
 
 test('a frozen frame reads a still camera and zero motion; the moving test pattern reads above it', { skip }, async () => {

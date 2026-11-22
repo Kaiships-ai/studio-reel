@@ -29,7 +29,7 @@ test('the make-reel-stick-man skill shows the registry exactly as whochecks.mjs 
 test('every 16/11 complaint sits in one cell its measured evidence supports', () => {
   const { problems: bad, cells } = checkMap(REG, MAP);
   assert.deepEqual(bad, []);
-  assert.deepEqual(Object.fromEntries(Object.entries(cells).map(([c, ids]) => [c, ids.length])), { machine: 12, ai: 2, kai: 17 });
+  assert.deepEqual(Object.fromEntries(Object.entries(cells).map(([c, ids]) => [c, ids.length])), { machine: 13, ai: 1, kai: 17 });
   assert.equal(MAP.complaints.length, 31);
 });
 

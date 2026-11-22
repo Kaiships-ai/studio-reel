@@ -6,6 +6,8 @@
 //   node styles/stick-man/tools/refbench.mjs counts <key.json> <agent.json>... --out <bench dir>/counts.json
 //        blind agents' strip counts (blinks, depth planes) back to videos: key.json maps S01.jpg -> <video>_NN.jpg
 //   node styles/stick-man/tools/refbench.mjs table <bench dir>                  the gap table (TABLE.md) from the rows
+//   node styles/stick-man/tools/refbench.mjs bands <bench dir> <row.json>       per shot of a row: set and sky detail against
+//        the Rick shots' band; exit 1 when a shot is under it
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { run, start } from '../../../kit/env.mjs';
@@ -32,6 +34,8 @@ export const METRICS = [
   { key: 'sharpHi', label: 'sharpest edges (1/px)', group: 'depth', digits: 3 },
   { key: 'sharpLo', label: 'softest edges, background (1/px)', group: 'depth', digits: 3 },
   { key: 'depthRatio', label: 'depth ratio (sharp / soft)', group: 'depth', digits: 2 },
+  { key: 'setDetail', label: 'set detail (share of 20 px cells with an edge)', group: 'set', digits: 2 },
+  { key: 'skyDetail', label: 'sky detail (the same, in the sky band 10-35 % down)', group: 'set', digits: 2 },
   { key: 'cameraMotion', label: 'camera motion (px/frame @1080)', group: 'motion', digits: 2 },
   { key: 'stillShare', label: 'camera still (share of frames)', group: 'motion', digits: 2 },
   { key: 'idleEnergy', label: 'motion inside slow shots, pan removed (px/frame @1080)', group: 'motion', digits: 2 },
@@ -162,6 +166,7 @@ export function motionStats(rows, f0, f1, cutFrames) {
   const still = pairs.filter(r => r.cam < STILL), slow = pairs.filter(r => r.cam < SLOW);
   return {
     sharpHi: median(span.map(r => r.sharpHi)), sharpLo: median(span.map(r => r.sharpLo)), depthRatio: median(span.map(r => r.depthRatio)),
+    setDetail: median(span.map(r => r.setDetail)), skyDetail: median(span.map(r => r.skyDetail)),
     cameraMotion: pairs.length ? median(pairs.map(r => r.cam)) * TO_1080 : null,
     stillShare: pairs.length ? still.length / pairs.length : null,
     idleEnergy: slow.length >= MIN_PAIRS ? mean(slow.map(r => r.top)) * TO_1080 : null,
@@ -288,6 +293,25 @@ export function tableMarkdown(rows, ourIds) {
 
 const readJson = f => JSON.parse(fs.readFileSync(f, 'utf8'));
 
+// Per shot of our row, set and sky detail against the band of the Rick shots (min-max over every Rick shot). A shot
+// under the band is barer than any Rick shot: flat blocks for a set, an empty sky. Above it is not a fault.
+export const BAND_KEYS = ['setDetail', 'skyDetail'];
+export function shotBands(rick, row) {
+  const band = Object.fromEntries(BAND_KEYS.map(k => {
+    const v = rick.flatMap(r => r.shots.map(x => x[k])).filter(x => x != null);
+    return [k, v.length ? [Math.min(...v), Math.max(...v)] : null];
+  }));
+  const shots = row.shots.map(x => ({ shot: x.shot, t0: x.t0, t1: x.t1,
+    ...Object.fromEntries(BAND_KEYS.map(k => [k, { v: x[k] ?? null, under: band[k] != null && x[k] != null && x[k] < band[k][0] }])) }));
+  return { band, shots, under: shots.filter(x => BAND_KEYS.some(k => x[k].under)).length };
+}
+
+export function bandsMarkdown(b) {
+  const f = v => (v == null ? 'n/a' : v.toFixed(2)), cell = c => `${f(c.v)}${c.under ? ' under' : ''}`;
+  return [`| Shot | Time (s) | ${BAND_KEYS.map(k => `${k} (Rick ${b.band[k] ? `${f(b.band[k][0])}-${f(b.band[k][1])}` : 'n/a'})`).join(' | ')} |`,
+    `|${' --- |'.repeat(2 + BAND_KEYS.length)}`, ...b.shots.map(x => `| ${x.shot} | ${x.t0}-${x.t1} | ${BAND_KEYS.map(k => cell(x[k])).join(' | ')} |`)].join('\n');
+}
+
 export function loadBench(dir) {
   const rows = sub => fs.existsSync(path.join(dir, sub)) ? fs.readdirSync(path.join(dir, sub)).filter(f => f.endsWith('.json')).sort().map(f => readJson(path.join(dir, sub, f))) : [];
   const floors = fs.readdirSync(dir).filter(f => /^noise.*\.json$/.test(f)).map(f => readJson(path.join(dir, f)).floor);
@@ -341,6 +365,10 @@ if (path.resolve(process.argv[1] || '') === fileURLToPath(import.meta.url)) {
       const byVideo = mergeCounts(key, agents);
       fs.writeFileSync(path.resolve(flag(args, 'out', 'counts.json')), JSON.stringify({ method: 'blind agents, 30-frame strips (refbench.mjs strips), names shuffled', byVideo }, null, 1) + '\n');
       console.log(JSON.stringify(byVideo, null, 1));
+    } else if (cmd === 'bands') {
+      const b = shotBands(loadBench(path.resolve(args[1])).rick, readJson(path.resolve(args[2])));
+      console.log(`${bandsMarkdown(b)}\n\n${b.under ? `FAIL: ${b.under} of ${b.shots.length} shots under the Rick band` : `PASS: every shot of ${b.shots.length} in or over the Rick band`}`);
+      process.exit(b.under ? 1 : 0);
     } else if (cmd === 'table') {
       const dir = path.resolve(args[1]), b = loadBench(dir), md = tableMarkdown(gapTable(b), b.ours.map(o => o.id));
       fs.writeFileSync(path.join(dir, 'TABLE.md'), `# Rick clip benchmark table\n\nWritten by \`refbench.mjs table\` from the rows in this folder. Method and limits: README.md.\n\n${md}\n`);

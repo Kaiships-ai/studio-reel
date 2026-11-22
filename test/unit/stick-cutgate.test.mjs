@@ -30,7 +30,7 @@ test('a long uncut opening does not hide a burst of cuts later in the film', () 
 });
 
 test('one cut a minute, like the Rick clips, passes', () => {
-  assert.deepEqual(verdict(measure({ dur: 65, scores: scores(65, [44]) })), { C1: true, C2: true, C3: null, C4: null });
+  assert.deepEqual(verdict(measure({ dur: 65, scores: scores(65, [44]) })), { C1: true, C2: true, C3: null, C4: null, C5: null });
 });
 
 const row = (f, cam, head, box) => ({ f, camera: { pos: cam }, actors: { you: { lead: true, inFrame: true, headW: head, head: box } } });
@@ -44,6 +44,19 @@ test('camera rows: a camera looking up at the lead is low; a head mostly out of 
   assert.deepEqual([verdict(m).C3, verdict(m).C4], [false, false]);
   const ok = measure({ dur: 4, scores: scores(4, []), rows: eye, W: 540, H: 960 });
   assert.deepEqual([verdict(ok).C3, verdict(ok).C4], [true, true]);
+});
+
+test('four takes of one angle family in five fails; three, like the A v9 banks run, passes; a take with no lead is no family', () => {
+  const at = (f, cam, yaw = 0) => ({ f, camera: { pos: cam }, actors: { you: { lead: true, inFrame: true, pos: [0, 0, 0], yaw, headW: [0, 0, 1.45], head: [200, 300, 300, 400] } } });
+  const side = { back: [-3, 0, 1.45], front: [3, 0, 1.45], left: [0, 3, 1.45] };
+  const film = list => list.flatMap((s, k) => Array.from({ length: 30 }, (_, i) => (s ? at(k * 30 + i, side[s]) : { f: k * 30 + i, camera: { pos: [0, 0, 0] }, actors: {} })));
+  const cutsAt = n => Array.from({ length: n - 1 }, (_, k) => (k + 1));
+  const four = measure({ dur: 6, scores: scores(6, cutsAt(6)), rows: film(['front', 'back', 'back', 'left', 'back', 'back']), W: 540, H: 960 });
+  assert.equal(four.angleRepeat, 4); assert.equal(four.angleWorst.family, 'back eye medium'); assert.equal(verdict(four).C5, false);
+  const three = measure({ dur: 6, scores: scores(6, cutsAt(6)), rows: film(['back', 'back', 'back', 'left', 'front', 'back']), W: 540, H: 960 });
+  assert.equal(verdict(three).C5, true);
+  const blank = measure({ dur: 6, scores: scores(6, cutsAt(6)), rows: film(['back', null, 'back', null, 'back', 'left']), W: 540, H: 960 });
+  assert.equal(blank.angleRepeat, 3);
 });
 
 test('no camera rows is PARTIAL, never PASS; a FAIL still wins', () => {

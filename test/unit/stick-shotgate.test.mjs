@@ -63,6 +63,19 @@ test('a moving prop may change place behind a cut; one left at rest and gone whe
   assert.deepEqual(kinds(rest), [], 'the next shot looks away from the spot');
 });
 
+test('across a cut in one scene a held bag that lands far from where its carry takes it, or drops while the next shot looks at its place, blocks; one carried on blocks nothing', () => {
+  const carry = (at, o = () => ({})) => Array.from({ length: 10 }, (_, i) => row(i, { props: { 'you:Rbag': bag(at(i), { held: true, ...o(i) }) } }));
+  const close = r => { r.camera = { pos: [0, -2.5, 1.2], target: [0, 0, 0.8], fov: 50, lens: 35 }; };
+  const on = carry(i => [0.05 * i, 0, 0.8]); on.slice(5).forEach(close); on[5].edit = true;
+  assert.deepEqual(kinds(on), []);
+  const jump = carry(i => [0.05 * i + (i >= 5 ? 0.6 : 0), 0, 0.8]); jump.slice(5).forEach(close); jump[5].edit = true;
+  assert.deepEqual(kinds(jump), ['prop jumps at cut']);
+  const gone = carry(i => [0.05 * i, 0, 0.8], i => (i >= 5 ? { shown: false } : {})); gone.slice(5).forEach(close); gone[5].edit = true;
+  assert.deepEqual(kinds(gone), ['prop vanishes at cut']);
+  const newScene = carry(i => [0.05 * i + (i >= 5 ? 0.6 : 0), 0, 0.8]); newScene.slice(5).forEach(r => { close(r); r.set = 's2'; }); newScene[5].edit = true;
+  assert.deepEqual(kinds(newScene), [], 'a new set may put the bag anywhere');
+});
+
 test('a bag let go that falls under gravity is fine; one that rises at a steady speed floats', () => {
   const fall = Array.from({ length: 8 }, (_, i) => row(i, { props: { b: bag([0, 0, 1.2 - 0.5 * G_FRAME * i * i], { held: i < 1 }) } }));
   assert.deepEqual(kinds(fall), []);
