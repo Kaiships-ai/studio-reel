@@ -186,6 +186,19 @@ const SKY_GLSL = `
 const SKY_V = 'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }';
 const SKY_F = SKY_GLSL + '\n varying vec3 vD; void main(){ gl_FragColor = vec4(skyAt(normalize(vD)), 1.0); }';
 
+// Render quality, picked once by the page before createStage (reel.html ?q=, set by tools/shot.mjs --tier). `proof` is the
+// cheap 480p watch (tools/render/tiers.mjs T2): no MSAA, a 1024 sun shadow map, no lens blur. Every light stays: capping them
+// (8 point + 4 spot, the nearest in view) saved ~30 % of the frame but dropped the warm car light from the hm-ep01 gun shot (22/11).
+export const QUALITY = {
+  full: { msaa: 4, shadow: 4096, dof: true },
+  proof: { msaa: 0, shadow: 1024, dof: false },
+};
+let QQ = QUALITY.full;
+export function setQuality(name) {
+  if (!QUALITY[name]) throw new Error(`unknown render quality "${name}" (${Object.keys(QUALITY).join(', ')})`);
+  QQ = QUALITY[name];
+}
+
 // stick06 judge round 2 (lighting/shading 4/10 'flat, washed out, evenly lit'): sat 1.25 -> 1.38, con 1.12 -> 1.18, sky fill
 // 1.15 -> 0.85, sun lowered to <= 35 deg; set ink 2.6 -> 2.1 px (ink gate median 4 px; judge: set lines compete with figures);
 // round 3 ('washed out, hazy overlays'): highlight bloom 0.38 -> 0.28, shafts 0.032 -> 0.024
@@ -206,7 +219,7 @@ export function createStage({ width, height, faceInk = false, exposure = 0.88, i
 
   // sun: 4096 map fitted tight round what the shot sees; PCF with a small radius keeps bar edges straight, not stepped
   const sun = new THREE.DirectionalLight(lin(1.0, 0.93, 0.80), 6.0);
-  sun.castShadow = true; sun.shadow.mapSize.set(4096, 4096);
+  sun.castShadow = true; sun.shadow.mapSize.set(QQ.shadow, QQ.shadow);
   sun.shadow.bias = -0.0002; sun.shadow.normalBias = 0.006; sun.shadow.radius = shadowRadius;   // hard-edged cast shadows (reference)
   scene.add(sun, sun.target);
   const hemi = new THREE.HemisphereLight(lin(0.44, 0.60, 1.0), lin(0.80, 0.68, 0.58), 0.85);
@@ -349,7 +362,7 @@ export function createStage({ width, height, faceInk = false, exposure = 0.88, i
       }` });
   dofPass.uniforms.tD.value = nrt.depthTexture; dofPass.enabled = false;
   function setDof(o) {
-    if (!o) { dofPass.enabled = false; return; }
+    if (!o || !QQ.dof) { dofPass.enabled = false; return; }
     Object.assign(dofPass.uniforms.near, { value: o.near }); dofPass.uniforms.far.value = o.far;
     dofPass.uniforms.maxR.value = (o.px ?? 14) * px * 0.75; dofPass.uniforms.gain.value = (o.gain ?? 2.0) * dofK; dofPass.enabled = true;   // lighter lens blur: the reference keeps the set readable
   }
@@ -449,7 +462,7 @@ export function createStage({ width, height, faceInk = false, exposure = 0.88, i
   const prevTex = new THREE.FramebufferTexture(width, height);
   gradePass.uniforms.tPrev.value = prevTex;
   function grab() { renderer.setRenderTarget(null); renderer.copyFramebufferToTexture(prevTex); }
-  const crt = new THREE.WebGLRenderTarget(width, height, { type: THREE.HalfFloatType, samples: 4 });
+  const crt = new THREE.WebGLRenderTarget(width, height, { type: THREE.HalfFloatType, samples: QQ.msaa });
   const composer = new EffectComposer(renderer, crt);
   composer.setPixelRatio(1);
   composer.addPass(new RenderPass(scene, camera));

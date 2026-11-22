@@ -8,6 +8,8 @@
 //   node styles/stick-man/tools/refbench.mjs table <bench dir>                  the gap table (TABLE.md) from the rows
 //   node styles/stick-man/tools/refbench.mjs bands <bench dir> <row.json>       per shot of a row: set and sky detail against
 //        the Rick shots' band; exit 1 when a shot is under it
+// Our own renders are measured at T3 (shot.mjs --tier review, 720x1280 full quality): a T2 proof has no lens blur and low
+// shadows, so its luma, depth and blur numbers are not the film's (tools/render/tiers.mjs).
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { run, start } from '../../../kit/env.mjs';
