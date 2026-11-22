@@ -52,7 +52,15 @@ path. A FAIL or a DRAFT keeps ◇5 OPEN.
   the mp4 at 4 fps, HUD bands cropped. Glare: the blurred picture is >= 200 luma and >= 90 above the frame's median on
   more than 3 % of the frame (a hot pool, not an evenly lit day lobby), or > 1 % of pixels at the clip, held >= 0.5 s.
   Crushed subject: > 8 % of a subject's box at luma <= 10 (boxes from the rows' head boxes, widened and run down for the
-  body), held >= 0.5 s. It runs at ◇5 beside colourgate (`GATES.json`): `node styles/stick-man/tools/gates/valuegate.mjs
+  body), held >= 0.5 s. Blown object (Kai 22/11: "the money bags and the lamps keep blowing out"): any one connected
+  region, after a 3x3 opening (caption and HUD strokes drop out; the figures' heads, flat white by design, are left out),
+  of colourless (saturation < 0.2), detail-less (3x3 luma range <= 4) pixels at luma >= 200 or >= 80 over the frame's
+  median, of 30 px or more at 180x320, or of clipped pixels (>= 248) of 6 px or more, held >= 0.5 s; whatever its share of
+  the frame (a bag at 1 % passes the glare share and fails here). The FAIL line names the region's box. The light budget
+  that keeps objects out of it is `styles/stick-man/kit/look/highlights.js` (used by `engine/look.js` for every film: prop
+  albedo <= 0.8, no glow unless a light, `grade.exp` on the linear scene, a highlight roll-off before the blooms and the
+  tone mapper, the glow halo capped; `grade.shoulder` retired with a `[kit]` warning).
+  It runs at ◇5 beside colourgate (`GATES.json`): `node styles/stick-man/tools/gates/valuegate.mjs
   films/<slug>` (final render, review/shot-rows.jsonl) or `--mp4 <file> --rows <rows.jsonl>`; exits 1 on a fault; `test/unit/stick-valuegate.test.mjs` covers a hot pool, an even bright frame, a crushed and a lit subject, a flash.
 
 ## Driving it
@@ -72,8 +80,7 @@ path. A FAIL or a DRAFT keeps ◇5 OPEN.
 
 The script's look is made at render time in the acts (`light` colours and powers, practical lamps, `grade`). Post draws
 the HUD and the locks only; a new look is a new render. `engine/play.js` warns on every act whose `grade.exp` is over
-1.5 (`styles/stick-man/kit/look/exposure.js`): the multiply comes after tone mapping, so it clips and then the shoulder
-flattens it. The warning shows in shot.mjs output as a `console` line. Regression: `node --test
+1.5 (`styles/stick-man/kit/look/exposure.js`): `grade.exp` scales the linear scene (x exp^2.2) before the highlight roll-off and the tone mapper (`kit/look/highlights.js`), so a high one pushes every bright object into the roll-off. The warning shows in shot.mjs output as a `console` line. Regression: `node --test
 test/unit/stick-exposure.test.mjs`.
 
 ## Gotchas

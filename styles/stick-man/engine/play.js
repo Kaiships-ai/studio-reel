@@ -131,7 +131,7 @@ async function buildAct(R, X) {
   // ground, hemi, fill, fillPower, background, bounce, lamps: [{at, rgb, power, dist}] }`
   // recolours the shared sun / sky / fill while this act is on screen, scales the set's own bounce lights, and hangs
   // practical lamps (point lights in this act's group, so they only light this act)
-  for (const w of exposureWarnings(R)) console.warn(w);   // grade.exp over 1.5 clips, then flattens: light the place instead
+  for (const w of exposureWarnings(R)) console.warn(w);   // grade.exp over 1.5 flattens the highlights: light the place instead
   const LT = R.light || null;
   stage.light0 ||= { sun: stage.sun.color.clone(), si: stage.sun.intensity, sky: stage.hemi.color.clone(), gr: stage.hemi.groundColor.clone(),
     hi: stage.hemi.intensity, fill: stage.fill.color.clone(), fi: stage.fill.intensity };
