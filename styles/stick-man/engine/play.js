@@ -28,6 +28,7 @@ import { solidBoxes, restBoxes, inBoxes, drawnBox, boxPoints } from './solids.js
 import * as EXTRAS from '#kit/cast/extras.js';
 import { PHYS } from '#kit/fx/physfx.js';
 import { STORY } from '#kit/props/story.js';
+import { ablate, listLights, frameLights } from '#kit/look/ablate.js';
 import { exposureWarnings } from '#kit/look/exposure.js';
 // default acting size: the reference's big beats travel ~2.3 head widths, ours ~0.5-0.7 (reference study), so every pose plays 1.2x unless an act or cast entry says otherwise
 const ACT_AMP = 1.2;
@@ -906,6 +907,12 @@ export async function boot({ film, width, height }) {
   // the film's face style (reel.js faceStyle, engine/facestyles/index.js; left out = s2): set before any figure or the stage is built
   await useFaceStyle(R1.faceStyle);
   const stage = createStage({ width, height, faceInk: !!FACE_STYLE.name, ...(R1.look || {}) });
+  // ?ablate=<source> (kit/look/ablate.js; tools/gates/blame.mjs): every render with that one light source dimmed, to find
+  // what blows a region; ?ablate=list prints the lights it can name
+  const ABL = new URLSearchParams(globalThis.location?.search || '').get('ablate');
+  if (ABL) { const r0 = stage.render; let lights = null;   // light<i>: the first render's list, frozen (a dissolve renders two acts)
+    stage.render = (o = {}) => { if (!lights) { lights = frameLights(stage.scene); for (const l of listLights(stage.scene)) console.warn(`[kit] ablate ${l}`); }
+      const u = ablate(stage, ABL, o.grade, lights); try { return r0({ ...o, grade: u.grade }); } finally { u.undo(); } }; }
   try { await document.fonts.load('900 100px InterReel'); } catch { /* falls back to the system sans */ }
   const cap = createCaptions({ words, lines: [...R1.lines, ...(R2?.lines || [])], fps, width, height, mode: R1.captions?.mode });
   const X = { stage, words, fps, F0, F1, width, height, cap, glasses: R1.glasses, directDrift: R1.directDrift, travelWhoosh: R1.travelWhoosh }, bg0 = stage.scene.background;
