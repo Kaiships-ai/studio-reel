@@ -35,6 +35,7 @@ test('the engine uses the budget, the roll-off before the blooms, and no post-to
   assert.match(look, /gradePass\.uniforms\.uExp\.value = 1; rollPass\.uniforms\.uExpLin\.value = expLinear\(gr\.exp\)/);
   assert.doesNotMatch(look, /uShoulder \* c \* c/);
   assert.match(look, /min\(texture2D\(tB, vUv\)\.rgb, vec3\(gMax\)\)/);
+  assert.doesNotMatch(look, /min\(col, vec3\(0\.96\)\)/, 'a figure has a soft knee, not a hard cap (a flat white hoodie)');
   const shot = fs.readFileSync(new URL('../../styles/stick-man/tools/render/shot.mjs', import.meta.url), 'utf8');
   assert.match(shot, /m\.type\(\) === 'warning' && m\.text\(\)\.startsWith\('\[kit\]'\)/, 'shot.mjs prints [kit] warnings');
 });
