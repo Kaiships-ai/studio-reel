@@ -251,8 +251,8 @@ function flatHeadMat(rgb, shade) {
 }
 // the face shell: a unit front hemisphere (+z) kept as the base; aimShell lays it on the head toward the head-local lens
 // direction d (unit), on the head's ellipsoid, with the uv of each point its position across the lens
-const SHELL_R = 1.015, _shellM = new THREE.Matrix4(), _upL = new THREE.Vector3(), _sx = new THREE.Vector3(), _sy = new THREE.Vector3(), _sz = new THREE.Vector3(), _sp = new THREE.Vector3();
-function faceShell() {
+const SHELL_R = 1.015, HEAD_UP = new THREE.Vector3(0, 1, 0), _hU = new THREE.Vector3(), _fU = new THREE.Vector3(), _sx = new THREE.Vector3(), _sy = new THREE.Vector3(), _sz = new THREE.Vector3(), _sp = new THREE.Vector3();
+export function faceShell() {
   const g = new THREE.SphereGeometry(1, 40, 30, 0, Math.PI, 0, Math.PI);
   g.userData.base = g.attributes.position.array.slice(); g.userData.d = null;
   return g;
@@ -261,6 +261,7 @@ function aimShell(g, d, up) {
   const last = g.userData.d, k = [d.x, d.y, d.z, up.x, up.y, up.z]; if (last && k.every((v, i) => Math.abs(v - last[i]) < 1e-5)) return;
   g.userData.d = k;
   _sz.copy(d); _sx.copy(up).cross(_sz); if (_sx.lengthSq() < 1e-6) _sx.set(1, 0, 0); _sx.normalize(); _sy.crossVectors(_sz, _sx);
+  g.userData.sy = _sy.toArray();
   const B0 = g.userData.base, p = g.attributes.position, uv = g.attributes.uv;
   for (let i = 0; i < p.count; i++) {
     const bx = B0[3 * i], by = B0[3 * i + 1], bz = B0[3 * i + 2];
@@ -268,6 +269,17 @@ function aimShell(g, d, up) {
     p.setXYZ(i, _sp.x, _sp.y, _sp.z); uv.setXY(i, 0.5 + _sp.dot(_sx) / W, 0.5 + _sp.dot(_sy) / W);
   }
   p.needsUpdate = true; uv.needsUpdate = true; g.computeBoundingSphere();
+}
+// lays the face shell on the head toward the head-local lens direction d with the HEAD's up (Kai 23/11, Ep1 v12: with the
+// world's up, as the flat card stood, the face stayed level while the teller's head tilted 13 deg to the phone, and slid
+// round it); returns faceRoll
+export function layFace(g, d) { aimShell(g, d, HEAD_UP); return faceRollOf(g, d); }
+// faceRoll (deg): how far the shell's drawn up (the frame aimShell laid it with) is turned from the head's own up, both seen
+// along the lens (tools/gates/facegate.mjs)
+export function faceRollOf(g, d) {
+  const sy = g.userData.sy; if (!sy) return 0;
+  _fU.fromArray(sy); _hU.set(0, 1, 0).addScaledVector(d, -d.y);
+  return _fU.lengthSq() > 1e-8 && _hU.lengthSq() > 1e-8 ? +(_fU.angleTo(_hU) / DEG).toFixed(1) : 0;
 }
 // spherical patch just above the head; UVs are the straight-on projection, so from the front it reads as the flat 2D face
 function facePatch() {
@@ -666,11 +678,12 @@ export function makeStick(spec) {
       const vis = Math.max(0, Math.min(1, (Math.cos(yaw) + 0.35) / 0.3));
       slide = [-TURN * yaw, -0.40 * Math.sin(el) * HEAD_H, vis, ...(shell || spec.faceTopUp ? [Math.sin(el)] : [])];
       card2d.visible = true;
-      if (shell) aimShell(card2d.geometry, d, _upL.set(0, 1, 0).transformDirection(_shellM.copy(head.matrixWorld).invert()));   // the world's up in the head (the flat card stood upright)
-      else { card2d.position.copy(d).multiplyScalar(HA * 1.02); card2d.lookAt(B(...P.cam)); }
-    } else card2d.visible = false;
+      if (shell) S.faceRoll = layFace(card2d.geometry, d);
+      else { card2d.position.copy(d).multiplyScalar(HA * 1.02); card2d.lookAt(B(...P.cam)); S.faceRoll = 0; }
+    } else { card2d.visible = false; S.faceRoll = 0; }
     face.visible = !P.cam;
     FR.draw(e, blink, t, marks, P.cam ? B(...P.cam) : null, mx ? mx.F : null, slide);
+    S.facePlate = spec.faceTop == null ? null : spec.faceEdge ? 'cap' : 'hood';
     S.faceStats = FR.stats; S.faceVis = slide ? +slide[2].toFixed(3) : 1;   // how much of the face the lens sees (0 = the back of the head)
     S.faceSlide = slide ? slide.map(v => +v.toFixed(3)) : null;   // [face yaw, dy, vis, sin(elevation)] for the dbg rows
     const ta = P.state && EXPR[typeof P.state.a === 'string' ? P.state.a : P.state.a?.name]?.tint, tb = E.tint, u = P.state ? Math.max(0, Math.min(1, P.state.u)) : 1;

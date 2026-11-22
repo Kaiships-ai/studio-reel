@@ -53,13 +53,13 @@ test("v10a's slide-then-wrap (the bug) stretches a teller's eye 4x at the turn K
 // faceStretch as the engine measured it on the teller (actor t) in v10a's banks part, frames 2140-2165, with the v10a kit
 // (before) and with the wrap (after); the head is a readable 0.2 of the frame
 const BEFORE = [1.124, 1.135, 1.147, 1.188, 1.301, 1.528, 2.046, 4.314, 7.43, 7.502, 7.473, 7.349, 4.296, 2.584, 2.354, 2.183, 1.931, 1.688, 1.576, 1.63, 1.758, 1.839, 1.76, 1.576, 1.447, 1.413];
-const rowsOf = S => S.map((s, i) => ({ f: 2140 + i, actors: { t: { inFrame: true, head: [80, 300, 520, 700], faceVis: 1, faceStretch: s } } }));
+const rowsOf = S => S.map((s, i) => ({ f: 2140 + i, actors: { t: { inFrame: true, head: [80, 300, 520, 700], faceVis: 1, faceStretch: s, faceLag: 0, faceRoll: 0, facePlate: null } } }));
 
 test("facegate fails v10a's teller and names the frames", () => {
   const R = facegate(rowsOf(BEFORE), 1280);
   assert.equal(R.ok, false);
   assert.equal(R.faults.length, 1);
-  assert.deepEqual([R.faults[0].who, R.faults[0].from, R.faults[0].to], ['t', 2144, 2165]);
+  assert.deepEqual([R.faults[0].who, R.faults[0].kind, R.faults[0].from, R.faults[0].to], ['t', 'stretched', 2144, 2165]);
   assert.ok(R.faults[0].peak > 7);
 });
 
@@ -81,7 +81,7 @@ test('rows made before the gate (no faceStretch) never pass', () => {
 });
 
 // faces.js itself (a stub canvas: node has no document): an s2 face on a turned head is wrapped at the yaw s2 names and
-// its stretch is measured over the columns the drawing inks (here the band a teller's left eye sat in, flat x -0.20..-0.10)
+// its stretch is measured over the columns the drawing inks (a hooded head; the band of flat x -0.20..-0.10)
 test('faces.js wraps an s2 face at the yaw s2 names and measures the stretch of the inked columns', async () => {
   const { faceRig, EXPR } = await import('../../styles/stick-man/engine/faces.js');
   S2.use();
@@ -97,13 +97,67 @@ test('faces.js wraps an s2 face at the yaw s2 names and measures the stretch of 
   const prev = globalThis.document;
   globalThis.document = { createElement: () => { const c = { width: 512, height: 512 }; const g = ctx(); g.canvas = c; c.getContext = () => g; return c; } };
   try {
-    const FR = faceRig(1, {}), ya = 1.115, sl = [ya, 0, 1, 0];
+    const FR = faceRig(1, { top: 0.20 }), ya = 1.115, sl = [ya, 0, 1, 0];
     assert.equal(EXPR.y_suspicious.style, 's2');
     FR.draw('y_suspicious', 0, 100, [], null, null, sl);
-    const yw = STYLE_DRAW.s2.wrap({ sl }), worst = yaw => { let m = 1;
+    const yw = STYLE_DRAW.s2.wrap({ top: 0.20, sl }), worst = yaw => { let m = 1;
       for (let u = inkU[0]; u <= inkU[1]; u += 0.002) { const a = Math.asin(u / R); if (Math.cos(a + yaw) >= 0.08) m = Math.max(m, Math.cos(a + yaw) / Math.cos(a)); } return m; };
-    assert.ok(Math.abs(yw) < ya - 0.5, 'the hood-less teller is held back');
+    assert.ok(Math.abs(yw) < ya - 0.5, 'a hooded face is held back');
     assert.ok(Math.abs(FR.stats.stretch - worst(yw)) < 0.05, `measured ${FR.stats.stretch} vs wrapped at s2's yaw ${worst(yw).toFixed(3)}`);
     assert.ok(FR.stats.stretch < LIMIT);
   } finally { globalThis.document = prev; }
+});
+
+// Kai 23/11 (Ep1 v12, 1:12): the blond teller on the phone, her face held near-frontal while her bare head turned 0.4 -> 1.14
+// rad and tilted 13 deg: faceLag and faceRoll as the engine measured them there (before the fix), and the gate's verdicts
+const LAG12 = [0.137, 0.193, 0.284, 0.414, 0.554, 0.673, 0.752, 0.785, 0.77, 0.722, 0.659, 0.61, 0.587, 0.574];   // f2142-2155, kit 6fcf14c
+test('facegate fails a bare head whose face turns less than the head (v12 teller), never a hood holding its marks back', () => {
+  const rows = LAG12.map((g, i) => ({ f: 2142 + i, actors: { t: { inFrame: true, head: [80, 300, 520, 700], faceVis: 1, faceStretch: 1.06, faceLag: g, faceRoll: 0, facePlate: null } } }));
+  const R = facegate(rows, 1280);
+  assert.deepEqual(R.faults.map(f => [f.kind, f.from, f.to]), [['slides (turn)', 2142, 2155]]);
+  const hood = rows.map(r => ({ ...r, actors: { t: { ...r.actors.t, facePlate: 'hood' } } }));
+  assert.equal(facegate(hood, 1280).ok, true);
+});
+
+test('facegate fails a face that stays level while its head tilts (the v12 teller f2175-2186, kit 6fcf14c)', () => {
+  const rows = [2.6, 10.9, 12.8, 14.4, 15.6, 16.5, 17.3, 18, 18.5, 18.6, 18.4, 3].map((d, i) => ({ f: 2175 + i, actors: { t: { inFrame: true, head: [80, 300, 520, 700], faceVis: 1, faceStretch: 1, faceLag: 0, faceRoll: d, facePlate: 'hood' } } }));
+  const R = facegate(rows, 1280);
+  assert.deepEqual(R.faults.map(f => [f.kind, f.from, f.to]), [['slides (tilt)', 2176, 2185]]);
+});
+
+test('a bare head (no hood or cap) turns its face all the way with the skull; a hood still holds its marks back', () => {
+  S2.use();
+  for (let ya = -1.2; ya <= 1.2; ya += 0.1) {
+    assert.ok(Math.abs(STYLE_DRAW.s2.wrap({ ...PLATES.bare, sl: [ya, 0, 1, 0] }) - ya) < 1e-9, `bare yaw ${ya.toFixed(1)}`);
+    if (Math.abs(ya) > 0.5) assert.ok(Math.abs(STYLE_DRAW.s2.wrap({ ...PLATES.hood, sl: [ya, 0, 1, 0] })) < Math.abs(ya) - 0.1, `hood yaw ${ya.toFixed(1)}`);
+  }
+});
+
+// cast.js: the face shell is laid with the head's own up, whatever the lens direction (a tilted head sees the lens off its
+// axes); faceRoll reads the frame the shell was actually laid with (Kai 23/11, Ep1 v12: the teller's head tilted 13 deg,
+// her face stayed level)
+test('the face shell takes the head\'s up: no roll from any lens direction; a level face on a tilted head reads 13 deg', async () => {
+  const THREE = await import('three');
+  const { faceShell, layFace, faceRollOf } = await import('../../styles/stick-man/engine/cast.js');
+  const g = faceShell();
+  for (const [x, y, z] of [[0, 0, 1], [0.3, 0.2, 0.9], [-0.6, -0.4, 0.7], [0.9, 0.1, 0.4], [0.2, 0.62, 0.76]]) {
+    const d = new THREE.Vector3(x, y, z).normalize();
+    assert.equal(layFace(g, d), 0, `lens ${[x, y, z]}`);
+    const sy = new THREE.Vector3().fromArray(g.userData.sy), sx = new THREE.Vector3().crossVectors(sy, d);
+    assert.ok(Math.abs(sx.y) < 1e-9, `lens ${[x, y, z]}: the face's horizontal leans off the head's (${sx.y})`);
+  }
+  const d = new THREE.Vector3(0.3, 0.2, 0.9).normalize();
+  layFace(g, d);
+  g.userData.sy = new THREE.Vector3().fromArray(g.userData.sy).applyAxisAngle(d, 13 * Math.PI / 180).toArray();
+  assert.ok(Math.abs(faceRollOf(g, d) - 13) < 0.2, `${faceRollOf(g, d)}`);
+});
+
+test('cast.js lays the face shell in one place only, layFace, with the head\'s up', async () => {
+  const fs = await import('node:fs');
+  const src = fs.readFileSync(new URL('../../styles/stick-man/engine/cast.js', import.meta.url), 'utf8');
+  const calls = [...src.matchAll(/aimShell\(/g)].length;
+  assert.equal(calls, 2, 'aimShell: its definition and the one call in layFace');
+  assert.match(src, /export function layFace\(g, d\) \{ aimShell\(g, d, HEAD_UP\);/);
+  assert.match(src, /HEAD_UP = new THREE\.Vector3\(0, 1, 0\)/);
+  assert.match(src, /S\.faceRoll = layFace\(card2d\.geometry, d\)/);
 });

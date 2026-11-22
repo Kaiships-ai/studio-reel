@@ -611,7 +611,7 @@ async function buildAct(R, X) {
         verb: [...a.verbs.filter(x => x.start <= f && f < x.end).map(x => x.name), ...(a.anim && a.anim.keys.length > 1 ? ['key'] : [])], head: box, feet, limbs: a.S.rigWorld(),
         // a motion v2 actor acts from hand-set keys, not verbs: past its first key it is acting ('key')
         body: a.verbs.filter(x => x.start <= f && f < x.end && isBodyVerb(x)).map(x => x.name).pop() || (a.anim && a.anim.keys.length > 1 && f >= a.anim.keys[0].f ? 'key' : null), lead: !!a.lead,
-        mouthA: +(a.S.faceStats?.mouth ?? 0).toFixed(5), faceVis: a.S.faceVis ?? null, faceSlide: a.S.faceSlide ?? null, faceStretch: +(a.S.faceStats?.stretch ?? 1).toFixed(3), faceKey: a.S.faceStats?.key ?? '', exprDesign: designKey(a.face.expr), talking: !!a.talking,
+        mouthA: +(a.S.faceStats?.mouth ?? 0).toFixed(5), faceVis: a.S.faceVis ?? null, faceSlide: a.S.faceSlide ?? null, faceStretch: +(a.S.faceStats?.stretch ?? 1).toFixed(3), faceLag: +(a.S.faceStats?.lag ?? 0).toFixed(3), faceRoll: a.S.faceRoll ?? 0, facePlate: a.S.facePlate ?? null, faceKey: a.S.faceStats?.key ?? '', exprDesign: designKey(a.face.expr), talking: !!a.talking,
         face: a.faceDbg || null, cord: a.S.hoodie?.dbg ?? null, headP: a.P ? [a.P.head_pitch || 0, a.P.head_dv || 0, a.P.head_tilt || 0].map(x => +(+x).toFixed(4)) : null,
         exprFrom: a.exprKey?.f > -1e8 ? a.exprKey.f : null, exprWord: a.exprKey?.word ?? null,
         headW: toB(c).map(x => +x.toFixed(4)), figH: +((sole - ys[0]) / height).toFixed(3),

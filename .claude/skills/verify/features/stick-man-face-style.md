@@ -25,6 +25,15 @@ approved on Hot Money ep01 r5 reel 1 (21/11, "v6 ok, ưng 9.5/10").
   `faces.js` wraps the whole drawing at that yaw. It never slides the flat drawing first (that took marks from the
   drawing's edge and un-foreshortened them, up to 7.5x). `tools/gates/facegate.mjs` fails a readable face whose
   `faceStretch` is over 1.3 for 3 frames (◇5).
+- A bare head (no hood or cap plate, `spec.faceTop` unset) has no rim to hold the marks back: `turn()` wraps it at the
+  head's full yaw (Kai 23/11, Ep1 v12 1:12: the teller on the phone, her face held at 0.30 rad while her head turned 1.1).
+  Going round, its far eye fades out over `faces.js` `BARE_EDGE` (z 0.40-0.55; a cap's is 0.58-0.70: at 0.55 a bare head turned 65 deg to the lens went blank, Ep1 v12 f2154-2166) instead of thinning to a
+  sliver on the outline.
+  The face shell's up is the head's own up (`cast.js` `aimShell`), so a face tilts with its head (it stayed level while
+  the head tilted 13 deg; `layFace` takes no up, it always uses the head's). dbg rows add `faceLag` (rad the drawn face
+  turned less than its turn target, `faceTurn` x the head's yaw), `faceRoll` (deg between the up the shell was laid with and
+  the head's, along the lens) and `facePlate` (`hood`, `cap` or null); facegate fails a bare head's lag over
+  0.12 rad and any roll over 6 deg for 3 frames.
 
 ## How to get to it (user POV)
 
