@@ -27,7 +27,7 @@ approved on Hot Money ep01 r5 reel 1 (21/11, "v6 ok, ưng 9.5/10").
   `faceStretch` is over 1.3 for 3 frames (◇5).
 - A bare head (no hood or cap plate, `spec.faceTop` unset) has no rim to hold the marks back: `turn()` wraps it at the
   head's full yaw (Kai 23/11, Ep1 v12 1:12: the teller on the phone, her face held at 0.30 rad while her head turned 1.1).
-  Going round, its far eye fades out over `faces.js` `BARE_EDGE` (z 0.40-0.55, as a cap's edge) instead of thinning to a
+  Going round, its far eye fades out over `faces.js` `BARE_EDGE` (z 0.55-0.70, as a cap's edge 0.58-0.70) instead of thinning to a
   sliver on the outline.
   The face shell's up is the head's own up (`cast.js` `aimShell`), so a face tilts with its head (it stayed level while
   the head tilted 13 deg; `layFace` takes no up, it always uses the head's). dbg rows add `faceLag` (rad the drawn face
