@@ -84,6 +84,17 @@ function clean(s, bad) {
   do { prev = t; t = t.replace(/\s*\([^()]*\)/g, p => bad.some(r => r.test(p)) ? '' : p); } while (t !== prev);
   return bad.some(r => r.test(t)) ? null : t;
 }
+// a GLSL comment inside a shader string (a template literal the JS scrub leaves alone): on a line that names a bad word
+// after a // that no quote is open across, that comment (up to a closing backtick on the line) is cleaned or dropped
+export function scrubShader(text, bad) {
+  return text.split('\n').flatMap(l => {
+    const k = l.indexOf('//'); if (k < 0 || !bad.some(r => r.test(l.slice(k)))) return [l];
+    const pre = l.slice(0, k); if ((pre.match(/'/g) || []).length % 2 || (pre.match(/"/g) || []).length % 2) return [l];
+    const tick = l.lastIndexOf('`'), end = tick > k ? tick : l.length, kept = clean(l.slice(k + 2, end), bad), tail = l.slice(end);
+    if (kept != null) return [pre + '//' + kept + tail];
+    return !pre.trim() && !tail ? [] : [pre.replace(/\s+$/, '') + tail];
+  }).join('\n');
+}
 // python and shell: a `#` comment that names a bad word goes; code that does is left for the check to catch
 export function scrubHash(text, bad) {
   return text.split('\n').flatMap(l => {
@@ -123,7 +134,7 @@ export function buildStick(files, m, blob) {
   const bad = m.stick_forbid.map(p => new RegExp(p, 'i'));
   for (const [f, b] of own) {
     try {
-      if (/\.(m?js)$/.test(f)) own.set(f, Buffer.from(scrubJs(b.toString('utf8'), bad)));
+      if (/\.(m?js)$/.test(f)) own.set(f, Buffer.from(scrubShader(scrubJs(b.toString('utf8'), bad), bad)));
       else if (/\.(py|sh|toml)$/.test(f)) own.set(f, Buffer.from(scrubHash(b.toString('utf8'), bad)));
     } catch (err) { errors.push(`${f}: cannot scrub (${err.message})`); }
   }

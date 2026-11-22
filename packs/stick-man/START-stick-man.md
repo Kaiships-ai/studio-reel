@@ -11,12 +11,27 @@ Run every command from this folder (the one this file is in).
 
 ## 1. Install (once, about 10 minutes)
 
+**Unzip into a short folder path**, for example `~/kaiships-studio` (macOS, Linux) or `C:\kaiships-studio` (Windows).
+The full path of the folder must be **83 characters or fewer**: the installer stops with `✗ folder path` in a longer one
+(a Downloads folder inside a synced cloud drive is often too long). Moving the folder after installing breaks it: unzip
+again instead.
+
+Open a terminal in that folder. If `pixi --version` prints nothing, install pixi first (one line, no admin rights),
+then open a new terminal so it is on your PATH:
+
+```
+macOS / Linux / Git Bash:  curl -fsSL https://pixi.sh/install.sh | PIXI_VERSION=v0.82.1 PIXI_NO_TELEMETRY=1 bash
+Windows PowerShell:        $env:PIXI_VERSION='v0.82.1'; $env:PIXI_NO_TELEMETRY='1'; irm -useb https://pixi.sh/install.ps1 | iex
+```
+
+Then set up the studio:
+
 ```
 pixi run studio install
 ```
 
-This installs Node, Python, ffmpeg, the browser that draws the frames, and the speech aligner. Run it again any time:
-finished steps are skipped. `pixi run studio doctor` checks the setup in a few seconds.
+This installs Node, Python, ffmpeg, the browser that draws the frames, and the speech aligner, all inside this folder.
+Run it again any time: finished steps are skipped. `pixi run studio doctor` checks the setup in a few seconds.
 
 For your own voice-overs, add a Google AI Studio key (free tier available at https://aistudio.google.com/apikey) to a
 file named `.env` in this folder:
@@ -53,6 +68,8 @@ from you. The skill's own page, `.claude/skills/make-reel-stick-man/SKILL.md`, h
 
 | You see | Do |
 |---|---|
+| `pixi: command not found` | install pixi (step 1), then open a new terminal |
+| `✗ folder path: this folder's path is … characters` | unzip again into a short path such as `~/kaiships-studio`, then `pixi run studio install` there |
 | `ffmpeg is not installed in this folder yet` | `pixi run studio install` |
 | `no GOOGLE_API_KEY` | add the key to `.env` (step 1) |
 | `the page failed: ...` | a mistake in `reel.js`; the message names it. Ask Claude to fix it |

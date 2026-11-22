@@ -81,3 +81,19 @@ test("the build's own comment finder agrees with acorn on every shipped JS file 
   }
   assert.deepEqual(bad, []);
 });
+
+test('the finish look stays private: no contact shadows, act grade, motion blur, haze or camera key light in the pack', () => {
+  const FINISH = /GTAOPass|\bao\s*[:=]\s*\d|uShoulder|uShadowK|uGrain|uBlur|mblur|camKey|R\.haze|grade\.shadow|uSoft\s*>|new THREE\.Fog/;
+  for (const [f, b] of P) if (/\.(m?js|html)$/.test(f)) assert.doesNotMatch(b.toString('utf8'), FINISH, f);
+  const look = text('styles/stick-man/engine/look.js'), play = text('styles/stick-man/engine/play.js');
+  assert.match(look, /shafts = 0,/, 'no light shafts by default');
+  assert.match(look, /airPass\.enabled = false;/, 'no air haze');
+  assert.match(look, /const gr = \{\};/, 'an act grade is ignored');
+  assert.doesNotMatch(play, /R1\.look/, 'an act look cannot switch a finish pass back on');
+  assert.match(look, /uPrev|uFlash|uWhip/, 'the transitions stay');
+});
+
+test('no internal jargon in any pack file (the reference study, its clip ids, gate and review names, judge rounds)', () => {
+  const JARGON = /the reference|reference (study|shots?|clips?|frames?|sets?)|\bQlDPM\b|\bVS1Z\b|colourgate|shotgate|cutgate|readgate|soundgate|kituse|facebeat|stagegate|whochecks|shotfaults|look_measure|◇|\bjudge\b|stick0\d|pilot A|KIT-DEPTH|study gap|render\/shot\.mjs/i;
+  for (const [f, b] of P) if (/\.(m?js|html|py|md|json)$/.test(f) && !f.endsWith('CREDITS')) assert.doesNotMatch(b.toString('utf8'), JARGON, f);
+});

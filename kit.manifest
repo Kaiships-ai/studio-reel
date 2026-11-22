@@ -271,7 +271,39 @@ styles/stick-man/faces.html :: node styles/stick-man/tools/render/shot\.mjs --pa
 styles/stick-man/tools/run/sound_dsp.py :: from the kai-reel-3d listicle score :: from a listicle score
 styles/stick-man/motion-lib/base.js :: import CARRY_IDLE from '\./ref/mixamo/carry_idle\.js'; :: import CARRY_IDLE from './ref/ual/walk_carry_loop.js';
 
+# the finish look stays private (Kai 22/11: option B = "ok B strip"): the shipped stage is a plain neutral look, basic
+# lighting only. No contact shadows (GTAO), no act grade / tone / grain / soften, no motion blur, no act haze, no light
+# shafts or air haze, no camera-riding key light; the dissolve, flash, whip and impact transitions stay
+styles/stick-man/engine/look.js :: import \{ GTAOPass \} from 'three/addons/postprocessing/GTAOPass\.js';\n :: 
+styles/stick-man/engine/look.js :: \n  // ao > 0 \(allout look\)[\s\S]*?composer\.addPass\(aoPass\); stage\.ao = aoPass; \} :: 
+styles/stick-man/engine/look.js :: , ao = 0, aoRadius = 0\.5, shadowRadius = 1\.0 \} = \{\}\) \{ :: , shadowRadius = 1.0 } = {}) {
+styles/stick-man/engine/look.js :: shafts = 0\.024, shaftK :: shafts = 0, shaftK
+styles/stick-man/engine/look.js :: sat = 1\.38, con = 1\.18, vig = 0\.30, split = 0\.7, :: sat = 1.15, con = 1.06, vig = 0, split = 0,
+styles/stick-man/engine/look.js :: \n      uShadowC: \{ value: new THREE\.Vector3\(0, 0, 0\) \}, uShadowK: \{ value: 0 \}, uShoulder: \{ value: 0 \}, uGrain: \{ value: 0 \}, uSoft: \{ value: 0 \}, uTime: \{ value: 0 \},\n      uBlur: \{ value: new THREE\.Vector2\(0, 0\) \}, texel: :: \n      texel:
+styles/stick-man/engine/look.js :: uImpact, uWhip, uShadowK, uShoulder, uGrain, uSoft, uTime; uniform vec3 uTint, uShadowC; uniform vec2 uImpC, uBlur, texel; :: uImpact, uWhip; uniform vec3 uTint; uniform vec2 uImpC, texel;
+styles/stick-man/engine/look.js :: \n        // motion blur on a very fast camera move only[\s\S]*?c = mix\(c, b, uSoft\); \} :: 
+styles/stick-man/engine/look.js :: \n        c = pow\(c, vec3\(uGam\)\) \* uExp \* uTint;[\s\S]*?c = clamp\(mix\(vec3\(dot\(c, vec3\(0\.2126,0\.7152,0\.0722\)\)\), c, uSat\), 0\.0, 1\.0\); :: 
+styles/stick-man/engine/look.js :: \n        if \(uGrain > 0\.0\)[^\n]* :: 
+styles/stick-man/engine/look.js :: const gr = o\.grade \|\| \{\}; if \(stage\.shafts\)[^\n]* :: const gr = {};
+styles/stick-man/engine/look.js :: \n    const U = gradePass\.uniforms, sc = gr\.shadow;[^\n]*\n    U\.uShoulder\.value[^\n]* :: 
+styles/stick-man/engine/look.js :: airPass\.enabled = !!bg && AI !== false && \(AI\.k \?\? 0\.35\) > 0; :: airPass.enabled = false;
+styles/stick-man/engine/look.js :: , ao: stage\.ao \|\| null \} :: }
+styles/stick-man/engine/play.js :: const fog = R\.haze \? new THREE\.Fog\([^\n]*\) : null; :: const fog = null;
+styles/stick-man/engine/play.js :: \n  // act haze: [^\n]* :: 
+styles/stick-man/engine/play.js :: \n    // motion blur on very fast camera moves only[\s\S]*?blurV = \[-dx \* k, dy \* k\]; \} \} \} :: \n    cam = DIR ? DIR.at(f, force) : camera.at(shots, f, n => anchor(n, f, livePos), cues, force);\n    blurV = null;
+styles/stick-man/engine/play.js :: \n    // light\.camKey[\s\S]*?SET\.SUN_HALF\); \} :: 
+styles/stick-man/reel.html :: \(set by tools/render/shot\.mjs\) :: (set by tools/pack/render.mjs)
+styles/stick-man/reel.html :: &q=proof \(tools/render/shot\.mjs --tier proof\): the cheap 480p look :: &q=proof: the cheap 480p look
+styles/stick-man/engine/play.js :: faceInk: !!FACE_STYLE\.name, \.\.\.\(R1\.look \|\| \{\}\) \}\) :: faceInk: !!FACE_STYLE.name })
+
 [stick_forbid]
+# the finish look (stripped by [stick_edit] above): contact shadows, the act grade's tone / grain / soften, motion blur,
+# act haze, the camera-riding key light
+gtaopass|uShoulder|uShadowK|uGrain\b|uBlur\b|mblur|camKey|R\.haze\b|grade\.shadow|grade\.soft
+# internal jargon: the reference study, its clip ids, gate and review names, judge rounds, private run ids
+the reference|\breference:|reference (study|shots?|clips?|frames?|sets?|ink|captions?|heads?|figures?|places?)|\bqldpm\b|\bvs1z\b
+colourgate|shotgate|cutgate|readgate|soundgate|valuegate|eyegate|kituse|facebeat|stagegate|whochecks|prepro\.mjs|motionlib\.mjs|shotfaults|look_measure|◇
+\bjudge|stick0\d|pilot a|kit-depth|\ballout\b|round [1-5]\b|\br[2-5] \w|gate [a-z]\b|study gap|render/shot\.mjs|--tier\b
 # Never in the stick-man pack, any case, in a path or in any file's bytes (comments that name one are dropped first)
 mixamo
 \bkai\b
