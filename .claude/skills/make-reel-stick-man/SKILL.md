@@ -147,9 +147,10 @@ independent review. Why each rule exists, with the film that paid for it, is in 
 | A new set, prop, fx or verb goes in the kit catalog with its rule, never for one film's taste | `styles/stick-man/bible/check.mjs` |
 | The film's colour follows the colour script signed with the S1 look; a look change starts from a whole-look prototype at S1, never from number tweaks | `colourgate.mjs` |
 | A run log is written only through `logline.mjs`; old lines are never edited | `logline.mjs` |
+| Render by purpose: T0 data, T1 stills, T2 480p proof, T3 720p review (what the pixel gates and K2 see); T4 1080p only on Kai's own request, normally for Post (`shot.mjs --tier final --kai-ok "<his words>"`) | `render/tiers.mjs` |
 
-Open, no check yet (each is a kit-fix PR): renders stay 720p, 1080p only on Kai's ask at Post (`shot.mjs` defaults to
-1080x1920); frames, audio and wording of a reference are never copied, and `ref-private/` is never committed.
+Open, no check yet (a kit-fix PR): frames, audio and wording of a reference are never copied, and `ref-private/` is
+never committed.
 
 ## Files
 
