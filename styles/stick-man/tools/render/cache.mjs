@@ -3,7 +3,8 @@
 // tier, size and page query, the frame range, the voice timing (vo/words.json), the bible (styles/stick-man/bible/<series>/
 // data and the film's bible-exceptions.json), the audio track muxed in, and every file the page loaded while rendering
 // (reel.js, the film's r5 code, shared GLBs and textures, three.js), each by content. The sidecar <mp4>.json holds the key,
-// the inputs and that file list; the next run re-hashes the same files, so an edit to any of them is a miss.
+// the inputs, that file list and the mp4's own size and hash; the next run re-hashes the same files, so an edit to any of them,
+// or an mp4 that is not the one the sidecar was written for (a killed or foreign render), is a miss.
 import fs from 'node:fs'; import path from 'node:path'; import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 
@@ -47,6 +48,8 @@ export function check(root, out, inputs) {
   const side = out + '.json';
   if (!fs.existsSync(out) || !fs.existsSync(side)) return { hit: false, why: 'no earlier render with a sidecar' };
   let S; try { S = JSON.parse(fs.readFileSync(side, 'utf8')); } catch { return { hit: false, why: 'sidecar unreadable' }; }
+  const st = fs.statSync(out);
+  if (S.mp4?.size !== st.size || S.mp4?.sha !== fileHash(out)) return { hit: false, why: 'the mp4 is not the render its sidecar describes' };
   if (S.inputs?.tier !== inputs.tier) return { hit: false, why: `earlier render is tier ${S.inputs?.tier}, this is ${inputs.tier}` };
   const k = firstDiff(S.inputs, inputs);
   if (k) return { hit: false, why: `${k} changed` };
@@ -56,8 +59,16 @@ export function check(root, out, inputs) {
   return { hit: true, why: `same inputs (key ${S.key.slice(0, 12)})` };
 }
 
-export function save(root, out, inputs, depRels) {
-  const deps = hashDeps(root, depRels), key = keyOf(inputs, deps);
-  fs.writeFileSync(out + '.json', JSON.stringify({ key, tier: inputs.tier, at: new Date().toISOString(), inputs, deps }, null, 1) + '\n');
+// a render starts: the old sidecar goes first, and the mp4 is written to a temp file beside it (returned)
+export function begin(out) {
+  fs.rmSync(out + '.json', { force: true }); fs.mkdirSync(path.dirname(out), { recursive: true });
+  return path.join(path.dirname(out), `.${path.basename(out, '.mp4')}.part.mp4`);
+}
+
+// a render finished: the temp file becomes the mp4, then the sidecar is written last, with the mp4's size and hash
+export function finish(root, out, part, inputs, depRels) {
+  fs.renameSync(part, out);
+  const deps = hashDeps(root, depRels), key = keyOf(inputs, deps), mp4 = { size: fs.statSync(out).size, sha: fileHash(out) };
+  fs.writeFileSync(out + '.json', JSON.stringify({ key, tier: inputs.tier, at: new Date().toISOString(), mp4, inputs, deps }, null, 1) + '\n');
   return key;
 }

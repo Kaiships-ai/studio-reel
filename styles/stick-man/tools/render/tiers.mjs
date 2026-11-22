@@ -1,7 +1,7 @@
 // Render by purpose: what each tier of tools/shot.mjs --tier makes, and what a pixel gate may read.
 //   T0 dbg     data only (__dbg rows, reports, cues): no pixels
 //   T1 still   one sharp frame per storyboard shot (--scenes 1) or the --frames given, full quality with lens blur, 1080x1920
-//   T2 proof   480x854, engine/look.js QUALITY.proof (no MSAA, small shadow map, no lens blur, 4 lights): a cheap 1x watch
+//   T2 proof   480x854, engine/look.js QUALITY.proof (no MSAA, small shadow map, no lens blur; every light kept): a cheap 1x watch
 //   T3 review  720x1280, full quality: what Kai watches and what the pixel gates (colourgate, refbench) read
 //   T4 final   1080x1920, full quality, only with --kai-ok "<Kai's words>"
 import fs from 'node:fs'; import path from 'node:path';

@@ -132,10 +132,13 @@ if (A.speed && !REEL) {
 } else if (A.mp4) {
   const fps = 30, f0 = frames[0], n = frames.length, wav = A.audio ? path.resolve(A.audio) : path.join(ROOT, A.film, 'vo', 'vo.wav');
   fs.mkdirSync(path.dirname(path.resolve(A.mp4)), { recursive: true });
+  // a tier mp4 renders to a temp file and its sidecar is written last, so a killed render is never a cache hit
+  const OUT = T?.pixels ? cache.begin(path.resolve(A.mp4)) : path.resolve(A.mp4);
+  if (!T?.pixels) fs.rmSync(path.resolve(A.mp4) + '.json', { force: true });
   const ff = start('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'mjpeg', '-i', '-',
     '-ss', (f0 / fps).toFixed(4), '-t', (n / fps).toFixed(4), '-i', wav, '-map', '0:v', '-map', '1:a',
     '-c:v', 'libx264', '-preset', 'medium', '-crf', '17', '-pix_fmt', 'yuv420p', '-r', String(fps), '-c:a', 'aac', '-b:a', '192k',
-    '-shortest', '-movflags', '+faststart', path.resolve(A.mp4)], { stdio: ['pipe', 'inherit', 'inherit'] });
+    '-shortest', '-movflags', '+faststart', OUT], { stdio: ['pipe', 'inherit', 'inherit'] });
   const done = new Promise((res, rej) => ff.on('close', c => (c ? rej(new Error('ffmpeg ' + c)) : res())));
   const t0 = Date.now(); let ms = 0;
   for (const f of frames) {
@@ -145,7 +148,7 @@ if (A.speed && !REEL) {
     if (f % 60 === 0) process.stdout.write(`frame ${f}\n`);
   }
   ff.stdin.end(); await done;
-  if (CACHE) cache.save(ROOT, path.resolve(A.mp4), inputs, deps);
+  if (T?.pixels) cache.finish(ROOT, path.resolve(A.mp4), OUT, inputs || { tier: T.tier, w: W, h: H, frames: A.frames || '0', nocache: true }, deps);
   console.log(`${A.mp4}  ${n} frames ${W}x${H}  page ${(ms / n).toFixed(1)} ms/frame, with JPEG ${((Date.now() - t0) / n).toFixed(1)} ms/frame`);
 } else if (A.report) {
   const L = [], pct = (a, b) => (100 * a / b).toFixed(1) + ' %';

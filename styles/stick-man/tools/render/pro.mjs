@@ -6,6 +6,7 @@
 // its own renders and their cache sidecars) by scp into ~/stick-sync/<job>/, and the Pro side runs in an Orca terminal on the
 // paired server `mac-pro` (--env), in the checkout --repo. The Pro side refuses when its HEAD after the pull is not the
 // origin/main commit this machine fetched (the kit the gates checked), and shot.mjs there holds the render lock and checks disk.
+// Outputs go under films/<ep>/renders/ (stills in a folder of their own there).
 // Options: --env mac-pro, --host pro (ssh alias), --repo <Pro checkout>, --timeout-min 120, --min-free-gb 5, --dry-run 1 (print the steps)
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -32,8 +33,11 @@ export function jobOf(shotArgs, root = ROOT) {
   const ep = `films/${m[1]}`, outputs = [];
   for (const k of OUT_FLAGS) if (A[k]) {
     const rel = path.relative(root, path.resolve(root, A[k])).split(path.sep).join('/');
-    if (!rel.startsWith(ep + '/')) throw new Error(`--${k} ${A[k]}: write inside ${ep}/ so it can be copied back`);
-    outputs.push(k === 'out' && rel.includes('%d') ? path.posix.dirname(rel) : rel);
+    // what comes back is untarred over the local episode: only files under renders/, and a stills folder of its own
+    const got = k === 'out' && rel.includes('%d') ? path.posix.dirname(rel) : rel;
+    if (k === 'out' && got === ep + '/renders') throw new Error(`--out ${A[k]}: give the stills a folder of their own, e.g. ${ep}/renders/stills/f_%d.png`);
+    if (!got.startsWith(ep + '/renders/')) throw new Error(`--${k} ${A[k]}: write under ${ep}/renders/ so copying it back cannot overwrite the episode`);
+    outputs.push(got);
     if (k === 'mp4') outputs.push(rel + '.json');
   }
   if (!outputs.length) throw new Error('shot.mjs writes nothing here: give --mp4 or --out');

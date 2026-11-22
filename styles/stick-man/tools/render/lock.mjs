@@ -1,6 +1,8 @@
 // One heavy render at a time per machine (tools/shot.mjs pixel tiers take it). The lock is a JSON file the holder rewrites
-// every `beatMs`; a lock whose beat is older than `ttlMs`, or whose holder on this host is gone, is stale and taken over,
-// so a killed render never blocks the machine for good. Waiters poll; the order among them is not a queue.
+// every `beatMs`. On this host a lock is stale when its process is gone (a live holder is never taken over, whatever its
+// beat); from another host, when its beat is older than `ttlMs`. A stale lock is taken over by one process at a time, under
+// a `<lock>.takeover` guard created exclusively, so a killed render never blocks the machine and two takers never both win.
+// Waiters poll; the order among them is not a queue.
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path'; import crypto from 'node:crypto';
 
 export const LOCK = process.env.STICK_RENDER_LOCK || path.join(os.homedir(), '.cache', 'stick-man', 'render.lock');
@@ -9,8 +11,8 @@ const alive = pid => { try { process.kill(pid, 0); return true; } catch (e) { re
 
 export function stale(L, now = Date.now(), ttlMs = 120000) {
   if (!L) return true;
-  if (now - L.beat > ttlMs) return true;
-  return L.host === os.hostname() && !alive(L.pid);
+  if (L.host === os.hostname()) return !alive(L.pid);
+  return now - L.beat > ttlMs;
 }
 
 // one try: { ok, lock } or { ok: false, holder }
@@ -22,10 +24,26 @@ export function tryLock({ file = LOCK, what = '', ttlMs = 120000, now = Date.now
     catch (e) { if (e.code !== 'EEXIST') throw e; }
     const L = read(file);
     if (!stale(L, now, ttlMs)) return { ok: false, holder: L };
-    // take a stale lock over only if it is still the one we judged stale
-    try { if (JSON.stringify(read(file)) === JSON.stringify(L)) fs.rmSync(file, { force: true }); } catch {}
+    if (!takeover(file, L)) return { ok: false, holder: L };
   }
   return { ok: false, holder: read(file) };
+}
+
+// remove the stale lock L, holding the guard; false when another process is taking it over
+const GUARD_MS = 30000;
+function takeover(file, L) {
+  const guard = file + '.takeover';
+  try { fs.writeFileSync(guard, String(Date.now()), { flag: 'wx' }); }
+  catch (e) {
+    if (e.code !== 'EEXIST') throw e;
+    // a guard left by a taker that died mid-takeover (a takeover takes milliseconds)
+    let at = NaN; try { at = Number(fs.readFileSync(guard, 'utf8')) || NaN; } catch {}
+    if (Date.now() - at > GUARD_MS) fs.rmSync(guard, { force: true });
+    return false;
+  }
+  try { if (JSON.stringify(read(file)) === JSON.stringify(L)) fs.rmSync(file, { force: true }); }
+  finally { fs.rmSync(guard, { force: true }); }
+  return true;
 }
 
 export function beat(file, lock, now = Date.now()) {

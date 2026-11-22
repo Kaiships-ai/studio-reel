@@ -53,9 +53,10 @@ test('T1 --scenes: the middle frame of each storyboard shot, a part reads its ep
 
 test('segment cache: same inputs hit; one changed input, dep or tier misses', () => {
   const root = tmp(), out = path.join(root, 'films/ep/renders/p1.mp4');
-  write(root, 'films/ep/reel.js', 'export default 1'); write(root, 'films/ep/shared/car.glb', 'glb v1'); write(root, 'films/ep/renders/p1.mp4', 'mp4');
+  write(root, 'films/ep/reel.js', 'export default 1'); write(root, 'films/ep/shared/car.glb', 'glb v1');
   const inputs = { tier: 'review', w: 720, h: 1280, query: '', frames: '0-99', film: 'films/ep', kit: 'aaa bbb', bible: 'b1', words: 'w1', audio: 'a1' };
-  cache.save(root, out, inputs, ['films/ep/reel.js', 'films/ep/shared/car.glb']);
+  const part = cache.begin(out); fs.writeFileSync(part, 'mp4 frames 0-99');
+  cache.finish(root, out, part, inputs, ['films/ep/reel.js', 'films/ep/shared/car.glb']);
   assert.equal(cache.check(root, out, { ...inputs }).hit, true);
   for (const [k, v] of [['kit', 'aaa ccc'], ['frames', '0-100'], ['words', 'w2'], ['bible', 'b2'], ['audio', 'a2'], ['query', 'q=x']])
     assert.deepEqual(cache.check(root, out, { ...inputs, [k]: v }), { hit: false, why: `${k} changed` });
@@ -66,6 +67,23 @@ test('segment cache: same inputs hit; one changed input, dep or tier misses', ()
   assert.equal(cache.check(root, out, inputs).hit, true, 'back to the same bytes: a hit again');
   fs.rmSync(out);
   assert.equal(cache.check(root, out, inputs).hit, false, 'the render itself is gone');
+});
+
+test('segment cache: a killed render is never a hit', () => {
+  const root = tmp(), out = path.join(root, 'films/ep/renders/open.mp4'), deps = ['films/ep/reel.js'];
+  write(root, 'films/ep/reel.js', 'export default 1');
+  const small = { tier: 'proof', w: 480, h: 854, query: 'q=proof', frames: '0-3', film: 'films/ep', kit: 'k', bible: 'b', words: 'w', audio: 'a' };
+  let part = cache.begin(out); fs.writeFileSync(part, 'frames 0-3'); cache.finish(root, out, part, small, deps);
+  assert.equal(cache.check(root, out, small).hit, true);
+  // a longer render to the same path starts, writes 178 of 401 frames and is killed
+  part = cache.begin(out); fs.writeFileSync(part, 'frames 0-177 of 0-400');
+  assert.equal(fs.existsSync(out + '.json'), false, 'the old sidecar is gone as soon as a render starts');
+  assert.equal(cache.check(root, out, small).hit, false, 'the first inputs again: a miss, not the old render');
+  assert.equal(fs.readFileSync(out, 'utf8'), 'frames 0-3', 'the killed render never replaced the mp4');
+  // an mp4 overwritten under an old sidecar (a plain --mp4 render, a copy) is not the render the sidecar describes
+  part = cache.begin(out); fs.writeFileSync(part, 'frames 0-3'); cache.finish(root, out, part, small, deps);
+  fs.writeFileSync(out, 'frames 0-177 of 0-400');
+  assert.deepEqual(cache.check(root, out, small), { hit: false, why: 'the mp4 is not the render its sidecar describes' });
 });
 
 test('kit stamp: the committed trees, and a different stamp for an uncommitted edit', () => {
@@ -88,19 +106,50 @@ test('render lock: one holder, a stale or dead holder is taken over, release fre
   const b = tryLock({ file, what: 'B' });
   assert.equal(b.ok, false); assert.equal(b.holder.what, 'A');
   assert.equal(beat(file, a.lock, Date.now()), true);
-  assert.equal(tryLock({ file, what: 'C', now: Date.now() + 121000 }).ok, true, 'no heartbeat for over the TTL: stale');
-  release(file, a.lock);
-  assert.ok(fs.existsSync(file), 'A no longer holds it, so A\'s release leaves C\'s lock');
+  assert.equal(tryLock({ file, what: 'C', now: Date.now() + 3600000 }).ok, false, 'a live holder on this host is never stale, whatever its beat');
+  release(file, a.lock); assert.equal(fs.existsSync(file), false);
+  fs.writeFileSync(file, JSON.stringify({ token: 'y', host: 'other-host', pid: 1, what: 'far', started: 0, beat: Date.now() }));
+  assert.equal(tryLock({ file, what: 'C' }).ok, false, 'another host, fresh beat: held');
+  const c = tryLock({ file, what: 'C', now: Date.now() + 121000 });
+  assert.equal(c.ok, true, 'another host, no heartbeat for over the TTL: stale');
+  release(file, c.lock);
   fs.writeFileSync(file, JSON.stringify({ token: 'x', host: os.hostname(), pid: 999999, what: 'dead', started: Date.now(), beat: Date.now() }));
   assert.equal(stale(JSON.parse(fs.readFileSync(file, 'utf8'))), true, 'its process is gone');
   const d = tryLock({ file, what: 'D' });
   assert.equal(d.ok, true); release(file, d.lock); assert.equal(fs.existsSync(file), false);
 });
 
+test('render lock: many processes on one stale lock, never two holders', async () => {
+  const dir = tmp(), file = path.join(dir, 'render.lock'), N = 6, ROUNDS = 20;
+  const lockUrl = new URL('../../styles/stick-man/tools/render/lock.mjs', import.meta.url).href;
+  const child = path.join(dir, 'race.mjs');
+  fs.writeFileSync(child, `import { tryLock } from '${lockUrl}';
+const at = Number(process.argv[3]); while (Date.now() < at) {}
+const r = tryLock({ file: process.argv[2], what: String(process.pid) });
+process.stdout.write(r.ok ? 'HELD' : 'no');
+while (Date.now() < at + 1500) {}   // a holder stays alive (a dead one is rightly taken over)`);
+  const { spawn } = await import('node:child_process');
+  let doubles = 0, none = 0;
+  for (let r = 0; r < ROUNDS; r++) {
+    fs.writeFileSync(file, JSON.stringify({ token: 'dead', host: os.hostname(), pid: 999999, what: 'killed render', started: 0, beat: 0 }));
+    const at = Date.now() + 400;
+    const outs = await Promise.all(Array.from({ length: N }, () => new Promise(res => {
+      const p = spawn(process.execPath, [child, file, String(at)]); let o = ''; p.stdout.on('data', d => { o += d; }); p.on('close', () => res(o)); })));
+    const held = outs.filter(o => o === 'HELD').length;
+    if (held > 1) doubles++; if (held === 0) none++;
+    fs.rmSync(file, { force: true });
+  }
+  assert.equal(doubles, 0, `${doubles} of ${ROUNDS} rounds had two holders`);
+  assert.ok(none < ROUNDS, 'someone takes the stale lock over');
+});
+
 test('Mac Pro job: outputs stay in the episode, the plan syncs, pulls and copies back', () => {
   const args = ['--film', 'films/hm-ep01/parts/gun', '--frames', '1140-1346', '--tier', 'review', '--mp4', 'films/hm-ep01/renders/gun.mp4'];
   assert.deepEqual(jobOf(args), { ep: 'films/hm-ep01', outputs: ['films/hm-ep01/renders/gun.mp4', 'films/hm-ep01/renders/gun.mp4.json'], tier: 'review' });
-  assert.throws(() => jobOf([...args.slice(0, 6), '--mp4', '/tmp/gun.mp4']), /inside films\/hm-ep01/);
+  assert.throws(() => jobOf([...args.slice(0, 6), '--mp4', '/tmp/gun.mp4']), /under films\/hm-ep01\/renders/);
+  assert.throws(() => jobOf([...args.slice(0, 6), '--out', 'films/hm-ep01/f_%d.png']), /under films\/hm-ep01\/renders/, 'stills in the episode folder would pack the episode');
+  assert.throws(() => jobOf([...args.slice(0, 6), '--out', 'films/hm-ep01/renders/f_%d.png']), /folder of their own/);
+  assert.deepEqual(jobOf([...args.slice(0, 6), '--out', 'films/hm-ep01/renders/t3/f_%d.png']).outputs, ['films/hm-ep01/renders/t3']);
   assert.throws(() => jobOf(['--film', 'films/x', '--tier', 'dbg', '--dbg', 'films/x/r.jsonl']), /pixel renders/);
   assert.throws(() => jobOf(['--film', 'films/x', '--tier', 'final', '--mp4', 'films/x/a.mp4']), /kai-ok/);
   const steps = plan({ shotArgs: args, kit: 'abc', id: 'hm-ep01-1', tmp: '/t' }), by = Object.fromEntries(steps.map(s => [s.what, s]));

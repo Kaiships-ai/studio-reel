@@ -18,10 +18,10 @@ before.
 - Segment cache (`render/cache.mjs`). A tier mp4 writes `<mp4>.json` beside it. The sidecar holds a key over the kit
   (the git trees of `styles/stick-man` and `kit/`, plus any uncommitted change), the tier, the size, the query, the
   frames, `vo/words.json`, the bible data, the muxed audio, and the content of every file the page loaded. The next run
-  with the same inputs prints `cache hit` and renders nothing. Any change prints `cache miss: <input> changed`. A render
+  with the same inputs prints `cache hit` and renders nothing. A render starts by removing the old sidecar, writes the mp4 to a temp file renamed on success, and writes the sidecar last with the mp4's size and hash, so a killed or overwritten render is never a hit. Any change prints `cache miss: <input> changed`. A render
   from another tier is never reused. `--no-cache 1` always renders.
 - Render lock (`render/lock.mjs`). Every pixel tier holds `~/.cache/stick-man/render.lock` (or `$STICK_RENDER_LOCK`)
-  with a heartbeat every 20 s. A lock with no heartbeat for 120 s, or whose process on this host is gone, is taken over.
+  with a heartbeat every 20 s. On this host a lock is taken over only when its process is gone; from another host, after 120 s without a heartbeat. Takeover runs under an exclusive `<lock>.takeover` guard, so two takers never both win.
   `--lock-wait <s>` sets the wait (default 3600). `--min-free-gb` (default 5) refuses to start on a full disk.
 - Pixel gates. `colourgate.mjs` exits 2 on a T2 proof (read from the sidecar) or on any mp4 under 720 wide, and tells
   you to render with `--tier review`.
@@ -29,7 +29,7 @@ before.
   without `renders/` and `deliver/`, then copies it by scp to `pro:stick-sync/<job>/`. An Orca terminal on `mac-pro`
   runs `git pull --ff-only origin main` and `pro.mjs --remote`. The remote side refuses when its HEAD is not the
   origin/main this machine fetched. It unpacks the episode, runs shot.mjs (lock and disk check), and packs the outputs.
-  The local side copies them back into `films/<ep>/`. `--dry-run 1` prints every step and runs nothing.
+  The local side copies them back into `films/<ep>/`. Outputs must sit under `films/<ep>/renders/`, stills in a folder of their own there. `--dry-run 1` prints every step and runs nothing.
 
 ## Driving it
 
