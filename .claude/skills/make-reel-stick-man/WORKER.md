@@ -45,7 +45,7 @@ Everything else comes as a free-form spec from Studio.
 - **Renders run on the Mac Pro only.** Kai's MacBook Air never renders video. If the Pro is down, send `worker_done` with
   `status: blocked` and `problems: blocked: mac-pro down`. Do not render locally.
 - **A new version uses the current kit** (`origin/main`). Show what the kit changed against the previous version:
-  `tools/abtest.mjs` when it exists, else a side sheet of the two versions.
+  `styles/stick-man/tools/abtest.mjs` (blind A|B); if it cannot run, a side sheet of the two versions.
 - **You run an independent reviewer.** It is a separate subagent that did not make the change, and it gets only the film
   and Kai's notes. Put its verdict in `review:` of `worker_done`. Studio's own check comes on top.
 - **status.json:** you write all of it, except `approval.state` `kai_approved` and `posted`, and `published`. Studio
