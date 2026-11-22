@@ -63,6 +63,11 @@ path. A FAIL or a DRAFT keeps ◇5 OPEN.
   Light rides a figure (Kai 23/11, A v11 0:16: "light comes FROM the character"): from the rows' `lights` (engine/play.js
   writes every point or spot light within 4 m of a head, with `carried` when it sits under a hand prop or a held prop), a
   light that is not carried and keeps with a head that travels >= 0.6 m in 15 frames fails; a set lamp or a carried torch passes.
+  Why a region is blown (Kai 23/11, A v11: four spots, four different sources): `node styles/stick-man/tools/gates/blame.mjs
+  --film <part> --frame <f> --box <x0,y0,x1,y1 as the FAIL line prints it> [--query ..] [--lights 1] [-- <shot.mjs args>]`
+  renders the frame once per source with only that source dimmed (`?ablate=` in `engine/play.js`, `kit/look/ablate.js`:
+  sun, hemi, fill, every lamp, each lamp alone, fog, air, shafts, highlight bloom) and ranks them by how much the region
+  drops; when none does alone, the surface or the exposure is the cause.
   It runs at ◇5 beside colourgate (`GATES.json`): `node styles/stick-man/tools/gates/valuegate.mjs
   films/<slug>` (final render, review/shot-rows.jsonl) or `--mp4 <file> --rows <rows.jsonl>`; exits 1 on a fault; `test/unit/stick-valuegate.test.mjs` covers a hot pool, an even bright frame, a crushed and a lit subject, a flash.
 
