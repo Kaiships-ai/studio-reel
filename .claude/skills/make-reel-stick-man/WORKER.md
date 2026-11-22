@@ -28,6 +28,9 @@ Everything else comes as a free-form spec from Studio.
 
 - Do not post or upload. Studio uploads to R2 and posts, after Kai taps Post; it writes `published`.
 - Do not message people or other sessions. Your only message is the `worker_done` report.
+- A command that may run over ~3 minutes (a render, the Pro round trip, the full test suite, a CI watch, a push) runs
+  in the background (`run_in_background: true`). Do the next independent step while it runs and let the notification
+  wake you. No foreground waits, no `sleep` loops.
 - 720p only. 1080p or full resolution only when Kai asked for it in this job.
 - Never edit `core/`, `styles/`, the engine or the kit for one film. A kit fault is its own PR with an independent
   review (`.agents/playbooks/stick-man-kit-fix.md`).
