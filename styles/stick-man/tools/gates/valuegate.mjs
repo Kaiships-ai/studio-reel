@@ -119,9 +119,10 @@ export function headBoxes(row, w = W, h = H, RW = row?.px?.[0] ?? 1080, RH = row
 // glowing white block, and the old box, 1.6 head heights under the head, hid it)
 export function figureMask(row, w = W, h = H) {
   const A = Object.values(row?.actors || {}).filter(a => a.inFrame !== false);
-  if (!row?.camera || !A.length || A.some(a => !a.headW || !a.limbs?.L?.shoulder)) return headBoxes(row, w, h);
-  const m = new Uint8Array(w * h), cam = row.camera;
-  const px = P => { const n = project(cam, P, w, h); return n && [(n[0] + 1) / 2 * w, (1 - n[1]) / 2 * h]; };
+  const cam = row?.camera, F = cam && cam.target.map((x, i) => x - cam.pos[i]);
+  if (!cam || !A.length || A.some(a => !a.headW || !a.limbs?.L?.shoulder) || Math.abs(F[2]) > 0.995 * Math.hypot(...F)) return headBoxes(row, w, h);   // straight down: project() has no right vector
+  const m = new Uint8Array(w * h), [ox, oy] = (cam.offset || [0, 0]).map(v => v * h / 1920);   // play.js setViewOffset: the picture moves by -offset (1920-px units)
+  const px = P => { const n = project(cam, P, w, h); return n && [(n[0] + 1) / 2 * w - ox, (1 - n[1]) / 2 * h - oy]; };
   const rad = (P, r) => { const a = px(P); if (!a) return 0;   // the longest of the three axes on screen: a top-down shot sees x, y, not z
     return Math.max(...[[r, 0, 0], [0, r, 0], [0, 0, r]].map(d => { const b = px(P.map((x, i) => x + d[i])); return b ? Math.hypot(b[0] - a[0], b[1] - a[1]) : 0; })); };
   const capsule = (P, Q, r) => { const a = px(P), b = px(Q), R = rad(mixP(P, Q, 0.5), r); if (!a || !b || !R) return;
@@ -151,7 +152,7 @@ export function lightRides(rows) {
       const dA = b.r.actors[who[0]].headW.map((v, i) => v - who[1].headW[i]), dL = b.pos.map((v, i) => v - a.pos[i]), mv = Math.hypot(...dA);
       const rides = mv >= RIDE.move && Math.hypot(...dL.map((v, i) => v - dA[i])) <= RIDE.slack * mv;
       if (rides && run && a.f - run.to <= RIDE.span) { run.to = b.f; run.peak = Math.max(run.peak, mv); }
-      else if (rides) { if (run) out.push(run); run = { kind: 'light rides a figure', from: a.f, to: b.f, peak: mv, who: who[0], id }; } }
+      else if (rides) { if (run) out.push(run); run = { kind: 'light rides a figure', from: a.f, to: b.f, peak: mv, unit: 'm', who: who[0], id }; } }
     if (run) out.push(run); }
   return out;
 }

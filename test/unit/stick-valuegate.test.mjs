@@ -83,6 +83,13 @@ test("the figure mask (Kai 23/11, A v11 0:12) covers the head, hood and torso fr
   assert.ok(b && b.box[0] >= bx - 6 && b.box[2] <= bx + 6, 'only the bag is blown');
 });
 
+test("the figure mask follows the camera's view offset as three.js shifts the picture (play.js setViewOffset)", () => {
+  const row = figRow(), off = { ...row, camera: { ...row.camera, offset: [60, -40] } }, a = figureMask(row), b = figureMask(off);
+  const [x, y] = at(row, [0, 0, 1.0]), dx = Math.round(-60 * H / 1920), dy = Math.round(40 * H / 1920);   // three: dx = -offset x h / 1920
+  assert.equal(a[y * W + x], 1); assert.equal(b[(y + dy) * W + x + dx], 1, 'the torso moved with the picture');
+  assert.ok(!(figureMask({ ...row, camera: { pos: [0, 0, 6], target: [0, 0, 0], fov: 40 } }) instanceof Uint8Array), 'straight down: the head boxes instead');
+});
+
 test('head boxes read the render size the rows were made at (a 720 x 1280 render, not 1080 x 1920)', () => {
   const [a] = headBoxes({ px: [720, 1280], actors: { you: { head: [360, 640, 400, 680] } } });
   assert.ok(Math.abs((a[0] + a[2]) / 2 - W / 2) < 6, 'centred at a 720-px row');
