@@ -256,7 +256,8 @@
       "{film}"
      ],
      "advisory": true,
-     "why": "advisory until its S2 sync is checked by ear: it flags the deliberately pre-rolled glass smash on Hot Money ep01 A v9"
+     "why": "advisory until its S2 sync is checked by ear: a hit sample that is pre-rolled on purpose reads as early",
+     "source": "PR #175: the glass smash of Hot Money ep01 A v9 starts 130 ms before the picture"
     }
    ],
    "evidence": [
