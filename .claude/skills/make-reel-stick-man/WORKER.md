@@ -31,12 +31,36 @@ Everything else comes as a free-form spec from Studio.
 - 720p only. 1080p or full resolution only when Kai asked for it in this job.
 - Never edit `core/`, `styles/`, the engine or the kit for one film. A kit fault is its own PR with an independent
   review (`.agents/playbooks/stick-man-kit-fix.md`).
-- Never set `approval.state` to `kai_approved` or `posted`. Only Kai approves; a new post copy starts as `waiting_kai`.
+- A new post copy starts as `waiting_kai`. Never set `kai_approved` or `posted` (see Roles).
 - One post copy: `films/<film>/deliver/current.mp4` with its cover and caption beside it, named in `deliver.current`. Move the
   cut it replaces into `deliver/archive/`. Alternative hook cuts (`deliver/hook-*.mp4`, PUBLISH.md [5.1]) may sit beside it.
   Delete nothing.
 - Film work happens in `films/<film>/` of the main checkout (git-ignored). Kit code changes go in a fresh worktree + PR
   with an independent review.
+
+## Roles: Studio and the worker
+
+- **Kai's notes** reach you only through Studio's spec, copied word for word, with the review page link. If Kai wrote
+  in the page's boxes instead, the spec says so; read them there.
+- **Renders run on the Mac Pro only.** Kai's MacBook Air never renders video. If the Pro is down, send `worker_done` with
+  `status: blocked` and `problems: blocked: mac-pro down`. Do not render locally.
+- **A new version uses the current kit** (`origin/main`). Show what the kit changed against the previous version:
+  `styles/stick-man/tools/abtest.mjs` (blind A|B); if it cannot run, a side sheet of the two versions.
+- **You run an independent reviewer.** It is a separate subagent that did not make the change, and it gets only the film
+  and Kai's notes. Put its verdict in `review:` of `worker_done`. Studio's own check comes on top.
+- **status.json:** you write all of it, except `approval.state` `kai_approved` and `posted`, and `published`. Studio
+  writes those after Kai acts.
+- **Caption** lives at `films/<film>/deliver/caption.txt`. Studio writes it; `deliver.caption` points to it.
+
+### Job: "make post copy from vN"
+
+Studio set `approval` to `kai_approved` after Kai's K2 approval. You:
+
+1. Copy vN's mp4 to `films/<film>/deliver/current.mp4`, with its cover beside it.
+2. Move any older cut to `deliver/archive/`.
+3. Set `deliver.current`, then run status.mjs again (exit 0).
+
+Do not touch `approval` or `published`.
 
 ## Report: worker_done
 
