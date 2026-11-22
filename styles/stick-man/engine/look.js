@@ -16,7 +16,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { SavePass } from 'three/addons/postprocessing/SavePass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
-import { budgetMaterial, ROLL, ROLL_GLSL, GLOW_MAX, expLinear } from '#kit/look/highlights.js';
+import { budgetMaterial, isFigurePart, ROLL, ROLL_GLSL, GLOW_MAX, expLinear } from '#kit/look/highlights.js';
 
 export const PROPS = 1;                                            // layer that gets the ink line
 export const B = (x, y, z) => new THREE.Vector3(x, z, -y);         // Blender Z-up -> three Y-up
@@ -298,13 +298,16 @@ export function createStage({ width, height, faceInk = false, exposure = 0.88, i
   const prepass = () => swap(m => m.userData.noPrepass ? null : (inkable(m) ? idMat(m) : NM[0]), nrt, null);
   // every plain MeshStandardMaterial (sets, glb dressing without toon, props) gets the set toon ramp once
   const seen = new WeakSet();
-  const isFigure = o => { for (let p = o; p; p = p.parent) if (p.userData.stick) return true; return false; };
-  const autoToon = () => scene.traverseVisible(o => { if (!o.isMesh) return;
-    for (const mt of Array.isArray(o.material) ? o.material : [o.material]) {
-      if (!mt || seen.has(mt)) continue; seen.add(mt);
-      budgetMaterial(mt, { figure: isFigure(o), light: !!o.userData.glow });   // kit/look/highlights.js: no white or glowing prop
+  const mats = o => (Array.isArray(o.material) ? o.material : [o.material]).filter(Boolean);
+  const autoToon = () => {
+    // a material any glow() mesh uses is a light, whichever mesh comes first (kit/look/highlights.js budget)
+    scene.traverseVisible(o => { if (o.isMesh && o.userData.glow) for (const mt of mats(o)) mt.userData.light = 1; });
+    scene.traverseVisible(o => { if (!o.isMesh) return;
+    for (const mt of mats(o)) {
+      if (seen.has(mt)) continue; seen.add(mt);
+      budgetMaterial(mt, { figure: isFigurePart(o, PROPS) });   // no white or glowing prop; a prop held in a hand is a prop
       if (mt.isMeshStandardMaterial && !mt.userData.toon && !mt.userData.noToon) toonify(mt, SET_LOOK);
-    } });
+    } }); };
 
   const inkPass = new ShaderPass({
     uniforms: { tDiffuse: { value: null }, tN: { value: null }, tD: { value: null }, texel: { value: new THREE.Vector2(1 / width, 1 / height) },

@@ -102,7 +102,7 @@ export function subjectBoxes(row, w = W, h = H, RW = 1080, RH = 1920) {
 // stops 1.6 head-heights below the head, so a bag held at the waist or in a hand still counts
 export function headBoxes(row, w = W, h = H, RW = 1080, RH = 1920) {
   return Object.values(row?.actors || {}).filter(a => a.inFrame !== false && a.head).map(({ head: [x0, y0, x1, y1] }) => {
-    const cx = (x0 + x1) / 2, hw = (x1 - x0) * 0.6, hh = y1 - y0;
+    const cx = (x0 + x1) / 2, hw = (x1 - x0) * 0.8, hh = y1 - y0;   // 1.6 head widths: the hoodie's shoulders
     return [(cx - hw) * w / RW, y0 * h / RH, (cx + hw) * w / RW, (y1 + 1.6 * hh) * h / RH]; });
 }
 // samples [{ t, glare, clip, crush }] -> faults held >= HOLD s: [{ kind, from, to, peak }]
