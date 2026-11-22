@@ -14,7 +14,9 @@ a build check, a manifest entry) in the same change. Drop a row once its mistake
 | Nothing in a zip leads a buyer back to this repository: no org, repo or handle name in any file, binaries, LICENSE and notices included | `[identity]` in `kit.manifest`, `repoLinks` in `release/build.mjs`; `test/unit/build-repo-links.test.mjs` |
 | `styles/catalog.md` (what `/studio` matches ideas against) lists every style with a `showcase.jpg`; regenerate it with `tools/readme_gallery.py` | `test/unit/catalog.test.mjs` |
 | Buyer documents (top-level docs, skills, `content-types/`, `styles/catalog.md`, style guides) are English; Chinese only as a quoted term in inline code (`` `留白` `` (empty space)); third-party skills shipped verbatim are listed in `[vendored]` instead | `release/build.mjs`; `test/unit/build-vendored.test.mjs` |
-| Starter ships exactly `studio` + `make-reel`, Pro adds the six `ig-*` skills; `verify` never ships | `release/build.mjs` |
+| Starter ships exactly `studio` + `make-reel` + the stick-man pack's `make-reel-stick-man`, Pro adds the six `ig-*` skills; `verify` never ships | `release/build.mjs` |
+| The stick-man pack (option B, 22/11) ships only kit.manifest `[stick]` picks plus `packs/stick-man/`: never the s2 faces, the hand camera, the finish look (contact shadows, act grade, motion blur, haze, camera key light: the shipped stage is plain), the hoodie, gates, review, bibles, the bench or a captured non-free clip; every shipped import resolves inside the pack; nothing names Kai, Hot Money or Mixamo, and no internal jargon (the reference study, gate names, judge rounds) | `[stick_forbid]` in `kit.manifest` via `release/stickpack.mjs`; `test/unit/build-stickpack.test.mjs` |
+| A pack change never edits `styles/stick-man/` (the studio's live kit): the pack overlays its own files from `packs/stick-man/`, tests run in a copy outside the repo | `release/pack-guard.mjs` (checks.yml); `test/unit/pack-guard.test.mjs` |
 | Kai's own likeness (`engine/kai-v3.js`) never ships; buyers design their presenter | `[dev]` in `kit.manifest`; no shipped page loads it |
 | Actions minutes: work that runs on every PR lives in `checks.yml` (Linux, ~1 min); install tests are path-filtered; the five-machine matrix runs only for a `v*` tag, a manual run or the `test-all-os` label | `test/unit/ci-policy.test.mjs` |
 | A PR's tmv install renders the short ci-smoke episode; the whole sample and its 11 gates run only nightly on `main`, for a `v*` tag, by hand or with the PR label `full-episode` | `fullEpisode` tests in `test/unit/ci-policy.test.mjs` |
@@ -43,6 +45,6 @@ a build check, a manifest entry) in the same change. Drop a row once its mistake
 
 Kai's own 3D reels (Blocky Kai skits, 3D listicles) are `/make-reel-3d` → `styles/kai-reel-3d/WORKFLOW.md`, dev only; stick-man
 story reels (three.js stick figures, like pilot A) are `/make-reel-stick-man` → `.claude/skills/make-reel-stick-man/SKILL.md`,
-dev only; every other reel request stays on `/make-reel`.
+dev only (buyers get their own version from `packs/stick-man/`: `START-stick-man.md` there); every other reel request stays on `/make-reel`.
 
 Commands: `node --test test/unit/*.test.mjs` · `node release/build.mjs --dry-run` · `node test/clean-install.mjs <unzipped folder>`.

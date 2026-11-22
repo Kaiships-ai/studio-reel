@@ -108,6 +108,16 @@ Lemo-Opuscar asset release by LemoLab; they are not in the zip.
   own `LICENSE`/`README` inside `core/audio/instruments/<lib>/`; follow those when you use a sample in a film
   (`sampler.py`'s `credits()` writes the `CREDITS` lines).
 
+### Stick-man pack (`styles/stick-man/`)
+
+The full list is `styles/stick-man/LICENSES.md`.
+
+- Motion captures (joint tables only, `styles/stick-man/motion-lib/ref/ual/`): Quaternius, Universal Animation Library
+  1 and 2 (quaternius.com), CC0 1.0.
+- Sound recordings (`styles/stick-man/sound/lib/`): Freesound.org, CC0 1.0, every file credited in
+  `styles/stick-man/sound/CREDITS`.
+- Inter (Rasmus Andersson), `styles/stick-man/fonts/`: SIL Open Font License 1.1 (`OFL-inter.txt`).
+
 ### Fonts
 
 | Font | Where | Licence |

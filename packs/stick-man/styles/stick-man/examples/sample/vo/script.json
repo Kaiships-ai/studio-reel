@@ -1,0 +1,40 @@
+{
+ "model": "gemini-3.8-flash-tts",
+ "cast": {
+  "nar": "Puck"
+ },
+ "note": "sample reel: one narrator, warm and quick; about 3 words a second",
+ "say": {},
+ "lines": [
+  {
+   "id": "l01",
+   "who": "nar",
+   "style": "fast, amused storyteller",
+   "text": "Leo yawned."
+  },
+  {
+   "id": "l02",
+   "who": "nar",
+   "style": "fast, amused storyteller",
+   "text": "Three seconds later, so did Maya."
+  },
+  {
+   "id": "l03",
+   "who": "nar",
+   "style": "fast, curious",
+   "text": "Yawns are contagious, and scientists still argue about why."
+  },
+  {
+   "id": "l04",
+   "who": "nar",
+   "style": "fast, explaining",
+   "text": "One idea: it keeps a whole group alert at the same moment."
+  },
+  {
+   "id": "l05",
+   "who": "nar",
+   "style": "fast, playful, a wink at the end",
+   "text": "So if you just yawned, blame Maya."
+  }
+ ]
+}

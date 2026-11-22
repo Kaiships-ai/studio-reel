@@ -1,0 +1,1 @@
+2026-11-22 · Studio Kit stick-man pack · packaging worker edited 10 motion files in styles/stick-man that Ep1 uses, because the spec did not say pack-only · rule: packaging never edits styles/stick-man, tests in a copy outside the repo; enforced by the pack-guard check (CI + local test)
