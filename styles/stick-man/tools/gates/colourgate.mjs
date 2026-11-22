@@ -214,7 +214,8 @@ export function judge({ samples, cutTimes, script, decisions = null }) {
   }));
   const open = findings.filter(f => !f.waived);
   const verdict = open.length ? 'FAIL' : script.approved ? 'PASS' : 'DRAFT';
-  return { verdict, findings, shots: S.map(({ xs, scene, ...s }) => ({ ...s, scene: scene.id })) };
+  const unchecked = script.scenes.filter(s => !s.luma).map(s => s.id);   // G9 cannot see these: listed in every output
+  return { verdict, findings, unchecked, shots: S.map(({ xs, scene, ...s }) => ({ ...s, scene: scene.id })) };
 }
 
 export function report(res, name, script) {
@@ -262,11 +263,12 @@ function main(argv) {
   let res;
   try { res = gate(mp4, readJson(scriptFile), decisions); } catch (e) { console.error(`colour-script.json: ${e.message}`); process.exit(2); }
   const md = report(res, path.basename(mp4), res.script), line = `${res.verdict} · ${CHECKS.map(c => `${c.id} ${res.findings.filter(f => f.check === c.id && !f.waived).length}`).join(', ')} · ${path.basename(mp4)}`;
-  if (out === 'json') console.log(JSON.stringify({ file: mp4, verdict: res.verdict, findings: res.findings, shots: res.shots }));
+  if (res.unchecked.length) console.error(`colourgate: brightness not checked (no luma in the script): ${res.unchecked.join(', ')}`);
+  if (out === 'json') console.log(JSON.stringify({ file: mp4, verdict: res.verdict, findings: res.findings, unchecked: res.unchecked, shots: res.shots }));
   else if (out) {
     fs.mkdirSync(path.join(out, 'review'), { recursive: true });
     fs.writeFileSync(path.join(out, 'review/colourgate.md'), md);
-    fs.writeFileSync(path.join(out, 'review/colour.json'), JSON.stringify({ file: path.basename(mp4), verdict: res.verdict, findings: res.findings, shots: res.shots }, null, 1));
+    fs.writeFileSync(path.join(out, 'review/colour.json'), JSON.stringify({ file: path.basename(mp4), verdict: res.verdict, findings: res.findings, unchecked: res.unchecked, shots: res.shots }, null, 1));
     console.log(`review/colourgate.md: ${line}`);
   } else console.log(md);
   process.exit(res.verdict === 'PASS' ? 0 : 1);

@@ -7,6 +7,6 @@ export const EXP_MAX = 1.5;
 export function exposureWarnings(act) {
   const e = act?.grade?.exp;
   if (!Number.isFinite(e) || e <= EXP_MAX) return [];
-  return [`${act.name || act.title || 'act'}: grade.exp ${e} > ${EXP_MAX} multiplies the finished frame after tone mapping, so it ` +
+  return [`${act.name || act.set || act.title || 'act'}: grade.exp ${e} > ${EXP_MAX} multiplies the finished frame after tone mapping, so it ` +
     'clips and the shoulder flattens it: brighten the place with its lights (light.power, hemi, fillPower, lamp, lamps) instead'];
 }

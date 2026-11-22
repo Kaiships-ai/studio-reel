@@ -7,6 +7,7 @@ test('an act graded over the exposure limit warns; one lit by its lights does no
   assert.equal(EXP_MAX, 1.5);
   assert.deepEqual(exposureWarnings({ name: 'lit', grade: { exp: 1.4 } }), []);
   assert.deepEqual(exposureWarnings({ name: 'none' }), []);
+  assert.match(exposureWarnings({ set: 'r5chase', grade: { exp: 2 } })[0], /^r5chase: /, 'an act without a name is labelled by its set');
   const [w] = exposureWarnings({ name: 'r5chase', grade: { exp: 2.2 } });
   assert.match(w, /^r5chase: grade\.exp 2\.2 > 1\.5/);
   assert.match(w, /lights/);
