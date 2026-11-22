@@ -5,8 +5,8 @@
 // floating in white is the stare.
 //   node styles/stick-man/tools/gates/eyegate.mjs [--json 1]     -> a table, exit 1 when a design fails
 import { pathToFileURL } from 'node:url';
-import { judge, LIMITS } from '../../engine/eyegeom.js';
-import { EXPR } from '../../engine/faces.js';
+import { judge, LIMITS } from '#engine/eyegeom.js';
+import { EXPR } from '#engine/faces.js';
 
 const ST = 0.022;   // faces.js eye(): the ring's ink width
 // the kit's ring eyes (faces.js eye(), white > 0): a pupil in a white disc; its share of the disc's width is what reads
@@ -17,7 +17,7 @@ export function kitRing(name, D) {
   return { name, kind: 'kit ring', pupilW, whiteAbove: null, ok, bad: ok ? [] : [`pupil ${(pupilW * 100).toFixed(0)}% of the ring (< ${LIMITS.shock.pupilW * 100}%)`] };
 }
 export async function eyegate() {
-  const S2 = await import('../../engine/facestyles/s2.js'), rows = [];
+  const S2 = await import('#engine/facestyles/s2.js'), rows = [];
   for (const [name, D] of Object.entries(S2.DESIGNS)) if (D.rx && D.ry) rows.push({ name, kind: 's2', ...judge(D) });
   for (const [name, D] of Object.entries(EXPR)) if (!name.endsWith('_o') && !name.endsWith('_O') && (D.white || 0) > 0.01 && D.eye === 'oval') rows.push(kitRing(name, D));
   return { ok: rows.every(r => r.ok), rows };
