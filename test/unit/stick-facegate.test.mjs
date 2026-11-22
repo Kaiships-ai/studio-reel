@@ -79,3 +79,31 @@ test('rows made before the gate (no faceStretch) never pass', () => {
   assert.equal(R.ok, false);
   assert.equal(R.unmeasured, BEFORE.length);
 });
+
+// faces.js itself (a stub canvas: node has no document): an s2 face on a turned head is wrapped at the yaw s2 names and
+// its stretch is measured over the columns the drawing inks (here the band a teller's left eye sat in, flat x -0.20..-0.10)
+test('faces.js wraps an s2 face at the yaw s2 names and measures the stretch of the inked columns', async () => {
+  const { faceRig, EXPR } = await import('../../styles/stick-man/engine/faces.js');
+  S2.use();
+  const inkU = [-0.20, -0.10], px = u => 256 + 512 * u;
+  const ctx = () => new Proxy({ getTransform: () => ({}) }, {
+    get(t, k) {
+      if (k in t) return t[k];
+      if (k === 'getImageData') return (x, y, w, h) => { const d = new Uint8ClampedArray(w * h * 4);
+        for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) if (x + c >= px(inkU[0]) && x + c < px(inkU[1])) d[4 * (r * w + c) + 3] = 255;
+        return { data: d }; };
+      return () => {};
+    }, set(t, k, v) { t[k] = v; return true; } });
+  const prev = globalThis.document;
+  globalThis.document = { createElement: () => { const c = { width: 512, height: 512 }; const g = ctx(); g.canvas = c; c.getContext = () => g; return c; } };
+  try {
+    const FR = faceRig(1, {}), ya = 1.115, sl = [ya, 0, 1, 0];
+    assert.equal(EXPR.y_suspicious.style, 's2');
+    FR.draw('y_suspicious', 0, 100, [], null, null, sl);
+    const yw = STYLE_DRAW.s2.wrap({ sl }), worst = yaw => { let m = 1;
+      for (let u = inkU[0]; u <= inkU[1]; u += 0.002) { const a = Math.asin(u / R); if (Math.cos(a + yaw) >= 0.08) m = Math.max(m, Math.cos(a + yaw) / Math.cos(a)); } return m; };
+    assert.ok(Math.abs(yw) < ya - 0.5, 'the hood-less teller is held back');
+    assert.ok(Math.abs(FR.stats.stretch - worst(yw)) < 0.05, `measured ${FR.stats.stretch} vs wrapped at s2's yaw ${worst(yw).toFixed(3)}`);
+    assert.ok(FR.stats.stretch < LIMIT);
+  } finally { globalThis.document = prev; }
+});

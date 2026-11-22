@@ -569,7 +569,7 @@ export function faceRig(headW, opt = {}) {
           // behind the edge and fades, the near one stays: a profile, not a drawing sliding off a disc. A face style that
           // holds its marks back from a hood's rim names the yaw it wraps at (STYLE_DRAW[style].wrap): the whole drawing is
           // wrapped at that yaw, never slid across the flat canvas first (a mark from the drawing's edge came out 4x wide)
-          const SW = STYLE_DRAW[(F || E).style]?.wrap, yw = SW ? SW({ ...opt, sl }) : sl[0];
+          const SW = FACE_STYLE.name && STYLE_DRAW[(F || E).style]?.wrap, yw = SW ? SW({ ...opt, sl }) : sl[0];
           og.clearRect(0, 0, 512, 512); og.drawImage(cv, 0, 0);
           const od = og.getImageData(0, 0, 512, 512).data, inked = new Uint8Array(512);
           for (let i = 3; i < od.length; i += 4) if (od[i] > 32) inked[((i - 3) >> 2) & 511] = 1;

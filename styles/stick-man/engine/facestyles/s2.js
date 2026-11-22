@@ -59,8 +59,8 @@ function plate3(top, bot, P) {
 // nearer: at 0.48 rad it cut the mouth), then only a tenth as far (a quarter left the far eye on the head's outline, cut in
 // half): T.w is the yaw faces.js wraps the drawing round the head at (STYLE_DRAW.s2.wrap), so each mark is foreshortened by
 // its own place on the ball. (Until 22/11 the drawing was slid back across the flat canvas by 0.462 sin(eff - yaw) and then
-// wrapped at the full yaw: a mark taken from the drawing's edge came out cos(a + yaw) / cos(a) wider, up to 4x at a 1.1 rad
-// turn: Hot Money A v10a's hero face crammed on his hood's edge, a teller's eye a wide black band. tools/gates/facegate.mjs.)
+// wrapped at the full yaw: a mark taken from the drawing's edge came out cos(a + yaw) / cos(a) wider, 4x on an eye at a
+// 1.1 rad turn, 7.5x at the worst column: Hot Money A v10a's hero face crammed on his hood's edge, a teller's eye a wide black band. tools/gates/facegate.mjs.)
 // A hood or cap top that dropped for the turn comes back up as far as the marks came back. Near profile (Hot Money r5 reel 1: a grey ghost face on a head still half
 // open to the lens, 239 part-faded frames with a 0.88-1.38 fade): under a cap, past yk2 the marks catch up with the skull,
 // reaching it at yc, and fade over yfCap as the strips carry them round the outline; under a hood they stay held back inside
