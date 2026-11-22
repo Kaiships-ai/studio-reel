@@ -2,6 +2,8 @@
 // every `beatMs`. On this host a lock is stale when its process is gone (a live holder is never taken over, whatever its
 // beat); from another host, when its beat is older than `ttlMs`. A stale lock is taken over by one process at a time, under
 // a `<lock>.takeover` guard created exclusively, so a killed render never blocks the machine and two takers never both win.
+// The lock appears whole: written to a temp file, then hard-linked into place (link fails if the lock exists). A plain
+// `wx` write shows an empty file for a moment, which a racer read as stale and removed (two holders on CI, 22/11).
 // Waiters poll; the order among them is not a queue.
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path'; import crypto from 'node:crypto';
 
@@ -20,13 +22,21 @@ export function tryLock({ file = LOCK, what = '', ttlMs = 120000, now = Date.now
   fs.mkdirSync(path.dirname(file), { recursive: true });
   const me = { token: crypto.randomUUID(), host: os.hostname(), pid: process.pid, what, started: now, beat: now };
   for (let i = 0; i < 3; i++) {
-    try { fs.writeFileSync(file, JSON.stringify(me), { flag: 'wx' }); return { ok: true, lock: me }; }
-    catch (e) { if (e.code !== 'EEXIST') throw e; }
+    if (create(file, me)) return { ok: true, lock: me };
     const L = read(file);
     if (!stale(L, now, ttlMs)) return { ok: false, holder: L };
     if (!takeover(file, L)) return { ok: false, holder: L };
   }
   return { ok: false, holder: read(file) };
+}
+
+// put `me` at `file` whole, or false when a lock is already there
+function create(file, me) {
+  const tmp = `${file}.${me.token}.new`;
+  fs.writeFileSync(tmp, JSON.stringify(me));
+  try { fs.linkSync(tmp, file); return true; }
+  catch (e) { if (e.code !== 'EEXIST') throw e; return false; }
+  finally { fs.rmSync(tmp, { force: true }); }
 }
 
 // remove the stale lock L, holding the guard; false when another process is taking it over
