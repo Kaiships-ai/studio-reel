@@ -772,6 +772,17 @@ async function buildAct(R, X) {
       if (h) out.cross.push({ what: k, through: h.object.name || h.object.parent?.name || 'set', d: +d.toFixed(3), at: toB(h.point).map(x => +x.toFixed(3)) });
     }
     crossPrev = { f, pts: now, where };
+    // lights within 4 m of a figure (valuegate 'light rides a figure', Kai 23/11: "light comes FROM the character"): a light
+    // that travels with a figure and is not a lamp it carries (one under a hand prop or a held prop) lights every wall it passes
+    out.px = [width, height];
+    out.lights = [];
+    const heads = actors.filter(a => a.S.root.visible).map(a => a.S.parts.head.getWorldPosition(new THREE.Vector3()));
+    stage.scene.traverse(o => {
+      if (!(o.isPointLight || o.isSpotLight) || !(o.intensity > 0)) return;
+      let carried = false; for (let q = o; q; q = q.parent) { if (!q.visible) return; if (/^hp_/.test(q.name || '') || q.userData?.prop || q.userData?.rest) carried = true; }
+      const P = o.getWorldPosition(new THREE.Vector3()); if (!heads.some(h => h.distanceTo(P) < 4)) return;
+      out.lights.push({ id: o.uuid.slice(0, 8), pos: toB(P).map(x => +x.toFixed(3)), power: +o.intensity.toFixed(2), carried });
+    });
     return out;
   }
   // the shot camera's view of a fault (engine/visible.js): items [{ actor, pts: [[x, y, z] Blender world] }], one state
