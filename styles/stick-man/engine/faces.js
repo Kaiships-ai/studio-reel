@@ -429,7 +429,7 @@ export const LAYOUT = { K: 1.25, ey: 0.0, dx: 0.118, my: -0.175, glasses: { K: 1
 // style (EXPR entry `style`), in final W units on the same canvas; DRAW_KIT lends it the drawing helpers
 export const STYLE_DRAW = {};
 // where a style face on a bare head starts to fade going round it: [z0, ramp] as opt.edge (a cap's is [0.58, 0.12])
-export const BARE_EDGE = [0.55, 0.15];
+export const BARE_EDGE = [0.40, 0.15];
 export function drawFaceState(g, F, blink = 0, t = 0, o = {}) {
   if (F.style && STYLE_DRAW[F.style]) { g.save(); g.lineCap = g.lineJoin = 'round'; STYLE_DRAW[F.style](g, F, blink, t, o); g.restore(); return; }
   const Lo = o.glasses ? LAYOUT.glasses : LAYOUT, K = Lo.K, dx = Lo.dx / K;
