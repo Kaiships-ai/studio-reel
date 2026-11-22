@@ -251,7 +251,7 @@ function flatHeadMat(rgb, shade) {
 }
 // the face shell: a unit front hemisphere (+z) kept as the base; aimShell lays it on the head toward the head-local lens
 // direction d (unit), on the head's ellipsoid, with the uv of each point its position across the lens
-const SHELL_R = 1.015, _shellM = new THREE.Matrix4(), _upL = new THREE.Vector3(), _sx = new THREE.Vector3(), _sy = new THREE.Vector3(), _sz = new THREE.Vector3(), _sp = new THREE.Vector3();
+const SHELL_R = 1.015, _shellM = new THREE.Matrix4(), _upL = new THREE.Vector3(), _hU = new THREE.Vector3(), _fU = new THREE.Vector3(), _sx = new THREE.Vector3(), _sy = new THREE.Vector3(), _sz = new THREE.Vector3(), _sp = new THREE.Vector3();
 function faceShell() {
   const g = new THREE.SphereGeometry(1, 40, 30, 0, Math.PI, 0, Math.PI);
   g.userData.base = g.attributes.position.array.slice(); g.userData.d = null;
@@ -668,9 +668,14 @@ export function makeStick(spec) {
       card2d.visible = true;
       if (shell) aimShell(card2d.geometry, d, _upL.set(0, 1, 0).transformDirection(_shellM.copy(head.matrixWorld).invert()));   // the world's up in the head (the flat card stood upright)
       else { card2d.position.copy(d).multiplyScalar(HA * 1.02); card2d.lookAt(B(...P.cam)); }
+      // faceRoll (deg): how far the drawn face's up is turned from the head's own up, both seen along the lens (a face that
+      // stays level while the head tilts slides round it; tools/gates/facegate.mjs)
+      if (shell) { _fU.copy(_upL).addScaledVector(d, -_upL.dot(d)); _hU.set(0, 1, 0).addScaledVector(d, -d.y);
+        S.faceRoll = _fU.lengthSq() > 1e-8 && _hU.lengthSq() > 1e-8 ? +(_fU.angleTo(_hU) / DEG).toFixed(1) : 0; } else S.faceRoll = 0;
     } else card2d.visible = false;
     face.visible = !P.cam;
     FR.draw(e, blink, t, marks, P.cam ? B(...P.cam) : null, mx ? mx.F : null, slide);
+    S.facePlate = spec.faceTop == null ? null : spec.faceEdge ? 'cap' : 'hood';
     S.faceStats = FR.stats; S.faceVis = slide ? +slide[2].toFixed(3) : 1;   // how much of the face the lens sees (0 = the back of the head)
     S.faceSlide = slide ? slide.map(v => +v.toFixed(3)) : null;   // [face yaw, dy, vis, sin(elevation)] for the dbg rows
     const ta = P.state && EXPR[typeof P.state.a === 'string' ? P.state.a : P.state.a?.name]?.tint, tb = E.tint, u = P.state ? Math.max(0, Math.min(1, P.state.u)) : 1;

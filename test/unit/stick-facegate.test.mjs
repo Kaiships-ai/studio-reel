@@ -53,13 +53,13 @@ test("v10a's slide-then-wrap (the bug) stretches a teller's eye 4x at the turn K
 // faceStretch as the engine measured it on the teller (actor t) in v10a's banks part, frames 2140-2165, with the v10a kit
 // (before) and with the wrap (after); the head is a readable 0.2 of the frame
 const BEFORE = [1.124, 1.135, 1.147, 1.188, 1.301, 1.528, 2.046, 4.314, 7.43, 7.502, 7.473, 7.349, 4.296, 2.584, 2.354, 2.183, 1.931, 1.688, 1.576, 1.63, 1.758, 1.839, 1.76, 1.576, 1.447, 1.413];
-const rowsOf = S => S.map((s, i) => ({ f: 2140 + i, actors: { t: { inFrame: true, head: [80, 300, 520, 700], faceVis: 1, faceStretch: s } } }));
+const rowsOf = S => S.map((s, i) => ({ f: 2140 + i, actors: { t: { inFrame: true, head: [80, 300, 520, 700], faceVis: 1, faceStretch: s, faceLag: 0, faceRoll: 0, facePlate: null } } }));
 
 test("facegate fails v10a's teller and names the frames", () => {
   const R = facegate(rowsOf(BEFORE), 1280);
   assert.equal(R.ok, false);
   assert.equal(R.faults.length, 1);
-  assert.deepEqual([R.faults[0].who, R.faults[0].from, R.faults[0].to], ['t', 2144, 2165]);
+  assert.deepEqual([R.faults[0].who, R.faults[0].kind, R.faults[0].from, R.faults[0].to], ['t', 'stretched', 2144, 2165]);
   assert.ok(R.faults[0].peak > 7);
 });
 
@@ -106,4 +106,21 @@ test('faces.js wraps an s2 face at the yaw s2 names and measures the stretch of 
     assert.ok(Math.abs(FR.stats.stretch - worst(yw)) < 0.05, `measured ${FR.stats.stretch} vs wrapped at s2's yaw ${worst(yw).toFixed(3)}`);
     assert.ok(FR.stats.stretch < LIMIT);
   } finally { globalThis.document = prev; }
+});
+
+// Kai 23/11 (Ep1 v12, 1:12): the blond teller on the phone, her face held near-frontal while her bare head turned 0.4 -> 1.14
+// rad and tilted 13 deg: faceLag and faceRoll as the engine measured them there (before the fix), and the gate's verdicts
+const LAG12 = [0.07, 0.2, 0.46, 0.77, 0.73, 0.57, 0.47, 0.5, 0.44, 0.39, 0.33, 0.22, 0.12, 0.05];
+test('facegate fails a bare head whose face turns less than the head (v12 teller), never a hood holding its marks back', () => {
+  const rows = LAG12.map((g, i) => ({ f: 2142 + i, actors: { t: { inFrame: true, head: [80, 300, 520, 700], faceVis: 1, faceStretch: 1.06, faceLag: g, faceRoll: 0, facePlate: null } } }));
+  const R = facegate(rows, 1280);
+  assert.deepEqual(R.faults.map(f => [f.kind, f.from, f.to]), [['slides (turn)', 2143, 2153]]);
+  const hood = rows.map(r => ({ ...r, actors: { t: { ...r.actors.t, facePlate: 'hood' } } }));
+  assert.equal(facegate(hood, 1280).ok, true);
+});
+
+test('facegate fails a face that stays level while its head tilts', () => {
+  const rows = [0, 3, 8, 11, 13, 13, 12, 9, 4, 1].map((d, i) => ({ f: 2160 + i, actors: { t: { inFrame: true, head: [80, 300, 520, 700], faceVis: 1, faceStretch: 1, faceLag: 0, faceRoll: d, facePlate: 'hood' } } }));
+  const R = facegate(rows, 1280);
+  assert.deepEqual(R.faults.map(f => [f.kind, f.from, f.to]), [['slides (tilt)', 2162, 2167]]);
 });

@@ -534,8 +534,9 @@ export function faceRig(headW, opt = {}) {
   const group = new THREE.Group(), cards = {};
   // measurement for __dbg (the forensic mouth numbers): dark mouth area (W^2, ink pixels below the eyes) and the drawing key;
   // stretch: how much wider than drawn the widest-stretched mark came out on the head this frame (the strips' own scale over
-  // every column that has ink or white in it and shows at half alpha or more; 1 = as drawn; tools/gates/facegate.mjs)
-  const stats = { mouth: 0, key: '', stretch: 1 };
+  // every column that has ink or white in it and shows at half alpha or more; 1 = as drawn; tools/gates/facegate.mjs);
+  // lag: how far (rad) the drawn face turned less than the head did (a face style holding its marks back from a hood's rim)
+  const stats = { mouth: 0, key: '', stretch: 1, lag: 0 };
   const darkMouth = () => { const d = g.getImageData(150, 318, 212, 150).data; let n = 0;
     for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 128 && d[i] + d[i + 1] + d[i + 2] < 200) n++; return n / (512 * 512); };
   let key = '';
@@ -562,7 +563,7 @@ export function faceRig(headW, opt = {}) {
           const o2 = { ...opt, top: top ?? opt.top, sl };   // (sl: a face style may answer the turn itself)
           if (F) drawFaceState(g, F, blink, t, o2); else drawFace(g, expr, blink, t, o2); };
         paint(); stats.mouth = darkMouth(); stats.key = k.length > 64 ? hashKey(k) : k;   // measured on the face itself, not where it turned
-        stats.stretch = 1;
+        stats.stretch = 1; stats.lag = 0;
         if (sl && (sl[0] || sl[1] || sl[2] < 1)) {
           // the face drawn on the ball of the head (asset 2.4): each vertical strip of the flat drawing sits at its own
           // longitude, turned by the face's yaw (sl[0], rad), so features squeeze as they go round, the far eye slides
@@ -570,6 +571,7 @@ export function faceRig(headW, opt = {}) {
           // holds its marks back from a hood's rim names the yaw it wraps at (STYLE_DRAW[style].wrap): the whole drawing is
           // wrapped at that yaw, never slid across the flat canvas first (a mark from the drawing's edge came out 4x wide)
           const SW = FACE_STYLE.name && STYLE_DRAW[(F || E).style]?.wrap, yw = SW ? SW({ ...opt, sl }) : sl[0];
+          stats.lag = Math.abs(sl[0]) - Math.abs(yw);
           og.clearRect(0, 0, 512, 512); og.drawImage(cv, 0, 0);
           const od = og.getImageData(0, 0, 512, 512).data, inked = new Uint8Array(512);
           for (let i = 3; i < od.length; i += 4) if (od[i] > 32) inked[((i - 3) >> 2) & 511] = 1;
