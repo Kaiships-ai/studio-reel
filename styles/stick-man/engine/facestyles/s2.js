@@ -57,12 +57,15 @@ function plate3(top, bot, P) {
 }
 // the head's turn (o.sl = [face yaw rad, dy, vis, sin elevation]): the marks follow the skull to YK (a hood's side rim is
 // nearer: at 0.48 rad it cut the mouth), then only a tenth as far (a quarter left the far eye on the head's outline, cut in
-// half), by sliding the drawing back (the strips put a flat x at asin(x / R0) + yaw); a hood or cap top that dropped for the
-// turn comes back up as far as the marks came back. Near profile (Hot Money r5 reel 1: a grey ghost face on a head still half
+// half): T.w is the yaw faces.js wraps the drawing round the head at (STYLE_DRAW.s2.wrap), so each mark is foreshortened by
+// its own place on the ball. (Until 22/11 the drawing was slid back across the flat canvas by 0.462 sin(eff - yaw) and then
+// wrapped at the full yaw: a mark taken from the drawing's edge came out cos(a + yaw) / cos(a) wider, up to 4x at a 1.1 rad
+// turn: Hot Money A v10a's hero face crammed on his hood's edge, a teller's eye a wide black band. tools/gates/facegate.mjs.)
+// A hood or cap top that dropped for the turn comes back up as far as the marks came back. Near profile (Hot Money r5 reel 1: a grey ghost face on a head still half
 // open to the lens, 239 part-faded frames with a 0.88-1.38 fade): under a cap, past yk2 the marks catch up with the skull,
 // reaching it at yc, and fade over yfCap as the strips carry them round the outline; under a hood they stay held back inside
 // the rim (caught up, the rim cut them) and fade between yf0 and yf1, where the opening is a sliver
-const R0 = 0.462, YK_CAP = 0.45, YK_HOOD = 0.30, YS = 0.10;
+const YK_CAP = 0.45, YK_HOOD = 0.30, YS = 0.10;
 function turn(o) {
   const YK = o.edge ? YK_CAP : YK_HOOD, sl = o.sl, ya = sl ? Math.abs(sl[0]) : 0, sg = sl && sl[0] < 0 ? -1 : 1;
   let eff = ya <= YK ? ya : YK + (ya - YK) * YS;
@@ -70,7 +73,7 @@ function turn(o) {
   if (o.edge && ya > yk2) { const e2 = YK + (yk2 - YK) * YS; eff = ya >= yc ? ya : e2 + (ya - yk2) * (yc - e2) / (yc - yk2); }
   const m = x => Math.min(1, Math.max(0, x - (o.topKnee || 0)) / 0.3);
   const [f0, f1] = o.edge ? TUNE.yfCap : [TUNE.yf0, TUNE.yf1];
-  return { a: clamp((f1 - ya) / (f1 - f0)), ux: R0 * Math.sin(sg * (eff - ya)),
+  return { a: clamp((f1 - ya) / (f1 - f0)), w: sg * eff,
     top: o.top == null ? null : o.top + (o.topSide || 0) * (m(ya) - m(eff)), bot: (o.edge ? TUNE.botCap : TUNE.botHood) - (sl ? sl[1] : 0) };
 }
 // a take into a design with x.zRamp = N: its accent re-timed over N frames from the key, eased at both ends (eyes on the
@@ -287,7 +290,7 @@ function face6(g, F, blink, t, o, T) {
   const eyeTop = Math.max(ryMax, 0.95 * F.rx * 1.05 * clamp((crunch(F) - SHUT) / (1 - SHUT))) + 0.004;
   const P = plate3(T.top, T.bot - (F.x.pBot || 0), { scMin: F.x.pScMin, scMin2: F.x.pScMin2, browTop, eyeTop: ey + eyeTop, mouthBot: my - mouthDrop(F), roomGap: bh0 - tiltUp - 0.5 * th0 - eyeTop, lift: Math.max(0, lL, lR) });
   const k = r2k(F) / Math.sqrt(P.sc), th = th0 * k ** 0.85;
-  g.save(); g.translate(T.ux, P.sh); g.scale(P.sc, P.sc);
+  g.save(); g.translate(0, P.sh); g.scale(P.sc, P.sc);
   for (const s of [-1, 1]) {
     const ex = s * dx + gxs;
     if (P.eyeA > 0.01) { g.globalAlpha = P.eyeA; eye4(g, Fe, ex, s, ey, blink, t, k, tilt, 0, life); }
@@ -311,6 +314,7 @@ STYLE_DRAW.s2 = (g, F, blink, t, o) => {
   face6(h, F, blink, t, o, T);
   g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = T.a; g.drawImage(OFF, 0, 0); g.restore();
 };
+STYLE_DRAW.s2.wrap = o => turn(o).w;
 export const DESIGNS = {
   y_alert: { style: 's2', eye: 'oval', mouth: 'tight', rx: 0.066, ry: 0.098, white: 0.1, bw: 1, lid: 0.04, brow: [0, 0.146, 0.012], mw: 0.9, x: { mC: -0.15 } },
   y_worried: { style: 's2', eye: 'oval', mouth: 'tight', rx: 0.066, ry: 0.114, white: 0.36, bw: 1.15, lid: -0.04, brow: [-28, 0.17, 0.016], mw: 1.05, x: { mC: -0.85, mWv: 1, bIn: 0.006, eSt: 0.04 } },
