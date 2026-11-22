@@ -1,5 +1,5 @@
 {
- "about": "The film's colour script in numbers ([1.7]); styles/stick-man/tools/gates/colourgate.mjs checks the final render against it at ◇5. Copy to films/<slug>/colour-script.json, one scene per place or time, back to back from 0 to the render's length (s). Every look Kai approves is written here first (hues, flood, ranges), then graded. Hue families: red, warm (amber, orange, yellow), green, cool (cyan, blue), pink (magenta, violet). Ranges are [min, max] of the shot median: rb = mean red over mean blue (1 neutral), sat = HSV saturation 0-1, black = 2nd percentile luma 0-255. A key left out takes the default in colourgate.mjs DEFAULTS. Remove `about` and the example scenes' text when you fill it.",
+ "about": "The film's colour script in numbers ([1.7]); styles/stick-man/tools/gates/colourgate.mjs checks the final render against it at ◇5. Copy to films/<slug>/colour-script.json, one scene per place or time, back to back from 0 to the render's length (s). Every look Kai approves is written here first (hues, flood, ranges, brightness), then lit: each scene's light and grade go into its acts (act `light`, `grade`, practical lamps) and render that way. Post never grades the rendered picture: it draws the HUD and the locks (a hero car's paint) only, so a new look is a new render, never a regrade of a graded master. Keep grade.exp <= 1.5 (it multiplies after tone mapping; engine/play.js warns over it): brighten a dark place with its lights. Hue families: red, warm (amber, orange, yellow), green, cool (cyan, blue), pink (magenta, violet). Ranges are [min, max] of the shot median: rb = mean red over mean blue (1 neutral), sat = HSV saturation 0-1, black = 2nd percentile luma 0-255; luma = the scene's median Rec.601 luma 0-255 (a night scene may sit at 40-80; there is no film-wide floor unless `defaults.film` sets one). A key left out takes the default in colourgate.mjs DEFAULTS; a scene without `luma` is reported as unchecked. Remove `about` and the example scenes' text when you fill it.",
  "film": "<slug>",
  "approved": { "by": "", "at": "" },
  "palette": { "signature": "warm", "offColor": "cool" },
@@ -8,9 +8,9 @@
  "events": [],
  "scenes": [
   { "id": "OPEN", "from": 0, "to": 6, "intent": "one line: the place, the light, the feeling (from TREATMENT.md's colour table)",
-    "hues": ["pink"], "flood": [], "rb": [0.8, 1.6], "sat": [0.25, 0.7], "black": [10, 26] },
+    "hues": ["pink"], "flood": [], "rb": [0.8, 1.6], "sat": [0.25, 0.7], "black": [10, 26], "luma": [90, 130] },
   { "id": "FIGHT", "from": 6, "to": 12, "intent": "night, police lights; the hero is not in white here",
-    "hues": ["red"], "hero": false,
+    "hues": ["red"], "hero": false, "luma": [35, 70],
     "events": [{ "from": 8.2, "to": 8.6, "why": "muzzle flash" }] }
  ]
 }
