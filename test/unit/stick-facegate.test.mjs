@@ -132,3 +132,22 @@ test('a bare head (no hood or cap) turns its face all the way with the skull; a 
     if (Math.abs(ya) > 0.5) assert.ok(Math.abs(STYLE_DRAW.s2.wrap({ ...PLATES.hood, sl: [ya, 0, 1, 0] })) < Math.abs(ya) - 0.1, `hood yaw ${ya.toFixed(1)}`);
   }
 });
+
+// cast.js: the face shell is laid with the head's own up, whatever the lens direction (a tilted head sees the lens off its
+// axes); faceRoll reads the frame the shell was actually laid with (Kai 23/11, Ep1 v12: the teller's head tilted 13 deg,
+// her face stayed level)
+test('the face shell takes the head\'s up: no roll from any lens direction; a level face on a tilted head reads 13 deg', async () => {
+  const THREE = await import('three');
+  const { faceShell, layFace, faceRollOf } = await import('../../styles/stick-man/engine/cast.js');
+  const g = faceShell();
+  for (const [x, y, z] of [[0, 0, 1], [0.3, 0.2, 0.9], [-0.6, -0.4, 0.7], [0.9, 0.1, 0.4], [0.2, 0.62, 0.76]]) {
+    const d = new THREE.Vector3(x, y, z).normalize();
+    assert.equal(layFace(g, d), 0, `lens ${[x, y, z]}`);
+    const sy = new THREE.Vector3().fromArray(g.userData.sy), sx = new THREE.Vector3().crossVectors(sy, d);
+    assert.ok(Math.abs(sx.y) < 1e-9, `lens ${[x, y, z]}: the face's horizontal leans off the head's (${sx.y})`);
+  }
+  const d = new THREE.Vector3(0.3, 0.2, 0.9).normalize();
+  layFace(g, d);
+  g.userData.sy = new THREE.Vector3().fromArray(g.userData.sy).applyAxisAngle(d, 13 * Math.PI / 180).toArray();
+  assert.ok(Math.abs(faceRollOf(g, d) - 13) < 0.2, `${faceRollOf(g, d)}`);
+});

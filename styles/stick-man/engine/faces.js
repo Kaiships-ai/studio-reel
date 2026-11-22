@@ -535,7 +535,7 @@ export function faceRig(headW, opt = {}) {
   // measurement for __dbg (the forensic mouth numbers): dark mouth area (W^2, ink pixels below the eyes) and the drawing key;
   // stretch: how much wider than drawn the widest-stretched mark came out on the head this frame (the strips' own scale over
   // every column that has ink or white in it and shows at half alpha or more; 1 = as drawn; tools/gates/facegate.mjs);
-  // lag: how far (rad) the drawn face turned less than the head did (a face style holding its marks back from a hood's rim)
+  // lag: how far (rad) the drawn face turned less than its turn target (sl[0], faceTurn x the head's yaw) (a face style holding its marks back from a hood's rim)
   const stats = { mouth: 0, key: '', stretch: 1, lag: 0 };
   const darkMouth = () => { const d = g.getImageData(150, 318, 212, 150).data; let n = 0;
     for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 128 && d[i] + d[i + 1] + d[i + 2] < 200) n++; return n / (512 * 512); };

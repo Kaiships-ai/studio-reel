@@ -6,7 +6,7 @@
 //   more), and the render's rows carry it as actors[n].faceStretch. On a ball a mark only narrows as it turns away from the
 //   lens; the widest it can legally come out is ~1.2x (a mouth corner at the drawing's side, wrapped to the front). Wider
 //   than LIMIT on a readable face (head >= MIN_FACE of the frame's height, the face >= half seen) for HOLD frames is a
-//   stretched face. faces.js also reports faceLag (how much less than the head the drawn face turned) and cast.js faceRoll
+//   stretched face. faces.js also reports faceLag (how much less than its turn target, faceTurn x the head's yaw, the drawn face turned) and cast.js faceRoll
 //   (how far the face's up is from the head's up, along the lens): a bare head's face more than LAG behind, or any face
 //   more than ROLL off its head's tilt, for HOLD frames, slides on the head.
 //   node styles/stick-man/tools/gates/facegate.mjs films/<slug>                          rows from review/shot-rows.jsonl
@@ -27,7 +27,7 @@ export const LIMIT = 1.3, HOLD = 3, MIN_VIS = 0.5;
 export const LAG = 0.12, ROLL = 6;
 const CHECKS = [
   { kind: 'stretched', val: a => a.faceStretch, bad: a => a.faceStretch > LIMIT, why: p => `a face mark came out ${p.toFixed(2)}x as wide as drawn (limit ${LIMIT}x): the face is stretched round the head` },
-  { kind: 'slides (turn)', val: a => a.faceLag, bad: a => !a.facePlate && a.faceLag > LAG, why: p => `the face turned ${p.toFixed(2)} rad less than the head (limit ${LAG} on a head with no hood or cap): it slides across the head` },
+  { kind: 'slides (turn)', val: a => a.faceLag, bad: a => !a.facePlate && a.faceLag > LAG, why: p => `the face turned ${p.toFixed(2)} rad less than its head's turn (limit ${LAG} on a head with no hood or cap): it slides across the head` },
   { kind: 'slides (tilt)', val: a => a.faceRoll, bad: a => a.faceRoll > ROLL, why: p => `the face stayed ${p.toFixed(0)} deg off the head's tilt (limit ${ROLL}): it slides round the head` },
 ];
 const MEASURED = ['faceStretch', 'faceLag', 'faceRoll'];
