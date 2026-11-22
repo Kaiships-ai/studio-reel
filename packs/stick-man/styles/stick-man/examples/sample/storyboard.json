@@ -1,0 +1,43 @@
+{
+ "film": "sample",
+ "lines": [
+  {
+   "id": "l01",
+   "role": "hook",
+   "shot": "ms",
+   "of": [
+    "leo"
+   ],
+   "see": "Leo yawns on the sofa"
+  },
+  {
+   "id": "l02",
+   "role": "setup",
+   "shot": "two",
+   "on": "Maya",
+   "see": "Maya walks in and yawns too"
+  },
+  {
+   "id": "l03",
+   "role": "explain",
+   "shot": "two",
+   "see": "Maya puzzled, Leo sceptical"
+  },
+  {
+   "id": "l04",
+   "role": "explain",
+   "shot": "est",
+   "on": "alert",
+   "see": "Leo jumps up, both wide awake"
+  },
+  {
+   "id": "l05",
+   "role": "payoff",
+   "shot": "cu",
+   "of": [
+    "maya"
+   ],
+   "see": "Maya winks at the viewer; Leo yawns again"
+  }
+ ]
+}

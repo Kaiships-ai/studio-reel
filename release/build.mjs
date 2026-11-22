@@ -1,5 +1,6 @@
 // release/build.mjs: the release zips, straight from git (uncommitted changes never ship).
-//   node release/build.mjs [--ref HEAD] [--tag v1.7] [--tier starter|pro|tmv|all] [--out dist] [--dry-run]
+//   node release/build.mjs [--ref HEAD] [--tag v1.7] [--tier starter|pro|tmv|all] [--out dist] [--dry-run] [--worktree]
+// --worktree builds from the files on disk (tracked and new, not ignored) instead of a commit: a local try-out, never a release.
 // kit.manifest decides what ships. Writes dist/kaiships-studio-<tier>-<version>.zip (every entry under
 // kaiships-studio/) and dist/SHA256SUMS. Same ref = same bytes (sorted entries, the commit's time on every file).
 // Refuses to write anything when a check fails: unclassified files, a Pro or dev file in Starter, a forbidden string,
@@ -7,11 +8,13 @@
 // Chinese text in a buyer document, a skill a document names that the edition lacks, missing licences,
 // a font a style's css/html loads that is not in the zip.
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { deflateRawSync, crc32 } from 'node:zlib';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
+import { buildStick, stickSources } from './stickpack.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const argv = process.argv.slice(2);
@@ -20,7 +23,7 @@ const REF = opt('ref', opt('tag', 'HEAD')), TAG = opt('tag', ''), OUT = resolve(
 // tmv = the paid "How we make Ten Million Views" kit (PLAN.md); it also refuses everything in [tmv_forbid]
 const TIERS = { starter: ['starter'], pro: ['starter', 'pro'], tmv: ['starter'] };
 const tiers = opt('tier', 'all') === 'all' ? ['starter', 'pro', 'tmv'] : [opt('tier')];
-const DRY = argv.includes('--dry-run');
+const DRY = argv.includes('--dry-run'), WORKTREE = argv.includes('--worktree');
 const git = (args, input) => {
   const r = spawnSync('git', args, { cwd: ROOT, input, maxBuffer: 1 << 30 });
   if (r.status !== 0) { console.error(`✗ git ${args.join(' ')}: ${String(r.stderr).trim()}`); process.exit(1); }
@@ -29,7 +32,7 @@ const git = (args, input) => {
 
 // ---------- the manifest ----------
 export function parseManifest(text) {
-  const m = { dev: [], pro: [], starter: [], forbid: [], identity: [], tmv_forbid: [], tmv_exclude: [], vendored: [] }; let sec = null;
+  const m = { dev: [], pro: [], starter: [], forbid: [], identity: [], tmv_forbid: [], tmv_exclude: [], vendored: [], stick: [], stick_edit: [], stick_forbid: [] }; let sec = null;
   for (const raw of text.split('\n')) {
     const line = raw.trim(); if (!line || line.startsWith('#')) continue;
     const s = /^\[(\w+)\]$/.exec(line); if (s) { sec = s[1]; if (!m[sec]) throw new Error(`kit.manifest: unknown section [${sec}]`); continue; }
@@ -50,7 +53,7 @@ export function classify(files, m) {
 const TEXT = /\.(md|mjs|js|cjs|json|html|css|py|txt|toml|ya?ml|srt|sh|ps1)$|(^|\/)(LICENSE|CLAUDE\.md|AGENTS\.md)$/;
 const EXEMPT = new Set(['LICENSE', 'THIRD_PARTY_NOTICES.md']);
 const BUYER_DOC = f => /^[^/]+\.md$/.test(f) || /^\.claude\/skills\/[^/]+\/.*\.md$/.test(f) || f === 'workspace/README.md' || f === 'styles/README.md' || f === 'styles/catalog.md' || /^content-types\/.*\.md$/.test(f) || /^styles\/[^/]+\/(STYLE|DEMO|WORKFLOW|README)\.md$/.test(f);
-const SKILL_REF = /(^|[\s`("'])\/(ig-[a-z]+|make-reel|studio|crowsnest|verify|episode|series)\b/g;
+const SKILL_REF = /(^|[\s`("'])\/(ig-[a-z]+|make-reel-stick-man|make-reel|studio|crowsnest|verify|episode|series)\b(?!-)/g;
 const STORY_SKILLS = ['chapter-writing', 'character-management', 'feedback-triage', 'genre-craft', 'interactive-fiction', 'line-editing', 'plot-structure', 'premise-workshop', 'reader-panel', 'research', 'story-init', 'story-maintenance', 'submission', 'theme-craft', 'worldbuilding'];
 const TMV_SKILLS = ['episode', 'series', 'story', 'studio', ...STORY_SKILLS].sort();
 const PRO_SKILLS = ['ig-plan', 'ig-reel', 'ig-human', 'ig-viral', 'ig-dm', 'ig-caption'];
@@ -84,7 +87,9 @@ export function repoLinks(files, blob, patterns) {
 export function check(tier, files, blob, m) {
   const errors = [], warns = [], set = new Set(files);
   const skills = [...new Set(files.map(f => /^\.claude\/skills\/([^/]+)\//.exec(f)?.[1]).filter(Boolean))].sort();
-  const want = tier === 'tmv' ? TMV_SKILLS : tier === 'pro' ? ['make-reel', 'studio', ...PRO_SKILLS].sort() : ['make-reel', 'studio'];
+  // the stick-man pack (release/stickpack.mjs) brings its own skill
+  const stick = tier !== 'tmv' && files.some(f => f.startsWith('styles/stick-man/')) ? ['make-reel-stick-man'] : [];
+  const want = tier === 'tmv' ? TMV_SKILLS : tier === 'pro' ? ['make-reel', 'studio', ...stick, ...PRO_SKILLS].sort() : ['make-reel', 'studio', ...stick].sort();
   if (skills.join() !== want.join()) errors.push(`skills are [${skills}] but ${tier} must have exactly [${want}]`);
   for (const f of ['LICENSE', 'THIRD_PARTY_NOTICES.md', 'README.md', 'pixi.toml', 'pixi.lock', 'kit/env.mjs', 'kit/studio.mjs', '.claude/skills/studio/SKILL.md'])
     if (!set.has(f)) errors.push(`${f} is missing`);
@@ -127,9 +132,11 @@ export function tmvFiles(by, overlay, m, blobs) {
   for (const f of overlay) { const to = f.slice(4); own.set(to, blobs.get(f)); out.add(to); }
   return { list: [...out].sort(), blob: f => own.get(f) };
 }
-export function tierFiles(tier, by, m, blobs) {
+export function tierFiles(tier, by, m, blobs, stick = null) {
   if (tier === 'tmv') return tmvFiles(by, by.dev.filter(f => f.startsWith('tmv/')), m, blobs);
-  return { list: TIERS[tier].flatMap(s => by[s]).sort(), blob: f => blobs.get(f) };
+  const list = TIERS[tier].flatMap(s => by[s]);
+  if (!stick) return { list: list.sort(), blob: f => blobs.get(f) };
+  return { list: [...new Set([...list, ...stick.keys()])].sort(), blob: f => stick.get(f) ?? blobs.get(f) };
 }
 const tmvVersion = (blob, tag, commit) => {
   const v = JSON.parse(blob('product.json').toString()).version;
@@ -164,29 +171,36 @@ export function zip(entries, date) {
 // ---------- main ----------
 if (import.meta.url === `file://${process.argv[1]}` || fileURLToPath(import.meta.url) === resolve(process.argv[1] || '')) {
   const commit = git(['rev-parse', '--verify', `${REF}^{commit}`]).toString().trim();
-  const date = git(['show', '-s', '--format=%cI', commit]).toString().trim();
-  const files = git(['ls-tree', '-r', '-z', '--name-only', commit]).toString().split('\0').filter(Boolean).sort();
-  const m = parseManifest(git(['show', `${commit}:kit.manifest`]).toString());
+  const date = WORKTREE ? new Date().toISOString() : git(['show', '-s', '--format=%cI', commit]).toString().trim();
+  const files = (WORKTREE ? git(['ls-files', '-z', '--cached', '--others', '--exclude-standard']).toString().split('\0').filter(f => f && existsSync(join(ROOT, f)))
+    : git(['ls-tree', '-r', '-z', '--name-only', commit]).toString().split('\0').filter(Boolean)).sort();
+  const m = parseManifest(WORKTREE ? readFileSync(join(ROOT, 'kit.manifest'), 'utf8') : git(['show', `${commit}:kit.manifest`]).toString());
   const { by, none } = classify(files, m);
   if (none.length) { console.error(`✗ ${none.length} tracked file(s) match no section of kit.manifest:\n  ${none.slice(0, 30).join('\n  ')}`); process.exit(1); }
   // read every shipped blob once
   const overlay = by.dev.filter(f => f.startsWith('tmv/'));
-  const ship = [...by.starter, ...by.pro, ...overlay];
-  const out = git(['cat-file', '--batch'], ship.map(f => `${commit}:${f}`).join('\n') + '\n');
-  const blobs = new Map(); let p = 0;
-  for (const f of ship) {
-    const nl = out.indexOf(10, p), head = out.subarray(p, nl).toString(), size = +head.split(' ')[2];
-    blobs.set(f, out.subarray(nl + 1, nl + 1 + size)); p = nl + 1 + size + 1;
+  const src = stickSources(files, m);
+  const ship = [...new Set([...by.starter, ...by.pro, ...overlay, ...src.picked, ...src.overlay])];
+  const blobs = new Map();
+  if (WORKTREE) for (const f of ship) blobs.set(f, readFileSync(join(ROOT, f)));
+  else {
+    const out = git(['cat-file', '--batch'], ship.map(f => `${commit}:${f}`).join('\n') + '\n'); let p = 0;
+    for (const f of ship) {
+      const nl = out.indexOf(10, p), head = out.subarray(p, nl).toString(), size = +head.split(' ')[2];
+      blobs.set(f, out.subarray(nl + 1, nl + 1 + size)); p = nl + 1 + size + 1;
+    }
   }
+  const stick = buildStick(files, m, f => blobs.get(f));
+  if (stick.errors.length) { console.error(`✗ stick-man pack: ${stick.errors.length} problem(s)\n  ${stick.errors.join('\n  ')}`); process.exit(1); }
   const baseBlob = f => blobs.get(f), blob = baseBlob;
   const product = JSON.parse(blob('product.json')?.toString() || '{}');
-  const version = TAG ? TAG.replace(/^v/, '') : `${product.version || '0'}-dev+${commit.slice(0, 7)}`;
+  const version = TAG ? TAG.replace(/^v/, '') : `${product.version || '0'}-dev+${commit.slice(0, 7)}${WORKTREE ? '-worktree' : ''}`;
   if (TAG && !tiers.includes('tmv') && product.version !== TAG.replace(/^v/, '')) { console.error(`✗ product.json says version ${product.version}, the tag is ${TAG}`); process.exit(1); }
   console.log(`Kaiships Studio ${version} from ${commit.slice(0, 10)} (${date})\n  tracked ${files.length}: starter ${by.starter.length}, pro ${by.pro.length}, dev ${by.dev.length}`);
   let failed = false; const sums = [];
   for (const tier of tiers) {
     if (!TIERS[tier]) { console.error(`✗ unknown tier ${tier}`); process.exit(2); }
-    const { list, blob } = tierFiles(tier, by, m, blobs);
+    const { list, blob } = tierFiles(tier, by, m, blobs, stick.files.size ? stick.files : null);
     const { errors, warns } = check(tier, list, blob, m);
     for (const w of warns) console.log(`  ! ${tier}: ${w}`);
     if (errors.length) { failed = true; console.error(`✗ ${tier}: ${errors.length} problem(s)\n  ${errors.join('\n  ')}`); continue; }

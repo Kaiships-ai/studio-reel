@@ -2,7 +2,7 @@
 # Every tracked file must match exactly one of [starter], [pro], [dev] (the build fails otherwise, so a new file
 # cannot slip into a zip unnoticed). Patterns: `*` = any characters but /, `**` = any path, a trailing / = folder.
 # The first matching section wins, sections are tried in the order [dev], [pro], [starter].
-# Starter ships [starter]; Pro ships [starter] + [pro]. [forbid] = regexes that must not appear in any shipped text file
+# Starter ships [starter]; Pro ships [starter] + [pro]; both also ship the stick-man pack ([stick], release/stickpack.mjs). [forbid] = regexes that must not appear in any shipped text file
 # (LICENSE and THIRD_PARTY_NOTICES.md are exempt, they carry the credits on purpose).
 # [identity] = regexes, ignoring case, that must not appear in any shipped file at all, binaries and those two included:
 # what would lead a buyer from the zip to this repository.
@@ -139,6 +139,8 @@ PLAN.md
 tmv/
 # Ep1 parts copied read-only from the Pro (no Mixkit, no char-kai, no Clawd cast): port source for slice 3, never shipped as is
 dev/
+# The stick-man pack's own files: packs/stick-man/<path> ships as <path> in Starter and Pro ([stick] below)
+packs/
 
 [pro]
 .claude/skills/ig-plan/
@@ -173,6 +175,113 @@ core/
 styles/
 workspace/
 content-types/
+
+[stick]
+# The stick-man pack, option B "Standard" (Kai 22/11): what of styles/stick-man (still [dev]) ships in Starter and Pro, plus
+# every file under packs/stick-man/. Left out on purpose: the s2 faces, the hand camera (director.js), the hoodie and its
+# cloth, the gates and review tools, the series bibles, the reference bench, and every motion clip taken from a
+# non-free capture library (rebuilt from Quaternius UAL, CC0, under packs/stick-man/).
+styles/stick-man/engine/
+!styles/stick-man/engine/facestyles/s2.js
+styles/stick-man/kit/util.js
+styles/stick-man/kit/acting/keys.js
+styles/stick-man/kit/cast/costume.js
+styles/stick-man/kit/cast/extras.js
+styles/stick-man/kit/cast/handprops.js
+styles/stick-man/kit/fx/burst.js
+styles/stick-man/kit/fx/explain.js
+styles/stick-man/kit/fx/physfx.js
+styles/stick-man/kit/props/story.js
+styles/stick-man/kit/props/dyepack.js
+styles/stick-man/kit/sets/kit.js
+styles/stick-man/kit/sets/canvas.js
+styles/stick-man/kit/sets/dress.js
+styles/stick-man/kit/sets/glb.js
+styles/stick-man/kit/sets/backdrop.js
+styles/stick-man/assets/backdrop/
+styles/stick-man/motion-lib/base.js
+styles/stick-man/motion-lib/bodies.js
+styles/stick-man/motion-lib/index.js
+styles/stick-man/motion-lib/props.js
+styles/stick-man/motion-lib/body/
+styles/stick-man/motion-lib/shared/
+styles/stick-man/motion-lib/ref/mocap.js
+styles/stick-man/motion-lib/ref/ual/
+styles/stick-man/motion-lib/ref/reach/consume_mouth.js
+styles/stick-man/motion-lib/ref/reach/handover_counter.js
+styles/stick-man/motion-lib/ref/reach/phonecall_ear.js
+# the 24 clips captured from the non-free library (the 8 adult basics come back from packs/stick-man/)
+!styles/stick-man/motion-lib/body/adult/Adult_Act_Jump_Once_v01.js
+!styles/stick-man/motion-lib/body/adult/Adult_Act_Phone_Once_v01.js
+!styles/stick-man/motion-lib/body/adult/Adult_Act_PickUp_Once_v01.js
+!styles/stick-man/motion-lib/body/adult/Adult_Act_PistolShoot_Once_v01.js
+!styles/stick-man/motion-lib/body/adult/Adult_Act_PutDown_Once_v01.js
+!styles/stick-man/motion-lib/body/adult/Adult_Gest_LookBackCarry_Once_v01.js
+!styles/stick-man/motion-lib/body/adult/Adult_Gest_LookBack_Once_v01.js
+!styles/stick-man/motion-lib/body/adult/Adult_Gest_PointSeated_Loop_v01.js
+!styles/stick-man/motion-lib/body/adult/Adult_Gest_Talk_Loop_v01.js
+!styles/stick-man/motion-lib/body/adult/Adult_Gest_Wave_Loop_v01.js
+!styles/stick-man/motion-lib/body/adult/Adult_Idle_CarryBag_Loop_v01.js
+!styles/stick-man/motion-lib/body/adult/Adult_Idle_LookAround_Loop_v01.js
+!styles/stick-man/motion-lib/body/adult/Adult_Idle_Sit_Loop_v01.js
+!styles/stick-man/motion-lib/body/adult/Adult_Idle_Sleep_Loop_v01.js
+!styles/stick-man/motion-lib/body/adult/Adult_Idle_Stand_Loop_v01.js
+!styles/stick-man/motion-lib/body/adult/Adult_Move_CarryBag_Walk_Loop_v01.js
+!styles/stick-man/motion-lib/body/adult/Adult_Move_Run_Fwd_Loop_v01.js
+!styles/stick-man/motion-lib/body/adult/Adult_Move_Sprint_Fwd_Loop_v01.js
+!styles/stick-man/motion-lib/body/adult/Adult_Move_TurnLeft_Once_v01.js
+!styles/stick-man/motion-lib/body/adult/Adult_Move_Walk_Fwd_Loop_v01.js
+!styles/stick-man/motion-lib/body/adult/Adult_React_Startle_Once_v01.js
+!styles/stick-man/motion-lib/body/adult/Adult_Trans_JumpWindow_Once_v01.js
+!styles/stick-man/motion-lib/body/adult/Adult_Trans_SitDown_Once_v01.js
+!styles/stick-man/motion-lib/body/adult/Adult_Trans_StandUp_Once_v01.js
+styles/stick-man/sound/lib/
+styles/stick-man/sound/CREDITS
+styles/stick-man/sound/library.json
+styles/stick-man/fonts/
+styles/stick-man/reel.html
+styles/stick-man/faces.html
+styles/stick-man/package.json
+styles/stick-man/tools/render/pageserver.mjs
+styles/stick-man/tools/gates/jointstep.mjs
+styles/stick-man/tools/run/voice.py
+styles/stick-man/tools/run/align.py
+styles/stick-man/tools/run/numwords.py
+styles/stick-man/tools/run/mix.py
+styles/stick-man/tools/run/sound.py
+styles/stick-man/tools/run/sound_dsp.py
+styles/stick-man/tools/run/sound_lib.py
+styles/stick-man/tools/run/sound_bank.py
+
+[stick_edit]
+# <path> :: <regex> :: <replacement>. Each must match (release/stickpack.mjs), so a moved line fails the build.
+# the kit faces are the default; the s2 faces stay private
+styles/stick-man/engine/facestyles/index.js :: DEFAULT_FACE_STYLE = 's2' :: DEFAULT_FACE_STYLE = 'kit'
+styles/stick-man/engine/facestyles/index.js :: , s2: \(\) => import\('\./s2\.js'\) :: 
+# the presenter's own likeness never ships
+styles/stick-man/engine/cast.js :: export const KAI = \{[^;]*\};\n :: 
+styles/stick-man/engine/play.js :: makeStick, KAI, TELLER :: makeStick, TELLER
+styles/stick-man/engine/play.js :: SPECS = \{ KAI, TELLER :: SPECS = { TELLER
+styles/stick-man/engine/play.js :: q\.who === 'kai' \|\| :: 
+# the hug pose comes from a CC0 capture
+styles/stick-man/engine/play.js :: \(await import\('#kit/acting/director\.js'\)\)\.createDirector\( :: noHandCamera(
+styles/stick-man/engine/play.js :: (import \{ planShots \} from '\./shotplan\.js';) :: $1\nconst noHandCamera = () => { throw new Error('reel.js "direct" (hand-placed cameras) is not in this kit: the auto camera plans every line; steer it with storyboard "role" or "shot"'); };
+styles/stick-man/faces.html :: the default s2\n// \(engine/facestyles/s2\.js\), or \?style=kit for every kit expression \(engine/faces\.js\)\. :: every kit expression\n// (engine/faces.js).
+styles/stick-man/faces.html :: node styles/stick-man/tools/render/shot\.mjs --page styles/stick-man/faces\.html[^\n]* :: node styles/stick-man/tools/pack/render.mjs --page faces --out faces.jpg
+styles/stick-man/tools/run/sound_dsp.py :: from the kai-reel-3d listicle score :: from a listicle score
+styles/stick-man/motion-lib/base.js :: import CARRY_IDLE from '\./ref/mixamo/carry_idle\.js'; :: import CARRY_IDLE from './ref/ual/walk_carry_loop.js';
+
+[stick_forbid]
+# Never in the stick-man pack, any case, in a path or in any file's bytes (comments that name one are dropped first)
+mixamo
+\bkai\b
+kai-v3|kai-taste|kai-ok
+hot.?money|hm-ep|hm-bible|hm-r\d
+\bgus\b|miss ruth|\bnico\b|the analyst|the mover
+\bricks?\b|rickclip|bench/
+director\.js
+hoodie_grey
+facestyles/s2|\bs2 face
 
 [forbid]
 kienbeovl
