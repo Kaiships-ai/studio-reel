@@ -34,7 +34,7 @@ const SKY = {
 const BLUE = [0.10, 0.30, 0.85], PURPLE = [0.42, 0.12, 0.62];
 export const EDGE_LOOK = {
   light: { sun: [1.0, 0.85, 0.64], power: 3.8, sky: [0.56, 0.52, 0.92], ground: [0.85, 0.42, 0.30], hemi: 0.32, fill: [0.78, 0.62, 0.98], fillPower: 0.45, lit: [1.04, 1.0, 0.95], shade: [0.80, 0.58, 0.92], lamp: 1 },
-  grade: { exp: 1.1, lift: 0.045, sat: 1.06, haze: 0.3, shadow: { c: [0.50, 0.20, 0.36], k: 0.22 }, shoulder: 0.25 },
+  grade: { exp: 1.1, lift: 0.045, sat: 1.06, haze: 0.3, shadow: { c: [0.50, 0.20, 0.36], k: 0.22 } },
   look: { ao: 0.7, aoRadius: 0.6, shadowRadius: 2.0, sat: 1.0, con: 1.05, vig: 0.08, bloom: 0.45, hot: 0.3, ink: 2.1 },
 };
 

@@ -225,8 +225,12 @@ Colour and value carry the curve: contrast rises with intensity, the climax owns
 unique colour, the release goes calm. Check against the look's limits at phone size.
 
 Then write the same in numbers, `colour-script.json` (SKILL.md [1.7], template
-`.claude/skills/make-reel-stick-man/templates/colour-script.json`): per scene the intent, R/B, saturation and black
-ranges, the hue families, the light events that may jump. It carries the S1 signature (`approved: { by: "kai", at }`, the date Kai picked the series look); ◇2c stays OPEN
+`.claude/skills/make-reel-stick-man/templates/colour-script.json`): per scene the intent, R/B, saturation, black and
+brightness (`luma`) ranges, the hue families, the light events that may jump. The look is made in the light, not in
+post: each scene's light and grade go into its acts (`light` colours and powers, practical lamps, `grade`, with
+`grade.exp` at most 1.5), and post has no colour step at all: it joins the parts, draws the HUD and holds the locks
+(a hero car's paint). A new look is a new render from the acts (Hot Money ep01, 22/11: three post grades on the
+finished picture each moved the hue a little and left every value where it was, and Kai saw no difference). It carries the S1 signature (`approved: { by: "kai", at }`, the date Kai picked the series look); ◇2c stays OPEN
 without the signature, and `colourgate.mjs` checks the final against it at ◇5.
 
 ---
@@ -340,7 +344,7 @@ question back: "which shot?"
 |---|---|---|---|
 | Panels | thumbnails, grey sketches, grey engine frames | cleaner keys where a fact must read | cameras matched to the chosen options |
 | Characters | proxies, silhouettes | design sheets | final in stage 2 |
-| Light, colour | none (grey) | colour script (the direction: one frame per scene on the curve) | materials and props stage 2, light per shot stage 3 [3.4b], render + grade stage 4 |
+| Light, colour | none (grey) | colour script (the direction: one frame per scene on the curve) | materials and props stage 2, light per shot stage 3 [3.4b], render with the look lit in the acts stage 4 (post adds no colour) |
 | Voice | scratch | final | final |
 | Sound | temp music + key sounds | same | stage 4 |
 

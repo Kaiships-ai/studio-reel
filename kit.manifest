@@ -191,6 +191,8 @@ styles/stick-man/kit/cast/handprops.js
 styles/stick-man/kit/fx/burst.js
 styles/stick-man/kit/fx/explain.js
 styles/stick-man/kit/fx/physfx.js
+styles/stick-man/kit/look/exposure.js
+styles/stick-man/kit/look/highlights.js
 styles/stick-man/kit/props/story.js
 styles/stick-man/kit/props/dyepack.js
 styles/stick-man/kit/sets/kit.js

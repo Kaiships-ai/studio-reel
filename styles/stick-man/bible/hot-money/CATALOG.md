@@ -269,10 +269,10 @@ Sinh từ `tokens.json` và `catalog.json` bởi `node styles/stick-man/bible/ca
 | tên | giá trị | đơn vị | dùng khi | gốc | nguồn | trạng thái |
 |---|---|---|---|---|---|---|
 | `format.frame` | 1080x1920@30 | px@fps | mọi reel | R3 | judgement | ổn định |
-| `luma.film.mean` | 100-135 | luma-0-255 | trung bình cả phim | R3 | measured | ổn định |
-| `luma.second.p10.min` | luma.70 = 70 | luma-0-255 | p10 mỗi giây | R3 | measured | ổn định |
-| `luma.dark.threshold` | luma.70 = 70 | luma-0-255 | giây tối là dưới mức này | R3 | measured | ổn định |
-| `luma.dark.share.max` | 0.15 | share-of-runtime | giây tối tối đa | R3 | measured | ổn định |
+| `luma.film.mean` | 100-135 | luma-0-255 | trung bình cả phim (chỉ tham khảo, không còn là cổng: Kai 22/11 chọn look A, sáng-tối theo từng cảnh trong colour-script.json) | R3 | measured | thử |
+| `luma.second.p10.min` | luma.70 = 70 | luma-0-255 | p10 mỗi giây (chỉ tham khảo, không còn là cổng: Kai 22/11 chọn look A, sáng-tối theo từng cảnh trong colour-script.json) | R3 | measured | thử |
+| `luma.dark.threshold` | luma.70 = 70 | luma-0-255 | giây tối là dưới mức này (chỉ tham khảo, không còn là cổng: Kai 22/11 chọn look A, sáng-tối theo từng cảnh trong colour-script.json) | R3 | measured | thử |
+| `luma.dark.share.max` | 0.15 | share-of-runtime | giây tối tối đa (chỉ tham khảo, không còn là cổng: Kai 22/11 chọn look A, sáng-tối theo từng cảnh trong colour-script.json) | R3 | measured | thử |
 | `light.face.night` | trống | luma-0-255 | TRỐNG: TOKENS.md chỉ nói "trắng ngà, không tối hơn nền", chưa có số luma | R3 | kai S3-051 | thử |
 | `light.night.preset` | nightBright | preset | cảnh đêm | R3 | kai S3-061 M-001 | thử |
 | `palette.signature` | color.amber = [1, 0.5, 0.14] | rgb-linear | màu chữ ký của phim (colour-script.json palette.signature: warm) | R3 | kai | ổn định |

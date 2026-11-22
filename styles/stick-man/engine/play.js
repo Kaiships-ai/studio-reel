@@ -28,6 +28,7 @@ import { solidBoxes, restBoxes, inBoxes, drawnBox, boxPoints } from './solids.js
 import * as EXTRAS from '#kit/cast/extras.js';
 import { PHYS } from '#kit/fx/physfx.js';
 import { STORY } from '#kit/props/story.js';
+import { exposureWarnings } from '#kit/look/exposure.js';
 // default acting size: the reference's big beats travel ~2.3 head widths, ours ~0.5-0.7 (reference study), so every pose plays 1.2x unless an act or cast entry says otherwise
 const ACT_AMP = 1.2;
 Object.assign(MAKE, PHYS, STORY);                               // story props that animate (kit/props/story.js)                                       // physical FX kinds (SETS.md "Physical effects")
@@ -130,6 +131,7 @@ async function buildAct(R, X) {
   // ground, hemi, fill, fillPower, background, bounce, lamps: [{at, rgb, power, dist}] }`
   // recolours the shared sun / sky / fill while this act is on screen, scales the set's own bounce lights, and hangs
   // practical lamps (point lights in this act's group, so they only light this act)
+  for (const w of exposureWarnings(R)) console.warn(w);   // grade.exp over 1.5 flattens the highlights: light the place instead
   const LT = R.light || null;
   stage.light0 ||= { sun: stage.sun.color.clone(), si: stage.sun.intensity, sky: stage.hemi.color.clone(), gr: stage.hemi.groundColor.clone(),
     hi: stage.hemi.intensity, fill: stage.fill.color.clone(), fi: stage.fill.intensity };

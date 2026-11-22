@@ -102,14 +102,37 @@ test('G8: colour outside the palette and the scene hues fails', { skip }, () => 
   assert.deepEqual(failing(gate(mp4, script(2, { hues: ['green'] }))), []);
 });
 
-test('G9: a dark film fails, and an approved Kai waiver in DECISIONS.json clears it', { skip }, () => {
+test('G9: no film-wide floor; a scene outside its own luma range fails, and an approved Kai waiver clears it', { skip }, () => {
   const mp4 = clip([{ s: 2, at: () => ({ gain: 0.45, dark: 30, hero: 0 }) }]);
-  const s = script(2, { hero: false });
-  assert.deepEqual(failing(gate(mp4, s)), ['G9']);
+  assert.deepEqual(failing(gate(mp4, script(2, { hero: false }))), [], 'a dark night film passes when its script sets no range');
+  assert.deepEqual(failing(gate(mp4, script(2, { hero: false, luma: [20, 140] }))), [], 'inside the scene range');
+  const s = script(2, { hero: false, luma: [90, 140] });
+  const res = gate(mp4, s);
+  assert.deepEqual(failing(res), ['G9']);
+  assert.match(res.findings[0].limit, /A 90-140/);
   const waived = gate(mp4, s, { decisions: [{ waives: 'colourgate.G9', by: 'kai', at: '2026-11-21', status: 'approved', decision: 'night film' }] });
   assert.equal(waived.verdict, 'PASS');
   const notKai = gate(mp4, s, { decisions: [{ waives: 'colourgate.G9', by: 'agent', at: '2026-11-21', status: 'approved' }] });
   assert.equal(notKai.verdict, 'FAIL');
+});
+
+test('G9: a film-wide brightness floor runs only when the script sets defaults.film', { skip }, () => {
+  const mp4 = clip([{ s: 2, at: () => ({ gain: 0.45, dark: 30, hero: 0 }) }]);
+  const res = gate(mp4, script(2, { hero: false }, { defaults: { film: { luma: 100, dark: 70, darkShare: 0.15 } } }));
+  assert.deepEqual(failing(res), ['G9']);
+  assert.ok(res.findings.some(f => /defaults\.film/.test(f.limit)));
+});
+
+test('G9: a partial defaults.film checks only what it sets; scenes without luma are listed as unchecked', { skip }, () => {
+  const mp4 = clip([{ s: 2, at: () => ({ gain: 0.45, dark: 30, hero: 0 }) }]);
+  const res = gate(mp4, script(2, { hero: false }, { defaults: { film: { luma: 100 } } }));
+  assert.deepEqual(res.findings.filter(f => f.check === 'G9').map(f => f.got.split(' ')[0]), ['mean']);
+  assert.deepEqual(res.unchecked, ['A']);
+  assert.deepEqual(gate(mp4, script(2, { hero: false, luma: [20, 140] })).unchecked, []);
+});
+
+test('a scene luma range must be [min, max]', () => {
+  assert.throws(() => parseScript({ scenes: [{ id: 'A', from: 0, to: 3, intent: 'x', luma: [140, 90] }] }, 3), /luma/);
 });
 
 test('the script must cover the film back to back, name real hue families and say why a light event is there', () => {

@@ -145,7 +145,7 @@ independent review. Why each rule exists, with the film that paid for it, is in 
 | An `'along'` hand prop with a top declares `userData.top`; never roll a kit prop in a film | `test/unit/stick-prop-roll.test.mjs` |
 | A costume is a closed shell on the engine body moved only by its physics; a Blender look is ported 1:1 with a match sheet | `test/unit/stick-cloth.test.mjs` |
 | A new set, prop, fx or verb goes in the kit catalog with its rule, never for one film's taste | `styles/stick-man/bible/check.mjs` |
-| The film's colour follows the colour script signed with the S1 look; a look change starts from a whole-look prototype at S1, never from number tweaks | `colourgate.mjs` |
+| The film's colour follows the colour script signed with the S1 look, lit in the acts (light + grade, `grade.exp` ≤ 1.5), never graded onto the rendered picture; a look change starts from a whole-look prototype at S1, never from number tweaks | `colourgate.mjs` (per-scene ranges and brightness from the script); `exposureWarnings` in `engine/play.js` (`test/unit/stick-exposure.test.mjs`) |
 | A run log is written only through `logline.mjs`; old lines are never edited | `logline.mjs` |
 | Render by purpose: T0 data, T1 stills, T2 480p proof, T3 720p review (what the pixel gates and K2 see); T4 1080p only on Kai's own request, normally for Post (`shot.mjs --tier final --kai-ok "<his words>"`) | `render/tiers.mjs` |
 

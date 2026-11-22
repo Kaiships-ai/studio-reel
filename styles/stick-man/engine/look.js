@@ -16,6 +16,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { SavePass } from 'three/addons/postprocessing/SavePass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
+import { budgetMaterial, isFigurePart, ROLL, ROLL_GLSL, GLOW_MAX, expLinear } from '#kit/look/highlights.js';
 
 export const PROPS = 1;                                            // layer that gets the ink line
 export const B = (x, y, z) => new THREE.Vector3(x, z, -y);         // Blender Z-up -> three Y-up
@@ -82,8 +83,9 @@ export function toonify(m, o = {}) {
       col += vec3(0.42, 0.62, 1.0) * 0.85 * uRimCool * uPlaceRim * pow(1.0 - saturate(dot(geometryNormal, geometryViewDir)), 2.5);
       // rimLit: a bright back-light edge on the sun side (the glossy reference heads), never in cast shadow
       col += vec3(1.0, 0.97, 0.92) * uRimLit * pow(1.0 - saturate(dot(geometryNormal, geometryViewDir)), 3.0) * smoothstep(-0.3, 0.4, ndl) * shw;
-      // a figure never goes HDR: a lit cream head at > 1 fed the highlight bloom, which hazed the face ink grey
-      col = mix(col, min(col, vec3(0.96)), uChar);
+      // a figure never goes HDR: a lit cream head at > 1 fed the highlight bloom, which hazed the face ink grey. A soft knee,
+      // not a hard min(): a hard cap made the white hoodie one flat plateau under a key (Kai 22/11, the blown-object gate)
+      { vec3 ex = max(col - vec3(0.72), 0.0); col = mix(col, min(col, vec3(0.72)) + ex / (1.0 + ex / 0.22), uChar); }
       gl_FragColor = vec4(col, diffuseColor.a);`);
   };
   m.needsUpdate = true;
@@ -296,11 +298,16 @@ export function createStage({ width, height, faceInk = false, exposure = 0.88, i
   const prepass = () => swap(m => m.userData.noPrepass ? null : (inkable(m) ? idMat(m) : NM[0]), nrt, null);
   // every plain MeshStandardMaterial (sets, glb dressing without toon, props) gets the set toon ramp once
   const seen = new WeakSet();
-  const autoToon = () => scene.traverseVisible(o => { if (!o.isMesh) return;
-    for (const mt of Array.isArray(o.material) ? o.material : [o.material]) {
-      if (!mt || seen.has(mt)) continue; seen.add(mt);
+  const mats = o => (Array.isArray(o.material) ? o.material : [o.material]).filter(Boolean);
+  const autoToon = () => {
+    // a material any glow() mesh uses is a light, whichever mesh comes first (kit/look/highlights.js budget)
+    scene.traverseVisible(o => { if (o.isMesh && o.userData.glow) for (const mt of mats(o)) mt.userData.light = 1; });
+    scene.traverseVisible(o => { if (!o.isMesh) return;
+    for (const mt of mats(o)) {
+      if (seen.has(mt)) continue; seen.add(mt);
+      budgetMaterial(mt, { figure: isFigurePart(o, PROPS) });   // no white or glowing prop; a prop held in a hand is a prop
       if (mt.isMeshStandardMaterial && !mt.userData.toon && !mt.userData.noToon) toonify(mt, SET_LOOK);
-    } });
+    } }); };
 
   const inkPass = new ShaderPass({
     uniforms: { tDiffuse: { value: null }, tN: { value: null }, tD: { value: null }, texel: { value: new THREE.Vector2(1 / width, 1 / height) },
@@ -410,8 +417,14 @@ export function createStage({ width, height, faceInk = false, exposure = 0.88, i
   copyIn.uniforms.tG.value = grt.texture;
   bloomComposer.addPass(copyIn);
   bloomComposer.addPass(new UnrealBloomPass(new THREE.Vector2(gw, gh), bloom, 0.6, 0.0));
-  const mixPass = new ShaderPass({ uniforms: { tDiffuse: { value: null }, tB: { value: null } }, vertexShader: FS_QUAD_V,
-    fragmentShader: 'uniform sampler2D tDiffuse, tB; varying vec2 vUv; void main(){ vec4 c = texture2D(tDiffuse, vUv); gl_FragColor = vec4(c.rgb + texture2D(tB, vUv).rgb, c.a); }' });
+  const mixPass = new ShaderPass({ uniforms: { tDiffuse: { value: null }, tB: { value: null }, gMax: { value: GLOW_MAX } }, vertexShader: FS_QUAD_V,
+    fragmentShader: 'uniform sampler2D tDiffuse, tB; uniform float gMax; varying vec2 vUv; void main(){ vec4 c = texture2D(tDiffuse, vUv); gl_FragColor = vec4(c.rgb + min(texture2D(tB, vUv).rgb, vec3(gMax)), c.a); }' });
+  // the act's exposure on the linear scene (scene-referred, kit/look/highlights.js) and the highlight roll-off, before the
+  // blooms and the tone mapper: a lit white surface keeps its gradient and never feeds the highlight bloom
+  const rollPass = new ShaderPass({ uniforms: { tDiffuse: { value: null }, uRollK: { value: ROLL.knee }, uRollC: { value: ROLL.ceil }, uExpLin: { value: 1 } },
+    vertexShader: FS_QUAD_V,
+    fragmentShader: `uniform sampler2D tDiffuse; varying vec2 vUv; ${ROLL_GLSL}
+      void main(){ vec4 c = texture2D(tDiffuse, vUv); gl_FragColor = vec4(roll(c.rgb), c.a); }` });
 
   const gradePass = new ShaderPass({
     uniforms: { tDiffuse: { value: null }, sat: { value: sat }, con: { value: con }, vig: { value: vig }, split: { value: split },
@@ -447,7 +460,7 @@ export function createStage({ width, height, faceInk = false, exposure = 0.88, i
         // tone (opt-in, grade.shadow / shoulder): deep shadows lifted toward a colour (the reference's mauve-violet shade sits
         // near 0.25, ours near 0.05), the ink lines (near black) left alone; highlights rolled off instead of clipping
         { float l2 = dot(c, vec3(0.2126,0.7152,0.0722)), w = uShadowK * (1.0 - smoothstep(0.06, 0.32, l2)) * smoothstep(0.012, 0.05, l2);   // only the deep shade: a blue sky must not go grey
-          c = mix(c, max(c, uShadowC), w); c = c - uShoulder * c * c * 0.5; }
+          c = mix(c, max(c, uShadowC), w); }   // (grade.shoulder retired: the roll-off before the tone mapper keeps highlights)
         c = clamp(mix(vec3(dot(c, vec3(0.2126,0.7152,0.0722))), c, uSat), 0.0, 1.0);
         if (uPrev > 0.0) c = mix(c, texture2D(tPrev, vUv).rgb, uPrev);       // dissolve: the other act's finished frame on top
         // impact frame: radial speed lines burst from uImpC, the centre stays clear (pirate f1830 explosion), uImpact 0..1
@@ -498,6 +511,7 @@ export function createStage({ width, height, faceInk = false, exposure = 0.88, i
   composer.addPass(inkPass);
   composer.addPass(airPass);
   composer.addPass(dofPass);
+  composer.addPass(rollPass);
   composer.addPass(mixPass);
   // highlights bloom too (lamps, sunlit white, specular), not only meshes marked glow()
   const hotPass = new UnrealBloomPass(new THREE.Vector2(gw, gh), hot, 0.5, 1.4);
@@ -507,14 +521,14 @@ export function createStage({ width, height, faceInk = false, exposure = 0.88, i
   composer.addPass(new OutputPass());
   composer.addPass(gradePass);
 
-  const one = new Uint8Array(4);
+  const one = new Uint8Array(4), SHOULDER_WARNED = new WeakSet();
   function render(o = {}) {
     const t0 = performance.now();
     gradePass.uniforms.uPrev.value = o.prev || 0; gradePass.uniforms.uFlash.value = Math.min(1, o.flash || 0);
-    const gr = o.grade || {}; if (stage.shafts) stage.shafts.march.material.uniforms.dens.value = shafts * (gr.haze ?? 1); gradePass.uniforms.uExp.value = gr.exp ?? 1; gradePass.uniforms.uLift.value = gr.lift ?? 0; gradePass.uniforms.uGam.value = gr.gam ?? 1; gradePass.uniforms.uSat.value = gr.sat ?? 1; gradePass.uniforms.uTint.value.set(...(gr.tint || [1, 1, 1]));
+    const gr = o.grade || {}; if (stage.shafts) stage.shafts.march.material.uniforms.dens.value = shafts * (gr.haze ?? 1); gradePass.uniforms.uExp.value = 1; rollPass.uniforms.uExpLin.value = expLinear(gr.exp); gradePass.uniforms.uLift.value = gr.lift ?? 0; gradePass.uniforms.uGam.value = gr.gam ?? 1; gradePass.uniforms.uSat.value = gr.sat ?? 1; gradePass.uniforms.uTint.value.set(...(gr.tint || [1, 1, 1]));
     gradePass.uniforms.uImpact.value = Math.min(1, o.impact || 0); gradePass.uniforms.uWhip.value = o.whip || 0;
     const U = gradePass.uniforms, sc = gr.shadow; U.uShadowC.value.set(...(sc?.c || [0, 0, 0])); U.uShadowK.value = sc?.k ?? 0;
-    U.uShoulder.value = gr.shoulder ?? 0; U.uGrain.value = gr.grain ?? 0; U.uSoft.value = gr.soft ?? 0; U.uTime.value = o.t ?? 0; U.uBlur.value.set(...(o.blur || [0, 0]));
+    U.uShoulder.value = 0; if (gr.shoulder && !SHOULDER_WARNED.has(gr)) { SHOULDER_WARNED.add(gr); console.warn(`[kit] grade.shoulder ${gr.shoulder} is retired: highlights roll off before the tone mapper (kit/look/highlights.js); drop it`); } U.uGrain.value = gr.grain ?? 0; U.uSoft.value = gr.soft ?? 0; U.uTime.value = o.t ?? 0; U.uBlur.value.set(...(o.blur || [0, 0]));
     INK_SUN.value.copy(sun.position).sub(sun.target.position).normalize();   // figure outlines thicken away from the sun (cast.js)
     // act grade.sky { glow, clouds } or false; grade.air { k, near, scale, desat } or false (KIT-DEPTH; on by default)
     const bg = scene.background?.isColor ? scene.background : null, SK = gr.sky ?? {}, AI = gr.air ?? {};
