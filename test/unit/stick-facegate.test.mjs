@@ -151,3 +151,13 @@ test('the face shell takes the head\'s up: no roll from any lens direction; a le
   g.userData.sy = new THREE.Vector3().fromArray(g.userData.sy).applyAxisAngle(d, 13 * Math.PI / 180).toArray();
   assert.ok(Math.abs(faceRollOf(g, d) - 13) < 0.2, `${faceRollOf(g, d)}`);
 });
+
+test('cast.js lays the face shell in one place only, layFace, with the head\'s up', async () => {
+  const fs = await import('node:fs');
+  const src = fs.readFileSync(new URL('../../styles/stick-man/engine/cast.js', import.meta.url), 'utf8');
+  const calls = [...src.matchAll(/aimShell\(/g)].length;
+  assert.equal(calls, 2, 'aimShell: its definition and the one call in layFace');
+  assert.match(src, /export function layFace\(g, d\) \{ aimShell\(g, d, HEAD_UP\);/);
+  assert.match(src, /HEAD_UP = new THREE\.Vector3\(0, 1, 0\)/);
+  assert.match(src, /S\.faceRoll = layFace\(card2d\.geometry, d\)/);
+});
