@@ -25,6 +25,9 @@ test('each source dims for one render and is put back after it', () => {
     const before = get(), u = ablate(S, src, {}); assert.equal(get(), want, src); u.undo(); assert.equal(get(), before, `${src} restored`);
   }
   assert.deepEqual(ablate(S, 'air', { exp: 1.2 }).grade, { exp: 1.2, air: false });
+  const frozen = frameLights(S.scene); S.a.parent.visible = false;                     // a dissolve: the act that listed is hidden now
+  const u = ablate(S, 'light1', {}, frozen); assert.equal(S.b.intensity, 0, 'light1 is still the listed lamp'); u.undo(); S.a.parent.visible = true;
+  assert.throws(() => ablate(S, 'light9', {}), /no light9/, 'an index past the list says so');
   assert.deepEqual(ablate(S, 'shafts', {}).grade, { haze: 0 });
   assert.equal(ablate(S, 'list', { exp: 1 }).grade.exp, 1, 'list dims nothing');
   assert.match(listLights(S.scene)[0], /^light0 point at 1\.00, -?0\.00, 2\.00 power 4\.00 reach 5\.0/);

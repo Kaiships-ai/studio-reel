@@ -4,7 +4,7 @@
 // it. A source that drops the region below valuegate's bar is the cause; when none does on its own, the surface itself
 // (its albedo, its sheen) or the act's exposure is.
 //   node styles/stick-man/tools/gates/blame.mjs --film films/<slug>[/parts/<part>] --frame <f> --box x0,y0,x1,y1
-//        [--query k=v&...] [--w 360 --h 640] [--j 4] [--lights 1] [-- <more shot.mjs args>]
+//        [--query k=v&...] [--w 360 --h 640] [--j 2] [--lights 1] [-- <more shot.mjs args>]
 //   --box is in valuegate's sample (180 x 320, as its FAIL line prints it); --lights 1 also dims each point / spot light alone
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
@@ -41,15 +41,16 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   const argv = process.argv.slice(2), dd = argv.indexOf('--'), extra = dd >= 0 ? argv.slice(dd + 1) : [], A = {};
   for (let i = 0; i < (dd >= 0 ? dd : argv.length); i += 2) A[argv[i].replace(/^--/, '')] = argv[i + 1];
   const box = (A.box || '').split(',').map(Number);
-  if (!A.film || !A.frame || box.length !== 4 || box.some(Number.isNaN)) {
-    console.error('usage: blame.mjs --film <film or part> --frame <f> --box x0,y0,x1,y1 [--query ..] [--w 360 --h 640] [--j 4] [--lights 1] [-- <shot.mjs args>]'); process.exit(2); }
-  const w = Number(A.w || 360), h = Number(A.h || 640), J = Number(A.j || 4), q0 = A.query || '', f = Number(A.frame);
+  if (!A.film || !A.frame || box.length !== 4 || box.some(Number.isNaN) || box[0] < 0 || box[1] < 0 || box[2] >= W || box[3] >= H || box[2] < box[0] || box[3] < box[1]) {
+    console.error(`usage: blame.mjs --film <film or part> --frame <f> --box x0,y0,x1,y1 (inside ${W}x${H}, x0 <= x1, y0 <= y1) [--query ..] [--w 360 --h 640] [--j 2] [--lights 1] [-- <shot.mjs args>]`); process.exit(2); }
+  const w = Number(A.w || 360), h = Number(A.h || 640), J = Number(A.j || 2), q0 = A.query || '', f = Number(A.frame);
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'blame-'));
+  try { job: {
   const one = async src => { const out = path.join(tmp, `${src}_%d.png`), q = [q0, `ablate=${src === 'none' ? 'list' : src}`].filter(Boolean).join('&');
     const r = await shot(A.film, f, q, w, h, out, extra), png = out.replace('%d', String(f));
     return { source: src, ok: r.code === 0 && fs.existsSync(png), png, log: r.log }; };
   const base = await one('none');
-  if (!base.ok) { console.error(`blame: the base render failed\n${base.log.slice(-2000)}`); process.exit(1); }
+  if (!base.ok) { console.error(`blame: the base render failed\n${base.log.slice(-2000)}`); process.exitCode = 1; break job; }
   const lights = [...base.log.matchAll(/\[kit\] ablate (light\d+ .*)/g)].map(m => m[1]);
   const todo = [...SOURCES, ...(A.lights ? lights.map(l => l.split(' ')[0]) : [])], done = [];
   for (let i = 0; i < todo.length; i += J) done.push(...await Promise.all(todo.slice(i, i + J).map(one)));
@@ -58,5 +59,5 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   for (const r of rank(rows)) console.log(`  ${r.source.padEnd(8)} ${r.luma.toFixed(0).padStart(4)}  ${r.lift >= 0 ? '-' : '+'}${Math.abs(r.lift).toFixed(0)}${lights.find(l => l.startsWith(r.source + ' ')) ? `  ${lights.find(l => l.startsWith(r.source + ' ')).slice(r.source.length + 1)}` : ''}`);
   for (const d of done.filter(x => !x.ok)) console.log(`  ${d.source}: render failed`);
   if (!A.lights && lights.length) console.log(`(${lights.length} lamps in view: --lights 1 dims each alone)`);
-  fs.rmSync(tmp, { recursive: true, force: true });
+  } } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
 }

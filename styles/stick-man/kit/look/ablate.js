@@ -23,14 +23,15 @@ export function frameLights(scene) {
   return out;
 }
 
-// dim one source for one render: returns the grade to render with and undo() to put everything back
-export function ablate(stage, which, grade = {}) {
+// dim one source for one render: returns the grade to render with and undo() to put everything back. `lights`: the list
+// light<i> indexes (engine/play.js freezes the first render's list, so a dissolve frame's second act cannot shift it)
+export function ablate(stage, which, grade = {}, lights = frameLights(stage.scene)) {
   const undo = [], set = (o, k, v) => { const v0 = o[k]; o[k] = v; undo.push(() => { o[k] = v0; }); };
   let gr = grade;
   const m = /^light(\d+)$/.exec(which || '');
   if (which === 'sun' || which === 'hemi' || which === 'fill') set(stage[which], 'intensity', stage[which].intensity * DIM);
   else if (which === 'lamps') for (const l of frameLights(stage.scene)) set(l, 'intensity', l.intensity * DIM);
-  else if (m) { const l = frameLights(stage.scene)[+m[1]]; if (l) set(l, 'intensity', 0); }
+  else if (m) { const l = lights[+m[1]]; if (!l) throw new Error(`ablate: no ${which} (${lights.length} lights)`); set(l, 'intensity', 0); }
   else if (which === 'fog') set(stage.scene, 'fog', null);
   else if (which === 'air') gr = { ...grade, air: false };
   else if (which === 'shafts') gr = { ...grade, haze: 0 };
