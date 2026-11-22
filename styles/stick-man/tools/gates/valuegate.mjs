@@ -31,7 +31,7 @@ export function frameValues(px, w, h, boxes = [], crop = CROP) {
   const B = blur(Y, w, h, GLARE.radius), y0 = Math.floor(crop.top * h), y1 = Math.ceil((1 - crop.bottom) * h);
   const hist = new Uint32Array(256); let n = 0, g = 0, c = 0;
   for (let y = y0; y < y1; y++) for (let x = 0; x < w; x++) { hist[Math.min(255, Y[y * w + x] | 0)]++; n++; }
-  let med = 0; for (let a = 0; med < 255 && (a += hist[med]) < n / 2; med++);
+  let med = 0, acc = hist[0]; while (med < 255 && acc < n / 2) acc += hist[++med];
   const hot = Math.max(GLARE.luma, med + GLARE.over);
   for (let y = y0; y < y1; y++) for (let x = 0; x < w; x++) { const i = y * w + x; if (B[i] >= hot) g++; if (Y[i] >= CLIP.luma) c++; }
   const crush = boxes.map(([a, b, e, d]) => { let m = 0, k = 0;
