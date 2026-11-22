@@ -54,13 +54,14 @@ Everything else comes as a free-form spec from Studio.
 
 ### Job: "make post copy from vN"
 
-Studio has set `approval` to `kai_approved`. You:
+Studio set `approval` to `kai_approved` after Kai's K2 approval. You:
 
 1. Copy vN's mp4 to `films/<film>/deliver/current.mp4`, with its cover beside it.
 2. Move any older cut to `deliver/archive/`.
 3. Set `deliver.current`, then run status.mjs again (exit 0).
 
 Do not touch `approval` or `published`.
+
 ## Report: worker_done
 
 Update `films/<film>/status.json` (run status.mjs again, it must exit 0), add one line to
