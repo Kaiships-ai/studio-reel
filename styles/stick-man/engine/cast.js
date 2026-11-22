@@ -251,7 +251,7 @@ function flatHeadMat(rgb, shade) {
 }
 // the face shell: a unit front hemisphere (+z) kept as the base; aimShell lays it on the head toward the head-local lens
 // direction d (unit), on the head's ellipsoid, with the uv of each point its position across the lens
-const SHELL_R = 1.015, _shellM = new THREE.Matrix4(), _upL = new THREE.Vector3(), _hU = new THREE.Vector3(), _fU = new THREE.Vector3(), _sx = new THREE.Vector3(), _sy = new THREE.Vector3(), _sz = new THREE.Vector3(), _sp = new THREE.Vector3();
+const SHELL_R = 1.015, _upL = new THREE.Vector3(), _hU = new THREE.Vector3(), _fU = new THREE.Vector3(), _sx = new THREE.Vector3(), _sy = new THREE.Vector3(), _sz = new THREE.Vector3(), _sp = new THREE.Vector3();
 function faceShell() {
   const g = new THREE.SphereGeometry(1, 40, 30, 0, Math.PI, 0, Math.PI);
   g.userData.base = g.attributes.position.array.slice(); g.userData.d = null;
@@ -666,7 +666,9 @@ export function makeStick(spec) {
       const vis = Math.max(0, Math.min(1, (Math.cos(yaw) + 0.35) / 0.3));
       slide = [-TURN * yaw, -0.40 * Math.sin(el) * HEAD_H, vis, ...(shell || spec.faceTopUp ? [Math.sin(el)] : [])];
       card2d.visible = true;
-      if (shell) aimShell(card2d.geometry, d, _upL.set(0, 1, 0).transformDirection(_shellM.copy(head.matrixWorld).invert()));   // the world's up in the head (the flat card stood upright)
+      // the face's up is the head's own up (Kai 23/11, Ep1 v12: with the world's up, as the flat card stood, the face stayed
+      // level while the teller's head tilted 13 deg to the phone, and slid round it)
+      if (shell) aimShell(card2d.geometry, d, _upL.set(0, 1, 0));
       else { card2d.position.copy(d).multiplyScalar(HA * 1.02); card2d.lookAt(B(...P.cam)); }
       // faceRoll (deg): how far the drawn face's up is turned from the head's own up, both seen along the lens (a face that
       // stays level while the head tilts slides round it; tools/gates/facegate.mjs)

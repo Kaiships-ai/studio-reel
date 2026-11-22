@@ -66,13 +66,16 @@ function plate3(top, bot, P) {
 // reaching it at yc, and fade over yfCap as the strips carry them round the outline; under a hood they stay held back inside
 // the rim (caught up, the rim cut them) and fade between yf0 and yf1, where the opening is a sliver
 const YK_CAP = 0.45, YK_HOOD = 0.30, YS = 0.10;
+// A bare head (no hood or cap plate, o.top null) has no rim to keep the marks inside: they turn with the skull all the way
+// and fade as a cap's do (Kai 23/11, Ep1 v12 1:12: the blond teller's face held at a hood's 0.30 rad while her head turned
+// 1.1 rad on the phone; the face slid across her head under her hair)
 function turn(o) {
-  const YK = o.edge ? YK_CAP : YK_HOOD, sl = o.sl, ya = sl ? Math.abs(sl[0]) : 0, sg = sl && sl[0] < 0 ? -1 : 1;
-  let eff = ya <= YK ? ya : YK + (ya - YK) * YS;
+  const bare = o.top == null, YK = o.edge ? YK_CAP : YK_HOOD, sl = o.sl, ya = sl ? Math.abs(sl[0]) : 0, sg = sl && sl[0] < 0 ? -1 : 1;
+  let eff = bare || ya <= YK ? ya : YK + (ya - YK) * YS;
   const { yk2, yc } = TUNE;
-  if (o.edge && ya > yk2) { const e2 = YK + (yk2 - YK) * YS; eff = ya >= yc ? ya : e2 + (ya - yk2) * (yc - e2) / (yc - yk2); }
+  if (!bare && o.edge && ya > yk2) { const e2 = YK + (yk2 - YK) * YS; eff = ya >= yc ? ya : e2 + (ya - yk2) * (yc - e2) / (yc - yk2); }
   const m = x => Math.min(1, Math.max(0, x - (o.topKnee || 0)) / 0.3);
-  const [f0, f1] = o.edge ? TUNE.yfCap : [TUNE.yf0, TUNE.yf1];
+  const [f0, f1] = o.edge || bare ? TUNE.yfCap : [TUNE.yf0, TUNE.yf1];
   return { a: clamp((f1 - ya) / (f1 - f0)), w: sg * eff,
     top: o.top == null ? null : o.top + (o.topSide || 0) * (m(ya) - m(eff)), bot: (o.edge ? TUNE.botCap : TUNE.botHood) - (sl ? sl[1] : 0) };
 }

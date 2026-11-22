@@ -81,7 +81,7 @@ test('rows made before the gate (no faceStretch) never pass', () => {
 });
 
 // faces.js itself (a stub canvas: node has no document): an s2 face on a turned head is wrapped at the yaw s2 names and
-// its stretch is measured over the columns the drawing inks (here the band a teller's left eye sat in, flat x -0.20..-0.10)
+// its stretch is measured over the columns the drawing inks (a hooded head; the band of flat x -0.20..-0.10)
 test('faces.js wraps an s2 face at the yaw s2 names and measures the stretch of the inked columns', async () => {
   const { faceRig, EXPR } = await import('../../styles/stick-man/engine/faces.js');
   S2.use();
@@ -97,12 +97,12 @@ test('faces.js wraps an s2 face at the yaw s2 names and measures the stretch of 
   const prev = globalThis.document;
   globalThis.document = { createElement: () => { const c = { width: 512, height: 512 }; const g = ctx(); g.canvas = c; c.getContext = () => g; return c; } };
   try {
-    const FR = faceRig(1, {}), ya = 1.115, sl = [ya, 0, 1, 0];
+    const FR = faceRig(1, { top: 0.20 }), ya = 1.115, sl = [ya, 0, 1, 0];
     assert.equal(EXPR.y_suspicious.style, 's2');
     FR.draw('y_suspicious', 0, 100, [], null, null, sl);
-    const yw = STYLE_DRAW.s2.wrap({ sl }), worst = yaw => { let m = 1;
+    const yw = STYLE_DRAW.s2.wrap({ top: 0.20, sl }), worst = yaw => { let m = 1;
       for (let u = inkU[0]; u <= inkU[1]; u += 0.002) { const a = Math.asin(u / R); if (Math.cos(a + yaw) >= 0.08) m = Math.max(m, Math.cos(a + yaw) / Math.cos(a)); } return m; };
-    assert.ok(Math.abs(yw) < ya - 0.5, 'the hood-less teller is held back');
+    assert.ok(Math.abs(yw) < ya - 0.5, 'a hooded face is held back');
     assert.ok(Math.abs(FR.stats.stretch - worst(yw)) < 0.05, `measured ${FR.stats.stretch} vs wrapped at s2's yaw ${worst(yw).toFixed(3)}`);
     assert.ok(FR.stats.stretch < LIMIT);
   } finally { globalThis.document = prev; }
@@ -123,4 +123,12 @@ test('facegate fails a face that stays level while its head tilts', () => {
   const rows = [0, 3, 8, 11, 13, 13, 12, 9, 4, 1].map((d, i) => ({ f: 2160 + i, actors: { t: { inFrame: true, head: [80, 300, 520, 700], faceVis: 1, faceStretch: 1, faceLag: 0, faceRoll: d, facePlate: 'hood' } } }));
   const R = facegate(rows, 1280);
   assert.deepEqual(R.faults.map(f => [f.kind, f.from, f.to]), [['slides (tilt)', 2162, 2167]]);
+});
+
+test('a bare head (no hood or cap) turns its face all the way with the skull; a hood still holds its marks back', () => {
+  S2.use();
+  for (let ya = -1.2; ya <= 1.2; ya += 0.1) {
+    assert.ok(Math.abs(STYLE_DRAW.s2.wrap({ ...PLATES.bare, sl: [ya, 0, 1, 0] }) - ya) < 1e-9, `bare yaw ${ya.toFixed(1)}`);
+    if (Math.abs(ya) > 0.5) assert.ok(Math.abs(STYLE_DRAW.s2.wrap({ ...PLATES.hood, sl: [ya, 0, 1, 0] })) < Math.abs(ya) - 0.1, `hood yaw ${ya.toFixed(1)}`);
+  }
 });

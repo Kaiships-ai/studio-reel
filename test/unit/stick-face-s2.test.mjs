@@ -49,7 +49,8 @@ test('every s2 design draws: eyes, brows and a mouth on the canvas, from the fro
 test('turned away: past the turn fade the face is not drawn; a three-quarter head keeps it', () => {
   const at = (yaw, o = {}) => { const { g, n } = recorder(); STYLE_DRAW.s2(g, held('y_alert'), 0, 0, { sl: [yaw, 0, 1, 0], ...o }); return n.stroke + n.fill; };
   assert.ok(at(0) > 0);
-  assert.equal(at(1.40), 0, 'the back of a hooded head (yaw 1.40 > 1.34) shows no face');
+  assert.equal(at(1.40, { top: 0.20 }), 0, 'the back of a hooded head (yaw 1.40 > 1.34) shows no face');
+  assert.equal(at(1.50), 0, 'a bare head past 1.45 shows no face');
   assert.equal(at(1.50, { edge: [0.58, 0.12] }), 0, 'under a cap past 1.45 no face');
   assert.ok(at(1.0) > 0, 'a three-quarter head still wears its face');
 });
