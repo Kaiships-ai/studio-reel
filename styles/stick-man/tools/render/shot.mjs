@@ -84,7 +84,7 @@ const browser = await launchGpu();
 const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
 const p = await ctx.newPage();
 p.on('pageerror', e => { console.error('pageerror:', e.message, '\n', e.stack || ''); process.exit(1); });
-p.on('console', m => { if (m.type() === 'error') console.error('console', m.text()); });
+p.on('console', m => { if (m.type() === 'error' || (m.type() === 'warning' && m.text().startsWith('[kit]'))) console.error('console', m.text()); });   // [kit] warnings: kit/look/*
 const deps = new Set();
 if (CACHE) p.on('request', r => { const u = new URL(r.url()); if (u.host === `127.0.0.1:${server.address().port}`) deps.add(decodeURIComponent(u.pathname).replace(/^\//, '')); });
 await p.goto(url); await p.waitForFunction(() => window.__ready === true, null, { timeout: 180000 });
