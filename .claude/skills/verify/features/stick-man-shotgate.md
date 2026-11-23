@@ -26,7 +26,7 @@ enough on a phone (px on a 720-tall frame × share in view, GATES.md "Shot gate"
   one frame; at real playback nobody notices".
 - Figures: pop in or out inside the frame, head jumps, skating (the body travels, both feet near the floor move along),
   joint pops (a jointstep.mjs channel over 25 deg whose points jump off their path), planted foot slide, hand off its grip,
-  held prop in the body, collision boxes.
+  held prop in the body, collision boxes, one arm through the other (the hands meeting left out).
   Cord shake is listed as watch only. The limits and their reasons: GATES.md "Shot gate".
 - Visibility: the share of a fault inside the frame and not behind the figure's own head or torso scales its severity;
   when the film has a `reel.js` (also with `--rows`), figure faults go through `shot.mjs --vis` and one behind the set is
