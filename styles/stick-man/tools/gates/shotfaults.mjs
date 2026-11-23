@@ -33,12 +33,15 @@ export const SKATE_FLOOR = 0.1;         // ... with that foot near the floor (a 
 export const TORSO_R = 0.11;            // m: a stick figure's torso as a rod this thick hides what is behind it (engine/play.js torso box 0.15 x 0.11)
 export const CROSS_MAX_M = 0.5;         // a point that moved further in a frame jumped (figure / prop jumps), it did not pass through
 export const INSIDE_MAX = 30;           // frames a point through a surface is followed
+export const ARM_R_SHARE = 0.023 / 0.5125; // an arm is a tube this thick per metre of upper arm (cast.js LIMB_R / W over LIMB.upper), at any figure scale
+export const HAND_SHARE = 0.1;          // the last tenth of a forearm is the hand (cast.js handR 0.05 of LIMB.fore 0.5125): two hands may meet
+const ARM_N = 24;                       // samples per arm bone
 
 export const ACROSS_CUT_M = 0.15;      // a held prop off where its holder's carry takes it across a cut by more than this jumps at the cut
 export const HOLDER_M = 0.35;           // a prop this close to a hand of a figure in frame is in that hand
 export const LOST_MAX = 45;             // frames a held prop may be out of the frame and still count as one that comes back
 export const CONTACT = new Set(['prop passes through', 'body passes through', 'body in the set', 'hand off its grip', 'prop in the body', 'foot slides', 'figure skates', 'prop floats',
-  'prop in the head', 'prop in the set', 'prop leaves view', 'prop out of scale']);
+  'prop in the head', 'prop in the set', 'prop leaves view', 'prop out of scale', 'arm through arm']);
 
 const F_ = r => r.F ?? r.f;
 const add = (a, b) => a.map((x, i) => x + b[i]), sub = (a, b) => a.map((x, i) => x - b[i]), mid = (a, b) => a.map((x, i) => (x + b[i]) / 2);
@@ -79,10 +82,23 @@ function metresPx(cam, P, m) {
   const fw = sub(cam.target, cam.pos), z = sub(P, cam.pos).reduce((s, x, i) => s + x * fw[i], 0) / len(fw);
   return z > 0.05 ? m / (2 * z * Math.tan(cam.fov * Math.PI / 360)) * REF_H : 0;
 }
+const lerp = (A, B, t) => add(A, sub(B, A).map(x => x * t));
+// how far P is from the segment C-D
+const toSeg = (P, C, D) => { const cd = sub(D, C), u = Math.max(0, Math.min(1, sub(P, C).reduce((s, x, k) => s + x * cd[k], 0) / (cd.reduce((s, x) => s + x * x, 0) || 1)));
+  return dist(P, lerp(C, D, u)); };
 // a segment from A to B passes within r of the segment C-D (sampled; the figure's own head and torso)
-const near = (A, B, C, D, r) => { for (let t = 0; t <= 1; t += 0.05) { const P = add(A, sub(B, A).map(x => x * t));
-  const cd = sub(D, C), u = Math.max(0, Math.min(1, sub(P, C).reduce((s, x, k) => s + x * cd[k], 0) / (cd.reduce((s, x) => s + x * x, 0) || 1)));
-  if (dist(P, add(C, cd.map(x => x * u))) < r) return true; } return false; };
+const near = (A, B, C, D, r) => { for (let t = 0; t <= 1; t += 0.05) if (toSeg(lerp(A, B, t), C, D) < r) return true; return false; };
+// how deep arm A runs into arm B, both tubes r thick, and where. A hand is not tested against the other hand, so two hands
+// on one object never count
+function armInArm(A, B, r) {
+  const wrist = lerp(B.elbow, B.hand, 1 - HAND_SHARE);
+  let deep = 0, at = null;
+  for (const [a, b, fore] of [[A.shoulder, A.elbow, false], [A.elbow, A.hand, true]]) for (let i = 0; i <= ARM_N; i++) {
+    const P = lerp(a, b, i / ARM_N), d = Math.min(toSeg(P, B.shoulder, B.elbow), toSeg(P, B.elbow, fore && i / ARM_N >= 1 - HAND_SHARE ? wrist : B.hand));
+    if (2 * r - d > deep) { deep = 2 * r - d; at = P; }
+  }
+  return { deep, at };
+}
 // the share of pts inside the frame and, for a figure a, not behind its own head or torso (the engine's visibility test never
 // lets a body hide its own fault: a stick figure seen from behind hides its arms all the same)
 function seenShare(cam, pts, W, H, a) {
@@ -323,6 +339,14 @@ function limbs(rows, cut, n, W, H, out) {
     const pts = l.propPts || [l.L.hand, l.R.hand];
     return { px: metresPx(rows[i].camera, pts[0], l.propPenCm / 100), cm: l.propPenCm, what: l.propIn || 'prop', pts };
   }, (w, frames) => out.push(fault({ F: F_(rows[w.i]), kind: 'prop in the body', who: n, what: `${n} held ${w.what} ${fmt(w.cm)} cm inside the body for ${frames} f`, px: w.px, frames, seen: seenShare(rows[w.i].camera, w.pts, W, H, rows[w.i].actors[n]), pts: w.pts })));
+  runs(rows, cut, i => {
+    const l = rows[i].actors[n]?.inFrame && rows[i].actors[n].limbs; if (!l?.L?.elbow || !l.R?.elbow) return null;
+    const r = ARM_R_SHARE * (dist(l.L.shoulder, l.L.elbow) + dist(l.R.shoulder, l.R.elbow)) / 2;
+    const w = [['L', 'R'], ['R', 'L']].map(([a, b]) => ({ a, b, ...armInArm(l[a], l[b], r) })).reduce((x, y) => (y.deep > x.deep ? y : x));
+    return w.at ? { px: metresPx(rows[i].camera, w.at, w.deep), ...w } : null;
+  }, (w, frames, run) => out.push(fault({ F: F_(rows[run[0].i]), kind: 'arm through arm', who: n,
+    what: `${n} arm ${w.a} ${fmt(w.deep * 100)} cm into arm ${w.b} for ${frames} f; fix: key the arms clear of each other (the elbow out, or one forearm in front)`,
+    px: w.px, frames, seen: seenShare(rows[w.i].camera, [w.at], W, H, rows[w.i].actors[n]), pts: [w.at] })));
 }
 
 function skating(rows, cut, n, W, H, out) {
