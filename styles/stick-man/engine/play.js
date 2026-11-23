@@ -24,7 +24,7 @@ import { ACT, PROPV, MAKE, keyTracks } from './verbs_fx.js';
 import { POSE_VERBS, POSES } from './poses.js';
 import { compileTrack, playActor, toPose, MOTION_POSES } from './motion.js';
 import { propPlan } from './propobj.js';
-import { solidBoxes, restBoxes, inBoxes, drawnBox, boxPoints } from './solids.js';
+import { solidBoxes, restBoxes, inBoxes, drawnBox, boxPoints, armIn } from './solids.js';
 import * as EXTRAS from '#kit/cast/extras.js';
 import { PHYS } from '#kit/fx/physfx.js';
 import { STORY } from '#kit/props/story.js';
@@ -720,6 +720,8 @@ async function buildAct(R, X) {
       for (const h of inBoxes(P, [...solids.filter(b => !skipSelf.has(b.mesh)), ...(SET.COLLIDE || [])], PROP_IN_GRACE))
         out.propIn.push({ id, in: h.name, cm: +(h.depth * 100).toFixed(1), at: toB(h.at).map(x => +x.toFixed(3)) });
     }
+    // an arm inside a solid of the set (engine/solids.js armIn), the points between the joints too
+    out.armIn = actors.filter(a => a.S.root.visible).flatMap(a => armIn(out.actors[a.name]?.limbs, [...solids, ...(SET.COLLIDE || [])]).map(x => ({ who: a.name, ...x })));
     // an object cut by the camera's far plane inside the shot: a straight-edged hole where the sky dome (drawn first, no
     // depth) shows through or a flat card draws over it (Hot Money r5 CHASE 1601-1637: motel.js's 220 x 60 m sky cards at
     // 60-70 m against far 80 m). Every opaque mesh 2 m tall or more whose box reaches both nearer and further than far

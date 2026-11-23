@@ -6,6 +6,7 @@
 //   restBoxes(boxes, COLLIDE) [{ name, lo, hi }] Blender metres: what a prop lands on and is stopped by (propobj.js),
 //                            overhead boxes (bottom above OVERHEAD) left out
 //   inBoxes(pts, boxes)      the deepest box each point set is in, by the box's own (turned) axes (a COLLIDE { lo, hi } too)
+//   armIn(limbs, boxes)      the deepest point of each arm in each box
 // A mesh with userData.hollow (a crate's open inside, a counter's knee space) is left out; so is an ink hull (BackSide)
 // and anything hidden.
 import * as THREE from 'three';
@@ -70,6 +71,29 @@ export function inBoxes(pts, boxes, grace = 0.01) {
       if (d > grace && (!best || d > best.depth)) best = { name: b.name, depth: d, at: p };
     }
     if (best) out.push(best);
+  }
+  return out;
+}
+
+// a figure's arms against boxes (Hot Money ep01 City Bank 1908-1914: a forearm ran through the counter top's front edge
+// with the elbow and the hand both clear, and the counter hid its middle, a stub; the crossing raycasts follow the head,
+// chest, pelvis and knees only). limbs: S.rigWorld() (Blender metres); ARM_N points along each upper arm and forearm. The
+// hand end (cast.js: the last tenth of the forearm) is left out while the hand is on its target or holds a prop: a hand
+// laid on a top or gripping something touches it. [{ side, part, in, cm, at (Blender) }], the deepest point per arm and box
+export const ARM_N = 24, ARM_IN_GRACE = 0.01, HAND_SHARE = 0.1;
+const toT = p => new THREE.Vector3(p[0], p[2], -p[1]);
+const armPart = (fore, t) => (fore ? (t < HAND_SHARE ? 'elbow' : t > 1 - HAND_SHARE ? 'hand' : 'forearm') : t > 1 - HAND_SHARE ? 'elbow' : 'upper arm');
+export function armIn(limbs, boxes, grace = ARM_IN_GRACE) {
+  const out = [];
+  for (const s of ['L', 'R']) {
+    const a = limbs?.[s]; if (!a?.shoulder || !a.elbow || !a.hand) continue;
+    const onTarget = a.grip || a.heldPts?.length, pts = [], parts = [];
+    for (const [u, v, fore] of [[a.shoulder, a.elbow, false], [a.elbow, a.hand, true]]) for (let i = fore ? 1 : 0; i <= ARM_N; i++) {
+      const t = i / ARM_N; if (fore && onTarget && t > 1 - HAND_SHARE) continue;
+      pts.push(toT(u.map((x, k) => x + (v[k] - x) * t))); parts.push(armPart(fore, t));
+    }
+    for (const h of inBoxes(pts, boxes, grace))
+      out.push({ side: s, part: parts[pts.indexOf(h.at)], in: h.name, cm: +(h.depth * 100).toFixed(1), at: toB(h.at).map(x => +x.toFixed(3)) });
   }
   return out;
 }

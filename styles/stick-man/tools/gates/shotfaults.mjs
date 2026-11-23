@@ -41,7 +41,7 @@ export const ACROSS_CUT_M = 0.15;      // a held prop off where its holder's car
 export const HOLDER_M = 0.35;           // a prop this close to a hand of a figure in frame is in that hand
 export const LOST_MAX = 45;             // frames a held prop may be out of the frame and still count as one that comes back
 export const CONTACT = new Set(['prop passes through', 'body passes through', 'body in the set', 'hand off its grip', 'prop in the body', 'foot slides', 'figure skates', 'prop floats',
-  'prop in the head', 'prop in the set', 'prop leaves view', 'prop out of scale', 'arm through arm']);
+  'prop in the head', 'prop in the set', 'prop leaves view', 'prop out of scale', 'arm through arm', 'arm in the set']);
 
 const F_ = r => r.F ?? r.f;
 const add = (a, b) => a.map((x, i) => x + b[i]), sub = (a, b) => a.map((x, i) => x - b[i]), mid = (a, b) => a.map((x, i) => (x + b[i]) / 2);
@@ -415,6 +415,25 @@ function propInside(rows, cut, W, H, out) {
   }
 }
 
+// an arm inside a solid the set built (engine/play.js out.armIn: points along the upper arm and forearm, the hand left out
+// while it is on its target or holds a prop), one fault per arm and piece and run of frames; px = how deep the drawn arm
+// (its axis plus one arm thickness) goes in. pts: the point inside and the arm's elbow and hand, so the arm counts as seen
+// while the stub outside the solid is in view
+function armInside(rows, cut, W, H, out) {
+  const keys = [...new Set(rows.flatMap(r => (r.armIn || []).map(x => `${x.who}\t${x.side}\t${x.in}`)))];
+  for (const k of keys) {
+    const [n, s, what] = k.split('\t');
+    runs(rows, cut, i => {
+      const a = rows[i].actors[n], arm = a?.inFrame && a.limbs?.[s]; if (!arm) return null;
+      const x = (rows[i].armIn || []).find(y => y.who === n && y.side === s && y.in === what); if (!x) return null;
+      const deep = x.cm / 100 + ARM_R_SHARE * dist(arm.shoulder, arm.elbow);
+      return { px: metresPx(rows[i].camera, x.at, deep), cm: x.cm, part: x.part, pts: [x.at, arm.elbow, arm.hand] };
+    }, (w, frames, run) => out.push(fault({ F: F_(rows[run[0].i]), kind: 'arm in the set', who: n,
+      what: `${n} ${s === 'L' ? 'left' : 'right'} ${w.part} ${fmt(w.cm)} cm into ${what} for ${frames} f; fix: key the arm clear of ${what} (over its top or in front of it), or, if it is not solid, mark its mesh userData.hollow`,
+      px: w.px, frames, seen: seenShare(rows[w.i].camera, w.pts, W, H, rows[w.i].actors[n]), pts: w.pts })));
+  }
+}
+
 // a prop in a hand leaves the frame while the figure holding it stays in frame, and comes back: the framing crops what the
 // beat is about (Hot Money ep01 r5 LOAD-B 741-757: the bait bill held up over the head, out of the top of the frame)
 function leavesView(rows, cut, W, H, out) {
@@ -473,7 +492,7 @@ export function shotFaults(rows, { W = 1080, H = 1920 } = {}) {
   cameraJumps(rows, cut, W, H, out); props(rows, cut, W, H, out); figures(rows, cut, W, H, out);
   goneAfterCut(rows, cut, W, H, out); acrossCut(rows, cut, W, H, out); changedAtCut(rows, cut, out); floating(rows, cut, W, H, out);
   for (const n of Object.keys(rows[0].actors)) { limbs(rows, cut, n, W, H, out); skating(rows, cut, n, W, H, out); cordShakes(rows, cut, n, out); }
-  crossings(rows, cut, W, H, out); propInside(rows, cut, W, H, out); leavesView(rows, cut, W, H, out); outOfScale(rows, cut, W, H, out); farCuts(rows, cut, W, H, out);
+  crossings(rows, cut, W, H, out); propInside(rows, cut, W, H, out); armInside(rows, cut, W, H, out); leavesView(rows, cut, W, H, out); outOfScale(rows, cut, W, H, out); farCuts(rows, cut, W, H, out);
   for (const x of out) x.sev = +severity(x).toFixed(2);
   return out.sort((a, b) => a.F - b.F);
 }
