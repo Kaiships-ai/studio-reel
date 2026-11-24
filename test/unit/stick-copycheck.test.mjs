@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { run, env } from '../../kit/env.mjs';
-import { copycheck, jumps, SPIKE } from '../../styles/stick-man/tools/gates/copycheck.mjs';
+import { copycheck, jumps, frameStats, SPIKE } from '../../styles/stick-man/tools/gates/copycheck.mjs';
 
 const E = env(), skip = !(E.tools?.ffmpeg && E.tools?.ffprobe) && 'needs ffmpeg and ffprobe';
 const ok = r => assert.equal(r.status, 0, r.stderr);
@@ -31,8 +31,22 @@ test('real ffmpeg: a clean 1080-style copy passes; a torn frame, a shift, a shor
     const R = n => copycheck({ copy: f(n), approved: f('approved.mp4') }), row = (r, id) => r.rows.find(x => x.id === id).ok;
     const clean = R('clean.mp4'); assert.equal(clean.ok, true, JSON.stringify(clean.rows));
     const torn = R('torn.mp4'); assert.equal(row(torn, 'K2b'), false); assert.deepEqual(torn.jumps.map(j => j.f), [45]);
-    assert.equal(row(R('short.mp4'), 'K1'), false);
+    const short = R('short.mp4'); assert.equal(row(short, 'K1'), false); assert.equal(row(short, 'K2a'), false, 'a short copy is not the same film either');
     assert.equal(row(R('remix.mp4'), 'K3'), false, 'a sound 6 dB down is not the approved sound');
-    const sh = R('shifted.mp4'); assert.equal(sh.ok, false, JSON.stringify(sh.rows));
+    const sh = R('shifted.mp4'); assert.equal(row(sh, 'K2a'), false, JSON.stringify(sh.rows));
+    copy('mute.mp4', 'scale=360:640:flags=lanczos', ['-an']);
+    assert.equal(row(R('mute.mp4'), 'K3'), false, 'no sound is not the approved sound');
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('frameStats: a temp folder with a quote in its path works, and a failed run leaves no temp folder', { skip }, () => {
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), "copy'check ")), was = process.env.TMPDIR, f = n => path.join(base, n);
+  try {
+    process.env.TMPDIR = base;
+    assert.equal(run('ffmpeg', ['-v', 'error', '-y', '-f', 'lavfi', '-i', 'testsrc2=size=64x64:rate=30:duration=1', '-pix_fmt', 'yuv420p', f('a.mp4')], { capture: true }).status, 0);
+    const S = frameStats(f('a.mp4'), f('a.mp4'), { w: 64, h: 64 });
+    assert.equal(S.ssim.length, 30); assert.equal(S.ymax.length, 30);
+    assert.throws(() => frameStats(f('missing.mp4'), f('a.mp4'), { w: 64, h: 64 }));
+    assert.deepEqual(fs.readdirSync(base).filter(n => n.startsWith('copycheck-')), [], 'no temp folder left behind');
+  } finally { process.env.TMPDIR = was; fs.rmSync(base, { recursive: true, force: true }); }
 });

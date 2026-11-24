@@ -3,7 +3,7 @@
 // film, frame for frame. Three checks, each measured, none by eye:
 //   K1 frames   the same number of frames at the same rate
 //   K2 picture  (a) the copy, scaled to the approved size, matches the approved film as a whole (median SSIM at least
-//               SSIM_MIN: not the wrong file, not shifted by a frame); (b) no frame tears: the largest local difference
+//               SSIM_MIN over every approved frame, each met by a real copy frame: not the wrong file, not shifted, not short); (b) no frame tears: the largest local difference
 //               against the approved frame (luma, blurred sigma 3, 8-bit) never jumps more than SPIKE above the median
 //               of the 4 frames each side (a whole whip or cut that differs evenly is not a jump)
 //   K3 sound    the decoded audio is the same samples (a copied stream), or within LU_TOL of the approved loudness
@@ -25,18 +25,19 @@ export function probe(file) {
   return { w: s.width, h: s.height, fps: +(a / (b || 1)).toFixed(3), frames: Number(s.nb_read_packets) };
 }
 // one pass over both films: the SSIM of each copy frame (scaled to the approved size, area filter) against the approved
-// frame, and the largest local difference (luma, blurred) per frame
+// frame, and the largest local difference (luma, blurred) per frame. ffmpeg runs in a temp folder and writes its two
+// stats files there by name, so no path goes into the filter graph.
 export function frameStats(copy, approved, { w, h }) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'copycheck-')), ss = path.join(dir, 'ssim.log'), dy = path.join(dir, 'ymax.log');
-  const esc = f => f.replace(/\\/g, '/').replace(/:/g, '\\:');
-  const g = `[0:v]scale=${w}:${h}:flags=area,format=yuv420p,split[c1][c2];[1:v]format=yuv420p,split[a1][a2];`
-    + `[c1][a1]ssim=stats_file='${esc(ss)}'[s];[c2]format=gray[cg];[a2]format=gray[ag];[cg][ag]blend=all_mode=difference,gblur=sigma=3,signalstats,metadata=print:key=lavfi.signalstats.YMAX:file='${esc(dy)}'[d]`;
-  const r = ff('ffmpeg', ['-v', 'error', '-i', copy, '-i', approved, '-filter_complex', g, '-map', '[s]', '-f', 'null', '-', '-map', '[d]', '-f', 'null', '-']);
-  if (r.status) throw new Error(`ffmpeg: ${r.stderr}`);
-  const ssim = fs.readFileSync(ss, 'utf8').split('\n').filter(Boolean).map(l => Number(/All:([\d.]+)/.exec(l)?.[1]));
-  const ymax = [...fs.readFileSync(dy, 'utf8').matchAll(/YMAX=([\d.]+)/g)].map(m => Number(m[1]));
-  fs.rmSync(dir, { recursive: true, force: true });
-  return { ssim, ymax };
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'copycheck-'));
+  try {
+    const g = `[0:v]scale=${w}:${h}:flags=area,format=yuv420p,split[c1][c2];[1:v]format=yuv420p,split[a1][a2];`
+      + `[c1][a1]ssim=stats_file=ssim.log:shortest=1[s];[c2]format=gray[cg];[a2]format=gray[ag];[cg][ag]blend=all_mode=difference:shortest=1,gblur=sigma=3,signalstats,metadata=print:key=lavfi.signalstats.YMAX:file=ymax.log[d]`;
+    const r = run('ffmpeg', ['-v', 'error', '-i', path.resolve(copy), '-i', path.resolve(approved), '-filter_complex', g, '-map', '[s]', '-f', 'null', '-', '-map', '[d]', '-f', 'null', '-'], { capture: true, cwd: dir });
+    if (r.status) throw new Error(`ffmpeg: ${r.stderr}`);
+    const ssim = fs.readFileSync(path.join(dir, 'ssim.log'), 'utf8').split('\n').filter(Boolean).map(l => Number(/All:([\d.]+)/.exec(l)?.[1]));
+    const ymax = [...fs.readFileSync(path.join(dir, 'ymax.log'), 'utf8').matchAll(/YMAX=([\d.]+)/g)].map(m => Number(m[1]));
+    return { ssim, ymax };
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 }
 export const median = a => { const s = [...a].sort((x, y) => x - y), h = s.length >> 1; return !s.length ? null : s.length % 2 ? s[h] : (s[h - 1] + s[h]) / 2; };
 // frames whose local difference jumps more than SPIKE above the median of the WIN frames each side
@@ -51,7 +52,9 @@ export function copycheck({ copy, approved }) {
   const C = probe(copy), A = probe(approved), rows = [];
   rows.push({ id: 'K1', what: 'frames and rate', ok: C.frames === A.frames && C.fps === A.fps, got: `${C.frames} f at ${C.fps} (${C.w}x${C.h})`, want: `${A.frames} f at ${A.fps} (${A.w}x${A.h})` });
   const F = frameStats(copy, approved, A), m = median(F.ssim), J = jumps(F.ymax);
-  rows.push({ id: 'K2a', what: 'the same film (median SSIM)', ok: m >= SSIM_MIN, got: m.toFixed(3), want: `at least ${SSIM_MIN}` });
+  const all = F.ssim.length === A.frames && F.ymax.length === A.frames;   // every approved frame met its copy frame
+  rows.push({ id: 'K2a', what: 'the same film (median SSIM)', ok: all && m >= SSIM_MIN,
+    got: `${Number.isFinite(m) ? m.toFixed(3) : '?'} over ${F.ssim.length} of ${A.frames} frames`, want: `at least ${SSIM_MIN}, every frame` });
   rows.push({ id: 'K2b', what: 'no torn frame (local jump)', ok: !J.length, got: J.length ? J.map(j => `f${j.f} +${j.jump}`).join(', ') : 'none', want: `no jump over ${SPIKE}` });
   const ma = audioMd5(copy), mb = audioMd5(approved), same = ma && ma === mb;
   const lu = same ? 0 : Math.abs(loudness(copy) - loudness(approved));
