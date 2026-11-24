@@ -7,11 +7,14 @@
 //               against the approved frame (luma, blurred sigma 3, 8-bit) never jumps more than SPIKE above the median
 //               of the 4 frames each side (a whole whip or cut that differs evenly is not a jump)
 //   K3 sound    the decoded audio is the same samples (a copied stream), or within LU_TOL of the approved loudness
+// K2b sees short tears only (1-4 frames: a run of 5 is its own neighbourhood) and needs a quiet neighbourhood (a tear as
+// large as V2.1's is missed on about 14 % of its frames). So the report always lists the LOOK frames that differ most from
+// the approved, as runs, to look at beside it: a long tear lands there.
 //   node styles/stick-man/tools/gates/copycheck.mjs --copy <mp4> --approved <mp4> [--json 1] [--out <report.md>]
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path'; import { pathToFileURL } from 'node:url';
 import { run } from '../../../../kit/env.mjs';
 
-export const SSIM_MIN = 0.95, SPIKE = 90, WIN = 4, LU_TOL = 0.5;
+export const SSIM_MIN = 0.95, SPIKE = 90, WIN = 4, LU_TOL = 0.5, LOOK = 8;
 export const SOURCES = {
   K2: 'Ep1 H2 V2.1 1080 copies against the approved 720 (24/11): median SSIM 0.983 / 0.984; the first try tore the two whips (its motion field was rebuilt at 1080), seen by eye after the copy had gone to the upload folder: jumps +108 (f1174) and +95 (f1141); the fixed copy jumps at most +83.5 (f440, in both). One film: the limit is thin, so K2 lists frames to look at',
   K3: 'Ep1 H2 V2.1 1080 copy: the approved audio stream is copied, never re-mixed',
@@ -45,11 +48,17 @@ export function jumps(ymax, { spike = SPIKE, win = WIN } = {}) {
   return ymax.flatMap((v, f) => { const nb = [...ymax.slice(Math.max(0, f - win), f), ...ymax.slice(f + 1, f + 1 + win)]; const j = v - (median(nb) ?? v);
     return j > spike ? [{ f, jump: +j.toFixed(1), ymax: v }] : []; });
 }
+// the n frames with the largest local difference, joined into runs of consecutive frames, in film order
+export function mostDifferent(ymax, n = LOOK) {
+  const top = ymax.map((v, f) => [f, v]).sort((a, b) => b[1] - a[1]).slice(0, n).sort((a, b) => a[0] - b[0]), runs = [];
+  for (const [f, v] of top) { const r = runs.at(-1); if (r && f === r.to + 1) { r.to = f; r.ymax = Math.max(r.ymax, v); } else runs.push({ from: f, to: f, ymax: v }); }
+  return runs;
+}
 const audioMd5 = f => { const r = ff('ffmpeg', ['-v', 'error', '-i', f, '-map', '0:a:0', '-f', 'md5', '-']); return r.status ? null : r.stdout.trim(); };
 const loudness = f => { const r = ff('ffmpeg', ['-hide_banner', '-nostats', '-i', f, '-map', '0:a:0', '-af', 'ebur128', '-f', 'null', '-']); return Number([...(r.stderr || '').matchAll(/I:\s+(-?[\d.]+) LUFS/g)].at(-1)?.[1]); };
 
-export function copycheck({ copy, approved }) {
-  const C = probe(copy), A = probe(approved), rows = [];
+export function copycheck(o) {
+  const copy = path.resolve(o.copy), approved = path.resolve(o.approved), C = probe(copy), A = probe(approved), rows = [];
   rows.push({ id: 'K1', what: 'frames and rate', ok: C.frames === A.frames && C.fps === A.fps, got: `${C.frames} f at ${C.fps} (${C.w}x${C.h})`, want: `${A.frames} f at ${A.fps} (${A.w}x${A.h})` });
   const F = frameStats(copy, approved, A), m = median(F.ssim), J = jumps(F.ymax);
   const all = F.ssim.length === A.frames && F.ymax.length === A.frames;   // every approved frame met its copy frame
@@ -59,7 +68,7 @@ export function copycheck({ copy, approved }) {
   const ma = audioMd5(copy), mb = audioMd5(approved), same = ma && ma === mb;
   const lu = same ? 0 : Math.abs(loudness(copy) - loudness(approved));
   rows.push({ id: 'K3', what: 'the approved sound', ok: Boolean(same || lu <= LU_TOL), got: same ? 'identical samples' : `${Number.isFinite(lu) ? lu.toFixed(2) : '?'} LU from the approved`, want: `identical, or within ${LU_TOL} LU` });
-  return { ok: rows.every(r => r.ok), rows, jumps: J, fps: A.fps };
+  return { ok: rows.every(r => r.ok), rows, jumps: J, look: mostDifferent(F.ymax), fps: A.fps };
 }
 
 export function report(R, { copy, approved }) {
@@ -67,6 +76,8 @@ export function report(R, { copy, approved }) {
   return [`# Copy check: ${path.basename(copy)} against ${path.basename(approved)}`, '', `**${R.ok ? 'PASS' : 'FAIL'}**`, '',
     '| Check | What | Got | Limit | |', '| --- | --- | --- | --- | --- |', ...R.rows.map(r => `| ${r.id} | ${r.what} | ${r.got} | ${r.want} | ${r.ok ? 'PASS' : 'FAIL'} |`), '',
     ...(R.jumps.length ? ['Frames to look at (copy beside the approved):', '', '| Frame | Time | Jump |', '| --- | --- | --- |', ...R.jumps.map(j => `| ${j.f} | ${t(j.f)} s | +${j.jump} |`), ''] : []),
+    `The ${LOOK} frames most different from the approved (look at them beside it):`, '', '| Frames | Time | Local difference |', '| --- | --- | --- |',
+    ...R.look.map(r => `| ${r.from}-${r.to} | ${t(r.from)}-${t(r.to + 1)} s | ${r.ymax} |`), '',
     ...Object.entries(SOURCES).map(([k, v]) => `- ${k} source: ${v}`)].join('\n') + '\n';
 }
 

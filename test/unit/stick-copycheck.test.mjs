@@ -4,7 +4,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { run, env } from '../../kit/env.mjs';
-import { copycheck, jumps, frameStats, SPIKE } from '../../styles/stick-man/tools/gates/copycheck.mjs';
+import { copycheck, jumps, frameStats, mostDifferent, SPIKE } from '../../styles/stick-man/tools/gates/copycheck.mjs';
+import { fileURLToPath } from 'node:url';
+const GATE = fileURLToPath(new URL('../../styles/stick-man/tools/gates/copycheck.mjs', import.meta.url));
 
 const E = env(), skip = !(E.tools?.ffmpeg && E.tools?.ffprobe) && 'needs ffmpeg and ffprobe';
 const ok = r => assert.equal(r.status, 0, r.stderr);
@@ -49,4 +51,19 @@ test('frameStats: a temp folder with a quote in its path works, and a failed run
     assert.throws(() => frameStats(f('missing.mp4'), f('a.mp4'), { w: 64, h: 64 }));
     assert.deepEqual(fs.readdirSync(base).filter(n => n.startsWith('copycheck-')), [], 'no temp folder left behind');
   } finally { process.env.TMPDIR = was; fs.rmSync(base, { recursive: true, force: true }); }
+});
+
+test('mostDifferent: the frames furthest from the approved, as runs, so a long tear is in the look list even with no jump', () => {
+  const y = Array(120).fill(13); for (let f = 59; f <= 66; f++) y[f] = 183; y[100] = 40;
+  assert.deepEqual(jumps(y), [], 'an 8-frame run has no jump over its neighbours');
+  assert.deepEqual(mostDifferent(y, 8), [{ from: 59, to: 66, ymax: 183 }]);
+});
+
+test('the CLI takes paths relative to where it runs', { skip }, () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'copycheck-rel-'));
+  try {
+    assert.equal(run('ffmpeg', ['-v', 'error', '-y', '-f', 'lavfi', '-i', 'testsrc2=size=64x64:rate=30:duration=1', '-f', 'lavfi', '-i', 'sine=duration=1', '-pix_fmt', 'yuv420p', '-shortest', path.join(dir, 'a.mp4')], { capture: true }).status, 0);
+    const r = run('node', [GATE, '--copy', 'a.mp4', '--approved', 'a.mp4'], { capture: true, cwd: dir });
+    assert.equal(r.status, 0, r.stdout + r.stderr); assert.match(r.stdout, /PASS/);
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
