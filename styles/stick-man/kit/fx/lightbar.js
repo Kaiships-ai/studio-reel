@@ -9,6 +9,7 @@
 //                       o: { at, colors (two css colours), power (each head's peak intensity), reach (m), gap (m between
 //                       the heads), ...the lightBarAt timing }
 import * as THREE from 'three';
+import './make.js';   // registers the 'ao_anim' kind the act keys the bar with
 
 const ss = u => { u = Math.min(1, Math.max(0, u)); return u * u * (3 - 2 * u); };
 export function lightBarAt(f, { from = 0, rise = 0, spin = 10, sharp = 3, fade = null } = {}) {

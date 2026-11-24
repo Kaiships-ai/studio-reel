@@ -3,6 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { lightBarAt, lightBar } from '../../styles/stick-man/kit/fx/lightbar.js';
+import { MAKE } from '../../styles/stick-man/engine/verbs_fx.js';
 
 test('dark before `from`; the heads take turns, half a turn apart, one turn every `spin` frames', () => {
   assert.deepEqual(lightBarAt(5, { from: 10 }), [0, 0]);
@@ -31,4 +32,5 @@ test('lightBar: two point lights that stand still and follow the timing on each 
   g.userData.anim(0); assert.ok(Math.abs(L[0].intensity - 10) < 1e-6 && L[1].intensity < 1e-6);
   g.userData.anim(5); assert.ok(L[0].intensity < 1e-6 && Math.abs(L[1].intensity - 10) < 1e-6);
   assert.ok(stage.scene.children.includes(g));
+  assert.equal(typeof MAKE.ao_anim, 'function', 'importing the bar registers the kind the act keys it with');
 });

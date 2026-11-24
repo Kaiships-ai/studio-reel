@@ -127,6 +127,7 @@ independent review. Why each rule exists, with the film that paid for it, is in 
 | Faces sell the character: a new face lands on a cut, few takes (≤ 4 a minute), each face held 6 f, no face beyond 2 takes | `facebeat.mjs` |
 | No new or changed face design reaches a render Kai sees before the S2 face sheet has it; a sheet made again after he looked is refused | `facesheet.mjs`, `facebeat.mjs` |
 | Every camera states its purpose and a clear size (a real wide or a real close-up, a clean background behind faces) | `review/campass1.md`, `prepro.mjs` |
+| A figure that walks or turns keeps its face to the lens (fly it with `faceCam`); the lead is not seen from behind for 2 s | `headgate.mjs` |
 | The unit of pre-production is the shot: id, purpose, size, angle, lens, move and story intensity before it is drawn well | `prepro.mjs` |
 | Keep the direction conventions and one camera axis per place | `prepro.mjs` |
 | Camera intent is locked in pre-production (◇2b, seen by Kai at K1); stage 3 executes it in 3D | `prepro.mjs`, `stagegate.mjs` |
