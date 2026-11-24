@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { run, env } from '../../kit/env.mjs';
-import { copycheck, jumps, frameStats, mostDifferent, SPIKE } from '../../styles/stick-man/tools/gates/copycheck.mjs';
+import { copycheck, jumps, frameStats, lookAt, orderFaults, SPIKE } from '../../styles/stick-man/tools/gates/copycheck.mjs';
 import { fileURLToPath } from 'node:url';
 const GATE = fileURLToPath(new URL('../../styles/stick-man/tools/gates/copycheck.mjs', import.meta.url));
 
@@ -36,6 +36,9 @@ test('real ffmpeg: a clean 1080-style copy passes; a torn frame, a shift, a shor
     const short = R('short.mp4'); assert.equal(row(short, 'K1'), false); assert.equal(row(short, 'K2a'), false, 'a short copy is not the same film either');
     assert.equal(row(R('remix.mp4'), 'K3'), false, 'a sound 6 dB down is not the approved sound');
     const sh = R('shifted.mp4'); assert.equal(row(sh, 'K2a'), false, JSON.stringify(sh.rows));
+    copy('dropdup.mp4', "scale=360:640:flags=lanczos,select='not(eq(n\\,40))',setpts=N/30/TB,loop=loop=1:size=1:start=68,setpts=N/30/TB", ['-c:a', 'copy']);
+    const dd = R('dropdup.mp4'); assert.equal(row(dd, 'K1'), true, 'still 90 frames'); assert.equal(row(dd, 'K2c'), false, JSON.stringify(dd.rows));
+    assert.equal(row(clean, 'K2c'), true);
     copy('mute.mp4', 'scale=360:640:flags=lanczos', ['-an']);
     assert.equal(row(R('mute.mp4'), 'K3'), false, 'no sound is not the approved sound');
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
@@ -53,10 +56,11 @@ test('frameStats: a temp folder with a quote in its path works, and a failed run
   } finally { process.env.TMPDIR = was; fs.rmSync(base, { recursive: true, force: true }); }
 });
 
-test('mostDifferent: the frames furthest from the approved, as runs, so a long tear is in the look list even with no jump', () => {
-  const y = Array(120).fill(13); for (let f = 59; f <= 66; f++) y[f] = 183; y[100] = 40;
-  assert.deepEqual(jumps(y), [], 'an 8-frame run has no jump over its neighbours');
-  assert.deepEqual(mostDifferent(y, 8), [{ from: 59, to: 66, ymax: 183 }]);
+test('lookAt: a long tear and a single-frame spike under the K2b limit are both in the look list', () => {
+  const y = Array(120).fill(13); for (let f = 59; f <= 66; f++) y[f] = 183; y[100] = 13 + 70;
+  assert.deepEqual(jumps(y), [], 'neither is a K2b jump');
+  const L = lookAt(y), has = f => L.some(r => f >= r.from && f <= r.to);
+  assert.ok(has(59) && has(66) && has(62) && has(100), JSON.stringify(L));
 });
 
 test('the CLI takes paths relative to where it runs', { skip }, () => {
@@ -66,4 +70,11 @@ test('the CLI takes paths relative to where it runs', { skip }, () => {
     const r = run('node', [GATE, '--copy', 'a.mp4', '--approved', 'a.mp4'], { capture: true, cwd: dir });
     assert.equal(r.status, 0, r.stdout + r.stderr); assert.match(r.stdout, /PASS/);
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('orderFaults: a repeated frame (no change where the approved moves) and a skipped one (twice the change) are named', () => {
+  const ta = Array(20).fill(4), tc = [...ta]; tc[6] = 0; tc[12] = 8.5;
+  assert.deepEqual(orderFaults(tc, ta).map(x => [x.f, x.kind]), [[7, 'repeat'], [13, 'skip']]);
+  assert.deepEqual(orderFaults(ta, ta), []);
+  const still = Array(20).fill(0.05); assert.deepEqual(orderFaults(still, still), [], 'a held frame in the approved film is not a fault');
 });
