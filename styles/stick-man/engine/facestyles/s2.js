@@ -358,12 +358,14 @@ function snarl(g, x0, y, w, sd, k) {
 function shiver(g, k) {
   for (const s of [-1, 1]) for (let j = 0; j < 2; j++) { const x = s * (0.262 + 0.024 * j); K.taper(g, [[x, -0.09 - 0.012 * j], [x - s * 0.005, -0.14], [x, -0.19 + 0.012 * j]], 0.0065 * k, K.INK, 0.3); }
 }
-function gloom(g, k) { for (let i = -2; i <= 2; i++) { const x = i * 0.04, L = 0.085 - 0.014 * Math.abs(i); sweep(g, [[x, 0.315], [x, 0.315 - L]], 0.0062 * k, 0.0008 * k); } }
+function gloom(g, k) { for (let i = -2; i <= 2; i++) { const x = i * 0.042, L = 0.1 - 0.016 * Math.abs(i); sweep(g, [[x, 0.33], [x, 0.33 - L]], 0.0085 * k, 0.001 * k); } }
+// heat (hot): three ink squiggles rising off the brow
+function heat(g, k, t) { for (const x of [-0.075, 0, 0.075]) { const pts = []; for (let i = 0; i <= 20; i++) { const u = i / 20; pts.push([x + 0.012 * Math.sin(u * 2.5 * Math.PI - t * 0.3 + x * 40), 0.245 + 0.1 * u]); } K.taper(g, pts, 0.0085 * k, K.INK, 0.25); } }
 const bags = (g, ex, ey, k) => K.taper(g, K.bez([ex - 0.046, ey - 0.106], [ex - 0.02, ey - 0.128], [ex + 0.02, ey - 0.128], [ex + 0.046, ey - 0.106], 10), 0.0065 * k, K.INK, 0.3);
 function puff(g, x0, y, w, k) {
   for (const sd of [-1, 1]) { const cx = x0 + sd * (w + 0.002), pts = []; for (let i = 0; i <= 12; i++) { const a = (sd > 0 ? 0 : Math.PI) + (i / 12 - 0.5) * 2.1; pts.push([cx + 0.036 * Math.cos(a), y + 0.004 + 0.042 * Math.sin(a)]); } K.taper(g, pts, 0.0095 * k, K.INK, 0.3); }
 }
-function dots(g, sd) { for (const [x, y, r] of [[0.215, 0.255, 0.0095], [0.252, 0.3, 0.0125], [0.29, 0.348, 0.016]]) { g.beginPath(); g.arc(sd * x, y, r, 0, 2 * Math.PI); g.fillStyle = K.INK; g.fill(); } }
+function dots(g, sd) { for (const [x, y, r] of [[0.212, 0.25, 0.012], [0.252, 0.298, 0.016], [0.296, 0.352, 0.021]]) { g.beginPath(); g.arc(sd * x, y, r, 0, 2 * Math.PI); g.fillStyle = K.INK; g.fill(); } }
 function sigh(g, x, y, k) {
   const C = [[0, 0, 0.019], [0.027, 0.009, 0.024], [0.054, 0.001, 0.018]], lw = 0.0085 * k;
   for (const [dx, dy, r] of C) { g.beginPath(); g.arc(x + dx, y + dy, r + lw / 2, 0, 2 * Math.PI); g.fillStyle = K.INK; g.fill(); }
@@ -422,6 +424,7 @@ function face6(g, F, blink, t, o, T) {
   if (on('blush')) blushCheeks(g, k);
   if (on('shiver')) shiver(g, k);
   if (on('gloom')) gloom(g, k);
+  if (on('heat')) heat(g, k, t);
   if (on('dots')) dots(g, (F.gx || 0) < 0 ? -1 : 1);
   if (on('scrunch')) scrunch(g, k);
   for (const s of [-1, 1]) {
@@ -518,28 +521,28 @@ Object.assign(DESIGNS, {
   blush: des({ brow: [-18, 0.15, 0.014], mw: 0.55 }, { eArc: 1, mC: 0.4, mWv: 0.5, blush: 1 }),
   proud: des({ lid: 0.5, gy: -0.5, brow: [14, 0.185, 0.03], mw: 1.15, my: 0.03, marks: [['sparkle']] }, { eY: 0.03, mC: 1 }),
   excited: des({ rx: 0.072, ry: 0.12, white: 0.45, lid: -0.04, brow: [-6, 0.182, 0.026], mw: 1.2 }, { mC: 1, mOpen: 1.1, mTeeth: 0.5, eSt: 0.06, eStar: 1, shiver: 1 }),
-  manic: des({ rx: 0.074, ry: 0.12, white: 0.95, lid: -0.08, brow: [18, 0.16, 0.012, 0.035, -0.01], mw: 1.3 }, { mC: 1, mOpen: 0.7, mTeeth: 1, gJit: 0.6, eAsym: 0.2 }),
+  manic: des({ rx: 0.074, ry: 0.12, white: 0.95, lid: -0.08, brow: [14, 0.16, 0.012, 0.05, -0.012], mw: 1.4 }, { mGrim: 1, mC: 1, gJit: 0.8, eAsym: 0.4 }),
   sad: des({ lid: 0.28, lidTilt: -8, low: 0.05, gy: -0.4, brow: [-26, 0.152, 0.014], mw: 0.7 }, { mC: -0.85, tear: 0.3 }),
   cry: des({ brow: [-30, 0.156, 0.014], mw: 1.05 }, { eCr: 1, tear: 1, mOpen: 0.9, mC: -1, mWv: 0.8, mTeeth: 0.4 }),
   sleep: des({ brow: [-4, 0.13, 0.012], mw: 0.45, marks: [['zzz']] }, { eArc: -1, mOpen: 0.14 }),
   yawn: des({ lid: 0.62, lidTilt: -10, brow: [-22, 0.17, 0.018], mw: 1.1 }, { mO: 1.35, tear1: 1 }),
   dizzy: des({ brow: [-14, 0.15, 0.01], mw: 0.8 }, { eSpiral: 1, mWv: 0.8, mC: -0.3, mSk: 0.4 }),
-  disgust: des({ lid: 0.3, low: 0.2, bw: 1.15, brow: [10, 0.134, 0.006, 0.012, -0.022], mw: 0.95 }, { mSnarl: 1, eAsym: 0.18, scrunch: 1, bIn: 0.012 }),
+  disgust: des({ bw: 1.2, brow: [16, 0.13, 0.004, 0.012, -0.02], mw: 0.8 }, { eCr: 0.62, mOpen: 0.35, mC: -0.7, mWv: 0.6, mTongue: 1, scrunch: 1, bIn: 0.014 }),
   love: des({ brow: [-10, 0.165, 0.02], mw: 0.95 }, { eHeart: 1, mC: 0.9, mOpen: 0.35, mTeeth: 0.3, blush: 0.8 }),
   kiss: des({ brow: [-6, 0.15, 0.016] }, { eArc: 1, mKiss: 1, blush: 0.6 }),
   wink: des({ lid: -0.02, low: 0.16, brow: [0, 0.16, 0.016, 0.03, -0.02], mw: 1 }, { wink: 1, mC: 0.9, mOpen: 0.45, mTeeth: 0.5, mSk: 0.3 }),
   embarrassed: des({ lid: 0.06, gx: -0.8, gy: -0.2, brow: [-20, 0.158, 0.014], mw: 0.9 }, { blush: 1, mC: 0.45, mWv: 0.7, sw: 0.8 }),
   shy: des({ lid: 0.3, gx: 0.5, gy: -0.9, brow: [-18, 0.15, 0.012], mw: 0.35 }, { blush: 1, mC: -0.1, mWv: 0.5, gSh: 1 }),
-  guilty: des({ lid: 0.18, gx: -1, gy: -0.6, brow: [-24, 0.16, 0.014], mw: 0.7 }, { mC: -0.45, mWv: 0.6, mSk: -0.3, sw: 0.8, gloom: 1 }),
+  guilty: des({ lid: 0.26, gx: -1, gy: -0.8, brow: [-24, 0.16, 0.014], mw: 0.7, my: -0.02 }, { eY: -0.02, mC: -0.45, mWv: 0.6, mSk: -0.3, sw: 0.8, gloom: 1 }),
   disappointed: des({ lid: 0.85, lidTilt: -12, gy: -1, brow: [-20, 0.14, 0.01], mw: 0.95 }, { mC: -0.8, sigh: 1 }),
   bored: des({ lid: 0.46, gx: 0.8, gy: 0.2, brow: [-4, 0.128, 0.002], mw: 0.65 }, { mC: -0.15, mSk: 0.7, mPr: 0.6 }),
-  thinking: des({ lid: 0.14, gx: 0.8, brow: [4, 0.14, 0.012, 0, 0.03], mx: 0.035, mw: 0.55 }, { gY: 0.7, mSk: 0.6, mPr: 0.8, mC: -0.15, dots: 1 }),
+  thinking: des({ lid: 0.1, gx: 0.85, brow: [4, 0.14, 0.012, 0, 0.035], mx: 0.04, mw: 0.55 }, { gY: 1, mSk: 0.6, mPr: 0.8, mC: 0, dots: 1 }),
   mischievous: des({ lid: 0.4, lidTilt: 10, low: 0.16, gx: 0.9, brow: [24, 0.13, 0.004, 0, 0.03], mw: 1.15 }, { mC: 1, mOpen: 0.45, mTeeth: 1, mSk: 0.9 }),
   smug: des({ lid: 0.48, lidTilt: 4, brow: [-2, 0.16, 0.02], mw: 0.9 }, { mC: 0.75, mSk: 0.5 }),
-  scream: des({ rx: 0.074, ry: 0.124, white: 0.95, lid: -0.1, brow: [-30, 0.196, 0.024], mw: 1.45 }, { mO: 1, oTeeth: 1, mWv: 0.8, shiver: 1 }),
+  scream: des({ rx: 0.074, ry: 0.124, white: 0.95, lid: -0.1, brow: [-32, 0.196, 0.024], mw: 1.25 }, { mOpen: 1.2, mC: -1, mTeeth: 1, mWv: 0.8, sw: 0.8, shiver: 1 }),
   sick: des({ lid: 0.45, lidTilt: -8, low: 0.1, brow: [-18, 0.142, 0.01], mw: 0.6, tint: [0.46, 0.68, 0.38] }, { mWv: 1.2, mC: -0.5, mPr: 0.6, bags: 1, puff: 1, sw: 0.6 }),
   cold: des({ lid: 0.06, white: 0.3, brow: [-24, 0.158, 0.012], mw: 0.95, tint: [0.56, 0.7, 0.96] }, { mGrim: 0.7, mPul: 1, mC: -0.3, bFl: 0.6, shiver: 1 }),
-  hot: des({ lid: 0.3, lidTilt: -8, brow: [-16, 0.145, 0.012], mw: 0.9, tint: [0.96, 0.55, 0.48], marks: [['steam']] }, { sw: 1, sw2: 1, mOpen: 0.6, mC: -0.1, mTongue: 1 }),
+  hot: des({ lid: 0.3, lidTilt: -8, brow: [-16, 0.145, 0.012], mw: 0.9, tint: [1, 0.44, 0.32] }, { sw: 1, sw2: 1, mOpen: 0.6, mC: -0.1, mTongue: 1, heat: 1 }),
   angry: des({ lid: 0.26, low: 0.12, bw: 1.25, brow: [24, 0.12, 0.002], mw: 0.9, marks: [['anger']] }, { mGrim: 0.7, mC: -0.7, bIn: 0.014 }),
   deadpan: des({ lid: 0.4, brow: [0, 0.136, 0], mw: 0.6 }, { mC: 0 }),
   confused: des({ lid: 0.06, gy: 0.2, brow: [-6, 0.152, 0.01, 0.045, -0.015], mw: 0.7, marks: [['question']] }, { eAsym: 0.22, mSk: 0.55, mC: -0.25, mWv: 0.5 }),
