@@ -10,6 +10,7 @@ test('dark before `from`; the heads take turns, half a turn apart, one turn ever
   const o = { from: 0, spin: 10 }, [a0, b0] = lightBarAt(0, o), [a5, b5] = lightBarAt(5, o);
   assert.ok(a0 > 0.99 && b0 < 0.01 && a5 < 0.01 && b5 > 0.99, `${a0} ${b0} ${a5} ${b5}`);
   assert.deepEqual(lightBarAt(3, o), lightBarAt(13, o));
+  assert.ok(lightBarAt(7, { spin: 0 }).every(Number.isFinite) && lightBarAt(NaN).every(x => x === 0), 'never NaN light');
 });
 
 test('a sweep, not a blink: each head comes up over several frames and never jumps from dark to full', () => {

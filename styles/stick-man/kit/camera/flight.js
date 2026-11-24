@@ -25,7 +25,9 @@ export function crT(P, T, t) {
   return L(B1, B2, t1, t2);
 }
 
-export function flyCam(WP, F0, F1, { off = () => [0, 0, 0], shake = () => [0, 0, 0], dof, intent = 'ms', why = 'one flight' } = {}) {
+export function flyCam(WP0, F0, F1, { off = () => [0, 0, 0], shake = () => [0, 0, 0], dof, intent = 'ms', why = 'one flight' } = {}) {
+  // in frame order, one waypoint a frame (a repeated frame would divide by zero in the curve: the first one stays)
+  const WP = [...WP0].sort((a, b) => a.f - b.f).filter((w, i, a) => !i || w.f !== a[i - 1].f);
   const T = WP.map(w => w.f), P = WP.map(w => w.pos), A = WP.map(w => w.aim), Z = WP.map(w => [1 / w.lens]), R = WP.map(w => [w.roll || 0]);
   const out = [];
   for (let f = F0; f <= F1; f++) {

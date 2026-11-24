@@ -13,7 +13,8 @@ import './make.js';   // registers the 'ao_anim' kind the act keys the bar with
 
 const ss = u => { u = Math.min(1, Math.max(0, u)); return u * u * (3 - 2 * u); };
 export function lightBarAt(f, { from = 0, rise = 0, spin = 10, sharp = 3, fade = null } = {}) {
-  if (f < from) return [0, 0];
+  if (!(f >= from)) return [0, 0];
+  spin = Math.max(1, spin);
   const env = fade ? 1 - ss((f - fade[0]) / Math.max(1, fade[1] - fade[0])) : 1;
   if (f < from + rise) { const u = (f - from + 1) / rise; return [env * 0.5 * u * u, env * 0.06 * u]; }
   const ph = ((f - from - rise) % spin) / spin, head = p => Math.max(0, Math.cos(2 * Math.PI * p)) ** sharp;

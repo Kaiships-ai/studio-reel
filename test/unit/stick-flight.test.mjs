@@ -16,6 +16,12 @@ test('flyCam: one entry a frame, through every waypoint on its frame, no cut ins
   assert.equal(D[60].cam.roll, 4); assert.equal(D[0].cam.roll, undefined, 'no roll key when there is none');
 });
 
+test('flyCam: waypoints in any order, a repeated frame keeps the first (never a NaN camera)', () => {
+  const D = flyCam([WP[2], WP[0], { ...WP[0], pos: [9, 9, 9] }, WP[1]], 0, 60);
+  assert.ok(D.every(d => d.cam.pos.every(Number.isFinite) && d.cam.aim.every(Number.isFinite)));
+  assert.deepEqual(D[0].cam.pos, WP[0].pos); assert.deepEqual(D[60].cam.pos, WP[2].pos);
+});
+
 test('flyCam: the camera never stops at an inner waypoint (its speed carries through)', () => {
   const D = flyCam(WP, 0, 60), step = f => dist(D[f + 1].cam.pos, D[f].cam.pos);
   assert.ok(step(29) > 0.02 && step(30) > 0.02, `${step(29)} ${step(30)}`);
