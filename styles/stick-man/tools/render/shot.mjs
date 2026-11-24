@@ -141,8 +141,8 @@ if (A.speed && !REEL) {
   if (!T?.pixels) fs.rmSync(path.resolve(A.mp4) + '.json', { force: true });
   const pad = A['pad-audio'] === '1';
   if (!pad) {
-    const sec = Number(run('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', wav], { capture: true }).stdout);
-    const lost = Number.isFinite(sec) ? framesLost(sec, { fps, f0, n }) : 0;
+    const pr = run('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', wav], { capture: true }), sec = Number(pr.stdout);
+    const lost = pr.status === 0 && pr.stdout.trim() && sec > 0 ? framesLost(sec, { fps, f0, n }) : 0;   // no duration: no claim (ffmpeg reports the file)
     if (lost) console.warn(`[shot] the audio ends at ${sec.toFixed(2)} s, before the last frame: the mp4 lacks its last ${lost} frame(s); --pad-audio 1 keeps them`);
   }
   const ff = start('ffmpeg', muxArgs({ fps, f0, n, wav, out: OUT, pad }), { stdio: ['pipe', 'inherit', 'inherit'] });
