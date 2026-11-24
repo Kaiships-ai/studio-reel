@@ -10,6 +10,9 @@
 //   --film ... --serve 1                                               keep a server up and print the URL
 //   --film ... --cues audio/cues.json                                  sound cues from the picture: [{t, name, strength}]
 //   --mp4 ... --audio films/x/audio/mix.wav                           mux this track instead of vo/vo.wav
+//   --mp4 ... --pad-audio 1                                           keep every frame when the audio ends first (silence
+//                                                                     after it); without it the mp4 ends with the audio, as
+//                                                                     always, and a warning says how many frames it lacks
 //   --no-bible-check '<reason>'  render although bible/check.mjs blocks (prints a warning, logged in films/<slug>/bible-bypass.tsv)
 //   --fast 1 (report without the frame-difference pass), --w/--h (default 1080x1920), --query k=v (page flags); --help
 // Render by purpose (tools/render/tiers.mjs): --tier dbg|still|proof|review|final sets the size and the look
@@ -26,6 +29,7 @@ import { acting, joints, compress, holdLines, faultList, hiddenOf, faceLines, co
 import { bibleGate } from '../../bible/gate.mjs';
 import { resolveTier, sceneFrames } from './tiers.mjs';
 import * as cache from './cache.mjs';
+import { muxArgs, framesLost } from './mux.mjs';
 import { acquire, freeGB } from './lock.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -62,7 +66,7 @@ if (A.scenes) {
 const CACHE = T?.pixels && A.mp4 && !A['no-cache'] && REEL;
 const inputs = CACHE && { tier: T.tier, w: W, h: H, query: QUERY, frames: A.frames || '0', film: A.film, kit: cache.kitStamp(ROOT),
   bible: cache.bibleStamp(ROOT, path.join(ROOT, A.film)), words: cache.fileHash(path.join(ROOT, A.film, 'vo', 'words.json')),
-  audio: cache.fileHash(A.audio ? path.resolve(A.audio) : path.join(ROOT, A.film, 'vo', 'vo.wav')) };
+  audio: cache.fileHash(A.audio ? path.resolve(A.audio) : path.join(ROOT, A.film, 'vo', 'vo.wav')), ...(A['pad-audio'] === '1' ? { pad: 1 } : {}) };
 if (CACHE) {
   const c = cache.check(ROOT, path.resolve(A.mp4), inputs);
   if (c.hit) { console.log(`${A.mp4}  cache hit: ${c.why}`); process.exit(0); }
@@ -135,10 +139,13 @@ if (A.speed && !REEL) {
   // a tier mp4 renders to a temp file and its sidecar is written last, so a killed render is never a cache hit
   const OUT = T?.pixels ? cache.begin(path.resolve(A.mp4)) : path.resolve(A.mp4);
   if (!T?.pixels) fs.rmSync(path.resolve(A.mp4) + '.json', { force: true });
-  const ff = start('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'mjpeg', '-i', '-',
-    '-ss', (f0 / fps).toFixed(4), '-t', (n / fps).toFixed(4), '-i', wav, '-map', '0:v', '-map', '1:a',
-    '-c:v', 'libx264', '-preset', 'medium', '-crf', '17', '-pix_fmt', 'yuv420p', '-r', String(fps), '-c:a', 'aac', '-b:a', '192k',
-    '-shortest', '-movflags', '+faststart', OUT], { stdio: ['pipe', 'inherit', 'inherit'] });
+  const pad = A['pad-audio'] === '1';
+  if (!pad) {
+    const pr = run('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', wav], { capture: true }), sec = Number(pr.stdout);
+    const lost = pr.status === 0 && pr.stdout.trim() && sec > 0 ? framesLost(sec, { fps, f0, n }) : 0;
+    if (lost) console.warn(`[shot] the audio ends at ${sec.toFixed(2)} s, before the last frame: the mp4 lacks its last ${lost} frame(s); --pad-audio 1 keeps them`);
+  }
+  const ff = start('ffmpeg', muxArgs({ fps, f0, n, wav, out: OUT, pad }), { stdio: ['pipe', 'inherit', 'inherit'] });
   const done = new Promise((res, rej) => ff.on('close', c => (c ? rej(new Error('ffmpeg ' + c)) : res())));
   const t0 = Date.now(); let ms = 0;
   for (const f of frames) {

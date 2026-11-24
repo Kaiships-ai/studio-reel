@@ -23,6 +23,10 @@ before.
 - Render lock (`render/lock.mjs`). Every pixel tier holds `~/.cache/stick-man/render.lock` (or `$STICK_RENDER_LOCK`)
   with a heartbeat every 20 s. On this host a lock is taken over only when its process is gone; from another host, after 120 s without a heartbeat. Takeover runs under an exclusive `<lock>.takeover` guard, so two takers never both win.
   `--lock-wait <s>` sets the wait (default 3600). `--min-free-gb` (default 5) refuses to start on a full disk.
+- Audio shorter than the picture (`render/mux.mjs`). `--mp4` ends with the audio (`-shortest`), so a voice that stops
+  before the last frame drops those frames: shot.mjs warns `[shot] the audio ends at ... lacks its last N frame(s)`.
+  `--pad-audio 1` pads the audio with silence and keeps every frame (it joins the cache key only when set). Regression:
+  `node --test test/unit/stick-shot-mux.test.mjs` (real ffmpeg: 30 of 60 frames without it, 60 with it).
 - Pixel gates. `colourgate.mjs` exits 2 on a T2 proof (read from the sidecar) or on any mp4 under 720 wide, and tells
   you to render with `--tier review`.
 - Mac Pro (`render/pro.mjs`). `node styles/stick-man/tools/render/pro.mjs -- <shot.mjs args>` packs `films/<ep>`
