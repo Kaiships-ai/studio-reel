@@ -43,7 +43,7 @@ sf.write(r'${f('vo.wav')}', v, 48000); sf.write(r'${f('bed.wav')}', b, 48000); s
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
-test('mix.py floor: opt-in, the beds come up in a hole between two lines and nowhere near the end', { skip: skip || (!E.tools?.ffmpeg && 'needs ffmpeg') }, () => {
+test('mix.py floor: opt-in, the beds come up in a hole between two lines, never inside a planned silence or near the end', { skip: skip || (!E.tools?.ffmpeg && 'needs ffmpeg') }, () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mix-floor-'));
   try {
     const level = (film, a, b) => { const p = run('python', ['-I', '-c', `import numpy as np, soundfile as sf; x, sr = sf.read(r'${path.join(film, 'audio/mix.wav')}'); x = x.mean(1)[int(${a} * sr):int(${b} * sr)]; print(20 * np.log10(np.sqrt((x ** 2).mean()) + 1e-9))`], { capture: true }); return Number(p.stdout); };
@@ -57,14 +57,16 @@ sf.write(r'${path.join(film, 'vo/vo.wav')}', 0.3 * np.sin(2 * np.pi * 220 * t) *
       fs.writeFileSync(path.join(film, 'audio/cues.json'), '[]');
       fs.writeFileSync(path.join(film, 'audio/ambience.json'), JSON.stringify({ amb: [[[0, 10], 'office', -30, 'room']] }));
       if (music) fs.writeFileSync(path.join(film, 'audio/music.json'), JSON.stringify(music));
+      fs.writeFileSync(path.join(film, 'audio/sound-plan.json'), JSON.stringify({ silences: [{ t: [4.0, 5.0], why: 'a held breath' }] }));
       const r = run('python', ['-I', `${TOOLS}/run/mix.py`, film], { capture: true }); assert.equal(r.status, 0, r.stderr);
       return film;
     };
     const plain = make('plain', { amb_lu: -36 }), floored = make('floored', { amb_lu: -36, floor: -27 });
-    const before = level(plain, 3.6, 6.0), after = level(floored, 3.6, 6.0);
+    const before = level(plain, 5.2, 6.2), after = level(floored, 5.2, 6.2);
     assert.ok(before < -30, `the hole is a hole without the floor (${before.toFixed(1)} dBFS)`);
     assert.ok(after > before + 4, `the floor lifts it (${before.toFixed(1)} -> ${after.toFixed(1)} dBFS)`);
-    assert.ok(Math.abs(level(floored, 9.5, 10) - level(plain, 9.5, 10)) < 1.5, 'the last 0.6 s is left alone');
+    for (const [a, b, what] of [[4.0, 4.1, 'the silence\'s first 0.1 s'], [4.0, 5.0, 'the planned silence'], [4.9, 5.0, 'the silence\'s last 0.1 s'], [9.4, 10, 'the last 0.6 s']])
+      assert.ok(Math.abs(level(floored, a, b) - level(plain, a, b)) < 0.5, `${what} is left alone (${level(plain, a, b).toFixed(1)} -> ${level(floored, a, b).toFixed(1)} dBFS)`);
     assert.match(fs.readFileSync(path.join(floored, 'audio/levels.txt'), 'utf8'), /floor -27 dBFS: beds lifted on \d+\.\d s/);
     assert.doesNotMatch(fs.readFileSync(path.join(plain, 'audio/levels.txt'), 'utf8'), /beds lifted/, 'no floor unless music.json asks for one');
   } finally { fs.rmSync(tmp, { recursive: true, force: true }); }

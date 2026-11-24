@@ -49,7 +49,7 @@
   with no guess; `Gunshot`, `gunshot_2` and `gunshot-close` play gunshots, `password` and `reveal` play the quiet
   default; an unknown `bag_swish` is a whoosh; a 3 s test film mixes to −14 LUFS and reports its guessed name.
 - `node --test test/unit/stick-floorgate.test.mjs`: the floor gate on made-up sound (holes, a thin bed, a closing drop) and
-  the mixer's floor lifting a 3.5 s hole between two lines by more than 4 dB while a mix without `floor` stays as it was.
+  the mixer's floor lifting a hole between two lines by more than 4 dB while a planned silence (its first and last 0.1 s too) and the last 0.6 s stay within 0.5 dB; without `floor` the fill step never runs (main's and this mixer gave byte-identical stems in review).
 - `node --test test/unit/sound-fit.test.mjs`: a 100 BPM click track fit to a made-up arc cuts within one frame of a bar
   line at every section start, plays the loud part under the loud section, and stays silent in the planned silences;
   `--check` passes the placed stem and fails it 0.2 s late or cut short.

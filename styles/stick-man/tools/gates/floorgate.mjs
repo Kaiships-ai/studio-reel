@@ -21,7 +21,7 @@ export const LIMITS = [
   { id: 'F2', what: `bed under the voice by more than ${GAP_DB} dB for ${GAP_S} s or more`, key: 'thin', max: 0,
     source: 'Hot Money ep01, this meter: v15 0-25.5 s and 52-90 s (worst 34 dB; the bank explanation, where the YouTube audience dropped at 0:53); H2 V2.1 none' },
   { id: 'F3', what: `the last ${CLOSE_S} s: bed vs the film's median bed (dB)`, key: 'close', min: -CLOSE_DB,
-    source: 'Hot Money ep01, this meter: v15 -1.6 dB ("the film asks and nobody feels asked", the cold watch of 24/11); H2 V2.1 +5.2 dB' },
+    source: 'Hot Money ep01, this meter: v15 -1.6 dB ("the film asks and nobody feels asked", the cold watch of 24/11); H2 V2.1 +4.2 dB' },
 ];
 
 const db = x => 10 * Math.log10(Math.max(x, 1e-12));
@@ -59,8 +59,8 @@ export function thinRuns(G) {
   return runs;
 }
 export function closing(bed) {
-  const P = blocks(bed, SR / 2).map(db), med = [...P].sort((p, q) => p - q)[Math.floor(P.length / 2)], k = CLOSE_S * 2;
-  const end = db(blocks(bed, SR / 2).slice(-k).reduce((s, p) => s + p, 0) / k);
+  const median = a => [...a].sort((p, q) => p - q)[Math.floor(a.length / 2)];
+  const P = blocks(bed, SR / 2).map(db), med = median(P), end = median(P.slice(-CLOSE_S * 2));   // like with like: medians of 0.5 s blocks
   return { end, median: med, close: end - med };
 }
 

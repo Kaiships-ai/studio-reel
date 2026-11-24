@@ -258,9 +258,13 @@ def fill_floor(S, floor, most=14.0):
     L, R = summed(stems(S, G)); K = N // hop
     pw = uniform_filter1d(((L[:K * hop] ** 2 + R[:K * hop] ** 2) / 2).reshape(K, hop).mean(1), 20)
     up = np.clip(floor - 10 * np.log10(pw + 1e-12), 0, most)
-    for x in S['silences']: up[int(x['t'][0] * 100):int(x['t'][1] * 100) + 1] = 0
-    up[max(0, K - 60):] = 0
-    up = uniform_filter1d(uniform_filter1d(up, 12), 8)
+    keep = np.ones(K)
+    for x in S['silences']: keep[int(x['t'][0] * 100):int(x['t'][1] * 100) + 1] = 0
+    keep[max(0, K - 60):] = 0
+    # smoothing spreads the lift, so the mask goes on after it too: zero from one block early, then a linear 0.1 s ramp
+    # before the edge (a planned silence keeps its hard edge; the lift fades out over the 0.1 s before it)
+    keep = minimum_filter1d(keep, 3); ramp = np.clip(2 * uniform_filter1d(keep, 21) - 1, 0, 1)
+    up = uniform_filter1d(uniform_filter1d(up * keep, 12), 8) * ramp
     g = 10 ** (np.interp(np.arange(N), np.arange(K) * hop + hop / 2, up) / 20)
     S['aL'], S['aR'] = S['aL'] * g, S['aR'] * g
     if not S['stem']: S['mL'], S['mR'] = S['mL'] * g, S['mR'] * g
