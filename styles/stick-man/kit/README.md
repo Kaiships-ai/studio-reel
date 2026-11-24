@@ -8,7 +8,8 @@ Live engine code, not a one-off study. Each file sits in the folder of what it i
 | `cast/` | what a figure wears or holds: `costume.js`, `hoodie.js` with its `cloth.js` sim, `extras.js` background people, `handprops.js` (toon) and `handprops-lit.js` (the lit swap), `rail.js` (the railroad cast) |
 | `props/` | story props that stand in the set: `story.js`, `dyepack.js`, and `sizes.js` (the real sizes `shotfaults.mjs` holds props to) |
 | `acting/` | what plays over time: `keys.js` (the lead's acting keys), `director.js` (the hand-directed camera) |
-| `fx/` | effects: `make.js` (the `ao_*` MAKE kinds), `physfx.js` (physical effects in the world), `explain.js` (explainer effects), `burst.js` (the burst) |
+| `camera/` | `flight.js`: `flyCam` (one continuous flight through waypoints, one `direct` entry a frame, never stops or cuts), `faceCam` (waypoints that arc round a turning figure at eye height so its face stays to the lens) and `pathOf` (a placed clip's or hand keys' path for it) |
+| `fx/` | effects: `make.js` (the `ao_*` MAKE kinds), `physfx.js` (physical effects in the world), `explain.js` (explainer effects), `burst.js` (the burst), `lightbar.js` (a rotating light bar whose heads sweep, never blink) |
 | `look/` | how a picture is lit: `highlights.js` (the light budget every film gets from `engine/look.js`: no prop whiter than albedo 0.8 or glowing unless it is a light, `grade.exp` on the linear scene, a highlight roll-off before the blooms and the tone mapper, the glow halo capped; `grade.shoulder` retired); `exposure.js` (`exposureWarnings`: `engine/play.js` warns on an act whose `grade.exp` is over 1.5: light the place instead) |
 
 Code inside `styles/stick-man/` imports these by alias, `#kit/<folder>/<file>.js` (also `#engine/`, `#motion-lib/`,
@@ -29,6 +30,9 @@ and `sets/backdrop.js` from here. An act or a cast entry opts in with the keys b
 | `make: { f: { kind: 'ao_flies', at: { head: 'kip' } } }` | flies buzzing round a head (key on) | fx.js |
 | `backdrop: { rows: [{ piece, at, rot, tint, scale }], tint }` | far town rows 20-60 m past the set's walls (pieces `backdrop_skyline_a`, `backdrop_skyline_b`, `backdrop_roofline`); never collide, no ink, not dressing; `tint` darkens them for a night set | sets/backdrop.js, assets/backdrop/ (engine/play.js hook) |
 | shot `travel: 'rush'` | hold, then a crisp travel (no smear); 'land' arrives with a small settle | director.js |
+| `direct: flyCam(faceCam({ ...pathOf(placeClip(key, cur).keys), f0, f1, side, dist }), f0, f1)` | one flight that keeps the face to the lens while a library clip walks, turns or runs (H2 V2.1: faces, not the back of the hood); `pathOf` also reads hand keys | camera/flight.js |
+| set `lightBar(stage, { at, colors, power, from, rise, spin, fade })` returned as a prop; `make: { bar: { kind: 'ao_anim', prop: 'bar' } }` | a siren or alarm bar that stands still and sweeps red and blue | fx/lightbar.js |
+| act `grade.roll: { knee, ceil }` | this act's highlight roll-off (a close-up of the flat white head: `{ knee: 0.46, ceil: 0.70 }` as H2 V2.1's ending; wide shots kept 0.49 / 0.76); a ceiling at or under the knee is ignored with a `[kit]` warning | look/highlights.js `actRoll`, engine/look.js |
 
 Look rules the sets follow: physically lit standard materials (never toonified, never inked: only the cast is inked),
 bevelled edges, an image-based fill per place (`envMap` panels = its windows and lamps), one warm key + practical

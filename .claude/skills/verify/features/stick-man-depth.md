@@ -21,6 +21,10 @@ Rick clip bench (`styles/stick-man/bench/TABLE.md`, depth ratio, luma, saturatio
 - `look.dofAuto` still gives its gain to a director shot closer than `below`.
 - Act `grade.sky` (`{ glow, clouds }` or `false`) and `grade.air` (`{ k, near, scale, desat }` or `false`) tune or turn
   off the dome and the air for one act.
+- Act `grade.roll` (`{ knee, ceil }`) sets that act's highlight roll-off (`kit/look/highlights.js` `actRoll`); a ceiling at or
+  under the knee is ignored with a `[kit]` warning. A set's `lightBar` (`kit/fx/lightbar.js`) sweeps two coloured point
+  lights and stands still in the world. A flight from `kit/camera/flight.js` (`flyCam`, `faceCam`) is an ordinary `direct`
+  list. Tests: `stick-highlights`, `stick-lightbar`, `stick-flight`.
 - `act.backdrop.rows`: `{ piece, at, rot, scale, tint }`; `backdrop(stage, rows, { tint })` is the same call for a set's `build()`. The toon ramp ignores light intensity, so a
   night set graded up 2-3x needs a dark tint (about 0.17). Lit windows keep their glow. The pieces ignore the act's
   linear haze; the air pass fades them.
