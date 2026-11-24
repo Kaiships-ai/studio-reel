@@ -136,6 +136,7 @@ independent review. Why each rule exists, with the film that paid for it, is in 
 | Explain in pictures first; a card last, ≤ 8 s of cards in a row and ≤ 25 % of the film | `prepro.mjs` |
 | Words, numbers and faces stay in the text-safe box (x 6-87 %, y 14-65 %) on every frame, zooms included | `animatic.mjs` |
 | The animatic is locked on the final voice, timed in frames, with burn-in | `prepro.mjs` |
+| A delivery copy is the approved film frame for frame (native 1080, the approved sound copied, motion fields from the approved pass) before it reaches the upload folder | `copycheck.mjs` |
 | Approved decisions live in `DECISIONS.json` and are checked at every gate; dropping one Kai approved goes to him at K3 | `develop.mjs` |
 | The confirmed scene feels and story scores are locked (`prepro.mjs --lock-story agent:<id>`); a later change is a FAIL | `prepro.mjs` |
 | An overlay or an on-screen counter claims only what the picture and the story math show, changing on the word that causes it | `review/final-qa.md` |

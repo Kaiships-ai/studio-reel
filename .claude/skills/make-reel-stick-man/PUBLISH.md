@@ -7,6 +7,7 @@ better for it. Stage 5 turns retention and comments into named causes, and cause
 
 | Step | Do | Output |
 |---|---|---|
+| [5.0] Delivery copy | Only on Kai's go for a 1080 copy: render the picture at native 1080 (never an upscale), take any motion field (whip blur, retime) from the approved 720 pass so nothing is rebuilt, copy the approved audio stream. Then `node styles/stick-man/tools/gates/copycheck.mjs --copy <1080.mp4> --approved <approved 720.mp4> --out review/copycheck.md`: frames, film match, torn frames (look at each frame it names beside the approved one), sound. Nothing goes to the upload folder before it passes. | `review/copycheck.md` |
 | [5.1] Publish | Post the delivery package (◇5): the final, the cover, the caption, the subtitles. Note the hook used, the time, the platform. If there is an alternative hook cut, say which one ran where (the cut goes in `deliver/hook-*.mp4`, which `postcheck.mjs` P3 looks for). | `review/publish.md` |
 | [5.2] Read the numbers at 24 h and 7 d | Kai pastes the analytics screenshots (retention curve, average view %, views, comments split). Transcribe the curve to `t,pct` points, about one per 2-5 s. | `review/retention-24h.csv`, `-7d.csv` |
 | [5.3] Map to shots | `node styles/stick-man/tools/series/retention.mjs films/<slug> --csv review/retention-24h.csv --label 24h` puts each drop on a shot id. | `review/retention.md` |
