@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // The lead's face, not the back of the head (advisory, ◇5). Reads the dbg rows (shot.mjs --dbg, review/shot-rows.jsonl):
 // a run of frames where the lead is on screen and big enough to read (head box at least MIN_H of the frame height) but
-// turned away from the lens (faceVis under VIS) for HOLD frames or more is a finding. A figure that walks or turns keeps
+// turned away from the lens (faceVis under VIS) for HOLD frames or more is a finding. A dropout of GAP frames or fewer (a
+// flicker of face, a frame off screen) does not end a run; a frame where another face is readable (an over-the-shoulder
+// shot) does not count, the viewer has a face; a walk away stops counting once the head is under MIN_H. A figure that walks or turns keeps
 // its face to the lens with kit/camera/flight.js faceCam. Source: H2 V2's note "faces, not the back of the hood" and the
 // runs it measures on Ep1 v15 (LIMIT below).
 //   node styles/stick-man/tools/gates/headgate.mjs films/<slug>          (review/shot-rows.jsonl -> review/headgate.md)
@@ -9,25 +11,26 @@
 import fs from 'node:fs'; import path from 'node:path'; import { pathToFileURL } from 'node:url';
 import { ROOT } from '../../../../kit/env.mjs';
 
-export const VIS = 0.25, MIN_H = 0.05, HOLD = 60;
+export const VIS = 0.25, MIN_H = 0.05, HOLD = 60, GAP = 8;
 export const LIMIT = { id: 'H1', what: `the lead on screen and readable with its back to the lens (faceVis under ${VIS}) for ${HOLD / 30} s or more`,
-  source: 'Ep1 v15 (these rows): 3 runs, 11 s (889-993, 1025-1125, 1514-1637), the first the shot H2 V2 re-cut to show his face; H2 V2 notes: "faces, not the back of the hood", "the previs flight looked down on the cap for 3.6 s"' };
+  source: 'Ep1 v15 (these rows): 4 runs, 14 s (884-1002, 1025-1125, 1268-1346, 1514-1637), the first the shot H2 V2 re-cut to show his face; H2 V2 notes: "faces, not the back of the hood", "the previs flight looked down on the cap for 3.6 s"' };
 
-const leadOf = r => Object.values(r.actors || {}).find(a => a.lead);
-// the frame's lead: null when there is none, else { seen (on screen and readable), back (seen and turned away) }
+const readable = (a, H) => Boolean(a.inFrame && a.head && (a.head[3] - a.head[1]) >= MIN_H * H);
+// the frame's lead: null when no row names a lead or its faceVis is missing (not measured), else { seen, back }
 export function frameState(r) {
-  const a = leadOf(r); if (!a) return null;
-  const H = r.px?.[1] || 1280, seen = Boolean(a.inFrame && a.head && (a.head[3] - a.head[1]) >= MIN_H * H);
-  return { seen, back: seen && (a.faceVis ?? 1) < VIS };
+  const A = Object.values(r.actors || {}), a = A.find(x => x.lead); if (!a || a.faceVis == null) return null;
+  const H = r.px?.[1] || 1280, seen = readable(a, H), otherFace = A.some(x => x !== a && readable(x, H) && (x.faceVis ?? 0) >= 0.5);
+  return { seen, back: seen && a.faceVis < VIS && !otherFace };
 }
 
 export function headgate(rows) {
   const runs = []; let cur = null, measured = 0, seen = 0, face = 0;
   const close = () => { if (cur && cur.to - cur.from + 1 >= HOLD) runs.push({ id: 'H1', ...cur, what: `the back of the lead's head for ${((cur.to - cur.from + 1) / 30).toFixed(1)} s` }); cur = null; };
   for (const r of rows) {
-    const s = frameState(r); if (!s) { close(); continue; }
-    measured++; if (s.seen) { seen++; if (!s.back) face++; }
-    if (s.back) { if (cur && r.f === cur.to + 1) cur.to = r.f; else { close(); cur = { from: r.f, to: r.f }; } } else close();
+    const s = frameState(r);
+    if (s) { measured++; if (s.seen) { seen++; if (!s.back) face++; } }
+    if (s?.back) { if (cur && r.f - cur.to - 1 <= GAP) cur.to = r.f; else { close(); cur = { from: r.f, to: r.f }; } }
+    else if (cur && r.f - cur.to > GAP) close();
   }
   close();
   return { ok: !runs.length, runs, measured, faceShare: seen ? +(face / seen).toFixed(3) : null };

@@ -241,8 +241,8 @@
       "{film}"
      ],
      "advisory": true,
-     "why": "advisory until a film flown with faceCam has passed it: a figure walking away into a wide is film grammar, so the limit is a run of 2 s at a readable size",
-     "source": "Ep1 v15 rows: 3 runs, 11 s; H2 V2 re-cut the first to show his face"
+     "why": "advisory: it lists shots to look at. A walk away stops counting once the head is under 5 % of the frame and an over-the-shoulder shot with another face on screen does not count, but a readable walk away is listed: whether it stays is a director's call",
+     "source": "Ep1 v15 rows: 4 runs, 14 s; H2 V2 re-cut the first to show his face"
     },
     {
      "tool": "tools/gates/shotgate.mjs",
