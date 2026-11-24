@@ -248,6 +248,13 @@ def prepare(film, args):
                 silences=(J(os.path.join(A, 'sound-plan.json'), {}) or {}).get('silences', []))
 
 
+def smooth_outside(up, keep):
+    """a lift per 10 ms block, smoothed, that is 0 wherever keep is 0 and fades to 0 over the 0.1 s before it"""
+    keep = minimum_filter1d(keep, 3)
+    fade_in = np.clip(2 * uniform_filter1d(keep, 21) - 1, 0, 1)
+    return uniform_filter1d(uniform_filter1d(up * keep, 12), 8) * fade_in
+
+
 def fill_floor(S, floor, most=14.0):
     """opt-in sound floor (music.json "floor"): where the whole mix, at the master gain, would fall under `floor` dBFS
     (100 ms RMS, smoothed over 0.2 s) the music and the ambience come up by the difference, at most `most` dB, never inside a
@@ -261,10 +268,7 @@ def fill_floor(S, floor, most=14.0):
     keep = np.ones(K)
     for x in S['silences']: keep[int(x['t'][0] * 100):int(x['t'][1] * 100) + 1] = 0
     keep[max(0, K - 60):] = 0
-    # smoothing spreads the lift, so the mask goes on after it too: zero from one block early, then a linear 0.1 s ramp
-    # before the edge (a planned silence keeps its hard edge; the lift fades out over the 0.1 s before it)
-    keep = minimum_filter1d(keep, 3); ramp = np.clip(2 * uniform_filter1d(keep, 21) - 1, 0, 1)
-    up = uniform_filter1d(uniform_filter1d(up * keep, 12), 8) * ramp
+    up = smooth_outside(up, keep)
     g = 10 ** (np.interp(np.arange(N), np.arange(K) * hop + hop / 2, up) / 20)
     S['aL'], S['aR'] = S['aL'] * g, S['aR'] * g
     if not S['stem']: S['mL'], S['mR'] = S['mL'] * g, S['mR'] * g

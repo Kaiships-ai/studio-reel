@@ -7,7 +7,7 @@
 // F2 bed under the voice: while the voice speaks, the effects + music + ambience (the bed) more than 18 dB under the voice,
 //    2 s windows, held 4 s or more
 // F3 the close: the bed over the last 6 s at least as loud as the film's median bed (a closing question that lands)
-// With no stems only F1 is measured and the verdict is PARTIAL.
+// With no stems only F1 is measured and the verdict is PARTIAL. The film behind each limit is its `source` in LIMITS.
 import fs from 'node:fs'; import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { finalRender } from '#tools/render/renders.mjs';
@@ -60,7 +60,7 @@ export function thinRuns(G) {
 }
 export function closing(bed) {
   const median = a => [...a].sort((p, q) => p - q)[Math.floor(a.length / 2)];
-  const P = blocks(bed, SR / 2).map(db), med = median(P), end = median(P.slice(-CLOSE_S * 2));   // like with like: medians of 0.5 s blocks
+  const P = blocks(bed, SR / 2).map(db), med = median(P), end = median(P.slice(-CLOSE_S * 2));
   return { end, median: med, close: end - med };
 }
 
