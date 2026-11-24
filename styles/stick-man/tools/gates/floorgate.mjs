@@ -17,11 +17,11 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.
 export const HOLE_DB = -30, HOLE_S = 0.3, EDGE_S = 0.2, GAP_DB = 18, GAP_S = 4, WIN_S = 2, CLOSE_S = 6, CLOSE_DB = 0, VOICE_ON_DB = 20;
 export const LIMITS = [
   { id: 'F1', what: `holes: the mix under ${HOLE_DB} dBFS for ${HOLE_S} s or more`, key: 'holes', max: 0,
-    source: 'Hot Money ep01 (24/11), this meter on the mix: v15 19 holes (9.6 s); H2 V2.1 0 (its mixer fills them); a blind viewer named the half-second holes of the cut before V2.1' },
+    source: 'Ep1 (24/11), this meter on the mix: v15 19 holes (9.6 s); H2 V2.1 0 (its mixer fills them); a blind viewer named the half-second holes of the cut before V2.1' },
   { id: 'F2', what: `bed under the voice by more than ${GAP_DB} dB for ${GAP_S} s or more`, key: 'thin', max: 0,
-    source: 'Hot Money ep01, this meter: v15 0-25.5 s and 52-90 s (worst 34 dB; the bank explanation, where the YouTube audience dropped at 0:53); H2 V2.1 none' },
+    source: 'Ep1, this meter: v15 0-25.5 s and 52-90 s (worst 34 dB; the bank explanation, where the YouTube audience dropped at 0:53); H2 V2.1 none' },
   { id: 'F3', what: `the last ${CLOSE_S} s: bed vs the film's median bed (dB)`, key: 'close', min: -CLOSE_DB,
-    source: 'Hot Money ep01, this meter: v15 -1.6 dB ("the film asks and nobody feels asked", the cold watch of 24/11); H2 V2.1 +4.2 dB' },
+    source: 'Ep1, this meter: v15 -1.6 dB ("the film asks and nobody feels asked", the cold watch of 24/11); H2 V2.1 +4.2 dB' },
 ];
 
 const db = x => 10 * Math.log10(Math.max(x, 1e-12));
