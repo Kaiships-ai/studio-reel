@@ -29,10 +29,10 @@ export const HOLD = 15, MIN_FACE = 0.03, REPEAT_MAX = 2;
 // Each face of the kit (faces.js EXPR) and the films' closed-mouth twins (a prefix such as y_) in one emotion family, and
 // the words a beat uses for that family. Family 'neutral' never mismatches.
 export const FAMILY = {
-  neutral: ['neutral', 'deadpan', 'focus', 'alert', 'calm', 'suspicious', 'skeptic', 'squint', 'bored', 'stern', 'sleep', 'confused', 'thinking', 'yawn'],
+  neutral: ['neutral', 'deadpan', 'focus', 'alert', 'calm', 'suspicious', 'skeptic', 'squint', 'bored', 'stern', 'sleep', 'confused', 'thinking', 'yawn', 'bite', 'hide', 'spend'],
   joy: ['happy', 'grin', 'closed', 'blush', 'excited', 'relief', 'relieved', 'content', 'manic', 'laugh', 'proud', 'love', 'kiss'],
   smug: ['smug', 'sly', 'dare', 'wink', 'mischievous'],
-  fear: ['worried', 'nervous', 'panic', 'fear', 'fret', 'scared', 'scream'],
+  fear: ['worried', 'nervous', 'panic', 'fear', 'fret', 'scared', 'scream', 'tense'],
   surprise: ['shock', 'dizzy'],
   anger: ['angry', 'furious', 'defiant', 'shout', 'disgust'],
   sad: ['sad', 'cry', 'disappointed', 'guilty', 'embarrassed', 'shy'],

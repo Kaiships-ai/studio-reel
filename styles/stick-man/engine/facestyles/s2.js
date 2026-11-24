@@ -256,9 +256,10 @@ function sweat(g, sw, k) {
   g.beginPath(); g.ellipse(x - r * 0.30, y - r * 0.15, r * 0.20, r * 0.30, 0, 0, 2 * Math.PI); g.fillStyle = K.INK; g.globalAlpha *= 0.25; g.fill(); g.globalAlpha = 1;
 }
 // ---- the kit catalogue's extra marks (Kai 25/11: every face in the V2.1 style, plus the common story faces). Each is drawn
-// only when its design asks (x.eArc, eHeart, eSpiral, wink, tear, blush, mKiss, tint), so the V2.1 designs draw as before.
+// only when its design asks (x.eArc, eHeart, eSpiral, wink, tear, blush, mKiss, mO, tSick / tCold / tHot), so the V2.1 designs draw as before.
 const PINK = 'rgba(240,120,140,', TEAR = 'rgba(170,215,255,0.95)', HEART = '#e8344a';
-const TINTS = { sick: [120, 190, 90, 0.30, -0.16], cold: [120, 170, 235, 0.26, 0.02], hot: [235, 90, 70, 0.22, -0.10] };
+// (amounts, not names: the engine mixes a face's numbers from one face to the next, so a tint fades in and out with the face)
+const TINTS = { tSick: [110, 190, 80, 0.55, -0.14], tCold: [110, 165, 240, 0.48, 0.0], tHot: [240, 85, 65, 0.42, -0.10] };
 // a shut eye as an arc: bend +1 a happy ∩ (the cheeks push it up), -1 a sleepy ∪
 function arcEye(g, ex, ey, w, h, k, bend) {
   const pts = []; for (let i = 0; i <= 16; i++) { const u = -1 + 2 * i / 16; pts.push([ex + w * u, ey + bend * h * (1 - u * u) - (bend > 0 ? 0.2 * h : -0.15 * h)]); }
@@ -277,7 +278,7 @@ function tears(g, tr, ex, s, ey, ry, k) {
   if (tr < 0.03) return;
   const x = ex + s * 0.012, y0 = ey - ry * 0.75;
   if (tr < 0.6) { const r = 0.016, yy = y0 - 0.03; K.fill(g, [...K.bez([x, yy + 2.2 * r], [x + r, yy + r], [x + r, yy - r], [x, yy - r], 8), ...K.bez([x, yy - r], [x - r, yy - r], [x - r, yy + r], [x, yy + 2.2 * r], 8)], TEAR, 0.008 * k); return; }
-  const L = 0.20 * tr, wd = 0.024, pts = [];
+  const L = 0.20 * tr, wd = 0.032, pts = [];
   for (let i = 0; i <= 12; i++) { const u = i / 12; pts.push([x + s * wd * (0.4 + 0.6 * u) + s * 0.006 * Math.sin(u * 6), y0 - L * u]); }
   for (let i = 12; i >= 0; i--) { const u = i / 12; pts.push([x - s * wd * (0.2 + 0.4 * u) + s * 0.006 * Math.sin(u * 6), y0 - L * u - 0.01 * u]); }
   K.fill(g, pts, TEAR, 0.008 * k);
@@ -291,16 +292,21 @@ function blushCheeks(g, b, ey) {
   }
 }
 // a wash over part of the face (sick: green on the lower face, cold: blue all over, hot: red cheeks), under every mark
-function tintFace(g, name) {
-  const T = TINTS[name]; if (!T) return;
-  const [r, gg, b, a, cy] = T, gr = g.createRadialGradient(0, cy, 0.02, 0, cy, 0.36);
-  gr.addColorStop(0, `rgba(${r},${gg},${b},${a})`); gr.addColorStop(1, `rgba(${r},${gg},${b},0)`);
+function tintFace(g, name, amt) {
+  const [r, gg, b, a0, cy] = TINTS[name], a = a0 * clamp(amt), gr = g.createRadialGradient(0, cy, 0.02, 0, cy, 0.36);
+  gr.addColorStop(0, `rgba(${r},${gg},${b},${a})`); gr.addColorStop(0.55, `rgba(${r},${gg},${b},${0.8 * a})`); gr.addColorStop(1, `rgba(${r},${gg},${b},0)`);
   g.fillStyle = gr; g.beginPath(); g.arc(0, cy, 0.36, 0, 2 * Math.PI); g.fill();
 }
-// the kiss: a puckered round mouth set toward the gaze side, its lips drawn as a thick ring
+// the kiss: a puckered round mouth set toward the gaze side, its lips drawn as a thick ring, a small heart rising beside it
 function kissMouth(g, x0, y, k) {
-  g.save(); g.beginPath(); g.ellipse(x0, y, 0.024, 0.030, 0, 0, 2 * Math.PI); g.fillStyle = 'rgba(150,40,60,1)'; g.fill(); g.lineWidth = 0.016 * k; g.strokeStyle = K.INK; g.stroke(); g.restore();
-  K.taper(g, [[x0 - 0.034, y + 0.026], [x0 - 0.040, y], [x0 - 0.034, y - 0.026]], 0.008 * k, K.INK, 0.5);
+  g.save(); g.beginPath(); g.ellipse(x0, y, 0.032, 0.038, 0, 0, 2 * Math.PI); g.fillStyle = 'rgba(150,40,60,1)'; g.fill(); g.lineWidth = 0.018 * k; g.strokeStyle = K.INK; g.stroke(); g.restore();
+  K.taper(g, [[x0 - 0.044, y + 0.032], [x0 - 0.052, y], [x0 - 0.044, y - 0.032]], 0.009 * k, K.INK, 0.5);
+  heartEye(g, x0 + 0.105, y + 0.075, 0.034, k * 0.8);
+}
+// a round open mouth (a yawn, a scream): a tall dark oval, mO 0..1 its height
+function oMouth(g, x0, y, mw, mO) {
+  g.save(); g.beginPath(); g.ellipse(x0, y - 0.03 * mO, 0.046 * (mw || 1), 0.022 + 0.075 * mO, 0, 0, 2 * Math.PI); g.fillStyle = K.INK; g.fill(); g.restore();
+  g.save(); g.beginPath(); g.ellipse(x0, y - 0.03 * mO - (0.012 + 0.045 * mO), 0.028 * (mw || 1), 0.010 + 0.022 * mO, 0, 0, 2 * Math.PI); g.fillStyle = 'rgba(200,80,95,1)'; g.fill(); g.restore();
 }
 function face6(g, F, blink, t, o, T) {
   F = ramp(F);
@@ -342,7 +348,7 @@ function face6(g, F, blink, t, o, T) {
   const k = r2k(F) / Math.sqrt(P.sc), th = th0 * k ** 0.85;
   g.save(); g.translate(0, P.sh); g.scale(P.sc, P.sc);
   const X = F.x;
-  if (X.tint) tintFace(g, X.tint);
+  for (const n of Object.keys(TINTS)) if ((X[n] || 0) > 0.02) tintFace(g, n, X[n]);
   blushCheeks(g, X.blush || 0, ey);
   for (const s of [-1, 1]) {
     const ex = s * dx + gxs;
@@ -360,6 +366,7 @@ function face6(g, F, blink, t, o, T) {
   }
   if (P.eyeA > 0.01) sweat(g, clamp(F.x.sw || 0), k);
   if (X.mKiss) kissMouth(g, (F.mx || 0) + 0.03 * clamp(F.gx || 0, -1, 1), my + P.mUp, k);
+  else if (X.mO) oMouth(g, F.mx || 0, my + P.mUp, F.mw, clamp(X.mO));
   else mouth4(g, Fm, t, my + P.mUp, k, glp);
   g.restore();
 }
@@ -433,7 +440,7 @@ Object.assign(DESIGNS, {
   sad: des({ lid: 0.3, lidTilt: -8, low: 0.05, gy: -0.4, brow: [-24, 0.15, 0.012], mw: 0.7 }, { mC: -0.8 }),
   cry: des({ brow: [-28, 0.15, 0.012], mw: 0.95 }, { eCr: 0.7, tear: 1, mOpen: 0.5, mC: -0.9, mWv: 0.6 }),
   sleep: des({ brow: [-4, 0.13, 0.006], mw: 0.5 }, { eArc: -1, mOpen: 0.12 }),
-  yawn: des({ lid: 0.55, lidTilt: -6, brow: [-10, 0.14, 0.01], mw: 0.55 }, { mOpen: 1.15, mC: -0.2, tear: 0.2 }),
+  yawn: des({ lid: 0.55, lidTilt: -6, brow: [-10, 0.14, 0.01], mw: 0.8 }, { mO: 1, tear: 0.2 }),
   dizzy: des({ brow: [-14, 0.15, 0.01], mw: 0.8 }, { eSpiral: 1, mWv: 0.8, mC: -0.3, mSk: 0.4 }),
   disgust: des({ lid: 0.32, low: 0.2, lidTilt: 4, brow: [12, 0.13, 0.004, 0.02, 0], mw: 0.85 }, { mSk: 0.7, mC: -0.7, mOpen: 0.12, mTeeth: 0.6 }),
   love: des({ brow: [-8, 0.16, 0.02], mw: 0.95 }, { eHeart: 1, mC: 0.9, mOpen: 0.3, blush: 0.8 }),
@@ -446,10 +453,10 @@ Object.assign(DESIGNS, {
   thinking: des({ lid: 0.12, gx: 0.8, brow: [4, 0.14, 0.012, 0, 0.03], mx: 0.03, mw: 0.6 }, { gY: 0.6, mSk: 0.5, mPr: 0.6, mC: -0.1 }),
   mischievous: des({ lid: 0.28, lidTilt: 6, gx: 0.7, brow: [12, 0.13, 0.004, -0.006, 0.04] }, { mC: 0.9, mOpen: 0.25, mTeeth: 0.8, mSk: 0.4 }),
   smug: des({ lid: 0.35, lidTilt: 4, brow: [6, 0.135, 0.006, 0, 0.02], mw: 0.9 }, { mC: 0.6, mSk: 0.45 }),
-  scream: des({ rx: 0.072, ry: 0.122, white: 0.9, lid: -0.1, brow: [-28, 0.18, 0.02], mw: 0.9 }, { mOpen: 1.2, mC: -0.4 }),
-  sick: des({ lid: 0.4, lidTilt: -8, brow: [-16, 0.14, 0.008], mw: 0.7 }, { tint: 'sick', mWv: 1, mC: -0.4, mPr: 0.5 }),
-  cold: des({ lid: 0.1, brow: [-22, 0.155, 0.012], mw: 0.9 }, { tint: 'cold', mGrim: 0.6, mPul: 1, mC: -0.3, bFl: 0.6 }),
-  hot: des({ lid: 0.3, lidTilt: -8, brow: [-14, 0.14, 0.01], mw: 0.8 }, { tint: 'hot', sw: 1, mOpen: 0.4, mC: -0.5 }),
+  scream: des({ rx: 0.072, ry: 0.122, white: 0.9, lid: -0.1, brow: [-28, 0.18, 0.02], mw: 1.1 }, { mO: 1, sw: 0.6 }),
+  sick: des({ lid: 0.4, lidTilt: -8, brow: [-16, 0.14, 0.008], mw: 0.7 }, { tSick: 1, mWv: 1, mC: -0.4, mPr: 0.5 }),
+  cold: des({ lid: 0.1, brow: [-22, 0.155, 0.012], mw: 0.9 }, { tCold: 1, mGrim: 0.6, mPul: 1, mC: -0.3, bFl: 0.6 }),
+  hot: des({ lid: 0.3, lidTilt: -8, brow: [-14, 0.14, 0.01], mw: 0.8 }, { tHot: 1, sw: 1, mOpen: 0.4, mC: -0.5 }),
   angry: des({ lid: 0.14, low: 0.08, bw: 1.2, brow: [22, 0.128, 0.002], mw: 0.85 }, { mGrim: 0.45, mC: -0.6, bIn: 0.012 }),
   deadpan: des({ lid: 0.3, brow: [0, 0.14, 0.004], mw: 0.7 }, { mC: 0 }),
   confused: des({ lid: 0.06, gy: 0.4, brow: [-6, 0.15, 0.01, 0.03, -0.01], mw: 0.7 }, { mSk: 0.5, mC: -0.2, mWv: 0.3 }),
@@ -470,7 +477,9 @@ export const PURPOSE = {
   angry: 'angry', furious: 'shouting mad', deadpan: 'deadpan, unimpressed', confused: 'confused', bored: 'bored',
   worried: 'worried', nervous: 'nervous', shock: 'shocked', panic: 'panic', pain: 'in pain', stern: 'stern, serious',
   suspicious: 'suspicious', skeptic: 'skeptical squint', sly: 'sly dare', determined: 'determined, pushing', relieved: 'relieved',
-  sweat: 'sweating it', fret: 'fretting',
+  sweat: 'sweating it', fret: 'fretting', y_alert: 'alert, ears up', y_focus: 'focused on the task', y_strain: 'straining, lifting',
+  y_fear: 'afraid', y_bite: 'biting into food', y_scared: 'scared', y_hide: 'eyes to one side (a choice)', y_spend: 'eyes to the other side (a choice)',
+  y_tense: 'tense, holding it in', c_suspicious: 'suspicious (a second character)', c_stern: 'stern (a second character)',
 };
 const talking = (d, open, base) => ({ ...d, base, x: { ...(d.x || {}), mOpen: Math.max(d.x?.mOpen || 0, open) } });
 // s2 on the engine for this render (the clocks are module state: one face style per render)
