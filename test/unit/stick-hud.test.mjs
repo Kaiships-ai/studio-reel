@@ -94,6 +94,11 @@ test('vote at its default place: every box sits inside the text-safe box and off
   }
 });
 
+test('vote: long choices shrink until the pair fits the text-safe width', () => {
+  const ov = make([{ kind: 'vote', from: 0, to: 60, choices: ['FIX IT', 'BLAME THE DOG FOR EVERYTHING'], hits: [0, 0] }]);
+  for (const b of boxes(ov, 30)) assert.ok(b.box[0] >= TEXT_SAFE.x0 && b.box[2] <= TEXT_SAFE.x1, `${b.text} ${b.box}`);
+});
+
 test('boxes: a text label, a meter, a clock and a threat give boxes in shares of the frame, tagged with their overlay', () => {
   const ov = make([{ kind: 'text', from: 0, to: 40, text: 'HELLO', at: [0.5, 0.3], tilt: 0, enter: 'none' }, { ...CLOCK }, { kind: 'meter', from: 0, to: 40, at: [0.5, 0.5], label: 'HEAT', keys: [[0, 10]], enter: 'none' },
     { kind: 'threat', from: 0, to: 40, steps: [{ f: 0, who: 'MOM', word: 'NEAR', level: 0.3 }] }]);

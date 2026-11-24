@@ -193,9 +193,11 @@ export function hudKinds({ width, height, k, rrect }) {
   // ---- vote: two choices side by side that slam in on the words that name them, in two colours that say neither is
   // the right one; the half of the frame on that side takes its colour; a heartbeat from the first hit; the call to
   // action in rows under it. By default the whole card sits inside the text-safe box (y 0.14-0.65).
+  // the pair shrinks until it fits the text-safe width (x 0.06-0.87, centred at `at`): long choices stay off the app's bands
   const voteGeo = (g, o) => {
-    const px = (o.size ?? 99) * k, [ax, ay] = o.at ?? [0.465, 0.47], [a, b] = o.choices ?? ['YES', 'NO'];
-    g.font = font(px); const wa = g.measureText(a).width + 0.85 * px, wb = g.measureText(b).width + 0.73 * px, gap = 9 * k;
+    const [ax, ay] = o.at ?? [0.465, 0.47], [a, b] = o.choices ?? ['YES', 'NO'], fitW = 2 * Math.min(ax - 0.07, 0.86 - ax) * W, gap = 9 * k;
+    let px = (o.size ?? 99) * k, wa, wb;
+    for (;;) { g.font = font(px); wa = g.measureText(a).width + 0.85 * px; wb = g.measureText(b).width + 0.73 * px; if (wa + wb + gap <= fitW || px <= 36 * k) break; px *= 0.94; }
     const x0 = ax * W - (wa + wb + gap) / 2; return { px, cy: ay * H, wa, wb, ca: x0 + wa / 2, cb: x0 + wa + gap + wb / 2, seam: x0 + wa + gap / 2, h: 1.9 * px };
   };
   const rowY = (o, r) => ((o.at ?? [0.465, 0.47])[1] + 0.074 + (r - 1) * 0.058) * H;
