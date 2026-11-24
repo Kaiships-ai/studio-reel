@@ -255,11 +255,10 @@ function sweat(g, sw, k) {
   g.globalAlpha = clamp(sw * 2); K.fill(g, pts, K.WHITE, 0.011 * k);
   g.beginPath(); g.ellipse(x - r * 0.30, y - r * 0.15, r * 0.20, r * 0.30, 0, 0, 2 * Math.PI); g.fillStyle = K.INK; g.globalAlpha *= 0.25; g.fill(); g.globalAlpha = 1;
 }
-// ---- the kit catalogue's extra marks (Kai 25/11: every face in the V2.1 style, plus the common story faces). Each is drawn
-// only when its design asks (x.eArc, eHeart, eSpiral, wink, tear, blush, mKiss, mO, tSick / tCold / tHot), so the V2.1 designs draw as before.
+// the catalogue's marks (Kai 25/11: every face in the V2.1 style, plus the common story faces)
 const PINK = 'rgba(240,120,140,', TEAR = 'rgba(170,215,255,0.95)', HEART = '#e8344a';
 // (amounts, not names: the engine mixes a face's numbers from one face to the next, so a tint fades in and out with the face)
-const TINTS = { tSick: [110, 190, 80, 0.55, -0.14], tCold: [110, 165, 240, 0.48, 0.0], tHot: [240, 85, 65, 0.42, -0.10] };
+const TINTS = { tSick: { rgb: [110, 190, 80], alpha: 0.55, y: -0.14 }, tCold: { rgb: [110, 165, 240], alpha: 0.48, y: 0 }, tHot: { rgb: [240, 85, 65], alpha: 0.42, y: -0.10 } };
 // a shut eye as an arc: bend +1 a happy ∩ (the cheeks push it up), -1 a sleepy ∪
 function arcEye(g, ex, ey, w, h, k, bend) {
   const pts = []; for (let i = 0; i <= 16; i++) { const u = -1 + 2 * i / 16; pts.push([ex + w * u, ey + bend * h * (1 - u * u) - (bend > 0 ? 0.2 * h : -0.15 * h)]); }
@@ -291,19 +290,17 @@ function blushCheeks(g, b, ey) {
     g.save(); g.translate(cx, cy); g.scale(1, 0.55); g.translate(-cx, -cy); g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, 0.060, 0, 2 * Math.PI); g.fill(); g.restore();
   }
 }
-// a wash over part of the face (sick: green on the lower face, cold: blue all over, hot: red cheeks), under every mark
 function tintFace(g, name, amt) {
-  const [r, gg, b, a0, cy] = TINTS[name], a = a0 * clamp(amt), gr = g.createRadialGradient(0, cy, 0.02, 0, cy, 0.36);
+  const { rgb: [r, gg, b], alpha, y: cy } = TINTS[name], a = alpha * clamp(amt), gr = g.createRadialGradient(0, cy, 0.02, 0, cy, 0.36);
   gr.addColorStop(0, `rgba(${r},${gg},${b},${a})`); gr.addColorStop(0.55, `rgba(${r},${gg},${b},${0.8 * a})`); gr.addColorStop(1, `rgba(${r},${gg},${b},0)`);
   g.fillStyle = gr; g.beginPath(); g.arc(0, cy, 0.36, 0, 2 * Math.PI); g.fill();
 }
-// the kiss: a puckered round mouth set toward the gaze side, its lips drawn as a thick ring, a small heart rising beside it
 function kissMouth(g, x0, y, k) {
   g.save(); g.beginPath(); g.ellipse(x0, y, 0.032, 0.038, 0, 0, 2 * Math.PI); g.fillStyle = 'rgba(150,40,60,1)'; g.fill(); g.lineWidth = 0.018 * k; g.strokeStyle = K.INK; g.stroke(); g.restore();
   K.taper(g, [[x0 - 0.044, y + 0.032], [x0 - 0.052, y], [x0 - 0.044, y - 0.032]], 0.009 * k, K.INK, 0.5);
   heartEye(g, x0 + 0.105, y + 0.075, 0.034, k * 0.8);
 }
-// a round open mouth (a yawn, a scream): a tall dark oval, mO 0..1 its height
+// x.mO 0..1: the round mouth's height
 function oMouth(g, x0, y, mw, mO) {
   g.save(); g.beginPath(); g.ellipse(x0, y - 0.03 * mO, 0.046 * (mw || 1), 0.022 + 0.075 * mO, 0, 0, 2 * Math.PI); g.fillStyle = K.INK; g.fill(); g.restore();
   g.save(); g.beginPath(); g.ellipse(x0, y - 0.03 * mO - (0.012 + 0.045 * mO), 0.028 * (mw || 1), 0.010 + 0.022 * mO, 0, 0, 2 * Math.PI); g.fillStyle = 'rgba(200,80,95,1)'; g.fill(); g.restore();
@@ -466,7 +463,6 @@ export const ALIASES = {
   pain: 'y_pain', stern: 'y_stern', furious: 'c_shout', suspicious: 'y_suspicious', skeptic: 'y_squint', sly: 'y_dare',
   determined: 'y_set', relieved: 'y_relief', sweat: 'y_sweat', fret: 'y_fret', y_calm: 'calm',
 };
-// one line per catalogue face: what a story uses it for (the face sheet's captions)
 export const PURPOSE = {
   neutral: 'resting, listening', calm: 'polite, at ease (a clerk, a host)', happy: 'pleased, a good surprise', grin: 'big closed-teeth grin',
   laugh: 'laughing hard', closed: 'content, eyes shut smiling', blush: 'flattered, touched', proud: 'proud of it', excited: 'can\'t wait',
@@ -481,14 +477,14 @@ export const PURPOSE = {
   y_fear: 'afraid', y_bite: 'biting into food', y_scared: 'scared', y_hide: 'eyes to one side (a choice)', y_spend: 'eyes to the other side (a choice)',
   y_tense: 'tense, holding it in', c_suspicious: 'suspicious (a second character)', c_stern: 'stern (a second character)',
 };
+const isPlainName = k => !/_[oO]$/.test(k) && !/^[yc]_/.test(k);   // a kit name, not a talking twin or a V2.1 (y_ / c_) face
 const talking = (d, open, base) => ({ ...d, base, x: { ...(d.x || {}), mOpen: Math.max(d.x?.mOpen || 0, open) } });
 // s2 on the engine for this render (the clocks are module state: one face style per render)
 export function use() {
   FACE_STYLE.name = 's2';
   Object.assign(EXPR, DESIGNS);
   for (const [k, d] of Object.entries(ALIASES)) EXPR[k] = DESIGNS[d];
-  // every plain name talks (its `_o` / `_O` twins open the mouth): no name is left on a kit (dot-eye) design
-  for (const k of Object.keys(EXPR)) if (!/_[oO]$/.test(k) && !/^[yc]_/.test(k)) { EXPR[`${k}_o`] = talking(EXPR[k], 0.6, k); EXPR[`${k}_O`] = talking(EXPR[k], 1, k); }
+  for (const k of Object.keys(EXPR)) if (isPlainName(k)) { EXPR[`${k}_o`] = talking(EXPR[k], 0.6, k); EXPR[`${k}_O`] = talking(EXPR[k], 1, k); }
   for (const c of ['normal', 'fast', 'slow']) FACE_TIMING[c] = TIMING[c];
   Object.assign(TAKE, TIMING.take); Object.assign(SMALL_TAKE, TIMING.small); Object.assign(BLINKS, TIMING.blinks); Object.assign(CHEW, TIMING.chew);
 }

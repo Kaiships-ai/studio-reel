@@ -42,12 +42,10 @@ export function faceDesigns(rows, H = 1920) {
 export const sheetHash = designs => crypto.createHash('sha256')
   .update(JSON.stringify(designs.map(({ who, expr, design }) => [who, expr, design ?? null]))).digest('hex').slice(0, 8);
 
-// the shown designs Kai has not approved: an approved design matches by name and, when both rows carry one, by its key;
-// on the film's sheet for that character, or on the kit sheet for anyone
+const sameDesign = (a, d) => a.expr === d.expr && (!a.design || !d.design || a.design === d.design);   // the key counts when both rows carry one
 export function unapproved(designs, approved, kit = null) {
   const ok = approved?.by === 'kai' ? approved.designs || [] : [], kitOk = kit?.by === 'kai' ? kit.designs || [] : [];
-  const same = (a, d) => a.expr === d.expr && (!a.design || !d.design || a.design === d.design);
-  return designs.filter(d => !ok.some(a => a.who === d.who && same(a, d)) && !kitOk.some(a => same(a, d)));
+  return designs.filter(d => !ok.some(a => a.who === d.who && sameDesign(a, d)) && !kitOk.some(a => sameDesign(a, d)));
 }
 
 // the shot.mjs call for the sheet's stills: the page flags and the logged bible bypass of the render the rows came from
