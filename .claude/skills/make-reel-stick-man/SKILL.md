@@ -134,6 +134,8 @@ independent review. Why each rule exists, with the film that paid for it, is in 
 | The script is written from a beat outline, tested by readers who did not write it, and locked at ◇S; a new draft replaces the old one only if it wins a blind A/B | `scriptlint.mjs`, `review/script-ab.md` |
 | Every line is something the point-of-view character can know right now; a logic sạn hunt runs on every script and hook | `review/skeptic.md` |
 | A fact the script states is checked against the rest of the story; a rule never answers the ending vote | `review/fact-check.md` |
+| Every claim on screen (a threat, a rule, a number) is marked true against the story before the cut ships | `claims.mjs` |
+| A blind round of cuts gets each film's written notes before the next film, then one ranking | `blindround.mjs` |
 | Explain in pictures first; a card last, ≤ 8 s of cards in a row and ≤ 25 % of the film | `prepro.mjs` |
 | Words, numbers and faces stay in the text-safe box (x 6-87 %, y 14-65 %) on every frame, zooms included | `animatic.mjs` |
 | A word on screen never sits on a face, under the app's buttons or on another card, and no word carries a middle dot or bullet | `textgate.mjs` |
