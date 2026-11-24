@@ -1,7 +1,7 @@
 {
  "rows": "review/shot-rows.jsonl",
  "query": null,
- "hash": "d5305764",
+ "hash": "fc4ec2ac",
  "designs": [
   {
    "who": "face",
@@ -23,7 +23,7 @@
   {
    "who": "face",
    "expr": "calm",
-   "design": "u1s1uw",
+   "design": "mpemd0",
    "frames": 30,
    "held": 30,
    "best": {
@@ -40,7 +40,7 @@
   {
    "who": "face",
    "expr": "happy",
-   "design": "1tyfcbn",
+   "design": "181arfl",
    "frames": 30,
    "held": 30,
    "best": {
@@ -57,7 +57,7 @@
   {
    "who": "face",
    "expr": "grin",
-   "design": "nv31ve",
+   "design": "6h7w7t",
    "frames": 30,
    "held": 30,
    "best": {
@@ -74,7 +74,7 @@
   {
    "who": "face",
    "expr": "laugh",
-   "design": "zuxkel",
+   "design": "icnhtg",
    "frames": 30,
    "held": 30,
    "best": {
@@ -91,7 +91,7 @@
   {
    "who": "face",
    "expr": "closed",
-   "design": "122okil",
+   "design": "1guc1b4",
    "frames": 30,
    "held": 30,
    "best": {
@@ -108,7 +108,7 @@
   {
    "who": "face",
    "expr": "blush",
-   "design": "p8w31k",
+   "design": "1bfflke",
    "frames": 30,
    "held": 30,
    "best": {
@@ -125,7 +125,7 @@
   {
    "who": "face",
    "expr": "proud",
-   "design": "1rkkv8c",
+   "design": "13il9sb",
    "frames": 30,
    "held": 30,
    "best": {
@@ -142,7 +142,7 @@
   {
    "who": "face",
    "expr": "excited",
-   "design": "1sogpvf",
+   "design": "19arp7n",
    "frames": 30,
    "held": 30,
    "best": {
@@ -159,7 +159,7 @@
   {
    "who": "face",
    "expr": "manic",
-   "design": "1a6c5zn",
+   "design": "7ix8f9",
    "frames": 30,
    "held": 30,
    "best": {
@@ -176,7 +176,7 @@
   {
    "who": "face",
    "expr": "sad",
-   "design": "6bizes",
+   "design": "1wv2hzn",
    "frames": 30,
    "held": 30,
    "best": {
@@ -193,7 +193,7 @@
   {
    "who": "face",
    "expr": "cry",
-   "design": "1a719k7",
+   "design": "1g7x179",
    "frames": 30,
    "held": 30,
    "best": {
@@ -210,7 +210,7 @@
   {
    "who": "face",
    "expr": "sleep",
-   "design": "x8pv0w",
+   "design": "1fcwh8l",
    "frames": 30,
    "held": 30,
    "best": {
@@ -227,7 +227,7 @@
   {
    "who": "face",
    "expr": "yawn",
-   "design": "1nmohb6",
+   "design": "pmkp0b",
    "frames": 30,
    "held": 30,
    "best": {
@@ -261,7 +261,7 @@
   {
    "who": "face",
    "expr": "disgust",
-   "design": "1ce8tma",
+   "design": "k0y1if",
    "frames": 30,
    "held": 30,
    "best": {
@@ -278,7 +278,7 @@
   {
    "who": "face",
    "expr": "love",
-   "design": "11h7oau",
+   "design": "15zmg6v",
    "frames": 30,
    "held": 30,
    "best": {
@@ -295,7 +295,7 @@
   {
    "who": "face",
    "expr": "kiss",
-   "design": "pnf0q3",
+   "design": "l2vn25",
    "frames": 30,
    "held": 30,
    "best": {
@@ -312,7 +312,7 @@
   {
    "who": "face",
    "expr": "wink",
-   "design": "1camla8",
+   "design": "14pzrea",
    "frames": 30,
    "held": 30,
    "best": {
@@ -329,7 +329,7 @@
   {
    "who": "face",
    "expr": "embarrassed",
-   "design": "3tcw1b",
+   "design": "1f2rtl9",
    "frames": 30,
    "held": 30,
    "best": {
@@ -346,7 +346,7 @@
   {
    "who": "face",
    "expr": "shy",
-   "design": "1krefu8",
+   "design": "1aisylf",
    "frames": 30,
    "held": 30,
    "best": {
@@ -363,7 +363,7 @@
   {
    "who": "face",
    "expr": "guilty",
-   "design": "1899qww",
+   "design": "lzbusw",
    "frames": 30,
    "held": 30,
    "best": {
@@ -380,7 +380,7 @@
   {
    "who": "face",
    "expr": "disappointed",
-   "design": "1i5ddcf",
+   "design": "1d7jehh",
    "frames": 30,
    "held": 30,
    "best": {
@@ -397,7 +397,7 @@
   {
    "who": "face",
    "expr": "thinking",
-   "design": "1nftfrw",
+   "design": "1jvpoy8",
    "frames": 30,
    "held": 30,
    "best": {
@@ -414,7 +414,7 @@
   {
    "who": "face",
    "expr": "mischievous",
-   "design": "6k6j9j",
+   "design": "1q16dkn",
    "frames": 30,
    "held": 30,
    "best": {
@@ -431,7 +431,7 @@
   {
    "who": "face",
    "expr": "smug",
-   "design": "8ni872",
+   "design": "1lfet5p",
    "frames": 30,
    "held": 30,
    "best": {
@@ -448,7 +448,7 @@
   {
    "who": "face",
    "expr": "scream",
-   "design": "p1ixpm",
+   "design": "1jvuat4",
    "frames": 30,
    "held": 30,
    "best": {
@@ -465,7 +465,7 @@
   {
    "who": "face",
    "expr": "sick",
-   "design": "bxfptw",
+   "design": "1kw13dh",
    "frames": 30,
    "held": 30,
    "best": {
@@ -482,7 +482,7 @@
   {
    "who": "face",
    "expr": "cold",
-   "design": "vzoka3",
+   "design": "r7b6fg",
    "frames": 30,
    "held": 30,
    "best": {
@@ -499,7 +499,7 @@
   {
    "who": "face",
    "expr": "hot",
-   "design": "n9s7ew",
+   "design": "15yfszo",
    "frames": 30,
    "held": 30,
    "best": {
@@ -516,7 +516,7 @@
   {
    "who": "face",
    "expr": "angry",
-   "design": "1qxfstz",
+   "design": "sy5ihg",
    "frames": 30,
    "held": 30,
    "best": {
@@ -550,7 +550,7 @@
   {
    "who": "face",
    "expr": "deadpan",
-   "design": "1vzeoj7",
+   "design": "1bvvbjq",
    "frames": 30,
    "held": 30,
    "best": {
@@ -567,7 +567,7 @@
   {
    "who": "face",
    "expr": "confused",
-   "design": "16k5meq",
+   "design": "14t5xsc",
    "frames": 30,
    "held": 30,
    "best": {
@@ -584,7 +584,7 @@
   {
    "who": "face",
    "expr": "bored",
-   "design": "suaw4d",
+   "design": "hskkm8",
    "frames": 30,
    "held": 30,
    "best": {
