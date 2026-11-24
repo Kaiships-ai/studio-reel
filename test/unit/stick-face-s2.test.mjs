@@ -14,7 +14,7 @@ const S2 = await import('../../styles/stick-man/engine/facestyles/s2.js');
 function recorder() {
   const n = { stroke: 0, fill: 0 };
   const g = new Proxy({ canvas: { width: 512, height: 512 }, getTransform: () => ({}) }, {
-    get(t, k) { if (k in t) return t[k]; if (k === 'stroke' || k === 'fill') return () => { n[k]++; }; if (/^create.*Gradient$/.test(k)) return () => ({ addColorStop() {} }); return () => {}; },
+    get(t, k) { if (k in t) return t[k]; return () => { n[k] = (n[k] || 0) + 1; if (/^create.*Gradient$/.test(k)) return { addColorStop() {} }; }; },
     set(t, k, v) { t[k] = v; return true; } });
   return { g, n };
 }
@@ -102,4 +102,7 @@ test('a mark switches half-way through a change: a half-mixed wink still closes 
   assert.equal(W(0.7), W(1), 'a 0.7 wink closes the eye like a full one'); assert.notEqual(W(0), W(1));
   const love = held('love'), faint = draw({ ...love, x: { ...love.x, eHeart: 0.1 } }), full = draw(love);
   assert.ok(faint !== full, 'a tenth of a heart draws the plain eye, not the heart');
+  // a round mouth too (a yawn's O stayed on through 95 % of a change into happy and read as the yawn)
+  const yawn = held('yawn'), O = m => { const { g, n } = recorder(); STYLE_DRAW.s2(g, { ...yawn, x: { ...yawn.x, mO: m } }, 0, 0, {}); return n.ellipse || 0; };   // (the O mouth and its tongue are ellipses)
+  assert.equal(O(0.4), O(0), 'a 0.4 O mouth draws the plain mouth'); assert.notEqual(O(0.6), O(0));
 });
