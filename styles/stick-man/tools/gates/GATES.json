@@ -236,6 +236,15 @@
      ]
     },
     {
+     "tool": "tools/gates/headgate.mjs",
+     "args": [
+      "{film}"
+     ],
+     "advisory": true,
+     "why": "advisory: it lists shots to look at. A walk away stops counting once the head is under 5 % of the frame and an over-the-shoulder shot with another face on screen does not count, but a readable walk away is listed: whether it stays is a director's call",
+     "source": "Ep1 v15 rows: 4 runs, 14 s; H2 V2 re-cut the first to show his face"
+    },
+    {
      "tool": "tools/gates/shotgate.mjs",
      "args": [
       "{film}"

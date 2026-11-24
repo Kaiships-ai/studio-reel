@@ -16,7 +16,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { SavePass } from 'three/addons/postprocessing/SavePass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
-import { budgetMaterial, isFigurePart, ROLL, ROLL_GLSL, GLOW_MAX, expLinear } from '#kit/look/highlights.js';
+import { budgetMaterial, isFigurePart, ROLL, ROLL_GLSL, GLOW_MAX, expLinear, actRoll } from '#kit/look/highlights.js';
 
 export const PROPS = 1;                                            // layer that gets the ink line
 export const B = (x, y, z) => new THREE.Vector3(x, z, -y);         // Blender Z-up -> three Y-up
@@ -521,12 +521,14 @@ export function createStage({ width, height, faceInk = false, exposure = 0.88, i
   composer.addPass(new OutputPass());
   composer.addPass(gradePass);
 
-  const one = new Uint8Array(4), SHOULDER_WARNED = new WeakSet();
+  const one = new Uint8Array(4), SHOULDER_WARNED = new WeakSet(), ROLL_WARNED = new WeakSet(), ROLL0 = { knee: rollPass.uniforms.uRollK.value, ceil: rollPass.uniforms.uRollC.value };
   function render(o = {}) {
     const t0 = performance.now();
     gradePass.uniforms.uPrev.value = o.prev || 0; gradePass.uniforms.uFlash.value = Math.min(1, o.flash || 0);
     const gr = o.grade || {}; if (stage.shafts) stage.shafts.march.material.uniforms.dens.value = shafts * (gr.haze ?? 1); gradePass.uniforms.uExp.value = 1; rollPass.uniforms.uExpLin.value = expLinear(gr.exp); gradePass.uniforms.uLift.value = gr.lift ?? 0; gradePass.uniforms.uGam.value = gr.gam ?? 1; gradePass.uniforms.uSat.value = gr.sat ?? 1; gradePass.uniforms.uTint.value.set(...(gr.tint || [1, 1, 1]));
     gradePass.uniforms.uImpact.value = Math.min(1, o.impact || 0); gradePass.uniforms.uWhip.value = o.whip || 0;
+    const RL = actRoll(gr, ROLL0); rollPass.uniforms.uRollK.value = RL.knee; rollPass.uniforms.uRollC.value = RL.ceil;
+    if (RL.bad && !ROLL_WARNED.has(gr.roll)) { ROLL_WARNED.add(gr.roll); console.warn(`[kit] ${RL.bad}: the act keeps the film's roll-off`); }
     const U = gradePass.uniforms, sc = gr.shadow; U.uShadowC.value.set(...(sc?.c || [0, 0, 0])); U.uShadowK.value = sc?.k ?? 0;
     U.uShoulder.value = 0; if (gr.shoulder && !SHOULDER_WARNED.has(gr)) { SHOULDER_WARNED.add(gr); console.warn(`[kit] grade.shoulder ${gr.shoulder} is retired: highlights roll off before the tone mapper (kit/look/highlights.js); drop it`); } U.uGrain.value = gr.grain ?? 0; U.uSoft.value = gr.soft ?? 0; U.uTime.value = o.t ?? 0; U.uBlur.value.set(...(o.blur || [0, 0]));
     INK_SUN.value.copy(sun.position).sub(sun.target.position).normalize();   // figure outlines thicken away from the sun (cast.js)

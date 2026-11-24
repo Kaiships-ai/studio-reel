@@ -61,3 +61,12 @@ export const ROLL_GLSL = `
     if (L > uRollK) { float e = L - uRollK; c *= (uRollK + e / (1.0 + e / (uRollC - uRollK))) / L; }
     return c; }`;
 export const expLinear = exp => Math.pow(exp ?? 1, EXP_GAMMA);
+// an act's grade.roll { knee, ceil } over the film's roll-off (`base`), for that act only: a close-up whose flat white head
+// fills the frame takes a lower ceiling so the head keeps its shading. A ceiling at or under the knee would invert the
+// curve, so it is ignored (with the reason).
+export function actRoll(grade, base = ROLL) {
+  const r = grade?.roll; if (!r) return base;
+  const knee = r.knee ?? base.knee, ceil = r.ceil ?? base.ceil;
+  if (!(ceil > knee + 0.02)) return { ...base, bad: `grade.roll ceil ${ceil} must sit above knee ${knee}` };
+  return { knee, ceil };
+}

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import * as THREE from 'three';
-import { budgetMaterial, isFigurePart, rollLuma, expLinear, BUDGET, ROLL, GLOW_MAX } from '../../styles/stick-man/kit/look/highlights.js';
+import { budgetMaterial, isFigurePart, rollLuma, expLinear, actRoll, BUDGET, ROLL, GLOW_MAX } from '../../styles/stick-man/kit/look/highlights.js';
 
 test('a prop never reflects more than the budget and never glows unless it is a light', () => {
   const bag = new THREE.MeshStandardMaterial({ color: new THREE.Color(1, 1, 1), emissive: new THREE.Color(0.86, 0.85, 0.82), emissiveIntensity: 0.22 });
@@ -43,6 +43,19 @@ test('the engine uses the budget, the roll-off before the blooms, and no post-to
   assert.doesNotMatch(look, /min\(col, vec3\(0\.96\)\)/, 'a figure has a soft knee, not a hard cap (a flat white hoodie)');
   const shot = fs.readFileSync(new URL('../../styles/stick-man/tools/render/shot.mjs', import.meta.url), 'utf8');
   assert.match(shot, /m\.type\(\) === 'warning' && m\.text\(\)\.startsWith\('\[kit\]'\)/, 'shot.mjs prints [kit] warnings');
+});
+
+test("an act's grade.roll lowers the ceiling for that act only; without it, or with a broken one, the film's roll-off stays", () => {
+  const neutral = x => { const s = 0.76, d = 0.24; if (x < s) return x; return 1 - d * d / (x + d - s); };
+  const srgb = v => (v <= 0.0031308 ? 12.92 * v : 1.055 * v ** (1 / 2.4) - 0.055), out = (L, r) => 255 * srgb(neutral(rollLuma(L, r.knee, r.ceil) * 0.88));
+  const close = actRoll({ roll: { knee: 0.46, ceil: 0.70 } });
+  assert.ok(out(1.6, close) < out(1.6, ROLL) - 8, `a lit white head lands at ${out(1.6, close).toFixed(0)} instead of ${out(1.6, ROLL).toFixed(0)}`);
+  assert.ok(out(1.6, close) - out(1.1, close) > 2, 'and keeps its shading');
+  assert.equal(actRoll({}), ROLL); assert.equal(actRoll(undefined, ROLL), ROLL);
+  assert.deepEqual(actRoll({ roll: { ceil: 0.7 } }), { knee: ROLL.knee, ceil: 0.7 }, 'a missing key keeps the film value');
+  const bad = actRoll({ roll: { knee: 0.6, ceil: 0.5 } }); assert.equal(bad.knee, ROLL.knee); assert.equal(bad.ceil, ROLL.ceil); assert.match(bad.bad, /above knee/);
+  const look = fs.readFileSync(new URL('../../styles/stick-man/engine/look.js', import.meta.url), 'utf8');
+  assert.match(look, /const RL = actRoll\(gr, ROLL0\); rollPass\.uniforms\.uRollK\.value = RL\.knee; rollPass\.uniforms\.uRollC\.value = RL\.ceil;/, 'set on every frame from the act');
 });
 
 test('a prop held in a hand is a prop, not part of the figure (the budget caps it)', () => {
