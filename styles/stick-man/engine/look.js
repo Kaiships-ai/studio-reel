@@ -421,8 +421,6 @@ export function createStage({ width, height, faceInk = false, exposure = 0.88, i
     fragmentShader: 'uniform sampler2D tDiffuse, tB; uniform float gMax; varying vec2 vUv; void main(){ vec4 c = texture2D(tDiffuse, vUv); gl_FragColor = vec4(c.rgb + min(texture2D(tB, vUv).rgb, vec3(gMax)), c.a); }' });
   // the act's exposure on the linear scene (scene-referred, kit/look/highlights.js) and the highlight roll-off, before the
   // blooms and the tone mapper: a lit white surface keeps its gradient and never feeds the highlight bloom
-  // an act's grade.roll { knee, ceil } replaces the kit's for that act only (a close-up whose flat white head fills the frame
-  // takes a lower ceiling); without it the roll-off stays at the values read here
   const rollPass = new ShaderPass({ uniforms: { tDiffuse: { value: null }, uRollK: { value: ROLL.knee }, uRollC: { value: ROLL.ceil }, uExpLin: { value: 1 } },
     vertexShader: FS_QUAD_V,
     fragmentShader: `uniform sampler2D tDiffuse; varying vec2 vUv; ${ROLL_GLSL}

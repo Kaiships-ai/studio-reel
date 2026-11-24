@@ -2,7 +2,8 @@
 // The lead's face, not the back of the head (advisory, ◇5). Reads the dbg rows (shot.mjs --dbg, review/shot-rows.jsonl):
 // a run of frames where the lead is on screen and big enough to read (head box at least MIN_H of the frame height) but
 // turned away from the lens (faceVis under VIS) for HOLD frames or more is a finding. A figure that walks or turns keeps
-// its face to the lens with kit/camera/flight.js faceCam.
+// its face to the lens with kit/camera/flight.js faceCam. Source: H2 V2's note "faces, not the back of the hood" and the
+// runs it measures on Ep1 v15 (LIMIT below).
 //   node styles/stick-man/tools/gates/headgate.mjs films/<slug>          (review/shot-rows.jsonl -> review/headgate.md)
 //   node styles/stick-man/tools/gates/headgate.mjs --rows <rows.jsonl> [--json 1]
 import fs from 'node:fs'; import path from 'node:path'; import { pathToFileURL } from 'node:url';
