@@ -94,3 +94,13 @@ test('hold drift never draws a lid line across a ring eye (Kai: the floating rul
   assert.equal(ring.lid, 0, 'ring eye: no lid from the drift');
   assert.ok(dot.lid > 0.04, 'dot eye still breathes its lid');
 });
+
+test('the head tint holds between a face and its talking twin and blends between two tints (Kai 25/11: a cold face lost its blue on every word)', async () => {
+  const { headTint } = await import('../../styles/stick-man/engine/faces.js');
+  const skin = [0.8, 0.77, 0.84], cold = [0.56, 0.7, 0.96], sick = [0.46, 0.68, 0.38], near = (a, b) => a.every((v, i) => Math.abs(v - b[i]) < 1e-9);
+  assert.equal(headTint(null, null, 0.5, 3, skin), null, 'no tint: the head keeps its skin');
+  assert.ok(near(headTint(cold, cold, 0.1, 1, skin), cold), 'cold into cold_o, a frame in: still blue');
+  assert.ok(near(headTint(sick, cold, 0.5, 1, skin), sick.map((v, i) => (v + cold[i]) / 2)), 'sick into cold: half way at half the change');
+  assert.ok(near(headTint(null, cold, 1, 3, skin), skin.map((v, i) => v + (cold[i] - v) / 2)), 'a face flushing in from none: half after 3 frames');
+  assert.ok(near(headTint(cold, null, 0.25, 9, skin), cold.map((v, i) => v + (skin[i] - v) / 4)), 'a tint fading as the face leaves');
+});

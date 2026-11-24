@@ -526,6 +526,14 @@ const MARKS = {
   zzz: { cards: ['zzz', 'zzz'], at: (w, t) => [0, 1].map(i => { const u = ((t + i * 20) % 40) / 40; return [i, (0.45 + 0.25 * u) * w, (0.45 + 0.45 * u) * w, 0.1 * w, (0.14 + 0.12 * u) * w * Math.min(1, (1 - u) * 4), 0.2]; }) },
 };
 export const MARK_NAMES = Object.keys(MARKS);
+// the head's colour this frame (linear rgb; null: its own skin): the tint the face changes from (ta) blends into the one
+// it changes to (tb) over the change (u), and a face flushing in from no tint takes 6 frames more. A face and its talking
+// twin share a tint, so it holds (Kai 25/11 face set: a cold face lost its blue on every word; a sick-to-cold change snapped)
+export function headTint(ta, tb, u, age, skin) {
+  if (!ta && !tb) return null;
+  const A = ta || skin, B = tb || skin, w = tb && !ta ? Math.min(1, age / 6) * u : u;
+  return A.map((a, i) => a + (B[i] - a) * w);
+}
 
 const hashKey = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return (h >>> 0).toString(36); };
 // One figure's face: its own canvas (redrawn only when what it shows changes) and its mark cards.
