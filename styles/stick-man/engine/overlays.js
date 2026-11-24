@@ -8,7 +8,7 @@
 //   { kind: 'arrows', from, to, world: [x, y, z], axis: [x, y, z], len, gap, inward }
 //   { kind: 'meter', from, to, at: [kx, ky], width, label, keys: [[f, value], ...], max, unit, color, size, enter }
 //   { kind: 'path', from, to, world: [[x, y, z], ...] | at: [[kx, ky], ...], dur, dash, width, color, arrow, labels: [a, b] }
-//   heads-up kinds 'clock', 'threat', 'vote', 'edge': engine/hud.js
+//   heads-up kinds 'clock', 'threat', 'vote', 'edge', 'endcard': engine/hud.js
 // enter: 'pop' (overshoot in over 5 frames, shrink out over the last 4), 'fade' (alpha in and out), 'none' (on for the
 // whole span: a label or clock carried across cuts or ticks), 'slam' (lands from 1.8x over 5 frames: a stamp)
 import * as THREE from 'three';
