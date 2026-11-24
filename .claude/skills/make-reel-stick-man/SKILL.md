@@ -149,6 +149,7 @@ independent review. Why each rule exists, with the film that paid for it, is in 
 | The film's colour follows the colour script signed with the S1 look, lit in the acts (light + grade, `grade.exp` ≤ 1.5), never graded onto the rendered picture; a look change starts from a whole-look prototype at S1, never from number tweaks | `colourgate.mjs` (per-scene ranges and brightness from the script); `exposureWarnings` in `engine/play.js` (`test/unit/stick-exposure.test.mjs`) |
 | A run log is written only through `logline.mjs`; old lines are never edited | `logline.mjs` |
 | Render by purpose: T0 data, T1 stills, T2 480p proof, T3 720p review (what the pixel gates and K2 see); T4 1080p only on Kai's own request, normally for Post (`shot.mjs --tier final --kai-ok "<his words>"`) | `render/tiers.mjs` |
+| The film never goes empty under its words: no holes, the bed within 18 dB of the voice, a close as full as the film (`floor` in music.json fills the holes) | `floorgate.mjs` |
 
 Open, no check yet (a kit-fix PR): frames, audio and wording of a reference are never copied, and `ref-private/` is
 never committed.
