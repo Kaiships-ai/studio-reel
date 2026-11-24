@@ -56,11 +56,11 @@ export function pathOf(keys) {
 }
 
 // at(f) -> the figure's [x, y, z] (feet), yaw(f) -> its yaw (deg); a waypoint every `every` frames from f0 to f1 (f1 always).
-// dist and lens may be numbers or functions of the frame (a push in to the face)
+// side, dist, eye, look and lens may be numbers or functions of the frame (a push in to the face)
 export function faceCam({ at, yaw, f0, f1, every = 6, side = 25, dist = 2.2, eye = 1.3, look = 1.2, lens = 28 }) {
   const fs = [], val = (v, f) => (typeof v === 'function' ? v(f) : v); for (let f = f0; f < f1; f += every) fs.push(f); fs.push(f1);
   return fs.map(f => {
-    const p = at(f), a = (yaw(f) + side) * DEG, n = [Math.sin(a), -Math.cos(a)], d = val(dist, f);
-    return { f, pos: [p[0] + n[0] * d, p[1] + n[1] * d, p[2] + eye], aim: [p[0], p[1], p[2] + look], lens: val(lens, f) };
+    const p = at(f), a = (yaw(f) + val(side, f)) * DEG, n = [Math.sin(a), -Math.cos(a)], d = val(dist, f);
+    return { f, pos: [p[0] + n[0] * d, p[1] + n[1] * d, p[2] + val(eye, f)], aim: [p[0], p[1], p[2] + val(look, f)], lens: val(lens, f) };
   });
 }

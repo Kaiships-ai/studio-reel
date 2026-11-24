@@ -39,8 +39,9 @@ test('faceCam: a figure turning away keeps its face to the lens; a camera that s
   for (const d of D) assert.ok(Math.abs(d.cam.pos[2] - 1.3) < 0.05, 'at eye height, never over the cap');
 });
 
-test('faceCam: a push in to the face (dist and lens as functions of the frame)', () => {
-  const W = faceCam({ at: () => [0, 0, 0], yaw: () => 0, f0: 0, f1: 30, dist: f => 2 - f / 30, lens: f => 28 + f / 3 });
+test('faceCam: a push in to the face (every number may be a function of the frame)', () => {
+  const W = faceCam({ at: () => [0, 0, 0], yaw: () => 0, f0: 0, f1: 30, dist: f => 2 - f / 30, lens: f => 28 + f / 3, look: f => 1 + f / 100, eye: f => 1.2 + f / 100 });
+  assert.equal(W.at(-1).aim[2], 1.3); assert.equal(W.at(-1).pos[2], 1.5);
   const d = w => Math.hypot(w.pos[0], w.pos[1]);
   assert.ok(Math.abs(d(W[0]) - 2) < 1e-9 && Math.abs(d(W.at(-1)) - 1) < 1e-9); assert.equal(W.at(-1).lens, 38);
 });
