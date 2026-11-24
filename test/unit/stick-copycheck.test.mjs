@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { run, env } from '../../kit/env.mjs';
-import { copycheck, jumps, frameStats, lookAt, orderFaults, SPIKE } from '../../styles/stick-man/tools/gates/copycheck.mjs';
+import { copycheck, jumps, frameStats, lookAt, orderFaults, metaValues, SPIKE } from '../../styles/stick-man/tools/gates/copycheck.mjs';
 import { fileURLToPath } from 'node:url';
 const GATE = fileURLToPath(new URL('../../styles/stick-man/tools/gates/copycheck.mjs', import.meta.url));
 
@@ -77,4 +77,10 @@ test('orderFaults: a repeated frame (no change where the approved moves) and a s
   assert.deepEqual(orderFaults(tc, ta).map(x => [x.f, x.kind]), [[7, 'repeat'], [13, 'skip']]);
   assert.deepEqual(orderFaults(ta, ta), []);
   const still = Array(20).fill(0.05); assert.deepEqual(orderFaults(still, still), [], 'a held frame in the approved film is not a fault');
+});
+
+test('metaValues: ffmpeg prints tiny values with an exponent; they are read whole (What if 1: YAVG=1.08507e-06 read as 1.085 failed K2c)', () => {
+  const text = 'frame:0 pts:0\nlavfi.signalstats.YAVG=1.08507e-06\nframe:1 pts:1\nlavfi.signalstats.YAVG=2.5\nframe:2\nlavfi.signalstats.YAVG=3E+2\n';
+  assert.deepEqual(metaValues(text, 'YAVG'), [1.08507e-06, 2.5, 300]);
+  assert.deepEqual(orderFaults(metaValues(text, 'YAVG').slice(0, 1), [1.2e-06]), [], 'a still frame against a still frame is no fault');
 });

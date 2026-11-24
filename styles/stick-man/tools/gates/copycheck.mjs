@@ -30,6 +30,8 @@ export function probe(file) {
   const [a, b] = s.r_frame_rate.split('/').map(Number);
   return { w: s.width, h: s.height, fps: +(a / (b || 1)).toFixed(3), frames: Number(s.nb_read_packets) };
 }
+// the values of one key in an ffmpeg `metadata=print` file, in frame order
+export const metaValues = (text, key) => [...text.matchAll(new RegExp(`${key}=([-+\\d.eE]+)`, 'g'))].map(m => Number(m[1]));
 // one pass over both films: the SSIM of each copy frame (scaled to the approved size, area filter) against the approved
 // frame, and the largest local difference (luma, blurred) per frame. ffmpeg runs in a temp folder and writes its two
 // stats files there by name, so no path goes into the filter graph.
@@ -43,8 +45,8 @@ export function frameStats(copy, approved, { w, h }) {
     const out = ['[s]', '[d]', '[tc]', '[ta]'].flatMap(m => ['-map', m, '-f', 'null', '-']);
     const r = run('ffmpeg', ['-v', 'error', '-i', path.resolve(copy), '-i', path.resolve(approved), '-filter_complex', g, ...out], { capture: true, cwd: dir });
     if (r.status) throw new Error(`ffmpeg: ${r.stderr}`);
-    const ssim = fs.readFileSync(path.join(dir, 'ssim.log'), 'utf8').split('\n').filter(Boolean).map(l => Number(/All:([\d.]+)/.exec(l)?.[1]));
-    const meta = (f, key) => [...fs.readFileSync(path.join(dir, f), 'utf8').matchAll(new RegExp(`${key}=([\\d.]+)`, 'g'))].map(m => Number(m[1]));
+    const ssim = fs.readFileSync(path.join(dir, 'ssim.log'), 'utf8').split('\n').filter(Boolean).map(l => Number(/All:([-+\d.eE]+)/.exec(l)?.[1]));
+    const meta = (f, key) => metaValues(fs.readFileSync(path.join(dir, f), 'utf8'), key);
     return { ssim, ymax: meta('ymax.log', 'YMAX'), tc: meta('tc.log', 'YAVG'), ta: meta('ta.log', 'YAVG') };
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 }
