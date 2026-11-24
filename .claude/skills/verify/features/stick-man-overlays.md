@@ -16,6 +16,13 @@ never touches them. Fields: `.claude/skills/make-reel-stick-man/REEL_DATA.md` "O
 - `path`: a dotted (`dash: 'dash'` for dashes) line through `world` points projected by the shot camera every frame (or
   screen `at` points), drawn on over `dur` frames with an arrowhead; `labels: [start, end]`, the end label pops on arrival.
 
+- Heads-up kinds (`engine/hud.js`, from Hot Money ep01 H2 V2.1): `clock` (a countdown from keys: red under `alarm`, a punch
+  and an edge flash per second, a big drop shakes it and slides a chip, `tags` for a time skip, slots that pop), `threat`
+  (who, one word that slams in per step, a marker easing toward YOU, held between steps), `vote` (two choices on their
+  words, neutral colours, a tint per half, a heartbeat, call-to-action rows, inside the text-safe box by default), `edge`
+  (a flash in the frame's outer band). `enter: 'slam'` and `box.outline` make a stamp.
+- The rows carry `text`: each readable box per frame (overlays and the caption) for `tools/gates/textgate.mjs`.
+
 ## How to get to it (user POV)
 
 In a film's act: `overlays: [{ kind: 'meter', from: 0, to: 90, at: [0.5, 0.27], label: 'SUSPICION', keys: [[15, 0], [60, 35]] }]`,
@@ -29,7 +36,7 @@ then render the shot. Clocks: one `text` entry per tick with the same `at`, `ent
   clock box the same at each tick, the meter bar rising, the path drawing on and staying on the floor as the camera
   follows, the end label popping on arrival.
 - Numbers: crop the clock region of frames either side of a tick and compare the box's bounding box (it must not move).
-- Regression: `node --test test/unit/stick-overlays.test.mjs` (what reaches the canvas per frame for each kind).
+- Regression: `node --test test/unit/stick-overlays.test.mjs test/unit/stick-hud.test.mjs test/unit/stick-textgate.test.mjs` (what reaches the canvas per frame for each kind, the boxes, the text gate).
 
 ## Gotchas
 

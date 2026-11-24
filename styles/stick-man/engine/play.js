@@ -957,6 +957,7 @@ export async function boot({ film, width, height }) {
   window.__vis = (f, items) => { const s = at(f); show(s.cur); return s.cur.vis(f, items); };
   window.__dbg = f => {
     const s = at(f); show(s.cur); const out = s.cur.dbg(f); out.act = s.cur.name; out.mix = s.prev ? +s.u.toFixed(2) : null;
+    const cb = cap.boxAt(f); out.text = [...s.cur.ov.boxes(f, capG), ...(cb ? [{ kind: 'caption', ...cb }] : [])];   // what a viewer reads, for the text check
     for (const A of acts) for (const a of A.actors) if (!out.actors[a.name]) out.actors[a.name] = { blink: 0, head: [0, 0, 0, 0], inFrame: false, verb: [] };
     return JSON.stringify(out);
   };

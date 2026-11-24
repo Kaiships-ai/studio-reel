@@ -52,5 +52,13 @@ export function createCaptions({ words, lines, fps, width, height, font = 'Inter
     g.restore();
     return c.text;
   }
-  return { canvas: cv, chunks, draw, chunkAt };
+  // the caption on frame f as a box in shares of the frame (its glyphs, stroke and shadow), or null
+  function boxAt(f) {
+    const c = chunkAt(f); if (!c) return null;
+    g.save(); let size = CAP.size * k; g.font = `${CAP.weight} ${size}px ${font}`; g.letterSpacing = `${CAP.track * k}px`;
+    let w = g.measureText(c.text).width; if (w > 940 * k) { size *= 940 * k / w; w = 940 * k; } g.restore();
+    const pad = (2 * CAP.stroke + 5) * k, y = height * 0.70;
+    return { text: c.text, box: [(width - w) / 2 - pad, y - 0.62 * size - pad, (width + w) / 2 + pad, y + 0.62 * size + pad].map((v, i) => +(v / (i % 2 ? height : width)).toFixed(4)) };
+  }
+  return { canvas: cv, chunks, draw, chunkAt, boxAt };
 }
