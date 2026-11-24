@@ -93,3 +93,13 @@ test('no dot faces: after use() every face name a character can use (and its tal
   for (const [k, d] of Object.entries(S2.ALIASES)) assert.equal(EXPR[k], S2.DESIGNS[d], `${k} draws ${d}`);
   for (const n of ['love', 'kiss', 'wink', 'embarrassed', 'shy', 'guilty', 'disappointed', 'thinking', 'mischievous', 'yawn', 'sick', 'cold', 'hot', 'determined', 'relieved']) assert.ok(EXPR[n], n);
 });
+
+test('a mark switches half-way through a change: a half-mixed wink still closes one eye, a heart never draws at a tenth', () => {
+  S2.use();
+  const draw = F => { const { g, n } = recorder(); STYLE_DRAW.s2(g, F, 0, 0, {}); return n.stroke + n.fill; };
+  const base = held('wink');
+  const W = w => draw({ ...base, x: { ...base.x, wink: w } });
+  assert.equal(W(0.7), W(1), 'a 0.7 wink closes the eye like a full one'); assert.notEqual(W(0), W(1));
+  const love = held('love'), faint = draw({ ...love, x: { ...love.x, eHeart: 0.1 } }), full = draw(love);
+  assert.ok(faint !== full, 'a tenth of a heart draws the plain eye, not the heart');
+});

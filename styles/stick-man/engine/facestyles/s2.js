@@ -351,9 +351,11 @@ function face6(g, F, blink, t, o, T) {
     const ex = s * dx + gxs;
     if (P.eyeA > 0.01) {
       g.globalAlpha = P.eyeA;
-      if (X.eHeart) heartEye(g, ex, ey, F.rx * 1.25, k);
-      else if (X.eSpiral) spiralEye(g, ex, ey, F.rx * 1.05, k, s);
-      else if (X.eArc || X.wink === s) arcEye(g, ex, ey, F.rx * 0.95, F.ry * 0.55, k, X.eArc || 1);
+      // the eye marks switch half-way through a change (the numbers mix; a mark is there or not)
+      const arc = Math.abs(X.eArc || 0) >= 0.5 ? Math.sign(X.eArc) : Math.abs((X.wink || 0) - s) < 0.5 ? 1 : 0;
+      if ((X.eHeart || 0) >= 0.5) heartEye(g, ex, ey, F.rx * 1.25, k);
+      else if ((X.eSpiral || 0) >= 0.5) spiralEye(g, ex, ey, F.rx * 1.05, k, s);
+      else if (arc) arcEye(g, ex, ey, F.rx * 0.95, F.ry * 0.55, k, arc);
       else eye4(g, Fe, ex, s, ey, blink, t, k, tilt, 0, life);
       tears(g, X.tear || 0, ex, s, ey, F.ry, k);
     }
@@ -362,8 +364,8 @@ function face6(g, F, blink, t, o, T) {
     g.globalAlpha = 1;
   }
   if (P.eyeA > 0.01) sweat(g, clamp(F.x.sw || 0), k);
-  if (X.mKiss) kissMouth(g, (F.mx || 0) + 0.03 * clamp(F.gx || 0, -1, 1), my + P.mUp, k);
-  else if (X.mO) oMouth(g, F.mx || 0, my + P.mUp, F.mw, clamp(X.mO));
+  if ((X.mKiss || 0) >= 0.5) kissMouth(g, (F.mx || 0) + 0.03 * clamp(F.gx || 0, -1, 1), my + P.mUp, k);
+  else if ((X.mO || 0) >= 0.05) oMouth(g, F.mx || 0, my + P.mUp, F.mw, clamp(X.mO));
   else mouth4(g, Fm, t, my + P.mUp, k, glp);
   g.restore();
 }
