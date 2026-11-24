@@ -1,8 +1,8 @@
 // Face style s2 (styles/stick-man/engine/facestyles/s2.js), the rubber face Kai approved 21/11 on Hot Money ep01 r5 reel 1
-// ("v6 ok, ưng 9.5/10"), the default face style; a film with reel.js faceStyle: 'kit' keeps the kit's faces.
+// ("v6 ok, ưng 9.5/10"), the default face style; faceStyle 'kit' is retired and draws s2 too.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs'; import zlib from 'node:zlib';
+import fs from 'node:fs'; import zlib from 'node:zlib'; import crypto from 'node:crypto';
 import { EXPR, STYLE_DRAW, FACE_STYLE, faceParams, mixFace } from '../../styles/stick-man/engine/faces.js';
 import { faceStateAt, FACE_TIMING, CHEW, TAKE } from '../../styles/stick-man/engine/acting.js';
 import { faceFaults } from '../../styles/stick-man/tools/gates/faults.mjs';
@@ -14,7 +14,7 @@ const S2 = await import('../../styles/stick-man/engine/facestyles/s2.js');
 function recorder() {
   const n = { stroke: 0, fill: 0 };
   const g = new Proxy({ canvas: { width: 512, height: 512 }, getTransform: () => ({}) }, {
-    get(t, k) { if (k in t) return t[k]; if (k === 'stroke' || k === 'fill') return () => { n[k]++; }; return () => {}; },
+    get(t, k) { if (k in t) return t[k]; if (k === 'stroke' || k === 'fill') return () => { n[k]++; }; if (/^create.*Gradient$/.test(k)) return () => ({ addColorStop() {} }); return () => {}; },
     set(t, k, v) { t[k] = v; return true; } });
   return { g, n };
 }
@@ -30,8 +30,10 @@ test('before use() nothing changes: the kit faces keep their clocks and no s2 de
 test('use(): every s2 design is in EXPR, drawn by s2, and the engine runs on s2\'s clocks', () => {
   S2.use();
   assert.equal(FACE_STYLE.name, 's2');
-  const names = Object.keys(S2.DESIGNS);
-  assert.equal(names.length, 27);
+  const names = Object.keys(S2.DESIGNS), v21 = names.filter(n => /^[yc]_/.test(n)).sort();
+  assert.equal(v21.length, 27, 'the 27 H2 V2.1 designs');
+  const hash = crypto.createHash('sha256').update(JSON.stringify(v21.map(n => [n, S2.DESIGNS[n]]))).digest('hex').slice(0, 12);
+  assert.equal(hash, 'e3573a542db6', 'the V2.1 designs are the standard: unchanged by the catalogue');
   for (const n of ['y_tense', 'y_worried', 'y_set', 'y_strain', 'y_squint', 'y_fear', 'y_tired', 'y_dare', 'y_panic', 'y_shock', 'c_stern', 'c_shout']) assert.ok(names.includes(n), n);
   for (const n of names) assert.equal(EXPR[n].style, 's2', n);
   assert.notEqual(FACE_TIMING.normal, kitNormal); assert.equal(CHEW.T, 19); assert.equal(TAKE.sine, true);
@@ -80,13 +82,14 @@ test('reel 1 in s2: the lead\'s eyes are shut (blink past half) under 4 % of his
   assert.ok(share < 0.04, `${(100 * share).toFixed(2)} %`); assert.ok(max <= 3, `${max} f`);
 });
 
-test("s2 draws the kit's everyday names: a new character on 'neutral' gets an s2 face; talking twins open the mouth; names with no s2 design keep the kit face", () => {
+test('no dot faces: after use() every face name a character can use (and its talking twins) is an s2 design; every catalogue face says what it is for', () => {
   S2.use();
-  for (const [k, d] of Object.entries(S2.KIT_MAP)) {
-    assert.ok(S2.DESIGNS[d], `${k} -> ${d} is an s2 design`);
-    assert.equal(EXPR[k].style, 's2', k);
-    assert.ok(EXPR[`${k}_o`].x.mOpen >= 0.6 && EXPR[`${k}_O`].x.mOpen === 1 && EXPR[`${k}_o`].base === k, `${k} talks`);
+  const names = Object.keys(EXPR).filter(k => !/_[oO]$/.test(k));
+  for (const k of names) assert.equal(EXPR[k].style, 's2', k);
+  for (const k of names.filter(n => !/^[yc]_/.test(n))) {
+    assert.ok(EXPR[`${k}_o`].style === 's2' && EXPR[`${k}_o`].x.mOpen >= 0.6 && EXPR[`${k}_O`].x.mOpen >= 1, `${k} talks in s2`);
+    assert.ok(S2.PURPOSE[k], `${k} has a purpose line`);
   }
-  assert.equal(EXPR.neutral, S2.DESIGNS.y_lens, 'the default face is the calm s2 face');
-  assert.notEqual(EXPR.grin.style, 's2', 'a name with no s2 design yet keeps the kit face (Kai picks it on the kit sheet)');
+  for (const [k, d] of Object.entries(S2.ALIASES)) assert.equal(EXPR[k], S2.DESIGNS[d], `${k} draws ${d}`);
+  for (const n of ['love', 'kiss', 'wink', 'embarrassed', 'shy', 'guilty', 'disappointed', 'thinking', 'mischievous', 'yawn', 'sick', 'cold', 'hot', 'determined', 'relieved']) assert.ok(EXPR[n], n);
 });

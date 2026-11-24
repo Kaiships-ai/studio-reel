@@ -261,6 +261,7 @@ styles/stick-man/tools/run/sound_bank.py
 # the kit faces are the default; the s2 faces stay private
 styles/stick-man/engine/facestyles/index.js :: DEFAULT_FACE_STYLE = 's2' :: DEFAULT_FACE_STYLE = 'kit'
 styles/stick-man/engine/facestyles/index.js :: , s2: \(\) => import\('\./s2\.js'\) :: 
+styles/stick-man/engine/facestyles/index.js :: const RETIRED = \{ kit: 's2' \}; :: const RETIRED = {};
 # the presenter's own likeness never ships
 styles/stick-man/engine/cast.js :: export const KAI = \{[^;]*\};\n :: 
 styles/stick-man/engine/play.js :: makeStick, KAI, TELLER :: makeStick, TELLER

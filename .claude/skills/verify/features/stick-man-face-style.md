@@ -43,8 +43,8 @@ approved on Hot Money ep01 r5 reel 1 (21/11, "v6 ok, ưng 9.5/10").
 ## How to get to it (user POV)
 
 Any film: beats with `expr: 'y_fear', take: true` and the like (`new_film.mjs` writes no `faceStyle`: s2). A film that
-keeps the old faces: `export default { ...act, faceStyle: 'kit' }`. The design sheet: `shot.mjs --page
-styles/stick-man/faces.html --view a --frames 12 --w 1560 --h 1300 --out faces.jpg` (s2; `--query style=kit` the kit's).
+used to keep the old faces with `faceStyle: 'kit'`; since 25/11 that name is retired and draws s2 with a `[kit]` warning (the buyer pack keeps the dot faces through kit.manifest [stick_edit]). The design sheet: `shot.mjs --page
+styles/stick-man/faces.html --view a --frames 12 --w 1560 --h 1300 --out faces.jpg` (s2; `--query style=kit` now draws s2 too).
 
 - Eyes (Kai 22/11, Hot Money ep01 A v9: "creepy" wide eyes): `engine/eyegeom.js` sets the open eye's pupil (`EYE.prx` x
   `EYE.pry`, a wide-eyed design shrinks it by `EYE.shrink`) and the upper lid's rest on the pupil's top (`restLid`: at most

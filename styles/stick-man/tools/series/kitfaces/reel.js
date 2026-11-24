@@ -1,5 +1,5 @@
-// The kit face sheet's film (dev only): every face a new character can draw under the kit's default face style, one at a
-// time on one head, each held FACE frames. Its face sheet is approved once for every film:
+// The kit face sheet's film (dev only): the kit's face catalogue (engine/facestyles/s2.js: Kai 25/11, every face in the H2
+// V2.1 style, no dot eyes), every name a character can use, one at a time on one head, each held FACE frames. Its face sheet is approved once for every film:
 //   node styles/stick-man/tools/render/shot.mjs --film styles/stick-man/tools/series/kitfaces --frames all --dbg styles/stick-man/tools/series/kitfaces/review/shot-rows.jsonl --w 720 --h 1280
 //   node styles/stick-man/tools/series/facesheet.mjs styles/stick-man/tools/series/kitfaces --h 1280     -> review/face-sheet.jpg, its hash
 //   node styles/stick-man/tools/series/facesheet.mjs styles/stick-man/tools/series/kitfaces --approve "<Kai's words, time>" --sheet <hash>
@@ -7,11 +7,10 @@
 import { stand, K } from '/styles/stick-man/motion-lib/base.js';
 import { SPECS } from '/styles/stick-man/engine/play.js';
 import { bodySpec } from '/styles/stick-man/motion-lib/bodies.js';
-import { EXPR_NAMES } from '/styles/stick-man/engine/faces.js';
-import { DESIGNS } from '/styles/stick-man/engine/facestyles/s2.js';
+import { DESIGNS, ALIASES, PURPOSE } from '/styles/stick-man/engine/facestyles/s2.js';
 
 export const FACE = 30;
-export const FACES = [...EXPR_NAMES.filter(n => !/_[oO]$/.test(n)), ...Object.keys(DESIGNS)];
+export const FACES = [...new Set([...Object.keys(PURPOSE), ...Object.keys(DESIGNS), ...Object.keys(ALIASES)])];
 SPECS.KITFACE = bodySpec({ name: 'Face', shirt: [0.62, 0.62, 0.66], hair: [] }, 'adult');
 export const CUTS = [0];
 const F1 = FACES.length * FACE - 1;

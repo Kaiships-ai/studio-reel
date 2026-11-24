@@ -122,7 +122,7 @@ open-mouth twin for talking. A face change lands 4 f before its word, with a bod
 **Face style.** Every film draws its faces in s2 unless its `reel.js` default export says otherwise (Kai 21/11).
 s2 (`engine/facestyles/s2.js`, #156) is the rubber face Kai approved on Hot Money reel 1: 27 designs, `y_` for the lead
 and `c_` for a second character (`expr: 'y_fear'`), with its own change timing, blinks and chew. New face work goes into
-s2. `faceStyle: 'kit'` keeps the kit faces below exactly; any other name fails the render. Details:
+s2. `faceStyle: 'kit'` is retired: it draws the same faces with a warning (no dot eyes since 25/11); any other name fails the render. Details:
 `.claude/skills/verify/features/stick-man-face-style.md`.
 
 | `expr` | Look | Marks |
