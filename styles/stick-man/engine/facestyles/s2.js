@@ -326,10 +326,9 @@ function kissMouth(g, x0, y, k, sd) {
   for (const j of [-1, 1]) K.taper(g, [[x0 - sd * 0.014, y + j * 0.012], [x0 - sd * 0.032, y + j * 0.019]], 0.0065 * k, K.INK, 0.3);
   heart(g, x0 + sd * 0.098, y + 0.072, 0.028, k * 0.8, -sd * 14);
 }
-// a round open mouth (yawn, scream; x.mO its depth, up to 1.4 for a yawn): a stretched oval, its upper lip curved, its
-// bottom squashed, the tongue low in it, on a scream (x.oTeeth) a strip of top teeth; its rim at the grin's weight, a
-// bracket at each corner
-function oMouth(g, x0, y, mw, mO, k, teeth, wv, t) {
+// a round open mouth (a yawn; x.mO its depth, up to 1.4): a stretched oval, its upper lip curved, its bottom squashed,
+// the tongue low in it; its rim at the grin's weight, a bracket at each corner
+function oMouth(g, x0, y, mw, mO, k, wv, t) {
   const w = (0.040 + 0.024 * Math.min(1, mO)) * (mw || 1), h = 0.06 + 0.14 * mO, top = y + 0.016, L = [x0 - w, top - 0.012], R = [x0 + w, top - 0.012], b = top - h;
   const up = K.bez(L, [x0 - w * 0.55, top + 0.016], [x0 + w * 0.55, top + 0.016], R, 14);
   const dn = [...K.bez(R, [x0 + w * 1.45, top - h * 0.5], [x0 + w * 0.9, b - 0.004], [x0, b], 12), ...K.bez([x0, b], [x0 - w * 0.9, b - 0.004], [x0 - w * 1.45, top - h * 0.5], L, 12)]
@@ -338,7 +337,6 @@ function oMouth(g, x0, y, mw, mO, k, teeth, wv, t) {
   K.fill(g, pts, K.INK);
   g.save(); K.path(g, pts, true); g.clip();
   g.beginPath(); g.ellipse(x0, b + h * 0.2, w * 0.78, h * 0.22, 0, 0, 2 * Math.PI); g.fillStyle = TONGUE; g.fill();
-  if (teeth >= 0.5) K.fill(g, [...K.bez([x0 - w, top], [x0 - w * 0.5, top + 0.016], [x0 + w * 0.5, top + 0.016], [x0 + w, top], 14), ...K.bez([x0 + w, top - 0.03], [x0 + w * 0.5, top - 0.016], [x0 - w * 0.5, top - 0.016], [x0 - w, top - 0.03], 14)], K.WHITE);
   g.restore();
   K.path(g, pts, true); g.lineWidth = 0.014 * k; g.strokeStyle = K.INK; g.stroke();
   for (const [sd, [xc, yc]] of [[-1, L], [1, R]]) bracket(g, xc - sd * 0.004, yc, sd, k);
@@ -447,7 +445,7 @@ function face6(g, F, blink, t, o, T) {
   if (P.eyeA > 0.01) { sweat(g, clamp(X.sw || 0), k); if (on('sw2')) { sweat(g, 1, k, -0.205, 0); sweat(g, 0.8, k, 0.232, -0.118); } }
   const mx = F.mx || 0, mY = my + P.mUp;
   if (on('mKiss')) kissMouth(g, mx + 0.03 * clamp(F.gx || 0, -1, 1), mY, k, (F.gx || 0) < -0.1 ? -1 : 1);
-  else if (on('mO')) oMouth(g, mx, mY, F.mw, clamp(X.mO, 0, 1.4), k, X.oTeeth || 0, X.mWv || 0, t);
+  else if (on('mO')) oMouth(g, mx, mY, F.mw, clamp(X.mO, 0, 1.4), k, X.mWv || 0, t);
   else if (on('mSnarl')) snarl(g, mx, mY, 0.105 * (F.mw || 1), 1, k);
   else mouth4(g, Fm, t, mY, k, glp);
   if (on('puff')) puff(g, mx, mY, 0.105 * (F.mw || 1), k);
@@ -527,7 +525,7 @@ Object.assign(DESIGNS, {
   sleep: des({ brow: [-4, 0.13, 0.012], mw: 0.45, marks: [['zzz']] }, { eArc: -1, mOpen: 0.14 }),
   yawn: des({ lid: 0.62, lidTilt: -10, brow: [-22, 0.17, 0.018], mw: 1.1 }, { mO: 1.35, tear1: 1 }),
   dizzy: des({ brow: [-14, 0.15, 0.01], mw: 0.8 }, { eSpiral: 1, mWv: 0.8, mC: -0.3, mSk: 0.4 }),
-  disgust: des({ bw: 1.2, brow: [16, 0.13, 0.004, 0.012, -0.02], mw: 0.8 }, { eCr: 0.62, mOpen: 0.35, mC: -0.7, mWv: 0.6, mTongue: 1, scrunch: 1, bIn: 0.014 }),
+  disgust: des({ lid: 0.3, low: 0.2, bw: 1.15, brow: [10, 0.134, 0.006, 0.012, -0.022], mw: 0.95 }, { mSnarl: 1, eAsym: 0.18, scrunch: 1, bIn: 0.012 }),
   love: des({ brow: [-10, 0.165, 0.02], mw: 0.95 }, { eHeart: 1, mC: 0.9, mOpen: 0.35, mTeeth: 0.3, blush: 0.8 }),
   kiss: des({ brow: [-6, 0.15, 0.016] }, { eArc: 1, mKiss: 1, blush: 0.6 }),
   wink: des({ lid: -0.02, low: 0.16, brow: [0, 0.16, 0.016, 0.03, -0.02], mw: 1 }, { wink: 1, mC: 0.9, mOpen: 0.45, mTeeth: 0.5, mSk: 0.3 }),
@@ -542,15 +540,16 @@ Object.assign(DESIGNS, {
   scream: des({ rx: 0.074, ry: 0.124, white: 0.95, lid: -0.1, brow: [-32, 0.196, 0.024], mw: 1.25 }, { mOpen: 1.2, mC: -1, mTeeth: 1, mWv: 0.8, sw: 0.8, shiver: 1 }),
   sick: des({ lid: 0.45, lidTilt: -8, low: 0.1, brow: [-18, 0.142, 0.01], mw: 0.6, tint: [0.46, 0.68, 0.38] }, { mWv: 1.2, mC: -0.5, mPr: 0.6, bags: 1, puff: 1, sw: 0.6 }),
   cold: des({ lid: 0.06, white: 0.3, brow: [-24, 0.158, 0.012], mw: 0.95, tint: [0.56, 0.7, 0.96] }, { mGrim: 0.7, mPul: 1, mC: -0.3, bFl: 0.6, shiver: 1 }),
-  hot: des({ lid: 0.3, lidTilt: -8, brow: [-16, 0.145, 0.012], mw: 0.9, tint: [1, 0.44, 0.32] }, { sw: 1, sw2: 1, mOpen: 0.6, mC: -0.1, mTongue: 1, heat: 1 }),
+  hot: des({ lid: 0.3, lidTilt: -8, brow: [-16, 0.145, 0.012], mw: 0.9, tint: [1, 0.6, 0.24] }, { sw: 1, sw2: 1, mOpen: 0.6, mC: -0.1, mTongue: 1, heat: 1 }),
   angry: des({ lid: 0.26, low: 0.12, bw: 1.25, brow: [24, 0.12, 0.002], mw: 0.9, marks: [['anger']] }, { mGrim: 0.7, mC: -0.7, bIn: 0.014 }),
   deadpan: des({ lid: 0.4, brow: [0, 0.136, 0], mw: 0.6 }, { mC: 0 }),
+  y_calm: des({ lid: 0.12, brow: [-2, 0.14, 0.01], mw: 0.7 }, { mC: 0.18 }),
   confused: des({ lid: 0.06, gy: 0.2, brow: [-6, 0.152, 0.01, 0.045, -0.015], mw: 0.7, marks: [['question']] }, { eAsym: 0.22, mSk: 0.55, mC: -0.25, mWv: 0.5 }),
 });
 export const ALIASES = {
   neutral: 'y_lens', worried: 'y_worried', nervous: 'y_nervous', shock: 'y_shock', panic: 'y_panic',
   pain: 'y_pain', stern: 'y_stern', furious: 'c_shout', suspicious: 'y_suspicious', skeptic: 'y_squint', sly: 'y_dare',
-  determined: 'y_set', relieved: 'y_relief', sweat: 'y_sweat', fret: 'y_fret', y_calm: 'calm',
+  determined: 'y_set', relieved: 'y_relief', sweat: 'y_sweat', fret: 'y_fret',
 };
 export const PURPOSE = {
   neutral: 'resting, listening', calm: 'polite, at ease (a clerk, a host)', happy: 'pleased, a good surprise', grin: 'big closed-teeth grin',
@@ -574,14 +573,15 @@ export const LOOKALIKE = [['happy', 'grin'], ['happy', 'excited'], ['grin', 'man
   ['mischievous', 'sly'], ['wink', 'sly'], ['thinking', 'confused'], ['confused', 'skeptic'], ['angry', 'stern'], ['angry', 'furious'], ['scream', 'shock'],
   ['scream', 'panic'], ['love', 'kiss'], ['cold', 'nervous'], ['hot', 'sweat'], ['sick', 'disgust'], ['worried', 'nervous'], ['fret', 'worried']];
 const isPlainName = k => !/_[oO]$/.test(k) && !/^[yc]_/.test(k);   // a kit name, not a talking twin or a V2.1 (y_ / c_) face
-// a talking twin opens the mouth; a clenched grin speaks through its teeth and a kiss lets go
-const talking = (d, open, base) => { const x = d.x || {}; return { ...d, base, x: { ...x, mOpen: Math.max(x.mOpen || 0, open), mGrim: 0, mKiss: 0, mTeeth: Math.max(x.mTeeth || 0, x.mGrim ? 0.7 : 0) } }; };
+// a talking twin opens the mouth; a kit design's clenched grin speaks through its teeth and its kiss lets go (an alias's
+// twin stays as the V2.1 face's was: y_panic_O kept its grimace)
+const talking = (d, open, base, own) => { const x = d.x || {}; return { ...d, base, x: { ...x, mOpen: Math.max(x.mOpen || 0, open), ...(own ? { mGrim: 0, mKiss: 0, mTeeth: Math.max(x.mTeeth || 0, x.mGrim ? 0.7 : 0) } : {}) } }; };
 // s2 on the engine for this render (the clocks are module state: one face style per render)
 export function use() {
   FACE_STYLE.name = 's2';
   Object.assign(EXPR, DESIGNS);
   for (const [k, d] of Object.entries(ALIASES)) EXPR[k] = DESIGNS[d];
-  for (const k of Object.keys(EXPR)) if (isPlainName(k)) { EXPR[`${k}_o`] = talking(EXPR[k], 0.6, k); EXPR[`${k}_O`] = talking(EXPR[k], 1, k); }
+  for (const k of Object.keys(EXPR)) if (isPlainName(k)) { const own = !(k in ALIASES); EXPR[`${k}_o`] = talking(EXPR[k], 0.6, k, own); EXPR[`${k}_O`] = talking(EXPR[k], 1, k, own); }
   for (const c of ['normal', 'fast', 'slow']) FACE_TIMING[c] = TIMING[c];
   Object.assign(TAKE, TIMING.take); Object.assign(SMALL_TAKE, TIMING.small); Object.assign(BLINKS, TIMING.blinks); Object.assign(CHEW, TIMING.chew);
 }

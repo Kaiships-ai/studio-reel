@@ -30,7 +30,7 @@ test('before use() nothing changes: the kit faces keep their clocks and no s2 de
 test('use(): every s2 design is in EXPR, drawn by s2, and the engine runs on s2\'s clocks', () => {
   S2.use();
   assert.equal(FACE_STYLE.name, 's2');
-  const names = Object.keys(S2.DESIGNS), v21 = names.filter(n => /^[yc]_/.test(n)).sort();
+  const names = Object.keys(S2.DESIGNS), v21 = names.filter(n => /^[yc]_/.test(n) && n !== 'y_calm').sort();   // (y_calm: a film's own calm face, kept as it was, not one of V2.1's)
   assert.equal(v21.length, 27, 'the 27 H2 V2.1 designs');
   const hash = crypto.createHash('sha256').update(JSON.stringify(v21.map(n => [n, S2.DESIGNS[n]]))).digest('hex').slice(0, 12);
   assert.equal(hash, 'e3573a542db6', 'the V2.1 designs are the standard: unchanged by the catalogue');
@@ -92,6 +92,14 @@ test('no dot faces: after use() every face name a character can use (and its tal
   }
   for (const [k, d] of Object.entries(S2.ALIASES)) assert.equal(EXPR[k], S2.DESIGNS[d], `${k} draws ${d}`);
   for (const n of ['love', 'kiss', 'wink', 'embarrassed', 'shy', 'guilty', 'disappointed', 'thinking', 'mischievous', 'yawn', 'sick', 'cold', 'hot', 'determined', 'relieved']) assert.ok(EXPR[n], n);
+});
+
+test('a V2.1 face keeps its mouth when it talks: an alias twin keeps the grimace, y_calm keeps the calm it had', () => {
+  S2.use();
+  assert.equal(EXPR.panic_O.x.mGrim, S2.DESIGNS.y_panic.x.mGrim, 'panic_O (y_panic) talks through its grimace');
+  assert.equal(EXPR.pain_o.x.mGrim, S2.DESIGNS.y_pain.x.mGrim);
+  assert.equal(EXPR.grin_O.x.mGrim, 0, 'a kit grin opens to speak');
+  assert.deepEqual([EXPR.y_calm.lid, EXPR.y_calm.mw, EXPR.y_calm.x.mC], [0.12, 0.7, 0.18], 'y_calm is the calm face films were given');
 });
 
 test('a mark switches half-way through a change: a half-mixed wink still closes one eye, a heart never draws at a tenth', () => {
