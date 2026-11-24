@@ -142,7 +142,7 @@ if (A.speed && !REEL) {
   const pad = A['pad-audio'] === '1';
   if (!pad) {
     const pr = run('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', wav], { capture: true }), sec = Number(pr.stdout);
-    const lost = pr.status === 0 && pr.stdout.trim() && sec > 0 ? framesLost(sec, { fps, f0, n }) : 0;   // no duration: no claim (ffmpeg reports the file)
+    const lost = pr.status === 0 && pr.stdout.trim() && sec > 0 ? framesLost(sec, { fps, f0, n }) : 0;
     if (lost) console.warn(`[shot] the audio ends at ${sec.toFixed(2)} s, before the last frame: the mp4 lacks its last ${lost} frame(s); --pad-audio 1 keeps them`);
   }
   const ff = start('ffmpeg', muxArgs({ fps, f0, n, wav, out: OUT, pad }), { stdio: ['pipe', 'inherit', 'inherit'] });
