@@ -15,7 +15,7 @@ function recorder() {
     save() { stack.push({ ...st }); }, restore() { st = stack.pop(); },
     translate(x, y) { st.tx += x * st.s; st.ty += y * st.s; }, rotate() {}, scale(s) { st.s *= s; }, clip() {}, setLineDash() {},
     measureText: t => ({ width: [...String(t)].length * 0.6 * Number(/(\d+(\.\d+)?)px/.exec(g.font)?.[1] ?? 10) }),
-    beginPath() {}, closePath() {}, moveTo() {}, lineTo() {}, arc() {}, ellipse() {}, rect() {}, roundRect() {},
+    beginPath() {}, closePath() {}, moveTo() {}, lineTo() {}, arc(x, y, r) { ops.push({ op: 'arc', x: st.tx + x * st.s, y: st.ty + y * st.s, r: r * st.s }); }, ellipse() {}, rect() {}, roundRect() {},
     fill() { ops.push({ op: 'fill', color: g.fillStyle, ...st }); }, stroke() { ops.push({ op: 'stroke', color: g.strokeStyle, ...st }); },
     fillRect(x, y, w, h) { ops.push({ op: 'fillRect', x, y, w, h, ...st }); },
     createLinearGradient: () => ({ addColorStop() {} }),
@@ -97,6 +97,17 @@ test('vote at its default place: every box sits inside the text-safe box and off
 test('vote: long choices shrink until the pair fits the text-safe width', () => {
   const ov = make([{ kind: 'vote', from: 0, to: 60, choices: ['FIX IT', 'BLAME THE DOG FOR EVERYTHING'], hits: [0, 0] }]);
   for (const b of boxes(ov, 30)) assert.ok(b.box[0] >= TEXT_SAFE.x0 && b.box[2] <= TEXT_SAFE.x1, `${b.text} ${b.box}`);
+});
+
+test("vote: the 'or' chip never covers a letter, short or long choices, through the heartbeat", () => {
+  const px = op => Number(/(\d+(\.\d+)?)px/.exec(op.font)[1]) * op.s, half = op => [...op.text].length * 0.6 * px(op) / 2;
+  for (const choices of [['HIDE', 'SPEND'], ['FIX IT', 'BLAME THE DOG'], ['YES', 'BLAME THE DOG FOR EVERYTHING']]) {
+    const ov = make([{ kind: 'vote', from: 0, to: 120, choices, hits: [0, 6], or: 3 }]);
+    for (let f = 20; f <= 120; f++) {
+      const ops = frame(ov, f), chip = ops.find(o => o.op === 'arc'), a = textOp(ops, choices[0]), b = textOp(ops, choices[1]);
+      assert.ok(a.x + half(a) <= chip.x - chip.r && b.x - half(b) >= chip.x + chip.r, `${choices} f${f}: ${a.x + half(a)} | ${chip.x - chip.r}..${chip.x + chip.r} | ${b.x - half(b)}`);
+    }
+  }
 });
 
 test('boxes: a text label, a meter, a clock and a threat give boxes in shares of the frame, tagged with their overlay', () => {

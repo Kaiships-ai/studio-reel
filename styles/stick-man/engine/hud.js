@@ -193,18 +193,24 @@ export function hudKinds({ width, height, k, rrect }) {
   // ---- vote: two choices side by side that slam in on the words that name them, in two colours that say neither is
   // the right one; the half of the frame on that side takes its colour; a heartbeat from the first hit; the call to
   // action in rows under it. By default the whole card sits inside the text-safe box (y 0.14-0.65).
-  // the pair shrinks until it fits the text-safe width (x 0.06-0.87, centred at `at`): long choices stay off the app's bands
+  // the pair shrinks until it fits the text-safe width (x 0.06-0.87, centred at `at`): long choices stay off the app's bands.
+  // The 'or' chip scales with the words and each card's inner pad clears it, heartbeat included, so it never covers a letter.
   const voteGeo = (g, o) => {
     const [ax, ay] = o.at ?? [0.465, 0.47], [a, b] = o.choices ?? ['YES', 'NO'], fitW = 2 * Math.min(ax - 0.07, 0.86 - ax) * W, gap = 9 * k;
-    let px = (o.size ?? 99) * k, wa, wb;
-    for (;;) { g.font = font(px); wa = g.measureText(a).width + 0.85 * px; wb = g.measureText(b).width + 0.73 * px; if (wa + wb + gap <= fitW || px <= 36 * k) break; px *= 0.94; }
-    const x0 = ax * W - (wa + wb + gap) / 2; return { px, cy: ay * H, wa, wb, ca: x0 + wa / 2, cb: x0 + wa + gap + wb / 2, seam: x0 + wa + gap / 2, h: 1.9 * px };
+    let px = (o.size ?? 99) * k, ta, tb, r, ia, ib;
+    for (;;) {
+      g.font = font(px); ta = g.measureText(a).width; tb = g.measureText(b).width; r = 0.455 * px;
+      ia = r - gap / 2 + 0.08 * px + 0.02 * ta; ib = r - gap / 2 + 0.08 * px + 0.02 * tb;
+      if (ta + tb + ia + ib + 0.8 * px + gap <= fitW || px <= 36 * k) break; px *= 0.94;
+    }
+    const wa = ta + 0.4 * px + ia, wb = tb + 0.4 * px + ib, x0 = ax * W - (wa + wb + gap) / 2;
+    return { px, r, cy: ay * H, wa, wb, ca: x0 + wa / 2, cb: x0 + wa + gap + wb / 2, ta: x0 + 0.4 * px + ta / 2, tb: x0 + wa + gap + ib + tb / 2, seam: x0 + wa + gap / 2, h: 1.9 * px };
   };
   const rowY = (o, r) => ((o.at ?? [0.465, 0.47])[1] + 0.074 + (r - 1) * 0.058) * H;
   function vote(g, o, f) {
     const V = voteGeo(g, o), [a, b] = o.choices ?? ['YES', 'NO'], [fa, fb] = o.hits ?? [o.from, o.from], again = o.again ?? [];
     const colors = o.colors ?? ['#1654c8', '#de7608'], hb = heartbeat(f, fa, o.beat ?? 20), tint = o.tint ?? 0.35;
-    const side = (i, text, cx, w, f0, rot) => {
+    const side = (i, text, cx, w, tx, f0, rot) => {
       if (f < f0) return;
       const age = f - f0; let s = 1 + 0.95 * Math.max(0, 1 - age / 5) ** 2;
       if (again[i] != null && f >= again[i]) s += 0.34 * Math.max(0, 1 - (f - again[i]) / 8) ** 2;
@@ -219,14 +225,14 @@ export function hudKinds({ width, height, k, rrect }) {
       g.fillStyle = colors[i]; rrect(g, -w / 2, -V.h / 2, w, V.h, 36 * k); g.fill();
       g.lineWidth = 13.5 * k; g.strokeStyle = INK; g.stroke();
       g.lineWidth = 6 * k; g.strokeStyle = 'rgba(240,239,234,0.88)'; rrect(g, -w / 2 + 13.5 * k, -V.h / 2 + 13.5 * k, w - 27 * k, V.h - 27 * k, 25 * k); g.stroke();
-      outlined(g, text, 0, 0, V.px, WHITE, 7.5 * k);
+      outlined(g, text, tx - cx, 0, V.px, WHITE, 7.5 * k);
       g.restore();
     };
-    side(0, a, V.ca, V.wa, fa, 2); side(1, b, V.cb, V.wb, fb, -2);
+    side(0, a, V.ca, V.wa, V.ta, fa, 2); side(1, b, V.cb, V.wb, V.tb, fb, -2);
     if (o.or != null && f >= o.or) {
-      const s = Math.min(1, (f - o.or) / 6), r = 45 * k * (1 + 0.18 * Math.sin(Math.PI * s) * (1 - s));
+      const s = Math.min(1, (f - o.or) / 6), r = V.r * (1 + 0.18 * Math.sin(Math.PI * s) * (1 - s));
       g.save(); g.beginPath(); g.arc(V.seam, V.cy, r, 0, 2 * Math.PI); g.fillStyle = YELLOW; g.fill(); g.lineWidth = 9 * k; g.strokeStyle = INK; g.stroke();
-      outlined(g, 'or', V.seam, V.cy - 1.5 * k, 46 * k * Math.max(0.1, s), INK, 0); g.restore();
+      outlined(g, 'or', V.seam, V.cy - 1.5 * k, 1.02 * V.r * Math.max(0.1, s), INK, 0); g.restore();
     }
     for (const [i, L] of (o.lines || []).entries()) {
       if (f < L.f || (L.to != null && f > L.to)) continue;
