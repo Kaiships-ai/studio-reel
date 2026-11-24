@@ -25,6 +25,11 @@
   first 70 ms out of that dip only where the words it lands on name it (whole words of the cue name: "smash" on
   `glass_smash`, never "hot" on `gunshot`; the, a, an, of, to and and are ignored) or a cue sets `"keep": true`. Under any other word ("hit the car" under the gunshot) the word wins: Hot Money r4 goes from 4/255 words under
   +6 dB to 0/255, and the gunshots at 43.47 s and 43.8 s give up about 3 dB of transient.
+- `sound.floor`: opt-in `music.json` `floor` (dBFS) and `floor_max` (dB, default 14): the music and the ambience come up
+  wherever the whole mix would fall under the floor, never inside a planned silence or the last 0.6 s; `levels.txt` ends
+  with `floor <dB> dBFS: beds lifted on <s> s, at most <dB> dB`. `tools/gates/floorgate.mjs` checks a render: F1 holes
+  (under -30 dBFS for 0.3 s), F2 the bed more than 18 dB under the voice for 4 s, F3 the last 6 s at least as full as
+  the film's median bed (advisory at ◇5).
 - `sound.mux`: `--mux <video> <out.mp4>` encodes AAC 256k, measures the mp4's true peak with ebur128 and, while it is over
   −1.0 dBTP, lowers the limiter ceiling by the overshoot plus 0.3 dB and encodes again (3 encodes at most). It exits
   non-zero, saying why, when the final mp4 is over −1.0 dBTP or outside −14 ±0.5 LUFS, and before any encode when the video
@@ -43,6 +48,8 @@
 - `node --test test/unit/sound-lib.test.mjs`: the library is on disk, CC0 and credited; every Hot Money cue name resolves
   with no guess; `Gunshot`, `gunshot_2` and `gunshot-close` play gunshots, `password` and `reveal` play the quiet
   default; an unknown `bag_swish` is a whoosh; a 3 s test film mixes to −14 LUFS and reports its guessed name.
+- `node --test test/unit/stick-floorgate.test.mjs`: the floor gate on made-up sound (holes, a thin bed, a closing drop) and
+  the mixer's floor lifting a 3.5 s hole between two lines by more than 4 dB while a mix without `floor` stays as it was.
 - `node --test test/unit/sound-fit.test.mjs`: a 100 BPM click track fit to a made-up arc cuts within one frame of a bar
   line at every section start, plays the loud part under the loud section, and stays silent in the planned silences;
   `--check` passes the placed stem and fails it 0.2 s late or cut short.
