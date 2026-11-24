@@ -17,7 +17,7 @@ import { hudKinds } from './hud.js';
 
 const ORANGE = '#f08a2c', INK = '#141414', RED = '#e23b3b';
 const pop = u => (u < 0 ? 0 : u >= 1 ? 1 : 1 + 0.18 * Math.sin(Math.PI * u) * (1 - u) - Math.pow(1 - u, 3));   // overshoot, settle
-const ENTER = { text: 'pop', loupe: 'pop', arrows: 'pop', meter: 'fade', path: 'fade', clock: 'none', threat: 'none', vote: 'none', edge: 'none' };
+const ENTER = { text: 'pop', loupe: 'pop', arrows: 'pop', meter: 'fade', path: 'fade', clock: 'none', threat: 'none', vote: 'none', edge: 'none', endcard: 'none' };
 
 // scale and alpha of an overlay on frame f
 export function envelope(o, f, from = o.from) {

@@ -7,6 +7,9 @@
 //   { kind: 'vote', from, to, choices: [a, b], hits: [fa, fb], again: [fa, fb], or, at, size, colors, beat, tint,
 //     lines: [{ f, to, text, cta, row }] }
 //   { kind: 'edge', from, to, color, peak, band }
+//   { kind: 'endcard', from, to, lines: [{ f, to, text, cta, size }], at, free }: the end card, a stack of cards (a call to
+//     action in yellow) that sits inside the text-safe box unless `free`: long lines shrink to its width, a stack placed
+//     past its edge is moved back in
 import { smooth } from './mathx.js';
 import { TEXT_SAFE } from './safezone.js';
 
@@ -243,5 +246,30 @@ export function hudKinds({ width, height, k, rrect }) {
 
   function edge(g, o, f) { const u = (f - o.from) / Math.max(1, o.to - o.from); edgeFlash(g, (o.peak ?? 0.3) * (1 - u) ** 1.5, o.color ?? RED, o.band ?? 0.12); }
 
-  return { kinds: { clock, threat, vote, edge }, boxes: { clock: clockBoxes, threat: threatBoxes, vote: voteBoxes, edge: () => [] }, colors: { INK, WHITE, YELLOW, RED, BLUE, GREEN } };
+  // the end card's stack: every line's size and centre, the same on every frame (a card that pops in never moves the others)
+  const endGeo = (g, o) => {
+    const [ax, ay] = o.at ?? [0.465, 0.55], fitW = (TEXT_SAFE.x1 - TEXT_SAFE.x0 - 0.02) * W, gap = 18 * k;
+    const rows = (o.lines || []).map(l => {
+      let px = (l.size ?? (l.cta ? 84 : 66)) * k, w;
+      for (;;) { g.font = font(px); w = g.measureText(l.text).width + px; if (w <= fitW || px <= 30 * k) break; px *= 0.94; }
+      return { ...l, px, w, h: 1.6 * px };
+    });
+    const total = rows.reduce((t, r) => t + r.h, 0) + gap * Math.max(0, rows.length - 1), wide = Math.max(0, ...rows.map(r => r.w));
+    let top = ay * H - total / 2, cx = ax * W;
+    if (!o.free) {
+      top = Math.max((TEXT_SAFE.y0 + 0.01) * H, Math.min(top, (TEXT_SAFE.y1 - 0.01) * H - total));
+      cx = Math.max(TEXT_SAFE.x0 * W + wide / 2, Math.min(cx, TEXT_SAFE.x1 * W - wide / 2));
+    }
+    let y = top; return rows.map(r => { const cy = y + r.h / 2; y += r.h + gap; return { ...r, cx, cy }; });
+  };
+  const shown = (l, f) => f >= (l.f ?? -Infinity) && (l.to == null || f <= l.to);
+  function endcard(g, o, f) {
+    for (const r of endGeo(g, o)) {
+      if (!shown(r, f)) continue;
+      const age = f - (r.f ?? o.from), s = age < 6 ? 1 + 0.18 * Math.sin(Math.PI * age / 6) * (1 - age / 6) - Math.pow(1 - age / 6, 3) : 1;
+      card(g, r.text, r.cx, r.cy, r.px, r.cta ? INK : WHITE, r.cta ? '#face1e' : '#121012', Math.max(0.01, s));
+    }
+  }
+  const endcardBoxes = (g, o, f) => endGeo(g, o).filter(r => shown(r, f)).map(r => ({ text: r.text, box: cardBox(g, r.text, r.cx, r.cy, r.px) }));
+  return { kinds: { clock, threat, vote, edge, endcard }, boxes: { clock: clockBoxes, threat: threatBoxes, vote: voteBoxes, edge: () => [], endcard: endcardBoxes }, colors: { INK, WHITE, YELLOW, RED, BLUE, GREEN } };
 }
