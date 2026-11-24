@@ -194,11 +194,16 @@ blur; `dof: { gain: 0 }` turns it off (stick-man-depth.md).
 | `arrows` | `from, to, world, axis, len, gap, inward` | expansion; `inward: true` when ends grow into a gap, and the gap must close in the same frames |
 | `meter` | `from, to, at: [kx, ky], width, label, keys: [[f, value], ...], max, unit, color, size, enter` | a labelled bar on a dark panel (SUSPICION 35%); the value eases between keys and holds outside them |
 | `path` | `from, to, world: [[x, y, z], ...] \| at: [[kx, ky], ...], dur, dash, width, color, arrow, labels: [a, b], labelSize, labelDy` | a dotted route that draws on over `dur` frames (default 60 % of the span) with an arrowhead; world points stay on the set as the camera moves; `labels` sit on its ends, the end one pops when the line arrives |
+| `clock` | `from, to, keys: [[f, seconds], ...], at, size, label, labelSize, color, alarm, alarmColor, dropMin, tags: [[f0, f1, text]], slots: { n, keys: [[f, count]], icon: 'bag' \| 'dot', size }, slam, edge` | the countdown that never re-pops: big outlined digits that run between keys, red under `alarm` seconds with a punch and an edge flash on every second, a jump of `dropMin` s or more shakes it and slides a red chip (`-1:17`), a `tags` range shows its text instead of the label (a time skip, no chip), slots fill and pop (engine/hud.js) |
+| `threat` | `from, to, steps: [{ f, who, word, level, color, whoColor }], at, icon: 'car' \| 'dot', you, hot` | danger that never leaves the screen: who (small), one word that slams in on the step's frame, a marker that eases along a track toward YOU; between steps it holds. Put each step on the word that causes it, and say a condition as one (`IF YOU HIDE`) |
+| `vote` | `from, to, choices: [a, b], hits: [fa, fb], again: [fa, fb], or, at, size, colors, beat, tint, lines: [{ f, to, text, cta, row }]` | the closing question: two choices slam in on the words that name them, in two colours that say neither is right, that half of the frame takes its colour, a heartbeat from the first hit, the call to action in rows below. The default `at` [0.465, 0.47] keeps every row inside the text-safe box |
+| `edge` | `from, to, color, peak, band` | a coloured flash in the outer band of the frame that decays over its span (alarm, hit, siren); faces sit inside the band |
 
 - `enter`: `'pop'` (the default for `text`: overshoot in over 5 frames, shrink out over the last 4), `'fade'` (the default
   for `meter` and `path`), `'none'` (full size from `from` to `to`). Use `'none'` for a label carried across cuts and for
   a clock: one entry per tick, each `enter: 'none'`, so nothing re-pops.
-- `box`: `true` (ink, 82 %) or `{ color, alpha, pad, r }` (`pad` and `r` in px at 1080 wide). Boxed text is white unless
+- `enter: 'slam'`: lands from 1.8x over 5 frames and shrinks out over the last 4 (a stamp such as LOST THEM; add `shake`).
+- `box`: `true` (ink, 82 %) or `{ color, alpha, pad, r, outline, outlineWidth }` (`pad`, `r` and `outlineWidth` in px at 1080 wide). Boxed text is white unless
   `color` is set and has no ink outline. The box is measured with every digit as 0, so a ticking clock keeps one box.
   A red clock: `box: { color: '#c62828', alpha: 0.92 }, tilt: 0`.
 - Sizes are px at 1080 wide: keep `size` ≥ 42 (14 px on a 360 px phone). A meter at the default `size` 46 and `width`
@@ -207,6 +212,7 @@ blur; `dof: { gain: 0 }` turns it off (stick-man-depth.md).
   the height above the end point).
 - A path through a point behind the camera is cut where it crosses the camera plane: only the part in front is drawn,
   the arrowhead shows only while the tip is on a visible stretch and inside the frame, and a hidden end has no label.
+- Every kind but loupe, arrows and path also gives the rows (`--dbg`) the boxes a viewer reads (`text`: kind, overlay index, text, box in shares of the frame), with the caption's; `tools/gates/textgate.mjs` checks them at ◇5 (advisory): nothing under the app's buttons, over a face or stacked, no middle dot.
 - Check one on the motion-lib proof page: `tools/render/shot.mjs --film styles/stick-man/motion-lib/proof --query
   "clip=Move_CarryBag_Walk_Loop&ov=<url-encoded JSON list>" --w 540 --h 960 --frames 0,30`.
 
