@@ -39,12 +39,14 @@ export function clockEvents(o, f, look = 40) {
   }
   return { tick, drop };
 }
-// the threat track: the step in force on frame f, its age, and the marker's level eased over 16 frames from the last one
+// the threat track: the step in force on frame f (steps in any order), its age, and the marker's level eased over 16
+// frames from the last one; a step without a word shows only its `who` line
 export function threatState(steps, f) {
-  let k = -1; for (let i = 0; i < steps.length; i++) if (f >= steps[i].f) k = i;
+  const S = [...steps].sort((a, b) => a.f - b.f);
+  let k = -1; for (let i = 0; i < S.length; i++) if (f >= S[i].f) k = i;
   if (k < 0) return null;
-  const s = steps[k], prev = k ? steps[k - 1].level : 0, age = f - s.f;
-  return { ...s, age, level: prev + (s.level - prev) * smooth(age / 16) };
+  const s = S[k], prev = k ? S[k - 1].level : 0, age = f - s.f;
+  return { ...s, word: s.word ?? '', age, level: prev + (s.level - prev) * smooth(age / 16) };
 }
 export const heartbeat = (f, f0, beat = 20) => (f < f0 ? 0 : Math.max(0, 1 - ((f - f0) % beat) / 8));
 

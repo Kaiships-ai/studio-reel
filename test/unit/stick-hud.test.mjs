@@ -12,7 +12,7 @@ function recorder() {
   const g = {
     font: '', fillStyle: '', strokeStyle: '', lineWidth: 1, textAlign: '', textBaseline: '', lineJoin: '', lineCap: '', shadowColor: '', shadowBlur: 0, letterSpacing: '',
     get globalAlpha() { return st.a; }, set globalAlpha(v) { st.a = v; },
-    save() { stack.push({ ...st }); }, restore() { st = stack.pop(); },
+    save() { stack.push({ st: { ...st }, font: g.font }); }, restore() { const p = stack.pop(); st = p.st; g.font = p.font; },
     translate(x, y) { st.tx += x * st.s; st.ty += y * st.s; }, rotate() {}, scale(s) { st.s *= s; }, clip() {}, setLineDash() {},
     measureText: t => ({ width: [...String(t)].length * 0.6 * Number(/(\d+(\.\d+)?)px/.exec(g.font)?.[1] ?? 10) }),
     beginPath() {}, closePath() {}, moveTo() {}, lineTo() {}, arc(x, y, r) { ops.push({ op: 'arc', x: st.tx + x * st.s, y: st.ty + y * st.s, r: r * st.s }); }, ellipse() {}, rect() {}, roundRect() {},
@@ -108,6 +108,19 @@ test("vote: the 'or' chip never covers a letter, short or long choices, through 
       assert.ok(a.x + half(a) <= chip.x - chip.r && b.x - half(b) >= chip.x + chip.r, `${choices} f${f}: ${a.x + half(a)} | ${chip.x - chip.r}..${chip.x + chip.r} | ${b.x - half(b)}`);
     }
   }
+});
+
+test('threat: steps in any order give the same track; a step without a word never draws "undefined"', () => {
+  const A = [{ f: 0, who: 'MOM', word: 'NEAR', level: 0.3 }, { f: 30, word: 'HERE', level: 0.9 }];
+  for (const f of [10, 35, 60]) assert.deepEqual(threatState([A[1], A[0]], f), threatState(A, f));
+  const ops = frame(make([{ kind: 'threat', from: 0, to: 40, steps: [{ f: 0, who: 'MOM', level: 0.4 }] }]), 20);
+  assert.ok(!texts(ops).some(t => /undefined/.test(t)) && texts(ops).includes('MOM'));
+});
+
+test('boxes leave the canvas font as it was (the dbg rows measure on the caption canvas)', () => {
+  const ov = make([{ ...CLOCK }, { kind: 'threat', from: 0, to: 300, steps: [{ f: 0, who: 'MOM', word: 'NEAR', level: 0.3 }] },
+    { kind: 'vote', from: 0, to: 300, choices: ['STAY', 'RUN'], hits: [0, 0], lines: [{ f: 0, text: 'COMMENT', cta: true }] }]);
+  const r = recorder(); r.g.font = '40px caption'; ov.boxes(20, r.g); assert.equal(r.g.font, '40px caption');
 });
 
 test('boxes: a text label, a meter, a clock and a threat give boxes in shares of the frame, tagged with their overlay', () => {
