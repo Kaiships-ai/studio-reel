@@ -67,7 +67,7 @@ sf.write(r'${path.join(film, 'vo/vo.wav')}', 0.3 * np.sin(2 * np.pi * 220 * t) *
     assert.ok(after > before + 4, `the floor lifts it (${before.toFixed(1)} -> ${after.toFixed(1)} dBFS)`);
     for (const [a, b, what] of [[4.0, 4.1, 'the silence\'s first 0.1 s'], [4.0, 5.0, 'the planned silence'], [4.9, 5.0, 'the silence\'s last 0.1 s'], [9.4, 10, 'the last 0.6 s']])
       assert.ok(Math.abs(level(floored, a, b) - level(plain, a, b)) < 0.5, `${what} is left alone (${level(plain, a, b).toFixed(1)} -> ${level(floored, a, b).toFixed(1)} dBFS)`);
-    assert.match(fs.readFileSync(path.join(floored, 'audio/levels.txt'), 'utf8'), /floor -27 dBFS: beds lifted on \d+\.\d s/);
+    assert.match(fs.readFileSync(path.join(floored, 'audio/levels.txt'), 'utf8'), /floor -27 dBFS \(measured before the master level\): beds lifted on \d+\.\d s/);
     assert.doesNotMatch(fs.readFileSync(path.join(plain, 'audio/levels.txt'), 'utf8'), /beds lifted/, 'no floor unless music.json asks for one');
   } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
 });

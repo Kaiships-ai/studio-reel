@@ -388,7 +388,8 @@ def main():
         if tp <= MP4_TP: break
         ceil = used - (tp - MP4_TP + 0.3)
     lines = report(S, L, R, G, paths, used, mp4)
-    if floor: lines.append(f'floor {S["M"]["floor"]} dBFS: beds lifted on {floor[0]:.1f} s, at most {floor[1]:.1f} dB')
+    if floor: lines.append(f'floor {S["M"]["floor"]} dBFS (measured before the master level): {"ambience" if S["stem"] else "beds"} lifted on {floor[0]:.1f} s, at most {floor[1]:.1f} dB'
+                           + (' (the music stem is left as given)' if S['stem'] else ''))
     open(os.path.join(out, 'levels.txt' if args.name == 'mix' else f'levels-{args.name}.txt'), 'w').write('\n'.join(lines) + '\n'); print('\n'.join(lines[:16]))
     if mp4 and (mp4['tp'] > MP4_TP or abs(mp4['I'] - MIX_LU) > 0.5):
         sys.exit(f'mix.py: {mp4["path"]} is at {mp4["I"]:.1f} LUFS, true peak {mp4["tp"]:.1f} dBTP after {mp4["tries"]} encode(s); '

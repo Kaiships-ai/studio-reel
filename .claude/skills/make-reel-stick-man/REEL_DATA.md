@@ -219,7 +219,7 @@ levels `mus_lu`, `amb_lu`, `duck_db`, and `track { file, segments: [{ src: [a, b
 full key list is the header of `styles/stick-man/tools/run/mix.py`.
 
 `floor` (opt-in, dBFS, e.g. `-27`): where the whole mix would fall under it, the music and the ambience come up by the
-difference, at most `floor_max` dB (default 14), never inside a planned silence (`audio/sound-plan.json` `silences`) and
+difference (measured before the master level, so the final mix lands about there; a frozen music stem stays as given), at most `floor_max` dB (default 14), never inside a planned silence (`audio/sound-plan.json` `silences`) and
 never in the last 0.6 s; `levels.txt` says how long and how far. No hole of near silence between two lines, the way
 Hot Money ep01 H2 V2.1 was mixed. `tools/gates/floorgate.mjs` (◇5, advisory) measures the result: holes, the bed under
 the voice, the closing seconds.
