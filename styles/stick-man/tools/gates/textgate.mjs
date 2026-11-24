@@ -9,6 +9,7 @@
 // T3 on a face: a box covering 20 % or more of a face the lens sees (faceVis >= 0.3), held 0.5 s
 // T4 stacked: two boxes from different overlays (or one and the caption) overlapping by 15 % of the smaller one, held
 // T5 a middle dot or a bullet in anything a viewer reads (Kai's rule, H2 V2.1)
+// The film behind each limit is its `source` in LIMITS below.
 import fs from 'node:fs'; import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { UI_BANDS, TEXT_SAFE } from '../run/shotlist.mjs';

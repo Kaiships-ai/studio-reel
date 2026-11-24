@@ -8,6 +8,7 @@
 //     lines: [{ f, to, text, cta, row }] }
 //   { kind: 'edge', from, to, color, peak, band }
 import { smooth } from './mathx.js';
+import { TEXT_SAFE } from './safezone.js';
 
 const INK = '#0c0c0e', WHITE = '#f2f1ec', YELLOW = '#ffd60a', RED = '#ff3028', BLUE = '#3c8cff', GREEN = '#46e68c';
 
@@ -61,7 +62,7 @@ export function hudKinds({ width, height, k, rrect }) {
   }
   function card(g, text, cx, cy, px, fg, bg, s = 1, rot = 0, a = 1) {
     g.save(); g.globalAlpha *= a; g.translate(cx, cy); g.rotate(rot * Math.PI / 180); g.scale(s, s);
-    g.font = font(px); const w = g.measureText(text).width + 2 * 0.5 * px, h = px * 1.24 + 0.36 * px;
+    g.font = font(px); const w = g.measureText(text).width + px, h = 1.6 * px;
     g.fillStyle = bg; rrect(g, -w / 2, -h / 2, w, h, 0.24 * px); g.fill();
     g.lineWidth = 0.13 * px; g.strokeStyle = INK; rrect(g, -w / 2, -h / 2, w, h, 0.24 * px); g.stroke();
     g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = fg; g.fillText(text, 0, px * 0.04);
@@ -69,7 +70,6 @@ export function hudKinds({ width, height, k, rrect }) {
   }
   const cardBox = (g, text, cx, cy, px) => { g.font = font(px); const w = g.measureText(text).width + px, h = px * 1.6;
     return [(cx - w / 2) / W, (cy - h / 2) / H, (cx + w / 2) / W, (cy + h / 2) / H]; };
-  // a flash in the outer band of the frame only (faces sit inside it)
   function edgeFlash(g, alpha, color, band = 0.12) {
     if (alpha <= 0.002) return;
     g.save(); g.globalAlpha *= Math.min(1, alpha);
@@ -106,8 +106,6 @@ export function hudKinds({ width, height, k, rrect }) {
     for (const wx of [-0.32, 0.32]) { g.beginPath(); g.arc(x + wx * s, y - 0.1 * s, 0.14 * s, 0, 2 * Math.PI); g.fillStyle = INK; g.fill(); }
   }
 
-  // ---- clock: big outlined digits, red under `alarm` seconds with a punch and an edge flash on every second, a drop of
-  // `dropMin` s or more shakes it and slides a red chip out, `tags` replace the label for a time skip, `slots` pop as they fill
   const clockGeo = o => { const [ax, ay] = o.at ?? [0.5, 0.15]; return { cx: ax * W, cy: ay * H, px: (o.size ?? 177) * k, lpx: (o.labelSize ?? 42) * k, ly: (ay - 0.0625) * H, sy: (ay + 0.072) * H }; };
   function clock(g, o, f) {
     const { cx, cy, px, lpx, ly, sy } = clockGeo(o), secs = clockSecs(o.keys, f), alarm = o.alarm != null && secs < o.alarm;
@@ -155,8 +153,6 @@ export function hudKinds({ width, height, k, rrect }) {
     g.restore(); return out;
   }
 
-  // ---- threat: who (small line), one big word that slams in on its step, a marker that eases along a track toward YOU.
-  // The track never leaves the screen: the danger holds between steps and rises only on the step that causes it.
   const threatGeo = o => { const [ax, ay] = o.at ?? [0.5, 0.165]; const cx = ax * W, cy = ay * H;
     return { cx, cy, pw: 0.739 * W, ph: 0.186 * H, wy: cy - 0.069 * H, by: cy - 0.0065 * H, ty: cy + 0.0607 * H, x0: cx - 0.317 * W, x1: cx + 0.233 * W }; };
   function threat(g, o, f) {
@@ -192,13 +188,8 @@ export function hudKinds({ width, height, k, rrect }) {
     return [{ text: [st.who, st.word].filter(Boolean).join(' '), box: [(G.cx - G.pw / 2) / W, top / H, (G.x1 + 126 * k) / W, (G.ty + 37.5 * k) / H] }];
   }
 
-  // ---- vote: two choices side by side that slam in on the words that name them, in two colours that say neither is
-  // the right one; the half of the frame on that side takes its colour; a heartbeat from the first hit; the call to
-  // action in rows under it. By default the whole card sits inside the text-safe box (y 0.14-0.65).
-  // the pair shrinks until it fits the text-safe width (x 0.06-0.87, centred at `at`): long choices stay off the app's bands.
-  // The 'or' chip scales with the words and each card's inner pad clears it, heartbeat included, so it never covers a letter.
   const voteGeo = (g, o) => {
-    const [ax, ay] = o.at ?? [0.465, 0.47], [a, b] = o.choices ?? ['YES', 'NO'], fitW = 2 * Math.min(ax - 0.07, 0.86 - ax) * W, gap = 9 * k;
+    const [ax, ay] = o.at ?? [0.465, 0.47], [a, b] = o.choices ?? ['YES', 'NO'], fitW = 2 * Math.min(ax - TEXT_SAFE.x0 - 0.01, TEXT_SAFE.x1 - 0.01 - ax) * W, gap = 9 * k;
     let px = (o.size ?? 99) * k, ta, tb, r, ia, ib;
     for (;;) {
       g.font = font(px); ta = g.measureText(a).width; tb = g.measureText(b).width; r = 0.455 * px;
@@ -250,7 +241,6 @@ export function hudKinds({ width, height, k, rrect }) {
     return out;
   }
 
-  // ---- edge: a coloured flash in the frame's outer band that decays over its span (an alarm, a hit, a siren)
   function edge(g, o, f) { const u = (f - o.from) / Math.max(1, o.to - o.from); edgeFlash(g, (o.peak ?? 0.3) * (1 - u) ** 1.5, o.color ?? RED, o.band ?? 0.12); }
 
   return { kinds: { clock, threat, vote, edge }, boxes: { clock: clockBoxes, threat: threatBoxes, vote: voteBoxes, edge: () => [] }, colors: { INK, WHITE, YELLOW, RED, BLUE, GREEN } };

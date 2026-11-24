@@ -204,7 +204,7 @@ export function createOverlays({ stage, width, height, list = [] }) {
     for (const [i, o] of L.entries()) {
       if (!on(o, f) || !BOXES[o.kind]) continue;
       const e = envelope(o, f); if (e.s <= 0 || e.a <= 0) continue;
-      g.save(); const B = BOXES[o.kind](g, o, f); g.restore();   // measuring sets the font: it never leaks into the caption canvas
+      g.save(); const B = BOXES[o.kind](g, o, f); g.restore();
       for (const b of B) out.push({ i, kind: o.kind, text: b.text, box: b.box.map(v => +v.toFixed(4)) });
     }
     return out;
