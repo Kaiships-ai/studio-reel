@@ -30,6 +30,11 @@ before.
   runs `git pull --ff-only origin main` and `pro.mjs --remote`. The remote side refuses when its HEAD is not the
   origin/main this machine fetched. It unpacks the episode, runs shot.mjs (lock and disk check), and packs the outputs.
   The local side copies them back into `films/<ep>/`. Outputs must sit under `films/<ep>/renders/`, stills in a folder of their own there. `--dry-run 1` prints every step and runs nothing.
+- Delivery copy (`gates/copycheck.mjs`). A copy against the approved film: K1 frames and rate, K2a median SSIM over every
+  approved frame, K2b torn frames (the local difference jumping over 90 against its neighbours), K2c no frame repeated or
+  skipped (each frame's change against the approved's), K3 the same audio samples. The report always lists frames to look
+  at beside the approved (`lookAt`): K2b only sees short tears in quiet stretches, and its limit comes from one film.
+  Regression: `node --test test/unit/stick-copycheck.test.mjs` (clean, torn, shifted, short, re-mixed, dropped+repeated).
 
 ## Driving it
 
