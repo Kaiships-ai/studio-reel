@@ -279,6 +279,15 @@
      "advisory": true,
      "why": "advisory until its S2 sync is checked by ear: a hit sample that is pre-rolled on purpose reads as early",
      "source": "PR #175: the glass smash of Hot Money ep01 A v9 starts 130 ms before the picture"
+    },
+    {
+     "tool": "tools/gates/textgate.mjs",
+     "args": [
+      "{film}"
+     ],
+     "advisory": true,
+     "why": "advisory until the films that render now carry the rows' text field: a row without it reads PARTIAL",
+     "source": "H2 V2.1 (24/11): the end card in the bottom band, cards stacked, the threat panel over a face, a middle dot on a sign"
     }
    ],
    "evidence": [

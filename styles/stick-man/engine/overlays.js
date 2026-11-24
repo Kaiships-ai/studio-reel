@@ -8,20 +8,23 @@
 //   { kind: 'arrows', from, to, world: [x, y, z], axis: [x, y, z], len, gap, inward }
 //   { kind: 'meter', from, to, at: [kx, ky], width, label, keys: [[f, value], ...], max, unit, color, size, enter }
 //   { kind: 'path', from, to, world: [[x, y, z], ...] | at: [[kx, ky], ...], dur, dash, width, color, arrow, labels: [a, b] }
+//   heads-up kinds 'clock', 'threat', 'vote', 'edge': engine/hud.js
 // enter: 'pop' (overshoot in over 5 frames, shrink out over the last 4), 'fade' (alpha in and out), 'none' (on for the
-// whole span: a label or clock carried across cuts or ticks)
+// whole span: a label or clock carried across cuts or ticks), 'slam' (lands from 1.8x over 5 frames: a stamp)
 import * as THREE from 'three';
 import { clamp, smooth } from './mathx.js';
+import { hudKinds } from './hud.js';
 
 const ORANGE = '#f08a2c', INK = '#141414', RED = '#e23b3b';
 const pop = u => (u < 0 ? 0 : u >= 1 ? 1 : 1 + 0.18 * Math.sin(Math.PI * u) * (1 - u) - Math.pow(1 - u, 3));   // overshoot, settle
-const ENTER = { text: 'pop', loupe: 'pop', arrows: 'pop', meter: 'fade', path: 'fade' };
+const ENTER = { text: 'pop', loupe: 'pop', arrows: 'pop', meter: 'fade', path: 'fade', clock: 'none', threat: 'none', vote: 'none', edge: 'none' };
 
 // scale and alpha of an overlay on frame f
 export function envelope(o, f, from = o.from) {
   const enter = o.enter ?? ENTER[o.kind] ?? 'pop', u = (f - from) / 5, out = clamp((o.to - f) / 4);
   if (enter === 'none') return { s: 1, a: 1 };
   if (enter === 'fade') return { s: 1, a: Math.min(clamp(u), out) };
+  if (enter === 'slam') return { s: (1 + 0.8 * (1 - clamp(u)) ** 2) * out, a: 1 };
   return { s: pop(u) * out, a: 1 };
 }
 
@@ -64,6 +67,7 @@ export function createOverlays({ stage, width, height, list = [] }) {
     if (B) {
       const pad = (B.pad ?? 0.32 * (o.size ?? 150)) * k, w = g.measureText(String(o.text).replace(/\d/g, '0')).width + 2 * pad, h = px * 0.86 + 1.1 * pad;
       g.save(); g.globalAlpha *= B.alpha ?? 0.82; g.fillStyle = B.color ?? INK; rrect(g, -w / 2, -h / 2, w, h, B.r != null ? B.r * k : Math.min(h / 2, pad)); g.fill(); g.restore();
+      if (B.outline) { g.lineWidth = (B.outlineWidth ?? 10) * k; g.strokeStyle = B.outline; rrect(g, -w / 2, -h / 2, w, h, B.r != null ? B.r * k : Math.min(h / 2, pad)); g.stroke(); }
       g.fillStyle = o.color ?? '#ffffff'; g.fillText(o.text, 0, px * 0.04);
     } else {
       g.lineWidth = 16 * k; g.strokeStyle = INK; g.strokeText(o.text, 0, 0); g.fillStyle = o.color ?? ORANGE; g.fillText(o.text, 0, 0);
@@ -71,7 +75,9 @@ export function createOverlays({ stage, width, height, list = [] }) {
     g.restore();
   }
 
+  const HUD = hudKinds({ width, height, k, rrect });
   const KINDS = {
+    ...HUD.kinds,
     loupe(g, o, f, { s }) {
       const cx = o.at[0] * width, cy = o.at[1] * height, r = (o.r ?? 0.2) * width * s;
       const [tx, ty, vis] = screen(o.look);
@@ -175,5 +181,33 @@ export function createOverlays({ stage, width, height, list = [] }) {
       KINDS[o.kind]?.(g, o, f, e);
     }
   }
-  return { loupeAt, grabLoupe, draw };
+  // what a viewer reads on frame f, as boxes in shares of the frame at full size: a text label (its box, or its glyphs and
+  // ink), a meter panel and the heads-up kinds' own layout. Loupes, arrows and paths carry no words a check needs.
+  const turn = (w, h, deg) => { const t = deg * Math.PI / 180; return [Math.abs(w * Math.cos(t)) + Math.abs(h * Math.sin(t)), Math.abs(w * Math.sin(t)) + Math.abs(h * Math.cos(t))]; };
+  const BOXES = {
+    ...HUD.boxes,
+    text(g, o) {
+      let x, y; if (o.world) { const p = screen(o.world); if (!p[2]) return []; x = p[0] + (o.dx ?? 0) * width; y = p[1] + (o.dy ?? 0) * height; } else { x = o.at[0] * width; y = o.at[1] * height; }
+      const px = (o.size ?? 150) * k, B = o.box === true ? {} : o.box; g.save(); g.font = `900 ${px}px InterReel, sans-serif`;
+      let w, h; if (B) { const pad = (B.pad ?? 0.32 * (o.size ?? 150)) * k; w = g.measureText(String(o.text).replace(/\d/g, '0')).width + 2 * pad; h = px * 0.86 + 1.1 * pad; }
+      else { w = g.measureText(String(o.text)).width + 16 * k; h = px; }
+      g.restore(); const [bw, bh] = turn(w, h, o.tilt ?? -8);
+      return [{ text: String(o.text), box: [(x - bw / 2) / width, (y - bh / 2) / height, (x + bw / 2) / width, (y + bh / 2) / height] }];
+    },
+    meter(g, o, f) {
+      const px = (o.size ?? 46) * k, W = (o.width ?? 0.6) * width, pad = px * 0.45, pw = W + 2 * pad, ph = px + 0.72 * px + 3 * pad, x0 = o.at[0] * width - pw / 2, y0 = o.at[1] * height - ph / 2;
+      return [{ text: `${o.label ?? ''} ${Math.round(valueAt(o.keys, f))}${o.unit ?? '%'}`.trim(), box: [x0 / width, y0 / height, (x0 + pw) / width, (y0 + ph) / height] }];
+    },
+  };
+  function boxes(f, g) {
+    const out = [];
+    for (const [i, o] of L.entries()) {
+      if (!on(o, f) || !BOXES[o.kind]) continue;
+      const e = envelope(o, f); if (e.s <= 0 || e.a <= 0) continue;
+      g.save(); const B = BOXES[o.kind](g, o, f); g.restore();
+      for (const b of B) out.push({ i, kind: o.kind, text: b.text, box: b.box.map(v => +v.toFixed(4)) });
+    }
+    return out;
+  }
+  return { loupeAt, grabLoupe, draw, boxes };
 }
