@@ -5,7 +5,8 @@
 #        (keep: true holds a locked hero hit's transient over any word, not only one naming it),
 #        audio/ambience.json {amb: [[[a, z], kind, dB, what]], dips: [[a, z, dB]]} (optional), audio/sound-plan.json silences (optional),
 #        audio/music.json (optional): mus_lu, amb_lu, duck_db, contour, climb, vo_ride, protect, length, arc, sections [[name, a, z]],
-#        peak (a section name: the film's loudest moment), track {file, segments: [{src: [a, b], at, file?, gain?}], xfade}
+#        peak (a section name: the film's loudest moment), track {file, segments: [{src: [a, b], at, file?, gain?}], xfade},
+#        floor (opt-in, dBFS: where the whole mix would fall under it the beds come up, up to floor_max dB, default 14)
 #        (--music-plan <json> reads that file in place of audio/music.json; sound_fit.py writes one)
 # music, the first that applies: --music <track> | music.json track | --music-stem <wav> (placed as it is) | none
 # writes <out>/<name>.wav, <out>/stems/{vo_m,sfx,music,amb}.wav, <out>/levels.txt; with --mux an mp4 (AAC 256k, true peak <= -1 dBTP)
@@ -247,6 +248,33 @@ def prepare(film, args):
                 silences=(J(os.path.join(A, 'sound-plan.json'), {}) or {}).get('silences', []))
 
 
+def smooth_outside(up, keep):
+    """a lift per 10 ms block, smoothed, that is 0 wherever keep is 0 and fades to 0 over the 0.1 s before it"""
+    keep = minimum_filter1d(keep, 3)
+    fade_in = np.clip(2 * uniform_filter1d(keep, 21) - 1, 0, 1)
+    return uniform_filter1d(uniform_filter1d(up * keep, 12), 8) * fade_in
+
+
+def fill_floor(S, floor, most=14.0):
+    """opt-in sound floor (music.json "floor"): where the whole mix, at the master gain, would fall under `floor` dBFS
+    (100 ms RMS, smoothed over 0.2 s) the music and the ambience come up by the difference, at most `most` dB, never inside a
+    planned silence (sound-plan.json) and never in the last 0.6 s. A frozen music stem stays as it was given.
+    Returns (seconds lifted, deepest lift in dB)."""
+    N, hop = S['N'], SR // 100
+    G = 10 ** ((MIX_LU - lufs([S['vo'] + S['mL'] + S['sL'] + S['aL'], S['vo'] + S['mR'] + S['sR'] + S['aR']])) / 20)
+    L, R = summed(stems(S, G)); K = N // hop
+    pw = uniform_filter1d(((L[:K * hop] ** 2 + R[:K * hop] ** 2) / 2).reshape(K, hop).mean(1), 20)
+    up = np.clip(floor - 10 * np.log10(pw + 1e-12), 0, most)
+    keep = np.ones(K)
+    for x in S['silences']: keep[int(x['t'][0] * 100):int(x['t'][1] * 100) + 1] = 0
+    keep[max(0, K - 60):] = 0
+    up = smooth_outside(up, keep)
+    g = 10 ** (np.interp(np.arange(N), np.arange(K) * hop + hop / 2, up) / 20)
+    S['aL'], S['aR'] = S['aL'] * g, S['aR'] * g
+    if not S['stem']: S['mL'], S['mR'] = S['mL'] * g, S['mR'] * g
+    return float((up > 1).sum() / 100), float(up.max(initial=0))
+
+
 def stems(S, G):
     """the stems at master gain G, as they sit in the mix before the limiter; a frozen music stem stays as it was given"""
     return dict(sfx=(S['sL'] * G, S['sR'] * G), music=S['stem'] or (S['mL'] * G, S['mR'] * G), amb=(S['aL'] * G, S['aR'] * G), vo_m=(S['vo'] * G, S['vo'] * G))
@@ -345,7 +373,8 @@ def main():
     ap.add_argument('--music-plan', help='a music.json to use in place of <film>/audio/music.json (a sound_fit.py candidate)')
     ap.add_argument('--mux', nargs=2, metavar=('VIDEO', 'OUT_MP4'))
     args = ap.parse_args(); film = args.film.rstrip('/'); out = args.out or os.path.join(film, 'audio')
-    S = prepare(film, args)
+    S = prepare(film, args); floor = None
+    if S['M'].get('floor') is not None: floor = fill_floor(S, float(S['M']['floor']), float(S['M'].get('floor_max', 14)))
     if args.mux and abs(gap := (v := video_seconds(args.mux[0])) - S['N'] / SR) > 1 / 30:
         sys.exit(f'mix.py: video {v:.3f} s and mix {S["N"] / SR:.3f} s differ by more than one frame; '
                  f'muxing would cut the longer one short (set music.json length to the video)')
@@ -359,6 +388,10 @@ def main():
         if tp <= MP4_TP: break
         ceil = used - (tp - MP4_TP + 0.3)
     lines = report(S, L, R, G, paths, used, mp4)
+    if floor:
+        kept = S['stem'] and S['music'] != 'none'
+        lines.append(f'floor {S["M"]["floor"]} dBFS (measured before the master level): {"ambience" if kept else "beds"} lifted on {floor[0]:.1f} s, '
+                     f'at most {floor[1]:.1f} dB' + (' (the music stem is left as given)' if kept else ''))
     open(os.path.join(out, 'levels.txt' if args.name == 'mix' else f'levels-{args.name}.txt'), 'w').write('\n'.join(lines) + '\n'); print('\n'.join(lines[:16]))
     if mp4 and (mp4['tp'] > MP4_TP or abs(mp4['I'] - MIX_LU) > 0.5):
         sys.exit(f'mix.py: {mp4["path"]} is at {mp4["I"]:.1f} LUFS, true peak {mp4["tp"]:.1f} dBTP after {mp4["tries"]} encode(s); '

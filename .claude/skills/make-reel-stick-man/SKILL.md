@@ -136,6 +136,7 @@ independent review. Why each rule exists, with the film that paid for it, is in 
 | A fact the script states is checked against the rest of the story; a rule never answers the ending vote | `review/fact-check.md` |
 | Explain in pictures first; a card last, ≤ 8 s of cards in a row and ≤ 25 % of the film | `prepro.mjs` |
 | Words, numbers and faces stay in the text-safe box (x 6-87 %, y 14-65 %) on every frame, zooms included | `animatic.mjs` |
+| A word on screen never sits on a face, under the app's buttons or on another card, and no word carries a middle dot or bullet | `textgate.mjs` |
 | The animatic is locked on the final voice, timed in frames, with burn-in | `prepro.mjs` |
 | Approved decisions live in `DECISIONS.json` and are checked at every gate; dropping one Kai approved goes to him at K3 | `develop.mjs` |
 | The confirmed scene feels and story scores are locked (`prepro.mjs --lock-story agent:<id>`); a later change is a FAIL | `prepro.mjs` |
@@ -149,6 +150,7 @@ independent review. Why each rule exists, with the film that paid for it, is in 
 | The film's colour follows the colour script signed with the S1 look, lit in the acts (light + grade, `grade.exp` ≤ 1.5), never graded onto the rendered picture; a look change starts from a whole-look prototype at S1, never from number tweaks | `colourgate.mjs` (per-scene ranges and brightness from the script); `exposureWarnings` in `engine/play.js` (`test/unit/stick-exposure.test.mjs`) |
 | A run log is written only through `logline.mjs`; old lines are never edited | `logline.mjs` |
 | Render by purpose: T0 data, T1 stills, T2 480p proof, T3 720p review (what the pixel gates and K2 see); T4 1080p only on Kai's own request, normally for Post (`shot.mjs --tier final --kai-ok "<his words>"`) | `render/tiers.mjs` |
+| The film never goes empty under its words: no holes, the bed within 18 dB of the voice, a close as full as the film (`floor` in music.json fills the holes) | `floorgate.mjs` |
 
 Open, no check yet (a kit-fix PR): frames, audio and wording of a reference are never copied, and `ref-private/` is
 never committed.
