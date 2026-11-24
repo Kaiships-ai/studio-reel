@@ -10,6 +10,11 @@ approved on Hot Money ep01 r5 reel 1 (21/11, "v6 ok, ưng 9.5/10").
 
 - Designs: `DESIGNS` (27: `y_` the lead's faces, `c_` a second character's) go into `EXPR` with `style: 's2'`; `faces.js`
   `drawFaceState` hands them to `STYLE_DRAW.s2`. Kit designs on other figures of the same film keep the kit drawer.
+- Kit names (`KIT_MAP`): 20 of the kit's 31 everyday face names (`neutral`, `happy`, `worried`, ...) draw the closest s2
+  design, and their talking twins `_o` / `_O` open the mouth, so a new character on `neutral` gets an s2 face. The other 11
+  (`grin`, `laugh`, `proud`, `excited`, `blush`, `cry`, `dizzy`, `sleep`, `closed`, `disgust`, `manic`) keep the kit face
+  until Kai picks new designs. The kit face sheet (`tools/series/kitfaces`, every face a new character can draw) is
+  approved once; `facebeat.mjs` (3) then passes its designs in every film, for any character.
 - Clocks: s2's change timing (eyes lead, brows and mouth overlap), takes eased at both ends (`TAKE.sine`), crisp blinks,
   a chew every 19 f (`acting.js` `CHEW`; the kit's faces 9 f).
 - Engine rules under a style: a sagging shut eye, a lid stroke that shortens as it lifts, no gasp between shut mouths,

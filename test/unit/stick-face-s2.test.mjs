@@ -79,3 +79,14 @@ test('reel 1 in s2: the lead\'s eyes are shut (blink past half) under 4 % of his
   const share = B.filter(b => b > 0.5).length / B.length;
   assert.ok(share < 0.04, `${(100 * share).toFixed(2)} %`); assert.ok(max <= 3, `${max} f`);
 });
+
+test("s2 draws the kit's everyday names: a new character on 'neutral' gets an s2 face; talking twins open the mouth; names with no s2 design keep the kit face", () => {
+  S2.use();
+  for (const [k, d] of Object.entries(S2.KIT_MAP)) {
+    assert.ok(S2.DESIGNS[d], `${k} -> ${d} is an s2 design`);
+    assert.equal(EXPR[k].style, 's2', k);
+    assert.ok(EXPR[`${k}_o`].x.mOpen >= 0.6 && EXPR[`${k}_O`].x.mOpen === 1 && EXPR[`${k}_o`].base === k, `${k} talks`);
+  }
+  assert.equal(EXPR.neutral, S2.DESIGNS.y_lens, 'the default face is the calm s2 face');
+  assert.notEqual(EXPR.grin.style, 's2', 'a name with no s2 design yet keeps the kit face (Kai picks it on the kit sheet)');
+});

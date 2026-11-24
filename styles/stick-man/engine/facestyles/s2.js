@@ -357,10 +357,22 @@ const TIMING = {
   blinks: { regular: [0.55, 1, 0.45, 0.12, 0.02], fast: [0.6, 1, 0.3, 0.06, 0.01], long: [0.5, 1, 0.6, 0.3, 0.1, 0.03] },
   chew: { T: 19, open: 0.42 },
 };
+// The kit's everyday face names drawn as s2: a character left on 'neutral', or given a kit name, draws the closest s2
+// design (and its talking twins `_o` / `_O` open the mouth), so a new character gets the face Kai approved without the film
+// naming y_ designs. Names with no close s2 design keep the kit face until Kai picks new designs on the kit face sheet
+// (tools/series/kitfaces).
+export const KIT_MAP = {
+  neutral: 'y_lens', calm: 'y_lens', deadpan: 'y_tired', bored: 'y_tired', happy: 'y_relief', worried: 'y_worried',
+  nervous: 'y_nervous', confused: 'y_fret', sad: 'y_fret', shock: 'y_shock', panic: 'y_panic', scream: 'y_panic',
+  pain: 'y_pain', stern: 'y_stern', angry: 'c_stern', furious: 'c_shout', suspicious: 'y_suspicious', skeptic: 'y_squint',
+  sly: 'y_dare', smug: 'y_dare',
+};
+const talking = (d, open, base) => ({ ...d, base, x: { ...(d.x || {}), mOpen: Math.max(d.x?.mOpen || 0, open) } });
 // s2 on the engine for this render (the clocks are module state: one face style per render)
 export function use() {
   FACE_STYLE.name = 's2';
   Object.assign(EXPR, DESIGNS);
+  for (const [k, d] of Object.entries(KIT_MAP)) { EXPR[k] = DESIGNS[d]; EXPR[`${k}_o`] = talking(DESIGNS[d], 0.6, k); EXPR[`${k}_O`] = talking(DESIGNS[d], 1, k); }
   for (const c of ['normal', 'fast', 'slow']) FACE_TIMING[c] = TIMING[c];
   Object.assign(TAKE, TIMING.take); Object.assign(SMALL_TAKE, TIMING.small); Object.assign(BLINKS, TIMING.blinks); Object.assign(CHEW, TIMING.chew);
 }
