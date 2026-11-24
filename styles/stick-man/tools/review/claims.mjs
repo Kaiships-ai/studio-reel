@@ -10,8 +10,9 @@
 import fs from 'node:fs'; import path from 'node:path'; import { pathToFileURL } from 'node:url';
 
 export const VERDICTS = ['true', 'false', 'unclear'];
-// a clock or counter changes every frame: its readings are one row per box, the distinct values listed (up to MAXV)
-const NUMBERS = /^[\d\s:.,$€£%+\-x×/]+$/, MAXV = 8;
+// a clock or counter changes every frame: its readings are one row per box, every distinct value listed (a wrong figure
+// among them is the skeptic's to catch)
+const NUMBERS = /^[\d\s:.,$€£%+\-x×/]+$/;
 const BLANK = '_';
 
 // rows rendered before the rows carried readable boxes have none: an empty list from them is no clearance
@@ -35,7 +36,7 @@ export function collect(rows) {
 
 const sec = (f, fps) => (f / fps).toFixed(1);
 const cell = s => String(s).replace(/\|/g, '\\|');
-const said = c => c.values.length ? `${c.claim}: ${c.values.slice(0, MAXV).join(', ')}${c.values.length > MAXV ? ', …' : ''}` : c.claim;
+const said = c => c.values.length ? `${c.claim}: ${c.values.join(', ')}` : c.claim;
 export function table(claims, fps = 30) {
   return [`<!-- claims: ${claims.length} -->`, '| # | claim | on screen | verdict | why |', '|---|---|---|---|---|',
     ...claims.map((c, i) => `| ${i + 1} | ${cell(said(c))} | ${c.spans.map(([a, b]) => `${sec(a, fps)}-${sec(b + 1, fps)} s`).join(', ')} | ${BLANK} | |`)].join('\n');

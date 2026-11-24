@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
-import { FIELDS, filmNames, shuffle, noteTemplate, brief, missing, keyFile } from '../../styles/stick-man/tools/review/blindround.mjs';
+import { FIELDS, filmNames, shuffle, noteTemplate, brief, missing, keyFile, prepare } from '../../styles/stick-man/tools/review/blindround.mjs';
 import { collect, table, problems, hasText } from '../../styles/stick-man/tools/review/claims.mjs';
 
 function round(n) {
@@ -43,6 +43,9 @@ test('blind round: check fails until every film has every field written and the 
   assert.deepEqual(missing(dir), ['ranking: Film B not ranked', 'ranking: Film A ranked twice']);
   fs.writeFileSync(path.join(dir, 'notes', 'ranking.md'), '1. Film C: the hook\n2. Film A: clear\n3. Film B: lost me at 0:20\n');
   assert.deepEqual(missing(dir), []);
+  // a second round into the same folder would read these notes against reshuffled cuts
+  const cut = path.join(dir, 'a.mp4'); fs.writeFileSync(cut, '');
+  assert.throws(() => prepare([cut, cut], dir, 1), /already holds a round/);
   fs.rmSync(dir, { recursive: true });
 });
 
@@ -59,6 +62,8 @@ test('claims: every overlay line once with its times, captions left out, a count
   assert.match(md, /\| 1 \| OVER \$10,000 = REPORTED \| 0\.0-0\.1 s, 0\.3-0\.4 s \| _ \| \|/);
   assert.match(md, /\| 2 \| text2 numbers: \$10,000, \$5,000 \|/, 'a number the viewer reads is shown to the skeptic');
   assert.equal(hasText(rows), true); assert.equal(hasText([{ f: 0 }, { f: 1 }]), false, 'rows with no readable boxes are not a clean list');
+  const counter = collect(Array.from({ length: 12 }, (_, f) => ({ f, text: [{ kind: 'text', i: 0, text: `$${f}` }] })));
+  assert.equal(counter[0].values.length, 12); assert.match(table(counter), /\$11 \|/, 'every reading is shown, the last one too');
   const sparse = [0, 5, 10, 15].map(f => ({ f, text: [{ kind: 'text', i: 0, text: 'GO' }] }));
   assert.deepEqual(collect(sparse)[0].spans, [[0, 15]], 'rows sampled every 5 frames: one span');
 });

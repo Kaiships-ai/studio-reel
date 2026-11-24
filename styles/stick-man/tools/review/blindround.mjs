@@ -2,7 +2,7 @@
 // one more opinion beside Kai's own look. A reviewer who watched every cut and wrote at the end had lost the first ones
 // (its screenshots were gone and it compared from memory), so the brief asks for each film's notes before the next film,
 // and `check` refuses the round until every film's notes and one ranking are written.
-//   node styles/stick-man/tools/review/blindround.mjs <a.mp4> <b.mp4> [...] --out <dir> [--seed n]
+//   node styles/stick-man/tools/review/blindround.mjs <a.mp4> <b.mp4> [...] --out <dir> [--seed n] [--force 1]
 //     -> <dir>/films/Film A.mp4 ... (the cuts shuffled, their metadata stripped), <dir>/films/Film A.jpg (8 frames across
 //        the whole cut), <dir>/BRIEF.md, <dir>/notes/ (a template per film); the key goes beside the folder, <dir>.key.json
 //   node styles/stick-man/tools/review/blindround.mjs check <dir>      exit 1 until every film's notes and the ranking are filled
@@ -33,9 +33,14 @@ export function brief(names) {
 }
 
 export const keyFile = dir => `${path.resolve(dir)}.key.json`;
-export function prepare(mp4s, out, seed = Date.now()) {
+// a folder that already holds a round is refused: its notes would be read against reshuffled cuts (--force clears it)
+export function prepare(mp4s, out, seed = Date.now(), force = false) {
   if (mp4s.length < 2 || mp4s.length > 6) throw new Error(`a round takes 2 to 6 cuts, not ${mp4s.length}`);
   for (const f of mp4s) if (!fs.existsSync(f)) throw new Error(`missing ${f}`);
+  if (['films', 'notes'].some(d => fs.existsSync(path.join(out, d)))) {
+    if (!force) throw new Error(`${out} already holds a round: pick a new --out, or --force 1 to clear it`);
+    for (const d of ['films', 'notes']) fs.rmSync(path.join(out, d), { recursive: true, force: true });
+  }
   const order = shuffle(mp4s.map(f => path.resolve(f)), seed), names = filmNames(order.length);
   for (const d of ['films', 'notes']) fs.mkdirSync(path.join(out, d), { recursive: true });
   order.forEach((src, i) => {
@@ -43,7 +48,7 @@ export function prepare(mp4s, out, seed = Date.now()) {
     ff(['-i', src, '-c', 'copy', '-map_metadata', '-1', '-map_chapters', '-1', mp4]);   // a title tag would name the cut
     const d = Number(run('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', src], { capture: true }).stdout) || 8;
     ff(['-i', src, '-vf', `fps=${8 / d},scale=180:-1,tile=8x1`, '-frames:v', '1', '-q:v', '4', path.join(out, 'films', `${names[i]}.jpg`)]);
-    const note = path.join(out, 'notes', `${names[i]}.md`); if (!fs.existsSync(note)) fs.writeFileSync(note, noteTemplate(names[i]));
+    fs.writeFileSync(path.join(out, 'notes', `${names[i]}.md`), noteTemplate(names[i]));
   });
   fs.writeFileSync(path.join(out, 'BRIEF.md'), brief(names));
   fs.writeFileSync(keyFile(out), JSON.stringify({ seed, films: Object.fromEntries(names.map((n, i) => [n, order[i]])) }, null, 1) + '\n');
@@ -66,7 +71,7 @@ export function missing(dir) {
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
-  const argv = process.argv.slice(2), usage = () => { console.error('usage: blindround.mjs <a.mp4> <b.mp4> [...] --out <dir> [--seed n] | check <dir>'); process.exit(2); };
+  const argv = process.argv.slice(2), usage = () => { console.error('usage: blindround.mjs <a.mp4> <b.mp4> [...] --out <dir> [--seed n] [--force 1] | check <dir>'); process.exit(2); };
   if (argv[0] === 'check') {
     if (!argv[1] || !fs.existsSync(path.join(argv[1], 'films'))) usage();
     const m = missing(argv[1]);
@@ -75,6 +80,6 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   }
   const files = [], A = {}; for (let i = 0; i < argv.length; i++) argv[i].startsWith('--') ? (A[argv[i].slice(2)] = argv[++i]) : files.push(argv[i]);
   if (!A.out) usage();
-  const names = prepare(files, A.out, A.seed != null ? Number(A.seed) : undefined);
+  const names = prepare(files, A.out, A.seed != null ? Number(A.seed) : undefined, A.force === '1');
   console.log(`${A.out}: ${names.join(', ')}; give the reviewer this folder only (the key is ${keyFile(A.out)})`);
 }
