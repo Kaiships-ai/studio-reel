@@ -180,6 +180,12 @@ test('endcard: a stack taller than the text-safe box shrinks until its last card
   assert.ok(Math.abs(five[0].box[1] - 0.2525) < 0.001 && Math.abs(five[4].box[3] - 0.64) < 0.001, `a stack that fits keeps its size: ${five[0].box[1]} ${five[4].box[3]}`);
 });
 
+test('endcard: shrinking a tall stack never enlarges a card the film set below the floor', () => {
+  const small = { f: 0, text: 'small print', size: 20 }, cta = Array.from({ length: 7 }, (_, i) => ({ f: 0, text: `CARD ${i + 1}`, cta: true }));
+  const alone = boxes(make([{ kind: 'endcard', from: 0, to: 60, lines: [small] }]), 30)[0], inTall = boxes(make([{ kind: 'endcard', from: 0, to: 60, lines: [small, ...cta] }]), 30)[0];
+  assert.ok(Math.abs((inTall.box[3] - inTall.box[1]) - (alone.box[3] - alone.box[1])) < 0.002, `${inTall.box} vs ${alone.box}`);
+});
+
 test('endcard: a line too wide for the safe box even at the smallest size stays on the frame', () => {
   const text = 'X'.repeat(56);
   const [b] = boxes(make([{ kind: 'endcard', from: 0, to: 60, lines: [{ f: 0, text }] }]), 30);

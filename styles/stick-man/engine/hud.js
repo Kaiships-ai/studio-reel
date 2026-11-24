@@ -260,7 +260,7 @@ export function hudKinds({ width, height, k, rrect }) {
     });
     const height = () => rows.reduce((t, r) => t + r.h, 0) + gap * Math.max(0, rows.length - 1);
     while (!o.free && height() > fitH + 0.5 && rows.some(r => r.px > floor)) {
-      const s = fitH / height(); gap *= s; rows = rows.map(r => sized(r, Math.max(floor, r.px * s)));
+      const s = fitH / height(); gap *= s; rows = rows.map(r => r.px > floor ? sized(r, Math.max(floor, r.px * s)) : r);
     }
     const total = height(), wide = Math.max(0, ...rows.map(r => r.w));
     let top = ay * H - total / 2, cx = ax * W;
