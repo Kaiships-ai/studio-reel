@@ -1,14 +1,15 @@
-// The five body types of the motion library. One skeleton (engine/cast.js) for all of them: a body type is its
+// The seven body types of the motion library. One skeleton (engine/cast.js) for all of them: a body type is its
 // proportions (the rig reads them from the cast spec) plus its own way of standing and moving (each body's clips are
 // authored with these numbers, never an adult clip played on another body).
 //   spec    the cast spec fields the rig reads: girth (torso width), scale (whole figure from the soles), headScale (head
 //           against the body), legScale (leg length; the hip lowers with it), kg (body mass: a load's share of balance)
-//   stance  feet spacing against the adult's; posture: the body's standing pose (motion v2 channels, on top of STAND)
+//   stance  feet spacing against the adult's (times scale); posture: the body's standing pose (motion v2 channels, on top of STAND)
 //   walk    S step length (m), T frames per step, lift (m), bobC / bobP hip height at contact / passing (W), bend (spine
 //           deg), swing (arm deg each way), elbow, sway (pelvis roll deg each way), nod (head bob deg per step)
 //   run     the same, plus lean (deg: the trunk tipped forward from the hips, straight, not curled) and ts: frames on the ground per step (the rest is a flight that gravity times: g = 9.8)
 //   knees   the stance knee (deg) the hips are solved from: walk [contact, down, passing, up, trail, toe-off], run
 //           [contact, down, toe-off] (base.js gaitLoop)
+//   oldDrop the child's clips on main were solved with the hips a little too low (base.js gaitLoop DROP): kept, so they do not change
 //   breath  the idle's breath: spine bend amplitude (deg), its period (frames), the weight shift (hip, W)
 //   life    how it performs a capture (ref/perform.js, base.js ownClip), against the adult, whose capture it is: rate its clock
 //           (frames a captured frame), hold longer (shorter) where the body is still, drag longer into and out of a move,
@@ -66,8 +67,8 @@ export const BODIES = {
       weight: [2, 2, 1] } },   // a long light body sways round from the ankles: a circle (its limbs settle in the way out)
   // child: a big head on a small body with short legs; quick short steps, a lot of bounce, the arms swing wide
   child: { spec: { scale: 0.62, headScale: 1.3, legScale: 0.8 }, kg: 25, stance: 0.9, posture: {},
-    walk: { knees: [6, 32, 10, 6, 14, 36], S: 0.30, T: 10, lift: 0.07, bobC: -0.08, bobP: 0.04, bend: 2, swing: 34, elbow: 30, sway: 2, nod: 3 },
-    run: { S: 0.5, T: 8, ts: 5, lift: 0.14, bobC: -0.16, bobP: -0.02, lean: 10, bend: 3, swing: 30, elbow: 70, sway: 2, nod: 4 },
+    walk: { oldDrop: true, knees: [6, 32, 10, 6, 14, 36], S: 0.30, T: 10, lift: 0.07, bobC: -0.08, bobP: 0.04, bend: 2, swing: 34, elbow: 30, sway: 2, nod: 3 },
+    run: { oldDrop: true, S: 0.5, T: 8, ts: 5, lift: 0.14, bobC: -0.16, bobP: -0.02, lean: 10, bend: 3, swing: 30, elbow: 70, sway: 2, nod: 4 },
     breath: { amp: 1.8, per: 30, shift: 0.03 },
     life: { rate: 0.76, hold: -0.15, drag: 0, arm: 1.5, trunk: 1.25, sway: 1.2, give: 1.6 },
     perform: {
@@ -76,6 +77,38 @@ export const BODIES = {
       head: [3.4, 0.45],    // the big head bobs after the body
       fidget: [7, 54],      // never frozen: the head turns about and the weight shifts all the time (no settle: a child does not wait)
       weight: [1.6, 1, 1.7] } },   // shifts on an uneven beat, side and fore-aft
+  // teen: 85 % of the adult's height and a bit thinner (Studio 25/11), the legs and head a little large for the body; a slouch. The walk
+  // and the run: the adult's numbers here, 5 % longer for the leg, and looser (a slower beat, the arms and the trunk swinging further).
+  // No clip is made of them: the gate holds a teen's step to 5 % over the adult's PLAYED one (a capture's, 1.04 of its leg a step; a made
+  // walk at that length has a knee snap 28 deg a frame or never both feet down), and these are 0.69 of it
+  teen: { spec: { scale: 0.826, girth: 0.88, headScale: 1.06, legScale: 1.02 }, kg: 50, stance: 1, posture: { spine: { bend: 9 }, neck: { nod: -5 } },
+    walk: { knees: [5, 26, 9, 5, 14, 36], S: 0.49, T: 17, lift: 0.10, bend: 2, swing: 32, elbow: 20, sway: 2.5, nod: 2, shift: 0.03 },
+    run: { S: 0.885, T: 9, ts: 5, lift: 0.22, lean: 12, bend: 2, swing: 36, elbow: 66, sway: 1.5, nod: 2.5 },
+    // (close to the adult's 40 frames; deeper, and the weight slung further onto one hip)
+    breath: { amp: 1.8, per: 42, shift: 0.035 },
+    life: { rate: 1.08, hold: 0.1, drag: 0.2, top: 0.95, arm: 1.14, trunk: 1.14, sway: 1.2, give: 1.1 },
+    perform: {
+      trunk: [1.6, 0.6],    // loose: the slouched trunk comes after and settles past its stop
+      arms: [2.6, 0.45],    // the arms flop past the gesture's end
+      head: [2.4, 0.6],
+      weight: [1.4, 0.6, 1] } },   // slung from hip to hip
+  // toddler: 70 % of the child's height (Studio 25/11), stubby legs, the biggest head for its body; wide unsteady stance, arms held out
+  // and bent for balance. A one-year-old: the feet further apart than the hips, quick short steps, no swing of the arms (Sutherland,
+  // The Development of Mature Gait, 1980, as reported: the numbers here are the kit's own, not his table's); it leans its whole body over each foot (a waddle) and the head counters, so the face reads
+  toddler: { spec: { scale: 0.4468, headScale: 1.5, legScale: 0.6 }, kg: 11, stance: 1.4, posture: { armL: { raise: 42, swing: 8, elbow: 40 }, armR: { raise: 42, swing: 8, elbow: 40 } },
+    walk: { knees: [14, 26, 14, 12, 16, 26], S: 0.12, T: 9, lift: 0.04, bend: 2, swing: 4, elbow: 40, raise: 42, swing0: 8, sway: 7, nod: 0.8, shift: 0.06, toe: 10 },
+    // (no clip is made of the run: it passed the body gate with a foot always on the floor, and seen moving it read as a walk, 26/11)
+    run: { knees: [16, 33, 20], kick: 36, S: 0.136, T: 8, ts: 7, lift: 0.05, reach: 0.35, toeOff: 28, lane: 0.74, lean: 4, bend: 2, swing: 6, elbow: 45, raise: 46, swing0: 8, sway: 6, shift: 0.022, yaw: 4, nod: 1 },
+    // (26 breaths a minute at two years, Fleming 2011, against an adult's 16: 0.6 of the adult's 40 frames)
+    breath: { amp: 2.0, per: 24, shift: 0.05 },
+    life: { rate: 0.8, hold: -0.2, drag: 0, arm: 1.4, trunk: 1.3, sway: 1.6, give: 1.4 },
+    perform: {
+      trunk: [2.8, 0.4],    // the big head tips the small trunk past every stop and back
+      arms: [3.0, 0.5],
+      head: [3.0, 0.6],     // steadier than the trunk
+      fidget: [5, 40],
+      armOut: 0.6,          // arms held out for balance over a capture too
+      weight: [2, 1.4, 1.6] } },   // never quite still on its feet
   // elder: stooped (the spine bent, the head lifted to look ahead), short slow steps, feet barely off the floor, little
   // bounce, arms close
   elder: { spec: { scale: 0.96 }, kg: 62, stance: 1.1, posture: { spine: { bend: 24 }, neck: { nod: -20 }, armL: { raise: 10, swing: 6, elbow: 28 }, armR: { raise: 10, swing: 6, elbow: 28 } },
@@ -95,5 +128,12 @@ export const BODIES = {
       weight: [0.6, 2.4, 1] } },   // keeps both feet loaded: rocks forward and back for balance, hardly side to side
 };
 export const BODY_NAMES = Object.keys(BODIES);
+// a body clip's name opens with its body (Elder_Move_Walk_Fwd_Loop)
+export const bodyPrefix = body => body[0].toUpperCase() + body.slice(1);
+export const BODY_PREFIX = new RegExp(`^(${BODY_NAMES.map(bodyPrefix).join('|')})_`);
 // a cast spec in a body type: cast: { gran: { spec: 'GRAN' } } with SPECS.GRAN = bodySpec(SPECS.MAGNATE, 'elder')
-export const bodySpec = (spec, body) => ({ ...spec, ...BODIES[body].spec, kg: BODIES[body].kg, motionBody: body });
+// posture: true (opt-in) also puts the body's posture and foot spacing on the figure itself (cast.js spec.posture, spec.stance): a pose that
+// names no spine, neck, arm or foot of its own (a figure not posed with base.js stand(), a beat-posed one) stands the body's way
+// instead of upright. A clip and stand() name every channel, so they play the same with it or without
+export const bodySpec = (spec, body, { posture = false } = {}) => ({ ...spec, ...BODIES[body].spec, kg: BODIES[body].kg, motionBody: body,
+  ...(posture ? { posture: BODIES[body].posture, stance: BODIES[body].stance } : {}) });

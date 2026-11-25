@@ -9,7 +9,7 @@
 // `stop: true` does the same without `to`. A shared clip played on another body scales its metres with that body's size.
 // The README in this folder has the rules; docs/MOTION-LIB.md the catalogue.
 import * as THREE from 'three';
-import { BODIES } from './bodies.js';
+import { BODIES, BODY_PREFIX } from './bodies.js';
 import { BASES } from './base.js';
 // (the floor's standard poses, KNEEL and FLOOR, registered before any clip: acts/floor.js; the names it registered below)
 import FLOOR_POSES from './acts/floor.js';
@@ -51,6 +51,7 @@ import Thin_Act_TorchReady_Loop_v01 from './body/thin/Thin_Act_TorchReady_Loop_v
 import Heavy_Move_WalkFlashlight_Loop_v01 from './body/heavy/Heavy_Move_WalkFlashlight_Loop_v01.js';
 import Thin_Move_WalkFlashlight_Loop_v01 from './body/thin/Thin_Move_WalkFlashlight_Loop_v01.js';
 import Child_Idle_Breath_Loop_v01 from './body/child/Child_Idle_Breath_Loop_v01.js';
+import Child_Idle_Fidget_Loop_v01 from './body/child/Child_Idle_Fidget_Loop_v01.js';
 import Child_Move_Run_Fwd_Loop_v01 from './body/child/Child_Move_Run_Fwd_Loop_v01.js';
 import Child_Move_Walk_Fwd_Loop_v01 from './body/child/Child_Move_Walk_Fwd_Loop_v01.js';
 import Elder_Idle_Breath_Loop_v01 from './body/elder/Elder_Idle_Breath_Loop_v01.js';
@@ -83,6 +84,9 @@ import Adult_Gest_ShakeNo_Once_v01 from './body/adult/Adult_Gest_ShakeNo_Once_v0
 import Adult_React_Defeated_Once_v01 from './body/adult/Adult_React_Defeated_Once_v01.js';
 import Adult_Gest_Yawn_Once_v01 from './body/adult/Adult_Gest_Yawn_Once_v01.js';
 import Adult_Gest_Point_Once_v01 from './body/adult/Adult_Gest_Point_Once_v01.js';
+import Teen_Idle_Breath_Loop_v01 from './body/teen/Teen_Idle_Breath_Loop_v01.js';
+import Toddler_Idle_Breath_Loop_v01 from './body/toddler/Toddler_Idle_Breath_Loop_v01.js';
+import Toddler_Move_Walk_Fwd_Loop_v01 from './body/toddler/Toddler_Move_Walk_Fwd_Loop_v01.js';
 export const ALL = [
   Adult_Move_Run_Fwd_Loop_v01,
   Adult_Move_Walk_Fwd_Loop_v01,
@@ -121,6 +125,7 @@ export const ALL = [
   Heavy_Move_WalkFlashlight_Loop_v01,
   Thin_Move_WalkFlashlight_Loop_v01,
   Child_Idle_Breath_Loop_v01,
+  Child_Idle_Fidget_Loop_v01,
   Child_Move_Run_Fwd_Loop_v01,
   Child_Move_Walk_Fwd_Loop_v01,
   Elder_Idle_Breath_Loop_v01,
@@ -152,6 +157,9 @@ export const ALL = [
   Adult_React_Defeated_Once_v01,
   Adult_Gest_Yawn_Once_v01,
   Adult_Gest_Point_Once_v01,
+  Teen_Idle_Breath_Loop_v01,
+  Toddler_Idle_Breath_Loop_v01,
+  Toddler_Move_Walk_Fwd_Loop_v01,
 ];
 // A clip starts at its own origin: a capture's first frame stands a few cm (an in-place loop) to 1 m off it, and two
 // clips chained (each placed where the last one left the actor) jumped the root by that offset. Every clip is moved so
@@ -209,7 +217,7 @@ export function propFit(C, k) {
   return Object.keys(fit).length ? fit : null;
 }
 export function getClip(name, body = 'adult', fit = null) {
-  const e = CLIPS[name] || CLIPS[name.replace(/^(Adult|Heavy|Thin|Child|Elder)_/, '').replace(/_v\d+$/, '')];
+  const e = CLIPS[name] || CLIPS[name.replace(BODY_PREFIX, '').replace(/_v\d+$/, '')];
   if (!e) throw new Error(`motion-lib: no clip "${name}" (${CLIP_NAMES.join(', ')})`);
   const c = e[body] || e['*'];
   if (!c) throw new Error(`motion-lib: clip "${name}" has no ${body} version (bodies: ${Object.keys(e).join(', ')})`);

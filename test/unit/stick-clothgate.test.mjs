@@ -42,3 +42,18 @@ test('the tool on a film: names the film, the figure and the clip, exit 1; a fil
   assert.match(message('f', { who: 'a', wears: 'w', clip: 'c', f: 1, act: 'x', why: 'y' }), /^f: a \(w\) plays c at f1 in x: y$/);
 });
 test('reel2.js acts are read too', async () => { const d = film({ name: 'a', cast: {} }); fs.writeFileSync(path.join(d, 'reel2.js'), `export default ${JSON.stringify({ acts: act({ amy: { spec: 'KAI', costume: ['dress:coral'] } }, { amy: [key('Act_Jump_Once')] }) })};\n`); assert.deepEqual((await filmCloth(d)).findings.map(x => x.clip), ['Act_Jump_Once']); });
+
+// kit/compat.json: a figure in wardrobe garments is looked up too
+test('a figure in a kit garment whose (person, clip) is blocked or has no row is a table finding; a usable one is none; a hoodie, a plain figure and a clip already reported are never looked up', async () => {
+  const { pair, personKey, table } = await import('../../styles/stick-man/kit/cast/compat.js'), key1 = personKey({ outfit: ['coat:lab'] }), row = (clip, verdict) => ({ pair: pair('clip', key1, clip), kind: 'clip', verdict, number: 9.9, unit: 'mm', why: 'a cuff' });
+  const T = table({ rows: [row('Idle_Stand_Loop', 'pass'), row('React_Terrified_Once', 'blocked'), row('Move_Run_Fwd_Loop', 'blocked')] }), look = (costume, clip) => clothGate(act({ amy: { spec: 'KAI', costume } }, { amy: [key(clip)] }), {}, T);
+  assert.deepEqual(look(['coat:lab'], 'Idle_Stand_Loop').table, []);
+  assert.match(look(['coat:lab'], 'React_Terrified_Once').table[0].why, /^blocked in kit\/compat\.json: 9\.9 mm \(a cuff\)$/); assert.match(look(['coat:lab'], 'Idle_Sit_Loop').table[0].why, /^untested in kit\/compat\.json/);
+  const run_ = look(['coat:lab'], 'Move_Run_Fwd_Loop'); assert.equal(run_.findings.length, 1); assert.deepEqual(run_.table, [], 'reported once');
+  for (const c of [undefined, ['hoodie:grey'], ['belt', 'holster:L', 'hat:flat']]) assert.deepEqual(look(c, 'React_Terrified_Once').table, [], String(c));
+  assert.match(look(['sweater:sky'], 'Idle_Stand_Loop').table[0].why, /^untested/, 'a garment that does not hang is looked up too');
+});
+test('the tool prints a table finding and exits 1', () => {
+  const p = run('node', [TOOL, film({ name: 'street', cast: { amy: { spec: 'KAI', at: [0, 0], costume: ['sweater:sky', 'scarf:mustard', 'cap:pilot'] } }, anim: { amy: [key('Idle_Stand_Loop')] } })], { capture: true });
+  assert.equal(p.status, 1, p.stdout + p.stderr); assert.match(p.stdout, /plays Idle_Stand_Loop at f10 in street: untested in kit\/compat\.json/);
+});

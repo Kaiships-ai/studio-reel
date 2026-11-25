@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "about": "The limits kit/compat.json is measured with, written before anything was measured. Copied from the kit: test/unit/stick-fits.test.mjs fails if one of them is no longer the kit's own. Changing this file makes every row of compat.json stale (its sha is in compat.json).",
+  "clip": {
+    "from": "test/unit/wardrobe-measure.mjs",
+    "TRIM_MM": 4.5, "ARM_MM": 1, "STRETCH": 0.15, "BENT": 0.22, "AREA": [0.65, 1.15], "FOLD": 0.03, "SOLID_MM": 2, "MOVE_M": 0.01,
+    "TORSO_MM": 4, "ARM_IN": 4, "HAND_IN": 10, "TOUCH_MM": 3,
+    "MODES": { "walk": { "stretch": 0.15, "edge": 0.25, "kink": 45, "hem": 60, "acc": 6 }, "fast": { "stretch": 0.22, "edge": 0.3, "kink": 60, "hem": 60, "acc": 10 }, "sit": { "stretch": 0.22, "edge": 0.3, "kink": 75, "hem": 75, "acc": 5 } },
+    "frames": "every frame of the whole clip as played, cloth and trims"
+  },
+  "copy": { "from": "styles/stick-man/tools/gates/bodylife.mjs", "SHAPE_C": 0.85, "SHAPE_CM": 1.4 },
+  "accepted": {
+    "from": "kit/cast/clothsafe.js, its header: plain walking in a hanging garment is 7.3 cm a frame a frame on 9 frames against the limit of 6, the carry-bag walk 6.2-6.4 cm on one frame, both known and accepted on 25/11. Only this fault, on the adult body, up to these numbers; any other fault on the same clip blocks it",
+    "fault": "jerks",
+    "clips": { "Move_Walk_Fwd_Loop": { "body": "adult", "cm": 7.3, "frames": 9 }, "Move_CarryBag_Walk_Loop": { "body": "adult", "cm": 6.4, "frames": 1 } }
+  },
+  "outfit": { "from": "test/unit/wardrobe-measure.mjs trims(), the numbers of stick-wardrobe.test.mjs", "TOUCH_MM": 3, "ring_mm": 14, "TRIM_MM": 4.5 },
+  "face": { "from": "Kai's face sheet, 25/11", "approved": ["elder", "adult", "child"], "waits": ["teen", "toddler"] },
+  "mark": { "from": "test/unit/stick-wardrobe-age.test.mjs, the share of a mark's card under the hat, front and 24 deg round", "cover": 0 },
+  "controls": {
+    "bad": [{ "person": { "body": "adult", "outfit": ["job:doctor"] }, "clip": "React_SitDisbelief_Once", "must": "blocked" }],
+    "good": [{ "person": { "body": "adult", "outfit": ["job:doctor"] }, "clip": "Idle_Stand_Loop", "must": "pass" }],
+    "copy": [{ "of": "adult", "clip": "Gest_Yawn_Once", "bodies": ["elder", "heavy", "thin"], "must": "blocked" }]
+  }
+}

@@ -58,3 +58,19 @@ Finish kit (from the private master study, 11/11; each is opt-in, an act without
 | hoodie | `import costume.js` then `hoodie.js`; cast or spec `costume: ['hoodie:grey']` (hood up) \| `['hoodie:grey:down']` (hood folded on the back); the hood is skinned between chest and head, its back peak springs and the cords swing (`PHYS.on`); a spec's own `costume` is worn by default | hoodie.js, cloth.js, assets/costume/hoodie_grey.glb |
 | acting | act `actingAmp` / cast `amp` (all pose sizes) | engine/poses.js |
 | sets | `K.planks`, `SURF.weathered`, `K.extras` (background people), `K.skyDome` (a sky that rides the camera), card `fog` | kit.js |
+
+## The way in: `film.js` and the fits table
+
+A new film imports one kit file, `/styles/stick-man/kit/film.js`, and builds its people with `person({ name, body, age, outfit,
+clips, prop, ... })` and its places with `place(name, { light, props })`. Each one asks the fits table `compat.json` about every
+pair it puts together and throws on one that is not `pass` or `accepted`, before anything renders:
+
+| Pair | Measured by | Limit (frozen in `compat-limits.json`) |
+|---|---|---|
+| `clip\|<body>/g<girth>/<garments>\|<Clip>` | `tools/gates/fits.mjs --measure`: the whole clip played in the outfit | cloth faults per mode, a trim 1 mm in an arm |
+| `face\|<age>\|<body>`, `mark\|bold:<mark>\|<hat>`, `outfit\|<garment>\|<body>` | `fits.mjs --kinds` (`fits_kinds.mjs`) | Kai's face sheet; 0 % of a mark under a hat; `trims()` |
+| `hand\|<prop>\|<body>\|hand\|seat`, `light\|<prop>\|<light>` | no measure yet: no row, so `untested` | - |
+
+`untested` and `blocked` stop a film; a waiver `{ pair, why, by }` lets exactly one pair through. A pair known to be bad whatever a
+later measure says is in `UNSAFE_PAIRS` (`cast/clothsafe.js`). `tools/gates/importgate.mjs` keeps a film's imports to `film.js`, its
+own files and three. `node …/fits.mjs films/<slug>` checks an old film that skips `film.js` (its clip keys, `x_hp` props, marks).

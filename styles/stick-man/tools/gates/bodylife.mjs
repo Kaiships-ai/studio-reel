@@ -25,6 +25,13 @@
 //           steps", and a 5 % longer stride for its leg contradicted it, both made child gaits failed it at 0.58 and 0.71):
 //           its steps at least 15 % quicker than the adult's (steps a second; the same 15 % as its time), each step no
 //           longer for its leg than the adult's (stride <= 1)
+//   teen    (25/11, before the bodies were made; bodies.js "5 % longer for the leg, and looser (a slower beat, the arms and the trunk
+//           swinging further)") told by its outline too (85 % of the height, thinner), so heavy's and thin's marks: time 8 % longer, arc 8 %
+//           bigger, stride 5 % longer for its leg. Its made walk (stride 0.69, shape 0.34) and run (time 0.95, stride 0.61) fail it: neither is in
+//           the library
+//   toddler (25/11, before the bodies were made; bodies.js "quick short steps", "wide") the child's marks for quick (time, arc, cadence),
+//           the elder's for short: its step 20 % shorter for its leg than the adult's. Its width, held-out arms, waddle and steady head:
+//           test/unit/stick-bodies-age.test.mjs
 //   shape   the ACT: the paths of the hands (from the middle of the shoulders) and the face (from the neck), both in the chest's
 //           own frame, and of the upper trunk (the neck from the hips), so a hip sway or a weight shift is in none of them and a
 //           breath only in the trunk, over the capture's frames, against the
@@ -55,6 +62,8 @@ export const BODY_LIFE = {
   heavy: { time: [1.10, Infinity], arc: [0, 0.92], onset: [0, 0.75], stride: [0, 0.90], shape: [SHAPE_REL, Infinity] },
   thin: { time: [0, 0.92], arc: [1.08, Infinity], stride: [1.05, Infinity], shape: [SHAPE_REL, Infinity] },
   child: { time: [0, 0.85], arc: [1.15, Infinity], bounce: [1.15, Infinity], stride: [0, 1.0], cadence: [1.15, Infinity], shape: [SHAPE_REL, Infinity] },
+  teen: { time: [1.08, Infinity], arc: [1.08, Infinity], stride: [1.05, Infinity], shape: [SHAPE_REL, Infinity], cycles: true },
+  toddler: { time: [0, 0.85], arc: [1.15, Infinity], stride: [0, 0.80], cadence: [1.15, Infinity], shape: [SHAPE_REL, Infinity], cycles: true },
 };
 export const NEAREST = { Move_OldWalk_Fwd_Loop: 'Move_Walk_Fwd_Loop' };
 export const BOUNCE_MIN = 0.02;
@@ -87,7 +96,9 @@ export function lifeOf(C, rows, { scale = 1, leg = 1 } = {}) {
   const mid = r => r.shL.map((v, i) => (v + r.shR[i]) / 2);
   const act = { trunk: r => sub(r.neck, r.pelvis), face: r => inChest(r, sub(r.face, r.neck)), handL: r => inChest(r, sub(r.handL, mid(r))), handR: r => inChest(r, sub(r.handR, mid(r))) };
   const paths = Object.fromEntries(Object.entries(act).filter(([k]) => !held[k]).map(([k, fn]) => [k, rows.map(r => fn(r).map(v => v / scale))]));
-  return { frames: C.frames, moves, stride: travel / leg, steps: stepsOf(C, rows), size, paths, accel: Object.fromEntries(Object.entries(parts).map(([k, P]) => [k, accel(P) / scale])), bounce: (pct(z, 0.95) - pct(z, 0.05)) / leg };
+  // (the cycles of a gait alone, without its first and closing steps: shapeOf)
+  const cycle = C.advance ? Object.fromEntries(Object.entries(paths).map(([k, P]) => [k, P.slice(C.introFrames, C.introFrames + 2 * C.frames + 1)])) : paths;
+  return { frames: C.frames, moves, stride: travel / leg, steps: stepsOf(C, rows), size, paths, cycle, accel: Object.fromEntries(Object.entries(parts).map(([k, P]) => [k, accel(P) / scale])), bounce: (pct(z, 0.95) - pct(z, 0.05)) / leg };
 }
 // B's act against A's (its adult, on the same figure): { shape (the weighted share of the motion the other does not explain), cm
 // (the part that differs most, rms at its weight), part, c (the correlation the share says) }
@@ -122,6 +133,11 @@ export function shapeAgainst(A, B) {
   const shape = Math.sqrt(R / T);
   return { shape, cm: 100 * worst, part, c: Math.sqrt(Math.max(0, 1 - shape ** 2)) };
 }
+// the shape as a body is held to it. The teen and the toddler (cycles, 25/11): a gait's cycles only. Its first and closing steps come out of and go
+// back to the body's standing posture, and a posture is not an act: with them in, the adult's own walk on the toddler passed (0.85, 14 cm
+// of hand: its arms coming down from held out). The older bodies keep the whole clip: on their cycles alone the made walks of the child, the
+// elder, heavy and thin fail (follow-up, they were not touched here)
+export const shapeOf = (body, A, B) => (BODY_LIFE[body]?.cycles ? shapeAgainst({ ...A, paths: A.cycle }, { ...B, paths: B.cycle }) : shapeAgainst(A, B));
 // a body's clip against the adult's: [{ n: measure, v, lo, hi, ok }] (near: A is the nearest adult clip, not a twin; on: the adult's
 // clip on this body's own figure, for the shape)
 export function lifeAgainst(body, A, B, { near = false, on = A } = {}) {
@@ -138,7 +154,7 @@ export function lifeAgainst(body, A, B, { near = false, on = A } = {}) {
     if (A.size[lead] >= need) { put('arc', B.size[lead] / A.size[lead], lead); if (L.onset) put('onset', B.accel[lead] / A.accel[lead], lead); }
     if (L.bounce && A.bounce >= BOUNCE_MIN) put('bounce', B.bounce / A.bounce);
   }
-  const s = shapeAgainst(on, B); put('shape', s.shape, `${s.part} ${s.cm.toFixed(1)} cm`, s.shape >= SHAPE_REL && s.cm >= SHAPE_CM);
+  const s = shapeOf(body, on, B); put('shape', s.shape, `${s.part} ${s.cm.toFixed(1)} cm`, s.shape >= SHAPE_REL && s.cm >= SHAPE_CM);
   return out;
 }
 const want = r => (r.lo > 0 ? `>= ${+r.lo.toFixed(2)}` : `<= ${r.hi}`);

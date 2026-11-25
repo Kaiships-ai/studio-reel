@@ -177,6 +177,12 @@
      ]
     },
     {
+     "tool": "tools/gates/importgate.mjs",
+     "args": [
+      "{film}"
+     ]
+    },
+    {
      "tool": "tools/gates/clothgate.mjs",
      "args": [
       "{film}"

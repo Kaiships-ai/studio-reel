@@ -19,7 +19,7 @@ anim: { gran: [
 
 | Key field | Meaning |
 |---|---|
-| `clip`, `body` | the clip (name without body prefix and version) and the body: adult, heavy, thin, child, elder (default adult) |
+| `clip`, `body` | the clip (name without body prefix and version) and the body: adult, heavy, thin, child, teen, toddler, elder (default adult) |
 | `to` | a travelling loop walks there: heading, cycle count and stride fitted, starts and ends on the standard pose |
 | `times` | loop cycles (default 1; with `to`, fixes the count); `stop: true` adds the first and closing steps without `to` |
 | `pos`, `yaw` | where the clip starts and which way it faces (default: where the keys before it left the actor) |
@@ -28,8 +28,12 @@ anim: { gran: [
 
 A clip key expands into the clip's keys before playback (`engine/motion.js` `compileTrack`), so the 12-principles
 playback, the `style` dose and the body's physics apply exactly as to hand keys. Keys after a clip that move the feet use
-`footW` (metres, planted) like the clips: a carried `footW` channel overrides `foot`. `base.js` `stand(body, x)` gives
-the standard pose there.
+`footW` (metres, planted) like the clips: a carried `footW` channel overrides `foot`. `base.js` `stand(body, x, { yaw, y })` gives
+the standard pose there, facing that way: its planted prints are in the world, so a heading put on top of `stand(body, x)` (`K(f, stand(b), { yaw: 0 })`)
+leaves one foot ahead of the other under a body facing the lens. A figure nobody poses with `stand()` or a clip stands
+upright on every body; `bodySpec(spec, body, { posture: true })` (opt-in) stands it its body's way (an elder's stoop, a toddler's
+wide feet and held-out arms) where a pose names no channel. The elder's stoop is ahead, 11 cm at the head and 1.5 cm of
+height: from the front only those 1.5 cm show, so a still that has to show it turns the elder.
 
 ## Rules (checked by `tools/gates/motionlib.mjs` and `test/unit/stick-motionlib.test.mjs`)
 
@@ -42,7 +46,7 @@ the standard pose there.
 | No joint turns more than 25 deg in a frame after the `kaiships` dose (a hand on an ik target: its travel over the arm's length) | joint gate |
 | A foot on the floor never slides (< 1 mm a frame): feet leave and reach the floor straight up and down | feet |
 | A body the floor carries (KNEEL, FLOOR: standard poses, no clip is on them now) has its ankles and toes no more than 3 cm above the floor. A limb sunk into the floor is not seen by it (a kneel's shins were, and passed) | floor |
-| A body's clip is not the adult's in another costume: against the adult's clip of the same name it is slower or quicker, its arcs smaller or bigger, its stride (a child: its cadence) its own, and its act (the hands, the face, the upper trunk, the hips' sway taken out, against the adult's clip on that body's figure) is not the same motion retimed and resized (correlation 0.85 at most, `SHAPE_C`), by the amounts in `tools/gates/bodylife.mjs`. The check sees copies: a pass says the motion is not a copy, never that it acts like that body; that is a viewer's, in motion. Older clips that fail it are listed, dated, in `motionlib.mjs` BODY_KNOWN (only shrinks) | body |
+| A body's clip is not the adult's in another costume: against the adult's clip of the same name it is slower or quicker, its arcs smaller or bigger, its stride (a child: its cadence) its own, and its act (the hands, the face, the upper trunk, the hips' sway taken out, against the adult's clip on that body's figure) is not the same motion retimed and resized (correlation 0.85 at most, `SHAPE_C`), by the amounts in `tools/gates/bodylife.mjs`. The check sees copies: a pass says the motion is not a copy, never that it acts like that body; that is a viewer's, in motion. The teen and the toddler have their lines too; the teen's made walk and run fail theirs, so the teen only stands; the toddler's made run passes and, seen moving, read as a walk, so it is out too. Older clips that fail it are listed, dated, in `motionlib.mjs` BODY_KNOWN (only shrinks) | body |
 | A batch 1 clip never stops dead: in every 2 s some part moves 2 cm within half a second (`bodylife.mjs` STILL; the mark was raised to 2.8 and put back, both after measuring). A hold a viewer calls still passes it (2.48 cm did) | still |
 | A clip a film cuts to for its feeling shows its face: the head's turn and its look down (`bodylife.mjs` FACE_SEEN). A rim, a fringe or a hand over the face is not seen by it | face |
 | What no check here sees: a body in contact with the floor (sunk in it, floating a little), feet skating (a foot not keyed as planted, or the visible slide between keys), how a start or a stop reads, how a clip reads in a real set and camera. A gate pass is not a review | (a viewer, in motion) |
@@ -59,7 +63,7 @@ the standard pose there.
 |---|---|
 | `index.js` | the registry (every clip file imported), `getClip(name, body)`, `placeClip`, `expandClips` |
 | `base.js` | STAND, BREATH, the standard poses (stand, sit, carry), the key helper `K`, the gait builder `gaitLoop` |
-| `bodies.js` | the five body types: proportions for the rig, mass, stance, posture, walk / run / breath numbers |
+| `bodies.js` | the seven body types: proportions for the rig, mass, stance, posture, walk / run / breath numbers |
 | `props.js` | the hand props the clips name (bag, torch, cash, cap) |
 | `body/`, `shared/` | the clips |
 | `proof/` | the proof page: one clip on one body, physics on or off (`tools/gates/motionlib.mjs --proof`, `--sheet`) |
