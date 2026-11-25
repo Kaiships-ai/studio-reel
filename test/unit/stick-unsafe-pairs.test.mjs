@@ -52,3 +52,11 @@ test('the table: a usable row of an unsafe pair is a fault of the table itself; 
   const t = F.tableFaults({ ...T, rows: T.rows.map(x => (x === r ? { ...x, verdict: 'pass', number: 0, bad: 0 } : x)) });
   assert.equal(t.length, 1, t.join('\n')); assert.match(t[0], /UNSAFE_PAIRS/);
 });
+
+test('the table: a hand-edited outfit, face or accepted row of another kind is a fault (review of #207)', async () => {
+  const fs = await import('node:fs'), T = JSON.parse(fs.readFileSync(new URL('../../styles/stick-man/kit/compat.json', import.meta.url), 'utf8'));
+  const edit = (p, o) => F.tableFaults({ ...T, rows: T.rows.map(x => (x.pair === p ? { ...x, ...o } : x)) });
+  assert.equal(edit('outfit|coat|adult', { number: 99 }).length, 1); assert.equal(edit('outfit|coat|adult', { bad: 3 }).length, 1);
+  assert.equal(edit('outfit|coat|adult', { verdict: 'accepted' }).length, 1); assert.equal(edit('mark|bold:sweat|cap:police', { verdict: 'accepted' }).length, 1);
+  assert.equal(F.tableFaults({ ...T, rows: [...T.rows, { pair: 'face|adult|toddler', kind: 'face', verdict: 'pass', number: 50, unit: '%', bad: 0, commit: 'a2fa81e6' }] }).length, 1);
+});

@@ -32,6 +32,9 @@ export function personKey({ body = 'adult', girth, scale, headScale, legScale, o
   return `${body}/${build}/${expand([].concat(outfit || [])).map(shapeOf).sort().join('+') || 'plain'}`;
 }
 
+// the bodies each face age is drawn for: a face row is measured, and usable, on these only
+export const FACE_BODIES = { adult: ['adult', 'heavy', 'thin'], elder: ['elder'], child: ['child'], teen: ['teen'], toddler: ['toddler'] };
+
 const KINDS = { clip: 2, face: 2, mark: 2, hand: 3, outfit: 2, light: 2 };
 export function pair(kind, ...parts) {
   if (!KINDS[kind]) throw new Error(`compat: no pair kind "${kind}" (${Object.keys(KINDS).join(', ')})`);

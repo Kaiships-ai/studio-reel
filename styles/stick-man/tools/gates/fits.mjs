@@ -13,7 +13,7 @@
 // A run only adds rows or makes one stricter (merge). `fail` is never written: a red pair is `blocked`, with its number.
 import fs from 'node:fs'; import path from 'node:path'; import crypto from 'node:crypto'; import { pathToFileURL, fileURLToPath } from 'node:url'; import { execFileSync } from 'node:child_process';
 import { ROOT, run } from '../../../../kit/env.mjs';
-import { personKey, pair, table as tableOf, measured, shapeOf, USABLE, VERDICTS } from '../../kit/cast/compat.js';
+import { personKey, pair, table as tableOf, measured, shapeOf, FACE_BODIES, USABLE, VERDICTS } from '../../kit/cast/compat.js';
 import { UNSAFE, unsafePair, HANGS, hangs, clipId } from '../../kit/cast/clothsafe.js';
 import { expand } from '../../kit/cast/jobs.js';
 
@@ -69,8 +69,10 @@ export function tableFaults(T, sha = limitsSha()) {
       if (r.verdict === 'accepted') { const a = LIMITS.accepted.clips[clip]; if (!a || a.body !== who.split('/')[0] || r.number > a.cm || r.bad > a.frames) bad(`accepted, and the frozen limits accept no such pair (${r.number} ${r.unit}, ${r.bad} frames)`); }
       if (use && UNSAFE[clip] && who.split('/')[2].split('+').some(g => HANGS.includes(g.split(':')[0]))) bad(`${r.verdict}, but kit/cast/clothsafe.js says: ${UNSAFE[clip].why}`);
       const [b, g, w] = who.split('/'), known = use && unsafePair({ body: b, girth: +g.slice(1).split(',')[0], outfit: w === 'plain' ? [] : w.split('+') }, clip); if (known) bad(`${r.verdict}, but it is in UNSAFE_PAIRS of kit/cast/clothsafe.js: ${known.why}`);
-    } else if (kind === 'mark' && use && r.number > LIMITS.mark.cover) bad(`${r.verdict} with ${r.number} ${r.unit}`);
-    else if (kind === 'face' && use && !LIMITS.face.approved.includes(who)) bad(`${r.verdict}, but Kai has not approved this face`);
+    } else if (r.verdict === 'accepted') bad('accepted, and only a clip can be accepted (limits.accepted)');
+    else if (kind === 'mark' && use && r.number > LIMITS.mark.cover) bad(`${r.verdict} with ${r.number} ${r.unit}`);
+    else if (kind === 'face' && use && (!LIMITS.face.approved.includes(who) || !(FACE_BODIES[who] || []).includes(clip))) bad(`${r.verdict}, but Kai has not approved the ${who} face on the ${clip} body`);
+    else if (kind === 'outfit' && use && (r.bad !== 0 || r.number > LIMITS.outfit.TRIM_MM)) bad(`${r.verdict}, but it measured ${r.number} ${r.unit}, ${r.bad} pieces off`);
   }
   return out;
 }

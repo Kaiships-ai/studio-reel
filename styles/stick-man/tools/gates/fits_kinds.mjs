@@ -7,12 +7,12 @@
 //                             over limits.mark.cover (0) is blocked
 //   hand|<prop>|<body>|<at>, light|<prop>|<light>   no measure yet: no row (untested)
 import * as THREE from 'three';
-import { pair, SHAPES } from '../../kit/cast/compat.js';
+import { pair, SHAPES, FACE_BODIES } from '../../kit/cast/compat.js';
 
 import fs from 'node:fs';
 // (read here, not from fits.mjs: fits.mjs loads this module while it runs)
 const LIMITS = JSON.parse(fs.readFileSync(new URL('../../kit/compat-limits.json', import.meta.url), 'utf8'));
-export const OWN = { adult: ['adult', 'heavy', 'thin'], elder: ['elder'], child: ['child'], teen: ['teen'], toddler: ['toddler'] };
+export const OWN = FACE_BODIES;
 export const HATS = ['cap:police', 'cap:pilot', 'cap:scrub', 'hat:hard', 'hat:toque'];
 const row = (p, kind, verdict, number, unit, bad, why) => ({ pair: p, kind, verdict, number, unit, bad, ...(why ? { why } : {}) });
 
