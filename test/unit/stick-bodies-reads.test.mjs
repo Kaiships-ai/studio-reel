@@ -4,8 +4,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { onBody } from '../../styles/stick-man/tools/gates/motionlib.mjs';
-import { stillSpans, STILL_F, STILL_IN } from '../../styles/stick-man/tools/gates/bodylife.mjs';
-import { standing, copyOf, coverFrom, hoodCover, COVER_MAX, COVER_SAME } from './bodies-measure.mjs';
+import { stillSpans, STILL_F, STILL_IN, READ_PX } from '../../styles/stick-man/tools/gates/bodylife.mjs';
+import { getClip } from '../../styles/stick-man/motion-lib/index.js';
+import { BODIES } from '../../styles/stick-man/motion-lib/bodies.js';
+import { idle, pathsOf, standing, copyOf, coverFrom, hoodCover, MOVES_CM, COVER_MAX, COVER_SAME } from './bodies-measure.mjs';
 
 const mean = P => P[0].map((_, i) => P.reduce((a, p) => a + p[i], 0) / P.length);
 const retimed = (P, k) => Array.from({ length: Math.round(P.length * k) }, (_, i) => P[Math.min(P.length - 1, Math.round(i / k))]);
@@ -39,4 +41,13 @@ test('the hoodie hides no more of the teen\'s face than of the adult\'s, and not
     assert.ok(t.cover[az] <= COVER_MAX && a.cover[az] <= COVER_MAX, `az ${az}: adult ${a.cover[az]}, teen ${t.cover[az]}`);
     assert.ok(t.cover[az] - a.cover[az] <= COVER_SAME, `az ${az}: teen ${t.cover[az]}, adult ${a.cover[az]}`);
   }
+});
+// (a child never stands frozen: the review's word for Idle_Breath_Loop, whose head moves 25 px against the adult's 110)
+test('the child\'s fidgeting idle: never still, its head turning about, seen to move more than the breath, nobody else\'s clip', async () => {
+  const C = getClip('Idle_Fidget_Loop', 'child'), F = await idle(C), B = await idle(getClip('Idle_Breath_Loop', 'child'));
+  assert.ok(C.perform, 'the still rule of the gate covers it');
+  assert.ok(F.least_cm >= MOVES_CM, `stillest 2 s: ${F.least_cm} cm`);
+  assert.ok(F.turn_deg >= 2 * BODIES.child.perform.fidget[0], `the head turns ${F.turn_deg} deg`);
+  for (const p of ['head', 'handL', 'handR']) assert.ok(F[p].pp_px >= B[p].pp_px + READ_PX, `${p}: ${F[p].pp_px} px, breath ${B[p].pp_px}`);
+  assert.deepEqual(await copyOf(await pathsOf(C), 'child'), []);
 });
