@@ -14,7 +14,7 @@
 import fs from 'node:fs'; import path from 'node:path'; import crypto from 'node:crypto'; import { pathToFileURL, fileURLToPath } from 'node:url'; import { execFileSync } from 'node:child_process';
 import { ROOT, run } from '../../../../kit/env.mjs';
 import { personKey, pair, table as tableOf, measured, shapeOf, USABLE, VERDICTS } from '../../kit/cast/compat.js';
-import { UNSAFE, HANGS, hangs, clipId } from '../../kit/cast/clothsafe.js';
+import { UNSAFE, unsafePair, HANGS, hangs, clipId } from '../../kit/cast/clothsafe.js';
 import { expand } from '../../kit/cast/jobs.js';
 
 const SELF = fileURLToPath(import.meta.url), KIT = path.join(ROOT, 'styles/stick-man/kit'), LIMITS_FILE = path.join(KIT, 'compat-limits.json');
@@ -68,6 +68,7 @@ export function tableFaults(T, sha = limitsSha()) {
       if (r.verdict === 'pass' && (r.bad !== 0 || r.number > L.ARM_MM)) bad(`pass, but it measured ${r.number} ${r.unit}, ${r.bad} bad frames`);
       if (r.verdict === 'accepted') { const a = LIMITS.accepted.clips[clip]; if (!a || a.body !== who.split('/')[0] || r.number > a.cm || r.bad > a.frames) bad(`accepted, and the frozen limits accept no such pair (${r.number} ${r.unit}, ${r.bad} frames)`); }
       if (use && UNSAFE[clip] && who.split('/')[2].split('+').some(g => HANGS.includes(g.split(':')[0]))) bad(`${r.verdict}, but kit/cast/clothsafe.js says: ${UNSAFE[clip].why}`);
+      const [b, g, w] = who.split('/'), known = use && unsafePair({ body: b, girth: +g.slice(1).split(',')[0], outfit: w === 'plain' ? [] : w.split('+') }, clip); if (known) bad(`${r.verdict}, but it is in UNSAFE_PAIRS of kit/cast/clothsafe.js: ${known.why}`);
     } else if (kind === 'mark' && use && r.number > LIMITS.mark.cover) bad(`${r.verdict} with ${r.number} ${r.unit}`);
     else if (kind === 'face' && use && !LIMITS.face.approved.includes(who)) bad(`${r.verdict}, but Kai has not approved this face`);
   }
@@ -117,7 +118,8 @@ const round = v => +v.toFixed(1);
 // a measurement -> { verdict, number, unit, bad, why? }. force: what it measured, whatever clothsafe.js says (the controls)
 export function verdictOf(person, clip, x, { force = false } = {}) {
   const id = clipId(clip), out = (verdict, number, unit, bad, why) => ({ verdict, number, unit, bad, ...(why ? { why } : {}) }), list = expand([].concat(person.outfit || [])), other = list.filter(it => !measured([it]).length);
-  if (x.error || !x.frames) return out('untested', null, null, null, x.error || 'no frame was played'); if (x.copy) return out('blocked', x.copy.shape, "share of the motion that is not the adult's", 0, `an adult's clip on another body: ${x.copy.why}`);
+  if (x.error || !x.frames) return out('untested', null, null, null, x.error || 'no frame was played');
+  const known = !force && unsafePair(person, clip); if (known) return out('blocked', known.number, known.unit, known.bad, `clothsafe.js UNSAFE_PAIRS: ${known.why}`); if (x.copy) return out('blocked', x.copy.shape, "share of the motion that is not the adult's", 0, `an adult's clip on another body: ${x.copy.why}`);
   if (other.length) return out('untested', null, null, null, `not measured: ${other.join(', ')} is not drawn by kit/cast/wardrobe.js`);
   const worst = [], bad = new Set(x.faults.map(f => f.split(':')[0])).size, K = L.MODES[x.mode || 'walk'], rest = {};
   for (const f of x.faults) { const what = f.replace(/^f\d+: /, ''), k = FAULT.find(([re]) => re.test(what)); if (k) { const v = +k[0].exec(what)[1]; worst.push([v / k[1](K), v, k[2]]); } else rest[what.replace(/[\d.]+/g, '#')] = (rest[what.replace(/[\d.]+/g, '#')] || 0) + 1; }
