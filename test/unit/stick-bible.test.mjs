@@ -22,7 +22,7 @@ function broken(edit) {
 test('the real bible validates against the kit as it is now', () => {
   const r = run();
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /components \d+: motion-clip 37/);
+  assert.match(r.stdout, /components \d+: motion-clip 58/);
 });
 
 test('a duplicate id fails', () => {

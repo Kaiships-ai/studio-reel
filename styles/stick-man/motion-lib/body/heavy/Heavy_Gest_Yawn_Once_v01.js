@@ -3,6 +3,6 @@
 import { mocapClip } from '../../base.js';
 import SRC from '../../ref/mixamo/yawn.js';
 
-const M = mocapClip({ body: 'heavy', src: SRC, base: 'STAND', end: 'STAND' });
+const M = mocapClip({ body: 'heavy', src: SRC, base: 'STAND', end: 'STAND', armOut: 0.5 });
 export default { name: 'Heavy_Gest_Yawn_Once', clip: 'Gest_Yawn_Once', body: 'heavy', group: 'Gest', loop: false, frames: M.frames, base: 'STAND', end: 'STAND', style: 'kaiships',
   needs: { props: [], hands: null, marks: M.marks }, keys: M.keys, captured: M.captured, rest: M.rest };
