@@ -9,7 +9,9 @@
 import * as THREE from 'three';
 import { pair, SHAPES } from '../../kit/cast/compat.js';
 
-const { LIMITS } = await import('./fits.mjs');
+import fs from 'node:fs';
+// (read here, not from fits.mjs: fits.mjs loads this module while it runs)
+const LIMITS = JSON.parse(fs.readFileSync(new URL('../../kit/compat-limits.json', import.meta.url), 'utf8'));
 export const OWN = { adult: ['adult', 'heavy', 'thin'], elder: ['elder'], child: ['child'], teen: ['teen'], toddler: ['toddler'] };
 export const HATS = ['cap:police', 'cap:pilot', 'cap:scrub', 'hat:hard', 'hat:toque'];
 const row = (p, kind, verdict, number, unit, bad, why) => ({ pair: p, kind, verdict, number, unit, bad, ...(why ? { why } : {}) });
@@ -18,7 +20,7 @@ export async function faces() {
   const { eyegate } = await import('./eyegate.mjs'), E = await eyegate(), low = +(100 * Math.min(...E.rows.filter(r => r.kind === 's2' && r.pupilW != null).map(r => r.pupilW))).toFixed(1), F = LIMITS.face, U = '% pupil of the eye (eyegate, lowest)', rows = [];
   for (const [age, bodies] of Object.entries(OWN)) for (const body of bodies) {
     const p = pair('face', age, body);
-    if (!F.approved.includes(age)) rows.push(row(p, 'face', 'blocked', null, null, 0, F.waits.includes(age) ? `the ${age} face on the ${body} body waits for Kai (${F.from})` : `not on Kai's face sheet (${F.from})`));
+    if (!F.approved.includes(age)) rows.push(row(p, 'face', 'blocked', 0, 'approvals by Kai of this face on this body', 0, F.waits.includes(age) ? `the ${age} face on the ${body} body waits for Kai (${F.from})` : `not on Kai's face sheet (${F.from})`));
     else rows.push(E.ok ? row(p, 'face', 'pass', low, U, 0) : row(p, 'face', 'blocked', low, U, 0, 'eyegate fails'));
   }
   return rows;
@@ -28,12 +30,18 @@ export async function faces() {
 export const garments = () => Object.entries(SHAPES).flatMap(([k, w]) => (k === 'hoodie' || k === 'belt' || k === 'holster' ? [] : [k, ...w.map(x => `${k}:${x}`)])).filter(g => !/^(cap|hat|hat:(cowboy|flat|bowler|top))$/.test(g));
 export async function outfits(bodies = ['adult', 'heavy', 'thin', 'elder', 'child'], list = garments()) {
   const M = await import('../../../../test/unit/wardrobe-measure.mjs'), { rigStick } = await import('./motionlib.mjs'), O = LIMITS.outfit, rows = [];
+  // a piece that lies on another layer (a tie, a stethoscope, a backpack's straps) is measured over a plain shirt when alone it floats;
+  // a shape word that follows a colour ('apron:<colour>:low') is worn in the kit's slate
+  const item = g => { const [k, ...w] = g.split(':'); return w.length && !['cap', 'hat', 'shirt', 'coat', 'jacket', 'vest', 'tie', 'badge'].includes(k) ? `${k}:slate:${w.join(':')}` : g; };
+  const dress = async (body, list) => { const { S } = await rigStick(body); M.wears(S, list); return S; };
   for (const body of bodies) for (const g of list) {
-    const p = pair('outfit', g, body); let t;
-    try { const { S } = await rigStick(body); M.wears(S, [g]); if (!S.wardrobe.group.children.length && !S.wardrobe.drapes?.length && !S.wardrobe.hats?.length) { rows.push(row(p, 'outfit', 'untested', null, null, null, 'nothing drawn')); continue; } t = M.trims(S, g); }
-    catch (e) { rows.push(row(p, 'outfit', 'untested', null, null, null, String(e.message).slice(0, 160))); continue; }
+    const p = pair('outfit', g, body); let t, over = '';
+    try {
+      let S = await dress(body, [item(g)]); if (!S.wardrobe.group.children.length && !S.wardrobe.drapes?.length && !S.wardrobe.hats?.length) { rows.push(row(p, 'outfit', 'untested', null, null, null, 'nothing drawn')); continue; }
+      t = M.trims(S, g); if (t.floats.length && g.split(':')[0] !== 'shirt') { S = await dress(body, ['shirt', item(g)]); t = M.trims(S, g); over = ' (over a plain shirt)'; }
+    } catch (e) { rows.push(row(p, 'outfit', 'untested', null, null, null, String(e.message).slice(0, 160))); continue; }
     const worst = Math.max(t.shift.mm, t.gapMax), why = [...t.floats.slice(0, 2), t.ring.mm >= O.ring_mm ? t.ring.what : '', t.shift.mm > O.TRIM_MM ? t.shift.what : ''].filter(Boolean).join(' | ');
-    rows.push(why ? row(p, 'outfit', 'blocked', +worst.toFixed(1), 'mm, a trim off or moving on the shell', t.floats.length, why) : row(p, 'outfit', 'pass', +t.shift.mm.toFixed(1), 'mm a trim moves on the shell as it bends', 0));
+    rows.push(why ? row(p, 'outfit', 'blocked', +worst.toFixed(1), `mm, a trim off or moving on the shell${over}`, t.floats.length, why) : row(p, 'outfit', 'pass', +t.shift.mm.toFixed(1), `mm a trim moves on the shell as it bends${over}`, 0));
   }
   return rows;
 }
