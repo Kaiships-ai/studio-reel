@@ -27,6 +27,9 @@ A crowd: `costume: ['sweater:' + outfit(i)]` (`outfit` from wardrobe.js).
   Every rigid piece touches what it lies on (3 mm, all its points: the shell or a piece on the shell). Cloth inside a drawn
   leg's radius (4 mm, as an arm) is measured and printed as `todo`: the cloth's points keep off a leg, its triangles do not
   (a bent knee's corner, a seated thigh's root, up to 12 mm).
+- With kit faces v4 on the same spec (`faceAge`, `tidyFeet`, `head_yaw`, head marks): `node --test test/unit/stick-wardrobe-age.test.mjs`
+  (3 s): the age face under a costume, the costume on the shell, a figure with no costume hashed against main 0704de3e. A police or
+  pilot cap and a toque cover 29-70 % of some head marks (named there, printed as `todo`): that is NOT clean yet.
 - Group shots and motion: `films/kitbody-costumes/sheet2.html` (line-up at true scale, a crowd of twelve in `outfit(i)`, walk,
   run and sit clips of three outfits).
 
