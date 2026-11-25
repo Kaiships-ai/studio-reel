@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { onBody } from '../../styles/stick-man/tools/gates/motionlib.mjs';
 import { stillSpans, STILL_F, STILL_IN } from '../../styles/stick-man/tools/gates/bodylife.mjs';
-import { standing, copyOf, coverFrom } from './bodies-measure.mjs';
+import { standing, copyOf, coverFrom, hoodCover, COVER_MAX, COVER_SAME } from './bodies-measure.mjs';
 
 const mean = P => P[0].map((_, i) => P.reduce((a, p) => a + p[i], 0) / P.length);
 const retimed = (P, k) => Array.from({ length: Math.round(P.length * k) }, (_, i) => P[Math.min(P.length - 1, Math.round(i / k))]);
@@ -32,4 +32,11 @@ test('control: the cover is 0 with nothing on the head, 1 behind a wall, 0.5 beh
   assert.equal(coverFrom(head, [wall(5, 0.3)], 0, g).share, 1);
   assert.ok(Math.abs(coverFrom(head, [wall(5, 2.8)], 0, g).share - 0.5) < 0.05);
   assert.ok(coverFrom(head, [], 90, g).seen > 50, 'some of the face is seen from the side');
+});
+test('the hoodie hides no more of the teen\'s face than of the adult\'s, and not most of it from the side', async () => {
+  const [a, t] = [await hoodCover('adult'), await hoodCover('teen')];
+  for (const az of [0, 45, 90]) {
+    assert.ok(t.cover[az] <= COVER_MAX && a.cover[az] <= COVER_MAX, `az ${az}: adult ${a.cover[az]}, teen ${t.cover[az]}`);
+    assert.ok(t.cover[az] - a.cover[az] <= COVER_SAME, `az ${az}: teen ${t.cover[az]}, adult ${a.cover[az]}`);
+  }
 });

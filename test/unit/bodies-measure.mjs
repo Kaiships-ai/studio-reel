@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { rigStick, rigClip, onBody, clipLife } from '../../styles/stick-man/tools/gates/motionlib.mjs';
 import { shapeAgainst, SHAPE_REL, SHAPE_CM, STILL_F, STILL_IN, STILL_CM, PX_PER_M, READ_PX } from '../../styles/stick-man/tools/gates/bodylife.mjs';
 import { serveRoot } from '../../styles/stick-man/tools/gates/cordjump.mjs';
-import { ALL, getClip } from '../../styles/stick-man/motion-lib/index.js';
+import { ALL } from '../../styles/stick-man/motion-lib/index.js';
 import { BODIES, bodySpec } from '../../styles/stick-man/motion-lib/bodies.js';
 import { stand } from '../../styles/stick-man/motion-lib/base.js';
 import { flatten } from '../../styles/stick-man/engine/motion.js';
@@ -68,7 +68,7 @@ export function coverFrom(head, meshes, az, { W, HA, HEAD_H, SHELL = 1.015, skip
     const o = head.localToWorld(p.clone()); ray.set(o, to); ray.near = 1e-4; ray.far = 10;
     if (ray.intersectObjects(meshes, false).some(h => !skip(h, head))) hidden++;
   }
-  return { seen, share: seen ? hidden / seen : 0 };
+  return { seen, bare: seen / BOX.n ** 2, share: seen ? hidden / seen : 0 };
 }
 // the kit's grey hoodie, hood up, on a body standing
 export async function hoodCover(body, azs = [0, 45, 90]) {
@@ -83,7 +83,8 @@ export async function hoodCover(body, azs = [0, 45, 90]) {
   const open = (h, head) => { if (h.object.name !== 'hood_cowl') return false; const l = head.worldToLocal(h.point.clone()); const c = new THREE.Vector3(l.x, l.y / HEAD_H, l.z).normalize();
     return (Math.atan2(c.x, c.z) / 1.22) ** 2 + ((Math.asin(c.y) + 0.45) / 1.12) ** 2 < 1; };
   const g = { W: W_M, HA: 0.5 * W_M, HEAD_H, skip: open }, head = S.parts.head.parent;
-  return { body, meshes: meshes.length, ...Object.fromEntries(azs.map(a => [a, r3(Math.max(coverFrom(head, meshes, a, g).share, coverFrom(head, meshes, -a, g).share))])) };
+  const at = a => [a, -a].map(x => coverFrom(head, meshes, x, g)).sort((p, q) => q.share - p.share)[0];
+  return { body, meshes: meshes.length, cover: Object.fromEntries(azs.map(a => [a, r3(at(a).share)])), bare: Object.fromEntries(azs.map(a => [a, r3(at(a).bare)])) };
 }
 // the costume's cloth, its ink shells left out (they are drawn from behind only)
 const inHoodie = o => { for (let p = o.parent; p && !p.isMesh; p = p.parent) if (p.name === 'hoodie') return true; return false; };
