@@ -360,36 +360,6 @@
    "notes": "size 1.5x0.3x1.0 m (estimate (list)), scale x6.66667; turned 90 so the long side matches the list w x d",
    "sec": 0.0
   },
-  "scaffolding": {
-   "id": "AYQd5RQ8w4",
-   "name": "Scaffolding",
-   "place": "street",
-   "file": "street/scaffolding.glb",
-   "bytes": 21788,
-   "tris": 384,
-   "size": [
-    0.288,
-    0.288,
-    3.0
-   ],
-   "lo": [
-    -0.144,
-    -0.144,
-    0.0
-   ],
-   "hi": [
-    0.144,
-    0.144,
-    3.0
-   ],
-   "materials": 1,
-   "source_url": "https://poly.pizza/m/AYQd5RQ8w4",
-   "licence": "CC0 1.0",
-   "author": "lakescorp",
-   "film_need": "Times Square: scaffold",
-   "notes": "size 2.0x1.0x3.0 m (estimate (list)), scale x0.11296; turned 90 so the long side matches the list w x d; stood upright (was lying along x; list says it is tall)",
-   "sec": 0.01
-  },
   "market-stand": {
    "id": "DGIM5HGISb",
    "name": "Market Stand",
@@ -687,7 +657,7 @@
    "licence": "CC0 1.0",
    "author": "Quaternius",
    "film_need": "Times Square: food cart (truck)",
-   "notes": "size 5.0x2.2x2.8 m (estimate (list)), scale x0.41016; turned 90: vehicle long side on x (backdrop pack); size corrected to 3.0 m tall: chunky food truck: a 5 m length fit made it 4.6 m tall; real food truck ~3 m; decimated 14628 -> 4750 tris (vehicle/large budget 5000)",
+   "notes": "size 5.0x2.2x2.8 m (estimate (list)), scale x0.41016; turned 90: vehicle long side on x (backdrop pack); size corrected to 3.0 m tall: chunky food truck: a 5 m length fit made it 4.6 m tall; real food truck ~3 m; decimated 14628 -> 4750 tris (vehicle/large budget 5000); kept 3.27 m long: a 5 m length at these proportions is 4.6 m tall",
    "sec": 0.08
   },
   "standing-picture-frame": {
@@ -1289,36 +1259,6 @@
    "film_need": "Care home: sofa",
    "notes": "size 2.0x0.9x0.8 m (estimate (list)), scale x0.49967; decimated 3886 -> 2850 tris (furniture budget 3000)",
    "sec": 0.02
-  },
-  "tv": {
-   "id": "mBGTVozH1u",
-   "name": "TV",
-   "place": "kitchen-home",
-   "file": "kitchen-home/tv.glb",
-   "bytes": 15180,
-   "tris": 312,
-   "size": [
-    2.626,
-    0.894,
-    3.0
-   ],
-   "lo": [
-    -1.313,
-    -0.447,
-    0.0
-   ],
-   "hi": [
-    1.313,
-    0.447,
-    3.0
-   ],
-   "materials": 4,
-   "source_url": "https://poly.pizza/m/mBGTVozH1u",
-   "licence": "CC0 1.0",
-   "author": "Quaternius",
-   "film_need": "Care home / Kitchen: TV",
-   "notes": "size 1.0x0.1x0.6 m (estimate (list)), scale x2.18177; size corrected to 3.0 m tall: a screen hung on a pole rig, not a set-top TV; 3 m rig keeps the screen ~0.9 m wide",
-   "sec": 0.01
   },
   "washing-machine": {
    "id": "UFxsKNSl8W",
@@ -3749,6 +3689,66 @@
    "film_need": "Times Square: a stage with steps",
    "notes": "size 6.0x4.0x1.0 m (estimate (list)), scale x0.28565; size corrected to 3.5 m tall: round stage with a backdrop truss: the 6 m fit left the truss 2.4 m high; decimated 6388 -> 4750 tris (vehicle/large budget 5000)",
    "sec": 0.04
+  },
+  "screen-rig": {
+   "id": "mBGTVozH1u",
+   "name": "Screen rig (TV)",
+   "place": "arena",
+   "file": "arena/screen-rig.glb",
+   "bytes": 15180,
+   "tris": 312,
+   "size": [
+    2.626,
+    0.894,
+    3.0
+   ],
+   "lo": [
+    -1.313,
+    -0.447,
+    0.0
+   ],
+   "hi": [
+    1.313,
+    0.447,
+    3.0
+   ],
+   "materials": 4,
+   "source_url": "https://poly.pizza/m/mBGTVozH1u",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Care home / Kitchen: TV",
+   "notes": "size 1.0x0.1x0.6 m (estimate (list)), scale x2.18177; size corrected to 3.0 m tall: a screen hung on a pole rig, not a set-top TV; 3 m rig keeps the screen ~0.9 m wide; renamed from kitchen-home/tv (it is a 3 m screen-on-pole rig, not a set-top TV)",
+   "sec": 0.01
+  },
+  "truss-post": {
+   "id": "AYQd5RQ8w4",
+   "name": "Truss post (Scaffolding)",
+   "place": "street",
+   "file": "street/truss-post.glb",
+   "bytes": 21788,
+   "tris": 384,
+   "size": [
+    0.288,
+    0.288,
+    3.0
+   ],
+   "lo": [
+    -0.144,
+    -0.144,
+    0.0
+   ],
+   "hi": [
+    0.144,
+    0.144,
+    3.0
+   ],
+   "materials": 1,
+   "source_url": "https://poly.pizza/m/AYQd5RQ8w4",
+   "licence": "CC0 1.0",
+   "author": "lakescorp",
+   "film_need": "Times Square: scaffold",
+   "notes": "size 2.0x1.0x3.0 m (estimate (list)), scale x0.11296; turned 90 so the long side matches the list w x d; stood upright (was lying along x; list says it is tall); renamed from street/scaffolding (it is one 3 m truss post)",
+   "sec": 0.01
   }
  },
  "failed": {},

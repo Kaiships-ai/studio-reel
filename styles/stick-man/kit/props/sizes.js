@@ -30,3 +30,21 @@ export function scaleFault(id, size) {
   if (size < lo / SIZE_TOL) return { kind: k, over: lo / SIZE_TOL - size, want: [lo, hi], src };
   return null;
 }
+
+// Real heights of the kit's set props (kit/props/catalog.js: the CC0 .glb props and the code-built ones), metres, held by
+// test/unit/stick-props-catalog.test.mjs. Most props stand between a pan (6 cm) and a shop shelf or a door (3.2 m); a
+// flat one (a rug, a plate, a keyboard) is named in `flat`, a place-sized one (lamp posts, vehicles, stages, rigs, towers)
+// in `big`, each with its own range.
+export const PROP_HEIGHT = {
+  default: [0.05, 3.2],
+  flat: [/\/(rug|plate|computer-keyboard|clipboard)/, [0.005, 0.06]],
+  big: [
+    [/^street\/(street-light|street-lamp|traffic-light|truss-post|police-tower|screen-truck|sushi-truck|scaffolding)/, 4.8],
+    [/^arena\/(concert-stage|stage|screen-rig)$/, 6],
+  ],
+};
+export function heightRange(name) {
+  if (PROP_HEIGHT.flat[0].test(name)) return PROP_HEIGHT.flat[1];
+  const b = PROP_HEIGHT.big.find(([re]) => re.test(name));
+  return b ? [PROP_HEIGHT.default[0], b[1]] : PROP_HEIGHT.default;
+}

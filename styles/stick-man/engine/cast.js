@@ -465,7 +465,7 @@ function armFK(sh, sg, a) {
   return { elbow, hand: elbow.clone().addScaledVector(fd, LIMB.fore) };
 }
 
-function contactTex() {
+export function contactTex() {
   const cv = document.createElement('canvas'); cv.width = cv.height = 128; const g = cv.getContext('2d');
   const gr = g.createRadialGradient(64, 64, 6, 64, 64, 64); gr.addColorStop(0, '#fff'); gr.addColorStop(1, '#000');
   g.fillStyle = gr; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(cv);

@@ -32,7 +32,8 @@ SIZE = {
 UPRIGHT = {'q6i3XL52ge'}     # came in lying on its side: stand its longest axis up, closed end down
 ROT = {}                    # id -> degrees about z, applied after import (when the auto turn is wrong)
 KEEP_TEX = {'WetFloorSign_01', 'PeM20xAT0V'}     # the printed picture is the prop (a sign)
-SLUG = {'vPFSLYh6sg': 'street-light-2'}
+SLUG = {'vPFSLYh6sg': 'street-light-2', 'mBGTVozH1u': 'screen-rig', 'AYQd5RQ8w4': 'truss-post'}
+PLACE = {'mBGTVozH1u': 'arena'}   # the list's place is wrong for the model: the TV is a 3 m screen rig (the kitchen TV is code-built)
 VEHICLE = re.compile(r'\b(taxi|car|truck|van|bus|hatchback)\b', re.I)
 K = 8
 
@@ -369,7 +370,7 @@ def main():
     out = os.path.join(root, o['out']); os.makedirs(out, exist_ok=True); mp = os.path.join(out, 'manifest.json')
     man = json.load(open(mp)) if os.path.exists(mp) else {'props': {}, 'failed': {}}
     for it in pick:
-        t0 = time.time(); s = slug[it['id']]; pl = it['place']
+        t0 = time.time(); s = slug[it['id']]; pl = PLACE.get(it['id'], it['place'])
         try:
             clear(); _PX.clear()
             f = model_file(os.path.join(root, o['src'], it['id']))

@@ -1,0 +1,44 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Prop sheet</title>
+<style>html, body { margin: 0; background: #000; } canvas { display: block; }</style>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/","#engine/":"/styles/stick-man/engine/","#kit/":"/styles/stick-man/kit/","#motion-lib/":"/styles/stick-man/motion-lib/","#tools/":"/styles/stick-man/tools/"}}</script>
+</head><body>
+<!-- ?place=<place>&cell=200: every prop of that place (kit/props/catalog.js: .glb and code-built) placed alone on a floor in
+     the kit's look (engine/look.js stage, toon, ink, contact shadow), one render per cell, laid on a grid with its name.
+     Driven by tools/run/propsheet.mjs: window.__sheet = the PNG data URL, window.__sheetError on a failure. -->
+<script type="module">
+import * as THREE from 'three';
+import { createStage, B } from '#engine/look.js';
+import { propKit, catalog } from '#kit/props/catalog.js';
+import { tm } from '#kit/sets/dress.js';
+try {
+  const q = new URLSearchParams(location.search), place = q.get('place') || 'street', cell = +(q.get('cell') || 200), cols = +(q.get('cols') || 6);
+  const rows = catalog().filter(r => r.place === place);
+  if (!rows.length) throw new Error(`no props in ${place}`);
+  const stage = createStage({ width: cell, height: cell });
+  stage.scene.background = new THREE.Color().setRGB(0.62, 0.74, 0.88);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), tm([0.55, 0.52, 0.47], { soft: 1 }));
+  floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; stage.scene.add(floor);
+  const p = propKit(stage, []); await p.load(rows.map(r => r.name));
+  const lab = 34, W = cols * cell, H = Math.ceil(rows.length / cols) * (cell + lab);
+  const sheet = document.createElement('canvas'); sheet.width = W; sheet.height = H; document.body.appendChild(sheet);
+  const g2 = sheet.getContext('2d'); g2.fillStyle = '#26262b'; g2.fillRect(0, 0, W, H);
+  rows.forEach((r, i) => {
+    const o = p.place(r.name, [0, 0, 0], 0, { solid: false });
+    const [w, d, h] = r.size, rad = 0.5 * Math.hypot(w, d, h), c = [0, 0, h / 2];
+    const lens = 30, dist = rad / Math.tan(Math.atan(18 / lens)) * 1.12, dir = [0.42, -0.82, 0.38], n = Math.hypot(...dir);
+    stage.setSun([0.45, 0.62, -0.64], c, Math.max(1.5, rad * 1.6));
+    stage.setCamera(dir.map((v, k) => c[k] + v / n * dist), c, lens);
+    stage.camera.near = Math.max(0.01, dist / 100); stage.camera.far = dist * 6; stage.camera.updateProjectionMatrix();
+    stage.render();
+    const x = (i % cols) * cell, y = Math.floor(i / cols) * (cell + lab);
+    g2.drawImage(stage.renderer.domElement, x, y, cell, cell);
+    g2.fillStyle = '#f0ede6'; g2.font = '600 13px Arial, sans-serif'; g2.fillText(r.name.split('/')[1], x + 6, y + cell + 14);
+    g2.fillStyle = r.source === 'code' ? '#f2b65a' : '#9cc3e6'; g2.font = '11px Arial, sans-serif';
+    g2.fillText(`${r.source} · ${w.toFixed(2)}×${d.toFixed(2)}×${h.toFixed(2)} m · ${r.tris} tris`, x + 6, y + cell + 28);
+    stage.scene.remove(o);
+  });
+  window.__sheet = sheet.toDataURL('image/png');
+} catch (e) { console.error('PROPSHEET', e.message, e.stack); window.__sheetError = e.message; }
+</script>
+</body></html>

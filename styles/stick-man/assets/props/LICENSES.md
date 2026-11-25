@@ -8,6 +8,7 @@ or Poly Pizza (poly.pizza, each model page states "Public Domain (CC0)"), then c
 |---|---|---|---|---|
 | `arena/concert-stage.glb` | Concert Stage | https://poly.pizza/m/6u4c1kSsiP | iPoly3D | CC0 1.0 |
 | `arena/mic.glb` | Mic | https://poly.pizza/m/yqbacXdPsg | iPoly3D | CC0 1.0 |
+| `arena/screen-rig.glb` | TV (screen rig) | https://poly.pizza/m/mBGTVozH1u | Quaternius | CC0 1.0 |
 | `arena/speaker.glb` | Speaker | https://poly.pizza/m/zOQOThSpuo | iPoly3D | CC0 1.0 |
 | `arena/spotlight.glb` | Spotlight | https://poly.pizza/m/YohOCmn0hO | iPoly3D | CC0 1.0 |
 | `arena/stage.glb` | Stage | https://poly.pizza/m/dGRAisemWy | iPoly3D | CC0 1.0 |
@@ -46,10 +47,9 @@ or Poly Pizza (poly.pizza, each model page states "Public Domain (CC0)"), then c
 | `kitchen-home/sauce-pan.glb` | Sauce Pan | https://poly.pizza/m/Lb86upv8y5 | MilkAndBanana | CC0 1.0 |
 | `kitchen-home/sofa.glb` | Sofa | https://poly.pizza/m/X5kQPKzAWp | Quaternius | CC0 1.0 |
 | `kitchen-home/stock-pot.glb` | Stock Pot | https://poly.pizza/m/CFbvPTVVEl | MilkAndBanana | CC0 1.0 |
-| `kitchen-home/table.glb` | Table | https://poly.pizza/m/41R2HTYj1O | Kenney | CC0 1.0 |
 | `kitchen-home/table-lamp.glb` | Table Lamp | https://poly.pizza/m/9Mo3JruPHY | Quaternius | CC0 1.0 |
+| `kitchen-home/table.glb` | Table | https://poly.pizza/m/41R2HTYj1O | Kenney | CC0 1.0 |
 | `kitchen-home/toaster.glb` | Toaster | https://poly.pizza/m/wALulTo6gm | Kenney | CC0 1.0 |
-| `kitchen-home/tv.glb` | TV | https://poly.pizza/m/mBGTVozH1u | Quaternius | CC0 1.0 |
 | `kitchen-home/washing-machine.glb` | Washing Machine | https://poly.pizza/m/UFxsKNSl8W | Quaternius | CC0 1.0 |
 | `kitchen-home/water-bottle.glb` | Water Bottle | https://poly.pizza/m/KpxDpidn1Z | Quaternius | CC0 1.0 |
 | `kitchen-home/wicker-basket-2.glb` | Wicker Basket 02 | https://polyhaven.com/a/wicker_basket_02 | Kuutti Siitonen | CC0 1.0 |
@@ -85,9 +85,9 @@ or Poly Pizza (poly.pizza, each model page states "Public Domain (CC0)"), then c
 | `office/coat-rack-standing.glb` | Coat Rack Standing | https://poly.pizza/m/8jXUm32dKW | Kenney | CC0 1.0 |
 | `office/computer-keyboard.glb` | Computer Keyboard | https://poly.pizza/m/vsqTUPFSw6 | Kenney | CC0 1.0 |
 | `office/computer-screen.glb` | Computer Screen | https://poly.pizza/m/V5Qo141OcB | Kenney | CC0 1.0 |
-| `office/desk.glb` | Desk | https://poly.pizza/m/V86Go2rlnq | Quaternius | CC0 1.0 |
 | `office/desk-chair.glb` | Desk Chair | https://poly.pizza/m/CKSz6PB1vO | Kenney | CC0 1.0 |
 | `office/desk-fan.glb` | Desk Fan | https://poly.pizza/m/OlTLyyXoXY | CreativeTrio | CC0 1.0 |
+| `office/desk.glb` | Desk | https://poly.pizza/m/V86Go2rlnq | Quaternius | CC0 1.0 |
 | `office/houseplant.glb` | Houseplant | https://poly.pizza/m/bfLOqIV5uP | Quaternius | CC0 1.0 |
 | `office/laptop.glb` | Laptop | https://poly.pizza/m/GnbwSUiVty | Kenney | CC0 1.0 |
 | `office/metal-office-desk.glb` | Metal Office Desk | https://polyhaven.com/a/metal_office_desk | Ulan Cabanilla | CC0 1.0 |
@@ -98,8 +98,8 @@ or Poly Pizza (poly.pizza, each model page states "Public Domain (CC0)"), then c
 | `street/ad-board.glb` | Ad Board | https://poly.pizza/m/8G0qJ84VDS | Uykucukoala | CC0 1.0 |
 | `street/barrier-fixed.glb` | Barrier Fixed | https://poly.pizza/m/Fg3Nimfcfg | Quaternius | CC0 1.0 |
 | `street/barrier-single.glb` | Barrier Single | https://poly.pizza/m/wCUxgt2jSP | Quaternius | CC0 1.0 |
-| `street/bench.glb` | Bench | https://poly.pizza/m/6d92UYCIC1 | Kay Lousberg | CC0 1.0 |
 | `street/bench-2.glb` | Bench | https://poly.pizza/m/7uSlZo3n9Y | Quaternius | CC0 1.0 |
+| `street/bench.glb` | Bench | https://poly.pizza/m/6d92UYCIC1 | Kay Lousberg | CC0 1.0 |
 | `street/candles.glb` | Candles | https://poly.pizza/m/AnzHB44wlW | Quaternius | CC0 1.0 |
 | `street/car-hatchback.glb` | Car Hatchback | https://poly.pizza/m/BG0KAhmGDt | Kay Lousberg | CC0 1.0 |
 | `street/cart.glb` | Cart | https://poly.pizza/m/l7bDe7ak6j | Quaternius | CC0 1.0 |
@@ -109,16 +109,16 @@ or Poly Pizza (poly.pizza, each model page states "Public Domain (CC0)"), then c
 | `street/flowers.glb` | Flowers | https://poly.pizza/m/NBUxHir6FJ | Quaternius | CC0 1.0 |
 | `street/jar.glb` | Jar | https://poly.pizza/m/XGe3q5zQ5s | CreativeTrio | CC0 1.0 |
 | `street/market-stand.glb` | Market Stand | https://poly.pizza/m/DGIM5HGISb | Quaternius | CC0 1.0 |
-| `street/scaffolding.glb` | Scaffolding | https://poly.pizza/m/AYQd5RQ8w4 | lakescorp | CC0 1.0 |
 | `street/standing-picture-frame.glb` | Standing Picture Frame 01 | https://polyhaven.com/a/standing_picture_frame_01 | James Ray Cock | CC0 1.0 |
 | `street/street-lamp.glb` | Street Lamp 01 | https://polyhaven.com/a/street_lamp_01 | Josh Dean | CC0 1.0 |
-| `street/street-light.glb` | Street Light | https://poly.pizza/m/nFwrlcLvM5 | Quaternius | CC0 1.0 |
 | `street/street-light-2.glb` | Streetlight | https://poly.pizza/m/vPFSLYh6sg | Kay Lousberg | CC0 1.0 |
+| `street/street-light.glb` | Street Light | https://poly.pizza/m/nFwrlcLvM5 | Quaternius | CC0 1.0 |
 | `street/sushi-truck.glb` | Sushi Truck | https://poly.pizza/m/OgrROxABGT | Quaternius | CC0 1.0 |
 | `street/taxi.glb` | Taxi | https://poly.pizza/m/u5PhZQ35XG | Kay Lousberg | CC0 1.0 |
 | `street/traffic-cone.glb` | Traffic Cone | https://poly.pizza/m/lAx8JytxGD | Quaternius | CC0 1.0 |
 | `street/traffic-light.glb` | Traffic Light | https://poly.pizza/m/apWcPbwhlq | Quaternius | CC0 1.0 |
 | `street/trashcan-large.glb` | Trashcan Large | https://poly.pizza/m/eYNKnGlhon | Quaternius | CC0 1.0 |
+| `street/truss-post.glb` | Scaffolding (truss post) | https://poly.pizza/m/AYQd5RQ8w4 | lakescorp | CC0 1.0 |
 | `supermarket/can-fridge.glb` | Can Fridge | https://poly.pizza/m/8OHbykvREu | Quaternius | CC0 1.0 |
 | `supermarket/cash-register.glb` | Cash Register 01 | https://polyhaven.com/a/CashRegister_01 | Joe Seabuhr | CC0 1.0 |
 | `supermarket/cooler-box.glb` | Cooler Box | https://poly.pizza/m/63CkYTkeQP | MilkAndBanana | CC0 1.0 |
