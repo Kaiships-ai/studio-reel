@@ -3,6 +3,7 @@
 //   const p = propKit(stage, COLLIDE);                          // COLLIDE: the set's export, place() pushes its solid boxes (collide.js)
 //   await p.load(['street/bench', 'hospital/iv-stand']);         // inside build(), before __ready
 //   p.place('street/bench', [x, y, 0], 180, { scale, tint, shadow: true, solid: true, ink: true })   // -> the THREE.Group
+// Solid boxes only at 0, 90, 180, 270 deg; any other turn (and solid: false) is listed in COLLIDE.unchecked, not collision-checked.
 //   catalog()  -> [{ name, place, size: [w, d, h], tris, source: 'glb' | 'code' }]
 // Real size by default (the importer scaled every .glb to metres; built props are drawn in metres): scale 1. A contact
 // shadow (cast.js's foot blob, sized to the prop's footprint near the floor) sits under each prop unless shadow: false;

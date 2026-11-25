@@ -34,7 +34,6 @@ const { SIT } = await import('../../styles/stick-man/engine/verbs.js');
 
 const stage = () => ({ scene: new THREE.Scene(), prop() {}, glow() {} });
 const T = p => new THREE.Vector3(p[0], p[2], -p[1]);
-const inside = (p, boxes) => inBoxes([T(p)], boxes).map(h => h.name);
 async function placed(name, at = [0, 0, 0], deg = 0, o = {}) { const S = stage(), C = [], p = propKit(S, C); await p.load([name]); const g = p.place(name, at, deg, o); S.scene.updateMatrixWorld(true); return { S, C, g, p }; }
 // the points engine/play.js tests against COLLIDE: the torso grid from hip to shoulder, both knees and ankles (Blender metres)
 function body({ at = [0, 0], yaw = 0, hip = HIP_V * W_M, sh = SHOULDER_V * W_M, knee, ankle }) {

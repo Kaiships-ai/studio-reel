@@ -50,7 +50,7 @@ Nobody's body, arm or held prop is checked against it, and a prop let go falls t
 
 One mechanism for every prop but seats and beds: its solid parts are measured from its triangles (`kit/props/parts.js`). The gaps
 that count as solid: what a thing 24 cm wide cannot get into (a railing's bars, a bin, under a stage's skirt), and a gap under
-0.50 m tall (under a bed, between two shelves). A box whose corner stands more than 3.5 cm out of the prop's plan outline (its
+0.50 m tall (under a bed, between two shelves). A box whose corner stands more than 3 cm out of the prop's plan outline (its
 convex hull: a round bin, a truck's nose) is cut again, up to 24 cuts.
 
 | Prop | Boxes |
@@ -66,10 +66,12 @@ convex hull: a round bin, a truck's nose) is cut again, up to 24 cuts.
 A figure may: stand on a stage's deck, under the scaffold or the tower, beside a leg, sit with its legs under a table, desk or
 bench. A figure through a truss, a post, a top, or standing inside a deck is a fault.
 
-Limits: a box is the bounds of what it holds, so a concave side (the L sofa's inner corner, between a truck's wheels, under a
-counter's overhang) and a round side between two cuts stay solid. The stages' rounded front stands up to about 11 cm (scale 1)
-to 15 cm (1.5) out of the deck in front of it, and a seat's block up to 7 cm (the rocking chair's rockers): a figure standing
-that close beside them is flagged. Seats (sitting) and bed backs are held only at the quarters.
+Limits (measured: a box corner the body gate reads against the prop's convex outline): a box is the bounds of what it holds,
+so a concave side (the L sofa's inner corner, between a truck's wheels, under a counter's overhang) stays solid. Over 5 cm:
+`arena/stage`'s rounded front 10.5 cm (scale 1), 13.5 (1.3), 15.4 (1.5); seat blocks (not cut to the outline) up to 6.8 / 9.1 /
+10.6 cm (`care-home/rockingchair`'s rockers), `street/bench` 4.8 / 7.1 / 8.7, `office/office-chair` 4.7 / 6.2 / 7.3,
+`kitchen-home/sofa` 5.2 at 1.3; `street/food-truck` 5.0 / 5.5 / 5.8 and `street/screen-truck` 5.0 / 5.6 (a tapered nose under a
+wider awning), `supermarket/glass-cabinet` 5.4 at 1.3. A figure standing that close beside them is flagged.
 
 **solid: false** (or a caller's `grace`) is still for: a prop the film moves; a seat, bed, gurney or wheelchair with a figure's
 legs or a trolley under it (a seat is a block to the floor); sitting or standing on top of a table or desk, or lying on a
@@ -77,7 +79,9 @@ counter (`grace: 0.01`: the top loses its reach, its box stays); a door or shutt
 a fridge, a bin or the food truck (closed props are solid inside); a prop let go into a tray, a basket or between two shelves.
 A scaffold's deck at 2 m is no rest surface (the engine leaves out what is over 1.8 m).
 
-Cost: each box is about 0.016 ms per figure per frame in the gates; first placing of a prop measures its parts (below).
+Cost: about 0.04 ms per box per figure per frame in the gate loop (40 mixed props: 337 boxes, 14 ms; 68303386: 246, 12 ms).
+The first placing of a prop measures it: about 0.3 s a prop (0.9 s for a desk), once per name and scale; the same props
+again take 2 ms each. Nothing is cached in a file.
 
 The second `street/bench` placed is `street/bench@2`, its boxes `street/bench@2#1..` (`street/bench-2` is another prop).
 
