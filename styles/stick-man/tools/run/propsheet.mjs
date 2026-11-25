@@ -2,7 +2,7 @@
 // rendered alone in the kit's look with its name, source, size and triangles (propsheet.html, headless Chrome on the GPU).
 // --view turns every prop straight to, away from or side-on to the camera (a check of its front); default: 3/4 front.
 //   node styles/stick-man/tools/run/propsheet.mjs [--places street,lab] [--cell 240] [--cols 6] [--view front|back|side] [--out films/kit-props-list/sheet]
-// Writes <out>/<place>.png. Renders on the GPU: run it on the render machine, not a laptop.
+// Writes <out>/<place>.png (with --view: <out>/<view>-<place>.png). Renders on the GPU: run it on the render machine, not a laptop.
 import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
 import { serveFiles, launchGpu } from '#tools/render/pageserver.mjs';
 
@@ -25,7 +25,7 @@ try {
     await page.waitForFunction(() => window.__sheet || window.__sheetError, null, { timeout: 300000, polling: 250 });
     const err = await page.evaluate(() => window.__sheetError);
     if (err) throw new Error(`${place}: ${err}`);
-    const url = await page.evaluate(() => window.__sheet), file = path.join(out, `${place}.png`);
+    const url = await page.evaluate(() => window.__sheet), file = path.join(out, `${view ? `${view}-` : ''}${place}.png`);
     fs.writeFileSync(file, Buffer.from(url.split(',')[1], 'base64'));
     console.log(`${place}: ${path.relative(REPO, file)} (${((Date.now() - t0) / 1000).toFixed(1)} s)`);
     await page.close();

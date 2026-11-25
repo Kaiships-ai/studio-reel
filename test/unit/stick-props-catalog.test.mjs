@@ -1,6 +1,6 @@
 // The stick-man kit's shared prop catalog (kit/props/catalog.js): the CC0 .glb props (assets/props/<place>/<slug>.glb)
 // and the code-built ones (kit/props/built.js), one name space '<place>/<slug>'. Every prop is held to: a file that parses
-// and matches the manifest's triangles, a real height (kit/props/sizes.js PROP_HEIGHT), its pivot on the floor, no
+// and matches the manifest's triangles, a real height by class (kit/props/sizes.js PROP_HEIGHT), its pivot on the floor, no
 // near-white or black base colour (the valuegate 'blown object' / crushed intent: importer clamp max 0.90 sRGB, floor 0.08),
 // and a load-time budget (assets/props <= 15 MB, one file <= 400 KB, a built prop <= 6k triangles).
 import { test } from 'node:test';
@@ -13,7 +13,7 @@ const ctx = new Proxy({}, { get: (_, k) => k === 'measureText' ? () => ({ width:
 globalThis.document ??= { createElement: () => ({ width: 0, height: 0, getContext: () => ctx }) };
 const { BUILT, builtGroup } = await import('../../styles/stick-man/kit/props/built.js');
 const { catalog, propNames, resolveProp } = await import('../../styles/stick-man/kit/props/catalog.js');
-const { PROP_HEIGHT, heightRange, poseFault, PROP_POSE, NEAR_BLACK, BLACK_OK, DARK, FRONT, NO_FRONT, frontFault, propLuma, diagonalSplits } = await import('../../styles/stick-man/kit/props/sizes.js');
+const { PROP_HEIGHT, heightRange, heightClasses, SEAT, blackShare, frontSigns, poseFault, PROP_POSE, NEAR_BLACK, BLACK_OK, DARK, FRONT, NO_FRONT, frontFault, propLuma, diagonalSplits } = await import('../../styles/stick-man/kit/props/sizes.js');
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../styles/stick-man/assets/props');
 const MAN = JSON.parse(fs.readFileSync(path.join(ROOT, 'manifest.json'), 'utf8'));
@@ -56,17 +56,17 @@ function glbTris(b, j, o0) {
   for (const m of j.meshes) for (const p of m.primitives) {
     const P = read(p.attributes.POSITION), ix = p.indices != null ? read(p.indices) : Uint32Array.from({ length: P.length / 3 }, (_, i) => i), pb = j.materials?.[p.material]?.pbrMetallicRoughness || {};
     const c = pb.baseColorTexture ? null : (pb.baseColorFactor || [1, 1, 1]).slice(0, 3).map(s8);
-    for (let i = 0; i < ix.length; i += 3) out.push({ v: [0, 1, 2].map(k => { const q = 3 * ix[i + k]; return [P[q], -P[q + 2], P[q + 1]]; }), c });
+    for (let i = 0; i < ix.length; i += 3) out.push({ v: [0, 1, 2].map(k => { const q = 3 * ix[i + k]; return [P[q], -P[q + 2], P[q + 1]]; }), c, map: !c });
   }
   return out;
 }
 // a built prop measured like a glb: triangles, bounds, flat colours (painted cards carry a map and are skipped)
 function readBuilt(name) {
   const g = builtGroup(name); g.updateMatrixWorld(true);
-  const box = new THREE.Box3().setFromObject(g), colours = [], list = []; let tris = 0; const p = new THREE.Vector3();
+  const box = new THREE.Box3().setFromObject(g, true), colours = [], list = []; let tris = 0; const p = new THREE.Vector3();
   g.traverse(o => { if (!o.isMesh) return; const ix = o.geometry.index; tris += (ix ? ix.count : o.geometry.attributes.position.count) / 3;
     const mt = o.material, at = o.geometry.attributes.position, flat = mt.map || !mt.color || mt.transparent ? null : [mt.color.r, mt.color.g, mt.color.b].map(s8);
-    for (let i = 0; i < (ix ? ix.count : at.count); i += 3) list.push({ v: [0, 1, 2].map(k => { p.fromBufferAttribute(at, ix ? ix.getX(i + k) : i + k).applyMatrix4(o.matrixWorld); return [p.x, -p.z, p.y]; }), c: flat });
+    for (let i = 0; i < (ix ? ix.count : at.count); i += 3) list.push({ map: !!mt.map, v: [0, 1, 2].map(k => { p.fromBufferAttribute(at, ix ? ix.getX(i + k) : i + k).applyMatrix4(o.matrixWorld); return [p.x, -p.z, p.y]; }), c: flat });
     if (mt.map || !mt.color) return; colours.push({ name: o.name || mt.type, srgb: [mt.color.r, mt.color.g, mt.color.b].map(s8) }); });
   return { tris, lo: [box.min.x, -box.max.z, box.min.y], hi: [box.max.x, -box.min.z, box.max.y], colours, list };
 }
@@ -93,8 +93,8 @@ test('catalog: every code-built item of the prop list is built, in its place; re
   for (const [place, list] of Object.entries(CODE_BUILT)) for (const id of list) { const [n, b] = Object.entries(BUILT).find(([, b]) => b.id === id); assert.equal(n.split('/')[0], place, `${id} lives in ${place}`); assert.ok(b.make, n); }
   assert.ok(BUILT['kitchen-home/tv'] && BUILT['street/scaffolding'], 'the code-built TV and scaffolding replace the misnamed glbs');
   assert.equal(resolveProp('kitchen-home/dishrack').source, 'code', 'the code-built dish rack replaces the stool-like glb');
-  for (const n of ['care-home/wall-clock', 'office/mug', 'lab/bunsen-burner', 'supermarket/shopping-basket']) assert.equal(resolveProp(n).source, 'code', n);
-  const drop = { y9mMoShXnI: 'dish rack', wall_clock: 'blank clock', fis2ugeLbn: 'broken mug', wicker_basket_01: 'bread tray' };
+  for (const n of ['care-home/wall-clock', 'office/mug', 'lab/bunsen-burner', 'supermarket/shopping-basket', 'kitchen-home/pan', 'kitchen-home/toaster', 'street/construction-barrier', 'street/food-truck', 'street/bouquet', 'street/candle-jar', 'supermarket/security-camera', 'care-home/fancy-picture-frame']) assert.equal(resolveProp(n).source, 'code', n);
+  const drop = { y9mMoShXnI: 'dish rack', wall_clock: 'blank clock', fis2ugeLbn: 'broken mug', wicker_basket_01: 'bread tray', f9my9iJZMv: 'black pan', wALulTo6gm: 'slab toaster', '4mrO9ueiQr': 'blank barrier', security_camera_01: 'camera hood', nNGtcp9qK2: 'sink cabinet', CFbvPTVVEl: 'bucket pot', '63CkYTkeQP': 'cooler slab', vsqTUPFSw6: 'key-less keyboard', clipboard: 'bare clipboard', cardboard_box_01: 'sack box', fancy_picture_frame_01: 'empty frame' };
   for (const v of Object.values(MAN.props)) assert.ok(!drop[v.id], `${v.file}: the dropped ${drop[v.id]} stays out of the manifest`);
   assert.equal(resolveProp('misc/scuba-tanks').entry.id, 'j59k7ctnZM'); assert.equal(resolveProp('lab/tripod-stand').entry.id, 'bunsen_burner');
   assert.ok(BUILT['supermarket/shelf-stocked'] && BUILT['supermarket/shelf-end-cap']);
@@ -116,13 +116,15 @@ test('catalog: catalog() lists every prop with place, size, tris and source; an 
 test('catalog: every prop stands at a real height, its pivot on the floor at its bottom centre', () => {
   const bad = [];
   for (const { name, m } of ALL()) {
-    const h = m.hi[2] - m.lo[2], [lo, hi] = heightRange(name);
+    const h = m.hi[2] - m.lo[2], cls = heightClasses(name); if (cls.length !== 1) { bad.push(`${name}: in ${cls.length} height classes (PROP_HEIGHT), want 1`); if (!cls.length) continue; }
+    const [lo, hi] = heightRange(name);
     if (!(h >= lo && h <= hi)) bad.push(`${name}: ${h.toFixed(2)} m tall, want ${lo}-${hi}`);
     if (Math.abs(m.lo[2]) > 0.01) bad.push(`${name}: bottom at z ${m.lo[2].toFixed(3)} (pivot not on the floor)`);
     for (const k of [0, 1]) { const c = (m.lo[k] + m.hi[k]) / 2, w = m.hi[k] - m.lo[k]; if (Math.abs(c) > 0.08 * w + 0.02) bad.push(`${name}: centre ${'xy'[k]} ${c.toFixed(2)} off the pivot`); }
   }
   assert.deepEqual(bad, []);
-  assert.ok(PROP_HEIGHT.default[1] <= 3.5 && PROP_HEIGHT.big.some(([re]) => re.test('arena/concert-stage')));
+  for (const [cls, , [lo, hi]] of PROP_HEIGHT) assert.ok(lo >= 0.01 && hi <= 5 && hi / lo <= 6.5, `${cls}: ${lo}-${hi} m holds nothing`);
+  for (const re of [SEAT.sit, SEAT.lie]) for (const n of re.source.match(/[a-z-]+(?=[|)])/g)) assert.ok(ALL().some(x => x.name.endsWith('/' + n) && re.test(x.name)), `SEAT names ${n}`);
 });
 
 // Contact sheets 25/11: a 20 cm mic stand, a screen rig on its side, a phone screen to +x, a tipped jug. The pose table
@@ -149,24 +151,48 @@ test('catalog: no prop is too dark as a whole (area-weighted luminance, DARK.ok 
   const bad = [], all = ALL();
   for (const { name, m } of all) { const l = propLuma(m.list); if (l != null && l < DARK.min && !DARK.ok[name]) bad.push(`${name}: ${l.toFixed(3)} < ${DARK.min}`); }
   assert.deepEqual(bad, []);
-  for (const n of Object.keys(DARK.ok)) assert.ok(propLuma(all.find(x => x.name === n).m.list) < DARK.min, `DARK.ok names ${n}, which is not that dark`);
+  for (const n of Object.keys(DARK.ok)) assert.ok(all.some(x => x.name === n), `DARK.ok names ${n}, not in the catalog`);
   const tri = c => [{ v: [[0, 0, 0], [1, 0, 0], [0, 1, 0]], c: c.map(v => v / 255) }];
   assert.ok(propLuma(tri([36, 34, 39])) < DARK.min && propLuma(tri([41, 41, 41])) < DARK.min, 'the old armchair and sofa cloth');
 });
 
-// 25/11: the lounge chair, desk chair, screen, laptop and picture frame showed their backs, and seven more
-test('catalog: every .glb prop faces the front (FRONT, measured) or says why it has none (NO_FRONT)', () => {
-  const glb = ALL().filter(x => x.src === 'glb'), bad = [];
-  for (const { name, m } of glb) {
-    const none = Object.values(NO_FRONT).filter(re => re.test(name)).length;
-    if (!FRONT[name] && !none) bad.push(`${name}: in neither FRONT nor NO_FRONT`);
-    if (none + (FRONT[name] ? 1 : 0) > 1) bad.push(`${name}: in FRONT and NO_FRONT`);
-    const f = frontFault(name, m.list); if (f) bad.push(`${name}: ${f}`);
-    if (FRONT[name] && ['mark', 'back', 'x'].includes(FRONT[name][0])) {           // the row must fail on the same prop turned round
-      const turned = m.list.map(t => ({ c: t.c, v: t.v.map(([x, y, z]) => [-x, -y, z]) })); if (!frontFault(name, turned)) bad.push(`${name}: FRONT row also holds turned 180 (it proves nothing)`); }
-  }
-  for (const n of Object.keys(FRONT)) if (!glb.some(x => x.name === n)) bad.push(`FRONT names ${n}, not in the catalog`);
+// review 25/11: the pan was exempt by name, and a black deck under a white truss (arena/stage, mean 0.40) passed the mean
+test('catalog: no prop has a large black part (the share of its area under DARK.black)', () => {
+  const bad = []; for (const { name, m } of ALL()) { const s = blackShare(m.list); if (s >= DARK.area && !DARK.ok[name]) bad.push(`${name}: ${(100 * s).toFixed(0)} % of it under ${DARK.black}`); }
   assert.deepEqual(bad, []);
+  const sq = (c, w) => ({ v: [[0, 0, 0], [w, 0, 0], [0, 1, 0]], c }); assert.ok(Math.abs(blackShare([sq([0.1, 0.1, 0.1], 1), sq([0.9, 0.9, 0.9], 3)]) - 0.25) < 1e-9);
+});
+
+// 25/11: the lounge chair, desk chair, screen, laptop and picture frame showed their backs, and seven more
+test('catalog: every prop faces the front (FRONT, measured) or says why it has none (NO_FRONT, measured too)', () => {
+  const all = ALL(), bad = [];
+  for (const { name, m } of all) {
+    const none = Object.entries(NO_FRONT).filter(([, re]) => re.test(name)).map(([k]) => k);
+    if (!FRONT[name] && !none.length) bad.push(`${name}: in neither FRONT nor NO_FRONT`);
+    if (none.length + (FRONT[name] ? 1 : 0) > 1) bad.push(`${name}: in FRONT and NO_FRONT`);
+    if (['round', 'the same both ways'].includes(none[0])) { const s = frontSigns(m.list); if (s.length) bad.push(`${name}: NO_FRONT '${none[0]}', but ${s.join('; ')}`); }
+    const f = frontFault(name, m.list); if (f) bad.push(`${name}: ${f}`);
+    if (FRONT[name] && FRONT[name][0] !== 'eye') {                                  // the row must fail on the same prop turned round
+      const turned = m.list.map(t => ({ ...t, v: t.v.map(([x, y, z]) => [-x, -y, z]) })); if (!frontFault(name, turned)) bad.push(`${name}: FRONT row also holds turned 180 (it proves nothing)`); }
+  }
+  for (const n of Object.keys(FRONT)) if (!all.some(x => x.name === n)) bad.push(`FRONT names ${n}, not in the catalog`);
+  assert.deepEqual(bad, []);
+});
+
+// review 25/11: the red cross on white is a protected emblem (Geneva Conventions)
+test('catalog: no red cross: the first aid kit is a white cross on green', () => {
+  const kit = ALL().find(x => x.name === 'hospital/first-aid-kit'), cs = kit.m.colours.map(c => c.srgb);
+  assert.deepEqual(cs.filter(([r, g, b]) => r > 1.4 * Math.max(g, b)), [], 'a red on it'); assert.ok(cs.some(([r, g, b]) => g > 1.4 * Math.max(r, b)), 'its green');
+});
+
+test('catalog: what the importer imports is tracked (assets/props/list.json): every .glb has its row, its licence is the row\'s, CC0', () => {
+  const text = fs.readFileSync(path.join(ROOT, 'list.json'), 'utf8'), rows = new Map(JSON.parse(text).items.map(i => [i.id, i]));
+  assert.doesNotMatch(text, /\/Users\/|\/home\/|ksa-|[a-z]+@[a-z]+\./); assert.equal(rows.size, JSON.parse(text).items.length, 'an id twice');
+  for (const [slug, v] of Object.entries(MAN.props)) { const r = rows.get(v.id); assert.ok(r, `${slug}: ${v.id} is not in list.json`);
+    for (const k of ['id', 'place', 'name', 'size_m', 'source', 'source_url', 'author', 'licence']) assert.ok(r[k], `${v.id}: ${k}`);
+    assert.equal(v.licence, r.licence, slug); assert.match(r.licence, /^CC0/, slug); assert.equal(v.source_url, r.source_url, slug); }
+  const py = fs.readFileSync(path.join(ROOT, '../../tools/run/import_props.py'), 'utf8');
+  assert.doesNotMatch(py, /'licence': '/, 'the licence is written in the importer, not read from the list'); assert.match(py, /'list': 'styles\/stick-man\/assets\/props\/list\.json'/);
 });
 
 // 25/11: a picture, a desk top and a mirror split along the diagonal in two colours

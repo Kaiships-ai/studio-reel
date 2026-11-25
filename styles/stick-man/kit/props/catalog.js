@@ -1,6 +1,6 @@
 // The kit's shared prop catalog (docs/PROPS.md): every set prop by one name '<place>/<slug>', a CC0 .glb from
 // assets/props/ (glb.js glbKit: toon, ink, COLLIDE) or a code-built one from kit/props/built.js; a film never cares which.
-//   const p = propKit(stage, COLLIDE);                          // COLLIDE: the set's export, place() pushes one box per prop
+//   const p = propKit(stage, COLLIDE);                          // COLLIDE: the set's export, place() pushes its solid boxes (collide.js)
 //   await p.load(['street/bench', 'hospital/iv-stand']);         // inside build(), before __ready
 //   p.place('street/bench', [x, y, 0], 180, { scale, tint, shadow: true, solid: true, ink: true })   // -> the THREE.Group
 //   catalog()  -> [{ name, place, size: [w, d, h], tris, source: 'glb' | 'code' }]
@@ -11,6 +11,7 @@ import * as THREE from 'three';
 import { B, lin } from '#engine/look.js';
 import { contactTex } from '#engine/cast.js';
 import { glbKit, bodyBox } from '#kit/sets/glb.js';
+import { propBoxes } from './collide.js';
 import { tm } from '#kit/sets/dress.js';
 import { BUILT, builtGroup } from './built.js';
 import MAN from '../../assets/props/manifest.json' with { type: 'json' };
@@ -61,8 +62,15 @@ function contactShadow(g) {
   s.userData.noPrepass = true; s.userData.contact = true; s.name = 'contact'; g.add(s); return s;
 }
 
+// the solid boxes this module pushed, per COLLIDE array: a set built twice (two acts, one module) places the same props again,
+// and the same box is not pushed twice. Nothing is ever taken out of the array: it is the film's, other kits write into it.
+const OWN = new WeakMap();
+const boxKey = b => `${b.name.replace(/-\d+(#\d+)?$/, '')}|${b.lo}|${b.hi}`;
+
 export function propKit(stage, collide = []) {
-  const { scene, prop, glow } = stage, glb = glbKit(stage, 'props', collide), loaded = new Set(), count = {};
+  const { scene, prop, glow } = stage, glb = glbKit(stage, 'props', []), loaded = new Set(), count = {};   // glbKit empties the array it is given: never the film's
+  if (!OWN.has(collide)) OWN.set(collide, new WeakSet());
+  const own = OWN.get(collide), push = b => { if (collide.some(o => own.has(o) && boxKey(o) === boxKey(b))) return; own.add(b); collide.push(b); };
   return {
     collide, catalog,
     async load(names) {
@@ -78,14 +86,15 @@ export function propKit(stage, collide = []) {
       else {
         g = builtGroup(name);
         g.traverse(m => { if (!m.isMesh) return;
+          m.userData.hollow = true;                             // its boxes are in COLLIDE as a .glb's are: engine/solids.js solidBoxes would report its box meshes a second time
           if (tint && m.material.color && !m.material.map && !m.material.transparent) m.material = tm([m.material.color.r * tint[0], m.material.color.g * tint[1], m.material.color.b * tint[2]], m.material.userData.glowy ? { glowy: 0.6 } : {});
           if (m.material.userData.glowy) glow(m, 0.25); });
         g.position.copy(B(...at)); g.rotation.y = deg * Math.PI / 180; g.scale.setScalar(scale);
         scene.add(g); if (ink) prop(g);
       }
       count[name] = (count[name] || 0) + 1; g.name = `${name}-${count[name]}`;
+      if (solid) for (const b of propBoxes(g, name, { band, grace })) push(b);
       if (shadow ?? !(r.source === 'code' && r.entry.wall)) contactShadow(g);
-      if (solid) { const b = bodyBox(g, band); if (b) collide.push({ name: g.name, ...b, ...(grace != null ? { grace } : {}) }); }
       return g;
     },
   };

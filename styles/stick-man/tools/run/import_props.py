@@ -1,7 +1,8 @@
 # Downloaded CC0 props -> stick-man kit .glb (GLB.md conventions, same as export_glb.py). Runs inside Blender, headless:
 #   nice -n 10 Blender -b --factory-startup --python styles/stick-man/tools/run/import_props.py -- [--places street,hospital] [--ids a,b]
-#       [--list films/kit-props-list/manifest.json] [--src films/kit-props-src] [--out styles/stick-man/assets/props]
-# Per prop (one item of the list, its files in <src>/<id>/): import glTF/GLB/FBX/OBJ, bake every mesh's world transform,
+#       [--list styles/stick-man/assets/props/list.json] [--src films/kit-props-src] [--out styles/stick-man/assets/props]
+# The list is tracked (ids, place, name, size, source, licence); the downloads are not: fetch each model from its source_url into
+# <src>/<id>/ first (docs/PROPS.md). Per prop (one item of the list, its files in <src>/<id>/): import glTF/GLB/FBX/OBJ, bake every mesh's world transform,
 # merge into ONE triangulated mesh, turn it so its long side matches the list's w x d (vehicles: long side on x, as the
 # backdrop pack), scale to the real size (Poly Haven is already metres; Poly Pizza sizes are estimates, SIZE below
 # corrects the odd ones), pivot = bottom centre on the floor (z = 0). Colours: every face takes its material's colour
@@ -30,13 +31,15 @@ SIZE = {
     '6u4c1kSsiP': (4.5, 'stage deck + truss rig: the 10 m fit left the truss 2.6 m high, figures would hit it'),
     'dGRAisemWy': (3.5, 'round stage with a backdrop truss: the 6 m fit left the truss 2.4 m high'),
     'j59k7ctnZM': (0.65, 'a scuba twin set, not a lab tank: real ~0.65 m tall'),
+    '8G0qJ84VDS': (1.1, 'a sandwich board is ~1.1 m; the 2.5 m list size is a billboard'),
+    'Fsk9PE6o74': (0.5, 'a 9 kg propane bottle with its collar is ~0.5 m; the list says 1 m'),
     'OgrROxABGT': (3.0, 'chunky food truck: a 5 m length fit made it 4.6 m tall; real food truck ~3 m'),
 }
 # id -> degrees about z, applied after import instead of the auto turn. Front to -y: the sources of these face +y (held by
 # kit/props/sizes.js FRONT, tests and the front/back sheets of 25/11); a prop the auto turn had turned 90 says 270
 ROT = {
-    'RY93lbAIFg': 180, 'CKSz6PB1vO': 180, 'V5Qo141OcB': 180, 'GnbwSUiVty': 180, 'vsqTUPFSw6': 180,      # lounge chair, desk chair, screen, laptop, keyboard
-    '36ODvl4CIy': 180, 'vUsvf2HGDv': 180, 'nNGtcp9qK2': 180, 'kTJU2y4R15': 180,                          # fridge, microwave, sink, stove
+    'RY93lbAIFg': 180, 'CKSz6PB1vO': 180, 'V5Qo141OcB': 180, 'GnbwSUiVty': 180,      # lounge chair, desk chair, screen, laptop
+    '36ODvl4CIy': 180, 'vUsvf2HGDv': 180, 'kTJU2y4R15': 180,                          # fridge, microwave, stove
     'M2cJ5sVUgJ': 180, '3fFsumkkQD': 270, 'standing_picture_frame_01': 270,                              # books (spines), briefcase (clasp), picture frame
     'DGIM5HGISb': 90, 'SU28ptta34': 50,                                                                  # market stand: its long counter to the front; bottle: its label
 }
@@ -49,11 +52,11 @@ ORIENT = {
 # id -> (axis, above, reason): faces whose centre lies above this source coordinate are cut before turning
 CROP = {'mBGTVozH1u': (2, 0.21, 'the antenna pole over the screen: with the truss stood up it would stick 2.4 m out sideways')}
 # id -> tris, where the size's budget shreds the model (a woven or many-part model decimated to the small budget)
-BUDGET = {'cardboard_box_01': 4000, 'wicker_basket_02': 4000, 'industrial_microscope': 3500, 'vintage_microscope': 3000,
-          'plastic_thermos': 2500, 'security_camera_01': 2500, 'clipboard': 2000, 'fancy_picture_frame_01': 1200, 'standing_picture_frame_01': 1600,
+BUDGET = {'wicker_basket_02': 4000, 'industrial_microscope': 3500, 'vintage_microscope': 3000,
+          'plastic_thermos': 2500, 'standing_picture_frame_01': 1600,
           'bunsen_burner': 2000}
 # id -> colours, where the photo's wear reads as patches of camouflage (the default is K)
-COLOURS = {'cardboard_box_01': 1, 'wicker_basket_02': 1, 'tea_set_01': 1, 'hand_truck': 4, 'plastic_thermos': 3}
+COLOURS = {'wicker_basket_02': 1, 'tea_set_01': 1, 'hand_truck': 4, 'plastic_thermos': 3}
 MERGE = {'3fFsumkkQD': 0.35}      # id -> sRGB distance instead of NEAR (a gradient painted over many small folds)
 SKIP_MAT = {'standing_picture_frame_01': 'standing_picture_frame_01_glass'}     # id -> a material whose faces are left out (a glass pane in front of the picture)
 OBJECTS = {'bunsen_burner': 'burner_stand'}     # id -> the only object of the file that is kept
@@ -62,6 +65,17 @@ DROP = {
     'y9mMoShXnI': 'reads as an upside-down stool (four posts on a plank), not a dish rack: kitchen-home/dishrack',
     'wall_clock': 'its hands and marks are a texture behind a glass mesh: a blank disc as flat colours: care-home/wall-clock',
     'fis2ugeLbn': 'two interpenetrating rings round a broken cup: office/mug',
+    'f9my9iJZMv': 'one near-black colour, no rim or inside: kitchen-home/pan',
+    'wALulTo6gm': 'a smooth slab, its slots and lever not modelled on the sides a camera sees: kitchen-home/toaster',
+    '4mrO9ueiQr': 'a blank white board: street/construction-barrier',
+    'security_camera_01': 'a hood whose lens is 2 % of it, hidden under the hood: supermarket/security-camera',
+    'nNGtcp9qK2': 'one oven-like door under a solid top, no bowl: kitchen-home/kitchen-sink',
+    'CFbvPTVVEl': 'tapers like a bucket: kitchen-home/stock-pot',
+    '63CkYTkeQP': 'one pale colour, no lid or handle: supermarket/cooler-box',
+    'vsqTUPFSw6': 'a tray with two flat patches, no keys: office/computer-keyboard',
+    'clipboard': 'a board with no paper: hospital/clipboard',
+    'cardboard_box_01': 'its photo texture is the box; as one colour a lumpy sack: misc/cardboard-box',
+    'fancy_picture_frame_01': 'an empty frame: care-home/fancy-picture-frame',
     'wicker_basket_01': 'a 12 cm bread tray of loose twigs, not a shopping basket: supermarket/shopping-basket',
 }
 # id -> ((from sRGB 0-255, to sRGB 0-255), ...): the palette colour nearest to `from` becomes `to` (source colours the kit's
@@ -77,11 +91,29 @@ RECOLOUR = {
     'SU28ptta34': (((30, 30, 30), (46, 88, 56)),),                                       # bottle: green glass
     'bunsen_burner': (((5, 6, 125), (150, 148, 142)),),                                  # tripod: the gauze's baked blue light
     'korean_fire_extinguisher_01': (((174, 126, 121), (206, 196, 180)), ((131, 101, 102), (206, 196, 180))),   # extinguisher: one label colour
+    # a large part near black (sizes.js DARK.area): charcoal, slate or wood with form left in it
+    'zOQOThSpuo': (((25, 25, 25), (70, 72, 80)), ((59, 59, 59), (92, 94, 102))),         # speaker cabinet
+    'YohOCmn0hO': (((29, 29, 28), (74, 76, 84)),),                                       # spotlight can
+    '6u4c1kSsiP': (((20, 20, 20), (74, 76, 88)), ((59, 59, 59), (96, 98, 110))),         # concert stage deck
+    'dGRAisemWy': (((25, 25, 25), (74, 76, 88)), ((59, 59, 59), (96, 98, 110))),         # stage deck
+    'yqbacXdPsg': (((20, 20, 20), (66, 68, 74)),),                                       # mic head and base
+    '4DRZmTs3jq': (((20, 20, 20), (52, 66, 98)), ((26, 25, 50), (78, 80, 90))),          # smartphone: screen, case
+    'k2kgBepoMU': (((45, 45, 45), (56, 72, 102)),),                                      # phone screen
+    'UfKvrZBK6C': (((50, 50, 50), (72, 74, 82)),),                                       # office chair frame
+    'BG0KAhmGDt': (((41, 41, 41), (66, 68, 76)),), 'u5PhZQ35XG': (((33, 33, 33), (66, 68, 76)),),   # hatchback, taxi: tyres and cabin
+    '8G0qJ84VDS': (((44, 40, 40), (122, 78, 50)),),                                      # ad board: wood frame
+    'standing_chalkboard_01': (((47, 47, 47), (62, 88, 80)), ((60, 40, 18), (104, 66, 36))),   # slate green
+    'street_lamp_01': (((6, 6, 6), (52, 54, 60)),), 'QmYKHtUnxb': (((41, 41, 41), (98, 106, 106)), ((60, 60, 60), (82, 90, 92))),   # lamp head, dumpster lid
+    'vintage_microscope': (((26, 30, 43), (56, 62, 82)),), 'tool_cart': (((53, 48, 36), (88, 82, 66)),),
+    'TPqvwkyWdV': (((45, 45, 45), (58, 62, 72)),), 'OgrROxABGT': (((66, 66, 66), (84, 86, 94)),),   # radio case (then LIFT), sushi truck trim
+    'medical_box': (((16, 65, 33), (46, 112, 66)),),                                     # medical box lid
+    'U8yQZ9l0HZ': (((70, 39, 32), (122, 72, 50)),),                                      # corkboard frame
+    'Hp80p6148W': (((115, 50, 48), (24, 116, 68)),),                                     # first-aid kit: white cross on green (a red cross on white is a protected emblem)
     'OlTLyyXoXY': (((20, 20, 20), (74, 98, 124)),),                                      # desk fan: blue-grey base
 }
 LIFT = {'Rockingchair_01': 1.8, '7cobkfclNv': 1.4, 'metal_office_desk': 1.35, 'street_lamp_01': 1.5, 'TPqvwkyWdV': 1.5,
         'industrial_storage_cart': 1.35, 'industrial_microscope': 1.3, 'chemistry_set': 1.4, '9N9rYOD8On': 1.4, 'ianC28eMOF': 1.25, '3VGWnZPXmG': 1.25, 'TvaOenUAni': 1.3, 'vF7TuXCPDH': 1.25, '3fFsumkkQD': 1.35}     # id -> gain on every palette colour (too dark for the kit's contrast)
-BLACK = {'6u4c1kSsiP', 'dGRAisemWy', 'yqbacXdPsg', 'zOQOThSpuo', '4DRZmTs3jq', 'korean_fire_extinguisher_01'}   # really black things (sizes.js BLACK_OK); on every other prop a near-black colour is lifted to 0.16
+BLACK = {'korean_fire_extinguisher_01'}   # really black things (sizes.js BLACK_OK); on every other prop a near-black colour is lifted to 0.16
 TWO_SIDED = {'bfLOqIV5uP', 'OlTLyyXoXY'}     # open sheets (leaves, fan blades): a flipped copy, the kit draws front faces only
 KEEP_TEX = {'WetFloorSign_01', 'PeM20xAT0V'}     # the printed picture is the prop (a sign)
 SLUG = {'vPFSLYh6sg': 'street-light-2', 'mBGTVozH1u': 'screen-rig', 'AYQd5RQ8w4': 'truss-post', 'j59k7ctnZM': 'scuba-tanks', 'bunsen_burner': 'tripod-stand'}
@@ -91,7 +123,7 @@ K = 8
 
 def args():
     a = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
-    o = {'list': 'films/kit-props-list/manifest.json', 'src': 'films/kit-props-src', 'out': 'styles/stick-man/assets/props', 'places': '', 'ids': ''}
+    o = {'list': 'styles/stick-man/assets/props/list.json', 'src': 'films/kit-props-src', 'out': 'styles/stick-man/assets/props', 'places': '', 'ids': ''}
     for i in range(0, len(a) - 1, 2): o[a[i].lstrip('-')] = a[i + 1]
     return o
 
@@ -469,7 +501,7 @@ def export(me, path):
 
 def licenses(man, path):
     rows = sorted(man['props'].items(), key=lambda kv: (kv[1]['place'], kv[0]))
-    L = ['# Third-party props (CC0)', '', 'Every model below is public domain (CC0 1.0). Downloaded from Poly Haven (polyhaven.com, all assets CC0)',
+    L = ['# Third-party props (CC0)', '', 'Every model below is public domain (CC0); the Licence column is what its page states (tools/run/import_props.py list). Downloaded from Poly Haven (polyhaven.com, all assets CC0)',
          'or Poly Pizza (poly.pizza, each model page states "Public Domain (CC0)"), then converted by',
          '`tools/run/import_props.py` (merged, rescaled, flat colours, decimated). Credit is not required; it is given here anyway.', '',
          '| File | Name | Source | Author | Licence |', '|---|---|---|---|---|']
@@ -496,6 +528,7 @@ def main():
             clear(); _PX.clear()
             f = model_file(os.path.join(root, o['src'], it['id']))
             if not f: raise RuntimeError('no model file downloaded')
+            if not it['licence'].startswith('CC0'): raise RuntimeError(f'licence {it["licence"]!r} is not CC0')
             do_import(f)
             me, pal, kept = build(it, f)
             if it['id'] in CROP: ax, above, why = CROP[it['id']]; crop(me, ax, above)
@@ -519,7 +552,7 @@ def main():
             notes.insert(0, f'size {"x".join(str(v) for v in size)} m ({why}), scale x{scale}')
             man['props'][s] = {'id': it['id'], 'name': it['name'], 'place': pl, 'file': f'{pl}/{s}.glb', 'bytes': os.path.getsize(path),
                 'tris': len(me.polygons), 'size': dims, 'lo': [round(float(x), 3) for x in lo], 'hi': [round(float(x), 3) for x in hi],
-                'materials': len(me.materials), 'source_url': it['source_url'], 'licence': 'CC0 1.0', 'author': it.get('author', ''),
+                'materials': len(me.materials), 'source_url': it['source_url'], 'licence': it['licence'], 'author': it.get('author', ''),
                 'film_need': it.get('film_need', ''), 'notes': '; '.join(notes), 'sec': round(time.time() - t0, 2)}
             man['failed'].pop(it['id'], None)
             print('PROP', s, json.dumps(man['props'][s]), flush=True)
@@ -531,6 +564,9 @@ def main():
         with open(mp, 'w') as fh: json.dump(man, fh, indent=1)
     man['totals'] = {'props': len(man['props']), 'failed': len(man['failed']), 'bytes': sum(p['bytes'] for p in man['props'].values()),
                      'tris': sum(p['tris'] for p in man['props'].values())}
+    with open(mp, 'w') as fh: json.dump(man, fh, indent=1)
+    lic = {it['id']: it['licence'] for it in items}
+    for v in man['props'].values(): v['licence'] = lic[v['id']]      # what the list says, for every prop
     with open(mp, 'w') as fh: json.dump(man, fh, indent=1)
     licenses(man, os.path.join(out, 'LICENSES.md'))
     print('PROPS total', man['totals'], flush=True)
