@@ -1,5 +1,5 @@
-// The kit expression sheet (dev only): every expression in engine/expressions.js (face + pose + mark, one kit asset, Kai
-// 25/11) acted once on one adult figure framed from the knees up, each peak held, then the head marks on their own.
+// The kit expression sheet (dev only): every expression in engine/expressions.js (face + pose + mark, one kit asset, the approved
+// plan of 25/11) acted once on one adult figure framed from the knees up, each peak held, then the head marks on their own.
 //   node styles/stick-man/tools/render/shot.mjs --film styles/stick-man/tools/series/kitexpr --frames <PEAKS> --out review/e_%d.jpg --w 720 --h 1280
 //   ... --query marks=classic (the film without its headMarks switch: the marks every other film draws; the old | new pictures)
 //   ... --query sil=1 (the same frames on a flat key colour, no sky, no marks, a plain face: the silhouette pass)

@@ -84,3 +84,17 @@ test('the V2.1 designs stay as they are (the age layer never writes a design)', 
   const v21 = NAMES.filter(n => /^[yc]_/.test(n) && n !== 'y_calm').sort();
   assert.equal(crypto.createHash('sha256').update(JSON.stringify(v21.map(n => [n, S2.DESIGNS[n]]))).digest('hex').slice(0, 12), 'e3573a542db6');
 });
+
+test('a faceAge the face style cannot draw (the dot-eye kit faces: the buyer pack default) warns once; s2 never warns', async () => {
+  const { faceRig, FACE_STYLE } = await import('../../styles/stick-man/engine/faces.js');
+  const doc = globalThis.document, warn = console.warn, said = [], name = FACE_STYLE.name;
+  globalThis.document = { createElement: () => ({ width: 0, height: 0, style: {}, getContext: () => recorder().g }) };
+  console.warn = m => said.push(String(m));
+  try {
+    faceRig(1, { faceAge: 'elder' }); faceRig(1, {}); assert.deepEqual(said, [], 's2 draws the age');
+    FACE_STYLE.name = null;
+    faceRig(1, {}); faceRig(1, { faceAge: 'adult' }); assert.deepEqual(said, [], 'no age asked, no warning');
+    faceRig(1, { faceAge: 'elder' }); faceRig(1, { faceAge: 'child' });
+    assert.equal(said.length, 1, said.join('\n')); assert.match(said[0], /faceAge 'elder'.*face style/);
+  } finally { FACE_STYLE.name = name; console.warn = warn; globalThis.document = doc; }
+});

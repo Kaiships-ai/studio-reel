@@ -38,13 +38,6 @@ export const EXPR_DESIGNS = {
   e_cry: own('cry', { mRim: 1 }), e_scream: own('scream', { mRim: 1 }),
   e_disgust: { ...own('disgust', { mSnarl: 0, scrunch: 0, mWv: 1.3, mC: -0.75, mTongue: 1, eAsym: 0.12 }), mw: 0.8 },
 };
-export const EXPR_PURPOSE = {
-  e_proud: 'proud: round open eyes, high level brows, a big closed-teeth grin', e_smug: 'smug: sloped half lid, cocked brow, one-sided smirk',
-  e_guilty: 'guilty: eyes in the far lower corner, a small pressed mouth to one side', e_bored: 'bored: flat brows, half lids, eyes aside, flat mouth',
-  e_embarrassed: 'embarrassed: eyes squeezed, wide wavy smile, big blush', e_shock: 'shocked: wide eyes, a tall open oval mouth',
-  e_shy: 'shy: eyes down, blush, a tiny half smile', e_sleepy: 'sleepy: a yawn, half shut eyes, level brows', e_angry: 'angry (no own mark)', e_confused: 'confused (no own mark)',
-  e_cry: 'crying hard (the lip drawn)', e_scream: 'shocked scream (the lip drawn)', e_disgust: 'disgusted: one wavy mouth, the tongue out',
-};
 // the kit's shock is a take and its sleepy yawn a plain change: the expression faces run on the same clocks
 FACE_CLASS.take.add('e_shock');
 

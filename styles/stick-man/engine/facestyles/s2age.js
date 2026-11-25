@@ -1,9 +1,9 @@
-// Age on the s2 rubber face (Kai 25/11, kit faces v4): a layer over every s2 design, so one design reads as an elder, an
+// Age on the s2 rubber face (kit faces v4, the approved plan of 25/11): a layer over every s2 design, so one design reads as an elder, an
 // adult, a teen, a child or a toddler from the face alone (a hood or a cap hides hair; the head is ~120 px on a phone).
 // Adult is today's face, untouched. The other ages change proportion (eye size, the eye line, spacing, mouth width, brow
 // weight) and add ink (an elder's lines, a teen's pimples and braces, a toddler's one tooth); expression stays the design's own, so an elder's angry keeps his lines.
-// Baby schema (Lorenz 1943; Glocker et al. 2009): big eyes low on a tall forehead, a small mouth read young. Kai asked for
-// kids' eyes "set higher": a child has them high (child_hi); a toddler has both (toddler_lo, the default, and toddler_hi), his pick.
+// Baby schema (Lorenz 1943; Glocker et al. 2009): big eyes low on a tall forehead, a small mouth read young. The approved plan
+// (25/11) asked for kids' eyes "set higher": a child has them high (child_hi); a toddler has both (toddler_lo, the default, and toddler_hi), for the owner to pick.
 // Opt-in: the age comes from the cast spec's own spec.faceAge and nothing else. A child or an elder body without it draws
 // today's face (films already posted use those bodies; test/unit/stick-head-marks.test.mjs holds them to their hash).
 // Lines add age, never take it away; every added line is at least 2 px on a 120 px head.

@@ -639,7 +639,7 @@ export function makeStick(spec) {
   contact.rotation.x = -Math.PI / 2; contact.scale.set(0.48 * W, 0.24 * W, 1); contact.position.set(0.03 * W, 0.004, 0);
   contact.userData.noPrepass = true; root.add(contact);
   // spec.tidyFeet (opt-in): the foot shadow a soft neutral grey, and the heel balls hidden on a figure posed by beats (S.pose
-  // has no heels: the two balls stay at the root, a black dot on the floor between the feet)
+  // has no heels: the two balls stay at the root, a black dot on the floor between the feet; S.pose2 places them and shows them again)
   if (spec.tidyFeet) { contact.material.color.copy(lin(0.10, 0.10, 0.10)); contact.material.opacity = 0.3; }
 
   const S = { root, yaw: 0, hand: {}, parts: { head: headSolid, torso, toes, ankles, hands, face, marks: FR.group, hair: hairG }, xmarks: [], props: {} };
@@ -1007,7 +1007,7 @@ export function makeStick(spec) {
       const toe = toeL.clone().multiplyScalar(W);
       for (let i = 1; i <= 5; i++) lp.push(lp[12].clone().lerp(toe, i / 5));
       limbs['leg' + side].set(lp); ankles[side].position.copy(lp[12]); toes[side].position.copy(toe);
-      heelT[side].set(Array.from({ length: 6 }, (_, i) => lp[12].clone().lerp(heelL.clone().multiplyScalar(W), i / 5))); heels[side].position.copy(heelL).multiplyScalar(W);
+      heelT[side].set(Array.from({ length: 6 }, (_, i) => lp[12].clone().lerp(heelL.clone().multiplyScalar(W), i / 5))); heels[side].position.copy(heelL).multiplyScalar(W); heels[side].visible = true;   // (shown again after S.pose hid them, spec.tidyFeet)
       // joint angles as a clinician measures them (deg): hip flexion (+ forward) and abduction (+ outward) of the thigh
       // in the pelvis frame, ankle dorsiflexion (+ toes toward the shin) between the shin and the sole
       const th = leg.joint.clone().sub(hipJ).applyQuaternion(qb.clone().invert());

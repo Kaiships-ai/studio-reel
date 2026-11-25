@@ -1,4 +1,4 @@
-// Expressions (Kai 25/11, kit faces v4): a feeling is ONE kit asset, a face and an upper-body pose read together, plus an
+// Expressions (kit faces v4, the approved plan of 25/11): a feeling is ONE kit asset, a face and an upper-body pose read together, plus an
 // optional head mark. The face sells it in a close shot, the pose in a long one (it must read filled black), the mark is
 // the loudest read after the pose. A film names the expression; expressionBeats() expands it into the beats play.js runs:
 //   pose first (with its anticipation), the face 2 frames after the action starts, the mark MARK_LAG frames after the

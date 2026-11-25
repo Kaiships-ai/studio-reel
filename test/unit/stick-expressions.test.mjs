@@ -1,4 +1,4 @@
-// Kit expressions (styles/stick-man/engine/expressions.js, Kai 25/11): a feeling is one asset, a face + an upper-body pose
+// Kit expressions (styles/stick-man/engine/expressions.js, kit faces v4): a feeling is one asset, a face + an upper-body pose
 // (+ a head mark), read together. Every expression names a face, a pose and marks that exist; its beats put the pose
 // first, the face after the anticipation and hold the peak; the pairs viewers mix up have clearly different shapes; and
 // every head mark is big and inked enough to read on a phone (head ~120 px).

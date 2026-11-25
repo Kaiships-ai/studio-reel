@@ -127,7 +127,8 @@ Sheet: `tools/series/kitexpr`.
 
 **Face age** (opt-in): `faceAge: 'elder' | 'teen' | 'child' | 'toddler'` on a cast spec draws its s2 face at that age
 (`facestyles/s2age.js`; `child` = `child_hi`, `toddler` = `toddler_lo`, the other variants by name). Left out, the face is the
-plain one, whatever the body.
+plain one, whatever the body. Only the s2 face style draws an age: under any other (the dot-eye `kit` faces) the face stays adult
+and the film warns once.
 
 Hand props (`kit/cast/handprops.js`: cup hammer pencil pad drumstick apple phone megaphone box) belong to the figure and are
 parented to the hand each frame (gap 0 by construction); a pose shows them through the pose keys `x_hp<L|R|B>_<kind>`.

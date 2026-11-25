@@ -543,7 +543,12 @@ export function headTint(ta, tb, u, age, skin) {
 
 const hashKey = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return (h >>> 0).toString(36); };
 // One figure's face: its own canvas (redrawn only when what it shows changes) and its mark cards.
+// spec.faceAge is drawn only by a face style that has ages (the studio's default style): under another style (the buyer pack's dot-eye 'kit') the
+// face stays as it is, and the film is told once
+let AGE_WARNED = false;
 export function faceRig(headW, opt = {}) {
+  if (opt.faceAge && opt.faceAge !== 'adult' && FACE_STYLE.name !== 's2' && !AGE_WARNED) {
+    AGE_WARNED = true; console.warn(`[kit] faceAge '${opt.faceAge}' needs a face style that has ages: under face style '${FACE_STYLE.name || 'kit'}' every face stays adult`); }
   const cv = document.createElement('canvas'); cv.width = cv.height = 512; const g = cv.getContext('2d', { willReadFrequently: true });
   const off = document.createElement('canvas'); off.width = off.height = 512; const og = off.getContext('2d');
   const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
