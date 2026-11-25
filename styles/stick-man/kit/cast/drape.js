@@ -20,10 +20,10 @@ import { W_M } from '#engine/cast.js';
 import { css } from '#engine/look.js';
 import { PHYS } from '#engine/body.js';
 import { Cloth, bodyJump } from './cloth.js';
-import { at, wearMat, bendTorso, HULL_MAT } from './wear.js';
+import { at, wearMat, bendTorso, HULL_MAT, Y0 } from './wear.js';
 
 const W = W_M, SUB = 5, ARM_FROM = 5, PRE = 10, LIMB_R = 0.046 * W / 2, HAND_R = 0.030;
-export const UNDER = 0.012, ARM_PUSH = 0.03, LAP_HAND = LIMB_R + 0.061, LAP_ARM = LIMB_R + 0.052, LEG_CLEAR = LIMB_R + 0.024, ARM_CLEAR = 0.027, HAND_CLEAR = HAND_R + 0.008, SOLID_CLEAR = 0.008, LEG_KEEP = LIMB_R + 0.011, SHIN_R = LIMB_R + 0.042;   // (the guide stands LEG_CLEAR off a leg; the simulation may come as near as LEG_KEEP)
+export const UNDER = 0.012, TUCK = 0.005, TUCK_FROM = 0.012, ARM_PUSH = 0.03, LAP_HAND = LIMB_R + 0.061, LAP_ARM = LIMB_R + 0.052, LEG_CLEAR = LIMB_R + 0.024, ARM_CLEAR = 0.027, HAND_CLEAR = HAND_R + 0.008, SOLID_CLEAR = 0.008, SIDE = 0.02, ON = 0.015, LEG_KEEP = LIMB_R + 0.011, LEG_KEEP_LAP = 0.004, SHIN_R = LIMB_R + 0.042;   // (the guide stands LEG_CLEAR off a leg; the simulation may come as near as LEG_KEEP)
 const sstep = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z), UP = V(0, 1, 0);
 
@@ -200,11 +200,16 @@ function clearOf(p, a, b, R, h) {
   if (_hh.lengthSq() < 0.04) _hh.copy(_w.lengthSq() > 1e-10 ? _w : h); _hh.normalize();
   const wd = _w.dot(_hh); p.addScaledVector(_hh, -wd + Math.sqrt(Math.max(0, wd * wd - _w.lengthSq() + R * R)) + 1e-5); return true;
 }
-// out of a box { lo, hi } (three.js world): up when it is near its top (a seat, a floor), else by the nearest face
+// out of a box { lo, hi } (three.js world): up when it is near its top (a seat, a floor), else by the nearest face. Its top edges are
+// rounded, as far as clearing the real corner allows (the arc r + m out touches it at r = m / (sqrt 2 - 1)): cloth over a seat's
+// edge turns in two steps, not one corner. A point just inside a side near the top goes out of that side: pushed up it stayed on the
+// seat and the skirt's back gathered there instead of falling over the edge (costume review 3, M2: a high seat)
 function outOfBox(p, b, m) {
   if (p.x <= b.lo.x - m || p.x >= b.hi.x + m || p.y <= b.lo.y - m || p.y >= b.hi.y + m || p.z <= b.lo.z - m || p.z >= b.hi.z + m) return false;
+  const r = Math.min(m / (Math.SQRT2 - 1), (b.hi.x - b.lo.x) / 2, (b.hi.z - b.lo.z) / 2, (b.hi.y - b.lo.y) / 2), y = p.y - (b.hi.y - r), x = p.x < b.lo.x + r ? p.x - b.lo.x - r : Math.max(0, p.x - b.hi.x + r), z = p.z < b.lo.z + r ? p.z - b.lo.z - r : Math.max(0, p.z - b.hi.z + r);
+  if (y > 0 && (x || z)) { const l = Math.hypot(x, y, z), k = (r + m) / l - 1; if (k <= 0) return false; p.x += x * k; p.y += y * k; p.z += z * k; return true; }
   const up = b.hi.y + m - p.y, d = [p.x - b.lo.x + m, b.hi.x + m - p.x, p.z - b.lo.z + m, b.hi.z + m - p.z], k = d.indexOf(Math.min(...d));
-  if (up < 0.10 || up <= d[k]) p.y = b.hi.y + m; else if (k < 2) p.x = k ? b.hi.x + m : b.lo.x - m; else p.z = k === 3 ? b.hi.z + m : b.lo.z - m;
+  if (up <= d[k] || (up < 0.10 && d[k] > SIDE)) p.y = b.hi.y + m; else if (k < 2) p.x = k ? b.hi.x + m : b.lo.x - m; else p.z = k === 3 ? b.hi.z + m : b.lo.z - m;
   return true;
 }
 class Drape extends Cloth {
@@ -227,13 +232,19 @@ const legLine = m => limbLine(m, 2, 1);
 // on. It knows nothing of the cloth's own points, so a hand slides over it and never steps. q (root m) must stand R over the
 // thighs' plane: -> the move that takes it there, or null. Eased in as the thighs rise (standing, the cloth gives way to an arm
 // instead), at the lap's edges, and for a hand hanging well below it.
+// The cloth over a lap runs taut from the garment's waist to the knees, so over thighs that slope down from the hip (a high seat) it
+// lies higher off them near the waist than over level ones: waist (the front of the sewn row, root m) raises the plane there, by as
+// much as the slope does, down to none at the knee
+// (a forearm drawn in to point went 18 mm into the cloth of a high seat: costume review 3, M2).
 const LAP_EDGE = 0.05, LAP_PAST = 0.07, LAP_EASE = 0.07;
-export function lapOut(rig, q, R) {
+export function lapOut(rig, q, R, waist = null) {
   const m = v => v.clone().multiplyScalar(W), A = m(rig.L.hip), B = m(rig.R.hip), C = m(rig.R.knee), D = m(rig.L.knee), X = V().subVectors(B, A), F = V().crossVectors(X, UP).normalize(), up = (h, k) => { const t = V().subVectors(k, h); return Math.atan2(t.dot(F), -t.y); };
   const w = sstep(0.12, 0.6, Math.min(up(A, D), up(B, C))); if (w <= 0) return null;
   const H = A.clone().lerp(B, 0.5), T = C.clone().lerp(D, 0.5).sub(H), L = T.length(); T.divideScalar(L); X.addScaledVector(T, -X.dot(T)).normalize(); const N = V().crossVectors(T, X), r = V().subVectors(q, H), a = r.dot(T), x = r.dot(X), u = Math.max(0, Math.min(1, a / L));
   const x0 = V().subVectors(A, H).dot(X) * (1 - u) + V().subVectors(D, H).dot(X) * u, x1 = V().subVectors(B, H).dot(X) * (1 - u) + V().subVectors(C, H).dot(X) * u, f = Math.max(0, Math.min(1, (x - x0) / Math.max(1e-6, x1 - x0)));
-  const h = r.dot(N) - u * (V().subVectors(D, H).dot(N) * (1 - f) + V().subVectors(C, H).dot(N) * f), e = Math.max(x0 - x, x - x1) - LAP_EDGE, end = Math.max(a - L - LAP_PAST, -a); if (h >= R) return null;
+  const h = r.dot(N) - u * (V().subVectors(D, H).dot(N) * (1 - f) + V().subVectors(C, H).dot(N) * f), e = Math.max(x0 - x, x - x1) - LAP_EDGE, end = Math.max(a - L - LAP_PAST, -a);
+  if (waist) { r.subVectors(waist, H); const aw = r.dot(T), slope = r.dot(N) - r.y; if (aw < L - 0.05) R += Math.max(0, slope * (1 - Math.max(0, Math.min(1, (a - aw) / (L - aw))))); }
+  if (h >= R) return null;
   const k = w * (1 - sstep(0, LAP_EASE, Math.max(e, end))) * sstep(-0.22, -0.12, h); return k > 1e-3 ? N.multiplyScalar((R - h) * k) : null;
 }
 // One moving part on the figure S. guide: a Guide (below the waist) or { strip: stripRest(...) }; o: the Sheet's plus { tether, reach, bend }
@@ -272,7 +283,7 @@ export function drape(S, part, o = {}) {
       P = g.P; ways = g.O; ST.raw = { P: g.P.map(q => q.clone()), O: g.O, shin: g.shin };
     } else P = R0.map(q => onBody(q, V()));
     const legs = [], arms = [];
-    if (r?.L?.hip) for (const sd of ['L', 'R']) { const g = r[sd], ln = legLine(S.parts.limbs['leg' + sd]).map(q => q.applyMatrix4(RW)); ln.slice(1).forEach((b, j) => legs.push([ln[j], b, LEG_KEEP * SC * (j < ln.length >> 1 ? 1 : 1 - (ST.raw?.shin?.[sd === 'L' ? 0 : 1] ?? 0))]));
+    if (r?.L?.hip) for (const sd of ['L', 'R']) { const g = r[sd], lap = !wrap ? 0 : sstep(0.6, 1.0, Math.acos(Math.max(-1, Math.min(1, (g.hip.y - g.knee.y) / g.hip.distanceTo(g.knee))))), ln = legLine(S.parts.limbs['leg' + sd]).map(q => q.applyMatrix4(RW)); ln.slice(1).forEach((b, j) => legs.push([ln[j], b, (LEG_KEEP + LEG_KEEP_LAP * lap) * SC * (j < ln.length >> 1 ? 1 : 1 - (ST.raw?.shin?.[sd === 'L' ? 0 : 1] ?? 0))]));
       if (g.shoulder) { const al = limbLine(S.parts.limbs['arm' + sd], ARM_FROM, 2).map(q => q.applyMatrix4(RW)), ha = al[al.length - 1]; al.slice(1).forEach((b, j) => arms.push([al[j], b, ARM_CLEAR * SC])); arms.push([ha, ha, HAND_CLEAR * SC]); } }
     // a hand on a knee: there is no room between it and the leg for the cloth to stand clear of both, so it gives way to the
     // hand and lies pressed on the leg (a clip's hands grip the knees as it sits down)
@@ -299,7 +310,26 @@ export function drape(S, part, o = {}) {
     const Q = outer.ST.drawn, N = outer.sheet.mesh.geometry.attributes.normal, jn = outer.cols; if (!Q) return;
     for (let i = cols; i < n; i++) { let best = 1e9, k = -1; for (let q = 0; q < Q.length; q++) { const l = Q[q].distanceToSquared(P[i]); if (l < best) { best = l; k = q; } } const J = outer.wrap ? jn + 1 : jn, r = Math.floor(k / jn), j = k % jn; _n.fromBufferAttribute(N, r * J + j); const h = _o.subVectors(P[i], Q[k]).dot(_n) + UNDER; if (h > 0) P[i].addScaledVector(_n, -h); }
   }
-  const draw = P => { if (outer) within(P); ST.drawn = P; sheet.draw(P); fringe?.(P); };
+  // the body under a garment sewn all round is never outside it: a point of the torso below the sewn row goes in to the cloth's inner
+  // face, and the ink line over it with it. A seat is the case: the torso sinks into it and the cloth lies on it, so a strip of the
+  // sweater stood under a seated skirt (costume review 3, M1). cast.js lays the torso out afresh on every pose
+  const tg = S.parts.torso.geometry.attributes.position, hg = S.parts.torso.children[0].geometry.attributes.position, tuckable = [], lineOver = [];
+  if (wrap) {   // (at rest: before the figure's first bent pose, as wear.js thinHull)
+    const rest = Array.from({ length: tg.count }, (_, i) => V().fromBufferAttribute(tg, i)); rest.forEach((q, i) => { if (q.y + Y0 < G.y - TUCK_FROM) tuckable.push(i); }); const p = V();
+    for (let i = 0; i < hg.count; i++) { p.fromBufferAttribute(hg, i); if (p.y + Y0 > G.y + 0.05) continue; let m = 1e9, k = -1; for (const t of tuckable) { const l = rest[t].distanceToSquared(p); if (l < m) { m = l; k = t; } } if (m < 0.0016) lineOver.push([i, k]); }
+  }
+  const tri = new THREE.Triangle(), tn = V(), tp = V(), tq = V(), tb = V(), ti = V(), moved = new Map();
+  function tuck(P) {
+    if (!S.spineB || !tuckable.length) return;
+    const at_ = (r, j) => P[r * cols + (j + cols) % cols], Mb = body.matrix, Mi = Mb.clone().invert(); moved.clear();
+    for (const i of tuckable) { tp.fromBufferAttribute(tg, i).applyMatrix4(Mb); let m = 0.0144, k = -1; for (let q = 0; q < P.length; q++) { const l = P[q].distanceToSquared(tp); if (l < m) { m = l; k = q; } } if (k < 0) continue;
+      const r0 = Math.floor(k / cols), j0 = k % cols; let best = 1e9, h = 0; for (const r of [r0 - 1, r0]) for (const j of [j0 - 1, j0]) { if (r < 0 || r + 1 >= rows) continue;
+        for (const [a, b, c] of [[at_(r, j), at_(r + 1, j), at_(r, j + 1)], [at_(r, j + 1), at_(r + 1, j), at_(r + 1, j + 1)]]) { tri.set(a, b, c); tri.closestPointToPoint(tp, tq); const l = tq.distanceToSquared(tp); if (l < best) { tri.getNormal(tn).multiplyScalar(-sheet.sign); best = l; h = tb.subVectors(tp, tq).dot(tn); ti.copy(tn); } } }
+      if (best === 1e9 || h <= -TUCK) continue; tq.copy(tp).addScaledVector(ti, -TUCK - h).applyMatrix4(Mi); tp.applyMatrix4(Mi); moved.set(i, tq.clone().sub(tp)); tg.setXYZ(i, tq.x, tq.y, tq.z); }
+    if (!moved.size) return; tg.needsUpdate = hg.needsUpdate = true;
+    for (const [i, k] of lineOver) { const d = moved.get(k); if (d) hg.setXYZ(i, hg.getX(i) + d.x, hg.getY(i) + d.y, hg.getZ(i) + d.z); }
+  }
+  const draw = P => { if (outer) within(P); ST.drawn = P; sheet.draw(P); tuck(P); fringe?.(P); };
   const _h = V(), _a = V(), _b = V(), _l = V();
   // a point kept off the limbs, the body (a strip on the chest) and the solids; was / now eased at u
   function keepOut(p, i, now, u, was) {
@@ -316,6 +346,17 @@ export function drape(S, part, o = {}) {
     for (const b of now.solids) hit = outOfBox(p, b, SOLID_CLEAR * SC) || hit;
     return hit;
   }
+  // the cloth as drawn off the solids: its points (the easing takes one back into the seat's edge it is wrapped round), then the
+  // straight edges and triangles between them, which cut that edge's corner: the points of one are moved out by its middle's depth
+  function offSolids(P, now) {
+    const k = SOLID_CLEAR * SC, w = V(), w0 = V(), out = (p, m) => { w.copy(p).applyMatrix4(now.RW); w0.copy(w); let hit = false; for (const b of now.solids) hit = outOfBox(w, b, m) || hit; return hit; };
+    const all = q => { for (const p of q) if (out(p, k)) p.copy(w.applyMatrix4(now.RWi)); }; all(P); const on = P.map(p => out(p, ON));
+    const c = V(), mv = V(); for (let pass = 0; pass < 3; pass++) { let moved = false;
+      for (let i = 0; i + 1 < rows; i++) for (let j = 0; j < (wrap ? cols : cols - 1); j++) { const a = id(i, j), b = id(i + 1, j), e = id(i, jw(j + 1)), f = id(i + 1, jw(j + 1));
+        for (const q of [[a, b], [a, b, e], [e, b, f]]) { c.set(0, 0, 0); for (const n of q) c.add(P[n]); c.divideScalar(q.length); if (!out(c, 0.002)) continue; moved = true; w.sub(w0); mv.copy(w).transformDirection(now.RWi).multiplyScalar(w.length() / SC); for (const n of q) if (!pin[n]) P[n].add(mv); } }
+      if (!moved) break; }
+    return on;
+  }
   function step(t) {
     const now = ST.now; if (!now || t === ST.t) return;
     const c0 = now.world.slice(0, cols).reduce((a, q) => a.add(q), V()).divideScalar(cols); let fresh = ST.t == null || t !== ST.t + 1 || !ST.was;
@@ -329,11 +370,13 @@ export function drape(S, part, o = {}) {
     }
     ST.was = { world: now.world, legs: now.legs, arms: now.arms, c0 }; ST.t = t; ST.stepped = true; ST.fresh = fresh;
     const Pd = Array.from({ length: n }, (_, k) => V(C.x[3 * k], C.x[3 * k + 1], C.x[3 * k + 2]).applyMatrix4(now.RWi)); if (G) G.eased({ P: Pd });   // (drawn eased as the guide is: a crease the sim leaves in one row is shared out)
-    if (G && now.solids.length) for (const p of Pd) { const w = p.clone().applyMatrix4(now.RW); let hit = false; for (const b of now.solids) hit = outOfBox(w, b, SOLID_CLEAR * SC) || hit; if (hit) p.copy(w.applyMatrix4(now.RWi)); }   // (and the easing does not take it back into a seat's edge it is wrapped round)
+    if (G && now.solids.length) { const on = offSolids(Pd, now), E = Pd.map(p => p.clone()); G.eased({ P: E }); Pd.forEach((p, i) => { if (on[i]) p.copy(E[i]); }); offSolids(Pd, now); }   // (what lies on a solid is eased once more: a point on the corner of a seat bends the cloth there by itself)
     draw(Pd);
   }
+  // the front of the sewn row as the body is posed now (root m)
+  const front = G && (G.gap ? [0, G.nc - 1] : [G.cols >> 1]), waist = () => { body.updateMatrix(); M.copy(body.matrix); return front.reduce((a, j) => a.add(onBody(G.top[j], V())), V()).divideScalar(front.length); };
   const fringe = o.fringe ? makeFringe(root, rows, cols, o.fringe) : null;
-  return { update, step, under: !!o.under, inside: d => { outer = d; }, sheet, ST, cloth: C, rows, cols, wrap, guide: G, rest: R0, edges: edges.filter(e => e[3] < 1.05), n };
+  return { update, step, waist, under: !!o.under, inside: d => { outer = d; }, sheet, ST, cloth: C, rows, cols, wrap, guide: G, rest: R0, edges: edges.filter(e => e[3] < 1.05), n };
 }
 // a fringe: short strands of the strip's own colours hanging on from its last row
 function makeFringe(root, rows, cols, { rgb, len = 0.03, n = 4 }) {

@@ -22,14 +22,18 @@ A crowd: `costume: ['sweater:' + outfit(i)]` (`outfit` from wardrobe.js).
   AS DRAWN (the curved lines and sleeves: 4 mm into an arm, 10 mm into a hand), worst single edge (25 % walking, 30 % seated)
   next to p99, a column's bend and the hem's corners, the cloth's own acceleration against the body; collars and scarves round
   the neck, whole ink lines, short sleeves out of the torso, a cap's peak, layers over layers, a coat over a skirt, unknown names
-  throw, a held prop stays in its hand, lose_hat. Run, jump and window leap print their faults as `todo`: cloth there is
-  NOT clean yet (keep skirts, coats and aprons out of a run).
+  throw, a held prop stays in its hand, lose_hat. Every clip a figure is seated in is played whole (five today). Run, jump and
+  window leap print their faults as `todo`: cloth there is NOT clean yet (three pairs on the heavy and elder bodies are, and are
+  real tests; a todo that comes out clean fails the list). The measuring code is `test/unit/wardrobe-measure.mjs`.
+- A film that puts a coat, a skirt, a dress or an apron on a figure in a clip the cloth is not clean in (`kit/cast/clothsafe.js`:
+  run, sprint, jump, window leap, lying down and getting up, sleeping, picking up from the floor, the trunk and the window drop,
+  pushing) is reported at the shot lock gate by `tools/gates/clothgate.mjs` (advisory; `node --test test/unit/stick-clothgate.test.mjs`, 2 s).
   Every rigid piece touches what it lies on (3 mm, all its points: the shell or a piece on the shell). Cloth inside a drawn
   leg's radius (4 mm, as an arm) is measured and printed as `todo`: the cloth's points keep off a leg, its triangles do not
   (a bent knee's corner, a seated thigh's root, up to 12 mm).
 - With kit faces v4 on the same spec (`faceAge`, `tidyFeet`, `head_yaw`, head marks): `node --test test/unit/stick-wardrobe-age.test.mjs`
   (3 s): the age face under a costume, the costume on the shell, a figure with no costume hashed against main 0704de3e. A police or
-  pilot cap and a toque cover 29-70 % of some head marks (named there, printed as `todo`): that is NOT clean yet.
+  pilot cap and a toque cover part of some head marks: every pair's share is printed, with no limit (an open design call).
 - Group shots and motion: `films/kitbody-costumes/sheet2.html` (line-up at true scale, a crowd of twelve in `outfit(i)`, walk,
   run and sit clips of three outfits).
 
@@ -45,6 +49,9 @@ A crowd: `costume: ['sweater:' + outfit(i)]` (`outfit` from wardrobe.js).
   legs as drawn (`Guide.laid`, `taut`); a shin kicked back raises the hem over it (`cleared`).
 - Over a seated knee the cloth falls toward the shin (test: hem 8 cm or more below the knee, within 25 deg of straight down
   from where it crosses the knee). That needs length: a knee-length skirt has ~9 cm past a seated knee, so dress and skirt
-  are 0.53 of the leg, the apron 0.50, the coat 0.56. Past a knee a row goes no further forward than the shin (`laid`);
+  are 0.54 of the leg, the apron 0.50, the coat 0.56. Past a knee a row goes no further forward than the shin (`laid`);
   the cloth clears every ring of the drawn leg (every second ring cut a bent knee's corner by 9 mm).
+- A seat's top edges are rounded for the cloth (`outOfBox`) and the straight cloth between two points is kept off it (`offSolids`):
+  a point on the sharp corner bent a column 80-89 deg, and one just inside the front was pushed back up on the seat. Under a skirt or a
+  dress the torso is drawn in behind the cloth (`tuck`) and painted the skirt's colour: a seat squeezes the cloth above the torso's foot.
 - `thinHull` takes the torso's own outline in under a garment; it must run before the figure's first bent pose.

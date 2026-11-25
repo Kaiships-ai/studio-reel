@@ -52,7 +52,8 @@ function lapels(X, c, w, k = 0.72) {
 const folds = (n, k = 0.10) => u => 1 - k * (0.5 + 0.5 * Math.cos(u * 2 * PI * n)) ** 2;
 // painted on a cloth spread flat: lines in the garment's own line tone
 const inkOn = (g, c, w) => { g.strokeStyle = css(ln(c)); g.lineWidth = w; g.lineJoin = g.lineCap = 'round'; };
-function skirtCloth(X, c, { len, flare = 0.24, y = 0.046, paint = null, shade = folds(9), ink = 0.022 }) {
+export const SKIRT_Y = 0.046;   // where a skirt is sewn
+function skirtCloth(X, c, { len, flare = 0.24, y = SKIRT_Y, paint = null, shade = folds(9), ink = 0.022 }) {
   const inner = X.has('coat');   // (under a coat it hangs close, inside the coat's own cloth)
   X.cover(y); X.cloth(new Guide(X.F, { y, len: (inner ? 0.40 : len) * X.F.leg, cols: 32, rows: 12, d: 0.008, flare: inner ? 0.02 : flare, ...(inner ? { hem: [0.120, 0.160] } : {}) }), { rgb: c, inner: mul(c, 0.5), shade, paint, ink: inner ? 0.006 : ink, topInk: 0.9, under: inner });
 }

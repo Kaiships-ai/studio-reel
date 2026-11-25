@@ -24,8 +24,8 @@ import { PHYS } from '#engine/body.js';
 import { flyOff } from './costume.js';
 import { fitOf, thS, rider, wearMat, sleeve, thinHull, H_T, Y0 } from './wear.js';
 import { drape, lapOut, limbLine, LAP_HAND, LAP_ARM } from './drape.js';
-import { UNIFORM, mul } from './palette.js';
-import { GARMENTS, ITEMS } from './garments.js';
+import { PALETTES, UNIFORM, colourOf, mul } from './palette.js';
+import { GARMENTS, ITEMS, SKIRT_Y } from './garments.js';
 import { hatOf, tuckHair } from './hats.js';
 
 export { PALETTES, PALETTE_ORDER, UNIFORM, outfit } from './palette.js';
@@ -97,6 +97,8 @@ export function wardrobe(S, items, { group = null } = {}) {
   const at = (gm, f) => { X.variant = gm.a; X.arg = gm.b ?? gm.a; X.top = GARMENTS[gm.k].colour(gm.a, gm.b); X.hidden = GARMENTS[gm.k].z < closed; X.under = X.hidden || (gm !== outer && !!opening && GARMENTS[gm.k].z < 3); f(GARMENTS[gm.k], X.top); };
   if (garments.length) {
     const p = painter(F, torso.material.map); for (const gm of garments) at(gm, (D, c) => D.paint(p, c, X));
+    // under a skirt the torso is the skirt's own cloth, not the garment above it (costume review 3, M1)
+    const sk = parsed.find(q => q.k === 'skirt'); if (sk && !X.has('coat')) p.band(Y0 - 0.01, SKIRT_Y, colourOf(sk.a, PALETTES.plum.main));
     const old = torso.material.map; torso.material.map = p.tex(); torso.material.needsUpdate = true; old?.dispose?.();
     for (const gm of garments) at(gm, (D, c) => D.build(X, c));
   }
@@ -120,10 +122,10 @@ export function wardrobe(S, items, { group = null } = {}) {
   const held = (Q, sd) => (Q['arm' + sd]?.ik && (Q['arm' + sd].ikw ?? 1) > 0) || Object.entries(Q).some(([k, v]) => { const m = /^x_hp([LRB])_(\w+)$/.exec(k); return m && (m[1] === sd || m[1] === 'B') && (v > 0 || Q.propRest?.[m[1] + m[2]]); });
   S.pose2 = (Q = {}) => {
     let r = p2(Q); if (!PHYS.on || !drapes.some(d => d.guide) || !S.rig.L.hip) { after(); return r; }   // (the arms are read from the rig: the garments are laid once, at the end)
-    const free = ['L', 'R'].filter(sd => !held(Q, sd)), hand = {}, pole = {};
+    const free = ['L', 'R'].filter(sd => !held(Q, sd)), hand = {}, pole = {}, W0 = drapes.find(d => d.guide).waist();
     for (let pass = 0; pass < 4; pass++) {
-      let moved = false, q = Q; for (const sd of free) { const ln = limbLine(S.parts.limbs['arm' + sd], 0, 1), n = ln.length - 1, g = S.rig[sd], need = lapOut(S.rig, ln[n], LAP_HAND), e = need ? need.clone() : new THREE.Vector3(), lift = new THREE.Vector3();
-        for (let i = 6; i < n; i++) { const v = lapOut(S.rig, ln[i], LAP_ARM); if (!v) continue; const u = i / n; if (u > 0.75) { if (v.length() > e.length()) e.copy(v); } if (v.length() > lift.length()) lift.copy(v); }
+      let moved = false, q = Q; for (const sd of free) { const ln = limbLine(S.parts.limbs['arm' + sd], 0, 1), n = ln.length - 1, g = S.rig[sd], need = lapOut(S.rig, ln[n], LAP_HAND, W0), e = need ? need.clone() : new THREE.Vector3(), lift = new THREE.Vector3();
+        for (let i = 6; i < n; i++) { const v = lapOut(S.rig, ln[i], LAP_ARM, W0); if (!v) continue; const u = i / n; if (u > 0.75) { if (v.length() > e.length()) e.copy(v); } if (v.length() > lift.length()) lift.copy(v); }
         if (e.lengthSq() > 1e-8 || lift.lengthSq() > 1e-8) { moved = true; (hand[sd] ||= g.hand.clone()).addScaledVector(e, 1 / W_M); (pole[sd] ||= g.elbow.clone().sub(g.shoulder.clone().lerp(g.hand, 0.5))).addScaledVector(lift, 2 / W_M); }
         if (hand[sd]) q = { ...q, ['arm' + sd]: { ...(Q['arm' + sd] || {}), pole: pole[sd].toArray(), ik: hand[sd].toArray(), ikw: 1 } }; }
       if (!moved) break; r = p2(q);
