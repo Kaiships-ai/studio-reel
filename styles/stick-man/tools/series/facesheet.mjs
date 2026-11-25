@@ -9,7 +9,9 @@
 //   node styles/stick-man/tools/series/facesheet.mjs films/<slug> --approve "<Kai's words, with the time he said them>" --sheet <hash>
 //        -> review/faces-approved.json { by: 'kai', at, note, sheet, designs }: only after Kai said yes to the sheet with that
 //           hash. A sheet made again after he looked has a new hash, so his yes cannot approve faces he has not seen.
-// facebeat.mjs fails while a design the film shows is not in review/faces-approved.json.
+// facebeat.mjs fails while a design the film shows is not in review/faces-approved.json, or on the kit face sheet: the kit
+// faces film (tools/series/kitfaces, every face a new character can draw) made and approved the same way, once, for every
+// film; its designs match by face name and numbers, for any character.
 import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os'; import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { run } from '../../../../kit/env.mjs';
@@ -17,6 +19,8 @@ import { HOLD, MIN_FACE } from '#tools/gates/facebeat.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 const key = d => `${d.who} ${d.expr}${d.design ? ' #' + d.design : ''}`;
+export const KIT_FACES = path.join(ROOT, 'styles/stick-man/tools/series/kitfaces');
+export const kitApproval = (file = path.join(KIT_FACES, 'review/faces-approved.json')) => (fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : null);
 
 // every face design held HOLD frames or more on a readable head: [{ who, expr, design, frames, best: { f, h, head } }]
 export function faceDesigns(rows, H = 1920) {
@@ -38,10 +42,10 @@ export function faceDesigns(rows, H = 1920) {
 export const sheetHash = designs => crypto.createHash('sha256')
   .update(JSON.stringify(designs.map(({ who, expr, design }) => [who, expr, design ?? null]))).digest('hex').slice(0, 8);
 
-// the shown designs Kai has not approved: an approved design matches by name and, when both rows carry one, by its key
-export function unapproved(designs, approved) {
-  const ok = approved?.by === 'kai' ? approved.designs || [] : [];
-  return designs.filter(d => !ok.some(a => a.who === d.who && a.expr === d.expr && (!a.design || !d.design || a.design === d.design)));
+const sameDesign = (a, d) => a.expr === d.expr && (!a.design || !d.design || a.design === d.design);   // the key counts when both rows carry one
+export function unapproved(designs, approved, kit = null) {
+  const ok = approved?.by === 'kai' ? approved.designs || [] : [], kitOk = kit?.by === 'kai' ? kit.designs || [] : [];
+  return designs.filter(d => !ok.some(a => a.who === d.who && sameDesign(a, d)) && !kitOk.some(a => sameDesign(a, d)));
 }
 
 // the shot.mjs call for the sheet's stills: the page flags and the logged bible bypass of the render the rows came from
@@ -50,8 +54,8 @@ export function shotArgs(film, frames, out, W, H, A = {}) {
     ...(A.query ? ['--query', A.query] : []), ...('no-bible-check' in A ? ['--no-bible-check', A['no-bible-check'] || 'no reason given'] : [])];
 }
 
-export function approvalLine(designs, approved, film) {
-  const miss = unapproved(designs, approved);
+export function approvalLine(designs, approved, film, kit = null) {
+  const miss = unapproved(designs, approved, kit);
   if (!miss.length) return null;
   const why = !approved ? 'no face sheet approved by Kai (review/faces-approved.json)' : approved.by !== 'kai' ? 'review/faces-approved.json is not by kai' : `${miss.length} face design(s) not on the sheet Kai approved ${approved.at}`;
   return `${why}: ${miss.map(key).join(', ')}; fix: node styles/stick-man/tools/series/facesheet.mjs ${film}, show Kai review/face-sheet.jpg (S2), then --approve "<his words>" --sheet <its hash>`;

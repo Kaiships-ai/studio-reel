@@ -33,6 +33,14 @@ test('facesheet: an approved sheet passes; a new face, a changed design, a sheet
   assert.match(approvalLine(faceDesigns(rows, H), null, 'films/x'), /no face sheet approved by Kai/);
 });
 
+test('facesheet: a face on the kit sheet Kai approved passes for any character in any film; a face not on it still fails', () => {
+  const d = faceDesigns(rows, H), kit = { by: 'kai', designs: d.map(({ expr, design }) => ({ who: 'face', expr, design })) };
+  assert.equal(approvalLine(d, null, 'films/x', kit), null, 'no film sheet needed');
+  assert.deepEqual(unapproved(d, null, { ...kit, by: 'self' }).length, d.length, 'a kit sheet not by Kai approves nothing');
+  const redraw = rows.map(r => ({ ...r, actors: Object.fromEntries(Object.entries(r.actors).map(([n, a]) => [n, a.expr === kit.designs[0].expr ? { ...a, exprDesign: 'r2new' } : a])) }));
+  assert.equal(unapproved(faceDesigns(redraw, H), null, kit).length, 1, 'the same name drawn with new numbers is not on the kit sheet');
+});
+
 // a film made of the LOAD-A rows and one shot whose story names the faces it shows (strain, nervous), so only the sheet decides
 function film() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'facesheet-film-'));

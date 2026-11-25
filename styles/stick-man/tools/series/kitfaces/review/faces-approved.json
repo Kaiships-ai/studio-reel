@@ -1,0 +1,388 @@
+{
+ "by": "kai",
+ "at": "2026-11-25T03:15:25.442Z",
+ "note": "Kai 25/11: merge hết (via Chief/Studio)",
+ "sheet": "fc4ec2ac",
+ "designs": [
+  {
+   "who": "face",
+   "expr": "neutral",
+   "design": "nq3dr0"
+  },
+  {
+   "who": "face",
+   "expr": "calm",
+   "design": "mpemd0"
+  },
+  {
+   "who": "face",
+   "expr": "happy",
+   "design": "181arfl"
+  },
+  {
+   "who": "face",
+   "expr": "grin",
+   "design": "6h7w7t"
+  },
+  {
+   "who": "face",
+   "expr": "laugh",
+   "design": "icnhtg"
+  },
+  {
+   "who": "face",
+   "expr": "closed",
+   "design": "1guc1b4"
+  },
+  {
+   "who": "face",
+   "expr": "blush",
+   "design": "1bfflke"
+  },
+  {
+   "who": "face",
+   "expr": "proud",
+   "design": "13il9sb"
+  },
+  {
+   "who": "face",
+   "expr": "excited",
+   "design": "19arp7n"
+  },
+  {
+   "who": "face",
+   "expr": "manic",
+   "design": "7ix8f9"
+  },
+  {
+   "who": "face",
+   "expr": "sad",
+   "design": "1wv2hzn"
+  },
+  {
+   "who": "face",
+   "expr": "cry",
+   "design": "1g7x179"
+  },
+  {
+   "who": "face",
+   "expr": "sleep",
+   "design": "1fcwh8l"
+  },
+  {
+   "who": "face",
+   "expr": "yawn",
+   "design": "pmkp0b"
+  },
+  {
+   "who": "face",
+   "expr": "dizzy",
+   "design": "11qc0b0"
+  },
+  {
+   "who": "face",
+   "expr": "disgust",
+   "design": "k0y1if"
+  },
+  {
+   "who": "face",
+   "expr": "love",
+   "design": "15zmg6v"
+  },
+  {
+   "who": "face",
+   "expr": "kiss",
+   "design": "l2vn25"
+  },
+  {
+   "who": "face",
+   "expr": "wink",
+   "design": "14pzrea"
+  },
+  {
+   "who": "face",
+   "expr": "embarrassed",
+   "design": "1f2rtl9"
+  },
+  {
+   "who": "face",
+   "expr": "shy",
+   "design": "1aisylf"
+  },
+  {
+   "who": "face",
+   "expr": "guilty",
+   "design": "lzbusw"
+  },
+  {
+   "who": "face",
+   "expr": "disappointed",
+   "design": "1d7jehh"
+  },
+  {
+   "who": "face",
+   "expr": "thinking",
+   "design": "1jvpoy8"
+  },
+  {
+   "who": "face",
+   "expr": "mischievous",
+   "design": "1q16dkn"
+  },
+  {
+   "who": "face",
+   "expr": "smug",
+   "design": "1lfet5p"
+  },
+  {
+   "who": "face",
+   "expr": "scream",
+   "design": "1jvuat4"
+  },
+  {
+   "who": "face",
+   "expr": "sick",
+   "design": "1kw13dh"
+  },
+  {
+   "who": "face",
+   "expr": "cold",
+   "design": "r7b6fg"
+  },
+  {
+   "who": "face",
+   "expr": "hot",
+   "design": "15yfszo"
+  },
+  {
+   "who": "face",
+   "expr": "angry",
+   "design": "sy5ihg"
+  },
+  {
+   "who": "face",
+   "expr": "furious",
+   "design": "gcm5kx"
+  },
+  {
+   "who": "face",
+   "expr": "deadpan",
+   "design": "1bvvbjq"
+  },
+  {
+   "who": "face",
+   "expr": "confused",
+   "design": "14t5xsc"
+  },
+  {
+   "who": "face",
+   "expr": "bored",
+   "design": "hskkm8"
+  },
+  {
+   "who": "face",
+   "expr": "worried",
+   "design": "1j6wnui"
+  },
+  {
+   "who": "face",
+   "expr": "nervous",
+   "design": "10hzrai"
+  },
+  {
+   "who": "face",
+   "expr": "shock",
+   "design": "bg3uim"
+  },
+  {
+   "who": "face",
+   "expr": "panic",
+   "design": "d01heq"
+  },
+  {
+   "who": "face",
+   "expr": "pain",
+   "design": "bmqd5p"
+  },
+  {
+   "who": "face",
+   "expr": "stern",
+   "design": "he2wfi"
+  },
+  {
+   "who": "face",
+   "expr": "suspicious",
+   "design": "17h1sz4"
+  },
+  {
+   "who": "face",
+   "expr": "skeptic",
+   "design": "12t6k0h"
+  },
+  {
+   "who": "face",
+   "expr": "sly",
+   "design": "lss15h"
+  },
+  {
+   "who": "face",
+   "expr": "determined",
+   "design": "q98n2k"
+  },
+  {
+   "who": "face",
+   "expr": "relieved",
+   "design": "1s2fhqe"
+  },
+  {
+   "who": "face",
+   "expr": "sweat",
+   "design": "9mmpfb"
+  },
+  {
+   "who": "face",
+   "expr": "fret",
+   "design": "125bfwt"
+  },
+  {
+   "who": "face",
+   "expr": "y_alert",
+   "design": "88pnmk"
+  },
+  {
+   "who": "face",
+   "expr": "y_focus",
+   "design": "15o28dm"
+  },
+  {
+   "who": "face",
+   "expr": "y_strain",
+   "design": "1psjfmq"
+  },
+  {
+   "who": "face",
+   "expr": "y_fear",
+   "design": "1ftm3v9"
+  },
+  {
+   "who": "face",
+   "expr": "y_bite",
+   "design": "eq5ijd"
+  },
+  {
+   "who": "face",
+   "expr": "y_scared",
+   "design": "1hpyebj"
+  },
+  {
+   "who": "face",
+   "expr": "y_hide",
+   "design": "1v4njp7"
+  },
+  {
+   "who": "face",
+   "expr": "y_spend",
+   "design": "or59q9"
+  },
+  {
+   "who": "face",
+   "expr": "y_tense",
+   "design": "ai14ja"
+  },
+  {
+   "who": "face",
+   "expr": "c_suspicious",
+   "design": "uh2t39"
+  },
+  {
+   "who": "face",
+   "expr": "c_stern",
+   "design": "anwlv3"
+  },
+  {
+   "who": "face",
+   "expr": "y_worried",
+   "design": "1j6wnui"
+  },
+  {
+   "who": "face",
+   "expr": "y_set",
+   "design": "q98n2k"
+  },
+  {
+   "who": "face",
+   "expr": "y_squint",
+   "design": "12t6k0h"
+  },
+  {
+   "who": "face",
+   "expr": "y_tired",
+   "design": "suaw4d"
+  },
+  {
+   "who": "face",
+   "expr": "y_pain",
+   "design": "bmqd5p"
+  },
+  {
+   "who": "face",
+   "expr": "y_lens",
+   "design": "nq3dr0"
+  },
+  {
+   "who": "face",
+   "expr": "y_dare",
+   "design": "lss15h"
+  },
+  {
+   "who": "face",
+   "expr": "y_nervous",
+   "design": "10hzrai"
+  },
+  {
+   "who": "face",
+   "expr": "y_sweat",
+   "design": "9mmpfb"
+  },
+  {
+   "who": "face",
+   "expr": "y_stern",
+   "design": "he2wfi"
+  },
+  {
+   "who": "face",
+   "expr": "y_panic",
+   "design": "d01heq"
+  },
+  {
+   "who": "face",
+   "expr": "y_shock",
+   "design": "bg3uim"
+  },
+  {
+   "who": "face",
+   "expr": "y_relief",
+   "design": "1s2fhqe"
+  },
+  {
+   "who": "face",
+   "expr": "y_fret",
+   "design": "125bfwt"
+  },
+  {
+   "who": "face",
+   "expr": "y_suspicious",
+   "design": "17h1sz4"
+  },
+  {
+   "who": "face",
+   "expr": "c_shout",
+   "design": "gcm5kx"
+  },
+  {
+   "who": "face",
+   "expr": "y_calm",
+   "design": "u1s1uw"
+  }
+ ]
+}

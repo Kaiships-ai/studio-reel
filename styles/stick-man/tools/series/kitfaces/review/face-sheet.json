@@ -1,0 +1,1299 @@
+{
+ "rows": "review/shot-rows.jsonl",
+ "query": null,
+ "hash": "fc4ec2ac",
+ "designs": [
+  {
+   "who": "face",
+   "expr": "neutral",
+   "design": "nq3dr0",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 29,
+    "h": 0.211,
+    "head": [
+     208.5,
+     519.3,
+     496,
+     789.5
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "calm",
+   "design": "mpemd0",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 59,
+    "h": 0.212,
+    "head": [
+     211.6,
+     517.8,
+     500.3,
+     789.2
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "happy",
+   "design": "181arfl",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 62,
+    "h": 0.212,
+    "head": [
+     213.7,
+     517.9,
+     502.3,
+     789.3
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "grin",
+   "design": "6h7w7t",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 95,
+    "h": 0.21,
+    "head": [
+     219.6,
+     517.8,
+     505.5,
+     786.6
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "laugh",
+   "design": "icnhtg",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 142,
+    "h": 0.212,
+    "head": [
+     208.2,
+     518.1,
+     496.3,
+     788.9
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "closed",
+   "design": "1guc1b4",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 168,
+    "h": 0.212,
+    "head": [
+     217.5,
+     516.4,
+     506.8,
+     788.3
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "blush",
+   "design": "1bfflke",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 183,
+    "h": 0.211,
+    "head": [
+     218,
+     518.5,
+     505.3,
+     788.6
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "proud",
+   "design": "13il9sb",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 236,
+    "h": 0.211,
+    "head": [
+     211.5,
+     518.8,
+     498.3,
+     788.4
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "excited",
+   "design": "19arp7n",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 263,
+    "h": 0.212,
+    "head": [
+     221.1,
+     517.8,
+     509.2,
+     788.6
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "manic",
+   "design": "7ix8f9",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 278,
+    "h": 0.212,
+    "head": [
+     217.2,
+     517.6,
+     505.9,
+     789
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "sad",
+   "design": "1wv2hzn",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 300,
+    "h": 0.211,
+    "head": [
+     223.9,
+     519.2,
+     511,
+     789.1
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "cry",
+   "design": "1g7x179",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 359,
+    "h": 0.211,
+    "head": [
+     208.9,
+     517.8,
+     496.3,
+     788
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "sleep",
+   "design": "1fcwh8l",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 389,
+    "h": 0.212,
+    "head": [
+     210,
+     517.9,
+     499,
+     789.5
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "yawn",
+   "design": "pmkp0b",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 394,
+    "h": 0.212,
+    "head": [
+     212,
+     517.9,
+     500.7,
+     789.4
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "dizzy",
+   "design": "11qc0b0",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 449,
+    "h": 0.21,
+    "head": [
+     212.8,
+     518.8,
+     499,
+     787.9
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "disgust",
+   "design": "k0y1if",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 474,
+    "h": 0.212,
+    "head": [
+     221.7,
+     516.5,
+     510.5,
+     788
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "love",
+   "design": "15zmg6v",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 480,
+    "h": 0.212,
+    "head": [
+     223.8,
+     517.9,
+     512,
+     788.8
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "kiss",
+   "design": "l2vn25",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 516,
+    "h": 0.211,
+    "head": [
+     214.5,
+     518.6,
+     501.8,
+     788.7
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "wink",
+   "design": "14pzrea",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 569,
+    "h": 0.21,
+    "head": [
+     205.9,
+     518.6,
+     492.5,
+     788
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "embarrassed",
+   "design": "1f2rtl9",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 594,
+    "h": 0.212,
+    "head": [
+     223.7,
+     516.7,
+     512.5,
+     788.2
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "shy",
+   "design": "1aisylf",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 600,
+    "h": 0.212,
+    "head": [
+     229.2,
+     518,
+     517.5,
+     789
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "guilty",
+   "design": "lzbusw",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 630,
+    "h": 0.211,
+    "head": [
+     216,
+     519,
+     502.9,
+     788.7
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "disappointed",
+   "design": "1d7jehh",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 689,
+    "h": 0.211,
+    "head": [
+     214.3,
+     518.3,
+     501.8,
+     788.5
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "thinking",
+   "design": "1jvpoy8",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 719,
+    "h": 0.212,
+    "head": [
+     214.5,
+     517.7,
+     503.3,
+     789.1
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "mischievous",
+   "design": "1q16dkn",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 720,
+    "h": 0.212,
+    "head": [
+     214.4,
+     517.7,
+     503,
+     789.1
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "smug",
+   "design": "1lfet5p",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 753,
+    "h": 0.21,
+    "head": [
+     212.9,
+     517.7,
+     499.1,
+     786.7
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "scream",
+   "design": "1jvuat4",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 809,
+    "h": 0.212,
+    "head": [
+     219.4,
+     518.6,
+     508.6,
+     790.3
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "sick",
+   "design": "1kw13dh",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 813,
+    "h": 0.213,
+    "head": [
+     218.6,
+     518.4,
+     508,
+     790.5
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "cold",
+   "design": "r7b6fg",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 841,
+    "h": 0.211,
+    "head": [
+     223,
+     518.1,
+     510.4,
+     788.2
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "hot",
+   "design": "15yfszo",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 893,
+    "h": 0.211,
+    "head": [
+     212.2,
+     519,
+     498.9,
+     788.5
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "angry",
+   "design": "sy5ihg",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 918,
+    "h": 0.212,
+    "head": [
+     218.7,
+     516.7,
+     507.5,
+     788.2
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "furious",
+   "design": "gcm5kx",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 930,
+    "h": 0.212,
+    "head": [
+     217.7,
+     517.8,
+     506,
+     788.7
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "deadpan",
+   "design": "1bvvbjq",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 960,
+    "h": 0.211,
+    "head": [
+     216.4,
+     518.3,
+     503.7,
+     788.3
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "confused",
+   "design": "14t5xsc",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1014,
+    "h": 0.211,
+    "head": [
+     220,
+     518.6,
+     506.7,
+     788.1
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "bored",
+   "design": "hskkm8",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1039,
+    "h": 0.213,
+    "head": [
+     212.9,
+     517.6,
+     502.4,
+     789.7
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "worried",
+   "design": "1j6wnui",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1055,
+    "h": 0.212,
+    "head": [
+     209.3,
+     517.6,
+     498.1,
+     789.1
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "nervous",
+   "design": "10hzrai",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1109,
+    "h": 0.21,
+    "head": [
+     217.4,
+     519,
+     504,
+     788.4
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "shock",
+   "design": "bg3uim",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1139,
+    "h": 0.212,
+    "head": [
+     224.8,
+     518.4,
+     513.6,
+     789.8
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "panic",
+   "design": "d01heq",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1142,
+    "h": 0.212,
+    "head": [
+     229.2,
+     517.1,
+     518.1,
+     788.7
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "pain",
+   "design": "bmqd5p",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1179,
+    "h": 0.211,
+    "head": [
+     202.7,
+     517.9,
+     490.1,
+     788
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "stern",
+   "design": "he2wfi",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1229,
+    "h": 0.21,
+    "head": [
+     217.4,
+     518.7,
+     503.6,
+     787.7
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "suspicious",
+   "design": "17h1sz4",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1259,
+    "h": 0.212,
+    "head": [
+     213.6,
+     517,
+     502.9,
+     789
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "skeptic",
+   "design": "12t6k0h",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1272,
+    "h": 0.212,
+    "head": [
+     211.7,
+     517.9,
+     500.3,
+     789.3
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "sly",
+   "design": "lss15h",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1292,
+    "h": 0.21,
+    "head": [
+     220.7,
+     518.6,
+     506.7,
+     787.5
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "determined",
+   "design": "q98n2k",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1347,
+    "h": 0.212,
+    "head": [
+     217.2,
+     518.2,
+     505.3,
+     789.1
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "relieved",
+   "design": "1s2fhqe",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1373,
+    "h": 0.212,
+    "head": [
+     209.2,
+     517,
+     497.8,
+     788.4
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "sweat",
+   "design": "9mmpfb",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1388,
+    "h": 0.211,
+    "head": [
+     213.9,
+     518.6,
+     501.2,
+     788.7
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "fret",
+   "design": "125bfwt",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1439,
+    "h": 0.21,
+    "head": [
+     223.9,
+     519.7,
+     510,
+     788.6
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "y_alert",
+   "design": "88pnmk",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1454,
+    "h": 0.212,
+    "head": [
+     222.6,
+     518.3,
+     510.6,
+     789.1
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "y_focus",
+   "design": "15o28dm",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1470,
+    "h": 0.212,
+    "head": [
+     220.8,
+     518.1,
+     509,
+     789
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "y_strain",
+   "design": "1psjfmq",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1501,
+    "h": 0.211,
+    "head": [
+     214.2,
+     517.4,
+     501.5,
+     787.5
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "y_fear",
+   "design": "1ftm3v9",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1553,
+    "h": 0.211,
+    "head": [
+     216.9,
+     518.9,
+     503.5,
+     788.4
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "y_bite",
+   "design": "eq5ijd",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1589,
+    "h": 0.212,
+    "head": [
+     209.3,
+     518,
+     498.3,
+     789.7
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "y_scared",
+   "design": "1hpyebj",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1598,
+    "h": 0.212,
+    "head": [
+     208.6,
+     518.1,
+     497.2,
+     789.5
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "y_hide",
+   "design": "1v4njp7",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1620,
+    "h": 0.211,
+    "head": [
+     223.1,
+     518.6,
+     509.9,
+     788.2
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "y_spend",
+   "design": "or59q9",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1679,
+    "h": 0.211,
+    "head": [
+     222.3,
+     518.3,
+     509.9,
+     788.7
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "y_tense",
+   "design": "ai14ja",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1707,
+    "h": 0.212,
+    "head": [
+     200.1,
+     517.5,
+     488.9,
+     788.9
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "c_suspicious",
+   "design": "uh2t39",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1710,
+    "h": 0.212,
+    "head": [
+     199.9,
+     518.2,
+     488.5,
+     789.4
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "c_stern",
+   "design": "anwlv3",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1753,
+    "h": 0.21,
+    "head": [
+     220.4,
+     519.1,
+     505.7,
+     787.3
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "y_worried",
+   "design": "1j6wnui",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1799,
+    "h": 0.212,
+    "head": [
+     213.5,
+     517.7,
+     502.6,
+     789.5
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "y_set",
+   "design": "q98n2k",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1810,
+    "h": 0.212,
+    "head": [
+     217.8,
+     516.6,
+     506.8,
+     788.3
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "y_squint",
+   "design": "12t6k0h",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1831,
+    "h": 0.211,
+    "head": [
+     222.1,
+     518.1,
+     509.5,
+     788.2
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "y_tired",
+   "design": "suaw4d",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1889,
+    "h": 0.211,
+    "head": [
+     211.5,
+     517,
+     499,
+     787.2
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "y_pain",
+   "design": "bmqd5p",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1919,
+    "h": 0.212,
+    "head": [
+     207.4,
+     516.7,
+     496.5,
+     788.5
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "y_lens",
+   "design": "nq3dr0",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1932,
+    "h": 0.212,
+    "head": [
+     215.5,
+     517.8,
+     504.2,
+     789.2
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "y_dare",
+   "design": "lss15h",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 1979,
+    "h": 0.21,
+    "head": [
+     222.3,
+     518.9,
+     508.2,
+     787.7
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "y_nervous",
+   "design": "10hzrai",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 2005,
+    "h": 0.212,
+    "head": [
+     211.1,
+     517.8,
+     499.1,
+     788.6
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "y_sweat",
+   "design": "9mmpfb",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 2010,
+    "h": 0.212,
+    "head": [
+     209.1,
+     517.7,
+     497.5,
+     788.7
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "y_stern",
+   "design": "he2wfi",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 2058,
+    "h": 0.211,
+    "head": [
+     209.3,
+     518.7,
+     496.7,
+     788.8
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "y_panic",
+   "design": "d01heq",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 2099,
+    "h": 0.21,
+    "head": [
+     215.3,
+     517.4,
+     501.9,
+     786.8
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "y_shock",
+   "design": "bg3uim",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 2122,
+    "h": 0.212,
+    "head": [
+     221,
+     517.9,
+     509.1,
+     788.7
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "y_relief",
+   "design": "1s2fhqe",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 2130,
+    "h": 0.212,
+    "head": [
+     220.5,
+     517.8,
+     508.9,
+     788.9
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "y_fret",
+   "design": "125bfwt",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 2163,
+    "h": 0.211,
+    "head": [
+     221.1,
+     518.7,
+     508.4,
+     788.9
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "y_suspicious",
+   "design": "17h1sz4",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 2219,
+    "h": 0.211,
+    "head": [
+     209.1,
+     518.4,
+     496.5,
+     788.5
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "c_shout",
+   "design": "gcm5kx",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 2249,
+    "h": 0.212,
+    "head": [
+     206.4,
+     517.6,
+     495.4,
+     789.3
+    ]
+   }
+  },
+  {
+   "who": "face",
+   "expr": "y_calm",
+   "design": "u1s1uw",
+   "frames": 30,
+   "held": 30,
+   "best": {
+    "f": 2254,
+    "h": 0.212,
+    "head": [
+     209.6,
+     516.4,
+     498.5,
+     788
+    ]
+   }
+  }
+ ]
+}

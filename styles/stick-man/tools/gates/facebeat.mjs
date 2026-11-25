@@ -8,7 +8,7 @@
 //   (2) a face that keeps coming back: one character's face (neutral ones excepted) taken up more than REPEAT_MAX times
 //       (a face held on across cuts is one take).
 //   (3) a face design (an expression and the numbers it draws with) that is not on the face sheet Kai approved
-//       (review/faces-approved.json, tools/series/facesheet.mjs --approve).
+//       (review/faces-approved.json, tools/series/facesheet.mjs --approve) or on the kit face sheet (tools/series/kitfaces).
 // All three are visible faults (a face on screen 0.5 s or more; a film-wide repeat), so either fails (exit 1). A story with no
 // shots, or faces none of its shots cover, is PARTIAL (exit 1): nothing was judged, so it never passes.
 //   node styles/stick-man/tools/gates/facebeat.mjs films/<slug> [--rows review/shot-rows.jsonl] [--h 1920] [--story films/<slug>] [--out <dir>]
@@ -19,7 +19,7 @@
 //   cut): writes faces.md and faces.json to --out (default the film's review/).
 import fs from 'node:fs'; import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { faceDesigns, approvalLine } from '#tools/series/facesheet.mjs';
+import { faceDesigns, approvalLine, kitApproval } from '#tools/series/facesheet.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 // HOLD: kai-taste Severity "High: on a face, 0.5 s or more". MIN_FACE: a head under 3 % of the frame height is too
@@ -29,23 +29,23 @@ export const HOLD = 15, MIN_FACE = 0.03, REPEAT_MAX = 2;
 // Each face of the kit (faces.js EXPR) and the films' closed-mouth twins (a prefix such as y_) in one emotion family, and
 // the words a beat uses for that family. Family 'neutral' never mismatches.
 export const FAMILY = {
-  neutral: ['neutral', 'deadpan', 'focus', 'alert', 'calm', 'suspicious', 'skeptic', 'squint', 'bored', 'stern', 'sleep', 'confused'],
-  joy: ['happy', 'grin', 'closed', 'blush', 'excited', 'relief', 'content', 'manic'],
-  smug: ['smug', 'sly'],
-  fear: ['worried', 'nervous', 'panic', 'fear', 'fret', 'scared'],
+  neutral: ['neutral', 'deadpan', 'focus', 'alert', 'calm', 'suspicious', 'skeptic', 'squint', 'bored', 'stern', 'sleep', 'confused', 'thinking', 'yawn', 'bite', 'hide', 'spend'],
+  joy: ['happy', 'grin', 'closed', 'blush', 'excited', 'relief', 'relieved', 'content', 'manic', 'laugh', 'proud', 'love', 'kiss'],
+  smug: ['smug', 'sly', 'dare', 'wink', 'mischievous'],
+  fear: ['worried', 'nervous', 'panic', 'fear', 'fret', 'scared', 'scream', 'tense'],
   surprise: ['shock', 'dizzy'],
-  anger: ['angry', 'furious', 'defiant', 'shout'],
-  sad: ['sad', 'cry'],
-  effort: ['strain', 'sweat', 'pain', 'tired'],
+  anger: ['angry', 'furious', 'defiant', 'shout', 'disgust'],
+  sad: ['sad', 'cry', 'disappointed', 'guilty', 'embarrassed', 'shy'],
+  effort: ['strain', 'sweat', 'pain', 'tired', 'set', 'determined', 'sick', 'cold', 'hot'],
 };
 export const WORDS = {
-  joy: /\b(joy|happ|glad|delight|laugh|smil|grin|pleas|triumph|celebrat|relie|relax|proud|pride|excit|thrill|giddy|hope|hopeful|confiden|it works|win)/i,
-  smug: /\b(smug|sly|cock|greed|confiden|gloat|satisf|scheme|cunning|tempt|hunger|over-confiden)/i,
+  joy: /\b(joy|happ|glad|delight|laugh|smil|grin|pleas|triumph|celebrat|relie|relax|proud|pride|excit|thrill|giddy|hope|hopeful|confiden|it works|win|love|adore|crush|kiss|cute)/i,
+  smug: /\b(smug|sly|cock|greed|confiden|gloat|satisf|scheme|cunning|tempt|hunger|over-confiden|wink|mischie|prank|trick|tease)/i,
   fear: /\b(fear|afraid|scare|panic|dread|terror|nerv|anxi|worr|tense|alarm|fright|danger|threat|desperat|trapped|trap|hunted|caught|horror|helpless|doubt|flinch|shak)/i,
   surprise: /\b(surpris|shock|startl|stun|gasp|sudden|jolt|realis|realiz|disbelie|snap|found out|bang|horror|shoot|shot|gun|bullet|fire)/i,
-  anger: /\b(anger|angry|rage|furi|mad\b|hostil|aggress|defian|shout|yell|command|menac|glare|fierce|threat|freeze|warning|shooting)/i,
-  sad: /\b(sad|grief|cry|tear|loss|despair|defeat|gloom|regret|sorrow|alone|helpless)/i,
-  effort: /\b(strain|effort|heav|lift|weight|push|struggl|grit|haul|drag|exhaust|tired|sweat|pant|spent|kg|kilo|arms gone)/i,
+  anger: /\b(anger|angry|rage|furi|mad\b|hostil|aggress|defian|shout|yell|command|menac|glare|fierce|threat|freeze|warning|shooting|disgust|gross|yuck|revolt)/i,
+  sad: /\b(sad|grief|cry|tear|loss|despair|defeat|gloom|regret|sorrow|alone|helpless|embarrass|ashamed|shame|guilt|sorry|disappoint|shy|bashful|blush)/i,
+  effort: /\b(strain|effort|heav|lift|weight|push|struggl|grit|haul|drag|exhaust|tired|sweat|pant|spent|kg|kilo|arms gone|sick|ill\b|nause|cold|freez|shiver|hot\b|heat|melt|determin)/i,
 };
 const BY_FACE = Object.fromEntries(Object.entries(FAMILY).flatMap(([fam, faces]) => faces.map(f => [f, fam])));
 const displayPath = p => path.relative(ROOT, p).startsWith('..') ? p : path.relative(ROOT, p);
@@ -141,7 +141,7 @@ if (path.resolve(process.argv[1] || '') === fileURLToPath(import.meta.url)) {
   let shots; try { shots = story(path.resolve(ROOT, A.story || film)); } catch (e) { console.error(`facebeat: ${e.message}`); process.exit(2); }
   const H = Number(A.h || 1920), runs = faceRuns(rows, shots, H), J = judge(runs, shots), cov = coverage(rows, shots, H), V = verdict(J, cov);
   // (3) a face design Kai has not seen on a face sheet (tools/series/facesheet.mjs) fails, whatever the beat
-  const apFile = path.join(DIR, 'review/faces-approved.json'), sheet = approvalLine(faceDesigns(rows, H), fs.existsSync(apFile) ? JSON.parse(fs.readFileSync(apFile, 'utf8')) : null, film);
+  const apFile = path.join(DIR, 'review/faces-approved.json'), sheet = approvalLine(faceDesigns(rows, H), fs.existsSync(apFile) ? JSON.parse(fs.readFileSync(apFile, 'utf8')) : null, film, kitApproval());
   if (sheet) { if (V.status === 'PASS') V.status = 'FAIL'; V.reason = [V.reason, sheet].filter(Boolean).join('; '); }
   const line = V.reason ? `${V.status}: ${V.reason}` : `${V.status} · ${J.mismatch.length} off the beat, ${J.over.length} over ${REPEAT_MAX} takes (${J.over.map(r => `${r.who} ${r.expr} ×${r.n}`).join(', ') || '-'})`;
   const md = [`# Faces against the story · ${path.basename(DIR)}`, '',

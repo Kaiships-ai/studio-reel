@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { toon, lin, css, B, INK_RGB, INK_SUN, PLACE } from './look.js';
 import { DEG } from './mathx.js';
-import { EXPR, faceRig, mixFace, FACE_STYLE } from './faces.js';
+import { EXPR, faceRig, mixFace, FACE_STYLE, headTint } from './faces.js';
 import { makeHandProp } from '#kit/cast/handprops.js';
 import { SOFT, footDown, legReach, limitArm, limitBody, ROM, torsoSlices, ellipsoid, worldBox, solveArm, armPenetration, propPush, PHYS, centreOfMass, balanceShift, headWear, wearVolume } from './body.js';
 
@@ -609,7 +609,7 @@ export function makeStick(spec) {
     polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
   card2d.userData.noPrepass = true; card2d.userData.faceInk = true; card2d.renderOrder = shell ? 6 : 2; card2d.visible = false; head.add(card2d);   // after a set's additive light cards (5): ink stays ink under a lamp's glow
   face.visible = false;
-  const skin0 = headSolid.material.color.clone(), tintC = new THREE.Color();
+  const skin0 = headSolid.material.color.clone();
   if (spec.glasses) rig.add(glasses());
   // hair and hats: one group fixed to the head (Kai 20/11: a cap that swung after the head's nods read as a wobble)
   const hairG = new THREE.Group(); head.add(hairG);
@@ -687,8 +687,8 @@ export function makeStick(spec) {
     S.faceStats = FR.stats; S.faceVis = slide ? +slide[2].toFixed(3) : 1;   // how much of the face the lens sees (0 = the back of the head)
     S.faceSlide = slide ? slide.map(v => +v.toFixed(3)) : null;   // [face yaw, dy, vis, sin(elevation)] for the dbg rows
     const ta = P.state && EXPR[typeof P.state.a === 'string' ? P.state.a : P.state.a?.name]?.tint, tb = E.tint, u = P.state ? Math.max(0, Math.min(1, P.state.u)) : 1;
-    const tk = tb ? Math.min(1, age / 6) * u : ta ? 1 - u : 0;   // a furious face flushes over 6 frames (and fades as it leaves)
-    headSolid.material.color.copy(skin0); if (tk) headSolid.material.color.lerp(tintC.setRGB(...(tb || ta)), tk);
+    const tint = headTint(ta, tb, u, age, [skin0.r, skin0.g, skin0.b]);
+    headSolid.material.color.copy(skin0); if (tint) headSolid.material.color.setRGB(...tint);
     if (headSolid.material.uniforms?.uFill) headSolid.material.uniforms.uFill.value = S.fill > 0 ? -1.08 + 2.2 * Math.min(1, S.fill) : -2;
     rig.rotation.set(-(P.look_v || 0) * 0.12, (P.look || 0) * LOOK_RAD, 0);
   };
