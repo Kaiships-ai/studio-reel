@@ -34,6 +34,8 @@ A crowd: `costume: ['sweater:' + outfit(i)]` (`outfit` from wardrobe.js).
 - With kit faces v4 on the same spec (`faceAge`, `tidyFeet`, `head_yaw`, head marks): `node --test test/unit/stick-wardrobe-age.test.mjs`
   (3 s): the age face under a costume, the costume on the shell, a figure with no costume hashed against main 0704de3e. A police or
   pilot cap and a toque cover part of some head marks: every pair's share is printed, with no limit (an open design call).
+- Which kit parts go together (`kit/compat.json`): `node --test test/unit/stick-fits.test.mjs test/unit/stick-fits-kinds.test.mjs test/unit/stick-unsafe-pairs.test.mjs`
+  (about 40 s); a film: `node styles/stick-man/tools/gates/fits.mjs films/<slug>` (exit 1 names each blocked or untested pair).
 - Group shots and motion: `films/kitbody-costumes/sheet2.html` (line-up at true scale, a crowd of twelve in `outfit(i)`, walk,
   run and sit clips of three outfits).
 
