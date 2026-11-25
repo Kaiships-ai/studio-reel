@@ -253,6 +253,7 @@ styles/stick-man/motion-lib/ref/reach/phonecall_ear.js
 !styles/stick-man/motion-lib/body/*/*_Gest_SitTalk_Loop_v01.js
 !styles/stick-man/motion-lib/body/*/*_Gest_Yawn_Once_v01.js
 !styles/stick-man/motion-lib/body/*/*_Idle_Stooped_Loop_v01.js
+!styles/stick-man/motion-lib/body/*/*_Idle_Fidget_Loop_v01.js
 !styles/stick-man/motion-lib/body/*/*_Move_OldWalk_Fwd_Loop_v01.js
 !styles/stick-man/motion-lib/body/*/*_React_Cry_Loop_v01.js
 !styles/stick-man/motion-lib/body/*/*_React_Defeated_Once_v01.js

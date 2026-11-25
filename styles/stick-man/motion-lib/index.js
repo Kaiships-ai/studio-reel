@@ -51,6 +51,7 @@ import Thin_Act_TorchReady_Loop_v01 from './body/thin/Thin_Act_TorchReady_Loop_v
 import Heavy_Move_WalkFlashlight_Loop_v01 from './body/heavy/Heavy_Move_WalkFlashlight_Loop_v01.js';
 import Thin_Move_WalkFlashlight_Loop_v01 from './body/thin/Thin_Move_WalkFlashlight_Loop_v01.js';
 import Child_Idle_Breath_Loop_v01 from './body/child/Child_Idle_Breath_Loop_v01.js';
+import Child_Idle_Fidget_Loop_v01 from './body/child/Child_Idle_Fidget_Loop_v01.js';
 import Child_Move_Run_Fwd_Loop_v01 from './body/child/Child_Move_Run_Fwd_Loop_v01.js';
 import Child_Move_Walk_Fwd_Loop_v01 from './body/child/Child_Move_Walk_Fwd_Loop_v01.js';
 import Elder_Idle_Breath_Loop_v01 from './body/elder/Elder_Idle_Breath_Loop_v01.js';
@@ -124,6 +125,7 @@ export const ALL = [
   Heavy_Move_WalkFlashlight_Loop_v01,
   Thin_Move_WalkFlashlight_Loop_v01,
   Child_Idle_Breath_Loop_v01,
+  Child_Idle_Fidget_Loop_v01,
   Child_Move_Run_Fwd_Loop_v01,
   Child_Move_Walk_Fwd_Loop_v01,
   Elder_Idle_Breath_Loop_v01,

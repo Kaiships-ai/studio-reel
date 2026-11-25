@@ -1,6 +1,6 @@
 # Motion library catalogue
 
-The 71 clips of `styles/stick-man/motion-lib` (rules and use: its README.md). An anim key `{ f, clip, body, to?, times? }`
+The 72 clips of `styles/stick-man/motion-lib` (rules and use: its README.md). An anim key `{ f, clip, body, to?, times? }`
 plays one (REEL_DATA.md). `frames` = one cycle or the whole one-off at 30 fps; `base` = the standard pose it starts (→ ends) on;
 `props` = what the hands hold (`x_hp<L|R|B>_<prop>`, motion-lib/props.js and kit/cast/handprops.js; a film swaps its own with
 the key's `swap`), on which hand; `set` = the set pieces it needs (the proof page builds them at the sizes the clip names in
@@ -27,6 +27,7 @@ raw pelvis speed is reported, not gated); the carried mass changes at most 35 % 
 | `Idle_Breath_Loop` | thin | loop | 76 | STAND | - | - | a thin body (girth 0.6, 55 kg) standing, breathing, the weight drifting to one foot and back |
 | `Idle_Breath_Loop` | toddler | loop | 48 | STAND | - | - | a toddler (70 % of the child, stubby legs, a big head, 11 kg) standing, breathing, the weight drifting to one foot and back |
 | `Idle_CarryBag_Loop` | adult | loop | 327 | HUG | hugbag (both) | - | standing with a heavy duffel hugged to the chest in both arms, from motion capture (Mixamo "Carrying", ref/mixamo/carry_idle.js) on this body, every captured frame, opened and closed on HUG (the capture's own first frame) |
+| `Idle_Fidget_Loop` | child | loop | 270 | STAND | - | - | a child (big head, short legs, 25 kg) standing and unable to wait: it turns at the waist to look about, the loose arms swinging after the chest, and shifts its weight on an uneven beat |
 | `Idle_LookAround_Loop` | adult | loop | 161 | STAND | - | - | standing, looking round from side to side, wary, from motion capture (Mixamo "Look Around", ref/mixamo/look_around.js) on this body: a loop in place |
 | `Idle_Sit_Loop` | adult | loop | 156 | SIT | - | seat | sitting at rest on a seat, shifting a little, from motion capture (Mixamo "Sitting Idle", ref/mixamo/sitting_idle.js) on this body, every captured frame |
 | `Idle_Sleep_Loop` | adult | loop | 265 | LIE | - | - | asleep on the floor, curled on one side, breathing (SH280), from motion capture (Mixamo "Sleeping Idle", ref/mixamo/sleeping_idle.js) on this body, every captured frame |
