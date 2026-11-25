@@ -11,13 +11,16 @@ import { compileTrack, playActor, toPose, STYLE_PRESETS } from '../../styles/sti
 import { DOSE_E, markColliders } from '../../styles/stick-man/motion-lib/base.js';
 import { ellipsoid, solveArm, armPenetration, propPush, centreOfMass } from '../../styles/stick-man/engine/body.js';
 
-test('the library has 72 clips on 7 bodies, and every one passes motionlib.mjs (naming, seam, base, joint gate, feet)', async () => {
-  assert.equal(ALL.length, 72);
-  assert.equal(clipFiles().length, 72);
+test('the library has 71 clips on 7 bodies, and every one passes motionlib.mjs (naming, seam, base, joint gate, feet)', async () => {
+  assert.equal(ALL.length, 71);
+  assert.equal(clipFiles().length, 71);
   assert.deepEqual(Object.keys(BODIES), ['adult', 'heavy', 'thin', 'child', 'teen', 'toddler', 'elder']);
-  // every body stands, walks and runs (the adult's standing idle is the captured Idle_Stand_Loop); the teen only stands: its made walk and run
-  // fail the body gate (stick-bodies-age.test.mjs)
-  for (const b of Object.keys(BODIES)) for (const c of [b === 'adult' ? 'Idle_Stand_Loop' : 'Idle_Breath_Loop', ...(b === 'teen' ? [] : ['Move_Walk_Fwd_Loop', 'Move_Run_Fwd_Loop'])]) assert.equal(getClip(c, b).body, b);
+  // every body stands, walks and runs (the adult's standing idle is the captured Idle_Stand_Loop); the teen only stands (its made walk and run
+  // fail the body gate) and the toddler has no run (stick-bodies-age.test.mjs)
+  const NONE = { teen: ['Move_Walk_Fwd_Loop', 'Move_Run_Fwd_Loop'], toddler: ['Move_Run_Fwd_Loop'] };
+  for (const b of Object.keys(BODIES)) for (const c of [b === 'adult' ? 'Idle_Stand_Loop' : 'Idle_Breath_Loop', 'Move_Walk_Fwd_Loop', 'Move_Run_Fwd_Loop']) {
+    if (NONE[b]?.includes(c)) assert.throws(() => getClip(c, b), new RegExp(`has no ${b} version`)); else assert.equal(getClip(c, b).body, b);
+  }
   const bad = (await checkAll()).filter(r => r.fails.length);
   assert.deepEqual(bad.map(r => `${r.name || r.file}: ${r.fails.join('; ')}`), []);
 });

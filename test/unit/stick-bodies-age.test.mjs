@@ -110,11 +110,13 @@ test('toddler walk: wide feet, arms out, a waddle, the head steady enough to rea
 test('the gate holds both bodies to their own lines, and every clip they have passes it', async () => {
   assert.deepEqual(BODY_LIFE.teen.stride, [1.05, Infinity]); assert.deepEqual(BODY_LIFE.teen.time, [1.08, Infinity]);
   assert.deepEqual(BODY_LIFE.toddler.cadence, [1.15, Infinity]); assert.deepEqual(BODY_LIFE.toddler.stride, [0, 0.80]);
-  assert.deepEqual(NEW.map(C => C.name), ['Teen_Idle_Breath_Loop', 'Toddler_Idle_Breath_Loop', 'Toddler_Move_Run_Fwd_Loop', 'Toddler_Move_Walk_Fwd_Loop']);
+  assert.deepEqual(NEW.map(C => C.name), ['Teen_Idle_Breath_Loop', 'Toddler_Idle_Breath_Loop', 'Toddler_Move_Walk_Fwd_Loop']);
   // the teen's made walk and run at its own numbers fail it, so they are not in the library, and nothing stands in for them
   const A = getClip('Move_Walk_Fwd_Loop', 'adult'), W = { name: 'Teen_Move_Walk_Fwd_Loop', clip: 'Move_Walk_Fwd_Loop', body: 'teen', loop: true, needs: { props: [], hands: null }, ...gaitLoop({ body: 'teen', kind: 'walk' }) };
   assert.deepEqual(lifeAgainst('teen', await clipLife(A), await clipLife(W), { on: await onBody(A, 'teen') }).filter(r => !r.ok).map(r => r.n), ['stride', 'shape']);
   for (const c of ['Move_Walk_Fwd_Loop', 'Move_Run_Fwd_Loop']) assert.throws(() => getClip(c, 'teen'), /has no teen version/);
+  // the toddler's made run passed this gate and a reviewer who watched it move (26/11) read it as a walk: a pass here is not a look
+  assert.throws(() => getClip('Move_Run_Fwd_Loop', 'toddler'), /has no toddler version/);
   for (const C of NEW) assert.deepEqual(await bodyFails(C), [], C.name);
   // none is the adult's clip under another name
   for (const C of NEW.filter(c => c.advance)) { const A = getClip(C.clip, 'adult'), s = lifeAgainst(C.body, await clipLife(A), await clipLife(C), { on: await onBody(A, C.body) }).find(r => r.n === 'shape'); assert.ok(s.ok, `${C.name} ${JSON.stringify(s)}`); }
