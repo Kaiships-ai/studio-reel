@@ -210,6 +210,7 @@ export function judge({ acts, rec, SPECS }, bible, film) {
             if (!byId.has(id)) { add('clip-not-in-catalog', fromWhere({ act, subject, what: k.clip, f0, f1 }, find(siteFiles, new RegExp(`clip:\\s*'${esc(k.clip)}'`)))); continue; }
             use(id, act, f0, f1);
             const cb = k.body || 'adult';
+            if (byId.get(id).status === 'stable' && byId.get(id).trialBodies?.includes(cb)) add('trial-part', { act, what: `${id} (${cb})`, f0, f1 });
             if (cb !== body) add('clip-wrong-body', fromWhere({ act, subject, what: `${k.clip} (${cb}) trên thân ${body}`, f0, f1, note: 'mỗi thân dùng clip của chính nó' }, find(siteFiles, new RegExp(`clip:\\s*'${esc(k.clip)}'`))));
             continue;
           }

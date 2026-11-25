@@ -49,6 +49,12 @@ test('a kit clip with no catalog entry fails: the set stays closed', () => {
   assert.match(r.stderr, /kit motion-clip "Act_Jump_Once" .* has no catalog entry/);
 });
 
+test('a body a clip has no version for cannot be on trial; a trial body shows as such beside a stable clip', () => {
+  const r = run('--dir', broken(b => { b.catalog.components.find(c => c.id === 'clip.Move_Run_Fwd_Loop').trialBodies = ['teen']; }));
+  assert.equal(r.status, 1); assert.match(r.stderr, /clip\.Move_Run_Fwd_Loop: trialBodies teen not in bodies/);
+  assert.match(fs.readFileSync(path.join(DIR, 'CATALOG.md'), 'utf8'), /`clip\.Move_Run_Fwd_Loop` \| adult, child, elder, heavy, thin, toddler \(thử\) \| ổn định/);
+});
+
 test('a token that drifts from the kit value fails', () => {
   const r = run('--dir', broken(b => { b.tokens.tokens.find(t => t.name === 'count.3').value = 4; }));
   assert.equal(r.status, 1);

@@ -148,6 +148,8 @@ export async function validate({ tokens, catalog }, { repo = REPO, films = path.
     if (c.kind === 'motion-clip' && first && !first.error && first.value) {
       const have = Object.keys(first.value).sort(), want = [...(c.bodies || [])].sort();
       if (!same(have, want)) errors.push(`${w}: bodies ${want.join(',')} but the kit has ${have.join(',')}`);
+      // (a clip praised on some bodies may be new on another: trialBodies, shown as "thử" whatever the clip's status)
+      const extra = (c.trialBodies || []).filter(b => !want.includes(b)); if (extra.length) errors.push(`${w}: trialBodies ${extra.join(',')} not in bodies`);
     }
     for (const v of c.variants || []) if (first?.parent && !(c.kit[0].key + v in first.parent)) errors.push(`${w}: the kit has no ${c.kit[0].key}${v}`);
     if (c.provides && first && !first.error && !first.unchecked) {
@@ -178,6 +180,7 @@ export async function validate({ tokens, catalog }, { repo = REPO, films = path.
 export const KIND_VI = { 'motion-clip': 'Clip chuyển động', face: 'Nét mặt', 'camera-kind': 'Loại shot', 'camera-move': 'Di máy', prop: 'Đạo cụ', set: 'Bối cảnh',
   cast: 'Nhân vật', rig: 'Bộ xương', 'caption-style': 'Phụ đề', 'card-2d': 'Thẻ 2D', fx: 'Hiệu ứng trong cảnh', 'look-preset': 'Ánh sáng, màu' };
 export const TIER_VI = { primitive: 'Giá trị gốc', semantic: 'Theo mục đích', component: 'Theo thành phần' };
+export const bodiesText = c => c.bodies.map(b => ((c.trialBodies || []).includes(b) && c.status !== 'trial' ? `${b} (thử)` : b)).join(', ');
 export const ST_VI = { stable: 'ổn định', trial: 'thử', retired: 'bỏ' };
 const cell = s => String(s ?? '').replace(/\|/g, '/').replace(/\n/g, ' ');
 const show = v => v === null ? 'trống' : Array.isArray(v) ? `[${v.join(', ')}]` : v && typeof v === 'object' ? (v.min != null ? `${show(v.min)}-${show(v.max)}` : JSON.stringify(v)) : String(v);
@@ -195,7 +198,7 @@ export function render({ tokens, catalog }, { stats, resolve }) {
       const ev = [...(c.evidence?.praise || []).map(i => '+' + i), ...(c.evidence?.complaints || []).map(i => '-' + i)].join(' ');
       const local = c.kit.some(r => r.path.startsWith('films/')) ? ' (phim)' : '';
       const instead = Object.values(c.covers || {}).flat();
-      out.push(`| \`${c.id}\` | ${cell(k === 'motion-clip' ? c.bodies.join(', ') : c.name)} | ${ST_VI[c.status]}${local} | ${cell(c.use)}${instead.length ? ` (thay cho ${cell(instead.join(', '))})` : ''} | ${cell(c.never)} | ${ev} |`);
+      out.push(`| \`${c.id}\` | ${cell(k === 'motion-clip' ? bodiesText(c) : c.name)} | ${ST_VI[c.status]}${local} | ${cell(c.use)}${instead.length ? ` (thay cho ${cell(instead.join(', '))})` : ''} | ${cell(c.never)} | ${ev} |`);
     }
     out.push('');
   }

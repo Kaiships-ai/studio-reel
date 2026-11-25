@@ -8,7 +8,7 @@ Sinh từ `tokens.json` và `catalog.json` bởi `node styles/stick-man/bible/ca
 
 | id | thân | trạng thái | dùng khi | không bao giờ | Kai |
 |---|---|---|---|---|---|
-| `clip.Move_Run_Fwd_Loop` | adult, child, elder, heavy, thin, toddler | ổn định | chạy thoát, chạy đuổi (thay cho DASH, C_RUNGUN) | chạy bằng key tay | +S3-013 +S3-003 -S3-002 |
+| `clip.Move_Run_Fwd_Loop` | adult, child, elder, heavy, thin, toddler (thử) | ổn định | chạy thoát, chạy đuổi (thay cho DASH, C_RUNGUN) | chạy bằng key tay | +S3-013 +S3-003 -S3-002 |
 | `clip.Move_Walk_Fwd_Loop` | adult, child, elder, heavy, thin, toddler | thử | đi bộ thường (thay cho walk) | đi bằng key tay khi có clip |  |
 | `clip.Move_Sprint_Fwd_Loop` | adult | ổn định | chạy nước rút | dừng gấp không bước hãm | +S3-013 |
 | `clip.Act_Jump_Once` | adult | thử | nhảy tại chỗ | lăn nghiêng giữa không trung | -S3-007 |
