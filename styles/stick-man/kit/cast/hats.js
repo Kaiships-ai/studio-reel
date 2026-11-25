@@ -41,9 +41,10 @@ export function hatOf(kind) {
   } else if (kind === 'toque') {
     const c = UNIFORM.toque; put(new THREE.CylinderGeometry(0.206, 0.206, 0.075, 48, 1, false).translate(0, y0 + 0.035, 0), mul(c, 0.94), 0.004);
     const pr = [[0.198, y0 + 0.07]]; for (let i = 1; i <= 12; i++) { const u = i / 12; pr.push([0.198 + 0.06 * Math.sin(u * Math.PI * 0.85) - 0.07 * u * u, y0 + 0.07 + 0.25 * u]); } pr.push([0, y0 + 0.32]);
-    const puff = lathe(pr, 64), P = puff.attributes.position;
+    // pleated in its shape, shaded as the round puff it is (pleat normals put the cel ramp's edge along every pleat in grey teeth)
+    const puff = lathe(pr, 64), P = puff.attributes.position; puff.computeVertexNormals();
     for (let i = 0; i < P.count; i++) { const x = P.getX(i), z = P.getZ(i), y = P.getY(i), k = 1 + 0.045 * Math.cos(14 * Math.atan2(x, z)) * sstep(y0 + 0.07, y0 + 0.12, y); P.setXYZ(i, x * k, y, z * k); }
-    puff.computeVertexNormals(); put(puff, c);
+    put(puff, c);
   }
   g.rotation.x = -8 * DEG; return g;
 }

@@ -15,7 +15,7 @@
 //   cloth     only what moves: a coat's skirts, a skirt, an apron, a scarf's ends (drape.js on cloth.js)
 //   hats      rigid on the head (Kai hates wobble): cap:police, cap:pilot, cap:scrub, hat:hard, hat:toque (hats.js)
 // Colours are linear (as everywhere in the kit; a :rrggbb is read as costume.js reads it). No garment is a flat near-white:
-// the white coats are a warm off-white, shaded by the cel ramp and folds (valuegate's blown object).
+// the white coats are a cool off-white (a warm one reads as a trench coat), shaded by the cel ramp and folds (valuegate's blown object).
 import * as THREE from 'three';
 import { W_M } from '#engine/cast.js';
 import { css } from '#engine/look.js';
