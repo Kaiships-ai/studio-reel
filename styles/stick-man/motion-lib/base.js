@@ -27,8 +27,14 @@ export function merge(a, ...bs) {
 }
 const fy = body => FY * (BODIES[body].spec.scale ?? 1) * BODIES[body].stance;
 const feet = (body, x, xl = x, xr = x) => ({ legL: { footW: [xl, -fy(body), 0], pitch: 0, yaw: 0 }, legR: { footW: [xr, fy(body), 0], pitch: 0, yaw: 0 } });
-// STAND for a body at x (clip space)
-export const stand = (body = 'adult', x = 0) => merge(STAND, BODIES[body].posture, { pos: [x, 0, 0], yaw: 90, shrugL: 0, shrugR: 0 }, feet(body, x));
+// STAND for a body at x (clip space). Its planted prints are in the world, so a figure that stands anywhere else or faces another way
+// asks for it here: stand(body, x, { yaw, y }) turns the prints with it. A heading put on top of stand() (K(f, stand(b), { yaw: 0 }))
+// turns the body over prints that stay a step wide along y: one foot ahead of the other under a body facing the lens, the legs meeting in
+// one point (the first faces line-up, 25/11)
+export const stand = (body = 'adult', x = 0, { yaw = 90, y = 0 } = {}) => {
+  const P = merge(STAND, BODIES[body].posture, { pos: [x, 0, 0], yaw: 90, shrugL: 0, shrugR: 0 }, feet(body, x));
+  return yaw === 90 && y === 0 ? P : turned(P, yaw - 90, [x, y]);
+};
 // SIT on a knee-high seat (0.45 m) whose front edge is at x: the feet forward, the pelvis on the seat; the seat carries the
 // weight, so balance is off (`fall` is the rig's switch for a body supported by something other than its feet)
 export const sit = (body = 'adult', x = 0) => merge(STAND, BODIES[body].posture, { pos: [x, 0, 0], yaw: 90, bob: -0.56, fall: 1, spine: { bend: 4 },
@@ -370,7 +376,9 @@ export function gaitLoop({ body = 'adult', kind = 'walk', upper, base, ...over }
   // with the pelvis; the ankle rides up on the heel or the toe as the foot pitches; metres / (0.6 x scale).
   // The 'kaiships' dose plays bob and the pelvis 1.3x further from the base pose (motion.js exaggeration 0.4 + 1.2 x 0.75):
   // the solve works on the played values and writes the bob back unexaggerated (test/unit/stick-motionlib.test.mjs pins it).
-  const sc = B.spec.scale ?? 1, LK = B.spec.legScale ?? 1, legW = 2 * 0.679 * LK, DROP = (1 - LK) * legW, mW = 1 / (0.6 * sc), DEG = Math.PI / 180;
+  // (DROP is cast.js's, how far shorter legs lower the hip. G.oldDrop: the child's clips on main were solved with the shorter leg's
+  // length in it, so their hips sit 0.054 W (2 cm) lower and their knees bend more than keyed; they keep it, they are not changed here)
+  const sc = B.spec.scale ?? 1, LK = B.spec.legScale ?? 1, legW = 2 * 0.679 * LK, DROP = (1 - LK) * (G.oldDrop ? legW : 2 * 0.679), mW = 1 / (0.6 * sc), DEG = Math.PI / 180;
   const sole = p => 0.004 + (p > 0 ? 0.08 * Math.sin(p * DEG) : 0.122 * Math.sin(-p * DEG));
   // the hips' sideways shift as the film shows it (hip.x is a dosed channel, motion.js EXAG)
   const hipX = P => (pose0.hip?.x || 0) + ((P.hip?.x || 0) - (pose0.hip?.x || 0)) * DOSE_E;

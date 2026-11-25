@@ -1,6 +1,6 @@
 # Motion library catalogue
 
-The 68 clips of `styles/stick-man/motion-lib` (rules and use: its README.md). An anim key `{ f, clip, body, to?, times? }`
+The 72 clips of `styles/stick-man/motion-lib` (rules and use: its README.md). An anim key `{ f, clip, body, to?, times? }`
 plays one (REEL_DATA.md). `frames` = one cycle or the whole one-off at 30 fps; `base` = the standard pose it starts (→ ends) on;
 `props` = what the hands hold (`x_hp<L|R|B>_<prop>`, motion-lib/props.js and kit/cast/handprops.js; a film swaps its own with
 the key's `swap`), on which hand; `set` = the set pieces it needs (the proof page builds them at the sizes the clip names in
@@ -23,8 +23,11 @@ raw pelvis speed is reported, not gated); the carried mass changes at most 35 % 
 | `Idle_Breath_Loop` | child | loop | 60 | STAND | - | - | a child (big head, short legs, 25 kg) standing, breathing, the weight drifting to one foot and back |
 | `Idle_Breath_Loop` | elder | loop | 112 | STAND | - | - | an elder (stooped, 62 kg) standing, breathing, the weight drifting to one foot and back |
 | `Idle_Breath_Loop` | heavy | loop | 96 | STAND | - | - | a heavy body (girth 1.9, 115 kg) standing, breathing, the weight drifting to one foot and back |
+| `Idle_Breath_Loop` | teen | loop | 84 | STAND | - | - | a teen (85 % of the adult, a bit thinner, 50 kg) standing, breathing, the weight drifting to one foot and back |
 | `Idle_Breath_Loop` | thin | loop | 76 | STAND | - | - | a thin body (girth 0.6, 55 kg) standing, breathing, the weight drifting to one foot and back |
+| `Idle_Breath_Loop` | toddler | loop | 48 | STAND | - | - | a toddler (70 % of the child, stubby legs, a big head, 11 kg) standing, breathing, the weight drifting to one foot and back |
 | `Idle_CarryBag_Loop` | adult | loop | 327 | HUG | hugbag (both) | - | standing with a heavy duffel hugged to the chest in both arms, from motion capture (Mixamo "Carrying", ref/mixamo/carry_idle.js) on this body, every captured frame, opened and closed on HUG (the capture's own first frame) |
+| `Idle_Fidget_Loop` | child | loop | 270 | STAND | - | - | a child (big head, short legs, 25 kg) standing and unable to wait: it turns at the waist to look about, the loose arms swinging after the chest, and shifts its weight on an uneven beat |
 | `Idle_LookAround_Loop` | adult | loop | 161 | STAND | - | - | standing, looking round from side to side, wary, from motion capture (Mixamo "Look Around", ref/mixamo/look_around.js) on this body: a loop in place |
 | `Idle_Sit_Loop` | adult | loop | 156 | SIT | - | seat | sitting at rest on a seat, shifting a little, from motion capture (Mixamo "Sitting Idle", ref/mixamo/sitting_idle.js) on this body, every captured frame |
 | `Idle_Sleep_Loop` | adult | loop | 265 | LIE | - | - | asleep on the floor, curled on one side, breathing (SH280), from motion capture (Mixamo "Sleeping Idle", ref/mixamo/sleeping_idle.js) on this body, every captured frame |
@@ -50,6 +53,7 @@ raw pelvis speed is reported, not gated); the carried mass changes at most 35 % 
 | `Move_Walk_Fwd_Loop` | elder | loop | 38 | STAND | - | - | short slow steps, feet barely off the floor, little bounce, arms close, head lifted to look ahead |
 | `Move_Walk_Fwd_Loop` | heavy | loop | 36 | STAND | - | - | short slow steps on wide feet, the body rolling over each foot, arms out round the belly |
 | `Move_Walk_Fwd_Loop` | thin | loop | 28 | STAND | - | - | long light steps on narrow feet, little roll |
+| `Move_Walk_Fwd_Loop` | toddler | loop | 18 | STAND | - | - | quick short steps on wide-set feet, rocking from side to side, the arms held out |
 | `Move_WalkFlashlight_Loop` | adult | loop | 34 | STAND | torch (L) | - | a cautious search walk with a flashlight held out in the left fist (the same hand as Act_TorchReady_Loop), waist high, the beam ahead |
 | `Move_WalkFlashlight_Loop` | heavy | loop | 40 | STAND | torch (L) | - | the cautious search walk with a flashlight held out in the left fist (shared/extra/Move_WalkFlashlight_Loop_v01.js flashlightWalk) on the heavy body, from its own walk |
 | `Move_WalkFlashlight_Loop` | thin | loop | 32 | STAND | torch (L) | - | the cautious search walk with a flashlight held out in the left fist (shared/extra/Move_WalkFlashlight_Loop_v01.js flashlightWalk) on the thin body, from its own walk |
@@ -122,4 +126,6 @@ raw pelvis speed is reported, not gated); the carried mass changes at most 35 % 
 | heavy | {girth: 1.9} | 115 kg | 0.42 m, 18 | 0.62 m, 9, 8 |
 | thin | {girth: 0.6} | 55 kg | 0.62 m, 14 | 1 m, 8, 5 |
 | child | {scale: 0.62, headScale: 1.3, legScale: 0.8} | 25 kg | 0.3 m, 10 | 0.5 m, 8, 5 |
+| teen | {scale: 0.826, girth: 0.88, headScale: 1.06, legScale: 1.02} | 50 kg | 0.49 m, 17 | 0.885 m, 9, 5 |
+| toddler | {scale: 0.4468, headScale: 1.5, legScale: 0.6} | 11 kg | 0.12 m, 9 | 0.136 m, 8, 7 |
 | elder | {scale: 0.96} | 62 kg | 0.3 m, 19 | 0.42 m, 11, 10 |
