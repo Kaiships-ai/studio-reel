@@ -67,41 +67,22 @@ import Move_WalkFlashlight_Loop_v01 from './shared/extra/Move_WalkFlashlight_Loo
 import Act_DropInTrunk_Once_v01 from './shared/interact/Act_DropInTrunk_Once_v01.js';
 import Act_PushBagOutWindow_Once_v01 from './shared/interact/Act_PushBagOutWindow_Once_v01.js';
 
-import Adult_Idle_Sad_Loop_v01 from './body/adult/Adult_Idle_Sad_Loop_v01.js';
-import Heavy_Idle_Sad_Loop_v01 from './body/heavy/Heavy_Idle_Sad_Loop_v01.js';
-import Elder_Idle_Sad_Loop_v01 from './body/elder/Elder_Idle_Sad_Loop_v01.js';
 import Adult_React_Cry_Loop_v01 from './body/adult/Adult_React_Cry_Loop_v01.js';
-import Thin_React_Cry_Loop_v01 from './body/thin/Thin_React_Cry_Loop_v01.js';
 import Adult_React_Surprise_Once_v01 from './body/adult/Adult_React_Surprise_Once_v01.js';
 import Adult_React_Terrified_Once_v01 from './body/adult/Adult_React_Terrified_Once_v01.js';
-import Thin_React_Terrified_Once_v01 from './body/thin/Thin_React_Terrified_Once_v01.js';
-import Child_React_Terrified_Once_v01 from './body/child/Child_React_Terrified_Once_v01.js';
 import Adult_React_SitDisbelief_Once_v01 from './body/adult/Adult_React_SitDisbelief_Once_v01.js';
-import Thin_React_SitDisbelief_Once_v01 from './body/thin/Thin_React_SitDisbelief_Once_v01.js';
 import Adult_Gest_Clap_Loop_v01 from './body/adult/Adult_Gest_Clap_Loop_v01.js';
-import Child_Gest_Clap_Loop_v01 from './body/child/Child_Gest_Clap_Loop_v01.js';
 import Adult_Gest_SitClap_Loop_v01 from './body/adult/Adult_Gest_SitClap_Loop_v01.js';
-import Adult_Move_SadWalk_Fwd_Loop_v01 from './body/adult/Adult_Move_SadWalk_Fwd_Loop_v01.js';
 import Elder_Move_OldWalk_Fwd_Loop_v01 from './body/elder/Elder_Move_OldWalk_Fwd_Loop_v01.js';
 import Elder_Idle_Stooped_Loop_v01 from './body/elder/Elder_Idle_Stooped_Loop_v01.js';
-import Adult_Idle_SitFloor_Loop_v01 from './body/adult/Adult_Idle_SitFloor_Loop_v01.js';
-import Heavy_Idle_SitFloor_Loop_v01 from './body/heavy/Heavy_Idle_SitFloor_Loop_v01.js';
 import Adult_Gest_SitTalk_Loop_v01 from './body/adult/Adult_Gest_SitTalk_Loop_v01.js';
 import Adult_Act_Type_Loop_v01 from './body/adult/Adult_Act_Type_Loop_v01.js';
 import Adult_Gest_PhoneTalk_Loop_v01 from './body/adult/Adult_Gest_PhoneTalk_Loop_v01.js';
 import Adult_Gest_NodYes_Once_v01 from './body/adult/Adult_Gest_NodYes_Once_v01.js';
-import Thin_Gest_NodYes_Once_v01 from './body/thin/Thin_Gest_NodYes_Once_v01.js';
 import Adult_Gest_ShakeNo_Once_v01 from './body/adult/Adult_Gest_ShakeNo_Once_v01.js';
-import Thin_Gest_ShakeNo_Once_v01 from './body/thin/Thin_Gest_ShakeNo_Once_v01.js';
 import Adult_React_Defeated_Once_v01 from './body/adult/Adult_React_Defeated_Once_v01.js';
-import Heavy_React_Defeated_Once_v01 from './body/heavy/Heavy_React_Defeated_Once_v01.js';
-import Thin_React_Defeated_Once_v01 from './body/thin/Thin_React_Defeated_Once_v01.js';
 import Adult_Gest_Yawn_Once_v01 from './body/adult/Adult_Gest_Yawn_Once_v01.js';
-import Thin_Gest_Yawn_Once_v01 from './body/thin/Thin_Gest_Yawn_Once_v01.js';
-import Adult_Move_RunTired_Once_v01 from './body/adult/Adult_Move_RunTired_Once_v01.js';
-import Adult_Idle_Kneel_Loop_v01 from './body/adult/Adult_Idle_Kneel_Loop_v01.js';
 import Adult_Gest_Point_Once_v01 from './body/adult/Adult_Gest_Point_Once_v01.js';
-import Heavy_Gest_Point_Once_v01 from './body/heavy/Heavy_Gest_Point_Once_v01.js';
 export const ALL = [
   Adult_Move_Run_Fwd_Loop_v01,
   Adult_Move_Walk_Fwd_Loop_v01,
@@ -155,41 +136,22 @@ export const ALL = [
   Move_WalkFlashlight_Loop_v01,
   Act_DropInTrunk_Once_v01,
   Act_PushBagOutWindow_Once_v01,
-  Adult_Idle_Sad_Loop_v01,
-  Heavy_Idle_Sad_Loop_v01,
-  Elder_Idle_Sad_Loop_v01,
   Adult_React_Cry_Loop_v01,
-  Thin_React_Cry_Loop_v01,
   Adult_React_Surprise_Once_v01,
   Adult_React_Terrified_Once_v01,
-  Thin_React_Terrified_Once_v01,
-  Child_React_Terrified_Once_v01,
   Adult_React_SitDisbelief_Once_v01,
-  Thin_React_SitDisbelief_Once_v01,
   Adult_Gest_Clap_Loop_v01,
-  Child_Gest_Clap_Loop_v01,
   Adult_Gest_SitClap_Loop_v01,
-  Adult_Move_SadWalk_Fwd_Loop_v01,
   Elder_Move_OldWalk_Fwd_Loop_v01,
   Elder_Idle_Stooped_Loop_v01,
-  Adult_Idle_SitFloor_Loop_v01,
-  Heavy_Idle_SitFloor_Loop_v01,
   Adult_Gest_SitTalk_Loop_v01,
   Adult_Act_Type_Loop_v01,
   Adult_Gest_PhoneTalk_Loop_v01,
   Adult_Gest_NodYes_Once_v01,
-  Thin_Gest_NodYes_Once_v01,
   Adult_Gest_ShakeNo_Once_v01,
-  Thin_Gest_ShakeNo_Once_v01,
   Adult_React_Defeated_Once_v01,
-  Heavy_React_Defeated_Once_v01,
-  Thin_React_Defeated_Once_v01,
   Adult_Gest_Yawn_Once_v01,
-  Thin_Gest_Yawn_Once_v01,
-  Adult_Move_RunTired_Once_v01,
-  Adult_Idle_Kneel_Loop_v01,
   Adult_Gest_Point_Once_v01,
-  Heavy_Gest_Point_Once_v01,
 ];
 // A clip starts at its own origin: a capture's first frame stands a few cm (an in-place loop) to 1 m off it, and two
 // clips chained (each placed where the last one left the actor) jumped the root by that offset. Every clip is moved so

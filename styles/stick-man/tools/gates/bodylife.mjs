@@ -3,6 +3,9 @@
 // on), and has to be slower / quicker, smaller / bigger by at least these amounts, in that body's direction, AND move in
 // another shape: a copy that is only retimed and resized is the same performance in another costume. A clip that passes is told
 // apart by these numbers; whether it acts like that body is for a viewer in motion, and no line here says it does.
+// Not seen by any line here or in motionlib.mjs: a body sinking into the floor (a kneel's shins did, and passed), feet skating where no
+// foot is keyed as planted or between keys (54 and 82 cm, and passed), how a start or a stop reads (a lurch, a step back, a snap:
+// passed), and how a clip reads in a real set (25/11, the review of the five adult clips)
 //
 // The amounts, written before anything was measured. A full-length figure in a 720 x 1280 frame is ~770 px tall, 430 px a
 // metre. Nobody sees two bodies side by side in a film, so a difference has to survive a cut:
@@ -144,11 +147,11 @@ export const lifeFails = (body, A, B, o) => lifeAgainst(body, A, B, o).filter(r 
 // ------------------------------------------------------------------ a hold is never a freeze
 // A figure that stops dead reads as a paused film, not a still person (REVIEW-2: Idle_Kneel frozen 176 frames, Idle_Sad
 // 315). In every STILL_F frames (2 s) some part (the head, a hand, the hips) moves at least STILL_CM within STILL_IN frames
-// (half a second): a drift slower than that reads as a still picture, not as breathing. STILL_CM 2.8: READ_PX, 6 px, on a figure
-// half the height of a 720 x 1280 frame, the size films mostly show (12 px on one the full height). It was 1.0, which the review
-// counted as 2 px and saw stills pass; 2.0, tried first, still passed the Idle_Kneel the review called still for 62 frames (it
-// peaked at 2.7 cm in half a second there). What it cannot see: a slow loop of one sway, alive by this number and dull to watch
-export const STILL_F = 60, STILL_IN = 15, STILL_CM = +(100 * READ_PX / (PX_PER_M / 2)).toFixed(1);
+// (half a second): a drift slower than that reads as a still picture, not as breathing. STILL_CM 2.0 was set before any clip was
+// measured with it; it was raised to 2.8 after measuring (2.0 passes the old kneel a review saw still for 62 frames, 2.48 cm) and put
+// back to 2.0, also after measuring (Studio 25/11). The first version of this check had 1.0. So: what it cannot see is a hold
+// between 2 and 2.8 cm that a viewer calls still, and a slow loop of one sway, alive by this number and dull to watch
+export const STILL_F = 60, STILL_IN = 15, STILL_CM = 2.0;
 export function stillSpans(rows) {
   const P = ['head', 'handL', 'handR', 'pelvis'], v = [];
   for (let f = 0; f + STILL_IN < rows.length; f++) v.push(100 * Math.max(...P.map(p => Math.hypot(...sub(rows[f + STILL_IN][p], rows[f][p])))));
@@ -164,6 +167,7 @@ export function stillSpans(rows) {
 // allowed, and a limit on every frame's look down where the clip has one: SadWalk 35 (Studio 25/11: 70 deg down, the face never
 // seen). A quarter for a fright that looks both ways, a cry's wiping hand and a slump that bows (FACE_AWAY). What it cannot see: a
 // rim, a fringe or a hand over the face, or whether the face it can see is acting
+// (SadWalk, RunTired and Idle_Sad are not in the library now; their marks stay as they were, for when one is made again)
 export const FACE_YAW = 40, FACE_DOWN = 60, FACE_AWAY = 0.25;
 export const FACE_SEEN = { Gest_SitTalk_Loop: [0, 0], Gest_SitClap_Loop: [0, 0], Gest_PhoneTalk_Loop: [0, 0], Move_RunTired_Once: [0, 0], Idle_Sad_Loop: [0, 0], Move_SadWalk_Fwd_Loop: [0, 0, 35],
   React_Defeated_Once: [0, FACE_AWAY], React_Terrified_Once: [FACE_AWAY, FACE_AWAY], React_Cry_Loop: [FACE_AWAY, FACE_AWAY] };

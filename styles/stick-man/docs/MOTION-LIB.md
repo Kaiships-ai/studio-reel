@@ -1,6 +1,6 @@
 # Motion library catalogue
 
-The 87 clips of `styles/stick-man/motion-lib` (rules and use: its README.md). An anim key `{ f, clip, body, to?, times? }`
+The 68 clips of `styles/stick-man/motion-lib` (rules and use: its README.md). An anim key `{ f, clip, body, to?, times? }`
 plays one (REEL_DATA.md). `frames` = one cycle or the whole one-off at 30 fps; `base` = the standard pose it starts (→ ends) on;
 `props` = what the hands hold (`x_hp<L|R|B>_<prop>`, motion-lib/props.js and kit/cast/handprops.js; a film swaps its own with
 the key's `swap`), on which hand; `set` = the set pieces it needs (the proof page builds them at the sizes the clip names in
@@ -25,14 +25,8 @@ raw pelvis speed is reported, not gated); the carried mass changes at most 35 % 
 | `Idle_Breath_Loop` | heavy | loop | 96 | STAND | - | - | a heavy body (girth 1.9, 115 kg) standing, breathing, the weight drifting to one foot and back |
 | `Idle_Breath_Loop` | thin | loop | 76 | STAND | - | - | a thin body (girth 0.6, 55 kg) standing, breathing, the weight drifting to one foot and back |
 | `Idle_CarryBag_Loop` | adult | loop | 327 | HUG | hugbag (both) | - | standing with a heavy duffel hugged to the chest in both arms, from motion capture (Mixamo "Carrying", ref/mixamo/carry_idle.js) on this body, every captured frame, opened and closed on HUG (the capture's own first frame) |
-| `Idle_Kneel_Loop` | adult | loop | 156 | KNEEL | - | - | kneeling on both knees, breathing, the weight going from knee to knee, a slow look down and up |
 | `Idle_LookAround_Loop` | adult | loop | 161 | STAND | - | - | standing, looking round from side to side, wary, from motion capture (Mixamo "Look Around", ref/mixamo/look_around.js) on this body: a loop in place |
-| `Idle_Sad_Loop` | adult | loop | 148 | STAND | - | - | standing sad, head and shoulders down, a little sway |
-| `Idle_Sad_Loop` | elder | loop | 199 | STAND | - | - | standing sad, head and shoulders down, a little sway |
-| `Idle_Sad_Loop` | heavy | loop | 172 | STAND | - | - | standing sad, head and shoulders down, a little sway |
 | `Idle_Sit_Loop` | adult | loop | 156 | SIT | - | seat | sitting at rest on a seat, shifting a little, from motion capture (Mixamo "Sitting Idle", ref/mixamo/sitting_idle.js) on this body, every captured frame |
-| `Idle_SitFloor_Loop` | adult | loop | 354 | FLOOR | - | - | sitting on the floor, the knees drawn up, the arms round them, looking about |
-| `Idle_SitFloor_Loop` | heavy | loop | 392 | FLOOR | - | - | sitting on the floor, the knees drawn up, the arms round them, looking about |
 | `Idle_Sleep_Loop` | adult | loop | 265 | LIE | - | - | asleep on the floor, curled on one side, breathing (SH280), from motion capture (Mixamo "Sleeping Idle", ref/mixamo/sleeping_idle.js) on this body, every captured frame |
 | `Idle_Stand_Loop` | adult | loop | 325 | STAND | - | - | standing at rest, breathing, the weight settling foot to foot, from motion capture (Mixamo "Breathing Idle", ref/mixamo/breathing_idle.js) on this body: a loop in place |
 | `Idle_Stooped_Loop` | elder | loop | 393 | STAND | - | - | an old man standing stooped, a slight sway |
@@ -49,8 +43,6 @@ raw pelvis speed is reported, not gated); the carried mass changes at most 35 % 
 | `Move_Run_Fwd_Loop` | elder | loop | 22 | STAND | - | - | a slow shuffling jog: long contact, a tiny flight |
 | `Move_Run_Fwd_Loop` | heavy | loop | 18 | STAND | - | - | a heavy jog: long ground contact, a short low flight, a big roll |
 | `Move_Run_Fwd_Loop` | thin | loop | 16 | STAND | - | - | a long light run, a high quick stride |
-| `Move_RunTired_Once` | adult | once | 175 | STAND | - | - | a run from standing on heavy legs that is out of breath, shortens and stops, facing front |
-| `Move_SadWalk_Fwd_Loop` | adult | loop | 44 | STAND | - | - | a slow sad walk, the head down with the face still seen |
 | `Move_Sprint_Fwd_Loop` | adult | loop | 16 | STAND | - | - | a fast run, from motion capture (Mixamo "Fast Run", ref/mixamo/fast_run.js) on this body |
 | `Move_TurnLeft_Once` | adult | once | 56 | STAND | - | - | a quarter turn to the left on the spot, from motion capture (Mixamo "Left Turn 90", ref/mixamo/left_turn_90.js) on this body, every captured frame |
 | `Move_Walk_Fwd_Loop` | adult | loop | 31 | STAND | - | - | a walk, from motion capture (Mixamo "Walking", ref/mixamo/walking.js) on this body: planted feet pinned to their prints, the body travelling at the speed the captured feet slid back |
@@ -96,42 +88,31 @@ raw pelvis speed is reported, not gated); the carried mass changes at most 35 % 
 | Clip | Body | Loop | Frames | Base | Props (hand) | Set | What |
 |---|---|---|---|---|---|---|---|
 | `React_Cry_Loop` | adult | loop | 224 | STAND | - | - | standing, crying: hunched, head down, hands to the chin and cheek, an arm thrown out, wiping (on this big head the hands do not reach the eyes) |
-| `React_Cry_Loop` | thin | loop | 178 | STAND | - | - | standing, crying: hunched, head down, hands to the chin and cheek, an arm thrown out, wiping (on this big head the hands do not reach the eyes) |
 | `React_Defeated_Once` | adult | once | 182 | STAND | - | - | a frustrated slump after a loss: bends over, the fists swung down, then up, and the slump |
-| `React_Defeated_Once` | heavy | once | 226 | STAND | - | - | a frustrated slump after a loss: bends over, the fists swung down, then up, and the slump |
-| `React_Defeated_Once` | thin | once | 152 | STAND | - | - | a frustrated slump after a loss: bends over, the fists swung down, then up, and the slump |
 | `React_SitDisbelief_Once` | adult | once | 173 | SIT | - | seat | seated, in disbelief: the hands to the face, the body thrown back with the hands on the head, then upright again (needs a seat with room behind) |
-| `React_SitDisbelief_Once` | thin | once | 157 | SIT | - | seat | seated, in disbelief: the hands to the face, the body thrown back with the hands on the head, then upright again (needs a seat with room behind) |
 | `React_Startle_Once` | adult | once | 137 | STAND | - | - | a start: surprised, looking off to the right, from motion capture (Mixamo "Reacting", ref/mixamo/reacting.js) on this body, every captured frame |
 | `React_Surprise_Once` | adult | once | 60 | STAND | - | - | a start at something in front: the hands thrown up and the body back within half a second, a short beat held, then easing |
 | `React_Terrified_Once` | adult | once | 187 | STAND | - | - | terrified on the spot: the hands fly up, the body hunches on bent knees, the head snaps round one way, then the other |
-| `React_Terrified_Once` | child | once | 138 | STAND | - | - | terrified on the spot: the hands fly up, the body hunches on bent knees, the head snaps round one way, then the other |
-| `React_Terrified_Once` | thin | once | 151 | STAND | - | - | terrified on the spot: the hands fly up, the body hunches on bent knees, the head snaps round one way, then the other |
 
 ## Gest
 
 | Clip | Body | Loop | Frames | Base | Props (hand) | Set | What |
 |---|---|---|---|---|---|---|---|
 | `Gest_Clap_Loop` | adult | loop | 85 | STAND | - | - | standing, clapping: the hands open wide and meet |
-| `Gest_Clap_Loop` | child | loop | 64 | STAND | - | - | standing, clapping: the hands open wide and meet |
 | `Gest_LookBack_Once` | adult | once | 140 | STAND | - | - | a quick nervous look over the right shoulder, from motion capture (Mixamo "Look Over Shoulder", ref/mixamo/look_over_shoulder.js) on this body, every captured frame |
 | `Gest_LookBackCarry_Once` | adult | once | 140 | HUG | hugbag (both) | - | a quick nervous look over the right shoulder with the duffel hugged to the chest, from motion capture (Mixamo "Look Over Shoulder", ref/mixamo/look_over_shoulder.js) on this body, every captured frame, opened and closed on HUG: the capture's legs, head and turn (neck, the spine's twist, the pelvis), its arms and its lean the HUG pose's (they keep the bag, the motion-lib/props.js hugbag, 20 kg, turning with the chest |
 | `Gest_LookUp_Once` | any (adult, scaled) | once | 70 | STAND | - | - | something above |
 | `Gest_NodYes_Once` | adult | once | 106 | STAND | - | - | a plain yes nod |
-| `Gest_NodYes_Once` | thin | once | 84 | STAND | - | - | a plain yes nod |
 | `Gest_PhoneCall_Loop` | adult | loop | 115 | STAND | phone (R) | - | standing, talking on a phone held to the ear, from motion capture (Quaternius UAL "Idle_TalkingPhone_Loop", CC0, ref/ual/idle_talkingphone_loop.js) on this body, every captured frame |
 | `Gest_PhoneTalk_Loop` | adult | loop | 190 | STAND | phone (R) | - | standing, a phone in the right hand held to the ear, talking, the left hand with it |
 | `Gest_Point_Once` | adult | once | 110 | STAND | - | - | standing, pointing ahead |
-| `Gest_Point_Once` | heavy | once | 149 | STAND | - | - | standing, pointing ahead |
 | `Gest_PointSeated_Loop` | adult | loop | 130 | SIT | - | seat | seated, pointing ahead with the right hand, from motion capture (Mixamo "Pointing (seated)", ref/mixamo/pointing_seated.js) on this body, every captured frame |
 | `Gest_ShakeNo_Once` | adult | once | 104 | STAND | - | - | an annoyed no, the head shaking |
-| `Gest_ShakeNo_Once` | thin | once | 82 | STAND | - | - | an annoyed no, the head shaking |
 | `Gest_SitClap_Loop` | adult | loop | 104 | SIT | - | seat | seated, clapping in front of the chest |
 | `Gest_SitTalk_Loop` | adult | loop | 212 | SIT | - | seat | seated, talking, small hand moves |
 | `Gest_Talk_Loop` | adult | loop | 175 | STAND | - | - | standing, talking with both hands, from motion capture (Mixamo "Talking", ref/mixamo/talking.js) on this body: a loop in place |
 | `Gest_Wave_Loop` | adult | loop | 92 | STAND | - | - | standing, waving one hand overhead, from motion capture (Mixamo "Waving", ref/mixamo/waving.js) on this body: a loop in place |
 | `Gest_Yawn_Once` | adult | once | 207 | STAND | - | - | a tired stretch and yawn, a hand to the mouth |
-| `Gest_Yawn_Once` | thin | once | 164 | STAND | - | - | a tired stretch and yawn, a hand to the mouth |
 
 ## Body types
 

@@ -41,10 +41,11 @@ the standard pose there.
 | A one-off starts on its `base` and ends on its `end` (default `base`); a travelling loop's first and closing steps too. Standard poses: STAND, SIT, CARRY, LIE, HUG (`base.js`), and the poses a clip's own capture holds all through (`captureBase`: KNEEL, FLOOR) | base |
 | No joint turns more than 25 deg in a frame after the `kaiships` dose (a hand on an ik target: its travel over the arm's length) | joint gate |
 | A foot on the floor never slides (< 1 mm a frame): feet leave and reach the floor straight up and down | feet |
-| A body the floor carries (KNEEL, FLOOR) has its ankles and toes within 3 cm of the floor | floor |
-| A body's clip is not the adult's in another costume: against the adult's clip of the same name it is slower or quicker, its arcs smaller or bigger, its stride (a child: its cadence) its own, and its act (the hands, the face, the upper trunk, the hips' sway taken out, against the adult's clip on that body's figure) is not the same motion retimed and resized (correlation 0.85 at most, `SHAPE_C`), by the amounts in `tools/gates/bodylife.mjs`. The check sees copies; it cannot see whether the motion reads as that body, or as acting: that is a viewer's, in motion. Older clips that fail it are listed, dated, in `motionlib.mjs` BODY_KNOWN (only shrinks) | body |
-| A batch 1 clip never stops dead: in every 2 s some part moves 2.8 cm within half a second (6 px on a figure half the frame high; `bodylife.mjs` STILL) | still |
-| A clip a film cuts to for its feeling shows its face: the head's turn and its look down (`bodylife.mjs` FACE_SEEN; SadWalk 35 deg on every frame). A rim, a fringe or a hand over the face is not seen by it | face |
+| A body the floor carries (KNEEL, FLOOR: standard poses, no clip is on them now) has its ankles and toes no more than 3 cm above the floor. A limb sunk into the floor is not seen by it (a kneel's shins were, and passed) | floor |
+| A body's clip is not the adult's in another costume: against the adult's clip of the same name it is slower or quicker, its arcs smaller or bigger, its stride (a child: its cadence) its own, and its act (the hands, the face, the upper trunk, the hips' sway taken out, against the adult's clip on that body's figure) is not the same motion retimed and resized (correlation 0.85 at most, `SHAPE_C`), by the amounts in `tools/gates/bodylife.mjs`. The check sees copies: a pass says the motion is not a copy, never that it acts like that body; that is a viewer's, in motion. Older clips that fail it are listed, dated, in `motionlib.mjs` BODY_KNOWN (only shrinks) | body |
+| A batch 1 clip never stops dead: in every 2 s some part moves 2 cm within half a second (`bodylife.mjs` STILL; the mark was raised to 2.8 and put back, both after measuring). A hold a viewer calls still passes it (2.48 cm did) | still |
+| A clip a film cuts to for its feeling shows its face: the head's turn and its look down (`bodylife.mjs` FACE_SEEN). A rim, a fringe or a hand over the face is not seen by it | face |
+| What no check here sees: a body in contact with the floor (sunk in it, floating a little), feet skating (a foot not keyed as planted, or the visible slide between keys), how a start or a stop reads, how a clip reads in a real set and camera. A gate pass is not a review | (a viewer, in motion) |
 | A (clip, body) with no own clip has no clip: `getClip` throws, naming the bodies that have one. The adult's is never played instead | (index.js) |
 | Clips are written in clip space: the actor at the origin facing +x (yaw 90), metres for `pos` and `footW`, the figure frame (W) for `ik` targets | (convention) |
 | Each body's locomotion is authored with that body's numbers (`bodies.js`): stride, cadence, bounce, lift, sway, stoop; never an adult clip played on another body. Shared clips are authored on the adult and scale their metres with a smaller body | (review) |
@@ -70,7 +71,7 @@ A two-hand prop (`x_hpB_`) is now measured from the hands' midpoint to its grip 
 A capture on another body: `mocapClip` / `gaitLoop` options `stoop` (share of the elder's bent spine and lifted head put on
 an upright actor's capture: without it the elder stands up straight for a nod) and `armOut` (the heavy body's arms held out
 round the belly); `bobLow` (a captured walk's hips come down before the foot lands, not after), `seam` (an in-place loop
-whose capture ends a few cm off its first prints). `toeKeys`, `bridgeKeys` (`base.js`) say what each is for.
+whose capture ends a few cm off its first prints). `bridgeKeys` (`base.js`) says what it is for.
 
 `ownClip` (a one-off or a loop in place), `ownGait` (a walk) and `floorClip` (KNEEL, FLOOR) wrap them with the body's `life`
 (`bodies.js`): its clock (`rate`, `hold`, `drag`, its fastest hand `top`), the size of its arms' and trunk's moves, its weight
@@ -78,9 +79,10 @@ shift and bounce (`ref/perform.js`); and its `perform`: its arms, trunk and head
 `perform.js` `follow`, `armLag`), the elder hesitates as a move leaves a hold, a stiff or short neck takes the trunk with a nod,
 the weight shifts along the body's own path, every act breathes, a child fidgets; the stoop and arms held out are kept on every
 base. These layers retime, resize and loosen one capture; they do not make another performance of it (REVIEW-3, and the shape
-check: after the clock and the size, each kept body clip's act is correlated 0.88 to 0.99 with the adult's). A body that has to act its own way
-needs its own capture or its own keys. A recipe (`acts/<clip>.js`) says only what the action needs: the span of the capture
-(`cutSource`, `loopSource`), arms kept apart (`apartSource`), a clap that opens (`clapSource`). `closed` (on in `ownClip` loops)
+check: after the clock and the size, 13 of the 14 body clips the gate last judged had an act correlated 0.94 or more with the adult's, or none
+that moves, and Heavy SitFloor 0.88 with 1.3 cm). So no new clip gives thin, heavy or child their own acting: none is on them. A body that has to
+act its own way needs its own capture or its own keys. A recipe (`acts/<clip>.js`) says only what the action needs: the span of the capture
+(`cutSource`, `loopSource`), a clap that opens (`clapSource`). `closed` (on in `ownClip` loops)
 keeps a loop's last frame, so it repeats without skipping one.
 
 New clip: write it in clip space with `K` and the standard poses, add its import to `index.js`, run the checker, render

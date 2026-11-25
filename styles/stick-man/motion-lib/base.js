@@ -811,13 +811,4 @@ export const poleSpans = (keys, { deg = 18, pad = 5 } = {}) => ['armL', 'armR'].
     if (Math.max(Math.abs(b[arm].swing - a[arm].swing), Math.abs(b[arm].roll - a[arm].roll)) < deg) continue;
     const s = out[out.length - 1]; if (s && a.f - pad <= s[2]) s[2] = b.f + pad; else out.push([arm, a.f - pad, b.f + pad]); }
   return out; });
-// The feet's pitch turning at most `max` deg a frame: each key takes the middle of the steepest-allowed curves over and
-// under the captured one, so a faster toe flick is spread over the frames before and after it, and a slower one is kept
-export const toeKeys = (keys, max) => {
-  const at = keys.map(k => Object.fromEntries(['legL', 'legR'].map(sd => {
-    let lo = Infinity, hi = -Infinity; for (const q of keys) { const d = max * Math.abs(q.f - k.f); if (d > 180) continue; lo = Math.min(lo, q[sd].pitch + d); hi = Math.max(hi, q[sd].pitch - d); }
-    return [sd, (lo + hi) / 2];
-  })));
-  return keys.map((k, i) => ({ ...k, ...Object.fromEntries(['legL', 'legR'].map(sd => [sd, { ...k[sd], pitch: at[i][sd] }])) }));
-};
 

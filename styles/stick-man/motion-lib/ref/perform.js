@@ -119,8 +119,6 @@ export function ownSource(src, L, { loop = false, arm = 1, size = 1, P = {}, set
 const LEAN_AT = 0.40, LEAN_W = 0.10;
 
 // ------------------------------------------------------------ a capture set right for this kit
-// the toes turned down `deg` (a capture whose standing foot is pitched otherwise than the one it is joined to)
-export const toeSource = (src, deg) => ({ ...src, frames: src.frames.map(f => { const g = { ...f }; for (const s of ['Left', 'Right']) { const v = V(f[s + 'Foot'], f[s + 'ToeBase']), h = Math.hypot(v[0], v[1]) || 1, l = len(v), a = Math.atan2(v[2], h) - deg / DEG; g[s + 'ToeBase'] = add(f[s + 'Foot'], [v[0] / h * l * Math.cos(a), v[1] / h * l * Math.cos(a), l * Math.sin(a)]); } return g; }) });
 // a two-bone arm reaching T, the elbow on the side it was bent to
 // (reachTurned: the captured arm's bend plane turned with the shoulder-to-hand line onto the new one, so a target off the
 // captured line never swings the elbow round: reach2's plane, taken from the captured elbow against the new line, flipped
@@ -148,8 +146,3 @@ export function clapSource(src, { open = 1, meet = 0.1, up = 0 } = {}) {
     for (const [[s, e, hd], k] of [[ARMS[0], sg], [ARMS[1], -sg]]) { const along = dot(V(m, f[hd]), C.l), T = add(add(f[hd], mul(C.l, k * h / 2 - along)), mul(C.u, up)); [g[e], g[hd]] = reach2(f[s], f[e], f[hd], T); }
     return g; }) };
 }
-// both hands `d` metres further apart: the rig's shoulders are narrower than the capture's (a thin body's by 8 cm), so
-// arms held at the captured angles close on each other (only while the hands are within `at` of each other)
-export const apartSource = (src, d, at = 0.5) => (!d ? src : { ...src, frames: src.frames.map(f => { const C = chest(f), g = { ...f }, w = d * ease3((at - len(V(f.LeftHand, f.RightHand))) / 0.25);
-  for (const [[s, e, h], o] of [[ARMS[0], ARMS[1]], [ARMS[1], ARMS[0]]]) { const sg = Math.sign(dot(V(f[o[0]], f[s]), C.l)) || 1; [g[e], g[h]] = reach2(f[s], f[e], f[h], add(f[h], mul(C.l, sg * w / 2))); }
-  return g; }) });

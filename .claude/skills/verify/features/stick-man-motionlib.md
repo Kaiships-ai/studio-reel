@@ -1,7 +1,7 @@
 # Stick-man motion library and carried loads
 
 A stick-man reel's motion v2 `anim` takes library clips: `{ f, clip: 'Move_Walk_Fwd_Loop', body: 'elder', to: [3, 0] }`
-expands into the clip's keys (`styles/stick-man/motion-lib`, 87 clips, 5 body types; Mixamo batch 1 (21 clips, 35 files: 19 on the adult, 16 on another body); the adult's first 29 Mixamo and 8 Quaternius UAL (CC0) captures; standard poses STAND, SIT, CARRY, LIE, HUG (a duffel hugged to the chest); captured keys play without the drag (motion.js raw) (ref/mocap.js): run, sprint, walk with their captured start and stops, jump, idle, look around, talk, point, wave, sit down, sit, stand up, seated point, pick up, quarter turn, a window climb from two captures joined (mocapJoin: feet and hands on a sill, ref/mocap.js surfaces)). The rig under it gained body
+expands into the clip's keys (`styles/stick-man/motion-lib`, 68 clips, 5 body types; Mixamo batch 1 (16 clips: 14 on the adult, the elder's old walk and stooped idle; none on thin, heavy or child); the adult's first 29 Mixamo and 8 Quaternius UAL (CC0) captures; standard poses STAND, SIT, CARRY, LIE, HUG (a duffel hugged to the chest); captured keys play without the drag (motion.js raw) (ref/mocap.js): run, sprint, walk with their captured start and stops, jump, idle, look around, talk, point, wave, sit down, sit, stand up, seated point, pick up, quarter turn, a window climb from two captures joined (mocapJoin: feet and hands on a sill, ref/mocap.js surfaces)). The rig under it gained body
 proportions (cast spec `scale`, `headScale`, `legScale`, `kg`), a hand that grips keeps its target or reports the gap
 (rig K4), and a carried prop that is a solid with mass (rig K5). A reel without `clip` keys or new spec fields renders as
 before, except where an old one had a hand forced off a target (now kept when reachable) or a held prop inside the body.
@@ -59,18 +59,19 @@ before, except where an old one had a hand forced off a target (now kept when re
   sets its grip and mode, no offset.
 - Captures on any body (`mocapClip` / `gaitLoop` options): `stoop` and `armOut` (the elder's bent spine, the heavy body's
   arms out, on a capture of an upright slim actor), `wide` (clapping hands meet, they do not cross), `bones` (a capture that
-  never stands up is scaled by its bones: Typing, SitTalk, SitClap, Kneel, SitFloor were 1.35 to 1.71 times too big),
+  never stands up is scaled by its bones: Typing, SitTalk, SitClap and the KNEEL, FLOOR poses were 1.35 to 1.71 times too big),
   `stanceAt` (its standing foot), `bobLow` (a captured walk's hips come down before the foot lands), `seam`; `captureBase`
-  (KNEEL, FLOOR), `toeKeys`, `bridgeKeys`. `strike`: a loop starts on the first left print, not on a low skim.
+  (KNEEL, FLOOR: standard poses, no clip on them now), `bridgeKeys`. `strike`: a loop starts on the first left print, not on a low skim.
   `Adult_Idle_Sit_Loop` still has the old scale (1.46 times).
 - A body's own clip: batch 1 is one recipe an action (`motion-lib/acts/`) with the body's `life` (clock, size) and `perform`
   (springs, stoop, breath: `bodies.js`, `ref/perform.js`, `base.js` `ownClip`, `ownGait`, `floorClip`). `motionlib.mjs` fails
   a body's clip that is not slower / quicker, smaller / bigger than the adult's of the same name, or whose act (hands, face,
   upper trunk; the hips' sway out; against the adult's clip on that body's figure, physics off) is the adult's retimed and
   resized, by the amounts in `tools/gates/bodylife.mjs` (`body:` lines; SHAPE_C 0.85; the 8 older clips that fail it are
-  listed, dated 25/11, in `motionlib.mjs` BODY_KNOWN). It sees copies, not acting. `still:` a batch 1 clip where nothing moves
-  2.8 cm in half a second for 2 s; `face:` a clip a film cuts to turned or bowed away (FACE_SEEN); a KNEEL / FLOOR clip with a foot
-  over 3 cm off the floor. A (clip, body) with no own clip throws in `getClip`. The gate plays the record it is given
+  listed, dated 25/11, in `motionlib.mjs` BODY_KNOWN). It sees copies: a pass never means a clip acts like that body. `still:` a batch 1 clip where nothing moves
+  2 cm in half a second for 2 s; `face:` a clip a film cuts to turned or bowed away (FACE_SEEN); a KNEEL / FLOOR clip with a foot
+  over 3 cm off the floor. A (clip, body) with no own clip throws in `getClip`. Not seen by the gate: contact with the floor (a limb in it), feet skating,
+  starts and stops, reading in a real set: a kneel, a tired run and a sad walk passed it and failed a viewer (25/11). The gate plays the record it is given
   (`placeClip(key, cur, rec)`). `mocap_reach.mjs` bakes a hand onto the mouth (yawn) or the eyes (cry, `eye`, `+x` near its
   closest approach, the weight ramped), `earclose` + `captured` for a call that never leaves the ear; a `near` in metres bakes
   the older tables as before.
