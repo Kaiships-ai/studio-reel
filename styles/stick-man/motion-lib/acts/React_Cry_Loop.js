@@ -10,14 +10,10 @@ import EYE_L_ADULT from '../ref/reach/cry_eye_l.js';
 import EYE_R_ADULT from '../ref/reach/cry_eye_r.js';
 import EYE_L_THIN from '../ref/reach/cry_eye_l_thin.js';
 import EYE_R_THIN from '../ref/reach/cry_eye_r_thin.js';
-import EYE_L_ELDER from '../ref/reach/cry_eye_l_elder.js';
-import EYE_R_ELDER from '../ref/reach/cry_eye_r_elder.js';
 
-const EYES = { adult: [EYE_L_ADULT, EYE_R_ADULT], thin: [EYE_L_THIN, EYE_R_THIN], elder: [EYE_L_ELDER, EYE_R_ELDER] };
+const EYES = { adult: [EYE_L_ADULT, EYE_R_ADULT], thin: [EYE_L_THIN, EYE_R_THIN] };
 // the thin body's shoulders are narrow: its forearms crossed, under 3 cm apart on 55 frames
-// the elder's arm thrown out kept small (1.5 of its smaller reach): its hands still land on the eyes (the tables), the rest of
-// the arm's way is the old body's short reach
-const APART = { thin: 0.12 }, ARM = { thin: 1.4, elder: 1.5 };
+const APART = { thin: 0.12 }, ARM = { thin: 1.4 };
 
 export default act({ clip: 'React_Cry_Loop', loop: true }, body => {
   // (easeOut 22: the arms hang tucked in at the loop's end, and the library's 14 frames back to STAND, 11 on the thin body's clock,

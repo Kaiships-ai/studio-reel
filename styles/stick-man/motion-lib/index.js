@@ -68,63 +68,39 @@ import Act_DropInTrunk_Once_v01 from './shared/interact/Act_DropInTrunk_Once_v01
 import Act_PushBagOutWindow_Once_v01 from './shared/interact/Act_PushBagOutWindow_Once_v01.js';
 
 import Adult_Idle_Sad_Loop_v01 from './body/adult/Adult_Idle_Sad_Loop_v01.js';
-import Thin_Idle_Sad_Loop_v01 from './body/thin/Thin_Idle_Sad_Loop_v01.js';
 import Heavy_Idle_Sad_Loop_v01 from './body/heavy/Heavy_Idle_Sad_Loop_v01.js';
 import Elder_Idle_Sad_Loop_v01 from './body/elder/Elder_Idle_Sad_Loop_v01.js';
 import Adult_React_Cry_Loop_v01 from './body/adult/Adult_React_Cry_Loop_v01.js';
 import Thin_React_Cry_Loop_v01 from './body/thin/Thin_React_Cry_Loop_v01.js';
-import Elder_React_Cry_Loop_v01 from './body/elder/Elder_React_Cry_Loop_v01.js';
 import Adult_React_Surprise_Once_v01 from './body/adult/Adult_React_Surprise_Once_v01.js';
-import Thin_React_Surprise_Once_v01 from './body/thin/Thin_React_Surprise_Once_v01.js';
 import Adult_React_Terrified_Once_v01 from './body/adult/Adult_React_Terrified_Once_v01.js';
 import Thin_React_Terrified_Once_v01 from './body/thin/Thin_React_Terrified_Once_v01.js';
-import Heavy_React_Terrified_Once_v01 from './body/heavy/Heavy_React_Terrified_Once_v01.js';
 import Child_React_Terrified_Once_v01 from './body/child/Child_React_Terrified_Once_v01.js';
 import Adult_React_SitDisbelief_Once_v01 from './body/adult/Adult_React_SitDisbelief_Once_v01.js';
 import Thin_React_SitDisbelief_Once_v01 from './body/thin/Thin_React_SitDisbelief_Once_v01.js';
-import Elder_React_SitDisbelief_Once_v01 from './body/elder/Elder_React_SitDisbelief_Once_v01.js';
 import Adult_Gest_Clap_Loop_v01 from './body/adult/Adult_Gest_Clap_Loop_v01.js';
 import Child_Gest_Clap_Loop_v01 from './body/child/Child_Gest_Clap_Loop_v01.js';
 import Adult_Gest_SitClap_Loop_v01 from './body/adult/Adult_Gest_SitClap_Loop_v01.js';
-import Elder_Gest_SitClap_Loop_v01 from './body/elder/Elder_Gest_SitClap_Loop_v01.js';
 import Adult_Move_SadWalk_Fwd_Loop_v01 from './body/adult/Adult_Move_SadWalk_Fwd_Loop_v01.js';
-import Thin_Move_SadWalk_Fwd_Loop_v01 from './body/thin/Thin_Move_SadWalk_Fwd_Loop_v01.js';
-import Heavy_Move_SadWalk_Fwd_Loop_v01 from './body/heavy/Heavy_Move_SadWalk_Fwd_Loop_v01.js';
-import Elder_Move_SadWalk_Fwd_Loop_v01 from './body/elder/Elder_Move_SadWalk_Fwd_Loop_v01.js';
 import Elder_Move_OldWalk_Fwd_Loop_v01 from './body/elder/Elder_Move_OldWalk_Fwd_Loop_v01.js';
 import Elder_Idle_Stooped_Loop_v01 from './body/elder/Elder_Idle_Stooped_Loop_v01.js';
 import Adult_Idle_SitFloor_Loop_v01 from './body/adult/Adult_Idle_SitFloor_Loop_v01.js';
-import Thin_Idle_SitFloor_Loop_v01 from './body/thin/Thin_Idle_SitFloor_Loop_v01.js';
 import Heavy_Idle_SitFloor_Loop_v01 from './body/heavy/Heavy_Idle_SitFloor_Loop_v01.js';
-import Elder_Idle_SitFloor_Loop_v01 from './body/elder/Elder_Idle_SitFloor_Loop_v01.js';
 import Adult_Gest_SitTalk_Loop_v01 from './body/adult/Adult_Gest_SitTalk_Loop_v01.js';
-import Elder_Gest_SitTalk_Loop_v01 from './body/elder/Elder_Gest_SitTalk_Loop_v01.js';
 import Adult_Act_Type_Loop_v01 from './body/adult/Adult_Act_Type_Loop_v01.js';
-import Thin_Act_Type_Loop_v01 from './body/thin/Thin_Act_Type_Loop_v01.js';
 import Adult_Gest_PhoneTalk_Loop_v01 from './body/adult/Adult_Gest_PhoneTalk_Loop_v01.js';
-import Thin_Gest_PhoneTalk_Loop_v01 from './body/thin/Thin_Gest_PhoneTalk_Loop_v01.js';
 import Adult_Gest_NodYes_Once_v01 from './body/adult/Adult_Gest_NodYes_Once_v01.js';
 import Thin_Gest_NodYes_Once_v01 from './body/thin/Thin_Gest_NodYes_Once_v01.js';
-import Heavy_Gest_NodYes_Once_v01 from './body/heavy/Heavy_Gest_NodYes_Once_v01.js';
-import Elder_Gest_NodYes_Once_v01 from './body/elder/Elder_Gest_NodYes_Once_v01.js';
 import Adult_Gest_ShakeNo_Once_v01 from './body/adult/Adult_Gest_ShakeNo_Once_v01.js';
-import Heavy_Gest_ShakeNo_Once_v01 from './body/heavy/Heavy_Gest_ShakeNo_Once_v01.js';
 import Thin_Gest_ShakeNo_Once_v01 from './body/thin/Thin_Gest_ShakeNo_Once_v01.js';
 import Adult_React_Defeated_Once_v01 from './body/adult/Adult_React_Defeated_Once_v01.js';
 import Heavy_React_Defeated_Once_v01 from './body/heavy/Heavy_React_Defeated_Once_v01.js';
 import Thin_React_Defeated_Once_v01 from './body/thin/Thin_React_Defeated_Once_v01.js';
 import Adult_Gest_Yawn_Once_v01 from './body/adult/Adult_Gest_Yawn_Once_v01.js';
-import Heavy_Gest_Yawn_Once_v01 from './body/heavy/Heavy_Gest_Yawn_Once_v01.js';
-import Elder_Gest_Yawn_Once_v01 from './body/elder/Elder_Gest_Yawn_Once_v01.js';
 import Thin_Gest_Yawn_Once_v01 from './body/thin/Thin_Gest_Yawn_Once_v01.js';
 import Adult_Move_RunTired_Once_v01 from './body/adult/Adult_Move_RunTired_Once_v01.js';
-import Heavy_Move_RunTired_Once_v01 from './body/heavy/Heavy_Move_RunTired_Once_v01.js';
-import Elder_Move_RunTired_Once_v01 from './body/elder/Elder_Move_RunTired_Once_v01.js';
 import Adult_Idle_Kneel_Loop_v01 from './body/adult/Adult_Idle_Kneel_Loop_v01.js';
-import Elder_Idle_Kneel_Loop_v01 from './body/elder/Elder_Idle_Kneel_Loop_v01.js';
-import Thin_Idle_Kneel_Loop_v01 from './body/thin/Thin_Idle_Kneel_Loop_v01.js';
 import Adult_Gest_Point_Once_v01 from './body/adult/Adult_Gest_Point_Once_v01.js';
-import Thin_Gest_Point_Once_v01 from './body/thin/Thin_Gest_Point_Once_v01.js';
 import Heavy_Gest_Point_Once_v01 from './body/heavy/Heavy_Gest_Point_Once_v01.js';
 export const ALL = [
   Adult_Move_Run_Fwd_Loop_v01,
@@ -180,63 +156,39 @@ export const ALL = [
   Act_DropInTrunk_Once_v01,
   Act_PushBagOutWindow_Once_v01,
   Adult_Idle_Sad_Loop_v01,
-  Thin_Idle_Sad_Loop_v01,
   Heavy_Idle_Sad_Loop_v01,
   Elder_Idle_Sad_Loop_v01,
   Adult_React_Cry_Loop_v01,
   Thin_React_Cry_Loop_v01,
-  Elder_React_Cry_Loop_v01,
   Adult_React_Surprise_Once_v01,
-  Thin_React_Surprise_Once_v01,
   Adult_React_Terrified_Once_v01,
   Thin_React_Terrified_Once_v01,
-  Heavy_React_Terrified_Once_v01,
   Child_React_Terrified_Once_v01,
   Adult_React_SitDisbelief_Once_v01,
   Thin_React_SitDisbelief_Once_v01,
-  Elder_React_SitDisbelief_Once_v01,
   Adult_Gest_Clap_Loop_v01,
   Child_Gest_Clap_Loop_v01,
   Adult_Gest_SitClap_Loop_v01,
-  Elder_Gest_SitClap_Loop_v01,
   Adult_Move_SadWalk_Fwd_Loop_v01,
-  Thin_Move_SadWalk_Fwd_Loop_v01,
-  Heavy_Move_SadWalk_Fwd_Loop_v01,
-  Elder_Move_SadWalk_Fwd_Loop_v01,
   Elder_Move_OldWalk_Fwd_Loop_v01,
   Elder_Idle_Stooped_Loop_v01,
   Adult_Idle_SitFloor_Loop_v01,
-  Thin_Idle_SitFloor_Loop_v01,
   Heavy_Idle_SitFloor_Loop_v01,
-  Elder_Idle_SitFloor_Loop_v01,
   Adult_Gest_SitTalk_Loop_v01,
-  Elder_Gest_SitTalk_Loop_v01,
   Adult_Act_Type_Loop_v01,
-  Thin_Act_Type_Loop_v01,
   Adult_Gest_PhoneTalk_Loop_v01,
-  Thin_Gest_PhoneTalk_Loop_v01,
   Adult_Gest_NodYes_Once_v01,
   Thin_Gest_NodYes_Once_v01,
-  Heavy_Gest_NodYes_Once_v01,
-  Elder_Gest_NodYes_Once_v01,
   Adult_Gest_ShakeNo_Once_v01,
-  Heavy_Gest_ShakeNo_Once_v01,
   Thin_Gest_ShakeNo_Once_v01,
   Adult_React_Defeated_Once_v01,
   Heavy_React_Defeated_Once_v01,
   Thin_React_Defeated_Once_v01,
   Adult_Gest_Yawn_Once_v01,
-  Heavy_Gest_Yawn_Once_v01,
-  Elder_Gest_Yawn_Once_v01,
   Thin_Gest_Yawn_Once_v01,
   Adult_Move_RunTired_Once_v01,
-  Heavy_Move_RunTired_Once_v01,
-  Elder_Move_RunTired_Once_v01,
   Adult_Idle_Kneel_Loop_v01,
-  Elder_Idle_Kneel_Loop_v01,
-  Thin_Idle_Kneel_Loop_v01,
   Adult_Gest_Point_Once_v01,
-  Thin_Gest_Point_Once_v01,
   Heavy_Gest_Point_Once_v01,
 ];
 // A clip starts at its own origin: a capture's first frame stands a few cm (an in-place loop) to 1 m off it, and two
@@ -260,13 +212,13 @@ export const CLIP_NAMES = Object.keys(CLIPS);
 // a clip fitted to its set (the clip key's `fit`, e.g. { lip: 0.85 } for a trunk, { sill, top, width } for a window; and
 // to the bag it holds, fit.bag, propFit below): a
 // clip record with `fit(opts)` makes the fitted version (checked by tools/gates/motionlib.mjs on every fit in its `fitChecks`)
-const FITTED = new Map();
+const FITTED = new WeakMap();
 export function fitClip(C, fit) {
   if (!fit) return C;
   if (!C.fit) throw new Error(`motion-lib: clip "${C.clip}" takes no fit (${JSON.stringify(fit)})`);
-  const id = `${C.name}|${JSON.stringify(fit)}`;
-  if (!FITTED.has(id)) FITTED.set(id, zeroed(C.fit(fit)));
-  return FITTED.get(id);
+  const made = FITTED.get(C) || FITTED.set(C, new Map()).get(C), id = JSON.stringify(fit);
+  if (!made.has(id)) made.set(id, zeroed(C.fit(fit)));
+  return made.get(id);
 }
 // The size of a prop a clip fits itself to (a record's `fitProps`: ['bag']): the clip key's own `fit.bag` ({ w, l, h, grip },
 // metres), else the prop the key swaps in, read off the built prop: its userData.size [w, h, l] and grip (motion-lib/props.js),
@@ -305,9 +257,10 @@ export function getClip(name, body = 'adult', fit = null) {
 
 const PASS = new Set(['expr', 'look', 'ease', 'antic', 'cycle']);         // fields of the clip key that go onto its first key
 const clone = v => (Array.isArray(v) ? v.slice() : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, clone(x)])) : v);
-// one clip key -> its keys in the world: { keys, pos, yaw } (pos, yaw: where the actor ends)
-export function placeClip(k, cur = { pos: [0, 0], yaw: 0 }) {
-  const body = k.body || 'adult', C = getClip(k.clip, body, propFit(getClip(k.clip, body), k)), sc = C.body ? 1 : (BODIES[body].spec.scale ?? 1);
+// one clip key -> its keys in the world: { keys, pos, yaw } (pos, yaw: where the actor ends). `rec`: the clip record to place
+// instead of the registered one of that name (the gate plays exactly the clip it is given; a fitted record is placed as it is)
+export function placeClip(k, cur = { pos: [0, 0], yaw: 0 }, rec = null) {
+  const body = k.body || 'adult', C0 = rec || getClip(k.clip, body), F = propFit(C0, k), C = rec && F && JSON.stringify(F) === JSON.stringify(rec.fitted) ? rec : fitClip(C0, F), sc = C.body ? 1 : (BODIES[body].spec.scale ?? 1);
   // (k.pos[2]: the height of a surface the clip plays on, a bed or a stage: every key is lifted onto it and held up by
   // it, motion.js `support`)
   const O = k.pos ? [k.pos[0], k.pos[1]] : cur.pos.slice(0, 2), Hs = k.pos?.[2] ?? cur.support ?? 0;

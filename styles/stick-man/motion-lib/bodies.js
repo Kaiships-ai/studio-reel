@@ -14,8 +14,8 @@
 //           (frames a captured frame), hold longer (shorter) where the body is still, drag longer into and out of a move,
 //           top its fastest hand and limb against the adult's;
 //           arm, trunk the size of the arms' and the trunk's and head's moves; sway the weight shift; give the knees' bend and
-//           stretch (the bounce). tools/gates/bodylife.mjs holds each body to its own way
-//   perform the SHAPE of its moves, not only their clock and size (Kai 25/11: "one performance replayed faster and slower";
+//           stretch (the bounce). tools/gates/bodylife.mjs checks the amounts
+//   perform how its parts follow each other, over the same capture (it does not make another performance of it: bodylife.mjs shape). (Kai 25/11: "one performance replayed faster and slower";
 //           ref/perform.js armLag on the capture, base.js ownFrames on its channels). Each part follows what drives it as
 //           a spring does (Williams, The Animator's Survival Kit: overlapping action, drag, follow-through; Thomas and
 //           Johnston: "follow through and overlapping action"):

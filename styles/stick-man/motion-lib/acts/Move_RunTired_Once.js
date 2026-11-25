@@ -1,17 +1,19 @@
-// A jog from standing that runs out of breath and ends in a dizzy stagger, facing front.
+// A run from standing on heavy legs that is out of breath, shortens, and stops.
 import { ownClip, toeKeys, bridgeKeys, poleSpans } from '../base.js';
 import { act } from './act.js';
-import START from '../ref/mixamo/start_walking.js';
+import START from '../ref/mixamo/idle_to_sprint.js';
 import RUN from '../ref/mixamo/running_tired.js';
 import { mocapJoin } from '../ref/mocap.js';
-import { toeSource, turnSource } from '../ref/perform.js';
-import { BODIES } from '../bodies.js';
+import { apartSource, cutSource, toeSource } from '../ref/perform.js';
 
-const AT = 68, ramp = (i, a, b) => { const w = Math.max(0, Math.min(1, (i - a) / (b - a))); return w * w * (3 - 2 * w); };
-// the stagger turns its actor 62 deg on the right foot, its back to what it ran to: turned back round that foot as he steps
-const SRC = turnSource(mocapJoin([{ src: { ...START, frames: START.frames.slice(0, 60) } }, { bridge: 8 }, { src: toeSource(RUN, 12), follow: true }], { source: 'joined (mocapJoin)' }), i => 62 * ramp(i, AT + 72, AT + 108), f => f.RightFoot);
+// the capture runs 1.5 s and staggers 5 (a bow, the hands on the head): no run read. Kept: its run, its own stride (frames 9-30)
+// run twice more, and its halt (to 69); taken out: the stagger after it. Off the mark on a captured push off (the old start walked
+// for 2.7 s first). Its steps STRIDE as long: as captured they shuffle
+// (its hands, both held at the belly, 6 cm further apart: this rig's narrower shoulders crossed them)
+const STRIDE = 1.3, APART = 0.06, join = (a, b) => ({ src: cutSource(RUN, a, b), follow: true });
+const SRC = apartSource(toeSource(mocapJoin([{ src: cutSource(START, 0, 12) }, { bridge: 4 }, join(18, 30), { bridge: 1 }, join(9, 30), { bridge: 1 }, join(9, 69)], { source: 'joined (mocapJoin)' }), 12), APART);
 
 export default act({ clip: 'Move_RunTired_Once', loop: false }, body => {
-  const M = ownClip({ body, src: SRC, turn: true, easeOut: 26, bobLow: body === 'elder', stride: BODIES[body].run.S / BODIES.adult.run.S / (BODIES[body].spec.scale ?? 1) });
+  const M = ownClip({ body, src: SRC, turn: true, easeOut: 26, stride: STRIDE, bobLow: true, own: { limb: 15, hand: 0.07 } });
   return { ...M, keys: toeKeys(bridgeKeys(M.keys, poleSpans(M.keys)), 20) };
 });

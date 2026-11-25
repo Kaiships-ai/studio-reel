@@ -1,7 +1,7 @@
 # Stick-man motion library and carried loads
 
 A stick-man reel's motion v2 `anim` takes library clips: `{ f, clip: 'Move_Walk_Fwd_Loop', body: 'elder', to: [3, 0] }`
-expands into the clip's keys (`styles/stick-man/motion-lib`, 111 clips, 5 body types; Mixamo batch 1 (21 clips on up to 4 bodies each); the adult's first 29 Mixamo and 8 Quaternius UAL (CC0) captures; standard poses STAND, SIT, CARRY, LIE, HUG (a duffel hugged to the chest); captured keys play without the drag (motion.js raw) (ref/mocap.js): run, sprint, walk with their captured start and stops, jump, idle, look around, talk, point, wave, sit down, sit, stand up, seated point, pick up, quarter turn, a window climb from two captures joined (mocapJoin: feet and hands on a sill, ref/mocap.js surfaces)). The rig under it gained body
+expands into the clip's keys (`styles/stick-man/motion-lib`, 87 clips, 5 body types; Mixamo batch 1 (21 clips, 35 files: 19 on the adult, 16 on another body); the adult's first 29 Mixamo and 8 Quaternius UAL (CC0) captures; standard poses STAND, SIT, CARRY, LIE, HUG (a duffel hugged to the chest); captured keys play without the drag (motion.js raw) (ref/mocap.js): run, sprint, walk with their captured start and stops, jump, idle, look around, talk, point, wave, sit down, sit, stand up, seated point, pick up, quarter turn, a window climb from two captures joined (mocapJoin: feet and hands on a sill, ref/mocap.js surfaces)). The rig under it gained body
 proportions (cast spec `scale`, `headScale`, `legScale`, `kg`), a hand that grips keeps its target or reports the gap
 (rig K4), and a carried prop that is a solid with mass (rig K5). A reel without `clip` keys or new spec fields renders as
 before, except where an old one had a hand forced off a target (now kept when reachable) or a held prop inside the body.
@@ -63,15 +63,17 @@ before, except where an old one had a hand forced off a target (now kept when re
   `stanceAt` (its standing foot), `bobLow` (a captured walk's hips come down before the foot lands), `seam`; `captureBase`
   (KNEEL, FLOOR), `toeKeys`, `bridgeKeys`. `strike`: a loop starts on the first left print, not on a low skim.
   `Adult_Idle_Sit_Loop` still has the old scale (1.46 times).
-- Each body its own way: batch 1 is one recipe an action (`motion-lib/acts/`) performed with the body's `life`
-  (`bodies.js`, `ref/perform.js`, `base.js` `ownClip`, `ownGait`, `floorClip`). `motionlib.mjs` fails a body's clip that is
-  not slower / quicker, smaller / bigger than the adult's of the same name, or that moves in the adult's shape (a retimed,
-  resized copy), by the amounts in `tools/gates/bodylife.mjs` (`body:` lines; the 8 older clips that fail it are listed,
-  dated 25/11, in `motionlib.mjs` BODY_KNOWN), a clip a body performs that stops dead for 2 s (`still:`), and a KNEEL / FLOOR
-  clip with a foot over 3 cm off the floor. The shape comes from `bodies.js` `perform` (springs on arms, trunk, head; the
-  elder's hesitation and lean-in, the weight's path, breath, a child's fidget); `mocap_reach.mjs` bakes a hand onto the mouth
-  (yawn) or the eyes (cry, `eye`, `+x` near its closest approach, the weight ramped).
-  `mocap_reach.mjs` bakes on any body, `earclose` + `captured` for a call that never leaves the ear.
+- A body's own clip: batch 1 is one recipe an action (`motion-lib/acts/`) with the body's `life` (clock, size) and `perform`
+  (springs, stoop, breath: `bodies.js`, `ref/perform.js`, `base.js` `ownClip`, `ownGait`, `floorClip`). `motionlib.mjs` fails
+  a body's clip that is not slower / quicker, smaller / bigger than the adult's of the same name, or whose act (hands, face,
+  upper trunk; the hips' sway out; against the adult's clip on that body's figure, physics off) is the adult's retimed and
+  resized, by the amounts in `tools/gates/bodylife.mjs` (`body:` lines; SHAPE_C 0.85; the 8 older clips that fail it are
+  listed, dated 25/11, in `motionlib.mjs` BODY_KNOWN). It sees copies, not acting. `still:` a batch 1 clip where nothing moves
+  2.8 cm in half a second for 2 s; `face:` a clip a film cuts to turned or bowed away (FACE_SEEN); a KNEEL / FLOOR clip with a foot
+  over 3 cm off the floor. A (clip, body) with no own clip throws in `getClip`. The gate plays the record it is given
+  (`placeClip(key, cur, rec)`). `mocap_reach.mjs` bakes a hand onto the mouth (yawn) or the eyes (cry, `eye`, `+x` near its
+  closest approach, the weight ramped), `earclose` + `captured` for a call that never leaves the ear; a `near` in metres bakes
+  the older tables as before.
 - Body types (`motion-lib/bodies.js` `bodySpec`): adult, heavy (girth 1.9), thin (0.6), child (scale 0.62, head 1.3, legs
   0.8), elder (stooped posture); each with its own walk, run and breath.
 - Gaits (`base.js` `gaitLoop`, every walk and run): sampled a key a frame from curves. The hips are solved from the

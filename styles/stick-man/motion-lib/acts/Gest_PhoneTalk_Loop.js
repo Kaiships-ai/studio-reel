@@ -2,12 +2,11 @@
 import { ownClip, reachKeys } from '../base.js';
 import { act } from './act.js';
 import SRC from '../ref/mixamo/talking_on_phone.js';
-// the hand onto the ear, baked on each body (tools/run/mocap_reach.mjs Gest_PhoneTalk_Loop R earclose captured 22 <out> <body>)
+// the hand onto the ear (tools/run/mocap_reach.mjs Gest_PhoneTalk_Loop R earclose captured 22 <out>)
 import EAR_ADULT from '../ref/reach/phonetalk_ear.js';
-import EAR_THIN from '../ref/reach/phonetalk_ear_thin.js';
 import { loopSource } from '../ref/perform.js';
 
-const EAR = { adult: EAR_ADULT, thin: EAR_THIN };
+const EAR = { adult: EAR_ADULT };
 // the capture turns right round on the spot twice: the 4 s it faces front, the left hand talking
 const call = loopSource(SRC, 866, 996, 14);
 

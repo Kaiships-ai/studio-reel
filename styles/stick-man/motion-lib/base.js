@@ -283,6 +283,9 @@ export function ownFrames(frames, L, { body = 'adult' } = {}) {
   if ((L.give ?? 1) !== 1) for (const n of ['kneeL', 'kneeR']) { const r = rest(f => f[n]); for (const f of frames) f[n] = Math.max(4, r + (f[n] - r) * L.give); }
   // (L.knee: the share of the captured knees' bend kept, from straight: a capture crouched all through, its stance knee never under 28)
   if (L.knee) for (const n of ['kneeL', 'kneeR']) for (const f of frames) f[n] = Math.max(4, f[n] * L.knee);
+  // (L.lift { spine, neck, beat }: a capture bowed so far its face is never seen comes up by so many degrees, and `beat` more as
+  // each step passes: down on the strike, up over the leg, two steps a cycle)
+  if (L.lift) frames.forEach((f, i) => { f.spine.bend -= L.lift.spine; f.neck.nod -= L.lift.neck + (L.lift.beat ?? 0) * Math.sin(2 * Math.PI * i / frames.length) ** 2; });
   const P = L.perform || {}, n = frames.length, loop = !!L.loop;
   // a stiff neck: the trunk takes a share of the head's nod and turn (from their rest), the neck keeps the rest of it
   if (P.neck) { const rn = rest(f => f.neck.nod), rt = rest(f => f.neck.turn); for (const f of frames) { const dn = f.neck.nod - rn, dt = f.neck.turn - rt; f.spine.bend += P.neck * dn; f.neck.nod -= P.neck * dn; f.spine.twist += P.neck * dt; f.neck.turn -= P.neck * dt; } }
@@ -808,13 +811,6 @@ export const poleSpans = (keys, { deg = 18, pad = 5 } = {}) => ['armL', 'armR'].
     if (Math.max(Math.abs(b[arm].swing - a[arm].swing), Math.abs(b[arm].roll - a[arm].roll)) < deg) continue;
     const s = out[out.length - 1]; if (s && a.f - pad <= s[2]) s[2] = b.f + pad; else out.push([arm, a.f - pad, b.f + pad]); }
   return out; });
-// an anticipation before an accent: over the `n` frames up to key frame `at` (and 2 on) the trunk, head and arms go the other
-// way, `k` of the accent (the pose at `peak`) back from where they were
-export const anticKeys = (keys, { at, n, peak, k }) => { const A = keys.find(q => q.f >= at - n), P = keys.find(q => q.f >= peak);
-  return keys.map(q => { const t = (q.f - (at - n)) / (n + 2); if (t <= 0 || t >= 1) return q;
-    const w = k * Math.sin(Math.PI * t) ** 2, o = { ...q, bob: q.bob + w * 0.5 * Math.min(0, P.bob - A.bob) };
-    for (const [g, cs] of [['spine', ['bend']], ['neck', ['nod']], ['armL', ['raise', 'swing']], ['armR', ['raise', 'swing']]]) o[g] = { ...q[g], ...Object.fromEntries(cs.map(c => [c, q[g][c] - w * (P[g][c] - A[g][c])])) };
-    return o; }); };
 // The feet's pitch turning at most `max` deg a frame: each key takes the middle of the steepest-allowed curves over and
 // under the captured one, so a faster toe flick is spread over the frames before and after it, and a slower one is kept
 export const toeKeys = (keys, max) => {

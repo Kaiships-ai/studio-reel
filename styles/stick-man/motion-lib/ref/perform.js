@@ -5,10 +5,9 @@
 //   ownSource   the arms' reach, then the clock: slower or quicker, held longer or shorter where the body is still, slow
 //               into and out of a move, hesitating as a move leaves a hold, and never faster than a real hand or limb (the
 //               cap); then the shape (bodies.js perform): a one-off runs on to settle, and the arms follow the chest as
-//               springs do (armLag: drag, overshoot, settle), so a body's hands take another path, not the adult's sped up
+//               springs do (armLag: drag, overshoot, settle), so a body's hands drag and settle their own way (how little that changes the act: tools/gates/bodylife.mjs shape)
 //   follow      a channel following what drives it as a spring does (the trunk and head channels use it too, base.js)
-//   cutSource   a span of a long capture; loopSource a span closed into a loop; unturnSource a capture that turns, kept
-//               facing front; clapSource a clap that opens wide and meets
+//   cutSource   a span of a long capture; loopSource a span closed into a loop; clapSource a clap that opens wide and meets
 const DEG = 180 / Math.PI, V = (a, b) => [b[0] - a[0], b[1] - a[1], b[2] - a[2]], dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const add = (a, b) => a.map((v, i) => v + b[i]), mul = (a, k) => a.map(v => v * k), len = a => Math.hypot(...a), nrm = a => mul(a, 1 / (len(a) || 1)), mix = (a, b, w) => a.map((v, i) => v + (b[i] - v) * w);
 const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
@@ -120,9 +119,6 @@ export function ownSource(src, L, { loop = false, arm = 1, size = 1, P = {}, set
 const LEAN_AT = 0.40, LEAN_W = 0.10;
 
 // ------------------------------------------------------------ a capture set right for this kit
-const rotZ = (p, c, s, o = [0, 0]) => [o[0] + (p[0] - o[0]) * c - (p[1] - o[1]) * s, o[1] + (p[0] - o[0]) * s + (p[1] - o[1]) * c, p[2]];
-// turned about the vertical by deg(i) (Blender axes: + to the figure's left), about the point about(f)
-export const turnSource = (src, deg, about = () => [0, 0]) => ({ ...src, frames: src.frames.map((f, i) => { const a = (typeof deg === 'function' ? deg(i, f) : deg) / DEG, c = Math.cos(a), s = Math.sin(a), o = about(f); return each(f, (p, n) => (isDir(n) ? rotZ(p, c, s) : rotZ(p, c, s, o))); }) });
 // the toes turned down `deg` (a capture whose standing foot is pitched otherwise than the one it is joined to)
 export const toeSource = (src, deg) => ({ ...src, frames: src.frames.map(f => { const g = { ...f }; for (const s of ['Left', 'Right']) { const v = V(f[s + 'Foot'], f[s + 'ToeBase']), h = Math.hypot(v[0], v[1]) || 1, l = len(v), a = Math.atan2(v[2], h) - deg / DEG; g[s + 'ToeBase'] = add(f[s + 'Foot'], [v[0] / h * l * Math.cos(a), v[1] / h * l * Math.cos(a), l * Math.sin(a)]); } return g; }) });
 // a two-bone arm reaching T, the elbow on the side it was bent to
