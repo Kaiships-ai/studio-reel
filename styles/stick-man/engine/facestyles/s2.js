@@ -17,6 +17,7 @@ import { EXPR, STYLE_DRAW, FACE_STYLE, DRAW_KIT as K, mixFace } from '../faces.j
 import { FACE_TIMING, TAKE, SMALL_TAKE, BLINKS, CHEW } from '../acting.js';
 import { DEG, clamp, lerp } from '../mathx.js';
 import { EYE, pupil, restLid } from '../eyegeom.js';
+import { ageOf, ageFace, ageInk, ageMouth } from './s2age.js';
 
 const sineIO = x => 0.5 - 0.5 * Math.cos(Math.PI * clamp(x));
 const chewPh = (F, t, late = 0) => (F.chewX || 0) * Math.sin(Math.PI * (t - late) / CHEW.T) ** 2;
@@ -136,7 +137,7 @@ function eye4(g, F, ex, s, ey, blink, t, k, tilt, gxs, life) {
   if (q >= 0.999 || h < 0.006) { shutEye(g, ex, s, yc, w, k * (1 + (F.x.shutDK || 0)), tE, clamp((cr - SHUT) / (1 - SHUT)), sk); return; }
   const mid = shutMid(s, w, tE, sk), e = 0.5 + 0.35 * cq, lw = 0.018 * k, pts = almondPts(ex, yc, w, h, h, e, mid, q);
   // the pupil (engine/eyegeom.js: big enough to fill the eye, a wide-eyed design shrinks it only a little)
-  const wP = clamp(F.prev ? F.prev[0].white : F.white || 0), kp = 1 + 0.45 * (k - 1), { prx, pry } = pupil(wP, kp, q);
+  const wP = clamp(F.prev ? F.prev[0].white : F.white || 0), kp = (1 + 0.45 * (k - 1)) * (F.aPu || 1), { prx, pry } = pupil(wP, kp, q);
   const pyc = -0.014 * (1 - q) + ((F.gy || 0) + (F.x.gY || 0)) * Math.max(0, h - pry - 0.01) * 0.8;
   // the design's lids (a lid share L from the top, a raised lower lid) clip the almond, never below a white slit; the upper
   // lid rests on the pupil's top (eyegeom.js restLid: white above it only for fear and shock), eased out as the eye closes
@@ -158,14 +159,14 @@ function eye4(g, F, ex, s, ey, blink, t, k, tilt, gxs, life) {
   g.beginPath(); g.ellipse(px, py, prx, pry, 0, 0, 2 * Math.PI); g.fillStyle = K.INK; g.fill();
   const [cx, cy, cw, ch2] = EYE.catch;   // the catch light at the pupil's upper edge (centred, it read as a ring)
   if ((F.x.eStar || 0) >= 0.5 && open > 1.6 * pry) { star(g, px + prx * 0.22, py + pry * 0.26, prx * 0.86); g.beginPath(); g.ellipse(px - prx * 0.38, py - pry * 0.42, prx * 0.17, pry * 0.17, 0, 0, 2 * Math.PI); g.fill(); }
-  else if (wP < 0.7 && open > 1.6 * pry && pry > 0.012) { g.beginPath(); g.ellipse(px + prx * cx, py + pry * cy, prx * cw, pry * ch2, 0, 0, 2 * Math.PI); g.fillStyle = K.WHITE; g.fill(); }
+  else if (wP < 0.7 && open > 1.6 * pry && pry > 0.012) { g.beginPath(); const ca = F.aCa || 1; g.ellipse(px + prx * cx, py + pry * cy, prx * cw * ca, pry * ch2 * ca, 0, 0, 2 * Math.PI); g.fillStyle = K.WHITE; g.fill(); }
   g.restore();
   K.path(g, pts, true); g.lineWidth = lw; g.strokeStyle = K.INK; g.stroke();
   g.restore();
   // the upper lid's crease line: drawn for any lid past 0.10, the rest lid included, so a calm face now shows its lid resting
   // on the pupil (Kai 22/11 before|after: the stare is gone, the face reads relaxed)
   const kk = clamp((L - 0.10) / 0.12), ch = w * Math.sqrt(Math.max(0, 1 - ((top - yc) / h) ** 2)) * 1.06;
-  if (kk > 0.02 && ch > 0.004) K.line(g, [[ex - ch, top + m0 - ch * slope], [ex + ch, top + m0 + ch * slope]], 0.016 * k * (0.4 + 0.6 * kk));
+  if (kk > 0.02 && ch > 0.004) K.line(g, [[ex - ch, top + m0 - ch * slope], [ex + ch, top + m0 + ch * slope]], 0.016 * k * (0.4 + 0.6 * kk) * (F.aLw || 1));
   // a raised lower lid draws its own line (the clip cut the rim open and the eye read as a broken "(")
   const kl = clamp((low - 0.04) / 0.10), cb = w * Math.sqrt(Math.max(0, 1 - ((lowY - yc) / h) ** 2)) * 1.02;
   if (kl > 0.02 && cb > 0.004) K.line(g, [[ex - cb, lowY + m0], [ex + cb, lowY + m0]], 0.016 * k * (0.4 + 0.6 * kl));
@@ -204,6 +205,7 @@ function mouth4(g, F, t, y0, k, glp) {
     K.fill(g, pts, K.INK);
     const tt = Math.max(X.mTeeth || 0, clamp((open - 0.35) / 0.2));
     if (tt > 0.02) { g.save(); K.path(g, pts, true); g.clip(); K.fill(g, [...curve(0.004), ...curve(-0.020 * tt).reverse()], K.WHITE); g.restore(); }
+    if ((X.mRim || 0) > 0.02) { K.path(g, pts, true); g.lineWidth = 0.016 * k * X.mRim; g.strokeStyle = K.INK; g.stroke(); }   // (opt-in: a lip line round the teeth)
   } else K.taper(g, curve(0), (0.0175 + 0.008 * clamp(X.mPr || 0) + 0.003 * glp) * k, K.INK, 0.7);
   for (const sd of [-1, 1]) { const [xc, yc] = corner(sd); bracket(g, xc, yc, sd, k); }
 }
@@ -379,15 +381,18 @@ function star(g, x, y, r) {
   const pts = []; for (let i = 0; i < 8; i++) { const a = Math.PI / 2 + i * Math.PI / 4, q = i % 2 ? 0.36 * r : r; pts.push([x + q * Math.cos(a), y + q * Math.sin(a)]); }
   K.fill(g, pts, K.WHITE);
 }
+// mouths other modules add, by the x number that picks them (s2expr.js); no catalogue design names one, and a talking mouth
+// is always mouth4's
+export const MOUTHS = {};
 function face6(g, F, blink, t, o, T) {
-  F = ramp(F);
+  const AG = ageOf(o); F = ageFace(ramp(F), AG);   // (s2age.js: spec.faceAge; none = the face as it is)
   const tk = F.cls === 'take' || F.cls === 'small', C = F.chg, age = F.age ?? 99;
   let B = tk && F.prev ? F.prev[1].brow : F.brow;
   if (C && C.cls === 'take' && F.prev) {
     const Ld = C.B.x?.zRamp ? RAMP_LEAD : LEAD, u1 = F.prev[0].u, w = C.a < 0 ? Ld * sineIO((C.a + C.antic + 1) / (C.antic + 1)) : u1 + Ld * Math.max(0, 1 - u1);
     B = F.brow.map((x, i) => x + ((C.B.brow[i] ?? 0) - (C.A.brow[i] ?? 0)) * (w - C.u));
   }
-  const [tilt, bh, arch = 0, lL = 0, lR = 0] = B, bh0 = bh + 0.03, dx = 0.084, bIn = F.x.bIn || 0;
+  const [tilt, bh, arch = 0, lL = 0, lR = 0] = B, bh0 = bh + 0.03, dx = 0.084 * (F.aDx || 1), bIn = F.x.bIn || 0;
   const wag = (F.x.bWag || 0) * (bump(age, 8, 6) + bump(age, 14, 6) + bump(age, 20, 6)) * 0.030;
   const glp = (F.x.mGlp || 0) * bump(age, 7, 10);
   let fl = 0; for (let j = 0; j < 7; j++) fl += bump(age, 7.5 * j - 1, 5); fl *= F.x.bFl || 0;
@@ -439,12 +444,16 @@ function face6(g, F, blink, t, o, T) {
       tears(g, Math.max(X.tear || 0, s > 0 && on('tear1') ? 0.3 : 0), ex, s, ey, F.ry, k, t, crunch(F) >= SHUT);
     }
     const by = ey + bh0 - P.cut + P.lk * (s < 0 ? lL : lR) + wag * (s > 0 ? 1 : 0.75) + bS(s) + bUp + bob - 0.006 * clamp(blink);
-    if (P.browA > 0.01) { g.globalAlpha = P.browA; crescent(g, ex - gxs * 0.4 + s * (0.012 - bIn), s, by, tilt, arch, 0.068, th, 0.28); }
+    if (P.browA > 0.01) { g.globalAlpha = P.browA; crescent(g, ex - gxs * 0.4 + s * (0.012 - bIn), s, by, tilt, arch, 0.068 * (F.aBl || 1), th, 0.28); }
     g.globalAlpha = 1;
   }
+  if (AG && P.eyeA > 0.01) ageInk(g, AG, { ey, dx, rx: F.rx, ry: F.ry, browY: ey + bh0 - P.cut + Math.max(0, arch, lL, lR) + th, my, k });
   if (P.eyeA > 0.01) { sweat(g, clamp(X.sw || 0), k); if (on('sw2')) { sweat(g, 1, k, -0.205, 0); sweat(g, 0.8, k, 0.232, -0.118); } }
   const mx = F.mx || 0, mY = my + P.mUp;
-  if (on('mKiss')) kissMouth(g, mx + 0.03 * clamp(F.gx || 0, -1, 1), mY, k, (F.gx || 0) < -0.1 ? -1 : 1);
+  const own = !(F.talk?.open > 0.06) && Object.keys(MOUTHS).find(on);
+  if (AG && !own && ageMouth(g, AG, F, { mx, my: mY, k, t, draw: () => mouth4(g, Fm, t, mY, k, glp) })) { /* a toddler's or a teen's own mouth */ }
+  else if (own) MOUTHS[own](g, F, mx, mY, k, t);
+  else if (on('mKiss')) kissMouth(g, mx + 0.03 * clamp(F.gx || 0, -1, 1), mY, k, (F.gx || 0) < -0.1 ? -1 : 1);
   else if (on('mO')) oMouth(g, mx, mY, F.mw, clamp(X.mO, 0, 1.4), k, X.mWv || 0, t);
   else if (on('mSnarl')) snarl(g, mx, mY, 0.105 * (F.mw || 1), 1, k);
   else mouth4(g, Fm, t, mY, k, glp);

@@ -8,7 +8,7 @@
 import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { run } from '../../../../kit/env.mjs';
-import { shotFaults, bySecond, blocks, FPS, REF_H } from './shotfaults.mjs';
+import { shotFaults, bySecond, blocks, FPS, REF_H, UNCHECKED } from './shotfaults.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..'), SHOT = path.join(ROOT, 'styles/stick-man/tools/render/shot.mjs');
 const film = process.argv[2], A = {};
@@ -37,13 +37,16 @@ if (page && figureFaults.length) {
   if (r.status) { console.error(`shot.mjs --vis failed:\n${(r.stderr || '').trim().split('\n').slice(-5).join('\n')}`); process.exit(2); }
   JSON.parse(fs.readFileSync(vf, 'utf8')).forEach((v, i) => { figureFaults[i].vis = v; });
 }
-const secs = bySecond(faults), blocking = secs.filter(s => s.block);
+const secs = bySecond(faults);
+// a prop no gate checks (turned off a quarter turn) leaves its shots unmeasured: PARTIAL, never PASS
+const seen = x => blocks(x) && x.kind !== UNCHECKED, toFix = secs.filter(s => s.list.some(seen)), unmeasured = [...new Set(faults.filter(x => x.kind === UNCHECKED && blocks(x)).map(x => x.who))];
+const verdict = toFix.length ? 'FAIL' : unmeasured.length ? 'PARTIAL' : 'PASS';
 
 const mp4 = A.in ? path.resolve(ROOT, A.in) : (fs.existsSync(F('renders')) ? fs.readdirSync(F('renders')).filter(f => f.endsWith('.mp4')).map(f => F('renders/' + f))
   .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs)[0] : null);
 const from = Number(A.from || 0), SD = F('review/shot-gate');
 fs.rmSync(SD, { recursive: true, force: true }); fs.mkdirSync(SD, { recursive: true });
-const picks = blocking.map(s => { const x = s.list.find(blocks); return { s, f0: Math.max(0, x.F - 5), file: `strip_${String(s.s).padStart(3, '0')}s_f${x.F}.jpg` }; });
+const picks = toFix.map(s => { const x = s.list.find(seen); return { s, f0: Math.max(0, x.F - 5), file: `strip_${String(s.s).padStart(3, '0')}s_f${x.F}.jpg` }; });
 const tile = (input, file) => run('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', ...input, '-frames:v', '15', '-vf', 'scale=180:-2,tile=15x1', '-frames:v', '1', path.join(SD, file)], { timeout: 60000 });
 if (picks.length && mp4) for (const k of picks) tile(['-ss', ((k.f0 - from) / FPS).toFixed(4), '-i', mp4], k.file);
 else if (picks.length && page) {
@@ -55,12 +58,12 @@ fs.rmSync(tmp, { recursive: true, force: true });
 
 const strip = s => picks.find(k => k.s === s)?.file;
 const cell = t => String(t).replace(/\|/g, '/');
-const md = [`# Shot gate · ${path.basename(DIR)}`, '', `**${blocking.length ? 'FAIL' : 'PASS'}**: ${blocking.length} second(s) with a fault the camera sees, ${secs.length - blocking.length} with hidden or watch-only faults; ${rows.length} frames${mp4 ? `, strips from ${path.basename(mp4)}` : ''}`, '',
+const md = [`# Shot gate · ${path.basename(DIR)}`, '', `**${verdict}**: ${toFix.length} second(s) with a fault the camera sees,${unmeasured.length ? ` not collision-checked: ${unmeasured.join(', ')},` : ''} ${secs.length - toFix.length} with hidden or watch-only faults; ${rows.length} frames${mp4 ? `, strips from ${path.basename(mp4)}` : ''}`, '',
   '| Second | Frame | Kind | What | px x frames x seen = sev | Blocks | Strip |', '| --- | --- | --- | --- | --- | --- | --- |',
-  ...secs.flatMap(s => s.list.filter(x => blocks(x) || x.sev >= 1 || x.watch).map((x, j) => `| ${j ? '' : `${s.s}`} | ${x.F} | ${x.kind} | ${cell(x.what)} | ${x.px.toFixed(1)} x ${x.frames} x ${x.seen.toFixed(2)} = ${x.sev} | ${x.vis !== 'in' ? `no, ẩn (${x.vis})` : blocks(x) ? 'yes' : 'no, watch'} | ${j || !strip(s.s) ? '' : `[strip](shot-gate/${strip(s.s)})`} |`)), '',
+  ...secs.flatMap(s => s.list.filter(x => blocks(x) || x.sev >= 1 || x.watch).map((x, j) => `| ${j ? '' : `${s.s}`} | ${x.F} | ${x.kind} | ${cell(x.what)} | ${x.px.toFixed(1)} x ${x.frames} x ${x.seen.toFixed(2)} = ${x.sev} | ${x.kind === UNCHECKED ? (blocks(x) ? 'yes, not measured' : 'no, watch') : x.vis !== 'in' ? `no, ẩn (${x.vis})` : blocks(x) ? 'yes' : 'no, watch'} | ${j || !strip(s.s) ? '' : `[strip](shot-gate/${strip(s.s)})`} |`)), '',
   `px are counted on a phone frame ${REF_H} px tall, after the motion the neighbouring frames predict. A strip is 15 frames in a row, the flagged frame on tile 6. Thresholds: styles/stick-man/tools/gates/shotfaults.mjs.`];
 fs.mkdirSync(F('review'), { recursive: true });
 fs.writeFileSync(F('review/shot-gate.md'), md.join('\n') + '\n');
 const kinds = {}; for (const x of faults) if (blocks(x)) kinds[x.kind] = (kinds[x.kind] || 0) + 1;
-console.log(`review/shot-gate.md: ${blocking.length ? 'FAIL' : 'PASS'} · ${blocking.length} second(s) to fix${Object.keys(kinds).length ? ' (' + Object.entries(kinds).map(([k, n]) => `${k} ${n}`).join(', ') + ')' : ''}`);
-process.exit(blocking.length ? 1 : 0);
+console.log(`review/shot-gate.md: ${verdict} · ${toFix.length} second(s) to fix${unmeasured.length ? `, not collision-checked: ${unmeasured.join(', ')}` : ''}${Object.keys(kinds).length ? ' (' + Object.entries(kinds).map(([k, n]) => `${k} ${n}`).join(', ') + ')' : ''}`);
+process.exit(verdict === 'PASS' ? 0 : 1);

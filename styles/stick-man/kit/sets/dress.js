@@ -69,7 +69,7 @@ export function posterTex(title, { bg = [0.95, 0.45, 0.62], fg = [0.05, 0.05, 0.
 
 // ---------------------------------------------------------------- the piece-local builder
 // coordinates are piece-local Blender metres; meshes go into group g
-function P(g) {
+export function P(g) {
   const add = (x, ink = true, cast = true) => { x.castShadow = cast; x.receiveShadow = true; if (!ink) x.userData.noInk = true; g.add(x); return x; };
   return {
     box(lo, hi, c, o = {}) { const a = B(...lo), b = B(...hi);

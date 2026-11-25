@@ -465,7 +465,7 @@ function armFK(sh, sg, a) {
   return { elbow, hand: elbow.clone().addScaledVector(fd, LIMB.fore) };
 }
 
-function contactTex() {
+export function contactTex() {
   const cv = document.createElement('canvas'); cv.width = cv.height = 128; const g = cv.getContext('2d');
   const gr = g.createRadialGradient(64, 64, 6, 64, 64, 64); gr.addColorStop(0, '#fff'); gr.addColorStop(1, '#000');
   g.fillStyle = gr; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(cv);
@@ -595,7 +595,8 @@ export function makeStick(spec) {
   // spec.faceTop (W): the top of the face plate a hood or a cap leaves open (faces.js drawFaceState o.top); spec.faceTurn:
   // how far the face slides round the head with the skull's yaw (0.8 default; a hood's opening wants the marks further in)
   // (spec.faceTopSide / faceTopUp: how much lower that top is in profile / seen from above; spec.faceEdge: [z0, ramp] where the face fades going round)
-  const FR = faceRig(W, { glasses: !!spec.glasses, top: spec.faceTop, topSide: spec.faceTopSide, topKnee: spec.faceTopKnee, topUp: spec.faceTopUp, edge: spec.faceEdge, edgeKnee: spec.faceEdgeKnee }), TURN = spec.faceTurn ?? 0.8;
+  // (spec.faceAge: elder | teen | child | toddler draws the s2 face at that age, facestyles/s2age.js; left out = the face as it is, whatever the body)
+  const FR = faceRig(W, { glasses: !!spec.glasses, top: spec.faceTop, topSide: spec.faceTopSide, topKnee: spec.faceTopKnee, topUp: spec.faceTopUp, edge: spec.faceEdge, edgeKnee: spec.faceEdgeKnee, faceAge: spec.faceAge }), TURN = spec.faceTurn ?? 0.8;
   const face = new THREE.Mesh(facePatch(), new THREE.MeshBasicMaterial({ map: FR.tex, transparent: true, depthWrite: false,
     polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
   face.userData.noPrepass = true; face.userData.faceInk = true; face.renderOrder = 2; rig.add(face); head.add(FR.group);
@@ -637,8 +638,12 @@ export function makeStick(spec) {
     alphaMap: contactTex(), transparent: true, opacity: 0.42, depthWrite: false }));
   contact.rotation.x = -Math.PI / 2; contact.scale.set(0.48 * W, 0.24 * W, 1); contact.position.set(0.03 * W, 0.004, 0);
   contact.userData.noPrepass = true; root.add(contact);
+  // spec.tidyFeet (opt-in): the foot shadow a soft neutral grey, and the heel balls hidden on a figure posed by beats (S.pose
+  // has no heels: the two balls stay at the root, a black dot on the floor between the feet; S.pose2 places them and shows them again)
+  if (spec.tidyFeet) { contact.material.color.copy(lin(0.10, 0.10, 0.10)); contact.material.opacity = 0.3; }
 
-  const S = { root, yaw: 0, hand: {}, parts: { head: headSolid, torso, toes, ankles, hands, face, marks: FR.group, hair: hairG }, xmarks: [], props: {} };
+  // (spec: the build a costume layer sizes itself from, kit/cast/wardrobe.js; parts.limbs: the drawn limb lines, root metres)
+  const S = { root, spec, yaw: 0, hand: {}, parts: { head: headSolid, torso, toes, ankles, hands, face, marks: FR.group, hair: hairG, limbs: Object.fromEntries(Object.entries(limbs).map(([k, t]) => [k, t.mesh])) }, xmarks: [], props: {} };
   const inv = new THREE.Matrix4();
 
   // pos (Blender metres), and either yaw (deg, 0 = facing Blender -Y) or face (a Blender point to turn toward)
@@ -786,7 +791,7 @@ export function makeStick(spec) {
     body.position.set(dx * W, (HIP_V + dz) * W, 0); body.rotation.set(pt, 0, -lean);
     const hc = bt(HEAD_C[0] + (P.head_dx || 0), HEAD_C[1] + (P.head_dv || 0));
     head.position.set(hc[0] * W, hc[1] * W, hc[2] * W);
-    head.rotation.set(pt * 0.6 + (P.head_pitch || 0) * DEG, 0, -(lean + (P.head_tilt || 0) * DEG));
+    head.rotation.set(pt * 0.6 + (P.head_pitch || 0) * DEG, (P.head_yaw || 0) * DEG, -(lean + (P.head_tilt || 0) * DEG));   // (head_yaw, a pose's: + = toward its right)
     S.fill = P.x_fill || 0;                                        // rage fill (verb face_fill): the face pass reads it
     S.face(P);
     // Limbs. Extra keys: elbow{L,R} / kneeDir (or kneeDir{L,R}) = pole vectors (figure-local), armFK{L,R} =
@@ -827,7 +832,8 @@ export function makeStick(spec) {
       rig[side] = { hip, knee: leg.joint, ankle: foot, toe: toeL, shoulder: sh, elbow: arm.joint, hand,
         kneeFlex: leg.flex, elbowFlex: arm.flex, footPitch: P['footPitch' + side] || 0 };
     }
-    S.rig = rig;
+    S.rig = rig; S.spineB = null;                                  // (no spine bend on this path: the torso is drawn at rest)
+    if (spec.tidyFeet) for (const h of Object.values(heels)) h.visible = false;
     handProps(P, rig);
     S.xmarks = Object.keys(P).filter(k => k.startsWith('x_mark_') && P[k] >= 1).map(k => [k.slice(7), Math.floor(P[k] - 1)]);
     contact.visible = P.contact !== false && !(P.x_air > 0) && Math.abs(P.x_tumble || 0) < 20 && Math.abs(P.x_roll || 0) < 20;   // a figure tipped over or airborne has no foot shadow
@@ -852,6 +858,7 @@ export function makeStick(spec) {
       slices = torsoSlices(bent[0].p, { girth, gz: 0.9 + 0.1 * girth, W, y0: TORSO_Y0 });
     }
     const B = spineParams(Q.spine, Q.sq || 0), gz = 0.9 + 0.1 * girth, v = new THREE.Vector3(), n = new THREE.Vector3();
+    S.spineB = B;                                                  // the bend the torso is drawn with: layers on it bend the same (kit/cast/wardrobe.js)
     for (const b of bent) {
       const P = b.g.attributes.position, N = b.g.attributes.normal;
       for (let i = 0; i < P.count; i++) {
@@ -1002,7 +1009,7 @@ export function makeStick(spec) {
       const toe = toeL.clone().multiplyScalar(W);
       for (let i = 1; i <= 5; i++) lp.push(lp[12].clone().lerp(toe, i / 5));
       limbs['leg' + side].set(lp); ankles[side].position.copy(lp[12]); toes[side].position.copy(toe);
-      heelT[side].set(Array.from({ length: 6 }, (_, i) => lp[12].clone().lerp(heelL.clone().multiplyScalar(W), i / 5))); heels[side].position.copy(heelL).multiplyScalar(W);
+      heelT[side].set(Array.from({ length: 6 }, (_, i) => lp[12].clone().lerp(heelL.clone().multiplyScalar(W), i / 5))); heels[side].position.copy(heelL).multiplyScalar(W); heels[side].visible = true;   // (shown again after S.pose hid them, spec.tidyFeet)
       // joint angles as a clinician measures them (deg): hip flexion (+ forward) and abduction (+ outward) of the thigh
       // in the pelvis frame, ankle dorsiflexion (+ toes toward the shin) between the shin and the sole
       const th = leg.joint.clone().sub(hipJ).applyQuaternion(qb.clone().invert());

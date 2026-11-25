@@ -482,8 +482,19 @@ function farCuts(rows, cut, W, H, out) {
     px: w.px, frames, pts: [w.x.at] })));
 }
 
+// a set prop no gate checks (engine/play.js out.unchecked, from kit/props/catalog.js: turned off a quarter turn, or solid:
+// false), one row per prop and shot of the act it is in: its body, arm and prop faults are not measured, so the shot is not
+// clean. A turned prop blocks (shotgate.mjs: PARTIAL, never PASS); solid: false is the film's own choice and is listed as watch
+export const UNCHECKED = 'not collision-checked';
+function unchecked(rows, cut, out) {
+  const keys = [...new Set(rows.flatMap(r => (r.unchecked || []).map(u => `${u.name}\t${u.why}`)))];
+  for (const k of keys) { const [n, why] = k.split('\t');
+    runs(rows, cut, i => ((rows[i].unchecked || []).some(u => u.name === n && u.why === why) ? { px: 0 } : null), (w, frames, run) => out.push(fault({ F: F_(rows[run[0].i]), kind: UNCHECKED, who: n,
+      what: `${n} (${why}) has no solid boxes: nobody's body, arm or prop is checked against it in this shot for ${frames} f; ${why === 'solid: false' ? 'the film chose it: look at it by eye' : 'fix: place it at 0, 90, 180 or 270 deg'}`, px: 0, frames, watch: why === 'solid: false' }))); }
+}
+
 export const severity = x => x.px * Math.min(x.frames, MAX_FRAMES) * x.seen;
-export const blocks = x => x.vis === 'in' && !x.watch && x.frames >= HOLD_FRAMES && x.px * x.seen >= (CONTACT.has(x.kind) ? CONTACT_PX : CHANGE_PX);
+export const blocks = x => x.kind === UNCHECKED ? !x.watch : x.vis === 'in' && !x.watch && x.frames >= HOLD_FRAMES && x.px * x.seen >= (CONTACT.has(x.kind) ? CONTACT_PX : CHANGE_PX);
 
 // every fault of the rows, by frame; W, H: the frame size the rows were measured at
 export function shotFaults(rows, { W = 1080, H = 1920 } = {}) {
@@ -492,7 +503,7 @@ export function shotFaults(rows, { W = 1080, H = 1920 } = {}) {
   cameraJumps(rows, cut, W, H, out); props(rows, cut, W, H, out); figures(rows, cut, W, H, out);
   goneAfterCut(rows, cut, W, H, out); acrossCut(rows, cut, W, H, out); changedAtCut(rows, cut, out); floating(rows, cut, W, H, out);
   for (const n of Object.keys(rows[0].actors)) { limbs(rows, cut, n, W, H, out); skating(rows, cut, n, W, H, out); cordShakes(rows, cut, n, out); }
-  crossings(rows, cut, W, H, out); propInside(rows, cut, W, H, out); armInside(rows, cut, W, H, out); leavesView(rows, cut, W, H, out); outOfScale(rows, cut, W, H, out); farCuts(rows, cut, W, H, out);
+  crossings(rows, cut, W, H, out); propInside(rows, cut, W, H, out); armInside(rows, cut, W, H, out); leavesView(rows, cut, W, H, out); outOfScale(rows, cut, W, H, out); farCuts(rows, cut, W, H, out); unchecked(rows, cut, out);
   for (const x of out) x.sev = +severity(x).toFixed(2);
   return out.sort((a, b) => a.F - b.F);
 }

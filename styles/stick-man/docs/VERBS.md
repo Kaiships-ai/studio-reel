@@ -17,7 +17,7 @@ the storyboard `act` field and for `expr` on keys.
 | `f` | an absolute frame instead of a word (set-up before the first word only) | `{ f: 0, who: 'kai', do: 'hold', ... }` |
 | `who` | an actor in `cast`, a prop in the set, an effect in `make`, or `'screen'` | `who: 'teller'` |
 | `expr` | face from here on (lands 4 f before its word); the 31 faces are in "Faces" below | `expr: 'manic'` |
-| `mark` | a head-attached emotion mark for 36 f, or `[kind, frames]`: sweat anger sparkle question exclaim steam stars zzz | `mark: 'question'` |
+| `mark` | a head-attached emotion mark for 36 f, or `[kind, frames]`: sweat anger sparkle question exclaim steam stars zzz. A film with `headMarks: 'bold'` in reel.js draws the bold set (sized to read at a 120 px head) and also has ellipsis gloom shake; without it the marks stay the small ones they always were, and asking for one of those three fails | `mark: 'question'` |
 | `look` | gaze target: actor, prop, place, or `'camera'` | `look: 'note'` |
 | `sound`, `strength`, `soundAt` | add a sound cue (bank name, 0-1, frames late) | `sound: 'tick', strength: 0.5` |
 
@@ -97,11 +97,38 @@ set prop) keeps its prop; the rest of the pose still plays. Joint gate: every po
 | `laugh` | doubled forward, hands on the belly, shaking with laughter | `{ who: 'kai', do: 'laugh', expr: 'closed' }` |
 | `flail` | arms up and waving out of time, bouncing (panic) | `{ who: 'june', do: 'flail', expr: 'scream' }` |
 | `wobble` | wide stance, swaying in circles, arms out (dizzy) | `{ ...at('l04', 'damages', -2), who: 'kai', do: 'wobble', expr: 'dizzy' }` |
+| `proud_chin` | chin up, chest out, back arched, both hands resting on the hips, wide stance (proud) | `{ who: 'kai', do: 'proud_chin', expr: 'e_proud' }` |
+| `hands_behind` | head down and turned away, shoulders up, both hands behind the back, a toe scuffing (guilty) | `{ who: 'kai', do: 'hands_behind', expr: 'e_guilty' }` |
+| `jolt` | a jolt back, face on the lens, arms flung up and out from the shoulders, trembling (shocked) | `{ who: 'kai', do: 'jolt', expr: 'e_shock' }` |
+| `shy_twist` | head tipped to a shoulder, one arm hanging, the other across the belly holding its elbow, knees in, toe down (shy) | `{ who: 'wren', do: 'shy_twist', expr: 'e_shy' }` |
+| `chin_prop` | the head tipped onto a fist at the side of the jaw, the other arm holding that elbow, a slow sigh (bored) | `{ who: 'bram', do: 'chin_prop', expr: 'bored' }` |
+| `fume` | chest forward, glaring from under the brows, shoulders high, fists out, wide stance, shaking (angry) | `{ who: 'kai', do: 'fume', expr: 'angry' }` |
+| `cringe` | knees bent, leaning back, one foot back, head pulled in, both hands up at the mouth, elbows tight, shaking (scared) | `{ who: 'kai', do: 'cringe', expr: 'y_fear' }` |
+| `droop` | shoulders low and forward, the head a little down, arms hanging (sad) | `{ who: 'kai', do: 'droop', expr: 'sad' }` |
+| `head_scratch` | a hand scratching the side of the crown, that arm a loop clear of the head, head tipped, other fist on the hip (confused) | `{ who: 'kai', do: 'head_scratch', expr: 'confused' }` |
+| `cheeks_cover` | fists low on the cheeks, hunched, turned a little away, squirming (embarrassed) | `{ who: 'wren', do: 'cheeks_cover', expr: 'embarrassed' }` |
+| `cheer` | both arms flung up in a wide V, up on the toes, bouncing (excited) | `{ who: 'kai', do: 'cheer', expr: 'excited' }` |
+| `arms_folded_high` | arms folded, each hand under the other arm, chin up, weight back on one hip (smug) | `{ who: 'kai', do: 'arms_folded_high', expr: 'e_smug' }` |
+| `nod_off` | upright, the head tipped right over to one side and nodding, arms loose (sleepy) | `{ who: 'kai', do: 'nod_off', expr: 'e_sleepy' }` |
 | `pour` | a mug in the hand tips and pours, then rights | `{ who: 'kai', do: 'pour', hold: 50 }` |
 | `hammer` | a hammer raised and brought down every 15 f (a `clunk` cue on each hit) | `{ who: 'kai', do: 'hammer', hold: 60 }` |
 | `write` | notepad in one hand, pencil scribbling in the other, head down | `{ who: 'kai', do: 'write' }` |
 | `eat` | a drumstick to the mouth every 22 f, the other hand on the belly | `{ who: 'kai', do: 'eat' }` |
 | `phone` | a phone held to the ear, head tipped | `{ who: 'kai', do: 'phone' }` |
+
+**Expressions** (`engine/expressions.js`): a feeling as one kit asset, a face + a pose + a head mark read together (13:
+proud guilty shy bored shocked angry scared sad confused excited embarrassed smug sleepy). `expressionBeats(name, where,
+who, o)` gives the beats: the pose first, the face 2 f after its anticipation, the mark 3 f after the face reads on
+screen (gone as the pose releases, or 6 f before the next face); on a word the face lands 4 f before it, as any face does, the peak held >= 12 f; its faces are new `e_` designs (`facestyles/s2expr.js`: e_proud e_smug
+e_guilty e_bored e_embarrassed e_shock e_shy e_sleepy, plus e_angry / e_confused without their own marks)
+(`o.hold`, `amp`, `hand`, `face`, `pose`, `mark` override). Example: `beats: [...expressionBeats('guilty', { line: 'l03', on: 'sorry' }, 'kai')]`.
+Set `headMarks: 'bold'` in the film (the marks are the bold set's; without it proud, bored, sad and scared fail unless `mark: null`).
+Sheet: `tools/series/kitexpr`.
+
+**Face age** (opt-in): `faceAge: 'elder' | 'teen' | 'child' | 'toddler'` on a cast spec draws its s2 face at that age
+(`facestyles/s2age.js`; `child` = `child_hi`, `toddler` = `toddler_lo`, the other variants by name). Left out, the face is the
+plain one, whatever the body. Only the s2 face style draws an age: under any other (the dot-eye `kit` faces) the face stays adult
+and the film warns once.
 
 Hand props (`kit/cast/handprops.js`: cup hammer pencil pad drumstick apple phone megaphone box) belong to the figure and are
 parented to the hand each frame (gap 0 by construction); a pose shows them through the pose keys `x_hp<L|R|B>_<kind>`.
