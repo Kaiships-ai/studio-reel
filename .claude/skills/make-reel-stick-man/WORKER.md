@@ -50,6 +50,12 @@ Everything else comes as a free-form spec from Studio.
   `status: blocked` and `problems: blocked: mac-pro down`. Do not render locally.
 - **A new version uses the current kit** (`origin/main`). Show what the kit changed against the previous version:
   `styles/stick-man/tools/review/abtest.mjs` (blind A|B); if it cannot run, a side sheet of the two versions.
+  For more than two cuts, `styles/stick-man/tools/review/blindround.mjs <cuts> --out <dir>` gives the reviewer neutral
+  names and a brief that asks for each film's notes before the next; `blindround.mjs check <dir>` closes the round only
+  when every film's notes and the ranking are written.
+- **Before a cut ships, its on-screen claims are marked.** `styles/stick-man/tools/review/claims.mjs films/<film>` lists
+  every overlay line with its times (`review/claims.md`). A story skeptic marks each one true, false or unclear against the
+  story. `claims.mjs check films/<film>` fails while a line is blank or false.
 - **You run an independent reviewer.** It is a separate subagent that did not make the change, and it gets only the film
   and Kai's notes. Put its verdict in `review:` of `worker_done`. Studio's own check comes on top.
 - **status.json:** you write all of it, except `approval.state` `kai_approved` and `posted`, and `published`. Studio
