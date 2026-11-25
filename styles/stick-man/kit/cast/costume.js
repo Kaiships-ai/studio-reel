@@ -66,7 +66,10 @@ HOOKS.costume = (S, list, { group }) => {
     else if (k === 'holster') body.add(holster(a === 'L' ? -1 : 1, hex(a === 'L' ? b : a)));
     else if (k === 'hat') { worn = hat(a, hex(b)); worn.position.y += HAT_LIFT; head.add(worn); flying = hat(a, hex(b)); flying.visible = false; group.add(flying); }
   }
-  if (!worn) return;
+  if (worn) flyOff(S, worn, flying);
+};
+// a hat worn on the head (worn) and its twin (flying, in the figure's parent group): lose_hat sends it off
+export function flyOff(S, worn, flying) {
   // the hat flies off: x_hatfly = frames since lose_hat + 1. An arc from where the head stands (the body channel's position
   // and yaw, not the tumbling root: a pure function of the frame), up and back off the head, spinning, then it lies
   const pose = S.pose;
@@ -82,7 +85,7 @@ HOOKS.costume = (S, list, { group }) => {
     }
     return r;
   };
-};
+}
 const y0Of = () => HB * 0.62;
 
 // lose_hat: from this frame the hat flies off the head (x_hatfly counts frames)
