@@ -38,29 +38,46 @@ meshes, only box meshes: a `.glb` is solid through `COLLIDE` alone. So the array
 `propKit` only adds to it: it never empties it and never drops an entry, and a set built again with the same placements adds
 none twice. `glbKit` does empty the array it is given: create it before the first `place`. Code: `kit/props/collide.js`.
 
-One mechanism for every prop but seats and beds: its solid parts are measured from its triangles in its own frame, once per
-name (`kit/props/parts.js`), then scaled and turned with it. The gaps that count as solid: what a thing 24 cm wide cannot get
-into (a railing's bars, a bin, under a stage's skirt), and a gap under 0.50 m tall (under a bed, between two shelves).
+A `COLLIDE` entry is square to the axes, so a prop has boxes only at a **quarter turn**: 0, 90, 180 or 270 degrees, within
+0.5 degrees, any sign or number of turns. Its solid parts are measured once per name and scale in its own frame (cached for the
+page), then turned exactly by the quarter (sides swap and change sign), so every quarter gives the same boxes.
+
+**Any other turn** (37, 45, 120 degrees): the prop is placed with no box and is **not collision-checked**. `propKit` lists it in
+`COLLIDE.unchecked` (`[{ name, why }]`, kept through a rebuild or an emptied array), the rows carry it (`unchecked`), and the shot
+gate gives it its own row kind, `not collision-checked`, in every shot of its act: the shot gate then reads PARTIAL, never PASS.
+Nobody's body, arm or held prop is checked against it, and a prop let go falls through it. To have it checked, turn it to a quarter.
+`solid: false` is not checked either: it is listed the same way, as watch only (the film chose it), and never blocks.
+
+One mechanism for every prop but seats and beds: its solid parts are measured from its triangles (`kit/props/parts.js`). The gaps
+that count as solid: what a thing 24 cm wide cannot get into (a railing's bars, a bin, under a stage's skirt), and a gap under
+0.50 m tall (under a bed, between two shelves). A box whose corner stands more than 3.5 cm out of the prop's plan outline (its
+convex hull: a round bin, a truck's nose) is cut again, up to 24 cuts.
 
 | Prop | Boxes |
 |---|---|
-| square to the axes (within 5 degrees) | one per part (`<prop>#1..`): a deck, each post, a table's top and each end of legs; up to 16, 24 for a stage (over 20 m2); most closed props are one. Each reaches its part's real top, so a prop let go over a bench rests on the bench |
-| turned | each part in slices, `grace` up to 0.12 on a wide part (a body may sink in as far as a slice's corner stands out); up to 48, 72 for a stage, 16 for a prop with no room in it. A hand, an arm or a prop let go reads the slices as they are, up to about 12 cm wide of a turned side (more on a turned stage) |
+| any prop | one per part (`<prop>#1..`): a deck, each post, a table's top and each end of legs, the slices of a rounded side; up to 16, 24 for a stage (over 20 m2), plus the cuts to its outline; most closed props are a few. Each reaches its part's real top, so a prop let go over a bench rests on the bench |
+| a closed prop (a vehicle, a fridge, a shelf, a dumpster) | a figure more than 5 cm outside its outline is not flagged, one inside it is (`stick-props-kit.test.mjs`, 17 props, scale 1 and 1.3, the 4 quarters) |
 | a thin top legs go under (a table, a desk, a counter) | one sliver more inside it, with a negative `grace`: the body gate reads ankles, knees and the torso, none at a table's height, so the top counts up (or down) to the nearest of them, over its own floor only. No other gate sees the sliver |
-| a seat or bed (`SEAT` in `sizes.js`), up to 8 | a block from the floor to the seat plus its back, arms or headboard: sitting or lying on it is no fault, standing through it is; the block has `grace` 0.02. Turned off the axes its arms are left out, and the L sofa's boxes fill part of its inner corner |
+| a seat or bed (`SEAT` in `sizes.js`), up to 8 | a block from the floor to the seat plus its back, arms or headboard: sitting or lying on it is no fault, standing through it or sitting into its back is; the block has `grace` 0.02. Held at the 4 quarters and scales 1, 1.15, 1.3, 1.5 for every seat |
 | overhead (over 1.8 m: a truss, an awning, a scaffold's deck) | none, unless it is in reach of a figure on the prop's own deck |
-| thin (under 6 cm: a rug, a plate, a keyboard) or wholly over the band | none |
+| thin (under 6 cm: a rug, a plate, a keyboard) or wholly over the band | none (nothing to check: not listed) |
 | a wall piece (clock, blind, whiteboard, frame, camera) | one where it hangs, so a figure can stand under it; none over 1.8 m |
 
 A figure may: stand on a stage's deck, under the scaffold or the tower, beside a leg, sit with its legs under a table, desk or
-bench (turned off the axes: leave 10 cm between chest and edge). A figure through a truss, a post, a top, or standing inside a
-deck is a fault.
+bench. A figure through a truss, a post, a top, or standing inside a deck is a fault.
+
+Limits: a box is the bounds of what it holds, so a concave side (the L sofa's inner corner, between a truck's wheels, under a
+counter's overhang) and a round side between two cuts stay solid. The stages' rounded front stands up to about 11 cm (scale 1)
+to 15 cm (1.5) out of the deck in front of it, and a seat's block up to 7 cm (the rocking chair's rockers): a figure standing
+that close beside them is flagged. Seats (sitting) and bed backs are held only at the quarters.
 
 **solid: false** (or a caller's `grace`) is still for: a prop the film moves; a seat, bed, gurney or wheelchair with a figure's
 legs or a trolley under it (a seat is a block to the floor); sitting or standing on top of a table or desk, or lying on a
 counter (`grace: 0.01`: the top loses its reach, its box stays); a door or shutter the film opens; a figure inside a vehicle,
 a fridge, a bin or the food truck (closed props are solid inside); a prop let go into a tray, a basket or between two shelves.
 A scaffold's deck at 2 m is no rest surface (the engine leaves out what is over 1.8 m).
+
+Cost: each box is about 0.016 ms per figure per frame in the gates; first placing of a prop measures its parts (below).
 
 The second `street/bench` placed is `street/bench@2`, its boxes `street/bench@2#1..` (`street/bench-2` is another prop).
 

@@ -11,7 +11,7 @@
 // The solid is cut, box by box, where the cut gives back the most air (both the cut and the best one after it count), until
 // no cut gives back MIN_AIR cubic metres or there are PARTS_MAX boxes (PARTS_BIG for a prop over BIG square metres: a stage). Every box is the bounds of what it holds, so its top is
 // the part's real top; nothing solid is ever left out. Last, a box corner that stands out of the prop's outline is cut off (trimmed).
-export const PARTS_MAX = 16, PARTS_BIG = 24, BIG = 20, KNEE = 0.50, BODY_R = 0.12, MIN_AIR = 0.03, CORNER = 0.035, TRIM_MAX = 12, TRIM_STEPS = 24;
+export const PARTS_MAX = 16, PARTS_BIG = 24, BIG = 20, KNEE = 0.50, BODY_R = 0.12, MIN_AIR = 0.03, CORNER = 0.03, TRIM_MAX = 24, TRIM_STEPS = 24, BODY_TOP = 1.3, TRIM_ENDS = [0.03, 0.06, 0.1, 0.15, 0.2, 0.3], TRIM_GAIN = 0.9;
 const SHARE = 0.12, WIDE = [4], DEEP = [3, 2], RING = 0.2, EVEN = 0.1;   // a cut gives back this share of its box or more; the cuts tried; a box over RING m3 is tried deeper
 const BUDGET = 30000, STEP = [0.02, 0.2];         // voxels in a prop's grid, and the size of one
 const DECK = { area: 1.0, top: 1.6, clear: 1.6 };    // a top a figure can stand on: flat area (m2), how high, how much air over it
@@ -60,7 +60,7 @@ export function solidParts(tris, top, k1 = 1) {
   // what a cut is worth is judged on sides rounded out to EVEN (a 2 cm rim or a rounded corner is no air worth a box); tops are not rounded
   const R = Float64Array.from(E); for (let q = 0; q < list.length; q++) for (const k of [0, 1]) { R[6 * q + k] = lo[k] + Math.floor((E[6 * q + k] - lo[k]) / EVEN + 1e-4) * EVEN; R[6 * q + 3 + k] = hi[k] - Math.floor((hi[k] - E[6 * q + 3 + k]) / EVEN + 1e-4) * EVEN; }
   const G = { C, E: R, real: E, n };
-  return trimmed(pieces(G, Array.from(list.keys()), D[0] * D[1] > BIG ? PARTS_BIG : PARTS_MAX), outline(tris, ceil), CORNER / k1);
+  return trimmed(pieces(G, Array.from(list.keys()), D[0] * D[1] > BIG ? PARTS_BIG : PARTS_MAX), outline(tris, ceil), CORNER / k1, BODY_TOP / k1, k1);
 }
 
 // a 0/1 picture grown by r cells each way (a square)
@@ -147,19 +147,19 @@ function within(H, lo, hi) {
   return P.length ? { lo: [0, 1].map(k => Math.min(...P.map(p => p[k]))), hi: [0, 1].map(k => Math.max(...P.map(p => p[k]))) } : null;
 }
 // the boxes less the corners that stand out of the outline by more than `tol` (a round bin, a truck's nose): the box whose
-// corner stands out most is cut where the corners shrink most, at most TRIM_MAX cuts; each half is as wide as the outline there
-function trimmed(L, H, tol) {
+// corner stands out most (half as much over BODY_TOP, where only arms reach) is cut where the corners shrink most, at most TRIM_MAX cuts; each half is as wide as the outline there
+function trimmed(L, H, tol, body, k1) {
   if (H.length < 3) return L;
   const corners = b => [b.lo[0], b.hi[0]].flatMap(x => [b.lo[1], b.hi[1]].map(y => outOf(H, [x, y]))), cost = b => corners(b).reduce((s, d) => s + d * d, 0);
   const part = b => { const w = within(H, b.lo, b.hi); return w && { lo: [...w.lo, b.lo[2]], hi: [...w.hi, b.hi[2]] }; };
-  const out = L.map(b => ({ b, worst: Math.max(...corners(b)) }));
+  const worst = b => Math.max(...corners(b)) * (b.lo[2] < body ? 1 : 0.5), out = L.map(b => ({ b, worst: worst(b) }));
   for (let cut = 0; cut < TRIM_MAX; cut++) {
     const w = out.reduce((m, x) => (x.worst > m.worst ? x : m)); if (!(w.worst > tol)) break;
-    let best = { cost: 0.9 * cost(w.b) };
-    for (const a of [0, 1]) for (let i = 1; i < TRIM_STEPS; i++) { const x = w.b.lo[a] + (w.b.hi[a] - w.b.lo[a]) * i / TRIM_STEPS, set = (v, y) => v.map((z, k) => (k === a ? y : z)), A = part({ lo: w.b.lo, hi: set(w.b.hi, x) }), B = part({ lo: set(w.b.lo, x), hi: w.b.hi });
+    const c0 = cost(w.b); let best = { cost: TRIM_GAIN * c0 };
+    for (const a of [0, 1]) for (const x of [...Array.from({ length: TRIM_STEPS - 1 }, (_, i) => w.b.lo[a] + (w.b.hi[a] - w.b.lo[a]) * (i + 1) / TRIM_STEPS), ...H.flatMap((p, i) => [0, 0.25, 0.5, 0.75].map(t => p[a] + t * (H[(i + 1) % H.length][a] - p[a]))), ...TRIM_ENDS.flatMap(d => [w.b.lo[a] + d / k1, w.b.hi[a] - d / k1])].filter(x => x > w.b.lo[a] + 0.01 && x < w.b.hi[a] - 0.01)) { const set = (v, y) => v.map((z, k) => (k === a ? y : z)), A = part({ lo: w.b.lo, hi: set(w.b.hi, x) }), B = part({ lo: set(w.b.lo, x), hi: w.b.hi });
       if (A && B && cost(A) + cost(B) < best.cost) best = { cost: cost(A) + cost(B), A, B }; }
     if (!best.A) { w.worst = 0; continue; }
-    out.splice(out.indexOf(w), 1, ...[best.A, best.B].map(b => ({ b, worst: Math.max(...corners(b)) })));
+    out.splice(out.indexOf(w), 1, ...[best.A, best.B].map(b => ({ b, worst: worst(b) })));
   }
   return out.map(x => x.b);
 }
