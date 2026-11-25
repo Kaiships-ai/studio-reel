@@ -1,9 +1,5 @@
-// Thin_React_Surprise_Once: a small start on bent knees at something in front, the hands up a little, then easing, from
-// motion capture (Mixamo "Surprised", ref/mixamo/surprised.js) on the thin body, every captured frame. Mixamo batch 1
-// (V4 film).
-import { mocapClip } from '../../base.js';
-import SRC from '../../ref/mixamo/surprised.js';
+// Thin_React_Surprise_Once: a start at something in front: a dip, the hands thrown up and the body back, held, then easing.
+// (acts/React_Surprise_Once.js on the thin body: its own clock, reach and weight.) Batch 1 (V4 film).
+import act from '../../acts/React_Surprise_Once.js';
 
-const M = mocapClip({ body: 'thin', src: SRC, base: 'STAND', end: 'STAND' });
-export default { name: 'Thin_React_Surprise_Once', clip: 'React_Surprise_Once', body: 'thin', group: 'React', loop: false, frames: M.frames, base: 'STAND', end: 'STAND', style: 'kaiships',
-  needs: { props: [], hands: null, marks: M.marks }, keys: M.keys, captured: M.captured, rest: M.rest };
+export default act('thin');

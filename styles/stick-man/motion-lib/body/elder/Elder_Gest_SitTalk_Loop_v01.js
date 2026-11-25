@@ -1,8 +1,5 @@
-// Elder_Gest_SitTalk_Loop: seated, talking to someone off to the left, small hand moves, from motion capture (Mixamo
-// "Sitting Talking", ref/mixamo/sitting_talking.js) on the elder body, every captured frame. Mixamo batch 1 (V4 film).
-import { mocapClip } from '../../base.js';
-import SRC from '../../ref/mixamo/sitting_talking.js';
+// Elder_Gest_SitTalk_Loop: seated, talking, small hand moves.
+// (acts/Gest_SitTalk_Loop.js on the elder body: its own clock, reach and weight.) Batch 1 (V4 film).
+import act from '../../acts/Gest_SitTalk_Loop.js';
 
-const M = mocapClip({ body: 'elder', src: SRC, base: 'SIT', end: 'SIT', seated: true, bones: true });
-export default { name: 'Elder_Gest_SitTalk_Loop', clip: 'Gest_SitTalk_Loop', body: 'elder', group: 'Gest', loop: true, frames: M.frames, base: 'SIT', end: 'SIT', style: 'kaiships',
-  needs: { props: [], hands: null, marks: M.marks }, keys: M.keys, captured: M.captured, rest: M.rest };
+export default act('elder');

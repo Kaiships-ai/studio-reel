@@ -63,6 +63,11 @@ before, except where an old one had a hand forced off a target (now kept when re
   `stanceAt` (its standing foot), `bobLow` (a captured walk's hips come down before the foot lands), `seam`; `captureBase`
   (KNEEL, FLOOR), `toeKeys`, `bridgeKeys`. `strike`: a loop starts on the first left print, not on a low skim.
   `Adult_Idle_Sit_Loop` still has the old scale (1.46 times).
+- Each body its own way: batch 1 is one recipe an action (`motion-lib/acts/`) performed with the body's `life`
+  (`bodies.js`, `ref/perform.js`, `base.js` `ownClip`, `ownGait`, `floorClip`). `motionlib.mjs` fails a body's clip that is
+  not slower / quicker, smaller / bigger than the adult's of the same name by the amounts in `tools/gates/bodylife.mjs`
+  (`body:` lines; 9 older clips fail it, listed in PR 202), and a KNEEL / FLOOR clip with a foot over 3 cm off the floor.
+  `mocap_reach.mjs` bakes on any body, `earclose` + `captured` for a call that never leaves the ear.
 - Body types (`motion-lib/bodies.js` `bodySpec`): adult, heavy (girth 1.9), thin (0.6), child (scale 0.62, head 1.3, legs
   0.8), elder (stooped posture); each with its own walk, run and breath.
 - Gaits (`base.js` `gaitLoop`, every walk and run): sampled a key a frame from curves. The hips are solved from the

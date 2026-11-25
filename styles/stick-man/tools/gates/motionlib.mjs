@@ -3,7 +3,9 @@
 //        naming, the index lists every file, the record, loop seam, starts / ends on its standard pose, the joint gate
 //        (<= 25 deg a frame after the 'kaiships' dose), planted feet that never slide, a physics line (flights, g), and the
 //        clip through the real rig headless (cast.js): a gripping hand <= 2 cm off its target, a held prop <= 1 cm in the body,
-//        no prop inside the set, and the solved joints turning no more than 25 deg a frame beyond the motion's own (jointExcess)
+//        no prop inside the set, the solved joints turning no more than 25 deg a frame beyond the motion's own (jointExcess),
+//        feet on the floor under a body the floor carries, and each body told from the adult it shares a clip with: slower or
+//        quicker, smaller or bigger, by the amounts in bodylife.mjs
 //   node styles/stick-man/tools/gates/motionlib.mjs --only <clip> [--check '<json>']   one clip and its fitChecks / propChecks,
 //        plus a film's own key as JSON: { swap, pos, yaw, body, fit fields, collide: [{ name, lo, hi }] } (a swap value is a
 //        prop kind or a prop's contract { mode, grip, size }: props.js heldProp), so a film checks its prop and staging first
@@ -20,6 +22,7 @@ import { BODIES } from '#motion-lib/bodies.js';
 import { compileTrack, playActor, flatten } from '#engine/motion.js';
 import { sizedBag, propSwap } from '#motion-lib/props.js';
 import { jointSteps, JOINT_STEP_MAX } from './jointstep.mjs';
+import { lifeOf, lifeFails, BODY_LIFE } from './bodylife.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.resolve(HERE, '../../../..'), LIB = path.join(ROOT, 'styles/stick-man/motion-lib');
 export const JOINT_MAX = 25, SLIDE_MM = 1, ARM_W = 1.025;
@@ -231,7 +234,7 @@ export async function rigClip(C, body = C.body || 'adult', { phys = true, obstac
   const lastF = keys[keys.length - 1].f, Qat = f => R.toPose(fr[Math.max(0, Math.min(fr.length - 1, f))], S.root.scale.x), plan = R.propPlan(track, Qat, S);
   const o = { grip: 0, gripAt: null, prop0: 0, prop: 0, propAt: null, over: [], joint: 0, jointAt: null, heldFrames: 0, inSet: [],
     slip: 0, slipAt: null, gone: [], bal: 0, balAt: null, pelvis: 0, pelvisAt: null, massStep: 0, massAt: null, kgMax: 0,
-    limbs: [], propInSet: [] };
+    limbs: [], propInSet: [], paths: [] };
   const d3 = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]), V3 = new (S.root.position.constructor)();
   const gripW = p => { const g = p.userData.grip || [0, 0, 0]; V3.set(...(Array.isArray(g) ? g : [0, 0, 0])); p.localToWorld(V3); return [V3.x, -V3.z, V3.y]; };
   let prevP = {}, prevBal = null, prevPel = null, prevKg = null, kgs = [];
@@ -259,6 +262,7 @@ export async function rigClip(C, body = C.body || 'adult', { phys = true, obstac
       const lim = { torsoLean: w.torsoLean, torsoRoll: w.torsoRoll, ...Object.fromEntries(['L', 'R'].map(s => [s, { ...Object.fromEntries(LIMB_PTS.map(j => [j, w[s][j]])), kneeFlex: w[s].kneeFlex, elbowFlex: w[s].elbowFlex, footPitch: w[s].footPitch }])) };
       if (o.limbs.length) for (const [k, d] of jointSteps(o.limbs[o.limbs.length - 1], lim)) if (d > o.joint) { o.joint = +d.toFixed(1); o.jointAt = `${f} ${k}`; }
       o.limbs.push(lim);
+      if (f <= lastF) o.paths.push({ pelvis: w.skel.pelvis, head: w.skel.head, handL: w.L.hand, handR: w.R.hand, feet: ['L', 'R'].map(sd => [w[sd].ankle[2], w[sd].toe[2]]) });
       if (Object.values(S.props).some(p => p.visible)) o.heldFrames++;
       // the body inside the set's solid pieces (a window's wall, a trunk lip): the head (its centre and the crown), the
       // joints of the limbs (1 cm grace, as the render's (e)); the arms are solved against the set, the rest is not
@@ -342,6 +346,28 @@ export function physicsFails(g, tag = '') {
   if (g.massStep > MASS_STEP) out.push(`load${t}: the carried mass steps ${Math.round(g.massStep * 100)} % of its ${+g.kgMax.toFixed(1)} kg in one frame at ${g.massAt} (max ${Math.round(MASS_STEP * 100)} %)`);
   return out;
 }
+// ------------------------------------------------------------------ a body's own way of doing it (bodylife.mjs)
+// every clip on another body against the adult's clip of that name (the body's own or the shared one): the paths of the
+// hands, the head and the hips through the rig, physics on. A clip with no adult twin has nothing to be told from
+const LIFE = new Map();
+export async function clipLife(C, g = null) {
+  if (!LIFE.has(C)) { const b = C.body || 'adult', s = BODIES[b].spec, sc = s.scale ?? 1; LIFE.set(C, lifeOf(C, (g || await rigClip(C)).paths, { scale: sc, leg: sc * (s.legScale ?? 1) })); }
+  return LIFE.get(C);
+}
+// a body the floor carries (KNEEL, FLOOR: no foot is keyed as planted, so the sliding check never looks at one) rests its feet
+// on that floor: a standing sole has its ankle 1.6 cm up and its toe 1.3 cm (the drawn line's half); more than FLOOR_CM is a
+// foot in the air (2 px at 720p a centimetre: Idle_Kneel hung its feet 11 cm up for 155 frames and passed)
+export const FLOOR_CM = 3, ON_FLOOR = ['KNEEL', 'FLOOR'];
+export function floorFails(C, g) {
+  if (!ON_FLOOR.includes(C.base)) return [];
+  let worst = [0, '']; g.paths.forEach((r, f) => r.feet.forEach(([a, t], i) => { for (const [v, n] of [[a, 'ankle'], [t, 'toe']]) if (100 * v > worst[0]) worst = [100 * v, `${n}${'LR'[i]} at ${f}`]; }));
+  return worst[0] > FLOOR_CM ? [`floor: a foot is ${worst[0].toFixed(1)} cm above the floor (${worst[1]}, max ${FLOOR_CM})`] : [];
+}
+export const adultTwin = C => (BODY_LIFE[C.body] ? ALL.find(A => A.clip === C.clip && (A.body || 'adult') === 'adult') : null);
+export async function bodyFails(C, g = null) { const A = adultTwin(C); return A ? lifeFails(C.body, await clipLife(A), await clipLife(C, g)) : []; }
+// the motion rules of one clip (its rigClip results, physics on and off)
+export const motionFails = async (C, g, g0) => [...physicsFails(g), ...physicsFails(g0, 'physics off'), ...floorFails(C, g), ...await bodyFails(C, g)];
+
 export async function checkAll({ only, check } = {}) {
   const mine = C => !only || C.clip === only || C.name === only;
   const files = clipFiles(), rows = [], listed = new Set();
@@ -359,7 +385,7 @@ export async function checkAll({ only, check } = {}) {
       if (g0.prop > PROP_CM) r.fails.push(`rig (physics off): a held prop is ${g0.prop} cm inside the ${g0.propIn === 'set' ? 'set' : 'body'} at frame ${g0.propAt} (max ${PROP_CM})`);
       if (g.inSet.length) r.fails.push(`rig: the body is inside the set: ${g.inSet.slice(0, 3).join('; ')}${g.inSet.length > 3 ? ` (+${g.inSet.length - 3} frames)` : ''}`);
       if ((C.needs?.props || []).length && !g.heldFrames) r.fails.push(`rig: needs.props ${C.needs.props} but the rig shows no held prop on any frame`);
-      r.fails.push(...physicsFails(g), ...physicsFails(g0, 'physics off')); jointGate(r, C.name, g, g0);
+      r.fails.push(...await motionFails(C, g, g0)); jointGate(r, C.name, g, g0);
       Object.assign(r.info, { slipCm: g.slip, balCm: g.bal, massStep: g.massStep });
       Object.assign(r.info, { gripCm: g.grip, propCm0: g.prop0, propCm: g.prop, propOffCm: g0.prop, heldFrames: g.heldFrames, rigJoint: g.joint, rigJointAt: g.jointAt, rigExcess: Math.max(jointExcess(g).excess, jointExcess(g0).excess) });
       rows.push({ file: f, name: C.name, ...r });

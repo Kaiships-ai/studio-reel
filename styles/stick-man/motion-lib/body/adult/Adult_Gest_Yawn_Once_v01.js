@@ -1,8 +1,5 @@
-// Adult_Gest_Yawn_Once: a tired stretch and yawn, from motion capture (Mixamo "Yawn", ref/mixamo/yawn.js) on this body,
-// every captured frame. Mixamo batch 1 (V4 film).
-import { mocapClip } from '../../base.js';
-import SRC from '../../ref/mixamo/yawn.js';
+// Adult_Gest_Yawn_Once: a tired stretch and yawn, a hand to the mouth.
+// (acts/Gest_Yawn_Once.js on the adult body: its own clock, reach and weight.) Batch 1 (V4 film).
+import act from '../../acts/Gest_Yawn_Once.js';
 
-const M = mocapClip({ body: 'adult', src: SRC, base: 'STAND', end: 'STAND' });
-export default { name: 'Adult_Gest_Yawn_Once', clip: 'Gest_Yawn_Once', body: 'adult', group: 'Gest', loop: false, frames: M.frames, base: 'STAND', end: 'STAND', style: 'kaiships',
-  needs: { props: [], hands: null, marks: M.marks }, keys: M.keys, captured: M.captured, rest: M.rest };
+export default act('adult');

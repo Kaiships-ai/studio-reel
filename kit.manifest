@@ -209,6 +209,7 @@ styles/stick-man/motion-lib/props.js
 styles/stick-man/motion-lib/body/
 styles/stick-man/motion-lib/shared/
 styles/stick-man/motion-lib/ref/mocap.js
+styles/stick-man/motion-lib/ref/perform.js
 styles/stick-man/motion-lib/ref/ual/
 styles/stick-man/motion-lib/ref/reach/consume_mouth.js
 styles/stick-man/motion-lib/ref/reach/handover_counter.js

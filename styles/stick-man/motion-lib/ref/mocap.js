@@ -37,10 +37,12 @@ const rel = (Pf, Cf) => {
   return { yaw: y * DEG, pitch: p * DEG, roll: Math.atan2(dot(cu, rH), dot(cu, uP)) * DEG };
 };
 const ROLL_ELBOW = 30;
-export function mocapCycle(src, { legM, once = false, roll = true, from = null, bones = false, stance = null, strike = false }) {
+export function mocapCycle(src, { legM, once = false, roll = true, from = null, bones = false, stance = null, strike = false, stride = 1, closed = false }) {
   let F = src.frames.map(f => Object.fromEntries(Object.entries(f).map(([k, p]) => [k, toClip(p)])));
   const same = (a, b) => Object.keys(a).every(k => len(V(a[k], b[k])) < 1e-3);
-  if (F.length > 2 && same(F[0], F[F.length - 1])) F = F.slice(0, -1);            // the last frame repeats the first
+  // (the last frame repeats the first; closed: kept, a loop in place repeats from its first frame, and without it every
+  // repeat skipped a frame: the hands jumped 2-5 cm at the seam, Gest_SitClap_Loop)
+  if (!closed && F.length > 2 && same(F[0], F[F.length - 1])) F = F.slice(0, -1);
   const N = F.length;
   // the capture's leg: hip to ankle at its straightest, or (bones) its thigh and shin: a capture that never stands up never
   // straightens it, and was played 1.4-1.7 times its size (Mixamo "Typing", "Kneeling Idle")
@@ -63,7 +65,13 @@ export function mocapCycle(src, { legM, once = false, roll = true, from = null, 
   const isDir = n => /_[fu]$/.test(n);
   const W = F.map((f, t) => { const o = {}; for (const [n, p] of Object.entries(f)) o[n] = isDir(n) ? p : mul(add(p, [v * t, 0, 0]), k); return o; });
   const hip0 = mix(W[0].LeftUpLeg, W[0].RightUpLeg, 0.5)[0]; for (const f of W) for (const [n, p] of Object.entries(f)) if (!isDir(n)) p[0] -= hip0;
-  const advance = v * N * k;
+  const advance = v * N * k * stride;
+  // (stride: this body's step against the capture's: the hips' way and the feet's prints that much longer or shorter; the
+  // knees bend as captured, so the hips' height follows, base.js legBob)
+  const K0 = W.map(f => ['Left', 'Right'].map(sd => [f[sd + 'UpLeg'], f[sd + 'Leg'], f[sd + 'Foot']].map(p => [...p])));
+  if (stride !== 1) for (const f of W) { const hx = mix(f.LeftUpLeg, f.RightUpLeg, 0.5)[0], to = {};
+    for (const sd of ['Left', 'Right']) for (const b of ['Foot', 'ToeBase']) to[sd + b] = (stride - 1) * f[sd + 'Foot'][0];
+    for (const [n, p] of Object.entries(f)) if (!isDir(n)) p[0] += to[n] ?? (stride - 1) * hx; }
   // what the body stands on above the floor (src.surfaces, mocapJoin): scaled and placed as the joints are; a foot is
   // down on the highest one under it, its print at that top
   const surf = (src.surfaces || []).map(s => ({ x: s.x.map(x => x * k - hip0), y: s.y.map(y => y * k), top: s.top * k }));
@@ -98,7 +106,7 @@ export function mocapCycle(src, { legM, once = false, roll = true, from = null, 
   }
   // (strike) an ankle skimming low into its strike (Mixamo "Sad Walk": 5 frames) is not down yet: the cycle starts where the left
   // foot is first on its print, or that print is unknown to the steps around the loop (they stood it at x 0)
-  if (strike && !once && from == null && !prints.Left[0]) { const j = prints.Left.findIndex(Boolean); if (j > 0) return mocapCycle(src, { legM, once, roll, bones, stance, from: (s0 + j) % N }); }
+  if (strike && !once && from == null && !prints.Left[0]) { const j = prints.Left.findIndex(Boolean); if (j > 0) return mocapCycle(src, { legM, once, roll, bones, stance, stride, from: (s0 + j) % N }); }
   // a swinging foot: the captured ankle, carried from the print it left to the one it lands on. A print is pinned (PIN),
   // not where the ankle was on the frame it lifts or lands, so the gap at each end (print less ankle, height included)
   // fades across the swing instead of jumping on the first or last frame of it
@@ -143,7 +151,7 @@ export function mocapCycle(src, { legM, once = false, roll = true, from = null, 
     };
     const leg = sd => { const pr = prints[sd][t];
       return pr ? { footW: [pr[0], pr[1], pr[2]], pitch: footPitch(f, sd) } : { footW: swingAt(sd, t), pitch: footPitch(f, sd) }; };
-    const knee = sd => { const a = nrm(V(f[sd + 'UpLeg'], f[sd + 'Leg'])), b = nrm(V(f[sd + 'Leg'], f[sd + 'Foot'])); return Math.acos(Math.max(-1, Math.min(1, dot(a, b)))) * DEG; };
+    const knee = sd => { const [hp, kn, an] = K0[t][sd === 'Left' ? 0 : 1], a = nrm(V(hp, kn)), b = nrm(V(kn, an)); return Math.acos(Math.max(-1, Math.min(1, dot(a, b)))) * DEG; };
     // a foot's turn: its toe's heading on the root's, less the rig's own toe-out (cast.js FOOT.out), + toward the right
     // A foot pointing near straight up or down (kicked up behind in a run) has no heading: its turn fades out as the toe
     // leaves the horizontal (cos of its pitch under 0.7)

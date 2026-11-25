@@ -10,32 +10,42 @@
 //   knees   the stance knee (deg) the hips are solved from: walk [contact, down, passing, up, trail, toe-off], run
 //           [contact, down, toe-off] (base.js gaitLoop)
 //   breath  the idle's breath: spine bend amplitude (deg), its period (frames), the weight shift (hip, W)
+//   life    how it performs a capture (ref/perform.js, base.js ownClip), against the adult, whose capture it is: rate its clock
+//           (frames a captured frame), hold longer (shorter) where the body is still, drag longer into and out of a move,
+//           top its fastest hand and limb against the adult's;
+//           arm, trunk the size of the arms' and the trunk's and head's moves; sway the weight shift; give the knees' bend and
+//           stretch (the bounce). tools/gates/bodylife.mjs holds each body to its own way
 export const BODIES = {
   adult: { spec: {}, kg: 70, stance: 1, posture: {},
     walk: { knees: [5, 26, 9, 5, 14, 36], S: 0.55, T: 15, lift: 0.10, bobC: -0.06, bobP: 0.02, bend: 4, swing: 27, elbow: 25, sway: 1.5, nod: 1.5 },
     run: { S: 1.0, T: 8, ts: 5, lift: 0.24, bobC: -0.14, bobP: -0.04, lean: 13, bend: 4, swing: 32, elbow: 72, sway: 1, nod: 2 },
-    breath: { amp: 1.5, per: 40, shift: 0.025 } },
+    breath: { amp: 1.5, per: 40, shift: 0.025 },
+    life: { rate: 1, hold: 0, drag: 0, arm: 1, trunk: 1, sway: 1, give: 1 } },
   // heavy: wide feet, short slow steps, the body rolls over each foot, arms held out round the belly
   heavy: { spec: { girth: 1.9 }, kg: 115, stance: 1.4, posture: { armL: { raise: 22 }, armR: { raise: 22 } },
     walk: { knees: [8, 28, 11, 8, 16, 34], S: 0.42, T: 18, lift: 0.07, bobC: -0.05, bobP: 0.01, bend: 2, swing: 16, elbow: 22, sway: 5.5, nod: 1, raise: 22 },
     run: { knees: [16, 40, 18], kick: 80, S: 0.62, T: 9, ts: 8, lift: 0.14, bobC: -0.16, bobP: -0.07, lean: 9, bend: 4, swing: 30, elbow: 75, sway: 4, nod: 2.5, raise: 24 },
-    breath: { amp: 2.2, per: 48, shift: 0.035 } },
+    breath: { amp: 2.2, per: 48, shift: 0.035 },
+    life: { rate: 1.02, hold: 0, drag: 0.5, top: 0.7, arm: 0.84, trunk: 0.86, sway: 1.5, give: 0.8 } },
   // thin: narrow feet, long light steps, little roll
   thin: { spec: { girth: 0.6 }, kg: 55, stance: 0.85, posture: {},
     walk: { knees: [4, 22, 7, 4, 12, 36], S: 0.62, T: 14, lift: 0.11, bobC: -0.05, bobP: 0.03, bend: 3, swing: 30, elbow: 22, sway: 1, nod: 1.5 },
     run: { S: 1.0, T: 8, ts: 5, lift: 0.26, bobC: -0.12, bobP: -0.02, lean: 13, bend: 3, swing: 35, elbow: 72, sway: 0.5, nod: 2 },
-    breath: { amp: 1.3, per: 38, shift: 0.02 } },
+    breath: { amp: 1.3, per: 38, shift: 0.02 },
+    life: { rate: 0.84, hold: -0.05, drag: 0, arm: 1.14, trunk: 1.14, sway: 0.8, give: 1 } },
   // child: a big head on a small body with short legs; quick short steps, a lot of bounce, the arms swing wide
   child: { spec: { scale: 0.62, headScale: 1.3, legScale: 0.8 }, kg: 25, stance: 0.9, posture: {},
     walk: { knees: [6, 32, 10, 6, 14, 36], S: 0.30, T: 10, lift: 0.07, bobC: -0.08, bobP: 0.04, bend: 2, swing: 34, elbow: 30, sway: 2, nod: 3 },
     run: { S: 0.5, T: 8, ts: 5, lift: 0.14, bobC: -0.16, bobP: -0.02, lean: 10, bend: 3, swing: 30, elbow: 70, sway: 2, nod: 4 },
-    breath: { amp: 1.8, per: 30, shift: 0.03 } },
+    breath: { amp: 1.8, per: 30, shift: 0.03 },
+    life: { rate: 0.76, hold: -0.15, drag: 0, arm: 1.3, trunk: 1.25, sway: 1.2, give: 1.6 } },
   // elder: stooped (the spine bent, the head lifted to look ahead), short slow steps, feet barely off the floor, little
   // bounce, arms close
   elder: { spec: { scale: 0.96 }, kg: 62, stance: 1.1, posture: { spine: { bend: 24 }, neck: { nod: -20 }, armL: { raise: 10, swing: 6, elbow: 28 }, armR: { raise: 10, swing: 6, elbow: 28 } },
     walk: { knees: [16, 28, 18, 16, 22, 34], S: 0.30, T: 19, lift: 0.04, bobC: -0.05, bobP: -0.02, bend: 3, swing: 8, elbow: 30, sway: 2, nod: 1, swing0: 6 },
     run: { knees: [16, 32, 18], kick: 55, S: 0.42, T: 11, ts: 10, lift: 0.08, bobC: -0.12, bobP: -0.08, lean: 6, bend: 6, swing: 18, elbow: 60, sway: 2, nod: 1.5, swing0: 6 },
-    breath: { amp: 2.0, per: 56, shift: 0.02 } },
+    breath: { amp: 2.0, per: 56, shift: 0.02 },
+    life: { rate: 1.2, hold: 0.25, drag: 0.1, top: 0.7, arm: 0.72, trunk: 0.72, sway: 0.8, give: 0.7 } },
 };
 export const BODY_NAMES = Object.keys(BODIES);
 // a cast spec in a body type: cast: { gran: { spec: 'GRAN' } } with SPECS.GRAN = bodySpec(SPECS.MAGNATE, 'elder')
