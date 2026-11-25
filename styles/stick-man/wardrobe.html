@@ -1,0 +1,67 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Stick-man wardrobe</title>
+<style>html, body { margin: 0; background: #888; } canvas { display: block; }</style>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/","#engine/":"/styles/stick-man/engine/","#kit/":"/styles/stick-man/kit/","#motion-lib/":"/styles/stick-man/motion-lib/","#tools/":"/styles/stick-man/tools/"}}</script>
+</head><body>
+<script type="module">
+// The wardrobe's costume sheet, one figure a frame on a plain backdrop (kit/cast/sheetcells.js lists the cells: who, what they
+// wear, the pose, the view). Each cell plays its clip from the start up to the frame it shows, so its cloth has its history; a
+// cell is the same picture rendered alone or with the others. The face is the approved neutral, eyes open. A cell whose head,
+// feet or hat leave the frame is reported ([sheet] console error).
+//   node styles/stick-man/tools/render/shot.mjs --page styles/stick-man/wardrobe.html --frames 0,5 --w 540 --h 960 --out <dir>/c_%d.png [--query clean=1]
+import * as THREE from 'three';
+import { makeStick } from '#engine/cast.js';
+import { createStage, lin } from '#engine/look.js';
+import { useFaceStyle } from '#engine/facestyles/index.js';
+import { faceStateAt } from '#engine/acting.js';
+import { mixFace } from '#engine/faces.js';
+import { HOOKS } from '#engine/play.js';
+import { compileTrack, playActor, toPose } from '#engine/motion.js';
+import { propPlan } from '#engine/propobj.js';
+import { ALL, placeClip } from '#motion-lib/index.js';
+import { BODIES, bodySpec } from '#motion-lib/bodies.js';
+import '#motion-lib/props.js';
+import '#kit/cast/wardrobe.js';
+import { CELLS, PLACE_OF } from '#kit/cast/sheetcells.js';
+
+await useFaceStyle();
+const W = innerWidth, H = innerHeight;
+const stage = createStage({ width: W, height: H, faceInk: true, ao: 0.5, aoRadius: 0.4, shadowRadius: 2, sat: 1.0, con: 1.05, vig: 0, bloom: 0.04, hot: 0.1, ink: 2.4, shafts: 0 });
+stage.scene.background = lin(0.36, 0.38, 0.41);
+const back = new THREE.Mesh(new THREE.SphereGeometry(40, 48, 32), new THREE.MeshBasicMaterial({ color: lin(0.30, 0.32, 0.35), side: THREE.BackSide })); back.userData.noInk = true; stage.scene.add(back);   // a plain backdrop, no sky
+stage.sun.color.copy(lin(1.0, 0.97, 0.93)); stage.sun.intensity = 3.0; stage.setSun([0.35, 0.45, -0.85], [0, 0, 0.8], 3);
+stage.hemi.color.copy(lin(0.86, 0.86, 0.88)); stage.hemi.groundColor.copy(lin(0.55, 0.55, 0.56)); stage.hemi.intensity = 0.5; stage.fill.color.copy(lin(0.95, 0.95, 1.0)); stage.fill.intensity = 0.4;
+const floor = new THREE.Mesh(new THREE.CircleGeometry(60, 64).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: lin(0.30, 0.315, 0.34), roughness: 1 })); floor.receiveShadow = true; stage.scene.add(floor);
+const seat = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: lin(0.20, 0.13, 0.08), roughness: 0.9 })); seat.castShadow = seat.receiveShadow = true; stage.scene.add(seat);
+
+let now = null;
+function build(c) {
+  if (now) { stage.scene.remove(now.group); now.group.traverse(o => o.geometry?.dispose?.()); }
+  const group = new THREE.Group(); stage.scene.add(group);
+  const S = makeStick(bodySpec({ name: c.label, shirt: [0.62, 0.62, 0.66], hair: [] }, c.body)); group.add(S.root);
+  const P = PLACE_OF(c); S.obstacles = P.solids; S.rest = [...P.solids, { name: 'floor', lo: [-20, -20, -0.1], hi: [20, 20, 0] }];
+  HOOKS.costume(S, c.wear, { group }); now = { group, S, c, P };
+}
+window.__frame = i => {
+  const c = CELLS[i]; build(c); const { S, P } = now, t0 = performance.now();
+  const key = P.key, keys = placeClip(key, { pos: [0, 0], yaw: 90 }).keys, track = compileTrack(keys, {}, { pos: [0, 0], yaw: 90 }, 'kaiships'), fr = playActor(track, 0, Math.max(P.f, keys[keys.length - 1].f) + 2), at = f => toPose(fr[Math.min(fr.length - 1, f)], S.root.scale.x), plan = propPlan(track, at, S);
+  const sc = S.root.scale.x, az = c.az * Math.PI / 180, close = c.close;
+  for (let f = 0; f <= P.f; f++) { const Q = at(f); Q.propRest = plan.at(f); S.pose2(Q); S.face({ t: f, expr: 'neutral' }); }
+  const hd = S.skel.head.clone().multiplyScalar(0.6).applyMatrix4(S.root.matrixWorld), pel = S.skel.pelvis.clone().multiplyScalar(0.6).applyMatrix4(S.root.matrixWorld);
+  // the frame: every drawn point of the figure (hat and soles), or the uniform up close (from the hat down past the hip)
+  const yaw = S.yaw, lens = 60, dir = new THREE.Vector3(Math.sin(yaw + az), 0.06, Math.cos(yaw + az)).normalize(), right = new THREE.Vector3(dir.z, 0, -dir.x).normalize(), up = dir.clone().cross(right), toB = v => [v.x, -v.z, v.y], e = [1e9, -1e9, 1e9, -1e9], v = new THREE.Vector3();
+  S.root.updateMatrixWorld(true); S.root.traverseVisible(o => { if (!o.isMesh || o.material?.transparent) return; const A = o.geometry.attributes.position; for (let k = 0; k < A.count; k += 3) { v.fromBufferAttribute(A, k).applyMatrix4(o.matrixWorld); if (close && v.y < pel.y - 0.20 * sc) continue; const x = v.dot(right), y = v.dot(up); e[0] = Math.min(e[0], x); e[1] = Math.max(e[1], x); e[2] = Math.min(e[2], y); e[3] = Math.max(e[3], y); } });
+  const tall = Math.max(e[3] - e[2], (e[1] - e[0]) * H / W) * (close ? 1.06 : 1.12), d = tall * lens / 36 + 0.3 * sc, mid = new THREE.Vector3().addScaledVector(right, (e[0] + e[1]) / 2).addScaledVector(up, (e[2] + e[3]) / 2).addScaledVector(dir, hd.dot(dir)), cam = mid.clone().addScaledVector(dir, d);
+  stage.setCamera(toB(cam), toB(mid), lens); stage.setSun(toB(dir.clone().multiplyScalar(-0.8).addScaledVector(right, 0.42).setY(-0.5)), toB(mid.clone().setY(0.8)), 2.2);   // a key from the camera's left
+  const state = faceStateAt([{ f: -1e9, expr: 'neutral' }], 400, 7, null), mix = mixFace(state); S.face({ t: P.f, expr: 'neutral', state, mix, blink: 0, age: 400, cam: toB(cam) });
+  seat.visible = !!P.seat; if (P.seat) { const { lo: a, hi: h } = P.seat; seat.scale.set(h[0] - a[0], h[2] - a[2], h[1] - a[1]); seat.position.set((a[0] + h[0]) / 2, (a[2] + h[2]) / 2, -(a[1] + h[1]) / 2); }
+  stage.scene.updateMatrixWorld(true); stage.render({ grade: { exp: 1, lift: 0, sat: 1, haze: 0, sky: false, air: false } });
+  // what left the frame
+  const out = [], px = p => { v.copy(p).project(stage.camera); return Math.max(Math.abs(v.x), Math.abs(v.y)); }; const hb = new THREE.Box3().setFromObject(S.parts.head.parent);
+  if (px(new THREE.Vector3((hb.min.x + hb.max.x) / 2, hb.max.y, (hb.min.z + hb.max.z) / 2)) > 0.99) out.push('hat or head'); if (!close) for (const s of ['L', 'R']) if (px(S.rig[s].toe.clone().multiplyScalar(0.6).applyMatrix4(S.root.matrixWorld)) > 0.99) out.push('foot ' + s);
+  if (out.length) console.error(`[sheet] cell ${i} ${c.body} ${c.label} ${c.view}: ${out.join(', ')} out of frame`);
+  return performance.now() - t0;
+};
+window.__ready = true;
+</script>
+</body></html>
