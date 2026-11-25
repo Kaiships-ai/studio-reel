@@ -214,6 +214,14 @@ export const BUILT = {
     k.cyl([0, -0.0225, 0.16], 0.011, 0.006, Q.resin, { axis: 'y', seg: 10 });
   } },
   // a gilt frame with a small landscape in it
+  // a tea cup on its saucer, its handle to the side, the spoon in front
+  'care-home/cup-tea': { size: [0.15, 0.15, 0.08], make(k) {
+    k.lathe([0, 0, 0], [[0, 0], [0.04, 0], [0.074, 0.012], [0.075, 0.015], [0.042, 0.006], [0, 0.006]], Q.off, 28); k.tor([0, 0, 0.014], 0.073, 0.0022, Q.blue, { axis: 'z' });
+    k.lathe([0, 0, 0.006], [[0, 0], [0.022, 0], [0.024, 0.006], [0.04, 0.04], [0.044, 0.074], [0.041, 0.074], [0.037, 0.042], [0, 0.04]], Q.off, 28); k.tor([0, 0, 0.078], 0.0425, 0.0022, Q.blue, { axis: 'z' });
+    k.cyl([0, 0, 0.068], 0.041, 0.004, Q.wood, { seg: 24 });
+    k.tor([0.053, 0, 0.05], 0.016, 0.004, Q.off, { axis: 'y' });
+    k.cyl([0, -0.058, 0.017], 0.0025, 0.08, Q.chrome, { axis: 'x', seg: 6 }); k.box([-0.052, -0.066, 0.015], [-0.032, -0.05, 0.019], Q.chrome);
+  } },
   'care-home/fancy-picture-frame': { size: [0.6, 0.04, 0.46], wall: true, make(k) {
     const ring = (w, h, t, y0, y1, c) => { for (const s of [-1, 1]) { k.box([s * w / 2 - (s > 0 ? t : 0), y0, 0.23 - h / 2], [s * w / 2 + (s > 0 ? 0 : t), y1, 0.23 + h / 2], c); k.box([-w / 2, y0, 0.23 + s * h / 2 - (s > 0 ? t : 0)], [w / 2, y1, 0.23 + s * h / 2 + (s > 0 ? 0 : t)], c); } };
     ring(0.6, 0.46, 0.035, -0.02, 0.02, Q.gold); ring(0.53, 0.39, 0.025, -0.012, 0.015, Q.woodD); ring(0.48, 0.34, 0.015, -0.015, 0.015, Q.gold);
@@ -253,6 +261,14 @@ export const BUILT = {
     k.glow(k.cone([0, 0, 0.084], 0.008, 0.028, Q.yellow, { seg: 10 }), [0.78, 0.50, 0.10], 0.9);
     k.glass(k.lathe([0, 0, 0], [[0, 0], [0.038, 0], [0.041, 0.006], [0.041, 0.095], [0.036, 0.106], [0.038, 0.118]], Q.glass, 20)).name = 'glass';
     k.tor([0, 0, 0.117], 0.038, 0.003, Q.plastic, { axis: 'z' }); k.tor([0, 0, 0.005], 0.038, 0.003, Q.plastic, { axis: 'z' });
+  } },
+  // a kitchen jar: clear glass over what is in it, a ribbed screw lid
+  'street/jar': { size: [0.106, 0.106, 0.15], make(k) {
+    k.cyl([0, 0, 0.056], 0.047, 0.1, Q.woodL, { seg: 24 }); k.sph([0, 0, 0.104], 0.04, Q.woodL, { seg: 14 });
+    k.glass(k.lathe([0, 0, 0], [[0, 0], [0.048, 0], [0.053, 0.008], [0.053, 0.1], [0.044, 0.122], [0.044, 0.13]], Q.glass, 24)).name = 'glass';
+    k.tor([0, 0, 0.005], 0.048, 0.003, Q.plastic, { axis: 'z' });
+    k.cyl([0, 0, 0.136], 0.048, 0.024, Q.red, { seg: 24 }); k.cyl([0, 0, 0.1485], 0.041, 0.003, Q.red, { seg: 24 });
+    for (let i = 0; i < 24; i++) { const a = i * Math.PI / 12; k.cyl([0.048 * Math.cos(a), 0.048 * Math.sin(a), 0.136], 0.003, 0.022, Q.red, { seg: 5 }); }
   } },
   // a food truck: the hatch, the counter and the awning on its -y side, a painted menu and a plain sign; points +x
   'street/food-truck': { size: [5.0, 2.2, 2.9], make(k) {
@@ -365,7 +381,11 @@ export const BUILT = {
     k.cyl([0, 0.5, 0.97], 0.02, 0.52, Q.red, { axis: 'x', seg: 8 });
   } },
   'supermarket/checkout-belt': { id: 'cb-checkoutbelt', size: [0.5, 2.0, 0.9], make(k) {
-    k.box([-0.25, -1.0, 0], [0.25, 1.0, 0.8], Q.cream); k.box([-0.255, -1.0, 0], [0.255, 1.0, 0.08], Q.steelD);
+    k.box([-0.25, -1.0, 0], [0.25, 1.0, 0.8], Q.cream); k.box([-0.255, -1.005, 0], [0.255, 1.0, 0.08], Q.steelD);
+    k.box([-0.255, -1.005, 0.58], [0.255, 1.0, 0.68], Q.teal); for (const x of [-0.25, 0.25]) k.box([x - 0.012, -1.0, 0.775], [x + 0.012, 0.58, 0.825], Q.chrome);   // the store's band, the belt's side rails
+    for (const x of [-0.254, 0.254]) for (const y of [-0.9, -0.28, 0.34]) k.box([x - 0.002, y, 0.14], [x + 0.002, y + 0.54, 0.52], Q.steel);
+    k.box([-0.2, -1.004, 0.14], [0.2, -0.998, 0.52], Q.steel); k.box([-0.06, -1.012, 0.44], [0.06, -1.0, 0.46], Q.steelD);               // its end: a service door, the belt's roller over it
+    k.cyl([0, -0.985, 0.8], 0.028, 0.44, Q.rubber, { axis: 'x', seg: 12 });
     k.box([-0.22, -0.95, 0.8], [0.22, 0.55, 0.82], Q.rubber);
     for (const y of [-0.95, 0.55]) k.cyl([0, y, 0.81], 0.02, 0.44, Q.chrome, { axis: 'x', seg: 8 });
     k.box([-0.2, -0.3, 0.82], [0.2, -0.28, 0.87], Q.red);

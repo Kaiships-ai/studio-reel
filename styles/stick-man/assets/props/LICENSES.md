@@ -14,7 +14,6 @@ or Poly Pizza (poly.pizza, each model page states "Public Domain (CC0)"), then c
 | `arena/stage.glb` | Stage | https://poly.pizza/m/dGRAisemWy | iPoly3D | CC0 1.0 |
 | `care-home/armchair.glb` | Armchair | https://poly.pizza/m/myd1WSucAz | CreativeTrio | CC0 1.0 |
 | `care-home/coffee-cart.glb` | Coffee Cart 01 | https://polyhaven.com/a/CoffeeCart_01 | Joe Seabuhr | CC0 |
-| `care-home/cup-tea.glb` | Cup Tea | https://poly.pizza/m/FUSyrlibw0 | Kenney | CC0 1.0 |
 | `care-home/lamp-round-floor.glb` | Lamp Round Floor | https://poly.pizza/m/8LiDIfXVLi | Kenney | CC0 1.0 |
 | `care-home/lounge-chair.glb` | Lounge Chair | https://poly.pizza/m/RY93lbAIFg | Kenney | CC0 1.0 |
 | `care-home/night-stand.glb` | Night Stand | https://poly.pizza/m/7cobkfclNv | Quaternius | CC0 1.0 |
@@ -95,7 +94,6 @@ or Poly Pizza (poly.pizza, each model page states "Public Domain (CC0)"), then c
 | `street/dumpster.glb` | Dumpster | https://poly.pizza/m/QmYKHtUnxb | Kay Lousberg | CC0 1.0 |
 | `street/fire-hydrant.glb` | Fire Hydrant | https://poly.pizza/m/DKkMQbEklp | Quaternius | CC0 1.0 |
 | `street/flowers.glb` | Flowers | https://poly.pizza/m/NBUxHir6FJ | Quaternius | CC0 1.0 |
-| `street/jar.glb` | Jar | https://poly.pizza/m/XGe3q5zQ5s | CreativeTrio | CC0 1.0 |
 | `street/market-stand.glb` | Market Stand | https://poly.pizza/m/DGIM5HGISb | Quaternius | CC0 1.0 |
 | `street/standing-picture-frame.glb` | Standing Picture Frame 01 | https://polyhaven.com/a/standing_picture_frame_01 | James Ray Cock | CC0 |
 | `street/street-lamp.glb` | Street Lamp 01 | https://polyhaven.com/a/street_lamp_01 | Josh Dean | CC0 |

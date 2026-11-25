@@ -13,7 +13,7 @@ const ctx = new Proxy({}, { get: (_, k) => k === 'measureText' ? () => ({ width:
 globalThis.document ??= { createElement: () => ({ width: 0, height: 0, getContext: () => ctx }) };
 const { BUILT, builtGroup } = await import('../../styles/stick-man/kit/props/built.js');
 const { catalog, propNames, resolveProp } = await import('../../styles/stick-man/kit/props/catalog.js');
-const { PROP_HEIGHT, heightRange, heightClasses, SEAT, blackShare, frontSigns, poseFault, PROP_POSE, NEAR_BLACK, BLACK_OK, DARK, FRONT, NO_FRONT, frontFault, propLuma, diagonalSplits } = await import('../../styles/stick-man/kit/props/sizes.js');
+const { PROP_HEIGHT, ANY_SIZE, heightRange, heightClasses, SEAT, blackShare, frontSigns, poseFault, PROP_POSE, NEAR_BLACK, BLACK_OK, DARK, FRONT, NO_FRONT, frontFault, propLuma, diagonalSplits } = await import('../../styles/stick-man/kit/props/sizes.js');
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../styles/stick-man/assets/props');
 const MAN = JSON.parse(fs.readFileSync(path.join(ROOT, 'manifest.json'), 'utf8'));
@@ -93,8 +93,8 @@ test('catalog: every code-built item of the prop list is built, in its place; re
   for (const [place, list] of Object.entries(CODE_BUILT)) for (const id of list) { const [n, b] = Object.entries(BUILT).find(([, b]) => b.id === id); assert.equal(n.split('/')[0], place, `${id} lives in ${place}`); assert.ok(b.make, n); }
   assert.ok(BUILT['kitchen-home/tv'] && BUILT['street/scaffolding'], 'the code-built TV and scaffolding replace the misnamed glbs');
   assert.equal(resolveProp('kitchen-home/dishrack').source, 'code', 'the code-built dish rack replaces the stool-like glb');
-  for (const n of ['care-home/wall-clock', 'office/mug', 'lab/bunsen-burner', 'supermarket/shopping-basket', 'kitchen-home/pan', 'kitchen-home/toaster', 'street/construction-barrier', 'street/food-truck', 'street/bouquet', 'street/candle-jar', 'supermarket/security-camera', 'care-home/fancy-picture-frame']) assert.equal(resolveProp(n).source, 'code', n);
-  const drop = { y9mMoShXnI: 'dish rack', wall_clock: 'blank clock', fis2ugeLbn: 'broken mug', wicker_basket_01: 'bread tray', f9my9iJZMv: 'black pan', wALulTo6gm: 'slab toaster', '4mrO9ueiQr': 'blank barrier', security_camera_01: 'camera hood', nNGtcp9qK2: 'sink cabinet', CFbvPTVVEl: 'bucket pot', '63CkYTkeQP': 'cooler slab', vsqTUPFSw6: 'key-less keyboard', clipboard: 'bare clipboard', cardboard_box_01: 'sack box', fancy_picture_frame_01: 'empty frame' };
+  for (const n of ['care-home/wall-clock', 'office/mug', 'lab/bunsen-burner', 'supermarket/shopping-basket', 'kitchen-home/pan', 'kitchen-home/toaster', 'street/construction-barrier', 'street/food-truck', 'street/bouquet', 'street/candle-jar', 'supermarket/security-camera', 'care-home/fancy-picture-frame', 'street/jar', 'care-home/cup-tea']) assert.equal(resolveProp(n).source, 'code', n);
+  const drop = { y9mMoShXnI: 'dish rack', wall_clock: 'blank clock', fis2ugeLbn: 'broken mug', wicker_basket_01: 'bread tray', f9my9iJZMv: 'black pan', wALulTo6gm: 'slab toaster', '4mrO9ueiQr': 'blank barrier', security_camera_01: 'camera hood', nNGtcp9qK2: 'sink cabinet', CFbvPTVVEl: 'bucket pot', '63CkYTkeQP': 'cooler slab', vsqTUPFSw6: 'key-less keyboard', clipboard: 'bare clipboard', cardboard_box_01: 'sack box', fancy_picture_frame_01: 'empty frame', XGe3q5zQ5s: 'bin-like jar', FUSyrlibw0: 'carton cup' };
   for (const v of Object.values(MAN.props)) assert.ok(!drop[v.id], `${v.file}: the dropped ${drop[v.id]} stays out of the manifest`);
   assert.equal(resolveProp('misc/scuba-tanks').entry.id, 'j59k7ctnZM'); assert.equal(resolveProp('lab/tripod-stand').entry.id, 'bunsen_burner');
   assert.ok(BUILT['supermarket/shelf-stocked'] && BUILT['supermarket/shelf-end-cap']);
@@ -123,8 +123,16 @@ test('catalog: every prop stands at a real height, its pivot on the floor at its
     for (const k of [0, 1]) { const c = (m.lo[k] + m.hi[k]) / 2, w = m.hi[k] - m.lo[k]; if (Math.abs(c) > 0.08 * w + 0.02) bad.push(`${name}: centre ${'xy'[k]} ${c.toFixed(2)} off the pivot`); }
   }
   assert.deepEqual(bad, []);
-  for (const [cls, , [lo, hi]] of PROP_HEIGHT) assert.ok(lo >= 0.01 && hi <= 5 && hi / lo <= 6.5, `${cls}: ${lo}-${hi} m holds nothing`);
+  for (const [cls, , [lo, hi]] of PROP_HEIGHT) assert.ok(lo >= 0.01 && hi <= 5 && hi / lo <= (cls === ANY_SIZE ? 6.5 : 3), `${cls}: ${lo}-${hi} m holds nothing`);
   for (const re of [SEAT.sit, SEAT.lie]) for (const n of re.source.match(/[a-z-]+(?=[|)])/g)) assert.ok(ALL().some(x => x.name.endsWith('/' + n) && re.test(x.name)), `SEAT names ${n}`);
+});
+
+// review 2 of 25/11: a wrong size_m in list.json passed: twice its size 34 of 166 props, half of it 66
+test('catalog: a prop twice or half its size is outside its class, but for what comes in any size', () => {
+  const bad = [];
+  for (const { name, m } of ALL()) { const h = m.hi[2] - m.lo[2], [lo, hi] = heightRange(name); if (heightClasses(name)[0][0] === ANY_SIZE) continue;
+    for (const k of [2, 0.5]) if (k * h >= lo && k * h <= hi) bad.push(`${name} (${h.toFixed(2)} m) x${k} passes ${lo}-${hi}`); }
+  assert.deepEqual(bad, []); assert.ok(ALL().filter(x => heightClasses(x.name)[0][0] === ANY_SIZE).length <= 9, 'the any-size list only shrinks');
 });
 
 // Contact sheets 25/11: a 20 cm mic stand, a screen rig on its side, a phone screen to +x, a tipped jug. The pose table
@@ -172,9 +180,10 @@ test('catalog: every prop faces the front (FRONT, measured) or says why it has n
     if (none.length + (FRONT[name] ? 1 : 0) > 1) bad.push(`${name}: in FRONT and NO_FRONT`);
     if (['round', 'the same both ways'].includes(none[0])) { const s = frontSigns(m.list); if (s.length) bad.push(`${name}: NO_FRONT '${none[0]}', but ${s.join('; ')}`); }
     const f = frontFault(name, m.list); if (f) bad.push(`${name}: ${f}`);
-    if (FRONT[name] && FRONT[name][0] !== 'eye') {                                  // the row must fail on the same prop turned round
+    if (FRONT[name]) {                                  // the row must fail on the same prop turned round
       const turned = m.list.map(t => ({ ...t, v: t.v.map(([x, y, z]) => [-x, -y, z]) })); if (!frontFault(name, turned)) bad.push(`${name}: FRONT row also holds turned 180 (it proves nothing)`); }
   }
+  const free = all.filter(({ name }) => !FRONT[name] && !NO_FRONT.round.test(name) && !NO_FRONT['the same both ways'].test(name)).map(x => x.name); assert.deepEqual(free, ['office/houseplant'], 'props no measure holds to their front (review 2: 17, a tool cart turned 180 passed)');
   for (const n of Object.keys(FRONT)) if (!all.some(x => x.name === n)) bad.push(`FRONT names ${n}, not in the catalog`);
   assert.deepEqual(bad, []);
 });

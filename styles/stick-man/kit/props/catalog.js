@@ -64,8 +64,9 @@ function contactShadow(g) {
 
 // the solid boxes this module pushed, per COLLIDE array: a set built twice (two acts, one module) places the same props again,
 // and the same box is not pushed twice. Nothing is ever taken out of the array: it is the film's, other kits write into it.
+const COPY = '@';                    // 'street/bench@2' is the second street/bench placed ('street/bench-2' is another prop)
 const OWN = new WeakMap();
-const boxKey = b => `${b.name.replace(/-\d+(#\d+)?$/, '')}|${b.lo}|${b.hi}`;
+const boxKey = b => `${b.name.replace(/@\d+(#\d+)?$/, '')}|${b.lo}|${b.hi}`;
 
 export function propKit(stage, collide = []) {
   const { scene, prop, glow } = stage, glb = glbKit(stage, 'props', []), loaded = new Set(), count = {};   // glbKit empties the array it is given: never the film's
@@ -92,7 +93,7 @@ export function propKit(stage, collide = []) {
         g.position.copy(B(...at)); g.rotation.y = deg * Math.PI / 180; g.scale.setScalar(scale);
         scene.add(g); if (ink) prop(g);
       }
-      count[name] = (count[name] || 0) + 1; g.name = `${name}-${count[name]}`;
+      count[name] = (count[name] || 0) + 1; g.name = `${name}${COPY}${count[name]}`;
       if (solid) for (const b of propBoxes(g, name, { band, grace })) push(b);
       if (shadow ?? !(r.source === 'code' && r.entry.wall)) contactShadow(g);
       return g;

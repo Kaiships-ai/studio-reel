@@ -76,6 +76,8 @@ DROP = {
     'clipboard': 'a board with no paper: hospital/clipboard',
     'cardboard_box_01': 'its photo texture is the box; as one colour a lumpy sack: misc/cardboard-box',
     'fancy_picture_frame_01': 'an empty frame: care-home/fancy-picture-frame',
+    'XGe3q5zQ5s': 'an opaque grey pot, reads as a bin: street/jar',
+    'FUSyrlibw0': 'a faceted carton with a handle: care-home/cup-tea',
     'wicker_basket_01': 'a 12 cm bread tray of loose twigs, not a shopping basket: supermarket/shopping-basket',
 }
 # id -> ((from sRGB 0-255, to sRGB 0-255), ...): the palette colour nearest to `from` becomes `to` (source colours the kit's

@@ -480,36 +480,6 @@
    "notes": "size 0.2x0.2x0.15 m (estimate (list)), scale x0.22701; decimated 844 -> 760 tris (small budget 800)",
    "sec": 0.01
   },
-  "jar": {
-   "id": "XGe3q5zQ5s",
-   "name": "Jar",
-   "place": "street",
-   "file": "street/jar.glb",
-   "bytes": 6944,
-   "tris": 308,
-   "size": [
-    0.106,
-    0.106,
-    0.15
-   ],
-   "lo": [
-    -0.053,
-    -0.053,
-    0.0
-   ],
-   "hi": [
-    0.053,
-    0.053,
-    0.15
-   ],
-   "materials": 1,
-   "source_url": "https://poly.pizza/m/XGe3q5zQ5s",
-   "licence": "CC0 1.0",
-   "author": "CreativeTrio",
-   "film_need": "Memorial street: candles in jars (jar)",
-   "notes": "size 0.1x0.1x0.15 m (estimate (list)), scale x1.25481",
-   "sec": 0.01
-  },
   "flowers": {
    "id": "NBUxHir6FJ",
    "name": "Flowers",
@@ -2010,36 +1980,6 @@
    "notes": "size 0.8x0.8x0.9 m (estimate (list)), scale x1.83673; turned 180 (ROT)",
    "sec": 0.01
   },
-  "cup-tea": {
-   "id": "FUSyrlibw0",
-   "name": "Cup Tea",
-   "place": "care-home",
-   "file": "care-home/cup-tea.glb",
-   "bytes": 6920,
-   "tris": 108,
-   "size": [
-    0.1,
-    0.087,
-    0.086
-   ],
-   "lo": [
-    -0.05,
-    -0.044,
-    0.0
-   ],
-   "hi": [
-    0.05,
-    0.044,
-    0.086
-   ],
-   "materials": 4,
-   "source_url": "https://poly.pizza/m/FUSyrlibw0",
-   "licence": "CC0 1.0",
-   "author": "Kenney",
-   "film_need": "Care home: tea trolley with cups",
-   "notes": "size 0.1x0.1x0.07 m (estimate (list)), scale x0.43013",
-   "sec": 0.01
-  },
   "coffee-cart": {
    "id": "CoffeeCart_01",
    "name": "Coffee Cart 01",
@@ -2815,7 +2755,7 @@
    "materials": 8,
    "source_url": "https://polyhaven.com/a/vintage_microscope",
    "licence": "CC0",
-   "author": "Luis Jos\u00e9 Fern\u00e1ndez Rodr\u00edguez",
+   "author": "Luis José Fernández Rodríguez",
    "film_need": "Lab: bench dressing",
    "notes": "size 0.11x0.18x0.4 m (Poly Haven), scale x1.0; decimated 20631 -> 2849 tris (BUDGET budget 3000)",
    "sec": 0.74
@@ -2845,7 +2785,7 @@
    "materials": 8,
    "source_url": "https://polyhaven.com/a/chemistry_set",
    "licence": "CC0",
-   "author": "Ji\u0159\u00ed Pt\u00e1\u010dek",
+   "author": "Jiří Ptáček",
    "film_need": "Lab: bench dressing",
    "notes": "size 1.08x0.35x0.43 m (Poly Haven), scale x1.0; decimated 41958 -> 2850 tris (furniture budget 3000)",
    "sec": 0.8
@@ -3303,9 +3243,9 @@
  },
  "failed": {},
  "totals": {
-  "props": 110,
+  "props": 108,
   "failed": 0,
-  "bytes": 4780852,
-  "tris": 124989
+  "bytes": 4766988,
+  "tris": 124573
  }
 }
