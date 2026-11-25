@@ -1,6 +1,7 @@
 // Contact sheets of the kit's prop catalog (kit/props/catalog.js): one PNG per place, every prop (.glb and code-built)
 // rendered alone in the kit's look with its name, source, size and triangles (propsheet.html, headless Chrome on the GPU).
-//   node styles/stick-man/tools/run/propsheet.mjs [--places street,lab] [--cell 200] [--cols 6] [--out films/kit-props-list/sheet]
+// --view turns every prop straight to, away from or side-on to the camera (a check of its front); default: 3/4 front.
+//   node styles/stick-man/tools/run/propsheet.mjs [--places street,lab] [--cell 240] [--cols 6] [--view front|back|side] [--out films/kit-props-list/sheet]
 // Writes <out>/<place>.png. Renders on the GPU: run it on the render machine, not a laptop.
 import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
 import { serveFiles, launchGpu } from '#tools/render/pageserver.mjs';
@@ -11,7 +12,7 @@ if (argv.includes('--help')) { console.log(fs.readFileSync(fileURLToPath(import.
 const MAN = JSON.parse(fs.readFileSync(path.join(REPO, 'styles/stick-man/assets/props/manifest.json'), 'utf8'));
 const { BUILT } = await import('#kit/props/built.js');
 const all = [...new Set([...Object.values(MAN.props).map(v => v.place), ...Object.keys(BUILT).map(n => n.split('/')[0])])].sort();
-const places = flag('places') ? flag('places').split(',') : all, cell = +flag('cell', 200), cols = +flag('cols', 6);
+const places = flag('places') ? flag('places').split(',') : all, cell = +flag('cell', 240), cols = +flag('cols', 6), view = flag('view', '');
 const out = path.resolve(flag('out', path.join(REPO, 'films/kit-props-list/sheet')));
 fs.mkdirSync(out, { recursive: true });
 
@@ -20,7 +21,7 @@ try {
   for (const place of places) {
     const t0 = Date.now(), page = await browser.newPage();
     page.on('console', m => { if (m.type() === 'error' || m.type() === 'warning') console.log(`  [${place}] ${m.text()}`); });
-    await page.goto(`http://127.0.0.1:${server.address().port}/styles/stick-man/tools/run/propsheet.html?place=${place}&cell=${cell}&cols=${cols}`);
+    await page.goto(`http://127.0.0.1:${server.address().port}/styles/stick-man/tools/run/propsheet.html?place=${place}&cell=${cell}&cols=${cols}${view ? `&view=${view}` : ''}`);
     await page.waitForFunction(() => window.__sheet || window.__sheetError, null, { timeout: 300000, polling: 250 });
     const err = await page.evaluate(() => window.__sheetError);
     if (err) throw new Error(`${place}: ${err}`);

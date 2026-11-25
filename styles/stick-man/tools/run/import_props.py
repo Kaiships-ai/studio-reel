@@ -5,8 +5,9 @@
 # merge into ONE triangulated mesh, turn it so its long side matches the list's w x d (vehicles: long side on x, as the
 # backdrop pack), scale to the real size (Poly Haven is already metres; Poly Pizza sizes are estimates, SIZE below
 # corrects the odd ones), pivot = bottom centre on the floor (z = 0). Colours: every face takes its material's colour
-# (photo textures sampled at the face, times the factor and vertex colour), the colours are clustered into <= 8 flat
-# materials, then clamped (max channel <= 0.90 sRGB, never pure black). A texture is kept only where the picture IS the
+# (photo textures sampled over the face, one colour per flat panel, times the factor and vertex colour), the colours are
+# clustered into <= 8 flat materials (near ones merged), then clamped (max channel <= 0.90 sRGB, never pure black; near black
+# only on BLACK). A texture is kept only where the picture IS the
 # prop (KEEP_TEX, <= 256 px JPEG). Decimated to the budget (small <= 2k tris, furniture <= 6k, vehicles/large <= 10k).
 # Writes <out>/<place>/<slug>.glb, <out>/manifest.json (merged across calls) and <out>/LICENSES.md.
 import bpy, bmesh, sys, os, json, re, math, time
@@ -24,16 +25,67 @@ SIZE = {
     'BG0KAhmGDt': (1.55, 'chunky low-poly hatchback: a 4.0 m length fit made it 1.8 m tall; real ~1.5 m'),
     'zpURbFzEbv': (0.9, 'counter height; the long low model fit to 1.0 m length was 0.48 m tall'),
     'ubNPKDn2yH': (0.12, 'a ROW of 12 small jars, each ~0.12 m; the 0.3 m fit made them 2 cm'),
-    'q6i3XL52ge': (0.11, 'measuring jug ~0.11 m tall (it came in lying on its side, see UPRIGHT)'),
+    'q6i3XL52ge': (0.11, 'measuring jug ~0.11 m tall, its handle out to the side (the source is upright: -z cap 4.7 > open top 3.9)'),
+    'yqbacXdPsg': (1.6, 'a full mic stand (the source is 1.63 m), not a hand mic: the list\'s 0.2 m fit shrank the stand to 20 cm'),
     '6u4c1kSsiP': (4.5, 'stage deck + truss rig: the 10 m fit left the truss 2.6 m high, figures would hit it'),
     'dGRAisemWy': (3.5, 'round stage with a backdrop truss: the 6 m fit left the truss 2.4 m high'),
+    'j59k7ctnZM': (0.65, 'a scuba twin set, not a lab tank: real ~0.65 m tall'),
     'OgrROxABGT': (3.0, 'chunky food truck: a 5 m length fit made it 4.6 m tall; real food truck ~3 m'),
 }
-UPRIGHT = {'q6i3XL52ge'}     # came in lying on its side: stand its longest axis up, closed end down
-ROT = {}                    # id -> degrees about z, applied after import (when the auto turn is wrong)
+# id -> degrees about z, applied after import instead of the auto turn. Front to -y: the sources of these face +y (held by
+# kit/props/sizes.js FRONT, tests and the front/back sheets of 25/11); a prop the auto turn had turned 90 says 270
+ROT = {
+    'RY93lbAIFg': 180, 'CKSz6PB1vO': 180, 'V5Qo141OcB': 180, 'GnbwSUiVty': 180, 'vsqTUPFSw6': 180,      # lounge chair, desk chair, screen, laptop, keyboard
+    '36ODvl4CIy': 180, 'vUsvf2HGDv': 180, 'nNGtcp9qK2': 180, 'kTJU2y4R15': 180,                          # fridge, microwave, sink, stove
+    'M2cJ5sVUgJ': 180, '3fFsumkkQD': 270, 'standing_picture_frame_01': 270,                              # books (spines), briefcase (clasp), picture frame
+    'DGIM5HGISb': 90, 'SU28ptta34': 50,                                                                  # market stand: its long counter to the front; bottle: its label
+}
+# id -> ((axis, degrees), ...) turned in this order right after import, instead of the auto turn and the auto upright
+# (the auto upright stands the long side up about y, which turned the phone's screen to +x)
+ORIENT = {
+    '4DRZmTs3jq': (('X', 90),),     # smartphone lies flat, screen +z, long side y: stand the long side up, screen to -y (front)
+    'mBGTVozH1u': (('Y', 90),),     # screen rig: its truss lies along +x off the screen's side; truss down, screen on top
+}
+# id -> (axis, above, reason): faces whose centre lies above this source coordinate are cut before turning
+CROP = {'mBGTVozH1u': (2, 0.21, 'the antenna pole over the screen: with the truss stood up it would stick 2.4 m out sideways')}
+# id -> tris, where the size's budget shreds the model (a woven or many-part model decimated to the small budget)
+BUDGET = {'cardboard_box_01': 4000, 'wicker_basket_02': 4000, 'industrial_microscope': 3500, 'vintage_microscope': 3000,
+          'plastic_thermos': 2500, 'security_camera_01': 2500, 'clipboard': 2000, 'fancy_picture_frame_01': 1200, 'standing_picture_frame_01': 1600,
+          'bunsen_burner': 2000}
+# id -> colours, where the photo's wear reads as patches of camouflage (the default is K)
+COLOURS = {'cardboard_box_01': 1, 'wicker_basket_02': 1, 'tea_set_01': 1, 'hand_truck': 4, 'plastic_thermos': 3}
+MERGE = {'3fFsumkkQD': 0.35}      # id -> sRGB distance instead of NEAR (a gradient painted over many small folds)
+SKIP_MAT = {'standing_picture_frame_01': 'standing_picture_frame_01_glass'}     # id -> a material whose faces are left out (a glass pane in front of the picture)
+OBJECTS = {'bunsen_burner': 'burner_stand'}     # id -> the only object of the file that is kept
+# id -> reason: list items that are not imported (a code-built prop of kit/props/built.js replaces them); a re-import removes the file
+DROP = {
+    'y9mMoShXnI': 'reads as an upside-down stool (four posts on a plank), not a dish rack: kitchen-home/dishrack',
+    'wall_clock': 'its hands and marks are a texture behind a glass mesh: a blank disc as flat colours: care-home/wall-clock',
+    'fis2ugeLbn': 'two interpenetrating rings round a broken cup: office/mug',
+    'wicker_basket_01': 'a 12 cm bread tray of loose twigs, not a shopping basket: supermarket/shopping-basket',
+}
+# id -> ((from sRGB 0-255, to sRGB 0-255), ...): the palette colour nearest to `from` becomes `to` (source colours the kit's
+# contrast crushes to a black lump, kit/props/sizes.js DARK)
+RECOLOUR = {
+    'myd1WSucAz': (((36, 34, 39), (112, 126, 88)), ((70, 39, 32), (122, 78, 50))),       # armchair: moss green cloth, wood legs
+    'X5kQPKzAWp': (((41, 41, 41), (98, 118, 146)), ((67, 59, 55), (122, 78, 50))),       # sofa: dusty blue cloth, wood legs
+    'bfLOqIV5uP': (((47, 47, 47), (176, 98, 62)),),                                      # houseplant: terracotta pot
+    'PvSjEbz11k': (((20, 20, 20), (66, 72, 84)),),                                       # monitor: dark grey, its one material is screen and case
+    '77K2TCL5Lz': (((20, 20, 20), (96, 100, 108)),),                                     # printer: grey case
+    'standing_picture_frame_01': (((22, 22, 22), (104, 66, 40)),),                       # picture frame: walnut
+    '7DsKpns9FM': (((57, 31, 33), (128, 62, 54)),),                                      # suit-case: oxblood leather
+    'SU28ptta34': (((30, 30, 30), (46, 88, 56)),),                                       # bottle: green glass
+    'bunsen_burner': (((5, 6, 125), (150, 148, 142)),),                                  # tripod: the gauze's baked blue light
+    'korean_fire_extinguisher_01': (((174, 126, 121), (206, 196, 180)), ((131, 101, 102), (206, 196, 180))),   # extinguisher: one label colour
+    'OlTLyyXoXY': (((20, 20, 20), (74, 98, 124)),),                                      # desk fan: blue-grey base
+}
+LIFT = {'Rockingchair_01': 1.8, '7cobkfclNv': 1.4, 'metal_office_desk': 1.35, 'street_lamp_01': 1.5, 'TPqvwkyWdV': 1.5,
+        'industrial_storage_cart': 1.35, 'industrial_microscope': 1.3, 'chemistry_set': 1.4, '9N9rYOD8On': 1.4, 'ianC28eMOF': 1.25, '3VGWnZPXmG': 1.25, 'TvaOenUAni': 1.3, 'vF7TuXCPDH': 1.25, '3fFsumkkQD': 1.35}     # id -> gain on every palette colour (too dark for the kit's contrast)
+BLACK = {'6u4c1kSsiP', 'dGRAisemWy', 'yqbacXdPsg', 'zOQOThSpuo', '4DRZmTs3jq', 'korean_fire_extinguisher_01'}   # really black things (sizes.js BLACK_OK); on every other prop a near-black colour is lifted to 0.16
+TWO_SIDED = {'bfLOqIV5uP', 'OlTLyyXoXY'}     # open sheets (leaves, fan blades): a flipped copy, the kit draws front faces only
 KEEP_TEX = {'WetFloorSign_01', 'PeM20xAT0V'}     # the printed picture is the prop (a sign)
-SLUG = {'vPFSLYh6sg': 'street-light-2', 'mBGTVozH1u': 'screen-rig', 'AYQd5RQ8w4': 'truss-post'}
-PLACE = {'mBGTVozH1u': 'arena'}   # the list's place is wrong for the model: the TV is a 3 m screen rig (the kitchen TV is code-built)
+SLUG = {'vPFSLYh6sg': 'street-light-2', 'mBGTVozH1u': 'screen-rig', 'AYQd5RQ8w4': 'truss-post', 'j59k7ctnZM': 'scuba-tanks', 'bunsen_burner': 'tripod-stand'}
+PLACE = {'mBGTVozH1u': 'arena', 'j59k7ctnZM': 'misc'}   # the list's place is wrong for the model: the TV is a 3 m screen rig, the lab tank a scuba set
 VEHICLE = re.compile(r'\b(taxi|car|truck|van|bus|hatchback)\b', re.I)
 K = 8
 
@@ -98,7 +150,7 @@ def do_import(path):
 
 _PX = {}
 def pixels(img, px=256):
-    """sRGB HxWx3 array (<= px) of an image, cached"""
+    """sRGB + alpha HxWx4 array (<= px) of an image, cached"""
     if img.name in _PX: return _PX[img.name]
     a = None
     try:
@@ -107,8 +159,8 @@ def pixels(img, px=256):
             c = img.copy()
             if max(w, h) > px: c.scale(max(1, round(w * px / max(w, h))), max(1, round(h * px / max(w, h))))
             W, H = c.size; p = np.empty(W * H * 4, dtype=np.float32); c.pixels.foreach_get(p)
-            a = p.reshape(H, W, 4)[:, :, :3]
-            if img.is_float or not img.colorspace_settings.name.lower().startswith('srgb'): a = l2s(a)
+            a = p.reshape(H, W, 4).copy()
+            if img.is_float or not img.colorspace_settings.name.lower().startswith('srgb'): a[:, :, :3] = l2s(a[:, :, :3])
             bpy.data.images.remove(c)
     except Exception: a = None
     _PX[img.name] = a; return a
@@ -156,7 +208,7 @@ def face_colours(me, descs):
     ls = np.empty(n, dtype=np.int32); me.polygons.foreach_get('loop_start', ls)
     lt = np.empty(n, dtype=np.int32); me.polygons.foreach_get('loop_total', lt)
     nl = len(me.loops); owner = np.repeat(np.arange(n), lt)
-    col = np.zeros((n, 3))
+    col = np.zeros((n, 3)); noisy = np.zeros(n, dtype=bool)
     uv = None
     if me.uv_layers:
         u = np.empty(nl * 2, dtype=np.float32); me.uv_layers[0].data.foreach_get('uv', u); u = u.reshape(-1, 2)
@@ -167,8 +219,20 @@ def face_colours(me, descs):
         a = pixels(d['img']) if d['img'] is not None else None
         if a is not None and uv is not None:
             H, W = a.shape[:2]
-            x = (np.mod(uv[sel, 0], 1) * W).astype(int).clip(0, W - 1); y = (np.mod(uv[sel, 1], 1) * H).astype(int).clip(0, H - 1)
-            col[sel] = s2l(a[y, x]) * d['fac']
+            def at(t): return a[(np.mod(t[:, 1], 1) * H).astype(int).clip(0, H - 1), (np.mod(t[:, 0], 1) * W).astype(int).clip(0, W - 1)]
+            # the face's colour: the mean of its opaque samples from the centre toward each corner. A cut-out card (leaves,
+            # petals on an alpha atlas) has see-through samples whose black RGB turned the street flowers into black blobs;
+            # a face with no opaque sample takes the picture's own opaque mean
+            fsel = np.where(sel)[0]; lm = sel[owner]; lo_ = owner[lm]; sm = np.zeros((n, 3)); sq = np.zeros(n); cn = np.zeros(n)
+            for t in (0.0, 0.2, 0.4, 0.6, 0.8):
+                c = at(uv[lo_] * (1 - t) + u[lm] * t); ok = c[:, 3] >= 0.5
+                np.add.at(sm, lo_[ok], c[ok, :3]); np.add.at(sq, lo_[ok], (c[ok, :3] ** 2).sum(1)); np.add.at(cn, lo_[ok], 1)
+            wa = a[:, :, 3].reshape(-1); mean = (a[:, :, :3].reshape(-1, 3) * wa[:, None]).sum(0) / max(wa.sum(), 1e-6)
+            m_ = sm[fsel] / np.maximum(cn[fsel, None], 1); rgb = np.where(cn[fsel, None] > 0, m_, mean)
+            noisy[fsel] = np.sqrt(np.maximum(sq[fsel] / np.maximum(cn[fsel], 1) - (m_ ** 2).sum(1), 0)) > 0.02
+            # a flat swatch keeps its exact colour (the mean of identical samples); a swatch edge must not blend in
+            flat = ~noisy[fsel]; cc = at(uv[fsel]); rgb[flat & (cc[:, 3] >= 0.5)] = cc[flat & (cc[:, 3] >= 0.5), :3]
+            col[sel] = s2l(rgb) * d['fac']
         else: col[sel] = d['const']
     ca = me.color_attributes[0] if len(me.color_attributes) else None
     if ca is not None and ca.domain in ('CORNER', 'POINT'):
@@ -179,7 +243,36 @@ def face_colours(me, descs):
             fv = np.zeros((n, 3)); np.add.at(fv, owner, v); fv /= lt[:, None]
             col *= fv
         except Exception: pass
-    return col, mi
+    return coplanar(me, col, mi, noisy), mi
+
+def coplanar(me, col, mi, noisy):
+    """one colour per flat panel: faces of one material that share an edge and lie in one plane (within 2 degrees) take the
+    panel's area mean where a photo or gradient is sampled (`noisy`). Sampled face by face, a quad's two triangles got two
+    colours: a picture, a desk top, a mirror split along its diagonal."""
+    if not noisy.any(): return col
+    n = len(me.polygons); nv = len(me.vertices)
+    co = np.empty(nv * 3, dtype=np.float64); me.vertices.foreach_get('co', co); co = co.reshape(-1, 3)
+    q = np.round(co / max(1e-9, (co.max(0) - co.min(0)).max() * 1e-5)).astype(np.int64)
+    _, key = np.unique(q, axis=0, return_inverse=True); key = key.reshape(-1)          # a glTF import splits a vertex at every UV seam
+    nrm = np.empty(n * 3, dtype=np.float32); me.polygons.foreach_get('normal', nrm); nrm = nrm.reshape(-1, 3)
+    area = np.empty(n, dtype=np.float32); me.polygons.foreach_get('area', area)
+    par = list(range(n))
+    def find(i):
+        while par[i] != i: par[i] = par[par[i]]; i = par[i]
+        return i
+    edges = {}
+    for f in me.polygons:
+        vs = key[list(f.vertices)]
+        for i in range(len(vs)):
+            e = (min(vs[i], vs[i - 1]), max(vs[i], vs[i - 1])); edges.setdefault(e, []).append(f.index)
+    for fs in edges.values():
+        for a in fs[1:]:
+            b = fs[0]
+            if mi[a] == mi[b] and noisy[a] and noisy[b] and float(nrm[a] @ nrm[b]) > 0.9994: par[find(a)] = find(b)
+    root = np.array([find(i) for i in range(n)]); w = area[:, None].astype(float) + 1e-12
+    sm = np.zeros((n, 3)); ws = np.zeros((n, 1)); np.add.at(sm, root, l2s(col) * w); np.add.at(ws, root, w)
+    out = col.copy(); out[noisy] = s2l(sm[root] / ws[root])[noisy]
+    return out
 
 def kmeans(x, w, k, seed=0):
     rng = np.random.default_rng(seed); c = [x[np.argmax(w)]]
@@ -195,27 +288,39 @@ def kmeans(x, w, k, seed=0):
             if s.any(): c[j] = (x[s] * w[s, None]).sum(0) / w[s].sum()
     return c, np.argmin(((x[:, None] - c[None]) ** 2).sum(-1), 1)
 
-def clamp(srgb):
+def clamp(srgb, black=True):
     c = np.array(srgb, dtype=float); m = c.max()
     if m > 0.90: c *= 0.90 / m
+    if not black and c.max() <= 0.11: c = np.full(3, 0.16) if c.max() <= 1e-6 else c * (0.16 / c.max())
     if c.max() < 0.08: c = np.full(3, 0.08) if c.max() <= 1e-6 else c * (0.08 / c.max())
     return c
 
-def palette(col, emis, area, k=K):
+NEAR = 0.075                # palette colours closer than this (sRGB distance) are one colour: a photo's wear is not eight browns
+def near_merge(c, l, w, near=NEAR):
+    c = [np.array(v, dtype=float) for v in c]; w = list(w); to = list(range(len(c))); live = set(to)
+    while len(live) > 1:
+        d, i, j = min((float(np.linalg.norm(c[i] - c[j])), i, j) for i in live for j in live if i < j)
+        if d >= near: break
+        c[i] = (c[i] * w[i] + c[j] * w[j]) / (w[i] + w[j]); w[i] += w[j]; live.discard(j); to = [i if t == j else t for t in to]
+    ids = sorted(live); ren = {k: n for n, k in enumerate(ids)}
+    return np.array([c[k] for k in ids]), np.array([ren[to[v]] for v in l], dtype=int)
+
+def palette(it, col, emis, area):
     """cluster face colours (sRGB) -> (centres sRGB, label per face); emissive faces cluster on their own"""
-    lab = np.zeros(len(col), dtype=int); cents, flags = [], []
+    lab = np.zeros(len(col), dtype=int); cents, flags = [], []; pid = it['id']
     for e in (False, True):
         s = emis == e
         if not s.any(): continue
         x = l2s(col[s]); q = np.round(x * 255) / 255
-        u, inv = np.unique(q, axis=0, return_inverse=True); inv = inv.reshape(-1)
-        kk = k if not e else 3
+        u, inv = np.unique(q, axis=0, return_inverse=True); inv = inv.reshape(-1); wu = np.bincount(inv, weights=area[s] + 1e-9)
+        kk = COLOURS.get(pid, K) if not e else 3
         if len(u) <= kk: c, l = u, inv
-        else:
-            wu = np.bincount(inv, weights=area[s] + 1e-9)
-            c, lu = kmeans(u, wu, kk); l = lu[inv]
-        lab[s] = l + len(cents); cents += [clamp(v) for v in c]; flags += [e] * len(c)
-    return cents, flags, lab
+        else: c, lu = kmeans(u, wu, kk); l = lu[inv]
+        c, l = near_merge(c, l, np.bincount(l, weights=area[s] + 1e-9, minlength=len(c)), MERGE.get(pid, NEAR))
+        lab[s] = l + len(cents); cents += list(c); flags += [e] * len(c)
+    for old, new in RECOLOUR.get(pid, ()):
+        k = min(range(len(cents)), key=lambda i: float(np.linalg.norm(cents[i] * 255 - np.array(old)))); cents[k] = np.array(new) / 255
+    return [clamp(c * LIFT.get(pid, 1.0), pid in BLACK) for c in cents], flags, lab
 
 def build(it, files):
     descs_all, meshes, kept = [], [], None
@@ -223,10 +328,14 @@ def build(it, files):
     for inst in dg.object_instances:
         ob = inst.object
         if ob.type not in ('MESH', 'CURVE', 'FONT', 'SURFACE', 'META'): continue
+        if it['id'] in OBJECTS and ob.name != OBJECTS[it['id']]: continue
         try: me = ob.to_mesh()
         except RuntimeError: continue
         if me is None or not len(me.polygons): ob.to_mesh_clear(); continue
         me = me.copy(); ob.to_mesh_clear()
+        if it['id'] in SKIP_MAT:
+            bm = bmesh.new(); bm.from_mesh(me); skip = [i for i, m in enumerate(me.materials) if m and m.name == SKIP_MAT[it['id']]]
+            bmesh.ops.delete(bm, geom=[f for f in bm.faces if f.material_index in skip], context='FACES'); bm.to_mesh(me); bm.free()
         me.transform(Matrix(inst.matrix_world))
         if inst.matrix_world.determinant() < 0: me.flip_normals()
         mats = list(me.materials) or [None]
@@ -241,7 +350,7 @@ def build(it, files):
     col = np.concatenate([m[1] for m in meshes]); emis = np.concatenate([m[2] for m in meshes])
     area = np.concatenate([m[3] for m in meshes]); tex = np.concatenate([m[4] for m in meshes])
     lab = np.zeros(len(col), dtype=int); cents, flags = [], []
-    if (~tex).any(): cents, flags, lab[~tex] = palette(col[~tex], emis[~tex], area[~tex])
+    if (~tex).any(): cents, flags, lab[~tex] = palette(it, col[~tex], emis[~tex], area[~tex])
     ti = len(cents)                                             # the kept-texture material comes last
     lab[tex] = ti
     bm = bmesh.new(); o = 0
@@ -275,24 +384,22 @@ def bounds(me):
     v = np.empty(len(me.vertices) * 3, dtype=np.float64); me.vertices.foreach_get('co', v); v = v.reshape(-1, 3)
     return v.min(0), v.max(0)
 
-def stand(me, ax):
-    """rotation that turns horizontal axis ax (0 x, 1 y) up, with the end that has more cap area (the closed end) down"""
-    v = np.empty(len(me.vertices) * 3); me.vertices.foreach_get('co', v); v = v.reshape(-1, 3)
-    lo, hi = v[:, ax].min(), v[:, ax].max(); band = (hi - lo) * 0.1; a = [0.0, 0.0]
-    for p in me.polygons:
-        c = p.center[ax]; n = p.normal[ax]
-        if c < lo + band and n < -0.8: a[0] += p.area
-        if c > hi - band and n > 0.8: a[1] += p.area
-    down_is_max = a[1] > a[0]                                    # the closed end must end at -z
-    if ax == 0: return Matrix.Rotation(math.radians(90 if down_is_max else -90), 4, 'Y')
-    return Matrix.Rotation(math.radians(-90 if down_is_max else 90), 4, 'X')
+def crop(me, ax, above):
+    """cut the faces whose centre lies above `above` on axis ax"""
+    bm = bmesh.new(); bm.from_mesh(me)
+    bmesh.ops.delete(bm, geom=[f for f in bm.faces if f.calc_center_median()[ax] > above], context='FACES')
+    bm.to_mesh(me); bm.free()
 
 def place(me, it, size, src):
     """turn, scale and put the pivot at the bottom centre; returns notes"""
     notes = []; lo, hi = bounds(me); d = hi - lo
     w, dd, h = size
+    for ax, deg in ORIENT.get(it['id'], ()):
+        me.transform(Matrix.Rotation(math.radians(deg), 4, ax)); notes.append(f'turned {deg} about {ax.lower()} (ORIENT)')
+    if it['id'] in ORIENT: lo, hi = bounds(me); d = hi - lo
     rot = ROT.get(it['id'])
-    if rot is None:
+    if it['id'] in ORIENT: rot = 0
+    elif rot is None:
         rot = 0
         if VEHICLE.search(it['name']):
             if d[1] > d[0] * 1.2: rot = 90; notes.append('turned 90: vehicle long side on x (backdrop pack)')
@@ -300,10 +407,7 @@ def place(me, it, size, src):
             rot = 90; notes.append('turned 90 so the long side matches the list w x d')
     else: notes.append(f'turned {rot} (ROT)')
     if rot: me.transform(Matrix.Rotation(math.radians(rot), 4, 'Z')); lo, hi = bounds(me); d = hi - lo
-    if it['id'] in UPRIGHT:
-        ax = int(np.argmax(d[:2])); me.transform(stand(me, ax)); lo, hi = bounds(me); d = hi - lo
-        notes.append(f'stood upright from lying along {"xy"[ax]} (UPRIGHT), closed end down')
-    if it['id'] not in SIZE and h > max(w, dd) and d[2] < 0.5 * max(d[0], d[1]):          # upright check: a tall prop that came in lying down
+    if it['id'] not in SIZE and it['id'] not in ORIENT and h > max(w, dd) and d[2] < 0.5 * max(d[0], d[1]):          # upright check: a tall prop that came in lying down
         ax = 'Y' if d[0] >= d[1] else 'X'; me.transform(Matrix.Rotation(math.radians(90), 4, ax)); lo, hi = bounds(me); d = hi - lo
         notes.append(f'stood upright (was lying along {"x" if ax == "Y" else "y"}; list says it is tall)')
     tmax = max(size); mmax = max(d)
@@ -343,6 +447,17 @@ def finish(me, keep_uv):
         for u in list(me.uv_layers): me.uv_layers.remove(u)
     me.polygons.foreach_set('use_smooth', [True] * len(me.polygons))
     me.set_sharp_from_angle(angle=math.radians(35))
+    # face-area weighted normals: plain averaging bends a big flat face's normals at its bevelled corners, and the toon ramp
+    # then draws a false triangle of shade across it (the safe's door, the jar, the stock pot)
+    scn = bpy.context.scene; ob = bpy.data.objects.new('wn', me); scn.collection.objects.link(ob)
+    mod = ob.modifiers.new('wn', 'WEIGHTED_NORMAL'); mod.keep_sharp = True; mod.mode = 'FACE_AREA'; mod.weight = 100
+    dg = bpy.context.evaluated_depsgraph_get(); dg.update(); nm = bpy.data.meshes.new_from_object(ob.evaluated_get(dg))
+    scn.collection.objects.unlink(ob); bpy.data.objects.remove(ob); return nm
+
+def two_sided(me):
+    bm = bmesh.new(); bm.from_mesh(me)
+    g = bmesh.ops.duplicate(bm, geom=list(bm.faces))['geom']; bmesh.ops.reverse_faces(bm, faces=[f for f in g if isinstance(f, bmesh.types.BMFace)])
+    bm.to_mesh(me); bm.free()
 
 def export(me, path):
     scn = bpy.context.scene
@@ -371,18 +486,31 @@ def main():
     man = json.load(open(mp)) if os.path.exists(mp) else {'props': {}, 'failed': {}}
     for it in pick:
         t0 = time.time(); s = slug[it['id']]; pl = PLACE.get(it['id'], it['place'])
+        if it['id'] in DROP:
+            for k in [k for k, v in man['props'].items() if v['id'] == it['id']]:
+                fp = os.path.join(out, man['props'].pop(k)['file'])
+                if os.path.exists(fp): os.remove(fp)
+            man['failed'].pop(it['id'], None); print('DROP', it['id'], DROP[it['id']], flush=True)
+            continue
         try:
             clear(); _PX.clear()
             f = model_file(os.path.join(root, o['src'], it['id']))
             if not f: raise RuntimeError('no model file downloaded')
             do_import(f)
             me, pal, kept = build(it, f)
+            if it['id'] in CROP: ax, above, why = CROP[it['id']]; crop(me, ax, above)
             size, why = target(it)
             dims, notes, scale = place(me, it, size, it['source'])
+            if it['id'] in CROP: notes.insert(0, f'cut faces above {"xyz"[CROP[it["id"]][0]]} {CROP[it["id"]][1]} (CROP): {CROP[it["id"]][2]}')
             limit, cat = budget(it, size)
+            if it['id'] in BUDGET: limit, cat = BUDGET[it['id']], 'BUDGET'
             me, n0 = decimate(me, limit)
-            finish(me, kept)
+            me = finish(me, kept)
+            if it['id'] in TWO_SIDED: two_sided(me); notes.append('two-sided (flipped copy of every face)')
             lo, hi = bounds(me); me.transform(Matrix.Translation(Vector((-(lo[0] + hi[0]) / 2, -(lo[1] + hi[1]) / 2, -lo[2]))))
+            for k in [k for k, v in man['props'].items() if v['id'] == it['id'] and v['file'] != f'{pl}/{s}.glb']:      # renamed or moved
+                fp = os.path.join(out, man['props'].pop(k)['file'])
+                if os.path.exists(fp): os.remove(fp)
             os.makedirs(os.path.join(out, pl), exist_ok=True); path = os.path.join(out, pl, s + '.glb')
             export(me, path)
             lo, hi = bounds(me)
@@ -401,6 +529,9 @@ def main():
         man['totals'] = {'props': len(man['props']), 'failed': len(man['failed']), 'bytes': sum(p['bytes'] for p in man['props'].values()),
                          'tris': sum(p['tris'] for p in man['props'].values())}
         with open(mp, 'w') as fh: json.dump(man, fh, indent=1)
+    man['totals'] = {'props': len(man['props']), 'failed': len(man['failed']), 'bytes': sum(p['bytes'] for p in man['props'].values()),
+                     'tris': sum(p['tris'] for p in man['props'].values())}
+    with open(mp, 'w') as fh: json.dump(man, fh, indent=1)
     licenses(man, os.path.join(out, 'LICENSES.md'))
     print('PROPS total', man['totals'], flush=True)
 

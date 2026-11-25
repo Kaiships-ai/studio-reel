@@ -1,5 +1,5 @@
-// The kit's code-built set props: the items of the prop list (films/kit-props-list/manifest.json `code_built`) no CC0
-// model covers, plus the kitchen TV and the scaffolding bay. Loaded by name through kit/props/catalog.js propKit, the same
+// The kit's code-built set props: what no CC0 model covers (33 of them carry an `id` of the first prop list, held by
+// test/unit/stick-props-catalog.test.mjs), plus those that replace a model that did not read as its name. Loaded by name through kit/props/catalog.js propKit, the same
 // '<place>/<slug>' names as the .glb props, so a film never cares which kind a prop is.
 // Built like kit/sets/dress.js PIECES: Blender metres (x right, y into the scene, z up), origin at the bottom centre, front
 // to -y (vehicles point +x, as the .glb vehicles); toon materials via tm(). Colours stay inside the valuegate band
@@ -57,6 +57,35 @@ const monthTex = () => tex('month', 192, 192, (x, W, H) => { x.fillStyle = css([
   for (let j = 0; j <= 5; j++) { x.beginPath(); x.moveTo(0, j * H / 5); x.lineTo(W, j * H / 5); x.stroke(); }
   x.fillStyle = css([0.72, 0.13, 0.09]); x.beginPath(); x.arc(W * (3.5 / 7), H * 0.5, W * 0.06, 0, 7); x.fill(); });
 
+// a seeded 0..1 stream (mulberry32): a stocked shelf comes out the same on every render
+const rng = seed => () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+const GOODS = [Q.red, Q.blue, Q.green, Q.yellow, Q.orange, Q.pink, Q.teal, Q.mint, Q.cream, Q.blueL, Q.woodL, Q.sheet];
+// a supermarket gondola w metres wide, 0.5 deep, 1.8 tall: plinth, back panel, side panels, 4 stocked levels. Each level
+// holds runs of one product (3-7 facings of one colour and kind): a box as deep as the shelf, a bottle with one behind it,
+// or two cans stacked; a price strip on every shelf lip
+function gondola(k, w, seed) {
+  const r = rng(seed), h = w / 2;
+  k.box([-h, -0.25, 0], [h, 0.25, 0.1], Q.steelD);
+  k.box([-h, 0.2, 0.1], [h, 0.25, 1.8], Q.off);
+  for (const x of [-h, h - 0.03]) k.box([x, -0.25, 0], [x + 0.03, 0.25, 1.8], Q.steel);
+  k.box([-h, 0.17, 1.7], [h, 0.2, 1.8], Q.red);
+  for (const z of [0.1, 0.52, 0.94, 1.36]) {
+    if (z > 0.1) k.box([-h + 0.03, -0.25, z - 0.03], [h - 0.03, 0.2, z], Q.steel);
+    k.box([-h + 0.03, -0.26, z - 0.05], [h - 0.03, -0.25, z + 0.01], Q.yellow, { ink: false });
+    const top = z === 1.36 ? 1.66 : z + 0.38;
+    for (let x = -h + 0.04; x < h - 0.07;) {
+      const kind = r() < 0.5 ? 'box' : r() < 0.6 ? 'bottle' : 'can', c = GOODS[Math.floor(r() * GOODS.length)], n = 3 + Math.floor(r() * 5);
+      const fw = kind === 'box' ? 0.07 + r() * 0.06 : kind === 'bottle' ? 0.075 : 0.07, fh = kind === 'box' ? 0.14 + r() * (top - z - 0.16) : kind === 'bottle' ? 0.2 + r() * 0.08 : 0.11;
+      for (let i = 0; i < n && x + fw < h - 0.035; i++, x += fw + 0.006) {
+        const cx = x + fw / 2;
+        if (kind === 'box') k.box([x, -0.22, z], [x + fw, 0.16, z + fh], c);
+        else if (kind === 'bottle') for (const y of [-0.17, 0.02]) { k.cyl([cx, y, z + fh / 2], 0.034, fh, c, { seg: 5 }); }
+        else for (const zz of [0, 0.112]) k.cyl([cx, -0.17, z + zz + 0.055], 0.033, 0.11, c, { seg: 5 });
+      }
+      x += 0.012;
+    }
+  }
+}
 
 export const BUILT = {
   // ------------------------------------------------------------------ hospital
@@ -157,13 +186,24 @@ export const BUILT = {
     k.box([-0.55, 0.03, 0.6], [0.55, 0.05, 0.85], Q.steel); for (let z = 0.63; z < 0.84; z += 0.05) k.box([-0.55, 0.025, z], [0.55, 0.03, z + 0.008], Q.steelD, { ink: false });
     for (let i = 0; i < 6; i++) k.cyl([0.3, -0.08, 0.3475 + i * 0.016], 0.1, 0.015, Q.off, { seg: 16 });
   } },
+  // a school wall clock stopped at 11:59: 12 marks (the quarters heavier), hour hand at 359.5 deg, minute hand at 354
+  'care-home/wall-clock': { size: [0.32, 0.05, 0.32], wall: true, make(k) {
+    k.cyl([0, 0.005, 0.16], 0.16, 0.04, Q.steelD, { axis: 'y', seg: 28 });
+    k.cyl([0, -0.013, 0.16], 0.145, 0.012, Q.off, { axis: 'y', seg: 28 });
+    const hand = (deg, r0, r1, w, y, c) => { const a = deg * D, r = (r0 + r1) / 2, x = r * Math.sin(a), z = 0.16 + r * Math.cos(a), l = (r1 - r0) / 2;
+      const m = k.box([x - w / 2, y - 0.002, z - l], [x + w / 2, y, z + l], c, { ink: false }); m.name = `clock:${deg}`; return k.tilt(m, 'y', deg); };
+    for (let i = 0; i < 12; i++) hand(i * 30, i % 3 ? 0.115 : 0.1, 0.134, i % 3 ? 0.008 : 0.014, -0.0195, Q.steelD);
+    hand(359.5, -0.02, 0.075, 0.016, -0.0215, Q.resin); hand(354, -0.025, 0.118, 0.009, -0.0235, Q.red);
+    k.cyl([0, -0.0225, 0.16], 0.011, 0.006, Q.resin, { axis: 'y', seg: 10 });
+  } },
   // ------------------------------------------------------------------ street
-  'street/child-shoe': { id: 'cb-childshoe', size: [0.06, 0.15, 0.07], make(k) {
-    k.box([-0.03, -0.075, 0], [0.03, 0.065, 0.015], Q.off);
-    k.box([-0.028, -0.02, 0.015], [0.028, 0.065, 0.068], Q.pink);
-    k.sph([0, -0.04, 0.03], 0.029, Q.pink, { sz: 0.6, seg: 10 });
-    k.box([-0.031, -0.03, 0.04], [0.031, -0.015, 0.05], Q.blue);
-    for (const y of [0.0, 0.02]) k.box([-0.012, y, 0.068], [0.012, y + 0.005, 0.071], Q.off);
+  'street/child-shoe': { id: 'cb-childshoe', size: [0.06, 0.15, 0.075], make(k) {
+    for (const y of [-0.045, 0.045]) k.cyl([0, y, 0.006], 0.03, 0.012, Q.off, { seg: 16 });
+    k.box([-0.03, -0.045, 0], [0.03, 0.045, 0.012], Q.off);
+    const toe = k.sph([0, -0.035, 0.024], 0.028, Q.pink, { seg: 16 }); toe.scale.set(1, 0.95, 1.3);
+    k.cyl([0, 0.035, 0.04], 0.027, 0.056, Q.pink, { r2: 0.024, seg: 16 }); k.box([-0.026, -0.035, 0.012], [0.026, 0.035, 0.042], Q.pink);
+    k.cyl([0, 0.035, 0.069], 0.02, 0.004, Q.resin, { seg: 16 });
+    k.box([-0.029, -0.008, 0.026], [0.029, 0.006, 0.05], Q.blue); k.sph([0.03, -0.001, 0.04], 0.006, Q.yellow, { seg: 8 });
   } },
   'street/police-tower': { id: 'cb-policetower', size: [1.5, 1.5, 3.2], make(k) {
     for (const x of [-0.68, 0.68]) for (const y of [-0.68, 0.68]) k.box([x - 0.04, y - 0.04, 0], [x + 0.04, y + 0.04, 2.2], Q.steelD);
@@ -222,7 +262,21 @@ export const BUILT = {
     k.box([-0.45, 0.28, 0.95], [0.45, 0.32, 1.5], Q.steelD); k.glow(k.box([-0.42, 0.275, 0.98], [0.42, 0.28, 1.47], Q.blueL), [0.22, 0.38, 0.7], 0.6);
     k.cyl([0, 0.3, 0.47], 0.03, 0.94, Q.steelD, { seg: 8 });
   } },
+  'office/mug': { size: [0.12, 0.085, 0.1], make(k) {
+    k.cyl([-0.0175, 0, 0.05], 0.0425, 0.1, Q.blue, { seg: 20 });
+    k.cyl([-0.0175, 0, 0.1], 0.036, 0.004, Q.woodD, { seg: 20 });
+    k.tor([0.026, 0, 0.05], 0.027, 0.0065, Q.blue, { axis: 'y' });
+  } },
   // ------------------------------------------------------------------ supermarket
+  // a plastic hand basket: solid base and rim, slatted sides (the gaps show through), two hoop handles up
+  'supermarket/shopping-basket': { size: [0.45, 0.3, 0.36], make(k) {
+    k.box([-0.19, -0.12, 0], [0.19, 0.12, 0.015], Q.red);
+    for (const z of [0.015, 0.205]) { const g = z > 0.1 ? 1 : 0.86; for (const y of [-1, 1]) k.box([-0.225 * g, y * 0.15 * g - 0.008, z], [0.225 * g, y * 0.15 * g + 0.008, z + 0.025], Q.red); for (const x of [-1, 1]) k.box([x * 0.225 * g - 0.008, -0.15 * g, z], [x * 0.225 * g + 0.008, 0.15 * g, z + 0.025], Q.red); }
+    for (let i = 0; i <= 8; i++) for (const y of [-1, 1]) { const x = -0.21 + i * 0.0525; k.tube([x * 0.86, y * 0.129, 0.03], [x, y * 0.149, 0.21], 0.009, Q.red, 4); }
+    for (let i = 1; i <= 4; i++) for (const x of [-1, 1]) { const y = -0.14 + i * 0.056; k.tube([x * 0.194, y * 0.86, 0.03], [x * 0.223, y, 0.21], 0.009, Q.red, 4); }
+    for (const z of [0.09, 0.15]) { const g = 0.86 + 0.14 * z / 0.21; for (const y of [-1, 1]) k.cyl([0, y * 0.15 * g, z], 0.006, 0.44 * g, Q.red, { axis: 'x', seg: 5 }); for (const x of [-1, 1]) k.cyl([x * 0.225 * g, 0, z], 0.006, 0.29 * g, Q.red, { axis: 'y', seg: 5 }); }
+    for (const y of [-0.035, 0.035]) { for (const x of [-1, 1]) k.tube([x * 0.215, y * 3, 0.215], [x * 0.1, y, 0.35], 0.007, Q.steelD, 6); k.cyl([0, y, 0.35], 0.01, 0.21, Q.steelD, { axis: 'x', seg: 8 }); }
+  } },
   'supermarket/shop-trolley': { id: 'cb-shoptrolley', size: [0.55, 1.0, 1.0], make(k) {
     for (const x of [-0.22, 0.22]) for (const y of [-0.4, 0.4]) { k.cyl([x, y, 0.29], 0.012, 0.42, Q.chrome, { seg: 6 }); k.wheel(x, y, 0.04, 'x'); }
     k.box([-0.22, -0.4, 0.15], [0.22, 0.4, 0.17], Q.chrome);
@@ -261,7 +315,18 @@ export const BUILT = {
     k.tilt(k.box([0.2, -0.33, 1.15], [0.46, -0.05, 1.35], Q.sheet), 'z', 20);
     k.tilt(k.box([-0.3, -0.55, 0], [0.0, -0.4, 0.22], Q.blueL), 'z', -18);
   } },
+  'supermarket/shelf-stocked': { size: [2.0, 0.5, 1.8], make(k) { gondola(k, 2.0, 11); } },
+  'supermarket/shelf-end-cap': { size: [1.0, 0.5, 1.8], make(k) { gondola(k, 1.0, 29); } },
   // ------------------------------------------------------------------ kitchen / home
+  // a wire dish rack on a drip tray, five plates on edge (faces to +-x) and a mug upside down in the corner
+  'kitchen-home/dishrack': { size: [0.45, 0.3, 0.26], make(k) {
+    k.box([-0.225, -0.15, 0], [0.225, 0.15, 0.025], Q.plastic);
+    for (const y of [-0.12, 0.12]) for (const z of [0.04, 0.15]) k.cyl([0, y, z], 0.004, 0.42, Q.chrome, { axis: 'x', seg: 5 });
+    for (const x of [-0.21, 0.21]) for (const y of [-0.12, 0.12]) k.cyl([x, y, 0.09], 0.004, 0.12, Q.chrome, { seg: 5 });
+    for (let i = 0; i < 12; i++) for (const y of [-0.06, 0.06]) k.cyl([-0.18 + i * 0.03, y, 0.075], 0.003, 0.07, Q.chrome, { seg: 4 });
+    [-0.16, -0.1, -0.04, 0.02, 0.08].forEach((x, i) => k.tilt(k.cyl([x, 0, 0.145], 0.11, 0.012, i % 2 ? Q.blueL : Q.off, { axis: 'x', seg: 18 }), 'y', 8));
+    k.cyl([0.165, 0.07, 0.07], 0.04, 0.09, Q.red, { seg: 12 }); k.tor([0.205, 0.07, 0.07], 0.025, 0.006, Q.red);
+  } },
   'kitchen-home/high-chair': { id: 'cb-highchair', size: [0.5, 0.55, 0.9], make(k) {
     for (const x of [-1, 1]) for (const y of [-1, 1]) k.tube([x * 0.23, y * 0.23, 0], [x * 0.13, y * 0.13, 0.56], 0.016, Q.chrome);
     k.box([-0.16, -0.16, 0.55], [0.16, 0.16, 0.6], Q.mint);
@@ -306,6 +371,16 @@ export const BUILT = {
     for (const x of [-0.06, 0.06]) k.cone([x, -0.02, 0.135], 0.02, 0.04, Q.green, { seg: 8 });
     k.box([-0.12, 0.115, 0.19], [0.12, 0.12, 0.29], Q.green);
     k.card([0, 0.1145, 0.24], 0.22, 0.08, signTex('EYE WASH', { bg: [0.14, 0.46, 0.2], fg: [0.78, 0.78, 0.74], border: null, w: 256, h: 96 }), { lit: false });
+  } },
+  // a Bunsen burner: weighted foot, air collar, barrel, gas tap with its hose, the blue flame
+  'lab/bunsen-burner': { size: [0.2, 0.1, 0.24], make(k0) {
+    const k = k0.sub([-0.05, 0, 0]);
+    k.cyl([0, 0, 0.009], 0.05, 0.018, Q.steelD, { seg: 18 }); k.cyl([0, 0, 0.028], 0.035, 0.02, Q.steelD, { r2: 0.014, seg: 18 });
+    k.cyl([0, 0, 0.06], 0.016, 0.05, Q.yellow, { seg: 14 }); k.cyl([0, 0, 0.115], 0.011, 0.09, Q.chrome, { seg: 14 }); k.tor([0, 0, 0.158], 0.011, 0.003, Q.chrome, { axis: 'z' });
+    k.box([-0.005, -0.0175, 0.05], [0.005, -0.0155, 0.068], Q.steelD, { ink: false });
+    k.cyl([0.045, 0, 0.034], 0.006, 0.06, Q.yellow, { axis: 'x', seg: 8 }); k.box([0.045, -0.004, 0.038], [0.055, 0.004, 0.056], Q.red);
+    k.tube([0.07, 0, 0.034], [0.11, 0.01, 0.012], 0.008, Q.orange); k.tube([0.11, 0.01, 0.012], [0.146, 0.02, 0.009], 0.008, Q.orange);
+    k.glow(k.cone([0, 0, 0.199], 0.013, 0.078, Q.blueL, { seg: 12 }), [0.25, 0.45, 0.78], 0.6);
   } },
   'lab/incubator': { id: 'cb-incubator', size: [0.8, 0.74, 1.8], make(k) {
     for (const x of [-0.35, 0.35]) for (const y of [-0.3, 0.3]) k.box([x - 0.03, y - 0.03, 0], [x + 0.03, y + 0.03, 0.05], Q.steelD);
