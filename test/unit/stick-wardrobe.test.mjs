@@ -94,14 +94,26 @@ for (const body of BODIES) for (const n of body === 'adult' ? [...CLOTHED, 'swea
     if (f < 24) continue; const Mi = S.parts.torso.parent.matrix.clone().invert(), h = d.ST.drawn[(d.rows - 1) * d.cols + (d.cols >> 1)].clone().applyMatrix4(Mi); rest ||= h; if (d === S.wardrobe.drapes[0]) move = Math.max(move, h.distanceTo(rest)); } } });
   assert.deepEqual(summary(bad), []); assert.ok(move >= MOVE_M, `the cloth hardly moves on a walk (${(100 * move).toFixed(1)} cm)`);
 });
-for (const n of CLOTHED) test(`cloth: ${n} sitting down and seated: a lap, not a rag; nothing in the seat`, async () => {
+// Over a seated knee the cloth falls like cloth, not a tray (costume review 2, V1), set before the fix was measured, from what is
+// seen at 720 (~590 px a metre):
+//   DROP  the hem hangs this far below the knee's centre at the columns over each knee: 8 cm = 47 px, three widths of the drawn
+//         leg, a fall down the shin and not a lip at the knee (the tray: 4.7 cm)
+//   FALL  from where the cloth crosses the knee to the hem it runs within this of straight down, deg: cloth hanging over a knee
+//         is a knee's width in front of it for 15 cm down (~17 deg); the tray went out as far as it went down (30)
+const DROP = 0.08, FALL = 25;
+for (const n of CLOTHED) test(`cloth: ${n} sitting down and seated: a lap, not a rag; nothing in the seat; over the knees it falls toward the shins`, async () => {
   const bad = []; let S = null;
   S = await play(look(n), 'adult', 'seated', { each: (f, S_, P) => { for (const d of S_.wardrobe.drapes) bad.push(...clothFaults(S_, d, P, f, 'sit')); } });
   assert.deepEqual(summary(bad), []);
-  const d = S.wardrobe.drapes[0], m = q => q.clone().multiplyScalar(0.6), hip = m(S.rig.R.hip), kn = m(S.rig.R.knee), J = d.guide.gap ? [4, d.cols - 5] : [d.cols >> 1];
-  for (const j of J) { const col = [...Array(d.rows).keys()].map(i => d.ST.drawn[i * d.cols + j]);
-    for (const p of col.slice(2)) if (p.z > hip.z + 0.12 && p.z < kn.z - 0.03) assert.ok(p.y > hip.y - 0.02, `the lap sinks under the thighs (${(p.y - hip.y).toFixed(3)} m at column ${j})`);
-    assert.ok(col[d.rows - 1].z > kn.z - 0.03, `column ${j}: the garment stops on the lap (hem ${(kn.z - col[d.rows - 1].z).toFixed(2)} m short of the knee)`); if (!d.guide.gap) assert.ok(col[d.rows - 1].y < kn.y - 0.03, `the hem does not hang past the knee`); }
+  const d = S.wardrobe.drapes[0], m = q => q.clone().multiplyScalar(0.6), col = j => [...Array(d.rows).keys()].map(i => d.ST.drawn[i * d.cols + j]);
+  { const hip = m(S.rig.R.hip), kn = m(S.rig.R.knee); for (const j of d.guide.gap ? [4, d.cols - 5] : [d.cols >> 1]) for (const p of col(j).slice(2)) if (p.z > hip.z + 0.12 && p.z < kn.z - 0.03) assert.ok(p.y > hip.y - 0.02, `the lap sinks under the thighs (${(p.y - hip.y).toFixed(3)} m at column ${j})`); }
+  for (const sd of ['L', 'R']) { const kn = m(S.rig[sd].knee);
+    // the columns that cross over this knee (a point of theirs above it, within 3 cm of it front to back): the one nearest its top,
+    // and its two neighbours
+    const over = [...Array(d.cols).keys()].map(j => { let b = 1e9, k = -1; col(j).forEach((p, i) => { const l = p.distanceTo(kn); if (p.y > kn.y && Math.abs(p.z - kn.z) < 0.03 && l < b) { b = l; k = i; } }); return { j, b, k }; }).filter(o => o.k > 0 && o.b < 0.10).sort((a, b) => Math.abs(col(a.j)[a.k].x - kn.x) - Math.abs(col(b.j)[b.k].x - kn.x)).slice(0, 3);
+    assert.ok(over.length, `${sd}: no column crosses the knee (the garment stops on the lap)`);
+    for (const { j, k } of over) { const c = col(j), h = c[d.rows - 1], kp = c[k], drop = kn.y - h.y, fall = Math.atan2(Math.hypot(h.x - kp.x, h.z - kp.z), kp.y - h.y) * 57.3;
+      assert.ok(drop >= DROP, `${sd} column ${j}: the hem hangs ${(100 * drop).toFixed(1)} cm below the knee (${100 * DROP})`); assert.ok(fall <= FALL, `${sd} column ${j}: past the knee it goes ${fall.toFixed(0)} deg off straight down (${FALL})`); } }
 });
 for (const [body, clips] of [['adult', ['Move_Run_Fwd_Loop', 'Act_Jump_Once', 'Trans_JumpWindow_Once']], ...['heavy', 'thin', 'elder', 'child'].map(b => [b, ['Move_Run_Fwd_Loop']])]) for (const clip of clips) for (const n of ['doctor', 'chef', 'dress']) test(`cloth in a hurry: ${n} on ${body}, ${clip}`, { todo: HURRY }, async () => {
   const bad = []; await play(look(n), body, { clip }, { each: (f, S, P) => { for (const d of S.wardrobe.drapes) bad.push(...clothFaults(S, d, P, f, 'fast')); } }); assert.deepEqual(summary(bad), []);

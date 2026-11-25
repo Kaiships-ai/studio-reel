@@ -69,15 +69,29 @@ export class Guide {
     const turn = l => { const t = new THREE.Quaternion().setFromUnitVectors(V(0, -1, 0), l.axis), a = 2 * Math.acos(Math.min(1, Math.abs(t.w))); return new THREE.Quaternion().slerp(t, a < 1e-4 ? 0 : 1 + ((soft(a) - soft(0)) / a - 1) * (1 - sstep(...SLACK.all, a))).multiply(qB); };
     const qL = turn(L), qR = turn(R), hike = 1 - (1 - HIKE.to) * sstep(...HIKE.from, Math.abs(L.thigh - R.thigh)), at_ = (k, j, v) => { const i0 = Math.min(rows - 2, Math.floor(k)); return v.copy(rest[i0 * nc + j]).lerp(rest[(i0 + 1) * nc + j], k - i0); };
     // past a raised knee the cloth hangs: straight down, or along a shin that goes forward of that
-    const drop = [L, R].map(l => ({ w: sstep(0.5, 1.0, l.thigh), q: new THREE.Quaternion().setFromAxisAngle(side, -Math.max(0, Math.min(1.2, l.shin))).multiply(qB) }));
-    for (let i = 0; i < rows; i++) { const u = i / (rows - 1), t = sstep(0, 0.35, u); for (let j = 0; j < nc; j++) {
-      const ph = this.phi(j, u), c = Math.cos(ph), wR = sstep(-1, 1, 1.25 * Math.sin(ph)), id = i * nc + j; q.copy(qL).slerp(qR, wR); O.push(V(Math.sin(ph), 0, c).applyQuaternion(i ? q : qB));   // (off a leg it goes square to that leg, not to the cloth's own bend at the waist)
+    const drop = [L, R].map(l => ({ w: sstep(0.5, 1.0, l.thigh), q: new THREE.Quaternion().setFromAxisAngle(side, -Math.max(0, Math.min(1.2, l.shin))).multiply(qB) })), K = new Float64Array(rows * nc);
+    const wRof = ph => sstep(-1, 1, 1.25 * Math.sin(ph)), past = (p, l) => sstep(-0.075, 0.02, e.subVectors(p, l.hip).dot(l.axis) - l.long);
+    for (let i = 0; i < rows; i++) { const u = i / (rows - 1), t = sstep(0, 0.35, u);
+      // how far each column of this row hangs, shared with the columns beside it (a column hanging beside one laid along the thigh
+      // made a corner in the hem at the knee's outer side)
+      if (i) { for (let j = 0; j < nc; j++) { const p = P[(i - 1) * nc + j], wR = wRof(this.phi(j, u)); K[i * nc + j] = drop[0].w * past(p, L) * (1 - wR) + drop[1].w * past(p, R) * wR; }
+        for (let pass = 0; pass < 2; pass++) { const r = K.slice(i * nc, (i + 1) * nc), at = j => r[this.wrap ? (j + nc) % nc : Math.max(0, Math.min(nc - 1, j))]; for (let j = 0; j < nc; j++) K[i * nc + j] = (at(j - 1) + 2 * r[j] + at(j + 1)) / 4; } }
+      for (let j = 0; j < nc; j++) {
+      const ph = this.phi(j, u), c = Math.cos(ph), wR = wRof(ph), id = i * nc + j; q.copy(qL).slerp(qR, wR); O.push(V(Math.sin(ph), 0, c).applyQuaternion(i ? q : qB));   // (off a leg it goes square to that leg, not to the cloth's own bend at the waist)
       if (!i) { P.push(top[j].clone()); continue; }
-      const p = P[id - nc], past = l => sstep(-0.075, 0.02, e.subVectors(p, l.hip).dot(l.axis) - l.long), k = drop[0].w * past(L) * (1 - wR) + drop[1].w * past(R) * wR;
+      const p = P[id - nc], k = K[id];
       qq.copy(qB).slerp(q, t); if (k > 0) { hang.copy(drop[0].q).slerp(drop[1].q, wR); qq.slerp(hang, k); O[id].lerp(e.set(Math.sin(ph), 0, c).applyQuaternion(hang), k).normalize(); }
-      P.push(at_(i * hike, j, V()).sub(at_((i - 1) * hike, j, d)).applyQuaternion(qq).add(p)); } }
-    // a lap lies on the thighs: the front stands clear of them from the start (below a thigh's line it would be turned out on its far side)
-    for (let i = 1; i < rows; i++) for (let j = 0; j < nc; j++) { const u = i / (rows - 1), ph = this.phi(j, u), c = Math.cos(ph); if (c > 0) P[i * nc + j].addScaledVector(O[i * nc + j], Math.max(0, LIFT + this.lift - (this.y - 0.024)) * sstep(0.95, 1.4, L.thigh + (R.thigh - L.thigh) * sstep(-1, 1, 1.25 * Math.sin(ph))) * sstep(0, 0.10, u) * Math.min(1, 1.6 * c)); }
+      // (hanging off a knee, a row goes on down from the one above no further forward than the shin does: the rest shape's flare, out
+      // from the garment's middle, is forward past a knee, and the hem jutted out. Its spread to the sides is kept, so the hem stays
+      // round)
+      const s = at_(i * hike, j, V()).sub(at_((i - 1) * hike, j, d)), sl = s.length(); s.applyQuaternion(qq);
+      if (k > 0) { const fd = e.set(0, -1, 0).applyQuaternion(hang).dot(L.F) * sl, f = s.dot(L.F); if (f > fd) s.addScaledVector(L.F, -k * (f - fd)).setLength(sl); } P.push(s.add(p)); } }
+    // a lap lies on the thighs: the front stands clear of them from the start (below a thigh's line it would be turned out on its far side).
+    // What hangs past a knee is carried with the lap above it, not lifted out along its own way out (that is forward there: the
+    // hem jutted out over the knees like a tray)
+    const lv = P.map(() => V());
+    for (let i = 1; i < rows; i++) for (let j = 0; j < nc; j++) { const u = i / (rows - 1), ph = this.phi(j, u), c = Math.cos(ph), id = i * nc + j, a = c > 0 ? Math.max(0, LIFT + this.lift - (this.y - 0.024)) * sstep(0.95, 1.4, L.thigh + (R.thigh - L.thigh) * sstep(-1, 1, 1.25 * Math.sin(ph))) * sstep(0, 0.10, u) * Math.min(1, 1.6 * c) : 0;
+      lv[id].copy(O[id]).multiplyScalar(a * (1 - K[id])).addScaledVector(lv[id - nc], K[id]); P[id].add(lv[id]); }
     return { P, O };
   }
   // drawn taut: out of the legs and the solids, then no row further from the one above it and no edge longer than at rest, a
@@ -112,7 +126,7 @@ export class Guide {
     const { rows, nc, wrap } = this, long = new Float64Array(nc).fill(1), c = V(), kx = V();
     for (const l of legs) { const w = back(l); if (w <= 0) continue; const a = l.knee.clone().lerp(l.ankle, 0.25);
       for (let j = 0; j < nc; j++) { let first = -1, close = 1e9; for (let i = 1; i < rows; i++) for (let f = 0.25; f <= 1; f += 0.25) { c.copy(P[(i - 1) * nc + j]).lerp(P[i * nc + j], f); near(c, a, l.ankle, kx); const gap = kx.distanceTo(c); if (gap < SHIN_R) { if (first < 0) first = i - 1 + f; close = Math.min(close, gap); } }
-        if (first > 0) long[j] = Math.min(long[j], 1 - w * sstep(0, 0.02, SHIN_R - close) * (1 - Math.max(0.52, (first - 1.2) / (rows - 1)))); } }   // (eased in as it comes near)
+        if (first > 0) long[j] = Math.min(long[j], 1 - w * sstep(0, 0.06, SHIN_R - close) * (1 - Math.max(0.52, (first - 1.2) / (rows - 1)))); } }   // (eased in over 6 cm as it comes near: over 2 cm a longer hem jerked up 8 cm a frame a frame on a child)
     if (!long.some(x => x < 1)) return;
     const L = j => long[wrap ? (j + nc) % nc : Math.max(0, Math.min(nc - 1, j))];
     for (const dir of [1, -1]) for (let a = 0; a < 2 * nc; a++) { const j = dir > 0 ? a % nc : nc - 1 - (a % nc); long[j] = Math.min(long[j], L(j - dir) + 0.045); }
@@ -207,7 +221,8 @@ export function limbLine(mesh, from = 0, step = 2) {
   const A = mesh.geometry.attributes.position.array, n = A.length / 30, out = []; for (let i = from; i < n; i += i + step < n || i === n - 1 ? step : n - 1 - i) { const v = V(); for (let j = 0; j < 10; j++) { const k = 3 * (i * 10 + j); v.x += A[k]; v.y += A[k + 1]; v.z += A[k + 2]; } out.push(v.divideScalar(10)); if (i === n - 1) break; }
   return out;
 }
-const legLine = m => limbLine(m, 2, 2);
+// every ring: every second one cut the corner of a bent knee by 9 mm, and a seated lap lay in the drawn thigh beside it
+const legLine = m => limbLine(m, 2, 1);
 // Raised thighs with a garment over them are a solid to the arms: a lap, as wide as the cloth lies, that a hand or a forearm rests
 // on. It knows nothing of the cloth's own points, so a hand slides over it and never steps. q (root m) must stand R over the
 // thighs' plane: -> the move that takes it there, or null. Eased in as the thighs rise (standing, the cloth gives way to an arm
@@ -233,7 +248,8 @@ export function drape(S, part, o = {}) {
     for (const [a, b] of [[i + 1, j + 1], [i + 1, j - 1]]) if (ok(a, b)) { const k = id(a, jw(b)); edges.push([id(i, j), k, SC * R0[id(i, j)].distanceTo(R0[k]), 1.08]); }
   }
   const pin = new Uint8Array(n); for (let j = 0; j < cols; j++) pin[j] = 1;
-  const C = new Drape(n, edges, bends, pin, { bend: 0, damp: o.damp ?? 0.06, iters: 6, margin: 0, tether: o.tether ?? 0.12, reach: o.reach ?? 0.035 });
+  // damp 0.2: a hem below the knee, pushed by a thin or a child's shin in a stride, jerked 6-8 cm a frame a frame at 0.06
+  const C = new Drape(n, edges, bends, pin, { bend: 0, damp: o.damp ?? 0.2, iters: 6, margin: 0, tether: o.tether ?? 0.12, reach: o.reach ?? 0.035 });
   C.tw = new Float64Array(n); for (let i = 0; i < rows; i++) for (let j = 0; j < cols; j++) C.tw[id(i, j)] = 1 - 0.7 * i / Math.max(1, rows - 1);
   const ST = { t: null, was: null, stepped: false }, M = new THREE.Matrix4();
   // a point bent with the torso (body space -> root metres)
@@ -313,6 +329,7 @@ export function drape(S, part, o = {}) {
     }
     ST.was = { world: now.world, legs: now.legs, arms: now.arms, c0 }; ST.t = t; ST.stepped = true; ST.fresh = fresh;
     const Pd = Array.from({ length: n }, (_, k) => V(C.x[3 * k], C.x[3 * k + 1], C.x[3 * k + 2]).applyMatrix4(now.RWi)); if (G) G.eased({ P: Pd });   // (drawn eased as the guide is: a crease the sim leaves in one row is shared out)
+    if (G && now.solids.length) for (const p of Pd) { const w = p.clone().applyMatrix4(now.RW); let hit = false; for (const b of now.solids) hit = outOfBox(w, b, SOLID_CLEAR * SC) || hit; if (hit) p.copy(w.applyMatrix4(now.RWi)); }   // (and the easing does not take it back into a seat's edge it is wrapped round)
     draw(Pd);
   }
   const fringe = o.fringe ? makeFringe(root, rows, cols, o.fringe) : null;

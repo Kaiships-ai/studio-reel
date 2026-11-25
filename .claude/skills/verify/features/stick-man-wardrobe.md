@@ -37,4 +37,8 @@ A crowd: `costume: ['sweater:' + outfit(i)]` (`outfit` from wardrobe.js).
   ik (`wardrobe.js` `S.pose2`, `drape.js` `lapOut`); a hand that holds a prop or is on its own ik target is never moved.
 - Below the waist the garment is each column hinged at its waist point and turned with the thighs, then drawn taut over the
   legs as drawn (`Guide.laid`, `taut`); a shin kicked back raises the hem over it (`cleared`).
+- Over a seated knee the cloth falls toward the shin (test: hem 8 cm or more below the knee, within 25 deg of straight down
+  from where it crosses the knee). That needs length: a knee-length skirt has ~9 cm past a seated knee, so dress and skirt
+  are 0.53 of the leg, the apron 0.50, the coat 0.56. Past a knee a row goes no further forward than the shin (`laid`);
+  the cloth clears every ring of the drawn leg (every second ring cut a bent knee's corner by 9 mm).
 - `thinHull` takes the torso's own outline in under a garment; it must run before the figure's first bent pose.

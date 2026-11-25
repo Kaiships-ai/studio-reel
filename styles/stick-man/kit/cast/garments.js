@@ -86,7 +86,7 @@ export const GARMENTS = {
     build(X, c) { const { F } = X; lapels(X, c, 0.050, 0.86); for (const y of [0.160, 0.118]) button(X, 0.030, y, tone(c, 0.35), 0.0115);
       X.pocket = { s0: -0.142, s1: -0.072, top: 0.232 }; pocket(X, c, -0.142, -0.072, 0.232, 0.142); X.cover(0.112);
       // the coat's line goes straight on from the shell's widest height: one garment, buttoned over the hip, then a slit
-      X.cloth(new Guide(F, { y: 0.112, len: 0.515 * F.leg, gap: u => 0.02 + 0.13 * sstep(0.3, 1, u), cols: 28, rows: 12, d: -0.002, flare: 0.05, hem: [0.148, 0.215], lift: 0.027 }),
+      X.cloth(new Guide(F, { y: 0.112, len: 0.56 * F.leg, gap: u => 0.02 + 0.13 * sstep(0.3, 1, u), cols: 28, rows: 12, d: -0.002, flare: 0.05, hem: [0.148, 0.215], lift: 0.027 }),
         { rgb: c, inner: mul(c, 0.6), ink: 0.0245, topInk: 1, shade: folds(7, 0.07), paint: (g, w, h) => { inkOn(g, c, 9); for (const x of [0.135, 0.755]) { g.fillStyle = css(mul(c, 0.86)); g.fillRect(x * w, 0.30 * h, 0.11 * w, 0.34 * h); g.strokeRect(x * w, 0.30 * h, 0.11 * w, 0.34 * h); g.beginPath(); g.moveTo(x * w, 0.36 * h); g.lineTo((x + 0.11) * w, 0.36 * h); g.stroke(); }
           g.lineWidth = 6; g.beginPath(); g.moveTo(0, 0.93 * h); g.lineTo(w, 0.93 * h); g.stroke(); } });
       X.sleeve(c, { cuff: mul(c, 0.8), shirt: X.has('shirt') }); } },
@@ -136,7 +136,7 @@ export const GARMENTS = {
     build(X, c) { const ac = accentOf(X.arg, UNIFORM.dark);
       // a flat round collar from the front opening to the back of the neck, its front ends rounded
       neckband(X, th => { const g = Math.min(Math.abs(th), 2 * PI - Math.abs(th)), w = 0.058 * Math.sqrt(Math.max(0.02, Math.min(1, (g - 0.04) / 0.32))); return [[-w, 0.003], [-w + 0.006, 0.011], [-0.006, 0.013], [0.006, 0.010], [0.006, 0.003]]; }, wearMat(ac), INK.mid, 0.045, 2 * PI - 0.045); button(X, 0, 0.345, ac, 0.011);
-      sash(X, ac, true); skirtCloth(X, c, { len: 0.484, paint: (g, w, h) => { g.fillStyle = css(ac); for (let i = 0; i < 20; i++) for (let j = 0; j < 3; j++) { g.beginPath(); g.ellipse((i + (j % 2 ? 0.5 : 0)) / 20 * w, (0.22 + 0.24 * j) * h, 9, 8, 0, 0, 7); g.fill(); } g.fillRect(0, 0.90 * h, w, 0.10 * h); inkOn(g, c, 5); g.beginPath(); g.moveTo(0, 0.90 * h); g.lineTo(w, 0.90 * h); g.stroke(); } });
+      sash(X, ac, true); skirtCloth(X, c, { len: 0.54, paint: (g, w, h) => { g.fillStyle = css(ac); for (let i = 0; i < 20; i++) for (let j = 0; j < 3; j++) { g.beginPath(); g.ellipse((i + (j % 2 ? 0.5 : 0)) / 20 * w, (0.22 + 0.24 * j) * h, 9, 8, 0, 0, 7); g.fill(); } g.fillRect(0, 0.90 * h, w, 0.10 * h); inkOn(g, c, 5); g.beginPath(); g.moveTo(0, 0.90 * h); g.lineTo(w, 0.90 * h); g.stroke(); } });
       X.sleeve(c, { to: armOut(X.F) + 1.9, cuff: ac, profile: u => 1.05 + 0.5 * Math.sin(PI * Math.min(1, 0.15 + u)) }); } },
 };
 function trousersLow(p) { p.band(Y0 - 0.01, 0.0, UNIFORM.charcoal); p.hline(0.0, LINE, INK_RGB); }
@@ -145,7 +145,7 @@ function trousersLow(p) { p.band(Y0 - 0.01, 0.0, UNIFORM.charcoal); p.hline(0.0,
 export const APRON_SPAN = 78 * PI / 180, APRON_Y = 0.056;
 export const ITEMS = {
   skirt(X, a) { const c = colourOf(a, PALETTES.plum.main); X.add(inked(sweep(X.F, [[0.030, 0], [0.030, 0.013], [0.066, 0.013], [0.066, 0]], -PI, PI, 96), wearMat(tone(c, 0.6)), INK.mid)); button(X, 0, 0.048, tone(c, 0.35), 0.010, 0.013);
-    skirtCloth(X, c, { len: 0.484, flare: 0.22, shade: folds(12, 0.16), paint: (g, w, h) => { inkOn(g, c, 5); for (let i = 0; i < 16; i++) { g.beginPath(); g.moveTo((i + 0.5) / 16 * w, 0.12 * h); g.lineTo((i + 0.5) / 16 * w, 0.96 * h); g.stroke(); } } }); },
+    skirtCloth(X, c, { len: 0.54, flare: 0.22, shade: folds(12, 0.16), paint: (g, w, h) => { inkOn(g, c, 5); for (let i = 0; i < 16; i++) { g.beginPath(); g.moveTo((i + 0.5) / 16 * w, 0.12 * h); g.lineTo((i + 0.5) / 16 * w, 0.96 * h); g.stroke(); } } }); },
   // one piece: the bib's foot is as wide as the skirt's top (APRON_SPAN either side of the front) and the skirt is sewn to it
   apron(X, a, b) { if (b) oneOf('apron:' + a, b, ['low']); const c = colourOf(a, PALETTES.slate.main), F = X.F, top = b === 'low' ? 0.205 : 0.262, yj = APRON_Y, wAt = (y, th) => { let s = 0, t = 0; while (t < th) { s += 0.01 * Math.hypot(at(F, t + 0.01, y).x - at(F, t, y).x, at(F, t + 0.01, y).z - at(F, t, y).z) / 0.01; t += 0.01; } return s; }, j = wAt(yj, APRON_SPAN) / F.k, h = Math.min(0.092, 0.5 * j);
     const rows = [[top, 1], [top - 0.02, 1.02], [0.150, 1.10], [0.110, 1.30], [0.084, 1.62]].map(([y, k]) => [y, -Math.min(j, h * k), Math.min(j, h * k)]); rows.push([0.068, -0.92 * j, 0.92 * j], [yj - 0.004, -j, j]);
@@ -153,7 +153,7 @@ export const ITEMS = {
     for (const sg of [-1, 1]) X.add(inked(plate(F, 0, sided([[0.392, 0.070, 0.092], [top - 0.004, h - 0.026, h - 0.004]], sg), 0.011, 0.016, 2), wearMat(tone(c, 0.6)), INK.small));
     X.add(inked(sweep(F, [[yj - 0.016, 0.011], [yj - 0.016, 0.021], [yj + 0.016, 0.021], [yj + 0.016, 0.011]], -PI, PI, 96), wearMat(tone(c, 0.6)), INK.small)); X.add(inked(disc(F, PI, yj, 0.024, 0.012, 0.021), wearMat(tone(c, 0.6)), INK.small));
     X.add(inked(plate(F, 0, [[Math.min(0.172, top - 0.034), -0.056, 0.056], [0.098, -0.056, 0.056]], 0.017, 0.023, 6), wearMat(tone(c, 0.72)), INK.mid)); X.cover(yj);
-    X.cloth(new Guide(F, { y: yj, len: 0.462 * F.leg, span: APRON_SPAN, cols: 18, rows: 12, d: 0.014, flare: 0.10 }), { rgb: c, inner: mul(c, 0.5), shade: folds(6, 0.10), ink: 0.018, topInk: 0.5,
+    X.cloth(new Guide(F, { y: yj, len: 0.50 * F.leg, span: APRON_SPAN, cols: 16, rows: 12, d: 0.014, flare: 0.10 }), { rgb: c, inner: mul(c, 0.5), shade: folds(6, 0.10), ink: 0.018, topInk: 0.5,
       paint: (g, w, hh) => { inkOn(g, c, 7); g.beginPath(); g.moveTo(0, 0.90 * hh); g.lineTo(w, 0.90 * hh); g.stroke(); g.strokeRect(0.30 * w, 0.16 * hh, 0.40 * w, 0.40 * hh); g.beginPath(); g.moveTo(0.5 * w, 0.16 * hh); g.lineTo(0.5 * w, 0.56 * hh); g.stroke(); } }); },
   scarf(X, a) { const c = colourOf(a, PALETTES.mustard.main), ac = accentOf(a, UNIFORM.dark), F = X.F, list = [c, c, ac];
     neckband(X, [[-0.066, 0], [-0.074, 0.016], [-0.056, 0.032], [-0.022, 0.033], [0.004, 0.016], [0.006, 0]], wearMat([1, 1, 1], { map: stripes(list, 'u', 8) }), INK.big);
