@@ -35,6 +35,12 @@ flex in every frame; `--sheet` renders each clip's worst pose from the front, 3/
   `refbench.mjs` "motion while the camera is still" (Rick band 1.21-3.67), and check it reads: a blind A|B of 30-frame
   strips at 30 fps against life 0, with no jitter call.
 
+- Acted keys: keys a helper writes one a frame (`raw`) get no drag, settle or hold life; `acted: true` (or a dose 0-1) on
+  them gives it back (`engine/motion.js` `ACTED`): the neck ~2 f after the spine, the arms 4-5 f, a 5-10 % overshoot that
+  settles within 11 f of the stop, the moving hold by the body's own stillness (a seated figure in a moving car breathes).
+  Hair and headwear get nothing, a clip key never takes it, a track without it plays as before:
+  `node --test test/unit/stick-acted-keys.test.mjs`.
+
 ## How to get to it (user POV)
 
 At gate 4 of a stick-man film: `node styles/stick-man/tools/render/shot.mjs --film films/<slug> --frames <first>-<last> --dbg

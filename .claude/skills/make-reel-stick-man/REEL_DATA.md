@@ -124,6 +124,7 @@ anim: { eng: polish([ hold(0, { ...KNEEL, pos: E0, yaw: -120, expr: 'sly', look:
 | `antic` | 0.1-0.35: a wind-up against the move; it shortens the action itself, so give the move enough `t` |
 | `t` | on the next key: move length in frames (default 7, strokes 4, big arm moves 14-22, a take 9) |
 | `cycle` | `{ 'channel': [amplitude, period, phase] }` on top until the next key (breath, tremble) |
+| `raw`, `acted` | for keys a helper writes one a frame. `raw: true` = played as captured: no drag, no settle, no hold life, no balance solve (the engine's own layers are off, so authored keys play dead). Add `acted: true` to authored ones: the neck comes ~2 f after the spine, the arms 4-5 f, each settles, a hold breathes (per figure); a dose 0-1 (`0.3`: a held breath) fades over 12 f. Never on a captured run. A channel a key leaves out holds; a helper that fills it from a base pose snaps it back |
 | `expr`, `look` | the face (EXPR names; how each change is timed: [Face timing](#face-timing)) and the gaze target (an actor, a prop, `camera`) |
 | `take`, `small`, `exprSpeed` | on a key with `expr`: `take: true` makes any face a take, `take: false` makes a take face a fast change; `small: true` = a small take (no anticipation, 10 f); `exprSpeed: 'fast' \| 'normal' \| 'slow'` overrides the class. Beats take the same three fields |
 
