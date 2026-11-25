@@ -1,12 +1,17 @@
 // Heads-up overlays (act `overlays`, drawn by engine/overlays.js): a countdown clock, a threat track, a two-way vote
-// card and an edge flash. Sizes are px at 1080 wide; positions are shares of the frame. Each kind has a painter and a
-// layout: the layout returns the boxes a viewer reads (shares of the frame), so the text check sees exactly what is drawn.
+// card, an edge flash and an end card. Sizes are px at 1080 wide; positions are shares of the frame. Each kind has a
+// painter and a layout: the layout returns the boxes a viewer reads (shares of the frame), so the text check sees
+// exactly what is drawn.
 //   { kind: 'clock', from, to, keys: [[f, seconds], ...], at, size, label, labelSize, color, alarm, alarmColor, dropMin,
 //     tags: [[f0, f1, text], ...], slots: { n, keys: [[f, count], ...], icon: 'bag' | 'dot', size }, slam, edge }
 //   { kind: 'threat', from, to, steps: [{ f, who, word, level, color, whoColor }, ...], at, icon: 'car' | 'dot', you, hot }
 //   { kind: 'vote', from, to, choices: [a, b], hits: [fa, fb], again: [fa, fb], or, at, size, colors, beat, tint,
 //     lines: [{ f, to, text, cta, row }] }
 //   { kind: 'edge', from, to, color, peak, band }
+//   { kind: 'endcard', from, to, lines: [{ f, to, text, cta, size }], at, free }: the end card, a stack of cards (a call to
+//     action in yellow) that sits inside the text-safe box unless `free`: long lines shrink to its width, a stack placed
+//     past its edge is moved back in, a stack too tall shrinks to its height. Kept in by default because the H2 V2.1
+//     1080 copy put DECIDES EPISODE 2 at y 77-83 % and half of COMMENT in the app's bottom band
 import { smooth } from './mathx.js';
 import { TEXT_SAFE } from './safezone.js';
 
@@ -243,5 +248,39 @@ export function hudKinds({ width, height, k, rrect }) {
 
   function edge(g, o, f) { const u = (f - o.from) / Math.max(1, o.to - o.from); edgeFlash(g, (o.peak ?? 0.3) * (1 - u) ** 1.5, o.color ?? RED, o.band ?? 0.12); }
 
-  return { kinds: { clock, threat, vote, edge }, boxes: { clock: clockBoxes, threat: threatBoxes, vote: voteBoxes, edge: () => [] }, colors: { INK, WHITE, YELLOW, RED, BLUE, GREEN } };
+  // the end card's stack: every line's size and centre, the same on every frame (a card that pops in never moves the others)
+  const endGeo = (g, o) => {
+    const [ax, ay] = o.at ?? [0.465, 0.55], fitW = (TEXT_SAFE.x1 - TEXT_SAFE.x0 - 0.02) * W;
+    const fitH = (TEXT_SAFE.y1 - TEXT_SAFE.y0 - 0.02) * H, floor = 30 * k;
+    const sized = (l, px) => { g.font = font(px); return { ...l, px, w: g.measureText(l.text).width + px, h: 1.6 * px }; };
+    let gap = 18 * k, rows = (o.lines || []).map(l => {
+      let r = sized(l, (l.size ?? (l.cta ? 84 : 66)) * k);
+      while (r.w > fitW && r.px > floor) r = sized(l, r.px * 0.94);
+      return r;
+    });
+    const height = () => rows.reduce((t, r) => t + r.h, 0) + gap * Math.max(0, rows.length - 1);
+    while (!o.free && height() > fitH + 0.5 && rows.some(r => r.px > floor)) {
+      const s = fitH / height(); gap *= s; rows = rows.map(r => r.px > floor ? sized(r, Math.max(floor, r.px * s)) : r);
+    }
+    const total = height(), wide = Math.max(0, ...rows.map(r => r.w));
+    let top = ay * H - total / 2, cx = ax * W;
+    if (!o.free) {
+      top = Math.max((TEXT_SAFE.y0 + 0.01) * H, Math.min(top, (TEXT_SAFE.y1 - 0.01) * H - total));
+      const mid = (TEXT_SAFE.x0 + TEXT_SAFE.x1) / 2 * W;
+      cx = wide <= (TEXT_SAFE.x1 - TEXT_SAFE.x0) * W
+        ? Math.max(TEXT_SAFE.x0 * W + wide / 2, Math.min(cx, TEXT_SAFE.x1 * W - wide / 2))
+        : wide <= W ? Math.max(wide / 2, Math.min(mid, W - wide / 2)) : W / 2;
+    }
+    let y = top; return rows.map(r => { const cy = y + r.h / 2; y += r.h + gap; return { ...r, cx, cy }; });
+  };
+  const shown = (l, f) => f >= (l.f ?? -Infinity) && (l.to == null || f <= l.to);
+  function endcard(g, o, f) {
+    for (const r of endGeo(g, o)) {
+      if (!shown(r, f)) continue;
+      const age = f - (r.f ?? o.from), s = age < 6 ? 1 + 0.18 * Math.sin(Math.PI * age / 6) * (1 - age / 6) - Math.pow(1 - age / 6, 3) : 1;
+      card(g, r.text, r.cx, r.cy, r.px, r.cta ? INK : WHITE, r.cta ? '#face1e' : '#121012', Math.max(0.01, s));
+    }
+  }
+  const endcardBoxes = (g, o, f) => endGeo(g, o).filter(r => shown(r, f)).map(r => ({ text: r.text, box: cardBox(g, r.text, r.cx, r.cy, r.px) }));
+  return { kinds: { clock, threat, vote, edge, endcard }, boxes: { clock: clockBoxes, threat: threatBoxes, vote: voteBoxes, edge: () => [], endcard: endcardBoxes }, colors: { INK, WHITE, YELLOW, RED, BLUE, GREEN } };
 }

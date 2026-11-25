@@ -152,3 +152,42 @@ test('edge: a flash in the outer band that decays over its span', () => {
   assert.equal(a0.length, 4, 'four sides'); assert.ok(a0[0].a > a9[0].a);
   assert.ok(a0.every(r => r.w <= 0.12 * 1080 + 1 || r.h <= 0.08 * 1920 + 1), 'only the outer band');
 });
+
+test('endcard: by default every card sits inside the text-safe box and off the app bands; long lines shrink to fit', () => {
+  const lines = [{ f: 0, text: 'COMMENT YOUR GUESS', cta: true }, { f: 4, text: 'PART 2 DECIDES WHO WAS RIGHT ALL ALONG' }];
+  for (const at of [undefined, [0.465, 0.8], [0.95, 0.55]]) {
+    const B = boxes(make([{ kind: 'endcard', from: 0, to: 60, lines, ...(at ? { at } : {}) }]), 30);
+    assert.equal(B.length, 2);
+    for (const b of B) assert.ok(b.box[0] >= TEXT_SAFE.x0 && b.box[2] <= TEXT_SAFE.x1 && b.box[1] >= TEXT_SAFE.y0 && b.box[3] <= TEXT_SAFE.y1, `${at} ${b.text} ${b.box}`);
+  }
+});
+
+test("endcard: a card appears on its frame without moving the others; free keeps the film's own place", () => {
+  const o = { kind: 'endcard', from: 0, to: 60, lines: [{ f: 0, text: 'FOLLOW', cta: true }, { f: 20, text: 'FOR PART 2' }] };
+  const at10 = boxes(make([o]), 10), at30 = boxes(make([o]), 30);
+  assert.equal(at10.length, 1); assert.equal(at30.length, 2); assert.deepEqual(at10[0].box, at30[0].box);
+  const low = boxes(make([{ ...o, at: [0.465, 0.8], free: true }]), 30);
+  assert.ok(low[1].box[3] > TEXT_SAFE.y1, 'a free stack stays where the film put it (the text gate then says so)');
+});
+
+test('endcard: a stack taller than the text-safe box shrinks until its last card is above the app bottom bar', () => {
+  const inSafe = b => b.box[0] >= TEXT_SAFE.x0 && b.box[2] <= TEXT_SAFE.x1 && b.box[1] >= TEXT_SAFE.y0 && b.box[3] <= TEXT_SAFE.y1;
+  const seven = Array.from({ length: 7 }, (_, i) => ({ f: 0, text: `CARD ${i + 1}`, cta: true }));
+  const B = boxes(make([{ kind: 'endcard', from: 0, to: 60, lines: seven }]), 30);
+  assert.equal(B.length, 7);
+  for (const b of B) assert.ok(inSafe(b), `${b.text} ${b.box}`);
+  const five = boxes(make([{ kind: 'endcard', from: 0, to: 60, lines: seven.slice(0, 5) }]), 30);
+  assert.ok(Math.abs(five[0].box[1] - 0.2525) < 0.001 && Math.abs(five[4].box[3] - 0.64) < 0.001, `a stack that fits keeps its size: ${five[0].box[1]} ${five[4].box[3]}`);
+});
+
+test('endcard: shrinking a tall stack never enlarges a card the film set below the floor', () => {
+  const small = { f: 0, text: 'small print', size: 20 }, cta = Array.from({ length: 7 }, (_, i) => ({ f: 0, text: `CARD ${i + 1}`, cta: true }));
+  const alone = boxes(make([{ kind: 'endcard', from: 0, to: 60, lines: [small] }]), 30)[0], inTall = boxes(make([{ kind: 'endcard', from: 0, to: 60, lines: [small, ...cta] }]), 30)[0];
+  assert.ok(Math.abs((inTall.box[3] - inTall.box[1]) - (alone.box[3] - alone.box[1])) < 0.002, `${inTall.box} vs ${alone.box}`);
+});
+
+test('endcard: a line too wide for the safe box even at the smallest size stays on the frame', () => {
+  const text = 'X'.repeat(56);
+  const [b] = boxes(make([{ kind: 'endcard', from: 0, to: 60, lines: [{ f: 0, text }] }]), 30);
+  assert.ok(b.box[0] >= 0 && b.box[2] <= 1, `${b.box}`);
+});
