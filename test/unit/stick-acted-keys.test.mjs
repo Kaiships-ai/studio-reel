@@ -18,7 +18,7 @@ const half = (fr, c) => { let f = 0; while (fr[f][c] < HI[c] / 2) f++; return f 
 const settled = (fr, c) => { let s = 0; fr.forEach((o, f) => { if (Math.abs(o[c] - HI[c]) > 0.05 * HI[c]) s = f + 1; }); return s - F1; };
 const range = (fr, c, a, b) => { const v = fr.slice(a, b + 1).map(o => o[c]); return Math.max(...v) - Math.min(...v); };
 
-test('acted: the neck comes about 2 frames after the spine, the arms 4-5', () => {
+test('acted: the neck comes about 2 frames after the spine, the upper arm about 4, the forearm about 5.5', () => {
   const fr = play(keys({ acted: true }), quiet), lag = c => half(fr, c) - half(fr, 'spine.bend');
   for (const [c, lo, hi] of [['neck.nod', 1.5, 3], ['armR.raise', 3, 5], ['armR.elbow', 4, 6]])
     assert.ok(lag(c) >= lo && lag(c) <= hi, `${c} ${lag(c).toFixed(1)} frames behind the spine, want ${lo}-${hi}`);
@@ -56,7 +56,8 @@ test('a channel a per-frame key leaves out holds its last value, acted or not', 
   }
 });
 
-test('acted: hair and headwear get no motion of their own', () => {
+// guards the engine's channel table only; that the drawn hair and caps stay rigid on the head is stick-rigid-hair.test.mjs
+test('acted: no hair or headwear channel is sprung', () => {
   const ks = keys({ acted: true }).map(k => ({ ...k, hair: { swing: k.f < 30 ? 0 : 20 }, hat: { tilt: k.f < 30 ? 0 : 20 } }));
   const tr = compileTrack(ks, {}, {}), fr = playActor(tr, 0, END);
   for (let f = 0; f <= END; f++) for (const c of ['hair.swing', 'hat.tilt']) assert.equal(fr[f][c], keyed(tr, f)[c], `${c} f${f}`);
@@ -76,6 +77,37 @@ test('a library clip never takes the layer: acted on a clip key changes nothing,
   const run = keys({ acted: true }, 10), cap = placeClip({ ...clip, f: 11 }).keys.map(k => ({ ...k, raw: true }));
   const tr = compileTrack([...run, ...cap], {}, {}), fr = playActor(tr, 0, 80);
   for (let f = 30; f <= 80; f++) assert.ok(Math.abs(fr[f]['neck.nod'] - keyed(tr, f)['neck.nod']) < 1e-9, `f${f}`);
+});
+
+test('acted: a dose that is not true, false or 0..1 is refused by name, never played', () => {
+  for (const bad of [2, 5, -1, NaN, '1', Infinity]) assert.throws(() => compileTrack(keys({ acted: bad }), {}, {}), /acted .* at f 0: true, false or a dose 0\.\.1/, String(bad));
+  for (const ok of [true, false, 0, 0.3, 1, null, undefined]) assert.doesNotThrow(() => compileTrack(keys({ acted: ok }), {}, {}), String(ok));
+});
+
+test('acted: an anticipation inside an acted move keeps the layer on', () => {
+  const sparse = [{ f: 0, ...pose(0) }, { f: F0, ...pose(0) }, { f: 40, ...pose(1), antic: 0.5 }, { f: END, ...pose(1) }].map(k => ({ raw: true, acted: true, ...k }));
+  const tr = compileTrack(sparse, {}, {}, quiet), fr = playActor(tr, 0, END);
+  assert.ok(tr.some(t => t.antic), 'the move has its anticipation key');
+  // the same curve written one key a frame has no antic key in it: it must play the same
+  const dense = play(keys({ acted: true }).map(k => { const m = keyed(tr, k.f); return { ...k, spine: { bend: m['spine.bend'] }, neck: { nod: m['neck.nod'] }, armR: { raise: m['armR.raise'], elbow: m['armR.elbow'] } }; }), quiet);
+  for (let f = 0; f <= END; f++) for (const c of Object.keys(HI)) assert.ok(Math.abs(fr[f][c] - dense[f][c]) < 1e-6, `${c} f${f}: ${fr[f][c].toFixed(1)}, one key a frame ${dense[f][c].toFixed(1)}`);
+});
+
+test('acted: at a snap the layer is on or off at once, on either side of the cut', () => {
+  const cut = (a, b) => keys().map(k => ({ ...k, acted: k.f < F0 ? a : b, ...(k.f === F0 ? { ease: 'snap' } : {}) }));
+  const whole = play(cut(true, true), quiet), onAtCut = play(cut(false, true), quiet), off = cut(true, false), tr = compileTrack(off, {}, {}), offAtCut = playActor(tr, 0, END);
+  for (let f = F0; f <= END; f++) for (const c of Object.keys(HI)) {
+    assert.ok(Math.abs(onAtCut[f][c] - whole[f][c]) < 1e-9, `raw to acted: ${c} f${f}`);
+    assert.ok(Math.abs(offAtCut[f][c] - keyed(tr, f)[c]) < 1e-9, `acted to raw: ${c} f${f}`);
+  }
+});
+
+test('acted: switched on or off in a hold nothing steps; switched on in a move nothing goes faster than an acted move', () => {
+  const step = (fr, a, b) => Math.max(...['armR.raise', 'armR.elbow', 'neck.nod'].flatMap(c => fr.slice(a, b + 1).map((o, i) => Math.abs(o[c] - fr[a + i - 1][c]))));
+  for (const on of [f => f >= 70, f => f < 70]) assert.ok(step(play(keys().map(k => ({ ...k, acted: on(k.f) })), quiet), 60, END) < 0.2);
+  const swing = act => play(keys().map(k => ({ ...k, armR: { raise: 45 * Math.sin(2 * Math.PI * k.f / 28), elbow: 45 * Math.sin(2 * Math.PI * k.f / 28) }, acted: act(k.f) })), quiet);
+  const pure = step(swing(() => true), 45, 110);
+  for (let x = 50; x < 78; x++) { const s = step(swing(f => f >= x), 45, 110); assert.ok(s <= pure + 0.1, `on at f${x}: ${s.toFixed(1)} deg a frame, a pure acted swing ${pure.toFixed(1)}`); }
 });
 
 // digests of the playback on main a27faf07, before the flag: raw, baked, sparse and mixed tracks, default and kaiships dose

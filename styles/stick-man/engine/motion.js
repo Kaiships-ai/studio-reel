@@ -11,7 +11,8 @@
 //   cycle secondary business on top until the next key: { 'spine.bend': [amplitude, period frames, phase], ... }
 //   raw   a captured key (motion capture): played as it is, no drag, no moving hold, no balance solve
 //   acted on keys a helper writes one a frame (raw or not): they are authored, so the parts lag, settle and breathe (ACTED
-//         below); true, or a dose 0..1 (0.3: a held breath). Not for captured keys
+//         below); true, or a dose 0..1 (0.3: a held breath), anything else throws. Not for captured keys. A change of dose
+//         fades over RAW_FADE frames: make it in a hold or on a snap (turned off in a move, the parts hurry to catch up)
 //
 // Playback, per channel: cubic Hermite through the keys (arcs: every joint swings on a curve, no straight lerps), the
 // time between two keys warped by their ease (slow in / slow out); extremes get flat tangents (no overshoot from the
@@ -87,6 +88,7 @@ export function compileTrack(keys, poses, base, style) {
   const ks = keys.map(k => {
     const named = typeof k.pose === 'string' ? poses[k.pose] : k.pose;
     if (typeof k.pose === 'string' && !named) throw new Error(`anim: unknown pose "${k.pose}"`);
+    if (!(k.acted == null || typeof k.acted === 'boolean' || (typeof k.acted === 'number' && k.acted >= 0 && k.acted <= 1))) throw new Error(`anim: acted ${k.acted} at f ${k.f}: true, false or a dose 0..1`);
     const over = Object.fromEntries(Object.entries(k).filter(([n]) => !NON_POSE.has(n)));
     return { f: k.f, ease: k.ease || 'slow', hold: k.hold || 0, antic: Math.min(0.6, (k.antic || 0) * dial('anticipation')), expr: k.expr, look: k.look, props: k.props, cycle: k.cycle, raw: !!k.raw, acted: +(k.acted ?? 0),
       m: { ...flatten(named), ...flatten(over) } };
@@ -105,7 +107,7 @@ export function compileTrack(keys, poses, base, style) {
       const gap = k.f - prev.f, fa = Math.round(k.f - Math.max(4, gap * 0.4));   // the action itself keeps at least 4 frames
       if (fa > prev.f + 2) {
         const m = {}; for (const n of Object.keys(k.m)) m[n] = n.startsWith('pos.') || n === 'yaw' ? prev.m[n] : prev.m[n] - k.antic * (k.m[n] - prev.m[n]);
-        out.push({ f: fa, ease: 'slow', m, antic: true });
+        out.push({ f: fa, ease: 'slow', m, antic: true, acted: prev.acted });
       }
     }
     out.push(k);
@@ -188,8 +190,8 @@ class Spring {
 const DRAG = [
   [/^neck\./, 0.55, 0.55], [/^arm[LR]\.(raise|swing)$/, 0.62, 0.5], [/^arm[LR]\.(elbow|roll)$/, 0.5, 0.45], [/^headSq$/, 0.7, 0.35],
 ];
-// per-frame keys an author wrote (`acted`): the spine leads, the neck comes about 2 frames after it and the arms 4-5, each
-// on its own spring: [channel, delay in frames, rad per frame, damping]. Nothing here for hair or headwear: rigid
+// per-frame keys an author wrote (`acted`): the spine leads, the neck comes about 2 frames after it, the upper arms 4, the
+// forearms 5.5, each on its own spring: [channel, delay in frames, rad per frame, damping]. Nothing here for hair or headwear: rigid
 const ACTED = [
   [/^spine\./, 0, 0.67, 0.5], [/^(neck\.|shrug)/, 2, 0.6, 0.5], [/^arm[LR]\.(raise|swing)$/, 4, 0.6, 0.55], [/^arm[LR]\.(elbow|roll)$/, 5, 0.55, 0.55],
 ];
@@ -209,7 +211,8 @@ const SETTLE_WIN = 8, WALK_MIN = 0.005, SETTLE_WALK = 0.6;
 const SETTLE_CH = ['spine.bend', 'spine.side', 'neck.nod', 'neck.tilt'];
 const CM = c => (/^pos\.|footW|\.ik\./.test(c) ? 100 : c === 'bob' || c === 'support' ? 60 : 1);
 const settleOut = d => (d < 0 ? 0 : Math.exp(-d / 4) * Math.sin(0.55 * d));
-// acted: how still the figure's own body is (ACTED_CH), whatever carries it (a car) and however close its keys are
+// acted: how still the figure's own body is (ACTED_CH), whatever carries its root (a car's travel in pos, not a bounce in
+// bob) and however close its keys are
 function holdWeights(track, F0, F1, acted = false) {
   const rate = (A, B) => Math.max(0, ...Object.keys(B.m).filter(c => !acted || ACTED_CH.test(c)).map(c => CM(c) * Math.abs((B.m[c] ?? 0) - (A.m[c] ?? 0)) / Math.max(1, B.f - A.f)));
   const n = F1 - F0 + 1, moving = new Array(n).fill(false), baked = new Array(n).fill(false), stops = [];
@@ -264,7 +267,7 @@ export function playActor(track, F0, F1, opt = {}) {
     // out over RAW_FADE frames into a run of captured keys and back in after it (a switch in one frame would jump)
     let rk = null; for (const t of track) { if (t.f > f) break; rk = t; }
     rawW = clamp(rawW + (rk?.raw ? 1 : -1) / RAW_FADE, 0, 1);
-    if (acted) { const to = (rk || track[0]).acted || 0; actW = cuts.has(f) ? to : actW + clamp(to - actW, -1 / RAW_FADE, 1 / RAW_FADE); }
+    if (acted) { const to = (rk || track[0]).acted; actW = cuts.has(f) ? to : actW + clamp(to - actW, -1 / RAW_FADE, 1 / RAW_FADE); }
     o.x_raw = rawW;                                                    // (cast.js: a captured pose carries its own balance)
     for (const [c, v] of Object.entries(k)) {
       const d = DRAG.find(([re]) => re.test(c)); if (!d || opt.stiff) continue;

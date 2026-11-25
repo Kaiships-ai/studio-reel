@@ -36,8 +36,9 @@ flex in every frame; `--sheet` renders each clip's worst pose from the front, 3/
   strips at 30 fps against life 0, with no jitter call.
 
 - Acted keys: keys a helper writes one a frame (`raw`) get no drag, settle or hold life; `acted: true` (or a dose 0-1) on
-  them gives it back (`engine/motion.js` `ACTED`): the neck ~2 f after the spine, the arms 4-5 f, a 5-10 % overshoot that
-  settles within 11 f of the stop, the moving hold by the body's own stillness (a seated figure in a moving car breathes).
+  them gives it back (`engine/motion.js` `ACTED`): the neck ~2 f after the spine, the upper arms ~4 f, the forearms ~5.5 f, a 6-10 %
+  overshoot that settles within 11 f of the stop, the moving hold by the body's own stillness (a seated figure whose `pos` travels
+  with a car breathes; a bounce in `bob` stops it). A dose outside 0-1 throws. Limits: REEL_DATA.md "Acted keys".
   Hair and headwear get nothing, a clip key never takes it, a track without it plays as before:
   `node --test test/unit/stick-acted-keys.test.mjs`.
 
