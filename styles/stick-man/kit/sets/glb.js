@@ -65,13 +65,14 @@ export function glbKit(stage, pack, collide = []) {
     decor(names) { return names.map(n => { const o = this.place(n, [0, 0, 0], 0, { solid: false });
       if (/_room$/.test(n)) o.traverse(m => { if (m.isMesh) m.castShadow = false; }); return o; }); },
     // put a copy of piece `name` at Blender [x, y, z], turned rot degrees about z. Returns the group.
-    // tint = [r, g, b] multiplies the piece's colours (e.g. warm a night-painted texture for a day set)
-    place(name, at, rot = 0, { scale = 1, ink = true, solid = true, band = [0.05, 1.8], grace, tint = null } = {}) {
+    // tint = [r, g, b] multiplies the piece's colours (e.g. warm a night-painted texture for a day set);
+    // material = (src, mesh) => THREE.Material replaces toonFrom (and the tint: the caller applies it)
+    place(name, at, rot = 0, { scale = 1, ink = true, solid = true, band = [0.05, 1.8], grace, tint = null, material = null } = {}) {
       if (!src[name]) throw new Error(`glb: ${pack}/${name} not loaded (call load() first)`);
       const g = src[name].clone(true);
       g.traverse(m => {
         if (!m.isMesh) return;
-        m.material = toonFrom(m.material, tint); m.castShadow = m.receiveShadow = true;
+        m.material = material ? material(m.material, m) : toonFrom(m.material, tint); m.castShadow = m.receiveShadow = true;
         if (m.material.userData.glowy) glow(m, 0.25);
       });
       g.position.copy(B(...at)); g.rotation.y = rot * Math.PI / 180; g.scale.setScalar(scale);

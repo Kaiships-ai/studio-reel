@@ -3,6 +3,7 @@
 //   const p = propKit(stage, COLLIDE);                          // COLLIDE: the set's export, place() pushes its solid boxes (collide.js)
 //   await p.load(['street/bench', 'hospital/iv-stand']);         // inside build(), before __ready
 //   p.place('street/bench', [x, y, 0], 180, { scale, tint, shadow: true, solid: true, ink: true })   // -> the THREE.Group
+//   p.place(name, at, deg, { material: (src, mesh, name) => THREE.Material, parent })   // the film's material, its group
 // Solid boxes only at 0, 90, 180, 270 deg; any other turn (and solid: false) is listed in COLLIDE.unchecked, not collision-checked.
 //   catalog()  -> [{ name, place, size: [w, d, h], tris, source: 'glb' | 'code' }]
 // Real size by default (the importer scaled every .glb to metres; built props are drawn in metres): scale 1. A contact
@@ -18,6 +19,7 @@ import { BUILT, builtGroup } from './built.js';
 import MAN from '../../assets/props/manifest.json' with { type: 'json' };
 
 const GLB = Object.fromEntries(Object.entries(MAN.props).map(([slug, v]) => [`${v.place}/${slug}`, v]));
+const IDENT = new THREE.Matrix4();
 export const propNames = () => [...Object.keys(GLB), ...Object.keys(BUILT)].sort();
 
 function lev(a, b) {
@@ -67,6 +69,19 @@ function contactShadow(g) {
 // and the same box is not pushed twice. Nothing is ever taken out of the array: it is the film's, other kits write into it.
 const COPY = '@';                    // 'street/bench@2' is the second street/bench placed ('street/bench-2' is another prop)
 const OWN = new WeakMap();
+// material: the film's function, called once per (function, source material): the glTF material of a .glb, the shared tm()
+// of a built prop (mesh and name are of the first placing that meets it). Its result is shared and never changed; a tint
+// gives a copy (cached per returned material and tint) whose colour is multiplied, keeping the original's shader hook and userData.
+const FILM = new WeakMap(), TINTED = new WeakMap();
+function filmMat(fn, src, mesh, name, tint) {
+  if (!FILM.has(fn)) FILM.set(fn, new WeakMap());
+  const by = FILM.get(fn); if (!by.has(src)) by.set(src, fn(src, mesh, name));
+  const m = by.get(src); if (!tint || !m.color) return m;
+  if (!TINTED.has(m)) TINTED.set(m, new Map());
+  const T = TINTED.get(m), k = tint.join();
+  if (!T.has(k)) { const c = m.clone(); c.onBeforeCompile = m.onBeforeCompile; c.customProgramCacheKey = m.customProgramCacheKey; c.userData = m.userData; c.color.multiply(new THREE.Color(...tint)); T.set(k, c); }
+  return T.get(k);
+}
 const boxKey = b => `${b.name.replace(/@\d+(#\d+)?$/, '')}|${b.lo}|${b.hi}`;
 
 export function propKit(stage, collide = []) {
@@ -84,20 +99,24 @@ export function propKit(stage, collide = []) {
       await glb.load(r.filter(x => x.source === 'glb').map(x => x.name));
       for (const x of r) loaded.add(x.name);
     },
-    place(name, at, deg = 0, { scale = 1, tint = null, shadow, solid = true, ink = true, band = [0.05, 1.8], grace } = {}) {
+    place(name, at, deg = 0, { scale = 1, tint = null, shadow, solid = true, ink = true, band = [0.05, 1.8], grace, material = null, parent = null } = {}) {
       const r = resolveProp(name);
       if (!loaded.has(name)) throw new Error(`props: ${name} not loaded (call load() first)`);
+      if (parent) { parent.updateWorldMatrix(true, false); if (!parent.matrixWorld.elements.every((e, i) => Math.abs(e - IDENT.elements[i]) < 1e-6)) throw new Error(`props: ${name}: parent must sit at the origin, unturned and unscaled (COLLIDE boxes are world-space)`); }
+      const mat = material && ((src, m) => filmMat(material, src, m, name, tint));
       let g;
-      if (r.source === 'glb') g = glb.place(name, at, deg, { scale, tint, solid: false, ink, band });
+      if (r.source === 'glb') g = glb.place(name, at, deg, { scale, tint, solid: false, ink, band, material: mat });
       else {
         g = builtGroup(name);
         g.traverse(m => { if (!m.isMesh) return;
           m.userData.hollow = true;                             // its boxes are in COLLIDE as a .glb's are: engine/solids.js solidBoxes would report its box meshes a second time
-          if (tint && m.material.color && !m.material.map && !m.material.transparent) m.material = tm([m.material.color.r * tint[0], m.material.color.g * tint[1], m.material.color.b * tint[2]], m.material.userData.glowy ? { glowy: 0.6 } : {});
+          if (mat) m.material = mat(m.material, m);
+          else if (tint && m.material.color && !m.material.map && !m.material.transparent) m.material = tm([m.material.color.r * tint[0], m.material.color.g * tint[1], m.material.color.b * tint[2]], m.material.userData.glowy ? { glowy: 0.6 } : {});
           if (m.material.userData.glowy) glow(m, 0.25); });
         g.position.copy(B(...at)); g.rotation.y = deg * Math.PI / 180; g.scale.setScalar(scale);
         scene.add(g); if (ink) prop(g);
       }
+      if (parent) parent.add(g);                                // a group at the origin: COLLIDE is read in the scene's frame
       count[name] = (count[name] || 0) + 1; g.name = `${name}${COPY}${count[name]}`;
       if (solid && quarterOf(g.rotation.y) != null) for (const b of propBoxes(g, name, { band, grace })) push(b);
       else note(g.name, solid ? `turned ${+deg.toFixed(1)} deg, off a quarter turn` : 'solid: false');

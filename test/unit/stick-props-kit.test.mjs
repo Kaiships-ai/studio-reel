@@ -266,3 +266,64 @@ test('COLLIDE: every prop: few boxes (the caps), its surface inside them, two ki
   const C = [], a = propKit(stage(), C), b = propKit(stage(), C); for (const k of [a, b]) await k.load(['street/scaffolding', 'kitchen-home/table']);
   a.place('street/scaffolding', [0, 0, 0], 90); const n = C.length; b.place('kitchen-home/table', [4, 0, 0], 180, { scale: 1.5 }); assert.ok(C.length > n && n > 4); const m = C.length; b.place('street/scaffolding', [0, 0, 0], 90); assert.equal(C.length, m, 'the same placement adds none twice');
 });
+
+// a film's own material (wwr 25/11: the kit toon took none of the set's light, a trolley at 67 against 125, the wheelchair teal)
+const { loadGlb, ASSETS, toonFrom } = await import('../../styles/stick-man/kit/sets/glb.js');
+const mats = g => { const a = []; g.traverse(m => { if (m.isMesh && !m.userData.contact) a.push(m.material); }); return a; };
+const filmMat = () => { const calls = [], fn = (src, mesh, name) => { calls.push({ src, mesh, name }); return new THREE.MeshStandardMaterial({ color: src.color ? src.color.clone() : new THREE.Color(0.5, 0.5, 0.5) }); }; return { calls, fn }; };
+
+test('material: the film\'s function, called once per source material, its result shared and never mutated, for a glb and a built prop', async () => {
+  for (const n of ['street/bench', 'hospital/iv-stand']) {
+    const { calls, fn } = filmMat(), S = stage(), p = propKit(S, []); await p.load([n]);
+    const a = p.place(n, [0, 0, 0], 0, { material: fn }), k = calls.length; assert.ok(k > 0, `${n}: never called`);
+    assert.equal(new Set(calls.map(c => c.src)).size, k, `${n}: called twice for one source material`);
+    assert.ok(calls.every(c => c.name === n && c.mesh.isMesh), n);
+    if (n === 'street/bench') assert.ok(calls.every(c => !c.src.userData.toon), 'a glb: its glTF material, not the kit toon');
+    const b = p.place(n, [3, 0, 0], 90, { material: fn }); assert.equal(calls.length, k, `${n}: a second placing calls it again`);
+    assert.deepEqual(mats(b), mats(a), `${n}: not shared`); assert.ok(mats(a).every(m => !m.userData.toon && m.isMeshStandardMaterial), `${n}: the kit toon is left`);
+    const other = filmMat(); p.place(n, [6, 0, 0], 0, { material: other.fn }); assert.equal(other.calls.length, k, `${n}: another function has its own cache`);
+  }
+});
+
+test('material: a tint multiplies the colour of a copy, cached per tint; the film\'s material keeps its colour', async () => {
+  for (const n of ['street/bench', 'hospital/gurney']) {
+    const { calls, fn } = filmMat(), p = propKit(stage(), []); await p.load([n]);
+    const plain = mats(p.place(n, [0, 0, 0], 0, { material: fn })), hex = plain.map(m => m.color.getHexString());
+    const t = mats(p.place(n, [3, 0, 0], 0, { material: fn, tint: [1, 0.4, 0.4] })), k = calls.length;
+    assert.ok(k > 0 && plain.every(m => !m.userData.toon), `${n}: the film's function was not used`);
+    t.forEach((m, i) => { assert.notEqual(m, plain[i]); const want = plain[i].color.clone().multiply(new THREE.Color(1, 0.4, 0.4)); assert.ok(m.color.equals(want), `${n}: ${m.color.getHexString()} vs ${want.getHexString()}`); });
+    assert.deepEqual(plain.map(m => m.color.getHexString()), hex, `${n}: the tint changed the film's material`);
+    assert.deepEqual(mats(p.place(n, [6, 0, 0], 0, { material: fn, tint: [1, 0.4, 0.4] })), t, `${n}: a second tinted placing makes new copies`); assert.equal(calls.length, k);
+  }
+  const toonish = src => toonFrom(src), p = propKit(stage(), []); await p.load(['street/bench']);
+  const base = mats(p.place('street/bench', [0, 0, 0], 0, { material: toonish }))[0], m = mats(p.place('street/bench', [0, 0, 0], 0, { material: toonish, tint: [0.5, 0.5, 0.5] }))[0];
+  assert.ok(m !== base && m.onBeforeCompile === base.onBeforeCompile && m.userData.toon === base.userData.toon && m.color.equals(base.color.clone().multiplyScalar(0.5)), 'a tinted copy of a toon keeps its ramp');
+});
+
+test('material: without it nothing changes: the kit toon objects, COLLIDE and unchecked the same with or without it', async () => {
+  const src = await loadGlb(`${ASSETS}/props/street/bench.glb`), want = []; src.traverse(m => { if (m.isMesh) want.push(toonFrom(m.material)); });
+  assert.deepEqual(mats((await placed('street/bench')).g), want, 'a glb: the same toon objects as glbKit gives');
+  const bw = mats(builtGroup('hospital/iv-stand')); assert.deepEqual(mats((await placed('hospital/iv-stand')).g), bw, 'a built prop: its own shared materials');
+  for (const [n, deg] of [['street/bench', 0], ['hospital/iv-stand', 90], ['street/taxi', 45], ['lab/lab-bench', 180]]) {
+    const a = (await placed(n, [1, 2, 0], deg)).C, b = (await placed(n, [1, 2, 0], deg, { material: filmMat().fn })).C;
+    assert.deepEqual(b, a, `${n} at ${deg}: COLLIDE`); assert.deepEqual(b.unchecked, a.unchecked, `${n} at ${deg}: unchecked`);
+  }
+});
+
+test('parent: the prop goes into the film\'s group (the set\'s envScale reaches it), its boxes the same', async () => {
+  for (const n of ['street/bench', 'hospital/iv-stand']) {
+    const S = stage(), grp = new THREE.Group(), C = [], p = propKit(S, C); S.scene.add(grp); await p.load([n]);
+    const g = p.place(n, [1, 2, 0], 90, { parent: grp }); assert.equal(g.parent, grp, n); assert.ok(!S.scene.children.includes(g));
+    assert.deepEqual(C, (await placed(n, [1, 2, 0], 90)).C, `${n}: COLLIDE`);
+  }
+});
+
+test('parent: a moved, turned or scaled parent throws (COLLIDE is world-space); an identity parent works', async () => {
+  const n = 'street/bench';
+  for (const [what, set] of [['moved', g => g.position.set(1, 0, 0)], ['turned', g => { g.rotation.y = 0.5; }], ['scaled', g => g.scale.setScalar(2)]]) {
+    const S = stage(), grp = new THREE.Group(), p = propKit(S, []); S.scene.add(grp); await p.load([n]); set(grp);
+    assert.throws(() => p.place(n, [0, 0, 0], 0, { parent: grp }), err => err.message.includes(n) && /origin/.test(err.message) && /unturned/.test(err.message) && /unscaled/.test(err.message), what);
+  }
+  const S = stage(), grp = new THREE.Group(), p = propKit(S, []); S.scene.add(grp); await p.load([n]);
+  assert.equal(p.place(n, [0, 0, 0], 0, { parent: grp }).parent, grp);
+});
