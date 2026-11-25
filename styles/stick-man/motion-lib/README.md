@@ -42,7 +42,8 @@ the standard pose there.
 | No joint turns more than 25 deg in a frame after the `kaiships` dose (a hand on an ik target: its travel over the arm's length) | joint gate |
 | A foot on the floor never slides (< 1 mm a frame): feet leave and reach the floor straight up and down | feet |
 | A body the floor carries (KNEEL, FLOOR) has its ankles and toes within 3 cm of the floor | floor |
-| Each body performs a clip its own way: against the adult's clip of the same name it is slower or quicker, its arcs smaller or bigger, its stride its own, by the amounts in `tools/gates/bodylife.mjs` (BODY_LIFE). A capture on another body goes through `base.js` `ownClip` / `ownGait` / `floorClip` (the body's `life`, `bodies.js`), its recipe once in `acts/<clip>.js` | body |
+| Each body performs a clip its own way: against the adult's clip of the same name it is slower or quicker, its arcs smaller or bigger, its stride (a child: its cadence) its own, and it moves in another shape (its paths, less one clock and their size, differ by `SHAPE_REL` and `SHAPE_CM`), by the amounts in `tools/gates/bodylife.mjs` (BODY_LIFE). A capture on another body goes through `base.js` `ownClip` / `ownGait` / `floorClip` (the body's `life` and `perform`, `bodies.js`), its recipe once in `acts/<clip>.js`. Older clips that fail it are listed, dated, in `motionlib.mjs` BODY_KNOWN (only shrinks) | body |
+| A clip a body performs never stops dead: in every 2 s some part moves 1 cm within half a second (`bodylife.mjs` STILL) | still |
 | Clips are written in clip space: the actor at the origin facing +x (yaw 90), metres for `pos` and `footW`, the figure frame (W) for `ik` targets | (convention) |
 | Each body's locomotion is authored with that body's numbers (`bodies.js`): stride, cadence, bounce, lift, sway, stoop; never an adult clip played on another body. Shared clips are authored on the adult and scale their metres with a smaller body | (review) |
 | A hand on a target (ik weight >= 0.5, or holding a prop) stays on it (<= 2 cm off); a carried prop never passes through the body (<= 1 cm) and its mass (`x_kg<side>` kg) is in the centre of mass, so balance is keyed honestly: hips back under a load, the load handed to the floor or a sill while it rests there, let go over a few frames | rig (`motionlib.mjs` runs every clip through cast.js headless; `shot.mjs --report` (h)/(i) on renders) |
@@ -71,7 +72,10 @@ whose capture ends a few cm off its first prints). `toeKeys`, `bridgeKeys` (`bas
 
 `ownClip` (a one-off or a loop in place), `ownGait` (a walk) and `floorClip` (KNEEL, FLOOR) wrap them with the body's `life`
 (`bodies.js`): its clock (`rate`, `hold`, `drag`, its fastest hand `top`), the size of its arms' and trunk's moves, its weight
-shift and bounce (`ref/perform.js`). The adult's numbers change nothing. A recipe (`acts/<clip>.js`) says only what the action
+shift and bounce (`ref/perform.js`); and its `perform`, the shape of its moves: its arms, trunk and head follow as springs do
+(drag, overshoot, settle: `perform.js` `follow`, `armLag`), the elder hesitates as a move leaves a hold and leans in to meet a
+hand at its face, a stiff or short neck takes the trunk with a nod, the weight shifts along the body's own path, every act
+breathes, a child fidgets; the stoop and arms held out are kept on every base. The adult's capture is not reshaped. A recipe (`acts/<clip>.js`) says only what the action
 needs: the span of the capture (`cutSource`, `loopSource`), arms kept apart (`apartSource`), a clap that opens (`clapSource`), a
 turn taken out (`turnSource`), an antic (`anticKeys`). `closed` (on in `ownClip` loops) keeps a loop's last frame, so it
 repeats without skipping one.

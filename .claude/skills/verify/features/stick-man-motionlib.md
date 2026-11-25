@@ -65,8 +65,12 @@ before, except where an old one had a hand forced off a target (now kept when re
   `Adult_Idle_Sit_Loop` still has the old scale (1.46 times).
 - Each body its own way: batch 1 is one recipe an action (`motion-lib/acts/`) performed with the body's `life`
   (`bodies.js`, `ref/perform.js`, `base.js` `ownClip`, `ownGait`, `floorClip`). `motionlib.mjs` fails a body's clip that is
-  not slower / quicker, smaller / bigger than the adult's of the same name by the amounts in `tools/gates/bodylife.mjs`
-  (`body:` lines; 9 older clips fail it, listed in PR 202), and a KNEEL / FLOOR clip with a foot over 3 cm off the floor.
+  not slower / quicker, smaller / bigger than the adult's of the same name, or that moves in the adult's shape (a retimed,
+  resized copy), by the amounts in `tools/gates/bodylife.mjs` (`body:` lines; the 8 older clips that fail it are listed,
+  dated 25/11, in `motionlib.mjs` BODY_KNOWN), a clip a body performs that stops dead for 2 s (`still:`), and a KNEEL / FLOOR
+  clip with a foot over 3 cm off the floor. The shape comes from `bodies.js` `perform` (springs on arms, trunk, head; the
+  elder's hesitation and lean-in, the weight's path, breath, a child's fidget); `mocap_reach.mjs` bakes a hand onto the mouth
+  (yawn) or the eyes (cry, `eye`, `+x` near its closest approach, the weight ramped).
   `mocap_reach.mjs` bakes on any body, `earclose` + `captured` for a call that never leaves the ear.
 - Body types (`motion-lib/bodies.js` `bodySpec`): adult, heavy (girth 1.9), thin (0.6), child (scale 0.62, head 1.3, legs
   0.8), elder (stooped posture); each with its own walk, run and breath.

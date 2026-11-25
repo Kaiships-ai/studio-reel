@@ -106,7 +106,7 @@ export function mocapCycle(src, { legM, once = false, roll = true, from = null, 
   }
   // (strike) an ankle skimming low into its strike (Mixamo "Sad Walk": 5 frames) is not down yet: the cycle starts where the left
   // foot is first on its print, or that print is unknown to the steps around the loop (they stood it at x 0)
-  if (strike && !once && from == null && !prints.Left[0]) { const j = prints.Left.findIndex(Boolean); if (j > 0) return mocapCycle(src, { legM, once, roll, bones, stance, stride, from: (s0 + j) % N }); }
+  if (strike && !once && from == null && !prints.Left[0]) { const j = prints.Left.findIndex(Boolean); if (j > 0) return mocapCycle(src, { legM, once, roll, bones, stance, strike, stride, closed, from: (s0 + j) % N }); }   // (every option carried: the re-entry dropped `closed` and `strike`, REVIEW-2)
   // a swinging foot: the captured ankle, carried from the print it left to the one it lands on. A print is pinned (PIN),
   // not where the ankle was on the frame it lifts or lands, so the gap at each end (print less ankle, height included)
   // fades across the swing instead of jumping on the first or last frame of it
@@ -177,6 +177,10 @@ export function mocapCycle(src, { legM, once = false, roll = true, from = null, 
       const rv = j => frames[((j % N) + N) % N][sd].roll;
       frames[i][sd].roll = nx == null ? rv(pv) : pv == null ? rv(nx) : rv(pv) + (rv(nx) - rv(pv)) * (i - pv) / (nx - pv);
     }
+    // (closed: the loop's last frame is its first again, so its roll is too: the fill took the two ends from different bent
+    // frames, 11 deg apart on the thin body's cry, and every lap's seam jumped the hand 4 cm; what the two ends differ by is
+    // spread over the loop)
+    if (closed && N > 2) { const D = frames[N - 1][sd].roll - frames[0][sd].roll; if (Math.abs(D) > 1e-9) frames.forEach((f, i) => { f[sd].roll -= D * i / (N - 1); }); }
     for (const f of frames) { const e = f[sd].elbow, w = Math.min(1, Math.max(0, (e - ROLL_ELBOW / 2) / ROLL_ELBOW)); f[sd].roll *= w * w * (3 - 2 * w); }
   }
   // the prints of the cycle: the left one it starts on, and the right one the next step lands on (the first right print

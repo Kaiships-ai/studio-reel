@@ -8,4 +8,4 @@ import { loopSource } from '../ref/perform.js';
 // one faces front
 const talk = loopSource(SRC, 516, 700, 14);
 
-export default act({ clip: 'Gest_SitTalk_Loop', loop: true, base: 'SIT' }, body => ownClip({ body, src: talk, ...seated(body), loop: true, head: 0.45 }));
+export default act({ clip: 'Gest_SitTalk_Loop', loop: true, base: 'SIT' }, body => ownClip({ body, src: talk, ...seated(), loop: true, head: 0.45 }));

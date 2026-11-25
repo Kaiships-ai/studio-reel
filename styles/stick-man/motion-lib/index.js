@@ -11,6 +11,8 @@
 import * as THREE from 'three';
 import { BODIES } from './bodies.js';
 import { BASES } from './base.js';
+// (the floor's standard poses, KNEEL and FLOOR, registered before any clip: acts/floor.js; the names it registered below)
+import FLOOR_POSES from './acts/floor.js';
 import { BUILD } from '#kit/cast/handprops.js';
 import Adult_Move_Run_Fwd_Loop_v01 from './body/adult/Adult_Move_Run_Fwd_Loop_v01.js';
 import Adult_Move_Walk_Fwd_Loop_v01 from './body/adult/Adult_Move_Walk_Fwd_Loop_v01.js';
@@ -371,3 +373,7 @@ export function expandClips(keys, base = {}) {
   }
   return out;
 }
+// the standard poses acts/floor.js registered (KNEEL, FLOOR)
+export {
+  FLOOR_POSES,
+};

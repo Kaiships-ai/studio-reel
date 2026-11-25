@@ -481,23 +481,30 @@ test('bag size: at Hot Money ep01\'s duffel the bag goes into the trunk (0.85 m 
 });
 
 // Faults the gate passed and the batch 1 contact sheets and review showed (25/11)
-import { lifeFails, lifeOf, BODY_LIFE, READ_PX, PX_PER_M } from '../../styles/stick-man/tools/gates/bodylife.mjs';
-import { clipLife, adultTwin, bodyFails, motionFails, floorFails, FLOOR_CM } from '../../styles/stick-man/tools/gates/motionlib.mjs';
+import { lifeFails, lifeOf, lifeAgainst, shapeAgainst, BODY_LIFE, READ_PX, PX_PER_M, SHAPE_REL, SHAPE_CM, NEAREST, stillSpans, STILL_F, STILL_IN, STILL_CM } from '../../styles/stick-man/tools/gates/bodylife.mjs';
+import { clipLife, adultTwin, adultNear, bodyFails, motionFails, floorFails, FLOOR_CM, BODY_KNOWN, BODY_KNOWN_DATE, bodyGate, stillFails } from '../../styles/stick-man/tools/gates/motionlib.mjs';
 import { act } from '../../styles/stick-man/motion-lib/acts/act.js';
-import { mocapClip, captureBase, bridgeKeys, poleSpans } from '../../styles/stick-man/motion-lib/base.js';
-import { ownSource, retime } from '../../styles/stick-man/motion-lib/ref/perform.js';
+import { mocapClip, captureBase, bridgeKeys, poleSpans, BASES } from '../../styles/stick-man/motion-lib/base.js';
+import { ownSource, retime, follow, HAND_MAX } from '../../styles/stick-man/motion-lib/ref/perform.js';
+import { mocapCycle } from '../../styles/stick-man/motion-lib/ref/mocap.js';
 const acts = fs.readdirSync(new URL('../../styles/stick-man/motion-lib/acts/', import.meta.url)).map(f => f.replace('.js', '')).filter(n => n !== 'act');
 const MINE = ALL.filter(C => acts.includes(C.clip)), of = clip => MINE.filter(C => C.clip === clip);
+// every clip PR 202 made (the acts, and the elder's old walk): none may sit on the baseline of older faults
+const NEW = [...MINE, getClip('Move_OldWalk_Fwd_Loop', 'elder')];
 const ROWS = new Map();
 const rigRows = async (clip, body) => { const id = `${body} ${clip}`; if (!ROWS.has(id)) { const rows = [], C = getClip(clip, body);
-  await rigClip(C, body, { each: (f, S, w) => { const e = S.parts.head.matrixWorld.elements; rows.push({ ...w, face: Math.atan2(e[8], e[10]) * 180 / Math.PI }); } }); ROWS.set(id, rows); } return ROWS.get(id); };
+  await rigClip(C, body, { each: (f, S, w) => { const h = S.parts.head, e = h.matrixWorld.elements, up = new THREE.Vector3(e[4], e[5], e[6]).normalize();
+    const P = v => { const q = h.localToWorld(new THREE.Vector3(...v)); return [q.x, -q.z, q.y]; };
+    rows.push({ ...w, face: Math.atan2(e[8], e[10]) * 180 / Math.PI, roll: Math.asin(Math.max(-1, Math.min(1, -up.z))) * 180 / Math.PI, mouth: P([0, -0.10, 0.34]), eyeL: P([-0.12, 0, 0.33]), eyeR: P([0.12, 0, 0.33]) }); } }); ROWS.set(id, rows); } return ROWS.get(id); };
 const once = async C => (await rigRows(C.clip, C.body)).slice(0, C.frames + 1);
+const capOf = async C => (await rigRows(C.clip, C.body)).slice(C.captured[0], C.captured[1] + 1);
 const d3 = (a, b) => Math.hypot(...a.map((x, i) => x - b[i])), sub = (a, b) => a.map((x, i) => x - b[i]), dot = (a, b) => a.reduce((t, x, i) => t + x * b[i], 0);
 // how close two limb lines come (sampled along one)
 const segs = (p, q, a, b) => { let m = 9; const d = sub(b, a); for (let i = 0; i <= 10; i++) { const x = p.map((v, k) => v + (q[k] - v) * i / 10), t = Math.max(0, Math.min(1, dot(sub(x, a), d) / (dot(d, d) || 1))); m = Math.min(m, d3(x, a.map((v, k) => v + d[k] * t))); } return m; };
 const armGap = w => Math.min(segs(w.L.shoulder, w.L.elbow, w.R.shoulder, w.R.elbow), segs(w.L.elbow, w.L.hand, w.R.elbow, w.R.hand), segs(w.L.shoulder, w.L.elbow, w.R.elbow, w.R.hand), segs(w.L.elbow, w.L.hand, w.R.shoulder, w.R.elbow));
 const speed = rows => Math.max(...rows.slice(1).flatMap((w, i) => ['L', 'R'].map(s => 100 * d3(w[s].hand, rows[i][s].hand))));
 const offFront = rows => rows.map(w => Math.abs(((w.face - rows[0].face + 540) % 360) - 180));
+const sizeOf = b => ({ scale: BODIES[b].spec.scale ?? 1, leg: (BODIES[b].spec.scale ?? 1) * (BODIES[b].spec.legScale ?? 1) });
 
 test('each body performs its own way: the gate fails one capture on five bodies at one clock and one size', async () => {
   // the fixture: batch 1 as first made (one mocapClip recipe, every frame on every body). The check, run on cdc0a51a before any
@@ -505,16 +512,38 @@ test('each body performs its own way: the gate fails one capture on five bodies 
   const { default: YAWN } = await import('../../styles/stick-man/motion-lib/ref/mixamo/yawn.js'), { default: CRY } = await import('../../styles/stick-man/motion-lib/ref/mixamo/crying.js'), { default: WALK } = await import('../../styles/stick-man/motion-lib/ref/mixamo/sad_walk.js');
   const { gaitLoop } = await import('../../styles/stick-man/motion-lib/base.js');
   const same = (src, o = {}) => body => lifeOf2(act({ clip: 'Gest_Same_Once', loop: false }, b => mocapClip({ body: b, src, ...o }))(body));
-  const lifeOf2 = async C => { const sc = BODIES[C.body].spec.scale ?? 1; return lifeOf(C, paths(C), { scale: sc, leg: sc * (BODIES[C.body].spec.legScale ?? 1) }); };
+  const lifeOf2 = async C => lifeOf(C, paths(C), sizeOf(C.body));
   const paths = C => { const K = C.keys, t = compileTrack(K, {}, { pos: [0, 0], yaw: 90 }, 'kaiships'), fr = playActor(t, 0, C.frames); return fr.map(m => { S[C.body].pose2(toPose(m, S[C.body].root.scale.x)); const w = S[C.body].rigWorld(); return { pelvis: w.skel.pelvis, head: w.skel.head, handL: w.L.hand, handR: w.R.hand }; }); };
   const S = {}; for (const b of ['adult', 'heavy', 'thin', 'elder', 'child']) S[b] = (await rigStick(b)).S;
   for (const src of [YAWN, CRY]) { const L = same(src), A = await L('adult');
-    for (const b of Object.keys(BODY_LIFE)) { const f = lifeFails(b, A, await L(b)); assert.ok(f.some(x => /time is 1 of/.test(x)), `${b} passes at the adult's clock: ${f}`); assert.ok(f.some(x => /arc/.test(x)), `${b} passes at the adult's size: ${f}`); } }
-  const G = b => { const C = { ...gaitLoop({ body: b, kind: 'walk', mocap: WALK, loopIntro: true, strike: true }), body: b }; const sc = BODIES[b].spec.scale ?? 1; return lifeOf(C, paths({ ...C, keys: C.keys }), { scale: sc, leg: sc * (BODIES[b].spec.legScale ?? 1) }); };
-  for (const b of ['heavy', 'thin', 'elder']) assert.deepEqual(lifeFails(b, G('adult'), G(b)).map(x => x.match(/'s (\w+)/)[1]), ['time', 'stride']);
+    for (const b of Object.keys(BODY_LIFE)) { const f = lifeFails(b, A, await L(b)); assert.ok(f.some(x => /time is 1 of/.test(x)), `${b} passes at the adult's clock: ${f}`); assert.ok(f.some(x => /arc/.test(x)), `${b} passes at the adult's size: ${f}`); assert.ok(f.some(x => /shape/.test(x)), `${b} passes as the adult's shape: ${f}`); } }
+  const G = b => { const C = { ...gaitLoop({ body: b, kind: 'walk', mocap: WALK, loopIntro: true, strike: true }), body: b }; return lifeOf(C, paths({ ...C, keys: C.keys }), sizeOf(b)); };
+  for (const b of ['thin', 'elder']) assert.deepEqual(lifeFails(b, G('adult'), G(b)).map(x => x.match(/'s (\w+)/)[1]), ['time', 'stride', 'shape']);
+  // (a hole, measured: the heavy rig's belly bends a swinging arm, and the shape check reads that as the heavy body's own: the
+  // adult's walk on it scores 0.23 and 2.4 cm and passes shape; its tempo and stride still fail it. Open for a follow-up: measure
+  // shape against the adult's capture played on the same body)
+  assert.deepEqual(lifeFails('heavy', G('adult'), G('heavy')).map(x => x.match(/'s (\w+)/)[1]), ['time', 'stride']);
+});
+// Studio 25/11, gate (a): the body check fails a copy that is only retimed and rescaled. The copy: the act's capture played the
+// library's way (mocapClip) on one uniform clock (the body's rate, no hold, no drag, no cap) on the body's own figure, which is its
+// size: the same performance in another costume. (Not a copy: a stoop held over it, a posture, the elder's yawn scored 0.42, the
+// trunk tipping every path 24 deg; nor batch 1's arm reach, which turns each joint further and is no uniform resize, 0.26) Against the adult's capture played the same way, it fails the shape check on every body and act tried
+test('gate (a): a pure retime and resize of the adult fails the shape check on every body', async () => {
+  const S = {}; for (const b of ['adult', 'heavy', 'thin', 'elder', 'child']) S[b] = (await rigStick(b)).S;
+  const paths = C => { const t = compileTrack(C.keys, {}, { pos: [0, 0], yaw: 90 }, 'kaiships'), fr = playActor(t, 0, C.frames); return fr.map(m => { S[C.body].pose2(toPose(m, S[C.body].root.scale.x)); const w = S[C.body].rigWorld(); return { pelvis: w.skel.pelvis, head: w.skel.head, handL: w.L.hand, handR: w.R.hand }; }); };
+  const copy = (src, body) => { const C = act({ clip: 'Gest_Copy_Once', loop: false }, b => mocapClip({ body: b, src: ownSource(src, { rate: BODIES[body].life.rate, arm: 1, hold: 0, drag: 0 }, { cap: false }) }))(body);
+    return lifeOf(C, paths(C), sizeOf(body)); };
+  for (const name of ['yawn', 'crying', 'head_nod_yes', 'defeated']) {
+    const { default: src } = await import(`../../styles/stick-man/motion-lib/ref/mixamo/${name}.js`), A = copy(src, 'adult');
+    for (const body of ['elder', 'heavy', 'thin', 'child']) { const B = copy(src, body), s = shapeAgainst(A, B);
+      assert.ok(s.shape < SHAPE_REL || s.cm < SHAPE_CM, `${name} ${body}: a retimed copy reads as another shape (${s.shape.toFixed(3)}, ${s.cm.toFixed(1)} cm)`);
+      assert.ok(lifeFails(body, A, B).some(x => /'s shape/.test(x)), `${name} ${body}: the gate passes a retimed copy`); }
+  }
 });
 test('each body performs its own way: every body against the adult, and every two bodies against each other', async () => {
-  for (const C of MINE) assert.deepEqual(await bodyFails(C), [], C.name);
+  for (const C of NEW) assert.deepEqual(await bodyFails(C), [], C.name);
+  // and in shape, every new clip on another body is told from the adult's by more than SHAPE_REL and SHAPE_CM
+  for (const C of MINE.filter(C => C.body !== 'adult' && adultTwin(C))) { const r = lifeAgainst(C.body, await clipLife(adultTwin(C)), await clipLife(C)).find(x => x.n === 'shape'); assert.ok(r?.ok, `${C.name}: shape ${r?.v} ${r?.why}`); }
   // two bodies of one clip, in time (on the move: how fast they cover ground) and, where it is big enough to read, in the size
   // of the arc: 8 % at least, the least difference seen across a cut (bodylife.mjs)
   for (const clip of acts) { const L = []; for (const C of of(clip)) L.push([C.body, await clipLife(C)]);
@@ -526,23 +555,65 @@ test('each body performs its own way: every body against the adult, and every tw
 test('each body performs its own way: the gate itself runs the check (no clip passes motionlib.mjs without it)', async () => {
   // the adult's yawn handed to the heavy body as its own: what checkAll pushes for it
   const A = getClip('Gest_Yawn_Once', 'adult'), g = await rigClip(A, 'adult'), f = await motionFails({ ...A, body: 'heavy', name: 'Heavy_Gest_Yawn_Once' }, g, g);
-  assert.match(f.join('; '), /heavy's time is 1 of the adult's \(>= 1.1\).*heavy's arc/);
-  assert.match(fs.readFileSync(new URL('../../styles/stick-man/tools/gates/motionlib.mjs', import.meta.url), 'utf8'), /r\.fails\.push\(\.\.\.await motionFails\(C, g, g0\)\)/);
+  assert.match(f.join('; '), /heavy's time is 1 of the adult's \(>= 1.1\).*heavy's arc.*heavy's shape/);
+  assert.match(fs.readFileSync(new URL('../../styles/stick-man/tools/gates/motionlib.mjs', import.meta.url), 'utf8'), /bodyGate\(r, C, await motionFails\(C, g, g0\)\)/);
   assert.ok(MINE.filter(C => C.body !== 'adult' && adultTwin(C)).length >= 38);
 });
-test('a clap: the hands meet and never pass through each other, and open wide between two meetings', async () => {
+// Studio 25/11, gate (b): the child's stride limit became cadence after measuring. Old: stride >= 1.05 of the adult's for its leg;
+// new: steps >= 15 % quicker, stride <= 1. Old -> new on each child gait: Move_Walk 0.71 FAIL -> cadence 1.55, stride 0.71 PASS;
+// Move_Run 0.58 FAIL -> cadence 1.19, stride 0.58 PASS. Thin keeps its stride >= 1.05 (bodies.js "long light steps")
+test('gate (b): a child is held to quick steps (cadence) and steps no longer than the adult\'s; thin keeps its stride', async () => {
+  assert.deepEqual(BODY_LIFE.child.stride, [0, 1.0]); assert.deepEqual(BODY_LIFE.child.cadence, [1.15, Infinity]); assert.deepEqual(BODY_LIFE.thin.stride, [1.05, Infinity]);
+  for (const clip of ['Move_Walk_Fwd_Loop', 'Move_Run_Fwd_Loop']) { const r = lifeAgainst('child', await clipLife(getClip(clip, 'adult')), await clipLife(getClip(clip, 'child')));
+    assert.deepEqual(r.map(x => [x.n, x.ok]), [['cadence', true], ['stride', true], ['shape', true]], `${clip}: ${JSON.stringify(r)}`); }
+  // a child that strides out like the adult, at the adult's cadence, fails both
+  const A = await clipLife(getClip('Move_Walk_Fwd_Loop', 'adult')); assert.deepEqual(lifeFails('child', A, { ...A, stride: A.stride * 1.1 }).map(x => x.match(/'s (\w+)/)[1]), ['cadence', 'stride', 'shape']);
+});
+// Studio 25/11, gate (c): the clips on main before 25/11 that still fail the body check, named and dated; each must fail exactly
+// as listed (motionlib.mjs bodyGate, run by checkAll in the first test), a fixed one must leave, and none is a clip PR 202 made
+test('gate (c): the baseline lists only older clips, dated, each failing as listed', async () => {
+  assert.equal(BODY_KNOWN_DATE, '25/11');
+  const names = new Set(NEW.map(C => C.name)); for (const n of Object.keys(BODY_KNOWN)) { assert.ok(!names.has(n), `${n} is a new clip`); assert.ok(ALL.some(C => C.name === n), n); }
+  for (const [n, [want]] of Object.entries(BODY_KNOWN)) { const C = ALL.find(c => c.name === n), r = { fails: [] }; bodyGate(r, C, await bodyFails(C)); assert.deepEqual(r.fails, [], n); assert.match(r.known, new RegExp(want.join('|'))); }
+  // a listed clip that passes, or fails another way, fails
+  const C = ALL.find(c => c.name === 'Thin_Move_Walk_Fwd_Loop'), r1 = { fails: [] }, r2 = { fails: [] };
+  bodyGate(r1, C, []); assert.match(r1.fails[0], /fixed, delete it/);
+  bodyGate(r2, C, ["body: thin's time is 1 of the adult's (<= 0.92)"]); assert.match(r2.fails.join(), /BODY_KNOWN lists stride/);
+});
+// a twinless clip on the move is held to its nearest adult gait; in place, to the stated rule (never still, its posture)
+test('a clip with no adult twin: the old walk against the adult walk, the stooped idle never still', async () => {
+  assert.deepEqual(NEAREST, { Move_OldWalk_Fwd_Loop: 'Move_Walk_Fwd_Loop' });
+  const O = getClip('Move_OldWalk_Fwd_Loop', 'elder'); assert.equal(adultNear(O).name, 'Adult_Move_Walk_Fwd_Loop');
+  assert.deepEqual((await bodyFails(O)).filter(x => !/near/.test(x)), []);
+  const fake = { ...O, keys: O.keys, frames: Math.round(O.frames * 0.5) }; assert.match((await bodyFails(fake, await rigClip(O))).join(), /elder's time .*near: Adult_Move_Walk_Fwd_Loop/);
+  assert.deepEqual(stillSpans((await rigClip(getClip('Idle_Stooped_Loop', 'elder'))).paths), []);
+});
+// REVIEW-2 FIX (Gest_Clap child): both hands open and close (the captured right did the work: from three-quarter front, one hand
+// flapping), each travelling at least 40 % of the opening, and a child opens 15 % wider for its size than the adult (bodies.js:
+// "bigger gestures for its size", 15 % the size change the arc check calls readable for a child)
+test('a clap: the hands meet and never pass through each other, both open wide between two meetings, a child\'s wider for its size', async () => {
+  const opens = {};
   for (const [clip, body, open] of [['Gest_Clap_Loop', 'adult', 25], ['Gest_Clap_Loop', 'child', 18], ['Gest_SitClap_Loop', 'adult', 20], ['Gest_SitClap_Loop', 'elder', 18]]) {
-    const C = getClip(clip, body), gap = (await once(C)).slice(C.captured[0], C.captured[1] + 1).map(w => { const a = w.R.shoulder.map((x, i) => x - w.L.shoulder[i]), l = Math.hypot(...a); return 100 * w.R.hand.reduce((s, x, i) => s + (x - w.L.hand[i]) * a[i] / l, 0); });
+    const C = getClip(clip, body), R = await capOf(C), axis = w => { const a = sub(w.R.shoulder, w.L.shoulder), l = Math.hypot(...a); return a.map(x => x / l); }, mid = w => w.L.shoulder.map((x, i) => (x + w.R.shoulder[i]) / 2);
+    const gap = R.map(w => 100 * dot(sub(w.R.hand, w.L.hand), axis(w)));
     assert.ok(Math.min(...gap) > -2 && Math.min(...gap) < 2, `${body} ${clip}: ${Math.min(...gap).toFixed(1)} cm`);
     const meets = gap.filter((g, i) => i && i < gap.length - 1 && g < 6 && g <= gap[i - 1] && g < gap[i + 1]).length, wide = Math.max(...gap);
     assert.ok(meets >= 3, `${body} ${clip}: ${meets} meetings`); assert.ok(wide >= open, `${body} ${clip}: opens ${wide.toFixed(0)} cm`);
+    const travel = s => { const v = R.map(w => 100 * dot(sub(w[s].hand, mid(w)), axis(w))); return Math.max(...v) - Math.min(...v); };
+    for (const s of ['L', 'R']) assert.ok(travel(s) >= 0.4 * wide, `${body} ${clip}: the ${s} hand travels ${travel(s).toFixed(0)} of ${wide.toFixed(0)} cm`);
+    opens[`${clip} ${body}`] = wide / (BODIES[body].spec.scale ?? 1);
   }
+  assert.ok(opens['Gest_Clap_Loop child'] >= 1.15 * opens['Gest_Clap_Loop adult'], JSON.stringify(opens));
 });
 test('seated claps are at the chest, not the knees', async () => {
   for (const C of of('Gest_SitClap_Loop')) { const R = (await once(C)).slice(C.captured[0], C.captured[1]); for (const w of R) assert.ok(Math.min(w.L.hand[2], w.R.hand[2]) > w.L.knee[2] + 0.12, `${C.name}: hand ${w.L.hand[2]} knee ${w.L.knee[2]}`); }
 });
+// (played twice, so the frame after the capture's last is the next lap's first: played once it is the blend back to the standard
+// pose, whose first frame the engine plays its own way, which this test is not about)
 test('a loop in place repeats without skipping a frame: the hands move on at the seam as they did before it', async () => {
-  for (const C of MINE.filter(C => C.loop && !C.advance)) { const R = await rigRows(C.clip, C.body), [, b] = C.captured, v = f => Math.max(...['L', 'R'].map(s => 100 * d3(R[f][s].hand, R[f - 1][s].hand)));
+  for (const C of MINE.filter(C => C.loop && !C.advance)) { const r = placeClip({ f: 0, clip: C.clip, body: C.body, times: 2 }, { pos: [0, 0], yaw: 90 }), R = [];
+    await rigClip({ ...C, keys: r.keys, frames: r.keys.at(-1).f }, C.body, { each: (f, S, w) => R.push(w) });
+    const [, b] = C.captured, v = f => Math.max(...['L', 'R'].map(s => 100 * d3(R[f][s].hand, R[f - 1][s].hand)));
     assert.ok(v(b + 1) < 1.35 * Math.max(v(b), v(b + 2)) + 0.6, `${C.name}: ${v(b + 1).toFixed(1)} cm after ${v(b).toFixed(1)}`); }
 });
 test('a kneeling or floor-sitting body has its feet on the floor', async () => {
@@ -560,21 +631,53 @@ test('an elder stays stooped through a standing clip (it stood up to 3 deg for a
     const lean = (await rigRows(clip, 'elder')).map(w => w.torsoLean); assert.ok(Math.min(...lean) > 12, `${clip}: ${Math.min(...lean)} deg`);
   }
 });
+// REVIEW-2 FIX (Idle_Kneel, Idle_SitFloor: the elder knelt and sat upright like the adult, base.js floorClip passed no posture):
+// the stoop is held on every base, kneeling, on the floor and seated: the elder's trunk leans on average at least 10 deg more
+// than the adult's in each (its 24 deg stoop, less what a back already curled up has left of its range: base.js BEND_ROOM)
+test('an elder keeps its stoop kneeling, on the floor and seated', async () => {
+  const mean = R => R.reduce((a, w) => a + w.torsoLean, 0) / R.length;
+  for (const clip of ['Idle_Kneel_Loop', 'Idle_SitFloor_Loop', 'Gest_SitTalk_Loop', 'Gest_SitClap_Loop']) {
+    const e = mean(await capOf(getClip(clip, 'elder'))), a = mean(await capOf(getClip(clip, 'adult'))); assert.ok(e >= a + 10, `${clip}: elder ${e.toFixed(0)}, adult ${a.toFixed(0)} deg`); }
+});
 test('an arm keeps 3 cm off the other one (thin shoulders brought the arms of five clips together)', async () => {
   for (const C of MINE.filter(C => !/Clap/.test(C.clip))) { const n = (await once(C)).filter(w => 100 * armGap(w) < 3).length; assert.equal(n, 0, `${C.name}: ${n} frames`); }
 });
 test('a seated body keeps its hips on the seat', async () => {
   for (const C of MINE.filter(C => C.base === 'SIT')) { const z = (await once(C)).map(w => 100 * w.skel.pelvis[2]); assert.ok(Math.max(...z) - Math.min(...z) < 1, `${C.name}: ${(Math.max(...z) - Math.min(...z)).toFixed(1)} cm`); }
 });
-// HAND_CM: the fastest a hand goes in a frame (12 cm: 3.6 m/s, a thrown-up hand; the captures' seams and poles went 12 to 20)
-const HAND_CM = 12;
+// Limits re-set from principle (Studio 25/11, gate (d)), written before the clips were measured against them:
+// HAND_CM (was 12, "from seen values"): the library's own cap on a hand, perform.js HAND_MAX (8 cm a frame, 2.4 m/s, a quick
+// gesture), as the 'kaiships' dose plays it (DOSE_E: every angle 1.3 times as far from the act's first key): 10.4 cm a frame
+const HAND_CM = 100 * HAND_MAX * DOSE_E;
 test('no hand snaps', async () => {
-  for (const C of MINE) { const v = speed(await once(C)); assert.ok(v <= HAND_CM, `${C.name}: ${v.toFixed(1)} cm/f`); }
+  assert.ok(Math.abs(HAND_CM - 10.4) < 1e-9);
+  for (const C of NEW) { const v = speed(await once(C)); assert.ok(v <= HAND_CM, `${C.name}: ${v.toFixed(1)} cm/f`); }
 });
+// the clap caps (were hand 0.14, limb 22, raised for the claps): the library's own, HAND_MAX and LIMB_MAX: a clap is no faster than any
+// other quick gesture (a clapping hand meets the other at 1.5-2 m/s, under the cap's 2.4)
+test('the claps keep the library\'s speed caps', () => {
+  for (const f of ['Gest_Clap_Loop', 'Gest_SitClap_Loop']) assert.doesNotMatch(fs.readFileSync(new URL(`../../styles/stick-man/motion-lib/acts/${f}.js`, import.meta.url), 'utf8'), /hand: 0\.1|limb: 2/);
+});
+// FACE_AWAY (Terrified was allowed 35 %, its own share): a clip a film cuts to keeps its face readable for at least three quarters
+// of its frames (the head over 40 deg off front shows the side of the face, the eyes gone): a fright's look one way and the
+// other fits in the quarter left. ONCE (Terrified was <= 5.3 s, its own 5.23): the adult's Terrified is its act (the capture's
+// span) plus the library's way in (14 frames) and the rise out of the crouch, which may take no more than 60 frames (2 s: twice
+// a brisk sit-to-stand; the capture never stands up, so the rise is the clip's own). RISE: the head never comes up faster than
+// 2.5 cm a frame (0.75 m/s, a brisk sit-to-stand's), whatever the body's size (the legs push a light body up as fast).
+// (Set after the first measure, unlike the others: the first rise limit scaled with the root of the body's size and assumed an
+// easing whose peak is 1.5 times its mean; the library's 'slow' ease peaks at 2.3, and no child rise fitted both that and the
+// child's quick clock. ONCE in seconds is longer than before, 6.2 s against 5.3: the rise was 8 frames, now it is acted)
+const FACE_AWAY = 0.25, ONCE_IN = 14, ONCE_RISE = 60, RISE_CM = 2.5;
 test('a clip a film cuts to faces front: the head off front is the exception, the last frame is front, and a once is short', async () => {
-  for (const [clip, most] of [['Gest_SitTalk_Loop', 0], ['Gest_SitClap_Loop', 0], ['Gest_PhoneTalk_Loop', 0], ['Move_RunTired_Once', 0], ['React_Defeated_Once', 0], ['React_Terrified_Once', 0.35]])
+  for (const [clip, most] of [['Gest_SitTalk_Loop', 0], ['Gest_SitClap_Loop', 0], ['Gest_PhoneTalk_Loop', 0], ['Move_RunTired_Once', 0], ['React_Defeated_Once', 0], ['React_Terrified_Once', FACE_AWAY]])
     for (const C of of(clip)) { const off = offFront(await once(C)), n = off.filter(x => x > 40).length / off.length; assert.ok(n <= most, `${C.name}: ${(100 * n).toFixed(0)} % over 40 deg`); if (!C.loop) assert.ok(off[off.length - 1] < 5, `${C.name} ends ${off[off.length - 1].toFixed(0)} deg off`); }
-  for (const [clip, s] of [['Gest_SitTalk_Loop', 8], ['React_Terrified_Once', 5.3]]) assert.ok(getClip(clip, 'adult').frames <= s * 30, `${clip}: ${getClip(clip, 'adult').frames / 30} s`);
+  assert.ok(getClip('Gest_SitTalk_Loop', 'adult').frames <= 8 * 30);
+  const T = getClip('React_Terrified_Once', 'adult'); assert.ok(T.frames <= T.captured[1] - T.captured[0] + ONCE_IN + ONCE_RISE, `Terrified: ${T.frames} f for a ${T.captured[1] - T.captured[0]} f act`);
+});
+// REVIEW-2 FIX (React_Terrified child: folded into a ball 2 s, sprang up in 8 frames, head 6 cm a frame, the fear gone)
+test('a frightened body rises out of its crouch, never springs up', async () => {
+  for (const C of of('React_Terrified_Once')) { const z = (await once(C)).map(w => w.skel.head[2]), v = Math.max(...z.slice(1).map((x, i) => 100 * (x - z[i])));
+    assert.ok(v <= RISE_CM, `${C.name}: the head rises ${v.toFixed(2)} cm/f`); }
 });
 test('a surprise is an accent: the body goes the other way first, the hands then rise fast and high, and it holds', async () => {
   for (const C of of('React_Surprise_Once')) { const R = await once(C), z = R.map(w => (w.L.hand[2] + w.R.hand[2]) / 2), top = Math.max(...z), up = z.findIndex(x => x > z[0] + 0.5 * (top - z[0]));
@@ -604,3 +707,58 @@ test('a standard pose taken from a capture belongs to that capture; bridgeKeys t
   assert.equal(B[0].armR.swing, 0); assert.equal(B[3].armR.swing, 120); assert.ok(B[1].armR.swing > 0 && B[1].armR.swing < B[2].armR.swing);
   assert.deepEqual(poleSpans([0, 1, 2].map(f => ({ f, armL: { raise: 0, swing: 0, roll: 0 }, armR: { raise: 88, swing: f === 2 ? 200 : 0, roll: 0 } }))), [['armR', -4, 7]]);
 });
+// REVIEW-2 FIX (holds froze: Idle_Kneel 176 frames, Idle_Sad 315, Idle_SitFloor 209-293, Gest_SitTalk elder "nearly frozen"): no
+// clip a body performs stops dead (bodylife.mjs STILL_F, STILL_IN, STILL_CM; the gate's stillFails), and the talking hand of a
+// seated talk keeps talking
+test('a hold never freezes: every new clip moves within each 2 s, the talking hand too', async () => {
+  for (const C of NEW) { assert.ok(C.perform, C.name); assert.deepEqual(stillSpans((await once(C)).map(w => ({ head: w.skel.head, handL: w.L.hand, handR: w.R.hand, pelvis: w.skel.pelvis }))), [], C.name); }
+  for (const C of of('Gest_SitTalk_Loop')) { const R = await capOf(C), v = R.slice(STILL_IN).map((w, i) => 100 * d3(w.R.hand, R[i].R.hand)), lazy = [];
+    for (let a = 0; a + STILL_F - STILL_IN <= v.length; a++) if (Math.max(...v.slice(a, a + STILL_F - STILL_IN)) < STILL_CM) lazy.push(a);
+    assert.deepEqual(lazy.slice(0, 3), [], C.name); }
+  assert.match(stillFails({ perform: true }, { paths: Array.from({ length: 90 }, () => ({ head: [0, 0, 1], handL: [0, 0, 1], handR: [0, 0, 1], pelvis: [0, 0, 0.6] })) })[0], /^still: nothing moves/);
+});
+// REVIEW-2 FIX (Gest_NodYes elder: the head tilted to one side f21-133, read as a tilt): a yes keeps its head within 10 deg of
+// upright to the side (a head rolled further reads as a tilt, a question, not a nod)
+test('a yes is a nod, not a tilt', async () => {
+  for (const C of of('Gest_NodYes_Once')) { const r = Math.max(...(await capOf(C)).map(w => Math.abs(w.roll))); assert.ok(r <= 10, `${C.name}: the head rolls ${r.toFixed(0)} deg`); }
+});
+// REVIEW-2 FIX (Gest_Yawn: the elder's hand never reached the face, 53 cm off the head's centre; the heavy's 49; per-body tables and
+// no check): the yawning hand covers the mouth (its centre within 5 cm of where it covers it, mocap_reach.mjs 'mouth', the fist's
+// own radius) for at least half a second, on every body
+test('a yawn: the hand comes to the mouth on every body', async () => {
+  for (const C of of('Gest_Yawn_Once')) { const n = (await capOf(C)).filter(w => 100 * d3(w.L.hand, w.mouth) < 5).length; assert.ok(n >= 15, `${C.name}: ${n} frames at the mouth`); }
+});
+// REVIEW-2 FIX (React_Cry: the hands went to the chin, read worried or thinking): the hands press on the eyes, each within 6 cm of
+// where it covers its eye (mocap_reach.mjs 'eye') for at least 30 % of the loop, and while a hand is at the face it is at the
+// eye, not the chin
+test('a cry: the hands go to the eyes', async () => {
+  for (const C of of('React_Cry_Loop')) { const R = await capOf(C);
+    for (const s of ['L', 'R']) { const at = R.filter(w => 100 * d3(w[s].hand, w['eye' + s]) < 6).length / R.length; assert.ok(at >= 0.3, `${C.name} ${s}: ${(100 * at).toFixed(0)} % at the eye`);
+      for (const w of R) if (100 * d3(w[s].hand, w.mouth) < 6) assert.ok(d3(w[s].hand, w['eye' + s]) < d3(w[s].hand, w.mouth), `${C.name} ${s}: a hand at the chin`); } }
+});
+// REVIEW-2 FIX (Move_OldWalk elder: the hips pumped 9 cm a step, the knees 28-70 deg, a crouched creep, not frail): over its cycles
+// the old walk's hips rise and fall less than the adult's sad walk's (the slowest adult gait in the library), and no knee bends past
+// 50 deg (the elder's own made walk, swing included)
+test('an old walk is frail, not a crouched creep', async () => {
+  const hips = async C => { const R = await capOf(C), z = R.map(w => w.skel.pelvis[2]); return [100 * (Math.max(...z) - Math.min(...z)), Math.max(...R.flatMap(w => [w.L.kneeFlex, w.R.kneeFlex]))]; };
+  const [h, k] = await hips(getClip('Move_OldWalk_Fwd_Loop', 'elder')), [ha] = await hips(getClip('Move_SadWalk_Fwd_Loop', 'adult'));
+  assert.ok(h < ha, `old walk hips ${h.toFixed(1)} cm, adult sad walk ${ha.toFixed(1)}`); assert.ok(k <= 50, `old walk knee ${k.toFixed(0)} deg`);
+});
+// the shape layer: a spring that follows, a loop that closes on itself, a body that leans in to a hand at its face
+test('perform: a part follows as a spring (lag, overshoot on stop), a loop closes, the adult is not reshaped', () => {
+  const x = [...Array(30).fill(0), ...Array(60).fill(1)], y = follow(x, [1.5, 0.45]); assert.ok(y[31] < 0.2 && Math.max(...y) > 1.1 && Math.abs(y.at(-1) - 1) < 0.02);
+  const c = follow(Array.from({ length: 61 }, (_, i) => Math.sin(i / 60 * 2 * Math.PI)), [2, 0.5], true); assert.ok(Math.abs(c[0] - c[60]) < 1e-12 && Math.abs(c[1] - c[0]) < 0.2);
+  assert.deepEqual(Object.keys(BODIES.adult.perform), ['weight']);
+  for (const b of ['heavy', 'thin', 'child', 'elder']) for (const k of ['trunk', 'arms', 'head']) assert.equal(BODIES[b].perform[k].length, 2, `${b} ${k}`);
+});
+// REVIEW-2 code findings: KNEEL and FLOOR exist as soon as the library loads, before any clip (they existed only after a clip
+// that used them was imported; index.js now imports acts/floor.js first); mocap.js's second pass (a walk whose capture does not
+// open on a left strike) keeps `closed` and `strike`
+test('KNEEL and FLOOR are standard poses from the start; mocapCycle\'s second pass keeps its options', async () => {
+  assert.equal(typeof BASES.KNEEL, 'function'); assert.equal(typeof BASES.FLOOR, 'function');
+  const idx = fs.readFileSync(new URL('../../styles/stick-man/motion-lib/index.js', import.meta.url), 'utf8');
+  assert.ok(idx.indexOf("from './acts/floor.js'") < idx.indexOf("from './body/"), 'index.js registers the floor poses before it imports a clip');
+  const { default: SW } = await import('../../styles/stick-man/motion-lib/ref/mixamo/sad_walk.js'), a = mocapCycle(SW, { legM: 0.8, strike: true }), b = mocapCycle(SW, { legM: 0.8, strike: true, closed: true });
+  assert.ok(d3(SW.frames[0].Hips, SW.frames.at(-1).Hips) < 1e-3); assert.equal(b.cycle, a.cycle + 1);
+});
+

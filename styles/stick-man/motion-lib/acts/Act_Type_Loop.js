@@ -6,4 +6,4 @@ import { apartSource } from '../ref/perform.js';
 
 const APART = { thin: 0.1 };
 
-export default act({ clip: 'Act_Type_Loop', loop: true, base: 'SIT' }, body => ownClip({ body, src: apartSource(SRC, APART[body], 2), ...seated(body), loop: true }));
+export default act({ clip: 'Act_Type_Loop', loop: true, base: 'SIT' }, body => ownClip({ body, src: apartSource(SRC, APART[body], 2), ...seated(), loop: true }));
