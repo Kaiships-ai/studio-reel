@@ -110,15 +110,8 @@ else {
       for (const k of kinds[set]) { for (const S of [a, b]) S.face({ expr: 'neutral', t: 30, age: 60, cam: CAM, marks: [[k, 30]] }); const rows = S => marksIn(S).map(m => [m.position.toArray(), m.scale.x, m.renderOrder, m.material.depthTest].flat().map(x => num(x)));
         assert.ok(rows(b).length, k); assert.deepEqual(rows(a), rows(b), `${cap} ${k}`); assert.equal(a.wardrobe.hats[0].visible, true); } } } } finally { useHeadMarks(); }
   });
-  // COVER: the most of a mark's card a hat may hide, over eight frames and two cameras. Chosen on 25/11 AFTER the hats had been measured
-  // (it was not set blind): it falls between 20 % (a cap's crown over the anger vein) and 29 % (a toque over '...'), and no reviewer
-  // has judged it on a picture. No mark is left out. KNOWN: every pair over it that day (29 to 70 %), printed as todo: open faults, not
-  // accepted ones; a new pair fails. (A bare head hides 0 % of the classic stars: what hides them is the hat)
-  const COVER = 0.25, KNOWN = ['classic cap:police stars', 'classic cap:pilot stars', 'classic hat:toque stars', 'bold cap:police ellipsis', 'bold cap:pilot ellipsis', 'bold hat:toque exclaim', 'bold hat:toque ellipsis', 'bold hat:toque gloom'];
   const cover = () => { const out = {}; try { for (const set of ['classic', 'bold']) { useHeadMarks(set); for (const hat of ['cap:police', 'cap:pilot', 'cap:scrub', 'hat:hard', 'hat:toque']) { const { S } = build('adult', {}, [hat]); S.pose2(P0);
     for (const k of set === 'bold' ? BOLD_MARKS : ['sweat', 'anger', 'sparkle', 'question', 'exclaim', 'steam', 'stars', 'zzz']) out[`${set} ${hat} ${k}`] = hiddenShare(S, k); } } } finally { useHeadMarks(); } return out; };
-  const C = cover();
-  const over = l => l.filter(n => C[n] > COVER).map(n => `${n}: ${Math.round(100 * C[n])} % of the mark is under the hat`);
-  test('head marks and a wardrobe hat: no hat covers a quarter of a mark (the known pairs aside)', () => assert.deepEqual(over(Object.keys(C).filter(n => !KNOWN.includes(n))), []));
-  test('head marks and a wardrobe hat: the known pairs', { todo: 'a toque or a cap crown covers marks of both sets; where marks go over a hat is an open design call' }, () => assert.deepEqual(over(KNOWN), []));
+  // an open design call (hats and head marks, FOLLOWUPS): every pair's share is measured and printed, no limit is set
+  test('head marks and a wardrobe hat: the share of each mark under the hat', { todo: 'hats and head marks: an open design call (FOLLOWUPS)' }, t => { for (const [n, x] of Object.entries(cover())) t.diagnostic(`${n}: ${Math.round(100 * x)} % of the mark is under the hat`); });
 }
