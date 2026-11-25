@@ -13,9 +13,9 @@
 // A run only adds rows or makes one stricter (merge). `fail` is never written: a red pair is `blocked`, with its number.
 import fs from 'node:fs'; import path from 'node:path'; import crypto from 'node:crypto'; import { pathToFileURL, fileURLToPath } from 'node:url'; import { execFileSync } from 'node:child_process';
 import { ROOT, run } from '../../../../kit/env.mjs';
-import { personKey, pair, table as tableOf, measured, shapeOf, FACE_BODIES, USABLE, VERDICTS } from '../../kit/cast/compat.js';
-import { UNSAFE, unsafePair, HANGS, hangs, clipId } from '../../kit/cast/clothsafe.js';
-import { expand } from '../../kit/cast/jobs.js';
+import { personKey, pair, table as tableOf, measured, shapeOf, FACE_BODIES, USABLE, VERDICTS } from '#kit/cast/compat.js';
+import { UNSAFE, unsafePair, HANGS, hangs, clipId } from '#kit/cast/clothsafe.js';
+import { expand } from '#kit/cast/jobs.js';
 
 const SELF = fileURLToPath(import.meta.url), KIT = path.join(ROOT, 'styles/stick-man/kit'), LIMITS_FILE = path.join(KIT, 'compat-limits.json');
 export const TABLE = path.join(KIT, 'compat.json'), LIMITS = JSON.parse(fs.readFileSync(LIMITS_FILE, 'utf8'));
@@ -97,7 +97,7 @@ export function checkFilm(film, T) {
 }
 
 // ------------------------------------------------------------------ measuring
-let M_, G_; const measureKit = async () => (M_ ||= await import('../../../../test/unit/wardrobe-measure.mjs'), G_ ||= await import('./motionlib.mjs'), { M: M_, G: G_, lib: await import('../../motion-lib/index.js') });
+let M_, G_; const measureKit = async () => (M_ ||= await import('../../../../test/unit/wardrobe-measure.mjs'), G_ ||= await import('./motionlib.mjs'), { M: M_, G: G_, lib: await import('#motion-lib/index.js') });
 const COPY = new Map();
 // why a clip record on this body is the adult's performance, or null
 export async function copyOf(C, body) {
