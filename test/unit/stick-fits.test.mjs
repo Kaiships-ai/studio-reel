@@ -141,3 +141,11 @@ test('contract: every mark a feeling plays is a mark fits_kinds measures under e
   const { EXPRESSIONS, marksOf } = await import('../../styles/stick-man/engine/expressions.js'), K = await import('../../styles/stick-man/tools/gates/fits_kinds.mjs'), names = new Set((await K.marks(['cap:police'])).map(r => r.pair.split('|')[1]));
   for (const [n, e] of Object.entries(EXPRESSIONS)) for (const m of marksOf(e)) assert.ok(names.has(`bold:${[].concat(m)[0]}`), `${n}: ${m}`);
 });
+test('tampering with the REAL committed table: un-blocking a row, removing a row, a garment it never measured each fail the gate; untouched it passes', () => {
+  const real = TABLE.rows, K = [key('Idle_Stand_Loop'), key('Gest_Wave_Loop')], who = { costume: ['sweater:sky'] }, k = C.personKey({ outfit: ['sweater'], });
+  const ok = gate(reel(K, who), real); assert.equal(ok.code, 0, ok.out);
+  const blockedOf = real.find(r => r.verdict === 'blocked' && r.pair.startsWith(`clip|${k}|`)); assert.ok(blockedOf, `a blocked row of ${k}`);
+  const un = gate(reel([...K, key(blockedOf.pair.split('|')[2])], who), real.map(r => (r === blockedOf ? { ...r, verdict: 'pass', number: 0, bad: 0 } : r))); assert.equal(un.code, 1, un.out); assert.match(un.out, /pass, but/);
+  const gone = gate(reel(K, who), real.filter(r => r.pair !== `clip|${k}|Gest_Wave_Loop`)); assert.equal(gone.code, 1); assert.match(gone.out, /no row: not measured/);
+  const odd = gate(reel(K, { costume: ['sweater:sky', 'cardigan:plum', 'scarf:rose', 'tie'] }), real); assert.equal(odd.code, 1); assert.match(odd.out, /untested/);
+});
