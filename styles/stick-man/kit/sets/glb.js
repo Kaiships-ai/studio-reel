@@ -34,7 +34,7 @@ export function toonFrom(m, tint = null) {
 }
 
 // Blender-space box of a placed piece: triangles that cross the z band count, anything above or below does not
-function bodyBox(obj, band) {
+export function bodyBox(obj, band) {
   const lo = [Infinity, Infinity, 0], hi = [-Infinity, -Infinity, 0], a = new THREE.Vector3(), tri = [[], [], []];
   obj.updateMatrixWorld(true);
   obj.traverse(m => {
