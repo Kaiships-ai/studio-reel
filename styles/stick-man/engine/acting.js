@@ -237,9 +237,12 @@ export const EXPR_LEAD = 4;
 export const exprKeyAt = (track, f) => { let k = track[0] || { f: -1e9, expr: 'neutral' }; for (const x of track) if (x.f <= f) k = x; else break; return k; };
 
 // a beat's `mark: 'question'` (or [kind, frames]) shows a head-attached emotion mark (faces.js MARK_NAMES) for `dur` frames
-export function markOwner(b) {
+// (until(): the frame it must be gone by at the latest, read as it plays; a mark with `markFace`, the
+// frames since its own face's key, is cleared MARK_CLEAR frames before its figure's next face, expressions.js)
+export const MARK_CLEAR = 6;
+export function markOwner(b, until = null) {
   const [kind, dur] = Array.isArray(b.mark) ? b.mark : [b.mark, b.markDur ?? 36], t0 = b.at;
-  return { chan: 'add', start: t0, verb: 'mark', fn: f => (f >= t0 && f < t0 + dur ? { ['x_mark_' + kind]: f - t0 + 1 } : {}) };
+  return { chan: 'add', start: t0, verb: 'mark', fn: f => (f >= t0 && f < t0 + dur && !(until && f >= until()) ? { ['x_mark_' + kind]: f - t0 + 1 } : {}) };
 }
 
 // Which verbs count as the body acting (the acting gate: >= 70 % of a lead's on-screen frames). Head-only and set-up

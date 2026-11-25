@@ -595,7 +595,8 @@ export function makeStick(spec) {
   // spec.faceTop (W): the top of the face plate a hood or a cap leaves open (faces.js drawFaceState o.top); spec.faceTurn:
   // how far the face slides round the head with the skull's yaw (0.8 default; a hood's opening wants the marks further in)
   // (spec.faceTopSide / faceTopUp: how much lower that top is in profile / seen from above; spec.faceEdge: [z0, ramp] where the face fades going round)
-  const FR = faceRig(W, { glasses: !!spec.glasses, top: spec.faceTop, topSide: spec.faceTopSide, topKnee: spec.faceTopKnee, topUp: spec.faceTopUp, edge: spec.faceEdge, edgeKnee: spec.faceEdgeKnee }), TURN = spec.faceTurn ?? 0.8;
+  // (spec.faceAge: elder | teen | child | toddler draws the s2 face at that age, facestyles/s2age.js; left out = the face as it is, whatever the body)
+  const FR = faceRig(W, { glasses: !!spec.glasses, top: spec.faceTop, topSide: spec.faceTopSide, topKnee: spec.faceTopKnee, topUp: spec.faceTopUp, edge: spec.faceEdge, edgeKnee: spec.faceEdgeKnee, faceAge: spec.faceAge }), TURN = spec.faceTurn ?? 0.8;
   const face = new THREE.Mesh(facePatch(), new THREE.MeshBasicMaterial({ map: FR.tex, transparent: true, depthWrite: false,
     polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
   face.userData.noPrepass = true; face.userData.faceInk = true; face.renderOrder = 2; rig.add(face); head.add(FR.group);
@@ -637,6 +638,9 @@ export function makeStick(spec) {
     alphaMap: contactTex(), transparent: true, opacity: 0.42, depthWrite: false }));
   contact.rotation.x = -Math.PI / 2; contact.scale.set(0.48 * W, 0.24 * W, 1); contact.position.set(0.03 * W, 0.004, 0);
   contact.userData.noPrepass = true; root.add(contact);
+  // spec.tidyFeet (opt-in): the foot shadow a soft neutral grey, and the heel balls hidden on a figure posed by beats (S.pose
+  // has no heels: the two balls stay at the root, a black dot on the floor between the feet)
+  if (spec.tidyFeet) { contact.material.color.copy(lin(0.10, 0.10, 0.10)); contact.material.opacity = 0.3; }
 
   const S = { root, yaw: 0, hand: {}, parts: { head: headSolid, torso, toes, ankles, hands, face, marks: FR.group, hair: hairG }, xmarks: [], props: {} };
   const inv = new THREE.Matrix4();
@@ -786,7 +790,7 @@ export function makeStick(spec) {
     body.position.set(dx * W, (HIP_V + dz) * W, 0); body.rotation.set(pt, 0, -lean);
     const hc = bt(HEAD_C[0] + (P.head_dx || 0), HEAD_C[1] + (P.head_dv || 0));
     head.position.set(hc[0] * W, hc[1] * W, hc[2] * W);
-    head.rotation.set(pt * 0.6 + (P.head_pitch || 0) * DEG, 0, -(lean + (P.head_tilt || 0) * DEG));
+    head.rotation.set(pt * 0.6 + (P.head_pitch || 0) * DEG, (P.head_yaw || 0) * DEG, -(lean + (P.head_tilt || 0) * DEG));   // (head_yaw, a pose's: + = toward its right)
     S.fill = P.x_fill || 0;                                        // rage fill (verb face_fill): the face pass reads it
     S.face(P);
     // Limbs. Extra keys: elbow{L,R} / kneeDir (or kneeDir{L,R}) = pole vectors (figure-local), armFK{L,R} =
@@ -828,6 +832,7 @@ export function makeStick(spec) {
         kneeFlex: leg.flex, elbowFlex: arm.flex, footPitch: P['footPitch' + side] || 0 };
     }
     S.rig = rig;
+    if (spec.tidyFeet) for (const h of Object.values(heels)) h.visible = false;
     handProps(P, rig);
     S.xmarks = Object.keys(P).filter(k => k.startsWith('x_mark_') && P[k] >= 1).map(k => [k.slice(7), Math.floor(P[k] - 1)]);
     contact.visible = P.contact !== false && !(P.x_air > 0) && Math.abs(P.x_tumble || 0) < 20 && Math.abs(P.x_roll || 0) < 20;   // a figure tipped over or airborne has no foot shadow

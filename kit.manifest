@@ -183,6 +183,9 @@ content-types/
 # non-free capture library (rebuilt from Quaternius UAL, CC0, under packs/stick-man/).
 styles/stick-man/engine/
 !styles/stick-man/engine/facestyles/s2.js
+!styles/stick-man/engine/facestyles/s2age.js
+!styles/stick-man/engine/facestyles/s2expr.js
+!styles/stick-man/engine/expressions.js
 styles/stick-man/kit/util.js
 styles/stick-man/kit/acting/keys.js
 styles/stick-man/kit/cast/costume.js

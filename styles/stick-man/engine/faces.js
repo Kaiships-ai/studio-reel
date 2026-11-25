@@ -508,7 +508,7 @@ function cardTex(kind) {
 }
 const PLANE = new THREE.PlaneGeometry(1, 1);
 function card(kind) {
-  const m = new THREE.Mesh(PLANE, new THREE.MeshBasicMaterial({ map: cardTex(kind), transparent: true, depthWrite: false, alphaTest: 0.02 }));
+  const m = new THREE.Mesh(PLANE, new THREE.MeshBasicMaterial({ map: MARK_SET.now.tex(kind), transparent: true, depthWrite: false, alphaTest: 0.02 }));
   m.userData.noPrepass = true; m.renderOrder = FACE_STYLE.name ? 7 : 3; m.castShadow = false; m.visible = false; return m;
 }
 const back = x => { x = Math.max(0, Math.min(1, x)); const c = 2.2; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
@@ -526,6 +526,12 @@ const MARKS = {
   zzz: { cards: ['zzz', 'zzz'], at: (w, t) => [0, 1].map(i => { const u = ((t + i * 20) % 40) / 40; return [i, (0.45 + 0.25 * u) * w, (0.45 + 0.45 * u) * w, 0.1 * w, (0.14 + 0.12 * u) * w * Math.min(1, (1 - u) * 4), 0.2]; }) },
 };
 export const MARK_NAMES = Object.keys(MARKS);
+// The film's head-mark set (reel.js headMarks, set by engine/headmarks.js before any figure is built): the marks above, drawn
+// and timed as they always were ('classic', when left out), or the bold set. tex(card kind) -> texture, pop(mark) = frames
+// the mark takes to pop in. A set is opt-in, so a film that names none renders as before
+// (test/unit/stick-head-marks.test.mjs holds the classic set to its hash).
+export const MARK_SET = { classic: { marks: MARKS, tex: cardTex, pop: () => 7 }, now: null };
+MARK_SET.now = MARK_SET.classic;
 // the head's colour this frame (linear rgb; null: its own skin): the tint the face changes from (ta) blends into the one
 // it changes to (tb) over the change (u), and a face flushing in from no tint takes 6 frames more. A face and its talking
 // twin share a tint, so it holds (Kai 25/11 face set: a cold face lost its blue on every word; a sick-to-cold change snapped)
@@ -550,7 +556,7 @@ export function faceRig(headW, opt = {}) {
   const darkMouth = () => { const d = g.getImageData(150, 318, 212, 150).data; let n = 0;
     for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 128 && d[i] + d[i + 1] + d[i + 2] < 200) n++; return n / (512 * 512); };
   let key = '';
-  const cardsOf = kind => (cards[kind] ||= MARKS[kind].cards.map(c => { const m = card(c); group.add(m); return m; }));
+  const cardsOf = kind => (cards[kind] ||= MARK_SET.now.marks[kind].cards.map(c => { const m = card(c); group.add(m); return m; }));
   const v = new THREE.Vector3();
   return {
     tex, group, stats,
@@ -622,9 +628,9 @@ export function faceRig(headW, opt = {}) {
       }
       for (const list of Object.values(cards)) for (const m of list) m.visible = false;
       for (const [kind, age] of marks) {
-        if (!MARKS[kind]) continue;
-        const list = cardsOf(kind), pop = back(age / 7);
-        for (const [i, x, y, z, size, spin] of MARKS[kind].at(headW, t, age)) {
+        const M = MARK_SET.now.marks[kind]; if (!M) continue;
+        const list = cardsOf(kind), pop = back(age / MARK_SET.now.pop(kind));
+        for (const [i, x, y, z, size, spin] of M.at(headW, t, age)) {
           const m = list[i]; if (size <= 1e-4) continue;
           m.visible = true; m.position.set(x, y, z); m.scale.setScalar(Math.max(1e-3, size * pop));
           if (cam) { m.parent.updateMatrixWorld(true); m.lookAt(v.copy(cam)); }
