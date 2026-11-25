@@ -784,6 +784,7 @@ export function makeStick(spec) {
   // third number = depth toward where the figure faces (W), kneeF{L,R} = knee pushed forward (W), toeF = toe reach.
   S.pose = (P = {}) => {
     S.place(P);
+    if (spec.posture) P = { ...P, pitch: (P.pitch || 0) + (spec.posture.spine?.bend || 0), head_pitch: (P.head_pitch || 0) + (spec.posture.neck?.nod || 0) };
     P = reachAssist(P);
     const dx = P.dx || 0, dz = P.bob || 0, lean = (P.lean || 0) * DEG, c = Math.cos(lean), s = Math.sin(lean);
     const pt = (P.pitch || 0) * DEG, pc = Math.cos(pt), ps = Math.sin(pt);
@@ -848,8 +849,11 @@ export function makeStick(spec) {
   // plus the x_ keys (props, marks) and contact.
   let bent = null, slices = null;
   const _e = new THREE.Euler();
+  // spec.posture, spec.stance (motion-lib/bodies.js bodySpec(spec, body, { posture: true }), opt-in): the body's own way of standing on every
+  // channel a pose does not name (an elder's stoop, a toddler's held-out arms and wide feet)
+  const postured = Q => (spec.posture ? { ...Q, ...Object.fromEntries(Object.entries(spec.posture).filter(([, v]) => typeof v === 'object').map(([k, v]) => [k, { ...v, ...(Q[k] || {}) }])) } : Q);
   S.pose2 = (Q0 = {}) => {
-    const LB = limitBody(Q0), Q = LB.Q;
+    const LB = limitBody(postured(Q0)), Q = LB.Q;
     S.place(Q);
     if (!bent) {                                                   // rest copies of the torso and its ink shell, once
       const hull = torso.children[0];
@@ -932,7 +936,7 @@ export function makeStick(spec) {
       elbow = sol.elbow; hand = sol.hand; flex = sol.flex;
       arms[side] = { sh, pole, want, grip };
       const hipJ = toRoot(new THREE.Vector3(sg * 0.14 * girth, 0.04, 0)), G = Q['leg' + side] || {};
-      const foot0 = V(G.foot || [sg * 0.22, 0.022, 0]);
+      const foot0 = V(G.foot || [sg * 0.22 * (spec.stance ?? 1), 0.022, 0]);
       // the knee bends in the leg's own plane (hip, foot and the pelvis's sideways axis), always to the front of the
       // hip-to-foot line: a fixed 'forward' pole points almost along that line when the foot kicks up behind (a run's
       // heel kick), and the knee then swung out sideways up to 35 cm (Kai 2026-11-14, front view of the run). A keyed

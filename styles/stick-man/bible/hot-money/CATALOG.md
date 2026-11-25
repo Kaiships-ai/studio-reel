@@ -8,8 +8,8 @@ Sinh từ `tokens.json` và `catalog.json` bởi `node styles/stick-man/bible/ca
 
 | id | thân | trạng thái | dùng khi | không bao giờ | Kai |
 |---|---|---|---|---|---|
-| `clip.Move_Run_Fwd_Loop` | adult, child, elder, heavy, thin | ổn định | chạy thoát, chạy đuổi (thay cho DASH, C_RUNGUN) | chạy bằng key tay | +S3-013 +S3-003 -S3-002 |
-| `clip.Move_Walk_Fwd_Loop` | adult, child, elder, heavy, thin | thử | đi bộ thường (thay cho walk) | đi bằng key tay khi có clip |  |
+| `clip.Move_Run_Fwd_Loop` | adult, child, elder, heavy, thin, toddler | ổn định | chạy thoát, chạy đuổi (thay cho DASH, C_RUNGUN) | chạy bằng key tay | +S3-013 +S3-003 -S3-002 |
+| `clip.Move_Walk_Fwd_Loop` | adult, child, elder, heavy, thin, toddler | thử | đi bộ thường (thay cho walk) | đi bằng key tay khi có clip |  |
 | `clip.Move_Sprint_Fwd_Loop` | adult | ổn định | chạy nước rút | dừng gấp không bước hãm | +S3-013 |
 | `clip.Act_Jump_Once` | adult | thử | nhảy tại chỗ | lăn nghiêng giữa không trung | -S3-007 |
 | `clip.Idle_Stand_Loop` | adult | ổn định | đứng chờ, nghe | đứng như tượng hơn 3 s | +S3-013 |
@@ -41,7 +41,7 @@ Sinh từ `tokens.json` và `catalog.json` bởi `node styles/stick-man/bible/ca
 | `clip.Gest_PhoneCall_Loop` | adult | ổn định | gọi điện | máy rời tai | +S3-014 |
 | `clip.Gest_LookBackCarry_Once` | adult | ổn định | ngoái lại khi xách túi | túi đứng yên khi thân quay | +S3-014 |
 | `clip.Move_WalkFlashlight_Loop` | adult, heavy, thin | thử | đi soi đèn pin | đèn chỉ lung tung |  |
-| `clip.Idle_Breath_Loop` | child, elder, heavy, thin | thử | đứng thở (thân khác adult) | cho adult (dùng Idle_Stand) |  |
+| `clip.Idle_Breath_Loop` | child, elder, heavy, teen, thin, toddler | thử | đứng thở (thân khác adult) | cho adult (dùng Idle_Stand) |  |
 | `clip.Gest_LookUp_Once` | * | thử | ngước nhìn | không có gì ở trên |  |
 | `clip.Act_DropInTrunk_Once` | * | ổn định | thả túi vào cốp | túi biến mất sau khi thả | +S3-026 -S3-037 -S3-040 |
 | `clip.Act_PushBagOutWindow_Once` | * | ổn định | đẩy túi qua cửa sổ (thay cho PUSH_OUT) | túi xuyên khung cửa | +S3-026 |

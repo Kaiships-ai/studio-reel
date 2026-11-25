@@ -18,7 +18,7 @@ import { fileURLToPath } from 'node:url';
 import { run } from '../../../../kit/env.mjs';
 import { ALL, placeClip, fitClip, propSize } from '#motion-lib/index.js';
 import { BASES, turned, markColliders } from '#motion-lib/base.js';
-import { BODIES } from '#motion-lib/bodies.js';
+import { BODIES, BODY_NAMES, BODY_PREFIX, bodyPrefix } from '#motion-lib/bodies.js';
 import { compileTrack, playActor, flatten } from '#engine/motion.js';
 import { sizedBag, propSwap } from '#motion-lib/props.js';
 import { jointSteps, JOINT_STEP_MAX } from './jointstep.mjs';
@@ -32,8 +32,7 @@ export const JOINT_MAX = 25, SLIDE_MM = 1, ARM_W = 1.025;
 export const ROOT_CM = 4;
 export const OBJECT_ACT = /Carry|Push|PutDown|PickUp|HandOver|Consume|Phone|Pistol|Torch|Flashlight|Drop/;
 const GROUPS = ['Idle', 'Move', 'Act', 'Trans', 'React', 'Gest'], SHARED = { interact: ['Act'], transition: ['Trans'], react: ['React'], extra: GROUPS };
-const PREFIX = { adult: 'Adult', heavy: 'Heavy', thin: 'Thin', child: 'Child', elder: 'Elder' };
-export const NAME_RE = /^((Adult|Heavy|Thin|Child|Elder)_)?(Idle|Move|Act|Trans|React|Gest)_[A-Z][A-Za-z]*(_[A-Z][A-Za-z]*)*_(Loop|Once)_v\d\d\.js$/;
+export const NAME_RE = new RegExp(`^((${BODY_NAMES.map(bodyPrefix).join('|')})_)?` + /(Idle|Move|Act|Trans|React|Gest)_[A-Z][A-Za-z]*(_[A-Z][A-Za-z]*)*_(Loop|Once)_v\d\d\.js$/.source);
 const ANGLE = /^(yaw|spine\.(bend|side|twist)|neck\.(nod|tilt|turn)|pelvis\.(pitch|roll|yaw)|arm[LR]\.(raise|swing|elbow|roll)|leg[LR]\.pitch)$/;
 
 export function clipFiles() {
@@ -85,10 +84,10 @@ export function checkClip(C, file) {
   if (!NAME_RE.test(path.basename(file))) fails.push(`name: ${path.basename(file)} is not <Body>_<Group>_<Action>_<Loop|Once>_v01.js`);
   if (C.name !== base.replace(/_v\d+$/, '')) fails.push(`name: record name ${C.name} != file ${base}`);
   const isBody = dir[0] === 'body', body0 = isBody ? dir[1] : null;
-  if (isBody && (C.body !== body0 || !base.startsWith(PREFIX[body0] + '_'))) fails.push(`name: ${file} must be ${PREFIX[body0]}_... with body '${body0}'`);
-  if (!isBody && /^(Adult|Heavy|Thin|Child|Elder)_/.test(base)) fails.push('name: a shared clip carries no body prefix');
+  if (isBody && (C.body !== body0 || !base.startsWith(bodyPrefix(body0) + '_'))) fails.push(`name: ${file} must be ${bodyPrefix(body0)}_... with body '${body0}'`);
+  if (!isBody && BODY_PREFIX.test(base)) fails.push('name: a shared clip carries no body prefix');
   if (!isBody && !(SHARED[dir[1]] || []).includes(C.group)) fails.push(`name: group ${C.group} does not belong in shared/${dir[1]}`);
-  if (C.clip !== C.name.replace(/^(Adult|Heavy|Thin|Child|Elder)_/, '')) fails.push(`record: clip ${C.clip} != the name without its body`);
+  if (C.clip !== C.name.replace(BODY_PREFIX, '')) fails.push(`record: clip ${C.clip} != the name without its body`);
   if (!base.includes(`_${C.group}_`) && !base.startsWith(`${C.group}_`)) fails.push(`record: group ${C.group} not in the name`);
   if (C.loop !== /_Loop_v/.test(base)) fails.push('record: loop does not match _Loop / _Once');
   for (const k of ['name', 'clip', 'group', 'frames', 'base', 'style', 'needs', 'keys']) if (C[k] == null) fails.push(`record: no ${k}`);
@@ -356,7 +355,7 @@ export function physicsFails(g, tag = '') {
 // (bodylife.mjs NEAREST: time, or stride and cadence on the move); a clip with neither is not judged
 const LIFE = new Map();
 export async function clipLife(C, g = null, g0 = null) {
-  if (!LIFE.has(C)) { const z = sizeOf(C.body || 'adult'); LIFE.set(C, { ...lifeOf(C, (g || await rigClip(C)).paths, z), paths: lifeOf(C, (g0 || await rigClip(C, undefined, { phys: false })).paths, z).paths }); }
+  if (!LIFE.has(C)) { const z = sizeOf(C.body || 'adult'); const off = lifeOf(C, (g0 || await rigClip(C, undefined, { phys: false })).paths, z); LIFE.set(C, { ...lifeOf(C, (g || await rigClip(C)).paths, z), paths: off.paths, cycle: off.cycle }); }
   return LIFE.get(C);
 }
 // a body the floor carries (KNEEL, FLOOR: no foot is keyed as planted, so the sliding check never looks at one) rests its feet
