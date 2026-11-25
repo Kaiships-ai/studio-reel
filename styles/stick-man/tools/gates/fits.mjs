@@ -3,6 +3,7 @@
 // bodylife.mjs) with the limits frozen in kit/compat-limits.json; no render.
 //   node …/fits.mjs films/<slug>                        every pair the film lists has a usable row in the table, else exit 1
 //   node …/fits.mjs films/<slug> --measure              first measures the pairs that have none and writes their rows
+//                          --measure --all             every clip of the body for every person in the film, listed or not
 //   node …/fits.mjs --person '{"body":"elder","outfit":["shirt:office","cardigan"],"girth":1}' [--clips A,B]     measures one person (every clip of
 //                                                       the body without --clips) and writes the rows
 //   node …/fits.mjs --kinds                             the kinds that are not clips (faces, marks, outfits; props and lights stay untested)
@@ -157,7 +158,9 @@ async function main(argv) {
   if (!fs.existsSync(film)) { console.error(`no film at ${film}`); return 2; }
   const F = readFilm(film); let T; const load = () => { const D = read(), faults = tableFaults(D), seen = new Set(); T = tableOf({ rows: D.rows.filter(r => !seen.has(r.pair) && seen.add(r.pair)) }); return faults; };
   let faults = load();
-  if (has('--measure') && !faults.length) { const todo = new Map(); for (const p of checkFilm(F, T).pairs) if (p.clip && p.row.verdict === 'untested') (todo.get(p.by.key) || todo.set(p.by.key, { person: p.person, clips: [] }).get(p.by.key)).clips.push(p.clip);
+  if (has('--measure') && !faults.length) { const todo = new Map(), listed = checkFilm(F, T).pairs, lib = has('--all') ? (await measureKit()).lib : null;
+    if (lib) for (const p of F.people) if (!listed.some(q => q.by.key === p.key && q.all)) for (const c of lib.ALL) if ((c.body || 'adult') === p.person.body && !p.key.includes('film:')) { const q = pair('clip', p.key, c.clip); listed.push({ pair: q, clip: c.clip, person: p.person, row: T.lookup(q), by: p, all: true }); }
+    for (const p of listed) if (p.clip && p.row.verdict === 'untested') (todo.get(p.by.key) || todo.set(p.by.key, { person: p.person, clips: [] }).get(p.by.key)).clips.push(p.clip);
     if (todo.size) { if (!await ready()) return 1; for (const { person, clips } of todo.values()) await measureAll(person, clips); faults = load(); } }
   const R = checkFilm(F, T), problems = [...faults.map(f => `table: ${f}`), ...R.problems], n = v => R.pairs.filter(p => p.row.verdict === v).length; for (const p of problems) console.log(p);
   console.log(`fits ${problems.length ? 'FAIL' : 'PASS'}: ${F.reels.length} reel(s), ${F.people.length} cast entries, ${R.pairs.length} pair(s): ${VERDICTS.map(v => `${n(v)} ${v}`).join(', ')}; ${problems.length} problem(s)`); return problems.length ? 1 : 0;
