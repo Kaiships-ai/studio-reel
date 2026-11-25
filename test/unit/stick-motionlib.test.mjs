@@ -11,12 +11,13 @@ import { compileTrack, playActor, toPose, STYLE_PRESETS } from '../../styles/sti
 import { DOSE_E, markColliders } from '../../styles/stick-man/motion-lib/base.js';
 import { ellipsoid, solveArm, armPenetration, propPush, centreOfMass } from '../../styles/stick-man/engine/body.js';
 
-test('the library has 68 clips on 5 bodies, and every one passes motionlib.mjs (naming, seam, base, joint gate, feet)', async () => {
-  assert.equal(ALL.length, 68);
-  assert.equal(clipFiles().length, 68);
-  assert.deepEqual(Object.keys(BODIES), ['adult', 'heavy', 'thin', 'child', 'elder']);
-  // every body stands, walks and runs (the adult's standing idle is the captured Idle_Stand_Loop)
-  for (const b of Object.keys(BODIES)) for (const c of [b === 'adult' ? 'Idle_Stand_Loop' : 'Idle_Breath_Loop', 'Move_Walk_Fwd_Loop', 'Move_Run_Fwd_Loop']) assert.equal(getClip(c, b).body, b);
+test('the library has 72 clips on 7 bodies, and every one passes motionlib.mjs (naming, seam, base, joint gate, feet)', async () => {
+  assert.equal(ALL.length, 72);
+  assert.equal(clipFiles().length, 72);
+  assert.deepEqual(Object.keys(BODIES), ['adult', 'heavy', 'thin', 'child', 'teen', 'toddler', 'elder']);
+  // every body stands, walks and runs (the adult's standing idle is the captured Idle_Stand_Loop); the teen only stands: its made walk and run
+  // fail the body gate (stick-bodies-age.test.mjs)
+  for (const b of Object.keys(BODIES)) for (const c of [b === 'adult' ? 'Idle_Stand_Loop' : 'Idle_Breath_Loop', ...(b === 'teen' ? [] : ['Move_Walk_Fwd_Loop', 'Move_Run_Fwd_Loop'])]) assert.equal(getClip(c, b).body, b);
   const bad = (await checkAll()).filter(r => r.fails.length);
   assert.deepEqual(bad.map(r => `${r.name || r.file}: ${r.fails.join('; ')}`), []);
 });
@@ -217,8 +218,8 @@ test('rig: a 25 kg bag on the right pulls the centre of mass right; the cap on t
 test('gait: the hips are solved on the kaiships dose as motion.js plays it (DOSE_E = 0.4 + 1.2 x exaggeration)', () => {
   assert.equal(DOSE_E, +(0.4 + 1.2 * STYLE_PRESETS.kaiships.exaggeration).toFixed(6));
 });
-test('gait: the walks of all five bodies keep every solved knee and elbow under 27 deg a frame through the real rig', async () => {
-  for (const b of Object.keys(BODIES)) {
+test('gait: the walks of all bodies keep every solved knee and elbow under 27 deg a frame through the real rig', async () => {
+  for (const b of Object.keys(BODIES).filter(x => ALL.some(C => C.clip === 'Move_Walk_Fwd_Loop' && C.body === x))) {
     const g = await rigClip(getClip('Move_Walk_Fwd_Loop', b), b);
     assert.ok(g.joint <= 27, `${b} walk: ${g.joint} deg/f at ${g.jointAt}`);
   }
@@ -481,7 +482,7 @@ test('bag size: at Hot Money ep01\'s duffel the bag goes into the trunk (0.85 m 
 });
 
 // Faults the gate passed and the batch 1 contact sheets and review showed (25/11)
-import { lifeFails, lifeAgainst, shapeAgainst, BODY_LIFE, READ_PX, PX_PER_M, SHAPE_C, SHAPE_REL, SHAPE_CM, NEAREST, stillSpans, STILL_F, STILL_IN, STILL_CM, faceHidden, FACE_SEEN } from '../../styles/stick-man/tools/gates/bodylife.mjs';
+import { lifeFails, lifeAgainst, shapeAgainst, shapeOf, BODY_LIFE, READ_PX, PX_PER_M, SHAPE_C, SHAPE_REL, SHAPE_CM, NEAREST, stillSpans, STILL_F, STILL_IN, STILL_CM, faceHidden, FACE_SEEN } from '../../styles/stick-man/tools/gates/bodylife.mjs';
 import { clipLife, onBody, adultTwin, adultNear, bodyFails, motionFails, floorFails, BODY_KNOWN, BODY_KNOWN_DATE, bodyGate, stillFails } from '../../styles/stick-man/tools/gates/motionlib.mjs';
 import { act } from '../../styles/stick-man/motion-lib/acts/act.js';
 import { mocapClip, captureBase, floorClip, ownGait, bridgeKeys, poleSpans, BASES } from '../../styles/stick-man/motion-lib/base.js';
@@ -511,7 +512,7 @@ const armGap = w => Math.min(segs(w.L.shoulder, w.L.elbow, w.R.shoulder, w.R.elb
 const speed = rows => Math.max(...rows.slice(1).flatMap((w, i) => ['L', 'R'].map(s => 100 * d3(w[s].hand, rows[i][s].hand))));
 const offFront = rows => rows.map(w => Math.abs(((w.face - rows[0].face + 540) % 360) - 180));
 
-test('each body performs its own way: the gate fails one capture on five bodies at one clock and one size', async () => {
+test('each body performs its own way: the gate fails one capture on every body at one clock and one size', async () => {
   // the fixture: batch 1 as first made (one mocapClip recipe, every frame on every body). The check, run on cdc0a51a before any
   // clip was touched, failed all 38 of its clips that have an adult twin (time 1 on each; the list is in PR 202)
   const { default: YAWN } = await import('../../styles/stick-man/motion-lib/ref/mixamo/yawn.js'), { default: CRY } = await import('../../styles/stick-man/motion-lib/ref/mixamo/crying.js');
@@ -533,7 +534,7 @@ test('gate (a): the adult\'s own values, and the adult retimed and resized, fail
     for (const body of Object.keys(BODY_LIFE)) for (const life of [BODIES.adult.life, BODIES[body].life]) {
       const B = BODIES[body], was = [B.life, B.perform]; let C;
       try { B.life = life; B.perform = BODIES.adult.perform; C = recipe(body); } finally { [B.life, B.perform] = was; }
-      const L = await clipLife(C), on = await onBody(A, body), s = shapeAgainst(on, L), f = lifeFails(body, await clipLife(A), L, { on });
+      const L = await clipLife(C), on = await onBody(A, body), s = shapeOf(body, on, L), f = lifeFails(body, await clipLife(A), L, { on });
       assert.ok(f.some(x => /'s shape/.test(x)), `${clip} ${body} (${life === B.life ? 'retimed' : 'adult values'}): the gate passes a copy (${s.shape.toFixed(2)}, ${s.cm.toFixed(1)} cm ${s.part})`);
       assert.ok(s.c > 0.9, `${clip} ${body}: a copy's correlation ${s.c.toFixed(3)}`);
     } }

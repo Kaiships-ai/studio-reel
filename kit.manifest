@@ -256,6 +256,9 @@ styles/stick-man/motion-lib/ref/reach/phonecall_ear.js
 !styles/stick-man/motion-lib/body/*/*_React_SitDisbelief_Once_v01.js
 !styles/stick-man/motion-lib/body/*/*_React_Surprise_Once_v01.js
 !styles/stick-man/motion-lib/body/*/*_React_Terrified_Once_v01.js
+# the teen and toddler clips (nobody has seen them move)
+!styles/stick-man/motion-lib/body/teen/*
+!styles/stick-man/motion-lib/body/toddler/*
 styles/stick-man/sound/lib/
 styles/stick-man/sound/CREDITS
 styles/stick-man/sound/library.json

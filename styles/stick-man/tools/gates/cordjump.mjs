@@ -13,7 +13,7 @@ import { rigStick } from './motionlib.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 // hoodie.js loads its mesh from the page's root ('/styles/...'): headless, that path is read from the repository
-function serveRoot() {
+export function serveRoot() {
   if (globalThis.__cordjumpRoot) return; globalThis.__cordjumpRoot = true;
   const R0 = globalThis.Request, F0 = globalThis.fetch, local = 'http://local';
   globalThis.Request = class extends R0 { constructor(u, o) { super(typeof u === 'string' && u.startsWith('/') ? local + u : u, o); } };
