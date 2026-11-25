@@ -24,6 +24,9 @@ A crowd: `costume: ['sweater:' + outfit(i)]` (`outfit` from wardrobe.js).
   the neck, whole ink lines, short sleeves out of the torso, a cap's peak, layers over layers, a coat over a skirt, unknown names
   throw, a held prop stays in its hand, lose_hat. Run, jump and window leap print their faults as `todo`: cloth there is
   NOT clean yet (keep skirts, coats and aprons out of a run).
+  Every rigid piece touches what it lies on (3 mm, all its points: the shell or a piece on the shell). Cloth inside a drawn
+  leg's radius (4 mm, as an arm) is measured and printed as `todo`: the cloth's points keep off a leg, its triangles do not
+  (a bent knee's corner, a seated thigh's root, up to 12 mm).
 - Group shots and motion: `films/kitbody-costumes/sheet2.html` (line-up at true scale, a crowd of twelve in `outfit(i)`, walk,
   run and sit clips of three outfits).
 

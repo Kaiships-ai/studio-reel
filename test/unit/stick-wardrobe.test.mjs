@@ -59,7 +59,7 @@ const areaOf = T => T.reduce((s, t) => s + _t.set(...t).getArea(), 0);
 // the limb lines as drawn: the centres of their rings (root metres)
 const line = (S, k) => { const A = S.parts.limbs[k].geometry.attributes.position; return Array.from({ length: A.count / 10 }, (_, i) => { const v = new THREE.Vector3(); for (let j = 0; j < 10; j++) v.add(v3(A, i * 10 + j)); return v.divideScalar(10); }); };
 const track = new WeakMap();   // a cloth's last two frames, in the body's frame
-function clothFaults(S, d, P, f, mode = 'walk') {
+function clothFaults(S, d, P, f, mode = 'walk', legsIn = false) {
   const M = MODES[mode], out = [], T = tris(d), SC = S.root.scale.x, say = s => out.push(`f${f}: ${s}`), D = d.ST.drawn, at_ = (i, j) => D[i * d.cols + j];
   if (d.guide) {
     const st = d.edges.map(([i, j, r]) => D[i].distanceTo(D[j]) * SC / r - 1).sort((a, b) => a - b), p99 = st[Math.floor(0.99 * (st.length - 1))], max = st[st.length - 1]; if (p99 > M.stretch) say(`stretched ${(100 * p99).toFixed(0)} % (p99)`); if (max > M.edge) say(`an edge ${(100 * max).toFixed(0)} % longer`);
@@ -69,7 +69,8 @@ function clothFaults(S, d, P, f, mode = 'walk') {
     let kink = 0, hem = 0; const u = new THREE.Vector3(), w = new THREE.Vector3(), turn = (p, q, r) => (u.subVectors(q, p).length() < 0.004 || w.subVectors(r, q).length() < 0.004 ? 0 : u.angleTo(w) * 57.3);
     for (let j = 0; j < d.cols; j++) { for (let i = 0; i + 2 < d.rows; i++) kink = Math.max(kink, turn(at_(i, j), at_(i + 1, j), at_(i + 2, j))); if (d.wrap || j + 2 < d.cols) hem = Math.max(hem, turn(at_(d.rows - 1, j), at_(d.rows - 1, (j + 1) % d.cols), at_(d.rows - 1, (j + 2) % d.cols))); }
     if (kink > M.kink) say(`a column bends ${kink.toFixed(0)} deg`); if (hem > M.hem) say(`the hem turns ${hem.toFixed(0)} deg`);
-    for (const k of ['legL', 'legR']) { const L = line(S, k); let c = 0; for (let i = 2; i + 1 < L.length; i++) c += crosses(L[i], L[i + 1], T); if (c) say(`${k} through the cloth`); }
+    for (const k of ['legL', 'legR']) { const L = line(S, k); let c = 0, deep = -1e9; for (let i = 2; i + 1 < L.length; i++) { c += crosses(L[i], L[i + 1], T); if (legsIn) for (const e of [0, 0.5]) deep = Math.max(deep, LIMB_R - nearest(L[i].clone().lerp(L[i + 1], e), T)); }
+      if (c) say(`${k} through the cloth`); if (1000 * deep > ARM_IN) say(`cloth ${(1000 * deep).toFixed(1)} mm into ${k}`); }
     const Mi = S.parts.torso.parent.matrix.clone().invert(), B = D.map(p => p.clone().applyMatrix4(Mi)), h = track.get(d); if (h && h.f === f - 1 && h.b) { let m = 0; for (let i = 0; i < B.length; i++) m = Math.max(m, u.copy(B[i]).addScaledVector(h.a[i], -2).add(h.b[i]).length()); if (100 * m > M.acc) say(`jerks ${(100 * m).toFixed(1)} cm a frame a frame`); } track.set(d, { f, a: B, b: h && h.f === f - 1 ? h.a : null });
   }
   for (const k of ['armL', 'armR']) { const L = line(S, k), sl = S.wardrobe.sleeves.filter(s => s.arm === k); let deep = -1e9; if (d.guide) for (let i = 4; i + 1 < L.length; i++) for (const e of [0, 0.5]) { if (i + e > L.length - 2) continue; const r = Math.max(LIMB_R, ...sl.filter(s => i >= s.rings[0] && i < s.rings[1]).map(s => s.r)); deep = Math.max(deep, r - nearest(L[i].clone().lerp(L[i + 1], e), T)); }
@@ -118,6 +119,15 @@ for (const n of CLOTHED) test(`cloth: ${n} sitting down and seated: a lap, not a
 for (const [body, clips] of [['adult', ['Move_Run_Fwd_Loop', 'Act_Jump_Once', 'Trans_JumpWindow_Once']], ...['heavy', 'thin', 'elder', 'child'].map(b => [b, ['Move_Run_Fwd_Loop']])]) for (const clip of clips) for (const n of ['doctor', 'chef', 'dress']) test(`cloth in a hurry: ${n} on ${body}, ${clip}`, { todo: HURRY }, async () => {
   const bad = []; await play(look(n), body, { clip }, { each: (f, S, P) => { for (const d of S.wardrobe.drapes) bad.push(...clothFaults(S, d, P, f, 'fast')); } }); assert.deepEqual(summary(bad), []);
 });
+// A leg measured as an arm is (C2, costume review 2): the cloth inside the drawn line's radius, not only its centre through the
+// cloth; the same 4 mm (under the ink line's width the leg's edge still reads whole). KNOWN, NOT FIXED (25/11): the cloth's points
+// keep clear of a leg but its triangles do not: a straight edge between two rows either side of a bent knee cuts its corner
+// (seated up to 12 mm in, walking 6 mm, vertices 19-27 mm off), and the first band, from the sewn row to the next, bridges a
+// seated thigh's root (12 mm; at the deepest sit the apron's waistband itself is 12 mm from the thigh's line). Pushing edges out
+// as points tore the cloth (edges 400 % long); it needs triangles kept off the limbs inside the solver. These print every fault.
+const LEGS_IN = 'cloth inside a drawn leg (triangles, not points, against the limbs): not clean yet (kit-body costume review 2, C2)';
+for (const [n, pose] of [...CLOTHED.map(n => [n, 'walk']), ...CLOTHED.map(n => [n, 'seated']), ['dress', 'pick'], ['chef', 'pick']]) test(`cloth no deeper than ${ARM_IN} mm in a drawn leg: ${n}, ${pose}`, { todo: LEGS_IN }, async () => {
+  const bad = []; await play(look(n), 'adult', pose, { each: (f, S, P) => { for (const d of S.wardrobe.drapes) if (d.guide) bad.push(...clothFaults(S, d, P, f, pose === 'walk' ? 'walk' : 'sit', true).filter(b => /into leg/.test(b))); } }); assert.deepEqual(summary(bad), []); });
 test('a hand kept outside a lap slides on it: no step of its own through a sit', async () => { const most = async list => { let prev = null, m = 0; await play(list, 'adult', 'seated', { from: 30, to: 100, each: (f, S) => { const h = ['L', 'R'].map(sd => S.rig[sd].hand.clone().multiplyScalar(60)); if (prev) m = Math.max(m, ...h.map((x, i) => x.distanceTo(prev[i]))); prev = h; } }); return m; };
   const bare = await most(['job:manager']); for (const n of CLOTHED) { const m = await most(look(n)); assert.ok(m <= bare + 2.5, `${n}: a hand steps ${m.toFixed(1)} cm in a frame (${bare.toFixed(1)} without the garment)`); } });
 test('cloth: reaching to the floor in a skirt and an apron', async () => { for (const n of ['dress', 'chef']) { const bad = []; await play(look(n), 'adult', 'pick', { from: 10, each: (f, S, P) => { for (const d of S.wardrobe.drapes) bad.push(...clothFaults(S, d, P, f, 'sit')); } }); assert.deepEqual(summary(bad), []); } });
@@ -128,15 +138,26 @@ function off(T, p) { let best = Infinity; for (const t of T) { if (t.m.distanceT
 const pieces = S => S.wardrobe.group.children.map((m, k) => { const A = m.geometry.attributes.position, st = Math.max(1, Math.floor(A.count / 14)); return { k, A, idx: Array.from({ length: Math.ceil(A.count / st) }, (_, i) => i * st) }; });
 const ARMS = S => ['armL', 'armR'].flatMap(a => { const A = S.parts.limbs[a].geometry.attributes.position, c = i => { const v = new THREE.Vector3(); for (let j = 0; j < 10; j++) v.add(v3(A, i * 10 + j)); return v.divideScalar(10); }; return Array.from({ length: 12 }, (_, i) => [c(i + 3), c(i + 4)]); });
 const segD = (p, [a, b]) => { const ab = b.clone().sub(a), t = Math.max(0, Math.min(1, p.clone().sub(a).dot(ab) / ab.lengthSq())); return p.distanceTo(a.clone().addScaledVector(ab, t)); };
-for (const body of BODIES) test(`trims on ${body}: every piece of every look lies on this body's shell and stays there as it bends; none in an arm`, async () => {
+// TOUCH_MM: a rigid piece's nearest point to what it lies on, the shell or a piece itself on the shell (a buckle on a belt, a strap's
+// plate on the strap), every vertex counted (C1, costume review 2: a sample of 14 let a belt 42 mm off pass, and students 125).
+// 3 mm is under 2 px at 720 and under the 5 mm ink line round a piece: no gap shows between them
+const TOUCH_MM = 3;
+const trisOf = m => { const A = m.geometry.attributes.position, I = m.geometry.index?.array || Array.from({ length: A.count }, (_, i) => i), o = []; for (let t = 0; t < I.length; t += 3) { const a = v3(A, I[t]), b = v3(A, I[t + 1]), c = v3(A, I[t + 2]); if (_t.set(a, b, c).getArea() < 1e-10) continue; const k = a.clone().add(b).add(c).divideScalar(3); o.push({ a, b, c, m: k, r: Math.max(k.distanceTo(a), k.distanceTo(b), k.distanceTo(c)) }); } return o; };
+const allPts = m => { const A = m.geometry.attributes.position, st = Math.max(1, Math.floor(A.count / 400)); return Array.from({ length: Math.ceil(A.count / st) }, (_, i) => v3(A, i * st)); };
+for (const body of BODIES) test(`trims on ${body}: every piece of every look lies on this body's shell (or on a piece that does) and stays there as it bends; none in an arm`, async () => {
+  const floats = [];
   for (const [n, list] of LOOKS) {
     const { S } = await rigStick(body); wears(S, list); S.pose2({}); const T0 = shell(S), rest = pieces(S).map(q => ({ ...q, d: q.idx.map(i => off(T0, v3(q.A, i))) }));
-    for (const q of rest) { const lo = Math.min(...q.d); assert.ok(lo <= 0.042 || lo <= 0.125 && list.join().match(/student/), `${n}: piece ${q.k} floats ${(1000 * lo).toFixed(0)} mm off the shell`);
+    const ms = S.wardrobe.group.children, P = ms.map(allPts), gap = ms.map((m, k) => Math.min(...P[k].map(p => off(T0, p)))), on = gap.map(g => g <= TOUCH_MM / 1000);
+    for (let grew = true; grew;) { grew = false; ms.forEach((m, k) => { if (on[k]) return; for (let o = 0; o < ms.length; o++) if (on[o] && o !== k) { const T = trisOf(ms[o]), g = Math.min(...P[k].map(p => off(T, p))); if (g <= TOUCH_MM / 1000) { on[k] = grew = true; break; } } }); }
+    ms.forEach((m, k) => { if (!on[k]) floats.push(`${n}: piece ${k} floats ${(1000 * gap[k]).toFixed(1)} mm off the shell, touching nothing that lies on it`); });
+    for (const q of rest) {
       // a ring round the body (a belt, a sash, a hem band) lies on it all the way round
       const G = new THREE.Box3().setFromBufferAttribute(q.A); if (G.max.z - G.min.z > 1.2 * torsoR(0.05) * S.wardrobe.fit.gz && G.max.x - G.min.x > 1.6 * torsoR(0.05) * S.wardrobe.fit.gx) for (let s = 0; s < 16; s++) { const a = -Math.PI + s * Math.PI / 8; const near = Math.min(...Array.from({ length: q.A.count }, (_, i) => v3(q.A, i)).filter(p => Math.abs(Math.atan2(Math.sin(Math.atan2(p.x, p.z) - a), Math.cos(Math.atan2(p.x, p.z) - a))) < 0.25).map(p => off(T0, p))); if (isFinite(near)) assert.ok(near < 0.014, `${n}: ring ${q.k} stands ${(1000 * near).toFixed(0)} mm off at ${(a * 57).toFixed(0)} deg`); } }
-    const want = rest.filter(q => Math.min(...q.d) < 0.03);
+    const want = rest;
     for (const Q of [{ spine: { bend: 60, twist: -5 }, sq: 0.04 }, { spine: { bend: 80 } }, { spine: { bend: -12, side: 14, twist: 12 } }, { spine: { bend: 24 } }]) { S.pose2(Q); const T = shell(S); for (const q of want) q.idx.forEach((i, j) => { if (q.d[j] > 0.04) return; const e = Math.abs(off(T, v3(q.A, i)) - q.d[j]) * 1000; assert.ok(e <= TRIM_MM, `${n}: piece ${q.k} moved ${e.toFixed(1)} mm on the shell (bend ${Q.spine.bend})`); }); }
   }
+  assert.deepEqual(floats, []);
 });
 test('trims on every body clear the arm lines, standing and mid-walk', async () => { for (const body of BODIES) for (const [n, list] of LOOKS) await play(list, body, 'walk', { from: 30, to: 30, each: (f, S) => { const M = S.parts.torso.parent.matrix, A = ARMS(S); for (const q of pieces(S)) for (const i of q.idx) { const p = v3(q.A, i).applyMatrix4(M), pen = 1000 * (LIMB_R - Math.min(...A.map(s => segD(p, s)))); assert.ok(pen <= ARM_MM, `${body} ${n}: piece ${q.k} is ${pen.toFixed(1)} mm inside an arm`); } } }); });
 // ------------------------------------------------------------------ the second review (25/11)
