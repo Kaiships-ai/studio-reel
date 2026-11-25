@@ -1,0 +1,3761 @@
+{
+ "props": {
+  "street-light": {
+   "id": "nFwrlcLvM5",
+   "name": "Street Light",
+   "place": "street",
+   "file": "street/street-light.glb",
+   "bytes": 8056,
+   "tris": 324,
+   "size": [
+    0.333,
+    1.663,
+    4.5
+   ],
+   "lo": [
+    -0.167,
+    -0.831,
+    0.0
+   ],
+   "hi": [
+    0.167,
+    0.831,
+    4.5
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/nFwrlcLvM5",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Memorial street: lamp posts",
+   "notes": "size 0.3x0.3x4.5 m (estimate (list)), scale x0.79705",
+   "sec": 0.05
+  },
+  "street-light-2": {
+   "id": "vPFSLYh6sg",
+   "name": "Streetlight",
+   "place": "street",
+   "file": "street/street-light-2.glb",
+   "bytes": 12828,
+   "tris": 176,
+   "size": [
+    1.122,
+    0.288,
+    4.0
+   ],
+   "lo": [
+    -0.561,
+    -0.144,
+    0.0
+   ],
+   "hi": [
+    0.561,
+    0.144,
+    4.0
+   ],
+   "materials": 8,
+   "source_url": "https://poly.pizza/m/vPFSLYh6sg",
+   "licence": "CC0 1.0",
+   "author": "Kay Lousberg",
+   "film_need": "Memorial street: lamp posts",
+   "notes": "size 0.3x0.3x4.0 m (estimate (list)), scale x4.16704",
+   "sec": 0.08
+  },
+  "street-lamp": {
+   "id": "street_lamp_01",
+   "name": "Street Lamp 01",
+   "place": "street",
+   "file": "street/street-lamp.glb",
+   "bytes": 117744,
+   "tris": 2849,
+   "size": [
+    0.704,
+    0.386,
+    3.871
+   ],
+   "lo": [
+    -0.352,
+    -0.192,
+    0.0
+   ],
+   "hi": [
+    0.352,
+    0.192,
+    3.871
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/street_lamp_01",
+   "licence": "CC0 1.0",
+   "author": "Josh Dean",
+   "film_need": "Memorial street: lamp posts",
+   "notes": "size 0.7x0.39x3.87 m (Poly Haven), scale x1.0; decimated 30610 -> 2849 tris (furniture budget 3000)",
+   "sec": 0.15
+  },
+  "bench": {
+   "id": "6d92UYCIC1",
+   "name": "Bench",
+   "place": "street",
+   "file": "street/bench.glb",
+   "bytes": 9244,
+   "tris": 44,
+   "size": [
+    1.6,
+    0.6,
+    0.4
+   ],
+   "lo": [
+    -0.8,
+    -0.3,
+    -0.0
+   ],
+   "hi": [
+    0.8,
+    0.3,
+    0.4
+   ],
+   "materials": 8,
+   "source_url": "https://poly.pizza/m/6d92UYCIC1",
+   "licence": "CC0 1.0",
+   "author": "Kay Lousberg",
+   "film_need": "Snow square: toppled bench",
+   "notes": "size 1.6x0.5x0.9 m (estimate (list)), scale x4.0; CHECK height 0.40 m vs list 0.9 m",
+   "sec": 0.02
+  },
+  "bench-2": {
+   "id": "7uSlZo3n9Y",
+   "name": "Bench",
+   "place": "street",
+   "file": "street/bench-2.glb",
+   "bytes": 13712,
+   "tris": 276,
+   "size": [
+    1.6,
+    0.534,
+    0.447
+   ],
+   "lo": [
+    -0.8,
+    -0.267,
+    0.0
+   ],
+   "hi": [
+    0.8,
+    0.267,
+    0.447
+   ],
+   "materials": 1,
+   "source_url": "https://poly.pizza/m/7uSlZo3n9Y",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Snow square: toppled bench",
+   "notes": "size 1.6x0.5x0.9 m (estimate (list)), scale x2.40612; CHECK height 0.45 m vs list 0.9 m",
+   "sec": 0.01
+  },
+  "trashcan-large": {
+   "id": "eYNKnGlhon",
+   "name": "Trashcan Large",
+   "place": "street",
+   "file": "street/trashcan-large.glb",
+   "bytes": 14072,
+   "tris": 646,
+   "size": [
+    0.663,
+    0.663,
+    1.0
+   ],
+   "lo": [
+    -0.331,
+    -0.331,
+    0.0
+   ],
+   "hi": [
+    0.331,
+    0.331,
+    1.0
+   ],
+   "materials": 1,
+   "source_url": "https://poly.pizza/m/eYNKnGlhon",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Snow square: bin with a drift",
+   "notes": "size 0.6x0.6x1.0 m (estimate (list)), scale x0.54163",
+   "sec": 0.01
+  },
+  "dumpster": {
+   "id": "QmYKHtUnxb",
+   "name": "Dumpster",
+   "place": "street",
+   "file": "street/dumpster.glb",
+   "bytes": 12432,
+   "tris": 126,
+   "size": [
+    2.0,
+    1.247,
+    1.121
+   ],
+   "lo": [
+    -1.0,
+    -0.623,
+    -0.0
+   ],
+   "hi": [
+    1.0,
+    0.623,
+    1.121
+   ],
+   "materials": 8,
+   "source_url": "https://poly.pizza/m/QmYKHtUnxb",
+   "licence": "CC0 1.0",
+   "author": "Kay Lousberg",
+   "film_need": "Snow square: dumpster",
+   "notes": "size 2.0x1.2x1.3 m (estimate (list)), scale x3.5339",
+   "sec": 0.03
+  },
+  "fire-hydrant": {
+   "id": "DKkMQbEklp",
+   "name": "Fire Hydrant",
+   "place": "street",
+   "file": "street/fire-hydrant.glb",
+   "bytes": 20612,
+   "tris": 976,
+   "size": [
+    0.534,
+    0.413,
+    0.8
+   ],
+   "lo": [
+    -0.267,
+    -0.207,
+    0.0
+   ],
+   "hi": [
+    0.267,
+    0.207,
+    0.8
+   ],
+   "materials": 1,
+   "source_url": "https://poly.pizza/m/DKkMQbEklp",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Snow square: street furniture",
+   "notes": "size 0.4x0.4x0.8 m (estimate (list)), scale x1.03579",
+   "sec": 0.01
+  },
+  "traffic-light": {
+   "id": "apWcPbwhlq",
+   "name": "Traffic Light",
+   "place": "street",
+   "file": "street/traffic-light.glb",
+   "bytes": 32876,
+   "tris": 849,
+   "size": [
+    0.973,
+    0.972,
+    3.0
+   ],
+   "lo": [
+    -0.487,
+    -0.486,
+    0.0
+   ],
+   "hi": [
+    0.487,
+    0.486,
+    3.0
+   ],
+   "materials": 7,
+   "source_url": "https://poly.pizza/m/apWcPbwhlq",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Times Square: traffic light",
+   "notes": "size 0.4x0.4x3.0 m (estimate (list)), scale x0.64324",
+   "sec": 0.01
+  },
+  "traffic-cone": {
+   "id": "lAx8JytxGD",
+   "name": "Traffic Cone",
+   "place": "street",
+   "file": "street/traffic-cone.glb",
+   "bytes": 7232,
+   "tris": 168,
+   "size": [
+    0.5,
+    0.5,
+    0.472
+   ],
+   "lo": [
+    -0.25,
+    -0.25,
+    0.0
+   ],
+   "hi": [
+    0.25,
+    0.25,
+    0.472
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/lAx8JytxGD",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Times Square / Snow square: cones",
+   "notes": "size 0.3x0.3x0.5 m (estimate (list)), scale x0.74122",
+   "sec": 0.01
+  },
+  "barrier-single": {
+   "id": "wCUxgt2jSP",
+   "name": "Barrier Single",
+   "place": "street",
+   "file": "street/barrier-single.glb",
+   "bytes": 9676,
+   "tris": 232,
+   "size": [
+    2.408,
+    0.837,
+    0.8
+   ],
+   "lo": [
+    -1.204,
+    -0.418,
+    0.0
+   ],
+   "hi": [
+    1.204,
+    0.418,
+    0.8
+   ],
+   "materials": 4,
+   "source_url": "https://poly.pizza/m/wCUxgt2jSP",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Times Square: crowd barriers",
+   "notes": "size 1.5x0.4x1.0 m (estimate (list)), scale x1.27371; size corrected to 0.8 m tall: it is a concrete jersey barrier (real ~0.8 m tall), not a 1 m crowd barrier",
+   "sec": 0.01
+  },
+  "construction-barrier": {
+   "id": "4mrO9ueiQr",
+   "name": "Construction Barrier",
+   "place": "street",
+   "file": "street/construction-barrier.glb",
+   "bytes": 3704,
+   "tris": 60,
+   "size": [
+    1.5,
+    0.567,
+    0.792
+   ],
+   "lo": [
+    -0.75,
+    -0.283,
+    0.0
+   ],
+   "hi": [
+    0.75,
+    0.283,
+    0.792
+   ],
+   "materials": 1,
+   "source_url": "https://poly.pizza/m/4mrO9ueiQr",
+   "licence": "CC0 1.0",
+   "author": "Kenney",
+   "film_need": "Times Square: crowd barriers",
+   "notes": "size 1.5x0.3x1.0 m (estimate (list)), scale x6.66667; turned 90 so the long side matches the list w x d",
+   "sec": 0.0
+  },
+  "scaffolding": {
+   "id": "AYQd5RQ8w4",
+   "name": "Scaffolding",
+   "place": "street",
+   "file": "street/scaffolding.glb",
+   "bytes": 21788,
+   "tris": 384,
+   "size": [
+    0.288,
+    0.288,
+    3.0
+   ],
+   "lo": [
+    -0.144,
+    -0.144,
+    0.0
+   ],
+   "hi": [
+    0.144,
+    0.144,
+    3.0
+   ],
+   "materials": 1,
+   "source_url": "https://poly.pizza/m/AYQd5RQ8w4",
+   "licence": "CC0 1.0",
+   "author": "lakescorp",
+   "film_need": "Times Square: scaffold",
+   "notes": "size 2.0x1.0x3.0 m (estimate (list)), scale x0.11296; turned 90 so the long side matches the list w x d; stood upright (was lying along x; list says it is tall)",
+   "sec": 0.01
+  },
+  "market-stand": {
+   "id": "DGIM5HGISb",
+   "name": "Market Stand",
+   "place": "street",
+   "file": "street/market-stand.glb",
+   "bytes": 64296,
+   "tris": 1548,
+   "size": [
+    1.998,
+    2.5,
+    2.204
+   ],
+   "lo": [
+    -0.999,
+    -1.25,
+    0.0
+   ],
+   "hi": [
+    0.999,
+    1.25,
+    2.204
+   ],
+   "materials": 4,
+   "source_url": "https://poly.pizza/m/DGIM5HGISb",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Times Square: stall / kiosk",
+   "notes": "size 2.5x1.5x2.5 m (estimate (list)), scale x2.10114",
+   "sec": 0.01
+  },
+  "taxi": {
+   "id": "u5PhZQ35XG",
+   "name": "Taxi",
+   "place": "street",
+   "file": "street/taxi.glb",
+   "bytes": 44656,
+   "tris": 1256,
+   "size": [
+    3.67,
+    1.639,
+    1.7
+   ],
+   "lo": [
+    -1.835,
+    -0.82,
+    0.0
+   ],
+   "hi": [
+    1.835,
+    0.82,
+    1.7
+   ],
+   "materials": 8,
+   "source_url": "https://poly.pizza/m/u5PhZQ35XG",
+   "licence": "CC0 1.0",
+   "author": "Kay Lousberg",
+   "film_need": "Times Square / Snow square: car",
+   "notes": "size 1.9x4.4x1.6 m (estimate (list)), scale x3.9128; turned 90: vehicle long side on x (backdrop pack); size corrected to 1.7 m tall: chunky low-poly taxi: a 4.4 m length fit made it 2.0 m tall; 1.5 m car + roof sign",
+   "sec": 0.04
+  },
+  "car-hatchback": {
+   "id": "BG0KAhmGDt",
+   "name": "Car Hatchback",
+   "place": "street",
+   "file": "street/car-hatchback.glb",
+   "bytes": 41884,
+   "tris": 1194,
+   "size": [
+    3.388,
+    1.761,
+    1.55
+   ],
+   "lo": [
+    -1.694,
+    -0.88,
+    0.0
+   ],
+   "hi": [
+    1.694,
+    0.88,
+    1.55
+   ],
+   "materials": 8,
+   "source_url": "https://poly.pizza/m/BG0KAhmGDt",
+   "licence": "CC0 1.0",
+   "author": "Kay Lousberg",
+   "film_need": "Snow square: snow-covered car",
+   "notes": "size 1.8x4.0x1.5 m (estimate (list)), scale x4.20323; turned 90: vehicle long side on x (backdrop pack); size corrected to 1.55 m tall: chunky low-poly hatchback: a 4.0 m length fit made it 1.8 m tall; real ~1.5 m",
+   "sec": 0.03
+  },
+  "ad-board": {
+   "id": "8G0qJ84VDS",
+   "name": "Ad Board",
+   "place": "street",
+   "file": "street/ad-board.glb",
+   "bytes": 13292,
+   "tris": 400,
+   "size": [
+    1.929,
+    1.527,
+    2.5
+   ],
+   "lo": [
+    -0.965,
+    -0.764,
+    0.0
+   ],
+   "hi": [
+    0.965,
+    0.764,
+    2.5
+   ],
+   "materials": 3,
+   "source_url": "https://poly.pizza/m/8G0qJ84VDS",
+   "licence": "CC0 1.0",
+   "author": "Uykucukoala",
+   "film_need": "Times Square: ad board",
+   "notes": "size 2.0x0.2x2.5 m (estimate (list)), scale x0.45813",
+   "sec": 0.01
+  },
+  "candles": {
+   "id": "AnzHB44wlW",
+   "name": "Candles",
+   "place": "street",
+   "file": "street/candles.glb",
+   "bytes": 26004,
+   "tris": 760,
+   "size": [
+    0.2,
+    0.192,
+    0.138
+   ],
+   "lo": [
+    -0.1,
+    -0.096,
+    0.0
+   ],
+   "hi": [
+    0.1,
+    0.096,
+    0.138
+   ],
+   "materials": 3,
+   "source_url": "https://poly.pizza/m/AnzHB44wlW",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Memorial street: candles in jars",
+   "notes": "size 0.2x0.2x0.15 m (estimate (list)), scale x0.22701; decimated 844 -> 760 tris (small budget 800)",
+   "sec": 0.01
+  },
+  "jar": {
+   "id": "XGe3q5zQ5s",
+   "name": "Jar",
+   "place": "street",
+   "file": "street/jar.glb",
+   "bytes": 6940,
+   "tris": 308,
+   "size": [
+    0.106,
+    0.106,
+    0.15
+   ],
+   "lo": [
+    -0.053,
+    -0.053,
+    0.0
+   ],
+   "hi": [
+    0.053,
+    0.053,
+    0.15
+   ],
+   "materials": 1,
+   "source_url": "https://poly.pizza/m/XGe3q5zQ5s",
+   "licence": "CC0 1.0",
+   "author": "CreativeTrio",
+   "film_need": "Memorial street: candles in jars (jar)",
+   "notes": "size 0.1x0.1x0.15 m (estimate (list)), scale x1.25481",
+   "sec": 0.01
+  },
+  "flowers": {
+   "id": "NBUxHir6FJ",
+   "name": "Flowers",
+   "place": "street",
+   "file": "street/flowers.glb",
+   "bytes": 50792,
+   "tris": 759,
+   "size": [
+    1.599,
+    0.763,
+    0.3
+   ],
+   "lo": [
+    -0.8,
+    -0.381,
+    0.0
+   ],
+   "hi": [
+    0.8,
+    0.381,
+    0.3
+   ],
+   "materials": 8,
+   "source_url": "https://poly.pizza/m/NBUxHir6FJ",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Memorial street: a bunch of flowers; Birth room: flowers in a vase",
+   "notes": "size 0.3x0.3x0.4 m (estimate (list)), scale x0.445; size corrected to 0.3 m tall: a scattered patch of single flowers, each ~0.3 m tall; fitting 0.4 m to the patch width left them 7 cm tall; decimated 1360 -> 759 tris (small budget 800)",
+   "sec": 0.08
+  },
+  "barrier-fixed": {
+   "id": "Fg3Nimfcfg",
+   "name": "Barrier Fixed",
+   "place": "street",
+   "file": "street/barrier-fixed.glb",
+   "bytes": 45288,
+   "tris": 1208,
+   "size": [
+    1.5,
+    0.263,
+    1.255
+   ],
+   "lo": [
+    -0.75,
+    -0.131,
+    0.0
+   ],
+   "hi": [
+    0.75,
+    0.131,
+    1.255
+   ],
+   "materials": 7,
+   "source_url": "https://poly.pizza/m/Fg3Nimfcfg",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Times Square: viewing pens with metal barriers in rows",
+   "notes": "size 1.5x0.1x1.1 m (estimate (list)), scale x0.39416",
+   "sec": 0.03
+  },
+  "cart": {
+   "id": "l7bDe7ak6j",
+   "name": "Cart",
+   "place": "street",
+   "file": "street/cart.glb",
+   "bytes": 106380,
+   "tris": 2631,
+   "size": [
+    1.6,
+    0.797,
+    1.373
+   ],
+   "lo": [
+    -0.8,
+    -0.399,
+    0.0
+   ],
+   "hi": [
+    0.8,
+    0.399,
+    1.373
+   ],
+   "materials": 5,
+   "source_url": "https://poly.pizza/m/l7bDe7ak6j",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Times Square: food cart; Foreground crossers: cart",
+   "notes": "size 1.5x0.8x1.6 m (estimate (list)), scale x1.72527; turned 90 so the long side matches the list w x d",
+   "sec": 0.02
+  },
+  "sushi-truck": {
+   "id": "OgrROxABGT",
+   "name": "Sushi Truck",
+   "place": "street",
+   "file": "street/sushi-truck.glb",
+   "bytes": 142572,
+   "tris": 4750,
+   "size": [
+    3.274,
+    2.09,
+    3.0
+   ],
+   "lo": [
+    -1.637,
+    -1.045,
+    0.0
+   ],
+   "hi": [
+    1.637,
+    1.045,
+    3.001
+   ],
+   "materials": 8,
+   "source_url": "https://poly.pizza/m/OgrROxABGT",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Times Square: food cart (truck)",
+   "notes": "size 5.0x2.2x2.8 m (estimate (list)), scale x0.41016; turned 90: vehicle long side on x (backdrop pack); size corrected to 3.0 m tall: chunky food truck: a 5 m length fit made it 4.6 m tall; real food truck ~3 m; decimated 14628 -> 4750 tris (vehicle/large budget 5000)",
+   "sec": 0.08
+  },
+  "standing-picture-frame": {
+   "id": "standing_picture_frame_01",
+   "name": "Standing Picture Frame 01",
+   "place": "street",
+   "file": "street/standing-picture-frame.glb",
+   "bytes": 32388,
+   "tris": 760,
+   "size": [
+    0.201,
+    0.1,
+    0.25
+   ],
+   "lo": [
+    -0.1,
+    -0.05,
+    0.0
+   ],
+   "hi": [
+    0.1,
+    0.05,
+    0.25
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/standing_picture_frame_01",
+   "licence": "CC0 1.0",
+   "author": "James Ray Cock",
+   "film_need": "Memorial street: a framed photo propped on a stone; Office: photo frame",
+   "notes": "size 0.2x0.1x0.25 m (Poly Haven), scale x1.0; turned 90 so the long side matches the list w x d; decimated 1634 -> 760 tris (small budget 800)",
+   "sec": 0.04
+  },
+  "bed-single": {
+   "id": "ianC28eMOF",
+   "name": "Bed Single",
+   "place": "hospital",
+   "file": "hospital/bed-single.glb",
+   "bytes": 18388,
+   "tris": 536,
+   "size": [
+    1.005,
+    2.0,
+    0.688
+   ],
+   "lo": [
+    -0.502,
+    -1.0,
+    0.0
+   ],
+   "hi": [
+    0.502,
+    1.0,
+    0.688
+   ],
+   "materials": 5,
+   "source_url": "https://poly.pizza/m/ianC28eMOF",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Birth room / Hospital: bed",
+   "notes": "size 0.9x2.0x0.6 m (estimate (list)), scale x0.50761",
+   "sec": 0.01
+  },
+  "bed-twin": {
+   "id": "9N9rYOD8On",
+   "name": "Bed Twin",
+   "place": "hospital",
+   "file": "hospital/bed-twin.glb",
+   "bytes": 83760,
+   "tris": 2850,
+   "size": [
+    0.968,
+    2.0,
+    0.731
+   ],
+   "lo": [
+    -0.484,
+    -1.0,
+    0.0
+   ],
+   "hi": [
+    0.484,
+    1.0,
+    0.732
+   ],
+   "materials": 6,
+   "source_url": "https://poly.pizza/m/9N9rYOD8On",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Nursery: cradle bed",
+   "notes": "size 0.9x2.0x0.7 m (estimate (list)), scale x0.46965; decimated 3684 -> 2850 tris (furniture budget 3000)",
+   "sec": 0.03
+  },
+  "sign-hospital": {
+   "id": "PeM20xAT0V",
+   "name": "Sign Hospital",
+   "place": "hospital",
+   "file": "hospital/sign-hospital.glb",
+   "bytes": 6012,
+   "tris": 92,
+   "size": [
+    0.9,
+    0.113,
+    0.9
+   ],
+   "lo": [
+    -0.45,
+    -0.056,
+    0.0
+   ],
+   "hi": [
+    0.45,
+    0.056,
+    0.9
+   ],
+   "materials": 3,
+   "source_url": "https://poly.pizza/m/PeM20xAT0V",
+   "licence": "CC0 1.0",
+   "author": "Kenney",
+   "film_need": "Corridor: signs",
+   "notes": "size 0.6x0.1x0.9 m (estimate (list)), scale x2.25; turned 90 so the long side matches the list w x d",
+   "sec": 0.01
+  },
+  "first-aid-kit": {
+   "id": "Hp80p6148W",
+   "name": "First Aid Kit",
+   "place": "hospital",
+   "file": "hospital/first-aid-kit.glb",
+   "bytes": 12736,
+   "tris": 268,
+   "size": [
+    0.3,
+    0.108,
+    0.203
+   ],
+   "lo": [
+    -0.15,
+    -0.054,
+    0.0
+   ],
+   "hi": [
+    0.15,
+    0.054,
+    0.203
+   ],
+   "materials": 4,
+   "source_url": "https://poly.pizza/m/Hp80p6148W",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Corridor: first aid",
+   "notes": "size 0.3x0.1x0.2 m (estimate (list)), scale x0.15926",
+   "sec": 0.01
+  },
+  "wheelchair": {
+   "id": "wheelchair_01",
+   "name": "Wheelchair 01",
+   "place": "hospital",
+   "file": "hospital/wheelchair.glb",
+   "bytes": 165912,
+   "tris": 2823,
+   "size": [
+    0.824,
+    1.091,
+    1.104
+   ],
+   "lo": [
+    -0.412,
+    -0.545,
+    0.0
+   ],
+   "hi": [
+    0.412,
+    0.545,
+    1.104
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/wheelchair_01",
+   "licence": "CC0 1.0",
+   "author": "Garreth Dean",
+   "film_need": "Hospital: wheelchair (crossers)",
+   "notes": "size 0.82x1.09x1.1 m (Poly Haven), scale x1.0; decimated 40252 -> 2823 tris (furniture budget 3000)",
+   "sec": 0.2
+  },
+  "medical-box": {
+   "id": "medical_box",
+   "name": "Medical Box",
+   "place": "hospital",
+   "file": "hospital/medical-box.glb",
+   "bytes": 45708,
+   "tris": 759,
+   "size": [
+    0.525,
+    0.35,
+    0.098
+   ],
+   "lo": [
+    -0.263,
+    -0.175,
+    0.0
+   ],
+   "hi": [
+    0.263,
+    0.175,
+    0.097
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/medical_box",
+   "licence": "CC0 1.0",
+   "author": "Ulan Cabanilla",
+   "film_need": "Hospital: medical box",
+   "notes": "size 0.53x0.35x0.1 m (Poly Haven), scale x1.0; decimated 3718 -> 759 tris (small budget 800)",
+   "sec": 0.05
+  },
+  "tool-cart": {
+   "id": "tool_cart",
+   "name": "Tool Cart",
+   "place": "hospital",
+   "file": "hospital/tool-cart.glb",
+   "bytes": 151376,
+   "tris": 2849,
+   "size": [
+    1.273,
+    0.754,
+    0.965
+   ],
+   "lo": [
+    -0.639,
+    -0.376,
+    0.0
+   ],
+   "hi": [
+    0.639,
+    0.376,
+    0.964
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/tool_cart",
+   "licence": "CC0 1.0",
+   "author": "Savva Zakharov",
+   "film_need": "Foreground crossers: trolley; Lab: trolley of racks",
+   "notes": "size 1.27x0.75x0.96 m (Poly Haven), scale x1.0; decimated 29394 -> 2849 tris (furniture budget 3000)",
+   "sec": 0.16
+  },
+  "monitor": {
+   "id": "PvSjEbz11k",
+   "name": "Monitor",
+   "place": "hospital",
+   "file": "hospital/monitor.glb",
+   "bytes": 3488,
+   "tris": 84,
+   "size": [
+    0.4,
+    0.081,
+    0.247
+   ],
+   "lo": [
+    -0.2,
+    -0.041,
+    0.0
+   ],
+   "hi": [
+    0.2,
+    0.041,
+    0.247
+   ],
+   "materials": 1,
+   "source_url": "https://poly.pizza/m/PvSjEbz11k",
+   "licence": "CC0 1.0",
+   "author": "CreativeTrio",
+   "film_need": "Nursery/Corridor: monitor on a stand (head)",
+   "notes": "size 0.4x0.2x0.35 m (estimate (list)), scale x0.85179",
+   "sec": 0.0
+  },
+  "industrial-storage-cart": {
+   "id": "industrial_storage_cart",
+   "name": "Industrial Storage Cart",
+   "place": "hospital",
+   "file": "hospital/industrial-storage-cart.glb",
+   "bytes": 148312,
+   "tris": 2850,
+   "size": [
+    1.603,
+    1.103,
+    1.377
+   ],
+   "lo": [
+    -0.802,
+    -0.551,
+    0.0
+   ],
+   "hi": [
+    0.802,
+    0.551,
+    1.379
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/industrial_storage_cart",
+   "licence": "CC0 1.0",
+   "author": "Jule Bielitz",
+   "film_need": "Foreground crossers: trolley (hospital/lab trolley of racks)",
+   "notes": "size 1.6x1.1x1.38 m (Poly Haven), scale x1.0; decimated 18902 -> 2850 tris (furniture budget 3000)",
+   "sec": 0.1
+  },
+  "wet-floor-sign": {
+   "id": "WetFloorSign_01",
+   "name": "Wet Floor Sign 01",
+   "place": "hospital",
+   "file": "hospital/wet-floor-sign.glb",
+   "bytes": 16668,
+   "tris": 228,
+   "size": [
+    0.3,
+    0.359,
+    0.63
+   ],
+   "lo": [
+    -0.15,
+    -0.179,
+    0.0
+   ],
+   "hi": [
+    0.15,
+    0.179,
+    0.63
+   ],
+   "materials": 1,
+   "source_url": "https://polyhaven.com/a/WetFloorSign_01",
+   "licence": "CC0 1.0",
+   "author": "Fran Calvente",
+   "film_need": "Corridor/Supermarket: floor sign in the crossing zone",
+   "notes": "size 0.3x0.36x0.63 m (Poly Haven), scale x1.0; kept its printed texture (256 px)",
+   "sec": 0.02
+  },
+  "clipboard": {
+   "id": "clipboard",
+   "name": "Clipboard",
+   "place": "hospital",
+   "file": "hospital/clipboard.glb",
+   "bytes": 47212,
+   "tris": 760,
+   "size": [
+    0.229,
+    0.337,
+    0.042
+   ],
+   "lo": [
+    -0.114,
+    -0.168,
+    0.0
+   ],
+   "hi": [
+    0.114,
+    0.168,
+    0.042
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/clipboard",
+   "licence": "CC0 1.0",
+   "author": "ProgrammerOnCoffee",
+   "film_need": "Corridor: a dropped clipboard",
+   "notes": "size 0.23x0.34x0.04 m (Poly Haven), scale x1.0; decimated 6176 -> 760 tris (small budget 800)",
+   "sec": 0.05
+  },
+  "table": {
+   "id": "41R2HTYj1O",
+   "name": "Table",
+   "place": "kitchen-home",
+   "file": "kitchen-home/table.glb",
+   "bytes": 5624,
+   "tris": 120,
+   "size": [
+    1.932,
+    1.027,
+    0.75
+   ],
+   "lo": [
+    -0.966,
+    -0.513,
+    0.0
+   ],
+   "hi": [
+    0.966,
+    0.513,
+    0.75
+   ],
+   "materials": 1,
+   "source_url": "https://poly.pizza/m/41R2HTYj1O",
+   "licence": "CC0 1.0",
+   "author": "Kenney",
+   "film_need": "Kitchen: table",
+   "notes": "size 1.2x0.8x0.75 m (estimate (list)), scale x2.29545; size corrected to 0.75 m tall: dining table height; the model is long and low, so the 1.2 m length fit left it 0.47 m tall",
+   "sec": 0.0
+  },
+  "chair": {
+   "id": "zMmKNm8w4a",
+   "name": "Chair",
+   "place": "kitchen-home",
+   "file": "kitchen-home/chair.glb",
+   "bytes": 45932,
+   "tris": 1298,
+   "size": [
+    0.487,
+    0.545,
+    0.9
+   ],
+   "lo": [
+    -0.243,
+    -0.273,
+    0.0
+   ],
+   "hi": [
+    0.243,
+    0.273,
+    0.9
+   ],
+   "materials": 3,
+   "source_url": "https://poly.pizza/m/zMmKNm8w4a",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Kitchen: chairs",
+   "notes": "size 0.45x0.45x0.9 m (estimate (list)), scale x0.77657",
+   "sec": 0.01
+  },
+  "kitchen-fridge": {
+   "id": "36ODvl4CIy",
+   "name": "Kitchen Fridge",
+   "place": "kitchen-home",
+   "file": "kitchen-home/kitchen-fridge.glb",
+   "bytes": 11304,
+   "tris": 220,
+   "size": [
+    0.841,
+    0.571,
+    1.8
+   ],
+   "lo": [
+    -0.421,
+    -0.286,
+    0.0
+   ],
+   "hi": [
+    0.421,
+    0.286,
+    1.8
+   ],
+   "materials": 4,
+   "source_url": "https://poly.pizza/m/36ODvl4CIy",
+   "licence": "CC0 1.0",
+   "author": "Kenney",
+   "film_need": "Kitchen: open fridge door",
+   "notes": "size 0.7x0.7x1.8 m (estimate (list)), scale x1.95652",
+   "sec": 0.01
+  },
+  "kitchen-sink": {
+   "id": "nNGtcp9qK2",
+   "name": "Kitchen Sink",
+   "place": "kitchen-home",
+   "file": "kitchen-home/kitchen-sink.glb",
+   "bytes": 15684,
+   "tris": 296,
+   "size": [
+    0.878,
+    0.918,
+    1.0
+   ],
+   "lo": [
+    -0.439,
+    -0.459,
+    0.0
+   ],
+   "hi": [
+    0.439,
+    0.459,
+    1.0
+   ],
+   "materials": 6,
+   "source_url": "https://poly.pizza/m/nNGtcp9qK2",
+   "licence": "CC0 1.0",
+   "author": "Kenney",
+   "film_need": "Kitchen: sink; Nursery: sink",
+   "notes": "size 1.0x0.6x0.9 m (estimate (list)), scale x2.04082",
+   "sec": 0.01
+  },
+  "kitchen-stove": {
+   "id": "kTJU2y4R15",
+   "name": "Kitchen Stove",
+   "place": "kitchen-home",
+   "file": "kitchen-home/kitchen-stove.glb",
+   "bytes": 28004,
+   "tris": 828,
+   "size": [
+    0.86,
+    0.9,
+    0.9
+   ],
+   "lo": [
+    -0.43,
+    -0.45,
+    0.0
+   ],
+   "hi": [
+    0.43,
+    0.45,
+    0.9
+   ],
+   "materials": 5,
+   "source_url": "https://poly.pizza/m/kTJU2y4R15",
+   "licence": "CC0 1.0",
+   "author": "Kenney",
+   "film_need": "Kitchen: oven",
+   "notes": "size 0.6x0.6x0.9 m (estimate (list)), scale x2.0",
+   "sec": 0.01
+  },
+  "kitchen-microwave": {
+   "id": "vUsvf2HGDv",
+   "name": "Kitchen Microwave",
+   "place": "kitchen-home",
+   "file": "kitchen-home/kitchen-microwave.glb",
+   "bytes": 8460,
+   "tris": 152,
+   "size": [
+    0.5,
+    0.397,
+    0.31
+   ],
+   "lo": [
+    -0.25,
+    -0.198,
+    0.0
+   ],
+   "hi": [
+    0.25,
+    0.198,
+    0.31
+   ],
+   "materials": 4,
+   "source_url": "https://poly.pizza/m/vUsvf2HGDv",
+   "licence": "CC0 1.0",
+   "author": "Kenney",
+   "film_need": "Kitchen: microwave",
+   "notes": "size 0.5x0.4x0.3 m (estimate (list)), scale x1.72414",
+   "sec": 0.01
+  },
+  "table-lamp": {
+   "id": "9Mo3JruPHY",
+   "name": "Table Lamp",
+   "place": "kitchen-home",
+   "file": "kitchen-home/table-lamp.glb",
+   "bytes": 8988,
+   "tris": 244,
+   "size": [
+    0.23,
+    0.23,
+    0.5
+   ],
+   "lo": [
+    -0.115,
+    -0.115,
+    0.0
+   ],
+   "hi": [
+    0.115,
+    0.115,
+    0.5
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/9Mo3JruPHY",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Office: lamp; Birth room: lamp",
+   "notes": "size 0.25x0.25x0.5 m (estimate (list)), scale x0.65518",
+   "sec": 0.0
+  },
+  "sofa": {
+   "id": "X5kQPKzAWp",
+   "name": "Sofa",
+   "place": "kitchen-home",
+   "file": "kitchen-home/sofa.glb",
+   "bytes": 58108,
+   "tris": 2850,
+   "size": [
+    2.0,
+    1.4,
+    0.726
+   ],
+   "lo": [
+    -1.0,
+    -0.7,
+    0.0
+   ],
+   "hi": [
+    1.0,
+    0.7,
+    0.726
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/X5kQPKzAWp",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Care home: sofa",
+   "notes": "size 2.0x0.9x0.8 m (estimate (list)), scale x0.49967; decimated 3886 -> 2850 tris (furniture budget 3000)",
+   "sec": 0.02
+  },
+  "tv": {
+   "id": "mBGTVozH1u",
+   "name": "TV",
+   "place": "kitchen-home",
+   "file": "kitchen-home/tv.glb",
+   "bytes": 15180,
+   "tris": 312,
+   "size": [
+    2.626,
+    0.894,
+    3.0
+   ],
+   "lo": [
+    -1.313,
+    -0.447,
+    0.0
+   ],
+   "hi": [
+    1.313,
+    0.447,
+    3.0
+   ],
+   "materials": 4,
+   "source_url": "https://poly.pizza/m/mBGTVozH1u",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Care home / Kitchen: TV",
+   "notes": "size 1.0x0.1x0.6 m (estimate (list)), scale x2.18177; size corrected to 3.0 m tall: a screen hung on a pole rig, not a set-top TV; 3 m rig keeps the screen ~0.9 m wide",
+   "sec": 0.01
+  },
+  "washing-machine": {
+   "id": "UFxsKNSl8W",
+   "name": "Washing Machine",
+   "place": "kitchen-home",
+   "file": "kitchen-home/washing-machine.glb",
+   "bytes": 14756,
+   "tris": 304,
+   "size": [
+    0.791,
+    0.81,
+    0.9
+   ],
+   "lo": [
+    -0.395,
+    -0.405,
+    0.0
+   ],
+   "hi": [
+    0.395,
+    0.405,
+    0.9
+   ],
+   "materials": 3,
+   "source_url": "https://poly.pizza/m/UFxsKNSl8W",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Kitchen: washing/laundry",
+   "notes": "size 0.6x0.6x0.9 m (estimate (list)), scale x0.61216",
+   "sec": 0.01
+  },
+  "kettle": {
+   "id": "XggUrd5f03",
+   "name": "Kettle",
+   "place": "kitchen-home",
+   "file": "kitchen-home/kettle.glb",
+   "bytes": 19452,
+   "tris": 618,
+   "size": [
+    0.19,
+    0.148,
+    0.2
+   ],
+   "lo": [
+    -0.095,
+    -0.074,
+    0.0
+   ],
+   "hi": [
+    0.095,
+    0.074,
+    0.2
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/XggUrd5f03",
+   "licence": "CC0 1.0",
+   "author": "MilkAndBanana",
+   "film_need": "Kitchen: kettle",
+   "notes": "size 0.2x0.2x0.2 m (estimate (list)), scale x0.03155",
+   "sec": 0.01
+  },
+  "toaster": {
+   "id": "wALulTo6gm",
+   "name": "Toaster",
+   "place": "kitchen-home",
+   "file": "kitchen-home/toaster.glb",
+   "bytes": 9564,
+   "tris": 220,
+   "size": [
+    0.3,
+    0.16,
+    0.207
+   ],
+   "lo": [
+    -0.15,
+    -0.08,
+    0.0
+   ],
+   "hi": [
+    0.15,
+    0.08,
+    0.207
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/wALulTo6gm",
+   "licence": "CC0 1.0",
+   "author": "Kenney",
+   "film_need": "Kitchen: toaster",
+   "notes": "size 0.3x0.2x0.2 m (estimate (list)), scale x1.59588",
+   "sec": 0.01
+  },
+  "radio": {
+   "id": "TPqvwkyWdV",
+   "name": "Radio",
+   "place": "kitchen-home",
+   "file": "kitchen-home/radio.glb",
+   "bytes": 19996,
+   "tris": 481,
+   "size": [
+    0.241,
+    0.081,
+    0.3
+   ],
+   "lo": [
+    -0.12,
+    -0.041,
+    0.0
+   ],
+   "hi": [
+    0.12,
+    0.041,
+    0.3
+   ],
+   "materials": 4,
+   "source_url": "https://poly.pizza/m/TPqvwkyWdV",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Kitchen: radio; Care home: a radio",
+   "notes": "size 0.3x0.1x0.2 m (estimate (list)), scale x0.1427",
+   "sec": 0.01
+  },
+  "pan": {
+   "id": "f9my9iJZMv",
+   "name": "Pan",
+   "place": "kitchen-home",
+   "file": "kitchen-home/pan.glb",
+   "bytes": 8312,
+   "tris": 246,
+   "size": [
+    0.305,
+    0.5,
+    0.061
+   ],
+   "lo": [
+    -0.152,
+    -0.25,
+    0.0
+   ],
+   "hi": [
+    0.152,
+    0.25,
+    0.061
+   ],
+   "materials": 3,
+   "source_url": "https://poly.pizza/m/f9my9iJZMv",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Kitchen: tower of pans",
+   "notes": "size 0.3x0.5x0.06 m (estimate (list)), scale x0.17701",
+   "sec": 0.01
+  },
+  "sauce-pan": {
+   "id": "Lb86upv8y5",
+   "name": "Sauce Pan",
+   "place": "kitchen-home",
+   "file": "kitchen-home/sauce-pan.glb",
+   "bytes": 13512,
+   "tris": 428,
+   "size": [
+    0.205,
+    0.35,
+    0.12
+   ],
+   "lo": [
+    -0.103,
+    -0.175,
+    0.0
+   ],
+   "hi": [
+    0.103,
+    0.175,
+    0.12
+   ],
+   "materials": 3,
+   "source_url": "https://poly.pizza/m/Lb86upv8y5",
+   "licence": "CC0 1.0",
+   "author": "MilkAndBanana",
+   "film_need": "Kitchen: tower of pans",
+   "notes": "size 0.2x0.35x0.12 m (estimate (list)), scale x0.04618",
+   "sec": 0.01
+  },
+  "stock-pot": {
+   "id": "CFbvPTVVEl",
+   "name": "Stock Pot",
+   "place": "kitchen-home",
+   "file": "kitchen-home/stock-pot.glb",
+   "bytes": 16024,
+   "tris": 472,
+   "size": [
+    0.218,
+    0.3,
+    0.256
+   ],
+   "lo": [
+    -0.109,
+    -0.15,
+    0.0
+   ],
+   "hi": [
+    0.109,
+    0.15,
+    0.256
+   ],
+   "materials": 1,
+   "source_url": "https://poly.pizza/m/CFbvPTVVEl",
+   "licence": "CC0 1.0",
+   "author": "MilkAndBanana",
+   "film_need": "Kitchen: tower of pans",
+   "notes": "size 0.3x0.3x0.25 m (estimate (list)), scale x0.03289",
+   "sec": 0.01
+  },
+  "dishrack": {
+   "id": "y9mMoShXnI",
+   "name": "Dishrack",
+   "place": "kitchen-home",
+   "file": "kitchen-home/dishrack.glb",
+   "bytes": 21040,
+   "tris": 392,
+   "size": [
+    0.5,
+    0.375,
+    0.312
+   ],
+   "lo": [
+    -0.25,
+    -0.188,
+    0.0
+   ],
+   "hi": [
+    0.25,
+    0.188,
+    0.312
+   ],
+   "materials": 8,
+   "source_url": "https://poly.pizza/m/y9mMoShXnI",
+   "licence": "CC0 1.0",
+   "author": "Isa Lousberg",
+   "film_need": "Kitchen: bottle rack (base)",
+   "notes": "size 0.5x0.35x0.2 m (estimate (list)), scale x0.625; turned 90 so the long side matches the list w x d",
+   "sec": 0.02
+  },
+  "water-bottle": {
+   "id": "KpxDpidn1Z",
+   "name": "Water Bottle",
+   "place": "kitchen-home",
+   "file": "kitchen-home/water-bottle.glb",
+   "bytes": 9208,
+   "tris": 288,
+   "size": [
+    0.07,
+    0.07,
+    0.2
+   ],
+   "lo": [
+    -0.035,
+    -0.035,
+    0.0
+   ],
+   "hi": [
+    0.035,
+    0.035,
+    0.2
+   ],
+   "materials": 3,
+   "source_url": "https://poly.pizza/m/KpxDpidn1Z",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Kitchen: bottle rack full of parts (bottles)",
+   "notes": "size 0.06x0.06x0.2 m (estimate (list)), scale x0.13937",
+   "sec": 0.01
+  },
+  "wicker-basket-2": {
+   "id": "wicker_basket_02",
+   "name": "Wicker Basket 02",
+   "place": "kitchen-home",
+   "file": "kitchen-home/wicker-basket-2.glb",
+   "bytes": 44640,
+   "tris": 760,
+   "size": [
+    0.347,
+    0.254,
+    0.2
+   ],
+   "lo": [
+    -0.173,
+    -0.127,
+    0.0
+   ],
+   "hi": [
+    0.173,
+    0.127,
+    0.2
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/wicker_basket_02",
+   "licence": "CC0 1.0",
+   "author": "Kuutti Siitonen",
+   "film_need": "Kitchen: laundry basket overflowing",
+   "notes": "size 0.37x0.27x0.22 m (Poly Haven), scale x1.0; decimated 17850 -> 760 tris (small budget 800)",
+   "sec": 0.12
+  },
+  "cardboard-boxes": {
+   "id": "bs6ikOeTrR",
+   "name": "Cardboard Boxes",
+   "place": "misc",
+   "file": "misc/cardboard-boxes.glb",
+   "bytes": 4420,
+   "tris": 108,
+   "size": [
+    0.8,
+    0.596,
+    0.418
+   ],
+   "lo": [
+    -0.4,
+    -0.298,
+    -0.0
+   ],
+   "hi": [
+    0.4,
+    0.298,
+    0.418
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/bs6ikOeTrR",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Supermarket / Office: boxes",
+   "notes": "size 0.8x0.6x0.5 m (estimate (list)), scale x0.82006",
+   "sec": 0.02
+  },
+  "cardboard-box": {
+   "id": "cardboard_box_01",
+   "name": "Cardboard Box 01",
+   "place": "misc",
+   "file": "misc/cardboard-box.glb",
+   "bytes": 34832,
+   "tris": 760,
+   "size": [
+    0.387,
+    0.516,
+    0.342
+   ],
+   "lo": [
+    -0.194,
+    -0.258,
+    0.0
+   ],
+   "hi": [
+    0.194,
+    0.258,
+    0.338
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/cardboard_box_01",
+   "licence": "CC0 1.0",
+   "author": "Rahul Chaudhary",
+   "film_need": "Supermarket / Office: boxes",
+   "notes": "size 0.39x0.52x0.34 m (Poly Haven), scale x1.0; decimated 16952 -> 760 tris (small budget 800)",
+   "sec": 0.11
+  },
+  "crate": {
+   "id": "3VGWnZPXmG",
+   "name": "Crate",
+   "place": "misc",
+   "file": "misc/crate.glb",
+   "bytes": 28464,
+   "tris": 784,
+   "size": [
+    0.6,
+    0.6,
+    0.6
+   ],
+   "lo": [
+    -0.3,
+    -0.3,
+    0.0
+   ],
+   "hi": [
+    0.3,
+    0.3,
+    0.6
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/3VGWnZPXmG",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Supermarket: crates",
+   "notes": "size 0.6x0.6x0.6 m (estimate (list)), scale x0.72814",
+   "sec": 0.01
+  },
+  "backpack": {
+   "id": "vF7TuXCPDH",
+   "name": "Backpack",
+   "place": "misc",
+   "file": "misc/backpack.glb",
+   "bytes": 34044,
+   "tris": 759,
+   "size": [
+    0.45,
+    0.339,
+    0.401
+   ],
+   "lo": [
+    -0.225,
+    -0.171,
+    0.0
+   ],
+   "hi": [
+    0.225,
+    0.171,
+    0.4
+   ],
+   "materials": 3,
+   "source_url": "https://poly.pizza/m/vF7TuXCPDH",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Birth room: a bag packed by the door",
+   "notes": "size 0.3x0.2x0.45 m (estimate (list)), scale x0.42166; decimated 3960 -> 759 tris (small budget 800)",
+   "sec": 0.03
+  },
+  "suit-case": {
+   "id": "7DsKpns9FM",
+   "name": "Suit Case",
+   "place": "misc",
+   "file": "misc/suit-case.glb",
+   "bytes": 14096,
+   "tris": 270,
+   "size": [
+    0.6,
+    0.237,
+    0.504
+   ],
+   "lo": [
+    -0.3,
+    -0.118,
+    0.0
+   ],
+   "hi": [
+    0.3,
+    0.118,
+    0.504
+   ],
+   "materials": 3,
+   "source_url": "https://poly.pizza/m/7DsKpns9FM",
+   "licence": "CC0 1.0",
+   "author": "smallbigsquare",
+   "film_need": "Birth room: a bag packed by the door",
+   "notes": "size 0.4x0.2x0.6 m (estimate (list)), scale x1.005",
+   "sec": 0.03
+  },
+  "briefcase": {
+   "id": "3fFsumkkQD",
+   "name": "Briefcase",
+   "place": "misc",
+   "file": "misc/briefcase.glb",
+   "bytes": 20592,
+   "tris": 362,
+   "size": [
+    0.4,
+    0.117,
+    0.336
+   ],
+   "lo": [
+    -0.2,
+    -0.058,
+    0.0
+   ],
+   "hi": [
+    0.2,
+    0.058,
+    0.336
+   ],
+   "materials": 8,
+   "source_url": "https://poly.pizza/m/3fFsumkkQD",
+   "licence": "CC0 1.0",
+   "author": "reyshapes",
+   "film_need": "",
+   "notes": "size 0.4x0.1x0.3 m (estimate (list)), scale x0.12738; turned 90 so the long side matches the list w x d",
+   "sec": 0.02
+  },
+  "smartphone": {
+   "id": "4DRZmTs3jq",
+   "name": "Smartphone",
+   "place": "misc",
+   "file": "misc/smartphone.glb",
+   "bytes": 6228,
+   "tris": 182,
+   "size": [
+    0.01,
+    0.068,
+    0.15
+   ],
+   "lo": [
+    -0.005,
+    -0.034,
+    0.0
+   ],
+   "hi": [
+    0.005,
+    0.034,
+    0.15
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/4DRZmTs3jq",
+   "licence": "CC0 1.0",
+   "author": "smallbigsquare",
+   "film_need": "Office: phone",
+   "notes": "size 0.07x0.01x0.15 m (estimate (list)), scale x0.66585; turned 90 so the long side matches the list w x d; stood upright (was lying along x; list says it is tall)",
+   "sec": 0.01
+  },
+  "phone": {
+   "id": "k2kgBepoMU",
+   "name": "Phone",
+   "place": "misc",
+   "file": "misc/phone.glb",
+   "bytes": 9696,
+   "tris": 224,
+   "size": [
+    0.07,
+    0.01,
+    0.15
+   ],
+   "lo": [
+    -0.035,
+    -0.005,
+    0.0
+   ],
+   "hi": [
+    0.035,
+    0.005,
+    0.15
+   ],
+   "materials": 3,
+   "source_url": "https://poly.pizza/m/k2kgBepoMU",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Office: phone",
+   "notes": "size 0.07x0.01x0.15 m (estimate (list)), scale x0.16512",
+   "sec": 0.01
+  },
+  "book": {
+   "id": "h3Wh4fxSQX",
+   "name": "Book",
+   "place": "misc",
+   "file": "misc/book.glb",
+   "bytes": 25540,
+   "tris": 760,
+   "size": [
+    0.183,
+    0.085,
+    0.22
+   ],
+   "lo": [
+    -0.091,
+    -0.043,
+    0.0
+   ],
+   "hi": [
+    0.091,
+    0.043,
+    0.22
+   ],
+   "materials": 4,
+   "source_url": "https://poly.pizza/m/h3Wh4fxSQX",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Birth room: books",
+   "notes": "size 0.15x0.04x0.22 m (estimate (list)), scale x0.27269; turned 90 so the long side matches the list w x d; decimated 1060 -> 760 tris (small budget 800)",
+   "sec": 0.01
+  },
+  "books": {
+   "id": "M2cJ5sVUgJ",
+   "name": "Books",
+   "place": "misc",
+   "file": "misc/books.glb",
+   "bytes": 6452,
+   "tris": 62,
+   "size": [
+    0.3,
+    0.188,
+    0.207
+   ],
+   "lo": [
+    -0.15,
+    -0.094,
+    0.0
+   ],
+   "hi": [
+    0.15,
+    0.094,
+    0.207
+   ],
+   "materials": 4,
+   "source_url": "https://poly.pizza/m/M2cJ5sVUgJ",
+   "licence": "CC0 1.0",
+   "author": "Kenney",
+   "film_need": "Care home: books",
+   "notes": "size 0.3x0.15x0.22 m (estimate (list)), scale x1.99405",
+   "sec": 0.01
+  },
+  "bottle": {
+   "id": "SU28ptta34",
+   "name": "Bottle",
+   "place": "misc",
+   "file": "misc/bottle.glb",
+   "bytes": 6812,
+   "tris": 216,
+   "size": [
+    0.079,
+    0.078,
+    0.25
+   ],
+   "lo": [
+    -0.04,
+    -0.039,
+    0.0
+   ],
+   "hi": [
+    0.04,
+    0.039,
+    0.25
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/SU28ptta34",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "",
+   "notes": "size 0.07x0.07x0.25 m (estimate (list)), scale x0.25668",
+   "sec": 0.01
+  },
+  "safe": {
+   "id": "N4egHD2Vms",
+   "name": "Safe",
+   "place": "misc",
+   "file": "misc/safe.glb",
+   "bytes": 10248,
+   "tris": 222,
+   "size": [
+    0.552,
+    0.6,
+    0.55
+   ],
+   "lo": [
+    -0.276,
+    -0.3,
+    0.0
+   ],
+   "hi": [
+    0.276,
+    0.3,
+    0.55
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/N4egHD2Vms",
+   "licence": "CC0 1.0",
+   "author": "CreativeTrio",
+   "film_need": "",
+   "notes": "size 0.5x0.5x0.6 m (estimate (list)), scale x2.26106",
+   "sec": 0.01
+  },
+  "cake-birthday": {
+   "id": "JCT2SAoBud",
+   "name": "Cake Birthday",
+   "place": "misc",
+   "file": "misc/cake-birthday.glb",
+   "bytes": 52896,
+   "tris": 760,
+   "size": [
+    0.3,
+    0.3,
+    0.197
+   ],
+   "lo": [
+    -0.148,
+    -0.148,
+    0.0
+   ],
+   "hi": [
+    0.148,
+    0.148,
+    0.198
+   ],
+   "materials": 8,
+   "source_url": "https://poly.pizza/m/JCT2SAoBud",
+   "licence": "CC0 1.0",
+   "author": "Isa Lousberg",
+   "film_need": "Birthday room: a plate with a slice",
+   "notes": "size 0.3x0.3x0.2 m (estimate (list)), scale x0.24595; decimated 3040 -> 760 tris (small budget 800)",
+   "sec": 0.03
+  },
+  "present": {
+   "id": "LVg3ynJDxa",
+   "name": "Present",
+   "place": "misc",
+   "file": "misc/present.glb",
+   "bytes": 9252,
+   "tris": 228,
+   "size": [
+    0.3,
+    0.291,
+    0.289
+   ],
+   "lo": [
+    -0.15,
+    -0.145,
+    0.0
+   ],
+   "hi": [
+    0.15,
+    0.145,
+    0.289
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/LVg3ynJDxa",
+   "licence": "CC0 1.0",
+   "author": "CreativeTrio",
+   "film_need": "Birthday room: a wrapped present",
+   "notes": "size 0.3x0.3x0.3 m (estimate (list)), scale x1.76515",
+   "sec": 0.01
+  },
+  "plate-square": {
+   "id": "ihA4bF34hK",
+   "name": "Plate Square",
+   "place": "misc",
+   "file": "misc/plate-square.glb",
+   "bytes": 6100,
+   "tris": 204,
+   "size": [
+    0.25,
+    0.25,
+    0.02
+   ],
+   "lo": [
+    -0.125,
+    -0.125,
+    0.0
+   ],
+   "hi": [
+    0.125,
+    0.125,
+    0.02
+   ],
+   "materials": 1,
+   "source_url": "https://poly.pizza/m/ihA4bF34hK",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Birthday room: a plate with a slice",
+   "notes": "size 0.25x0.25x0.03 m (estimate (list)), scale x0.15271",
+   "sec": 0.0
+  },
+  "hand-truck": {
+   "id": "hand_truck",
+   "name": "Hand Truck",
+   "place": "misc",
+   "file": "misc/hand-truck.glb",
+   "bytes": 108092,
+   "tris": 2850,
+   "size": [
+    0.593,
+    0.693,
+    1.403
+   ],
+   "lo": [
+    -0.297,
+    -0.346,
+    0.0
+   ],
+   "hi": [
+    0.297,
+    0.346,
+    1.402
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/hand_truck",
+   "licence": "CC0 1.0",
+   "author": "Mutanzom3D",
+   "film_need": "Foreground crossers: cart",
+   "notes": "size 0.59x0.69x1.4 m (Poly Haven), scale x1.0; decimated 13220 -> 2850 tris (furniture budget 3000)",
+   "sec": 0.14
+  },
+  "plastic-thermos": {
+   "id": "plastic_thermos",
+   "name": "Plastic Thermos",
+   "place": "misc",
+   "file": "misc/plastic-thermos.glb",
+   "bytes": 31648,
+   "tris": 760,
+   "size": [
+    0.141,
+    0.109,
+    0.32
+   ],
+   "lo": [
+    -0.07,
+    -0.055,
+    0.0
+   ],
+   "hi": [
+    0.07,
+    0.055,
+    0.32
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/plastic_thermos",
+   "licence": "CC0 1.0",
+   "author": "PierreB3D",
+   "film_need": "Birthday room: a thermos",
+   "notes": "size 0.14x0.11x0.32 m (Poly Haven), scale x1.0; decimated 5514 -> 760 tris (small budget 800)",
+   "sec": 0.04
+  },
+  "rockingchair": {
+   "id": "Rockingchair_01",
+   "name": "Rockingchair 01",
+   "place": "care-home",
+   "file": "care-home/rockingchair.glb",
+   "bytes": 150016,
+   "tris": 2850,
+   "size": [
+    0.708,
+    0.833,
+    0.995
+   ],
+   "lo": [
+    -0.354,
+    -0.417,
+    0.0
+   ],
+   "hi": [
+    0.354,
+    0.417,
+    0.995
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/Rockingchair_01",
+   "licence": "CC0 1.0",
+   "author": "Jorge Camacho",
+   "film_need": "Care home: rocking chair",
+   "notes": "size 0.71x0.83x0.99 m (Poly Haven), scale x1.0; decimated 11866 -> 2850 tris (furniture budget 3000)",
+   "sec": 0.07
+  },
+  "armchair": {
+   "id": "myd1WSucAz",
+   "name": "Armchair",
+   "place": "care-home",
+   "file": "care-home/armchair.glb",
+   "bytes": 7300,
+   "tris": 162,
+   "size": [
+    0.739,
+    0.677,
+    0.9
+   ],
+   "lo": [
+    -0.37,
+    -0.338,
+    0.0
+   ],
+   "hi": [
+    0.37,
+    0.338,
+    0.9
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/myd1WSucAz",
+   "licence": "CC0 1.0",
+   "author": "CreativeTrio",
+   "film_need": "Birth room: recliner chair",
+   "notes": "size 0.8x0.8x0.9 m (estimate (list)), scale x1.2567",
+   "sec": 0.01
+  },
+  "night-stand": {
+   "id": "7cobkfclNv",
+   "name": "Night Stand",
+   "place": "care-home",
+   "file": "care-home/night-stand.glb",
+   "bytes": 9488,
+   "tris": 272,
+   "size": [
+    0.5,
+    0.5,
+    0.434
+   ],
+   "lo": [
+    -0.25,
+    -0.25,
+    0.0
+   ],
+   "hi": [
+    0.25,
+    0.25,
+    0.434
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/7cobkfclNv",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Birth room: bedside table",
+   "notes": "size 0.5x0.4x0.5 m (estimate (list)), scale x0.52508",
+   "sec": 0.01
+  },
+  "rug-round": {
+   "id": "jeDDiN69Ze",
+   "name": "Rug Round",
+   "place": "care-home",
+   "file": "care-home/rug-round.glb",
+   "bytes": 7340,
+   "tris": 188,
+   "size": [
+    1.5,
+    1.5,
+    0.016
+   ],
+   "lo": [
+    -0.75,
+    -0.75,
+    0.0
+   ],
+   "hi": [
+    0.75,
+    0.75,
+    0.016
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/jeDDiN69Ze",
+   "licence": "CC0 1.0",
+   "author": "Kenney",
+   "film_need": "Care home: rug",
+   "notes": "size 1.5x1.5x0.02 m (estimate (list)), scale x1.63043",
+   "sec": 0.01
+  },
+  "lamp-round-floor": {
+   "id": "8LiDIfXVLi",
+   "name": "Lamp Round Floor",
+   "place": "care-home",
+   "file": "care-home/lamp-round-floor.glb",
+   "bytes": 4696,
+   "tris": 76,
+   "size": [
+    0.265,
+    0.306,
+    1.5
+   ],
+   "lo": [
+    -0.133,
+    -0.153,
+    0.0
+   ],
+   "hi": [
+    0.133,
+    0.153,
+    1.5
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/8LiDIfXVLi",
+   "licence": "CC0 1.0",
+   "author": "Kenney",
+   "film_need": "Care home: wall/floor lamp",
+   "notes": "size 0.4x0.4x1.5 m (estimate (list)), scale x1.74419",
+   "sec": 0.0
+  },
+  "wall-clock": {
+   "id": "wall_clock",
+   "name": "Wall Clock",
+   "place": "care-home",
+   "file": "care-home/wall-clock.glb",
+   "bytes": 32248,
+   "tris": 760,
+   "size": [
+    0.32,
+    0.047,
+    0.32
+   ],
+   "lo": [
+    -0.16,
+    -0.024,
+    0.0
+   ],
+   "hi": [
+    0.16,
+    0.024,
+    0.32
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/wall_clock",
+   "licence": "CC0 1.0",
+   "author": "PierreB3D",
+   "film_need": "Nursery/Birth room/Kitchen/Care home: wall clock",
+   "notes": "size 0.32x0.05x0.32 m (Poly Haven), scale x1.0; decimated 3658 -> 760 tris (small budget 800)",
+   "sec": 0.04
+  },
+  "lounge-chair": {
+   "id": "RY93lbAIFg",
+   "name": "Lounge Chair",
+   "place": "care-home",
+   "file": "care-home/lounge-chair.glb",
+   "bytes": 6008,
+   "tris": 128,
+   "size": [
+    0.9,
+    0.753,
+    0.845
+   ],
+   "lo": [
+    -0.45,
+    -0.377,
+    0.0
+   ],
+   "hi": [
+    0.45,
+    0.377,
+    0.845
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/RY93lbAIFg",
+   "licence": "CC0 1.0",
+   "author": "Kenney",
+   "film_need": "Birth room: recliner chair",
+   "notes": "size 0.8x0.8x0.9 m (estimate (list)), scale x1.83673",
+   "sec": 0.01
+  },
+  "cup-tea": {
+   "id": "FUSyrlibw0",
+   "name": "Cup Tea",
+   "place": "care-home",
+   "file": "care-home/cup-tea.glb",
+   "bytes": 6940,
+   "tris": 108,
+   "size": [
+    0.1,
+    0.087,
+    0.086
+   ],
+   "lo": [
+    -0.05,
+    -0.044,
+    0.0
+   ],
+   "hi": [
+    0.05,
+    0.044,
+    0.086
+   ],
+   "materials": 4,
+   "source_url": "https://poly.pizza/m/FUSyrlibw0",
+   "licence": "CC0 1.0",
+   "author": "Kenney",
+   "film_need": "Care home: tea trolley with cups",
+   "notes": "size 0.1x0.1x0.07 m (estimate (list)), scale x0.43013",
+   "sec": 0.01
+  },
+  "coffee-cart": {
+   "id": "CoffeeCart_01",
+   "name": "Coffee Cart 01",
+   "place": "care-home",
+   "file": "care-home/coffee-cart.glb",
+   "bytes": 157136,
+   "tris": 2846,
+   "size": [
+    2.168,
+    1.073,
+    1.718
+   ],
+   "lo": [
+    -1.083,
+    -0.537,
+    0.0
+   ],
+   "hi": [
+    1.083,
+    0.537,
+    1.719
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/CoffeeCart_01",
+   "licence": "CC0 1.0",
+   "author": "Joe Seabuhr",
+   "film_need": "Care home: tea trolley; Nursery: nurse trolley; Foreground crossers: trolley",
+   "notes": "size 2.17x1.07x1.72 m (Poly Haven), scale x1.0; decimated 27659 -> 2846 tris (furniture budget 3000)",
+   "sec": 0.15
+  },
+  "fancy-picture-frame": {
+   "id": "fancy_picture_frame_01",
+   "name": "Fancy Picture Frame 01",
+   "place": "care-home",
+   "file": "care-home/fancy-picture-frame.glb",
+   "bytes": 35516,
+   "tris": 760,
+   "size": [
+    0.603,
+    0.02,
+    0.464
+   ],
+   "lo": [
+    -0.302,
+    -0.01,
+    -0.0
+   ],
+   "hi": [
+    0.302,
+    0.01,
+    0.464
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/fancy_picture_frame_01",
+   "licence": "CC0 1.0",
+   "author": "Rob Tuytel, Rico Cilliers",
+   "film_need": "Care home: framed photos; Birth room: wall art frame",
+   "notes": "size 0.6x0.02x0.46 m (Poly Haven), scale x1.0; decimated 938 -> 760 tris (small budget 800)",
+   "sec": 0.03
+  },
+  "vintage-crutches": {
+   "id": "vintage_crutches_01",
+   "name": "Vintage Crutches 01",
+   "place": "care-home",
+   "file": "care-home/vintage-crutches.glb",
+   "bytes": 97832,
+   "tris": 2850,
+   "size": [
+    0.384,
+    0.204,
+    1.605
+   ],
+   "lo": [
+    -0.192,
+    -0.102,
+    0.0
+   ],
+   "hi": [
+    0.192,
+    0.102,
+    1.605
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/vintage_crutches_01",
+   "licence": "CC0 1.0",
+   "author": "James Ray Cock",
+   "film_need": "Care home: walking aid (crutches; the frame itself is code-built)",
+   "notes": "size 0.4x0.22x1.61 m (Poly Haven), scale x1.0; decimated 10628 -> 2850 tris (furniture budget 3000)",
+   "sec": 0.06
+  },
+  "tea-set": {
+   "id": "tea_set_01",
+   "name": "Tea Set 01",
+   "place": "care-home",
+   "file": "care-home/tea-set.glb",
+   "bytes": 118576,
+   "tris": 2850,
+   "size": [
+    0.918,
+    0.484,
+    0.165
+   ],
+   "lo": [
+    -0.459,
+    -0.242,
+    0.0
+   ],
+   "hi": [
+    0.459,
+    0.242,
+    0.165
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/tea_set_01",
+   "licence": "CC0 1.0",
+   "author": "James Ray Cock, Rico Cilliers, Jurita Burger",
+   "film_need": "Care home: tea trolley with a cloche and cups",
+   "notes": "size 0.92x0.48x0.16 m (Poly Haven), scale x1.0; decimated 40296 -> 2850 tris (furniture budget 3000)",
+   "sec": 0.18
+  },
+  "desk": {
+   "id": "V86Go2rlnq",
+   "name": "Desk",
+   "place": "office",
+   "file": "office/desk.glb",
+   "bytes": 60092,
+   "tris": 2640,
+   "size": [
+    1.4,
+    0.65,
+    0.709
+   ],
+   "lo": [
+    -0.7,
+    -0.325,
+    0.0
+   ],
+   "hi": [
+    0.7,
+    0.325,
+    0.709
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/V86Go2rlnq",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Office: desk",
+   "notes": "size 1.4x0.7x0.75 m (estimate (list)), scale x0.76826",
+   "sec": 0.02
+  },
+  "office-chair": {
+   "id": "UfKvrZBK6C",
+   "name": "Office Chair",
+   "place": "office",
+   "file": "office/office-chair.glb",
+   "bytes": 62488,
+   "tris": 2116,
+   "size": [
+    0.64,
+    0.716,
+    1.0
+   ],
+   "lo": [
+    -0.32,
+    -0.358,
+    0.0
+   ],
+   "hi": [
+    0.32,
+    0.358,
+    1.0
+   ],
+   "materials": 3,
+   "source_url": "https://poly.pizza/m/UfKvrZBK6C",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Office: a rolling chair; Foreground crossers: rolling chair",
+   "notes": "size 0.6x0.6x1.0 m (estimate (list)), scale x0.88687",
+   "sec": 0.01
+  },
+  "desk-chair": {
+   "id": "CKSz6PB1vO",
+   "name": "Desk Chair",
+   "place": "office",
+   "file": "office/desk-chair.glb",
+   "bytes": 22532,
+   "tris": 588,
+   "size": [
+    0.496,
+    0.466,
+    0.9
+   ],
+   "lo": [
+    -0.248,
+    -0.233,
+    0.0
+   ],
+   "hi": [
+    0.248,
+    0.233,
+    0.9
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/CKSz6PB1vO",
+   "licence": "CC0 1.0",
+   "author": "Kenney",
+   "film_need": "Office: chairs",
+   "notes": "size 0.6x0.6x0.9 m (estimate (list)), scale x1.48124",
+   "sec": 0.01
+  },
+  "computer-screen": {
+   "id": "V5Qo141OcB",
+   "name": "Computer Screen",
+   "place": "office",
+   "file": "office/computer-screen.glb",
+   "bytes": 4272,
+   "tris": 72,
+   "size": [
+    0.5,
+    0.132,
+    0.375
+   ],
+   "lo": [
+    -0.25,
+    -0.066,
+    0.0
+   ],
+   "hi": [
+    0.25,
+    0.066,
+    0.375
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/V5Qo141OcB",
+   "licence": "CC0 1.0",
+   "author": "Kenney",
+   "film_need": "Office: 2 monitors; Hospital: monitor (screen)",
+   "notes": "size 0.5x0.2x0.4 m (estimate (list)), scale x1.27328",
+   "sec": 0.01
+  },
+  "laptop": {
+   "id": "GnbwSUiVty",
+   "name": "Laptop",
+   "place": "office",
+   "file": "office/laptop.glb",
+   "bytes": 4964,
+   "tris": 68,
+   "size": [
+    0.35,
+    0.318,
+    0.215
+   ],
+   "lo": [
+    -0.175,
+    -0.159,
+    0.0
+   ],
+   "hi": [
+    0.175,
+    0.159,
+    0.215
+   ],
+   "materials": 3,
+   "source_url": "https://poly.pizza/m/GnbwSUiVty",
+   "licence": "CC0 1.0",
+   "author": "Kenney",
+   "film_need": "Office: laptop",
+   "notes": "size 0.35x0.25x0.25 m (estimate (list)), scale x1.32576",
+   "sec": 0.01
+  },
+  "printer": {
+   "id": "77K2TCL5Lz",
+   "name": "Printer",
+   "place": "office",
+   "file": "office/printer.glb",
+   "bytes": 6544,
+   "tris": 182,
+   "size": [
+    0.349,
+    0.5,
+    0.262
+   ],
+   "lo": [
+    -0.174,
+    -0.25,
+    -0.0
+   ],
+   "hi": [
+    0.174,
+    0.25,
+    0.262
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/77K2TCL5Lz",
+   "licence": "CC0 1.0",
+   "author": "CreativeTrio",
+   "film_need": "Office: printer station, copier",
+   "notes": "size 0.5x0.4x0.35 m (estimate (list)), scale x1.31925",
+   "sec": 0.01
+  },
+  "houseplant": {
+   "id": "bfLOqIV5uP",
+   "name": "Houseplant",
+   "place": "office",
+   "file": "office/houseplant.glb",
+   "bytes": 15080,
+   "tris": 449,
+   "size": [
+    0.574,
+    0.6,
+    0.434
+   ],
+   "lo": [
+    -0.287,
+    -0.3,
+    0.0
+   ],
+   "hi": [
+    0.287,
+    0.3,
+    0.434
+   ],
+   "materials": 3,
+   "source_url": "https://poly.pizza/m/bfLOqIV5uP",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Office: plant; Care home: plant per table",
+   "notes": "size 0.3x0.3x0.6 m (estimate (list)), scale x0.49178",
+   "sec": 0.01
+  },
+  "computer-keyboard": {
+   "id": "vsqTUPFSw6",
+   "name": "Computer Keyboard",
+   "place": "office",
+   "file": "office/computer-keyboard.glb",
+   "bytes": 3108,
+   "tris": 32,
+   "size": [
+    0.45,
+    0.188,
+    0.044
+   ],
+   "lo": [
+    -0.225,
+    -0.094,
+    0.0
+   ],
+   "hi": [
+    0.225,
+    0.094,
+    0.044
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/vsqTUPFSw6",
+   "licence": "CC0 1.0",
+   "author": "Kenney",
+   "film_need": "Office: keyboard",
+   "notes": "size 0.45x0.15x0.03 m (estimate (list)), scale x1.59461",
+   "sec": 0.0
+  },
+  "metal-office-desk": {
+   "id": "metal_office_desk",
+   "name": "Metal Office Desk",
+   "place": "office",
+   "file": "office/metal-office-desk.glb",
+   "bytes": 122240,
+   "tris": 2850,
+   "size": [
+    2.0,
+    0.947,
+    0.788
+   ],
+   "lo": [
+    -1.0,
+    -0.474,
+    0.0
+   ],
+   "hi": [
+    1.0,
+    0.474,
+    0.788
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/metal_office_desk",
+   "licence": "CC0 1.0",
+   "author": "Ulan Cabanilla",
+   "film_need": "Office: desk",
+   "notes": "size 2.0x0.95x0.79 m (Poly Haven), scale x1.0; decimated 6898 -> 2850 tris (furniture budget 3000)",
+   "sec": 0.05
+  },
+  "bookcase-open": {
+   "id": "MTH8ZwnA27",
+   "name": "Bookcase Open",
+   "place": "office",
+   "file": "office/bookcase-open.glb",
+   "bytes": 12852,
+   "tris": 320,
+   "size": [
+    0.864,
+    0.54,
+    1.9
+   ],
+   "lo": [
+    -0.432,
+    -0.27,
+    0.0
+   ],
+   "hi": [
+    0.432,
+    0.27,
+    1.9
+   ],
+   "materials": 1,
+   "source_url": "https://poly.pizza/m/MTH8ZwnA27",
+   "licence": "CC0 1.0",
+   "author": "Kenney",
+   "film_need": "Office: shelving",
+   "notes": "size 0.9x0.35x1.9 m (estimate (list)), scale x2.15909",
+   "sec": 0.01
+  },
+  "desk-fan": {
+   "id": "OlTLyyXoXY",
+   "name": "Desk Fan",
+   "place": "office",
+   "file": "office/desk-fan.glb",
+   "bytes": 8648,
+   "tris": 294,
+   "size": [
+    0.297,
+    0.222,
+    0.4
+   ],
+   "lo": [
+    -0.148,
+    -0.111,
+    0.0
+   ],
+   "hi": [
+    0.148,
+    0.111,
+    0.4
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/OlTLyyXoXY",
+   "licence": "CC0 1.0",
+   "author": "CreativeTrio",
+   "film_need": "Office: a swivelling desk fan",
+   "notes": "size 0.3x0.2x0.4 m (estimate (list)), scale x1.52555",
+   "sec": 0.01
+  },
+  "coat-rack-standing": {
+   "id": "8jXUm32dKW",
+   "name": "Coat Rack Standing",
+   "place": "office",
+   "file": "office/coat-rack-standing.glb",
+   "bytes": 6500,
+   "tris": 190,
+   "size": [
+    0.638,
+    0.638,
+    1.8
+   ],
+   "lo": [
+    -0.319,
+    -0.319,
+    0.0
+   ],
+   "hi": [
+    0.319,
+    0.319,
+    1.8
+   ],
+   "materials": 1,
+   "source_url": "https://poly.pizza/m/8jXUm32dKW",
+   "licence": "CC0 1.0",
+   "author": "Kenney",
+   "film_need": "Office: a coat stand",
+   "notes": "size 0.5x0.5x1.8 m (estimate (list)), scale x2.33766",
+   "sec": 0.0
+  },
+  "wall-corkboard": {
+   "id": "U8yQZ9l0HZ",
+   "name": "Wall Corkboard",
+   "place": "office",
+   "file": "office/wall-corkboard.glb",
+   "bytes": 11912,
+   "tris": 218,
+   "size": [
+    0.8,
+    0.032,
+    0.552
+   ],
+   "lo": [
+    -0.4,
+    -0.016,
+    0.0
+   ],
+   "hi": [
+    0.4,
+    0.016,
+    0.552
+   ],
+   "materials": 4,
+   "source_url": "https://poly.pizza/m/U8yQZ9l0HZ",
+   "licence": "CC0 1.0",
+   "author": "CreativeTrio",
+   "film_need": "Office: sticky notes; Care home: wall notice board",
+   "notes": "size 0.8x0.05x0.6 m (estimate (list)), scale x1.04911",
+   "sec": 0.01
+  },
+  "mug": {
+   "id": "fis2ugeLbn",
+   "name": "Mug",
+   "place": "office",
+   "file": "office/mug.glb",
+   "bytes": 9200,
+   "tris": 232,
+   "size": [
+    0.1,
+    0.083,
+    0.08
+   ],
+   "lo": [
+    -0.05,
+    -0.041,
+    0.0
+   ],
+   "hi": [
+    0.05,
+    0.041,
+    0.08
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/fis2ugeLbn",
+   "licence": "CC0 1.0",
+   "author": "Kenney",
+   "film_need": "Office: desk dressing, mug",
+   "notes": "size 0.08x0.08x0.1 m (estimate (list)), scale x0.29098",
+   "sec": 0.0
+  },
+  "can-fridge": {
+   "id": "8OHbykvREu",
+   "name": "Can Fridge",
+   "place": "supermarket",
+   "file": "supermarket/can-fridge.glb",
+   "bytes": 73920,
+   "tris": 2850,
+   "size": [
+    0.969,
+    0.546,
+    1.8
+   ],
+   "lo": [
+    -0.484,
+    -0.273,
+    0.0
+   ],
+   "hi": [
+    0.484,
+    0.273,
+    1.8
+   ],
+   "materials": 8,
+   "source_url": "https://poly.pizza/m/8OHbykvREu",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Supermarket: fridge",
+   "notes": "size 0.7x0.7x1.8 m (estimate (list)), scale x0.41047; decimated 3004 -> 2850 tris (furniture budget 3000)",
+   "sec": 0.02
+  },
+  "cooler-box": {
+   "id": "63CkYTkeQP",
+   "name": "Cooler Box",
+   "place": "supermarket",
+   "file": "supermarket/cooler-box.glb",
+   "bytes": 45008,
+   "tris": 760,
+   "size": [
+    0.5,
+    0.328,
+    0.388
+   ],
+   "lo": [
+    -0.249,
+    -0.163,
+    0.0
+   ],
+   "hi": [
+    0.249,
+    0.163,
+    0.388
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/63CkYTkeQP",
+   "licence": "CC0 1.0",
+   "author": "MilkAndBanana",
+   "film_need": "Supermarket: fridge",
+   "notes": "size 0.5x0.35x0.35 m (estimate (list)), scale x0.02355; decimated 2282 -> 760 tris (small budget 800)",
+   "sec": 0.01
+  },
+  "counter-straight": {
+   "id": "zpURbFzEbv",
+   "name": "Counter Straight",
+   "place": "supermarket",
+   "file": "supermarket/counter-straight.glb",
+   "bytes": 21448,
+   "tris": 464,
+   "size": [
+    1.872,
+    0.826,
+    0.9
+   ],
+   "lo": [
+    -0.936,
+    -0.413,
+    -0.0
+   ],
+   "hi": [
+    0.936,
+    0.413,
+    0.9
+   ],
+   "materials": 3,
+   "source_url": "https://poly.pizza/m/zpURbFzEbv",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Nursery: counter; Supermarket: checkout counter",
+   "notes": "size 1.0x0.6x0.9 m (estimate (list)), scale x0.46788; size corrected to 0.9 m tall: counter height; the long low model fit to 1.0 m length was 0.48 m tall",
+   "sec": 0.07
+  },
+  "cash-register": {
+   "id": "CashRegister_01",
+   "name": "Cash Register 01",
+   "place": "supermarket",
+   "file": "supermarket/cash-register.glb",
+   "bytes": 149036,
+   "tris": 2849,
+   "size": [
+    0.6,
+    0.624,
+    0.621
+   ],
+   "lo": [
+    -0.299,
+    -0.311,
+    0.0
+   ],
+   "hi": [
+    0.299,
+    0.311,
+    0.62
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/CashRegister_01",
+   "licence": "CC0 1.0",
+   "author": "Joe Seabuhr",
+   "film_need": "Supermarket: checkouts",
+   "notes": "size 0.6x0.62x0.62 m (Poly Haven), scale x1.0; decimated 9927 -> 2849 tris (furniture budget 3000)",
+   "sec": 0.06
+  },
+  "wicker-basket": {
+   "id": "wicker_basket_01",
+   "name": "Wicker Basket 01",
+   "place": "supermarket",
+   "file": "supermarket/wicker-basket.glb",
+   "bytes": 89648,
+   "tris": 1148,
+   "size": [
+    0.383,
+    0.295,
+    0.117
+   ],
+   "lo": [
+    -0.201,
+    -0.163,
+    0.0
+   ],
+   "hi": [
+    0.201,
+    0.163,
+    0.169
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/wicker_basket_01",
+   "licence": "CC0 1.0",
+   "author": "Kuutti Siitonen",
+   "film_need": "Supermarket: a basket with spilled nappies",
+   "notes": "size 0.38x0.3x0.12 m (Poly Haven), scale x1.0; decimated 22276 -> 1148 tris (small budget 800)",
+   "sec": 0.12
+  },
+  "steel-frame-shelves": {
+   "id": "steel_frame_shelves_03",
+   "name": "Steel Frame Shelves 03",
+   "place": "supermarket",
+   "file": "supermarket/steel-frame-shelves.glb",
+   "bytes": 107160,
+   "tris": 2850,
+   "size": [
+    2.351,
+    0.721,
+    2.312
+   ],
+   "lo": [
+    -1.175,
+    -0.36,
+    0.0
+   ],
+   "hi": [
+    1.175,
+    0.36,
+    2.312
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/steel_frame_shelves_03",
+   "licence": "CC0 1.0",
+   "author": "Ulan Cabanilla",
+   "film_need": "Supermarket: end cap / shelving",
+   "notes": "size 2.35x0.72x2.31 m (Poly Haven), scale x1.0; decimated 8396 -> 2850 tris (furniture budget 3000)",
+   "sec": 0.06
+  },
+  "crate-of-tomatoes": {
+   "id": "YrCZgQcpMN",
+   "name": "Crate of Tomatoes",
+   "place": "supermarket",
+   "file": "supermarket/crate-of-tomatoes.glb",
+   "bytes": 40764,
+   "tris": 759,
+   "size": [
+    0.6,
+    0.6,
+    0.277
+   ],
+   "lo": [
+    -0.3,
+    -0.296,
+    0.0
+   ],
+   "hi": [
+    0.3,
+    0.296,
+    0.278
+   ],
+   "materials": 8,
+   "source_url": "https://poly.pizza/m/YrCZgQcpMN",
+   "licence": "CC0 1.0",
+   "author": "Kay Lousberg",
+   "film_need": "Supermarket: stock",
+   "notes": "size 0.6x0.4x0.25 m (estimate (list)), scale x0.3; decimated 2072 -> 759 tris (small budget 800)",
+   "sec": 0.03
+  },
+  "fruit-crate": {
+   "id": "aXulVWHOeV",
+   "name": "Fruit Crate",
+   "place": "supermarket",
+   "file": "supermarket/fruit-crate.glb",
+   "bytes": 10868,
+   "tris": 196,
+   "size": [
+    0.5,
+    0.415,
+    0.225
+   ],
+   "lo": [
+    -0.25,
+    -0.208,
+    0.0
+   ],
+   "hi": [
+    0.25,
+    0.208,
+    0.225
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/aXulVWHOeV",
+   "licence": "CC0 1.0",
+   "author": "BlenderVoyage",
+   "film_need": "Supermarket: stock",
+   "notes": "size 0.5x0.35x0.25 m (estimate (list)), scale x0.91993",
+   "sec": 0.01
+  },
+  "shelf-tall": {
+   "id": "TDgvIuorcX",
+   "name": "Shelf Tall",
+   "place": "supermarket",
+   "file": "supermarket/shelf-tall.glb",
+   "bytes": 20416,
+   "tris": 536,
+   "size": [
+    1.324,
+    0.522,
+    2.0
+   ],
+   "lo": [
+    -0.662,
+    -0.261,
+    0.0
+   ],
+   "hi": [
+    0.662,
+    0.261,
+    2.0
+   ],
+   "materials": 3,
+   "source_url": "https://poly.pizza/m/TDgvIuorcX",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Supermarket: end cap / shelving",
+   "notes": "size 1.0x0.4x2.0 m (estimate (list)), scale x0.64377",
+   "sec": 0.01
+  },
+  "mirror": {
+   "id": "2WQIUVj5qr",
+   "name": "Mirror",
+   "place": "supermarket",
+   "file": "supermarket/mirror.glb",
+   "bytes": 15740,
+   "tris": 294,
+   "size": [
+    0.42,
+    0.033,
+    0.5
+   ],
+   "lo": [
+    -0.21,
+    -0.017,
+    0.0
+   ],
+   "hi": [
+    0.21,
+    0.017,
+    0.5
+   ],
+   "materials": 8,
+   "source_url": "https://poly.pizza/m/2WQIUVj5qr",
+   "licence": "CC0 1.0",
+   "author": "Isa Lousberg",
+   "film_need": "Supermarket: a mirror",
+   "notes": "size 0.5x0.05x0.5 m (estimate (list)), scale x0.33333",
+   "sec": 0.02
+  },
+  "standing-chalkboard": {
+   "id": "standing_chalkboard_01",
+   "name": "Standing Chalkboard 01",
+   "place": "supermarket",
+   "file": "supermarket/standing-chalkboard.glb",
+   "bytes": 77344,
+   "tris": 1988,
+   "size": [
+    0.92,
+    0.759,
+    1.509
+   ],
+   "lo": [
+    -0.46,
+    -0.379,
+    0.0
+   ],
+   "hi": [
+    0.46,
+    0.379,
+    1.509
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/standing_chalkboard_01",
+   "licence": "CC0 1.0",
+   "author": "ParzivalCG",
+   "film_need": "Supermarket: a poster stand; Office: whiteboard (stand-in)",
+   "notes": "size 0.92x0.76x1.51 m (Poly Haven), scale x1.0",
+   "sec": 0.03
+  },
+  "security-camera": {
+   "id": "security_camera_01",
+   "name": "Security Camera 01",
+   "place": "supermarket",
+   "file": "supermarket/security-camera.glb",
+   "bytes": 43528,
+   "tris": 759,
+   "size": [
+    0.17,
+    0.554,
+    0.286
+   ],
+   "lo": [
+    -0.086,
+    -0.277,
+    0.0
+   ],
+   "hi": [
+    0.086,
+    0.277,
+    0.285
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/security_camera_01",
+   "licence": "CC0 1.0",
+   "author": "Alexander Otterbeck, Yann Kervran",
+   "film_need": "Supermarket: security camera dome",
+   "notes": "size 0.17x0.55x0.29 m (Poly Haven), scale x1.0; decimated 13571 -> 759 tris (small budget 800)",
+   "sec": 0.07
+  },
+  "bunsen-burner": {
+   "id": "bunsen_burner",
+   "name": "Bunsen Burner",
+   "place": "lab",
+   "file": "lab/bunsen-burner.glb",
+   "bytes": 38264,
+   "tris": 799,
+   "size": [
+    0.139,
+    0.139,
+    0.173
+   ],
+   "lo": [
+    -0.069,
+    -0.069,
+    0.0
+   ],
+   "hi": [
+    0.069,
+    0.069,
+    0.177
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/bunsen_burner",
+   "licence": "CC0 1.0",
+   "author": "BKS",
+   "film_need": "Lab: bench dressing",
+   "notes": "size 0.14x0.14x0.17 m (Poly Haven), scale x1.0; decimated 8434 -> 799 tris (small budget 800)",
+   "sec": 0.06
+  },
+  "industrial-microscope": {
+   "id": "industrial_microscope",
+   "name": "Industrial Microscope",
+   "place": "lab",
+   "file": "lab/industrial-microscope.glb",
+   "bytes": 54404,
+   "tris": 744,
+   "size": [
+    0.215,
+    0.498,
+    0.462
+   ],
+   "lo": [
+    -0.104,
+    -0.247,
+    0.0
+   ],
+   "hi": [
+    0.104,
+    0.247,
+    0.459
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/industrial_microscope",
+   "licence": "CC0 1.0",
+   "author": "Lukas Walzer",
+   "film_need": "Lab: bench dressing",
+   "notes": "size 0.21x0.5x0.46 m (Poly Haven), scale x1.0; decimated 16598 -> 744 tris (small budget 800)",
+   "sec": 0.1
+  },
+  "vintage-microscope": {
+   "id": "vintage_microscope",
+   "name": "Vintage Microscope",
+   "place": "lab",
+   "file": "lab/vintage-microscope.glb",
+   "bytes": 47336,
+   "tris": 758,
+   "size": [
+    0.107,
+    0.182,
+    0.4
+   ],
+   "lo": [
+    -0.054,
+    -0.09,
+    0.0
+   ],
+   "hi": [
+    0.054,
+    0.09,
+    0.4
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/vintage_microscope",
+   "licence": "CC0 1.0",
+   "author": "Luis Jos\u00e9 Fern\u00e1ndez Rodr\u00edguez",
+   "film_need": "Lab: bench dressing",
+   "notes": "size 0.11x0.18x0.4 m (Poly Haven), scale x1.0; decimated 20631 -> 758 tris (small budget 800)",
+   "sec": 0.12
+  },
+  "chemistry-set": {
+   "id": "chemistry_set",
+   "name": "Chemistry Set",
+   "place": "lab",
+   "file": "lab/chemistry-set.glb",
+   "bytes": 162444,
+   "tris": 2850,
+   "size": [
+    1.078,
+    0.354,
+    0.429
+   ],
+   "lo": [
+    -0.539,
+    -0.177,
+    0.0
+   ],
+   "hi": [
+    0.539,
+    0.177,
+    0.428
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/chemistry_set",
+   "licence": "CC0 1.0",
+   "author": "Ji\u0159\u00ed Pt\u00e1\u010dek",
+   "film_need": "Lab: bench dressing",
+   "notes": "size 1.08x0.35x0.43 m (Poly Haven), scale x1.0; decimated 41958 -> 2850 tris (furniture budget 3000)",
+   "sec": 0.21
+  },
+  "potion-bottle": {
+   "id": "WJxYta4Z96",
+   "name": "Potion Bottle",
+   "place": "lab",
+   "file": "lab/potion-bottle.glb",
+   "bytes": 16004,
+   "tris": 760,
+   "size": [
+    0.139,
+    0.139,
+    0.2
+   ],
+   "lo": [
+    -0.069,
+    -0.069,
+    0.0
+   ],
+   "hi": [
+    0.069,
+    0.069,
+    0.2
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/WJxYta4Z96",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Lab: bottles",
+   "notes": "size 0.1x0.1x0.2 m (estimate (list)), scale x0.2077; decimated 1328 -> 760 tris (small budget 800)",
+   "sec": 0.01
+  },
+  "jars": {
+   "id": "ubNPKDn2yH",
+   "name": "Jars",
+   "place": "lab",
+   "file": "lab/jars.glb",
+   "bytes": 27316,
+   "tris": 760,
+   "size": [
+    2.005,
+    0.091,
+    0.12
+   ],
+   "lo": [
+    -1.003,
+    -0.045,
+    0.0
+   ],
+   "hi": [
+    1.003,
+    0.045,
+    0.12
+   ],
+   "materials": 8,
+   "source_url": "https://poly.pizza/m/ubNPKDn2yH",
+   "licence": "CC0 1.0",
+   "author": "Kay Lousberg",
+   "film_need": "Memorial street: jars; Lab: jars",
+   "notes": "size 0.3x0.2x0.2 m (estimate (list)), scale x0.16; size corrected to 0.12 m tall: a ROW of 12 small jars, each ~0.12 m; the 0.3 m fit made them 2 cm; decimated 2192 -> 760 tris (small budget 800)",
+   "sec": 0.06
+  },
+  "measuring-cup": {
+   "id": "q6i3XL52ge",
+   "name": "Measuring Cup",
+   "place": "lab",
+   "file": "lab/measuring-cup.glb",
+   "bytes": 8100,
+   "tris": 282,
+   "size": [
+    0.062,
+    0.068,
+    0.11
+   ],
+   "lo": [
+    -0.031,
+    -0.034,
+    0.0
+   ],
+   "hi": [
+    0.031,
+    0.034,
+    0.11
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/q6i3XL52ge",
+   "licence": "CC0 1.0",
+   "author": "MilkAndBanana",
+   "film_need": "Lab: bench dressing",
+   "notes": "size 0.1x0.1x0.1 m (estimate (list)), scale x0.02681; stood upright from lying along x (UPRIGHT), closed end down; size corrected to 0.11 m tall: measuring jug ~0.11 m tall (it came in lying on its side, see UPRIGHT)",
+   "sec": 0.01
+  },
+  "tank": {
+   "id": "j59k7ctnZM",
+   "name": "Tank",
+   "place": "lab",
+   "file": "lab/tank.glb",
+   "bytes": 33604,
+   "tris": 1392,
+   "size": [
+    1.027,
+    1.117,
+    1.5
+   ],
+   "lo": [
+    -0.514,
+    -0.559,
+    0.0
+   ],
+   "hi": [
+    0.514,
+    0.559,
+    1.5
+   ],
+   "materials": 3,
+   "source_url": "https://poly.pizza/m/j59k7ctnZM",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Lab: tank",
+   "notes": "size 1.0x1.0x1.5 m (estimate (list)), scale x1.80516",
+   "sec": 0.01
+  },
+  "propane-tank": {
+   "id": "Fsk9PE6o74",
+   "name": "Propane Tank",
+   "place": "lab",
+   "file": "lab/propane-tank.glb",
+   "bytes": 28936,
+   "tris": 1008,
+   "size": [
+    0.735,
+    0.735,
+    1.0
+   ],
+   "lo": [
+    -0.368,
+    -0.367,
+    0.0
+   ],
+   "hi": [
+    0.368,
+    0.367,
+    1.0
+   ],
+   "materials": 3,
+   "source_url": "https://poly.pizza/m/Fsk9PE6o74",
+   "licence": "CC0 1.0",
+   "author": "CreativeTrio",
+   "film_need": "Lab: a gas bottle on a chain",
+   "notes": "size 0.25x0.25x1.0 m (estimate (list)), scale x2.96799",
+   "sec": 0.01
+  },
+  "stool": {
+   "id": "TvaOenUAni",
+   "name": "Stool",
+   "place": "lab",
+   "file": "lab/stool.glb",
+   "bytes": 24664,
+   "tris": 500,
+   "size": [
+    0.32,
+    0.336,
+    0.65
+   ],
+   "lo": [
+    -0.16,
+    -0.168,
+    0.0
+   ],
+   "hi": [
+    0.16,
+    0.168,
+    0.65
+   ],
+   "materials": 2,
+   "source_url": "https://poly.pizza/m/TvaOenUAni",
+   "licence": "CC0 1.0",
+   "author": "Quaternius",
+   "film_need": "Lab: a stool",
+   "notes": "size 0.35x0.35x0.65 m (estimate (list)), scale x0.47366",
+   "sec": 0.01
+  },
+  "korean-fire-extinguisher": {
+   "id": "korean_fire_extinguisher_01",
+   "name": "Korean Fire Extinguisher 01",
+   "place": "lab",
+   "file": "lab/korean-fire-extinguisher.glb",
+   "bytes": 90872,
+   "tris": 2849,
+   "size": [
+    0.28,
+    0.367,
+    0.659
+   ],
+   "lo": [
+    -0.14,
+    -0.184,
+    0.0
+   ],
+   "hi": [
+    0.14,
+    0.184,
+    0.659
+   ],
+   "materials": 8,
+   "source_url": "https://polyhaven.com/a/korean_fire_extinguisher_01",
+   "licence": "CC0 1.0",
+   "author": "UM JOORIN",
+   "film_need": "Lab/Office: wall safety kit",
+   "notes": "size 0.28x0.37x0.66 m (Poly Haven), scale x1.0; decimated 9913 -> 2849 tris (furniture budget 3000)",
+   "sec": 0.07
+  },
+  "concert-stage": {
+   "id": "6u4c1kSsiP",
+   "name": "Concert Stage",
+   "place": "arena",
+   "file": "arena/concert-stage.glb",
+   "bytes": 342368,
+   "tris": 4746,
+   "size": [
+    17.182,
+    10.335,
+    4.5
+   ],
+   "lo": [
+    -8.565,
+    -5.126,
+    0.0
+   ],
+   "hi": [
+    8.565,
+    5.126,
+    4.5
+   ],
+   "materials": 4,
+   "source_url": "https://poly.pizza/m/6u4c1kSsiP",
+   "licence": "CC0 1.0",
+   "author": "iPoly3D",
+   "film_need": "Times Square: stage",
+   "notes": "size 10.0x6.0x6.0 m (estimate (list)), scale x0.29467; size corrected to 4.5 m tall: stage deck + truss rig: the 10 m fit left the truss 2.6 m high, figures would hit it; decimated 20760 -> 4746 tris (vehicle/large budget 5000)",
+   "sec": 0.1
+  },
+  "spotlight": {
+   "id": "YohOCmn0hO",
+   "name": "Spotlight",
+   "place": "arena",
+   "file": "arena/spotlight.glb",
+   "bytes": 20088,
+   "tris": 660,
+   "size": [
+    0.427,
+    0.353,
+    0.6
+   ],
+   "lo": [
+    -0.214,
+    -0.177,
+    0.0
+   ],
+   "hi": [
+    0.214,
+    0.177,
+    0.6
+   ],
+   "materials": 3,
+   "source_url": "https://poly.pizza/m/YohOCmn0hO",
+   "licence": "CC0 1.0",
+   "author": "iPoly3D",
+   "film_need": "Times Square: lights",
+   "notes": "size 0.4x0.4x0.6 m (estimate (list)), scale x0.634",
+   "sec": 0.01
+  },
+  "mic": {
+   "id": "yqbacXdPsg",
+   "name": "Mic",
+   "place": "arena",
+   "file": "arena/mic.glb",
+   "bytes": 25040,
+   "tris": 760,
+   "size": [
+    0.031,
+    0.038,
+    0.2
+   ],
+   "lo": [
+    -0.015,
+    -0.019,
+    0.0
+   ],
+   "hi": [
+    0.015,
+    0.019,
+    0.2
+   ],
+   "materials": 4,
+   "source_url": "https://poly.pizza/m/yqbacXdPsg",
+   "licence": "CC0 1.0",
+   "author": "iPoly3D",
+   "film_need": "Times Square: stage mic",
+   "notes": "size 0.05x0.05x0.2 m (estimate (list)), scale x0.1231; decimated 1426 -> 760 tris (small budget 800)",
+   "sec": 0.01
+  },
+  "speaker": {
+   "id": "zOQOThSpuo",
+   "name": "Speaker",
+   "place": "arena",
+   "file": "arena/speaker.glb",
+   "bytes": 25288,
+   "tris": 794,
+   "size": [
+    0.617,
+    0.437,
+    0.8
+   ],
+   "lo": [
+    -0.308,
+    -0.219,
+    0.0
+   ],
+   "hi": [
+    0.308,
+    0.219,
+    0.8
+   ],
+   "materials": 4,
+   "source_url": "https://poly.pizza/m/zOQOThSpuo",
+   "licence": "CC0 1.0",
+   "author": "iPoly3D",
+   "film_need": "Times Square: speakers",
+   "notes": "size 0.5x0.4x0.8 m (estimate (list)), scale x1.1175",
+   "sec": 0.01
+  },
+  "stage": {
+   "id": "dGRAisemWy",
+   "name": "Stage",
+   "place": "arena",
+   "file": "arena/stage.glb",
+   "bytes": 288228,
+   "tris": 4750,
+   "size": [
+    8.915,
+    8.441,
+    3.5
+   ],
+   "lo": [
+    -4.457,
+    -4.22,
+    0.0
+   ],
+   "hi": [
+    4.457,
+    4.22,
+    3.5
+   ],
+   "materials": 5,
+   "source_url": "https://poly.pizza/m/dGRAisemWy",
+   "licence": "CC0 1.0",
+   "author": "iPoly3D",
+   "film_need": "Times Square: a stage with steps",
+   "notes": "size 6.0x4.0x1.0 m (estimate (list)), scale x0.28565; size corrected to 3.5 m tall: round stage with a backdrop truss: the 6 m fit left the truss 2.4 m high; decimated 6388 -> 4750 tris (vehicle/large budget 5000)",
+   "sec": 0.04
+  }
+ },
+ "failed": {},
+ "totals": {
+  "props": 125,
+  "failed": 0,
+  "bytes": 5252604,
+  "tris": 120789
+ }
+}
