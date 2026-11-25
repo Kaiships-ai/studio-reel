@@ -19,6 +19,7 @@ import { BUILT, builtGroup } from './built.js';
 import MAN from '../../assets/props/manifest.json' with { type: 'json' };
 
 const GLB = Object.fromEntries(Object.entries(MAN.props).map(([slug, v]) => [`${v.place}/${slug}`, v]));
+const IDENT = new THREE.Matrix4();
 export const propNames = () => [...Object.keys(GLB), ...Object.keys(BUILT)].sort();
 
 function lev(a, b) {
@@ -101,6 +102,7 @@ export function propKit(stage, collide = []) {
     place(name, at, deg = 0, { scale = 1, tint = null, shadow, solid = true, ink = true, band = [0.05, 1.8], grace, material = null, parent = null } = {}) {
       const r = resolveProp(name);
       if (!loaded.has(name)) throw new Error(`props: ${name} not loaded (call load() first)`);
+      if (parent) { parent.updateWorldMatrix(true, false); if (!parent.matrixWorld.elements.every((e, i) => Math.abs(e - IDENT.elements[i]) < 1e-6)) throw new Error(`props: ${name}: parent must sit at the origin, unturned and unscaled (COLLIDE boxes are world-space)`); }
       const mat = material && ((src, m) => filmMat(material, src, m, name, tint));
       let g;
       if (r.source === 'glb') g = glb.place(name, at, deg, { scale, tint, solid: false, ink, band, material: mat });

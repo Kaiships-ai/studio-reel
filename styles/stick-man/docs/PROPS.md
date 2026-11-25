@@ -14,7 +14,8 @@ await p.load(['street/bench', 'hospital/iv-stand']);          // before build() 
 p.place('street/bench', [2, 1, 0], 180);                       // Blender metres, degrees about z; returns the group
 p.place('hospital/iv-stand', [0, 0, 0], 0, { scale: 1, tint: [1, 0.9, 0.8], shadow: true, solid: true, ink: true });
 // the set's own material and group: the trolley sits in the set's light, not the kit toon's
-p.place('supermarket/shop-trolley', [3, 0, 0], 90, { material: src => K.mat(src.color), parent: K.room });
+const filmMat = src => K.mat(src.color);   // define once: the same function object on every call
+p.place('supermarket/shop-trolley', [3, 0, 0], 90, { material: filmMat, parent: K.room });
 ```
 
 | Option | Default | What |
@@ -25,7 +26,7 @@ p.place('supermarket/shop-trolley', [3, 0, 0], 90, { material: src => K.mat(src.
 | `solid` | true | Pushes the prop's solid boxes into `COLLIDE` (below). `false` for a prop the film moves (and the rows under **solid: false** below). |
 | `grace` | none | Metres a body may sink into it before the gate reports it (on every box of this prop; its thin tops then have no reach, below). |
 | `ink` | true | The kit's ink line. |
-| `material` | none (the kit toon) | `(src, mesh, name) => THREE.Material`: the film's own material, so the prop takes the set's light. `src` is the prop's source material: a `.glb`'s glTF material (`color`, `map`, emissive when its name has `_e_`), a built prop's shared `tm()`. Called once per function and source material (`mesh`, `name` are of the first placing that meets it); the result is shared by every mesh and placing, never changed. With `tint`, each mesh gets a copy of it (one per tint) with its `color` multiplied and the original's shader hook and `userData`; a material without `color` is not tinted. A result with `userData.glowy` glows. |
+| `material` | none (the kit toon) | `(src, mesh, name) => THREE.Material`: the film's own material, so the prop takes the set's light. `src` is the prop's source material: a `.glb`'s glTF material (`color`, `map`, emissive when its name has `_e_`), a built prop's shared `tm()`. Pass the same function object on every call (define it once), else every placing makes new materials. Called once per function and source material (`mesh`, `name` are of the first placing that meets it); the result is shared by every mesh and placing, never changed. With `tint`, each mesh gets a copy of it (one per tint) with its `color` multiplied and the original's shader hook and `userData`; a material without `color` is not tinted. A result with `userData.glowy` glows. |
 | `parent` | the scene | An `Object3D` to add the prop to (a set's group, so its `envScale` reaches the prop). It must sit at the origin, unturned and unscaled: `COLLIDE` is measured from the prop's own position. |
 
 Every prop: pivot at the bottom centre on the floor, front to -y (vehicles point +x). `catalog()` lists

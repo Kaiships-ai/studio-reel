@@ -317,3 +317,13 @@ test('parent: the prop goes into the film\'s group (the set\'s envScale reaches 
     assert.deepEqual(C, (await placed(n, [1, 2, 0], 90)).C, `${n}: COLLIDE`);
   }
 });
+
+test('parent: a moved, turned or scaled parent throws (COLLIDE is world-space); an identity parent works', async () => {
+  const n = 'street/bench';
+  for (const [what, set] of [['moved', g => g.position.set(1, 0, 0)], ['turned', g => { g.rotation.y = 0.5; }], ['scaled', g => g.scale.setScalar(2)]]) {
+    const S = stage(), grp = new THREE.Group(), p = propKit(S, []); S.scene.add(grp); await p.load([n]); set(grp);
+    assert.throws(() => p.place(n, [0, 0, 0], 0, { parent: grp }), err => err.message.includes(n) && /origin/.test(err.message) && /unturned/.test(err.message) && /unscaled/.test(err.message), what);
+  }
+  const S = stage(), grp = new THREE.Group(), p = propKit(S, []); S.scene.add(grp); await p.load([n]);
+  assert.equal(p.place(n, [0, 0, 0], 0, { parent: grp }).parent, grp);
+});
