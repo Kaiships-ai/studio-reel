@@ -119,9 +119,9 @@ raw pelvis speed is reported, not gated); the carried mass changes at most 35 % 
 | `React_Surprise_Once` | adult | once | 164 | STAND | - | - | a start at something in front: a dip, the hands thrown up and the body back, held, then easing |
 | `React_Surprise_Once` | thin | once | 140 | STAND | - | - | a start at something in front: a dip, the hands thrown up and the body back, held, then easing |
 | `React_Terrified_Once` | adult | once | 187 | STAND | - | - | terrified on the spot: the hands fly up, the body hunches on bent knees, the head snaps round one way, then the other |
-| `React_Terrified_Once` | child | once | 140 | STAND | - | - | terrified on the spot: the hands fly up, the body hunches on bent knees, the head snaps round one way, then the other |
+| `React_Terrified_Once` | child | once | 138 | STAND | - | - | terrified on the spot: the hands fly up, the body hunches on bent knees, the head snaps round one way, then the other |
 | `React_Terrified_Once` | heavy | once | 233 | STAND | - | - | terrified on the spot: the hands fly up, the body hunches on bent knees, the head snaps round one way, then the other |
-| `React_Terrified_Once` | thin | once | 153 | STAND | - | - | terrified on the spot: the hands fly up, the body hunches on bent knees, the head snaps round one way, then the other |
+| `React_Terrified_Once` | thin | once | 151 | STAND | - | - | terrified on the spot: the hands fly up, the body hunches on bent knees, the head snaps round one way, then the other |
 
 ## Gest
 
