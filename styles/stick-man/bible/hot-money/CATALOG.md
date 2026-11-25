@@ -2,9 +2,9 @@
 
 Sinh từ `tokens.json` và `catalog.json` bởi `node styles/stick-man/bible/catalog.mjs`. Đừng sửa tay file này.
 
-117 token (50 giá trị gốc, 52 theo mục đích, 15 theo thành phần), 4 chỗ trống. 145 thành phần (21 ổn định, 124 thử, 0 bỏ), 20 nằm trong phim, chờ đưa vào kit.
+117 token (50 giá trị gốc, 52 theo mục đích, 15 theo thành phần), 4 chỗ trống. 161 thành phần (21 ổn định, 140 thử, 0 bỏ), 20 nằm trong phim, chờ đưa vào kit.
 
-## Clip chuyển động (37)
+## Clip chuyển động (53)
 
 | id | thân | trạng thái | dùng khi | không bao giờ | Kai |
 |---|---|---|---|---|---|
@@ -45,6 +45,22 @@ Sinh từ `tokens.json` và `catalog.json` bởi `node styles/stick-man/bible/ca
 | `clip.Gest_LookUp_Once` | * | thử | ngước nhìn | không có gì ở trên |  |
 | `clip.Act_DropInTrunk_Once` | * | ổn định | thả túi vào cốp | túi biến mất sau khi thả | +S3-026 -S3-037 -S3-040 |
 | `clip.Act_PushBagOutWindow_Once` | * | ổn định | đẩy túi qua cửa sổ (thay cho PUSH_OUT) | túi xuyên khung cửa | +S3-026 |
+| `clip.React_Cry_Loop` | adult | thử | đứng khóc, tay ôm mắt | cần thấy rõ mắt suốt clip |  |
+| `clip.React_Surprise_Once` | adult | thử | giật mình, tay vung lên, người ngả ra sau | cú sốc kéo dài |  |
+| `clip.React_Terrified_Once` | adult | thử | sợ hãi tại chỗ, quay nhìn phía sau | cần bỏ chạy hoặc lùi lại |  |
+| `clip.React_SitDisbelief_Once` | adult | thử | ngồi, ngả người ôm đầu không tin nổi | ghế sát tường phía sau |  |
+| `clip.Gest_Clap_Loop` | adult | thử | đứng vỗ tay | một tay đang cầm đồ |  |
+| `clip.Gest_SitClap_Loop` | adult | thử | ngồi vỗ tay | một tay đang cầm đồ |  |
+| `clip.Move_OldWalk_Fwd_Loop` | elder | thử | cụ già lê bước | nhân vật trẻ |  |
+| `clip.Idle_Stooped_Loop` | elder | thử | cụ già đứng khom | nhân vật trẻ |  |
+| `clip.Gest_SitTalk_Loop` | adult | thử | ngồi nói chuyện, mặt hướng trước | một tay đang cầm đồ |  |
+| `clip.Act_Type_Loop` | adult | thử | ngồi gõ phím | không có bàn phím dưới tay |  |
+| `clip.Gest_PhoneTalk_Loop` | adult | thử | đứng gọi điện, mặt hướng trước | cần đi lại khi gọi |  |
+| `clip.Gest_NodYes_Once` | adult | thử | gật đầu đồng ý | đang nói dài |  |
+| `clip.Gest_ShakeNo_Once` | adult | thử | lắc đầu khó chịu | từ chối buồn |  |
+| `clip.React_Defeated_Once` | adult | thử | gập người ôm mặt rồi buông xuôi | thua nhẹ |  |
+| `clip.Gest_Yawn_Once` | adult | thử | vươn vai ngáp | cảnh gấp |  |
+| `clip.Gest_Point_Once` | adult | thử | đứng chỉ tay về trước | ngồi chỉ (có clip riêng) |  |
 
 ## Nét mặt (34)
 

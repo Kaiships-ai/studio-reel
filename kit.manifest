@@ -212,6 +212,7 @@ styles/stick-man/motion-lib/props.js
 styles/stick-man/motion-lib/body/
 styles/stick-man/motion-lib/shared/
 styles/stick-man/motion-lib/ref/mocap.js
+styles/stick-man/motion-lib/ref/perform.js
 styles/stick-man/motion-lib/ref/ual/
 styles/stick-man/motion-lib/ref/reach/consume_mouth.js
 styles/stick-man/motion-lib/ref/reach/handover_counter.js
@@ -241,6 +242,23 @@ styles/stick-man/motion-lib/ref/reach/phonecall_ear.js
 !styles/stick-man/motion-lib/body/adult/Adult_Trans_JumpWindow_Once_v01.js
 !styles/stick-man/motion-lib/body/adult/Adult_Trans_SitDown_Once_v01.js
 !styles/stick-man/motion-lib/body/adult/Adult_Trans_StandUp_Once_v01.js
+# the batch 1 clips (non-free captures too, every body)
+!styles/stick-man/motion-lib/body/*/*_Act_Type_Loop_v01.js
+!styles/stick-man/motion-lib/body/*/*_Gest_Clap_Loop_v01.js
+!styles/stick-man/motion-lib/body/*/*_Gest_NodYes_Once_v01.js
+!styles/stick-man/motion-lib/body/*/*_Gest_PhoneTalk_Loop_v01.js
+!styles/stick-man/motion-lib/body/*/*_Gest_Point_Once_v01.js
+!styles/stick-man/motion-lib/body/*/*_Gest_ShakeNo_Once_v01.js
+!styles/stick-man/motion-lib/body/*/*_Gest_SitClap_Loop_v01.js
+!styles/stick-man/motion-lib/body/*/*_Gest_SitTalk_Loop_v01.js
+!styles/stick-man/motion-lib/body/*/*_Gest_Yawn_Once_v01.js
+!styles/stick-man/motion-lib/body/*/*_Idle_Stooped_Loop_v01.js
+!styles/stick-man/motion-lib/body/*/*_Move_OldWalk_Fwd_Loop_v01.js
+!styles/stick-man/motion-lib/body/*/*_React_Cry_Loop_v01.js
+!styles/stick-man/motion-lib/body/*/*_React_Defeated_Once_v01.js
+!styles/stick-man/motion-lib/body/*/*_React_SitDisbelief_Once_v01.js
+!styles/stick-man/motion-lib/body/*/*_React_Surprise_Once_v01.js
+!styles/stick-man/motion-lib/body/*/*_React_Terrified_Once_v01.js
 styles/stick-man/sound/lib/
 styles/stick-man/sound/CREDITS
 styles/stick-man/sound/library.json

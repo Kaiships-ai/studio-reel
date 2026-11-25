@@ -22,12 +22,12 @@ A crowd: `costume: ['sweater:' + outfit(i)]` (`outfit` from wardrobe.js).
   AS DRAWN (the curved lines and sleeves: 4 mm into an arm, 10 mm into a hand), worst single edge (25 % walking, 30 % seated)
   next to p99, a column's bend and the hem's corners, the cloth's own acceleration against the body; collars and scarves round
   the neck, whole ink lines, short sleeves out of the torso, a cap's peak, layers over layers, a coat over a skirt, unknown names
-  throw, a held prop stays in its hand, lose_hat. Every clip a figure is seated in is played whole (five today). Run, jump and
+  throw, a held prop stays in its hand, lose_hat. Every clip a figure is seated in is played whole (nine today; `React_SitDisbelief_Once` is marked unsafe and must come out dirty). Run, jump and
   window leap print their faults as `todo`: cloth there is NOT clean yet (three pairs on the heavy and elder bodies are, and are
   real tests; a todo that comes out clean fails the list). The measuring code is `test/unit/wardrobe-measure.mjs`.
 - A film that puts a coat, a skirt, a dress or an apron on a figure in a clip the cloth is not clean in (`kit/cast/clothsafe.js`:
   run, sprint, jump, window leap, lying down and getting up, sleeping, picking up from the floor, the trunk and the window drop,
-  pushing) is reported at the shot lock gate by `tools/gates/clothgate.mjs` (advisory; `node --test test/unit/stick-clothgate.test.mjs`, 2 s).
+  pushing, a seated figure throwing itself back) is reported at the shot lock gate by `tools/gates/clothgate.mjs` (advisory; `node --test test/unit/stick-clothgate.test.mjs`, 2 s).
   Every rigid piece touches what it lies on (3 mm, all its points: the shell or a piece on the shell). Cloth inside a drawn
   leg's radius (4 mm, as an arm) is measured and printed as `todo`: the cloth's points keep off a leg, its triangles do not
   (a bent knee's corner, a seated thigh's root, up to 12 mm).
