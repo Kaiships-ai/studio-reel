@@ -7,9 +7,10 @@ import * as THREE from 'three';
 import { createStage, B as toThree, lin, PLACE } from './look.js';
 import { makeStick, KAI, TELLER, GUARD, HEAD_C } from './cast.js';
 import { VERBS, STAND, SIT, REST_ARM, W, DEG, lerp, lerp3, add3, angDiff, toLocal, smoother, hash, handEase } from './verbs.js';
-import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, exprAccent, bodyFollow, LATE, EXPR_LEAD, exprKeyAt, markOwner, isBodyVerb, autoActing, faceStateAt, visemeTrack, faceChanges, BLINKS, BLINK_GAP, focusEase, blinkAt, isTense, CHEW } from './acting.js';
+import { blinkTrack, exprAt, idle, saccade, focusAt, gaze, springs, idleBeats, exprAccent, bodyFollow, LATE, EXPR_LEAD, exprKeyAt, markOwner, MARK_CLEAR, isBodyVerb, autoActing, faceStateAt, visemeTrack, faceChanges, BLINKS, BLINK_GAP, focusEase, blinkAt, isTense, CHEW } from './acting.js';
 import { mixFace, faceParams, designKey, CLENCH, FACE_STYLE } from './faces.js';
 import { useFaceStyle } from './facestyles/index.js';
+import { useHeadMarks, checkMark } from './headmarks.js';
 // face timing in the runtime (face-research.md rules 13-14): focus changes, free-blink shape
 // TURN_BLINK: the gaze shift that blinks (the kit's own faces 0.6; under a face style 0.8, with NEAR and GAP, turnBlinkAt)
 const FOCUS_N = 12, PUPIL_K = 1.6, TURN_BLINK = 0.6, STYLE_TURN_BLINK = 0.8, TURN_BLINK_NEAR = [20, 10], TURN_BLINK_GAP = 90;
@@ -232,7 +233,7 @@ async function buildAct(R, X) {
     // from the value before) and a forced blink ('regular' | 'fast' | 'long')
     for (const n of ['chew', 'breath']) if (b[n] != null) (a.faceKeys ||= []).push({ f: b.at, n, v: b[n], t: b.t ?? 6 });
     if (b.blink) (a.blinkBeats ||= []).push({ f: b.at, shape: b.blink === true ? 'regular' : b.blink });
-    if (b.mark) a.owners.add.push(markOwner(b));
+    if (b.mark) { checkMark(b.mark); a.owners.add.push(markOwner(b, b.markFace != null ? () => Math.min(...a.exprs.filter(e => e.f > b.at - b.markFace).map(e => e.f)) - MARK_CLEAR : null)); }
     if (!b.do || KEYV.has(b.do)) return;
     const V = VERBS[b.do] || ACT[b.do]; if (!V) throw new Error(`unknown verb ${b.do}`);
     // any other body verb releases the pose being held (poses.js): the new action takes over from it
@@ -418,7 +419,7 @@ async function buildAct(R, X) {
     P.bob += add.bob || 0; P.shrug += add.shrug || 0;
     for (const s of ['L', 'R']) if (add['f' + s + 'x'] || add['f' + s + 'y'] || add['f' + s + 'z']) { const q = P['foot' + s] || base['foot' + s];
       P['foot' + s] = [q[0] + (add['f' + s + 'x'] || 0), q[1] + (add['f' + s + 'y'] || 0), (q[2] || 0) + (add['f' + s + 'z'] || 0)]; }
-    for (const n in add) if (n.startsWith('x_')) P[n] = add[n];
+    for (const n in add) if (n.startsWith('x_') || n === 'head_yaw') P[n] = add[n];
     a.idleLook = ibH ? iw * ibH.look : 0;
     a.S.pose(P); F.posed.add(a.name); a.P = P;
   }
@@ -909,6 +910,7 @@ export async function boot({ film, width, height }) {
   const fps = R1.fps || 30, F0 = R1.frames[0], F1 = R2 ? R2.frames[1] : R1.frames[1];
   // the film's face style (reel.js faceStyle, engine/facestyles/index.js; left out = s2): set before any figure or the stage is built
   await useFaceStyle(R1.faceStyle);
+  useHeadMarks(R1.headMarks);   // the film's head-mark set (reel.js headMarks: 'bold'; left out = the marks as they always were)
   const stage = createStage({ width, height, faceInk: !!FACE_STYLE.name, ...(R1.look || {}) });
   // ?ablate=<source> (kit/look/ablate.js; tools/gates/blame.mjs): every render with that one light source dimmed, to find
   // what blows a region; ?ablate=list prints the lights it can name

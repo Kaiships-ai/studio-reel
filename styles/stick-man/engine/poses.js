@@ -3,7 +3,7 @@
 // to whatever the body channel is doing (stand, sit, after a walk), so poses layer and cross-fade: the next pose may start
 // while the last one releases. Hands go through the normal hand channel (the runtime eases and arcs every hand-over).
 //   pose keys (W units, deg): bob, lean (+ = toward the figure's right), pitch (+ = forward), dx, shTwist, hipTwist,
-//   shrug, head_pitch (+ = chin down), head_tilt, head_dx, head_dv; feet {L, R}: absolute figure-local targets;
+//   shrug, head_pitch (+ = chin down), head_tilt, head_dx, head_dv, head_yaw (+ = turned toward its right); feet {L, R}: absolute figure-local targets;
 //   hands {L, R}: { l } figure frame | { t } torso frame (moves with the lean) | { h } head frame (moves with the head),
 //   plus elbow (pole) and bend; props {L|R|B: kind} (kit/cast/handprops.js), tilt {L|R: deg}; cycle(t) = moving hold.
 // Every verb takes `at` (frame), `hold` (frames held, default per pose), `dur` (action frames), `out` (release frames),
@@ -14,8 +14,8 @@ import { slowIn, MOVE_T } from './acting.js';
 
 export const LAG_A = 2, LAG_H = 4;
 const BODY = ['bob', 'lean', 'pitch', 'dx', 'shTwist', 'hipTwist', 'shrug', 'footPitchL', 'footPitchR'];
-const HEAD = ['head_pitch', 'head_tilt', 'head_dx', 'head_dv'];
-const MIRROR = new Set(['lean', 'dx', 'shTwist', 'hipTwist', 'head_tilt', 'head_dx']);
+const HEAD = ['head_pitch', 'head_tilt', 'head_dx', 'head_dv', 'head_yaw'];
+const MIRROR = new Set(['lean', 'dx', 'shTwist', 'hipTwist', 'head_tilt', 'head_dx', 'head_yaw']);
 const s2 = (x, e) => Math.sin(Math.PI * clamp(x, 0, 1)) ** e;
 
 // rise curve: anticipation (opposite way, `antic` of the size) over A frames, then the action over T frames with the
@@ -171,6 +171,70 @@ export const POSES = {
     cycle: t => ({ head_dv: t < 30 ? -0.012 * Math.max(0, Math.sin(t * 0.75)) : 0, head_pitch: t < 30 ? 2.5 * Math.sin(t * 0.75) : 0 }) },
   phone: { A: 3, T: 9, hold: 40, props: { R: 'phone' }, body: { head_tilt: 10, lean: 3, head_pitch: 4 },
     hands: { R: { h: [0.46, -0.06, 0.12], elbow: [0.9, -0.6, 0.1] }, L: HIP_HAND(-1) }, cycle: t => ({ head_tilt: 3 * Math.sin(t * 0.15) }) },
+  // ---- the expression poses (engine/expressions.js: each one is a face + one of these, read together). Each
+  // must read filled black: the arms and head carry the feeling outside the body's outline.
+  // proud: chin up, chest out, back arched, both hands resting on the hips (the widest shape: Tracy and Robins' pride display)
+  proud_chin: { A: 3, T: 10, hold: 40, body: { pitch: -11, shrug: -0.03, head_pitch: 0, lean: 2, dx: -0.02, bob: 0.02 },
+    feet: { L: [-0.32, 0.022, 0.02], R: [0.32, 0.022, 0.0] }, hands: { L: { t: [-0.29, 1.46, 0.08], elbow: [-1, 0.1, -0.3] }, R: { t: [0.29, 1.46, 0.08], elbow: [1, 0.1, -0.3] } },
+    cycle: t => ({ head_tilt: 2 * Math.sin(t * 0.12), bob: 0.006 * Math.sin(t * 0.2) }) },
+  // guilty: head down and turned away, shoulders up, both hands behind the back, one toe scuffing the floor
+  hands_behind: { A: 3, T: 10, hold: 40, body: { pitch: 7, shrug: 0.09, head_pitch: 16, head_tilt: -5, head_yaw: -24, lean: -2, hipTwist: -6, footPitchR: -30 },
+    feet: { L: [-0.15, 0.022, 0.0], R: [0.12, 0.07, 0.10] },
+    hands: { L: { t: [-0.04, 1.44, -0.36], elbow: [-1, 0, 0] }, R: { t: [0.04, 1.40, -0.36], elbow: [1, 0, 0] } },
+    cycle: t => ({ footPitchR: 9 * Math.sin(t * 0.3), hipTwist: 3 * Math.sin(t * 0.15), head_tilt: 1.5 * Math.sin(t * 0.1) }) },
+  // shy: head tipped to one shoulder, one arm hanging, the other across the belly holding its elbow (a narrow shape), knees in, one toe on the floor
+  shy_twist: { A: 3, T: 10, hold: 40, body: { head_tilt: 16, head_pitch: 8, shrug: 0.07, lean: 4, pitch: 3, hipTwist: -8, footPitchR: -22 },
+    feet: { L: [-0.10, 0.022, 0.02], R: [0.05, 0.05, 0.05] },
+    hands: { L: { t: [-0.36, 1.04, 0.08], elbow: [-0.3, 0, -0.6] }, R: { t: [-0.35, 1.56, 0.24], elbow: [0.9, -0.6, 0.2] } },
+    cycle: t => ({ lean: 2 * Math.sin(t * 0.1), hands: { R: [0, 0.025 * Math.sin(t * 0.3), 0] } }) },
+  // bored: the head tipped a little onto a fist at the side of the jaw (under the chin it read "thinking"), that elbow held by the other arm across the belly, a slow sigh
+  chin_prop: { A: 3, T: 10, hold: 40, body: { head_tilt: 6, head_pitch: 3, pitch: 2, shrug: -0.03, lean: 2, hipTwist: 6, dx: 0.04 },
+    hands: { R: { h: [0.36, -0.32, 0.36], elbow: [0.6, -1, 0.1] }, L: { t: [0.44, 1.56, 0.34], elbow: [-0.8, -0.6, 0.3] } },
+    cycle: t => ({ head_tilt: 2 * Math.sin(t * 0.08), bob: 0.008 * Math.sin(t * 0.08) }) },
+  // shocked: a jolt back with the face kept on the lens, arms flung up and out from the shoulders (elbows low, clear of the
+  // head), one foot back, trembling
+  jolt: { A: 2, T: 6, hold: 18, antic: 0.12, body: { pitch: -9, lean: 2, bob: -0.03, head_pitch: 12, head_dv: 0.04, shrug: -0.02 },
+    feet: { L: [-0.30, 0.022, -0.12], R: [0.24, 0.022, 0.02] },
+    hands: { L: { t: [-0.80, 2.02, 0.28], elbow: [-0.4, -1, 0] }, R: { t: [0.82, 2.06, 0.28], elbow: [0.4, -1, 0] } },
+    cycle: t => ({ ...tremble(t, 0.7), hands: { L: [0.012 * Math.sin(t * 2.1), 0.012 * Math.cos(t * 1.7), 0], R: [0.012 * Math.sin(t * 1.9), 0.012 * Math.cos(t * 2.3), 0] } }) },
+  // angry: leaning forward, head down to glare from under the brows, shoulders high, fists low and wide, wide stance
+  fume: { A: 3, T: 9, hold: 40, body: { pitch: 12, bob: -0.06, shrug: 0.13, head_pitch: 4 },
+    feet: { L: [-0.38, 0.022, 0.04], R: [0.38, 0.022, -0.02] },
+    hands: { L: { t: [-0.60, 1.24, 0.04], elbow: [-1, 0.2, -0.4] }, R: { t: [0.60, 1.24, 0.04], elbow: [1, 0.2, -0.4] } },
+    cycle: t => tremble(t, 1.2) },
+  // scared: knees bent and in, leaning back from it, one foot back, head pulled down between the shoulders, both hands up at
+  // the mouth with the elbows tight (a narrow low shape; shocked is tall with the hands flung wide), shaking
+  cringe: { A: 2, T: 8, hold: 36, antic: 0.1, body: { bob: -0.15, pitch: -6, lean: -3, shrug: 0.14, head_pitch: 9, head_dv: -0.05 },
+    feet: { L: [-0.20, 0.022, -0.16], R: [0.18, 0.022, 0.06] },
+    hands: { L: { h: [-0.05, -0.28, 0.50], elbow: [-0.45, -1, 0.1] }, R: { h: [0.25, -0.30, 0.48], elbow: [0.45, -1, 0.1] } },
+    cycle: t => tremble(t, 2) },
+  // sad: shoulders dropped and rolled forward, the head only a little down (the whole frown must show), arms hanging, a
+  // slow breath
+  droop: { A: 3, T: 12, hold: 40, body: { pitch: 9, bob: -0.05, shrug: -0.13, head_pitch: -3, head_dv: -0.03 },
+    hands: { L: { t: [-0.46, 1.04, 0.14], elbow: [-0.5, -0.4, -0.7] }, R: { t: [0.37, 1.04, 0.14], elbow: [0.5, -0.4, -0.7] } },
+    cycle: t => ({ pitch: 1.5 * Math.sin(t * 0.07), head_pitch: 1.5 * Math.sin(t * 0.07 - 0.6) }) },
+  // confused: a hand scratching the side of the crown, that arm a wide loop clear of the head, head tipped away, the other fist on the hip
+  head_scratch: { A: 3, T: 10, hold: 40, body: { head_tilt: -12, head_dx: -0.09, pitch: -2, lean: -3, shrug: 0.04 },
+    hands: { R: { h: [0.37, 0.27, 0.24], elbow: [1, -0.2, 0.1] }, L: { t: [-0.26, 1.46, 0.10], elbow: [-1, 0.1, -0.3] } },
+    cycle: t => ({ hands: { R: [0.02 * Math.sin(t * 0.9), 0.022 * Math.cos(t * 0.9), 0] }, head_tilt: 2 * Math.sin(t * 0.15) }) },
+  // embarrassed: both fists low on the cheeks (beside the blush, clear of the mouth), hunched, turned a little away, knees in, squirming
+  cheeks_cover: { A: 3, T: 10, hold: 40, body: { shrug: 0.10, pitch: 8, head_tilt: 8, head_pitch: 6, hipTwist: 8, shTwist: -6, bob: -0.04 },
+    feet: { L: [-0.14, 0.022, 0.02], R: [0.16, 0.022, -0.02] },
+    hands: { L: { h: [-0.38, -0.2, 0.34], elbow: [-1, -0.9, 0] }, R: { h: [0.36, -0.2, 0.34], elbow: [1, -0.9, 0] } },
+    cycle: t => ({ lean: 3 * Math.sin(t * 0.3), head_tilt: 4 * Math.sin(t * 0.3) }) },
+  // excited: both arms flung up in a wide V above the head, up on the toes, bouncing (celebrate's fists stay by the head)
+  cheer: { A: 4, T: 9, hold: 36, body: { pitch: -5, head_pitch: 2, shrug: 0.05, bob: 0.03, footPitchL: -16, footPitchR: -16 },
+    feet: { L: [-0.20, 0.05, 0.02], R: [0.20, 0.05, 0.0] },
+    hands: { L: { t: [-0.78, 2.66, 0.10], elbow: [-0.9, -0.2, 0] }, R: { t: [0.78, 2.66, 0.10], elbow: [0.9, -0.2, 0] } },
+    cycle: t => ({ bob: 0.03 * Math.abs(Math.sin(t * 0.35)), hands: { L: [0, 0.05 * Math.sin(t * 0.7), 0], R: [0, 0.05 * Math.sin(t * 0.7 + 1.5), 0] } }) },
+  // sleepy: upright, the head tipped right over to one side (sad's goes forward) and nodding, shoulders sagged, arms loose
+  nod_off: { A: 3, T: 12, hold: 40, body: { head_tilt: 28, head_pitch: 4, shrug: -0.06, pitch: 2, bob: -0.02, lean: -3 },
+    cycle: t => ({ head_tilt: 4 * Math.sin(t * 0.18), lean: 1.5 * Math.sin(t * 0.09) }) },
+  // smug: arms folded, each hand under the other arm, chin up, weight back on one hip
+  arms_folded_high: { A: 3, T: 10, hold: 40, body: { pitch: -6, head_pitch: -6, head_tilt: 6, hipTwist: 6, dx: 0.04, lean: -3 },
+    feet: { R: [0.30, 0.022, 0.06] },
+    hands: { L: { t: [0.16, 1.76, 0.30], elbow: [-1, -0.45, 0.1] }, R: { t: [-0.16, 1.68, 0.32], elbow: [1, -0.45, 0.1] } },
+    cycle: t => ({ head_tilt: 2 * Math.sin(t * 0.13) }) },
 };
 POSES.eat_chilli = { ...POSES.eat, props: { R: 'chilli' } };   // the same bite cycle with a red hot chilli
 

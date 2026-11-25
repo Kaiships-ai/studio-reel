@@ -1,8 +1,8 @@
 {
  "by": "kai",
- "at": "2026-11-25T03:15:25.442Z",
- "note": "Kai 25/11: merge hết (via Chief/Studio)",
- "sheet": "fc4ec2ac",
+ "at": "2026-11-25T09:42:32.126Z",
+ "note": "Kai 25/11 ~16:30 approved on page claude.ai/artifact/Km761Fz3qjRsvjrVNh4CCg (not on this jpg): \"ANh duyệt hết nhé. Mắt em bé: thấp hay cao? -> thấp. Dấu giận: mới. ưng đó.\" This sheet = the 76 designs of fc4ec2ac (unchanged) + the 9 new expression faces the page showed, design keys matched to the page render rows (films/kit-faces-v4/approval/PROOF.md); e_guilty, e_cry, e_scream, e_disgust and teen are not on it. Ages approved on the page: elder, adult, child, toddler (eyes low); teen not.",
+ "sheet": "3a46a73d",
  "designs": [
   {
    "who": "face",
@@ -383,6 +383,51 @@
    "who": "face",
    "expr": "y_calm",
    "design": "u1s1uw"
+  },
+  {
+   "who": "face",
+   "expr": "e_angry",
+   "design": "onp9vn"
+  },
+  {
+   "who": "face",
+   "expr": "e_bored",
+   "design": "1aeaorm"
+  },
+  {
+   "who": "face",
+   "expr": "e_confused",
+   "design": "k6lfn0"
+  },
+  {
+   "who": "face",
+   "expr": "e_embarrassed",
+   "design": "rf7udq"
+  },
+  {
+   "who": "face",
+   "expr": "e_proud",
+   "design": "gl02gt"
+  },
+  {
+   "who": "face",
+   "expr": "e_shock",
+   "design": "1jqicbq"
+  },
+  {
+   "who": "face",
+   "expr": "e_shy",
+   "design": "124j5nf"
+  },
+  {
+   "who": "face",
+   "expr": "e_sleepy",
+   "design": "1gz7d9t"
+  },
+  {
+   "who": "face",
+   "expr": "e_smug",
+   "design": "1ghwvdb"
   }
  ]
 }

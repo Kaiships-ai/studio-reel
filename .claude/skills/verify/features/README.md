@@ -55,3 +55,4 @@ Each feature file: H1 title, one paragraph, then `Sub-features`, `How to get to 
 - [Stick-man kit use gate](./stick-man-kituse.md): `kituse.mjs` blocks ◇4 and ◇5 of a film with no `life`, no far backdrop, no sound plan, no credited kit music or no Rick bench of its final, unless `DECISIONS.json` waives it.
 - [Stick-man render tiers](./stick-man-render-tiers.md): `shot.mjs --tier dbg|still|proof|review|final` renders for a purpose; tier mp4s are cached by their inputs, renders hold a lock, and `render/pro.mjs` runs them on the Mac Pro.
 - [Stick-man face style s2](./stick-man-face-style.md): every film draws its faces in s2, the rubber style Kai approved on Hot Money reel 1, unless its reel.js sets `faceStyle: 'kit'` (the old kit faces, exactly).
+- [Stick-man expressions, head marks and face ages](./stick-man-expressions.md): `expressionBeats` (face + pose + mark as one asset), reel.js `headMarks: 'bold'`, cast `faceAge`; all opt-in, hash-proven unchanged without.
