@@ -15,13 +15,14 @@ test('every unsafe pair names a body, a clip, a number with its unit and why', (
   }
 });
 
-test('a child playing Idle_Breath_Loop is blocked, in any outfit, with a clean measure', () => {
+test('a child playing Idle_Breath_Loop or Idle_Fidget_Loop is blocked, in any outfit, with a clean measure', () => {
   for (const outfit of [[], ['sweater']]) {
     const r = F.verdictOf({ body: 'child', outfit }, 'Idle_Breath_Loop', clean);
     assert.equal(r.verdict, 'blocked'); assert.match(r.why, /pinned|Idle_Fidget/);
   }
   assert.equal(F.verdictOf({ body: 'adult', outfit: [] }, 'Idle_Breath_Loop', clean).verdict, 'pass', 'only the child');
   assert.equal(F.verdictOf({ body: 'child', outfit: [] }, 'Idle_Stand_Loop', clean).verdict, 'pass', 'only that clip');
+  assert.equal(F.verdictOf({ body: 'child', outfit: [] }, 'Idle_Fidget_Loop', clean).verdict, 'blocked', 'its fidget too, until Kai sees it');
 });
 
 test('a teen in a hoodie is blocked on every clip (the hood hides the face), not untested; an adult in one stays untested', () => {

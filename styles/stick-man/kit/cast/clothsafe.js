@@ -34,6 +34,7 @@ export const UNSAFE_BEATS = [{ do: 'walk_to', style: 'run', why: RUN }, { do: 'l
 const MEASURED = '26/11, dc66975e';
 export const UNSAFE_PAIRS = [
   { body: 'teen', wears: ['hoodie'], clip: '*', number: 0.026, unit: 'share of the face the hood covers at 90 deg', bad: 0, why: 'a teen in a hoodie: the hood hides the face (reviewer, 26/11); waits for Kai' },
+  { body: 'child', wears: [], clip: 'Idle_Fidget_Loop', number: 33, unit: 'deg the head turns', bad: 0, why: "the reviewer (26/11, render of #206) saw the head turn read as a snap and the left arm drawn over the hip on frames 60-160; its two limits were written after the breath was measured, so the motion is the proof: waits for Kai" },
   { body: 'child', wears: [], clip: 'Idle_Breath_Loop', number: 0, unit: 'pinned', bad: 0, why: "the child's breath is pinned: use Idle_Fidget_Loop once its review has seen it move" },
   { body: "adult", girth: 0.9, wears: ["coat:lab","pens","shirt:office","tie"], clip: "Act_PutDown_Once", number: 17, unit: "frames: area # % of its own", bad: 17 },
   { body: "adult", girth: 0.9, wears: ["coat:lab","pens","shirt:office","tie"], clip: "Gest_Clap_Loop", number: 10, unit: "mm of a trim in an arm", bad: 0 },
