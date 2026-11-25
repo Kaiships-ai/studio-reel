@@ -22,6 +22,7 @@ import { css } from '#engine/look.js';
 import { HOOKS } from '#engine/play.js';
 import { PHYS } from '#engine/body.js';
 import { flyOff } from './costume.js';
+import { expand } from './jobs.js';
 import { fitOf, thS, rider, wearMat, sleeve, thinHull, H_T, Y0 } from './wear.js';
 import { drape, lapOut, limbLine, LAP_HAND, LAP_ARM } from './drape.js';
 import { PALETTES, UNIFORM, colourOf, mul } from './palette.js';
@@ -32,24 +33,11 @@ export { PALETTES, PALETTE_ORDER, UNIFORM, outfit } from './palette.js';
 const TW = 1536, TH = 864;
 
 // ---------------------------------------------------------------- presets
-export const JOBS = {
-  doctor: ['shirt:office:sky', 'tie:teal', 'coat:doctor', 'stethoscope', 'nametag', 'pens'],
-  nurse: ['scrubs:teal', 'badge:id', 'pens', 'cap:scrub'],
-  police: ['shirt:police', 'tie:navy', 'badge:police', 'epaulettes', 'dutybelt', 'cap:police'],
-  pilot: ['shirt:office:sky', 'tie:navy', 'jacket:pilot', 'badge:wings', 'epaulettes', 'cap:pilot'],
-  worker: ['shirt:work', 'vest:hivis', 'hat:hard'],
-  office: ['shirt:office', 'tie:crimson', 'nametag', 'pens'],
-  manager: ['shirt:office:sky', 'tie:mustard', 'blazer:slate'],
-  chef: ['jacket:chef', 'apron:slate:low', 'hat:toque'],
-  student: ['shirt:office:sky', 'tie:forest', 'cardigan:mustard', 'backpack:teal'],
-  'student-blazer': ['shirt:office:sky', 'tie:stripe', 'blazer:navy', 'badge:crest', 'backpack'],
-  florist: ['shirt:office:rose', 'apron:forest'],
-};
+export { JOBS, expand } from './jobs.js';
 const CAPS = ['police', 'pilot', 'scrub'], HATS = ['hard', 'toque'];
 // the layers this file draws (any other item goes on to costume.js / hoodie.js)
 export const LAYERS = [...Object.keys(GARMENTS), ...Object.keys(ITEMS), ...CAPS.map(x => 'cap:' + x), ...HATS.map(x => 'hat:' + x)];
 const mine = it => { const [k, a] = String(it).split(':'); return k === 'hat' ? HATS.includes(a) : k === 'cap' ? CAPS.includes(a) : !!(GARMENTS[k] || ITEMS[k]); };
-export const expand = list => list.flatMap(it => { const [k, a] = String(it).split(':'); if (k !== 'job') return [it]; if (!JOBS[a]) throw new Error(`costume job:${a}: no such job (${Object.keys(JOBS).join(', ')})`); return JOBS[a]; });
 
 // ---------------------------------------------------------------- the torso's texture
 // (th, y) -> the torso texture's pixel (cast.js torsoGeo: the lathe's front at u 0.5, v = height / torso height); s = metres

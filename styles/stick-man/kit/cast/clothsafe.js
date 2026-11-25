@@ -7,13 +7,13 @@
 // tools/gates/clothgate.mjs reports a film that puts a hanging garment on a figure that plays one; nothing else reads this, so a
 // figure without one is never affected. A sit is measured at each body's own girth up to 1.0; the gate does not check a sit on a
 // body broader than girth 1.0, though on one the sit is not clean either.
-import { expand } from './wardrobe.js';
+import { expand } from './jobs.js';
 
 // the garments that hang as cloth below the waist (a scarf's ends are cloth too, and clean)
 export const HANGS = ['coat', 'skirt', 'dress', 'apron'];
 export const hangs = list => expand([].concat(list || [])).filter(it => HANGS.includes(String(it).split(':')[0]));
 // a clip key's name as the library files it: no body, no version
-export const clipId = name => String(name).replace(/^(Adult|Heavy|Thin|Child|Elder)_/, '').replace(/_v\d+$/, '');
+export const clipId = name => String(name).replace(/^(Adult|Heavy|Thin|Child|Elder|Teen|Toddler)_/, '').replace(/_v\d+$/, '');
 
 const RUN = 'cloth in a run is not clean (legs through it, the hem jerks)', JUMP = 'cloth in a jump is not clean', LEAP = 'cloth in a leap through a window is not clean', LIE = 'cloth on a figure that lies down or gets up is not clean', STOOP = 'cloth on a figure that stoops to the floor and lifts is not clean', PUSH = 'cloth on a figure that leans in and pushes is not clean', BACK = 'cloth on a seated figure that throws itself back is not clean (the cloth goes into the arms)';
 export const UNSAFE = {
