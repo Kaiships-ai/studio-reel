@@ -7,18 +7,14 @@ import { UNIFORM, mul } from './palette.js';
 
 const HB = 0.5 * HEAD_H * W_M, sstep = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 const Y0H = HB * 0.62 + HAT_LIFT;
-function visorGeo(r0, r1, span, thick) {
-  const s = new THREE.Shape(), n = 16; for (let i = 0; i <= n; i++) { const a = -span + 2 * span * i / n; (i ? s.lineTo.bind(s) : s.moveTo.bind(s))(r1 * Math.sin(a), r1 * Math.cos(a)); }
-  for (let i = n; i >= 0; i--) { const a = -span + 2 * span * i / n; s.lineTo(r0 * Math.sin(a), r0 * Math.cos(a)); }
-  return new THREE.ExtrudeGeometry(s, { depth: thick, bevelEnabled: false }).rotateX(Math.PI / 2);
-}
-// a cap's peak: the profile [[r, y], ...] (inner to outer) swept across the front, `thick` deep, narrowing to the band at its sides
+// a cap's peak: the profile [[r, y], ...] (inner to outer) swept across the front, `thick` deep, a closed solid whose outline is a
+// half ellipse (the angle runs evenly round its edge: run evenly across, its two corners were cut off in one step, and a top
+// and an edge that shared points were shaded as one smear)
 function peakGeo(prof, span, thick) {
-  const n = 24, m = prof.length, P = [], idx = [], id = (i, j, f) => (f * (n + 1) + i) * m + j;
-  for (let f = 0; f < 2; f++) for (let i = 0; i <= n; i++) { const u = -1 + 2 * i / n, a = span * u, w = Math.sqrt(Math.max(0, 1 - u * u)); prof.forEach(([r, y]) => { const k = prof[0][0] + (r - prof[0][0]) * w, yy = prof[0][1] + (y - prof[0][1]) * w; P.push(k * Math.sin(a), yy - f * thick, k * Math.cos(a)); }); }
-  for (let i = 0; i < n; i++) for (let j = 0; j + 1 < m; j++) { const q = [id(i, j, 0), id(i, j + 1, 0), id(i + 1, j, 0), id(i + 1, j + 1, 0)], r = [id(i, j, 1), id(i, j + 1, 1), id(i + 1, j, 1), id(i + 1, j + 1, 1)]; idx.push(q[0], q[1], q[2], q[2], q[1], q[3], r[0], r[2], r[1], r[2], r[3], r[1]); }
-  for (let i = 0; i < n; i++) { const a = id(i, m - 1, 0), b = id(i + 1, m - 1, 0), c = id(i, m - 1, 1), d = id(i + 1, m - 1, 1); idx.push(a, c, b, b, c, d); }
-  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setIndex(idx); g.computeVertexNormals(); return g;
+  const n = 40, m = prof.length, P = [], N = [], idx = [], tris = (a, b, c, d) => { for (const [p, q, r] of [[a, b, c], [a, c, d]]) { const i = P.length / 3, u = new THREE.Vector3().subVectors(q, p), w = new THREE.Vector3().subVectors(r, p), k = u.cross(w); if (k.lengthSq() < 1e-14) continue; k.normalize(); for (const v of [p, q, r]) { P.push(v.x, v.y, v.z); N.push(k.x, k.y, k.z); } idx.push(i, i + 1, i + 2); } };
+  const at_ = (i, j, f) => { const t = -Math.PI / 2 + Math.PI * i / n, a = span * Math.sin(t), w = Math.max(0.02, Math.cos(t)), [r, y] = prof[j], k = prof[0][0] + (r - prof[0][0]) * w; return new THREE.Vector3(k * Math.sin(a), prof[0][1] + (y - prof[0][1]) * w - f * thick, k * Math.cos(a)); };
+  for (let i = 0; i < n; i++) { for (let j = 0; j + 1 < m; j++) { tris(at_(i, j, 0), at_(i, j + 1, 0), at_(i + 1, j + 1, 0), at_(i + 1, j, 0)); tris(at_(i, j, 1), at_(i + 1, j, 1), at_(i + 1, j + 1, 1), at_(i, j + 1, 1)); } for (const [j, sg] of [[m - 1, 1], [0, -1]]) { const q = [at_(i, j, 0), at_(i, j, 1), at_(i + 1, j, 1), at_(i + 1, j, 0)]; sg > 0 ? tris(...q) : tris(...q.reverse()); } }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); g.setIndex(idx); return g;
 }
 export function hatOf(kind) {
   const g = new THREE.Group(), y0 = Y0H, put = (geo, c, ink = 0.006) => { const m = inked(geo, wearMat(c), ink, { shadow: true }); g.add(m); return m; };
@@ -34,8 +30,8 @@ export function hatOf(kind) {
   } else if (kind === 'hard') {
     const c = UNIFORM.hard, pr = []; for (let i = 0; i <= 12; i++) { const a = i / 12 * Math.PI / 2; pr.push([0.236 * Math.cos(a), y0 - 0.012 + 0.19 * Math.sin(a)]); }
     put(lathe([[0, y0 - 0.012], ...pr.slice(0, -1), [0, y0 + 0.178]], 48), c);
-    put(lathe([[0.226, y0 - 0.016], [0.27, y0 - 0.022], [0.272, y0 - 0.012], [0.236, y0 + 0.006]], 48), mul(c, 0.9), 0.004);
-    put(visorGeo(0.22, 0.31, 0.8, 0.010).translate(0, y0 - 0.006, 0), mul(c, 0.9), 0.004);
+    // one brim all round, drawn out at the front (a ring and a separate visor showed two lips)
+    const brim = lathe([[0.226, y0 - 0.018], [0.266, y0 - 0.022], [0.270, y0 - 0.014], [0.234, y0 + 0.004]], 72), Q = brim.attributes.position; for (let i = 0; i < Q.count; i++) { const x = Q.getX(i), z = Q.getZ(i), r = Math.hypot(x, z), f = sstep(0.55, 0.95, z / r) * sstep(0.235, 0.262, r) * 0.052; Q.setXYZ(i, x * (1 + f / r), Q.getY(i) - 0.10 * f, z * (1 + f / r)); } brim.computeVertexNormals(); put(brim, mul(c, 0.9), 0.005);
     const arc = []; for (let i = 0; i <= 14; i++) { const a = 0.35 + (Math.PI - 0.7) * i / 14; arc.push(new THREE.Vector3(0, y0 - 0.012 + 0.192 * Math.sin(a), 0.238 * Math.cos(a))); }
     put(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(arc), 30, 0.013, 8, false), mul(c, 0.95), 0.003);
   } else if (kind === 'scrub') {                                  // a surgical cap: a soft dome to the hairline, its band, the tie at the back
@@ -43,12 +39,18 @@ export function hatOf(kind) {
     put(lathe([[0, y0 - 0.040], ...pr.slice(0, -1), [0, y0 + 0.165]], 48), c); const b = put(new THREE.CylinderGeometry(0.262, 0.268, 0.050, 48, 1, true).translate(0, y0 - 0.020, 0), mul(c, 0.45), 0.004); b.material.side = THREE.DoubleSide;
     for (const sg of [-1, 1]) put(new THREE.SphereGeometry(0.030, 12, 10).scale(1.2, 0.8, 0.6).translate(sg * 0.034, y0 - 0.022, -0.275), mul(c, 0.45), 0.004);
   } else if (kind === 'toque') {
-    const c = UNIFORM.toque, band = put(new THREE.CylinderGeometry(0.206, 0.206, 0.075, 48, 1, false).translate(0, y0 + 0.035, 0), mul(c, 0.94), 0.004);
+    const c = UNIFORM.toque; put(new THREE.CylinderGeometry(0.206, 0.206, 0.075, 48, 1, false).translate(0, y0 + 0.035, 0), mul(c, 0.94), 0.004);
     const pr = [[0.198, y0 + 0.07]]; for (let i = 1; i <= 12; i++) { const u = i / 12; pr.push([0.198 + 0.06 * Math.sin(u * Math.PI * 0.85) - 0.07 * u * u, y0 + 0.07 + 0.25 * u]); } pr.push([0, y0 + 0.32]);
     const puff = lathe(pr, 64), P = puff.attributes.position;
     for (let i = 0; i < P.count; i++) { const x = P.getX(i), z = P.getZ(i), y = P.getY(i), k = 1 + 0.045 * Math.cos(14 * Math.atan2(x, z)) * sstep(y0 + 0.07, y0 + 0.12, y); P.setXYZ(i, x * k, y, z * k); }
-    puff.computeVertexNormals(); put(puff, c); band.renderOrder = 0;
+    puff.computeVertexNormals(); put(puff, c);
   }
   g.rotation.x = -8 * DEG; return g;
 }
 
+// hair or a hat of the figure's own under a hat it puts on: what stands above the new hat's band goes in under it (a curl came out
+// of a cap's crown; a spec's own hat stood inside it)
+export function tuckHair(S, kind) {
+  const hair = S.parts.hair, head = S.parts.head.parent; if (!hair?.children.length) return; const band = Y0H + { police: -0.05, pilot: -0.05, scrub: -0.04, hard: -0.02, toque: 0 }[kind], A = 0.5 * W_M * 0.96, v = new THREE.Vector3(); head.updateWorldMatrix(true, true); const Hi = head.matrixWorld.clone().invert(), c = Math.cos(8 * DEG), s = Math.sin(8 * DEG);
+  hair.traverse(o => { if (!o.isMesh) return; const M = Hi.clone().multiply(o.matrixWorld), Mi = M.clone().invert(), P = o.geometry.attributes.position; for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(M); if (v.y * c + v.z * s < band) continue; const e = Math.hypot(v.x / A, v.y / (A * HEAD_H), v.z / A); if (e > 1) v.multiplyScalar(1 / e); v.applyMatrix4(Mi); P.setXYZ(i, v.x, v.y, v.z); } P.needsUpdate = true; o.geometry.computeVertexNormals(); });
+}
