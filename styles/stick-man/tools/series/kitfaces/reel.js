@@ -8,9 +8,13 @@ import { stand, K } from '/styles/stick-man/motion-lib/base.js';
 import { SPECS } from '/styles/stick-man/engine/play.js';
 import { bodySpec } from '/styles/stick-man/motion-lib/bodies.js';
 import { DESIGNS, ALIASES, PURPOSE } from '/styles/stick-man/engine/facestyles/s2.js';
+import { EXPR_DESIGNS } from '/styles/stick-man/engine/facestyles/s2expr.js';
 
 export const FACE = 30;
-export const FACES = [...new Set([...Object.keys(PURPOSE), ...Object.keys(DESIGNS), ...Object.keys(ALIASES)])];
+// the catalogue's faces (s2expr.js adds its e_ designs to DESIGNS on import: they are left out here), then the expression
+// faces Kai approved on the kit faces v4 page (25/11), after them so the catalogue's designs keep their places
+export const EXPR_FACES = ['e_angry', 'e_bored', 'e_confused', 'e_embarrassed', 'e_proud', 'e_shock', 'e_shy', 'e_sleepy', 'e_smug'];
+export const FACES = [...[...new Set([...Object.keys(PURPOSE), ...Object.keys(DESIGNS), ...Object.keys(ALIASES)])].filter(n => !(n in EXPR_DESIGNS)), ...EXPR_FACES];
 SPECS.KITFACE = bodySpec({ name: 'Face', shirt: [0.62, 0.62, 0.66], hair: [] }, 'adult');
 export const CUTS = [0];
 const F1 = FACES.length * FACE - 1;
