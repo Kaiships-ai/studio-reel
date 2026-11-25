@@ -11,7 +11,7 @@ import { pair, SHAPES } from '../../kit/cast/compat.js';
 
 const { LIMITS } = await import('./fits.mjs');
 export const OWN = { adult: ['adult', 'heavy', 'thin'], elder: ['elder'], child: ['child'], teen: ['teen'], toddler: ['toddler'] };
-export const HATS = ['cap', 'cap:police', 'cap:pilot', 'cap:scrub', 'hat:hard', 'hat:toque'];
+export const HATS = ['cap:police', 'cap:pilot', 'cap:scrub', 'hat:hard', 'hat:toque'];
 const row = (p, kind, verdict, number, unit, bad, why) => ({ pair: p, kind, verdict, number, unit, bad, ...(why ? { why } : {}) });
 
 export async function faces() {
@@ -25,7 +25,7 @@ export async function faces() {
 }
 
 // the garments a body wears as a kit part: every SHAPES layer and its shape words (no colour)
-export const garments = () => Object.entries(SHAPES).flatMap(([k, w]) => (k === 'hoodie' || k === 'belt' || k === 'holster' ? [] : [k, ...w.map(x => `${k}:${x}`)])).filter(g => !/^hat:(cowboy|flat|bowler|top)$/.test(g));
+export const garments = () => Object.entries(SHAPES).flatMap(([k, w]) => (k === 'hoodie' || k === 'belt' || k === 'holster' ? [] : [k, ...w.map(x => `${k}:${x}`)])).filter(g => !/^(cap|hat|hat:(cowboy|flat|bowler|top))$/.test(g));
 export async function outfits(bodies = ['adult', 'heavy', 'thin', 'elder', 'child'], list = garments()) {
   const M = await import('../../../../test/unit/wardrobe-measure.mjs'), { rigStick } = await import('./motionlib.mjs'), O = LIMITS.outfit, rows = [];
   for (const body of bodies) for (const g of list) {

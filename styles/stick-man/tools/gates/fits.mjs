@@ -13,7 +13,7 @@
 // A run only adds rows or makes one stricter (merge). `fail` is never written: a red pair is `blocked`, with its number.
 import fs from 'node:fs'; import path from 'node:path'; import crypto from 'node:crypto'; import { pathToFileURL, fileURLToPath } from 'node:url'; import { execFileSync } from 'node:child_process';
 import { ROOT, run } from '../../../../kit/env.mjs';
-import { personKey, pair, table as tableOf, measured, USABLE, VERDICTS } from '../../kit/cast/compat.js';
+import { personKey, pair, table as tableOf, measured, shapeOf, USABLE, VERDICTS } from '../../kit/cast/compat.js';
 import { UNSAFE, HANGS, hangs, clipId } from '../../kit/cast/clothsafe.js';
 import { expand } from '../../kit/cast/jobs.js';
 
@@ -27,6 +27,7 @@ const L = LIMITS.clip, TRIM = 'mm of a trim in an arm', BAKED_F = 15, MARK = '@@
 async function readReel(dir, reel) {
   const page = path.join(path.relative(ROOT, dir), path.dirname(reel)); globalThis.location = new URL(`http://localhost/?film=${encodeURIComponent(page).replaceAll('%2F', '/')}`);
   const { loadReel } = await import('#tools/render/reel_load.mjs'), { HOOKS, SPECS } = await import('#engine/play.js'); await import('#kit/cast/wardrobe.js');
+  const { EXPRESSIONS, marksOf } = await import('#engine/expressions.js'), { getClip } = await import('#motion-lib/index.js');
   // a costume layer the film draws with a hook of its own never reaches the kit's hook: it is not the garment the table measured
   let kit = HOOKS.costume, own = null, probing = false, passed = []; const gate = (S, list, o) => { if (probing) passed.push(...list); else kit(S, list, o); };
   Object.defineProperty(HOOKS, 'costume', { get: () => own || gate, set(fn) { if (own || !new Error().stack.split('\n')[2].includes('/styles/stick-man/')) own = fn; else kit = fn; } });
@@ -39,7 +40,12 @@ async function readReel(dir, reel) {
     const outfit = [].concat(c.costume ?? s.costume ?? []).flatMap(it => (drawnByKit(it) ? [it] : [`film:${it}`]));
     const keys = a.anim?.[who] || [], clips = [...keys.filter(k => k.clip).map(k => ({ clip: k.clip, body: k.body || 'adult', at: `f${k.f}` })), ...(c.clips || []).map(x => ({ body: s.motionBody || 'adult', ...(typeof x === 'string' ? { clip: x } : x), at: 'clips' }))];
     const bare = keys.filter(k => !k.clip).map(k => k.f).sort((x, y) => x - y); let baked = 0; for (let i = 1, n = 1; i < bare.length; i++) { n = bare[i] - bare[i - 1] <= 2 ? n + 1 : 1; baked = Math.max(baked, n); }
-    people.push({ who, spec: c.spec, act: a.name || a.set || 'act', person: { body: s.motionBody || 'adult', girth: s.girth, scale: s.scale, headScale: s.headScale, legScale: s.legScale, outfit }, faceAge: c.faceAge ?? s.faceAge ?? null, clips, baked: c.clips || baked < BAKED_F ? 0 : baked, keys: keys.length });
+    // what a film that skips film.js asks too: its hand props (pose keys x_hp<L|R|B|H>_<kind>), its marks (a beat's mark:, a feeling's own)
+    const props = [...new Set(keys.flatMap(k => Object.keys(k).filter(n => /^x_hp[LRBH]_\w+$/.test(n) && k[n] > 0.5).map(n => n.slice(6))))];
+    const feel = e => (e && EXPRESSIONS[e] ? marksOf(EXPRESSIONS[e]) : []), mine = (a.beats || []).filter(b => b.who === who);
+    const marks = [...new Set([...mine.flatMap(b => [...(b.mark ? [b.mark] : []), ...feel(b.expr)]), ...keys.flatMap(k => feel(k.expr))].map(m => [].concat(m)[0]))];
+    const seated = clips.some(x => { try { const C = getClip(x.clip, x.body); return [C.base, C.end].includes('SIT'); } catch { return false; } });
+    people.push({ who, spec: c.spec, act: a.name || a.set || 'act', person: { body: s.motionBody || 'adult', girth: s.girth, scale: s.scale, headScale: s.headScale, legScale: s.legScale, outfit }, faceAge: c.faceAge ?? s.faceAge ?? null, clips, baked: c.clips || baked < BAKED_F ? 0 : baked, keys: keys.length, props, marks, seated });
   }
   return { people };
 }
@@ -76,7 +82,11 @@ export function checkFilm(film, T) {
       if (c.body !== p.person.body) say(p, `blocked: ${clipId(c.clip)} at ${c.at} is the ${c.body} clip on ${/^[aeiou]/.test(p.person.body) ? 'an' : 'a'} ${p.person.body} body`);
       const q = pair('clip', p.key, c.clip); if (!pairs.has(q)) pairs.set(q, { pair: q, clip: clipId(c.clip), person: p.person, row: T.lookup(q), by: p });
     }
-    if (p.faceAge) { const q = pair('face', p.faceAge, p.person.body); if (!pairs.has(q)) pairs.set(q, { pair: q, row: T.lookup(q), by: p }); }
+    const ask = q => { if (!pairs.has(q)) pairs.set(q, { pair: q, row: T.lookup(q), by: p }); };
+    if (p.faceAge) ask(pair('face', p.faceAge, p.person.body));
+    const hats = expand(p.person.outfit.filter(it => !String(it).startsWith('film:'))).map(shapeOf).filter(g => /^(cap|hat):/.test(g));
+    for (const h of hats) for (const m of p.marks || []) ask(pair('mark', `bold:${m}`, h));
+    for (const k of p.props || []) for (const at of ['hand', ...(p.seated ? ['seat'] : [])]) ask(pair('hand', k, p.person.body, at));
   }
   for (const { pair: q, row: r, by } of pairs.values()) if (!USABLE.includes(r.verdict)) say(by, `${r.verdict}: ${q}${r.number != null ? `: ${r.number} ${r.unit}` : ''}${r.why ? ` (${r.why})` : ''}`);
   if (![...pairs.values()].some(p => p.clip)) problems.push('no pair: the film lists no (person, clip) at all');

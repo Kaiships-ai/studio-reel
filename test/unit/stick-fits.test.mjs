@@ -130,3 +130,14 @@ test('one command writes a person: --person, only the clips asked for, its rows 
   assert.notEqual(fits(['--person', '{"body":"giant"}', '--table', t, '--no-controls']).code, 0); assert.notEqual(fits(['--person', '{"body":"adult"}', '--clips', 'No_Such_Clip', '--table', t, '--no-controls']).code, 0);
   const z = fits(['--person', '{"body":"adult"}', '--clips', 'Idle_Stand_Loop', '--no-controls']); assert.notEqual(z.code, 0, "the committed table is never written without the controls"); assert.match(z.out, /controls/);
 });
+test('a film that skips film.js still asks its hand props (x_hp keys) and its marks (a mark: beat, a feeling with marks) under a hat', () => {
+  const K = [key('Idle_Stand_Loop'), { f: 10, x_hpR_phone: 1 }], hat = { costume: ['job:office', 'cap:police'] }, hk = C.personKey({ outfit: ['job:office', 'cap:police'] }), ok = { ...row('Idle_Stand_Loop'), pair: C.pair('clip', hk, 'Idle_Stand_Loop') };
+  const r = { ...reel(K, hat), beats: [{ who: 'amy', f: 20, mark: 'anger' }] }, hand = { ...ok, pair: C.pair('hand', 'phone', 'adult', 'hand'), kind: 'hand', number: 0 }, mark = { ...ok, pair: C.pair('mark', 'bold:anger', 'cap:police'), kind: 'mark', number: 0 };
+  let x = gate(r, [ok]); assert.equal(x.code, 1, x.out); assert.match(x.out, /hand\|phone\|adult\|hand/); assert.match(x.out, /mark\|bold:anger\|cap:police/);
+  x = gate(r, [ok, hand, mark]); assert.equal(x.code, 0, x.out);
+  assert.equal(gate(reel(K, { costume: ['job:office'] }), [row('Idle_Stand_Loop'), hand]).code, 0, 'no hat: no mark pair');
+});
+test('contract: every mark a feeling plays is a mark fits_kinds measures under every hat', async () => {
+  const { EXPRESSIONS, marksOf } = await import('../../styles/stick-man/engine/expressions.js'), K = await import('../../styles/stick-man/tools/gates/fits_kinds.mjs'), names = new Set((await K.marks(['cap:police'])).map(r => r.pair.split('|')[1]));
+  for (const [n, e] of Object.entries(EXPRESSIONS)) for (const m of marksOf(e)) assert.ok(names.has(`bold:${[].concat(m)[0]}`), `${n}: ${m}`);
+});
