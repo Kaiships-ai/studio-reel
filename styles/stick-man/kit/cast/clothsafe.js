@@ -1,7 +1,11 @@
 // Where the wardrobe's cloth is not clean: every clip of the library was played whole in the coat, the apron, the dress and the skirt on the
-// bodies that have it (25/11, in the measures of test/unit/wardrobe-measure.mjs); these eleven have a fault, the others none.
+// bodies that have it (25/11: 192 clip x body x outfit pairs, measured with the limits of test/unit/wardrobe-measure.mjs); eleven clips are
+// reported unsafe below. The list names only the hard cases (legs through the cloth, a hem that jerks in a run, a stoop, a lie-down). It is
+// not "every other clip is clean": plain walking in a dress is over the walk limit of 6 cm a frame a frame (7.3 cm on 9 frames), and
+// the carry-bag walk is at 6.2-6.4 cm on one frame; both are a known, accepted exceedance and are not in the list.
 // tools/gates/clothgate.mjs reports a film that puts a hanging garment on a figure that plays one; nothing else reads this, so a
-// figure without one is never affected. Measured at each body's own girth: on an adult broader than 1.0 a sit is not clean either.
+// figure without one is never affected. A sit is measured at each body's own girth up to 1.0; the gate does not check a sit on a
+// body broader than girth 1.0, though on one the sit is not clean either.
 import { expand } from './wardrobe.js';
 
 // the garments that hang as cloth below the waist (a scarf's ends are cloth too, and clean)
