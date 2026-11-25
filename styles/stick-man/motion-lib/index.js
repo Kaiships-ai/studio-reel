@@ -85,7 +85,6 @@ import Adult_Gest_Yawn_Once_v01 from './body/adult/Adult_Gest_Yawn_Once_v01.js';
 import Adult_Gest_Point_Once_v01 from './body/adult/Adult_Gest_Point_Once_v01.js';
 import Teen_Idle_Breath_Loop_v01 from './body/teen/Teen_Idle_Breath_Loop_v01.js';
 import Toddler_Idle_Breath_Loop_v01 from './body/toddler/Toddler_Idle_Breath_Loop_v01.js';
-import Toddler_Move_Run_Fwd_Loop_v01 from './body/toddler/Toddler_Move_Run_Fwd_Loop_v01.js';
 import Toddler_Move_Walk_Fwd_Loop_v01 from './body/toddler/Toddler_Move_Walk_Fwd_Loop_v01.js';
 export const ALL = [
   Adult_Move_Run_Fwd_Loop_v01,
@@ -158,7 +157,6 @@ export const ALL = [
   Adult_Gest_Point_Once_v01,
   Teen_Idle_Breath_Loop_v01,
   Toddler_Idle_Breath_Loop_v01,
-  Toddler_Move_Run_Fwd_Loop_v01,
   Toddler_Move_Walk_Fwd_Loop_v01,
 ];
 // A clip starts at its own origin: a capture's first frame stands a few cm (an in-place loop) to 1 m off it, and two

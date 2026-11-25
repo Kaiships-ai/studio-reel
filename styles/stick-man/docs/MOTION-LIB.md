@@ -1,6 +1,6 @@
 # Motion library catalogue
 
-The 72 clips of `styles/stick-man/motion-lib` (rules and use: its README.md). An anim key `{ f, clip, body, to?, times? }`
+The 71 clips of `styles/stick-man/motion-lib` (rules and use: its README.md). An anim key `{ f, clip, body, to?, times? }`
 plays one (REEL_DATA.md). `frames` = one cycle or the whole one-off at 30 fps; `base` = the standard pose it starts (→ ends) on;
 `props` = what the hands hold (`x_hp<L|R|B>_<prop>`, motion-lib/props.js and kit/cast/handprops.js; a film swaps its own with
 the key's `swap`), on which hand; `set` = the set pieces it needs (the proof page builds them at the sizes the clip names in
@@ -45,7 +45,6 @@ raw pelvis speed is reported, not gated); the carried mass changes at most 35 % 
 | `Move_Run_Fwd_Loop` | elder | loop | 22 | STAND | - | - | a slow shuffling jog: long contact, a tiny flight |
 | `Move_Run_Fwd_Loop` | heavy | loop | 18 | STAND | - | - | a heavy jog: long ground contact, a short low flight, a big roll |
 | `Move_Run_Fwd_Loop` | thin | loop | 16 | STAND | - | - | a long light run, a high quick stride |
-| `Move_Run_Fwd_Loop` | toddler | loop | 16 | STAND | - | - | quick short steps on wide-set feet leaning ahead, the arms held out, a foot always on the floor |
 | `Move_Sprint_Fwd_Loop` | adult | loop | 16 | STAND | - | - | a fast run, from motion capture (Mixamo "Fast Run", ref/mixamo/fast_run.js) on this body |
 | `Move_TurnLeft_Once` | adult | once | 56 | STAND | - | - | a quarter turn to the left on the spot, from motion capture (Mixamo "Left Turn 90", ref/mixamo/left_turn_90.js) on this body, every captured frame |
 | `Move_Walk_Fwd_Loop` | adult | loop | 31 | STAND | - | - | a walk, from motion capture (Mixamo "Walking", ref/mixamo/walking.js) on this body: planted feet pinned to their prints, the body travelling at the speed the captured feet slid back |

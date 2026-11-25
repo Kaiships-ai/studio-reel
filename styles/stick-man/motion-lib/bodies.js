@@ -97,7 +97,7 @@ export const BODIES = {
   // The Development of Mature Gait, 1980, as reported: the numbers here are the kit's own, not his table's); it leans its whole body over each foot (a waddle) and the head counters, so the face reads
   toddler: { spec: { scale: 0.4468, headScale: 1.5, legScale: 0.6 }, kg: 11, stance: 1.4, posture: { armL: { raise: 42, swing: 8, elbow: 40 }, armR: { raise: 42, swing: 8, elbow: 40 } },
     walk: { knees: [14, 26, 14, 12, 16, 26], S: 0.12, T: 9, lift: 0.04, bend: 2, swing: 4, elbow: 40, raise: 42, swing0: 8, sway: 7, nod: 0.8, shift: 0.06, toe: 10 },
-    // (the run's knees, kick and lane: a search for a made run no joint of which turns over 25 deg a frame, 25/11; a foot is always on the floor)
+    // (no clip is made of the run: it passed the body gate with a foot always on the floor, and seen moving it read as a walk, 26/11)
     run: { knees: [16, 33, 20], kick: 36, S: 0.136, T: 8, ts: 7, lift: 0.05, reach: 0.35, toeOff: 28, lane: 0.74, lean: 4, bend: 2, swing: 6, elbow: 45, raise: 46, swing0: 8, sway: 6, shift: 0.022, yaw: 4, nod: 1 },
     // (26 breaths a minute at two years, Fleming 2011, against an adult's 16: 0.6 of the adult's 40 frames)
     breath: { amp: 2.0, per: 24, shift: 0.05 },
