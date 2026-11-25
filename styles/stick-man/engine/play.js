@@ -722,6 +722,7 @@ async function buildAct(R, X) {
     }
     // an arm inside a solid of the set (engine/solids.js armIn), the points between the joints too
     out.armIn = actors.filter(a => a.S.root.visible).flatMap(a => armIn(out.actors[a.name]?.limbs, [...solids, ...(SET.COLLIDE || [])]).map(x => ({ who: a.name, ...x })));
+    if (SET.COLLIDE?.unchecked?.length) out.unchecked = SET.COLLIDE.unchecked.map(u => ({ ...u }));   // set props no gate checks (kit/props/catalog.js)
     // an object cut by the camera's far plane inside the shot: a straight-edged hole where the sky dome (drawn first, no
     // depth) shows through or a flat card draws over it (Hot Money r5 CHASE 1601-1637: motel.js's 220 x 60 m sky cards at
     // 60-70 m against far 80 m). Every opaque mesh 2 m tall or more whose box reaches both nearer and further than far

@@ -11,7 +11,7 @@ import * as THREE from 'three';
 import { B, lin } from '#engine/look.js';
 import { contactTex } from '#engine/cast.js';
 import { glbKit, bodyBox } from '#kit/sets/glb.js';
-import { propBoxes } from './collide.js';
+import { propBoxes, quarterOf } from './collide.js';
 import { tm } from '#kit/sets/dress.js';
 import { BUILT, builtGroup } from './built.js';
 import MAN from '../../assets/props/manifest.json' with { type: 'json' };
@@ -71,6 +71,10 @@ const boxKey = b => `${b.name.replace(/@\d+(#\d+)?$/, '')}|${b.lo}|${b.hi}`;
 export function propKit(stage, collide = []) {
   const { scene, prop, glow } = stage, glb = glbKit(stage, 'props', []), loaded = new Set(), count = {};   // glbKit empties the array it is given: never the film's
   if (!OWN.has(collide)) OWN.set(collide, new WeakSet());
+  // the props no gate checks: COLLIDE.unchecked [{ name, why }] (engine/play.js puts it in the rows, the shot gate reports
+  // it as 'not collision-checked'); on the array itself, so a rebuild or a set that empties the array keeps it
+  if (!Array.isArray(collide.unchecked)) Object.defineProperty(collide, 'unchecked', { value: [], enumerable: false });
+  const note = (n, why) => { if (!collide.unchecked.some(u => u.name === n && u.why === why)) collide.unchecked.push({ name: n, why }); };
   const own = OWN.get(collide), push = b => { if (collide.some(o => own.has(o) && boxKey(o) === boxKey(b))) return; own.add(b); collide.push(b); };
   return {
     collide, catalog,
@@ -94,7 +98,8 @@ export function propKit(stage, collide = []) {
         scene.add(g); if (ink) prop(g);
       }
       count[name] = (count[name] || 0) + 1; g.name = `${name}${COPY}${count[name]}`;
-      if (solid) for (const b of propBoxes(g, name, { band, grace })) push(b);
+      if (solid && quarterOf(g.rotation.y) != null) for (const b of propBoxes(g, name, { band, grace })) push(b);
+      else note(g.name, solid ? `turned ${+deg.toFixed(1)} deg, off a quarter turn` : 'solid: false');
       if (shadow ?? !(r.source === 'code' && r.entry.wall)) contactShadow(g);
       return g;
     },
