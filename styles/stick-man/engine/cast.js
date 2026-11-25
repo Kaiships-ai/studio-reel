@@ -642,7 +642,8 @@ export function makeStick(spec) {
   // has no heels: the two balls stay at the root, a black dot on the floor between the feet; S.pose2 places them and shows them again)
   if (spec.tidyFeet) { contact.material.color.copy(lin(0.10, 0.10, 0.10)); contact.material.opacity = 0.3; }
 
-  const S = { root, yaw: 0, hand: {}, parts: { head: headSolid, torso, toes, ankles, hands, face, marks: FR.group, hair: hairG }, xmarks: [], props: {} };
+  // (spec: the build a costume layer sizes itself from, kit/cast/wardrobe.js; parts.limbs: the drawn limb lines, root metres)
+  const S = { root, spec, yaw: 0, hand: {}, parts: { head: headSolid, torso, toes, ankles, hands, face, marks: FR.group, hair: hairG, limbs: Object.fromEntries(Object.entries(limbs).map(([k, t]) => [k, t.mesh])) }, xmarks: [], props: {} };
   const inv = new THREE.Matrix4();
 
   // pos (Blender metres), and either yaw (deg, 0 = facing Blender -Y) or face (a Blender point to turn toward)
@@ -831,7 +832,7 @@ export function makeStick(spec) {
       rig[side] = { hip, knee: leg.joint, ankle: foot, toe: toeL, shoulder: sh, elbow: arm.joint, hand,
         kneeFlex: leg.flex, elbowFlex: arm.flex, footPitch: P['footPitch' + side] || 0 };
     }
-    S.rig = rig;
+    S.rig = rig; S.spineB = null;                                  // (no spine bend on this path: the torso is drawn at rest)
     if (spec.tidyFeet) for (const h of Object.values(heels)) h.visible = false;
     handProps(P, rig);
     S.xmarks = Object.keys(P).filter(k => k.startsWith('x_mark_') && P[k] >= 1).map(k => [k.slice(7), Math.floor(P[k] - 1)]);
@@ -857,6 +858,7 @@ export function makeStick(spec) {
       slices = torsoSlices(bent[0].p, { girth, gz: 0.9 + 0.1 * girth, W, y0: TORSO_Y0 });
     }
     const B = spineParams(Q.spine, Q.sq || 0), gz = 0.9 + 0.1 * girth, v = new THREE.Vector3(), n = new THREE.Vector3();
+    S.spineB = B;                                                  // the bend the torso is drawn with: layers on it bend the same (kit/cast/wardrobe.js)
     for (const b of bent) {
       const P = b.g.attributes.position, N = b.g.attributes.normal;
       for (let i = 0; i < P.count; i++) {

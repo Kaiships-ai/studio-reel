@@ -175,6 +175,15 @@
       "{film}",
       "--premise"
      ]
+    },
+    {
+     "tool": "tools/gates/clothgate.mjs",
+     "args": [
+      "{film}"
+     ],
+     "advisory": true,
+     "why": "advisory: it reads what a figure wears and plays, not the framing, so a runner too far off to read is listed too: the director's call",
+     "source": "costume review 3 (25/11): no gate looked at the wardrobe: a film could put a coat, a skirt, a dress or an apron in a run, where its cloth is not clean"
     }
    ],
    "evidence": [
