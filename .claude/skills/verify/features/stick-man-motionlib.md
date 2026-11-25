@@ -1,7 +1,7 @@
 # Stick-man motion library and carried loads
 
 A stick-man reel's motion v2 `anim` takes library clips: `{ f, clip: 'Move_Walk_Fwd_Loop', body: 'elder', to: [3, 0] }`
-expands into the clip's keys (`styles/stick-man/motion-lib`, 52 clips, 5 body types; the adult's 29 Mixamo and 8 Quaternius UAL (CC0) captures; standard poses STAND, SIT, CARRY, LIE, HUG (a duffel hugged to the chest); captured keys play without the drag (motion.js raw) (ref/mocap.js): run, sprint, walk with their captured start and stops, jump, idle, look around, talk, point, wave, sit down, sit, stand up, seated point, pick up, quarter turn, a window climb from two captures joined (mocapJoin: feet and hands on a sill, ref/mocap.js surfaces)). The rig under it gained body
+expands into the clip's keys (`styles/stick-man/motion-lib`, 111 clips, 5 body types; Mixamo batch 1 (21 clips on up to 4 bodies each); the adult's first 29 Mixamo and 8 Quaternius UAL (CC0) captures; standard poses STAND, SIT, CARRY, LIE, HUG (a duffel hugged to the chest); captured keys play without the drag (motion.js raw) (ref/mocap.js): run, sprint, walk with their captured start and stops, jump, idle, look around, talk, point, wave, sit down, sit, stand up, seated point, pick up, quarter turn, a window climb from two captures joined (mocapJoin: feet and hands on a sill, ref/mocap.js surfaces)). The rig under it gained body
 proportions (cast spec `scale`, `headScale`, `legScale`, `kg`), a hand that grips keeps its target or reports the gap
 (rig K4), and a carried prop that is a solid with mass (rig K5). A reel without `clip` keys or new spec fields renders as
 before, except where an old one had a hand forced off a target (now kept when reachable) or a held prop inside the body.
@@ -57,6 +57,12 @@ before, except where an old one had a hand forced off a target (now kept when re
   (`base.js holdKeys`); `motion-lib/props.js` adds `hugbag` (both arms), `crate` (pushed, stands on the floor:
   `userData.floor`), `hotdog`, `pistol`. A prop's `userData.grip` is the point the fist holds: a film's own prop (`swap`)
   sets its grip and mode, no offset.
+- Captures on any body (`mocapClip` / `gaitLoop` options): `stoop` and `armOut` (the elder's bent spine, the heavy body's
+  arms out, on a capture of an upright slim actor), `wide` (clapping hands meet, they do not cross), `bones` (a capture that
+  never stands up is scaled by its bones: Typing, SitTalk, SitClap, Kneel, SitFloor were 1.35 to 1.71 times too big),
+  `stanceAt` (its standing foot), `bobLow` (a captured walk's hips come down before the foot lands), `seam`; `captureBase`
+  (KNEEL, FLOOR), `toeKeys`, `bridgeKeys`. `strike`: a loop starts on the first left print, not on a low skim.
+  `Adult_Idle_Sit_Loop` still has the old scale (1.46 times).
 - Body types (`motion-lib/bodies.js` `bodySpec`): adult, heavy (girth 1.9), thin (0.6), child (scale 0.62, head 1.3, legs
   0.8), elder (stooped posture); each with its own walk, run and breath.
 - Gaits (`base.js` `gaitLoop`, every walk and run): sampled a key a frame from curves. The hips are solved from the

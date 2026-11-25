@@ -11,9 +11,9 @@ import { compileTrack, playActor, toPose, STYLE_PRESETS } from '../../styles/sti
 import { DOSE_E, markColliders } from '../../styles/stick-man/motion-lib/base.js';
 import { ellipsoid, solveArm, armPenetration, propPush, centreOfMass } from '../../styles/stick-man/engine/body.js';
 
-test('the library has 52 clips on 5 bodies, and every one passes motionlib.mjs (naming, seam, base, joint gate, feet)', async () => {
-  assert.equal(ALL.length, 52);
-  assert.equal(clipFiles().length, 52);
+test('the library has 111 clips on 5 bodies, and every one passes motionlib.mjs (naming, seam, base, joint gate, feet)', async () => {
+  assert.equal(ALL.length, 111);
+  assert.equal(clipFiles().length, 111);
   assert.deepEqual(Object.keys(BODIES), ['adult', 'heavy', 'thin', 'child', 'elder']);
   // every body stands, walks and runs (the adult's standing idle is the captured Idle_Stand_Loop)
   for (const b of Object.keys(BODIES)) for (const c of [b === 'adult' ? 'Idle_Stand_Loop' : 'Idle_Breath_Loop', 'Move_Walk_Fwd_Loop', 'Move_Run_Fwd_Loop']) assert.equal(getClip(c, b).body, b);
@@ -477,5 +477,25 @@ test('bag size: at Hot Money ep01\'s duffel the bag goes into the trunk (0.85 m 
       assert.ok(over >= 0.04, `the bag's bottom clears the sill by ${(100 * over).toFixed(1)} cm`);
       assert.ok(back >= 0.04, `the bag's back clears the wall's outer face by ${(100 * back).toFixed(1)} cm`);
     }
+  }
+});
+
+// Faults the gate passed and the batch 1 contact sheets showed (25/11)
+const rigRows = async (clip, body) => { const rows = []; await rigClip(getClip(clip, body), body, { each: (f, S, w) => rows.push(w) }); return rows; };
+test('a clap: the hands meet and never pass through each other', async () => {
+  for (const [clip, body] of [['Gest_Clap_Loop', 'adult'], ['Gest_Clap_Loop', 'child'], ['Gest_SitClap_Loop', 'adult'], ['Gest_SitClap_Loop', 'elder']]) {
+    const gap = (await rigRows(clip, body)).map(w => { const a = w.R.shoulder.map((x, i) => x - w.L.shoulder[i]), l = Math.hypot(...a); return 100 * w.R.hand.reduce((s, x, i) => s + (x - w.L.hand[i]) * a[i] / l, 0); });
+    assert.ok(Math.min(...gap) > -2 && Math.min(...gap) < 2, `${body} ${clip}: ${Math.min(...gap).toFixed(1)} cm`);
+  }
+});
+test('a capture that kneels stands on its knees: hips over them, the shins back along the floor', async () => {
+  for (const body of ['adult', 'thin', 'elder']) for (const w of (await rigRows('Idle_Kneel_Loop', body)).slice(30, 60)) for (const s of ['L', 'R']) {
+    assert.ok(w[s].kneeFlex > 80, `${body} knee ${w[s].kneeFlex}`);
+    assert.ok(Math.abs(w[s].knee[0] - w[s].hip[0]) < 0.12 && w[s].knee[2] < 0.1, `${body} knee at ${w[s].knee}`);
+  }
+});
+test('an elder stays stooped through a standing clip (it stood up to 3 deg for a nod)', async () => {
+  for (const clip of ['Gest_NodYes_Once', 'Gest_Yawn_Once', 'React_Cry_Loop', 'Idle_Sad_Loop', 'Idle_Stooped_Loop']) {
+    const lean = (await rigRows(clip, 'elder')).map(w => w.torsoLean); assert.ok(Math.min(...lean) > 12, `${clip}: ${Math.min(...lean)} deg`);
   }
 });

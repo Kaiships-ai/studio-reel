@@ -38,7 +38,7 @@ the standard pose there.
 | File name `<Body>_<Group>_<Action>_<Loop\|Once>_v01.js`; shared clips have no body prefix. Groups: Idle, Move, Act, Trans, React, Gest. Body clips live in `body/<body>/`, shared in `shared/interact/` (Act) and `shared/extra/` (any group); the naming check also takes `shared/transition/` (Trans) and `shared/react/` (React), not made yet | naming |
 | A record: `name, clip, body?, group, loop, frames, base, end?, style: 'kaiships', needs: { props, hands, marks? }, keys` | record |
 | A loop is seamless: its last key is its first, moved on by `advance` (travelling loops) | loop seam |
-| A one-off starts on its `base` and ends on its `end` (default `base`); a travelling loop's first and closing steps too. Standard poses: STAND, SIT, CARRY (`base.js`) | base |
+| A one-off starts on its `base` and ends on its `end` (default `base`); a travelling loop's first and closing steps too. Standard poses: STAND, SIT, CARRY, LIE, HUG (`base.js`), and the poses a clip's own capture holds all through (`captureBase`: KNEEL, FLOOR) | base |
 | No joint turns more than 25 deg in a frame after the `kaiships` dose (a hand on an ik target: its travel over the arm's length) | joint gate |
 | A foot on the floor never slides (< 1 mm a frame): feet leave and reach the floor straight up and down | feet |
 | Clips are written in clip space: the actor at the origin facing +x (yaw 90), metres for `pos` and `footW`, the figure frame (W) for `ik` targets | (convention) |
@@ -61,6 +61,11 @@ the standard pose there.
 Changes to existing films: `toPose(m, scale)` puts a scaled figure's planted feet (`footW`) where they are keyed; before,
 they landed `scale` times further from the root (a `scale:1.12` cop: 1.6 cm wider each side, `films/motionlib-proof/cop_feet.png`).
 A two-hand prop (`x_hpB_`) is now measured from the hands' midpoint to its grip socket in `shot.mjs` (d).
+
+A capture on another body: `mocapClip` / `gaitLoop` options `stoop` (share of the elder's bent spine and lifted head put on
+an upright actor's capture: without it the elder stands up straight for a nod) and `armOut` (the heavy body's arms held out
+round the belly); `bobLow` (a captured walk's hips come down before the foot lands, not after), `seam` (an in-place loop
+whose capture ends a few cm off its first prints). `toeKeys`, `bridgeKeys` (`base.js`) say what each is for.
 
 New clip: write it in clip space with `K` and the standard poses, add its import to `index.js`, run the checker, render
 it with `--proof <dir> --only <clip>` and read its `(h)` and `(i)` lines physics on and off.

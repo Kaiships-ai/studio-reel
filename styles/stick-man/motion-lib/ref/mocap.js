@@ -37,23 +37,27 @@ const rel = (Pf, Cf) => {
   return { yaw: y * DEG, pitch: p * DEG, roll: Math.atan2(dot(cu, rH), dot(cu, uP)) * DEG };
 };
 const ROLL_ELBOW = 30;
-export function mocapCycle(src, { legM, once = false, roll = true }) {
+export function mocapCycle(src, { legM, once = false, roll = true, from = null, bones = false, stance = null, strike = false }) {
   let F = src.frames.map(f => Object.fromEntries(Object.entries(f).map(([k, p]) => [k, toClip(p)])));
   const same = (a, b) => Object.keys(a).every(k => len(V(a[k], b[k])) < 1e-3);
   if (F.length > 2 && same(F[0], F[F.length - 1])) F = F.slice(0, -1);            // the last frame repeats the first
   const N = F.length;
-  const legOf = f => len(V(f.LeftUpLeg, f.LeftFoot)), k = legM / Math.max(...F.map(legOf));
+  // the capture's leg: hip to ankle at its straightest, or (bones) its thigh and shin: a capture that never stands up never
+  // straightens it, and was played 1.4-1.7 times its size (Mixamo "Typing", "Kneeling Idle")
+  const legOf = f => bones ? len(V(f.LeftUpLeg, f.LeftLeg)) + len(V(f.LeftLeg, f.LeftFoot)) : len(V(f.LeftUpLeg, f.LeftFoot)), k = legM / Math.max(...F.map(legOf));
   // the ankle's height over the sole: its lowest while the body is up on its feet (hips over half a leg high); a foot
   // lying on its side on the floor (the body lying down) sits lower than a foot standing flat
   const up = F.filter(f => mix(f.LeftUpLeg, f.RightUpLeg, 0.5)[2] - Math.min(f.LeftFoot[2], f.RightFoot[2]) > 0.5 * Math.max(...F.map(g => len(V(g.LeftUpLeg, g.LeftFoot)))));
-  const rest = Math.min(...(up.length ? up : F).flatMap(f => [f.LeftFoot[2], f.RightFoot[2]]));
+  // (stance { ankle, pitch }: a capture that never stands on its feet says it: the ankle's height that plays as a sole on
+  // the floor and the foot's pitch standing flat)
+  const rest = stance ? stance.ankle : Math.min(...(up.length ? up : F).flatMap(f => [f.LeftFoot[2], f.RightFoot[2]]));
   // the travel: the planted feet slide back in place at the body's speed
   const v = once ? 0 : (() => { const s = []; for (const sd of ['Left', 'Right']) for (let i = 0; i < N; i++) { const a = F[i][sd + 'Foot'], b = F[(i + 1) % N][sd + 'Foot'];
     if (a[2] < rest + 0.02 && b[2] < rest + 0.02) s.push(a[0] - b[0]); }
     s.sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : 0; })();
   // start the cycle on the left heel strike (the frame the left ankle comes down), the hips at x = 0
   const down = i => F[i].LeftFoot[2] < rest + 0.02;
-  let s0 = 0; if (!once) for (let i = 0; i < N; i++) if (down(i) && !down((i - 1 + N) % N)) { s0 = i; break; }   // a one-off keeps its order
+  let s0 = from ?? 0; if (!once && from == null) for (let i = 0; i < N; i++) if (down(i) && !down((i - 1 + N) % N)) { s0 = i; break; }   // a one-off keeps its order
   F = [...F.slice(s0), ...F.slice(0, s0)];
   // <Bone>_f / _u are directions (a bone's forward and up, tools/run/mocap_dump.py), not positions: they are not moved or scaled
   const isDir = n => /_[fu]$/.test(n);
@@ -85,13 +89,16 @@ export function mocapCycle(src, { legM, once = false, roll = true }) {
     // stands on one print, the mean of where it was
     // a foot whose ankle stays within 3 cm all through (a heel raised as the weight shifts) never left the ground
     const hs = W.map(f => f[sd + 'Foot'][2]);
-    if (dn.every(Boolean) || Math.max(...hs) - Math.min(...hs) < 0.03 * k) { const m = W.map(f => f[sd + 'Foot']).reduce((a, b) => add(a, b)).map(x => x / N); m[2] = floorAt(m); prints[sd] = W.map(() => m); continue; }
+    if (dn.every(Boolean) || Math.max(...hs) - Math.min(...hs) < 0.03 * k) { const m = W.map(f => f[sd + 'Foot']).reduce((a, b) => add(a, b)).map(x => x / N); m[2] = stance ? Math.max(floorAt(m), m[2] - rest * k) : floorAt(m); prints[sd] = W.map(() => m); continue; }
     for (let i = 0; i < N; i++) if (dn[i] && (once && i === 0 || !dn[(i - 1 + N) % N])) {
       const run = []; for (let j = i; dn[j % N] && run.length < N && !(once && j >= N); j++) run.push(j);
       const at = run.map(j => add(W[j % N][sd + 'Foot'], [j >= N ? advance : 0, 0, 0])), m = mix(at[0], at.reduce((a, b) => add(a, b)).map(x => x / at.length), PIN); m[2] = floorAt(m);
       for (const j of run) prints[sd][j % N] = j >= N ? add(m, [-advance, 0, 0]) : m;
     }
   }
+  // (strike) an ankle skimming low into its strike (Mixamo "Sad Walk": 5 frames) is not down yet: the cycle starts where the left
+  // foot is first on its print, or that print is unknown to the steps around the loop (they stood it at x 0)
+  if (strike && !once && from == null && !prints.Left[0]) { const j = prints.Left.findIndex(Boolean); if (j > 0) return mocapCycle(src, { legM, once, roll, bones, stance, from: (s0 + j) % N }); }
   // a swinging foot: the captured ankle, carried from the print it left to the one it lands on. A print is pinned (PIN),
   // not where the ankle was on the frame it lifts or lands, so the gap at each end (print less ankle, height included)
   // fades across the swing instead of jumping on the first or last frame of it
@@ -107,7 +114,7 @@ export function mocapCycle(src, { legM, once = false, roll = true }) {
     const o = oA && oB ? oA.map((v, q) => v + (oB[q] - v) * e) : oA || oB || [0, 0, 0];
     return [r[0] + o[0], r[1] + o[1], Math.max(0.006, r[2] + o[2])];
   };
-  const restPitch = (() => { const f = F[0], p = V(f.LeftFoot, f.LeftToeBase); return Math.atan2(p[2], Math.hypot(p[0], p[1])) * DEG; })();
+  const restPitch = stance ? stance.pitch : (() => { const f = F[0], p = V(f.LeftFoot, f.LeftToeBase); return Math.atan2(p[2], Math.hypot(p[0], p[1])) * DEG; })();
   const footPitch = (f, sd) => { const p = V(f[sd + 'Foot'], f[sd + 'ToeBase']); return Math.atan2(p[2], Math.hypot(p[0], p[1])) * DEG - restPitch; };
   const frames = W.map((f, t) => {
     const hm = mix(f.LeftUpLeg, f.RightUpLeg, 0.5);
@@ -144,7 +151,7 @@ export function mocapCycle(src, { legM, once = false, roll = true }) {
       const y = Math.atan2(d[1], d[0]) * DEG - heading - (sd === 'Left' ? -FOOT_OUT : FOOT_OUT), w = Math.min(1, Math.max(0, (h - 0.5) / 0.4));
       return ((y + 540) % 360 - 180) * w * w * (3 - 2 * w); };
     const L = leg('Left'), R = leg('Right'); L.yaw = toe('Left'); R.yaw = toe('Right');
-    return { kneeL: knee('Left'), kneeR: knee('Right'), down: { L: !!prints.Left[t], R: !!prints.Right[t] }, hipZ: hm[2] - rest * k, hipFloor: floorAt(hm), handOn: ['Left', 'Right'].some(sd => { const h = f[sd + 'Hand'], t = floorAt(h); return t > 0 && h[2] - t < 0.1 * k; }), pos: [hm[0], 0, 0], hipY: hm[1],
+    return { kneeL: knee('Left'), kneeR: knee('Right'), down: { L: !!prints.Left[t] && !(stance && prints.Left[t][2] > 0.02), R: !!prints.Right[t] && !(stance && prints.Right[t][2] > 0.02) }, hipZ: hm[2] - rest * k, hipFloor: floorAt(hm), handOn: ['Left', 'Right'].some(sd => { const h = f[sd + 'Hand'], t = floorAt(h); return t > 0 && h[2] - t < 0.1 * k; }), pos: [hm[0], 0, 0], hipY: hm[1],
       heading, pelvis: { yaw: pelvis.yaw, pitch: pelvis.pitch, roll: pelvis.roll }, spine: { twist: spine.yaw, bend: spine.pitch, side: spine.roll }, neck: { turn: neck.yaw, nod: neck.pitch, tilt: neck.roll },
       armL: arm('Left', -1), armR: arm('Right', 1), legL: L, legR: R };
   });
