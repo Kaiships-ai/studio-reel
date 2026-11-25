@@ -44,7 +44,7 @@ function crosses(a, b, T, skip = null) { const dir = b.clone().sub(a), len = dir
 const onLeg = S => p => ['L', 'R'].some(sd => { const r = S.rig[sd], m = q => q.clone().multiplyScalar(0.6), l = new THREE.Line3(m(r.hip), m(r.knee)), k = new THREE.Line3(m(r.knee), m(r.ankle)), c = new THREE.Vector3(); return [l, k].some(x => x.closestPointToPoint(p, true, c).distanceTo(p) < HAND_R + 0.030); });
 const nearest = (p, T) => Math.min(...T.map(t => { _t.set(...t); _t.closestPointToPoint(p, _q); return _q.distanceTo(p); }));
 const areaOf = T => T.reduce((s, t) => s + _t.set(...t).getArea(), 0);
-function clothFaults(S, d, P, f, { hands = true, stretch = STRETCH } = {}) {
+function clothFaults(S, d, P, f, { stretch = STRETCH } = {}) {
   const out = [], T = tris(d), SC = S.root.scale.x, m = q => q.clone().multiplyScalar(0.6), say = s => out.push(`f${f}: ${s}`);
   if (d.guide) {
     const st = d.edges.map(([i, j, r]) => d.ST.drawn[i].distanceTo(d.ST.drawn[j]) * SC / r - 1).sort((a, b) => a - b), p99 = st[Math.floor(0.99 * (st.length - 1))]; if (p99 > stretch) say(`stretched ${(100 * p99).toFixed(0)} % (p99)`);
@@ -54,7 +54,7 @@ function clothFaults(S, d, P, f, { hands = true, stretch = STRETCH } = {}) {
     for (const sd of ['L', 'R']) { const r = S.rig[sd], hip = m(r.hip), kn = m(r.knee), an = m(r.ankle); const c = crosses(hip.clone().lerp(kn, 0.2), kn, T) + crosses(kn, an, T); if (c) say(`leg ${sd} through the cloth`); }
     // the leg stands inside the garment, so its drawn line never shows on the outside face: every shin or thigh point above the hem is on the body side
   }
-  for (const sd of ['L', 'R']) { const r = S.rig[sd], sh = m(r.shoulder), el = m(r.elbow), ha = m(r.hand); if (!hands) break; const leg = onLeg(S), c = crosses(sh.lerp(el, 0.45), el, T, leg) + crosses(el, ha, T, leg); if (c) say(`arm ${sd} through the cloth`); else if (d.guide && !leg(ha) && nearest(ha, T) < 0.4 * HAND_R) say(`hand ${sd} in the cloth (${(1000 * nearest(ha, T)).toFixed(0)} mm off)`); }
+  for (const sd of ['L', 'R']) { const r = S.rig[sd], sh = m(r.shoulder), el = m(r.elbow), ha = m(r.hand); const leg = onLeg(S), c = crosses(sh.lerp(el, 0.45), el, T, leg) + crosses(el, ha, T, leg); if (c) say(`arm ${sd} through the cloth`); else if (d.guide && !leg(ha) && nearest(ha, T) < 0.4 * HAND_R) say(`hand ${sd} in the cloth (${(1000 * nearest(ha, T)).toFixed(0)} mm off)`); }
   const M = S.root.matrixWorld, pts = [...d.ST.drawn, ...T.map(t => t[0].clone().add(t[1]).add(t[2]).divideScalar(3))].map(p => p.clone().applyMatrix4(M));
   for (const b of P.solids) { const deep = Math.max(...pts.map(p => Math.min(p.x - b.lo[0], b.hi[0] - p.x, -p.z - b.lo[1], b.hi[1] + p.z, p.y - b.lo[2], b.hi[2] - p.y))); if (deep * 1000 > SOLID_MM) say(`${(deep * 1000).toFixed(0)} mm inside the ${b.name}`); }
   return out;
@@ -79,7 +79,7 @@ for (const n of CLOTHED) test(`cloth: ${n} sitting down and seated: a lap, not a
 });
 test('a hand kept outside a lap slides on it: no step of its own through a sit', async () => { const most = async list => { let prev = null, m = 0; await play(list, 'adult', 'seated', { from: 30, to: 100, each: (f, S) => { const h = ['L', 'R'].map(sd => S.rig[sd].hand.clone().multiplyScalar(60)); if (prev) m = Math.max(m, ...h.map((x, i) => x.distanceTo(prev[i]))); prev = h; } }); return m; };
   const bare = await most(['job:manager']); for (const n of CLOTHED) { const m = await most(look(n)); assert.ok(m <= bare + 2.5, `${n}: a hand steps ${m.toFixed(1)} cm in a frame (${bare.toFixed(1)} without the garment)`); } });
-test('cloth: reaching to the floor in a skirt and an apron', async () => { for (const n of ['dress', 'chef']) { const bad = []; await play(look(n), 'adult', 'pick', { from: 10, each: (f, S, P) => { if (f % 6 === 0) for (const d of S.wardrobe.drapes) bad.push(...clothFaults(S, d, P, f, { hands: false, stretch: BENT })); } }); assert.deepEqual(bad.slice(0, 4), []); } });
+test('cloth: reaching to the floor in a skirt and an apron', async () => { for (const n of ['dress', 'chef']) { const bad = []; await play(look(n), 'adult', 'pick', { from: 10, each: (f, S, P) => { if (f % 6 === 0) for (const d of S.wardrobe.drapes) bad.push(...clothFaults(S, d, P, f, { stretch: BENT })); } }); assert.deepEqual(bad.slice(0, 4), []); } });
 
 // ------------------------------------------------------------------ rigid pieces on the shell
 function shell(S) { const g = S.parts.torso.geometry, P = g.attributes.position, I = g.index.array, T = []; for (let t = 0; t < I.length; t += 3) { const a = v3(P, I[t]), b = v3(P, I[t + 1]), c = v3(P, I[t + 2]); if (_t.set(a, b, c).getArea() < 1e-8) continue; const m = a.clone().add(b).add(c).divideScalar(3); T.push({ a, b, c, m, r: Math.max(m.distanceTo(a), m.distanceTo(b), m.distanceTo(c)) }); } return T; }
