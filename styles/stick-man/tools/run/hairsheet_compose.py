@@ -2,8 +2,8 @@
 import sys, os
 from PIL import Image, ImageDraw, ImageFont
 d = sys.argv[1]; out = sys.argv[2]
-TYPES = {'mw': ['side part', 'pompadour', 'buzz cut', 'mullet', 'afro', 'pixie', 'high ponytail']}
-STYLE = {'mw': ['side', 'pompadour', 'buzz', 'mullet', 'afro', 'pixie', 'ponytail']}
+TYPES = {'mw': ['side part', 'pompadour', 'buzz cut', 'mullet', 'afro', 'pixie', 'high ponytail'], 'long': ['chin bob', 'long', 'box braids', 'wavy lob']}
+STYLE = {'mw': ['side', 'pompadour', 'buzz', 'mullet', 'afro', 'pixie', 'ponytail'], 'long': ['bob', 'long', 'braids', 'lob']}
 # the face check's share per close view (tools/gates/facegate-hair.mjs --json), printed in the cell
 FACE = __import__('json').load(open(sys.argv[4])) if len(sys.argv) > 4 else {}
 # the bowed column's nod, read from the head bone by hairsheet.html (its '[kit] nod <style>: head pitched X deg' lines, shot.mjs's

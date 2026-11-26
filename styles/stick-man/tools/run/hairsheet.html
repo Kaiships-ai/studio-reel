@@ -33,6 +33,7 @@ const RUN = new URLSearchParams(location.search).get('run');
 const TYPES = { mw: [['side', 'adult'], ['pompadour', 'adult'], ['buzz', 'adult'], ['mullet', 'adult'], ['afro', 'adult'], ['pixie', 'adult'], ['ponytail', 'adult']] };   // the shipped styles only (Studio 28/11: bob, long, braids, lob are drafts)   // one row a style, as shipped (Studio 27/11: the designed twins cut)
 // type=zone: a bald head and the half-face card (test/unit/stick-hair-face.test.mjs) with dbg=zone: the face check's zone painted on
 // the head for the cell's view, red as facegate-hair.mjs puts it (solid), blue with the opposite height shift (wire)
+TYPES.long = [['bob', 'adult'], ['long', 'adult'], ['braids', 'adult'], ['lob', 'adult']];   // the drafts (kit-hair-long)
 TYPES.ab = [['pompadour', 'adult'], ['long', 'adult']];
 TYPES.zone = [['bald', 'adult', () => new THREE.Group()], ['card', 'adult', () => { const g = new THREE.Group(); g.add(new THREE.Mesh(new THREE.PlaneGeometry(0.5 * W_M, 1.2 * W_M).translate(0.25 * W_M, 0, 0.7 * W_M), new THREE.MeshBasicMaterial({ color: 0x6a4a30 }))); return g; }]];
 const TYPE = new URLSearchParams(location.search).get('type');
