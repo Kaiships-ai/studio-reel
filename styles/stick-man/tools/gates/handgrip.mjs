@@ -1,8 +1,9 @@
 // Hand grip gate (whatif1 v5, 26/11: a tin with the hands as dots on its label, a baby bundle floating beside the arms, a
 // photo in front of the chest with no hand on it, and every gate passed them). Each frame's rows carry held[]: every prop
 // a hand holds that frame (a set prop in mode 'hand', a cast.js hand prop fully in the hand), with gapCm, the air
-// between the hand dot and the prop's anchor (engine/grip.js): its grip socket (anchor 'grip') or, with none, the
-// nearest point of its box (anchor 'bounds'); each hand of a prop held in both is measured to its box. Any frame
+// from the hand mesh's surface (its world radius, scale and gloves included) to the nearest point of the prop's meshes
+// (engine/grip.js, anchor 'mesh'), never the grip socket the engine snaps onto the hand; each hand of a prop held in
+// both is measured on its own. Any frame
 // on screen over GAP_CM (handgrip.limits.json, frozen before anything was measured) fails.
 //   node styles/stick-man/tools/gates/handgrip.mjs films/<slug> [--frames 120-300]      rows from review/shot-rows.jsonl
 //   node styles/stick-man/tools/gates/handgrip.mjs --rows <rows.jsonl> [--frames a-b] [--json 1]   -> exit 1 on a fault
@@ -51,8 +52,8 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   const R = handgrip(rows, { frames });
   if (A.json) console.log(JSON.stringify(R, null, 1));
   else {
-    for (const x of R.faults) console.log(x.anchor === 'empty' ? `FAIL ${x.actor} ${x.prop} ${x.side} f${x.f} held, but it has no grip socket and nothing drawn to measure to`
-      : `FAIL ${x.actor} ${x.prop} ${x.side} f${x.f} ${x.cm.toFixed(2)} cm off the hand (to its ${x.anchor === 'grip' ? 'grip socket' : 'box'}; limit ${GAP_CM} cm)`);
+    for (const x of R.faults) console.log(x.anchor === 'empty' ? `FAIL ${x.actor} ${x.prop} ${x.side} f${x.f} held, but it has nothing drawn to measure to`
+      : `FAIL ${x.actor} ${x.prop} ${x.side} f${x.f} ${x.cm.toFixed(2)} cm of air between the hand and the prop (limit ${GAP_CM} cm)`);
     if (R.unmeasured) console.log(`${R.unmeasured} unmeasured (no rows in range, rows with no held array, or held props with no gapCm: rows made before this gate; make them again with shot.mjs --dbg)`);
     console.log(`handgrip ${R.ok ? 'PASS' : 'FAIL'} (${R.checked} held props on screen measured, limit ${GAP_CM} cm)`);
   }
