@@ -240,6 +240,26 @@
    "status": "approved",
    "why": "Kai: let V5 run to the end; no Kai stop at K1. Storyboard, previs and colour script are checked by an independent reviewer (READY) and Studio; Kai sees the part a cut and the whole film.",
    "decision": "Kai waives the K1 stop (previs + hook) and the S1 look signature for V5; an independent reviewer READY plus Studio stand in, and Kai judges the part a cut and the whole film."
+  },
+  {
+   "id": "waive-S-script",
+   "waives": [
+    "S scriptlint S3 (L03-L06, L11-L15)",
+    "S script-ab tie"
+   ],
+   "by": "kai",
+   "at": "2026-11-26T21:50",
+   "via": "Studio msg_3d2d4dad1254",
+   "status": "approved",
+   "decision": "V5 keeps V4's approved wording and voice (SPEC-V5 'Fixed', Kai's standing V5 decision); the S3 fact runs and the A/B tie are waived, never rewritten."
+  },
+  {
+   "id": "keep-a-count",
+   "by": "kai",
+   "at": "2026-11-26T21:50",
+   "via": "Studio msg_3d2d4dad1254",
+   "status": "approved",
+   "decision": "Part a's count shots SHa06-a08 stay at 12 f each (the 3-2-1 punch); Kai's notes on the part a cut decide."
   }
  ]
 }
