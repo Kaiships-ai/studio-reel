@@ -120,3 +120,22 @@
 | e3-2 | e beat_1413 | the phones are tiny; the red glow reads as red desk lamps or alarm light, not every phone ringing | visible |
 | e3-3 | e beat_1373, 1413, 1483 | desk front a flat pale near-white panel (bottom ~15-20 %); top ~20-25 % dark empty ceiling | minor |
 | K4 | the kit hand props are only cup hammer pencil pad drumstick apple phone megaphone beaker chilli medal box; films faked baby/tin/lantern/photo/balloon as loose set props + an invisible 4 mm stand-in (held:false), invisible to every gate | a, b, d, f, g, j | any | open: kit PR adding 5 hand props with grip points (Studio go 26/11); from now no invisible stand-ins in wif5 |
+
+## Parts f-j stills, blind read 4
+
+| id | still | what a viewer sees wrong | severity |
+|---|---|---|---|
+| f4-1 | f beat_1550, 1598, 1665, contact_tin | no hand holds the baby: the green father's only visible arm goes to the tin, the bundle hangs on his chest with its legs dangling | visible |
+| f4-2 | f beat_1550, contact_tin | the two hands sit on the tin's far rim, above the lid, and read as hovering over it rather than laying on it (1598 is fine) | minor |
+| f4-3 | f all beats | the last tin stands on a tall brown plinth in the aisle, like a museum display; the plinth fills the lower middle third; the right man's head touches/cuts the right edge (1550, 1665) | minor |
+| g4-1 | g beat_1865 | the blanket hangs like a tent over the chair: the father's body vanishes (a head on a draped chair), the baby sits on top of the blanket's edge, not under it | visible |
+| g4-2 | g beat_1785, 1705, 1865 | father cut by the left edge (arm, leg, chair) while the son is small at far right; bottom ~25-30 % empty floor in all three beats | minor |
+| h4-1 | h contact_glass, beat_2040, 2090 | the teal scientist's hand is inside the glass cylinder: his arm passes through the glass wall instead of resting on it | visible |
+| h4-2 | h beat_2000 | the hope beat has no hand on the glass; the middle scientist's face is a blank side-glance, not hope; the foetus on its stalk reads as a pink balloon/blob | visible |
+| h4-3 | h beat_2000, 2040, 2090, contact_glass | the front scientist's head is cut by the left frame edge in every still (tilted half out in 2090) | visible |
+| h4-4 | h beat_2000, 2040 | top ~27 % is empty ceiling (green, then red); NO PULSE text half hidden by a head in 2090 | minor |
+| i4-1 | i beat_2170 | the birthday man's head cuts into the right guest's head (two heads overlap) | visible |
+| i4-2 | i beat_2240, contact_plate | the face has slid to the left rim of the head; ~half the frame is a flat blank pale disc | visible |
+| i4-3 | i beat_2240, contact_plate | his yellow arm pushes down into the cake's top tier; the candles seen from behind read as three rings, not "80", and the flame is a thin orange spike | visible |
+| j4-1 | j beat_2620, contact_photo, 2400, 2790 | the photo is not held: the hands sit beside the frame (clearly off it in 2620), so it floats in front of the chest | visible |
+| j4-2 | j beat_2400, 2790, contact_photo | the frame is as big as his torso and overlaps his chin; in 2620 the head is cut by the top edge above the eyes | minor |
