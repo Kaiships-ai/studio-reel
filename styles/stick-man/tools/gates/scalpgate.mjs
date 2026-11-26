@@ -23,7 +23,7 @@ const R = 320, SPAN = 1.0 * W_M;   // pixels across; the half-width of the windo
 function headMesh() { const g = new THREE.SphereGeometry(0.5 * W_M, 64, 40); g.scale(1, HEAD_H, 1); return g; }
 
 // every triangle of the hair group in the head's centre frame: { a, b, c, hull }
-function hairTris(g) {
+export function hairTris(g) {
   g.updateMatrixWorld(true); const out = [], lift = g.position.y;
   g.traverse(o => { if (!o.isMesh) return; const hull = !!o.parent?.isMesh, P = o.geometry.attributes.position, I = o.geometry.index, N = o.geometry.attributes.normal;
     const at = i => new THREE.Vector3().fromBufferAttribute(P, i).applyMatrix4(o.matrixWorld).setY(new THREE.Vector3().fromBufferAttribute(P, i).applyMatrix4(o.matrixWorld).y - lift);
@@ -37,7 +37,7 @@ function hairTris(g) {
 
 // one view: the share of the head's pixels that are bare scalp, and the label buffer (0 nothing, 1 bare scalp, 2 face or
 // declared bare, 3 hair, 4 ink)
-function renderView(tris, head, bare, [yaw, el]) {
+export function renderView(tris, head, bare, [yaw, el]) {
   const y = yaw * Math.PI / 180, e = el * Math.PI / 180, dir = new THREE.Vector3(Math.sin(y) * Math.cos(e), Math.sin(e), Math.cos(y) * Math.cos(e));
   const right = new THREE.Vector3(0, 1, 0).cross(dir).normalize(), up = dir.clone().cross(right).normalize();
   const Z = new Float32Array(R * R).fill(-1e9), L = new Uint8Array(R * R), HP = new Float32Array(R * R * 3);
@@ -56,12 +56,12 @@ function renderView(tris, head, bare, [yaw, el]) {
   for (let o = 0; o < R * R; o++) { if (L[o] === 0) continue; headPx++;
     if (L[o] !== 1) continue; const x = HP[3 * o] / W_M, yy = HP[3 * o + 1] / W_M, z = HP[3 * o + 2] / W_M, lon = Math.atan2(x, z) * 180 / Math.PI;
     if (inScalp(lon, yy, bare, x)) barePx++; else L[o] = 2; }
-  return { share: barePx / headPx, px: barePx, L };
+  return { share: barePx / headPx, px: barePx, L, HP };
 }
 
 function headTris() { const g = headMesh(), P = g.attributes.position, I = g.index, out = [], v = i => new THREE.Vector3().fromBufferAttribute(P, i);
   for (let t = 0; t < I.count; t += 3) out.push([v(I.getX(t)), v(I.getX(t + 1)), v(I.getX(t + 2))]); return out; }
-const HEAD = headTris();
+export const HEAD = headTris();
 
 // { view: { share, px } } for one style (patch: fields over the style's own, as toonHair takes them); keepL: the label buffers too
 export function scalpBare(style, patch, keepL = false) {

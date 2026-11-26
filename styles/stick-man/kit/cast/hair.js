@@ -56,18 +56,18 @@ const STYLES = {
   buzz:  { col: [0.30, 0.23, 0.17], whorl: [0, 0.70, -0.70], locks: 36, twist: 0.1, clump: 0.003, base: 0.008, lift: 0.004, tips: 0.006, grain: 0.45, edgeDark: 0.35, ink: 0.6,
            lo: [[0, 0.33], [18, 0.33], [26, 0.27], [40, 0.27], [62, 0.10], [84, 0.03], [125, -0.36], [180, -0.36]] },
   // a mullet: short on top, a thick tail of pointed locks at the nape down to the collar
-  mullet: { neck: true, col: [0.40, 0.25, 0.13], whorl: [0, 0.70, -0.70], locks: 20, twist: 0.12, jit: 0.30, clump: 0.024, base: 0.020, lift: 0.030, tips: 0.090, lo: edge({ front: 0.29, side: -0.04, back: -0.42 }),
+  mullet: { cut: -0.42, col: [0.40, 0.25, 0.13], whorl: [0, 0.70, -0.70], locks: 20, twist: 0.12, jit: 0.30, clump: 0.024, base: 0.020, lift: 0.030, tips: 0.090, lo: edge({ front: 0.29, side: -0.04, back: -0.42 }),
             falls: [{ lon: [112, 180], n: 4, from: -0.20, to: -0.80, rho: 0.03, flat: 0.55, flare: 0.04, jit: 0.12, tip: 'point', ridges: 3 }] },
   // an afro: one round mass wider than the head, its surface curl clumps
   afro:  { col: [0.24, 0.15, 0.10], whorl: [0, 0.80, -0.60], locks: 12, twist: 0, clump: 0.004, base: 0.02, lift: 0, tips: 0.03, ball: { c: [0, 0.16, -0.05], r: 0.70, nape: -0.40 }, bumps: [150, 0.13, 0.030, -0.45], lo: edge({ front: 0.30, temple: 0.28, side: -0.02, back: -0.40 }) },
   // ---- women
   // a chin bob: a bell that falls straight from the crown to the jaw, a blunt hem, a side part
-  bob:   { neck: true, col: [0.42, 0.26, 0.14], whorl: [0, 1, -0.08], locks: 30, jit: 0.25, twist: 0, clump: 0.016, base: 0.030, lift: 0.020, tips: 0.006, part: 0.12, lo: edge({ front: 0.30, side: -0.04 }),
+  bob:   { cut: -0.12, col: [0.42, 0.26, 0.14], whorl: [0, 1, -0.08], locks: 30, jit: 0.25, twist: 0, clump: 0.016, base: 0.030, lift: 0.020, tips: 0.006, part: 0.12, lo: edge({ front: 0.30, side: -0.04 }),
            hang: { from: 0.02, flare: 0.10, hem: [[0, 0.30], [30, 0.28], [48, -0.36], [180, -0.38]], tips: 0.06, edge: 14 },
            falls: [{ lon: [20, 28], n: 2, from: 0.26, to: -0.55, toAt: [1.0, 0.7], rho: 0.07, flat: 0.32, flare: 0.04, jit: 0.3, tip: 'point', ridges: 3, seed: 13 },   // a lock over the bell's front edge each side: no straight line in 3/4
                    { lon: [30, 48], n: 3, from: 0.22, to: -0.36, toAt: [0.8, 1.0, 0.9], rho: 0.14, flat: 0.4, flare: 0.05, jit: 0.3, tip: 'point', ridges: 3, seed: 9 }] },   // face-framing locks
   // long and straight, parted in the middle: the scalp falls to the jaw, two curtains of flat locks on to the chest
-  long:  { neck: true, col: [0.26, 0.15, 0.08], whorl: [0, 1, -0.05], locks: 24, twist: 0, clump: 0.014, base: 0.026, lift: 0.014, tips: 0.006, part: 0, lo: edge({ front: 0.30, side: -0.04 }),
+  long:  { cut: -0.14, col: [0.26, 0.15, 0.08], whorl: [0, 1, -0.05], locks: 24, twist: 0, clump: 0.014, base: 0.026, lift: 0.014, tips: 0.006, part: 0, lo: edge({ front: 0.30, side: -0.04 }),
            hang: { from: 0.02, flare: 0.04, hem: [[0, 0.30], [30, 0.28], [48, -0.40], [180, -0.42]], tips: 0.09, edge: 14 },
            falls: [{ lon: [20, 28], n: 2, from: 0.26, to: -0.55, toAt: [1.0, 0.7], rho: 0.07, flat: 0.32, flare: 0.04, jit: 0.3, tip: 'point', ridges: 3, seed: 13 },   // a lock over the bell's front edge each side: no straight line in 3/4
                    { lon: [30, 50], n: 3, from: 0.22, to: -0.80, toAt: [0.75, 1.0, 0.9], rho: 0.10, flat: 0.32, flare: 0.06, jit: 0.35, tip: 'point', ridges: 3, seed: 9 },   // face-framing locks: uneven, tapered, angled out from the temple, laid over the bell's front edge (rho past the bell: inside it they never showed)
@@ -79,12 +79,12 @@ const STYLES = {
               buns: [{ dir: [0, 0.62, -0.78], r: 0.085, out: -0.01 }],
               tails: [{ path: [[0, 0.26, -0.30], [0, 0.40, -0.58], [0, 0.28, -0.80], [0, 0.00, -0.86], [0, -0.30, -0.80], [0, -0.55, -0.70]], w: [0.06, 0.10, 0.15, 0.17, 0.16, 0.11, 0.02], flat: 0.8, ridges: 5, seg: 64, sides: 22 }] },
   // box braids: square parts on the scalp, a curtain of thin braided ropes round the back and sides to the shoulders
-  braids: { neck: true, col: [0.20, 0.13, 0.09], whorl: [0, 1, -0.05], locks: 24, twist: 0, clump: 0.006, base: 0.022, lift: 0.012, tips: 0.010, grid: [14, 22], lo: edge({ front: 0.30, side: -0.04 }),
+  braids: { cut: -0.14, col: [0.20, 0.13, 0.09], whorl: [0, 1, -0.05], locks: 24, twist: 0, clump: 0.006, base: 0.022, lift: 0.012, tips: 0.010, grid: [14, 22], lo: edge({ front: 0.30, side: -0.04 }),
             hang: { from: 0.02, flare: 0, hem: [[0, 0.30], [30, 0.28], [48, -0.34], [180, -0.40]], tips: 0.03, edge: 12 },   // the braids lie on a curtain of hair: no cheek between them
             falls: [{ lon: [34, 48], n: 2, from: 0.10, to: -0.95, rho: 0.03, w: 0.040, flat: 1, flare: 0.02, jit: 0.10, tip: 'blunt', braid: 9, ridges: 0, ink: 0.55, sides: 12, seed: 9 },   // front braids: they read from the front
                     { lon: [56, 180], n: 10, from: -0.10, to: -1.00, rho: 0.04, w: 0.040, flat: 1, flare: 0.04, jit: 0.10, tip: 'blunt', braid: 9, ridges: 0, ink: 0.55, sides: 12 }] },
   // a wavy lob: a soft S-wave mass to the shoulders, the tips turning out
-  lob:   { neck: true, col: [0.46, 0.29, 0.14], whorl: [0, 1, -0.10], locks: 22, twist: 0.10, jit: 0.15, clump: 0.022, base: 0.030, lift: 0.024, tips: 0.010, part: 0.10, lo: edge({ front: 0.30, side: -0.04 }),
+  lob:   { cut: -0.12, col: [0.46, 0.29, 0.14], whorl: [0, 1, -0.10], locks: 22, twist: 0.10, jit: 0.15, clump: 0.022, base: 0.030, lift: 0.024, tips: 0.010, part: 0.10, lo: edge({ front: 0.30, side: -0.04 }),
            hang: { from: 0.02, flare: 0.08, hem: [[0, 0.30], [30, 0.28], [48, -0.30], [180, -0.36]], tips: 0.04, edge: 14 },
            falls: [{ lon: [20, 28], n: 2, from: 0.26, to: -0.55, toAt: [1.0, 0.7], rho: 0.07, flat: 0.32, flare: 0.04, jit: 0.3, tip: 'point', ridges: 3, seed: 13 },   // a lock over the bell's front edge each side: no straight line in 3/4
                    { lon: [30, 50], n: 3, from: 0.22, to: -0.60, toAt: [0.7, 1.0, 0.85], rho: 0.12, flat: 0.45, flare: 0.03, wave: [0.03, 2.2], flick: 0.05, jit: 0.35, tip: 'point', ridges: 3, seed: 9 },   // face-framing locks
@@ -251,6 +251,7 @@ function fall(F, cut) {
   for (const sg of sides) for (let i = 0; i < n; i++) {
     const lon = sg * (F.lon[0] + (F.lon[1] - F.lon[0]) * (n === 1 ? 0.5 : i / (n - 1))), j = 1 + (F.jit ?? 0) * (r() - 0.5), to = Math.max(cut ?? -9, F.to * (F.toAt ? lerpA(F.toAt, Math.abs(lon - sg * F.lon[0]) / Math.max(1, Math.abs(F.lon[1] - F.lon[0]))) : 1) * j);
     if (to > F.from - 0.06) continue;                                                   // shortened away: no lock left below the scalp
+    if (cut != null && to <= cut) continue;   // a lock the cut stops short stands out beside the jaw (PickUp: 17.7 mm into the arm, 27/11): it goes whole
     const K = 7, path = [];
     for (let k = 0; k <= K; k++) { const u = k / K, y = F.from + (to - F.from) * u, rho = 0.5 + (F.rho ?? 0.03) + (F.flare ?? 0) * u * u + (F.wave ? F.wave[0] * Math.sin(Math.PI * F.wave[1] * u + i) * sm(0, 0.2, u) : 0) + (F.flick ?? 0) * sm(0.7, 1, u), a = lon * DEG;
       path.push([rho * Math.sin(a), y, rho * Math.cos(a)]); }
