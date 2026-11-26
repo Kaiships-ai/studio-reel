@@ -7,7 +7,7 @@ import { on } from './lib.js';
 
 export const SUN_DIR = [-0.2, 0.5, -0.84];
 export const SUN_CENTER = [0, 0.6, 1.2], SUN_HALF = 5;
-export const TANK = [-0.3, 0.95], SCREEN = [0.78, 0.55, 0.92];
+export const TANK = [-0.3, 0.95], SCREEN = [1.2, 0.3, 0.92];
 export const MARKS = { tank: [TANK[0], TANK[1], 0], screen: SCREEN };
 export const PLACES = { tank: [TANK[0], TANK[1], 1.0], screen: SCREEN };
 export const CAMERA_SIDE = [0, -1];
@@ -49,7 +49,7 @@ export async function build(stage) {
   K.box([-3.2, -6, -0.2], [3.2, 3, 0], M('#ffffff', 0.5, { map: SURF.checker('#8e9aa0', '#7f8b91', 12), repeat: [4, 6] }), { r: 0 });
   K.box([-3.2, 2.6, 0], [3.2, 2.9, 3.0], wall, { r: 0 });
   for (const sx of [-3.2, 2.9]) K.box([sx, -6, 0], [sx + 0.3, 2.9, 3.0], wall, { r: 0 });
-  K.box([-3.2, -6, 3.0], [3.2, 3, 3.15], M('#7d878c', 0.9), { r: 0, cast: false });
+  K.box([-3.2, -6, 3.0], [3.2, 3, 3.15], M('#3e464a', 0.95), { r: 0, cast: false });
   K.box([-2.9, 2.58, 0], [2.9, 2.6, 0.12], M('#3b4548', 0.6), { r: 0 });
 
   // ---- the kit's lab along the back wall: benches, the safety cabinet, an incubator, glassware, a stool
@@ -86,19 +86,25 @@ export async function build(stage) {
   const screenL = K.point([sx - 0.1, sy - 0.3, sz - 0.05], '#62e890', 9, 2.6);
 
   // ---- room light: two ceiling panels (cool), a desk lamp warm on the back bench, a low fill on the faces
-  for (const [x, y] of [[-1.0, 0.2], [1.0, 0.2]]) { K.box([x - 0.5, y - 0.3, 2.96], [x + 0.5, y + 0.3, 3.0], K.glow([0.62, 0.70, 0.74], 0.6), { r: 0 }); }
-  const top1 = K.point([-1.0, 0.1, 2.7], '#d6e4ec', 16, 4.2), top2 = K.point([1.0, 0.1, 2.7], '#d6e4ec', 16, 4.2);
+  for (const [x, y] of [[-1.0, 0.2], [1.0, 0.2]]) { K.box([x - 0.5, y - 0.3, 2.96], [x + 0.5, y + 0.3, 3.0], K.glow([0.62, 0.70, 0.74], 0.3), { r: 0 }); }
+  const top1 = K.point([-1.0, 0.1, 2.4], '#d6e4ec', 13, 4.0), top2 = K.point([1.0, 0.1, 2.4], '#d6e4ec', 13, 4.0);
   K.point([-1.6, 2.0, 1.4], '#ffc98a', 9, 2.6);
-  K.point([0.2, -1.2, 1.5], '#e8dccb', 9, 3.0);
-  const alarm = K.point([tx, ty - 0.2, 1.85], '#ff3a2e', 0, 2.4);
+  const fillL = K.point([0.2, -1.2, 1.5], '#e8dccb', 9, 3.0);
+  const alarm = K.point([tx, ty - 0.55, 1.5], '#ff3a2e', 0, 2.6);
+  // red practicals for the flat line: a lamp on the monitor's top and a wall beacon over the bench, each a visible source
+  const lampM = K.sphere([sx, sy + 0.06, sz + 0.34], 0.045, K.glow([0.25, 0.06, 0.05], 1.0)); K.cyl([sx, sy + 0.06, sz + 0.3], 0.03, 0.04, dark, { seg: 12 });
+  const redM = K.point([sx - 0.3, sy + 0.25, 1.45], '#ff3326', 0, 2.4);
+  K.box([0.45, 2.5, 1.85], [0.75, 2.6, 2.05], dark, { r: 0.01 }); const lampW = K.sphere([0.6, 2.47, 1.95], 0.07, K.glow([0.25, 0.06, 0.05], 1.0));
+  const redW = K.point([0.6, 2.2, 1.9], '#ff3326', 0, 2.2);
 
   // at FLAT: the trace flat and red, the monitor's light red and stronger, the beacon lit red; the panels dim a little
   const swap = new T.Group(); K.root.add(swap);
   K.anim('screen', swap, f => {
     const flat = f >= FLAT, m = screen.material; if (m.map !== (flat ? red : green)) { m.map = flat ? red : green; m.needsUpdate = true; }
     screenL.color.set(flat ? '#ff3b2f' : '#62e890'); screenL.intensity = flat ? 22 : 9;
-    alarm.intensity = flat ? 6 : 0; beacon.material.color.setRGB(...(flat ? [2.2, 0.25, 0.18] : [0.25, 0.06, 0.05]));
-    top1.intensity = top2.intensity = flat ? 10 : 16; glow.intensity = flat ? 5 : 8;
+    alarm.intensity = flat ? 20 : 0; redM.intensity = flat ? 20 : 0; redW.intensity = flat ? 10 : 0; fillL.intensity = flat ? 3 : 9;
+    for (const s of [beacon, lampM, lampW]) s.material.color.setRGB(...(flat ? [2.2, 0.25, 0.18] : [0.25, 0.06, 0.05]));
+    top1.intensity = top2.intensity = flat ? 5 : 13; glow.intensity = flat ? 5 : 8;
   });
   swap.position.copy(K.B(sx, sy, sz));
   return { props: K.props };

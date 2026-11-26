@@ -75,10 +75,14 @@ export async function build(stage) {
   K.point([-2.2, -5.0, 2.2], '#7aa0d8', 12, 4.4);       // the street's cool glow from the door side
 
   // ---- the tin and the baby (B's, in a sling on his chest)
-  const t = tin(K, tex, { s: 1.6 }); K.root.add(t);
+  const t = tin(K, tex, { s: 1 }); K.root.add(t); const S0 = 1.25;
   K.anim('tin', t, f => {
-    if (on(f, TIN.shelf)) { t.visible = true; t.position.copy(K.B(0, STAND[1], STAND[2] + 0.05 + 0.136 + 0.02)); t.rotation.set(0, 0.25, 0); return; }
-    if (on(f, TIN.grip)) { const a = H.at('f_a', 'B'), b = H.at('f_b', 'B'); if (!a || !b) { t.visible = false; return; } t.position.copy(a).add(b).multiplyScalar(0.5); t.rotation.set(0, 0.3, 0); t.visible = true; return; }
+    t.scale.setScalar(S0);
+    if (on(f, TIN.shelf)) { t.visible = true; t.position.copy(K.B(0, STAND[1], STAND[2] + 0.05 + 0.085 * S0 + 0.02)); t.rotation.set(0, 0.25, 0); return; }
+    // the grip: the tin between the two fathers' left hands, as wide as they are apart: one hand on each side
+    if (on(f, TIN.grip)) { const L = H.at('f_a', 'L'), R = H.at('f_b', 'L'); if (!L || !R) { t.visible = false; return; }
+      const w = Math.min(1.9, Math.max(0.85, (L.distanceTo(R) / 2 - 0.03) / 0.07)); t.scale.set(w, w, w);
+      t.position.copy(L).add(R).multiplyScalar(0.5); t.position.y -= 0.085 * w; t.rotation.set(0, 0.25, 0); t.visible = true; return; }
     H.hold(t, 'f_a', 'L', { off: [0, 0.02, 0.06], rot: [0, 30, 0] });
   });
   const baby = bundle(K, tex); K.root.add(baby);
@@ -86,7 +90,8 @@ export async function build(stage) {
   const strap = new T.Mesh(new T.BoxGeometry(0.05, 0.42, 0.015), M('#3c5a78', 0.85)); strap.userData.noInk = true; baby.add(strap); strap.position.set(0.1, 0.2, -0.06); strap.rotation.z = -0.35;
   // in the sling on his chest (face to the lens), then in both his arms when A holds the tin out (P3)
   K.anim('baby', baby, f => { sling.visible = strap.visible = f < 1615;
-    if (f < 1615) H.hold(baby, 'f_b', 'chest', { off: [0.02, -0.10, 0.19], rot: [0, -62, 75] });
+    baby.scale.setScalar(f < 1615 ? 1.2 : 1);
+    if (f < 1615) H.hold(baby, 'f_b', 'chest', { off: [0.02, -0.24, 0.17], rot: [0, -62, 75] });
     else H.hold(baby, 'f_b', 'B', { off: [0, 0.03, 0.0], rot: [0, 140, 15] });
     baby.updateMatrixWorld(true); baby.userData.look(stage.camera); });
   return { props: K.props };

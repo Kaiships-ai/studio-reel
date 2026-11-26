@@ -18,18 +18,18 @@ export default {
   cast: { j_m: MAN.cast({ at: [...P, 0], yaw: Y, focus: 'photo', lead: true }) },
   anim: {
     j_m: [
-      MAN.clip('Idle_Stooped_Loop', { f: 2320, pos: P, yaw: Y, expr: 'calm', look: 'photo' }),
-      MAN.clip('Idle_Stooped_Loop', { f: 2505, pos: P, yaw: Y, expr: 'happy', look: 'photo' }),
+      MAN.clip('Idle_Stooped_Loop', { f: 2320, pos: P, yaw: Y, expr: 'closed', look: 'photo' }),
+      MAN.clip('Idle_Stooped_Loop', { f: 2505, pos: P, yaw: Y, expr: 'closed', look: 'photo' }),
       MAN.clip('Idle_Stooped_Loop', { f: 2700, pos: P, yaw: Y, expr: 'closed', look: 'camera' }),
     ],
   },
   direct: [
     { at: { f: 2336 }, intent: 'medium', why: 'P1 · alone in a small warm room, the photo in his hands', cut: 'cut',
-      cam: { pos: [0.25, -1.35, 0.95], aim: [0.0, 0.7, 0.9], lens: 20 } },
+      cam: { pos: [0.2, -1.0, 1.0], aim: [0.02, 0.7, 0.92], lens: 22 } },
     { at: { f: 2505 }, intent: 'close', why: 'contact · his two hands on the frame', cut: 'cut',
-      cam: { pos: [0.12, -0.35, 1.05], aim: [0.0, 0.3, 0.92], lens: 26 } },
+      cam: { pos: [0.1, -0.45, 1.05], aim: [0.06, 0.45, 1.0], lens: 22 } },
     { at: { f: 2600 }, intent: 'close', why: 'the photo: a young mother holding a newborn', cut: 'cut',
-      cam: { pos: [0.0, -0.1, 0.98], aim: [0.0, 0.3, 0.95], lens: 30 } },
+      cam: { pos: [0.08, -0.12, 0.82], aim: [0.07, 0.4, 0.77], lens: 30 } },
     { at: { f: 2700 }, intent: 'close', why: 'his face at peace; the window warms behind him', cut: 'cut',
       cam: { pos: [0.2, -0.75, 1.15], aim: [0.0, 0.7, 1.1], lens: 24 } },
   ],

@@ -15,7 +15,7 @@ export const CAMERA_ROOM = [[[-2.4, -5], [2.4, 0.3]]];
 export const BLOW = [[2222, 2270]], EMPTY = 2270;
 // the chairs round the table: [x, y, deg] (deg: the chair turned to face the table)
 export const CHAIRS = [[-0.62, 1.6, -15], [0.62, 1.6, 15], [-1.1, 0.55, -80], [1.1, 0.55, 80]];
-const PROPS = ['care-home/armchair', 'care-home/lamp-round-floor', 'care-home/wall-clock', 'care-home/fancy-picture-frame', 'care-home/rug-round', 'care-home/tea-set'];
+const PROPS = ['care-home/armchair', 'care-home/lamp-round-floor', 'care-home/wall-clock', 'care-home/fancy-picture-frame', 'care-home/tea-set'];
 const by = 'ep-whatif1-v5-director', why = 'V5 stills, measure not built';
 export const LOUNGE = place('care-home', { light: 'lounge-evening', props: PROPS, waivers: PROPS.map(p => ({ pair: `light|${p}|lounge-evening`, why, by })) });
 export const COLLIDE = LOUNGE.COLLIDE;
@@ -30,15 +30,15 @@ export async function build(stage) {
   const H = holder(stage, T);
 
   // ---- shell: a warm carpet, papered walls with a dado rail, a soft ceiling
-  const paper = M('#b7896a', 0.9, { map: SURF.plaster('#b7896a', 4) });
-  K.box([-3, -6, -0.2], [3, 3, 0], M('#8a5a48', 0.95), { r: 0 });
+  const paper = M('#93a08a', 0.9, { map: SURF.plaster('#93a08a', 4) });
+  K.box([-3, -6, -0.2], [3, 3, 0], M('#4f6670', 0.95), { r: 0 });
   K.box([-3, 2.4, 0], [3, 2.7, 2.8], paper, { r: 0 });
   for (const sx of [-3, 2.7]) K.box([sx, -6, 0], [sx + 0.3, 2.7, 2.8], paper, { r: 0 });
   K.box([-2.7, 2.37, 0.9], [2.7, 2.4, 0.95], M('#6e4a34', 0.6), { r: 0 }); K.box([-2.7, 2.38, 0], [2.7, 2.4, 0.9], M('#7d5a43', 0.85), { r: 0 });
-  K.box([-3, -6, 2.8], [3, 3, 2.95], M('#a89a86', 0.9), { r: 0, cast: false });
+  K.box([-3, -6, 2.8], [3, 3, 2.95], M('#6c6a62', 0.9), { r: 0, cast: false });
 
-  // ---- the kit's lounge: armchairs round the table, a rug, the lamp, the clock and pictures on the wall, a tea set
-  put('care-home/rug-round', [TABLE[0], TABLE[1], 0], 0);
+  // ---- the kit's lounge: armchairs round the table, the lamp, the clock and pictures on the wall, a tea set
+  // (no rug: its orange disc was the empty-floor read)
   for (const [x, y, d] of CHAIRS) put('care-home/armchair', [x, y, 0], d);
   put('care-home/lamp-round-floor', [-1.9, 1.7, 0], 0); put('care-home/wall-clock', [0.9, 2.38, 1.9], 0);
   put('care-home/fancy-picture-frame', [-0.6, 2.38, 1.55], 0); put('care-home/tea-set', [1.7, 1.9, 0], 0);
@@ -59,8 +59,11 @@ export async function build(stage) {
   for (const [x, zt] of [[tx - 0.06, CT + 0.13], [tx + 0.06, CT + 0.13]]) {
     K.cyl([x, ty - 0.02, zt + 0.008], 0.002, 0.016, M('#2a2420', 0.8), { seg: 6 });
     const fl = new T.Group(); fl.position.copy(K.B(x, ty - 0.02, zt + 0.016)); K.root.add(fl);
-    const cone = new T.Mesh(new T.ConeGeometry(0.022, 0.085, 16), K.glow([1.0, 0.70, 0.28], 1.6)); cone.position.y = 0.042; fl.add(cone);
-    const core = new T.Mesh(new T.SphereGeometry(0.018, 12, 8), K.glow([1.0, 0.84, 0.5], 1.4)); core.position.y = 0.018; fl.add(core);
+    const outer = K.glow([1.0, 0.62, 0.2], 1.5), halo = K.glow([1.0, 0.7, 0.35], 1.0); outer.transparent = halo.transparent = true; outer.opacity = 0.75; halo.opacity = 0.16; outer.depthWrite = halo.depthWrite = false;
+    const tip = new T.Mesh(new T.SphereGeometry(1, 16, 12), outer); tip.scale.set(0.016, 0.042, 0.016); tip.position.y = 0.036; fl.add(tip);
+    const core = new T.Mesh(new T.SphereGeometry(1, 12, 8), K.glow([1.0, 0.95, 0.75], 1.6)); core.scale.set(0.008, 0.018, 0.008); core.position.y = 0.02; fl.add(core);
+    const glowB = new T.Mesh(new T.SphereGeometry(0.05, 14, 10), halo); glowB.position.y = 0.035; fl.add(glowB);
+    for (const m of [tip, core, glowB]) m.userData.noInk = true;
     flames.push(fl);
   }
   const candle = K.point([tx, ty - 0.12, CT + 0.2], '#ffb45e', 7, 1.8);
@@ -70,20 +73,27 @@ export async function build(stage) {
   K.cyl([tx, ty, 2.45], 0.2, 0.16, M('#c98a3a', 0.5), { r2: 0.06, open: true }); K.cyl([tx, ty, 2.65], 0.006, 0.3, M('#222', 0.5));
   K.sphere([tx, ty, 2.4], 0.05, K.glow([1.0, 0.8, 0.5], 1.0));
   K.point([tx, ty - 0.1, 2.2], '#ffc98a', 18, 3.6);
-  K.point([-2.4, -0.5, 1.6], '#9fb6dc', 9, 3.4);
+  K.point([-2.4, -0.5, 1.6], '#9fb6dc', 13, 3.4);
   K.point([0.3, -1.4, 1.4], '#ffd9b0', 9, 3.0);
 
-  // ---- the blow: a puff from his mouth toward the candles, the flames leaning away from him (to the lens), the glow low
-  const puff = new T.Group(), pm = K.glow([0.55, 0.72, 0.88], 1.0), sm = K.glow([0.55, 0.72, 0.88], 1.0); pm.transparent = true; pm.opacity = 0.45; pm.depthWrite = false; K.root.add(puff);
-  // three wind streaks (arcs) from his lips to the flames
-  for (const [x, u] of [[-0.035, 0.01], [0.0, -0.02], [0.035, 0.0]]) { const a = new T.Mesh(new T.TorusGeometry(0.16, 0.009, 8, 24, 1.1), sm); a.rotation.set(0, Math.PI / 2, 0); a.position.set(x, u - 0.16, 0.2); a.userData.noInk = true; puff.add(a); }
-  for (const [d, s, u] of [[0.03, 0.03, 0.0], [0.09, 0.04, -0.015], [0.17, 0.05, -0.04]]) {
-    const b = new T.Mesh(new T.SphereGeometry(s, 16, 10), pm); b.position.set((r() - 0.5) * 0.02, u, d); b.userData.noInk = true; puff.add(b); }
+  // ---- the blow: a soft cloud of breath from his lips to the candles (overlapping see-through puffs, a few specks), the
+  // flames laid flat away from him; then OUT (from 2266): no flames, the candle light off, a thin curl of smoke off each wick
+  const puff = new T.Group(); K.root.add(puff);
+  for (const [d, s, u, o] of [[0.04, 0.026, 0.0, 0.42], [0.08, 0.036, -0.008, 0.34], [0.13, 0.044, -0.02, 0.28], [0.18, 0.05, -0.032, 0.22], [0.23, 0.05, -0.045, 0.16]]) {
+    const pm = K.glow([0.86, 0.92, 1.0], 1.0); pm.transparent = true; pm.opacity = o; pm.depthWrite = false;
+    const b = new T.Mesh(new T.SphereGeometry(s, 18, 12), pm); b.position.set((r() - 0.5) * 0.02, u, d); b.scale.set(1, 0.8, 1.1); b.userData.noInk = true; puff.add(b); }
+  const speck = K.glow([0.9, 0.95, 1.0], 1.0); speck.transparent = true; speck.opacity = 0.5; speck.depthWrite = false;
+  for (let i = 0; i < 14; i++) { const b = new T.Mesh(new T.SphereGeometry(0.004 + r() * 0.004, 8, 6), speck); b.position.set((r() - 0.5) * 0.09, -0.06 * r() + 0.01, 0.06 + 0.24 * r()); b.userData.noInk = true; puff.add(b); }
+  const OUT = 2266, smokeM = K.mat('#c9c6c2', 0.9, { opacity: 0.5 }); smokeM.depthWrite = false; const smoke = [];
+  for (const [x, zt] of [[tx - 0.06, CT + 0.13], [tx + 0.06, CT + 0.13]]) {
+    const pts = []; for (let k = 0; k <= 12; k++) { const h = k * 0.022; pts.push(K.B(x + 0.012 * Math.sin(k * 0.9 + x * 40) * (k / 12 + 0.3), ty - 0.02 + 0.008 * Math.cos(k * 0.7), zt + 0.02 + h)); }
+    const w = new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts), 40, 0.0035, 6), smokeM); w.userData.noInk = true; K.root.add(w); smoke.push(w); }
   K.anim('puff', puff, f => {
-    const blow = on(f, BLOW);
-    if (blow) H.hold(puff, 'i_m', 'head', { off: [0, -0.10, 0.24], rot: [18, 0, 0] }); else puff.visible = false;
-    for (const fl of flames) { fl.rotation.set(blow ? -0.7 : 0, 0, blow ? 0.75 : 0); fl.scale.set(blow ? 1.3 : 1, blow ? 1.5 : 1, blow ? 1.3 : 1); }
-    candle.intensity = blow ? 4 : 7;
+    const blow = on(f, BLOW) && f < OUT, out = f >= OUT;
+    if (blow) { H.hold(puff, 'i_m', 'head', { off: [0, -0.12, 0.2], rot: [22, 0, 0] }); puff.scale.setScalar(1.5); } else puff.visible = false;
+    for (const fl of flames) { fl.visible = !out; fl.rotation.set(blow ? 1.35 : 0, 0, 0); fl.scale.set(blow ? 0.8 : 1, blow ? 1.7 : 1, blow ? 0.6 : 1); fl.children[2].visible = !blow; }
+    for (const w of smoke) w.visible = out;
+    candle.intensity = out ? 0 : blow ? 3 : 7;
   });
   // the paper hats: on the friends' heads at the party, left on the empty chairs after
   const hats = [], hatM = [M('#5f9fd8', 0.6), M('#e86a6a', 0.6), M('#7cc48a', 0.6)];

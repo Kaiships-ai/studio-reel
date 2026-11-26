@@ -46,7 +46,7 @@ export default {
     { at: { f: 1715 }, intent: 'close', why: 'contact · the crying baby in his arms, sweat on his temple', cut: 'cut',
       cam: { pos: [0.0, -1.2, 1.05], aim: [0.4, 0.0, 1.0], lens: 22 } },
     { at: { f: 1745 }, intent: 'medium', why: 'P2 · asleep in the chair with the baby on his chest; his son walks in with a blanket', cut: 'cut',
-      cam: { pos: [0.0, -2.0, 0.95], aim: [-0.05, 0.4, 0.8], lens: 20 } },
+      cam: { pos: [-0.1, -1.55, 0.85], aim: [-0.15, 0.5, 0.62], lens: 20 } },
     { at: { f: 1830 }, intent: 'close', why: 'P3 · the blanket over both (faces under the words)', cut: 'cut',
       cam: { pos: [-0.72, -1.2, 0.9], aim: [-0.72, 0.42, 0.38], lens: 20 } },
   ],

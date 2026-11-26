@@ -47,11 +47,14 @@ const sm = (T, geo, m, cast = true) => { const x = new T.Mesh(geo, m); x.castSha
 
 // a baby wrapped in a blanket: long axis along x, the face at +x looking up and to +z (the viewer when held across a chest)
 // cry: the mouth open wide, tears; colour: the blanket (sRGB hex)
-export function bundle(K, tex, { colour = '#7ea7cf', foldColour = '#6f93b8', cry = false, s = 1.25 } = {}) {
+export function bundle(K, tex, { colour = '#7ea7cf', foldColour = '#6f93b8', cry = false, s = 1.25, rings = true } = {}) {
   const T = K.THREE, g = new T.Group(), env = 0.4, M = (c, r = 0.85) => K.mat(c, r, { env });
   const wrap = M(colour), fold = M(foldColour);
   const body = sm(T, new T.SphereGeometry(1, 28, 18), wrap); body.scale.set(0.19 * s, 0.085 * s, 0.10 * s); g.add(body);
-  for (const x of [-0.06, 0.04]) { const b = sm(T, new T.TorusGeometry(0.088 * s, 0.012 * s, 8, 24), fold); b.rotation.y = Math.PI / 2; b.position.x = x * s; b.scale.set(1, 0.95, 1.12); g.add(b); }
+  if (rings) for (const x of [-0.06, 0.04]) { const b = sm(T, new T.TorusGeometry(0.088 * s, 0.012 * s, 8, 24), fold); b.rotation.y = Math.PI / 2; b.position.x = x * s; b.scale.set(1, 0.95, 1.12); g.add(b); }
+  // no rings: a soft swaddle, the wrap's corner folded across the front in a loose diagonal flap
+  if (!rings) { const flap = sm(T, new T.SphereGeometry(1, 24, 14, 0, Math.PI * 2, 0, Math.PI / 2), fold); flap.scale.set(0.15 * s, 0.03 * s, 0.085 * s);
+    flap.rotation.set(Math.PI / 2, 0.5, 0); flap.position.set(-0.01 * s, 0, 0.065 * s); g.add(flap); }
   // drawn squeezed into the middle of the wrap (u 0.35-0.65): the sphere's equator is 2*pi*r round, so a face drawn across the
   // whole texture wraps half the head and only its middle (no features) faces the lens
   const face = tex(256, 256, (c, w) => { c.fillStyle = '#e8cbb0'; c.fillRect(0, 0, w, w); c.translate(w / 2, w * 0.5); c.scale(0.3, 0.85); c.translate(-w / 2, -w * 0.5);

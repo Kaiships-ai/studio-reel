@@ -78,3 +78,4 @@
 |---|---|---|---|---|
 | K1 | held prop not touching the holding hand passes every gate (no hand-to-grip distance check) | c trays, f tin, g baby, j photo, a 450 | any | open: kit gate PR queued (handgrip gate, frozen limit + 5 cm-off control) |
 | K2 | face slides to the head's edge / squashes at some camera angles | e beat_1511, f beat_1598 + contact_tin, h beat_2090 | angles to be logged from facegate per still (fix round 1 reports) | open: same or second kit PR; not hidden by camera choice only |
+| K3 | coloured practical light never reaches a head: heads are drawn unlit on purpose (`flatHeadMat`, engine/cast.js), place light tints 25 % only; a red alarm cannot be on faces | h beat_2040, 2090 | any | open: kit design call (faces readable vs lit); film shows red on walls, floor, tank |

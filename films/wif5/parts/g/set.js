@@ -3,7 +3,7 @@
 // right where the son comes in. Blender metres: x right, y into the scene, z up; camera on the y < 0 side.
 // Light (LIGHT-RECIPE-V3): practicals reach 2.4-4.6 m at power 8-26, materials env x0.4; the moon is the cool window.
 import { createKit, rng, tex, place, SURF, windowY } from '/styles/stick-man/kit/film.js';
-import { holder, on, bundle, foldedBlanket, drape } from './lib.js';
+import { holder, on, bundle, foldedBlanket } from './lib.js';
 
 export const SUN_DIR = [0.25, -0.5, -0.83];
 export const SUN_CENTER = [0, 0.5, 1.2], SUN_HALF = 5;
@@ -36,7 +36,7 @@ export async function build(stage) {
   K.box([-2.9, -5, 0], [-2.6, 2.2, 2.7], wall, { r: 0 });
   K.box([2.6, -5, 0], [2.9, -1.1, 2.7], wall, { r: 0 }); K.box([2.6, 0.1, 0], [2.9, 2.2, 2.7], wall, { r: 0 }); K.box([2.6, -1.1, 2.1], [2.9, 0.1, 2.7], wall, { r: 0 });
   K.box([2.9, -1.4, 0], [3.6, 0.4, 2.7], M('#2a2622', 0.9), { r: 0 });   // the dark hall behind the doorway
-  K.box([-2.9, -5, 2.7], [2.9, 2.5, 2.85], M('#d9d2c0', 0.9), { r: 0, cast: false });
+  K.box([-2.9, -5, 2.7], [2.9, 2.5, 2.85], M('#45413b', 0.95), { r: 0, cast: false });
   K.box([-2.6, 2.19, 0], [2.6, 2.2, 0.1], M('#5a4632', 0.7), { r: 0 });
   // the window over the sink: a night sky with a moon (self-lit, dim)
   const night = tex(512, 512, (c, w, h) => { const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#0d1838'); g.addColorStop(1, '#2a3b66'); c.fillStyle = g; c.fillRect(0, 0, w, h);
@@ -64,29 +64,50 @@ export async function build(stage) {
   K.box([-2.4, 1.85, 1.62], [0.8, 2.2, 2.3], M('#6b5640', 0.7), { r: 0.01 });          // wall cupboards
   K.box([-2.3, 1.88, 1.6], [0.7, 1.92, 1.62], K.glow([1.0, 0.82, 0.55], 0.7), { r: 0 });
   K.point([-0.8, 1.6, 1.45], '#ffcf8a', 10, 2.8);
-  K.point([-1.0, 1.4, 1.7], '#7f9ad8', 12, 3.6);                                     // the moon through the window
-  K.point([1.4, -1.2, 1.6], '#ffb070', 9, 3.0);                                      // a low warm fill from the hall light
+  K.point([-1.0, 1.4, 1.7], '#7f9ad8', 18, 3.6);                                     // the moon through the window
+  K.point([1.4, -1.2, 1.2], '#ffb070', 5, 2.6);                                      // a low warm fill from the hall light
   K.point([3.2, -0.5, 2.0], '#ffc488', 14, 2.6);                                     // the hall light behind the door
 
   // ---- the baby (crying in his arms, asleep on his chest), the son's folded blanket, the blanket over both
-  const cry = bundle(K, tex, { cry: true, colour: '#e79aa6', foldColour: '#c97482' }); K.root.add(cry);
-  const calm = bundle(K, tex, { colour: '#e79aa6', foldColour: '#c97482' }); K.root.add(calm);
-  K.anim('cry', cry, f => { if (on(f, WALK)) { H.hold(cry, 'g_dad', 'B', { off: [0, 0.05, 0.03], rot: [0, 0, 12] }); cry.userData.look(stage.camera); } else cry.visible = false; });
-  K.anim('calm', calm, f => { if (on(f, SLEEP)) { H.hold(calm, 'g_dads', 'chest', { off: [-0.04, -0.03, 0.18], rot: [0, 0, 14] }); calm.userData.look(stage.camera); } else calm.visible = false; });
+  const cry = bundle(K, tex, { cry: true, colour: '#8cc4ff', foldColour: '#6fa8ec', s: 1.1, rings: false }); K.root.add(cry);
+  const calm = bundle(K, tex, { colour: '#8cc4ff', foldColour: '#6fa8ec', s: 1.1, rings: false }); K.root.add(calm);
+  // a thing held across both hands: its long axis (local x) from the left hand to the right, its front to the lens, fitted to the gap
+  const V = (x, y, z) => new T.Vector3(x, y, z), MB = new T.Matrix4();
+  const between = (obj, who, { len = 0.46, shift = [0, 0, 0] } = {}) => { const a = H.at(who, 'L'), b = H.at(who, 'R'); if (!a || !b) { obj.visible = false; return; }
+    const x = V().subVectors(b, a), d = x.length(); x.normalize(); const z = V().subVectors(stage.camera.position, a).normalize();
+    const y = V().crossVectors(z, x).normalize(); z.crossVectors(x, y); obj.quaternion.setFromRotationMatrix(MB.makeBasis(x, y, z));
+    obj.scale.setScalar(Math.min(1.15, Math.max(0.85, (d - 0.04) / len))); obj.position.copy(a).add(b).multiplyScalar(0.5).add(K.B(...shift)); obj.visible = true; };
+  // cradled across both arms against his chest: one hand under her head, the other under her feet
+  K.anim('cry', cry, f => { if (on(f, WALK)) { between(cry, 'g_dad'); cry.userData.look(stage.camera); } else cry.visible = false; });
+  // asleep: she lies across his lap between his two hands; under the blanket she is up on his chest, her face out at its neck
+  K.anim('calm', calm, f => { if (!on(f, SLEEP)) { calm.visible = false; return; }
+    if (on(f, BLANKET_ON)) { calm.scale.setScalar(1); H.hold(calm, 'g_dads', 'chest', { off: [0.03, -0.09, 0.25], rot: [0, 0, 30] }); } else between(calm, 'g_dads', { shift: [0, 0.08, 0.05] });
+    calm.userData.look(stage.camera); });
   // a bead of sweat on his temple while he walks her (the kit's sweat mark sits behind the head in this three-quarter view)
   const drop = new T.Group(), dm = K.mat('#4fa6f2', 0.2, { env: 0.6 });
   const dball = new T.Mesh(new T.SphereGeometry(0.05, 18, 12), dm), dtip = new T.Mesh(new T.ConeGeometry(0.044, 0.09, 18), dm);
   dtip.position.y = 0.058; for (const m of [dball, dtip]) { m.userData.noInk = true; drop.add(m); } K.root.add(drop);
   K.anim('drop', drop, f => { if (on(f, WALK)) H.hold(drop, 'g_dad', 'head', { off: [-0.31, 0.10, 0.06], rot: [0, 0, 0] }); else drop.visible = false; });
   const fold = foldedBlanket(K, tex); K.root.add(fold);
-  K.anim('fold', fold, f => { if (on(f, BLANKET_CARRIED)) H.hold(fold, 'g_son', 'R', { off: [0, -0.02, 0.0], rot: [0, 0, 10] }); else fold.visible = false; });
-  // the son's blanket over both: a sheet laid from the baby on his chest over his lap, falling off the knees and sides
-  // (local x across him, z toward the lens: he sits at SEAT facing -y, so three.js +z is his front)
+  fold.scale.setScalar(0.7);
+  // the folded blanket hangs from his hand, his fingers over its top fold
+  K.anim('fold', fold, f => { if (on(f, BLANKET_CARRIED)) H.hold(fold, 'g_son', 'R', { off: [0.0, -0.075, 0.02], rot: [0, 90, 80] }); else fold.visible = false; });
+  // the son's blanket over both: laid over his shoulders like a shawl, down over the baby on his chest and his lap, hanging
+  // past his knees; it falls off his sides in soft folds and opens at the neck (his face and hers show). Built in Blender
+  // coordinates relative to the seat root (y < 0 is his front), then turned to three.js by K.B.
   const sm = (a, b, t) => { const u = Math.min(1, Math.max(0, (t - a) / (b - a))); return u * u * (3 - 2 * u); };
-  const blanket = drape(K, tex, 0.78, 0.62, (x, z) => { z += 0.31;
-    const y = 0.74 - 0.17 * sm(0.30, 0.42, z) - 0.40 * sm(0.50, 0.62, z);
-    return y - 0.55 * sm(0.24, 0.39, Math.abs(x)); }, { seg: 48 });
-  blanket.position.copy(K.B(SEAT[0], SEAT[1], 0)); K.root.add(blanket);
+  const path = new T.CatmullRomCurve3([[0.10, 0.78], [0.0, 0.87], [-0.13, 0.83], [-0.24, 0.70], [-0.26, 0.56], [-0.42, 0.52], [-0.52, 0.34], [-0.55, 0.14]].map(([y, z]) => V(y, z, 0)));
+  const NX = 44, NV = 60, bgeo = new T.PlaneGeometry(1, 1, NX, NV), bp = bgeo.attributes.position, bu = bgeo.attributes.uv;
+  for (let i = 0; i < bp.count; i++) { const u = bu.getX(i), v = 1 - bu.getY(i), x = (u - 0.5) * 0.62, ax = Math.abs(x);
+    const s0 = 0.5 * (1 - sm(0.11, 0.24, ax)), s = s0 + v * (1 - s0), p = path.getPointAt(s);
+    const rim = 0.2 + 0.07 * sm(0.3, 0.55, s), d = Math.max(0, ax - rim);
+    let y = p.x, z = p.y - 1.1 * d + 0.03 * Math.sin(x * 34 + s * 5) * Math.min(1, d * 7);
+    y += 0.035 * Math.sin(x * 26 + 1) * sm(0.55, 1, s); z += 0.05 * Math.sin(x * 17 + 2) * sm(0.85, 1, s);
+    y +=0 - 0.25 * d * sm(0.6, 1, s); z = Math.max(0.40 - 0.3 * sm(0.72, 1, s), z);
+    const w = K.B(SEAT[0] + x * (1 + 0.15 * d), SEAT[1] + y, z); bp.setXYZ(i, w.x, w.y, w.z); }
+  bgeo.computeVertexNormals();
+  const blanket = new T.Mesh(bgeo, K.mat('#ffffff', 0.95, { env: 0.35, map: fold.children[0].material.map, side: T.DoubleSide }));
+  blanket.castShadow = blanket.receiveShadow = true; blanket.userData.noInk = true; K.root.add(blanket);
   K.anim('blanket', blanket, f => { blanket.visible = on(f, BLANKET_ON); });
   return { props: K.props };
 }

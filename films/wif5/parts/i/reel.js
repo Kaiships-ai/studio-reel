@@ -30,18 +30,18 @@ export default {
   anim: {
     i_m: [
       M.clip('Idle_Stooped_Loop', { f: 2100, pos: PM, yaw: YM, expr: 'grin', look: 'camera' }),
-      M.clip('Idle_Stooped_Loop', { f: 2222, pos: [0, 0.92], yaw: YM, expr: 'yawn', look: 'puff' }),
-      M.clip('Idle_Stooped_Loop', { f: 2270, pos: PM, yaw: YM, expr: 'sad', look: 'camera' }),
+      M.clip('Idle_Stooped_Loop', { f: 2222, pos: [0, 0.9], yaw: YM, expr: 'shock', look: 'puff' }),
+      M.clip('Idle_Stooped_Loop', { f: 2270, pos: [0.38, 0.98], yaw: -10, expr: 'disappointed', look: 'camera' }),
     ],
-    i_a: [A.clip('Idle_Breath_Loop', { f: 2100, pos: PA, yaw: YA, times: 3, expr: 'laugh', look: 'camera' })],
-    i_b: [B.clip('Idle_Breath_Loop', { f: 2100, pos: PB, yaw: YB, times: 3, expr: 'happy', look: 'camera' })],
+    i_a: [A.clip('Idle_Breath_Loop', { f: 2100, pos: PA, yaw: YA, times: 3, expr: 'happy', look: 'camera' })],
+    i_b: [B.clip('Idle_Breath_Loop', { f: 2100, pos: PB, yaw: YB, times: 3, expr: 'grin', look: 'camera' })],
   },
   direct: [
     { at: { f: 2111 }, intent: 'medium', why: 'P1 · old men round a cake with 80 on it (faces over the words)', cut: 'cut',
-      cam: { pos: [0.0, -1.45, 0.8], aim: [0.0, 0.6, 0.5], lens: 19 } },
-    { at: { f: 2222 }, intent: 'close', why: 'P2 · he leans in and blows: the puff, the flames bending away', cut: 'cut',
-      cam: { pos: [0.35, -0.25, 1.0], aim: [0.0, 0.75, 1.05], lens: 28 } },
+      cam: { pos: [0.0, -0.95, 1.5], aim: [0.0, 0.9, 0.54], lens: 22 } },
+    { at: { f: 2222 }, intent: 'close', why: 'P2 · side close: he blows, an o mouth, a soft cloud of breath, the flames laid flat away from him', cut: 'cut',
+      cam: { pos: [1.0, 0.25, 1.15], aim: [-0.02, 0.72, 1.07], lens: 30 } },
     { at: { f: 2270 }, intent: 'wide', why: 'P3 · the chairs round him empty, the hats left on them (faces over the words)', cut: 'cut',
-      cam: { pos: [0.0, -1.45, 0.7], aim: [0.0, 0.7, 0.42], lens: 18 } },
+      cam: { pos: [0.2, -0.95, 1.5], aim: [0.25, 0.9, 0.54], lens: 22 } },
   ],
 };

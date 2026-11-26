@@ -13,7 +13,7 @@ export const PLACES = { window: [-0.7, 1.9, 1.5] };
 export const CAMERA_SIDE = [0, -1];
 export const CAMERA_ROOM = [[[-1.9, -4], [1.9, 0.5]]];
 export const WARM = [2700, 2790];          // the window light warms from the first frame to the second
-const PROPS = ['care-home/armchair', 'care-home/night-stand', 'care-home/memory-box', 'care-home/wall-clock', 'care-home/fancy-picture-frame', 'care-home/rug-round', 'care-home/cup-tea'];
+const PROPS = ['care-home/armchair', 'care-home/night-stand', 'care-home/wall-clock', 'care-home/fancy-picture-frame', 'care-home/rug-round'];
 const by = 'ep-whatif1-v5-director', why = 'V5 stills, measure not built';
 export const ROOM = place('care-home', { light: 'room-dawn', props: PROPS, waivers: PROPS.map(p => ({ pair: `light|${p}|room-dawn`, why, by })) });
 export const COLLIDE = ROOM.COLLIDE;
@@ -61,8 +61,8 @@ export async function build(stage) {
   const paper = M('#c09a74', 0.9, { map: SURF.plaster('#c09a74', 4) });
   K.box([-2.2, -4.5, -0.2], [2.2, 2.3, 0], M('#ffffff', 0.7, { map: SURF.wood('#9a7350', 6), repeat: [3, 4] }), { r: 0 });
   K.box([-2.2, 1.9, 0], [2.2, 2.2, 2.6], paper, { r: 0 });
-  for (const sx of [-2.2, 1.95]) K.box([sx, -4.5, 0], [sx + 0.25, 2.2, 2.6], paper, { r: 0 });
-  K.box([-2.2, -4.5, 2.6], [2.2, 2.3, 2.75], M('#b5a48c', 0.9), { r: 0, cast: false });
+  for (const sx of [-1.75, 1.55]) K.box([sx, -4.5, 0], [sx + 0.25, 2.2, 2.6], paper, { r: 0 });
+  K.box([-2.2, -4.5, 2.3], [2.2, 2.3, 2.45], M('#6e5f4e', 0.95), { r: 0, cast: false });
   K.box([-1.95, 1.88, 0], [1.95, 1.9, 0.1], M('#6e4f36', 0.7), { r: 0 });
   // the window on the back wall: a dawn sky (self-lit), warming
   const dawn = tex(512, 512, (c, w, h) => { const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#6f86b0'); g.addColorStop(0.6, '#e9b48a'); g.addColorStop(1, '#f2c48a'); c.fillStyle = g; c.fillRect(0, 0, w, h);
@@ -71,8 +71,8 @@ export async function build(stage) {
 
   // ---- the kit's room: his armchair by the window, the night stand with the keepsake box and a cup, the clock, pictures
   put('care-home/rug-round', [0, 0.55, 0], 0); put('care-home/armchair', [-1.05, 1.15, 0], -25);
-  put('care-home/night-stand', [1.1, 1.45, 0], 0); put('care-home/memory-box', [1.0, 1.45, 0.62], 10); put('care-home/cup-tea', [1.32, 1.4, 0.62], 0);
-  put('care-home/wall-clock', [0.55, 1.88, 1.95], 0); put('care-home/fancy-picture-frame', [0.95, 1.88, 1.4], 0);
+  put('care-home/night-stand', [1.1, 1.45, 0], 0);
+  put('care-home/wall-clock', [0.55, 1.88, 1.85], 0); put('care-home/fancy-picture-frame', [0.95, 1.88, 1.4], 0);
   // the night stand's lamp (a warm shade) and its pool
   K.cyl([1.2, 1.55, 0.74], 0.06, 0.24, M('#8a6a4a', 0.5), { seg: 16 }); K.cyl([1.2, 1.55, 0.95], 0.16, 0.18, M('#e2b878', 0.8, { emit: '#c98a3a', emitK: 0.5 }), { r2: 0.1, open: true, seg: 24 });
   K.point([1.15, 1.35, 1.0], '#ffc07a', 12, 2.8);
@@ -87,7 +87,13 @@ export async function build(stage) {
   const W = 0.2, Hh = 0.25, fm = M('#5a3a26', 0.45);
   const f1 = new T.Mesh(new T.BoxGeometry(W + 0.03, Hh + 0.03, 0.018), fm); f1.userData.noInk = true; f1.castShadow = true; photo.add(f1);
   const pic = new T.Mesh(new T.PlaneGeometry(W, Hh), K.mat('#ffffff', 0.7, { env: 0.3, map: tex(512, 640, print) })); pic.position.z = 0.0095; pic.userData.noInk = true; photo.add(pic);
-  K.anim('photo', photo, f => H.hold(photo, 'j_m', 'B', { off: [0, 0.1, 0.03], rot: [-12, 0, 0] }));
+  // held in both hands at its two sides: the frame is as wide as his hands are apart (each hand's centre on an edge), level
+  // between them, its picture to the lens and tipped back a little
+  const V = () => new T.Vector3(), MB = new T.Matrix4();
+  K.anim('photo', photo, f => { const a = H.at('j_m', 'L'), b = H.at('j_m', 'R'); if (!a || !b) { photo.visible = false; return; }
+    const x = V().subVectors(b, a); const d = x.length(); x.normalize(); const z = V().subVectors(stage.camera.position, a); z.y = 0; z.normalize();
+    const y = V().crossVectors(z, x).normalize(); z.crossVectors(x, y); photo.quaternion.setFromRotationMatrix(MB.makeBasis(x, y, z)); photo.rotateX(-0.2);
+    photo.scale.setScalar(d / (W + 0.03)); photo.position.copy(a).add(b).multiplyScalar(0.5); photo.position.y += 0.02; photo.visible = true; });
   // the window warming (WARM): the cool window light gives way to a low gold sun through it
   const warm = new T.Group(); K.root.add(warm);
   K.anim('warm', warm, f => { const u = Math.min(1, Math.max(0, (f - WARM[0]) / (WARM[1] - WARM[0]))), e = u * u * (3 - 2 * u);
