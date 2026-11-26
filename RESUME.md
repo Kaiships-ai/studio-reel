@@ -50,3 +50,11 @@ On "pause": commit, push, RESUME.md, stop.
 ## Handoff state (session 2)
 No sub-agents running; kit worktrees kit-handgrip-fix / kit-handprops / kit-mixamo-elder removed (branches merged).
 RESUME-kit-handprops.md at the worktree root is obsolete (untracked; #209 merged).
+
+## Session 3 state (26/11, latest)
+- Committed: walk shots 0-226 travel with the girl (reel.js direct), 450 changed shot (front, low, lens 26; arm reads), FAULTS a5-* logged.
+- Stills re-rendered on Pro: track check + 450 at renders/track_check.jpg, renders/c450.jpg. fits PASS.
+- Motion clip a_0-504_720.mp4 is from BEFORE these camera changes: re-render after the hair lands (Studio: hold the 720p clip until detailed hair is approved).
+- PR #211 no-hair check (kit-hair-check worktree): open, CI pending, needs an independent reviewer before merge.
+- kit-hair-detail builder (worktree ~/orca/workspaces/studio-reel/kit-hair-detail, Pro ~/kit-hair-detail): running; look sheet -> Studio -> Kai.
+- Next: hair approved -> swap hair in reel.js -> clip render (render-pro.sh clip) -> gates (shotgate needs Pro pixi ffmpeg) -> post.py cut with audio/a-mix.wav -> blind watch off/on -> chefkiss -> VN page -> worker_done.
