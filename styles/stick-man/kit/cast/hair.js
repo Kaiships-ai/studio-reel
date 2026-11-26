@@ -59,7 +59,7 @@ const STYLES = {
   mullet: { cut: -0.42, col: [0.40, 0.25, 0.13], whorl: [0, 0.70, -0.70], locks: 20, twist: 0.12, jit: 0.30, clump: 0.024, base: 0.020, lift: 0.030, tips: 0.090, lo: edge({ front: 0.29, side: -0.04, back: -0.42 }),
             falls: [{ lon: [112, 180], n: 4, from: -0.20, to: -0.80, rho: 0.03, flat: 0.55, flare: 0.04, jit: 0.12, tip: 'point', ridges: 3 }] },
   // an afro: one round mass wider than the head, its surface curl clumps
-  afro:  { col: [0.24, 0.15, 0.10], whorl: [0, 0.80, -0.60], locks: 12, twist: 0, clump: 0.004, base: 0.02, lift: 0, tips: 0.03, ball: { c: [0, 0.16, -0.05], r: 0.70, nape: -0.40 }, bumps: [150, 0.13, 0.030, -0.45], lo: edge({ front: 0.30, temple: 0.28, side: -0.02, back: -0.40 }) },
+  afro:  { col: [0.24, 0.15, 0.10], whorl: [0, 0.80, -0.60], locks: 12, twist: 0, clump: 0.004, base: 0.02, lift: 0, tips: 0.075, jit: 0.30, ball: { c: [0, 0.16, -0.05], r: 0.70, nape: -0.40 }, bumps: [150, 0.13, 0.030, -0.45], lo: edge({ front: 0.30, temple: 0.28, side: -0.02, back: -0.40 }) },
   // ---- women
   // a chin bob: a bell that falls straight from the crown to the jaw, a blunt hem, a side part
   bob:   { cut: -0.12, col: [0.42, 0.26, 0.14], whorl: [0, 1, -0.08], locks: 30, jit: 0.25, twist: 0, clump: 0.016, base: 0.030, lift: 0.020, tips: 0.006, part: 0.12, lo: edge({ front: 0.30, side: -0.04 }),
@@ -90,8 +90,8 @@ const STYLES = {
                    { lon: [48, 62], n: 3, from: 0.22, to: -0.60, toAt: [0.7, 1.0, 0.85], rho: 0.12, flat: 0.45, flare: 0.03, wave: [0.03, 2.2], flick: 0.05, jit: 0.35, tip: 'point', ridges: 3, seed: 9 },   // face-framing locks
                    { lon: [50, 180], n: 7, from: -0.20, to: -0.78, rho: 0.06, flat: 0.45, flare: 0.04, wave: [0.035, 2.2], flick: 0.06, jit: 0.08, tip: 'point', ridges: 3 }] },
 };
-// drafts (Studio 28/11): the long styles' lengths are not ready (they fall inside the shoulders' width: hair-in-body; their sides read
-// as one short bowl). Their code stays for kit-hair-long; they are not offered: HAIR_STYLES leaves them out and person() refuses them
+// drafts (Studio 27/11): the long styles' lengths are not ready (they fall inside the shoulders' width: hair-in-body; their sides read
+// as one short bowl). Their code stays for the long-hair work; they are not offered: HAIR_STYLES leaves them out, person() refuses them and toonHair() refuses them unless patch.draft is set
 export const HAIR_DRAFTS = ['bob', 'long', 'braids', 'lob'];
 export const HAIR_STYLES = Object.keys(STYLES).filter(s => !HAIR_DRAFTS.includes(s));
 export const styleOf = style => STYLES[style];
@@ -266,8 +266,10 @@ function fall(F, cut) {
   return out;
 }
 
-export function toonHair(style = 'side', col, patch) {   // patch: fields over the style's own (measures try a length with it)
-  if (!STYLES[style]) throw new Error(`toonHair: no style '${style}' (${HAIR_STYLES.join(', ')})`); const st = { ...STYLES[style], ...patch };
+export function toonHair(style = 'side', col, patch) {   // patch: fields over the style's own (measures try a length with it); a draft style needs patch.draft: true
+  if (!STYLES[style]) throw new Error(`toonHair: no style '${style}' (${HAIR_STYLES.join(', ')})`);
+  if (HAIR_DRAFTS.includes(style) && !patch?.draft) throw new Error(`toonHair: '${style}' is a draft, not offered yet (pass { draft: true } to work on it)`);
+  const st = { ...STYLES[style], ...patch };
   const rgb = col || st.col;
   return Object.assign(() => {
     const g = new THREE.Group(); g.name = 'toonHair:' + style; g.position.y = -HAT_LIFT;   // built on the head's own centre

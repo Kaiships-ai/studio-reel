@@ -12,11 +12,9 @@ import { rigStick } from '../../styles/stick-man/tools/gates/motionlib.mjs';
 
 await rigStick();
 const { HAIR_STYLES } = await import('../../styles/stick-man/kit/cast/hair.js');
-const { hairPoints, sweep, sweepAll, CLIPS } = await import('./hair-measure.mjs');
-export const HAIR_IN_MM = 4;
-const pinned = HAIR_IN_MM;
+const { hairPoints, sweep, sweepAll, CLIPS, HAIR_IN_MM, NEAR_W } = await import('./hair-measure.mjs');   // the limits as the measure itself uses them
 
-test('the limit is the one written before anything was measured', () => { assert.equal(pinned, 4); assert.equal(CLIPS.length, 10); });
+test('the limit is the one written before anything was measured', () => { assert.equal(HAIR_IN_MM, 4); assert.equal(NEAR_W, 0.10); assert.equal(CLIPS.length, 10); });
 
 // the control: a lock hung from the nape straight down the back through the shoulders must fail, or the measure sees nothing
 test('control: a lock hung through the back fails', async () => {

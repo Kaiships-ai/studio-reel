@@ -24,7 +24,7 @@ import { getClip, placeClip } from '#motion-lib/index.js';
 import { bodySpec } from '#motion-lib/bodies.js';
 import '#kit/cast/wardrobe.js';
 import { bun } from '#kit/cast/extras.js';
-import { toonHair } from '#kit/cast/hair.js';
+import { toonHair, HAIR_DRAFTS } from '#kit/cast/hair.js';
 
 await useFaceStyle();
 const RUN = new URLSearchParams(location.search).get('run');
@@ -39,7 +39,7 @@ const TYPE = new URLSearchParams(location.search).get('type');
 // ?turn=1.0: this render's faceTurn (cast.js spec.faceTurn, 0.8 by default): the A|B still, never the engine's default
 const FACE_TURN = +new URLSearchParams(location.search).get('turn') || 0;
 const ROWS = (TYPES[TYPE] || [['hairCap (today)', 'adult', hairCap()], ['bun (today)', 'adult', bun()], ['side', 'adult'], ['crop', 'adult'], ['curly', 'adult'], ['elder', 'elder'], ['woman', 'adult'], ['girl', 'child']])
-  .map(([n, b, f]) => ({ n, b, f: f || toonHair(n) }));
+  .map(([n, b, f]) => ({ n, b, f: f || toonHair(n, null, HAIR_DRAFTS.includes(n) ? { draft: true } : undefined) }));
 const COLS = [{ az: 0, el: 0.06 }, { az: 0, el: -0.30 }, { az: 0, el: 0.04, close: 1 }, { az: 38, el: 0.04, close: 1 }, { az: 0, el: -0.32, close: 1 }, { az: 180, el: 0.04, close: 1 }, { az: 0, el: 3.0, close: 1 }, { az: 20, el: 0.04, close: 1, nod: 35 }, { az: 0, el: 0.04, close: 1, sil: 1 }, { az: 90, el: 0.04, close: 1, sil: 1 }];   // silhouette (Studio 28/11): hair + head, black on white, front and side: a style must read by its outline alone
 //   // top (lens 72 deg up) and bowed (the head nodded 35 deg on the neck, an eye-level lens): a parting shows (Studio 27/11)
 const W = innerWidth, H = innerHeight;

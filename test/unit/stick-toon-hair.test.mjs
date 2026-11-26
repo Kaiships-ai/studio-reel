@@ -13,7 +13,7 @@ const HAIR_MM = 0.01;
 
 test('every style builds one closed scalp (and its buns), on the head', () => {
   assert.deepEqual(HAIR_STYLES.slice(0, 6), ['side', 'crop', 'curly', 'elder', 'woman', 'girl']);
-  // the shipped set, pinned (Studio 28/11): the short styles that pass every hair check; the long ones are drafts until kit-hair-long
+  // the shipped set, pinned (Studio 27/11): the short styles that pass every hair check; the long ones are drafts until the long-hair work
   assert.deepEqual(HAIR_STYLES, ['side', 'crop', 'curly', 'elder', 'woman', 'girl', 'pompadour', 'buzz', 'mullet', 'afro', 'pixie', 'ponytail']);
   assert.deepEqual(HAIR_DRAFTS, ['bob', 'long', 'braids', 'lob']);
   for (const s of HAIR_STYLES) {
@@ -32,9 +32,12 @@ test('every style builds one closed scalp (and its buns), on the head', () => {
   }
   assert.throws(() => toonHair('no-such-style'), /no style/);
 });
+test('a bare toonHair of a draft throws; the opt-in builds it', () => {
+  for (const s of HAIR_DRAFTS) { assert.throws(() => toonHair(s), /is a draft/, s); assert.equal(typeof toonHair(s, null, { draft: true }), 'function', s); }
+});
 test('a draft style is refused by person(): the film\'s way in', async () => {
   const { person } = await import('../../styles/stick-man/kit/film.js');
-  for (const s of HAIR_DRAFTS) assert.throws(() => person({ name: 'Ann', hair: [toonHair(s)] }), /is a draft, not offered/, s);
+  for (const s of HAIR_DRAFTS) assert.throws(() => person({ name: 'Ann', hair: [toonHair(s, null, { draft: true })] }), /not offered yet/, s);
 });
 
 const corners = (a, b) => [0, 1, 2, 3, 4, 5, 6, 7].map(n => a.clone().set(n & 1 ? b.x : a.x, n & 2 ? b.y : a.y, n & 4 ? b.z : a.z));

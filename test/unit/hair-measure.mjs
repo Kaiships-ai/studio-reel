@@ -18,6 +18,8 @@ export const CLIPS = ['Adult_Idle_LookAround_Loop', 'Gest_LookUp_Once', 'Adult_G
 // (Gest_LookUp_Once: the bare back of the head 61 mm into the upper back; Adult_Act_PickUp_Once: the chin 27 mm into the chest,
 // measured 26/11), such a point is left out: no hair can be cut shorter than the head. Locks, tails, buns and thick masses always count
 export const NEAR_W = 0.10;
+// HAIR_IN_MM: written 26/11 before any style was measured, never raised: the depth (mm) the hair's surface may go into the body's; stick-hair-body.test.mjs holds every style to it
+export const HAIR_IN_MM = 4;
 const G = 0.02, NEAR_M = 0.06, HA = 0.5 * W_M, HB = 0.5 * HEAD_H * W_M, CELL = 0.04, v = new THREE.Vector3(), _t = new THREE.Triangle(), _q = new THREE.Vector3();
 
 // the hair's fill vertices that stand out of the head, in the hair group's frame (the head-centre frame), and the lowest of them (W
