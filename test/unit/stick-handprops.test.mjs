@@ -27,6 +27,12 @@ test('the five props are kit hand props with grip points; a two-hand prop names 
   let glow = 0; BUILD.lantern().traverse(o => { if (o.isMesh && !drawnSolid(o)) glow++; }); assert.equal(glow, 1, 'the lantern flame is a glow (drawn.js leaves it out)');
 });
 
+test('a clip that holds its own prop in the same slot keeps it (the phone in its own slot was dropped: 0 frames)', () => {
+  assert.deepEqual(K.holdIn({ x_hpR_phone: 1, a: 2 }, 'phone', false, true), { a: 2, x_hpR_phone: 1 });
+  assert.deepEqual(K.holdIn({ x_hpL_cup: 0.5 }, 'tin', false, true), { x_hpL_tin: 0.5 });
+  assert.deepEqual(K.holdIn({ x_hpR_cup: 1 }, 'baby', true, false), { x_hpB_baby: 1 });
+});
+
 const R = await K.hands(NEW);
 
 test('every pose a film holds them in is measured, and on its film pose a touching control passes and a 3 cm-off control fails', () => {
