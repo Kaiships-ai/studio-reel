@@ -168,3 +168,8 @@
 | a6-9 | Studio: dad reads bald at 15.2 s (2nd time) | 334-504 | head tilted back 34-40 deg under a 0.9-1.0 m lens: only the rim of the side part shows | fixed: tilt ≤ 14 deg, eyes look up; lenses of 350/440 at 2.0 m (reel.js, path.js) |
 | a6-10 | skill gates: kituse life/depth, importgate | all | V5 never loaded make-reel-stick-man | life on record, backdrop rows; importgate 4 left = kit way-in (expandClips, makeHandProp not in film.js; nested parts/<p> slug): kit item |
 | a6-11 | Studio watch-item: fringe covers dad's right eye | ~495 | head nods down at the end (nod +22 at 462-496) | whole-film pass |
+
+## Kai verdict 26/11 ~22:00 on part a v6
+| id | what | verdict | status |
+|---|---|---|---|
+| K-a6 | Part a v6 (720p cut, shotgate PASS) | Kai: "tệ quá", worse than V4 in every way | V5 STOPPED by Kai; no notes per shot yet |
