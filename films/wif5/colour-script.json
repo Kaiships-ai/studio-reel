@@ -1,0 +1,455 @@
+{
+ "film": "wif5",
+ "approved": {
+  "by": "",
+  "at": ""
+ },
+ "palette": {
+  "signature": "warm",
+  "offColor": "cool"
+ },
+ "crop": {
+  "top": 0.1,
+  "bottom": 0.12
+ },
+ "about": "What if 1 V5 colour script from LIGHT-RECIPE-V3 (lit in each part's set.js and reel.js, no grade) and the final-light stills in parts/<p>/renders. Ranges = measured on the stills (median) with a margin; a reviewer checks them. approved stays empty until Kai signs the S1 series look.",
+ "cuts": [],
+ "events": [],
+ "scenes": [
+  {
+   "id": "a",
+   "from": 0.0,
+   "to": 16.8,
+   "intent": "night square: warm amber practicals and cool blue sky; the vanish at ONE leaves the same light on an empty square",
+   "story": "4 -> 8",
+   "hues": [
+    "warm",
+    "cool"
+   ],
+   "flood": [],
+   "rb": [
+    1.33,
+    2.26
+   ],
+   "sat": [
+    0.64,
+    1
+   ],
+   "black": [
+    0,
+    9
+   ],
+   "luma": [
+    0,
+    30
+   ],
+   "measured": {
+    "beat_90": {
+     "luma": 4.0,
+     "rb": 2.11,
+     "sat": 0.97,
+     "black": 0.0
+    },
+    "beat_331": {
+     "luma": 17.94,
+     "rb": 1.48,
+     "sat": 0.72,
+     "black": 0.53
+    }
+   },
+   "events": [
+    {
+     "from": 10.9,
+     "to": 11.53,
+     "why": "the vanish at ONE"
+    }
+   ]
+  },
+  {
+   "id": "b",
+   "from": 16.8,
+   "to": 32.8,
+   "intent": "dim nursery: low warm cradle lamps, red monitor pulse on walls and faces",
+   "story": "7",
+   "hues": [
+    "warm",
+    "red"
+   ],
+   "flood": [],
+   "rb": [
+    1.35,
+    2.33
+   ],
+   "sat": [
+    0.41,
+    0.92
+   ],
+   "black": [
+    0,
+    9
+   ],
+   "luma": [
+    41,
+    67
+   ],
+   "measured": {
+    "beat_579": {
+     "luma": 54.99,
+     "rb": 1.5,
+     "sat": 0.49,
+     "black": 0.0
+    },
+    "beat_954": {
+     "luma": 53.01,
+     "rb": 2.18,
+     "sat": 0.84,
+     "black": 0.94
+    }
+   }
+  },
+  {
+   "id": "c",
+   "from": 32.8,
+   "to": 37.8,
+   "intent": "care home at low window sun: warm, soft, the warmest daylight of the film",
+   "story": "5",
+   "hues": [
+    "warm"
+   ],
+   "flood": [],
+   "rb": [
+    1.99,
+    2.29
+   ],
+   "sat": [
+    0.6,
+    0.76
+   ],
+   "black": [
+    0,
+    10
+   ],
+   "luma": [
+    101,
+    125
+   ],
+   "measured": {
+    "beat_1024": {
+     "luma": 112.69,
+     "rb": 2.14,
+     "sat": 0.68,
+     "black": 2.18
+    }
+   }
+  },
+  {
+   "id": "d",
+   "from": 37.8,
+   "to": 44.767,
+   "intent": "dusk water: lantern amber on hands and faces, violet sky, a sky of lanterns",
+   "story": "6",
+   "hues": [
+    "warm",
+    "pink"
+   ],
+   "flood": [],
+   "rb": [
+    0.92,
+    1.4
+   ],
+   "sat": [
+    0.45,
+    0.63
+   ],
+   "black": [
+    0,
+    11
+   ],
+   "luma": [
+    59,
+    94
+   ],
+   "measured": {
+    "beat_1196": {
+     "luma": 82.28,
+     "rb": 1.25,
+     "sat": 0.53,
+     "black": 2.96
+    },
+    "beat_1324": {
+     "luma": 71.08,
+     "rb": 1.07,
+     "sat": 0.55,
+     "black": 2.74
+    }
+   }
+  },
+  {
+   "id": "e",
+   "from": 44.767,
+   "to": 50.6,
+   "intent": "night office: cold overhead, every phone a red point; the red rises as they ring",
+   "story": "6",
+   "hues": [
+    "cool",
+    "red"
+   ],
+   "flood": [],
+   "rb": [
+    0.7,
+    1.14
+   ],
+   "sat": [
+    0.81,
+    1
+   ],
+   "black": [
+    0,
+    9
+   ],
+   "luma": [
+    1,
+    33
+   ],
+   "measured": {
+    "beat_1373": {
+     "luma": 12.99,
+     "rb": 0.85,
+     "sat": 0.95,
+     "black": 0.3
+    },
+    "beat_1483": {
+     "luma": 20.74,
+     "rb": 0.99,
+     "sat": 0.89,
+     "black": 0.91
+    }
+   },
+   "events": [
+    {
+     "from": 46.43,
+     "to": 46.93,
+     "why": "every phone lights red at once"
+    }
+   ]
+  },
+  {
+   "id": "f",
+   "from": 50.6,
+   "to": 55.7,
+   "intent": "shop: green-white strip light over bare shelves, one warm lamp on the tin",
+   "story": "7",
+   "hues": [
+    "green",
+    "warm"
+   ],
+   "flood": [],
+   "rb": [
+    1.46,
+    1.76
+   ],
+   "sat": [
+    0.47,
+    0.63
+   ],
+   "black": [
+    0,
+    8
+   ],
+   "luma": [
+    50,
+    74
+   ],
+   "measured": {
+    "beat_1598": {
+     "luma": 62.1,
+     "rb": 1.61,
+     "sat": 0.55,
+     "black": 0.0
+    }
+   }
+  },
+  {
+   "id": "g",
+   "from": 55.7,
+   "to": 63.133,
+   "intent": "3 a.m. kitchen: one amber pendant, blue window light",
+   "story": "5",
+   "hues": [
+    "warm",
+    "cool"
+   ],
+   "flood": [],
+   "rb": [
+    1.83,
+    2.13
+   ],
+   "sat": [
+    0.61,
+    0.77
+   ],
+   "black": [
+    0,
+    9
+   ],
+   "luma": [
+    70,
+    94
+   ],
+   "measured": {
+    "beat_1785": {
+     "luma": 81.8,
+     "rb": 1.98,
+     "sat": 0.69,
+     "black": 0.87
+    }
+   }
+  },
+  {
+   "id": "h",
+   "from": 63.133,
+   "to": 70.367,
+   "intent": "lab: green heartbeat light on faces; at the flatline red monitor light floods walls and faces (in lights, no fill)",
+   "story": "5 -> 7",
+   "hues": [
+    "green",
+    "red"
+   ],
+   "flood": [],
+   "rb": [
+    0.83,
+    1.74
+   ],
+   "sat": [
+    0.34,
+    0.6
+   ],
+   "black": [
+    0,
+    9
+   ],
+   "luma": [
+    66,
+    125
+   ],
+   "measured": {
+    "beat_2000": {
+     "luma": 78.15,
+     "rb": 0.98,
+     "sat": 0.42,
+     "black": 1.27
+    },
+    "beat_2090": {
+     "luma": 113.04,
+     "rb": 1.59,
+     "sat": 0.52,
+     "black": 0.59
+    }
+   },
+   "events": [
+    {
+     "from": 67.67,
+     "to": 68.13,
+     "why": "the heartbeat line goes flat: green to red monitor light"
+    }
+   ]
+  },
+  {
+   "id": "i",
+   "from": 70.367,
+   "to": 77.867,
+   "intent": "birthday room: candle and lamp amber, dark walls; the room empties, the light stays",
+   "story": "6",
+   "hues": [
+    "warm"
+   ],
+   "flood": [],
+   "rb": [
+    1.53,
+    2.46
+   ],
+   "sat": [
+    0.53,
+    0.83
+   ],
+   "black": [
+    0,
+    12
+   ],
+   "luma": [
+    52,
+    165
+   ],
+   "measured": {
+    "beat_2240": {
+     "luma": 153.39,
+     "rb": 1.68,
+     "sat": 0.61,
+     "black": 2.25
+    },
+    "beat_2300": {
+     "luma": 63.62,
+     "rb": 2.31,
+     "sat": 0.75,
+     "black": 3.86
+    }
+   }
+  },
+  {
+   "id": "j",
+   "from": 77.867,
+   "to": 95.867,
+   "intent": "small warm room: amber lamp and a cool window that warms at the end; the photo in his hands",
+   "story": "9 climax",
+   "hues": [
+    "warm",
+    "cool"
+   ],
+   "flood": [],
+   "rb": [
+    1.91,
+    2.53
+   ],
+   "sat": [
+    0.59,
+    0.77
+   ],
+   "black": [
+    0,
+    11
+   ],
+   "luma": [
+    140,
+    165
+   ],
+   "measured": {
+    "beat_2620": {
+     "luma": 152.19,
+     "rb": 2.06,
+     "sat": 0.67,
+     "black": 2.03
+    },
+    "beat_2790": {
+     "luma": 153.07,
+     "rb": 2.38,
+     "sat": 0.69,
+     "black": 2.89
+    }
+   }
+  },
+  {
+   "id": "k",
+   "from": 95.86666666666666,
+   "to": 100.53333333333333,
+   "intent": "the end card: black, white and pink words",
+   "hues": [
+    "pink"
+   ],
+   "hero": false,
+   "luma": [
+    0,
+    40
+   ]
+  }
+ ]
+}
