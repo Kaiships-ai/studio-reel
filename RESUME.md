@@ -105,3 +105,12 @@ Nothing runs. Pro fans automatic. Part a page: https://claude.ai/artifact/Aif1wV
 - Next: send Studio the scalp root cause + before|after; long hair option A (crown rigid to head, lengths bound to neck/upper back,
   seam opening measured, close-up run clip, restore lengths, temple patches); women sheet to Studio; then children, teens, elders.
 - Owed: stick-wardrobe determinism check (3x alone vs 3x full suite, depth at f54). Pro cleanup: ~/v5-wif5.old-68041324, ~/wd.tar.
+
+## STOPPED by Kai 26/11 (~22:00), Studio msg_065c4782f250: "tệ quá" after watching part a v6
+
+Nothing for V5 runs; start nothing for V5 until Kai/Studio says. State at stop:
+- Part a v6: films/wif5/parts/a/renders/a_v6_720.mp4 (720p cut; shotgate PASS 0 s; page https://claude.ai/artifact/Aif1wV5iBQ6fwUTAWZw6rP). Kai's verdict: tệ quá. His notes not in yet.
+- Gates: ◇S LOCK (V4 wording waiver), ◇1 LOCK (hook H3), ◇2c LOCK (S1 waived), ◇2a/◇2b OPEN (storyboard fix b-j was starting; review/campass1.md has the fixes).
+- Previs: films/wif5/review/previs/animatic.mp4 + hook-H1/H2/H3.mp4.
+- Part b: stills at final light (commit 756e5a4e); motion builder for b/c stopped mid-way (uncommitted bits committed as WIP below).
+- Hair B (kit-hair-30, #213): builder told to finish its step, commit, hold.

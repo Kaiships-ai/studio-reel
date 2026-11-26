@@ -431,7 +431,7 @@
    "size": "WS",
    "angle": "high",
    "lens": 34,
-   "move": "static",
+   "move": "truck",
    "purpose": "P12 · he runs down the aisle (seen from the side of it): lit full cradles and dark empty ones alternate, red beacons overhead",
    "see": "he runs down the aisle (seen from the side of it): lit full cradles and dark empty ones alternate, red beacons overhead",
    "story": 7,
@@ -522,7 +522,8 @@
    ],
    "panels": [
     "review/previs/animatic_f579.png"
-   ]
+   ],
+   "why_move": "campass1: the 5 s hold gets a slow truck along the aisle with him, full and empty cradles passing"
   },
   {
    "id": "SHb02",
@@ -548,7 +549,9 @@
    ],
    "panels": [
     "review/previs/animatic_f709.png"
-   ]
+   ],
+   "join": "flight",
+   "why_join": "flies on from the previous shot (cut budget: at most 4 hard cuts in any 15 s, cutgate C1)"
   },
   {
    "id": "SHb03",
@@ -596,7 +599,8 @@
    ],
    "panels": [
     "review/previs/animatic_f799.png"
-   ]
+   ],
+   "join": "cut"
   },
   {
    "id": "SHb04",
@@ -605,7 +609,7 @@
    "size": "MS",
    "angle": "low",
    "lens": 24,
-   "move": "static",
+   "move": "push",
    "purpose": "P15 · remember him: his face over the boy, tender, high in frame; the card and her photo on the cradle front below",
    "see": "remember him: his face over the boy, tender, high in frame; the card and her photo on the cradle front below",
    "story": 6,
@@ -646,7 +650,10 @@
    ],
    "panels": [
     "review/previs/animatic_f909.png"
-   ]
+   ],
+   "join": "flight",
+   "why_join": "flies on from the previous shot (cut budget: at most 4 hard cuts in any 15 s, cutgate C1)",
+   "why_move": "campass1: the 5 s hold gets a slow push-in on him and the 11:59 bundle"
   },
   {
    "id": "SHc01",
@@ -732,7 +739,9 @@
    ],
    "panels": [
     "review/previs/animatic_f1040.png"
-   ]
+   ],
+   "join": "flight",
+   "why_join": "flies on from the previous shot (cut budget: at most 4 hard cuts in any 15 s, cutgate C1)"
   },
   {
    "id": "SHc03",
@@ -772,15 +781,17 @@
    ],
    "panels": [
     "review/previs/animatic_f1068.png"
-   ]
+   ],
+   "join": "flight",
+   "why_join": "flies on from the previous shot (cut budget: at most 4 hard cuts in any 15 s, cutgate C1)"
   },
   {
    "id": "SHc04",
    "scene": "c",
    "f0": 1082,
-   "size": "INS",
+   "size": "MS",
    "angle": "high",
-   "lens": 20,
+   "lens": 28,
    "move": "static",
    "purpose": "P19 · both hands on the trolley bar, from ahead, his face clear above and behind it",
    "see": "both hands on the trolley bar, from ahead, his face clear above and behind it",
@@ -799,7 +810,10 @@
    ],
    "panels": [
     "review/previs/animatic_f1108.png"
-   ]
+   ],
+   "join": "flight",
+   "why_join": "flies on from the previous shot (cut budget: at most 4 hard cuts in any 15 s, cutgate C1)",
+   "why_size": "campass1 I1: softened from INS 20 mm so the visual peak waits for the climax SHj03"
   },
   {
    "id": "SHd01",
@@ -849,7 +863,9 @@
    "lines": [],
    "panels": [
     "review/previs/animatic_f1160.png"
-   ]
+   ],
+   "join": "flight",
+   "why_join": "flies on from the previous shot (cut budget: at most 4 hard cuts in any 15 s, cutgate C1)"
   },
   {
    "id": "SHd03",
@@ -898,7 +914,9 @@
    ],
    "panels": [
     "review/previs/animatic_f1223.png"
-   ]
+   ],
+   "join": "flight",
+   "why_join": "flies on from the previous shot (cut budget: at most 4 hard cuts in any 15 s, cutgate C1)"
   },
   {
    "id": "SHd04",
@@ -948,7 +966,9 @@
    ],
    "panels": [
     "review/previs/animatic_f1306.png"
-   ]
+   ],
+   "join": "flight",
+   "why_join": "flies on from the previous shot (cut budget: at most 4 hard cuts in any 15 s, cutgate C1)"
   },
   {
    "id": "SHe01",
@@ -1055,7 +1075,9 @@
    ],
    "panels": [
     "review/previs/animatic_f1418.png"
-   ]
+   ],
+   "join": "flight",
+   "why_join": "flies on from the previous shot (cut budget: at most 4 hard cuts in any 15 s, cutgate C1)"
   },
   {
    "id": "SHe03",
@@ -1081,7 +1103,9 @@
    ],
    "panels": [
     "review/previs/animatic_f1480.png"
-   ]
+   ],
+   "join": "flight",
+   "why_join": "flies on from the previous shot (cut budget: at most 4 hard cuts in any 15 s, cutgate C1)"
   },
   {
    "id": "SHf01",
@@ -1167,7 +1191,9 @@
    ],
    "panels": [
     "review/previs/animatic_f1591.png"
-   ]
+   ],
+   "join": "flight",
+   "why_join": "flies on from the previous shot (cut budget: at most 4 hard cuts in any 15 s, cutgate C1)"
   },
   {
    "id": "SHf03",
@@ -1192,7 +1218,9 @@
    "lines": [],
    "panels": [
     "review/previs/animatic_f1609.png"
-   ]
+   ],
+   "join": "flight",
+   "why_join": "flies on from the previous shot (cut budget: at most 4 hard cuts in any 15 s, cutgate C1)"
   },
   {
    "id": "SHf04",
@@ -1241,7 +1269,9 @@
    ],
    "panels": [
     "review/previs/animatic_f1643.png"
-   ]
+   ],
+   "join": "flight",
+   "why_join": "flies on from the previous shot (cut budget: at most 4 hard cuts in any 15 s, cutgate C1)"
   },
   {
    "id": "SHg01",
@@ -1291,7 +1321,9 @@
    "lines": [],
    "panels": [
     "review/previs/animatic_f1730.png"
-   ]
+   ],
+   "join": "flight",
+   "why_join": "flies on from the previous shot (cut budget: at most 4 hard cuts in any 15 s, cutgate C1)"
   },
   {
    "id": "SHg03",
@@ -1340,7 +1372,9 @@
    ],
    "panels": [
     "review/previs/animatic_f1787.png"
-   ]
+   ],
+   "join": "flight",
+   "why_join": "flies on from the previous shot (cut budget: at most 4 hard cuts in any 15 s, cutgate C1)"
   },
   {
    "id": "SHg04",
@@ -1367,7 +1401,9 @@
    ],
    "panels": [
     "review/previs/animatic_f1862.png"
-   ]
+   ],
+   "join": "flight",
+   "why_join": "flies on from the previous shot (cut budget: at most 4 hard cuts in any 15 s, cutgate C1)"
   },
   {
    "id": "SHh01",
@@ -1376,7 +1412,7 @@
    "size": "WS",
    "angle": "eye",
    "lens": 17,
-   "move": "static",
+   "move": "push",
    "purpose": "P35 · the tank, the green heartbeat, three hopeful faces",
    "see": "the tank, the green heartbeat, three hopeful faces",
    "story": 5,
@@ -1416,7 +1452,8 @@
    ],
    "panels": [
     "review/previs/animatic_f1962.png"
-   ]
+   ],
+   "why_move": "campass1: the 4.5 s hold gets a slow push-in on the three hopeful faces"
   },
   {
    "id": "SHh02",
@@ -1465,7 +1502,9 @@
    ],
    "panels": [
     "review/previs/animatic_f2042.png"
-   ]
+   ],
+   "join": "flight",
+   "why_join": "flies on from the previous shot (cut budget: at most 4 hard cuts in any 15 s, cutgate C1)"
   },
   {
    "id": "SHh03",
@@ -1492,7 +1531,9 @@
    ],
    "panels": [
     "review/previs/animatic_f2065.png"
-   ]
+   ],
+   "join": "flight",
+   "why_join": "flies on from the previous shot (cut budget: at most 4 hard cuts in any 15 s, cutgate C1)"
   },
   {
    "id": "SHh04",
@@ -1502,8 +1543,8 @@
    "angle": "eye",
    "lens": 18,
    "move": "static",
-   "purpose": "P38 · one of them bends, defeated (faces over the words)",
-   "see": "one of them bends, defeated (faces over the words)",
+   "purpose": "P38 · one of them stands still, head bowed, hands off the bench (standing breath, clean in a lab coat; no stoop, D05) (faces over the words)",
+   "see": "one of them stands still, head bowed, hands off the bench (faces over the words)",
    "story": 6,
    "screen_dir": "-",
    "axis": "A",
@@ -1519,7 +1560,10 @@
    ],
    "panels": [
     "review/previs/animatic_f2093.png"
-   ]
+   ],
+   "join": "flight",
+   "why_join": "flies on from the previous shot (cut budget: at most 4 hard cuts in any 15 s, cutgate C1)",
+   "clip": "Idle_Breath_Loop"
   },
   {
    "id": "SHi01",
@@ -1591,7 +1635,9 @@
    "lines": [],
    "panels": [
     "review/previs/animatic_f2246.png"
-   ]
+   ],
+   "join": "flight",
+   "why_join": "flies on from the previous shot (cut budget: at most 4 hard cuts in any 15 s, cutgate C1)"
   },
   {
    "id": "SHi03",
@@ -1629,7 +1675,9 @@
    ],
    "panels": [
     "review/previs/animatic_f2303.png"
-   ]
+   ],
+   "join": "flight",
+   "why_join": "flies on from the previous shot (cut budget: at most 4 hard cuts in any 15 s, cutgate C1)"
   },
   {
    "id": "SHj01",
@@ -1715,16 +1763,17 @@
    ],
    "panels": [
     "review/previs/animatic_f2552.png"
-   ]
+   ],
+   "join": "cut"
   },
   {
    "id": "SHj03",
    "scene": "j",
    "f0": 2600,
-   "size": "MCU",
+   "size": "CU",
    "angle": "eye",
-   "lens": 30,
-   "move": "static",
+   "lens": 50,
+   "move": "push",
    "purpose": "P44 · the photo: a young mother holding a newborn",
    "see": "the photo: a young mother holding a newborn",
    "story": 9,
@@ -1763,7 +1812,9 @@
    ],
    "panels": [
     "review/previs/animatic_f2650.png"
-   ]
+   ],
+   "join": "cut",
+   "why_move": "campass1 I1: the climax gets the film's biggest move: a slow push-in to CU on his face and the photo"
   },
   {
    "id": "SHj04",
@@ -1833,7 +1884,8 @@
    ],
    "panels": [
     "review/previs/animatic_f2788.png"
-   ]
+   ],
+   "join": "cut"
   },
   {
    "id": "SHk01",

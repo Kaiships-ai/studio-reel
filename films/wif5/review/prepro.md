@@ -1,7 +1,7 @@
 # Pre-production check · wif5
 
 46 shots · 11 scenes · 100.53 s (3016 f at 30 fps) · voice ends f2876
-Climax: SHj03 · cards 4.7 s · **FAIL**: 27 FAIL, 43 WARN
+Climax: SHj03 · cards 4.7 s · **FAIL**: 27 FAIL, 40 WARN
 
 ## Findings
 
@@ -10,7 +10,7 @@ Climax: SHj03 · cards 4.7 s · **FAIL**: 27 FAIL, 43 WARN
 | FAIL | T1 | SHa06 | 12 f is too short to read (min 15 f) |
 | FAIL | T1 | SHa07 | 12 f is too short to read (min 15 f) |
 | FAIL | T1 | SHa08 | 12 f is too short to read (min 15 f) |
-| FAIL | I1 | SHc04 | visual peak 7 comes before the climax SHj03 (visual 2): save the biggest size/lens/move for the climax |
+| FAIL | I1 | SHc02 | visual peak 6 comes before the climax SHj03 (visual 4): save the biggest size/lens/move for the climax |
 | FAIL | D1 | waive-K1-S1 | approved decision not placed anywhere: Kai waives the K1 stop (previs + hook) and the S1 look signature for V5; an independent reviewer READY plus Studio stand in, and Kai judges the part a cut and the whole film. |
 | FAIL | D1 | waive-S-script | approved decision not placed anywhere: V5 keeps V4's approved wording and voice (SPEC-V5 'Fixed', Kai's standing V5 decision); the S3 fact runs and the A/B tie are waived, never rewritten. |
 | FAIL | D1 | keep-a-count | approved decision not placed anywhere: Part a's count shots SHa06-a08 stay at 12 f each (the 3-2-1 punch); Kai's notes on the part a cut decide. |
@@ -25,7 +25,7 @@ Climax: SHj03 · cards 4.7 s · **FAIL**: 27 FAIL, 43 WARN
 | FAIL | O1 | SHa11 | flagged MISMATCH: needs options (safe / emo / bold) cut into the animatic and Kai's pick |
 | FAIL | O1 | SHb01 | flagged MISMATCH: needs options (safe / emo / bold) cut into the animatic and Kai's pick |
 | FAIL | O1 | SHb02 | flagged MISMATCH: needs options (safe / emo / bold) cut into the animatic and Kai's pick |
-| FAIL | O1 | SHc04 | flagged EARLY_PEAK: needs options (safe / emo / bold) cut into the animatic and Kai's pick |
+| FAIL | O1 | SHc02 | flagged EARLY_PEAK: needs options (safe / emo / bold) cut into the animatic and Kai's pick |
 | FAIL | O1 | SHg03 | flagged FLAT: needs options (safe / emo / bold) cut into the animatic and Kai's pick |
 | FAIL | O1 | SHg04 | flagged FLAT: needs options (safe / emo / bold) cut into the animatic and Kai's pick |
 | FAIL | O1 | SHh01 | flagged FLAT: needs options (safe / emo / bold) cut into the animatic and Kai's pick |
@@ -39,10 +39,8 @@ Climax: SHj03 · cards 4.7 s · **FAIL**: 27 FAIL, 43 WARN
 | WARN | P2 | SHa05 | action shot with one panel: draw the start and end keys (and the extreme pose for action) |
 | WARN | P2 | SHa10 | action shot with one panel: draw the start and end keys (and the extreme pose for action) |
 | WARN | P2 | SHa11 | action shot with one panel: draw the start and end keys (and the extreme pose for action) |
-| WARN | T2 | SHb01 | 5.0 s static hold: add a move, a second panel, a cut, or mark hold: "why" if the breath is the point |
 | WARN | P2 | SHb01 | action shot with one panel: draw the start and end keys (and the extreme pose for action) |
 | WARN | P2 | SHb02 | action shot with one panel: draw the start and end keys (and the extreme pose for action) |
-| WARN | T2 | SHb04 | 5.0 s static hold: add a move, a second panel, a cut, or mark hold: "why" if the breath is the point |
 | WARN | P2 | SHb04 | action shot with one panel: draw the start and end keys (and the extreme pose for action) |
 | WARN | P2 | SHd03 | action shot with one panel: draw the start and end keys (and the extreme pose for action) |
 | WARN | P2 | SHd04 | action shot with one panel: draw the start and end keys (and the extreme pose for action) |
@@ -53,7 +51,6 @@ Climax: SHj03 · cards 4.7 s · **FAIL**: 27 FAIL, 43 WARN
 | WARN | P2 | SHf04 | action shot with one panel: draw the start and end keys (and the extreme pose for action) |
 | WARN | P2 | SHg03 | action shot with one panel: draw the start and end keys (and the extreme pose for action) |
 | WARN | P2 | SHg04 | action shot with one panel: draw the start and end keys (and the extreme pose for action) |
-| WARN | T2 | SHh01 | 4.5 s static hold: add a move, a second panel, a cut, or mark hold: "why" if the breath is the point |
 | WARN | P2 | SHh01 | action shot with one panel: draw the start and end keys (and the extreme pose for action) |
 | WARN | P2 | SHi01 | action shot with one panel: draw the start and end keys (and the extreme pose for action) |
 | WARN | P2 | SHi02 | action shot with one panel: draw the start and end keys (and the extreme pose for action) |
@@ -72,10 +69,10 @@ Climax: SHj03 · cards 4.7 s · **FAIL**: 27 FAIL, 43 WARN
 | WARN | I3 | SHa09 | MISMATCH story 8 vs visual 2 |
 | WARN | I3 | SHa10 | MISMATCH story 7 vs visual 2 |
 | WARN | I3 | SHa11 | MISMATCH story 7 vs visual 3 |
-| WARN | I3 | SHb01 | MISMATCH story 7 vs visual 1 |
+| WARN | I3 | SHb01 | MISMATCH story 7 vs visual 2 |
 | WARN | I3 | SHb02 | MISMATCH story 6 vs visual 2 |
 | WARN | I3 | SHj01 | MISMATCH story 6 vs visual 1 |
-| WARN | I3 | SHj03 | MISMATCH story 9 vs visual 2 |
+| WARN | I3 | SHj03 | MISMATCH story 9 vs visual 4 |
 | WARN | I3 | SHj04 | MISMATCH story 7 vs visual 1 |
 
 Fixes for each check id: PREPRO.md section 8.
@@ -97,14 +94,14 @@ Fixes for each check id: PREPRO.md section 8.
 | SHa09 | a | 0:11.0 | 0.7 s | FS | eye | 30 | static | 8 | 2 (0/0/0/0/2) | FLAT MISMATCH |  | P9 · she is gone: her balloon rises out of where her hand was, string slack; he looks up at it; nobody behind him |
 | SHa10 | a | 0:11.7 | 3.0 s | WS | eye | 22 | static | 7 | 2 (0/1/0/0/1) | MISMATCH | L02 | P10 · her balloon higher and smaller against the bunting, his head tilted up following it |
 | SHa11 | a | 0:14.7 | 2.1 s | FS | high | 26 | static | 7 | 3 (0/1/1/0/1) | MISMATCH | L02 | P11 · low, from in front of him: his face with tears and, clear beside it, his arm up after her balloon (the shoulder-to-hand line reads; a5-3 twice failed from the side); lens above his eyes so his hair reads (Studio 26/11) |
-| SHb01 | b | 0:16.8 | 5.0 s | WS | high | 34 | static | 7 | 1 (0/0/1/0/0) | MISMATCH | L03 L04 L05 | P12 · he runs down the aisle (seen from the side of it): lit full cradles and dark empty ones alternate, red beacons overhead |
+| SHb01 | b | 0:16.8 | 5.0 s | WS | high | 34 | truck | 7 | 2 (0/0/1/1/0) | MISMATCH | L03 L04 L05 | P12 · he runs down the aisle (seen from the side of it): lit full cradles and dark empty ones alternate, red beacons overhead |
 | SHb02 | b | 0:21.8 | 3.7 s | FS | eye | 24 | static | 6 | 2 (0/1/0/0/1) | MISMATCH | L05 | P13 · he bends over the boy behind his cradle, his palm comes onto the swaddled chest, his face close |
 | SHb03 | b | 0:25.5 | 2.3 s | INS | high | 26 | static | 6 | 5 (2/1/1/0/1) |  | L06 | P14 · his palm resting on the blanket over the boy's chest, the 23:59 card and her photo on the cradle under it |
-| SHb04 | b | 0:27.8 | 5.0 s | MS | low | 24 | static | 6 | 3 (1/1/1/0/0) |  | L06 L07 L08 | P15 · remember him: his face over the boy, tender, high in frame; the card and her photo on the cradle front below |
+| SHb04 | b | 0:27.8 | 5.0 s | MS | low | 24 | push | 6 | 4 (1/1/1/1/0) |  | L06 L07 L08 | P15 · remember him: his face over the boy, tender, high in frame; the card and her photo on the cradle front below |
 | SHc01 | c | 0:32.8 | 1.4 s | FS | eye | 16 | static | 4 | 4 (0/2/0/0/2) |  | L09 | P16 · close across the table: his face high, his hand on his cup low, her cup poured and steaming in front |
-| SHc02 | c | 0:34.2 | 0.9 s | INS | eye | 20 | static | 4 | 6 (2/2/0/0/2) |  | L09 | P17 · his hand on his cup |
+| SHc02 | c | 0:34.2 | 0.9 s | INS | eye | 20 | static | 4 | 6 (2/2/0/0/2) | EARLY_PEAK | L09 | P17 · his hand on his cup |
 | SHc03 | c | 0:35.1 | 0.9 s | FS | high | 24 | static | 5 | 4 (0/1/1/0/2) |  | L09 L10 | P18 · the carer behind, bent over the meal trolley with four trays, seen from ahead of it, a little high: the bar under his face, his arms either side of it |
-| SHc04 | c | 0:36.1 | 1.7 s | INS | high | 20 | static | 4 | 7 (2/2/1/0/2) | EARLY_PEAK | L10 | P19 · both hands on the trolley bar, from ahead, his face clear above and behind it |
+| SHc04 | c | 0:36.1 | 1.7 s | MS | high | 28 | static | 4 | 5 (1/1/1/0/2) |  | L10 | P19 · both hands on the trolley bar, from ahead, his face clear above and behind it |
 | SHd01 | d | 0:37.8 | 0.3 s | INS | low | 26 | static | 5 | 6 (2/1/1/0/2) |  |  | P20 · his two fists round the bamboo crossbar, the lantern glowing over them, its light on his hands and his face below |
 | SHd02 | d | 0:38.1 | 1.1 s | WS | low | 20 | static | 5 | 5 (0/2/1/0/2) |  |  | P21 · at the water he holds the lit lantern up over his head; his son walks in to him along the bank |
 | SHd03 | d | 0:39.2 | 3.1 s | FS | low | 22 | static | 5 | 3 (0/1/1/0/1) |  | L11 | P22 · side by side, both look up at it: its light on the father's hands and on the boy's face from above |
@@ -120,15 +117,15 @@ Fixes for each check id: PREPRO.md section 8.
 | SHg02 | g | 0:57.2 | 1.0 s | INS | eye | 22 | static | 5 | 5 (2/1/0/0/2) |  |  | P32 · the crying baby in his arms, sweat on his temple |
 | SHg03 | g | 0:58.2 | 2.8 s | WS | eye | 20 | static | 4 | 3 (0/2/0/0/1) | FLAT | L17 | P33 · asleep in the chair with the baby on his chest; his son walks in with a blanket |
 | SHg04 | g | 1:01.0 | 2.1 s | FS | high | 20 | static | 4 | 4 (0/2/1/0/1) | FLAT | L17 | P34 · the blanket over both (faces under the words) |
-| SHh01 | h | 1:03.1 | 4.5 s | WS | eye | 17 | static | 5 | 2 (0/2/0/0/0) | FLAT | L18 | P35 · the tank, the green heartbeat, three hopeful faces |
+| SHh01 | h | 1:03.1 | 4.5 s | WS | eye | 17 | push | 5 | 3 (0/2/0/1/0) | FLAT | L18 | P35 · the tank, the green heartbeat, three hopeful faces |
 | SHh02 | h | 1:07.7 | 0.8 s | WS | eye | 17 | static | 7 | 4 (0/2/0/0/2) | FLAT | L19 | P36 · the line goes flat: red monitor light on their faces |
 | SHh03 | h | 1:08.5 | 0.7 s | FS | eye | 20 | static | 7 | 4 (0/2/0/0/2) | FLAT | L19 | P37 · his palm on the glass, the child curled inside, the dead monitor above (hand and face over the words) |
-| SHh04 | h | 1:09.2 | 1.2 s | WS | eye | 18 | static | 6 | 4 (0/2/0/0/2) |  | L19 | P38 · one of them bends, defeated (faces over the words) |
+| SHh04 | h | 1:09.2 | 1.2 s | WS | eye | 18 | static | 6 | 4 (0/2/0/0/2) |  | L19 | P38 · one of them stands still, head bowed, hands off the bench (standing breath, clean in a lab coat; no stoop, D05) (faces over the words) |
 | SHi01 | i | 1:10.4 | 3.7 s | WS | high | 18 | static | 4 | 4 (0/2/1/0/1) |  | L20 | P39 · old men round a cake with 80 on it (faces over the words) |
 | SHi02 | i | 1:14.1 | 1.6 s | MS | eye | 30 | static | 5 | 3 (1/0/0/0/2) |  |  | P40 · side close (contact): his hands on the platter, he blows, an o mouth, a soft cloud of breath, the flames laid flat away from him |
 | SHi03 | i | 1:15.7 | 2.2 s | FS | high | 22 | static | 6 | 3 (0/1/1/0/1) |  | L21 | P41 · the chairs round him empty, the hats left on them (faces over the words) |
 | SHj01 | j | 1:17.9 | 5.6 s | FS | eye | 22 | static | 6 | 1 (0/1/0/0/0) | MISMATCH | L22 | P42 · alone in a small warm room, the photo in his hands |
 | SHj02 | j | 1:23.5 | 3.2 s | INS | eye | 22 | static | 7 | 4 (2/1/0/0/1) |  | L23 | P43 · his two hands on the frame |
-| SHj03 | j | 1:26.7 | 3.3 s | MCU | eye | 30 | static | 9 | 2 (1/0/0/0/1) | MISMATCH | L24 | P44 · the photo: a young mother holding a newborn |
+| SHj03 | j | 1:26.7 | 3.3 s | CU | eye | 50 | push | 9 | 4 (2/0/0/1/1) | MISMATCH | L24 | P44 · the photo: a young mother holding a newborn |
 | SHj04 | j | 1:30.0 | 5.9 s | FS | eye | 24 | static | 7 | 1 (0/1/0/0/0) | MISMATCH | L24 L25 L26 | P45 · his face at peace; the window warms behind him |
 | SHk01 | k | 1:35.9 | 4.7 s | CARD | eye |  | static | 3 | 0 (0/0/0/0/0) |  |  | P · the end card: No women, no one after us. Send this to the woman who held you first. |

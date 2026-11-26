@@ -10,7 +10,7 @@
 <rect x="56" y="48" width="25.555555555555557" height="248" fill="#f3efe6"/><text x="60" y="290" fill="#999">hook</text>
 <line x1="896.8888888888889" x2="896.8888888888889" y1="48" y2="296" stroke="#d97757" stroke-dasharray="4 4"/><text x="892.8888888888889" y="60" text-anchor="end" fill="#b4583a">climax SHj03</text>
 <polyline points="56.0,196.8 75.6,196.8 95.1,196.8 114.7,172.0 134.2,196.8 153.8,147.2 173.3,147.2 192.9,122.4 212.4,97.6 232.0,122.4 251.6,122.4 271.1,122.4 290.7,147.2 310.2,147.2 329.8,147.2 349.3,196.8 368.9,196.8 388.4,172.0 408.0,196.8 427.6,172.0 447.1,172.0 466.7,172.0 486.2,147.2 505.8,172.0 525.3,147.2 544.9,147.2 564.4,147.2 584.0,122.4 603.6,122.4 623.1,172.0 642.7,172.0 662.2,172.0 681.8,196.8 701.3,196.8 720.9,172.0 740.4,122.4 760.0,122.4 779.6,147.2 799.1,196.8 818.7,172.0 838.2,147.2 857.8,147.2 877.3,122.4 896.9,72.8 916.4,122.4 936.0,221.6" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="6 4"/>
-<polyline points="56.0,246.4 75.6,271.2 95.1,221.6 114.7,172.0 134.2,221.6 153.8,196.8 173.3,221.6 192.9,221.6 212.4,246.4 232.0,246.4 251.6,221.6 271.1,271.2 290.7,246.4 310.2,172.0 329.8,221.6 349.3,196.8 368.9,147.2 388.4,196.8 408.0,122.4 427.6,147.2 447.1,172.0 466.7,221.6 486.2,196.8 505.8,196.8 525.3,196.8 544.9,221.6 564.4,221.6 584.0,196.8 603.6,147.2 623.1,196.8 642.7,221.6 662.2,172.0 681.8,221.6 701.3,196.8 720.9,246.4 740.4,196.8 760.0,196.8 779.6,196.8 799.1,196.8 818.7,221.6 838.2,221.6 857.8,271.2 877.3,196.8 896.9,246.4 916.4,271.2 936.0,296.0" fill="none" stroke="#2a5bd8" stroke-width="2.5"/>
+<polyline points="56.0,246.4 75.6,271.2 95.1,221.6 114.7,172.0 134.2,221.6 153.8,196.8 173.3,221.6 192.9,221.6 212.4,246.4 232.0,246.4 251.6,221.6 271.1,246.4 290.7,246.4 310.2,172.0 329.8,196.8 349.3,196.8 368.9,147.2 388.4,196.8 408.0,172.0 427.6,147.2 447.1,172.0 466.7,221.6 486.2,196.8 505.8,196.8 525.3,196.8 544.9,221.6 564.4,221.6 584.0,196.8 603.6,147.2 623.1,196.8 642.7,221.6 662.2,172.0 681.8,221.6 701.3,196.8 720.9,221.6 740.4,196.8 760.0,196.8 779.6,196.8 799.1,196.8 818.7,221.6 838.2,221.6 857.8,271.2 877.3,196.8 896.9,196.8 916.4,271.2 936.0,296.0" fill="none" stroke="#2a5bd8" stroke-width="2.5"/>
 <circle cx="56" cy="246.4" r="3.5" fill="#2a5bd8"/><text x="56" y="312" text-anchor="end" transform="rotate(-50 56 312)" fill="#444">SHa01</text>
 <circle cx="75.55555555555556" cy="271.20000000000005" r="3.5" fill="#2a5bd8"/><text x="75.55555555555556" y="312" text-anchor="end" transform="rotate(-50 75.55555555555556 312)" fill="#444">SHa02</text>
 <circle cx="95.11111111111111" cy="221.6" r="5" fill="#c0392b"/><text x="95.11111111111111" y="312" text-anchor="end" transform="rotate(-50 95.11111111111111 312)" fill="#444">SHa03</text>
@@ -22,14 +22,14 @@
 <circle cx="212.44444444444446" cy="246.4" r="5" fill="#c0392b"/><text x="212.44444444444446" y="312" text-anchor="end" transform="rotate(-50 212.44444444444446 312)" fill="#444">SHa09</text>
 <circle cx="232" cy="246.4" r="5" fill="#c0392b"/><text x="232" y="312" text-anchor="end" transform="rotate(-50 232 312)" fill="#444">SHa10</text>
 <circle cx="251.55555555555554" cy="221.6" r="5" fill="#c0392b"/><text x="251.55555555555554" y="312" text-anchor="end" transform="rotate(-50 251.55555555555554 312)" fill="#444">SHa11</text>
-<circle cx="271.1111111111111" cy="271.20000000000005" r="5" fill="#c0392b"/><text x="271.1111111111111" y="312" text-anchor="end" transform="rotate(-50 271.1111111111111 312)" fill="#444">SHb01</text>
+<circle cx="271.1111111111111" cy="246.4" r="5" fill="#c0392b"/><text x="271.1111111111111" y="312" text-anchor="end" transform="rotate(-50 271.1111111111111 312)" fill="#444">SHb01</text>
 <circle cx="290.66666666666663" cy="246.4" r="5" fill="#c0392b"/><text x="290.66666666666663" y="312" text-anchor="end" transform="rotate(-50 290.66666666666663 312)" fill="#444">SHb02</text>
 <circle cx="310.2222222222222" cy="172" r="3.5" fill="#2a5bd8"/><text x="310.2222222222222" y="312" text-anchor="end" transform="rotate(-50 310.2222222222222 312)" fill="#444">SHb03</text>
-<circle cx="329.77777777777777" cy="221.6" r="3.5" fill="#2a5bd8"/><text x="329.77777777777777" y="312" text-anchor="end" transform="rotate(-50 329.77777777777777 312)" fill="#444">SHb04</text>
+<circle cx="329.77777777777777" cy="196.79999999999998" r="3.5" fill="#2a5bd8"/><text x="329.77777777777777" y="312" text-anchor="end" transform="rotate(-50 329.77777777777777 312)" fill="#444">SHb04</text>
 <circle cx="349.3333333333333" cy="196.79999999999998" r="3.5" fill="#2a5bd8"/><text x="349.3333333333333" y="312" text-anchor="end" transform="rotate(-50 349.3333333333333 312)" fill="#444">SHc01</text>
-<circle cx="368.8888888888889" cy="147.2" r="3.5" fill="#2a5bd8"/><text x="368.8888888888889" y="312" text-anchor="end" transform="rotate(-50 368.8888888888889 312)" fill="#444">SHc02</text>
+<circle cx="368.8888888888889" cy="147.2" r="5" fill="#c0392b"/><text x="368.8888888888889" y="312" text-anchor="end" transform="rotate(-50 368.8888888888889 312)" fill="#444">SHc02</text>
 <circle cx="388.44444444444446" cy="196.79999999999998" r="3.5" fill="#2a5bd8"/><text x="388.44444444444446" y="312" text-anchor="end" transform="rotate(-50 388.44444444444446 312)" fill="#444">SHc03</text>
-<circle cx="408" cy="122.4" r="5" fill="#c0392b"/><text x="408" y="312" text-anchor="end" transform="rotate(-50 408 312)" fill="#444">SHc04</text>
+<circle cx="408" cy="172" r="3.5" fill="#2a5bd8"/><text x="408" y="312" text-anchor="end" transform="rotate(-50 408 312)" fill="#444">SHc04</text>
 <circle cx="427.55555555555554" cy="147.2" r="3.5" fill="#2a5bd8"/><text x="427.55555555555554" y="312" text-anchor="end" transform="rotate(-50 427.55555555555554 312)" fill="#444">SHd01</text>
 <circle cx="447.1111111111111" cy="172" r="3.5" fill="#2a5bd8"/><text x="447.1111111111111" y="312" text-anchor="end" transform="rotate(-50 447.1111111111111 312)" fill="#444">SHd02</text>
 <circle cx="466.6666666666667" cy="221.6" r="3.5" fill="#2a5bd8"/><text x="466.6666666666667" y="312" text-anchor="end" transform="rotate(-50 466.6666666666667 312)" fill="#444">SHd03</text>
@@ -45,7 +45,7 @@
 <circle cx="662.2222222222222" cy="172" r="3.5" fill="#2a5bd8"/><text x="662.2222222222222" y="312" text-anchor="end" transform="rotate(-50 662.2222222222222 312)" fill="#444">SHg02</text>
 <circle cx="681.7777777777778" cy="221.6" r="5" fill="#c0392b"/><text x="681.7777777777778" y="312" text-anchor="end" transform="rotate(-50 681.7777777777778 312)" fill="#444">SHg03</text>
 <circle cx="701.3333333333333" cy="196.79999999999998" r="5" fill="#c0392b"/><text x="701.3333333333333" y="312" text-anchor="end" transform="rotate(-50 701.3333333333333 312)" fill="#444">SHg04</text>
-<circle cx="720.8888888888889" cy="246.4" r="5" fill="#c0392b"/><text x="720.8888888888889" y="312" text-anchor="end" transform="rotate(-50 720.8888888888889 312)" fill="#444">SHh01</text>
+<circle cx="720.8888888888889" cy="221.6" r="5" fill="#c0392b"/><text x="720.8888888888889" y="312" text-anchor="end" transform="rotate(-50 720.8888888888889 312)" fill="#444">SHh01</text>
 <circle cx="740.4444444444445" cy="196.79999999999998" r="5" fill="#c0392b"/><text x="740.4444444444445" y="312" text-anchor="end" transform="rotate(-50 740.4444444444445 312)" fill="#444">SHh02</text>
 <circle cx="760" cy="196.79999999999998" r="5" fill="#c0392b"/><text x="760" y="312" text-anchor="end" transform="rotate(-50 760 312)" fill="#444">SHh03</text>
 <circle cx="779.5555555555555" cy="196.79999999999998" r="3.5" fill="#2a5bd8"/><text x="779.5555555555555" y="312" text-anchor="end" transform="rotate(-50 779.5555555555555 312)" fill="#444">SHh04</text>
@@ -54,7 +54,7 @@
 <circle cx="838.2222222222222" cy="221.6" r="3.5" fill="#2a5bd8"/><text x="838.2222222222222" y="312" text-anchor="end" transform="rotate(-50 838.2222222222222 312)" fill="#444">SHi03</text>
 <circle cx="857.7777777777777" cy="271.20000000000005" r="5" fill="#c0392b"/><text x="857.7777777777777" y="312" text-anchor="end" transform="rotate(-50 857.7777777777777 312)" fill="#444">SHj01</text>
 <circle cx="877.3333333333334" cy="196.79999999999998" r="3.5" fill="#2a5bd8"/><text x="877.3333333333334" y="312" text-anchor="end" transform="rotate(-50 877.3333333333334 312)" fill="#444">SHj02</text>
-<circle cx="896.8888888888889" cy="246.4" r="5" fill="#c0392b"/><text x="896.8888888888889" y="312" text-anchor="end" transform="rotate(-50 896.8888888888889 312)" fill="#444">SHj03</text>
+<circle cx="896.8888888888889" cy="196.79999999999998" r="5" fill="#c0392b"/><text x="896.8888888888889" y="312" text-anchor="end" transform="rotate(-50 896.8888888888889 312)" fill="#444">SHj03</text>
 <circle cx="916.4444444444445" cy="271.20000000000005" r="5" fill="#c0392b"/><text x="916.4444444444445" y="312" text-anchor="end" transform="rotate(-50 916.4444444444445 312)" fill="#444">SHj04</text>
 <circle cx="936" cy="296" r="3.5" fill="#2a5bd8"/><text x="936" y="312" text-anchor="end" transform="rotate(-50 936 312)" fill="#444">SHk01</text>
 <text x="936" y="24" text-anchor="end" fill="#555">— visual (blue) · - - story (grey) · red dot = flagged</text>
