@@ -59,3 +59,9 @@ RESUME-kit-handprops.md at the worktree root is obsolete (untracked; #209 merged
 - kit-hair-detail builder (worktree ~/orca/workspaces/studio-reel/kit-hair-detail, Pro ~/kit-hair-detail): running; look sheet -> Studio -> Kai.
 - Next: hair approved -> swap hair in reel.js -> clip render (render-pro.sh clip) -> gates (shotgate needs Pro pixi ffmpeg) -> post.py cut with audio/a-mix.wav -> blind watch off/on -> chefkiss -> VN page -> worker_done.
 - TODO after hair round 3 reaches Studio: stick-wardrobe 3x alone vs 3x under full suite, compare cloth depth at f54 (legR 7 mm seen once under load); differ = kit issue with numbers.
+
+## Session 4 state (26/11 14:55)
+- #211 merged (e737a589). #212 hair: round 3 builder (Opus medium) running in kit-hair-detail: crop flat black cap, curly ring outlines,
+  elder grey shell + back knot, every style's V-wedge nape. CI cause: review/hair-sheet/ = new top-level folder not in kit.manifest ->
+  move proof under a [dev] path (no bypass, no --no-verify).
+- Then: look sheet -> chefkiss -> Studio -> Kai. Nothing into part a until Kai approves hair. Then wardrobe determinism check, then RESUME "Next".
