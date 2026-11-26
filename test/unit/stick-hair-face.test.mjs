@@ -25,7 +25,7 @@ test('control: a card over half the face fails', () => {
   const r = faceShare(make); assert.ok(r.front < FACE_MIN, `front ${r.front}`);
 });
 // the full lengths of the long styles (behind the { neck: true, cut: null } flag) curtained the face on the 27/11 sheet
-test('control: the 27/11 long (full length) fails', () => { const r = faceShare('long', { neck: true, cut: null, draft: true }); assert.ok(Object.values(r).some(x => x < FACE_MIN), JSON.stringify(r)); });
+test('control: the 27/11 long (full length) fails', () => { const r = faceShare('long', JSON.parse(fs.readFileSync(new URL('../fixtures/hair-face/long-27-11.json', import.meta.url), 'utf8')));   /* frozen: today's long passes */ assert.ok(Object.values(r).some(x => x < FACE_MIN), JSON.stringify(r)); });
 
 
 

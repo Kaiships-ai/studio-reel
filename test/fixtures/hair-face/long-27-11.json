@@ -1,0 +1,4 @@
+{ "neck": true, "cut": null, "draft": true, "top": null, "ramp": null,
+  "hang": { "from": 0.02, "flare": 0.04, "hem": [[0, 0.30], [30, 0.28], [48, -0.40], [180, -0.42]], "tips": 0.09, "edge": 14 },
+  "falls": [{ "lon": [30, 48], "n": 3, "from": 0.22, "to": -0.80, "toAt": [0.75, 1.0, 0.9], "rho": 0.10, "flat": 0.32, "flare": 0.06, "jit": 0.35, "tip": "point", "ridges": 3, "seed": 9 },
+            { "lon": [52, 180], "n": 8, "from": -0.02, "to": -1.15, "rho": 0.065, "flat": 0.32, "flare": 0.03, "tip": "blunt", "ridges": 3 }] }
