@@ -629,7 +629,7 @@ async function buildAct(R, X) {
       const hp = a.S.parts.hands[s.side].getWorldPosition(new THREE.Vector3()), gap = gripGap(hp, props[n], s.side);
       v.copy(hp).project(stage.camera);
       const on = v.z < 1 && Math.abs(v.x) < 1 && Math.abs(v.y) < 1;
-      out.held.push({ actor: s.actor, prop: n, side: s.side, onScreen: on, gapPx: +(gap.cm / 100 * pxPerM(hp)).toFixed(2), gapCm: gap.cm, anchor: gap.anchor });
+      out.held.push({ actor: s.actor, prop: n, side: s.side, onScreen: on, gapPx: gap.cm == null ? null : +(gap.cm / 100 * pxPerM(hp)).toFixed(2), gapCm: gap.cm, anchor: gap.anchor });
     }
     // hand props (cast.js x_hp<L|R|B>_<kind>, a bag, a phone): the gap from the hand to the prop's grip socket; a prop held
     // between both hands (B) hangs its socket at the hands' midpoint, so gapPx keeps that midpoint to the socket while gapCm
@@ -645,7 +645,7 @@ async function buildAct(R, X) {
             : a.S.parts.hands[s].getWorldPosition(new THREE.Vector3());
           const gap = gripGap(hp, o, s), own = side === 'B' ? gripGap(a.S.parts.hands[s].getWorldPosition(new THREE.Vector3()), o, 'B') : gap;
           v.copy(hp).project(stage.camera);
-          out.held.push({ actor: a.name, prop: id.slice(1), side: s, onScreen: v.z < 1 && Math.abs(v.x) < 1 && Math.abs(v.y) < 1, gapPx: +(gap.cm / 100 * pxPerM(hp)).toFixed(2), gapCm: own.cm, anchor: own.anchor });
+          out.held.push({ actor: a.name, prop: id.slice(1), side: s, onScreen: v.z < 1 && Math.abs(v.x) < 1 && Math.abs(v.y) < 1, gapPx: gap.cm == null ? null : +(gap.cm / 100 * pxPerM(hp)).toFixed(2), gapCm: own.cm, anchor: own.anchor });
         }
       }
     }
