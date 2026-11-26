@@ -8,58 +8,76 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import * as THREE from 'three';
-import { gripGap, HAND_R } from '../../styles/stick-man/engine/grip.js';
+import { gripGap, handRadius } from '../../styles/stick-man/engine/grip.js';
+import { W_M } from '../../styles/stick-man/engine/cast.js';
 import { handgrip, GAP_CM } from '../../styles/stick-man/tools/gates/handgrip.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const FROZEN = JSON.parse(fs.readFileSync(path.join(ROOT, 'styles/stick-man/tools/gates/handgrip.limits.json'), 'utf8'));
 const GATE = path.join(ROOT, 'styles/stick-man/tools/gates/handgrip.mjs');
 
-test('the gate uses the frozen limit, and the frozen control (5 cm off) is beyond it', () => {
+test('the gate uses the frozen limit, and the frozen control (5 cm of air) is beyond it', () => {
   assert.equal(GAP_CM, FROZEN.GAP_CM);
-  assert.ok(FROZEN.control.move_cm - HAND_R * 100 > GAP_CM, 'a prop 5 cm off the hand centre must read over the limit');
+  assert.ok(FROZEN.control.move_cm > GAP_CM);
 });
 
-// a tin 8 cm across, its grip socket on its side; the hand dot's centre on the socket
-const tin = (grip = true) => {
+// a figure's hand as cast.js builds it: a dot 0.050 W (gloves 1.15x) on root, root scaled by spec.scale
+const figure = ({ scale = 1, gloves = false } = {}) => {
+  const root = new THREE.Group(); root.scale.setScalar(scale);
+  const g = new THREE.SphereGeometry(0.050 * W_M, 16, 10); if (gloves) g.scale(1.15, 1.15, 1.15);
+  const hand = new THREE.Mesh(g); root.add(hand); root.updateMatrixWorld(true);
+  return { root, hand, r: hand.getWorldScale(new THREE.Vector3()).x * 0.050 * W_M * (gloves ? 1.15 : 1) };
+};
+const hold = (f, x) => { f.hand.position.set(x / f.root.scale.x, 1 / f.root.scale.x, 0); f.root.updateMatrixWorld(true); };
+// a tin 8 cm across, its left face at x = 0 (its socket, when it has one, on that face)
+const tin = (grip) => {
   const o = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.1, 0.08));
-  if (grip) o.userData.grip = [0.04, 0, 0];
-  o.position.set(1 - 0.04, 1, 0); o.updateMatrixWorld(true);
+  if (grip) o.userData.grip = grip;
+  o.position.set(0.04, 1, 0); o.updateMatrixWorld(true);
   return o;
 };
-const HAND = new THREE.Vector3(1, 1, 0);
+// the hand's surface `air` m left of the tin's face
+const at = (f, air) => hold(f, -(air + f.r));
 
-test('engine/grip.js: a prop on its grip socket reads 0 cm, the control 5 cm off it fails', () => {
-  const o = tin();
-  assert.deepEqual(gripGap(HAND, o, 'R'), { cm: 0, anchor: 'grip' });
-  o.position.x -= FROZEN.control.move_cm / 100; o.updateMatrixWorld(true);
-  const g = gripGap(HAND, o, 'R');
-  assert.equal(g.anchor, 'grip');
-  assert.ok(Math.abs(g.cm - (5 - HAND_R * 100)) < 1e-6, `${g.cm}`);
+test('engine/grip.js: the hand radius is measured on the mesh, scale and gloves included', () => {
+  assert.ok(Math.abs(handRadius(figure().hand) - 0.030) < 1e-6);
+  assert.ok(Math.abs(handRadius(figure({ gloves: true }).hand) - 0.0345) < 1e-6);
+  assert.ok(Math.abs(handRadius(figure({ scale: 0.447 }).hand) - 0.030 * 0.447) < 1e-6);
+});
+
+test('engine/grip.js: a toddler (scale 0.447) 2.5 cm off a no-socket prop fails; an adult 1.0 cm off passes', () => {
+  const t = figure({ scale: 0.447 }); at(t, 0.025);
+  const gt = gripGap(t.hand, tin());
+  assert.ok(Math.abs(gt.cm - 2.5) < 0.01, `${gt.cm}`); assert.ok(gt.cm > GAP_CM);
+  const a = figure(); at(a, 0.010);
+  const ga = gripGap(a.hand, tin());
+  assert.ok(Math.abs(ga.cm - 1.0) < 0.01, `${ga.cm}`); assert.ok(ga.cm <= GAP_CM);
+  const gl = figure({ gloves: true }); at(gl, 0.010);
+  assert.ok(Math.abs(gripGap(gl.hand, tin()).cm - 1.0) < 0.01);
+});
+
+test('engine/grip.js: a one-hand prop whose socket sits on the hand but 5 cm off its mesh fails (the control)', () => {
+  // the engine snaps the socket onto the hand dot's centre, so the socket always reads 0: the mesh is what is measured
+  const f = figure(); at(f, FROZEN.control.move_cm / 100);
+  const sock = new THREE.Vector3(...f.hand.getWorldPosition(new THREE.Vector3()).toArray()).sub(new THREE.Vector3(0.04, 1, 0));
+  const g = gripGap(f.hand, tin(sock.toArray()));
+  assert.ok(Math.abs(g.cm - 5) < 0.01, `${g.cm}`);
   assert.equal(handgrip([{ f: 0, held: [{ actor: 'mum', prop: 'tin', side: 'R', onScreen: true, gapCm: g.cm, anchor: g.anchor }] }]).ok, false);
+  at(f, 0); assert.equal(gripGap(f.hand, tin([-0.04, 0, 0])).cm, 0, 'the hand on the tin: 0');
 });
 
-test('engine/grip.js: a socket per hand is read for that hand; a prop with no socket is measured to its box', () => {
-  const o = tin(false);
-  o.userData.grip = { L: [-0.04, 0, 0], R: [0.04, 0, 0] };
-  assert.equal(gripGap(HAND, o, 'R').cm, 0);
-  assert.ok(gripGap(HAND, o, 'L').cm > 5, 'the left socket is 8 cm from the right hand');
-  const b = tin(false);
-  assert.deepEqual(gripGap(HAND, b, 'R'), { cm: 0, anchor: 'bounds' });   // the hand on its side
-  b.position.x -= 0.05; b.updateMatrixWorld(true);
-  const g = gripGap(HAND, b, 'R');
-  assert.equal(g.anchor, 'bounds');
-  assert.ok(Math.abs(g.cm - (5 - HAND_R * 100)) < 1e-6, `${g.cm}`);
-});
-
-test('engine/grip.js: a two-hand prop (B) is measured from each hand to its box, never its socket at the hands\' midpoint', () => {
-  // the engine hangs a B prop's socket at the hands' midpoint, so the socket always reads 0: a bundle 30 cm wide
-  // floating 6 cm in front of two hands 30 cm apart, its socket between them, fails on both hands
+test('engine/grip.js: a two-hand prop is measured from each hand to its mesh, never its socket at the hands\' midpoint', () => {
+  // a bundle 30 cm wide 6 cm of air below two hands 30 cm apart, its socket between them: fails on both hands
   const o = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.2)); o.userData.grip = [0, 0.16, 0];
-  o.position.set(0, -0.16, 1); o.updateMatrixWorld(true);
-  const L = new THREE.Vector3(-0.15, 0, 1), R = new THREE.Vector3(0.15, 0, 1), mid = L.clone().add(R).multiplyScalar(0.5);
-  assert.equal(gripGap(mid, o, 'R').cm, 0, 'the old midpoint-to-socket read: always 0');
-  for (const h of [L, R]) { const g = gripGap(h, o, 'B'); assert.equal(g.anchor, 'bounds'); assert.ok(Math.abs(g.cm - (6 - HAND_R * 100)) < 1e-6, `${g.cm}`); assert.ok(g.cm > GAP_CM); }
+  const f = figure(); o.position.set(0, -(0.1 + 0.06 + f.r), 1); o.updateMatrixWorld(true);
+  for (const x of [-0.15, 0.15]) { f.hand.position.set(x, 0, 1); f.root.updateMatrixWorld(true);
+    const g = gripGap(f.hand, o); assert.ok(Math.abs(g.cm - 6) < 0.01, `${g.cm}`); assert.ok(g.cm > GAP_CM); }
+});
+
+test('engine/grip.js: a tilted prop is measured to its own mesh, not its world box', () => {
+  const o = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.02, 0.02)); o.rotation.z = Math.PI / 4; o.updateMatrixWorld(true);
+  const f = figure(); f.hand.position.set(0.12, -0.12, 0); f.root.updateMatrixWorld(true);   // inside the world box, 17 cm off the stick
+  assert.ok(gripGap(f.hand, o).cm > 10);
 });
 
 const held = (cm, o = {}) => ({ actor: 'mum', prop: 'baby', side: 'B', onScreen: true, gapCm: cm, anchor: 'bounds', ...o });
@@ -87,7 +105,7 @@ test('handgrip.mjs CLI: exit 0 clean, 1 on the 5 cm control, 2 on old rows', () 
     return spawnSync(process.execPath, [GATE, '--rows', p], { encoding: 'utf8', timeout: 20000 }); };
   const ok = run(clip([0, 0]));
   assert.equal(ok.status, 0, ok.stdout + ok.stderr); assert.match(ok.stdout, /handgrip PASS/);
-  const bad = run(clip([0, FROZEN.control.move_cm - HAND_R * 100]));
+  const bad = run(clip([0, FROZEN.control.move_cm]));
   assert.equal(bad.status, 1); assert.match(bad.stdout, /FAIL mum baby B f1 /);
   assert.equal(run([{ f: 0, held: [{ actor: 'a', prop: 'p', side: 'R', onScreen: true, gapPx: 1 }] }]).status, 2);
   fs.rmSync(dir, { recursive: true, force: true });
@@ -102,7 +120,7 @@ test('handgrip: an empty rows file, no rows in --frames, or a row with no held a
 
 test('engine/grip.js: a prop with empty bounds and no socket fails, never reads as old rows', () => {
   const o = new THREE.Group(); o.updateMatrixWorld(true);
-  const g = gripGap(HAND, o, 'R');
+  const g = gripGap(figure().hand, o);
   assert.equal(g.anchor, 'empty');
   const R = handgrip([{ f: 0, held: [{ actor: 'mum', prop: 'ghost', side: 'R', onScreen: true, gapPx: null, gapCm: g.cm, anchor: g.anchor }] }]);
   assert.equal(R.ok, false); assert.equal(R.unmeasured, 0); assert.deepEqual(R.faults.map(x => x.anchor), ['empty']);
