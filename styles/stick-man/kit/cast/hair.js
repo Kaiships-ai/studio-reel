@@ -52,7 +52,7 @@ function scalp(st) {
   if (st.bumps) for (let i = 0; i < st.bumps[0]; i++) { const y = (st.bumps[3] ?? 0.25) + (1 - (st.bumps[3] ?? 0.25)) * r(), a = r() * 2 * Math.PI, s = Math.sqrt(1 - y * y); bumps.push(new THREE.Vector3(s * Math.sin(a), y, s * Math.cos(a))); }
   return d => {
     const rh = headR(d), y = d.y * rh / W, lon = Math.abs(Math.atan2(d.x, d.z)) / DEG, { c, ph, q } = L(d), amp = sm(0.10, 0.45, q);
-    let cover = sm(-0.012, 0.012, y - table(st.lo, lon) + st.tips * (c - 0.55) * amp);
+    let cover = sm(-0.02, 0.02, y - table(st.lo, lon) + st.tips * (c - 0.55) * amp);
     if (st.sparse) cover *= 1 - sm(0.15, 0.30, y) * (1 - sm(st.sparse, st.sparse + 0.2, c));   // over the crown only the lock crests: scalp between them
     const front = sm(60, 20, lon) * Math.exp(-(((y - table(st.lo, lon)) / 0.10) ** 2));
     let t = st.base + st.lift * front + st.clump * amp * c, shade = -Math.pow(1 - c, 3) * amp + 0.12 * Math.cos(2 * Math.PI * ph * 3) * amp * c;
@@ -61,8 +61,8 @@ function scalp(st) {
     if (st.sweep) t += st.sweep * sm(st.part, st.part - 0.35, d.x * rh / W) * sm(0.05, 0.35, y) * sm(-0.6, 0.2, d.z);   // the swept side stands higher
     if (st.part != null && d.y > 0.25 && d.z > -0.55) { const p = sm(0.012, 0.040, Math.abs(d.x * rh / W - st.part)); t *= 0.25 + 0.75 * p; shade = Math.min(shade, -(1 - p)); if (st.sweep) cover *= sm(0.004, 0.016, Math.abs(d.x * rh / W - st.part)); }
     shade += 0.45 * Math.exp(-(((Math.asin(d.y) / DEG - 52) / 9) ** 2)) * c * c * sm(130, 60, lon);   // the light band round the crown
-    const k = sm(0.3, 0.7, cover);                               // a sharp hairline wall: a soft slope dipped under the face shell (a white sliver)
-    return { r: rh * TUCK + (rh + t * W - rh * TUCK) * k, shade };
+    const k = cover;                                             // a soft wall: a sharp one stair-steps on the sphere grid
+    return { r: rh * TUCK + (rh + t * W - rh * TUCK) * k, k, shade };
   };
 }
 // a bun: a ball wound round its own axis (the ridges coil), at `out` W past the scalp along dir
@@ -74,8 +74,8 @@ function bunField(b) {
 // one closed mesh from a field d -> { r, shade }: the sphere's uv kept for the painted map, the normals taken from the
 // welded surface so the uv seam never shows in the shading
 function fieldMesh(f, rgb) {
-  const g = new THREE.SphereGeometry(1, 192, 128), P = g.attributes.position, d = new THREE.Vector3();
-  for (let i = 0; i < P.count; i++) { d.fromBufferAttribute(P, i).normalize(); const r = f(d).r; P.setXYZ(i, d.x * r, d.y * r, d.z * r); }
+  const g = new THREE.SphereGeometry(1, 288, 192), P = g.attributes.position, d = new THREE.Vector3();
+  for (let i = 0; i < P.count; i++) { d.fromBufferAttribute(P, i).normalize(); const q = f(d); P.setXYZ(i, d.x * q.r, d.y * q.r, d.z * q.r); }
   const key = i => `${P.getX(i).toFixed(5)},${P.getY(i).toFixed(5)},${P.getZ(i).toFixed(5)}`, K = Array.from({ length: P.count }, (_, i) => key(i)), N = new Map(), I = g.index;
   const v = [0, 1, 2].map(() => new THREE.Vector3()), e = new THREE.Vector3(), n = new THREE.Vector3();
   for (let t = 0; t < I.count; t += 3) {
@@ -98,6 +98,10 @@ function fieldMesh(f, rgb) {
     x.putImageData(im, 0, 0); map = new THREE.CanvasTexture(cv); map.colorSpace = THREE.SRGBColorSpace; map.anisotropy = 8;
   }
   const m = solid(g, toon(map ? [1, 1, 1] : rgb, { shade: [0.82, 0.79, 0.93], sheen: 0, rough: 1, rim: 0.12, map }));
+  // the ink hull goes out only where hair grows: on the hairline wall (k < 1) it stays on the wall, inside the head
+  const h = m.children[0], A = h.geometry.attributes.position, HN = h.geometry.attributes.normal, T = h.geometry.attributes.inkT;
+  for (let i = 0; i < A.count; i++) { d.fromBufferAttribute(A, i).normalize(); const k = f(d).k ?? 1, back = T.getX(i) * (1 - k);
+    A.setXYZ(i, A.getX(i) - HN.getX(i) * back, A.getY(i) - HN.getY(i) * back, A.getZ(i) - HN.getZ(i) * back); T.setX(i, T.getX(i) * k); }
   m.receiveShadow = false; m.userData.hairStyle = true;
   return m;
 }
