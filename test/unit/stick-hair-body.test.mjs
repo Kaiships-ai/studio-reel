@@ -12,7 +12,7 @@ import { rigStick } from '../../styles/stick-man/tools/gates/motionlib.mjs';
 
 await rigStick();
 const { HAIR_STYLES } = await import('../../styles/stick-man/kit/cast/hair.js');
-const { hairPoints, sweep, CLIPS } = await import('./hair-measure.mjs');
+const { hairPoints, sweep, sweepAll, CLIPS } = await import('./hair-measure.mjs');
 export const HAIR_IN_MM = 4;
 const pinned = HAIR_IN_MM;
 
@@ -26,11 +26,12 @@ test('control: a lock hung through the back fails', async () => {
   assert.ok(r.Adult_Gest_NodYes_Once.mm > 20, `the control lock measured ${r.Adult_Gest_NodYes_Once.mm.toFixed(1)} mm in`);
 });
 
+const all = await sweepAll(HAIR_STYLES);   // each clip played once, every style measured on its frames
 for (const s of HAIR_STYLES) {
   // measured as it ships (shortened or not), named with the length it was designed to
   const { low: designed } = hairPoints(s, { cut: null }), { low } = hairPoints(s);
   test(`${s} (down to ${(-low).toFixed(2)} W, designed to ${(-designed).toFixed(2)}): never more than ${HAIR_IN_MM} mm into the body`, async () => {
-    const r = await sweep(s), bad = Object.entries(r).filter(([, x]) => x.mm > HAIR_IN_MM);
+    const r = all[s], bad = Object.entries(r).filter(([, x]) => x.mm > HAIR_IN_MM);
     assert.deepEqual(bad.map(([c, x]) => `${c} f${x.f}: ${x.mm.toFixed(1)} mm into the ${x.what}`), []);
   });
 }

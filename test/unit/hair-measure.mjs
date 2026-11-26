@@ -60,11 +60,22 @@ function limbSegs(S) {
     for (let i = k.startsWith('arm') ? 4 : 2; i + 2 < L.length; i++) out.push({ k, i, n: L.length, a: L[i], b: L[i + 1], r: Math.max(LIMB_R, ...sl.filter(s => i >= s.rings[0] && i < s.rings[1]).map(s => s.r)) }); }
   return out;
 }
+
+// every style through every clip, each clip played once: the rig does not move with the hair it wears and every toon style sits at
+// the same lift on the head, so one run of the clip measures them all, frame by frame (CI's 10-minute checks budget).
+// { style: { clip: { mm, what, f } } }
+export async function sweepAll(styles, clips = CLIPS) {
+  const P = Object.fromEntries(styles.map(s => [s, hairPoints(s).pts])), out = Object.fromEntries(styles.map(s => [s, {}]));
+  for (const clip of clips) { for (const s of styles) out[s][clip] = { mm: -1e9, what: '', f: -1 };
+    await play(['sweater:coral'], 'adult', { clip, whole: true }, { spec: { hair: [toonHair(styles[0])] }, each: (f, S) => { S.root.updateMatrixWorld(true); const ix = torsoIndex(S), segs = limbSegs(S);
+      for (const s of styles) { const r = hairInBody(S, P[s], ix, segs); if (r.mm > out[s][clip].mm) out[s][clip] = { ...r, f }; } } }); }
+  return out;
+}
 const segD = (p, a, b) => { const ab = _q.subVectors(b, a), t = Math.max(0, Math.min(1, v.subVectors(p, a).dot(ab) / ab.lengthSq())); return p.distanceTo(v.copy(a).addScaledVector(ab, t)); };
 
 // the deepest the hair goes into the body on this frame (mm; <= 0 nowhere in it) and where
-export function hairInBody(S, P) {
-  const H = S.parts.hair, M = H.matrixWorld.clone().multiply(new THREE.Matrix4().makeTranslation(0, toonHairLift(H), 0)), ix = torsoIndex(S), segs = limbSegs(S);
+export function hairInBody(S, P, ix = torsoIndex(S), segs = limbSegs(S)) {
+  const H = S.parts.hair, M = H.matrixWorld.clone().multiply(new THREE.Matrix4().makeTranslation(0, toonHairLift(H), 0));
   let worst = { mm: -1e9, what: '' }, headIn = 0; const w = new THREE.Vector3(), b0 = new THREE.Vector3(), box = ix.box.clone(); for (const s of segs) box.expandByPoint(s.a).expandByPoint(s.b); box.expandByScalar(0.05);
   for (const p of P) { w.copy(p).applyMatrix4(M); if (!box.containsPoint(w)) continue;
     if (p.base && inTorso(b0.copy(p.base).applyMatrix4(M), ix)) { headIn++; continue; }   // the clip puts the head itself in the body here
