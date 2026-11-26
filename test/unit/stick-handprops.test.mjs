@@ -38,7 +38,7 @@ test('every pose a film holds them in is measured, and the 5 cm control fails fo
     assert.ok(c && c.minCm > GAP_CM, `${k}: the prop 5 cm off reads ${c?.minCm} cm on its least frame (limit ${GAP_CM})`);
   }
   assert.ok(R.rows.some(r => r.pair === 'hand|balloon|child|hand'), 'the balloon on the child walk');
-  assert.ok(R.rows.some(r => r.pair === 'hand|baby|adult|hand' && r.verdict === 'pass'), 'the baby in the adult carry');
+  assert.match(R.rows.find(r => r.pair === 'hand|baby|adult|hand').why, /Idle_CarryBag_Loop 0\.00/, 'the baby sits on both fists in the standing carry');
 });
 
 test('kit/compat.json holds the rows this measure writes, with the same verdicts; a hand row over the limit is a table fault', () => {

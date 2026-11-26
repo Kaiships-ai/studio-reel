@@ -5,7 +5,8 @@
 //                             under limits.outfit.ring_mm, a piece moves at most limits.outfit.TRIM_MM on the shell as it bends
 //   mark|bold:<mark>|<hat>    the share of the bold mark's card a wardrobe hat hides, front and 24 deg round (stick-wardrobe-age.test.mjs);
 //                             over limits.mark.cover (0) is blocked
-//   hand|<prop>|<body>|<at>, light|<prop>|<light>   no measure yet: no row (untested)
+//   hand|<prop>|<body>|hand   the prop held in every pose a film holds it in (HAND_POSES), each frame the fist to its grip point
+//                             (engine/grip.js), worst frame over GAP_CM (handgrip.limits.json) is blocked; seat and light: no row (untested)
 import * as THREE from 'three';
 import { pair, SHAPES, FACE_BODIES } from '#kit/cast/compat.js';
 
@@ -63,4 +64,44 @@ export async function marks(hats = HATS) {
   return rows;
 }
 
-export async function kinds() { return [...await faces(), ...await marks(), ...await outfits()]; }
+// hand|<prop>|<body>|hand: the prop held in every pose a film holds it in on that body, each frame the fist to its grip
+// point (engine/grip.js: a two-hand prop's fists to their own points), worst frame against GAP_CM (handgrip.limits.json,
+// frozen before anything was measured). A clip that holds a prop of its own holds this one in that slot (a film's swap);
+// any other clip has it added in the hand. A frame the prop is not fully in the hand (a hand-over) is left out.
+const CARRY = ['Idle_CarryBag_Loop', 'Move_CarryBag_Walk_Loop', 'Gest_LookBackCarry_Once'], OLD = ['Idle_Stooped_Loop', 'Idle_Breath_Loop'];
+export const HAND_POSES = {
+  baby: { adult: CARRY, elder: OLD }, lantern: { adult: CARRY, elder: OLD }, photo: { adult: CARRY, elder: OLD },
+  tin: { adult: ['Act_HandOver_Once', 'Idle_Stand_Loop'], elder: OLD },
+  balloon: { adult: ['Act_HandOver_Once', 'Idle_Stand_Loop'], elder: OLD, child: ['Move_Walk_Fwd_Loop'] },
+};
+export const CONTROL_M = 0.05;   // the control: the prop moved 5 cm forward off the hand, every frame must fail
+export async function hands(props = Object.keys(HAND_POSES)) {
+  const M = await import('../../../../test/unit/wardrobe-measure.mjs'), { gripGap } = await import('#engine/grip.js'), { GAP_CM } = await import('./handgrip.mjs');
+  const { BUILD } = await import('#kit/cast/handprops.js'), { getClip } = await import('#motion-lib/index.js'); await import('#motion-lib/props.js');
+  const rows = [], controls = [], U = 'cm, a fist off its grip point (handgrip, worst frame)', v = new THREE.Vector3();
+  for (const kind of props) {
+    const two = BUILD[kind]().userData.mode === 'both'; let ctl = Infinity;
+    for (const [body, clips] of Object.entries(HAND_POSES[kind])) {
+      let worst = 0, at = '', frames = 0, over = 0; const per = {};
+      for (const clip of clips) {
+        const own = (getClip(clip, body).needs?.props || []).length > 0, slot = two ? 'B' : 'R', key = `x_hp${slot}_${kind}`;
+        const q = Q => { const o = { ...Q }; let put = false; for (const k of Object.keys(o)) { const m = /^x_hp([LRB])_\w+$/.exec(k); if (!m) continue; if (own) { o[`x_hp${two ? 'B' : m[1]}_${kind}`] = o[k]; put = true; } delete o[k]; } if (!own || !put) o[key] = 1; return o; };
+        await M.play([], body, { clip, whole: true }, { q, each: (f, S) => {
+          S.root.updateMatrixWorld(true);
+          for (const [id, o] of Object.entries(S.props)) {
+            if (!o.visible || !id.endsWith(kind) || (S.propState[id]?.w ?? 1) < 0.999) continue;
+            const side = id[0], fists = side === 'B' ? ['L', 'R'] : [side], gap = s => gripGap(S.parts.hands[s], o).cm ?? Infinity;
+            frames++; const g = Math.max(...fists.map(gap)); per[clip] = Math.max(per[clip] ?? 0, g); if (g > GAP_CM) over++; if (g > worst) { worst = g; at = `${clip} f${f}`; }
+            o.position.z += CONTROL_M / S.root.scale.x; o.updateMatrixWorld(true); ctl = Math.min(ctl, Math.max(...fists.map(gap))); o.position.z -= CONTROL_M / S.root.scale.x; o.updateMatrixWorld(true);
+          } } });
+      }
+      const p = pair('hand', kind, body, 'hand'), n = +worst.toFixed(2), each = `worst per clip: ${Object.entries(per).map(([c, x]) => `${c} ${x.toFixed(2)}`).join(', ')}`;
+      rows.push(!frames ? { ...row(p, 'hand', 'untested', null, null, null, 'no frame held it'), frames }
+        : n <= GAP_CM ? { ...row(p, 'hand', 'pass', n, U, 0, each), frames } : { ...row(p, 'hand', 'blocked', n, U, over, `${at}: a fist ${n} cm off its grip point (limit ${GAP_CM}), ${over} of ${frames} frames over; ${each}`), frames });
+    }
+    controls.push({ prop: kind, minCm: +ctl.toFixed(2), must: 'fail' });
+  }
+  return { rows, controls };
+}
+
+export async function kinds() { return [...await faces(), ...await marks(), ...await outfits(), ...(await hands()).rows]; }
