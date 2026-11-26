@@ -4,13 +4,13 @@
 // the cradle's front under them. He does not carry the boy. Stills (film frame = 504 + local): beat 579 (run), 719 (he bends
 // over him), contact 790 (his palm on the blanket, the card and photo under it), beat 954 (his face over the boy, the palm low). Kit only through
 // person()/place(); the bend is Act_PickUp_Once's own keys held at its deepest reach (no prop), the palm by arm IK.
-import { person, W_M } from '/styles/stick-man/kit/film.js';
+import { person, toonHair, W_M } from '/styles/stick-man/kit/film.js';
 import { expandClips } from '/styles/stick-man/motion-lib/index.js';
 import './props.js';
 import { MARKS, CHEST, RIM } from './set.js';
 
 const by = 'ep-whatif1-v5-director', why = 'V5 stills, measure not built';
-const doc = person({ name: 'wif5_doc', body: 'adult', outfit: ['scrubs:teal', 'stethoscope', 'nametag', 'pens'], face: ['scared', 'sad'], hair: [],
+const doc = person({ name: 'wif5_doc', body: 'adult', outfit: ['scrubs:teal', 'stethoscope', 'nametag', 'pens'], face: ['scared', 'sad'], hair: [toonHair('crop', [0.30, 0.19, 0.10])],
   clips: ['Move_Run_Fwd_Loop', 'Idle_Stand_Loop'] });
 
 const DEG = Math.PI / 180, clone = k => JSON.parse(JSON.stringify(k));
@@ -54,8 +54,8 @@ export default {
     { at: { f: 150 }, intent: 'low', why: 'B2 · he bends over the boy behind his cradle, his palm comes onto the swaddled chest, his face close', cut: 'cut',
       cam: { pos: [-1.85, -0.45, 1.25], aim: [-1.0, 0.6, 1.1], lens: 24 } },
     { at: { f: 260 }, intent: 'insert', why: 'contact · his palm resting on the blanket over the boy\'s chest, the 23:59 card and her photo on the cradle under it', cut: 'cut',
-      cam: { pos: [-1.25, -0.35, 1.35], aim: [-1.05, 0.35, 0.98], lens: 28 } },
+      cam: { pos: [-1.35, -1.0, 1.55], aim: [-1.0, 0.45, 1.12], lens: 26 } },
     { at: { f: 330 }, intent: 'low', why: 'B4 · remember him: his face over the boy, tender, high in frame; the card and her photo on the cradle front below', cut: 'cut',
-      cam: { pos: [-1.0, -0.25, 0.88], aim: [-1.0, 0.7, 1.01], lens: 18 } },
+      cam: { pos: [-1.0, -0.8, 0.95], aim: [-1.0, 0.5, 1.2], lens: 24 } },
   ],
 };

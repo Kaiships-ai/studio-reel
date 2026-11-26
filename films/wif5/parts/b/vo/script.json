@@ -1,0 +1,9 @@
+{
+ "model": "gemini-3.8-flash-tts",
+ "cast": {
+  "nar": "Achird"
+ },
+ "note": "wif5-tmp-a: one narrator. Every style starts with \"fast\" (\"fast\", \"fast, smug\"). Achird ~2.9-3.3 words/s (20 s = ~60 words).",
+ "say": {},
+ "lines": []
+}
