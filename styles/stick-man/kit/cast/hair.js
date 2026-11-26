@@ -1,0 +1,109 @@
+// Sculpted toon hair (Kai 26/11: "everything else is detailed, hair is not"). One closed mass per head, like curls() in
+// engine/cast.js, but shaped as hair grows: locks radiate from a whorl, the hairline sits on the forehead's edge so a low
+// front camera sees it, lock tips scallop that edge, a parting is a groove, and a painted map (the sweater's way: grooves
+// dark, a fine strand line, a light band on the lock tops) carries the detail an ink hull cannot. Rigid: it is built once
+// into the head's hair group (cast.js, matrixAutoUpdate off), nothing in it moves.
+//   hair: [toonHair('side', [0.28, 0.17, 0.10])]     styles: HAIR_STYLES; the colour is optional (each style has one)
+// hairCap / curls / bun are untouched: old films look the same.
+import * as THREE from 'three';
+import { toon } from '#engine/look.js';
+import { W_M, HEAD_H, HAT_LIFT, solid } from '#engine/cast.js';
+
+const W = W_M, HA = 0.5 * W, HB = 0.5 * HEAD_H * W, DEG = Math.PI / 180;
+const sm = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+const headR = d => 1 / Math.hypot(d.x / HA, d.y / HB, d.z / HA);
+// a hairline height (W above the head's centre) round the head: [|lon| deg, y] with smooth steps between
+const table = (T, x) => { if (x <= T[0][0]) return T[0][1]; for (let i = 1; i < T.length; i++) if (x <= T[i][0]) return T[i - 1][1] + (T[i][1] - T[i - 1][1]) * sm(T[i - 1][0], T[i][0], x); return T[T.length - 1][1]; };
+const edge = ({ front, temple = front - 0.03, side = -0.02, back = -0.30 }) => [[0, front], [30, temple], [62, 0.10], [84, side], [115, side - 0.06], [180, back]];
+const rand = seed => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+
+// in W. whorl: where the locks start; locks: how many round it; clump: a lock's height over its grooves; base: the mass's
+// thickness; lift: extra volume over the forehead; tips: how far the lock tips reach past the hairline; part: x of a parting
+// (W, + = the figure's left); lo / hi: the hairline below / a bald line above; bumps: curls on the top; buns
+const STYLES = {
+  side:  { col: [0.28, 0.17, 0.10], whorl: [0.22, 0.75, -0.62], locks: 15, twist: 0.35, clump: 0.032, base: 0.030, lift: 0.050, tips: 0.050, part: 0.17, lo: edge({ front: 0.30 }) },
+  crop:  { col: [0.16, 0.11, 0.08], whorl: [0, 0.70, -0.70], locks: 22, twist: 0.15, clump: 0.020, base: 0.024, lift: 0.022, tips: 0.032, lo: edge({ front: 0.31, side: 0.0 }) },
+  curly: { col: [0.12, 0.08, 0.06], whorl: [0, 0.80, -0.60], locks: 12, twist: 0.5, clump: 0.018, base: 0.030, lift: 0.020, tips: 0.040, bumps: [44, 0.11, 0.045], lo: edge({ front: 0.29, side: 0.02 }) },
+  elder: { col: [0.74, 0.74, 0.76], whorl: [0, 0.55, -0.83], locks: 28, twist: 0, clump: 0.012, base: 0.018, lift: 0, tips: 0.018,
+           lo: [[0, 2], [50, 2], [74, 0.10], [92, -0.06], [130, -0.14], [180, -0.26]], hi: [[0, 0], [55, 0], [80, 0.30], [120, 0.36], [180, 0.40]] },
+  woman: { col: [0.20, 0.11, 0.06], whorl: [0, 0.15, -1], locks: 20, twist: 0, clump: 0.016, base: 0.022, lift: 0.018, tips: 0.014, part: 0, lo: edge({ front: 0.30, side: -0.04 }),
+           buns: [{ dir: [0, 0.15, -1], r: 0.17, out: 0.07 }] },
+  girl:  { col: [0.15, 0.09, 0.05], whorl: [0, 1, -0.25], locks: 18, twist: 0.2, clump: 0.026, base: 0.026, lift: 0.030, tips: 0.060, lo: edge({ front: 0.21, temple: 0.20, side: -0.02 }),
+           buns: [{ dir: [0, 1, -0.30], r: 0.15, out: 0.06 }] },
+};
+export const HAIR_STYLES = Object.keys(STYLES);
+
+// locks radiate from the axis w: c = 1 on a lock's crest, 0 in the groove between two; q = the angle from w
+function locksOf(w, n, twist) {
+  const a = new THREE.Vector3(...w).normalize(), e1 = new THREE.Vector3(1, 0, 0).addScaledVector(a, -a.x).normalize(), e2 = a.clone().cross(e1);
+  return d => { const q = Math.acos(Math.max(-1, Math.min(1, d.dot(a)))), ph = (Math.atan2(d.dot(e2), d.dot(e1)) / (2 * Math.PI) + twist * q / Math.PI) * n;
+    return { c: Math.pow(0.5 + 0.5 * Math.cos(2 * Math.PI * ph), 0.6), ph, q }; };
+}
+
+function scalp(st) {
+  const L = locksOf(st.whorl, st.locks, st.twist), r = rand(7), bumps = [];
+  if (st.bumps) for (let i = 0; i < st.bumps[0]; i++) { const y = 0.25 + 0.75 * r(), a = r() * 2 * Math.PI, s = Math.sqrt(1 - y * y); bumps.push(new THREE.Vector3(s * Math.sin(a), y, s * Math.cos(a))); }
+  return d => {
+    const rh = headR(d), y = d.y * rh / W, lon = Math.abs(Math.atan2(d.x, d.z)) / DEG, { c, ph, q } = L(d), amp = sm(0.10, 0.45, q);
+    let cover = sm(-0.012, 0.012, y - table(st.lo, lon) + st.tips * (c - 0.55) * amp);
+    if (st.hi) cover *= 1 - sm(-0.02, 0.02, y - table(st.hi, lon) - st.tips * (c - 0.55));
+    const front = sm(60, 20, lon) * Math.exp(-(((y - table(st.lo, lon)) / 0.10) ** 2));
+    let t = st.base + st.lift * front + st.clump * amp * c, shade = -Math.pow(1 - c, 3) * amp + 0.12 * Math.cos(2 * Math.PI * ph * 3) * amp * c;
+    let top = 0; for (const b of bumps) top = Math.max(top, 1 - Math.acos(Math.min(1, d.dot(b))) / st.bumps[1] * W / rh);
+    if (top > 0) { t = Math.max(t, st.base + st.bumps[2] * Math.sqrt(top)); shade = Math.min(shade, -0.8 * (1 - top) ** 3 + 0.3 * top * top); }
+    if (st.part != null && d.y > 0.25 && d.z > -0.55) { const p = sm(0.010, 0.032, Math.abs(d.x * rh / W - st.part)); t *= 0.4 + 0.6 * p; shade = Math.min(shade, -(1 - p)); }
+    shade += 0.45 * Math.exp(-(((Math.asin(d.y) / DEG - 52) / 9) ** 2)) * c * c * sm(130, 60, lon);   // the light band round the crown
+    const k = sm(0.3, 0.7, cover);                               // a sharp hairline wall: a soft slope dipped under the face shell (a white sliver)
+    return { r: rh * 0.94 + (rh + t * W - rh * 0.94) * k, shade };
+  };
+}
+// a bun: a ball wound round its own axis (the ridges coil), at `out` W past the scalp along dir
+function bunField(b) {
+  const L = locksOf([0, 1, 0], 5, 0.9);
+  return d => { const { c } = L(d); return { r: b.r * W * (0.93 + 0.07 * c) * (1 - 0.12 * Math.abs(d.y)), shade: -Math.pow(1 - c, 3) + 0.3 * Math.exp(-(((d.y - 0.45) / 0.2) ** 2)) * c }; };
+}
+
+// one closed mesh from a field d -> { r, shade }: the sphere's uv kept for the painted map, the normals taken from the
+// welded surface so the uv seam never shows in the shading
+function fieldMesh(f, rgb) {
+  const g = new THREE.SphereGeometry(1, 192, 128), P = g.attributes.position, d = new THREE.Vector3();
+  for (let i = 0; i < P.count; i++) { d.fromBufferAttribute(P, i).normalize(); const r = f(d).r; P.setXYZ(i, d.x * r, d.y * r, d.z * r); }
+  const key = i => `${P.getX(i).toFixed(5)},${P.getY(i).toFixed(5)},${P.getZ(i).toFixed(5)}`, K = Array.from({ length: P.count }, (_, i) => key(i)), N = new Map(), I = g.index;
+  const v = [0, 1, 2].map(() => new THREE.Vector3()), e = new THREE.Vector3(), n = new THREE.Vector3();
+  for (let t = 0; t < I.count; t += 3) {
+    const ix = [0, 1, 2].map(k => I.getX(t + k)); ix.forEach((j, k) => v[k].fromBufferAttribute(P, j));
+    n.subVectors(v[1], v[0]).cross(e.subVectors(v[2], v[0]));           // area weighted
+    for (const j of ix) { const s0 = N.get(K[j]); if (s0) s0.add(n); else N.set(K[j], n.clone()); }
+  }
+  const GN = g.attributes.normal; for (let i = 0; i < P.count; i++) { const s0 = N.get(K[i]).clone().normalize(); GN.setXYZ(i, s0.x, s0.y, s0.z); }
+  let map = null;
+  const cw = 1024, ch = 512, cv = typeof document !== 'undefined' ? document.createElement('canvas') : null, x = cv?.getContext?.('2d');
+  if (cv) { cv.width = cw; cv.height = ch; }
+  const im = x?.createImageData?.(cw, ch);
+  if (im?.data) {                                                 // (headless tests stub the canvas: no map there)
+    for (let j = 0; j < ch; j++) for (let i = 0; i < cw; i++) {
+      const th = (j + 0.5) / ch * Math.PI, phi = (i + 0.5) / cw * 2 * Math.PI, s = Math.max(-1, Math.min(1, f(d.set(-Math.cos(phi) * Math.sin(th), Math.cos(th), Math.sin(phi) * Math.sin(th))).shade));
+      const k = s < 0 ? 1 + 0.45 * s : 1 + 0.30 * s, o = 4 * (j * cw + i);
+      for (let n = 0; n < 3; n++) im.data[o + n] = Math.min(255, 255 * (rgb[n] * k + (s > 0 ? 0.06 * s : 0)));
+      im.data[o + 3] = 255;
+    }
+    x.putImageData(im, 0, 0); map = new THREE.CanvasTexture(cv); map.colorSpace = THREE.SRGBColorSpace; map.anisotropy = 8;
+  }
+  const m = solid(g, toon(map ? [1, 1, 1] : rgb, { shade: [0.82, 0.79, 0.93], sheen: 0, rough: 1, rim: 0.12, map }));
+  m.receiveShadow = false; m.userData.hairStyle = true;
+  return m;
+}
+
+export function toonHair(style = 'side', col) {
+  const st = STYLES[style]; if (!st) throw new Error(`toonHair: no style '${style}' (${HAIR_STYLES.join(', ')})`);
+  const rgb = col || st.col;
+  return () => {
+    const g = new THREE.Group(); g.name = 'toonHair:' + style; g.position.y = -HAT_LIFT;   // built on the head's own centre
+    g.add(fieldMesh(scalp(st), rgb));
+    for (const b of st.buns || []) {
+      const d = new THREE.Vector3(...b.dir).normalize(), m = fieldMesh(bunField(b), rgb);
+      m.position.copy(d).multiplyScalar(headR(d) + b.out * W); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d); g.add(m);
+    }
+    return g;
+  };
+}

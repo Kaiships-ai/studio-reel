@@ -1,0 +1,54 @@
+// Sculpted toon hair (kit/cast/hair.js): every style builds, sits on the head (its hairline reaches the forehead's front, so a
+// low front camera sees it), and is rigid to the head through the clips that swing a head the most (no follow-through:
+// the hair keeps its place in the head's own frame on every frame).
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { ALL } from '../../styles/stick-man/motion-lib/index.js';
+import { rigClip, rigStick } from '../../styles/stick-man/tools/gates/motionlib.mjs';
+
+await rigStick();
+const { GUARD, W_M, HEAD_H } = await import('../../styles/stick-man/engine/cast.js');
+const { toonHair, HAIR_STYLES } = await import('../../styles/stick-man/kit/cast/hair.js');
+const HAIR_MM = 0.01;
+
+test('every style builds one closed scalp (and its buns), on the head', () => {
+  assert.deepEqual(HAIR_STYLES, ['side', 'crop', 'curly', 'elder', 'woman', 'girl']);
+  for (const s of HAIR_STYLES) {
+    const g = toonHair(s, [0.3, 0.2, 0.1])(), meshes = g.children.filter(o => o.isMesh);
+    assert.equal(meshes.length, ['woman', 'girl'].includes(s) ? 2 : 1, s);
+    const P = meshes[0].geometry.attributes.position; let top = 0, front = -1, out = 0;
+    for (let i = 0; i < P.count; i++) {
+      const x = P.getX(i), y = P.getY(i), z = P.getZ(i), e = Math.hypot(x / (0.5 * W_M), y / (0.5 * HEAD_H * W_M), z / (0.5 * W_M));
+      top = Math.max(top, y); out = Math.max(out, e);
+      if (e > 1.02 && Math.abs(x) < 0.05 && z > 0) front = Math.max(front, z);   // hair standing off the head in front (vertices are in the head-centre frame: the group undoes HAT_LIFT)
+    }
+    assert.ok(out > 1.05 && out < 1.6, `${s}: hair stands ${out.toFixed(2)} of the head out`);
+    if (s !== 'elder') assert.ok(front > 0.10, `${s}: no hair over the forehead (front ${front.toFixed(3)} m)`);
+    if (s !== 'elder') assert.ok(top > 0.5 * HEAD_H * W_M, `${s}: hair below the crown`);   // the elder's crown is bald
+  }
+  assert.throws(() => toonHair('mohawk'), /no style/);
+});
+
+const corners = (a, b) => [0, 1, 2, 3, 4, 5, 6, 7].map(n => a.clone().set(n & 1 ? b.x : a.x, n & 2 ? b.y : a.y, n & 4 ? b.z : a.z));
+for (const s of HAIR_STYLES) test(`${s}: rigid to the head through a look up and a jump`, async () => {
+  const was = GUARD.hair.slice(); GUARD.hair.splice(0, was.length, toonHair(s));
+  try {
+    for (const name of ['Gest_LookUp_Once', 'Adult_Act_Jump_Once']) {
+      const C = ALL.find(c => c.name === name), at = {}; let worst = 0, meshes = 0;
+      await rigClip({ ...C, needs: { ...C.needs, cap: true } }, C.body || 'adult', { each: (f, S) => {
+        const head = S.parts.head.parent; head.updateMatrixWorld(true); let i = 0;
+        assert.equal(S.parts.hair.matrixAutoUpdate, false);
+        S.parts.hair.traverse(o => {
+          if (!o.isMesh) return; if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); const k = i++;
+          corners(o.geometry.boundingBox.min, o.geometry.boundingBox.max).forEach((c, j) => {
+            const w = o.localToWorld(c), key = `${k}.${j}`; at[key] ||= head.worldToLocal(w.clone());
+            worst = Math.max(worst, 1000 * w.distanceTo(head.localToWorld(at[key].clone())));
+          });
+        });
+        meshes = i;
+      } });
+      assert.ok(meshes > 0, `${s} ${name}: no hair on the figure`);
+      assert.ok(worst < HAIR_MM, `${s} ${name}: hair moved ${worst.toFixed(3)} mm in the head's frame`);
+    }
+  } finally { GUARD.hair.splice(0, GUARD.hair.length, ...was); }
+});
