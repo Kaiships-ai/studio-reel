@@ -57,3 +57,13 @@ A crowd: `costume: ['sweater:' + outfit(i)]` (`outfit` from wardrobe.js).
   a point on the sharp corner bent a column 80-89 deg, and one just inside the front was pushed back up on the seat. Under a skirt or a
   dress the torso is drawn in behind the cloth (`tuck`) and painted the skirt's colour: a seat squeezes the cloth above the torso's foot.
 - `thinHull` takes the torso's own outline in under a garment; it must run before the figure's first bent pose.
+
+## Sculpted toon hair (kit/cast/hair.js)
+
+`hair: [toonHair('side' | 'crop' | 'curly' | 'elder' | 'woman' | 'girl', rgb?)]` (also from `kit/film.js`): one sculpted mass
+with locks from a whorl, a hairline on the forehead, a parting and a painted groove / strand / light-band map; buns for
+`woman` and `girl`. `hairCap`, `curls` and `bun` are unchanged. Look sheet:
+`node styles/stick-man/tools/render/shot.mjs --page styles/stick-man/tools/run/hairsheet.html --frames 0-39 --w 720 --h 1280 --out <dir>/h_%d.png`
+(rows: hairCap, bun, the six styles; columns: beat-0 front / low front, close front / 3/4 / low front, all in the coral
+sweater); `?run=1` plays the six in a look-around. Numbers: `node --test test/unit/stick-toon-hair.test.mjs` (6 s): every
+style builds, reaches the forehead, and stays rigid in the head's frame through a look up and a jump.

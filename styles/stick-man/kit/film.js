@@ -36,6 +36,7 @@ export { STYLE_PRESETS } from '#engine/motion.js';
 export { solid, lathe, hairCap, curls, W_M, HEAD_H, HAT_LIFT } from '#engine/cast.js';
 export { toon, lin, INK_RGB } from '#engine/look.js';
 export { bun } from './cast/extras.js';
+export { toonHair, HAIR_STYLES } from './cast/hair.js';
 export { PALETTES, PALETTE_ORDER, UNIFORM, outfit } from './cast/wardrobe.js';
 
 const list = v => (v == null ? [] : [].concat(v));
