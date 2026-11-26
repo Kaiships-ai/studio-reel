@@ -1,0 +1,32 @@
+{
+  "S": {
+    "verdict": "NOT READY",
+    "reasons": "scriptlint 2 S3 FAIL (L03-L06, L11-L15) with no Kai waiver; script-ab is a tie (V5 = V4 byte-identical), cannot win; no narration exists, the film is on-screen text; fact 87% OECD unverified live",
+    "by": "agent:ep1-prepro-review",
+    "at": "2026-11-26T22:00"
+  },
+  "1": {
+    "verdict": "READY",
+    "reasons": "hook pick H3 with 3 conditions (SHj02 blank grey, safe box, hold the photo); D01-D04, D06-D08 approved, D05 rejected (SHh04 stoop in a lab coat); develop PASS. Needs D05 fixed or dropped by Kai before D-checks hold",
+    "by": "agent:ep1-prepro-review",
+    "at": "2026-11-26T22:00"
+  },
+  "2a": {
+    "verdict": "NOT READY",
+    "reasons": "prepro 2a still 4 FAIL (SHa06-a08 T1 12 f, SHc04 I1 early peak); story outline holds and was locked, but the muted animatic does not carry it (22 guesses); swipe risk 0:00-0:06 and 4.5-5.6 s holds",
+    "by": "agent:ep1-prepro-review",
+    "at": "2026-11-26T22:00"
+  },
+  "2b": {
+    "verdict": "NOT READY",
+    "reasons": "20 O1 options not cut in, T1 x3, I1; 11 cuts in 15 s (limit 4 at 5); SHa06-a08 off the count; previs framing far wider than the real stills",
+    "by": "agent:ep1-prepro-review",
+    "at": "2026-11-26T22:00"
+  },
+  "2c": {
+    "verdict": "READY",
+    "reasons": "stills read at phone size, climax is brightest and warmest, curve holds; colour-script unsigned by Kai (S1 waived in DECISIONS waive-K1-S1); a and e dark: colourgate at 5 may flag, fix in light",
+    "by": "agent:ep1-prepro-review",
+    "at": "2026-11-26T22:00"
+  }
+}

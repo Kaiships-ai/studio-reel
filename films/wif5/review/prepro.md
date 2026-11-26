@@ -11,7 +11,7 @@ Climax: SHj03 · cards 4.7 s · **FAIL**: 25 FAIL, 43 WARN
 | FAIL | T1 | SHa07 | 12 f is too short to read (min 15 f) |
 | FAIL | T1 | SHa08 | 12 f is too short to read (min 15 f) |
 | FAIL | I1 | SHc04 | visual peak 7 comes before the climax SHj03 (visual 2): save the biggest size/lens/move for the climax |
-| FAIL | K1 | story | no reviewer has confirmed the scene feels and story scores (prepro.mjs --lock-story agent:<id> after an independent reviewer does) |
+| FAIL | D1 | waive-K1-S1 | approved decision not placed anywhere: undefined |
 | FAIL | O1 | SHa03 | flagged FLAT: needs options (safe / emo / bold) cut into the animatic and Kai's pick |
 | FAIL | O1 | SHa04 | flagged FLAT: needs options (safe / emo / bold) cut into the animatic and Kai's pick |
 | FAIL | O1 | SHa05 | flagged FLAT: needs options (safe / emo / bold) cut into the animatic and Kai's pick |

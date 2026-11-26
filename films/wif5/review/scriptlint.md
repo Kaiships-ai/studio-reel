@@ -1,6 +1,6 @@
 # Script check · wif5 · vo/script.json
 
-**FAIL**: 2 FAIL, 6 WARN · 26 lines, 160 words, ≈ 60.7 s at 3.1 words/s
+**FAIL**: 2 FAIL, 6 WARN · 26 lines, 160 words, ≈ 60.7 s at 3.1 words/s (max 100.6 s)
 
 | Level | Check | Where | What |
 | --- | --- | --- | --- |
