@@ -92,3 +92,29 @@ test('handgrip.mjs CLI: exit 0 clean, 1 on the 5 cm control, 2 on old rows', () 
   assert.equal(run([{ f: 0, held: [{ actor: 'a', prop: 'p', side: 'R', onScreen: true, gapPx: 1 }] }]).status, 2);
   fs.rmSync(dir, { recursive: true, force: true });
 });
+
+// review of #208 at 70a4b749: no data is never a pass; a prop with no drawn bounds fails; a bad --frames errors
+test('handgrip: an empty rows file, no rows in --frames, or a row with no held array is unmeasured, never a pass', () => {
+  for (const R of [handgrip([]), handgrip(clip([0, 0]), { frames: [50, 60] }), handgrip([{ f: 0 }, { f: 1, held: [] }])]) {
+    assert.equal(R.ok, false); assert.ok(R.unmeasured >= 1, JSON.stringify(R)); }
+  assert.equal(handgrip([{ f: 0, held: [] }]).ok, true, 'rows that carry held: [] measured no held prop: a pass');
+});
+
+test('engine/grip.js: a prop with empty bounds and no socket fails, never reads as old rows', () => {
+  const o = new THREE.Group(); o.updateMatrixWorld(true);
+  const g = gripGap(HAND, o, 'R');
+  assert.equal(g.anchor, 'empty');
+  const R = handgrip([{ f: 0, held: [{ actor: 'mum', prop: 'ghost', side: 'R', onScreen: true, gapPx: null, gapCm: g.cm, anchor: g.anchor }] }]);
+  assert.equal(R.ok, false); assert.equal(R.unmeasured, 0); assert.deepEqual(R.faults.map(x => x.anchor), ['empty']);
+});
+
+test('handgrip.mjs CLI: a malformed --frames value errors (exit 2), an empty rows file exits 2', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'handgrip-'));
+  const p = path.join(dir, 'rows.jsonl'); fs.writeFileSync(p, clip([0, 0]).map(r => JSON.stringify(r)).join('\n'));
+  for (const fr of ['abc', '5-', '9-3', '1-2-3']) {
+    const r = spawnSync(process.execPath, [GATE, '--rows', p, '--frames', fr], { encoding: 'utf8', timeout: 20000 });
+    assert.equal(r.status, 2, `--frames ${fr}: ${r.stdout}`); assert.match(r.stderr, /--frames/); }
+  fs.writeFileSync(p, '');
+  assert.equal(spawnSync(process.execPath, [GATE, '--rows', p], { encoding: 'utf8', timeout: 20000 }).status, 2);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
