@@ -10,7 +10,7 @@ const SKIN = [[0.86, 0.72, 0.60], [0.74, 0.56, 0.44], [0.60, 0.43, 0.33], [0.90,
 const hair = c => [bun(c)];
 const dadP = person({ name: 'wif5_dad', body: 'adult', outfit: ['sweater:coral'], face: ['excited'], skin: SKIN[0],
   clips: ['Move_Walk_Fwd_Loop', 'Idle_Stand_Loop', 'React_Surprise_Once'] });
-const girlP = person({ name: 'wif5_girl', body: 'child', age: 'child', outfit: ['scarf:mustard', 'sweater:sky'], skin: SKIN[3], hair: hair([0.30, 0.16, 0.07]), clips: ['Move_Walk_Fwd_Loop'] });
+const girlP = person({ name: 'wif5_girl', body: 'child', age: 'child', outfit: ['scarf:mustard', 'sweater:sky'], skin: SKIN[3], hair: hair([0.30, 0.16, 0.07]), prop: 'balloon', clips: ['Move_Walk_Fwd_Loop'] });
 const oldM = person({ name: 'wif5_oldman', body: 'elder', age: 'elder', outfit: ['sweater:slate'], skin: SKIN[1], clips: ['Idle_Breath_Loop'] });
 const oldW = person({ name: 'wif5_oldwoman', body: 'elder', age: 'elder', outfit: ['cardigan:plum', 'shirt:office', 'skirt:navy'], skin: SKIN[0], hair: hair([0.78, 0.76, 0.74]), clips: ['Idle_Breath_Loop'] });
 const MEN = [['sweater:forest'], ['shirt:work'], ['pens', 'shirt:office', 'tie'], ['sweater:navy'], ['sweater:mustard']];
@@ -46,7 +46,9 @@ const other = s => (s === 'armL' ? 'armR' : 'armL');
 const sG = girlP.spec.scale ?? 1, sD = dadP.spec.scale ?? 1, sE = oldM.spec.scale ?? 1;
 let G = expandClips([girlP.clip('Move_Walk_Fwd_Loop', { f: 0, pos: START, yaw: YAW, to: at(START, WALK) })]);
 G = gone(G, GONE);
-for (const k of G) if (k.f < GONE) { const side = grip(k, handAt(k.f), sG), o = other(side); k[o] = { ...k[o], ik: local(balloonHand(k.f), k.pos, k.yaw, sG), ikw: 1 }; }   // her other hand holds the balloon string
+for (const k of G) if (k.f < GONE) { const side = grip(k, handAt(k.f), sG), o = other(side); k[o] = { ...k[o], ik: local(balloonHand(k.f), k.pos, k.yaw, sG), ikw: 1 };
+  k[`x_hp${o === 'armL' ? 'L' : 'R'}_balloon`] = 1; }   // her other hand holds the kit balloon by its string
+for (const k of G) if (k.f >= GONE) for (const x of Object.keys(k)) if (x.startsWith('x_hp')) delete k[x];   // gone: the set's balloon takes over
 for (const k of G) if (k.f < GONE) { nod(k, ease(ramp(k.f, 282, 296)), -24, 20); nod(k, ease(ramp(k.f, 312, 322)), -22, -10); }
 mark(G, 0, { expr: 'happy', look: 'dad' }); mark(G, 120, { expr: 'grin', look: CLOCK }); mark(G, 284, { expr: 'excited', look: CLOCK }); mark(G, 312, { expr: 'grin', look: 'dad' });
 
@@ -63,14 +65,14 @@ span(D, 70, 122, k => raise(k, free, ease(Math.min(ramp(k.f, 70, 80), 1 - ramp(k
 span(D, 306, GONE, k => raise(k, free, ease(ramp(k.f, 306, 316))));
 const dEnd = dadAt(GONE);
 const D2 = expandClips([dadP.clip('Idle_Stand_Loop', { f: GONE, pos: dEnd, yaw: YAW, ease: 'snap' }), dadP.clip('Idle_Stand_Loop', { f: 400 }), dadP.clip('Idle_Stand_Loop', { f: 470 })]);
-for (const f of [GONE, 331, 340, 352, 380, 400, 420, 436, 450, 500]) keyAt(D2, f);
-const he = handAt(GONE - 1), handUp = [he[0] - RIGHT[0] * 0.30 + U[0] * 0.30, he[1] - RIGHT[1] * 0.30 + U[1] * 0.30, 1.0];   // later he reaches on after her
+for (const f of [GONE, 331, 340, 352, 366, 380, 420, 450, 462, 480, 496, 500]) keyAt(D2, f);
+const he = handAt(GONE - 1), handUp = [dEnd[0] + U[0] * 0.35 - RIGHT[0] * 0.2, dEnd[1] + U[1] * 0.35 - RIGHT[1] * 0.2, 1.95];   // he reaches up after her balloon
 for (const k of D2) { k.pos = [...dEnd, 0]; k.yaw = YAW;          // his hand stays out where hers was; his head goes up after the balloon, then down
-  const w = ease(ramp(k.f, 400, 436)); k[hold] = { ...k[hold], ik: local(he.map((v, i) => v * (1 - w) + handUp[i] * w), [...dEnd, 0], YAW, sD), ikw: 1 };
-  nod(k, 1, -12, 25); nod(k, ramp(k.f, 334, 352), -34, 20); nod(k, ramp(k.f, 400, 436), 24, 45); raise(k, free, Math.max(0, 1 - ramp(k.f, GONE, 340))); }
+  const w = ease(ramp(k.f, 352, 380)) * (1 - 0.7 * ease(ramp(k.f, 462, 496))); k[hold] = { ...k[hold], ik: local(he.map((v, i) => v * (1 - w) + handUp[i] * w), [...dEnd, 0], YAW, sD), ikw: 1 };
+  nod(k, 1, -12, 25); nod(k, ramp(k.f, 334, 352), -34, 20); nod(k, ease(ramp(k.f, 352, 380)), -40, 10); nod(k, ease(ramp(k.f, 462, 496)), 22, 30); raise(k, free, Math.max(0, 1 - ramp(k.f, GONE, 340))); }
 D = [...D, ...D2];
 mark(D, 0, { expr: 'grin', look: 'camera' }); mark(D, 150, { expr: 'happy', look: 'girl' }); mark(D, 284, { expr: 'excited', look: CLOCK }); mark(D, 312, { expr: 'grin', look: 'girl' });
-mark(D, GONE, { expr: 'shock', look: balloonAt(334).c }); mark(D, 352, { expr: 'shock', look: balloonAt(362).c }); mark(D, 420, { expr: 'sad', look: handUp });
+mark(D, GONE, { expr: 'shock', look: balloonAt(334).c }); mark(D, 352, { expr: 'shock', look: balloonAt(362).c }); mark(D, 380, { expr: 'sad', look: balloonAt(420).c }); mark(D, 470, { expr: 'sad', look: [...girl(GONE), 0.1] });
 
 // ---- the old couple: hand in hand, their joined hands go up at midnight; she is gone, his hand stays up
 const yE = faceClock([(ELDERS.man[0] + ELDERS.woman[0]) / 2, ELDERS.man[1]]), low = [ELDERS.hand[0], ELDERS.hand[1] + 0.06, 0.62], up = ELDERS.hand;
@@ -109,8 +111,8 @@ COUPLES.forEach(([mp, wp], i) => {
 // ---- cameras: one shot a beat (each a cut); a still is read at its beat frame
 const cam = (f, why, pos, aim, lens, to) => ({ at: { f }, intent: 'still', why: `P1 · ${why}`, cut: 'cut', cam: { pos, aim, lens },
   to: to || { pos, aim, lens }, move: { from: { f }, dur: 1, ease: 'linear' } });
-export const SHOTS = { 0: 0, 90: 86, 200: 196, contact_hands: 226, contact_old: 246, 300: 294, 329: 318, 331: 330, 360: 350, 450: 440 };
-export const STILLS = { beat_0: 0, beat_90: 90, beat_200: 200, contact_dad_daughter_hands: 230, contact_old_couple_hands: 250, beat_300: 300, beat_329: 329, beat_331: 331, beat_360: 360, beat_450: 450 };
+export const SHOTS = { 0: 0, 90: 86, 200: 196, contact_hands: 226, contact_old: 246, 300: 294, 310: 306, 329: 318, 342: 330, 360: 350, 450: 440 };
+export const STILLS = { beat_0: 0, beat_90: 90, beat_200: 200, contact_dad_daughter_hands: 230, contact_old_couple_hands: 250, beat_300: 300, beat_310: 310, beat_329: 329, beat_342: 342, beat_360: 360, beat_450: 450 };
 
 export default {
   title: 'wif5 a: countdown', fps: 30, glasses: false, style: 'kaiships', directDrift: 0, name: 'square',

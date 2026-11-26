@@ -61,7 +61,7 @@ export async function build(stage) {
     for (let z = 1.2; z < h - 0.9; z += 1.9) for (let x2 = -1.9; x2 < 1.6; x2 += 1.3) K.box([x2, -0.06, z], [x2 + 0.7, 0, z + 1.05], r() < 0.6 ? winOn : winOff, { r: 0, parent: g, cast: false }); }
 
   // ---- the clock tower, close: stone shaft, a big lit face low on it, a red second hand that reaches twelve at frame 330
-  // (00:00), and under the face a lit board counting the last seconds (10 ... 1, then 0)
+  // (00:00), and under the face a lit board with the time to the second (23:59:49 ... 23:59:59, then 00:00)
   const stone = M('#7a6e60', 0.9), trim = M('#3a3129', 0.7), T0 = TOWER;
   K.box([T0.x0, T0.y0, 0], [T0.x1, T0.y1, T0.h], stone, { r: 0.03 });
   K.box([T0.x0 - 0.2, T0.y0 - 0.2, T0.h], [T0.x1 + 0.2, T0.y1 + 0.2, T0.h + 0.4], trim);
@@ -78,10 +78,12 @@ export async function build(stage) {
   hand(R * 0.55, 0.14, trim, 0); hand(R * 0.82, 0.09, trim, -1);   // a breath before midnight: both hands at twelve
   const sec = hand(R * 0.88, 0.04, K.glow([0.85, 0.08, 0.06], 1.0), 0);
   K.anim('clock', sec, f => { sec.rotation.z = -((49 + f / 30) * 6) * Math.PI / 180; });   // 23:59:49 + f/30 s
-  // the countdown board: warm digits on black glass, the number of seconds left (ONE at frame 300, 0 from 330)
+  // the board: warm digits on black glass, the time to the second (23:59:59 at frame 300, 00:00 from 330)
   const bt = tex(512, 256, () => {}), bg = bt.image.getContext('2d');
   const drawBoard = n => { bg.fillStyle = '#120d0b'; bg.fillRect(0, 0, 512, 256); bg.strokeStyle = '#6b4a2a'; bg.lineWidth = 10; bg.strokeRect(5, 5, 502, 246);
-    bg.fillStyle = n === 0 ? '#ffd27a' : '#ffb547'; bg.font = 'bold 210px sans-serif'; bg.textAlign = 'center'; bg.textBaseline = 'middle'; bg.fillText(String(n), 256, 140); bt.needsUpdate = true; };
+    bg.fillStyle = n === 0 ? '#ffd27a' : '#ffb547'; bg.textAlign = 'center'; bg.textBaseline = 'middle';
+    if (n === 0) { bg.font = 'bold 190px sans-serif'; bg.fillText('00:00', 256, 136); } else { bg.font = 'bold 112px sans-serif'; bg.fillText(`23:59:${60 - n}`, 256, 136); }   // a clock everyone reads: the last second, then midnight
+    bt.needsUpdate = true; };
   const board = K.card([BOARD[0], BOARD[1], BOARD[2]], 3.0, 1.5, bt, { emissive: 1.0 });
   K.box([BOARD[0] - 1.62, BOARD[1] + 0.01, BOARD[2] - 0.82], [BOARD[0] + 1.62, BOARD[1] + 0.12, BOARD[2] + 0.82], trim, { r: 0.02 });
   let shown = null; K.anim('board', board, f => { const n = Math.max(0, 11 - Math.floor(f / 30)); if (n !== shown) { shown = n; drawBoard(n); } });
@@ -139,13 +141,15 @@ export async function build(stage) {
   for (const d of [0.2, 3.0, 6.0, 8.8]) { const p = at(START, d); K.point([p[0] + 0.3, p[1] - 0.3, 2.6], '#ffbe7a', 13, 3.6); }
   for (const p of [[-3.1, 5.0], [3.9, 3.2], [4.1, 7.1], [-3.3, -5.7], [-4.3, -4.5], [3.2, 4.3]]) K.point([p[0], p[1] - 0.4, 2.7], '#ffc888', 10, 3.4);
 
-  // ---- her red balloon: its string in her free hand; at midnight it rises free, the string trailing loose
-  const bal = new T.Group(), red = M([0.86, 0.10, 0.10], 0.35);
-  const skin = new T.Mesh(new T.SphereGeometry(0.17, 24, 18), red); skin.scale.set(1, 1.18, 1); skin.castShadow = true; bal.add(skin);
-  const knot = new T.Mesh(new T.ConeGeometry(0.03, 0.05, 10), red); knot.position.y = -0.21; bal.add(knot); K.root.add(bal);
+  // ---- her red balloon after midnight: until 330 it is the kit hand prop in her hand (reel.js); from 330 this copy of it
+  // (same size and red) rises from where her hand was, the string trailing loose
+  const bal = new T.Group(), red = M([0.95, 0.20, 0.25], 0.35);
+  const skin = new T.Mesh(new T.SphereGeometry(0.15, 24, 18), red); skin.scale.set(1, 1.18, 1); skin.castShadow = true; bal.add(skin);
+  const knot = new T.Mesh(new T.ConeGeometry(0.018, 0.03, 10), red); knot.position.y = -0.165; bal.add(knot); K.root.add(bal);
   const strM = M([0.92, 0.90, 0.86], 0.8); let str = null;
-  K.anim('balloon', bal, f => { const b = balloonAt(f); bal.position.copy(K.B(...b.c)); bal.rotation.z = 0.08 * Math.sin(f / 9);
-    const top = [b.c[0], b.c[1], b.c[2] - 0.23], e = b.end, sag = b.free ? 0.12 : 0.03;
+  K.anim('balloon', bal, f => { const b = balloonAt(f); bal.visible = b.free; bal.position.copy(K.B(...b.c)); bal.rotation.z = 0.08 * Math.sin(f / 9);
+    if (!b.free) { if (str) str.visible = false; return; }
+    const top = [b.c[0], b.c[1], b.c[2] - 0.18], e = b.end, sag = 0.10;
     const P = Array.from({ length: 7 }, (_, i) => { const t = i / 6, w = Math.sin(t * Math.PI) * sag * (b.free ? Math.sin(f / 5 + t * 4) : 1);
       return K.B(top[0] + (e[0] - top[0]) * t + w, top[1] + (e[1] - top[1]) * t, top[2] + (e[2] - top[2]) * t); });
     if (str) { K.root.remove(str); str.geometry.dispose(); }

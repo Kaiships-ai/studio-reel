@@ -38,21 +38,23 @@ export const CAMS = () => { const h230 = handAt(230), h329 = handAt(329), he = h
     [196, 'he looks down at her and smiles, hand in hand', [0.99, 4.46, 1.0], [m200[0], m200[1], 1.05], 30],
     [226, 'contact: her hand in his', [h230[0] + U[0] * 1.4 + RIGHT[0] * 0.05, h230[1] + U[1] * 1.4 + RIGHT[1] * 0.05, 0.6], [h230[0], h230[1], 0.8], 26],
     [246, 'contact: the old couple hand in hand', [ELDERS.hand[0] - 0.5, ELDERS.hand[1] + 0.8, 0.7], [ELDERS.hand[0], ELDERS.hand[1] + 0.06, 0.72], 26],
-    [294, 'ONE: from low behind them, heads up to the big clock at midnight, the board says 1', [0.85, 2.03, 0.6], [1.0, 8.92, 3.0], 24],
+    [294, 'ONE: from low behind them, close, the big clock at twelve over their heads, the board reads 23:59:59', [0.75, 3.0, 0.5], [0.5, 8.92, 4.0], 22],
+    [306, 'the clock looks back: from under the board, down onto their faces turned up to it, hand in hand', [0.5, 8.4, 3.3], [1.2, 5.55, 0.95], 38],
     [318, 'midnight: hand in hand, her balloon over her; the next frame she is gone, the balloon rises free and he looks at it', [2.4, 8.0, 1.15], [1.4, 6.0, 1.25], 27],
-    [330, 'she is gone: her balloon springs up free over her footprints, string slack; he looks up at it; nobody behind him', [1.11, 8.36, 1.8], [1.22, 6.09, 1.4], 30],
+    [330, 'she is gone: her balloon rises out of where her hand was, string slack; he looks up at it; nobody behind him', [1.11, 8.36, 1.8], [1.22, 6.09, 1.4], 30],
     [350, 'her balloon higher and smaller against the bunting, his head tilted up following it', [2.9, 8.2, 0.9], [1.6, 6.4, 2.3], 22],
-    [440, 'the camera stops on him: tears, his hand still out where hers was, her footprints ending in the snow', [1.55, 7.2, 1.3], [1.6, 6.1, 0.95], 20],
+    [440, 'low in front of him: his hand reaches up after her balloon, small and high over the square; tears', [3.32, 7.01, 0.3], [2.0, 6.49, 4.0], 14],
   ]; };
 export const camAt = f => { let c = null; for (const k of CAMS()) if (k[0] <= f) c = k; return c; };
 
-// her red balloon: its string in her free (outer) hand from the start; at midnight it rises free over where she stood
-export const STRING = 0.95;
-export const balloonHand = f => { const g = girl(Math.min(f, GONE - 1)); return [g[0] - RIGHT[0] * 0.24 + U[0] * 0.05, g[1] - RIGHT[1] * 0.24 + U[1] * 0.05, 0.42]; };   // in her reach: low at her side
+// her red balloon (the kit hand prop, kit/cast/handprops.js balloon: an 0.80 m string, the ball 0.15 m, centre 0.965 m over the
+// fist) in her free (outer) hand from the start; at midnight the set's copy of it takes over where her hand was and rises free
+export const STRING = 0.80, BALL_UP = 0.965;
+export const balloonHand = f => { const g = girl(Math.min(f, GONE - 1)); return [g[0] - RIGHT[0] * 0.24 + U[0] * 0.05, g[1] - RIGHT[1] * 0.24 + U[1] * 0.05, 0.50]; };   // in her reach: low at her side
 export function balloonAt(f) {
-  const h = balloonHand(f), sway = 0.05 * Math.sin(f / 11);
-  const c0 = [h[0] - RIGHT[0] * 0.10 + sway, h[1] - RIGHT[1] * 0.10, h[2] + STRING + 0.10];   // leans out so the string clears her head
+  const h = balloonHand(GONE - 1), c0 = [h[0], h[1], h[2] + BALL_UP];
   if (f < GONE) return { c: c0, end: h, free: false };
-  const t = (f - GONE) / 30, c = [c0[0] + U[0] * 0.9 * t + 0.04 * Math.sin(t * 3), c0[1] + U[1] * 0.9 * t, c0[2] + 0.7 + 1.0 * t + 0.3 * t * t];   // let go, it springs up and away toward the clock
-  return { c, end: [c[0] - 0.14 - 0.05 * Math.sin(t * 4), c[1] - 0.05, c[2] - 0.17 - STRING * 0.85], free: true };   // the string hangs slack
+  const t = (f - GONE) / 30, sway = 0.05 * Math.sin(t * 3) * Math.min(1, t * 2);
+  const c = [c0[0] + U[0] * 0.5 * t + sway, c0[1] + U[1] * 0.5 * t, c0[2] + 0.9 * t + 0.15 * t * t];   // let go: it rises slowly, drifting toward the clock
+  return { c, end: [c[0] - 0.06 * Math.sin(t * 4) * Math.min(1, t * 3), c[1] - 0.03, c[2] - BALL_UP + 0.04 * Math.min(1, t * 3)], free: true };   // the string hangs under it
 }
