@@ -36,13 +36,13 @@ export const CAMS = () => { const h230 = handAt(230), h329 = handAt(329), he = h
     [86, 'he waves his free arm with the crowd, her hand in his', [0.06, 2.83, 2.6], [-1.38, -0.47, 2.2], 30],
     [196, 'he looks down at her and smiles, hand in hand', [0.99, 4.46, 1.0], [m200[0], m200[1], 1.05], 30],
     [226, 'contact: her hand in his', [h230[0] + U[0] * 1.4 + RIGHT[0] * 0.05, h230[1] + U[1] * 1.4 + RIGHT[1] * 0.05, 0.6], [h230[0], h230[1], 0.8], 26],
-    [246, 'contact: the old couple hand in hand', [ELDERS.hand[0] - 0.5, ELDERS.hand[1] + 0.8, 0.7], [ELDERS.hand[0], ELDERS.hand[1] + 0.06, 0.72], 26],
+    [246, 'the old couple, whole: hand in hand, both faces, looking up together', [1.95, 6.4, 1.05], [3.27, 4.64, 0.95], 26],
     [294, 'ONE: from low behind them, close, the big clock at twelve over their heads, the board reads 23:59:59', [0.75, 3.0, 0.5], [0.68, 8.92, 4.0], 22],
-    [306, 'the clock looks back: from under the board, down onto their faces turned up to it, hand in hand', [0.5, 8.4, 3.3], [0.98, 5.5, 1.0], 32],
+    [306, 'the clock looks back: from under the board, down onto their faces turned up to it, hand in hand', [0.5, 8.4, 3.3], [1.0, 5.45, 0.85], 36],
     [318, 'midnight: hand in hand, her balloon over her; the next frame she is gone, the balloon rises free and he looks at it', [2.4, 8.0, 1.15], [1.4, 6.0, 1.25], 27],
     [330, 'she is gone: her balloon rises out of where her hand was, string slack; he looks up at it; nobody behind him', [1.11, 8.36, 1.8], [1.22, 6.09, 1.4], 30],
     [350, 'her balloon higher and smaller against the bunting, his head tilted up following it', [2.9, 8.2, 0.9], [1.6, 6.4, 2.3], 22],
-    [440, 'close in front of him, low: his hand reaches up after her balloon (gone over us, toward the clock); tears', [1.94, 7.61, 0.8], [1.84, 6.12, 1.7], 22],
+    [440, 'close in front of him, low: his hand reaches up after her balloon (gone over us, toward the clock); tears', [1.94, 7.61, 0.8], [1.80, 6.10, 1.45], 22],
   ]; };
 export const camAt = f => { let c = null; for (const k of CAMS()) if (k[0] <= f) c = k; return c; };
 

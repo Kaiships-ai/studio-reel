@@ -2,25 +2,26 @@
 // midnight (330) the women are gone mid-cheer. The dad's hand stays on air where his daughter's was, her red balloon rises
 // free over where she stood, the old man holds his wife's empty handbag. People come only from person() (fits table); hands meet by arm IK
 // on the clips' own keys (figure-local W units, engine/cast.js pose2).
-import { person, bun, W_M } from '/styles/stick-man/kit/film.js';
+import { person, bun, hairCap, curls, W_M } from '/styles/stick-man/kit/film.js';
 import { expandClips } from '/styles/stick-man/motion-lib/index.js';
 import { YAW, WALK, START, GONE, ELDERS, CLOCK, U, RIGHT, at, girl, dadAt, handAt, CAMS, balloonHand, balloonAt } from '/films/wif5/parts/a/path.js';
 
 const SKIN = [[0.86, 0.72, 0.60], [0.74, 0.56, 0.44], [0.60, 0.43, 0.33], [0.90, 0.78, 0.66]];
 const hair = c => [bun(c)];
-const dadP = person({ name: 'wif5_dad', body: 'adult', outfit: ['sweater:coral'], face: ['excited'], skin: SKIN[0],
+const dadP = person({ name: 'wif5_dad', body: 'adult', outfit: ['sweater:coral'], face: ['excited'], skin: SKIN[0], hair: [hairCap([0.20, 0.12, 0.07], 20)],
   clips: ['Move_Walk_Fwd_Loop', 'Idle_Stand_Loop', 'React_Surprise_Once'] });
 const girlP = person({ name: 'wif5_girl', body: 'child', age: 'child', outfit: ['scarf:mustard', 'sweater:sky'], skin: SKIN[3], hair: hair([0.30, 0.16, 0.07]), prop: 'balloon', clips: ['Move_Walk_Fwd_Loop'] });
-const oldM = person({ name: 'wif5_oldman', body: 'elder', age: 'elder', outfit: ['sweater:slate'], skin: SKIN[1], clips: ['Idle_Breath_Loop'] });
+const oldM = person({ name: 'wif5_oldman', body: 'elder', age: 'elder', outfit: ['sweater:slate'], skin: SKIN[1], hair: [hairCap([0.74, 0.74, 0.72], 34)], clips: ['Idle_Breath_Loop'] });
 const oldW = person({ name: 'wif5_oldwoman', body: 'elder', age: 'elder', outfit: ['cardigan:plum', 'shirt:office', 'skirt:navy'], skin: SKIN[0], hair: hair([0.78, 0.76, 0.74]), clips: ['Idle_Breath_Loop'] });
 const MEN = [['sweater:forest'], ['shirt:work'], ['pens', 'shirt:office', 'tie'], ['sweater:navy'], ['sweater:mustard']];
 const GIRTH = [1, 1.35, 1, 1, 1];
 const WOMEN = ['rose', 'sky', 'coral', 'teal', 'sand'];
+const MHAIR = [curls([0.08, 0.06, 0.05]), hairCap([0.42, 0.26, 0.12], 16), curls([0.50, 0.24, 0.10]), hairCap([0.10, 0.08, 0.07], 24), hairCap([0.62, 0.48, 0.26], 18)];   // short, no two neighbours alike
 const MCLIPS = ['Gest_Wave_Loop', 'Gest_Clap_Loop', 'Gest_LookUp_Once', 'React_Surprise_Once', 'Idle_Stand_Loop'];
 const WCLIPS = ['Gest_Clap_Loop', 'Gest_LookUp_Once', 'Idle_Stand_Loop'];
 // couples around the square, each facing the clock: [man, woman] spots
 const COUPLES = [[[-3.4, 5.2], [-2.85, 5.25]], [[3.6, 3.4], [4.15, 3.5]], [[3.8, 7.4], [4.35, 7.3]], [[-3.6, -5.4], [-3.05, -5.3]], [[-4.6, -4.2], [-4.05, -4.1]]];
-const men = MEN.map((o, i) => person({ name: `wif5_man${i}`, body: 'adult', outfit: o, girth: GIRTH[i], skin: SKIN[(i + 1) % 4], clips: MCLIPS }));
+const men = MEN.map((o, i) => person({ name: `wif5_man${i}`, body: 'adult', outfit: o, girth: GIRTH[i], skin: SKIN[(i + 1) % 4], hair: [MHAIR[i]], clips: MCLIPS }));
 const women = WOMEN.map((c, i) => person({ name: `wif5_woman${i}`, body: 'adult', outfit: ['skirt:navy', `sweater:${c}`], girth: 0.9, skin: SKIN[(i + 2) % 4],
   hair: hair([[0.16, 0.09, 0.05], [0.42, 0.24, 0.10], [0.08, 0.06, 0.05], [0.55, 0.36, 0.16], [0.24, 0.13, 0.06]][i]), clips: WCLIPS }));
 
@@ -66,7 +67,7 @@ span(D, 306, GONE, k => raise(k, free, ease(ramp(k.f, 306, 316))));
 const dEnd = dadAt(GONE);
 const D2 = expandClips([dadP.clip('Idle_Stand_Loop', { f: GONE, pos: dEnd, yaw: YAW, ease: 'snap' }), dadP.clip('Idle_Stand_Loop', { f: 400 }), dadP.clip('Idle_Stand_Loop', { f: 470 })]);
 for (const f of [GONE, 331, 340, 352, 366, 380, 420, 450, 462, 480, 496, 500]) keyAt(D2, f);
-const he = handAt(GONE - 1), handUp = [dEnd[0] + U[0] * 0.35 - RIGHT[0] * 0.2, dEnd[1] + U[1] * 0.35 - RIGHT[1] * 0.2, 1.95];   // he reaches up after her balloon
+const he = handAt(GONE - 1), handUp = [dEnd[0] + U[0] * 0.30 - RIGHT[0] * 0.48, dEnd[1] + U[1] * 0.30 - RIGHT[1] * 0.48, 1.9];   // he reaches up after her balloon, out on her side (clear of his head)
 for (const k of D2) { k.pos = [...dEnd, 0]; k.yaw = YAW;          // his hand stays out where hers was; his head goes up after the balloon, then down
   const w = ease(ramp(k.f, 352, 380)) * (1 - 0.7 * ease(ramp(k.f, 462, 496))); k[hold] = { ...k[hold], ik: local(he.map((v, i) => v * (1 - w) + handUp[i] * w), [...dEnd, 0], YAW, sD), ikw: 1 };
   nod(k, 1, -12, 25); nod(k, ramp(k.f, 334, 352), -34, 20); nod(k, ease(ramp(k.f, 352, 380)), -40, 10); nod(k, ease(ramp(k.f, 462, 496)), 22, 30); raise(k, free, Math.max(0, 1 - ramp(k.f, GONE, 340))); }

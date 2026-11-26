@@ -76,9 +76,9 @@ export async function build(stage) {
     const t = K.cube([Math.sin(a) * (R * 0.9 - L / 2), cy - 0.08, cz + Math.cos(a) * (R * 0.9 - L / 2)], [wd, 0.02, L], trim, { r: 0 }); t.rotation.z = -a; }
   const hand = (len, wdt, m, deg) => { const g = new T.Group(); g.position.copy(K.B(0, cy - 0.11, cz)); const b = new T.Mesh(new T.BoxGeometry(wdt, len, 0.03), m);
     b.position.y = len * 0.4; g.add(b); g.rotation.z = -deg * Math.PI / 180; g.userData.noInk = true; K.root.add(g); return g; };
-  hand(R * 0.55, 0.14, trim, 0); hand(R * 0.82, 0.09, trim, -1);   // a breath before midnight: both hands at twelve
+  hand(R * 0.55, 0.14, trim, -0.5); const mins = hand(R * 0.82, 0.09, trim, -6);   // 23:59: the minute hand one tick short of twelve, it jumps at midnight
   const sec = hand(R * 0.88, 0.04, K.glow([0.85, 0.08, 0.06], 1.0), 0);
-  K.anim('clock', sec, f => { sec.rotation.z = -((49 + f / 30) * 6) * Math.PI / 180; });   // 23:59:49 + f/30 s
+  K.anim('clock', sec, f => { sec.rotation.z = -((49 + f / 30) * 6) * Math.PI / 180; mins.rotation.z = (f < GONE ? 6 : 0) * Math.PI / 180; });   // 23:59:49 + f/30 s
   // the board: warm digits on black glass, the time to the second (23:59:59 at frame 300, 00:00 from 330)
   const bt = tex(512, 256, () => {}), bg = bt.image.getContext('2d');
   const drawBoard = n => { bg.fillStyle = '#120d0b'; bg.fillRect(0, 0, 512, 256); bg.strokeStyle = '#6b4a2a'; bg.lineWidth = 10; bg.strokeRect(5, 5, 502, 246);
@@ -149,7 +149,7 @@ export async function build(stage) {
     bal.position.copy(K.B(...b.end)); bal.rotation.set(0, 0, 0.10 * Math.sin(f / 9) * Math.min(1, (f - GONE) / 10)); });
 
   // ---- a skin of snow along the end of their walk, with their footprints in it: hers stop where she stood
-  const snowSkin = M([0.40, 0.43, 0.51], 0.95), print = M([0.17, 0.17, 0.22], 0.95);
+  const snowSkin = M([0.54, 0.57, 0.66], 0.95), print = M([0.17, 0.17, 0.22], 0.95);
   const gm = girl(300); K.sphere([gm[0] + 0.25, gm[1] + 0.2, 0], 1, snowSkin, { sx: 1.15, sy: 2.1, sz: 0.02 });
   const step = (p, side, w, l) => { const m = K.sphere([p[0] + RIGHT[0] * side, p[1] + RIGHT[1] * side, 0.019], 1, print, { sx: w, sy: l, sz: 0.004 }); m.castShadow = false; };
   for (let f = 250, i = 0; f <= GONE - 1; f += 7, i++) { const g = girl(f); step(g, i % 2 ? 0.05 : -0.05, 0.035, 0.065);
