@@ -72,12 +72,12 @@ Five more (26/11): men `pompadour`, `buzz`, `afro`; women `pixie`, `ponytail` (`
 parts of the same field: `crest` (a swept wave), `tight` (cut sides), `ball` (a mass wider than the head), `hang` (falls straight
 to a hem), `grain` / `edgeDark` (a buzz cut's stubble and hairline), `grid` (box-braid parts); and locks that leave the head
 (`falls`: rings of flat or braided locks; `tails`: one swept lock, the ponytail), rigid in the head's hair group like the rest.
-`cut` is the length the hair-in-body check left: `node --test test/unit/stick-hair-body*.test.mjs` (10 shard files side by side, ~4-5 min)
-plays every shipped style through every adult clip (50, `ADULT_CLIPS` in test/unit/hair-measure.mjs) in the coral sweater and measures
+`cut` is the length the hair-in-body check left: `node --test test/unit/stick-hair-body.test.mjs test/unit/stick-hair-trip-*.test.mjs` (~1 min: the stamp, the table and a 10-clip live tripwire on 3 styles); after a change to hair.js, the engine, a clip or the measure the stamp is stale: rewrite the 550 rows with `node styles/stick-man/tools/gates/fits.mjs --hair` (~30 min).
+The writer plays every shipped style through every adult clip (50, `ADULT_CLIPS` in test/unit/hair-measure.mjs) in the coral sweater and measures
 how deep its drawn surface goes into the torso or a limb (4 mm, frozen). A pair over it is a `blocked` row `hair|<style>|<clip>` of
 `kit/compat.json` (written by `node styles/stick-man/tools/gates/fits.mjs --hair [styles] [--clips A,B]`): `person()` and `fits.mjs films/<slug>`
-refuse an adult wearing that style in that clip. The test fails when a row is not what it measures now, either way (an unblocked pair
-over 4 mm, a blocked pair that passes). Act_PistolShoot_Once is blocked for every style: the clip's own left arm goes 17 mm into the
+refuse an adult wearing that style in that clip. The test fails on a stale stamp, on a row over 4 mm not blocked or under it not pass, and when the tripwire
+measures a row otherwise. Act_PistolShoot_Once is blocked for every style: the clip's own left arm goes 17 mm into the
 bare head (f83-86), a clip fault. `node test/unit/hair-length.mjs <style>` finds the lowest cut that passes the ten head-moving clips (`CLIPS`). Type sheet:
 add `--query type=mw` to the sheet render (frames 0-89) and `hairsheet_compose.py <dir> <out.jpg> mw`.
 
