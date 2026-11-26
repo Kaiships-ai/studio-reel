@@ -5,10 +5,11 @@
 //                             under limits.outfit.ring_mm, a piece moves at most limits.outfit.TRIM_MM on the shell as it bends
 //   mark|bold:<mark>|<hat>    the share of the bold mark's card a wardrobe hat hides, front and 24 deg round (stick-wardrobe-age.test.mjs);
 //                             over limits.mark.cover (0) is blocked
-//   hand|<prop>|<body>|hand   the prop held in every pose a film holds it in (HAND_POSES), each frame the fist to its grip point
-//                             (engine/grip.js), worst frame over GAP_CM (handgrip.limits.json) is blocked; seat and light: no row (untested)
+//   hand|<prop>|<body>|hand   the prop held in every pose a film holds it in (HAND_POSES), each frame each fist's drawn edge to the
+//                             prop's drawn surface (engine/grip.js), worst frame over GAP_CM (handgrip.limits.json) is blocked; seat and light: no row (untested)
 import * as THREE from 'three';
 import { pair, SHAPES, FACE_BODIES } from '#kit/cast/compat.js';
+import { drawnSolid } from '#kit/props/drawn.js';
 
 import fs from 'node:fs';
 // (read here, not from fits.mjs: fits.mjs loads this module while it runs)
@@ -64,8 +65,8 @@ export async function marks(hats = HATS) {
   return rows;
 }
 
-// hand|<prop>|<body>|hand: the prop held in every pose a film holds it in on that body, each frame the fist to its grip
-// point (engine/grip.js: a two-hand prop's fists to their own points), worst frame against GAP_CM (handgrip.limits.json,
+// hand|<prop>|<body>|hand: the prop held in every pose a film holds it in on that body, each frame each holding
+// fist's drawn edge to the prop's drawn surface (engine/grip.js, as #208 measures a film), worst frame against GAP_CM (handgrip.limits.json,
 // frozen before anything was measured). A clip that holds a prop of its own holds this one in that slot (a film's swap);
 // any other clip has it added in the hand. A frame the prop is not fully in the hand (a hand-over) is left out.
 const CARRY = ['Idle_CarryBag_Loop', 'Move_CarryBag_Walk_Loop', 'Gest_LookBackCarry_Once'], OLD = ['Idle_Stooped_Loop', 'Idle_Breath_Loop'];
@@ -74,32 +75,65 @@ export const HAND_POSES = {
   tin: { adult: ['Act_HandOver_Once', 'Idle_Stand_Loop'], elder: OLD },
   balloon: { adult: ['Act_HandOver_Once', 'Idle_Stand_Loop'], elder: OLD, child: ['Move_Walk_Fwd_Loop'] },
 };
-export const CONTROL_M = 0.05;   // the control: the prop moved 5 cm forward off the hand, every frame must fail
+export const CONTROL_M = 0.03;   // the off control: the prop 3 cm off the fist on its film pose must fail; touching it must pass
+// the nearest point on a prop's drawn triangles to a world point (the same parts engine/grip.js measures: kit/props/drawn.js)
+function nearest(prop, c) {
+  const P = new THREE.Vector3(), best = new THREE.Vector3(), t = new THREE.Triangle(); let d = Infinity;
+  prop.traverseVisible(o => { if (!drawnSolid(o) || !o.geometry.attributes?.position) return;
+    const A = o.geometry.attributes.position, I = o.geometry.index, n = I ? I.count : A.count, ix = k => (I ? I.getX(k) : k);
+    for (let k = 0; k + 2 < n; k += 3) { t.a.fromBufferAttribute(A, ix(k)).applyMatrix4(o.matrixWorld); t.b.fromBufferAttribute(A, ix(k + 1)).applyMatrix4(o.matrixWorld); t.c.fromBufferAttribute(A, ix(k + 2)).applyMatrix4(o.matrixWorld);
+      t.closestPointToPoint(c, P); const x = P.distanceTo(c); if (x < d) { d = x; best.copy(P); } } });
+  return best;
+}
+// the controls on a held frame: the prop first moved along the fist's line to its nearest drawn point so it touches
+// the fist's drawn edge, then out along the line from the fist to the prop's centre to the last place it still
+// touches (must pass) and 3 cm past it (must fail); a two-hand prop is moved for the fist farther off it
+function controlAt(S, o, fists, gripGap, handRadius) {
+  const far = fists.reduce((a, s) => ((gripGap(S.parts.hands[s], o).cm ?? 0) >= (gripGap(S.parts.hands[a], o).cm ?? 0) ? s : a)), h = S.parts.hands[far];
+  const c = h.getWorldPosition(new THREE.Vector3()), r = handRadius(h), q = nearest(o, c), u = c.clone().sub(q), d = u.length(); u.normalize();
+  const p0 = o.position.clone(), w0 = o.getWorldPosition(new THREE.Vector3());
+  const put = w => { o.position.copy(o.parent.worldToLocal(w.clone())); o.updateMatrixWorld(true); return gripGap(h, o).cm; };
+  const w1 = w0.clone().addScaledVector(u, d - r); put(w1);
+  const v = new THREE.Box3().setFromObject(o).getCenter(new THREE.Vector3()).sub(c).normalize();
+  let lo = 0, hi = 0.6; while (hi - lo > 0.0005) { const m = (lo + hi) / 2; if (put(w1.clone().addScaledVector(v, m)) > 0) hi = m; else lo = m; }
+  const touchCm = put(w1.clone().addScaledVector(v, lo)), offCm = put(w1.clone().addScaledVector(v, lo + CONTROL_M));
+  o.position.copy(p0); o.updateMatrixWorld(true);
+  return { fist: far, touchCm, offCm };
+}
+// a clip's prop channels with this prop in the hand: a clip's own prop slot (x_hp<L|R|B>_<kind>) holds it instead (a
+// film's swap; the same slot and kind kept, never dropped), any other clip has it added in the right hand (both for a two-hand prop)
+export function holdIn(Q, kind, two, own) {
+  const o = {}, put = [];
+  for (const [k, x] of Object.entries(Q)) { const m = /^x_hp([LRB])_\w+$/.exec(k); if (!m) o[k] = x; else if (own) put.push([`x_hp${two ? 'B' : m[1]}_${kind}`, x]); }
+  for (const [k, x] of put) o[k] = x;
+  if (!put.length) o[`x_hp${two ? 'B' : 'R'}_${kind}`] = 1;
+  return o;
+}
 export async function hands(props = Object.keys(HAND_POSES)) {
-  const M = await import('../../../../test/unit/wardrobe-measure.mjs'), { gripGap } = await import('#engine/grip.js'), { GAP_CM } = await import('./handgrip.mjs');
+  const M = await import('../../../../test/unit/wardrobe-measure.mjs'), { gripGap, handRadius } = await import('#engine/grip.js'), { GAP_CM } = await import('./handgrip.mjs');
   const { BUILD } = await import('#kit/cast/handprops.js'), { getClip } = await import('#motion-lib/index.js'); await import('#motion-lib/props.js');
-  const rows = [], controls = [], U = 'cm, a fist off its grip point (handgrip, worst frame)', v = new THREE.Vector3();
+  const rows = [], controls = [], U = 'cm, a fist\'s drawn edge off the prop\'s drawn surface (handgrip, worst frame)';
   for (const kind of props) {
-    const two = BUILD[kind]().userData.mode === 'both'; let ctl = Infinity;
+    const two = BUILD[kind]().userData.mode === 'both';
     for (const [body, clips] of Object.entries(HAND_POSES[kind])) {
-      let worst = 0, at = '', frames = 0, over = 0; const per = {};
+      let worst = 0, at = '', frames = 0, over = 0, ctl = null; const per = {}, p = pair('hand', kind, body, 'hand');
       for (const clip of clips) {
-        const own = (getClip(clip, body).needs?.props || []).length > 0, slot = two ? 'B' : 'R', key = `x_hp${slot}_${kind}`;
-        const q = Q => { const o = { ...Q }; let put = false; for (const k of Object.keys(o)) { const m = /^x_hp([LRB])_\w+$/.exec(k); if (!m) continue; if (own) { o[`x_hp${two ? 'B' : m[1]}_${kind}`] = o[k]; put = true; } delete o[k]; } if (!own || !put) o[key] = 1; return o; };
+        const own = (getClip(clip, body).needs?.props || []).length > 0;
+        const q = Q => holdIn(Q, kind, two, own);
         await M.play([], body, { clip, whole: true }, { q, each: (f, S) => {
           S.root.updateMatrixWorld(true);
           for (const [id, o] of Object.entries(S.props)) {
             if (!o.visible || !id.endsWith(kind) || (S.propState[id]?.w ?? 1) < 0.999) continue;
             const side = id[0], fists = side === 'B' ? ['L', 'R'] : [side], gap = s => gripGap(S.parts.hands[s], o).cm ?? Infinity;
             frames++; const g = Math.max(...fists.map(gap)); per[clip] = Math.max(per[clip] ?? 0, g); if (g > GAP_CM) over++; if (g > worst) { worst = g; at = `${clip} f${f}`; }
-            o.position.z += CONTROL_M / S.root.scale.x; o.updateMatrixWorld(true); ctl = Math.min(ctl, Math.max(...fists.map(gap))); o.position.z -= CONTROL_M / S.root.scale.x; o.updateMatrixWorld(true);
+            if (!ctl) ctl = { pair: p, pose: `${clip} f${f}`, ...controlAt(S, o, fists, gripGap, handRadius) };   // the film pose: the first clip's first held frame
           } } });
       }
-      const p = pair('hand', kind, body, 'hand'), n = +worst.toFixed(2), each = `worst per clip: ${Object.entries(per).map(([c, x]) => `${c} ${x.toFixed(2)}`).join(', ')}`;
+      const n = +worst.toFixed(2), each = `worst per clip: ${Object.entries(per).map(([c, x]) => `${c} ${x.toFixed(2)}`).join(', ')}`;
       rows.push(!frames ? { ...row(p, 'hand', 'untested', null, null, null, 'no frame held it'), frames }
-        : n <= GAP_CM ? { ...row(p, 'hand', 'pass', n, U, 0, each), frames } : { ...row(p, 'hand', 'blocked', n, U, over, `${at}: a fist ${n} cm off its grip point (limit ${GAP_CM}), ${over} of ${frames} frames over; ${each}`), frames });
+        : n <= GAP_CM ? { ...row(p, 'hand', 'pass', n, U, 0, each), frames } : { ...row(p, 'hand', 'blocked', n, U, over, `${at}: a fist ${n} cm off the prop (limit ${GAP_CM}), ${over} of ${frames} frames over; ${each}`), frames });
+      if (ctl) controls.push(ctl);
     }
-    controls.push({ prop: kind, minCm: +ctl.toFixed(2), must: 'fail' });
   }
   return { rows, controls };
 }

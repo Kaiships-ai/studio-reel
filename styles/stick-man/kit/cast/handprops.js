@@ -115,7 +115,7 @@ export const BUILD = {
     for (let i = 0; i <= 10; i++) { const t = i / 10; pts.push(new THREE.Vector2(0.13 + 0.07 * Math.sin(Math.PI * 0.5 * t) + 0.02 * Math.sin(Math.PI * t), t * H)); }
     const paper = solid(new THREE.LatheGeometry(pts, 24), [1.0, 0.72, 0.34], { sheen: 0.2 }); paper.material.emissive = lin(0.55, 0.28, 0.06); paper.position.y = -H / 2; g.add(paper);
     const top = solid(new THREE.CircleGeometry(0.2, 24), [1.0, 0.72, 0.34]); top.rotation.x = -Math.PI / 2; top.position.y = H / 2; top.material.emissive = lin(0.5, 0.25, 0.05); g.add(top);
-    const flame = new THREE.Mesh(new THREE.SphereGeometry(0.025, 10, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(2.2, 1.4, 0.5) })); flame.position.y = -H / 2 + 0.06; g.add(flame);
+    const flame = new THREE.Mesh(new THREE.SphereGeometry(0.025, 10, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(2.2, 1.4, 0.5), blending: THREE.AdditiveBlending, depthWrite: false })); flame.position.y = -H / 2 + 0.06; g.add(flame);
     const lamp = new THREE.PointLight(new THREE.Color(1, 0.62, 0.28), 1.6, 2.2, 2); lamp.position.y = -H / 2 + 0.08; g.add(lamp);
     g.userData = { mode: 'both', grip: [0, -0.02, 0], hands: { L: [-0.21, -0.02, 0], R: [0.21, -0.02, 0] }, mass: 0.2 }; return g;
   },
