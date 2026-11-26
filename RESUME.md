@@ -1,5 +1,5 @@
 # RESUME: ep-whatif1-v5-director, PART A (written 26/11 by session 2, handed off)
-Worktree ~/orca/workspaces/studio-reel/whatif1-v5, branch KineBeo/whatif1-v5, head 3061fb6a (pushed; = main 65aba526 merged in).
+Worktree ~/orca/workspaces/studio-reel/whatif1-v5, branch KineBeo/whatif1-v5, head 3ed4ec90 (pushed; main 65aba526 merged in).
 Film folder films/wif5 (git-ignored: commit sources with `git add -f`). Studio = orca_session_id:d0be28c2-e934-4b72-850f-9bcb0ad301c3.
 
 ## Read first (in order, nothing else up front)
