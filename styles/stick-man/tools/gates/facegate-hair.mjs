@@ -31,8 +31,9 @@ export function faceShare(style, patch) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const a = process.argv.slice(2), neck = a.includes('--neck'), styles = a.filter(x => x !== '--neck'); let bad = 0;
-  for (const s of styles.length ? styles : HAIR_STYLES) { const r = faceShare(s, neck ? { neck: true, cut: null } : undefined), ok = Object.values(r).every(x => x >= FACE_MIN); bad += !ok;
+  const a = process.argv.slice(2), neck = a.includes('--neck'), json = a.includes('--json'), styles = a.filter(x => !x.startsWith('--')); let bad = 0; const all = {};
+  for (const s of styles.length ? styles : HAIR_STYLES) { const r = faceShare(s, neck ? { neck: true, cut: null } : undefined), ok = Object.values(r).every(x => x >= FACE_MIN); bad += !ok; all[s] = r; if (json) continue;
     console.log(s.padEnd(10), Object.entries(r).map(([k, x]) => `${k} ${(100 * x).toFixed(1)}%`).join('  '), ok ? 'PASS' : 'FAIL'); }
+  if (json) console.log(JSON.stringify(all));
   process.exit(bad ? 1 : 0);
 }

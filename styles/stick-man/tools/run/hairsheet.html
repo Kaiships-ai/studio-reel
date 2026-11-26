@@ -30,13 +30,14 @@ await useFaceStyle();
 const RUN = new URLSearchParams(location.search).get('run');
 // ?type=: one sheet a type of style, each on its own body (hairsheet_compose.py takes the same type); none: the first six beside today's caps
 // a style the hair-in-body check shortened also shows as designed (`cut: null`, its lengths bound to the neck: `neck: true`), for the one who picks the length
-const TYPES = { mw: [['pompadour', 'adult'], ['buzz', 'adult'], ['mullet', 'adult'], ['afro', 'adult'], ['bob', 'adult'], ['long', 'adult'], ['pixie', 'adult'], ['ponytail', 'adult'], ['braids', 'adult'], ['lob', 'adult'],
-  ['mullet', 'adult', toonHair('mullet', null, { neck: true, cut: null })], ['long', 'adult', toonHair('long', null, { neck: true, cut: null })], ['braids', 'adult', toonHair('braids', null, { neck: true, cut: null })], ['lob', 'adult', toonHair('lob', null, { neck: true, cut: null })], ['bob', 'adult', toonHair('bob', null, { neck: true, cut: null })],
-  ['long', 'adult', toonHair('long', [0.58, 0.38, 0.21], { neck: true, cut: null })]] };   // the lighter brown test (Studio 26/11)
+const TYPES = { mw: [['pompadour', 'adult'], ['buzz', 'adult'], ['mullet', 'adult'], ['afro', 'adult'], ['bob', 'adult'], ['long', 'adult'], ['pixie', 'adult'], ['ponytail', 'adult'], ['braids', 'adult'], ['lob', 'adult']] };   // one row a style, as shipped (Studio 27/11: the designed twins cut)
 // type=zone: a bald head and the half-face card (test/unit/stick-hair-face.test.mjs) with dbg=zone: the face check's zone painted on
 // the head for the cell's view, red as facegate-hair.mjs puts it (solid), blue with the opposite height shift (wire)
+TYPES.ab = [['pompadour', 'adult'], ['long', 'adult']];
 TYPES.zone = [['bald', 'adult', () => new THREE.Group()], ['card', 'adult', () => { const g = new THREE.Group(); g.add(new THREE.Mesh(new THREE.PlaneGeometry(0.5 * W_M, 1.2 * W_M).translate(0.25 * W_M, 0, 0.7 * W_M), new THREE.MeshBasicMaterial({ color: 0x6a4a30 }))); return g; }]];
 const TYPE = new URLSearchParams(location.search).get('type');
+// ?turn=1.0: this render's faceTurn (cast.js spec.faceTurn, 0.8 by default): the A|B still, never the engine's default
+const FACE_TURN = +new URLSearchParams(location.search).get('turn') || 0;
 const ROWS = (TYPES[TYPE] || [['hairCap (today)', 'adult', hairCap()], ['bun (today)', 'adult', bun()], ['side', 'adult'], ['crop', 'adult'], ['curly', 'adult'], ['elder', 'elder'], ['woman', 'adult'], ['girl', 'child']])
   .map(([n, b, f]) => ({ n, b, f: f || toonHair(n) }));
 const COLS = [{ az: 0, el: 0.06 }, { az: 0, el: -0.30 }, { az: 0, el: 0.04, close: 1 }, { az: 38, el: 0.04, close: 1 }, { az: 0, el: -0.32, close: 1 }, { az: 180, el: 0.04, close: 1 }];
@@ -51,7 +52,7 @@ const toB = v => [v.x, -v.z, v.y];
 
 function figure(row, x) {
   const group = new THREE.Group(); stage.scene.add(group);
-  const S = makeStick(bodySpec({ name: row.n, shirt: [0.62, 0.62, 0.66], hair: [row.f] }, row.b)); group.add(S.root);
+  const S = makeStick({ ...bodySpec({ name: row.n, shirt: [0.62, 0.62, 0.66], hair: [row.f] }, row.b), ...(FACE_TURN ? { faceTurn: FACE_TURN } : {}) }); group.add(S.root);
   S.rest = [{ name: 'floor', lo: [-20, -20, -0.1], hi: [20, 20, 0] }]; HOOKS.costume(S, ['sweater:coral'], { group });
   const name = (() => { for (const n of [...(RUN ? ['Adult_Idle_LookAround_Loop'] : []), 'Idle_Breath_Loop', 'Adult_Idle_Stand_Loop']) { try { getClip(n, row.b); return n; } catch { /* next */ } } })();
   const keys = placeClip({ f: 0, clip: name, body: row.b, times: 3 }, { pos: [x, 0], yaw: 90 }).keys, track = compileTrack(keys, {}, { pos: [x, 0], yaw: 90 }, 'kaiships');
