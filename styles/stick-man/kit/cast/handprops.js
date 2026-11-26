@@ -126,6 +126,13 @@ export const BUILD = {
     const sun = new THREE.Mesh(new THREE.CircleGeometry(0.03, 16), toon([1.0, 0.85, 0.35])); sun.position.set(0.04, 0.06, D / 2 + 0.002); g.add(sun);
     g.userData = { mode: 'both', grip: [0, 0, 0], hands: { L: [-Wf / 2 - 0.01, 0, 0], R: [Wf / 2 + 0.01, 0, 0] }, mass: 0.6 }; return g;
   },
+  photoPrint() {                                                 // a 10 x 15 cm photo print, a thin white border, pinched at its foot in one fist
+    const g = new THREE.Group(), Wp = 0.10, Hp = 0.15, D = 0.002, B = 0.006;
+    const card = solid(new THREE.BoxGeometry(Wp, Hp, D), [0.95, 0.94, 0.90], { sheen: 0.3 }); g.add(card);
+    const pic = new THREE.Mesh(new THREE.PlaneGeometry(Wp - 2 * B, Hp - 2 * B), toon([0.55, 0.72, 0.86])); pic.position.z = D / 2 + 0.001; g.add(pic);
+    const hill = new THREE.Mesh(new THREE.CircleGeometry(0.03, 16, 0, Math.PI), toon([0.40, 0.62, 0.32])); hill.position.set(-0.01, -Hp / 2 + B, D / 2 + 0.002); g.add(hill);
+    g.userData = { mode: 'up', grip: [0, -Hp / 2 + 0.012, 0], mass: 0.005 }; return g;
+  },
   balloon() {                                                    // a balloon on a string, held at the string's end, the balloon above
     const g = new THREE.Group(), S = 0.80, R = 0.15;
     const str = new THREE.Mesh(cyl(0.0025, 0.0025, S, 5), toon([0.92, 0.92, 0.92])); str.position.y = S / 2; g.add(str);

@@ -74,6 +74,7 @@ export const HAND_POSES = {
   baby: { adult: CARRY, elder: OLD }, lantern: { adult: CARRY, elder: OLD }, photo: { adult: CARRY, elder: OLD },
   tin: { adult: ['Act_HandOver_Once', 'Idle_Stand_Loop'], elder: OLD },
   balloon: { adult: ['Act_HandOver_Once', 'Idle_Stand_Loop'], elder: OLD, child: ['Move_Walk_Fwd_Loop'] },
+  photoPrint: { elder: ['Act_Give_Once'] },
 };
 export const CONTROL_M = 0.03;   // the off control: the prop 3 cm off the fist on its film pose must fail; touching it must pass
 // the nearest point on a prop's drawn triangles to a world point (the same parts engine/grip.js measures: kit/props/drawn.js)
