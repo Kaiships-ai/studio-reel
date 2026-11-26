@@ -65,3 +65,6 @@ RESUME-kit-handprops.md at the worktree root is obsolete (untracked; #209 merged
   elder grey shell + back knot, every style's V-wedge nape. CI cause: review/hair-sheet/ = new top-level folder not in kit.manifest ->
   move proof under a [dev] path (no bypass, no --no-verify).
 - Then: look sheet -> chefkiss -> Studio -> Kai. Nothing into part a until Kai approves hair. Then wardrobe determinism check, then RESUME "Next".
+- 15:45: #212 at 71aeede4, CI green. Look page https://claude.ai/artifact/PEpovJ94cP4NVxwwjzUm11 (sent to Studio). Studio: side/crop/woman/girl PASS,
+  elder (white shell from front) + curly (blobs) FAIL -> builder pass running (elder = crop/side locks in grey, receding; curly = fewer big locks).
+  Studio asks Kai: approve 4 now. Wardrobe determinism check started on Pro ~/wd-check (run.sh: 3x alone, 3x full) then paused for the hair renders; rerun after.
