@@ -8,6 +8,7 @@ before, except where an old one had a hand forced off a target (now kept when re
 
 ## Sub-features
 
+- Seats: a seated clip's seat height is `seatTop(C)` (its `seat` mark); a film names a seat with the clip key `seat`, and `person().clip` refuses two clips on one seat more than 2 cm apart (the elder's sit-down 0.528 m and idle 0.386 m are separate shots).
 - `clip` keys: `to` (heading, fitted cycles, first and closing steps), `times` (a captured loop in place blends in once,
   repeats its capture, blends out once: a phone stays at the ear), `stop`, `pos`, `yaw`, `swap`, `expr`. Every clip starts
   at its own origin (`index.js` zeroes its first key and its marks), so clips chained in one track never jump the actor.

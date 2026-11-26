@@ -20,3 +20,5 @@ Fits (`kit/compat.json`, 3 registered clips x 7 elder outfits, 21 rows): 26 pass
 Not seen: the clips in motion, in a set and camera (a gate pass is not a review). Picks were made from Mixamo's names, descriptions and previews, not from viewing the elder body play them.
 
 Open issue: nothing checks that a clip does the act its name says (the look-up passed every gate while looking at the floor).
+
+Seats: the elder `Trans_SitDown_Once` ends with the hips on a 0.528 m seat; the elder `Idle_Sit_Loop` needs a 0.386 m seat (hips 0.43 m). The two must NOT be chained on one seat (the hips would jump 14 cm): use them in separate shots. `kit/film.js` refuses it when a film names one `seat` for both (`seatTop` in `motion-lib/index.js`).

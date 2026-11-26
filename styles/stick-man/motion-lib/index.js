@@ -222,6 +222,10 @@ export function propFit(C, k) {
     fit[kind] = Object.fromEntries(Object.entries(d).map(([n, v]) => [n, r3(v)])); }
   return Object.keys(fit).length ? fit : null;
 }
+// the height of the seat a seated clip sits on (m): the top of the clip's own `seat` mark (its hips rest on it), null for a clip
+// that has no seat. A film's one seat serves only clips of one height (kit/film.js `seat`: the elder sits down onto 0.528 m
+// and its idle needs 0.386 m, so the two are not chained on one seat).
+export const seatTop = C => (C.needs?.marks || []).find(m => m.kind === 'seat')?.to?.[2] ?? null;
 export function getClip(name, body = 'adult', fit = null) {
   const e = CLIPS[name] || CLIPS[name.replace(BODY_PREFIX, '').replace(/_v\d+$/, '')];
   if (!e) throw new Error(`motion-lib: no clip "${name}" (${CLIP_NAMES.join(', ')})`);

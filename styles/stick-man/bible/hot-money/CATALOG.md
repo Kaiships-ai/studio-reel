@@ -16,8 +16,8 @@ Sinh từ `tokens.json` và `catalog.json` bởi `node styles/stick-man/bible/ca
 | `clip.Idle_LookAround_Loop` | adult | thử | dò xét xung quanh (thay cho PEER) | không có lý do trong truyện |  |
 | `clip.Gest_Talk_Loop` | adult | thử | nhân vật tự nói | khi chỉ người dẫn chuyện nói |  |
 | `clip.Gest_Wave_Loop` | adult | thử | vẫy tay | lặp như tật |  |
-| `clip.Trans_SitDown_Once` | adult, elder | ổn định | ngồi xuống | nhảy cóc vào tư thế ngồi | +S3-013 |
-| `clip.Idle_Sit_Loop` | adult, elder | thử | ngồi chờ (thay cho SIT_TALL, SIT_LOW, SIT_GUARD) | ngồi im cả cảnh |  |
+| `clip.Trans_SitDown_Once` | adult, elder | ổn định | ngồi xuống | nhảy cóc vào tư thế ngồi; xích với Idle_Sit_Loop trên một ghế (người già: ghế 0.528 m và 0.386 m) | +S3-013 |
+| `clip.Idle_Sit_Loop` | adult, elder | thử | ngồi chờ (thay cho SIT_TALL, SIT_LOW, SIT_GUARD) | ngồi im cả cảnh; xích sau Trans_SitDown_Once trên một ghế (người già: ghế 0.386 m và 0.528 m) |  |
 | `clip.Trans_StandUp_Once` | adult | thử | đứng dậy | bật dậy không dồn lực |  |
 | `clip.Gest_PointSeated_Loop` | adult | thử | ngồi chỉ tay | lặp như tật |  |
 | `clip.Act_PickUp_Once` | adult | ổn định | nhặt túi, hộp (thay cho REACH_LOW, HEAVE, HEAVE_UP, HEAVE_LO, HEAVE_SH) | đồ có sẵn trong tay sau cắt | +S3-026 -S3-021 -S3-023 -S3-024 -S3-025 |

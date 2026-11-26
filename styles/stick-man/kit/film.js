@@ -17,7 +17,7 @@
 //   the spec (SPECS[name].waivers), the set's COLLIDE.waivers, and waivers() (all of them, with where)
 import { SPECS } from '#engine/play.js';
 import { expressionBeats, EXPRESSIONS, marksOf } from '#engine/expressions.js';
-import { getClip, expandClips } from '#motion-lib/index.js';
+import { seatTop, getClip, expandClips } from '#motion-lib/index.js';
 import { bodySpec } from '#motion-lib/bodies.js';
 import { propSwap } from '#motion-lib/props.js';
 import { BUILD } from './cast/handprops.js';
@@ -69,6 +69,7 @@ export function person(def) {
   const ws = checkWaivers(where, given), key = personKey({ body, girth, outfit }), worn = expand(outfit).map(shapeOf), hats = worn.filter(g => /^(cap|hat):/.test(g));
   const hoodie = worn.find(g => g.startsWith('hoodie')); if (hoodie) throw new Error(`${where}: ${hoodie} is not a wardrobe layer (kit/cast/hoodie.js loads its own cloth model; film.js does not)`);
 
+  const seatsUsed = new Map();   // a seat the film names (clip key `seat`) -> the first clip that sat on it
   const pClip = n => pair('clip', key, n);
   const pMarks = ms => hats.flatMap(h => list(ms).map(m => pair('mark', `bold:${m}`, h)));
   const pHand = (kinds, seated) => kinds.flatMap(k => { if (!BUILD[k]) throw new Error(`${where}: no hand prop "${k}" (${Object.keys(BUILD).join(', ')})`); return ['hand', ...(seated ? ['seat'] : [])].map(at => pair('hand', k, body, at)); });
@@ -86,11 +87,13 @@ export function person(def) {
       never(`${where}: cast`, o, ['spec', 'costume', 'clips', 'waivers'], 'comes from person()');
       return { ...(faces.length ? { expr: EXPRESSIONS[faces[0]]?.face ?? faces[0] } : {}), ...o, spec: name, clips: [...clips], waivers: [...ws] };
     },
-    clip(n, k = {}) {
+    clip(n, { seat, ...k } = {}) {
       never(`${where}: clip ${n}`, k, ['clip', 'body'], 'comes from person()');
       if (!Number.isFinite(k.f)) throw new Error(`${where}: clip ${n}: f (the frame it starts on) is missing`);
       const c = getClip(n, body), swap = propSwap(k.swap), held = [...(c.needs?.props || []).map(p => swap[p] ?? p), ...Object.values(k.props || {}).filter(Boolean), ...Object.keys(k).flatMap(x => /^x_hp[LRBH]_(\w+)$/.exec(x)?.[1] ?? [])];
       must(where, [pClip(n), ...pHand(held, sits(c))], ws);
+      const top = seat != null ? seatTop(c) : null;   // `seat`: the film's name for the seat this clip sits on (not an engine key)
+      if (top != null) { const was = seatsUsed.get(seat); if (!was) seatsUsed.set(seat, { clip: n, top }); else if (Math.abs(was.top - top) > 0.02) throw new Error(`${where}: seat "${seat}" is used by ${was.clip} (seat ${was.top.toFixed(3)} m) and ${n} (seat ${top.toFixed(3)} m): clips on one seat are within 2 cm of each other; use them in separate shots`); }
       return { ...k, ...(k.swap ? { swap } : {}), clip: n, body };
     },
     expression(n, at, { who = name, ...o } = {}) {
