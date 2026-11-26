@@ -167,3 +167,4 @@
 | a6-8 | Studio: white ball at 5.9 s | 166-188 | a snowflake 0.7 m from the lens: the 1.8 m cull uses the camera key, not the framed camera | fixed: PointsMaterial size capped in the shader at its 3.75 m size (set.js) |
 | a6-9 | Studio: dad reads bald at 15.2 s (2nd time) | 334-504 | head tilted back 34-40 deg under a 0.9-1.0 m lens: only the rim of the side part shows | fixed: tilt ≤ 14 deg, eyes look up; lenses of 350/440 at 2.0 m (reel.js, path.js) |
 | a6-10 | skill gates: kituse life/depth, importgate | all | V5 never loaded make-reel-stick-man | life on record, backdrop rows; importgate 4 left = kit way-in (expandClips, makeHandProp not in film.js; nested parts/<p> slug): kit item |
+| a6-11 | Studio watch-item: fringe covers dad's right eye | ~495 | head nods down at the end (nod +22 at 462-496) | whole-film pass |
