@@ -8,12 +8,14 @@ import { rigClip, rigStick } from '../../styles/stick-man/tools/gates/motionlib.
 
 await rigStick();
 const { GUARD, W_M, HEAD_H } = await import('../../styles/stick-man/engine/cast.js');
-const { toonHair, HAIR_STYLES } = await import('../../styles/stick-man/kit/cast/hair.js');
+const { toonHair, HAIR_STYLES, HAIR_DRAFTS } = await import('../../styles/stick-man/kit/cast/hair.js');
 const HAIR_MM = 0.01;
 
 test('every style builds one closed scalp (and its buns), on the head', () => {
   assert.deepEqual(HAIR_STYLES.slice(0, 6), ['side', 'crop', 'curly', 'elder', 'woman', 'girl']);
-  for (const s of ['pompadour', 'buzz', 'mullet', 'afro', 'bob', 'long', 'pixie', 'ponytail', 'braids', 'lob']) assert.ok(HAIR_STYLES.includes(s), s);
+  // the shipped set, pinned (Studio 28/11): the short styles that pass every hair check; the long ones are drafts until kit-hair-long
+  assert.deepEqual(HAIR_STYLES, ['side', 'crop', 'curly', 'elder', 'woman', 'girl', 'pompadour', 'buzz', 'mullet', 'afro', 'pixie', 'ponytail']);
+  assert.deepEqual(HAIR_DRAFTS, ['bob', 'long', 'braids', 'lob']);
   for (const s of HAIR_STYLES) {
     const g = toonHair(s, [0.3, 0.2, 0.1])(), meshes = g.children.filter(o => o.isMesh);
     if (HAIR_STYLES.indexOf(s) < 6) assert.equal(meshes.length, { woman: 2, girl: 3 }[s] ?? 1, s); else assert.ok(meshes.length >= 1, s);
@@ -29,6 +31,10 @@ test('every style builds one closed scalp (and its buns), on the head', () => {
     if (s !== 'elder') assert.ok(top > 0.5 * HEAD_H * W_M, `${s}: hair below the crown`);   // the elder's crown is bald
   }
   assert.throws(() => toonHair('no-such-style'), /no style/);
+});
+test('a draft style is refused by person(): the film\'s way in', async () => {
+  const { person } = await import('../../styles/stick-man/kit/film.js');
+  for (const s of HAIR_DRAFTS) assert.throws(() => person({ name: 'Ann', hair: [toonHair(s)] }), /is a draft, not offered/, s);
 });
 
 const corners = (a, b) => [0, 1, 2, 3, 4, 5, 6, 7].map(n => a.clone().set(n & 1 ? b.x : a.x, n & 2 ? b.y : a.y, n & 4 ? b.z : a.z));

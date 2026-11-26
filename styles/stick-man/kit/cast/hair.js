@@ -90,7 +90,10 @@ const STYLES = {
                    { lon: [48, 62], n: 3, from: 0.22, to: -0.60, toAt: [0.7, 1.0, 0.85], rho: 0.12, flat: 0.45, flare: 0.03, wave: [0.03, 2.2], flick: 0.05, jit: 0.35, tip: 'point', ridges: 3, seed: 9 },   // face-framing locks
                    { lon: [50, 180], n: 7, from: -0.20, to: -0.78, rho: 0.06, flat: 0.45, flare: 0.04, wave: [0.035, 2.2], flick: 0.06, jit: 0.08, tip: 'point', ridges: 3 }] },
 };
-export const HAIR_STYLES = Object.keys(STYLES);
+// drafts (Studio 28/11): the long styles' lengths are not ready (they fall inside the shoulders' width: hair-in-body; their sides read
+// as one short bowl). Their code stays for kit-hair-long; they are not offered: HAIR_STYLES leaves them out and person() refuses them
+export const HAIR_DRAFTS = ['bob', 'long', 'braids', 'lob'];
+export const HAIR_STYLES = Object.keys(STYLES).filter(s => !HAIR_DRAFTS.includes(s));
 export const styleOf = style => STYLES[style];
 // where a style shows its scalp by design: what it declares (st.bare), and a swept style's parting (the scalp shows along it)
 // a parting is never declared skin (Studio 27/11: side's groove cut to the white head read as a seam on a bowed head)
@@ -266,7 +269,7 @@ function fall(F, cut) {
 export function toonHair(style = 'side', col, patch) {   // patch: fields over the style's own (measures try a length with it)
   if (!STYLES[style]) throw new Error(`toonHair: no style '${style}' (${HAIR_STYLES.join(', ')})`); const st = { ...STYLES[style], ...patch };
   const rgb = col || st.col;
-  return () => {
+  return Object.assign(() => {
     const g = new THREE.Group(); g.name = 'toonHair:' + style; g.position.y = -HAT_LIFT;   // built on the head's own centre
     g.add(fieldMesh(scalp(st), rgb));
     for (const b of st.buns || []) {
@@ -283,5 +286,5 @@ export function toonHair(style = 'side', col, patch) {   // patch: fields over t
     // so nothing the crown covers ever leaves it, then all neck 0.45 W lower (a lock's top fixed to the neck opened 11-49 mm)
     if (st.neck) Object.assign(lg.userData, { neckTop: ((st.hang ? Math.min(...st.hang.hem.map(h => h[1])) : table(st.lo, 180)) - 0.08) * W, neckRamp: 0.45 * W });
     return g;
-  };
+  }, { hairStyle: style });
 }
