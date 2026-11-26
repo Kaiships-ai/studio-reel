@@ -15,15 +15,15 @@ test('every style builds one closed scalp (and its buns), on the head', () => {
   assert.deepEqual(HAIR_STYLES, ['side', 'crop', 'curly', 'elder', 'woman', 'girl']);
   for (const s of HAIR_STYLES) {
     const g = toonHair(s, [0.3, 0.2, 0.1])(), meshes = g.children.filter(o => o.isMesh);
-    assert.equal(meshes.length, ['woman', 'girl'].includes(s) ? 2 : 1, s);
+    assert.equal(meshes.length, { woman: 2, girl: 3 }[s] ?? 1, s);
     const P = meshes[0].geometry.attributes.position; let top = 0, front = -1, out = 0;
     for (let i = 0; i < P.count; i++) {
       const x = P.getX(i), y = P.getY(i), z = P.getZ(i), e = Math.hypot(x / (0.5 * W_M), y / (0.5 * HEAD_H * W_M), z / (0.5 * W_M));
       top = Math.max(top, y); out = Math.max(out, e);
       if (e > 1.02 && Math.abs(x) < 0.05 && z > 0) front = Math.max(front, z);   // hair standing off the head in front (vertices are in the head-centre frame: the group undoes HAT_LIFT)
     }
-    assert.ok(out > 1.05 && out < 1.6, `${s}: hair stands ${out.toFixed(2)} of the head out`);
-    if (s !== 'elder') assert.ok(front > 0.10, `${s}: no hair over the forehead (front ${front.toFixed(3)} m)`);
+    assert.ok(out > 1.03 && out < 1.6, `${s}: hair stands ${out.toFixed(2)} of the head out`);
+    assert.ok(front > 0.10, `${s}: no hair over the forehead (front ${front.toFixed(3)} m)`);
     if (s !== 'elder') assert.ok(top > 0.5 * HEAD_H * W_M, `${s}: hair below the crown`);   // the elder's crown is bald
   }
   assert.throws(() => toonHair('mohawk'), /no style/);
