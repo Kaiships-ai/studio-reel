@@ -14,7 +14,7 @@ it differs from the adult clip the library already holds for the same act. Measu
 | seated clap | "Sitting Clap" (sitting_clap_b.js, 126 f) | `Gest_SitClap_Loop` | a longer, other capture than the 101-frame one in sitting_clap.js | BLOCKED: body gate, elder's hand arc 2.03 of the adult's (limit <= 0.85). Clip not registered; capture kept here |
 | look up | "Looking" (looking_shade.js, 144 f) | `Gest_LookUpShade_Once` (new name) | meant: head tips up, a hand shades the eyes | BLOCKED by review, unregistered: the independent review watched it on the Pro: from about f100 to f215 the elder leans 63 deg, looks at the floor, hand to chin, and never shades the eyes. It does the opposite of its name. No second try; capture kept here |
 
-Fits (`kit/compat.json`, 3 registered clips x 7 elder outfits, 21 rows): 26 pass; blocked: `cardigan+shirt:office+skirt` x
+Fits (`kit/compat.json`, 3 registered clips x 7 elder outfits, 21 rows, measured at b862f4c6): 19 pass; blocked: `cardigan+shirt:office+skirt` x
 `Trans_SitDown_Once` (16.8 mm of cloth in an arm) and `Idle_Sit_Loop` (22 mm of cloth in a hand), the skirt in a seated hand.
 
 Not seen: the clips in motion, in a set and camera (a gate pass is not a review). Picks were made from Mixamo's names, descriptions and previews, not from viewing the elder body play them.
