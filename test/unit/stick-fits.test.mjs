@@ -149,3 +149,8 @@ test('tampering with the REAL committed table: un-blocking a row, removing a row
   const gone = gate(reel(K, who), real.filter(r => r.pair !== `clip|${k}|Gest_Wave_Loop`)); assert.equal(gone.code, 1); assert.match(gone.out, /no row: not measured/);
   const odd = gate(reel(K, { costume: ['sweater:sky', 'cardigan:plum', 'scarf:rose', 'tie'] }), real); assert.equal(odd.code, 1); assert.match(odd.out, /untested/);
 });
+test('a hairless person is a fits problem; bald, hair or a hat is not', () => {
+  const T = { lookup: () => ({ verdict: 'pass' }) }, who = (w, noHair) => ({ reel: 'reel.js', who: w, key: 'adult/g1/plain', person: { body: 'adult', outfit: [] }, clips: [{ clip: 'Idle_Stand_Loop', body: 'adult', at: 'f0' }], baked: 0, noHair });
+  const R = F.checkFilm({ errors: [], people: [who('bare', true), who('ok', false)] }, T);
+  assert.equal(R.problems.length, 1); assert.match(R.problems[0], /bare .*no hair.*bald: true/);
+});
