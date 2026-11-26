@@ -244,3 +244,48 @@ test('handgrip.mjs CLI: a malformed --frames value errors (exit 2), an empty row
   assert.equal(spawnSync(process.execPath, [GATE, '--rows', p], { encoding: 'utf8', timeout: 20000 }).status, 2);
   fs.rmSync(dir, { recursive: true, force: true });
 });
+
+// review 5 (acceptance on real rows): only engine-held props were measured, so a tin in the air (V4 f), a lantern with no
+// hand (V4 d), a tin held by a 4 mm stand-in (V5 f) and a photo with held [] (V5 j) passed. Every gripping hand
+// (limbs.<side>.grip) is now measured to the nearest shown prop (rows' grips[], engine/grip.js nearestGap); a held prop
+// under STANDIN_CM in every dimension is a stand-in fault; a gripping hand nothing measures is a fault. Fixtures cut
+// from the real rows (test/fixtures/handgrip: f, held, track sizes, actors' grip flags).
+const FIX = n => fs.readFileSync(path.join(ROOT, 'test/fixtures/handgrip', n + '.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l));
+const { nearestGap, STANDIN_CM } = await import('../../styles/stick-man/engine/grip.js');
+
+test('handgrip on real rows: V4 tin in the air, V4 lantern with no hand, V5 f stand-in tin, V5 g, V5 j photo all FAIL', () => {
+  const kinds = {};
+  for (const n of ['v4-f', 'v4-d', 'v5-f', 'v5-g', 'v5-j']) {
+    const R = handgrip(FIX(n)); assert.equal(R.ok, false, `${n}: ${JSON.stringify(R).slice(0, 300)}`);
+    kinds[n] = [...new Set(R.faults.map(x => x.anchor))].sort(); }
+  assert.ok(kinds['v5-f'].includes('stand-in'), JSON.stringify(kinds));
+  assert.ok(kinds['v5-g'].includes('stand-in'), JSON.stringify(kinds));
+  for (const n of ['v4-f', 'v4-d', 'v5-j']) assert.ok(kinds[n].includes('unmeasured grip'), `${n} ${kinds[n]}`);
+});
+
+test('handgrip: grips[] rows: a gripping hand over the limit fails, on it passes, on no prop fails; nothing held says so', () => {
+  const row = (g, o = {}) => ({ f: 0, held: [], grips: [{ actor: 'm', side: 'L', onScreen: true, prop: 'photo', gapCm: g, anchor: 'edge', ...o }],
+    actors: { m: { inFrame: true, limbs: { L: { grip: true }, R: { grip: false } } } } });
+  assert.equal(handgrip([row(0.4)]).ok, true);
+  assert.equal(handgrip([row(3.2)]).ok, false);
+  assert.deepEqual(handgrip([row(null, { prop: null, anchor: 'none' })]).faults.map(x => x.anchor), ['none']);
+  assert.equal(handgrip([row(3.2, { onScreen: false })]).ok, true, 'off screen is left out');
+  const N = handgrip([{ f: 0, held: [], grips: [], actors: { m: { inFrame: true, limbs: { L: { grip: false }, R: { grip: false } } } } }]);
+  assert.equal(N.ok, true); assert.equal(N.nothing, true);
+  assert.equal(STANDIN_CM, 2);
+});
+
+test('engine/grip.js nearestGap: a gripping hand to the nearest shown prop, stand-ins and hidden props left out', () => {
+  const f = figure(); at(f, 0.03);
+  const loose = tin(), stub = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.004, 0.004)), far = tin(); far.position.x = 2; far.updateMatrixWorld(true);
+  stub.position.copy(f.hand.getWorldPosition(new THREE.Vector3())); stub.updateMatrixWorld(true);
+  const hid = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1)); hid.visible = false; hid.updateMatrixWorld(true);
+  const g = nearestGap(f.hand, [['tin', loose], ['stub', stub], ['far', far], ['hid', hid]]);
+  assert.equal(g.prop, 'tin'); assert.ok(Math.abs(g.cm - 3) < 0.01, `${g.cm}`); assert.ok(g.cm > GAP_CM);
+  assert.deepEqual(nearestGap(f.hand, [['stub', stub]]), { prop: null, cm: null, anchor: 'none' });
+});
+
+test('play.js writes grips[] for every gripping hand from nearestGap over the shown tracked props', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'styles/stick-man/engine/play.js'), 'utf8');
+  assert.match(src, /out\.grips = \[\]/); assert.match(src, /nearestGap\(a\.S\.parts\.hands\[s\]/);
+});
