@@ -1,8 +1,8 @@
 // Hand grip gate (whatif1 v5, 26/11: a tin with the hands as dots on its label, a baby bundle floating beside the arms, a
 // photo in front of the chest with no hand on it, and every gate passed them). Each frame's rows carry held[]: every prop
 // a hand holds that frame (a set prop in mode 'hand', a cast.js hand prop fully in the hand), with gapCm, the air
-// from the hand mesh's surface (its world radius, scale and gloves included) to the nearest point of the prop's meshes
-// (engine/grip.js, anchor 'mesh'), never the grip socket the engine snaps onto the hand; each hand of a prop held in
+// from the hand's drawn edge (its world radius with its ink outline, scale and gloves included) to the nearest point of the prop's meshes
+// (engine/grip.js, anchor 'edge': both sides to their drawn edge, ink outlines included), never the grip socket the engine snaps onto the hand; each hand of a prop held in
 // both is measured on its own. Any frame
 // on screen over GAP_CM (handgrip.limits.json, frozen before anything was measured) fails.
 //   node styles/stick-man/tools/gates/handgrip.mjs films/<slug> [--frames 120-300]      rows from review/shot-rows.jsonl
@@ -15,7 +15,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.resolve(H
 export const { GAP_CM } = JSON.parse(fs.readFileSync(path.join(HERE, 'handgrip.limits.json'), 'utf8'));
 
 // rows -> { ok, faults: [{ f, actor, prop, side, cm, anchor }], checked, unmeasured }. No rows in range, a row with no held
-// array, or a held prop with no gapCm is unmeasured (never a pass); a prop with nothing drawn to measure to (anchor
+// array, or a held prop with no gapCm or an anchor other than 'edge' is unmeasured (never a pass); a prop with nothing drawn to measure to (anchor
 // 'empty') is a fault.
 export function handgrip(rows, { frames } = {}) {
   const faults = []; let checked = 0, unmeasured = 0, seen = 0;
@@ -26,7 +26,7 @@ export function handgrip(rows, { frames } = {}) {
     for (const h of r.held) {
       if (!h.onScreen) continue;
       if (h.anchor === 'empty') { checked++; faults.push({ f: r.f, actor: h.actor, prop: h.prop, side: h.side, cm: null, anchor: 'empty' }); continue; }
-      if (h.gapCm == null) { unmeasured++; continue; }
+      if (h.gapCm == null || h.anchor !== 'edge') { unmeasured++; continue; }   // any other anchor is an older measure
       checked++;
       if (h.gapCm > GAP_CM) faults.push({ f: r.f, actor: h.actor, prop: h.prop, side: h.side, cm: h.gapCm, anchor: h.anchor });
     }
