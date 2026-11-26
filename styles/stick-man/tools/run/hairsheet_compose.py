@@ -12,8 +12,8 @@ for c, n in enumerate(cols): g.text((LW + c * T + 8, 7), n, fill=(20, 20, 20), f
 for r, n in enumerate(rows):
     g.text((8, TH + r * T + T // 2 - 10), n, fill=(20, 20, 20), font=F)
     for c in range(6):
-        p = os.path.join(d, f'old_{r * 5 + c}.png') if r < 2 else os.path.join(d, f'h_{r * 6 + c}.png')
-        if (r < 2 and c > 4) or not os.path.exists(p): continue
+        p = os.path.join(d, f'h_{r * 6 + c}.png')   # every row from hairsheet.html (the two caps of today included)
+        if not os.path.exists(p): continue
         im = Image.open(p).convert('RGB')
         box = (180, 440, 540, 800) if c < 2 else (110, 380, 610, 880)   # the figure / the head
         S.paste(im.crop(box).resize((T - 4, T - 4)), (LW + c * T + 2, TH + r * T + 2))

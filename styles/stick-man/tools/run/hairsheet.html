@@ -10,6 +10,7 @@
 // front, at 3/4, from low in front and from behind. ?run=1: the six new hairs in a row playing a look-around, frame by frame (rigid check).
 //   node styles/stick-man/tools/render/shot.mjs --page styles/stick-man/tools/run/hairsheet.html --frames 0-47 --w 720 --h 1280 --out <dir>/h_%d.png
 //   node styles/stick-man/tools/render/shot.mjs --page 'styles/stick-man/tools/run/hairsheet.html?run=1' --frames 0-119 --w 720 --h 1280 --mp4 <dir>/run.mp4
+//   python styles/stick-man/tools/run/hairsheet_compose.py <dir> docs/hair-sheet/hair-sheet.jpg   (the sheet kept for review; docs/hair-sheet/cells is ignored)
 import * as THREE from 'three';
 import { makeStick, hairCap, HEAD_H, W_M } from '#engine/cast.js';
 import { createStage, lin } from '#engine/look.js';
@@ -58,9 +59,9 @@ window.__frame = i => {
     // the six new hairs, 1.1 m apart, playing the look-around from frame 0
     if (!crowd) crowd = ROWS.slice(2).map((r, k) => figure(r, (k - 2.5) * 1.1));
     for (const F of crowd) pose(F, i);
-    const S = crowd[0].S, dir = new THREE.Vector3(Math.sin(S.yaw + 0.2), 0.08, Math.cos(S.yaw + 0.2)).normalize(), mid = new THREE.Vector3(0, 1.75, 0);
+    const S = crowd[0].S, dir = new THREE.Vector3(Math.sin(S.yaw + 1.2), 0.08, Math.cos(S.yaw + 1.2)).normalize(), mid = new THREE.Vector3(0, 1.75, 0);
     crowd.forEach(F => F.S.root.updateMatrixWorld(true)); const c = new THREE.Vector3(); crowd.forEach(F => c.add(world(F.S, F.S.skel.head))); c.divideScalar(crowd.length); mid.set(c.x, c.y - 0.35, c.z);
-    const cam = mid.clone().addScaledVector(dir, 14); stage.setCamera(toB(cam), toB(mid), 60);
+    const cam = mid.clone().addScaledVector(dir, 19); stage.setCamera(toB(cam), toB(mid), 60);
     stage.setSun(toB(dir.clone().multiplyScalar(-0.8).setY(-0.5)), toB(mid), 4); for (const F of crowd) face(F, i, cam);
   } else {
     const row = ROWS[Math.floor(i / COLS.length)], col = COLS[i % COLS.length];
