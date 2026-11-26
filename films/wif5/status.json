@@ -53,6 +53,15 @@
     "from": "What if 1 V4 (films/wwr)",
     "wording": "umibozu worktree films/wwr/tools/timeline.py TEXT (byte-identical to films/wif5/tools/timeline.py)",
     "voice": "films/wwr/vo/takes/take-01.wav (identical to films/wif5/vo/takes/take-01.wav)",
-    "note": "V4 has no vo/script.json or ◇S approval file: the lock is the approved V4 wording itself; V5 keeps it unchanged"
+    "note": "V4 has no vo/script.json or ◇S approval file: the lock is the approved V4 wording itself; V5 keeps it unchanged",
+    "path_v4": "/Users/kienbeovl/orca/workspaces/studio-reel/umibozu/films/wwr/tools/timeline.py (TEXT) + vo/takes/take-01.wav",
+    "built": "films/wif5/vo/script.json, beats.json, facts.json, words.json from TEXT frames (scratch gen script)",
+    "scriptlint": "FAIL 2 FAIL 6 WARN (review/scriptlint.md)",
+    "gaps": [
+      "S3 L03-L06: 4 on-screen lines, 10.4 s with no action line (nursery facts); the picture carries the action (doctor runs, lifts the boy), the words do not",
+      "S3 L11-L15: 5 lines, 12.4 s with no action line (lantern -> office -> shop facts)",
+      "S2 WARN L12, L13 two numbers; S6 WARN caps WOMAN, OECD; S10 WARN 7 facts; S11 no reference transcript",
+      "Not fixed: the wording is V4's approved lock. Fixing needs a Kai K3 conflict decision (DECISIONS.json conflict on scriptlint S3) or a reworded script that wins a blind A/B"
+    ]
   }
 }

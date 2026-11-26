@@ -1,0 +1,298 @@
+{
+ "film": "wif5",
+ "source": "V4 locked wording: films/wwr/tools/timeline.py TEXT (umibozu worktree), byte-identical to films/wif5/tools/timeline.py",
+ "note": "The narration of What if 1 is on-screen text at locked frames; the voice take (vo/takes/take-01.wav) is the crowd count and the whispered count in part j. f0/f1 are film frames. Wording inherited unchanged from V4 (do not edit).",
+ "voice": {
+  "take": "vo/takes/take-01.wav",
+  "use": "the countdown (part a, 0-11 s) and the whisper in j at film frames j+396, j+420, j+444 (tools/sound_rest.py)"
+ },
+ "wps": 3.1,
+ "lines": [
+  {
+   "id": "L01",
+   "who": "screen",
+   "style": "title",
+   "beat": "Ba",
+   "class": "twist",
+   "text": "What if every WOMAN on Earth disappeared?",
+   "f0": 0,
+   "f1": 138,
+   "onscreen": true
+  },
+  {
+   "id": "L02",
+   "who": "screen",
+   "style": "text",
+   "beat": "Ba",
+   "class": "twist",
+   "text": "Every woman and girl on Earth is gone.",
+   "f0": 396,
+   "f1": 480,
+   "onscreen": true
+  },
+  {
+   "id": "L03",
+   "who": "screen",
+   "style": "text",
+   "beat": "Bb",
+   "class": "fact",
+   "text": "Half the cradles are empty.",
+   "f0": 534,
+   "f1": 594,
+   "onscreen": true
+  },
+  {
+   "id": "L04",
+   "who": "screen",
+   "style": "text",
+   "beat": "Bb",
+   "class": "fact",
+   "text": "Only boys are left: the last babies ever.",
+   "f0": 596,
+   "f1": 644,
+   "onscreen": true
+  },
+  {
+   "id": "L05",
+   "who": "screen",
+   "style": "stat3",
+   "beat": "Bb",
+   "class": "number",
+   "text": "85% of the world's nurses were women",
+   "f0": 648,
+   "f1": 712,
+   "onscreen": true
+  },
+  {
+   "id": "L06",
+   "who": "screen",
+   "style": "text",
+   "beat": "Bb",
+   "class": "fact",
+   "text": "This one was born at 11:59 p.m.",
+   "f0": 804,
+   "f1": 868,
+   "onscreen": true
+  },
+  {
+   "id": "L07",
+   "who": "screen",
+   "style": "text",
+   "beat": "Bb",
+   "class": "twist",
+   "text": "One minute before.",
+   "f0": 874,
+   "f1": 926,
+   "onscreen": true
+  },
+  {
+   "id": "L08",
+   "who": "screen",
+   "style": "big",
+   "beat": "Bb",
+   "class": "reaction",
+   "text": "Remember him.",
+   "f0": 932,
+   "f1": 984,
+   "onscreen": true
+  },
+  {
+   "id": "L09",
+   "who": "screen",
+   "style": "stat3",
+   "beat": "Bc",
+   "class": "number",
+   "text": "87% of elder care workers were women (OECD)",
+   "f0": 994,
+   "f1": 1068,
+   "onscreen": true
+  },
+  {
+   "id": "L10",
+   "who": "screen",
+   "style": "text",
+   "beat": "Bc",
+   "class": "reaction",
+   "text": "The frail feel it first.",
+   "f0": 1076,
+   "f1": 1134,
+   "onscreen": true
+  },
+  {
+   "id": "L11",
+   "who": "screen",
+   "style": "text",
+   "beat": "Bd",
+   "class": "fact",
+   "text": "Mothers. Wives. Daughters. Sisters.",
+   "f0": 1198,
+   "f1": 1274,
+   "onscreen": true
+  },
+  {
+   "id": "L12",
+   "who": "screen",
+   "style": "text",
+   "beat": "Bd",
+   "class": "number",
+   "text": "A billion of those left are boys under 15.",
+   "f0": 1280,
+   "f1": 1342,
+   "onscreen": true
+  },
+  {
+   "id": "L13",
+   "who": "screen",
+   "style": "stat3",
+   "beat": "Be",
+   "class": "number",
+   "text": "4 in 10 workers on Earth, gone overnight",
+   "f0": 1347,
+   "f1": 1423,
+   "onscreen": true
+  },
+  {
+   "id": "L14",
+   "who": "screen",
+   "style": "text",
+   "beat": "Be",
+   "class": "fact",
+   "text": "And half of all the customers.",
+   "f0": 1436,
+   "f1": 1517,
+   "onscreen": true
+  },
+  {
+   "id": "L15",
+   "who": "screen",
+   "style": "stat3",
+   "beat": "Bf",
+   "class": "number",
+   "text": "90% of homicide suspects are men",
+   "f0": 1518,
+   "f1": 1590,
+   "onscreen": true
+  },
+  {
+   "id": "L16",
+   "who": "screen",
+   "style": "text",
+   "beat": "Bf",
+   "class": "action",
+   "text": "Some fight. Some let go.",
+   "f0": 1628,
+   "f1": 1670,
+   "onscreen": true
+  },
+  {
+   "id": "L17",
+   "who": "screen",
+   "style": "text",
+   "beat": "Bg",
+   "class": "reaction",
+   "text": "Now it is all on him.",
+   "f0": 1803,
+   "f1": 1893,
+   "onscreen": true
+  },
+  {
+   "id": "L18",
+   "who": "screen",
+   "style": "text",
+   "beat": "Bh",
+   "class": "fact",
+   "text": "Labs can freeze eggs, sperm and embryos.",
+   "f0": 1894,
+   "f1": 1970,
+   "onscreen": true
+  },
+  {
+   "id": "L19",
+   "who": "screen",
+   "style": "text",
+   "beat": "Bh",
+   "class": "twist",
+   "text": "No one has ever built a womb.",
+   "f0": 2046,
+   "f1": 2110,
+   "onscreen": true
+  },
+  {
+   "id": "L20",
+   "who": "screen",
+   "style": "text",
+   "beat": "Bi",
+   "class": "number",
+   "text": "The youngest person on Earth turns 80.",
+   "f0": 2125,
+   "f1": 2215,
+   "onscreen": true
+  },
+  {
+   "id": "L21",
+   "who": "screen",
+   "style": "text",
+   "beat": "Bi",
+   "class": "reaction",
+   "text": "Nobody comes after him.",
+   "f0": 2273,
+   "f1": 2333,
+   "onscreen": true
+  },
+  {
+   "id": "L22",
+   "who": "screen",
+   "style": "text",
+   "beat": "Bj",
+   "class": "twist",
+   "text": "The last person on Earth.",
+   "f0": 2432,
+   "f1": 2504,
+   "onscreen": true
+  },
+  {
+   "id": "L23",
+   "who": "screen",
+   "style": "big",
+   "beat": "Bj",
+   "class": "reaction",
+   "text": "Remember him?",
+   "f0": 2536,
+   "f1": 2600,
+   "onscreen": true
+  },
+  {
+   "id": "L24",
+   "who": "screen",
+   "style": "text",
+   "beat": "Bj",
+   "class": "fact",
+   "text": "She held him for one minute.",
+   "f0": 2640,
+   "f1": 2702,
+   "onscreen": true
+  },
+  {
+   "id": "L25",
+   "who": "screen",
+   "style": "text",
+   "beat": "Bj",
+   "class": "recap",
+   "text": "He held on to her for 116 years.",
+   "f0": 2710,
+   "f1": 2780,
+   "onscreen": true
+  },
+  {
+   "id": "L26",
+   "who": "screen",
+   "style": "pink",
+   "beat": "Bj",
+   "class": "CTA",
+   "text": "Send this to the woman who held you first.",
+   "f0": 2798,
+   "f1": 2876,
+   "onscreen": true
+  }
+ ]
+}

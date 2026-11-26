@@ -1,0 +1,156 @@
+{
+ "film": "wif5",
+ "note": "One beat per part (TREATMENT.md). Links read the film as cause and effect: the vanish causes every later scene; the boy born at 23:59 is the thread.",
+ "beats": [
+  {
+   "id": "Ba",
+   "name": "Countdown",
+   "lines": [
+    "L01",
+    "L02"
+   ],
+   "want": "a dad wants the new year with his daughter, hand in hand",
+   "obstacle": "at ONE every woman and girl vanishes",
+   "outcome": "his hand closes on air"
+  },
+  {
+   "id": "Bb",
+   "name": "Nursery",
+   "link": "so",
+   "because": "the women are gone, so the nurses and mothers are gone from the nursery",
+   "lines": [
+    "L03",
+    "L04",
+    "L05",
+    "L06",
+    "L07",
+    "L08"
+   ],
+   "want": "a doctor wants to keep the newborns alive alone",
+   "obstacle": "half the cradles are empty, alarms, no nurses",
+   "outcome": "he finds the boy born at 23:59 and holds him"
+  },
+  {
+   "id": "Bc",
+   "name": "Care home",
+   "link": "so",
+   "because": "the carers were women, so the old are left with one man",
+   "lines": [
+    "L09",
+    "L10"
+   ],
+   "want": "an old man wants tea with his wife",
+   "obstacle": "her chair is empty; one carer for four trays",
+   "outcome": "he sets her cup anyway"
+  },
+  {
+   "id": "Bd",
+   "name": "Lantern",
+   "link": "so",
+   "because": "every family lost its women, so they mourn",
+   "lines": [
+    "L11",
+    "L12"
+   ],
+   "want": "a father and son want to say goodbye",
+   "obstacle": "nobody to bury, only a lantern",
+   "outcome": "they let it go into a sky of lanterns"
+  },
+  {
+   "id": "Be",
+   "name": "Office",
+   "link": "but",
+   "because": "grief does not stop the world needing work, but 4 in 10 workers are gone",
+   "lines": [
+    "L13",
+    "L14"
+   ],
+   "want": "one man wants to keep the office running",
+   "obstacle": "empty desks, every phone ringing",
+   "outcome": "he stands, alone"
+  },
+  {
+   "id": "Bf",
+   "name": "Shop",
+   "link": "so",
+   "because": "with half the workers gone the shelves empty, so men fight",
+   "lines": [
+    "L15",
+    "L16"
+   ],
+   "want": "two fathers want the last tin",
+   "obstacle": "there is one",
+   "outcome": "one lets go for the other's baby"
+  },
+  {
+   "id": "Bg",
+   "name": "Kitchen",
+   "link": "so",
+   "because": "the care work women did is now all on the fathers",
+   "lines": [
+    "L17"
+   ],
+   "want": "a father wants the baby to sleep",
+   "obstacle": "exhaustion, alone",
+   "outcome": "he sleeps; his son covers them"
+  },
+  {
+   "id": "Bh",
+   "name": "Lab",
+   "link": "but",
+   "because": "the only way on is science, but no one has built a womb",
+   "lines": [
+    "L18",
+    "L19"
+   ],
+   "want": "scientists want one heartbeat in a glass womb",
+   "obstacle": "it flatlines",
+   "outcome": "they give up, red light"
+  },
+  {
+   "id": "Bi",
+   "name": "Birthday",
+   "link": "so",
+   "because": "no births ever again, so the youngest only grow old",
+   "lines": [
+    "L20",
+    "L21"
+   ],
+   "want": "old men want a birthday",
+   "obstacle": "nobody comes after",
+   "outcome": "chairs empty one by one"
+  },
+  {
+   "id": "Bj",
+   "name": "The last man",
+   "kind": "recap",
+   "human": "She held him for one minute",
+   "link": "so",
+   "because": "the boy born at 23:59 outlives everyone",
+   "lines": [
+    "L22",
+    "L23",
+    "L24",
+    "L25",
+    "L26"
+   ],
+   "want": "the last man wants to remember her",
+   "obstacle": "he is alone at 116",
+   "outcome": "the photo of his mother; peace"
+  }
+ ],
+ "plants": [
+  {
+   "id": "P1",
+   "what": "the boy born at 11:59 p.m., one minute before",
+   "set": "L06",
+   "paid": "L23"
+  },
+  {
+   "id": "P2",
+   "what": "Remember him.",
+   "set": "L08",
+   "paid": "L23"
+  }
+ ]
+}

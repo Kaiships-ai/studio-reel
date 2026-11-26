@@ -1,0 +1,98 @@
+{
+ "film": "wif5",
+ "note": "Claims as on screen (V4 wording). Sources are the ones the V4 numbers were written from (timeline.py comments) or the standard source for the claim; a fresh fact checker opens each one (review/fact-check.md).",
+ "facts": [
+  {
+   "id": "F1",
+   "claim": "85% of the world's nurses were women",
+   "lines": [
+    "L05"
+   ],
+   "source": {
+    "name": "WHO, State of the World's Nursing 2020",
+    "url": "https://www.who.int/publications/i/item/9789240003279"
+   },
+   "check": "report: about 90 % of the nursing workforce is female; 85 % is the safe lower figure",
+   "move": "the doctor runs the nursery alone"
+  },
+  {
+   "id": "F2",
+   "claim": "87% of elder care workers were women (OECD)",
+   "lines": [
+    "L09"
+   ],
+   "source": {
+    "name": "OECD, Who Cares? Attracting and Retaining Care Workers for the Elderly (2020)",
+    "url": "https://www.oecd.org/en/publications/who-cares-attracting-and-retaining-elderly-care-workers_92c0ef68-en.html"
+   },
+   "check": "OECD average share of women in long-term care workers ~ 90 %; check the 87 % figure in the report",
+   "move": "one carer, four trays"
+  },
+  {
+   "id": "F3",
+   "claim": "A billion of those left are boys under 15",
+   "lines": [
+    "L12"
+   ],
+   "source": {
+    "name": "UN World Population Prospects 2024",
+    "url": "https://population.un.org/wpp/"
+   },
+   "check": "males aged 0-14 ~ 1.03 billion (WPP 2024)",
+   "move": "the son beside his father at the lantern"
+  },
+  {
+   "id": "F4",
+   "claim": "4 in 10 workers on Earth, gone overnight",
+   "lines": [
+    "L13"
+   ],
+   "source": {
+    "name": "ILO, World Employment and Social Outlook: Trends",
+    "url": "https://ilostat.ilo.org/topics/women/"
+   },
+   "check": "women are ~ 39-40 % of the global labour force",
+   "move": "one man on a floor of empty desks"
+  },
+  {
+   "id": "F5",
+   "claim": "90% of homicide suspects are men",
+   "lines": [
+    "L15"
+   ],
+   "source": {
+    "name": "UNODC Global Study on Homicide 2019",
+    "url": "https://www.unodc.org/unodc/en/data-and-analysis/global-study-on-homicide.html"
+   },
+   "check": "UNODC: about 90 % of homicide suspects are male",
+   "move": "two fathers fight over one tin"
+  },
+  {
+   "id": "F6",
+   "claim": "Labs can freeze eggs, sperm and embryos; no one has ever built a womb",
+   "lines": [
+    "L18",
+    "L19"
+   ],
+   "source": {
+    "name": "Partridge et al., Nature Communications 2017 (extra-uterine support of lambs, not a human womb)",
+    "url": "https://www.nature.com/articles/ncomms15112"
+   },
+   "check": "no artificial womb has carried a human pregnancy from conception",
+   "move": "the glass womb flatlines"
+  },
+  {
+   "id": "F7",
+   "claim": "every woman and girl on Earth (49.73 % of people)",
+   "lines": [
+    "L02"
+   ],
+   "source": {
+    "name": "World Bank, Population, female (% of total), 2025",
+    "url": "https://data.worldbank.org/indicator/SP.POP.TOTL.FE.ZS"
+   },
+   "check": "timeline.py WOMEN = POP0 x 0.497326",
+   "move": "the counter drops at 330"
+  }
+ ]
+}
