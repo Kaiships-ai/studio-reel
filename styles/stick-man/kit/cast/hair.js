@@ -67,11 +67,11 @@ const STYLES = {
            falls: [{ lon: [42, 48], n: 2, from: 0.26, to: -0.55, toAt: [1.0, 0.7], rho: 0.07, flat: 0.32, flare: 0.04, jit: 0.3, tip: 'point', ridges: 3, seed: 13 },   // a lock over the bell's front edge each side: no straight line in 3/4
                    { lon: [48, 60], n: 3, from: 0.22, to: -0.36, toAt: [0.8, 1.0, 0.9], rho: 0.14, flat: 0.4, flare: 0.05, jit: 0.3, tip: 'point', ridges: 3, seed: 9 }] },   // face-framing locks
   // long and straight, parted in the middle: the scalp falls to the jaw, two curtains of flat locks on to the chest
-  long:  { cut: -0.14, col: [0.26, 0.15, 0.08], whorl: [0, 1, -0.05], locks: 24, twist: 0, clump: 0.014, base: 0.026, lift: 0.014, tips: 0.006, part: 0, lo: edge({ front: 0.30, side: -0.04 }),
-           hang: { from: 0.02, flare: 0.04, hem: [[0, 0.30], [42, 0.28], [60, -0.40], [180, -0.42]], tips: 0.09, edge: 14 },
-           falls: [{ lon: [42, 48], n: 2, from: 0.26, to: -0.55, toAt: [1.0, 0.7], rho: 0.07, flat: 0.32, flare: 0.04, jit: 0.3, tip: 'point', ridges: 3, seed: 13 },   // a lock over the bell's front edge each side: no straight line in 3/4
-                   { lon: [48, 62], n: 3, from: 0.22, to: -0.80, toAt: [0.75, 1.0, 0.9], rho: 0.10, flat: 0.32, flare: 0.06, jit: 0.35, tip: 'point', ridges: 3, seed: 9 },   // face-framing locks: uneven, tapered, angled out from the temple, laid over the bell's front edge (rho past the bell: inside it they never showed)
-                   { lon: [52, 180], n: 8, from: -0.02, to: -1.15, rho: 0.065, flat: 0.32, flare: 0.03, tip: 'blunt', ridges: 3 }] },
+  long:  { neck: true, top: -0.30, ramp: 0.20, col: [0.26, 0.15, 0.08], whorl: [0, 1, -0.05], locks: 24, twist: 0, clump: 0.014, base: 0.026, lift: 0.014, tips: 0.006, part: 0, lo: edge({ front: 0.30, side: -0.04 }),
+           // the bell ends high near the face (a hand at the cheek in PickUp) and at the back (the collar in LookUp), tapering in
+           // locks between; below it the lengths are bound to the upper back (kit-hair-long 28/11)
+           hang: { from: 0.02, flare: 0.04, skin: -0.26, hem: [[0, 0.30], [42, 0.26], [60, 0.0], [78, -0.14], [96, -0.40], [140, -0.26], [180, -0.26]], tips: 0.09, edge: 14 },
+           falls: [{ lon: [100, 180], n: 8, from: -0.02, to: -1.15, rho: 0.065, flat: 0.32, flare: 0.03, tip: 'blunt', ridges: 3, drape: [-0.30, -0.50, 0.18, -0.48, -0.10, -0.35] }] },   // drawn in behind the back, inside the arms' swing
   // a pixie: a short feathered cap, a wispy fringe swept to one side, feathered at the nape too
   pixie: { col: [0.50, 0.30, 0.15], whorl: [0.15, 0.75, -0.64], locks: 18, twist: 0.30, jit: 0.35, clump: 0.026, base: 0.020, lift: 0.024, tips: 0.090, napeTips: 1, sweep: 0.022, part: 0.20, lo: [[0, 0.24], [30, 0.22], [62, 0.02], [84, -0.08], [125, -0.36], [180, -0.36]] },   // the sideburn down past the ear's top: no skin wedge in 3/4
   // a high ponytail: the hair drawn tight to a tie high on the crown, one thick club of a tail off it
@@ -256,7 +256,7 @@ function fall(F, cut) {
     const K = 7, path = [];
     for (let k = 0; k <= K; k++) { const u = k / K, y = F.from + (to - F.from) * u, rho = 0.5 + (F.rho ?? 0.03) + (F.flare ?? 0) * u * u + (F.wave ? F.wave[0] * Math.sin(Math.PI * F.wave[1] * u + i) * sm(0, 0.2, u) : 0) + (F.flick ?? 0) * sm(0.7, 1, u), a = lon * DEG;
       let px = rho * Math.sin(a), pz = rho * Math.cos(a);
-      if (F.drape) { const [y0, y1, xm, zb] = F.drape, k = sm(y0, y1, y); px += (Math.max(-xm, Math.min(xm, px)) - px) * k; pz += (Math.min(pz, zb) - pz) * k; }   // below the head the lock draws in behind the back, inside the arms' swing
+      if (F.drape) { const [y0, y1, xm, zb, z0 = y0, z1 = y1] = F.drape, k = sm(y0, y1, y); px += (Math.max(-xm, Math.min(xm, px)) - px) * k; pz += (Math.min(pz, zb) - pz) * sm(z0, z1, y); }   // below the head the lock draws in behind the back, inside the arms' swing
       path.push([px, y, pz]); }
     path.unshift(onHead(lon, F.from + 0.18, -0.04));                                   // the root: inside the scalp's mass
     const wd = F.w ?? 0.53 * Math.abs(F.lon[1] - F.lon[0]) * DEG / Math.max(1, n - 1) * 0.65;   // half the width: 1.3 of the spacing, the locks overlap
@@ -283,7 +283,7 @@ export function toonHair(style = 'side', col, patch) {   // patch: fields over t
     for (const L of locks) lg.add(lockMesh(L, rgb));
     // the blend (cast.js skinToNeck): all head down to where the crown's mass ends (the bell's hem, or the hairline at the nape),
     // so nothing the crown covers ever leaves it, then all neck 0.45 W lower (a lock's top fixed to the neck opened 11-49 mm)
-    if (st.neck) Object.assign(lg.userData, { neckTop: ((st.hang ? Math.min(...st.hang.hem.map(h => h[1])) : table(st.lo, 180)) - 0.08) * W, neckRamp: 0.45 * W });
+    if (st.neck) Object.assign(lg.userData, { neckTop: ((st.top != null ? st.top + 0.08 : st.hang ? Math.min(...st.hang.hem.map(h => h[1])) : table(st.lo, 180)) - 0.08) * W, neckRamp: (st.ramp ?? 0.45) * W });
     return g;
   };
 }
