@@ -91,7 +91,9 @@ export function hairInBody(S, P, ix = torsoIndex(S), segs = limbSegs(S)) {
   worst.headIn = headIn; return worst;
 }
 // the toon hair group's offset under the head's hair group (toonHair builds on the head's own centre)
-const toonHairLift = H => { let y = 0; H.traverse(o => { if (o.name?.startsWith('toonHair:') || o.userData.hairControl) y = o.position.y; }); return y; };
+// (only the style's own group, a child of the hair group: a neck-bound 'toonHair:lengths' group inside it sits at 0 and, read last,
+// put every point HAT_LIFT too low: 9 mm into the collar for the side part with an empty lengths group, 28/11)
+export const toonHairLift = H => { let y = 0; for (const o of H.children) if (o.name?.startsWith('toonHair:') || o.userData.hairControl) y = o.position.y; return y; };
 
 // one style through every clip of CLIPS: the worst frame of each, { clip: { mm, what, f } }
 export async function sweep(style, clips = CLIPS, patch) {
