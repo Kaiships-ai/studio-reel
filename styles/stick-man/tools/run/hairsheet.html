@@ -11,7 +11,7 @@
 //   node styles/stick-man/tools/render/shot.mjs --page styles/stick-man/tools/run/hairsheet.html --frames 0-47 --w 720 --h 1280 --out <dir>/h_%d.png
 //   node styles/stick-man/tools/render/shot.mjs --page 'styles/stick-man/tools/run/hairsheet.html?run=1' --frames 0-119 --w 720 --h 1280 --mp4 <dir>/run.mp4
 //   python styles/stick-man/tools/run/hairsheet_compose.py <dir> docs/hair-sheet/hair-sheet.jpg   (the sheet kept for review; docs/hair-sheet/cells is ignored)
-//   a type's sheet: add &type=mw (frames 0-59) and pass the type: hairsheet_compose.py <dir> docs/hair-sheet/hair-sheet-mw.jpg mw
+//   a type's sheet: add --query type=mw (frames 0-89: 15 rows) and pass the type: hairsheet_compose.py <dir> docs/hair-sheet/hair-sheet-mw.jpg mw
 import * as THREE from 'three';
 import { makeStick, hairCap, HEAD_H, W_M } from '#engine/cast.js';
 import { createStage, lin } from '#engine/look.js';

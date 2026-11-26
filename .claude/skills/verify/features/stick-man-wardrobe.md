@@ -75,4 +75,4 @@ to a hem), `grain` / `edgeDark` (a buzz cut's stubble and hairline), `grid` (box
 `cut` is the length the hair-in-body check left: `node --test test/unit/stick-hair-body.test.mjs` (~3 min) plays every style
 through ten clips (`CLIPS` in test/unit/hair-measure.mjs) in the coral sweater and fails a style whose drawn surface goes over
 4 mm (frozen) into the torso or a limb; `node test/unit/hair-length.mjs <style>` finds the lowest cut that passes. Type sheet:
-add `&type=mw` to the sheet page (frames 0-83) and `hairsheet_compose.py <dir> <out.jpg> mw`.
+add `--query type=mw` to the sheet render (frames 0-89) and `hairsheet_compose.py <dir> <out.jpg> mw`.
