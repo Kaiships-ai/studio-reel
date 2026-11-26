@@ -4,7 +4,7 @@
 // the nearest point on the prop's visible drawn triangles (outlines included), never the grip socket the engine snaps
 // onto the hand; play.js writes it to the rows as held[].gapCm and tools/gates/handgrip.mjs fails a frame over the limit
 // frozen in handgrip.limits.json before anything was measured (pinned below: a changed value fails). The controls: a
-// prop 5 cm off one hand, a bundle 6 cm off two hands, a toddler 2.5 cm off, a can 2.9 cm off at 45 deg round its side.
+// prop 5 cm off one hand, a catalog cooler box 3 cm off (its contact-shadow disc is not the prop), a bundle 6 cm off two hands, a toddler 2.5 cm off, a can 2.9 cm off at 45 deg round its side.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
@@ -13,6 +13,19 @@ import * as THREE from 'three';
 import { gripGap, handRadius } from '../../styles/stick-man/engine/grip.js';
 import { W_M, solid } from '../../styles/stick-man/engine/cast.js';
 import { handgrip, GAP_CM } from '../../styles/stick-man/tools/gates/handgrip.mjs';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+// propKit in node (as test/unit/stick-props-kit.test.mjs): no canvas, the .glb read from disk with its textures left out
+const ctx = new Proxy({}, { get: (_, k) => k === 'measureText' ? () => ({ width: 10 }) : /Gradient$/.test(k) ? () => ({ addColorStop() {} }) : () => {}, set: () => true });
+globalThis.document ??= { createElement: () => ({ width: 0, height: 0, getContext: () => ctx }) };
+GLTFLoader.prototype.loadAsync = function (url) {
+  const b = fs.readFileSync(path.resolve(import.meta.dirname, '../..') + '/' + url.replace(/^\//, '')), n = b.readUInt32LE(12), j = JSON.parse(b.subarray(20, 20 + n)); delete j.textures; delete j.images;
+  for (const m of j.materials || []) { for (const o of [m, m.pbrMetallicRoughness || {}]) for (const k of Object.keys(o)) if (/Texture$/.test(k)) delete o[k]; }
+  let t = JSON.stringify(j); t += ' '.repeat((4 - Buffer.byteLength(t) % 4) % 4); const h = Buffer.from(b.subarray(0, 20)), out = Buffer.concat([h, Buffer.from(t), b.subarray(20 + n)]);
+  out.writeUInt32LE(Buffer.byteLength(t), 12); out.writeUInt32LE(out.length, 8); return new Promise((ok, no) => this.parse(new Uint8Array(out).buffer, '', ok, no));
+};
+const { propKit } = await import('../../styles/stick-man/kit/props/catalog.js');
+const { drawnSolid } = await import('../../styles/stick-man/kit/props/drawn.js');
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const FROZEN = JSON.parse(fs.readFileSync(path.join(ROOT, 'styles/stick-man/tools/gates/handgrip.limits.json'), 'utf8'));
@@ -86,6 +99,31 @@ test('engine/grip.js: a hidden mesh is not measured, on the prop or the hand', (
   const f = figure(); round(f, 0.029); assert.ok(gripGap(f.hand, o).cm > GAP_CM, 'the hidden box must not read 0');
   const g = gloved(), hid = new THREE.Mesh(new THREE.SphereGeometry(0.5)); hid.visible = false; g.hand.add(hid);
   assert.ok(handRadius(g.hand) < 0.06, `${handRadius(g.hand)}`);
+});
+
+test('engine/grip.js: a catalog cooler box 3 cm off its side fails (its contact-shadow disc read 0); touching passes', async () => {
+  const S = { scene: new THREE.Scene(), prop() {}, glow() {} }, k = propKit(S, []); await k.load(['supermarket/cooler-box']);
+  const g = k.place('supermarket/cooler-box', [0, 0, 0], 0); S.scene.updateMatrixWorld(true);
+  let disc = false; g.traverse(o => { if (o.userData.contact) disc = true; }); assert.ok(disc, 'the placed prop carries its contact disc');
+  const bb = new THREE.Box3(); g.traverse(o => { if (drawnSolid(o)) bb.expandByObject(o, true); });
+  const f = figure(), z = (bb.min.z + bb.max.z) / 2;
+  f.hand.position.set(bb.max.x + 0.03 + f.r, bb.min.y + 0.01, z); f.root.updateMatrixWorld(true);
+  const off = gripGap(f.hand, g); assert.ok(off.cm > GAP_CM, `3 cm off the side read ${off.cm}`);
+  f.hand.position.set(bb.max.x + f.r, (bb.min.y + bb.max.y) / 2, z); f.root.updateMatrixWorld(true);
+  assert.ok(gripGap(f.hand, g).cm <= GAP_CM, `touching read ${gripGap(f.hand, g).cm}`);
+});
+
+test('engine/grip.js: a mesh under a hidden parent is not measured', () => {
+  const o = can(), grp = new THREE.Group(); grp.visible = false; o.add(grp); grp.add(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1)));
+  const outer = new THREE.Group(); outer.visible = false; outer.add(o); outer.updateMatrixWorld(true);
+  const f = figure(); round(f, 0.029);
+  assert.equal(gripGap(f.hand, grp).cm, null, 'a hidden group has nothing drawn');
+  assert.ok(gripGap(f.hand, o).cm == null, 'a prop whose parent is hidden is not measured');
+});
+
+test('one filter for a prop\'s drawn solid part: grip.js, cast.js propBox and collide.js all use kit/props/drawn.js', () => {
+  for (const f of ['styles/stick-man/engine/grip.js', 'styles/stick-man/engine/cast.js', 'styles/stick-man/kit/props/collide.js'])
+    assert.match(fs.readFileSync(path.join(ROOT, f), 'utf8'), /drawnSolid/, f);
 });
 
 test('handgrip: a held entry whose anchor is not the drawn-edge measure is unmeasured, never a pass', () => {
