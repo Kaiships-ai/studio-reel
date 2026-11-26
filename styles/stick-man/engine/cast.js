@@ -215,7 +215,7 @@ function glasses() {
 
 // hats and hair sit HAT_LIFT higher than they were modelled so the brows always show (Kai, gate A 2026-11-12)
 export const HAT_LIFT = 0.035;
-const _hm = new THREE.Matrix4();
+const _hm = new THREE.Matrix4(), _nm = new THREE.Matrix4(), _hm2 = new THREE.Matrix4();
 // Kai 11/11: "the reference face and line are very 2D, ours is a 3D sphere". The head is drawn flat (unlit white, one thin
 // shade crescent at the edge, no light gradient) and, whenever a camera is given, the face is a flat card that always faces
 // the lens and slides across the head disc as the head turns (clipped by its edge), instead of a texture wrapped round a sphere.
@@ -624,6 +624,7 @@ export function makeStick(spec) {
     if (!o.geometry.userData.sheet) { for (let i = 0; i < P.count; i++) crown.push(at(i)); return; }
     const I = o.geometry.index; for (let i = 0; i < (I ? I.count : P.count); i += 3) sheets.push([0, 1, 2].map(j => at(I ? I.getX(i + j) : i + j))); });
   const wornShell = headWear(crown, sheets, HA, HB);
+  const neckBound = []; hairG.traverse(o => { if (o.userData.neckBound) { o.matrixAutoUpdate = false; neckBound.push(o); } });
 
   const limbs = { armL: new Tube(16, LIMB_R), armR: new Tube(16, LIMB_R), legL: new Tube(18, LIMB_R), legR: new Tube(18, LIMB_R) };
   // hand mitt: reference hands are ~0.10 W across, about twice the arm line
@@ -882,6 +883,11 @@ export function makeStick(spec) {
     const qTop = top.q.clone().multiply(qn), hOff = new THREE.Vector3(0, (HEAD_C[1] - HIP_V - SPINE_L + (HK - 1) * 0.5 * HEAD_H) * B.s, 0).applyQuaternion(qTop);
     head.position.copy(toRoot(top.p.clone().add(hOff))).multiplyScalar(W); head.quaternion.copy(qb.clone().multiply(qTop));
     const hs = Math.max(0.5, 1 + (Q.headSq || 0)); head.scale.set(HK / Math.sqrt(hs), HK * hs, HK / Math.sqrt(hs));
+    // hair lengths bound to the neck (toonHair's long styles, userData.neckBound): drawn where the head would be without the
+    // neck's nod / tilt / turn, so they stay on the neck and the upper back while the crown turns with the head (Studio 26/11, option A)
+    if (neckBound.length) { const hN = new THREE.Vector3(0, hOff.length(), 0).applyQuaternion(top.q), qN = qb.clone().multiply(top.q);
+      _nm.compose(toRoot(top.p.clone().add(hN)).multiplyScalar(W), qN, head.scale); S.neckLm = _hm2.compose(head.position, head.quaternion, head.scale).invert().multiply(_nm).clone();
+      for (const o of neckBound) { o.matrix.copy(S.neckLm); o.matrixWorldNeedsUpdate = true; } }
     S.fill = Q.x_fill || 0;
     const rig = { pitch: (pv.pitch || 0) + (Q.spine?.bend || 0), roll: (pv.roll || 0) + (Q.spine?.side || 0), assist: 0,
       body: [Q.hip?.x || 0, Q.bob || 0, Q.spine?.twist || 0].map(x => +x.toFixed(3)), sq: Q.sq || 0, headSq: Q.headSq || 0 };

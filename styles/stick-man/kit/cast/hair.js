@@ -56,16 +56,16 @@ const STYLES = {
   buzz:  { col: [0.20, 0.15, 0.11], whorl: [0, 0.70, -0.70], locks: 36, twist: 0.1, clump: 0.003, base: 0.008, lift: 0.004, tips: 0.006, grain: 0.30, edgeDark: 0.35, ink: 0.6,
            lo: [[0, 0.33], [18, 0.33], [26, 0.27], [40, 0.27], [62, 0.10], [84, 0.03], [125, -0.36], [180, -0.36]] },
   // a mullet: short on top, a thick tail of pointed locks at the nape down to the collar
-  mullet: { cut: -0.42, col: [0.40, 0.25, 0.13], whorl: [0, 0.70, -0.70], locks: 20, twist: 0.12, jit: 0.15, clump: 0.024, base: 0.020, lift: 0.030, tips: 0.050, lo: edge({ front: 0.30, side: -0.04, back: -0.42 }),
+  mullet: { neck: true, col: [0.40, 0.25, 0.13], whorl: [0, 0.70, -0.70], locks: 20, twist: 0.12, jit: 0.15, clump: 0.024, base: 0.020, lift: 0.030, tips: 0.050, lo: edge({ front: 0.30, side: -0.04, back: -0.42 }),
             falls: [{ lon: [112, 180], n: 4, from: -0.20, to: -0.80, rho: 0.03, flat: 0.55, flare: 0.04, jit: 0.12, tip: 'point', ridges: 3 }] },
   // an afro: one round mass wider than the head, its surface curl clumps
   afro:  { col: [0.24, 0.15, 0.10], whorl: [0, 0.80, -0.60], locks: 12, twist: 0, clump: 0.004, base: 0.02, lift: 0, tips: 0.03, ball: { c: [0, 0.16, -0.05], r: 0.70, nape: -0.40 }, bumps: [150, 0.13, 0.030, -0.45], lo: edge({ front: 0.30, temple: 0.28, side: -0.02, back: -0.40 }) },
   // ---- women
   // a chin bob: a bell that falls straight from the crown to the jaw, a blunt hem, a side part
-  bob:   { cut: -0.12, col: [0.24, 0.14, 0.08], whorl: [0, 1, -0.08], locks: 26, twist: 0, clump: 0.016, base: 0.030, lift: 0.020, tips: 0.006, part: 0.12, lo: edge({ front: 0.30, side: -0.04 }),
+  bob:   { neck: true, col: [0.24, 0.14, 0.08], whorl: [0, 1, -0.08], locks: 26, twist: 0, clump: 0.016, base: 0.030, lift: 0.020, tips: 0.006, part: 0.12, lo: edge({ front: 0.30, side: -0.04 }),
            hang: { from: 0.02, flare: 0.10, hem: [[0, 0.30], [28, 0.28], [52, -0.36], [180, -0.38]], tips: 0.010 } },
   // long and straight, parted in the middle: the scalp falls to the jaw, two curtains of flat locks on to the chest
-  long:  { cut: -0.14, col: [0.26, 0.15, 0.08], whorl: [0, 1, -0.05], locks: 24, twist: 0, clump: 0.014, base: 0.026, lift: 0.014, tips: 0.006, part: 0, lo: edge({ front: 0.30, side: -0.04 }),
+  long:  { neck: true, col: [0.26, 0.15, 0.08], whorl: [0, 1, -0.05], locks: 24, twist: 0, clump: 0.014, base: 0.026, lift: 0.014, tips: 0.006, part: 0, lo: edge({ front: 0.30, side: -0.04 }),
            hang: { from: 0.02, flare: 0.04, hem: [[0, 0.30], [28, 0.28], [50, -0.40], [180, -0.42]] },
            falls: [{ lon: [52, 180], n: 8, from: -0.30, to: -1.15, rho: 0.045, flat: 0.32, flare: 0.03, tip: 'blunt', ridges: 3 }] },
   // a pixie: a short feathered cap, a wispy fringe swept to one side, feathered at the nape too
@@ -75,11 +75,11 @@ const STYLES = {
               buns: [{ dir: [0, 0.62, -0.78], r: 0.085, out: -0.01 }],
               tails: [{ path: [[0, 0.26, -0.30], [0, 0.40, -0.58], [0, 0.28, -0.80], [0, 0.00, -0.86], [0, -0.30, -0.80], [0, -0.55, -0.70]], w: [0.06, 0.10, 0.15, 0.17, 0.16, 0.11, 0.02], flat: 0.8, ridges: 5, seg: 64, sides: 22 }] },
   // box braids: square parts on the scalp, a curtain of thin braided ropes round the back and sides to the shoulders
-  braids: { cut: -0.14, col: [0.20, 0.13, 0.09], whorl: [0, 1, -0.05], locks: 24, twist: 0, clump: 0.006, base: 0.022, lift: 0.012, tips: 0.010, grid: [14, 22], lo: edge({ front: 0.30, side: -0.04 }),
+  braids: { neck: true, col: [0.20, 0.13, 0.09], whorl: [0, 1, -0.05], locks: 24, twist: 0, clump: 0.006, base: 0.022, lift: 0.012, tips: 0.010, grid: [14, 22], lo: edge({ front: 0.30, side: -0.04 }),
             hang: { from: 0.02, flare: 0, hem: [[0, 0.30], [28, 0.28], [56, -0.34], [180, -0.40]] },   // the braids lie on a curtain of hair: no cheek between them
             falls: [{ lon: [56, 180], n: 10, from: -0.10, to: -1.00, rho: 0.04, w: 0.040, flat: 1, flare: 0.04, jit: 0.10, tip: 'blunt', braid: 9, ridges: 0, ink: 0.55, sides: 12 }] },
   // a wavy lob: a soft S-wave mass to the shoulders, the tips turning out
-  lob:   { cut: -0.12, col: [0.46, 0.29, 0.14], whorl: [0, 1, -0.10], locks: 22, twist: 0.10, jit: 0.15, clump: 0.022, base: 0.030, lift: 0.024, tips: 0.010, part: 0.10, lo: edge({ front: 0.30, side: -0.04 }),
+  lob:   { neck: true, col: [0.46, 0.29, 0.14], whorl: [0, 1, -0.10], locks: 22, twist: 0.10, jit: 0.15, clump: 0.022, base: 0.030, lift: 0.024, tips: 0.010, part: 0.10, lo: edge({ front: 0.30, side: -0.04 }),
            hang: { from: 0.02, flare: 0.08, hem: [[0, 0.30], [28, 0.28], [50, -0.30], [180, -0.36]] },
            falls: [{ lon: [50, 180], n: 7, from: -0.20, to: -0.78, rho: 0.06, flat: 0.45, flare: 0.04, wave: [0.035, 2.2], flick: 0.06, jit: 0.08, tip: 'point', ridges: 3 }] },
 };
@@ -260,7 +260,10 @@ export function toonHair(style = 'side', col, patch) {   // patch: fields over t
       m.position.copy(d).multiplyScalar(headR(d) + b.out * W); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d); g.add(m);
     }
     const tails = (st.tails || []).map(L => { const y0 = L.path[0][1], lo = Math.min(...L.path.map(p => p[1])); if (st.cut == null || lo >= st.cut) return L; const q = (y0 - st.cut) / (y0 - lo); return { ...L, path: L.path.map(p => [p[0], y0 + (p[1] - y0) * q, p[2]]) }; });
-    for (const L of [...tails, ...(st.falls || []).flatMap(F => fall(F, st.cut))]) g.add(lockMesh(L, rgb));
+    // st.neck: the lengths are bound to the neck and the upper back, not the head (cast.js moves this group each pose: the
+    // crown turns with the head, the lengths stay on the shoulders). Rigid both: no physics, no swing (Studio 26/11, option A)
+    const lg = st.neck ? Object.assign(new THREE.Group(), { name: 'toonHair:lengths' }) : g; if (st.neck) { lg.userData.neckBound = true; g.add(lg); }
+    for (const L of [...tails, ...(st.falls || []).flatMap(F => fall(F, st.cut))]) lg.add(lockMesh(L, rgb));
     return g;
   };
 }

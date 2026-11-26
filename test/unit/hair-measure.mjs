@@ -25,13 +25,13 @@ const HA = 0.5 * W_M, HB = 0.5 * HEAD_H * W_M, CELL = 0.04, v = new THREE.Vector
 export function hairPoints(style, patch) {
   const g = (typeof style === 'function' ? style : toonHair(style, null, patch))(), pts = [], seen = new Set(); let low = 0; g.updateMatrixWorld(true);
   const f = typeof style === 'string' ? scalpField(style, patch) : null, dir = new THREE.Vector3(); let first = true;
-  g.traverse(o => { if (!o.isMesh || !o.parent?.isGroup && o.parent !== g) return; const A = o.geometry.attributes.position, sc = first && f; first = false;
+  g.traverse(o => { if (!o.isMesh || !o.parent?.isGroup && o.parent !== g) return; const bound = o.parent?.userData.neckBound; const A = o.geometry.attributes.position, sc = first && f; first = false;
     for (let i = 0; i < A.count; i++) { v.fromBufferAttribute(A, i).applyMatrix4(o.matrixWorld); v.y -= g.position.y;   // (the group's own lift undone: the head's centre)
       if (Math.hypot(v.x / HA, v.y / HB, v.z / HA) < 1.0) continue;
       if (sc && f(dir.fromBufferAttribute(A, i).normalize()).k < 0.98) continue;   // the scalp's hairline wall: it goes under the skin by design (at the nape, the neck's)
       const key = `${v.x.toFixed(3)},${v.y.toFixed(3)},${v.z.toFixed(3)}`; if (seen.has(key)) continue; seen.add(key);   // (a seam's twin)
       const q = v.clone(), e = Math.hypot(q.x / HA, q.y / HB, q.z / HA); if (sc && q.length() * (1 - 1 / e) < NEAR_W * W_M) q.base = q.clone().divideScalar(e);   // a thin scalp point: the head under it
-      pts.push(q); low = Math.min(low, v.y / W_M); } });
+      if (bound) q.bound = true; pts.push(q); low = Math.min(low, v.y / W_M); } });
   return { pts, low };
 }
 
@@ -77,7 +77,8 @@ const segD = (p, a, b) => { const ab = _q.subVectors(b, a), t = Math.max(0, Math
 export function hairInBody(S, P, ix = torsoIndex(S), segs = limbSegs(S)) {
   const H = S.parts.hair, M = H.matrixWorld.clone().multiply(new THREE.Matrix4().makeTranslation(0, toonHairLift(H), 0));
   let worst = { mm: -1e9, what: '' }, headIn = 0; const w = new THREE.Vector3(), b0 = new THREE.Vector3(), box = ix.box.clone(); for (const s of segs) box.expandByPoint(s.a).expandByPoint(s.b); box.expandByScalar(0.05);
-  for (const p of P) { w.copy(p).applyMatrix4(M); if (!box.containsPoint(w)) continue;
+  const MN = S.neckLm ? M.clone().multiply(S.neckLm) : M;
+  for (const p of P) { w.copy(p).applyMatrix4(p.bound ? MN : M); if (!box.containsPoint(w)) continue;
     if (p.base && inTorso(b0.copy(p.base).applyMatrix4(M), ix)) { headIn++; continue; }   // the clip puts the head itself in the body here
     const d = inTorso(w, ix); if (d && 1000 * d > worst.mm) worst = { mm: 1000 * d, what: 'torso', at: p };
     for (const s of segs) { if (Math.abs(w.y - 0.5 * (s.a.y + s.b.y)) > 0.12) continue; const e = s.r - segD(w, s.a, s.b); if (1000 * e > worst.mm) worst = { mm: 1000 * e, what: s.k, ring: `${s.i}/${s.n}`, at: p }; } }
