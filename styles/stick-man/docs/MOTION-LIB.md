@@ -1,6 +1,6 @@
 # Motion library catalogue
 
-The 76 clips of `styles/stick-man/motion-lib` (rules and use: its README.md). An anim key `{ f, clip, body, to?, times? }`
+The 75 clips of `styles/stick-man/motion-lib` (rules and use: its README.md). An anim key `{ f, clip, body, to?, times? }`
 plays one (REEL_DATA.md). `frames` = one cycle or the whole one-off at 30 fps; `base` = the standard pose it starts (→ ends) on;
 `props` = what the hands hold (`x_hp<L|R|B>_<prop>`, motion-lib/props.js and kit/cast/handprops.js; a film swaps its own with
 the key's `swap`), on which hand; `set` = the set pieces it needs (the proof page builds them at the sizes the clip names in
@@ -109,7 +109,6 @@ raw pelvis speed is reported, not gated); the carried mass changes at most 35 % 
 | `Gest_LookBack_Once` | adult | once | 140 | STAND | - | - | a quick nervous look over the right shoulder, from motion capture (Mixamo "Look Over Shoulder", ref/mixamo/look_over_shoulder.js) on this body, every captured frame |
 | `Gest_LookBackCarry_Once` | adult | once | 140 | HUG | hugbag (both) | - | a quick nervous look over the right shoulder with the duffel hugged to the chest, from motion capture (Mixamo "Look Over Shoulder", ref/mixamo/look_over_shoulder.js) on this body, every captured frame, opened and closed on HUG: the capture's legs, head and turn (neck, the spine's twist, the pelvis), its arms and its lean the HUG pose's (they keep the bag, the motion-lib/props.js hugbag, 20 kg, turning with the chest |
 | `Gest_LookUp_Once` | any (adult, scaled) | once | 70 | STAND | - | - | something above |
-| `Gest_LookUpShade_Once` | elder | once | 284 | STAND | - | - | look up, a hand shading the eyes, Mixamo "Looking" (ref/mixamo/looking_shade.js) on the elder body, every captured frame |
 | `Gest_NodYes_Once` | adult | once | 106 | STAND | - | - | a plain yes nod |
 | `Gest_PhoneCall_Loop` | adult | loop | 115 | STAND | phone (R) | - | standing, talking on a phone held to the ear, from motion capture (Quaternius UAL "Idle_TalkingPhone_Loop", CC0, ref/ual/idle_talkingphone_loop.js) on this body, every captured frame |
 | `Gest_PhoneTalk_Loop` | adult | loop | 190 | STAND | phone (R) | - | standing, a phone in the right hand held to the ear, talking, the left hand with it |

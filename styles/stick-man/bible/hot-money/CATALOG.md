@@ -2,9 +2,9 @@
 
 Sinh từ `tokens.json` và `catalog.json` bởi `node styles/stick-man/bible/catalog.mjs`. Đừng sửa tay file này.
 
-117 token (50 giá trị gốc, 52 theo mục đích, 15 theo thành phần), 4 chỗ trống. 164 thành phần (21 ổn định, 143 thử, 0 bỏ), 20 nằm trong phim, chờ đưa vào kit.
+117 token (50 giá trị gốc, 52 theo mục đích, 15 theo thành phần), 4 chỗ trống. 163 thành phần (21 ổn định, 142 thử, 0 bỏ), 20 nằm trong phim, chờ đưa vào kit.
 
-## Clip chuyển động (56)
+## Clip chuyển động (55)
 
 | id | thân | trạng thái | dùng khi | không bao giờ | Kai |
 |---|---|---|---|---|---|
@@ -63,7 +63,6 @@ Sinh từ `tokens.json` và `catalog.json` bởi `node styles/stick-man/bible/ca
 | `clip.Gest_Yawn_Once` | adult | thử | vươn vai ngáp | cảnh gấp |  |
 | `clip.Gest_Point_Once` | adult | thử | đứng chỉ tay về trước | ngồi chỉ (có clip riêng) |  |
 | `clip.Act_Give_Once` | elder | thử | người già đưa tay ra trao | đưa tay bằng key tay |  |
-| `clip.Gest_LookUpShade_Once` | elder | thử | người già ngước lên, tay che mắt | ngước nhìn bằng key tay |  |
 
 ## Nét mặt (34)
 
