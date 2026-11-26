@@ -73,7 +73,7 @@ const STYLES = {
                    { lon: [48, 62], n: 3, from: 0.22, to: -0.80, toAt: [0.75, 1.0, 0.9], rho: 0.10, flat: 0.32, flare: 0.06, jit: 0.35, tip: 'point', ridges: 3, seed: 9 },   // face-framing locks: uneven, tapered, angled out from the temple, laid over the bell's front edge (rho past the bell: inside it they never showed)
                    { lon: [52, 180], n: 8, from: -0.02, to: -1.15, rho: 0.065, flat: 0.32, flare: 0.03, tip: 'blunt', ridges: 3 }] },
   // a pixie: a short feathered cap, a wispy fringe swept to one side, feathered at the nape too
-  pixie: { col: [0.50, 0.30, 0.15], whorl: [0.15, 0.75, -0.64], locks: 18, twist: 0.30, jit: 0.35, clump: 0.026, base: 0.020, lift: 0.024, tips: 0.090, napeTips: 1, sweep: 0.022, part: 0.20, partSkin: false, lo: [[0, 0.24], [30, 0.22], [62, 0.02], [84, -0.08], [125, -0.36], [180, -0.36]] },   // the sideburn down past the ear's top: no skin wedge in 3/4
+  pixie: { col: [0.50, 0.30, 0.15], whorl: [0.15, 0.75, -0.64], locks: 18, twist: 0.30, jit: 0.35, clump: 0.026, base: 0.020, lift: 0.024, tips: 0.090, napeTips: 1, sweep: 0.022, part: 0.20, lo: [[0, 0.24], [30, 0.22], [62, 0.02], [84, -0.08], [125, -0.36], [180, -0.36]] },   // the sideburn down past the ear's top: no skin wedge in 3/4
   // a high ponytail: the hair drawn tight to a tie high on the crown, one thick club of a tail off it
   ponytail: { cut: -0.54, col: [0.36, 0.20, 0.10], whorl: [0, 0.62, -0.78], locks: 22, twist: 0, clump: 0.016, base: 0.016, lift: 0.010, tips: 0.012, lo: edge({ front: 0.30, side: -0.04 }),
               buns: [{ dir: [0, 0.62, -0.78], r: 0.085, out: -0.01 }],
@@ -93,7 +93,8 @@ const STYLES = {
 export const HAIR_STYLES = Object.keys(STYLES);
 export const styleOf = style => STYLES[style];
 // where a style shows its scalp by design: what it declares (st.bare), and a swept style's parting (the scalp shows along it)
-export const bareOf = st => [...(st.bare || []), ...(st.sweep && st.part != null && st.partSkin !== false ? [{ part: st.part, w: 0.016, above: 0.25 }] : [])];
+// a parting is never declared skin (Studio 27/11: side's groove cut to the white head read as a seam on a bowed head)
+export const bareOf = st => [...(st.bare || [])];
 // a style's scalp field (d -> { r, k }, k = 1 where hair grows, less on its hairline wall, which tucks under the skin): for measures
 export const scalpField = (style, patch) => scalp({ ...STYLES[style], ...patch });
 
@@ -142,7 +143,7 @@ function scalp(st) {
       t += st.bumps[2] * h; shade = 0.2 * shade - 0.8 * (1 - h) ** 2 + 0.5 * ridge * apart * sm(0.5, 0.65, u) * (0.5 + 0.5 * Math.cos(a)) - 0.3 * (mid > ridge ? 1 : 0) * apart;
     }
     if (st.sweep) t += st.sweep * sm(st.part, st.part - 0.35, d.x * rh / W) * sm(0.05, 0.35, y) * sm(-0.6, 0.2, d.z);   // the swept side stands higher
-    if (st.part != null && d.y > 0.25 && d.z > -0.55) { const p = sm(0.012, 0.040, Math.abs(d.x * rh / W - st.part)); t *= 0.25 + 0.75 * p; shade = Math.min(shade, -(1 - p)); if (st.sweep && st.partSkin !== false) cover *= sm(0.004, 0.016, Math.abs(d.x * rh / W - st.part)); }
+    if (st.part != null && d.y > 0.25 && d.z > -0.55) { const p = sm(0.012, 0.040, Math.abs(d.x * rh / W - st.part)); t *= 0.45 + 0.55 * p; shade = Math.min(shade, -(1 - p)); if (st.partSkin === true) cover *= sm(0.004, 0.016, Math.abs(d.x * rh / W - st.part)); }
     shade += 0.45 * Math.exp(-(((Math.asin(d.y) / DEG - 52) / 9) ** 2)) * c * c * sm(130, 60, lon);   // the light band round the crown
     if (st.tipLight) shade += st.tipLight * sm(0.16, 0.0, y - table(st.lo, lon)) * c;   // the lock tips catch the light: grey hair, not a cap
     if (st.hang) cover = Math.max(cover, sm(-0.02, 0.02, y - table(st.hang.hem, lon + (st.hang.edge || 0) * (c - 0.55) * amp)));   // the hem is the hairline above the fall too: no bare band between the two

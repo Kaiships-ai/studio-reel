@@ -17,7 +17,7 @@ const { inScalp } = await import('#kit/cast/scalpline.js');
 // the camera's direction from the head's centre: [yaw deg (0 = the face, + = round to the figure's left), elevation deg]
 // front, 3/4 and the back as the sheet shows them; low front (the sheet's low camera); the head turned to profile; the
 // head looking up (seen from under the chin)
-export const VIEWS = { front: [0, 0], q34: [45, 0], low: [0, -25], back: [180, 0], turn: [90, 0], lookup: [0, -55] };
+export const VIEWS = { front: [0, 0], q34: [45, 0], low: [0, -25], back: [180, 0], turn: [90, 0], lookup: [0, -55], top: [0, 85], bowed: [0, 35] };   // top: straight down on the crown; bowed: an eye-level lens on a head nodded 35 deg (Studio 27/11)
 const R = 320, SPAN = 1.0 * W_M;   // pixels across; the half-width of the window (m): the widest style (the afro) fits
 
 function headMesh() { const g = new THREE.SphereGeometry(0.5 * W_M, 64, 40); g.scale(1, HEAD_H, 1); return g; }
@@ -71,6 +71,17 @@ export function scalpBare(style, patch, keepL = false) {
 }
 
 const COL = [[128, 128, 128], [255, 0, 255], [215, 212, 205], [110, 70, 40], [10, 10, 10]];
+// a parting shows no skin at all (Studio 27/11: side's groove cut to the white head, a seam on a bowed head; 0.02 % of the head,
+// under SCALP_BARE, yet the whole line reads): bare px within 0.05 W of a style's part line, top and bowed. PART_SKIN_PX written first
+export const PART_SKIN_PX = 0;
+export function partSkin(style, patch) {
+  const st = { ...styleOf(style), ...patch }; if (st.part == null) return { top: 0, bowed: 0 };
+  const r = scalpBare(style, patch, true), out = {};
+  for (const k of ['top', 'bowed']) { const { L, HP } = r[k]; let n = 0;
+    for (let o = 0; o < L.length; o++) if (L[o] === 1 && Math.abs(HP[3 * o] / W_M - st.part) < 0.05 && HP[3 * o + 1] / W_M > 0.2) n++;
+    out[k] = n; }
+  return out;
+}
 export function png(L, file) {
   const raw = Buffer.alloc((R * 3 + 1) * R); for (let j = 0; j < R; j++) { raw[j * (R * 3 + 1)] = 0; for (let i = 0; i < R; i++) { const c = COL[L[j * R + i]], o = j * (R * 3 + 1) + 1 + 3 * i; raw[o] = c[0]; raw[o + 1] = c[1]; raw[o + 2] = c[2]; } }
   const crc = b => { let c, k = -1; for (let n = 0; n < b.length; n++) { c = (k ^ b[n]) & 0xff; for (let i = 0; i < 8; i++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; k = (k >>> 8) ^ c; } return (k ^ -1) >>> 0; };
