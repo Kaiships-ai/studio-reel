@@ -10,9 +10,9 @@ import { deflateSync } from 'node:zlib';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
-const { toonHair, HAIR_STYLES, styleOf, bareOf } = await import('../../kit/cast/hair.js');
-const { W_M, HEAD_H } = await import('../../engine/cast.js');
-const { inScalp } = await import('../../kit/cast/scalpline.js');
+const { toonHair, HAIR_STYLES, styleOf, bareOf } = await import('#kit/cast/hair.js');
+const { W_M, HEAD_H } = await import('#engine/cast.js');
+const { inScalp } = await import('#kit/cast/scalpline.js');
 
 // the camera's direction from the head's centre: [yaw deg (0 = the face, + = round to the figure's left), elevation deg]
 // front, 3/4 and the back as the sheet shows them; low front (the sheet's low camera); the head turned to profile; the

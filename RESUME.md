@@ -3,7 +3,8 @@
 State 26/11: step 1 (long hair option A) built and measured; STOPPED on the measure, waiting for Studio.
 
 - engine/cast.js: hair groups with userData.neckBound are drawn each pose2 where the head would be without the neck's nod/tilt/turn (S.neckLm).
-- kit/cast/hair.js: mullet, bob, long, braids, lob have `neck: true`, `cut` removed (designed lengths back); falls/tails go into a neck-bound group. Bob has no falls, so nothing of it is bound (its hem is the head's scalp field).
+- kit/cast/hair.js: `neck: true` puts falls/tails in a neck-bound group. Shipped styles still carry their cut (the pre-push hook runs
+  stick-hair-body); option A is measured with the patch { neck: true, cut: null } (hair-seam.mjs default). Bob has no falls, so nothing of it is bound (its hem is the head's scalp field).
 - test/unit/hair-seam.mjs: seam opening per style/clip (mm further out of the crown than at rest, and slide mm).
 - hair-measure.mjs: bound points measured through S.neckLm.
 
@@ -16,7 +17,7 @@ Next (after Studio decides, e.g. bind the lengths to a blend of head + neck, or 
   for s in long bob lob braids mullet; do node test/unit/hair-seam.mjs $s; done
   node --test test/unit/stick-hair-body.test.mjs
 
-## PAUSED 26/11 (Kai: budget to V5 until 1/12). Start no renders until resumed.
+## Pause cancelled 26/11 (Kai: B runs in parallel with V5). V5 keeps priority on the Pro.
 
 Remaining steps, in order:
 1. Long hair option A: Studio decides how to handle the seam (above). Then run stick-hair-body (HAIR_IN_MM 4, frozen, never loosen),
