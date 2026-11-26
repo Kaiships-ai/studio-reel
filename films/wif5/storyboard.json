@@ -1,0 +1,3493 @@
+{
+ "film": "wif5",
+ "fps": 30,
+ "size": "1080x1920",
+ "last": 3016,
+ "climax": "SHj03",
+ "about": "Shot list on the film clock (30 fps). Every shot is a real camera key: part a from parts/a/path.js CAMS, b-j from parts/<p>/reel.js direct (camsrc). Size from camera distance and lens, angle from pitch. Scenes = parts.",
+ "scenes": [
+  {
+   "id": "a",
+   "feel": "warmth that drops into shock: the one you hold is gone mid-cheer",
+   "whose": "dad",
+   "key": "at midnight every woman and girl vanished",
+   "question": "what happens to the men left?"
+  },
+  {
+   "id": "b",
+   "feel": "panic that turns into a tender catch",
+   "whose": "doctor",
+   "key": "only boys are left; the boy born at 23:59 is the one to remember",
+   "question": "who is this boy?"
+  },
+  {
+   "id": "c",
+   "feel": "an ache: an old love set at an empty chair",
+   "whose": "oldman",
+   "key": "elder care was women's work; the frail feel it first",
+   "question": "who looks after the old?"
+  },
+  {
+   "id": "d",
+   "feel": "grief that lifts",
+   "whose": "father",
+   "key": "every family lost its mothers, wives, daughters",
+   "question": "how do they say goodbye?"
+  },
+  {
+   "id": "e",
+   "feel": "alarm alone on an empty floor",
+   "whose": "officeman",
+   "key": "4 in 10 workers gone overnight",
+   "question": "can the world keep running?"
+  },
+  {
+   "id": "f",
+   "feel": "anger that turns into kindness",
+   "whose": "father1",
+   "key": "scarcity makes men fight; some let go",
+   "question": "who gets the last tin?"
+  },
+  {
+   "id": "g",
+   "feel": "exhaustion and tenderness",
+   "whose": "father",
+   "key": "all the care work is now on the men",
+   "question": "can he hold on?"
+  },
+  {
+   "id": "h",
+   "feel": "hope that turns to shock",
+   "whose": "sci1",
+   "key": "no one has ever built a womb",
+   "question": "can science save them?"
+  },
+  {
+   "id": "i",
+   "feel": "warmth that empties into loneliness",
+   "whose": "oldmen",
+   "key": "the youngest person on Earth turns 80; nobody after",
+   "question": "who is left?"
+  },
+  {
+   "id": "j",
+   "feel": "calm love and peace at the very end",
+   "whose": "lastman",
+   "key": "the boy of 23:59 is the last person; she held him for one minute",
+   "question": "did he remember her?"
+  },
+  {
+   "id": "k",
+   "feel": "the ask: send this to the woman who held you first",
+   "whose": "viewer",
+   "key": "no women, no one after us",
+   "question": "who held you first?",
+   "noEst": "the end card has no place"
+  }
+ ],
+ "lines": [],
+ "shots": [
+  {
+   "id": "SHa01",
+   "scene": "a",
+   "f0": 0,
+   "size": "WS",
+   "angle": "eye",
+   "lens": 26,
+   "move": "static",
+   "purpose": "P1 · already busy: the dad and his girl walk hand in hand toward us into a full, lit square; the title sits over the square above them",
+   "see": "already busy: the dad and his girl walk hand in hand toward us into a full, lit square; the title sits over the square above them",
+   "story": 4,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "town square",
+   "cast": [
+    "dad",
+    "daughter"
+   ],
+   "camsrc": "parts/a/path.js CAMS f0",
+   "lines": [
+    "L01"
+   ],
+   "text": [
+    {
+     "text": "What if every",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 0,
+     "dur": 138
+    },
+    {
+     "text": "WOMAN",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 0,
+     "dur": 138
+    },
+    {
+     "text": "on Earth disappeared?",
+     "at": [
+      0.465,
+      0.54
+     ],
+     "size": 0.028,
+     "f0": 0,
+     "dur": 138
+    }
+   ],
+   "panels": [
+    "review/previs/animatic_f43.png"
+   ]
+  },
+  {
+   "id": "SHa02",
+   "scene": "a",
+   "f0": 86,
+   "size": "WS",
+   "angle": "eye",
+   "lens": 30,
+   "move": "static",
+   "purpose": "P2 · he waves his free arm with the crowd, her hand in his",
+   "see": "he waves his free arm with the crowd, her hand in his",
+   "story": 4,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "town square",
+   "cast": [
+    "dad",
+    "daughter"
+   ],
+   "camsrc": "parts/a/path.js CAMS f86",
+   "lines": [
+    "L01"
+   ],
+   "panels": [
+    "review/previs/animatic_f141.png"
+   ]
+  },
+  {
+   "id": "SHa03",
+   "scene": "a",
+   "f0": 196,
+   "size": "MCU",
+   "angle": "eye",
+   "lens": 30,
+   "move": "static",
+   "purpose": "P3 · he looks down at her and smiles, hand in hand",
+   "see": "he looks down at her and smiles, hand in hand",
+   "story": 4,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "town square",
+   "cast": [
+    "dad",
+    "daughter"
+   ],
+   "camsrc": "parts/a/path.js CAMS f196",
+   "lines": [],
+   "panels": [
+    "review/previs/animatic_f211.png"
+   ]
+  },
+  {
+   "id": "SHa04",
+   "scene": "a",
+   "f0": 226,
+   "size": "INS",
+   "angle": "eye",
+   "lens": 26,
+   "move": "static",
+   "purpose": "P4 · contact: her hand in his",
+   "see": "contact: her hand in his",
+   "story": 5,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "insert",
+   "set": "town square",
+   "cast": [
+    "dad",
+    "daughter"
+   ],
+   "camsrc": "parts/a/path.js CAMS f226",
+   "lines": [],
+   "panels": [
+    "review/previs/animatic_f236.png"
+   ]
+  },
+  {
+   "id": "SHa05",
+   "scene": "a",
+   "f0": 246,
+   "size": "FS",
+   "angle": "eye",
+   "lens": 26,
+   "move": "static",
+   "purpose": "P5 · the old couple, whole: hand in hand, both faces, looking up together",
+   "see": "the old couple, whole: hand in hand, both faces, looking up together",
+   "story": 4,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "town square",
+   "cast": [
+    "dad",
+    "daughter"
+   ],
+   "camsrc": "parts/a/path.js CAMS f246",
+   "lines": [],
+   "panels": [
+    "review/previs/animatic_f270.png"
+   ]
+  },
+  {
+   "id": "SHa06",
+   "scene": "a",
+   "f0": 294,
+   "size": "EWS",
+   "angle": "low",
+   "lens": 22,
+   "move": "static",
+   "purpose": "P6 · ONE: from low behind them, close, the big clock at twelve over their heads, the board reads 23:59:59",
+   "see": "ONE: from low behind them, close, the big clock at twelve over their heads, the board reads 23:59:59",
+   "story": 6,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "town square",
+   "cast": [
+    "dad",
+    "daughter"
+   ],
+   "camsrc": "parts/a/path.js CAMS f294",
+   "lines": [],
+   "panels": [
+    "review/previs/animatic_f300.png"
+   ]
+  },
+  {
+   "id": "SHa07",
+   "scene": "a",
+   "f0": 306,
+   "size": "WS",
+   "angle": "high",
+   "lens": 36,
+   "move": "static",
+   "purpose": "P7 · the clock looks back: from under the board, down onto their faces turned up to it, hand in hand",
+   "see": "the clock looks back: from under the board, down onto their faces turned up to it, hand in hand",
+   "story": 6,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "town square",
+   "cast": [
+    "dad",
+    "daughter"
+   ],
+   "camsrc": "parts/a/path.js CAMS f306",
+   "lines": [],
+   "panels": [
+    "review/previs/animatic_f312.png"
+   ]
+  },
+  {
+   "id": "SHa08",
+   "scene": "a",
+   "f0": 318,
+   "size": "FS",
+   "angle": "eye",
+   "lens": 27,
+   "move": "static",
+   "purpose": "P8 · midnight: hand in hand, her balloon over her; the next frame she is gone, the balloon rises free and he looks at it",
+   "see": "midnight: hand in hand, her balloon over her; the next frame she is gone, the balloon rises free and he looks at it",
+   "story": 7,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "town square",
+   "cast": [
+    "dad",
+    "daughter"
+   ],
+   "camsrc": "parts/a/path.js CAMS f318",
+   "lines": [],
+   "panels": [
+    "review/previs/animatic_f324.png"
+   ]
+  },
+  {
+   "id": "SHa09",
+   "scene": "a",
+   "f0": 330,
+   "size": "FS",
+   "angle": "eye",
+   "lens": 30,
+   "move": "static",
+   "purpose": "P9 · she is gone: her balloon rises out of where her hand was, string slack; he looks up at it; nobody behind him",
+   "see": "she is gone: her balloon rises out of where her hand was, string slack; he looks up at it; nobody behind him",
+   "story": 8,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "town square",
+   "cast": [
+    "dad",
+    "daughter"
+   ],
+   "camsrc": "parts/a/path.js CAMS f330",
+   "lines": [],
+   "panels": [
+    "review/previs/animatic_f340.png"
+   ]
+  },
+  {
+   "id": "SHa10",
+   "scene": "a",
+   "f0": 350,
+   "size": "WS",
+   "angle": "eye",
+   "lens": 22,
+   "move": "static",
+   "purpose": "P10 · her balloon higher and smaller against the bunting, his head tilted up following it",
+   "see": "her balloon higher and smaller against the bunting, his head tilted up following it",
+   "story": 7,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "town square",
+   "cast": [
+    "dad",
+    "daughter"
+   ],
+   "camsrc": "parts/a/path.js CAMS f350",
+   "lines": [
+    "L02"
+   ],
+   "text": [
+    {
+     "text": "Every woman and girl",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 46,
+     "dur": 84
+    },
+    {
+     "text": "on Earth is gone.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 46,
+     "dur": 84
+    }
+   ],
+   "panels": [
+    "review/previs/animatic_f395.png"
+   ]
+  },
+  {
+   "id": "SHa11",
+   "scene": "a",
+   "f0": 440,
+   "size": "FS",
+   "angle": "high",
+   "lens": 26,
+   "move": "static",
+   "purpose": "P11 · low, from in front of him: his face with tears and, clear beside it, his arm up after her balloon (the shoulder-to-hand line reads; a5-3 twice failed from the side); lens above his eyes so his hair reads (Studio 26/11)",
+   "see": "low, from in front of him: his face with tears and, clear beside it, his arm up after her balloon (the shoulder-to-hand line reads; a5-3 twice failed from the side); lens above his eyes so his hair reads (Studio 26/11)",
+   "story": 7,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "town square",
+   "cast": [
+    "dad",
+    "daughter"
+   ],
+   "camsrc": "parts/a/path.js CAMS f440",
+   "lines": [
+    "L02"
+   ],
+   "panels": [
+    "review/previs/animatic_f472.png"
+   ]
+  },
+  {
+   "id": "SHb01",
+   "scene": "b",
+   "f0": 504,
+   "size": "WS",
+   "angle": "high",
+   "lens": 34,
+   "move": "static",
+   "purpose": "P12 · he runs down the aisle (seen from the side of it): lit full cradles and dark empty ones alternate, red beacons overhead",
+   "see": "he runs down the aisle (seen from the side of it): lit full cradles and dark empty ones alternate, red beacons overhead",
+   "story": 7,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "nursery",
+   "cast": [
+    "doctor"
+   ],
+   "camsrc": "parts/b/reel.js direct f504",
+   "lines": [
+    "L03",
+    "L04",
+    "L05"
+   ],
+   "text": [
+    {
+     "text": "Half the cradles",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 30,
+     "dur": 60
+    },
+    {
+     "text": "are empty.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 30,
+     "dur": 60
+    },
+    {
+     "text": "Only boys are left:",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 92,
+     "dur": 48
+    },
+    {
+     "text": "the last babies ever.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 92,
+     "dur": 48
+    },
+    {
+     "text": "85%",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 144,
+     "dur": 64
+    },
+    {
+     "text": "of the world's nurses",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 144,
+     "dur": 64
+    },
+    {
+     "text": "were women",
+     "at": [
+      0.465,
+      0.54
+     ],
+     "size": 0.028,
+     "f0": 144,
+     "dur": 64
+    }
+   ],
+   "panels": [
+    "review/previs/animatic_f579.png"
+   ]
+  },
+  {
+   "id": "SHb02",
+   "scene": "b",
+   "f0": 654,
+   "size": "FS",
+   "angle": "eye",
+   "lens": 24,
+   "move": "static",
+   "purpose": "P13 · he bends over the boy behind his cradle, his palm comes onto the swaddled chest, his face close",
+   "see": "he bends over the boy behind his cradle, his palm comes onto the swaddled chest, his face close",
+   "story": 6,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "nursery",
+   "cast": [
+    "doctor"
+   ],
+   "camsrc": "parts/b/reel.js direct f654",
+   "lines": [
+    "L05"
+   ],
+   "panels": [
+    "review/previs/animatic_f709.png"
+   ]
+  },
+  {
+   "id": "SHb03",
+   "scene": "b",
+   "f0": 764,
+   "size": "INS",
+   "angle": "high",
+   "lens": 26,
+   "move": "static",
+   "purpose": "P14 · his palm resting on the blanket over the boy's chest, the 23:59 card and her photo on the cradle under it",
+   "see": "his palm resting on the blanket over the boy's chest, the 23:59 card and her photo on the cradle under it",
+   "story": 6,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "insert",
+   "set": "nursery",
+   "cast": [
+    "doctor"
+   ],
+   "camsrc": "parts/b/reel.js direct f764",
+   "lines": [
+    "L06"
+   ],
+   "text": [
+    {
+     "text": "This one was born",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 40,
+     "dur": 64
+    },
+    {
+     "text": "at 11:59 p.m.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 40,
+     "dur": 64
+    }
+   ],
+   "panels": [
+    "review/previs/animatic_f799.png"
+   ]
+  },
+  {
+   "id": "SHb04",
+   "scene": "b",
+   "f0": 834,
+   "size": "MS",
+   "angle": "low",
+   "lens": 24,
+   "move": "static",
+   "purpose": "P15 · remember him: his face over the boy, tender, high in frame; the card and her photo on the cradle front below",
+   "see": "remember him: his face over the boy, tender, high in frame; the card and her photo on the cradle front below",
+   "story": 6,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "nursery",
+   "cast": [
+    "doctor"
+   ],
+   "camsrc": "parts/b/reel.js direct f834",
+   "lines": [
+    "L06",
+    "L07",
+    "L08"
+   ],
+   "text": [
+    {
+     "text": "One minute before.",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 40,
+     "dur": 52
+    },
+    {
+     "text": "Remember him.",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 98,
+     "dur": 52
+    }
+   ],
+   "panels": [
+    "review/previs/animatic_f909.png"
+   ]
+  },
+  {
+   "id": "SHc01",
+   "scene": "c",
+   "f0": 984,
+   "size": "FS",
+   "angle": "eye",
+   "lens": 16,
+   "move": "static",
+   "purpose": "P16 · close across the table: his face high, his hand on his cup low, her cup poured and steaming in front",
+   "see": "close across the table: his face high, his hand on his cup low, her cup poured and steaming in front",
+   "story": 4,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "care home",
+   "cast": [
+    "oldman",
+    "carer"
+   ],
+   "camsrc": "parts/c/reel.js direct f984",
+   "lines": [
+    "L09"
+   ],
+   "text": [
+    {
+     "text": "87%",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 10,
+     "dur": 74
+    },
+    {
+     "text": "of elder care workers",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 10,
+     "dur": 74
+    },
+    {
+     "text": "were women (OECD)",
+     "at": [
+      0.465,
+      0.54
+     ],
+     "size": 0.028,
+     "f0": 10,
+     "dur": 74
+    }
+   ],
+   "panels": [
+    "review/previs/animatic_f1005.png"
+   ]
+  },
+  {
+   "id": "SHc02",
+   "scene": "c",
+   "f0": 1026,
+   "size": "INS",
+   "angle": "eye",
+   "lens": 20,
+   "move": "static",
+   "purpose": "P17 · his hand on his cup",
+   "see": "his hand on his cup",
+   "story": 4,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "insert",
+   "set": "care home",
+   "cast": [
+    "oldman",
+    "carer"
+   ],
+   "camsrc": "parts/c/reel.js direct f1026",
+   "lines": [
+    "L09"
+   ],
+   "panels": [
+    "review/previs/animatic_f1040.png"
+   ]
+  },
+  {
+   "id": "SHc03",
+   "scene": "c",
+   "f0": 1054,
+   "size": "FS",
+   "angle": "high",
+   "lens": 24,
+   "move": "static",
+   "purpose": "P18 · the carer behind, bent over the meal trolley with four trays, seen from ahead of it, a little high: the bar under his face, his arms either side of it",
+   "see": "the carer behind, bent over the meal trolley with four trays, seen from ahead of it, a little high: the bar under his face, his arms either side of it",
+   "story": 5,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "care home",
+   "cast": [
+    "oldman",
+    "carer"
+   ],
+   "camsrc": "parts/c/reel.js direct f1054",
+   "lines": [
+    "L09",
+    "L10"
+   ],
+   "text": [
+    {
+     "text": "The frail feel it first.",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 22,
+     "dur": 58
+    }
+   ],
+   "panels": [
+    "review/previs/animatic_f1068.png"
+   ]
+  },
+  {
+   "id": "SHc04",
+   "scene": "c",
+   "f0": 1082,
+   "size": "INS",
+   "angle": "high",
+   "lens": 20,
+   "move": "static",
+   "purpose": "P19 · both hands on the trolley bar, from ahead, his face clear above and behind it",
+   "see": "both hands on the trolley bar, from ahead, his face clear above and behind it",
+   "story": 4,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "insert",
+   "set": "care home",
+   "cast": [
+    "oldman",
+    "carer"
+   ],
+   "camsrc": "parts/c/reel.js direct f1082",
+   "lines": [
+    "L10"
+   ],
+   "panels": [
+    "review/previs/animatic_f1108.png"
+   ]
+  },
+  {
+   "id": "SHd01",
+   "scene": "d",
+   "f0": 1134,
+   "size": "INS",
+   "angle": "low",
+   "lens": 26,
+   "move": "static",
+   "purpose": "P20 · his two fists round the bamboo crossbar, the lantern glowing over them, its light on his hands and his face below",
+   "see": "his two fists round the bamboo crossbar, the lantern glowing over them, its light on his hands and his face below",
+   "story": 5,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "insert",
+   "set": "river bank",
+   "cast": [
+    "father",
+    "son"
+   ],
+   "camsrc": "parts/d/reel.js direct f1134",
+   "lines": [],
+   "panels": [
+    "review/previs/animatic_f1139.png"
+   ]
+  },
+  {
+   "id": "SHd02",
+   "scene": "d",
+   "f0": 1144,
+   "size": "WS",
+   "angle": "low",
+   "lens": 20,
+   "move": "static",
+   "purpose": "P21 · at the water he holds the lit lantern up over his head; his son walks in to him along the bank",
+   "see": "at the water he holds the lit lantern up over his head; his son walks in to him along the bank",
+   "story": 5,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "river bank",
+   "cast": [
+    "father",
+    "son"
+   ],
+   "camsrc": "parts/d/reel.js direct f1144",
+   "lines": [],
+   "panels": [
+    "review/previs/animatic_f1160.png"
+   ]
+  },
+  {
+   "id": "SHd03",
+   "scene": "d",
+   "f0": 1176,
+   "size": "FS",
+   "angle": "low",
+   "lens": 22,
+   "move": "static",
+   "purpose": "P22 · side by side, both look up at it: its light on the father's hands and on the boy's face from above",
+   "see": "side by side, both look up at it: its light on the father's hands and on the boy's face from above",
+   "story": 5,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "river bank",
+   "cast": [
+    "father",
+    "son"
+   ],
+   "camsrc": "parts/d/reel.js direct f1176",
+   "lines": [
+    "L11"
+   ],
+   "text": [
+    {
+     "text": "Mothers. Wives.",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 22,
+     "dur": 76
+    },
+    {
+     "text": "Daughters. Sisters.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 22,
+     "dur": 76
+    }
+   ],
+   "panels": [
+    "review/previs/animatic_f1223.png"
+   ]
+  },
+  {
+   "id": "SHd04",
+   "scene": "d",
+   "f0": 1270,
+   "size": "EWS",
+   "angle": "low",
+   "lens": 20,
+   "move": "static",
+   "purpose": "P23 · it rises from his open hands over their heads, into a sky of lanterns over the water",
+   "see": "it rises from his open hands over their heads, into a sky of lanterns over the water",
+   "story": 6,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "river bank",
+   "cast": [
+    "father",
+    "son"
+   ],
+   "camsrc": "parts/d/reel.js direct f1270",
+   "lines": [
+    "L11",
+    "L12"
+   ],
+   "text": [
+    {
+     "text": "A billion of those left",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 10,
+     "dur": 62
+    },
+    {
+     "text": "are boys under 15.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 10,
+     "dur": 62
+    }
+   ],
+   "panels": [
+    "review/previs/animatic_f1306.png"
+   ]
+  },
+  {
+   "id": "SHe01",
+   "scene": "e",
+   "f0": 1343,
+   "size": "WS",
+   "angle": "high",
+   "lens": 26,
+   "move": "static",
+   "purpose": "P24 · alone: him at the front desk, the empty rows running back behind him",
+   "see": "alone: him at the front desk, the empty rows running back behind him",
+   "story": 5,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "office floor",
+   "cast": [
+    "officeman"
+   ],
+   "camsrc": "parts/e/reel.js direct f1343",
+   "lines": [
+    "L13"
+   ],
+   "text": [
+    {
+     "text": "4 in 10",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 4,
+     "dur": 76
+    },
+    {
+     "text": "workers on Earth,",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 4,
+     "dur": 76
+    },
+    {
+     "text": "gone overnight",
+     "at": [
+      0.465,
+      0.54
+     ],
+     "size": 0.028,
+     "f0": 4,
+     "dur": 76
+    }
+   ],
+   "panels": [
+    "review/previs/animatic_f1368.png"
+   ]
+  },
+  {
+   "id": "SHe02",
+   "scene": "e",
+   "f0": 1393,
+   "size": "WS",
+   "angle": "high",
+   "lens": 24,
+   "move": "static",
+   "purpose": "P25 · every phone on the floor lit and ringing behind him, his head comes up",
+   "see": "every phone on the floor lit and ringing behind him, his head comes up",
+   "story": 6,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "office floor",
+   "cast": [
+    "officeman"
+   ],
+   "camsrc": "parts/e/reel.js direct f1393",
+   "lines": [
+    "L13",
+    "L14"
+   ],
+   "text": [
+    {
+     "text": "And half of",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 43,
+     "dur": 81
+    },
+    {
+     "text": "all the customers.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 43,
+     "dur": 81
+    }
+   ],
+   "panels": [
+    "review/previs/animatic_f1418.png"
+   ]
+  },
+  {
+   "id": "SHe03",
+   "scene": "e",
+   "f0": 1443,
+   "size": "WS",
+   "angle": "high",
+   "lens": 24,
+   "move": "static",
+   "purpose": "P26 · he has stood, alarmed, the red-lit floor behind him (he turns to it after)",
+   "see": "he has stood, alarmed, the red-lit floor behind him (he turns to it after)",
+   "story": 6,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "office floor",
+   "cast": [
+    "officeman"
+   ],
+   "camsrc": "parts/e/reel.js direct f1443",
+   "lines": [
+    "L14"
+   ],
+   "panels": [
+    "review/previs/animatic_f1480.png"
+   ]
+  },
+  {
+   "id": "SHf01",
+   "scene": "f",
+   "f0": 1518,
+   "size": "FS",
+   "angle": "eye",
+   "lens": 19,
+   "move": "static",
+   "purpose": "P27 · bare shelves, one tin: both men reach for it (faces over the words)",
+   "see": "bare shelves, one tin: both men reach for it (faces over the words)",
+   "story": 6,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "shop",
+   "cast": [
+    "father1",
+    "father2"
+   ],
+   "camsrc": "parts/f/reel.js direct f1518",
+   "lines": [
+    "L15"
+   ],
+   "text": [
+    {
+     "text": "90%",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 0,
+     "dur": 72
+    },
+    {
+     "text": "of homicide suspects",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 0,
+     "dur": 72
+    },
+    {
+     "text": "are men",
+     "at": [
+      0.465,
+      0.54
+     ],
+     "size": 0.028,
+     "f0": 0,
+     "dur": 72
+    }
+   ],
+   "panels": [
+    "review/previs/animatic_f1549.png"
+   ]
+  },
+  {
+   "id": "SHf02",
+   "scene": "f",
+   "f0": 1580,
+   "size": "WS",
+   "angle": "eye",
+   "lens": 20,
+   "move": "static",
+   "purpose": "P28 · both press a hand down on the tin's lid and glare, faces 3/4",
+   "see": "both press a hand down on the tin's lid and glare, faces 3/4",
+   "story": 7,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "shop",
+   "cast": [
+    "father1",
+    "father2"
+   ],
+   "camsrc": "parts/f/reel.js direct f1580",
+   "lines": [
+    "L15"
+   ],
+   "panels": [
+    "review/previs/animatic_f1591.png"
+   ]
+  },
+  {
+   "id": "SHf03",
+   "scene": "f",
+   "f0": 1603,
+   "size": "INS",
+   "angle": "eye",
+   "lens": 18,
+   "move": "static",
+   "purpose": "P29 · four hands on one tin",
+   "see": "four hands on one tin",
+   "story": 7,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "insert",
+   "set": "shop",
+   "cast": [
+    "father1",
+    "father2"
+   ],
+   "camsrc": "parts/f/reel.js direct f1603",
+   "lines": [],
+   "panels": [
+    "review/previs/animatic_f1609.png"
+   ]
+  },
+  {
+   "id": "SHf04",
+   "scene": "f",
+   "f0": 1615,
+   "size": "FS",
+   "angle": "eye",
+   "lens": 19,
+   "move": "static",
+   "purpose": "P30 · he sees the baby and lifts his hand off the lid; the other's hand stays",
+   "see": "he sees the baby and lifts his hand off the lid; the other's hand stays",
+   "story": 5,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "shop",
+   "cast": [
+    "father1",
+    "father2"
+   ],
+   "camsrc": "parts/f/reel.js direct f1615",
+   "lines": [
+    "L16"
+   ],
+   "text": [
+    {
+     "text": "Some fight.",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 13,
+     "dur": 42
+    },
+    {
+     "text": "Some let go.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 13,
+     "dur": 42
+    }
+   ],
+   "panels": [
+    "review/previs/animatic_f1643.png"
+   ]
+  },
+  {
+   "id": "SHg01",
+   "scene": "g",
+   "f0": 1671,
+   "size": "WS",
+   "angle": "eye",
+   "lens": 22,
+   "move": "static",
+   "purpose": "P31 · 3 a.m., he walks the crying baby, sweating",
+   "see": "3 a.m., he walks the crying baby, sweating",
+   "story": 5,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "night kitchen",
+   "cast": [
+    "father",
+    "son"
+   ],
+   "camsrc": "parts/g/reel.js direct f1671",
+   "lines": [],
+   "panels": [
+    "review/previs/animatic_f1693.png"
+   ]
+  },
+  {
+   "id": "SHg02",
+   "scene": "g",
+   "f0": 1715,
+   "size": "INS",
+   "angle": "eye",
+   "lens": 22,
+   "move": "static",
+   "purpose": "P32 · the crying baby in his arms, sweat on his temple",
+   "see": "the crying baby in his arms, sweat on his temple",
+   "story": 5,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "insert",
+   "set": "night kitchen",
+   "cast": [
+    "father",
+    "son"
+   ],
+   "camsrc": "parts/g/reel.js direct f1715",
+   "lines": [],
+   "panels": [
+    "review/previs/animatic_f1730.png"
+   ]
+  },
+  {
+   "id": "SHg03",
+   "scene": "g",
+   "f0": 1745,
+   "size": "WS",
+   "angle": "eye",
+   "lens": 20,
+   "move": "static",
+   "purpose": "P33 · asleep in the chair with the baby on his chest; his son walks in with a blanket",
+   "see": "asleep in the chair with the baby on his chest; his son walks in with a blanket",
+   "story": 4,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "night kitchen",
+   "cast": [
+    "father",
+    "son"
+   ],
+   "camsrc": "parts/g/reel.js direct f1745",
+   "lines": [
+    "L17"
+   ],
+   "text": [
+    {
+     "text": "Now it is",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 58,
+     "dur": 90
+    },
+    {
+     "text": "all on him.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 58,
+     "dur": 90
+    }
+   ],
+   "panels": [
+    "review/previs/animatic_f1787.png"
+   ]
+  },
+  {
+   "id": "SHg04",
+   "scene": "g",
+   "f0": 1830,
+   "size": "FS",
+   "angle": "high",
+   "lens": 20,
+   "move": "static",
+   "purpose": "P34 · the blanket over both (faces under the words)",
+   "see": "the blanket over both (faces under the words)",
+   "story": 4,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "night kitchen",
+   "cast": [
+    "father",
+    "son"
+   ],
+   "camsrc": "parts/g/reel.js direct f1830",
+   "lines": [
+    "L17"
+   ],
+   "panels": [
+    "review/previs/animatic_f1862.png"
+   ]
+  },
+  {
+   "id": "SHh01",
+   "scene": "h",
+   "f0": 1894,
+   "size": "WS",
+   "angle": "eye",
+   "lens": 17,
+   "move": "static",
+   "purpose": "P35 · the tank, the green heartbeat, three hopeful faces",
+   "see": "the tank, the green heartbeat, three hopeful faces",
+   "story": 5,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "lab",
+   "cast": [
+    "sci1",
+    "sci2"
+   ],
+   "camsrc": "parts/h/reel.js direct f1894",
+   "lines": [
+    "L18"
+   ],
+   "text": [
+    {
+     "text": "Labs can freeze eggs,",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 0,
+     "dur": 76
+    },
+    {
+     "text": "sperm and embryos.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 0,
+     "dur": 76
+    }
+   ],
+   "panels": [
+    "review/previs/animatic_f1962.png"
+   ]
+  },
+  {
+   "id": "SHh02",
+   "scene": "h",
+   "f0": 2030,
+   "size": "WS",
+   "angle": "eye",
+   "lens": 17,
+   "move": "static",
+   "purpose": "P36 · the line goes flat: red monitor light on their faces",
+   "see": "the line goes flat: red monitor light on their faces",
+   "story": 7,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "lab",
+   "cast": [
+    "sci1",
+    "sci2"
+   ],
+   "camsrc": "parts/h/reel.js direct f2030",
+   "lines": [
+    "L19"
+   ],
+   "text": [
+    {
+     "text": "No one has ever",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 16,
+     "dur": 64
+    },
+    {
+     "text": "built a womb.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 16,
+     "dur": 64
+    }
+   ],
+   "panels": [
+    "review/previs/animatic_f2042.png"
+   ]
+  },
+  {
+   "id": "SHh03",
+   "scene": "h",
+   "f0": 2054,
+   "size": "FS",
+   "angle": "eye",
+   "lens": 20,
+   "move": "static",
+   "purpose": "P37 · his palm on the glass, the child curled inside, the dead monitor above (hand and face over the words)",
+   "see": "his palm on the glass, the child curled inside, the dead monitor above (hand and face over the words)",
+   "story": 7,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "lab",
+   "cast": [
+    "sci1",
+    "sci2"
+   ],
+   "camsrc": "parts/h/reel.js direct f2054",
+   "lines": [
+    "L19"
+   ],
+   "panels": [
+    "review/previs/animatic_f2065.png"
+   ]
+  },
+  {
+   "id": "SHh04",
+   "scene": "h",
+   "f0": 2076,
+   "size": "WS",
+   "angle": "eye",
+   "lens": 18,
+   "move": "static",
+   "purpose": "P38 · one of them bends, defeated (faces over the words)",
+   "see": "one of them bends, defeated (faces over the words)",
+   "story": 6,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "lab",
+   "cast": [
+    "sci1",
+    "sci2"
+   ],
+   "camsrc": "parts/h/reel.js direct f2076",
+   "lines": [
+    "L19"
+   ],
+   "panels": [
+    "review/previs/animatic_f2093.png"
+   ]
+  },
+  {
+   "id": "SHi01",
+   "scene": "i",
+   "f0": 2111,
+   "size": "WS",
+   "angle": "high",
+   "lens": 18,
+   "move": "static",
+   "purpose": "P39 · old men round a cake with 80 on it (faces over the words)",
+   "see": "old men round a cake with 80 on it (faces over the words)",
+   "story": 4,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "birthday room",
+   "cast": [
+    "oldmen"
+   ],
+   "camsrc": "parts/i/reel.js direct f2111",
+   "lines": [
+    "L20"
+   ],
+   "text": [
+    {
+     "text": "The youngest person",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 14,
+     "dur": 90
+    },
+    {
+     "text": "on Earth turns 80.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 14,
+     "dur": 90
+    }
+   ],
+   "panels": [
+    "review/previs/animatic_f2166.png"
+   ]
+  },
+  {
+   "id": "SHi02",
+   "scene": "i",
+   "f0": 2222,
+   "size": "MS",
+   "angle": "eye",
+   "lens": 30,
+   "move": "static",
+   "purpose": "P40 · side close (contact): his hands on the platter, he blows, an o mouth, a soft cloud of breath, the flames laid flat away from him",
+   "see": "side close (contact): his hands on the platter, he blows, an o mouth, a soft cloud of breath, the flames laid flat away from him",
+   "story": 5,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "birthday room",
+   "cast": [
+    "oldmen"
+   ],
+   "camsrc": "parts/i/reel.js direct f2222",
+   "lines": [],
+   "panels": [
+    "review/previs/animatic_f2246.png"
+   ]
+  },
+  {
+   "id": "SHi03",
+   "scene": "i",
+   "f0": 2270,
+   "size": "FS",
+   "angle": "high",
+   "lens": 22,
+   "move": "static",
+   "purpose": "P41 · the chairs round him empty, the hats left on them (faces over the words)",
+   "see": "the chairs round him empty, the hats left on them (faces over the words)",
+   "story": 6,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "birthday room",
+   "cast": [
+    "oldmen"
+   ],
+   "camsrc": "parts/i/reel.js direct f2270",
+   "lines": [
+    "L21"
+   ],
+   "text": [
+    {
+     "text": "Nobody comes after him.",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 3,
+     "dur": 60
+    }
+   ],
+   "panels": [
+    "review/previs/animatic_f2303.png"
+   ]
+  },
+  {
+   "id": "SHj01",
+   "scene": "j",
+   "f0": 2336,
+   "size": "FS",
+   "angle": "eye",
+   "lens": 22,
+   "move": "static",
+   "purpose": "P42 · alone in a small warm room, the photo in his hands",
+   "see": "alone in a small warm room, the photo in his hands",
+   "story": 6,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "small room",
+   "cast": [
+    "lastman"
+   ],
+   "camsrc": "parts/j/reel.js direct f2336",
+   "lines": [
+    "L22"
+   ],
+   "text": [
+    {
+     "text": "The last person",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 96,
+     "dur": 72
+    },
+    {
+     "text": "on Earth.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 96,
+     "dur": 72
+    }
+   ],
+   "panels": [
+    "review/previs/animatic_f2420.png"
+   ]
+  },
+  {
+   "id": "SHj02",
+   "scene": "j",
+   "f0": 2505,
+   "size": "INS",
+   "angle": "eye",
+   "lens": 22,
+   "move": "static",
+   "purpose": "P43 · his two hands on the frame",
+   "see": "his two hands on the frame",
+   "story": 7,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "insert",
+   "set": "small room",
+   "cast": [
+    "lastman"
+   ],
+   "camsrc": "parts/j/reel.js direct f2505",
+   "lines": [
+    "L23"
+   ],
+   "text": [
+    {
+     "text": "Remember him?",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 31,
+     "dur": 64
+    }
+   ],
+   "panels": [
+    "review/previs/animatic_f2552.png"
+   ]
+  },
+  {
+   "id": "SHj03",
+   "scene": "j",
+   "f0": 2600,
+   "size": "MCU",
+   "angle": "eye",
+   "lens": 30,
+   "move": "static",
+   "purpose": "P44 · the photo: a young mother holding a newborn",
+   "see": "the photo: a young mother holding a newborn",
+   "story": 9,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "small room",
+   "cast": [
+    "lastman"
+   ],
+   "camsrc": "parts/j/reel.js direct f2600",
+   "lines": [
+    "L24"
+   ],
+   "text": [
+    {
+     "text": "She held him",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 40,
+     "dur": 62
+    },
+    {
+     "text": "for one minute.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 40,
+     "dur": 62
+    }
+   ],
+   "panels": [
+    "review/previs/animatic_f2650.png"
+   ]
+  },
+  {
+   "id": "SHj04",
+   "scene": "j",
+   "f0": 2700,
+   "size": "FS",
+   "angle": "eye",
+   "lens": 24,
+   "move": "static",
+   "purpose": "P45 · his face at peace; the window warms behind him",
+   "see": "his face at peace; the window warms behind him",
+   "story": 7,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "small room",
+   "cast": [
+    "lastman"
+   ],
+   "camsrc": "parts/j/reel.js direct f2700",
+   "lines": [
+    "L24",
+    "L25",
+    "L26"
+   ],
+   "text": [
+    {
+     "text": "He held on to her",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 10,
+     "dur": 70
+    },
+    {
+     "text": "for 116 years.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 10,
+     "dur": 70
+    },
+    {
+     "text": "Send this to the woman",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 98,
+     "dur": 78
+    },
+    {
+     "text": "who held you first.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 98,
+     "dur": 78
+    }
+   ],
+   "panels": [
+    "review/previs/animatic_f2788.png"
+   ]
+  },
+  {
+   "id": "SHk01",
+   "scene": "k",
+   "f0": 2876,
+   "size": "CARD",
+   "angle": "eye",
+   "move": "static",
+   "purpose": "P · the end card: No women, no one after us. Send this to the woman who held you first.",
+   "see": "black card, white and pink words, a pink arrow",
+   "story": 3,
+   "screen_dir": "-",
+   "kind": "explain",
+   "set": "end card",
+   "cast": [],
+   "hold": "the ask must be read",
+   "camsrc": "tools/timeline.py card()",
+   "lines": [],
+   "panels": [
+    "review/previs/animatic_f2946.png"
+   ]
+  }
+ ],
+ "facebeat_shots_v0": [
+  {
+   "id": "SHa01",
+   "scene": "a",
+   "f0": 0,
+   "size": "WS",
+   "angle": "eye",
+   "lens": 26,
+   "move": "static",
+   "purpose": "P1 · already busy: the dad and his girl walk hand in hand toward us into a full, lit square; the title sits over the square above them",
+   "see": "already busy: the dad and his girl walk hand in hand toward us into a full, lit square; the title sits over the square above them",
+   "story": 4,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "town square",
+   "cast": [
+    "dad",
+    "daughter"
+   ],
+   "camsrc": "parts/a/path.js CAMS f0",
+   "lines": [
+    "L01"
+   ],
+   "text": [
+    {
+     "text": "What if every",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 0,
+     "dur": 138
+    },
+    {
+     "text": "WOMAN",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 0,
+     "dur": 138
+    },
+    {
+     "text": "on Earth disappeared?",
+     "at": [
+      0.465,
+      0.54
+     ],
+     "size": 0.028,
+     "f0": 0,
+     "dur": 138
+    }
+   ]
+  },
+  {
+   "id": "SHa02",
+   "scene": "a",
+   "f0": 86,
+   "size": "WS",
+   "angle": "eye",
+   "lens": 30,
+   "move": "static",
+   "purpose": "P2 · he waves his free arm with the crowd, her hand in his",
+   "see": "he waves his free arm with the crowd, her hand in his",
+   "story": 4,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "town square",
+   "cast": [
+    "dad",
+    "daughter"
+   ],
+   "camsrc": "parts/a/path.js CAMS f86",
+   "lines": [
+    "L01"
+   ]
+  },
+  {
+   "id": "SHa03",
+   "scene": "a",
+   "f0": 196,
+   "size": "MCU",
+   "angle": "eye",
+   "lens": 30,
+   "move": "static",
+   "purpose": "P3 · he looks down at her and smiles, hand in hand",
+   "see": "he looks down at her and smiles, hand in hand",
+   "story": 4,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "town square",
+   "cast": [
+    "dad",
+    "daughter"
+   ],
+   "camsrc": "parts/a/path.js CAMS f196",
+   "lines": []
+  },
+  {
+   "id": "SHa04",
+   "scene": "a",
+   "f0": 226,
+   "size": "INS",
+   "angle": "eye",
+   "lens": 26,
+   "move": "static",
+   "purpose": "P4 · contact: her hand in his",
+   "see": "contact: her hand in his",
+   "story": 5,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "insert",
+   "set": "town square",
+   "cast": [
+    "dad",
+    "daughter"
+   ],
+   "camsrc": "parts/a/path.js CAMS f226",
+   "lines": []
+  },
+  {
+   "id": "SHa05",
+   "scene": "a",
+   "f0": 246,
+   "size": "FS",
+   "angle": "eye",
+   "lens": 26,
+   "move": "static",
+   "purpose": "P5 · the old couple, whole: hand in hand, both faces, looking up together",
+   "see": "the old couple, whole: hand in hand, both faces, looking up together",
+   "story": 4,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "town square",
+   "cast": [
+    "dad",
+    "daughter"
+   ],
+   "camsrc": "parts/a/path.js CAMS f246",
+   "lines": []
+  },
+  {
+   "id": "SHa06",
+   "scene": "a",
+   "f0": 294,
+   "size": "EWS",
+   "angle": "low",
+   "lens": 22,
+   "move": "static",
+   "purpose": "P6 · ONE: from low behind them, close, the big clock at twelve over their heads, the board reads 23:59:59",
+   "see": "ONE: from low behind them, close, the big clock at twelve over their heads, the board reads 23:59:59",
+   "story": 6,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "town square",
+   "cast": [
+    "dad",
+    "daughter"
+   ],
+   "camsrc": "parts/a/path.js CAMS f294",
+   "lines": []
+  },
+  {
+   "id": "SHa07",
+   "scene": "a",
+   "f0": 306,
+   "size": "WS",
+   "angle": "high",
+   "lens": 36,
+   "move": "static",
+   "purpose": "P7 · the clock looks back: from under the board, down onto their faces turned up to it, hand in hand",
+   "see": "the clock looks back: from under the board, down onto their faces turned up to it, hand in hand",
+   "story": 6,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "town square",
+   "cast": [
+    "dad",
+    "daughter"
+   ],
+   "camsrc": "parts/a/path.js CAMS f306",
+   "lines": []
+  },
+  {
+   "id": "SHa08",
+   "scene": "a",
+   "f0": 318,
+   "size": "FS",
+   "angle": "eye",
+   "lens": 27,
+   "move": "static",
+   "purpose": "P8 · midnight: hand in hand, her balloon over her; the next frame she is gone, the balloon rises free and he looks at it",
+   "see": "midnight: hand in hand, her balloon over her; the next frame she is gone, the balloon rises free and he looks at it",
+   "story": 7,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "town square",
+   "cast": [
+    "dad",
+    "daughter"
+   ],
+   "camsrc": "parts/a/path.js CAMS f318",
+   "lines": []
+  },
+  {
+   "id": "SHa09",
+   "scene": "a",
+   "f0": 330,
+   "size": "FS",
+   "angle": "eye",
+   "lens": 30,
+   "move": "static",
+   "purpose": "P9 · she is gone: her balloon rises out of where her hand was, string slack; he looks up at it; nobody behind him",
+   "see": "she is gone: her balloon rises out of where her hand was, string slack; he looks up at it; nobody behind him",
+   "story": 8,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "town square",
+   "cast": [
+    "dad",
+    "daughter"
+   ],
+   "camsrc": "parts/a/path.js CAMS f330",
+   "lines": []
+  },
+  {
+   "id": "SHa10",
+   "scene": "a",
+   "f0": 350,
+   "size": "WS",
+   "angle": "eye",
+   "lens": 22,
+   "move": "static",
+   "purpose": "P10 · her balloon higher and smaller against the bunting, his head tilted up following it",
+   "see": "her balloon higher and smaller against the bunting, his head tilted up following it",
+   "story": 7,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "town square",
+   "cast": [
+    "dad",
+    "daughter"
+   ],
+   "camsrc": "parts/a/path.js CAMS f350",
+   "lines": [
+    "L02"
+   ],
+   "text": [
+    {
+     "text": "Every woman and girl",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 46,
+     "dur": 84
+    },
+    {
+     "text": "on Earth is gone.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 46,
+     "dur": 84
+    }
+   ]
+  },
+  {
+   "id": "SHa11",
+   "scene": "a",
+   "f0": 440,
+   "size": "FS",
+   "angle": "high",
+   "lens": 26,
+   "move": "static",
+   "purpose": "P11 · low, from in front of him: his face with tears and, clear beside it, his arm up after her balloon (the shoulder-to-hand line reads; a5-3 twice failed from the side); lens above his eyes so his hair reads (Studio 26/11)",
+   "see": "low, from in front of him: his face with tears and, clear beside it, his arm up after her balloon (the shoulder-to-hand line reads; a5-3 twice failed from the side); lens above his eyes so his hair reads (Studio 26/11)",
+   "story": 7,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "town square",
+   "cast": [
+    "dad",
+    "daughter"
+   ],
+   "camsrc": "parts/a/path.js CAMS f440",
+   "lines": [
+    "L02"
+   ]
+  },
+  {
+   "id": "SHb01",
+   "scene": "b",
+   "f0": 504,
+   "size": "WS",
+   "angle": "high",
+   "lens": 34,
+   "move": "static",
+   "purpose": "P12 · he runs down the aisle (seen from the side of it): lit full cradles and dark empty ones alternate, red beacons overhead",
+   "see": "he runs down the aisle (seen from the side of it): lit full cradles and dark empty ones alternate, red beacons overhead",
+   "story": 7,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "nursery",
+   "cast": [
+    "doctor"
+   ],
+   "camsrc": "parts/b/reel.js direct f504",
+   "lines": [
+    "L03",
+    "L04",
+    "L05"
+   ],
+   "text": [
+    {
+     "text": "Half the cradles",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 30,
+     "dur": 60
+    },
+    {
+     "text": "are empty.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 30,
+     "dur": 60
+    },
+    {
+     "text": "Only boys are left:",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 92,
+     "dur": 48
+    },
+    {
+     "text": "the last babies ever.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 92,
+     "dur": 48
+    },
+    {
+     "text": "85%",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 144,
+     "dur": 64
+    },
+    {
+     "text": "of the world's nurses",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 144,
+     "dur": 64
+    },
+    {
+     "text": "were women",
+     "at": [
+      0.465,
+      0.54
+     ],
+     "size": 0.028,
+     "f0": 144,
+     "dur": 64
+    }
+   ]
+  },
+  {
+   "id": "SHb02",
+   "scene": "b",
+   "f0": 654,
+   "size": "FS",
+   "angle": "eye",
+   "lens": 24,
+   "move": "static",
+   "purpose": "P13 · he bends over the boy behind his cradle, his palm comes onto the swaddled chest, his face close",
+   "see": "he bends over the boy behind his cradle, his palm comes onto the swaddled chest, his face close",
+   "story": 6,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "nursery",
+   "cast": [
+    "doctor"
+   ],
+   "camsrc": "parts/b/reel.js direct f654",
+   "lines": [
+    "L05"
+   ]
+  },
+  {
+   "id": "SHb03",
+   "scene": "b",
+   "f0": 764,
+   "size": "INS",
+   "angle": "high",
+   "lens": 26,
+   "move": "static",
+   "purpose": "P14 · his palm resting on the blanket over the boy's chest, the 23:59 card and her photo on the cradle under it",
+   "see": "his palm resting on the blanket over the boy's chest, the 23:59 card and her photo on the cradle under it",
+   "story": 6,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "insert",
+   "set": "nursery",
+   "cast": [
+    "doctor"
+   ],
+   "camsrc": "parts/b/reel.js direct f764",
+   "lines": [
+    "L06"
+   ],
+   "text": [
+    {
+     "text": "This one was born",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 40,
+     "dur": 64
+    },
+    {
+     "text": "at 11:59 p.m.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 40,
+     "dur": 64
+    }
+   ]
+  },
+  {
+   "id": "SHb04",
+   "scene": "b",
+   "f0": 834,
+   "size": "MS",
+   "angle": "low",
+   "lens": 24,
+   "move": "static",
+   "purpose": "P15 · remember him: his face over the boy, tender, high in frame; the card and her photo on the cradle front below",
+   "see": "remember him: his face over the boy, tender, high in frame; the card and her photo on the cradle front below",
+   "story": 6,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "nursery",
+   "cast": [
+    "doctor"
+   ],
+   "camsrc": "parts/b/reel.js direct f834",
+   "lines": [
+    "L06",
+    "L07",
+    "L08"
+   ],
+   "text": [
+    {
+     "text": "One minute before.",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 40,
+     "dur": 52
+    },
+    {
+     "text": "Remember him.",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 98,
+     "dur": 52
+    }
+   ]
+  },
+  {
+   "id": "SHc01",
+   "scene": "c",
+   "f0": 984,
+   "size": "FS",
+   "angle": "eye",
+   "lens": 16,
+   "move": "static",
+   "purpose": "P16 · close across the table: his face high, his hand on his cup low, her cup poured and steaming in front",
+   "see": "close across the table: his face high, his hand on his cup low, her cup poured and steaming in front",
+   "story": 4,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "care home",
+   "cast": [
+    "oldman",
+    "carer"
+   ],
+   "camsrc": "parts/c/reel.js direct f984",
+   "lines": [
+    "L09"
+   ],
+   "text": [
+    {
+     "text": "87%",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 10,
+     "dur": 74
+    },
+    {
+     "text": "of elder care workers",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 10,
+     "dur": 74
+    },
+    {
+     "text": "were women (OECD)",
+     "at": [
+      0.465,
+      0.54
+     ],
+     "size": 0.028,
+     "f0": 10,
+     "dur": 74
+    }
+   ]
+  },
+  {
+   "id": "SHc02",
+   "scene": "c",
+   "f0": 1026,
+   "size": "INS",
+   "angle": "eye",
+   "lens": 20,
+   "move": "static",
+   "purpose": "P17 · his hand on his cup",
+   "see": "his hand on his cup",
+   "story": 4,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "insert",
+   "set": "care home",
+   "cast": [
+    "oldman",
+    "carer"
+   ],
+   "camsrc": "parts/c/reel.js direct f1026",
+   "lines": [
+    "L09"
+   ]
+  },
+  {
+   "id": "SHc03",
+   "scene": "c",
+   "f0": 1054,
+   "size": "FS",
+   "angle": "high",
+   "lens": 24,
+   "move": "static",
+   "purpose": "P18 · the carer behind, bent over the meal trolley with four trays, seen from ahead of it, a little high: the bar under his face, his arms either side of it",
+   "see": "the carer behind, bent over the meal trolley with four trays, seen from ahead of it, a little high: the bar under his face, his arms either side of it",
+   "story": 5,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "care home",
+   "cast": [
+    "oldman",
+    "carer"
+   ],
+   "camsrc": "parts/c/reel.js direct f1054",
+   "lines": [
+    "L09",
+    "L10"
+   ],
+   "text": [
+    {
+     "text": "The frail feel it first.",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 22,
+     "dur": 58
+    }
+   ]
+  },
+  {
+   "id": "SHc04",
+   "scene": "c",
+   "f0": 1082,
+   "size": "INS",
+   "angle": "high",
+   "lens": 20,
+   "move": "static",
+   "purpose": "P19 · both hands on the trolley bar, from ahead, his face clear above and behind it",
+   "see": "both hands on the trolley bar, from ahead, his face clear above and behind it",
+   "story": 4,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "insert",
+   "set": "care home",
+   "cast": [
+    "oldman",
+    "carer"
+   ],
+   "camsrc": "parts/c/reel.js direct f1082",
+   "lines": [
+    "L10"
+   ]
+  },
+  {
+   "id": "SHd01",
+   "scene": "d",
+   "f0": 1134,
+   "size": "INS",
+   "angle": "low",
+   "lens": 26,
+   "move": "static",
+   "purpose": "P20 · his two fists round the bamboo crossbar, the lantern glowing over them, its light on his hands and his face below",
+   "see": "his two fists round the bamboo crossbar, the lantern glowing over them, its light on his hands and his face below",
+   "story": 5,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "insert",
+   "set": "river bank",
+   "cast": [
+    "father",
+    "son"
+   ],
+   "camsrc": "parts/d/reel.js direct f1134",
+   "lines": []
+  },
+  {
+   "id": "SHd02",
+   "scene": "d",
+   "f0": 1144,
+   "size": "WS",
+   "angle": "low",
+   "lens": 20,
+   "move": "static",
+   "purpose": "P21 · at the water he holds the lit lantern up over his head; his son walks in to him along the bank",
+   "see": "at the water he holds the lit lantern up over his head; his son walks in to him along the bank",
+   "story": 5,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "river bank",
+   "cast": [
+    "father",
+    "son"
+   ],
+   "camsrc": "parts/d/reel.js direct f1144",
+   "lines": []
+  },
+  {
+   "id": "SHd03",
+   "scene": "d",
+   "f0": 1176,
+   "size": "FS",
+   "angle": "low",
+   "lens": 22,
+   "move": "static",
+   "purpose": "P22 · side by side, both look up at it: its light on the father's hands and on the boy's face from above",
+   "see": "side by side, both look up at it: its light on the father's hands and on the boy's face from above",
+   "story": 5,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "river bank",
+   "cast": [
+    "father",
+    "son"
+   ],
+   "camsrc": "parts/d/reel.js direct f1176",
+   "lines": [
+    "L11"
+   ],
+   "text": [
+    {
+     "text": "Mothers. Wives.",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 22,
+     "dur": 76
+    },
+    {
+     "text": "Daughters. Sisters.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 22,
+     "dur": 76
+    }
+   ]
+  },
+  {
+   "id": "SHd04",
+   "scene": "d",
+   "f0": 1270,
+   "size": "EWS",
+   "angle": "low",
+   "lens": 20,
+   "move": "static",
+   "purpose": "P23 · it rises from his open hands over their heads, into a sky of lanterns over the water",
+   "see": "it rises from his open hands over their heads, into a sky of lanterns over the water",
+   "story": 6,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "river bank",
+   "cast": [
+    "father",
+    "son"
+   ],
+   "camsrc": "parts/d/reel.js direct f1270",
+   "lines": [
+    "L11",
+    "L12"
+   ],
+   "text": [
+    {
+     "text": "A billion of those left",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 10,
+     "dur": 62
+    },
+    {
+     "text": "are boys under 15.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 10,
+     "dur": 62
+    }
+   ]
+  },
+  {
+   "id": "SHe01",
+   "scene": "e",
+   "f0": 1343,
+   "size": "WS",
+   "angle": "high",
+   "lens": 26,
+   "move": "static",
+   "purpose": "P24 · alone: him at the front desk, the empty rows running back behind him",
+   "see": "alone: him at the front desk, the empty rows running back behind him",
+   "story": 5,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "office floor",
+   "cast": [
+    "officeman"
+   ],
+   "camsrc": "parts/e/reel.js direct f1343",
+   "lines": [
+    "L13"
+   ],
+   "text": [
+    {
+     "text": "4 in 10",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 4,
+     "dur": 76
+    },
+    {
+     "text": "workers on Earth,",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 4,
+     "dur": 76
+    },
+    {
+     "text": "gone overnight",
+     "at": [
+      0.465,
+      0.54
+     ],
+     "size": 0.028,
+     "f0": 4,
+     "dur": 76
+    }
+   ]
+  },
+  {
+   "id": "SHe02",
+   "scene": "e",
+   "f0": 1393,
+   "size": "WS",
+   "angle": "high",
+   "lens": 24,
+   "move": "static",
+   "purpose": "P25 · every phone on the floor lit and ringing behind him, his head comes up",
+   "see": "every phone on the floor lit and ringing behind him, his head comes up",
+   "story": 6,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "office floor",
+   "cast": [
+    "officeman"
+   ],
+   "camsrc": "parts/e/reel.js direct f1393",
+   "lines": [
+    "L13",
+    "L14"
+   ],
+   "text": [
+    {
+     "text": "And half of",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 43,
+     "dur": 81
+    },
+    {
+     "text": "all the customers.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 43,
+     "dur": 81
+    }
+   ]
+  },
+  {
+   "id": "SHe03",
+   "scene": "e",
+   "f0": 1443,
+   "size": "WS",
+   "angle": "high",
+   "lens": 24,
+   "move": "static",
+   "purpose": "P26 · he has stood, alarmed, the red-lit floor behind him (he turns to it after)",
+   "see": "he has stood, alarmed, the red-lit floor behind him (he turns to it after)",
+   "story": 6,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "office floor",
+   "cast": [
+    "officeman"
+   ],
+   "camsrc": "parts/e/reel.js direct f1443",
+   "lines": [
+    "L14"
+   ]
+  },
+  {
+   "id": "SHf01",
+   "scene": "f",
+   "f0": 1518,
+   "size": "FS",
+   "angle": "eye",
+   "lens": 19,
+   "move": "static",
+   "purpose": "P27 · bare shelves, one tin: both men reach for it (faces over the words)",
+   "see": "bare shelves, one tin: both men reach for it (faces over the words)",
+   "story": 6,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "shop",
+   "cast": [
+    "father1",
+    "father2"
+   ],
+   "camsrc": "parts/f/reel.js direct f1518",
+   "lines": [
+    "L15"
+   ],
+   "text": [
+    {
+     "text": "90%",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 0,
+     "dur": 72
+    },
+    {
+     "text": "of homicide suspects",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 0,
+     "dur": 72
+    },
+    {
+     "text": "are men",
+     "at": [
+      0.465,
+      0.54
+     ],
+     "size": 0.028,
+     "f0": 0,
+     "dur": 72
+    }
+   ]
+  },
+  {
+   "id": "SHf02",
+   "scene": "f",
+   "f0": 1580,
+   "size": "WS",
+   "angle": "eye",
+   "lens": 20,
+   "move": "static",
+   "purpose": "P28 · both press a hand down on the tin's lid and glare, faces 3/4",
+   "see": "both press a hand down on the tin's lid and glare, faces 3/4",
+   "story": 7,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "shop",
+   "cast": [
+    "father1",
+    "father2"
+   ],
+   "camsrc": "parts/f/reel.js direct f1580",
+   "lines": [
+    "L15"
+   ]
+  },
+  {
+   "id": "SHf03",
+   "scene": "f",
+   "f0": 1603,
+   "size": "INS",
+   "angle": "eye",
+   "lens": 18,
+   "move": "static",
+   "purpose": "P29 · four hands on one tin",
+   "see": "four hands on one tin",
+   "story": 7,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "insert",
+   "set": "shop",
+   "cast": [
+    "father1",
+    "father2"
+   ],
+   "camsrc": "parts/f/reel.js direct f1603",
+   "lines": []
+  },
+  {
+   "id": "SHf04",
+   "scene": "f",
+   "f0": 1615,
+   "size": "FS",
+   "angle": "eye",
+   "lens": 19,
+   "move": "static",
+   "purpose": "P30 · he sees the baby and lifts his hand off the lid; the other's hand stays",
+   "see": "he sees the baby and lifts his hand off the lid; the other's hand stays",
+   "story": 5,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "shop",
+   "cast": [
+    "father1",
+    "father2"
+   ],
+   "camsrc": "parts/f/reel.js direct f1615",
+   "lines": [
+    "L16"
+   ],
+   "text": [
+    {
+     "text": "Some fight.",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 13,
+     "dur": 42
+    },
+    {
+     "text": "Some let go.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 13,
+     "dur": 42
+    }
+   ]
+  },
+  {
+   "id": "SHg01",
+   "scene": "g",
+   "f0": 1671,
+   "size": "WS",
+   "angle": "eye",
+   "lens": 22,
+   "move": "static",
+   "purpose": "P31 · 3 a.m., he walks the crying baby, sweating",
+   "see": "3 a.m., he walks the crying baby, sweating",
+   "story": 5,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "night kitchen",
+   "cast": [
+    "father",
+    "son"
+   ],
+   "camsrc": "parts/g/reel.js direct f1671",
+   "lines": []
+  },
+  {
+   "id": "SHg02",
+   "scene": "g",
+   "f0": 1715,
+   "size": "INS",
+   "angle": "eye",
+   "lens": 22,
+   "move": "static",
+   "purpose": "P32 · the crying baby in his arms, sweat on his temple",
+   "see": "the crying baby in his arms, sweat on his temple",
+   "story": 5,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "insert",
+   "set": "night kitchen",
+   "cast": [
+    "father",
+    "son"
+   ],
+   "camsrc": "parts/g/reel.js direct f1715",
+   "lines": []
+  },
+  {
+   "id": "SHg03",
+   "scene": "g",
+   "f0": 1745,
+   "size": "WS",
+   "angle": "eye",
+   "lens": 20,
+   "move": "static",
+   "purpose": "P33 · asleep in the chair with the baby on his chest; his son walks in with a blanket",
+   "see": "asleep in the chair with the baby on his chest; his son walks in with a blanket",
+   "story": 4,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "night kitchen",
+   "cast": [
+    "father",
+    "son"
+   ],
+   "camsrc": "parts/g/reel.js direct f1745",
+   "lines": [
+    "L17"
+   ],
+   "text": [
+    {
+     "text": "Now it is",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 58,
+     "dur": 90
+    },
+    {
+     "text": "all on him.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 58,
+     "dur": 90
+    }
+   ]
+  },
+  {
+   "id": "SHg04",
+   "scene": "g",
+   "f0": 1830,
+   "size": "FS",
+   "angle": "high",
+   "lens": 20,
+   "move": "static",
+   "purpose": "P34 · the blanket over both (faces under the words)",
+   "see": "the blanket over both (faces under the words)",
+   "story": 4,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "night kitchen",
+   "cast": [
+    "father",
+    "son"
+   ],
+   "camsrc": "parts/g/reel.js direct f1830",
+   "lines": [
+    "L17"
+   ]
+  },
+  {
+   "id": "SHh01",
+   "scene": "h",
+   "f0": 1894,
+   "size": "WS",
+   "angle": "eye",
+   "lens": 17,
+   "move": "static",
+   "purpose": "P35 · the tank, the green heartbeat, three hopeful faces",
+   "see": "the tank, the green heartbeat, three hopeful faces",
+   "story": 5,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "lab",
+   "cast": [
+    "sci1",
+    "sci2"
+   ],
+   "camsrc": "parts/h/reel.js direct f1894",
+   "lines": [
+    "L18"
+   ],
+   "text": [
+    {
+     "text": "Labs can freeze eggs,",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 0,
+     "dur": 76
+    },
+    {
+     "text": "sperm and embryos.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 0,
+     "dur": 76
+    }
+   ]
+  },
+  {
+   "id": "SHh02",
+   "scene": "h",
+   "f0": 2030,
+   "size": "WS",
+   "angle": "eye",
+   "lens": 17,
+   "move": "static",
+   "purpose": "P36 · the line goes flat: red monitor light on their faces",
+   "see": "the line goes flat: red monitor light on their faces",
+   "story": 7,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "lab",
+   "cast": [
+    "sci1",
+    "sci2"
+   ],
+   "camsrc": "parts/h/reel.js direct f2030",
+   "lines": [
+    "L19"
+   ],
+   "text": [
+    {
+     "text": "No one has ever",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 16,
+     "dur": 64
+    },
+    {
+     "text": "built a womb.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 16,
+     "dur": 64
+    }
+   ]
+  },
+  {
+   "id": "SHh03",
+   "scene": "h",
+   "f0": 2054,
+   "size": "FS",
+   "angle": "eye",
+   "lens": 20,
+   "move": "static",
+   "purpose": "P37 · his palm on the glass, the child curled inside, the dead monitor above (hand and face over the words)",
+   "see": "his palm on the glass, the child curled inside, the dead monitor above (hand and face over the words)",
+   "story": 7,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "lab",
+   "cast": [
+    "sci1",
+    "sci2"
+   ],
+   "camsrc": "parts/h/reel.js direct f2054",
+   "lines": [
+    "L19"
+   ]
+  },
+  {
+   "id": "SHh04",
+   "scene": "h",
+   "f0": 2076,
+   "size": "WS",
+   "angle": "eye",
+   "lens": 18,
+   "move": "static",
+   "purpose": "P38 · one of them bends, defeated (faces over the words)",
+   "see": "one of them bends, defeated (faces over the words)",
+   "story": 6,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "lab",
+   "cast": [
+    "sci1",
+    "sci2"
+   ],
+   "camsrc": "parts/h/reel.js direct f2076",
+   "lines": [
+    "L19"
+   ]
+  },
+  {
+   "id": "SHi01",
+   "scene": "i",
+   "f0": 2111,
+   "size": "WS",
+   "angle": "high",
+   "lens": 18,
+   "move": "static",
+   "purpose": "P39 · old men round a cake with 80 on it (faces over the words)",
+   "see": "old men round a cake with 80 on it (faces over the words)",
+   "story": 4,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "birthday room",
+   "cast": [
+    "oldmen"
+   ],
+   "camsrc": "parts/i/reel.js direct f2111",
+   "lines": [
+    "L20"
+   ],
+   "text": [
+    {
+     "text": "The youngest person",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 14,
+     "dur": 90
+    },
+    {
+     "text": "on Earth turns 80.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 14,
+     "dur": 90
+    }
+   ]
+  },
+  {
+   "id": "SHi02",
+   "scene": "i",
+   "f0": 2222,
+   "size": "MS",
+   "angle": "eye",
+   "lens": 30,
+   "move": "static",
+   "purpose": "P40 · side close (contact): his hands on the platter, he blows, an o mouth, a soft cloud of breath, the flames laid flat away from him",
+   "see": "side close (contact): his hands on the platter, he blows, an o mouth, a soft cloud of breath, the flames laid flat away from him",
+   "story": 5,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "birthday room",
+   "cast": [
+    "oldmen"
+   ],
+   "camsrc": "parts/i/reel.js direct f2222",
+   "lines": []
+  },
+  {
+   "id": "SHi03",
+   "scene": "i",
+   "f0": 2270,
+   "size": "FS",
+   "angle": "high",
+   "lens": 22,
+   "move": "static",
+   "purpose": "P41 · the chairs round him empty, the hats left on them (faces over the words)",
+   "see": "the chairs round him empty, the hats left on them (faces over the words)",
+   "story": 6,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "birthday room",
+   "cast": [
+    "oldmen"
+   ],
+   "camsrc": "parts/i/reel.js direct f2270",
+   "lines": [
+    "L21"
+   ],
+   "text": [
+    {
+     "text": "Nobody comes after him.",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 3,
+     "dur": 60
+    }
+   ]
+  },
+  {
+   "id": "SHj01",
+   "scene": "j",
+   "f0": 2336,
+   "size": "FS",
+   "angle": "eye",
+   "lens": 22,
+   "move": "static",
+   "purpose": "P42 · alone in a small warm room, the photo in his hands",
+   "see": "alone in a small warm room, the photo in his hands",
+   "story": 6,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "small room",
+   "cast": [
+    "lastman"
+   ],
+   "camsrc": "parts/j/reel.js direct f2336",
+   "lines": [
+    "L22"
+   ],
+   "text": [
+    {
+     "text": "The last person",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 96,
+     "dur": 72
+    },
+    {
+     "text": "on Earth.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 96,
+     "dur": 72
+    }
+   ]
+  },
+  {
+   "id": "SHj02",
+   "scene": "j",
+   "f0": 2505,
+   "size": "INS",
+   "angle": "eye",
+   "lens": 22,
+   "move": "static",
+   "purpose": "P43 · his two hands on the frame",
+   "see": "his two hands on the frame",
+   "story": 7,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "insert",
+   "set": "small room",
+   "cast": [
+    "lastman"
+   ],
+   "camsrc": "parts/j/reel.js direct f2505",
+   "lines": [
+    "L23"
+   ],
+   "text": [
+    {
+     "text": "Remember him?",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 31,
+     "dur": 64
+    }
+   ]
+  },
+  {
+   "id": "SHj03",
+   "scene": "j",
+   "f0": 2600,
+   "size": "MCU",
+   "angle": "eye",
+   "lens": 30,
+   "move": "static",
+   "purpose": "P44 · the photo: a young mother holding a newborn",
+   "see": "the photo: a young mother holding a newborn",
+   "story": 9,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "small room",
+   "cast": [
+    "lastman"
+   ],
+   "camsrc": "parts/j/reel.js direct f2600",
+   "lines": [
+    "L24"
+   ],
+   "text": [
+    {
+     "text": "She held him",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 40,
+     "dur": 62
+    },
+    {
+     "text": "for one minute.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 40,
+     "dur": 62
+    }
+   ]
+  },
+  {
+   "id": "SHj04",
+   "scene": "j",
+   "f0": 2700,
+   "size": "FS",
+   "angle": "eye",
+   "lens": 24,
+   "move": "static",
+   "purpose": "P45 · his face at peace; the window warms behind him",
+   "see": "his face at peace; the window warms behind him",
+   "story": 7,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "small room",
+   "cast": [
+    "lastman"
+   ],
+   "camsrc": "parts/j/reel.js direct f2700",
+   "lines": [
+    "L24",
+    "L25",
+    "L26"
+   ],
+   "text": [
+    {
+     "text": "He held on to her",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 10,
+     "dur": 70
+    },
+    {
+     "text": "for 116 years.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 10,
+     "dur": 70
+    },
+    {
+     "text": "Send this to the woman",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 98,
+     "dur": 78
+    },
+    {
+     "text": "who held you first.",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 98,
+     "dur": 78
+    }
+   ]
+  },
+  {
+   "id": "SHk01",
+   "scene": "k",
+   "f0": 2876,
+   "size": "CARD",
+   "angle": "eye",
+   "move": "static",
+   "purpose": "P · the end card: No women, no one after us. Send this to the woman who held you first.",
+   "see": "black card, white and pink words, a pink arrow",
+   "story": 3,
+   "screen_dir": "-",
+   "kind": "explain",
+   "set": "end card",
+   "cast": [],
+   "hold": "the ask must be read",
+   "camsrc": "tools/timeline.py card()",
+   "lines": []
+  }
+ ]
+}

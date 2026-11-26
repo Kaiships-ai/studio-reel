@@ -1,0 +1,47 @@
+shot,scene,f0,f1,sec,size,angle,lens,move,story,visual,flags,lines
+SHa01,a,0,86,2.87,WS,eye,26,static,4,2,,L01
+SHa02,a,86,196,3.67,WS,eye,30,static,4,1,,L01
+SHa03,a,196,226,1.00,MCU,eye,30,static,4,3,FLAT,
+SHa04,a,226,246,0.67,INS,eye,26,static,5,5,FLAT,
+SHa05,a,246,294,1.60,FS,eye,26,static,4,3,FLAT,
+SHa06,a,294,306,0.40,EWS,low,22,static,6,4,FLAT,
+SHa07,a,306,318,0.40,WS,high,36,static,6,3,FLAT,
+SHa08,a,318,330,0.40,FS,eye,27,static,7,3,FLAT MISMATCH,
+SHa09,a,330,350,0.67,FS,eye,30,static,8,2,FLAT MISMATCH,
+SHa10,a,350,440,3.00,WS,eye,22,static,7,2,MISMATCH,L02
+SHa11,a,440,504,2.13,FS,high,26,static,7,3,MISMATCH,L02
+SHb01,b,504,654,5.00,WS,high,34,static,7,1,MISMATCH,L03 L04 L05
+SHb02,b,654,764,3.67,FS,eye,24,static,6,2,MISMATCH,L05
+SHb03,b,764,834,2.33,INS,high,26,static,6,5,,L06
+SHb04,b,834,984,5.00,MS,low,24,static,6,3,,L06 L07 L08
+SHc01,c,984,1026,1.40,FS,eye,16,static,4,4,,L09
+SHc02,c,1026,1054,0.93,INS,eye,20,static,4,6,,L09
+SHc03,c,1054,1082,0.93,FS,high,24,static,5,4,,L09 L10
+SHc04,c,1082,1134,1.73,INS,high,20,static,4,7,EARLY_PEAK,L10
+SHd01,d,1134,1144,0.33,INS,low,26,static,5,6,,
+SHd02,d,1144,1176,1.07,WS,low,20,static,5,5,,
+SHd03,d,1176,1270,3.13,FS,low,22,static,5,3,,L11
+SHd04,d,1270,1343,2.43,EWS,low,20,static,6,4,,L11 L12
+SHe01,e,1343,1393,1.67,WS,high,26,static,5,4,,L13
+SHe02,e,1393,1443,1.67,WS,high,24,static,6,4,,L13 L14
+SHe03,e,1443,1518,2.50,WS,high,24,static,6,3,,L14
+SHf01,f,1518,1580,2.07,FS,eye,19,static,6,3,,L15
+SHf02,f,1580,1603,0.77,WS,eye,20,static,7,4,,L15
+SHf03,f,1603,1615,0.40,INS,eye,18,static,7,6,,
+SHf04,f,1615,1671,1.87,FS,eye,19,static,5,4,,L16
+SHg01,g,1671,1715,1.47,WS,eye,22,static,5,3,,
+SHg02,g,1715,1745,1.00,INS,eye,22,static,5,5,,
+SHg03,g,1745,1830,2.83,WS,eye,20,static,4,3,FLAT,L17
+SHg04,g,1830,1894,2.13,FS,high,20,static,4,4,FLAT,L17
+SHh01,h,1894,2030,4.53,WS,eye,17,static,5,2,FLAT,L18
+SHh02,h,2030,2054,0.80,WS,eye,17,static,7,4,FLAT,L19
+SHh03,h,2054,2076,0.73,FS,eye,20,static,7,4,FLAT,L19
+SHh04,h,2076,2111,1.17,WS,eye,18,static,6,4,,L19
+SHi01,i,2111,2222,3.70,WS,high,18,static,4,4,,L20
+SHi02,i,2222,2270,1.60,MS,eye,30,static,5,3,,
+SHi03,i,2270,2336,2.20,FS,high,22,static,6,3,,L21
+SHj01,j,2336,2505,5.63,FS,eye,22,static,6,1,MISMATCH,L22
+SHj02,j,2505,2600,3.17,INS,eye,22,static,7,4,,L23
+SHj03,j,2600,2700,3.33,MCU,eye,30,static,9,2,MISMATCH,L24
+SHj04,j,2700,2876,5.87,FS,eye,24,static,7,1,MISMATCH,L24 L25 L26
+SHk01,k,2876,3016,4.67,CARD,eye,,static,3,0,,

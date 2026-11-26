@@ -1,0 +1,98 @@
+{
+ "film": "wif5-H1",
+ "fps": 30,
+ "size": "1080x1920",
+ "last": 180,
+ "about": "H1 hook option (question: the open as built, moving through the lit square); the first 6 s, shots copied from the film storyboard",
+ "scenes": [
+  {
+   "id": "hook",
+   "feel": "question: the open as built, moving through the lit square",
+   "whose": "dad",
+   "key": "every woman vanished",
+   "question": "what if?"
+  }
+ ],
+ "shots": [
+  {
+   "id": "H1_1_SHa01",
+   "scene": "hook",
+   "f0": 0,
+   "size": "WS",
+   "angle": "eye",
+   "lens": 26,
+   "move": "static",
+   "purpose": "P1 \u00b7 already busy: the dad and his girl walk hand in hand toward us into a full, lit square; the title sits over the square above them",
+   "see": "already busy: the dad and his girl walk hand in hand toward us into a full, lit square; the title sits over the square above them",
+   "story": 4,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "town square",
+   "cast": [
+    "dad",
+    "daughter"
+   ],
+   "camsrc": "parts/a/path.js CAMS f0",
+   "lines": [
+    "L01"
+   ],
+   "text": [
+    {
+     "text": "What if every",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 0,
+     "dur": 138
+    },
+    {
+     "text": "WOMAN",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 0,
+     "dur": 138
+    },
+    {
+     "text": "on Earth disappeared?",
+     "at": [
+      0.465,
+      0.54
+     ],
+     "size": 0.028,
+     "f0": 0,
+     "dur": 138
+    }
+   ]
+  },
+  {
+   "id": "H1_2_SHa02",
+   "scene": "hook",
+   "f0": 86,
+   "size": "WS",
+   "angle": "eye",
+   "lens": 30,
+   "move": "static",
+   "purpose": "P2 \u00b7 he waves his free arm with the crowd, her hand in his",
+   "see": "he waves his free arm with the crowd, her hand in his",
+   "story": 4,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "town square",
+   "cast": [
+    "dad",
+    "daughter"
+   ],
+   "camsrc": "parts/a/path.js CAMS f86",
+   "lines": [
+    "L01"
+   ]
+  }
+ ]
+}

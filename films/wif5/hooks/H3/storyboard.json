@@ -1,0 +1,120 @@
+{
+ "film": "wif5-H3",
+ "fps": 30,
+ "size": "1080x1920",
+ "last": 180,
+ "about": "H3 hook option (mystery: flash-forward to the last man and the photo); the first 6 s, shots copied from the film storyboard",
+ "scenes": [
+  {
+   "id": "hook",
+   "feel": "mystery: flash-forward to the last man and the photo",
+   "whose": "dad",
+   "key": "every woman vanished",
+   "question": "what if?"
+  }
+ ],
+ "shots": [
+  {
+   "id": "H3_1_SHj03",
+   "scene": "hook",
+   "f0": 0,
+   "size": "MCU",
+   "angle": "eye",
+   "lens": 30,
+   "move": "static",
+   "purpose": "P44 \u00b7 the photo: a young mother holding a newborn",
+   "see": "the photo: a young mother holding a newborn",
+   "story": 9,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "small room",
+   "cast": [
+    "lastman"
+   ],
+   "camsrc": "parts/j/reel.js direct f2600",
+   "lines": [
+    "L24"
+   ],
+   "text": [
+    {
+     "text": "What if every",
+     "at": [
+      0.465,
+      0.44
+     ],
+     "size": 0.028,
+     "f0": 0,
+     "dur": 138
+    },
+    {
+     "text": "WOMAN",
+     "at": [
+      0.465,
+      0.49
+     ],
+     "size": 0.028,
+     "f0": 0,
+     "dur": 138
+    },
+    {
+     "text": "on Earth disappeared?",
+     "at": [
+      0.465,
+      0.54
+     ],
+     "size": 0.028,
+     "f0": 0,
+     "dur": 138
+    }
+   ]
+  },
+  {
+   "id": "H3_2_SHj02",
+   "scene": "hook",
+   "f0": 70,
+   "size": "INS",
+   "angle": "eye",
+   "lens": 22,
+   "move": "static",
+   "purpose": "P43 \u00b7 his two hands on the frame",
+   "see": "his two hands on the frame",
+   "story": 7,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "insert",
+   "set": "small room",
+   "cast": [
+    "lastman"
+   ],
+   "camsrc": "parts/j/reel.js direct f2505",
+   "lines": [
+    "L23"
+   ]
+  },
+  {
+   "id": "H3_3_SHa01",
+   "scene": "hook",
+   "f0": 120,
+   "size": "WS",
+   "angle": "eye",
+   "lens": 26,
+   "move": "static",
+   "purpose": "P1 \u00b7 already busy: the dad and his girl walk hand in hand toward us into a full, lit square; the title sits over the square above them",
+   "see": "already busy: the dad and his girl walk hand in hand toward us into a full, lit square; the title sits over the square above them",
+   "story": 4,
+   "screen_dir": "-",
+   "axis": "A",
+   "kind": "action",
+   "set": "town square",
+   "cast": [
+    "dad",
+    "daughter"
+   ],
+   "camsrc": "parts/a/path.js CAMS f0",
+   "lines": [
+    "L01"
+   ]
+  }
+ ]
+}
