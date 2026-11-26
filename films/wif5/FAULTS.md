@@ -79,3 +79,23 @@
 | K1 | held prop not touching the holding hand passes every gate (no hand-to-grip distance check) | c trays, f tin, g baby, j photo, a 450 | any | open: kit gate PR queued (handgrip gate, frozen limit + 5 cm-off control) |
 | K2 | face slides to the head's edge / squashes at some camera angles | e beat_1511, f beat_1598 + contact_tin, h beat_2090 | angles to be logged from facegate per still (fix round 1 reports) | open: same or second kit PR; not hidden by camera choice only |
 | K3 | coloured practical light never reaches a head: heads are drawn unlit on purpose (`flatHeadMat`, engine/cast.js), place light tints 25 % only; a red alarm cannot be on faces | h beat_2040, 2090 | any | open: kit design call (faces readable vs lit); film shows red on walls, floor, tank |
+
+## Parts a, f-j stills, blind read 2
+| id | still | what a viewer sees wrong | severity |
+|---|---|---|---|
+| a2-1 | a beat_331 | the falling scarf reads as a floating orange ring on a stack of brown blocks (a buoy or totem), not a scarf; nothing says a girl just vanished | blocks |
+| a2-2 | a beat_360 | the scarf on the ground is a long orange hose-like tube, wider than a leg, running off frame; ground is bare cobbles, no snow | visible |
+| a2-3 | a beat_329, beat_331, beat_450 | dad's head cut by the top edge on three key beats (only mouth, only eyes left) | visible |
+| a2-4 | a beat_450 (also beat_200, beat_331) | reach beat: dad cropped to the left half, arm points into empty dark with no trace of where she stood; lower ~40 % empty cobbles (same dead floor in 200 and 331) | visible |
+| f2-1 | f beat_1598 | neither hand touches the tin (a gap on each side), so the grab does not read | visible |
+| f2-2 | f beat_1550, beat_1598, beat_1665 | both fathers' faces slid to the head's edge; a big blank grey disc dominates each head | visible |
+| f2-3 | f beat_1550, beat_1598 | the baby floats against the green father's chest, no arm under it (his arm goes over it to the tin) | visible |
+| f2-4 | f beat_1665 | the let-go is unclear: the orange father still has his hand on the tin and smiles while the green one cries; who gave way is not readable | visible |
+| g2-1 | g beat_1785 | the son's blanket is a rigid tartan box carried like a suitcase | visible |
+| g2-2 | g beat_1865 / beat_1705 | blanket stands as a stiff tent over the chair, father's body and legs vanish, baby's face hidden; 1705 kitchen is brightly lit (not night), father small, lower ~35 % empty floor | minor |
+| h2-1 | h beat_2040, beat_2090 | the flat line is never seen: the monitor leaves the shot after 2000; only the red light carries the loss | visible |
+| h2-2 | h beat_2000 | the embryo is a faint pink blob, does not read as a baby; left scientist holds a black thing at his mouth like a microphone; top ~25 % dark ceiling and bottom ~30 % floor empty, scientists small | visible |
+| h2-3 | h beat_2040, beat_2090 | the shirt-and-tie scientist's face sits on the head's right edge | minor |
+| i2-1 | i beat_2240 | flames are flat orange discs floating above the candles, the "0" candle seen edge-on; neighbour's head cut by the frame fills the right ~40 % | visible |
+| i2-2 | i beat_2170 | the birthday man's head overlaps the right man's head (two heads merged), hero squeezed in the middle; bottom ~30 % empty floor | visible |
+| j2-1 | j beat_2400, beat_2790, contact_photo | the photo is tiny (~80 px) at wide size; each arm shows a pale sleeve stump plus a separate black ball hand (two hands per arm) | visible |
