@@ -47,25 +47,32 @@ export async function build(stage) {
   const [tx, ty] = TABLE;
   K.cyl([tx, ty, 0.71], 0.5, 0.04, M('#6b4430', 0.5), { seg: 48 }); K.cyl([tx, ty, 0.36], 0.06, 0.68, M('#4e3123', 0.5), { seg: 16 });
   K.cyl([tx, ty, 0.02], 0.28, 0.04, M('#4e3123', 0.5), { seg: 32 });
-  K.cyl([tx, ty, 0.74], 0.29, 0.015, M('#c7b8a8', 0.4), { seg: 48 });                                     // the plate
+  K.cyl([tx, ty, 0.74], 0.43, 0.015, M('#c7b8a8', 0.4), { seg: 48 }); K.torus([tx, ty, 0.748], 0.43, 0.008, M('#b5a491', 0.4));   // the platter, a rim to hold
   const icing = M('#e9a7b4', 0.55), sponge = M('#d9a066', 0.7), cream = M('#efd7b0', 0.5);
   K.cyl([tx, ty, 0.80], 0.24, 0.11, icing, { seg: 48 }); K.cyl([tx, ty, 0.885], 0.17, 0.07, cream, { seg: 48 });
   K.torus([tx, ty, 0.855], 0.235, 0.014, M('#d97f94', 0.5)); K.torus([tx, ty, 0.92], 0.165, 0.012, M('#d97f94', 0.5));
   for (let i = 0; i < 10; i++) { const a = i * 0.628; K.sphere([tx + Math.cos(a) * 0.2, ty + Math.sin(a) * 0.2, 0.86], 0.016, M(i % 2 ? '#7fb3d9' : '#f0c75a', 0.5)); }
   // the numbers: tori standing up and facing the lens; 8 = two rings, 0 = one tall ring
   const wax = [M('#5f9fd8', 0.5), M('#f0b84a', 0.5)], flames = [], CT = CAKE_TOP;
-  const ring = (x, z, R, sy, m) => { const t = new T.Mesh(new T.TorusGeometry(R, 0.013, 10, 32), m); t.position.copy(K.B(x, ty - 0.02, z)); t.scale.set(1, sy, 1); t.userData.noInk = true; t.castShadow = true; K.root.add(t); };
+  const ring = (x, z, R, sy, m) => { const t = new T.Mesh(new T.TorusGeometry(R, 0.013, 10, 32), m); t.position.copy(K.B(x, ty - 0.02, z)); t.scale.set(1, sy, 1); t.rotation.y = 40 * Math.PI / 180; t.userData.noInk = true; t.castShadow = true; K.root.add(t); };
   ring(tx - 0.06, CT + 0.035, 0.03, 1, wax[0]); ring(tx - 0.06, CT + 0.098, 0.03, 1, wax[0]); ring(tx + 0.06, CT + 0.065, 0.045, 1.4, wax[1]);
   for (const [x, zt] of [[tx - 0.06, CT + 0.13], [tx + 0.06, CT + 0.13]]) {
     K.cyl([x, ty - 0.02, zt + 0.008], 0.002, 0.016, M('#2a2420', 0.8), { seg: 6 });
     const fl = new T.Group(); fl.position.copy(K.B(x, ty - 0.02, zt + 0.016)); K.root.add(fl);
     const outer = K.glow([1.0, 0.62, 0.2], 1.5), halo = K.glow([1.0, 0.7, 0.35], 1.0); outer.transparent = halo.transparent = true; outer.opacity = 0.75; halo.opacity = 0.16; outer.depthWrite = halo.depthWrite = false;
-    const tip = new T.Mesh(new T.SphereGeometry(1, 16, 12), outer); tip.scale.set(0.016, 0.042, 0.016); tip.position.y = 0.036; fl.add(tip);
-    const core = new T.Mesh(new T.SphereGeometry(1, 12, 8), K.glow([1.0, 0.95, 0.75], 1.6)); core.scale.set(0.008, 0.018, 0.008); core.position.y = 0.02; fl.add(core);
-    const glowB = new T.Mesh(new T.SphereGeometry(0.05, 14, 10), halo); glowB.position.y = 0.035; fl.add(glowB);
+    // an upright teardrop: round at the base (sitting on the wick's top), pointed at the tip; a white-hot core inside it
+    const drop = (h, w) => new T.LatheGeometry(Array.from({ length: 17 }, (_, i) => { const t = i / 16; return new T.Vector2(w * Math.sin(Math.PI * Math.pow(t, 0.55)) * (1 - 0.25 * t), h * t); }), 20);
+    const tip = new T.Mesh(drop(0.062, 0.016), outer); tip.position.y = -0.004; fl.add(tip);
+    const core = new T.Mesh(drop(0.03, 0.008), K.glow([1.0, 0.95, 0.75], 1.6)); core.position.y = -0.002; fl.add(core);
+    const glowB = new T.Mesh(new T.SphereGeometry(0.024, 14, 10), halo); glowB.position.y = 0.024; fl.add(glowB);
     for (const m of [tip, core, glowB]) m.userData.noInk = true;
     flames.push(fl);
   }
+  // presents on the floor in front of the table: wrapped boxes, a ribbon cross on each (the lit foreground)
+  for (const [x, y, w, d, h, c, rc] of [[-0.32, 0.05, 0.22, 0.2, 0.16, '#4f8fd0', '#f3d36a'], [0.3, 0.0, 0.26, 0.22, 0.2, '#e86a7a', '#f7f0e4'], [0.08, -0.12, 0.16, 0.16, 0.12, '#7cc48a', '#e86a7a']]) {
+    K.box([x - w / 2, y - d / 2, 0], [x + w / 2, y + d / 2, h], M(c, 0.55), { r: 0.008 });
+    K.box([x - 0.015, y - d / 2 - 0.003, 0], [x + 0.015, y + d / 2 + 0.003, h + 0.003], M(rc, 0.5), { r: 0.002 });
+    K.box([x - w / 2 - 0.003, y - 0.015, 0], [x + w / 2 + 0.003, y + 0.015, h + 0.003], M(rc, 0.5), { r: 0.002 }); }
   const candle = K.point([tx, ty - 0.12, CT + 0.2], '#ffb45e', 7, 1.8);
 
   // ---- room light: the lamp's warm pool, a warm pendant over the table, a cool window spill from the left, a face fill

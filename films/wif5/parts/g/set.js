@@ -89,9 +89,19 @@ export async function build(stage) {
   dtip.position.y = 0.058; for (const m of [dball, dtip]) { m.userData.noInk = true; drop.add(m); } K.root.add(drop);
   K.anim('drop', drop, f => { if (on(f, WALK)) H.hold(drop, 'g_dad', 'head', { off: [-0.31, 0.10, 0.06], rot: [0, 0, 0] }); else drop.visible = false; });
   const fold = foldedBlanket(K, tex); K.root.add(fold);
-  fold.scale.setScalar(0.7);
-  // the folded blanket hangs from his hand, his fingers over its top fold
-  K.anim('fold', fold, f => { if (on(f, BLANKET_CARRIED)) H.hold(fold, 'g_son', 'R', { off: [0.0, -0.075, 0.02], rot: [0, 90, 80] }); else fold.visible = false; });
+  fold.visible = false;
+  // the son's blanket on his way in: folded once lengthwise and draped over his forearm by the wrist, both halves hanging in
+  // soft folds (a cloth sheet bent round the arm, not a block); x along the fold, the two halves fall either side of it
+  const carry = (() => { const NX = 24, NV = 48, L = 0.5, Wd = 0.2, r = 0.022, arc = Math.PI * r / 2;
+    const g = new T.PlaneGeometry(1, 1, NX, NV), p = g.attributes.position, uv = g.attributes.uv;
+    for (let i = 0; i < p.count; i++) { const u = uv.getX(i), v = uv.getY(i), x = (u - 0.5) * Wd, s = (v - 0.5) * L, side = Math.sign(s) || 1, a = Math.abs(s);
+      let y, z; if (a < arc) { const t = a / r; y = r * Math.cos(t) - r; z = side * r * Math.sin(t); } else { const h = a - arc; y = -r - h; z = side * (r + 0.012 * h); }
+      const hang = Math.max(0, a - arc); z += side * 0.018 * Math.sin(x * 46 + side) * Math.min(1, hang * 6); y += 0.02 * Math.sin(x * 23 + 1.3 * side) * Math.min(1, hang * 4);
+      p.setXYZ(i, x, y, z); }
+    g.computeVertexNormals(); const m = new T.Mesh(g, K.mat('#ffffff', 0.95, { env: 0.35, map: fold.children[0].material.map, side: T.DoubleSide }));
+    m.castShadow = true; m.userData.noInk = true; return m; })();
+  K.root.add(carry);
+  K.anim('fold', carry, f => { if (on(f, BLANKET_CARRIED)) H.hold(carry, 'g_son', 'L', { off: [0.0, 0.035, 0.0], rot: [0, 0, 0] }); else carry.visible = false; });
   // the son's blanket over both: laid over his shoulders like a shawl, down over the baby on his chest and his lap, hanging
   // past his knees; it falls off his sides in soft folds and opens at the neck (his face and hers show). Built in Blender
   // coordinates relative to the seat root (y < 0 is his front), then turned to three.js by K.B.

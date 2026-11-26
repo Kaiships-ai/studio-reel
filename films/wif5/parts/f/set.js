@@ -17,7 +17,7 @@ export const SHOP = place('supermarket', { light: 'shop-night', props: PROPS, wa
 export const COLLIDE = SHOP.COLLIDE;
 const ENV_K = 0.4;
 // frames (film clock): the tin on the shelf until the grab, in both men's hands, then in A's hand pushed to B, then B's
-export const STAND = [0, 0.42, 0.78];   // the promo stand's top centre
+export const STAND = [-0.01, 0.19, 0.667];   // the promo stand's top centre: under the two fathers' reaching hands, its lid at their height
 export const TIN = { shelf: [[0, 1592]], grip: [[1592, 1622]], give: [[1622, 1700]] };
 
 export async function build(stage) {
@@ -76,23 +76,16 @@ export async function build(stage) {
 
   // ---- the tin and the baby (B's, in a sling on his chest)
   const t = tin(K, tex, { s: 1 }); K.root.add(t); const S0 = 1.25;
-  K.anim('tin', t, f => {
-    t.scale.setScalar(S0);
-    if (on(f, TIN.shelf)) { t.visible = true; t.position.copy(K.B(0, STAND[1], STAND[2] + 0.05 + 0.085 * S0 + 0.02)); t.rotation.set(0, 0.25, 0); return; }
-    // the grip: the tin between the two fathers' left hands, as wide as they are apart: one hand on each side
-    if (on(f, TIN.grip)) { const L = H.at('f_a', 'L'), R = H.at('f_b', 'L'); if (!L || !R) { t.visible = false; return; }
-      const w = Math.min(1.9, Math.max(0.85, (L.distanceTo(R) / 2 - 0.03) / 0.07)); t.scale.set(w, w, w);
-      t.position.copy(L).add(R).multiplyScalar(0.5); t.position.y -= 0.085 * w; t.rotation.set(0, 0.25, 0); t.visible = true; return; }
-    H.hold(t, 'f_a', 'L', { off: [0, 0.02, 0.06], rot: [0, 30, 0] });
-  });
-  const baby = bundle(K, tex); K.root.add(baby);
-  const sling = new T.Mesh(new T.TorusGeometry(0.13, 0.025, 8, 24, Math.PI), M('#3c5a78', 0.85)); sling.userData.noInk = true; baby.add(sling); sling.rotation.set(0, 0, Math.PI); sling.position.set(0.01, -0.01, 0);
-  const strap = new T.Mesh(new T.BoxGeometry(0.05, 0.42, 0.015), M('#3c5a78', 0.85)); strap.userData.noInk = true; baby.add(strap); strap.position.set(0.1, 0.2, -0.06); strap.rotation.z = -0.35;
-  // in the sling on his chest (face to the lens), then in both his arms when A holds the tin out (P3)
-  K.anim('baby', baby, f => { sling.visible = strap.visible = f < 1615;
-    baby.scale.setScalar(f < 1615 ? 1.2 : 1);
-    if (f < 1615) H.hold(baby, 'f_b', 'chest', { off: [0.02, -0.24, 0.17], rot: [0, -62, 75] });
-    else H.hold(baby, 'f_b', 'B', { off: [0, 0.03, 0.0], rot: [0, 140, 15] });
+  // the tin stands on the stand the whole part; the fathers' hands press down on its lid (the lid top at 0.98 m)
+  K.anim('tin', t, f => { t.scale.setScalar(S0); t.visible = true; t.position.copy(K.B(STAND[0], STAND[1], STAND[2] + 0.05 + 0.085 * S0 + 0.02)); t.rotation.set(0, 0.25, 0); });
+  // B's baby in a carrier strapped to his chest: a padded pouch, two straps over his shoulders, her head out of the top
+  const baby = bundle(K, tex, { rings: false }); K.root.add(baby);
+  const carrier = new T.Group(), cloth = M('#2f4f73', 0.85), trim = M('#1f344d', 0.8); K.root.add(carrier);
+  const pouch = new T.Mesh(new T.SphereGeometry(1, 24, 16), cloth); pouch.scale.set(0.135, 0.15, 0.075); pouch.position.set(0, -0.13, 0.08); carrier.add(pouch);
+  for (const s of [-1, 1]) { const st = new T.Mesh(new T.BoxGeometry(0.045, 0.36, 0.02), trim); st.position.set(s * 0.1, 0.13, 0.0); st.rotation.set(-0.25, 0, -s * 0.12); carrier.add(st); }
+    carrier.traverse(m => { if (m.isMesh) { m.userData.noInk = true; m.castShadow = true; } });
+  K.anim('carrier', carrier, f => H.hold(carrier, 'f_b', 'chest', { off: [0, -0.08, 0.1], rot: [0, 0, 0] }));
+  K.anim('baby', baby, f => { baby.scale.setScalar(0.95); H.hold(baby, 'f_b', 'chest', { off: [0.01, -0.17, 0.2], rot: [0, 0, 70] });
     baby.updateMatrixWorld(true); baby.userData.look(stage.camera); });
   return { props: K.props };
 }

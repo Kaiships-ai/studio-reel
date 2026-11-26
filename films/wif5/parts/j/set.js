@@ -93,7 +93,7 @@ export async function build(stage) {
   K.anim('photo', photo, f => { const a = H.at('j_m', 'L'), b = H.at('j_m', 'R'); if (!a || !b) { photo.visible = false; return; }
     const x = V().subVectors(b, a); const d = x.length(); x.normalize(); const z = V().subVectors(stage.camera.position, a); z.y = 0; z.normalize();
     const y = V().crossVectors(z, x).normalize(); z.crossVectors(x, y); photo.quaternion.setFromRotationMatrix(MB.makeBasis(x, y, z)); photo.rotateX(-0.2);
-    photo.scale.setScalar(d / (W + 0.03)); photo.position.copy(a).add(b).multiplyScalar(0.5); photo.position.y += 0.02; photo.visible = true; });
+    photo.scale.setScalar((d - 0.045) / (W + 0.03)); photo.position.copy(a).add(b).multiplyScalar(0.5); photo.position.y += 0.02; photo.position.addScaledVector(z, 0.025); photo.visible = true; });   // gripped at its two edges, 2.5 cm proud of his palms: the forearms stay behind it
   // the window warming (WARM): the cool window light gives way to a low gold sun through it
   const warm = new T.Group(); K.root.add(warm);
   K.anim('warm', warm, f => { const u = Math.min(1, Math.max(0, (f - WARM[0]) / (WARM[1] - WARM[0]))), e = u * u * (3 - 2 * u);

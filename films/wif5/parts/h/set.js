@@ -7,7 +7,7 @@ import { on } from './lib.js';
 
 export const SUN_DIR = [-0.2, 0.5, -0.84];
 export const SUN_CENTER = [0, 0.6, 1.2], SUN_HALF = 5;
-export const TANK = [-0.3, 0.95], SCREEN = [1.2, 0.3, 0.92];
+export const TANK = [-0.3, 0.95], SCREEN = [0.45, 1.4, 2.08];
 export const MARKS = { tank: [TANK[0], TANK[1], 0], screen: SCREEN };
 export const PLACES = { tank: [TANK[0], TANK[1], 1.0], screen: SCREEN };
 export const CAMERA_SIDE = [0, -1];
@@ -34,7 +34,7 @@ function ecg(c, w, h, flat) {
   c.stroke();
   c.fillStyle = col; c.font = `900 ${h * 0.2}px InterReel, Arial Black, sans-serif`; c.textAlign = 'left';
   c.fillText(flat ? '♥ 0' : '♥ 142', w * 0.05, h * 0.24);
-  c.font = `800 ${h * 0.09}px InterReel, Arial Black, sans-serif`; c.textAlign = 'right'; c.fillText(flat ? 'NO PULSE' : 'BPM', w * 0.95, h * 0.2);
+  c.font = `900 ${h * (flat ? 0.17 : 0.09)}px InterReel, Arial Black, sans-serif`; c.textAlign = 'right'; c.fillText(flat ? 'NO PULSE' : 'BPM', w * 0.95, h * (flat ? 0.92 : 0.2));
 }
 
 export async function build(stage) {
@@ -63,13 +63,18 @@ export async function build(stage) {
   const [tx, ty] = TANK;
   K.cyl([tx, ty, 0.14], 0.46, 0.28, steel, { seg: 48 }); K.cyl([tx, ty, 0.29], 0.42, 0.03, dark, { seg: 48 });
   K.cyl([tx, ty, 0.93], 0.37, 1.26, K.glass([0.80, 0.92, 0.95], { opacity: 0.22 }), { seg: 48, open: true });
-  K.cyl([tx, ty, 0.88], 0.35, 1.12, M('#d98a62', 0.2, { opacity: 0.42, emit: '#7a3b1e', emitK: 0.35 }), { seg: 48 });
+  K.cyl([tx, ty, 0.88], 0.35, 1.12, M('#f3e2c4', 0.2, { opacity: 0.16, emit: '#6a4a2a', emitK: 0.15 }), { seg: 48 });
   K.cyl([tx, ty, 1.60], 0.45, 0.12, steel, { seg: 48 }); K.cyl([tx, ty, 1.68], 0.3, 0.05, dark, { seg: 40 });
-  for (const a of [0.6, 2.7, 4.8]) K.cyl([tx + Math.cos(a) * 0.40, ty + Math.sin(a) * 0.40, 0.93], 0.018, 1.26, steel, { seg: 12 });
+  for (const a of [0.5, 2.6, 3.7, 5.7]) K.cyl([tx + Math.cos(a) * 0.40, ty + Math.sin(a) * 0.40, 0.93], 0.018, 1.26, steel, { seg: 12 });
   // the child: curled, head down-left, knees up (a soft pink figure, lit warm from inside the fluid)
-  const skin = M('#e9a487', 0.6);
-  K.sphere([tx - 0.05, ty - 0.02, 0.92], 0.085, skin); K.sphere([tx + 0.04, ty - 0.01, 0.84], 0.09, skin, { sx: 0.8, sy: 0.75, sz: 1.25 });
-  K.sphere([tx + 0.07, ty - 0.06, 0.77], 0.045, skin, { sx: 1.4 }); K.sphere([tx - 0.02, ty - 0.07, 0.86], 0.03, skin);
+  // a big head with a closed eye, the back rounded, knees drawn up to the chest, a hand by the mouth, the cord from the belly
+  const skin = M('#ff9e8c', 0.6, { emit: '#c25a48', emitK: 0.5 }), k = 1.5, zc = 0.95;
+  const e = (dx, dy, z, r, o) => K.sphere([tx + dx * k, ty - 0.06 + dy * k, zc + (z - zc) * k], r * k, skin, o);
+  e(-0.07, 0, 1.04, 0.08); e(0.02, 0.01, 0.93, 0.075, { sx: 0.9, sy: 0.8, sz: 1.3 });
+  e(0.0, -0.04, 0.85, 0.04, { sx: 1.6 }); e(-0.05, -0.05, 0.9, 0.03, { sz: 1.6 }); e(-0.07, -0.055, 0.85, 0.024, { sx: 1.3 });
+  e(-0.03, -0.06, 0.96, 0.022, { sz: 1.7 }); e(-0.08, -0.07, 0.995, 0.019);
+  K.box([tx - 0.12 * k, ty - 0.06 - 0.082 * k, zc + 0.095 * k], [tx - 0.085 * k, ty - 0.06 - 0.076 * k, zc + 0.102 * k], M('#4a2a22', 0.6), { r: 0.002 });
+  K.point([tx, ty - 0.3, 1.0], '#ffcfa0', 6, 1.2);
   K.cyl([tx + 0.05, ty, 0.6], 0.012, 0.32, M('#c77a6a', 0.6), { seg: 8 });   // the cord to the plinth
   // hoses to a pump box beside it
   K.box([tx - 0.85, ty - 0.2, 0], [tx - 0.55, ty + 0.15, 0.55], M('#4c5a60', 0.5), { r: 0.02 });
@@ -79,8 +84,8 @@ export async function build(stage) {
 
   // ---- the monitor on its stand: the trace faces the room and the lens
   const [sx, sy, sz] = SCREEN;
-  K.cyl([sx, sy + 0.05, 0.35], 0.03, 0.7, dark, { seg: 16 }); K.cyl([sx, sy + 0.05, 0.02], 0.26, 0.04, dark, { seg: 32 });
-  K.box([sx - 0.43, sy + 0.02, sz - 0.28], [sx + 0.43, sy + 0.1, sz + 0.28], M('#22282b', 0.5), { r: 0.02 });
+  K.cyl([sx, sy + 0.05, (sz - 0.2) / 2], 0.03, sz - 0.2, dark, { seg: 16 }); K.cyl([sx, sy + 0.05, 0.02], 0.26, 0.04, dark, { seg: 32 });
+  K.box([sx - 0.42, sy + 0.02, sz - 0.27], [sx + 0.42, sy + 0.1, sz + 0.27], M('#22282b', 0.5), { r: 0.02 });
   const green = tex(1024, 600, (c, w, h) => ecg(c, w, h, false)), red = tex(1024, 600, (c, w, h) => ecg(c, w, h, true));
   const screen = K.card([sx, sy, sz], 0.78, 0.48, green, { emissive: 0.85 });
   const screenL = K.point([sx - 0.1, sy - 0.3, sz - 0.05], '#62e890', 9, 2.6);
@@ -92,7 +97,7 @@ export async function build(stage) {
   const fillL = K.point([0.2, -1.2, 1.5], '#e8dccb', 9, 3.0);
   const alarm = K.point([tx, ty - 0.55, 1.5], '#ff3a2e', 0, 2.6);
   // red practicals for the flat line: a lamp on the monitor's top and a wall beacon over the bench, each a visible source
-  const lampM = K.sphere([sx, sy + 0.06, sz + 0.34], 0.045, K.glow([0.25, 0.06, 0.05], 1.0)); K.cyl([sx, sy + 0.06, sz + 0.3], 0.03, 0.04, dark, { seg: 12 });
+  const lampM = K.sphere([sx, sy + 0.06, sz + 0.32], 0.045, K.glow([0.25, 0.06, 0.05], 1.0)); K.cyl([sx, sy + 0.06, sz + 0.28], 0.03, 0.04, dark, { seg: 12 });
   const redM = K.point([sx - 0.3, sy + 0.25, 1.45], '#ff3326', 0, 2.4);
   K.box([0.45, 2.5, 1.85], [0.75, 2.6, 2.05], dark, { r: 0.01 }); const lampW = K.sphere([0.6, 2.47, 1.95], 0.07, K.glow([0.25, 0.06, 0.05], 1.0));
   const redW = K.point([0.6, 2.2, 1.9], '#ff3326', 0, 2.2);

@@ -9,9 +9,9 @@ const A = person({ name: 'h_a', body: 'adult', outfit: ['pens', 'shirt:office', 
 const B = person({ name: 'h_b', body: 'adult', girth: 1.35, outfit: ['cardigan:plum', 'shirt:office'], face: ['happy'], hair: [],
   clips: ['Idle_Stand_Loop', 'Gest_NodYes_Once', 'React_Surprise_Once'] });
 const C = person({ name: 'h_c', body: 'adult', outfit: ['sweater:teal'], face: ['happy'], hair: [],
-  clips: ['Idle_Stand_Loop', 'React_Startle_Once'] });
+  clips: ['Idle_Stand_Loop', 'React_Startle_Once', 'Gest_Point_Once'] });   // the reach to the glass is the point's own arm (no prop)
 
-const PA = [-0.95, 0.5], YA = 30, PB = [0.25, 1.35], YB = -20, PC = [0.75, 0.95], YC = -45;
+const PA = [-0.65, 0.35], YA = 30, PB = [1.05, 1.3], YB = -30, PC = [0.42, 1.04], YC = -60;
 export default {
   title: 'wif5 h: the flat line', fps: 30, glasses: false, style: 'kaiships', directDrift: 0, name: 'lab',
   frames: [1894, 2111], lines: [], show: [{ from: 1894 }], beats: [], overlays: [],
@@ -29,9 +29,9 @@ export default {
   anim: {
     h_a: [
       A.clip('Idle_Stand_Loop', { f: 1880, pos: PA, yaw: YA, expr: 'happy', look: 'screen' }),
-      A.clip('Gest_Point_Once', { f: 1965, pos: PA, yaw: YA, expr: 'excited', look: 'screen' }),
+      A.clip('Idle_Stand_Loop', { f: 1965, pos: PA, yaw: YA, expr: 'excited', look: 'screen' }),
       A.clip('React_Startle_Once', { f: 2026, pos: PA, yaw: YA, expr: 'sad', look: 'screen' }),
-      A.clip('React_Defeated_Once', { f: 2034, pos: PA, yaw: 10, expr: 'sad', look: 'h_c' }),
+      A.clip('React_Defeated_Once', { f: 2034, pos: PA, yaw: 10, expr: 'sad', look: 'camera' }),
     ],
     h_b: [
       B.clip('Idle_Stand_Loop', { f: 1880, pos: PB, yaw: YB, expr: 'happy', look: 'screen' }),
@@ -41,15 +41,17 @@ export default {
     ],
     h_c: [
       C.clip('Idle_Stand_Loop', { f: 1880, pos: PC, yaw: YC, expr: 'happy', look: 'screen' }),
-      C.clip('Idle_Stand_Loop', { f: 2024, pos: PC, yaw: YC, expr: 'sad', look: 'screen' }),
+      C.clip('Gest_Point_Once', { f: 2026, pos: PC, yaw: YC, expr: 'sad', look: 'camera' }),
     ],
   },
   direct: [
     { at: { f: 1894 }, intent: 'wide', why: 'P1 · the tank, the green heartbeat, three hopeful faces', cut: 'cut',
-      cam: { pos: [0.1, -1.95, 0.95], aim: [0.1, 0.7, 0.88], lens: 18 } },
+      cam: { pos: [0.05, -1.3, 1.15], aim: [0.05, 0.85, 1.1], lens: 17 } },
     { at: { f: 2030 }, intent: 'close', why: 'P2 · the line goes flat: red monitor light on their faces', cut: 'cut',
-      cam: { pos: [-0.35, -1.4, 1.15], aim: [-0.2, 0.9, 1.2], lens: 18 } },
-    { at: { f: 2070 }, intent: 'medium', why: 'P3 · one of them bends, defeated (faces over the words)', cut: 'cut',
-      cam: { pos: [-0.55, -0.95, 0.72], aim: [-0.75, 0.5, 0.82], lens: 20 } },
+      cam: { pos: [-0.12, -1.1, 1.2], aim: [-0.05, 0.9, 1.15], lens: 17 } },
+    { at: { f: 2054 }, intent: 'close', why: 'P2b · his palm on the glass, the child curled inside, the dead monitor above (hand and face over the words)', cut: 'cut',
+      cam: { pos: [0.4, -0.35, 0.9], aim: [0.0, 0.9, 0.84], lens: 20 } },
+    { at: { f: 2076 }, intent: 'medium', why: 'P3 · one of them bends, defeated (faces over the words)', cut: 'cut',
+      cam: { pos: [-0.6, -1.2, 0.85], aim: [0.1, 1.0, 0.52], lens: 18 } },
   ],
 };

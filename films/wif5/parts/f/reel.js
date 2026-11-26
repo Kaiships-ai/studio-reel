@@ -14,7 +14,7 @@ const B = person({ name: 'f_b', body: 'adult', girth: 1.12, outfit: ['cardigan:f
 
 // B (the baby on his chest) on the left facing right, A on the right facing left: A's left hand (the giving hand) is the near one
 const PB1 = [-0.55, 0.62], PA1 = [0.55, 0.62], YB = 72, YA = -72;      // P1 reach: both left hands on the tin on its stand
-const PB2 = [-0.6, 0.62], PA2 = [0.6, 0.62];                         // P2 the tug: both left hands on the tin's two sides, faces 3/4 to camera
+const PB2 = [-0.55, 0.62], PA2 = [0.55, 0.62], YB2 = 50, YA2 = -50;     // both left hands pressed on the tin's lid, faces 3/4 to camera
 const PA3 = [0.60, 0.62], PB3 = [-0.50, 0.66];                          // P3 A holds the tin out to B
 export const CUTS = [1518, 1580, 1603, 1615];
 export default {
@@ -25,28 +25,30 @@ export default {
     fill: [0.85, 0.85, 0.9], fillPower: 0.2, background: [0.05, 0.05, 0.06], lit: [1.0, 0.94, 0.84], shade: [0.62, 0.64, 0.74], lamp: 0.55 },
   grade: { exp: 1.0, lift: 0.0, sat: 1.0, haze: 0 },
   set: 'shop', setModule: '/films/wif5/parts/f/set.js',
-  make: { tin: { kind: 'ao_anim', prop: 'tin' }, baby: { kind: 'ao_anim', prop: 'baby' } },
-  cast: { f_a: A.cast({ at: [...PA1, 0], yaw: YA, focus: 'f_b', lead: true }), f_b: B.cast({ at: [...PB1, 0], yaw: YB, focus: 'f_a' }) },
+  make: { tin: { kind: 'ao_anim', prop: 'tin' }, baby: { kind: 'ao_anim', prop: 'baby' }, carrier: { kind: 'ao_anim', prop: 'carrier' } },
+  cast: { f_a: A.cast({ at: [...PA2, 0], yaw: YA2, focus: 'f_b', lead: true }), f_b: B.cast({ at: [...PB2, 0], yaw: YB2, focus: 'f_a' }) },
   anim: {
+    // one staging for the whole part: both reach their left hand onto the tin's lid on the stand and press it down; at the
+    // let-go A stands back (his hand off the lid), B's hand stays on it. Heads turned to the lens so the faces sit centred.
     f_a: [
-      A.clip('Act_HandOver_Once', { f: 1500, pos: PA1, yaw: YA, swap: { cash: NONE_UP }, fit: { top: 0.85 }, expr: 'angry', look: 'tin' }),
-      A.clip('Act_HandOver_Once', { f: 1560, pos: PA2, yaw: -50, swap: { cash: NONE_UP }, fit: { top: 0.85 }, expr: 'furious', look: 'f_b' }),
-      A.clip('Act_HandOver_Once', { f: 1615, pos: PA3, yaw: YA, swap: { cash: NONE_UP }, fit: { top: 0.85 }, expr: 'calm', look: 'baby' }),
+      A.clip('Act_HandOver_Once', { f: 1508, pos: PA2, yaw: YA2, swap: { cash: NONE_UP }, fit: { top: 0.85 }, expr: 'angry', look: 'camera' }),
+      A.clip('Act_HandOver_Once', { f: 1562, pos: PA2, yaw: YA2, swap: { cash: NONE_UP }, fit: { top: 0.85 }, expr: 'angry', look: 'camera' }),
+      A.clip('Idle_Stand_Loop', { f: 1640, pos: PA2, yaw: YA2, expr: 'calm', look: 'baby' }),
     ],
     f_b: [
-      B.clip('Act_HandOver_Once', { f: 1504, pos: PB1, yaw: YB, swap: { cash: NONE_UP }, fit: { top: 0.85 }, expr: 'angry', look: 'tin' }),
-      B.clip('Act_HandOver_Once', { f: 1560, pos: PB2, yaw: 50, swap: { cash: NONE_UP }, fit: { top: 0.85 }, expr: 'furious', look: 'f_a' }),
-      B.clip('Idle_CarryBag_Loop', { f: 1615, pos: PB3, yaw: YB, swap: { hugbag: NONE_BOTH }, expr: 'sad', look: 'f_a' }),
+      B.clip('Act_HandOver_Once', { f: 1508, pos: PB2, yaw: YB2, swap: { cash: NONE_UP }, fit: { top: 0.85 }, expr: 'angry', look: 'camera' }),
+      B.clip('Act_HandOver_Once', { f: 1562, pos: PB2, yaw: YB2, swap: { cash: NONE_UP }, fit: { top: 0.85 }, expr: 'angry', look: 'camera' }),
+      B.clip('Act_HandOver_Once', { f: 1622, pos: PB2, yaw: YB2, swap: { cash: NONE_UP }, fit: { top: 0.85 }, expr: 'worried', look: 'f_a' }),
     ],
   },
   direct: [
     { at: { f: 1518 }, intent: 'low', why: 'P1 · bare shelves, one tin: both men reach for it (faces over the words)', cut: 'cut',
       cam: { pos: [0, -1.0, 1.06], aim: [0, 0.55, 0.93], lens: 19 } },
-    { at: { f: 1580 }, intent: 'medium', why: 'P2 · both grip the tin by its two sides and strain, faces 3/4', cut: 'cut',
+    { at: { f: 1580 }, intent: 'medium', why: 'P2 · both press a hand down on the tin\'s lid and glare, faces 3/4', cut: 'cut',
       cam: { pos: [0, -1.45, 1.15], aim: [0, 0.6, 1.0], lens: 20 } },
     { at: { f: 1603 }, intent: 'close', why: 'contact · four hands on one tin', cut: 'cut',
       cam: { pos: [0, -1.0, 1.08], aim: [0, 0.55, 1.02], lens: 18 } },
-    { at: { f: 1615 }, intent: 'medium', why: 'P3 · he sees the baby, lets go and holds the tin out to him', cut: 'cut',
+    { at: { f: 1615 }, intent: 'medium', why: 'P3 · he sees the baby and lifts his hand off the lid; the other\'s hand stays', cut: 'cut',
       cam: { pos: [0.15, -1.0, 1.06], aim: [-0.05, 0.55, 0.93], lens: 19 } },
   ],
 };
