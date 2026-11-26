@@ -1,9 +1,11 @@
 // The air between a hand and the prop it holds (tools/gates/handgrip.mjs reads it from the rows as held[].gapCm): from
 // the hand's drawn edge (its world radius over the hand and its ink hull: the figure's scale and gloves included) to the
-// nearest point on the prop's visible drawn triangles, ink hulls included (a round can or a balloon is its surface,
+// nearest point on the prop's drawn solid triangles (kit/props/drawn.js: no contact disc, no see-through overlay;
+// shown up its whole parent chain), ink hulls included (a round can or a balloon is its surface,
 // never its box; hidden meshes are left out). The grip socket is never
 // the anchor: the engine snaps it onto the hand, so it always read 0 (a tin or a bundle off the hand passed).
 import * as THREE from 'three';
+import { drawnSolid, shown } from '#kit/props/drawn.js';
 
 const _c = new THREE.Vector3(), _s = new THREE.Vector3(), _p = new THREE.Vector3(), _bb = new THREE.Box3(), _t = new THREE.Triangle();
 
@@ -26,8 +28,9 @@ export function gripGap(hand, prop) {
   const c = hand.getWorldPosition(_c).clone(), r = handRadius(hand);
   prop.updateWorldMatrix(true, true);
   let best = Infinity;
+  if (!shown(prop)) return { cm: null, anchor: 'empty' };      // a prop whose parent is hidden is not drawn
   prop.traverseVisible(o => {
-    if (!o.isMesh || !o.geometry?.attributes?.position) return;
+    if (!drawnSolid(o) || !o.geometry.attributes?.position) return;   // not its contact disc nor a glow (kit/props/drawn.js)
     const g = o.geometry; if (!g.boundingBox) g.computeBoundingBox(); if (g.boundingBox.isEmpty()) return;
     // the world box is a lower bound: a mesh whose box is farther than the best so far cannot be nearer
     if (_bb.copy(g.boundingBox).applyMatrix4(o.matrixWorld).distanceToPoint(c) >= best) return;
