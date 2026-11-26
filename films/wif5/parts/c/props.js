@@ -31,13 +31,13 @@ export function teacup(china = CHINA, { steam: hot = false } = {}) {
   const cup = lathe([[0, 0.008], [0.028, 0.008], [0.03, 0.014], [0.05, 0.05], [0.054, 0.09], [0.05, 0.09], [0.046, 0.052], [0, 0.05]], china, { ink: 0.005 }); g.add(cup);
   const band = new THREE.Mesh(new THREE.TorusGeometry(0.052, 0.004, 6, 28), new THREE.MeshStandardMaterial({ color: srgb(BAND), roughness: 0.5 })); band.rotation.x = Math.PI / 2; band.position.y = 0.078; g.add(band);
   const tea = new THREE.Mesh(new THREE.CircleGeometry(0.048, 24), new THREE.MeshStandardMaterial({ color: srgb(TEA), roughness: 0.3 })); tea.rotation.x = -Math.PI / 2; tea.position.y = 0.082; g.add(tea);
-  const handle = solid(new THREE.TorusGeometry(0.02, 0.006, 8, 16), china, { ink: 0.004 }); handle.position.set(0.068, 0.058, 0); g.add(handle);
+  const handle = solid(new THREE.TorusGeometry(0.026, 0.008, 8, 16), china, { ink: 0.004 }); handle.position.set(0.074, 0.058, 0); g.add(handle);
   if (hot) steam(g);
   g.traverse(o => { if (o.isMesh) o.userData.noInk = true; });
   return g;
 }
-// held by its handle: the fist on the handle, the saucer standing on the table under it
-BUILD.wif5_teacup = () => { const g = teacup(CHINA, { steam: true }); g.userData = { mode: 'up', grip: [0.072, 0.06, 0], size: [0.17, 0.09, 0.17], mass: 0.3 }; return g; };
+// held by its handle: the fist closed on the handle's outer side (the ring shows between it and the cup), the saucer standing on the table under it
+BUILD.wif5_teacup = () => { const g = teacup(CHINA, { steam: true }); g.userData = { mode: 'up', grip: [0.1, 0.058, 0], size: [0.17, 0.09, 0.17], mass: 0.3 }; return g; };
 
 // one meal tray: a plate with food, a bowl and a small cup, on a tray 0.46 x 0.28 (bottom at y 0)
 function tray(c) {

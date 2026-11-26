@@ -8,8 +8,8 @@ import { teacup } from './props.js';
 export const SUN_DIR = [-0.75, 0.35, -0.45];                          // low, from the window on the right
 export const SUN_CENTER = [0, 1.5, 1.0], SUN_HALF = 6;
 export const TABLE = { at: [0.075, 0.9], w: 1.35, d: 0.8, h: 0.75 };     // h: the top, at the saucer under his hand (dbg: hand z 0.81, grip 0.06)
-export const MARKS = { him: [-0.2, 1.48, 0], chair: [0.25, 0.2, 0], carer: [1.6, 3.4, 0] };   // her chair across the table from him, its back to the room
-export const PLACES = { hercup: [-0.06, 0.68, 0.8], chair: [0.25, 0.2, 0.85], mycup: [-0.3, 1.1, 0.8], carer: [0.6, 3.4, 1.4], trays: [0.4, 3.3, 0.85] };
+export const MARKS = { him: [-0.2, 1.48, 0], chair: [0.25, 0.2, 0], carer: [1.6, 2.7, 0] };   // her chair across the table from him, its back to the room
+export const PLACES = { hercup: [-0.06, 0.68, 0.8], chair: [0.25, 0.2, 0.85], mycup: [-0.3, 1.1, 0.8], carer: [0.6, 2.7, 1.4], trays: [0.4, 2.6, 0.85] };
 export const CAMERA_SIDE = [0, -1];
 export const CAMERA_ROOM = [[[-3.2, -3.5], [3.2, 0.3]]];
 const PROPS = ['care-home/lamp-round-floor', 'care-home/fancy-picture-frame', 'care-home/wall-clock', 'care-home/armchair', 'care-home/rug-round', 'care-home/walking-frame'];

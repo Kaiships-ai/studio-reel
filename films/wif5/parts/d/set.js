@@ -1,18 +1,18 @@
-// wif5 part d: a stone embankment by dark water at dusk. The son walks the lit paper lantern down the bank; the father
-// takes it at the water's edge; they let it go and it rises over the water into a sky of others. A dusk dome (indigo to
+// wif5 part d: a stone embankment by dark water at dusk. The father holds the lit paper lantern up in both hands; his son
+// walks in beside him and both look up at it; it rises from his hands into a sky of others. A dusk dome (indigo to
 // peach), still water that carries the sky's colour, a far shore of lit windows, one street lamp's pool on the bank.
 // Blender metres: x right, y into the scene (the water from y 1.8 on), z up; the camera on the y < 0 side.
 import { createKit, rng, tex, place } from '/styles/stick-man/kit/film.js';
-import { lantern } from './props.js';
+import { lantern, HELD_LANTERNS } from './props.js';
 
 export const SUN_DIR = [0.2, 0.9, -0.25];
 export const SUN_CENTER = [0, 1, 1.0], SUN_HALF = 6;
 export const EDGE = 1.8;                                               // the water's edge (the embankment's lip)
 export const RELEASE = 146;                                            // the father lets go (the set lantern takes over)
-export const MARKS = { dad: [0.3, 1.2, 0], son0: [-0.9, 1.45, 0], son1: [-0.065, 0.69, 0] };   // the son comes in along the path to his father's left
-export const ONTO = [0.135, 0.79, 0.9];                               // the son's left fist on its paper, low on his side (dbg: lantern at the fists' middle)
-export const LIFT0 = [0.247, 0.875, 0.86];                             // where it leaves his hands (dbg f62: the fists' middle)
-export const PLACES = { lantern: [0.247, 0.875, 1.05], sky: [0.5, 14, 7], water: [0.3, 4, 0], son: [-0.5, 0.9, 1.0], camera0: [0.6, -2, 1.2] };
+export const MARKS = { dad: [0.3, 1.2, 0], son0: [-1.0, 1.35, 0], son1: [-0.22, 1.08, 0] };   // the son walks in along the path to his father's right side (screen left)
+export const HELD = [0.26, 0.885, 1.66];                               // the crossbar's middle, held up in both hands in front of his face, over his head
+export const LIFT0 = HELD;                                             // where it leaves his hands
+export const PLACES = { lantern: [0.26, 0.885, 1.85], up: [0.2, 1.0, 3.6], sky: [0.5, 14, 7], water: [0.3, 4, 0], son: [-0.5, 0.9, 1.0], camera0: [0.6, -2, 1.2] };
 export const CAMERA_SIDE = [0, -1];
 export const CAMERA_ROOM = [[[-4, -4], [4, 1.7]]];
 const PROPS = [];
@@ -21,9 +21,8 @@ export const BANK = place('street', { light: 'lake-dusk', props: PROPS, waivers:
 export const COLLIDE = BANK.COLLIDE;
 const ENV_K = 0.4;
 
-// where the released lantern is at film-part frame f: up first, clear of his face (drifting away from him), then
-// speeding up and out over the water
-export function liftAt(f) { const t = Math.max(0, (f - RELEASE) / 30); return [LIFT0[0] - 0.15 * t, LIFT0[1] - 0.2 * t + 0.4 * t * t, LIFT0[2] + 1.1 * t + 0.3 * t * t]; }
+// where the released lantern is at film-part frame f: straight up from his hands over their heads, then slowly out over the water
+export function liftAt(f) { const t = Math.max(0, (f - RELEASE) / 30); return [LIFT0[0] - 0.05 * t, LIFT0[1] + 0.3 * t * t, LIFT0[2] + 0.75 * t + 0.25 * t * t]; }
 
 export async function build(stage) {
   const K = createKit(stage, { env: { top: [0.22, 0.20, 0.36], mid: [0.52, 0.36, 0.38], bottom: [0.14, 0.12, 0.16] }, envK: ENV_K });
@@ -66,7 +65,7 @@ export async function build(stage) {
   // ---- the lantern that rises: hidden until they let go, then up and out over the water, its light with it
   const up = K.group([0, 0, 0]); const L = lantern(); up.add(L); up.visible = false;
   K.anim('rise', up, f => { up.visible = f >= RELEASE;
-    stage.scene.traverse(o => { if (o.name === 'wif5_lantern2_held') o.visible = f < RELEASE; }); if (!up.visible) return; const p = liftAt(f); up.position.copy(K.B(...p)); L.rotation.y = 0.15 * (f - RELEASE) / 30; });
+    for (const o of HELD_LANTERNS) o.children.forEach(c => { c.visible = f < RELEASE; }); if (!up.visible) return; const p = liftAt(f); up.position.copy(K.B(...p)); L.rotation.y = 0.15 * (f - RELEASE) / 30; });
 
   // ---- the sky of lanterns: others already up over the water, drifting higher (seen once theirs goes)
   const sky = K.group([0, 0, 0]); sky.visible = false;

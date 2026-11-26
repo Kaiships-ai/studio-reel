@@ -10,8 +10,9 @@ import { bundle, tagCanvas, photoCanvas } from './props.js';
 export const SUN_DIR = [-0.3, 0.5, -0.8];
 export const SUN_CENTER = [0, 3, 1.2], SUN_HALF = 8;
 export const CRADLE = [-1.1, 0.4];                                   // the boy's cradle (left row, nearest the camera)
-export const MARKS = { doc: [-0.36, 0.5, 0] };
-export const PLACES = { cradle: [-1.1, 0.4, 0.85], baby: [-0.45, 0.2, 1.05], photo: [-0.85, 0.15, 0.9], camera0: [0, -3, 1.4] };
+export const MARKS = { doc: [-0.98, 0.96, 0] };                      // behind the boy's cradle (its back glass at y 0.6)
+export const CHEST = [-1.05, 0.4, 1.0], RIM = [-0.88, 0.6, 1.02];   // his palm on the swaddled chest; his other hand on the back rim
+export const PLACES = { cradle: [-1.1, 0.4, 0.85], baby: [-1.0, 0.4, 0.95], photo: [-0.85, 0.15, 0.9], camera0: [0, -3, 1.4] };
 export const CAMERA_SIDE = [0, -1];
 export const CAMERA_ROOM = [[[-3.4, -4.5], [3.4, 0]]];
 const PROPS = ['hospital/bassinet', 'hospital/monitor-stand', 'hospital/iv-stand', 'hospital/sanitiser', 'hospital/double-door'];
@@ -19,7 +20,6 @@ const by = 'ep-whatif1-v5-director', why = 'V5 stills, measure not built';
 export const NURSERY = place('hospital', { light: 'nursery-night', props: PROPS, waivers: PROPS.map(p => ({ pair: `light|${p}|nursery-night`, why, by })) });
 export const COLLIDE = NURSERY.COLLIDE;
 const ENV_K = 0.4;
-export const LIFT = 262;                                              // the boy leaves the cradle for the doctor's arms
 const ROWS = [-1.1, 1.1], N = 7, DY = 1.2, Y0 = 0.4;
 
 export async function build(stage) {
@@ -50,12 +50,11 @@ export async function build(stage) {
   for (const x of [-1.6, 1.6]) { const b = K.sphere([x, 9.3, 2.5], 0.09, red, { sy: 0.6 }); b.userData.noInk = true; beacons.push(b); }
 
   // ---- the cradles: two rows down the aisle, every second one flat and empty; a warm heat lamp over each
-  const boys = [];
   for (const x of ROWS) for (let i = 0; i < N; i++) {
     const y = Y0 + i * DY, full = (i + (x < 0 ? 0 : 1)) % 2 === 0;
     put('hospital/bassinet', [x, y, 0], 0);
-    if (full) { const b = bundle([[0.36, 0.56, 0.82], [0.45, 0.66, 0.86], [0.30, 0.50, 0.76]][i % 3]); b.position.copy(K.B(x + 0.02, y, 0.82)); b.rotation.y = (r() - 0.5) * 0.3; K.root.add(b);
-      if (x === CRADLE[0] && Math.abs(y - CRADLE[1]) < 0.01) boys.push(b); }
+    if (full) { const b = bundle([[0.36, 0.56, 0.82], [0.45, 0.66, 0.86], [0.30, 0.50, 0.76]][i % 3]), his = x === CRADLE[0] && Math.abs(y - CRADLE[1]) < 0.01;
+      b.position.copy(K.B(x + 0.02, y, 0.82)); b.rotation.y = his ? 0 : (r() - 0.5) * 0.3; K.root.add(b); }
     else { const bare = M([0.50, 0.56, 0.60], 0.6); K.box([x - 0.30, y - 0.15, 0.80], [x + 0.30, y + 0.15, 0.81], bare, { r: 0.01 }); }   // bare: no sheet, no baby
     if (i % 2 === 0) put('hospital/monitor-stand', [x + (x < 0 ? -0.78 : 0.78), y + 0.6, 0], 0);
     K.cyl([x, y, 1.95], 0.12, 0.08, M([0.30, 0.32, 0.34], 0.6), { r2: 0.05 }); K.cyl([x + (x < 0 ? -0.3 : 0.3), y, 1.97], 0.012, 0.6, M([0.30, 0.32, 0.34], 0.6), { axis: 'x' });
@@ -71,8 +70,6 @@ export async function build(stage) {
   const tape = M([0.92, 0.88, 0.70], 0.6, { opacity: 0.85 });
   for (const [dx, dz, a] of [[-0.09, 0.97, 0.4], [0.15, 0.97, -0.4], [0.22, 0.975, 0.3], [0.32, 0.97, -0.3]]) { const t = K.cube([cx + dx, cy - 0.216, dz], [0.06, 0.002, 0.022], tape, { r: 0 }); t.rotation.z = a; }
   K.point([cx, cy - 0.9, 1.25], '#ffd2a0', 8, 2.4);                  // a soft warm light on the card and the photo
-  const boy = new T.Group(); boys.forEach(b => { K.root.remove(b); boy.add(b); }); K.root.add(boy);
-  K.anim('boy', boy, f => { boy.visible = f < LIFT; });
 
   // ---- red alarm light: monitors and beacons pulse together, once a second; red pools on faces and walls
   const reds = [[-1.75, 1.0, 1.4], [0.45, 0.9, 1.5], [-0.6, 3.4, 1.6], [1.7, 4.6, 1.6], [0, 8.6, 2.4], [-2.2, 7.0, 1.6]].map(p => K.point(p, '#ff2a1a', 0, 3.4));

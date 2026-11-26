@@ -1,20 +1,37 @@
 // wif5 part b (film 504-984, here 0-480): the nursery. A doctor in scrubs runs the aisle between two rows of cradles, every
-// second one flat and empty, red alarm light pulsing (panic); he stops at the near-left cradle and finds the boy (worried);
-// lifts him to his chest (a tender catch); the boy's card "23:59" and his mother's photo taped to the cradle (sad).
-// Stills (film frame = 504 + local): beat 579 (run), 719 (finds him), 800 (lifted), contact 804 (the bundle in his arms),
-// beat 954 (the card and the photo). Kit only through person()/place() (styles/stick-man/kit/film.js); the set is ./set.js.
-import { person } from '/styles/stick-man/kit/film.js';
+// second one flat and empty, red alarm light pulsing (panic); he finds the boy's cradle, steps behind it and bends over him,
+// his palm resting on the swaddled chest, his face close (worried, tender); the boy's card "23:59" and his mother's photo on
+// the cradle's front under them. He does not carry the boy. Stills (film frame = 504 + local): beat 579 (run), 719 (he bends
+// over him), contact 790 (his palm on the blanket, the card and photo under it), beat 954 (his face over the boy, the palm low). Kit only through
+// person()/place(); the bend is Act_PickUp_Once's own keys held at its deepest reach (no prop), the palm by arm IK.
+import { person, W_M } from '/styles/stick-man/kit/film.js';
+import { expandClips } from '/styles/stick-man/motion-lib/index.js';
 import './props.js';
-import { MARKS } from './set.js';
+import { MARKS, CHEST, RIM } from './set.js';
 
 const by = 'ep-whatif1-v5-director', why = 'V5 stills, measure not built';
 const doc = person({ name: 'wif5_doc', body: 'adult', outfit: ['scrubs:teal', 'stethoscope', 'nametag', 'pens'], face: ['scared', 'sad'], hair: [],
-  clips: ['Move_Run_Fwd_Loop', 'Idle_Stand_Loop', 'Idle_CarryBag_Loop'],
-  waivers: [{ pair: 'hand|wif5_baby|adult|hand', why, by }] });
+  clips: ['Move_Run_Fwd_Loop', 'Idle_Stand_Loop'] });
 
-const AT = [MARKS.doc[0], MARKS.doc[1]];   // in the aisle at the boy's cradle; yaw 0 faces -y (the camera side), -90 faces -x
-const BABY = { hugbag: 'wif5_baby' };
-export const CUTS = [0, 150, 270, 298, 400];
+const DEG = Math.PI / 180, clone = k => JSON.parse(JSON.stringify(k));
+const local = (P, pos, yaw, s) => { const d = [P[0] - pos[0], P[2], -(P[1] - pos[1])], c = Math.cos(yaw * DEG), n = Math.sin(yaw * DEG), k = W_M * s;
+  return [(d[0] * c - d[2] * n) / k, d[1] / k, (d[0] * n + d[2] * c) / k]; };
+const ramp = (f, a, b) => Math.max(0, Math.min(1, (f - a) / (b - a))), ease = u => u * u * (3 - 2 * u);
+// behind the boy's cradle, facing the camera (yaw 0 faces -y): the bend steps his hips back ~0.13 m, so he starts nearer it
+const AT = [MARKS.doc[0], MARKS.doc[1]], BEND = 150, DEEP = BEND + 40, sD = doc.spec.scale ?? 1;
+// its body keys only (CAST.md: PickUp passes in scrubs); the clip's bag channels are dropped, as no bag is picked up
+const ALL = expandClips([{ f: BEND, clip: 'Act_PickUp_Once', body: 'adult', pos: AT, yaw: 0 }]);
+let BENT = ALL.filter(k => k.f <= DEEP);
+const hold = clone(BENT.at(-1)); for (const f of [DEEP + 40, 329]) BENT.push({ ...clone(hold), f });
+// from the B4 cut (words on screen) he is a little less bent, so his face clears the cradle's rim, high in frame
+const up = clone(ALL.find(k => k.f >= BEND + 30)); for (const f of [330, 480]) BENT.push({ ...clone(up), f });
+for (const k of BENT) { for (const n of Object.keys(k)) if (n.startsWith('x_') || n === 'clipProps') delete k[n];
+  const u = ease(ramp(k.f, BEND + 20, DEEP)); k.neck = { nod: 8 * u + (k.neck?.nod ?? 0) * (1 - u), tilt: 8 * u, turn: 0 };
+  const w = ease(ramp(k.f, BEND + 30, DEEP)); if (w <= 0) continue;
+  const q = local(CHEST, k.pos, k.yaw, sD), side = q[0] < 0 ? 'armL' : 'armR', other = side === 'armL' ? 'armR' : 'armL';
+  k[side] = { ...k[side], ik: q, ikw: w }; k[other] = { ...k[other], ik: local(RIM, k.pos, k.yaw, sD), ikw: w }; }
+BENT[0] = { ...BENT[0], expr: 'worried', look: 'baby' };
+export const CUTS = [0, 150, 260, 330];
 export default {
   title: 'wif5 b: nursery', fps: 30, glasses: false, style: 'kaiships', directDrift: 0, name: 'nursery',
   frames: [0, 480], lines: [], show: [{ from: 0 }], beats: [], overlays: [],
@@ -24,24 +41,21 @@ export default {
   grade: { exp: 1.0, lift: 0.0, sat: 1.0, haze: 0, sky: { clouds: 0 } },
   haze: { color: [0.06, 0.07, 0.08], near: 14, far: 60 },
   set: 'nursery', setModule: '/films/wif5/parts/b/set.js',
-  make: { pulse: { kind: 'ao_anim', prop: 'pulse' }, boy: { kind: 'ao_anim', prop: 'boy' } },
+  make: { pulse: { kind: 'ao_anim', prop: 'pulse' } },
   cast: { doc: doc.cast({ at: [0.1, 9.0, 0], yaw: 0, focus: 'camera', lead: true }) },
   anim: { doc: [
     doc.clip('Move_Run_Fwd_Loop', { f: 36, pos: [0.1, 9.0], to: [0.05, 0.6], expr: 'panic', look: 'camera0' }),
-    doc.clip('Idle_Stand_Loop', { f: 150, pos: AT, yaw: -62, expr: 'worried', look: 'cradle' }),
-    doc.clip('Idle_CarryBag_Loop', { f: 262, pos: AT, yaw: -28, swap: BABY, expr: 'calm', look: 'baby' }),
-    { f: 400, expr: 'worried', look: 'photo' },
+    ...BENT,
+    { f: 300, expr: 'calm', look: 'baby' },
   ] },
   direct: [
     { at: { f: 0 }, intent: 'high', why: 'B1 · he runs down the aisle (seen from the side of it): lit full cradles and dark empty ones alternate, red beacons overhead', cut: 'cut',
-      cam: { pos: [0.6, 2.5, 1.95], aim: [0.1, 4.9, 0.85], lens: 24 } },
-    { at: { f: 150 }, intent: 'low', why: 'B2 · he finds the boy: over the cradle, the bundle in front, his face up top', cut: 'cut',
-      cam: { pos: [-1.55, -1.15, 1.3], aim: [-0.75, 0.45, 1.05], lens: 24 } },
-    { at: { f: 270 }, intent: 'low', why: 'B3 · lifted to his chest', cut: 'cut',
-      cam: { pos: [0.15, -1.45, 0.95], aim: [-0.45, 0.45, 1.3], lens: 28 } },
-    { at: { f: 298 }, intent: 'insert', why: 'contact · the bundle in his arms', cut: 'cut',
-      cam: { pos: [-0.1, -0.6, 1.2], aim: [-0.4, 0.4, 1.12], lens: 40 } },
-    { at: { f: 400 }, intent: 'low', why: 'B4 · remember him: his card and her photo low, his face over them', cut: 'cut',
-      cam: { pos: [-1.3, -0.4, 1.2], aim: [-0.6, 0.45, 1.06], lens: 18 } },
+      cam: { pos: [-0.6, 1.4, 2.3], aim: [-0.1, 5.0, 0.45], lens: 34 } },
+    { at: { f: 150 }, intent: 'low', why: 'B2 · he bends over the boy behind his cradle, his palm comes onto the swaddled chest, his face close', cut: 'cut',
+      cam: { pos: [-1.85, -0.45, 1.25], aim: [-1.0, 0.6, 1.1], lens: 24 } },
+    { at: { f: 260 }, intent: 'insert', why: 'contact · his palm resting on the blanket over the boy\'s chest, the 23:59 card and her photo on the cradle under it', cut: 'cut',
+      cam: { pos: [-1.25, -0.35, 1.35], aim: [-1.05, 0.35, 0.98], lens: 28 } },
+    { at: { f: 330 }, intent: 'low', why: 'B4 · remember him: his face over the boy, tender, high in frame; the card and her photo on the cradle front below', cut: 'cut',
+      cam: { pos: [-1.0, -0.25, 0.88], aim: [-1.0, 0.7, 1.01], lens: 18 } },
   ],
 };

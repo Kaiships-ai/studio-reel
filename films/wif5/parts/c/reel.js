@@ -27,7 +27,7 @@ export default {
   set: 'dayroom', setModule: '/films/wif5/parts/c/set.js',
   cast: {
     him: him.cast({ at: [...MARKS.him.slice(0, 2), 0], yaw: 0, focus: 'hercup', lead: true }),
-    carer: carer.cast({ at: [2.0, 3.4, 0], yaw: -90 }),
+    carer: carer.cast({ at: [2.5, 2.7, 0], yaw: -90 }),
   },
   anim: {
     him: [
@@ -35,17 +35,17 @@ export default {
       { f: 70, look: 'chair' },
     ],
     carer: [
-      carer.clip('Move_PushHeavy_Loop', { f: 0, pos: [2.0, 3.4], to: [1.0, 3.4], swap: TROLLEY, expr: 'nervous', look: 'trays' }),
+      carer.clip('Move_PushHeavy_Loop', { f: 0, pos: [2.5, 2.7], to: [1.5, 2.7], swap: TROLLEY, expr: 'nervous', look: 'trays' }),
     ],
   },
   direct: [
-    { at: { f: 0 }, intent: 'low', why: 'C1 · two cups, one empty chair: from above the table, him and her chair in the lower third, the carer crossing behind', cut: 'cut',
-      cam: { pos: [-0.1, -1.6, 1.7], aim: [0.1, 1.0, 0.85], lens: 26 } },
+    { at: { f: 0 }, intent: 'low', why: 'C1 · close across the table: his face high, his hand on his cup low, her cup poured and steaming in front', cut: 'cut',
+      cam: { pos: [-0.2, 0.45, 1.15], aim: [-0.08, 1.63, 1.0], lens: 16 } },
     { at: { f: 42 }, intent: 'insert', why: 'contact · his hand on his cup', cut: 'cut',
-      cam: { pos: [0.3, 0.3, 1.1], aim: [-0.15, 1.3, 1.0], lens: 30 } },
-    { at: { f: 70 }, intent: 'low', why: 'C2 · the carer behind, bent over the meal trolley with four trays', cut: 'cut',
-      cam: { pos: [-1.1, 1.9, 1.25], aim: [0.6, 3.4, 0.75], lens: 26 } },
-    { at: { f: 98 }, intent: 'insert', why: 'contact · both hands on the trolley bar', cut: 'cut',
-      cam: { pos: [-0.2, 2.45, 1.45], aim: [0.72, 3.38, 1.0], lens: 26 } },
+      cam: { pos: [0.15, 0.6, 1.1], aim: [-0.2, 1.32, 1.01], lens: 20 } },
+    { at: { f: 70 }, intent: 'low', why: 'C2 · the carer behind, bent over the meal trolley with four trays, seen from ahead of it, a little high: the bar under his face, his arms either side of it', cut: 'cut',
+      cam: { pos: [0.1, 2.2, 1.6], aim: [1.7, 2.68, 0.75], lens: 24 } },
+    { at: { f: 98 }, intent: 'insert', why: 'contact · both hands on the trolley bar, from ahead, his face clear above and behind it', cut: 'cut',
+      cam: { pos: [0.4, 2.4, 1.45], aim: [1.3, 2.65, 0.95], lens: 20 } },
   ],
 };
