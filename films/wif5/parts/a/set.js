@@ -5,7 +5,7 @@
 // V5 stills: the tower stands close with a big lit face and a countdown board; warm pools along the family's walk.
 import { createKit, rng, tex, place } from '/styles/stick-man/kit/film.js';
 import { makeHandProp } from '/styles/stick-man/kit/cast/handprops.js';
-import { TOWER, CLOCK, CLOCK_R, BOARD, ELDERS, GONE, START, U, RIGHT, girl, at, camAt, balloonAt, CHILD_SCALE } from '/films/wif5/parts/a/path.js';
+import { TOWER, CLOCK, CLOCK_R, BOARD, ELDERS, GONE, START, U, RIGHT, girl, at, camAt, balloonAt, CHILD_SCALE } from './path.js';
 
 export const SUN_DIR = [0.35, 0.55, -0.76];                       // a cool moon from front-left, high
 export const SUN_CENTER = [0, 3, 1.5], SUN_HALF = 11;
@@ -194,6 +194,9 @@ export async function build(stage) {
   const flake = tex(64, 64, (g, w) => { const gr = g.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.5, 'rgba(255,255,255,0.6)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, w); });
   const pm = new T.PointsMaterial({ size: 0.045, map: flake, color: new T.Color(0.62, 0.66, 0.74), transparent: true, depthWrite: false, sizeAttenuation: true });
   pm.userData.noToon = true; pm.userData.noPrepass = true;
+  // no flake is ever drawn bigger than it is at 3.75 m (Studio 26/11: a flake near the lens read as a white ball at 5.9 s;
+  // the distance cull above uses the camera key, not the camera the director frames, so the cap is in the shader itself)
+  pm.onBeforeCompile = s => { s.vertexShader = s.vertexShader.replace('#include <logdepthbuf_vertex>', 'gl_PointSize = min(gl_PointSize, scale * 0.012);\n#include <logdepthbuf_vertex>'); };
   const snow = new T.Points(geo, pm); snow.frustumCulled = false; snow.userData.noInk = true; snow.userData.noPrepass = true; K.root.add(snow);
   K.anim('snow', snow, f => { const t = f / 30, c = camAt(f)?.[2]; late.visible = f >= 294; early.visible = !late.visible;
     for (let i = 0; i < N; i++) { const [bx, by, bz, ph] = base.subarray(i * 4, i * 4 + 4), z = ((bz - 0.55 * t) % 9 + 9) % 9;

@@ -41,8 +41,8 @@ export const CAMS = () => { const h230 = handAt(230), h329 = handAt(329), he = h
     [306, 'the clock looks back: from under the board, down onto their faces turned up to it, hand in hand', [0.5, 8.4, 3.3], [1.0, 5.45, 0.85], 36],
     [318, 'midnight: hand in hand, her balloon over her; the next frame she is gone, the balloon rises free and he looks at it', [2.4, 8.0, 1.15], [1.4, 6.0, 1.25], 27],
     [330, 'she is gone: her balloon rises out of where her hand was, string slack; he looks up at it; nobody behind him', [1.11, 8.36, 1.8], [1.22, 6.09, 1.4], 30],
-    [350, 'her balloon higher and smaller against the bunting, his head tilted up following it', [2.9, 8.2, 0.9], [1.6, 6.4, 2.3], 22],
-    [440, 'low, from in front of him: his face with tears and, clear beside it, his arm up after her balloon (the shoulder-to-hand line reads; a5-3 twice failed from the side)', [2.74, 7.69, 1.0], [1.66, 6.2, 1.2], 26],
+    [350, 'her balloon higher and smaller against the bunting, his head tilted up following it', [2.9, 8.2, 2.0], [1.6, 6.4, 2.3], 22],
+    [440, 'low, from in front of him: his face with tears and, clear beside it, his arm up after her balloon (the shoulder-to-hand line reads; a5-3 twice failed from the side); lens above his eyes so his hair reads (Studio 26/11)', [2.74, 7.69, 2.0], [1.66, 6.2, 1.35], 26],
   ]; };
 export const camAt = f => { let c = null; for (const k of CAMS()) if (k[0] <= f) c = k; return c; };
 

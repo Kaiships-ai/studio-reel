@@ -2,9 +2,9 @@
 // midnight (330) the women are gone mid-cheer. The dad's hand stays on air where his daughter's was, her red balloon rises
 // free over where she stood, the old man holds his wife's empty handbag. People come only from person() (fits table); hands meet by arm IK
 // on the clips' own keys (figure-local W units, engine/cast.js pose2).
-import { person, toonHair, W_M } from '/styles/stick-man/kit/film.js';
+import { person, toonHair, W_M, STYLE_PRESETS } from '/styles/stick-man/kit/film.js';
 import { expandClips } from '/styles/stick-man/motion-lib/index.js';
-import { YAW, WALK, START, GONE, ELDERS, CLOCK, U, RIGHT, at, girl, dadAt, handAt, CAMS, balloonHand, balloonAt } from '/films/wif5/parts/a/path.js';
+import { YAW, WALK, START, GONE, ELDERS, CLOCK, U, RIGHT, at, girl, dadAt, handAt, CAMS, balloonHand, balloonAt } from './path.js';
 
 const SKIN = [[0.86, 0.72, 0.60], [0.74, 0.56, 0.44], [0.60, 0.43, 0.33], [0.90, 0.78, 0.66]];
 const hair = c => [toonHair('woman', c)];   // Kai approved the 6 toon hairs 26/11 (#212)
@@ -96,9 +96,10 @@ const he = handAt(GONE - 1), handUp = [dEnd[0] + U[0] * 0.30 - RIGHT[0] * 0.48, 
 // his arm reaches 0.63 m from the shoulder (rows 26/11: shoulder 0.115 m to -x, 0.033 to +y of his spot, 1.18 m up): a target
 // further out is put at 0.59 m on the line to it, so the hand lands on it
 const SH = [dEnd[0] - 0.115, dEnd[1] + 0.033, 1.18], reach = P => { const v = P.map((x, i) => x - SH[i]), n = Math.hypot(...v); return n <= 0.59 ? P : SH.map((x, i) => x + v[i] * 0.59 / n); };
+// Studio 26/11: his head tilts back at most 14 deg, his eyes do the looking up (40 read as a bald head from a low lens)
 for (const k of D2) { k.pos = [...dEnd, 0]; k.yaw = YAW;          // his hand stays out where hers was; his head goes up after the balloon, then down
   const w = ease(ramp(k.f, 352, 380)) * (1 - 0.7 * ease(ramp(k.f, 462, 496))); k[hold] = { ...k[hold], ik: local(reach(he.map((v, i) => v * (1 - w) + handUp[i] * w)), [...dEnd, 0], YAW, sD), ikw: 1 };
-  nod(k, 1, -12, 25); nod(k, ramp(k.f, 334, 352), -34, 20); nod(k, ease(ramp(k.f, 352, 380)), -40, 10); nod(k, ease(ramp(k.f, 462, 496)), 22, 30); raise(k, free, Math.max(0, 1 - ramp(k.f, GONE, 340))); }
+  nod(k, 1, -12, 25); nod(k, ramp(k.f, 334, 352), -12, 20); nod(k, ease(ramp(k.f, 352, 380)), -14, 10); nod(k, ease(ramp(k.f, 462, 496)), 22, 30); raise(k, free, Math.max(0, 1 - ramp(k.f, GONE, 340))); }
 D = [...D, ...D2];
 mark(D, 0, { expr: 'grin', look: 'camera' }); mark(D, 150, { expr: 'happy', look: 'girl' }); mark(D, 284, { expr: 'excited', look: CLOCK }); mark(D, 312, { expr: 'grin', look: 'girl' });
 mark(D, GONE, { expr: 'shock', look: balloonAt(334).c }); mark(D, 352, { expr: 'shock', look: balloonAt(362).c }); mark(D, 380, { expr: 'sad', look: balloonAt(420).c }); mark(D, 470, { expr: 'sad', look: [...girl(GONE), 0.1] });
@@ -140,7 +141,7 @@ export const SHOTS = { 0: 0, 90: 86, 200: 196, contact_hands: 226, contact_old: 
 export const STILLS = { beat_0: 0, beat_90: 90, beat_200: 200, contact_dad_daughter_hands: 230, contact_old_couple_hands: 250, beat_300: 300, beat_310: 310, beat_329: 329, beat_342: 342, beat_360: 360, beat_450: 450 };
 
 export default {
-  title: 'wif5 a: countdown', fps: 30, glasses: false, style: 'kaiships', directDrift: 0, name: 'square',
+  title: 'wif5 a: countdown', fps: 30, glasses: false, style: { ...STYLE_PRESETS.kaiships, life: 0.75 }, directDrift: 0, name: 'square',
   frames: [0, 504], lines: [], show: [{ from: 0 }], beats: [], overlays: [],
   look: { ao: 0.6, aoRadius: 0.5, shadowRadius: 2.0, sat: 1.0, con: 1.05, vig: 0.05, bloom: 0.14, hot: 0.1, ink: 2.4 },
   light: { sun: [0.62, 0.70, 1.0], power: 0.7, sunDir: [0.35, 0.55, -0.76], sky: [0.34, 0.40, 0.62], ground: [0.30, 0.24, 0.20], hemi: 0.32,
@@ -148,6 +149,8 @@ export default {
   grade: { exp: 1.0, lift: 0.0, sat: 1.0, haze: 0, sky: { clouds: 0 } },
   haze: { color: [0.065, 0.08, 0.125], near: 18, far: 80 },
   set: 'square', setModule: '/films/wif5/parts/a/set.js',
+  // far town rows past the square's walls (kituse depth): seen over the roofs and down the gaps; night albedo ~0.17 (backdrop.js)
+  backdrop: { tint: [0.17, 0.18, 0.24], rows: [{ piece: 'backdrop_skyline_a', at: [-14, 34, 0] }, { piece: 'backdrop_roofline', at: [8, 30, 0] }, { piece: 'backdrop_skyline_b', at: [24, 48, 0] }, { piece: 'backdrop_skyline_b', at: [-30, 50, 0] }, { piece: 'backdrop_roofline', at: [-30, 6, 0], rot: 90 }, { piece: 'backdrop_skyline_a', at: [32, 8, 0], rot: -90 }] },
   make: { clock: { kind: 'ao_anim', prop: 'clock' }, snow: { kind: 'ao_anim', prop: 'snow' }, board: { kind: 'ao_anim', prop: 'board' }, balloon: { kind: 'ao_anim', prop: 'balloon' }, bag: { kind: 'ao_anim', prop: 'bag' } },
   cast: { dad: dadP.cast({ at: [...d0, 0], yaw: YAW, lead: true }), girl: girlP.cast({ at: [...START, 0], yaw: YAW }),
     oldman: oldM.cast({ at: [...ELDERS.man, 0], yaw: yE }), oldwoman: oldW.cast({ at: [...ELDERS.woman, 0], yaw: yE }), ...cast },
