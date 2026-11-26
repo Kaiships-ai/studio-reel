@@ -139,3 +139,17 @@
 | i4-3 | i beat_2240, contact_plate | his yellow arm pushes down into the cake's top tier; the candles seen from behind read as three rings, not "80", and the flame is a thin orange spike | visible |
 | j4-1 | j beat_2620, contact_photo, 2400, 2790 | the photo is not held: the hands sit beside the frame (clearly off it in 2620), so it floats in front of the chest | visible |
 | j4-2 | j beat_2400, 2790, contact_photo | the frame is as big as his torso and overlaps his chin; in 2620 the head is cut by the top edge above the eyes | minor |
+
+## Part a stills, blind read 5 (26/11; report review/blind-a5.md). Fix = director's change; closed only by the next non-builder read
+| id | frame | what a viewer sees wrong | severity | fix (open until re-read) |
+|---|---|---|---|---|
+| a5-1 | contact_old-couple-hands | both faces cut by the top edge; couple never set up | visible | new two-shot at 246 (whole couple, both faces) |
+| a5-2 | beat_342 | vanish not shown; balloon stands upright, does not rise | visible | balloon rises out of her hand from 330 (motion); kit balloon at child scale |
+| a5-3 | beat_450 | raised arm runs through his head | visible | 450 from his reaching side, shoulder in frame |
+| a5-4 | beat_450 | top 45 % empty sky; second crier half cut | visible | 450 camera lowered and moved |
+| a5-5 | beat_310 | snow oval reads as a hole | visible | lighter snow, lens 36 |
+| a5-6 | beat_300 | clock hands at 12 while board reads 23:59:59 | minor | minute hand at -6 deg, jumps to 12 at 330 |
+| a5-7 | beat_360 | half the frame empty sky; small balloon | minor | open |
+| a5-8 | beat_200 / contact | balloon clipped; dad clipped at left | minor | walk shots now travel with the family |
+| a5-9 | beat_342 | dad's face pressed to the left edge | minor | open |
+| a5-10 | motion 0-226 (director) | static cameras: the walking family walks into the lens, then out of an empty frame (f192-216) | visible | walk shots travel with the girl |
