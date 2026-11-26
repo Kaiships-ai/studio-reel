@@ -9,7 +9,7 @@ import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path'
 import { spawnSync } from 'node:child_process';
 import * as THREE from 'three';
 import { gripGap, handRadius } from '../../styles/stick-man/engine/grip.js';
-import { W_M } from '../../styles/stick-man/engine/cast.js';
+import { W_M, solid } from '../../styles/stick-man/engine/cast.js';
 import { handgrip, GAP_CM } from '../../styles/stick-man/tools/gates/handgrip.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
@@ -38,6 +38,53 @@ const tin = (grip) => {
 };
 // the hand's surface `air` m left of the tin's face
 const at = (f, air) => hold(f, -(air + f.r));
+
+// a gloved hand exactly as cast.js builds it: solid(dot x 1.15, mat, INK_T * 0.7), its ink hull a child
+const INK_T = 0.046 * W_M;
+const gloved = ({ scale = 1 } = {}) => {
+  const root = new THREE.Group(); root.scale.setScalar(scale);
+  const hand = solid(new THREE.SphereGeometry(0.050 * W_M, 16, 10).scale(1.15, 1.15, 1.15), new THREE.MeshBasicMaterial(), INK_T * 0.7);
+  root.add(hand); root.updateMatrixWorld(true);
+  return { root, hand, r: (0.050 * W_M * 1.15 + INK_T * 0.7) * scale };
+};
+
+test('engine/grip.js: a gloved hand (cast.js solid) is measured to its drawn edge, ink outline included', () => {
+  assert.ok(Math.abs(handRadius(gloved().hand) - (0.0345 + INK_T * 0.7)) < 1e-3, `${handRadius(gloved().hand)}`);
+  const f = gloved(); at(f, 0);
+  const g = gripGap(f.hand, tin());
+  assert.ok(g.cm < 0.1, `drawn edge on the tin reads ${g.cm}`); assert.equal(g.anchor, 'edge');
+  assert.equal(handgrip([{ f: 0, held: [{ actor: 'a', prop: 'tin', side: 'R', onScreen: true, gapCm: g.cm, anchor: g.anchor }] }]).ok, true);
+  at(f, 0.05); const o = gripGap(f.hand, tin()); assert.ok(Math.abs(o.cm - 5) < 0.1, `${o.cm}`);
+  assert.equal(handgrip([{ f: 0, held: [{ actor: 'a', prop: 'tin', side: 'R', onScreen: true, gapCm: o.cm, anchor: o.anchor }] }]).ok, false);
+  const t = gloved({ scale: 0.447 }); at(t, 0); assert.ok(gripGap(t.hand, tin()).cm < 0.1, 'a scaled gloved hand touching');
+});
+
+test('a prop with an ink hull is measured to its drawn edge too', () => {
+  const o = solid(new THREE.SphereGeometry(0.05, 32, 16), new THREE.MeshBasicMaterial(), 0.01);
+  o.position.set(0.05 + 0.01, 1, 0); o.updateMatrixWorld(true);   // a ball, its drawn left edge at x = 0
+  const f = figure(); at(f, 0); assert.ok(gripGap(f.hand, o).cm < 0.1, `${gripGap(f.hand, o).cm}`);
+});
+
+test('handgrip: a held entry whose anchor is not the drawn-edge measure is unmeasured, never a pass', () => {
+  for (const anchor of ['grip', 'bounds', 'mesh', undefined]) {
+    const R = handgrip([{ f: 0, held: [{ actor: 'a', prop: 'p', side: 'R', onScreen: true, gapCm: 0, anchor }] }]);
+    assert.equal(R.ok, false, String(anchor)); assert.equal(R.unmeasured, 1); }
+});
+
+test('play.js wiring: every held row is measured hand mesh to prop by gripGap, never from a point or the socket', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'styles/stick-man/engine/play.js'), 'utf8');
+  const calls = [...src.matchAll(/gripGap\(([^,]+),/g)].map(m => m[1].trim());
+  assert.equal(calls.length, 2, calls.join(' | '));
+  for (const c of calls) assert.match(c, /^a\.S\.parts\.hands\[s(\.side)?\]$/, c);
+  const held = src.slice(src.indexOf('out.held = []'), src.indexOf('// bodies inside set geometry'));
+  assert.doesNotMatch(held, /userData\.grip/);
+});
+
+test('shot.mjs: a held row with no gapPx is unmeasured, never 0 px', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'styles/stick-man/tools/render/shot.mjs'), 'utf8');
+  assert.doesNotMatch(src, /grip socket/);
+  assert.match(src, /gapPx == null/);
+});
 
 test('engine/grip.js: the hand radius is measured on the mesh, scale and gloves included', () => {
   assert.ok(Math.abs(handRadius(figure().hand) - 0.030) < 1e-6);
@@ -80,7 +127,7 @@ test('engine/grip.js: a tilted prop is measured to its own mesh, not its world b
   assert.ok(gripGap(f.hand, o).cm > 10);
 });
 
-const held = (cm, o = {}) => ({ actor: 'mum', prop: 'baby', side: 'B', onScreen: true, gapCm: cm, anchor: 'bounds', ...o });
+const held = (cm, o = {}) => ({ actor: 'mum', prop: 'baby', side: 'B', onScreen: true, gapCm: cm, anchor: 'edge', ...o });
 const clip = (cms, o) => cms.map((cm, f) => ({ f, held: [held(cm, o)] }));
 
 test('handgrip: per frame, one frame over the limit fails; off screen is left out; a clean hold passes', () => {
@@ -88,7 +135,7 @@ test('handgrip: per frame, one frame over the limit fails; off screen is left ou
   assert.equal(clean.ok, true); assert.equal(clean.checked, 4);
   const off = handgrip(clip([0, 0, 6.3, 0]));
   assert.equal(off.ok, false);
-  assert.deepEqual(off.faults.map(x => [x.f, x.actor, x.prop, x.side, x.anchor]), [[2, 'mum', 'baby', 'B', 'bounds']]);
+  assert.deepEqual(off.faults.map(x => [x.f, x.actor, x.prop, x.side, x.anchor]), [[2, 'mum', 'baby', 'B', 'edge']]);
   assert.equal(off.faults[0].cm, 6.3);
   assert.equal(handgrip(clip([0, 9, 9], { onScreen: false })).ok, true);
   assert.equal(handgrip(clip([0, 9, 9]), { frames: [0, 0] }).ok, true, '--frames keeps only the frames asked for');
