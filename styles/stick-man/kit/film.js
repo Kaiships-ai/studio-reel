@@ -36,6 +36,7 @@ export { STYLE_PRESETS } from '#engine/motion.js';
 export { solid, lathe, hairCap, curls, W_M, HEAD_H, HAT_LIFT } from '#engine/cast.js';
 export { toon, lin, INK_RGB } from '#engine/look.js';
 export { bun } from './cast/extras.js';
+export { toonHair, HAIR_STYLES } from './cast/hair.js';
 export { PALETTES, PALETTE_ORDER, UNIFORM, outfit } from './cast/wardrobe.js';
 
 const list = v => (v == null ? [] : [].concat(v));
@@ -55,7 +56,7 @@ function must(where, pairs, ws) {
   if (bad.length) throw new Error(bad.map(([p, { row }]) => `${where}: ${p}: ${row.verdict}${row.number != null ? `, ${row.number} ${row.unit ?? ''}`.trimEnd() : ''}${row.why ? ` (${row.why})` : ''}`).join('\n'));
 }
 
-const PERSON = ['name', 'body', 'age', 'face', 'outfit', 'girth', 'hair', 'shirt', 'skin', 'prop', 'clips', 'waivers'];
+const PERSON = ['name', 'body', 'age', 'face', 'outfit', 'girth', 'hair', 'shirt', 'skin', 'prop', 'clips', 'waivers', 'bald'];
 const OURS = new Map();   // name -> its definition: a reel file the tools load twice asks for the same person again
 const sits = c => [c.base, c.end].includes('SIT');
 
@@ -63,7 +64,7 @@ export function person(def) {
   const where = `person ${def?.name}`;
   if (!def?.name || typeof def.name !== 'string') throw new Error('person: needs a name');
   only(where, def, PERSON);
-  const { name, body = 'adult', age, face, girth, hair = [], shirt, skin, waivers: given = [] } = def, outfit = list(def.outfit), props = list(def.prop), clips = list(def.clips), faces = list(face);
+  const { name, body = 'adult', age, face, girth, hair = [], bald = false, shirt, skin, waivers: given = [] } = def, outfit = list(def.outfit), props = list(def.prop), clips = list(def.clips), faces = list(face);
   const sig = JSON.stringify({ ...def, hair: hair.length });
   if (name in SPECS && OURS.get(name) !== sig) throw new Error(`${where}: the name is taken (${OURS.has(name) ? 'another person of this film' : "the kit's own"})`);
   const ws = checkWaivers(where, given), key = personKey({ body, girth, outfit }), worn = expand(outfit).map(shapeOf), hats = worn.filter(g => /^(cap|hat):/.test(g));
@@ -79,7 +80,9 @@ export function person(def) {
     ...faces.flatMap(f => (EXPRESSIONS[f] ? pMarks(marksOf(EXPRESSIONS[f])) : [])), ...pHand(props, recs.some(sits))], ws);
 
   const spec = Object.freeze({ ...bodySpec({ name, hair, ...(shirt ? { shirt } : {}), ...(skin ? { skin } : {}), ...(age ? { faceAge: age } : {}) }, body), ...(girth != null ? { girth } : {}),
-    ...(outfit.length ? { costume: Object.freeze([...outfit]) } : {}), waivers: ws });
+    ...(outfit.length ? { costume: Object.freeze([...outfit]) } : {}),
+    // every person reads with hair (Kai 24/11): no hair, no cap or hat and no `bald: true` is a fits.mjs problem, not a throw (old films still load)
+    ...(bald ? { bald: true } : !hair.length && !hats.length ? { noHair: true } : {}), waivers: ws });
   SPECS[name] = spec; OURS.set(name, sig); record(where, ws);
 
   return Object.freeze({ name, spec,

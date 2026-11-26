@@ -48,7 +48,7 @@ async function readReel(dir, reel) {
     const feel = e => (e && EXPRESSIONS[e] ? marksOf(EXPRESSIONS[e]) : []), mine = (a.beats || []).filter(b => b.who === who);
     const marks = [...new Set([...mine.flatMap(b => [...(b.mark ? [b.mark] : []), ...feel(b.expr)]), ...keys.flatMap(k => feel(k.expr))].map(m => [].concat(m)[0]))];
     const seated = clips.some(x => { try { const C = getClip(x.clip, x.body); return [C.base, C.end].includes('SIT'); } catch { return false; } });
-    people.push({ who, spec: c.spec, act: a.name || a.set || 'act', person: { body: s.motionBody || 'adult', girth: s.girth, scale: s.scale, headScale: s.headScale, legScale: s.legScale, outfit }, faceAge: c.faceAge ?? s.faceAge ?? null, clips, baked: c.clips || baked < BAKED_F ? 0 : baked, keys: keys.length, props, marks, seated });
+    people.push({ who, spec: c.spec, act: a.name || a.set || 'act', person: { body: s.motionBody || 'adult', girth: s.girth, scale: s.scale, headScale: s.headScale, legScale: s.legScale, outfit }, faceAge: c.faceAge ?? s.faceAge ?? null, clips, baked: c.clips || baked < BAKED_F ? 0 : baked, keys: keys.length, props, marks, seated, noHair: !!s.noHair });
   }
   return { people };
 }
@@ -89,6 +89,7 @@ export function checkFilm(film, T) {
       if (c.body !== p.person.body) say(p, `blocked: ${clipId(c.clip)} at ${c.at} is the ${c.body} clip on ${/^[aeiou]/.test(p.person.body) ? 'an' : 'a'} ${p.person.body} body`);
       const q = pair('clip', p.key, c.clip); if (!pairs.has(q)) pairs.set(q, { pair: q, clip: clipId(c.clip), person: p.person, row: T.lookup(q), by: p });
     }
+    if (p.noHair) say(p, 'no hair: person() has an empty hair list and no cap or hat; give hair that fits the age and role, or declare bald: true');
     const ask = q => { if (!pairs.has(q)) pairs.set(q, { pair: q, row: T.lookup(q), by: p }); };
     if (p.faceAge) ask(pair('face', p.faceAge, p.person.body));
     const hats = expand(p.person.outfit.filter(it => !String(it).startsWith('film:'))).map(shapeOf).filter(g => /^(cap|hat):/.test(g));
