@@ -6,7 +6,7 @@
 import * as THREE from 'three';
 import { rigStick } from '../../styles/stick-man/tools/gates/motionlib.mjs';
 await rigStick();
-const { toonHair, scalpField, styleOf } = await import('../../styles/stick-man/kit/cast/hair.js');
+const { toonHair, scalpField } = await import('../../styles/stick-man/kit/cast/hair.js');
 const { W_M } = await import('../../styles/stick-man/engine/cast.js');
 const { play } = await import('./wardrobe-measure.mjs');
 const { CLIPS } = await import('./hair-measure.mjs');
@@ -16,7 +16,7 @@ export async function seam(style, clips = CLIPS, patch = { neck: true, cut: null
   const g = toonHair(style, null, patch)(), f = scalpField(style, patch), tops = [], d = new THREE.Vector3(), v = new THREE.Vector3(); g.updateMatrixWorld(true);
   const idx = [];   // [lock index in the group, vertex index, rest point]
   g.traverse(o => { if (!o.isMesh || !o.parent?.userData.neckBound) return; const k = o.parent.children.indexOf(o), A = o.geometry.attributes.position, ys = []; for (let i = 0; i < A.count; i++) ys.push(A.getY(i));
-    const top = Math.max(...ys); for (let i = 0; i < A.count; i++) { const p = new THREE.Vector3().fromBufferAttribute(A, i); p.out0 = Math.max(0, p.length() - f(d.copy(p).normalize()).r); if (p.out0 < 0.002 && p.y > -0.45 * W_M) { tops.push(p); idx.push([k, i]); } } });
+    for (let i = 0; i < A.count; i++) { const p = new THREE.Vector3().fromBufferAttribute(A, i); p.out0 = Math.max(0, p.length() - f(d.copy(p).normalize()).r); if (p.out0 < 0.002 && p.y > -0.45 * W_M) { tops.push(p); idx.push([k, i]); } } });
   // the crown as drawn (its fill mesh where hair grows), on a 1 cm grid: a lock point's distance to it, rest vs drawn
   const crown = new Map(), C = 0.01, key = (x, y, z) => `${x},${y},${z}`; const SA = g.children[0].geometry.attributes.position;
   for (let i = 0; i < SA.count; i++) { const q = new THREE.Vector3().fromBufferAttribute(SA, i); if (f(d.copy(q).normalize()).k < 0.98) continue; const k = key(...q.toArray().map(x => Math.floor(x / C))); (crown.get(k) || crown.set(k, []).get(k)).push(q); }
