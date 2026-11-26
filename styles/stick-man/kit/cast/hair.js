@@ -22,7 +22,7 @@ const rand = seed => () => ((seed = (seed * 16807) % 2147483647) - 1) / 21474836
 
 // in W. whorl: where the locks start; locks: how many round it; clump: a lock's height over its grooves; base: the mass's
 // thickness; lift: extra volume over the forehead; tips: how far the lock tips reach past the hairline; part: x of a parting
-// (W, + = the figure's left); lo: the hairline round the head; sweep: the swept side's extra height; sparse: only lock crests (scalp between); ink: the ink hull's share (thin strands want a thin line); bumps: curl clumps [n, r, h, lowest y]; buns
+// (W, + = the figure's left); lo: the hairline round the head; sweep: the swept side's extra height; sparse: only lock crests (scalp between); jit: uneven locks; soft: the painted grooves' share; ink: the ink hull's share (thin strands want a thin line); bumps: curl clumps [n, r, h, lowest y]; buns
 const STYLES = {
   // a clear parting on the figure's left, the rest swept over to the right in a raised wave
   side:  { col: [0.42, 0.25, 0.12], whorl: [0.22, 0.75, -0.62], locks: 14, twist: 0.35, clump: 0.034, base: 0.030, lift: 0.050, tips: 0.050, part: 0.17, sweep: 0.055, lo: edge({ front: 0.30 }) },
@@ -32,7 +32,7 @@ const STYLES = {
   curly: { col: [0.55, 0.22, 0.10], whorl: [0, 0.80, -0.60], locks: 12, twist: 0, clump: 0.006, base: 0.040, lift: 0.020, tips: 0.050, bumps: [150, 0.26, 0.026, -0.45], lo: edge({ front: 0.29, side: 0.0 }) },
   // thin grey: sparse locks round the back and sides and over the crown (scalp between them), the temples receded. The whorl
   // sits inside the neck, so the locks never meet in a knot anyone sees
-  elder: { col: [0.64, 0.64, 0.68], whorl: [0, -1, -0.05], locks: 30, twist: 0, clump: 0.014, base: 0.014, lift: 0, tips: 0.040, sparse: 0.72, ink: 0.3,
+  elder: { col: [0.70, 0.70, 0.73], whorl: [0, -1, -0.05], locks: 30, twist: 0.04, jit: 0.22, clump: 0.010, base: 0.012, lift: 0, tips: 0.040, sparse: 0.66, ink: 0.15, soft: 0.35,
            lo: [[0, 0.36], [18, 0.38], [38, 0.46], [62, 0.10], [88, -0.06], [125, -0.36], [180, -0.36]] },
   woman: { col: [0.20, 0.11, 0.06], whorl: [0, 0.75, -0.65], locks: 20, twist: 0, clump: 0.016, base: 0.022, lift: 0.018, tips: 0.014, part: 0, lo: edge({ front: 0.30, side: -0.04 }),
            buns: [{ dir: [0, 0.80, -0.60], r: 0.20, out: 0.05 }] },   // high on the back of the crown: it shows over the head from the front
@@ -42,33 +42,41 @@ const STYLES = {
 export const HAIR_STYLES = Object.keys(STYLES);
 
 // locks radiate from the axis w: c = 1 on a lock's crest, 0 in the groove between two; q = the angle from w
-function locksOf(w, n, twist) {
+// jit: uneven lock widths and spacing, and locks that bend on their way up (seeded, the same on every build)
+function locksOf(w, n, twist, jit = 0) {
   const a = new THREE.Vector3(...w).normalize(), e1 = new THREE.Vector3(1, 0, 0).addScaledVector(a, -a.x).normalize(), e2 = a.clone().cross(e1);
-  return d => { const q = Math.acos(Math.max(-1, Math.min(1, d.dot(a)))), ph = (Math.atan2(d.dot(e2), d.dot(e1)) / (2 * Math.PI) + twist * q / Math.PI) * n;
+  const r = rand(11), P = [0, 1, 2, 3].map(() => r() * 2 * Math.PI);
+  return d => { const q = Math.acos(Math.max(-1, Math.min(1, d.dot(a)))), th = Math.atan2(d.dot(e2), d.dot(e1));
+    const tw = th + jit * (0.45 * Math.sin(3 * th + P[0]) + 0.30 * Math.sin(5 * th + P[1]) + 0.20 * Math.sin(8 * th + P[2]) + 0.30 * Math.sin(1.5 * q + P[3]) * sm(0.2, 1.2, q));
+    const ph = (tw / (2 * Math.PI) + twist * q / Math.PI) * n;
     return { c: Math.pow(0.5 + 0.5 * Math.cos(2 * Math.PI * ph), 0.6), ph, q }; };
 }
 
 function scalp(st) {
-  const L = locksOf(st.whorl, st.locks, st.twist), r = rand(7), bumps = [];
+  const L = locksOf(st.whorl, st.locks, st.twist, st.jit), r = rand(7), bumps = []
   if (st.bumps) for (let i = 0; i < st.bumps[0]; i++) { const y = (st.bumps[3] ?? 0.25) + (1 - (st.bumps[3] ?? 0.25)) * r(), a = r() * 2 * Math.PI, s = Math.sqrt(1 - y * y); const v = new THREE.Vector3(s * Math.sin(a), y, s * Math.cos(a)); v.w = r() * 2 * Math.PI; bumps.push(v); }
   return d => {
     const rh = headR(d), y = d.y * rh / W, lon = Math.abs(Math.atan2(d.x, d.z)) / DEG, { c, ph, q } = L(d), amp = sm(0.10, 0.45, q);
     const tips = st.tips * (0.15 + 0.85 * sm(150, 70, lon));                // the nape's edge is clean, following the head
     let cover = sm(-0.02, 0.02, y - table(st.lo, lon) + tips * (c - 0.55) * amp);
-    if (st.sparse) cover *= 1 - (0.85 + 0.15 * sm(0.15, 0.30, y)) * (1 - sm(st.sparse, st.sparse + 0.2, c)) * sm(0.0, 0.25, q);   // only the lock crests, scalp between them: no flat shell
+    if (st.sparse) {   // only the lock crests, scalp between them: no flat shell. Each lock its own width, thinning toward the crown
+      const thr = st.sparse + 0.10 * Math.sin(2.39 * ph) + 0.06 * Math.sin(0.77 * ph + 1) + 0.10 * sm(0.10, 0.45, y);
+      cover *= 1 - (0.85 + 0.15 * sm(0.15, 0.30, y)) * (1 - sm(thr, thr + 0.25, c)) * sm(0.0, 0.25, q);
+    }
     const front = sm(60, 20, lon) * Math.exp(-(((y - table(st.lo, lon)) / 0.10) ** 2));
     let t = st.base + st.lift * front + st.clump * amp * c, shade = -Math.pow(1 - c, 3) * amp + 0.12 * Math.cos(2 * Math.PI * ph * 3) * amp * c;
     if (bumps.length) {   // curl clumps packed edge to edge (cells round the nearest clump centre): each a round top, the
-      // lines where two meet are valleys (concave, so the ink hull draws no ring there), painted dark, a spiral painted in each
+      // lines where two meet are valleys (concave, so the ink hull draws no ring there), painted dark, a lit crescent painted on each
       let f1 = 9, f2 = 9, nb = null; for (const b of bumps) { const g = Math.acos(Math.min(1, d.dot(b))); if (g < f1) { f2 = f1; f1 = g; nb = b; } else if (g < f2) f2 = g; }
       const R = st.bumps[1], h = sm(0, 0.7 * R, f2 - f1) * Math.max(0, 1 - (f1 / R) ** 2);
       const o = d.clone().addScaledVector(nb, -d.dot(nb)), e1 = new THREE.Vector3(0, 1, 0).addScaledVector(nb, -nb.y).normalize(), a = Math.atan2(o.dot(nb.clone().cross(e1)), o.dot(e1)) - nb.w;
-      const arc = Math.pow(0.5 + 0.5 * Math.cos(2 * Math.PI * (2.2 * f1 / R + a / (2 * Math.PI))), 5) * sm(0.05, 0.25, f1 / R) * h;   // a spiral: the curl's strand
-      t += st.bumps[2] * h; shade = 0.25 * shade - 0.7 * (1 - h) ** 2 - 0.8 * arc + 0.35 * h * h * (1 - arc);
+      const ring = Math.exp(-(((f1 / R - 0.5) / 0.10) ** 2)) * h, arc = ring * Math.max(0, Math.cos(a)) ** 2, under = ring * Math.max(0, -Math.cos(a)) ** 2;   // a crescent: the curl's lit edge
+      t += st.bumps[2] * h; shade = 0.25 * shade - 0.7 * (1 - h) ** 2 + 0.75 * arc - 0.35 * under;
     }
     if (st.sweep) t += st.sweep * sm(st.part, st.part - 0.35, d.x * rh / W) * sm(0.05, 0.35, y) * sm(-0.6, 0.2, d.z);   // the swept side stands higher
     if (st.part != null && d.y > 0.25 && d.z > -0.55) { const p = sm(0.012, 0.040, Math.abs(d.x * rh / W - st.part)); t *= 0.25 + 0.75 * p; shade = Math.min(shade, -(1 - p)); if (st.sweep) cover *= sm(0.004, 0.016, Math.abs(d.x * rh / W - st.part)); }
     shade += 0.45 * Math.exp(-(((Math.asin(d.y) / DEG - 52) / 9) ** 2)) * c * c * sm(130, 60, lon);   // the light band round the crown
+    if (st.soft) shade *= st.soft;
     const k = cover;                                             // a soft wall: a sharp one stair-steps on the sphere grid
     return { r: rh * TUCK + (rh + t * W - rh * TUCK) * k, k, shade, ink: st.ink ?? 1 };
   };
