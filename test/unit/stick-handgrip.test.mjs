@@ -1,8 +1,10 @@
 // Held props off the hand (whatif1 v5, 26/11: a tin with the hands as dots on its label, a baby bundle floating beside
 // the arms, a photo in front of the chest with no hand on it; every gate passed them). engine/grip.js measures, each
-// frame, the air between the hand dot and the prop's grip socket (userData.grip) or, for a prop with none, the nearest
-// point of its box; play.js writes it to the rows as held[].gapCm and tools/gates/handgrip.mjs fails a frame over the
-// limit frozen in handgrip.limits.json before anything was measured. The control: the same prop moved 5 cm off the hand.
+// frame, the air between the hand's drawn edge (its world radius with its ink outline: scale and gloves included) and
+// the nearest point on the prop's visible drawn triangles (outlines included), never the grip socket the engine snaps
+// onto the hand; play.js writes it to the rows as held[].gapCm and tools/gates/handgrip.mjs fails a frame over the limit
+// frozen in handgrip.limits.json before anything was measured (pinned below: a changed value fails). The controls: a
+// prop 5 cm off one hand, a bundle 6 cm off two hands, a toddler 2.5 cm off, a can 2.9 cm off at 45 deg round its side.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
@@ -16,9 +18,10 @@ const ROOT = path.resolve(import.meta.dirname, '../..');
 const FROZEN = JSON.parse(fs.readFileSync(path.join(ROOT, 'styles/stick-man/tools/gates/handgrip.limits.json'), 'utf8'));
 const GATE = path.join(ROOT, 'styles/stick-man/tools/gates/handgrip.mjs');
 
-test('the gate uses the frozen limit, and the frozen control (5 cm of air) is beyond it', () => {
-  assert.equal(GAP_CM, FROZEN.GAP_CM);
-  assert.ok(FROZEN.control.move_cm > GAP_CM);
+test('the frozen limit and control are pinned: a changed value fails (the why text may change)', () => {
+  assert.equal(FROZEN.GAP_CM, 1.5); assert.equal(GAP_CM, 1.5);
+  assert.deepEqual(FROZEN.control, { move_cm: 5, must: 'fail' });
+  assert.deepEqual(Object.keys(FROZEN).sort(), ['GAP_CM', 'about', 'control', 'why']);
 });
 
 // a figure's hand as cast.js builds it: a dot 0.050 W (gloves 1.15x) on root, root scaled by spec.scale
@@ -63,6 +66,26 @@ test('a prop with an ink hull is measured to its drawn edge too', () => {
   const o = solid(new THREE.SphereGeometry(0.05, 32, 16), new THREE.MeshBasicMaterial(), 0.01);
   o.position.set(0.05 + 0.01, 1, 0); o.updateMatrixWorld(true);   // a ball, its drawn left edge at x = 0
   const f = figure(); at(f, 0); assert.ok(gripGap(f.hand, o).cm < 0.1, `${gripGap(f.hand, o).cm}`);
+});
+
+// a can 7 cm in radius, 12 cm tall, at the origin; a bare hand at 45 deg round its side
+const can = () => { const o = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.12, 48)); o.updateMatrixWorld(true); return o; };
+const round = (f, air) => { const d = 0.07 + air + f.r; f.hand.position.set(d * Math.SQRT1_2, 0, d * Math.SQRT1_2); f.root.updateMatrixWorld(true); };
+
+test('engine/grip.js: a hand 2.9 cm off a round can at 45 deg fails (its box corner read 0); touching its side passes', () => {
+  const f = figure(); round(f, 0.029);
+  const g = gripGap(f.hand, can()); assert.ok(Math.abs(g.cm - 2.9) < 0.1, `${g.cm}`); assert.ok(g.cm > GAP_CM);
+  round(f, 0); assert.ok(gripGap(f.hand, can()).cm < 0.1, `${gripGap(f.hand, can()).cm}`);
+  const b = new THREE.Mesh(new THREE.SphereGeometry(0.05, 48, 24)); b.updateMatrixWorld(true);   // a balloon, 45 deg up and round
+  const d = 0.05 + 0.03 + f.r, k = d / Math.sqrt(3); f.hand.position.set(k, k, k); f.root.updateMatrixWorld(true);
+  assert.ok(Math.abs(gripGap(f.hand, b).cm - 3) < 0.1, `${gripGap(f.hand, b).cm}`);
+});
+
+test('engine/grip.js: a hidden mesh is not measured, on the prop or the hand', () => {
+  const o = can(), ghost = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1)); ghost.visible = false; o.add(ghost); o.updateMatrixWorld(true);
+  const f = figure(); round(f, 0.029); assert.ok(gripGap(f.hand, o).cm > GAP_CM, 'the hidden box must not read 0');
+  const g = gloved(), hid = new THREE.Mesh(new THREE.SphereGeometry(0.5)); hid.visible = false; g.hand.add(hid);
+  assert.ok(handRadius(g.hand) < 0.06, `${handRadius(g.hand)}`);
 });
 
 test('handgrip: a held entry whose anchor is not the drawn-edge measure is unmeasured, never a pass', () => {
