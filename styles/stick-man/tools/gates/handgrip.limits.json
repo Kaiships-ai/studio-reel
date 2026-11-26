@@ -1,6 +1,6 @@
 {
   "about": "handgrip.mjs limits, frozen 26/11 before anything was measured; never loosened (raise a fault instead)",
   "GAP_CM": 1.5,
-  "why": "the engine parents a prop with a grip socket to the hand, so a held prop reads 0 cm; air past the hand dot's own 2.4 cm radius wider than a bit over half of it shows as a prop off the hand at a mid shot",
+  "why": "the air between the real hand mesh's surface (its world radius, measured per figure: about 3.0 cm on an adult, 3.45 cm gloved, scaled on a child) and the nearest point of the held prop's own mesh; more than 1.5 cm of it shows as a prop off the hand at a mid shot",
   "control": { "move_cm": 5, "must": "fail" }
 }
