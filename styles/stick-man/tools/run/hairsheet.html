@@ -11,7 +11,7 @@
 //   node styles/stick-man/tools/render/shot.mjs --page styles/stick-man/tools/run/hairsheet.html --frames 0-47 --w 720 --h 1280 --out <dir>/h_%d.png
 //   node styles/stick-man/tools/render/shot.mjs --page 'styles/stick-man/tools/run/hairsheet.html?run=1' --frames 0-119 --w 720 --h 1280 --mp4 <dir>/run.mp4
 //   python styles/stick-man/tools/run/hairsheet_compose.py <dir> docs/hair-sheet/hair-sheet.jpg   (the sheet kept for review; docs/hair-sheet/cells is ignored)
-//   a type's sheet: add --query type=mw (frames 0-89: 15 rows) and pass the type: hairsheet_compose.py <dir> docs/hair-sheet/hair-sheet-mw.jpg mw
+//   a type's sheet: add --query type=mw (frames 0-95: 16 rows) and pass the type: hairsheet_compose.py <dir> docs/hair-sheet/hair-sheet-mw.jpg mw
 import * as THREE from 'three';
 import { makeStick, hairCap, HEAD_H, W_M } from '#engine/cast.js';
 import { createStage, lin } from '#engine/look.js';
@@ -29,9 +29,10 @@ import { toonHair } from '#kit/cast/hair.js';
 await useFaceStyle();
 const RUN = new URLSearchParams(location.search).get('run');
 // ?type=: one sheet a type of style, each on its own body (hairsheet_compose.py takes the same type); none: the first six beside today's caps
-// a style the hair-in-body check shortened also shows as designed (`cut: null`), for the one who picks the length
+// a style the hair-in-body check shortened also shows as designed (`cut: null`, its lengths bound to the neck: `neck: true`), for the one who picks the length
 const TYPES = { mw: [['pompadour', 'adult'], ['buzz', 'adult'], ['mullet', 'adult'], ['afro', 'adult'], ['bob', 'adult'], ['long', 'adult'], ['pixie', 'adult'], ['ponytail', 'adult'], ['braids', 'adult'], ['lob', 'adult'],
-  ['mullet', 'adult', toonHair('mullet', null, { cut: null })], ['long', 'adult', toonHair('long', null, { cut: null })], ['braids', 'adult', toonHair('braids', null, { cut: null })], ['lob', 'adult', toonHair('lob', null, { cut: null })], ['bob', 'adult', toonHair('bob', null, { cut: null })]] };
+  ['mullet', 'adult', toonHair('mullet', null, { neck: true, cut: null })], ['long', 'adult', toonHair('long', null, { neck: true, cut: null })], ['braids', 'adult', toonHair('braids', null, { neck: true, cut: null })], ['lob', 'adult', toonHair('lob', null, { neck: true, cut: null })], ['bob', 'adult', toonHair('bob', null, { neck: true, cut: null })],
+  ['long', 'adult', toonHair('long', [0.42, 0.26, 0.14], { neck: true, cut: null })]] };   // the lighter brown test (Studio 26/11)
 const TYPE = new URLSearchParams(location.search).get('type');
 const ROWS = (TYPES[TYPE] || [['hairCap (today)', 'adult', hairCap()], ['bun (today)', 'adult', bun()], ['side', 'adult'], ['crop', 'adult'], ['curly', 'adult'], ['elder', 'elder'], ['woman', 'adult'], ['girl', 'child']])
   .map(([n, b, f]) => ({ n, b, f: f || toonHair(n) }));
