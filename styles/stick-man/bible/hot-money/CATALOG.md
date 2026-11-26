@@ -2,9 +2,9 @@
 
 Sinh từ `tokens.json` và `catalog.json` bởi `node styles/stick-man/bible/catalog.mjs`. Đừng sửa tay file này.
 
-117 token (50 giá trị gốc, 52 theo mục đích, 15 theo thành phần), 4 chỗ trống. 162 thành phần (21 ổn định, 141 thử, 0 bỏ), 20 nằm trong phim, chờ đưa vào kit.
+117 token (50 giá trị gốc, 52 theo mục đích, 15 theo thành phần), 4 chỗ trống. 163 thành phần (21 ổn định, 142 thử, 0 bỏ), 20 nằm trong phim, chờ đưa vào kit.
 
-## Clip chuyển động (54)
+## Clip chuyển động (55)
 
 | id | thân | trạng thái | dùng khi | không bao giờ | Kai |
 |---|---|---|---|---|---|
@@ -16,8 +16,8 @@ Sinh từ `tokens.json` và `catalog.json` bởi `node styles/stick-man/bible/ca
 | `clip.Idle_LookAround_Loop` | adult | thử | dò xét xung quanh (thay cho PEER) | không có lý do trong truyện |  |
 | `clip.Gest_Talk_Loop` | adult | thử | nhân vật tự nói | khi chỉ người dẫn chuyện nói |  |
 | `clip.Gest_Wave_Loop` | adult | thử | vẫy tay | lặp như tật |  |
-| `clip.Trans_SitDown_Once` | adult | ổn định | ngồi xuống | nhảy cóc vào tư thế ngồi | +S3-013 |
-| `clip.Idle_Sit_Loop` | adult | thử | ngồi chờ (thay cho SIT_TALL, SIT_LOW, SIT_GUARD) | ngồi im cả cảnh |  |
+| `clip.Trans_SitDown_Once` | adult, elder | ổn định | ngồi xuống | nhảy cóc vào tư thế ngồi; xích với Idle_Sit_Loop trên một ghế (người già: ghế 0.528 m và 0.386 m) | +S3-013 |
+| `clip.Idle_Sit_Loop` | adult, elder | thử | ngồi chờ (thay cho SIT_TALL, SIT_LOW, SIT_GUARD) | ngồi im cả cảnh; xích sau Trans_SitDown_Once trên một ghế (người già: ghế 0.386 m và 0.528 m) |  |
 | `clip.Trans_StandUp_Once` | adult | thử | đứng dậy | bật dậy không dồn lực |  |
 | `clip.Gest_PointSeated_Loop` | adult | thử | ngồi chỉ tay | lặp như tật |  |
 | `clip.Act_PickUp_Once` | adult | ổn định | nhặt túi, hộp (thay cho REACH_LOW, HEAVE, HEAVE_UP, HEAVE_LO, HEAVE_SH) | đồ có sẵn trong tay sau cắt | +S3-026 -S3-021 -S3-023 -S3-024 -S3-025 |
@@ -62,6 +62,7 @@ Sinh từ `tokens.json` và `catalog.json` bởi `node styles/stick-man/bible/ca
 | `clip.React_Defeated_Once` | adult | thử | gập người ôm mặt rồi buông xuôi | thua nhẹ |  |
 | `clip.Gest_Yawn_Once` | adult | thử | vươn vai ngáp | cảnh gấp |  |
 | `clip.Gest_Point_Once` | adult | thử | đứng chỉ tay về trước | ngồi chỉ (có clip riêng) |  |
+| `clip.Act_Give_Once` | elder | thử | người già đưa tay ra trao | đưa tay bằng key tay |  |
 
 ## Nét mặt (34)
 

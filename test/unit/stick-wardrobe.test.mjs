@@ -62,6 +62,7 @@ for (const n of CLOTHED) for (const clip of SIT_CLIPS.filter(c => c !== 'Trans_S
   const bad = []; await play(look(n), 'adult', { clip, whole: true }, { each: (f, S, P) => { for (const d of S.wardrobe.drapes) bad.push(...clothFaults(S, d, P, f, 'sit')); } });
   if (UNSAFE[clip]) assert.ok(summary(bad).length, `${clip} is clean in ${n} now: take it out of UNSAFE`); else assert.deepEqual(summary(bad), []);
 });
+test('a seated clip is listed once, whatever bodies have it (the elder\'s Idle_Sit_Loop and Trans_SitDown_Once are the adult\'s names)', () => { assert.equal(new Set(SIT_CLIPS).size, SIT_CLIPS.length); });
 test('the seated clips are the ones that open or end on SIT, nine of them today, and the wardrobe calls exactly one unsafe', () => { assert.deepEqual([...SIT_CLIPS].sort(), ['Act_Drive_Loop', 'Act_Type_Loop', 'Gest_PointSeated_Loop', 'Gest_SitClap_Loop', 'Gest_SitTalk_Loop', 'Idle_Sit_Loop', 'React_SitDisbelief_Once', 'Trans_SitDown_Once', 'Trans_StandUp_Once']); assert.deepEqual(SIT_CLIPS.filter(c => UNSAFE[c]), ['React_SitDisbelief_Once']); });
 // M1 (costume review 3): under a skirt the torso is the skirt's own colour, so nothing of the sweater can show there (clothFaults measures that the torso is not past the cloth)
 test("a skirt's torso is painted the skirt's colour from its band down, over any garment; a coat keeps its own", async () => {
