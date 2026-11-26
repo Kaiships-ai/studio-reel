@@ -13,6 +13,10 @@ const { W_M, HEAD_H } = await import('../../styles/stick-man/engine/cast.js');
 // sat down and seated, running, turning on the spot
 export const CLIPS = ['Adult_Idle_LookAround_Loop', 'Gest_LookUp_Once', 'Adult_Gest_LookBack_Once', 'Adult_Gest_NodYes_Once', 'Adult_Gest_ShakeNo_Once',
   'Adult_Act_PickUp_Once', 'Adult_Trans_SitDown_Once', 'Adult_Idle_Sit_Loop', 'Adult_Move_Run_Fwd_Loop', 'Adult_Move_TurnLeft_Once'];
+// every adult clip of the motion library: what stick-hair-body*.test.mjs plays (a hair x clip pair over HAIR_IN_MM is a blocked `hair` row of
+// kit/compat.json); CLIPS above stays the head-moving set the length search and the seam check use
+const { ALL } = await import('../../styles/stick-man/motion-lib/index.js');
+export const ADULT_CLIPS = ALL.filter(C => (C.body || 'adult') === 'adult').map(C => C.clip);
 // NEAR_W: a scalp point this close (W, along the ray from the head's centre: oblique at the nape, where the six styles of #212 stand
 // up to 0.09 W off) to the head under it lies on the head. Where the clip itself puts the head in the body
 // (Gest_LookUp_Once: the bare back of the head 61 mm into the upper back; Adult_Act_PickUp_Once: the chin 27 mm into the chest,

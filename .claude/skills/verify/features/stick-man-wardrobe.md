@@ -72,9 +72,13 @@ Five more (26/11): men `pompadour`, `buzz`, `afro`; women `pixie`, `ponytail` (`
 parts of the same field: `crest` (a swept wave), `tight` (cut sides), `ball` (a mass wider than the head), `hang` (falls straight
 to a hem), `grain` / `edgeDark` (a buzz cut's stubble and hairline), `grid` (box-braid parts); and locks that leave the head
 (`falls`: rings of flat or braided locks; `tails`: one swept lock, the ponytail), rigid in the head's hair group like the rest.
-`cut` is the length the hair-in-body check left: `node --test test/unit/stick-hair-body.test.mjs` (~3 min) plays every style
-through ten clips (`CLIPS` in test/unit/hair-measure.mjs) in the coral sweater and fails a style whose drawn surface goes over
-4 mm (frozen) into the torso or a limb; `node test/unit/hair-length.mjs <style>` finds the lowest cut that passes. Type sheet:
+`cut` is the length the hair-in-body check left: `node --test test/unit/stick-hair-body*.test.mjs` (10 shard files side by side, ~4-5 min)
+plays every shipped style through every adult clip (50, `ADULT_CLIPS` in test/unit/hair-measure.mjs) in the coral sweater and measures
+how deep its drawn surface goes into the torso or a limb (4 mm, frozen). A pair over it is a `blocked` row `hair|<style>|<clip>` of
+`kit/compat.json` (written by `node styles/stick-man/tools/gates/fits.mjs --hair [styles] [--clips A,B]`): `person()` and `fits.mjs films/<slug>`
+refuse an adult wearing that style in that clip. The test fails when a row is not what it measures now, either way (an unblocked pair
+over 4 mm, a blocked pair that passes). Act_PistolShoot_Once is blocked for every style: the clip's own left arm goes 17 mm into the
+bare head (f83-86), a clip fault. `node test/unit/hair-length.mjs <style>` finds the lowest cut that passes the ten head-moving clips (`CLIPS`). Type sheet:
 add `--query type=mw` to the sheet render (frames 0-89) and `hairsheet_compose.py <dir> <out.jpg> mw`.
 
 Scalp coverage (26/11): one scalp line for every toon hair (`kit/cast/scalpline.js`: forehead 0.36 W, temples down to the ear's top 0.08, behind the ear from 95 deg to the nape -0.44 at 120 deg). The scalp field's floor covers it whatever a style's hairline, hem or cut leaves, thin where only the floor puts hair; a style shows scalp inside it only where it declares it (`bare`: the elder's receded temples; a swept parting). A `hang` hem is the hairline above the fall too. Gate: `node styles/stick-man/tools/gates/scalpgate.mjs [style] [--png dir]` renders head + hair headless from eight views (front, 3/4, low front, back, profile, from under the chin, top and bowed) and counts bare scalp pixels; `partSkin` counts skin in a parting from the top and bowed (0 px); `tools/gates/facegate-hair.mjs` keeps the face >= 85 % and each eye and the mouth >= 95 % at front, 3/4 and low front; `test/unit/stick-scalp-cover.test.mjs` holds every style (and the designed lengths) under 0.1 % per view, with a control that must fail.
