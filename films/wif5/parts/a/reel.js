@@ -124,5 +124,9 @@ export default {
   cast: { dad: dadP.cast({ at: [...d0, 0], yaw: YAW, lead: true }), girl: girlP.cast({ at: [...START, 0], yaw: YAW }),
     oldman: oldM.cast({ at: [...ELDERS.man, 0], yaw: yE }), oldwoman: oldW.cast({ at: [...ELDERS.woman, 0], yaw: yE }), ...cast },
   anim: { dad: D, girl: G, oldman: OM, oldwoman: OW, ...anim },
-  direct: CAMS().map(c => cam(...c)),
+  // the walk shots (before the old couple) travel with the family, so nobody walks into the lens or out of an empty frame
+  direct: CAMS().map((c, i, all) => { const [f, why, pos, aim, lens] = c, nx = all[i + 1]?.[0] ?? 504;
+    if (f >= 246) return cam(...c);
+    const a = girl(f), b = girl(nx), d = [b[0] - a[0], b[1] - a[1], 0], add = v => v.map((x, j) => x + d[j]);
+    return { ...cam(...c), to: { pos: add(pos), aim: add(aim), lens }, move: { from: { f }, dur: nx - f, ease: 'linear' } }; }),
 };
