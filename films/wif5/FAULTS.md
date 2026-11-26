@@ -99,3 +99,23 @@
 | i2-1 | i beat_2240 | flames are flat orange discs floating above the candles, the "0" candle seen edge-on; neighbour's head cut by the frame fills the right ~40 % | visible |
 | i2-2 | i beat_2170 | the birthday man's head overlaps the right man's head (two heads merged), hero squeezed in the middle; bottom ~30 % empty floor | visible |
 | j2-1 | j beat_2400, beat_2790, contact_photo | the photo is tiny (~80 px) at wide size; each arm shows a pale sleeve stump plus a separate black ball hand (two hands per arm) | visible |
+
+## Parts a-e stills, blind read 3
+| id | still | what a viewer sees wrong | severity |
+|---|---|---|---|
+| a3-1 | a beat_0, 90, 300, 329 | the balloon string ends at the girl's hat / back of her head, never in her hand (her hands hang or hold dad's) | visible |
+| a3-2 | a beat_331 | balloon still hangs at the same height beside dad, string trailing to the ground; only footprints hint she was there, two figures remain in the background crowd; the vanish reads as "balloon left behind", not "every woman gone" | visible |
+| a3-3 | a beat_450 | no reach: dad's arm hangs at his side; head cut by the left edge; lower ~45 % a flat grey-violet snow patch (only footprints in it) | visible |
+| a3-4 | a beat_300 | "1" on the board under a 12 o'clock clock may read as a countdown number, not midnight; father and girl small, from behind | minor |
+| b3-1 | b beat_800, 954, contact_baby | the newborn is a swaddled egg standing on a flat white board with a giant ball hand at each end: reads as carrying a tray, not cradling him at the chest; in 800 the baby's head overlaps the doctor's chin | visible |
+| b3-2 | b beat_579 | doctor walks slowly, not running; "every second cradle empty" does not read (most look alike); lower ~30 % empty floor | visible |
+| c3-1 | c beat_1068, contact_trolley | the trolley handle crosses the carer's face (dark bar over his mouth), his arms come out of his head | visible |
+| c3-2 | c beat_1024 | old man's hands hidden under the table, nothing shows he set the cups; the straining carer is tiny at the back; lower ~25 % empty brown floor | visible |
+| c3-3 | c contact_cup | his ball hand sits beside the cup, not on its handle | minor |
+| d3-1 | d beat_1174, 1196, contact_hands | never four hands: in 1174 the son sits apart, hands off; in 1196 only one son hand, raised behind his own head, touches the rim | visible |
+| d3-2 | d beat_1174, 1196, contact_dad, contact_hands | the lantern is flat orange, no glow at dusk, not "lit"; it covers the dad's chin | visible |
+| d3-3 | d beat_1174 (also 1196, 1324) | lower ~30 % a flat olive-green empty band (~15 % in 1196, ~12 % in 1324) | visible |
+| d3-4 | d beat_1324 | the son is hidden behind the dad (part of head and sweater only) | minor |
+| e3-1 | e beat_1483 | standing man's legs end on the desk top behind the keyboard: he reads as standing in/on the desk; hands hover at the desk's front edge | visible |
+| e3-2 | e beat_1413 | the phones are tiny; the red glow reads as red desk lamps or alarm light, not every phone ringing | visible |
+| e3-3 | e beat_1373, 1413, 1483 | desk front a flat pale near-white panel (bottom ~15-20 %); top ~20-25 % dark empty ceiling | minor |
