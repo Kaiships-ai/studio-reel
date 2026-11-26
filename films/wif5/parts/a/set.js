@@ -148,12 +148,33 @@ export async function build(stage) {
   K.anim('balloon', bal, f => { const b = balloonAt(f); bal.visible = b.free; if (!b.free) return;
     bal.position.copy(K.B(...b.end)); bal.rotation.set(0, 0, 0.10 * Math.sin(f / 9) * Math.min(1, (f - GONE) / 10)); });
 
-  // ---- a skin of snow along the end of their walk, with their footprints in it: hers stop where she stood
+  // ---- a skin of snow along the end of their walk, with their footprints in it: hers stop where she stood (shots before ONE, 294)
+  const early = new T.Group(); K.root.add(early);
   const snowSkin = M([0.54, 0.57, 0.66], 0.95), print = M([0.17, 0.17, 0.22], 0.95);
-  const gm = girl(300); K.sphere([gm[0] + 0.25, gm[1] + 0.2, 0], 1, snowSkin, { sx: 1.15, sy: 2.1, sz: 0.02 });
-  const step = (p, side, w, l) => { const m = K.sphere([p[0] + RIGHT[0] * side, p[1] + RIGHT[1] * side, 0.019], 1, print, { sx: w, sy: l, sz: 0.004 }); m.castShadow = false; };
+  const gm = girl(300); early.add(K.sphere([gm[0] + 0.25, gm[1] + 0.2, 0], 1, snowSkin, { sx: 1.15, sy: 2.1, sz: 0.02 }));
+  const step = (p, side, w, l) => { const m = K.sphere([p[0] + RIGHT[0] * side, p[1] + RIGHT[1] * side, 0.019], 1, print, { sx: w, sy: l, sz: 0.004 }); m.castShadow = false; early.add(m); };
   for (let f = 250, i = 0; f <= GONE - 1; f += 7, i++) { const g = girl(f); step(g, i % 2 ? 0.05 : -0.05, 0.035, 0.065);
     const d = [g[0] + RIGHT[0] * 0.62, g[1] + RIGHT[1] * 0.62]; if (i % 2 === 0) step(d, (i / 2) % 2 ? 0.08 : -0.08, 0.05, 0.11); }
+
+  // ---- from ONE (294) on: fresh snow over the whole square (no island edge in any lens), soft blue-white, and their footprints
+  // as small soft dents in pairs (hers small, his larger), dark blue in shadow, hers ending side by side where she stood
+  const late = new T.Group(); late.visible = false; K.root.add(late);
+  const snowTex = tex(1024, 1024, (g, w, h) => { g.fillStyle = '#eef2fa'; g.fillRect(0, 0, w, h); const q = rng(23);
+    for (let i = 0; i < 140; i++) { const x = q() * w, y = q() * h, s = 40 + 140 * q(), gr = g.createRadialGradient(x, y, 0, x, y, s), a = 0.05 + 0.07 * q();
+      gr.addColorStop(0, q() > 0.5 ? `rgba(255,255,255,${a})` : `rgba(150,165,200,${a})`); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(x - s, y - s, 2 * s, 2 * s); } }, { repeat: [5, 5] });
+  late.add(K.box([-16, -12, 0], [16, 22, 0.012], M([0.70, 0.82, 1.0], 0.92, { map: snowTex }), { r: 0, cast: false }));
+  const dentTex = tex(128, 256, (g, w, h) => { g.fillStyle = '#000'; g.fillRect(0, 0, w, h); g.filter = 'blur(9px)'; g.fillStyle = '#fff';
+    g.beginPath(); g.ellipse(w / 2, h * 0.37, w * 0.25, h * 0.2, 0, 0, 7); g.fill(); g.beginPath(); g.ellipse(w / 2, h * 0.7, w * 0.2, h * 0.13, 0, 0, 7); g.fill(); }, { srgb: false });
+  const dentM = new T.MeshStandardMaterial({ color: new T.Color().setRGB(0.30, 0.37, 0.56, T.SRGBColorSpace), alphaMap: dentTex, transparent: true, opacity: 0.8, depthWrite: false,
+    roughness: 0.95, envMap: K.ENV, envMapIntensity: ENV_K, polygonOffset: true, polygonOffsetFactor: -2 });
+  dentM.userData.noToon = true;
+  const yawU = Math.atan2(-U[0], U[1]);
+  const dent = (p, side, len) => { const m = new T.Mesh(new T.PlaneGeometry(len * 0.48, len * 1.35), dentM);
+    m.position.copy(K.B(p[0] + RIGHT[0] * side, p[1] + RIGHT[1] * side, 0.014)); m.rotation.order = 'YXZ'; m.rotation.y = yawU; m.rotation.x = -Math.PI / 2;
+    m.castShadow = false; m.receiveShadow = true; m.userData.noInk = true; m.userData.noPrepass = true; m.renderOrder = 1; late.add(m); };
+  for (let f = 250, i = 0; f <= GONE - 1; f += 7, i++) { const g = girl(f); dent(g, i % 2 ? 0.055 : -0.055, 0.15);
+    const d = [g[0] + RIGHT[0] * 0.62, g[1] + RIGHT[1] * 0.62]; if (i % 2 === 0) dent(d, (i / 2) % 2 ? 0.1 : -0.1, 0.27); }
+  { const g = girl(GONE - 1); dent(g, -0.065, 0.15); dent(g, 0.065, 0.15); }   // where she stood: both her feet, side by side
 
   // ---- her handbag: hangs from the old woman's free hand; at midnight it hangs a moment on nothing, drops, and then the
   // old man looks down at it, his hand still raised on nothing
@@ -174,7 +195,7 @@ export async function build(stage) {
   const pm = new T.PointsMaterial({ size: 0.045, map: flake, color: new T.Color(0.62, 0.66, 0.74), transparent: true, depthWrite: false, sizeAttenuation: true });
   pm.userData.noToon = true; pm.userData.noPrepass = true;
   const snow = new T.Points(geo, pm); snow.frustumCulled = false; snow.userData.noInk = true; snow.userData.noPrepass = true; K.root.add(snow);
-  K.anim('snow', snow, f => { const t = f / 30, c = camAt(f)?.[2];
+  K.anim('snow', snow, f => { const t = f / 30, c = camAt(f)?.[2]; late.visible = f >= 294; early.visible = !late.visible;
     for (let i = 0; i < N; i++) { const [bx, by, bz, ph] = base.subarray(i * 4, i * 4 + 4), z = ((bz - 0.55 * t) % 9 + 9) % 9;
       const v = K.B(bx + 0.18 * Math.sin(t * 0.9 + ph), by + 0.12 * Math.cos(t * 0.7 + ph), z); pos[i * 3] = v.x; pos[i * 3 + 1] = v.y; pos[i * 3 + 2] = v.z;
       if (c && Math.hypot(bx - c[0], by - c[1], z - c[2]) < 1.8) pos[i * 3 + 1] = -50; }   // no flake fills the lens
