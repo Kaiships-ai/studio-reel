@@ -47,7 +47,7 @@ export async function rigFigure(body, spec) { const R = await rigStick(body); re
 export function clipPlace(name, body, whole = false) { const C = getClip(name, body), key = C.advance ? { f: 0, clip: name, body, to: [C.introTravel + C.outroTravel + 4 * C.advance, 0] } : { f: 0, clip: name, body, ...(C.loop && !whole ? { times: 2 } : {}) }, n = placeClip(key, { pos: [0, 0], yaw: 90 }).keys, end = n[n.length - 1].f, m = (C.needs?.marks || []).find(x => x.kind === 'seat'), sc = C.body ? 1 : (motionBodies[body].spec.scale ?? 1);
   return { key, f: whole ? end : Math.min(70, end), solids: m ? [{ name: 'seat', lo: [m.at[0] * sc, m.at[1] * sc - 0.36, 0], hi: [m.to[0] * sc, m.at[1] * sc + 0.36, m.to[2] * sc] }] : [] }; }
 // the clips a figure is seated in (they open or end on SIT), every one the library has
-export const SIT_CLIPS = ALL.filter(C => C.base === 'SIT' || C.end === 'SIT').map(C => C.clip);
+export const SIT_CLIPS = ALL.filter(C => C.base === 'SIT' || C.end === 'SIT').map(C => C.clip).filter((c, i, a) => a.indexOf(c) === i);
 // ------------------------------------------------------------------ the cloth as drawn
 export const tris = d => { const out = [], J = d.wrap ? d.cols : d.cols - 1, p = (i, j) => d.ST.drawn[i * d.cols + (j % d.cols)]; for (let i = 0; i + 1 < d.rows; i++) for (let j = 0; j < J; j++) out.push([p(i, j), p(i + 1, j), p(i, j + 1)], [p(i, j + 1), p(i + 1, j), p(i + 1, j + 1)]); return out; };
 export const _t = new THREE.Triangle(), _ray = new THREE.Ray(), _q = new THREE.Vector3();
