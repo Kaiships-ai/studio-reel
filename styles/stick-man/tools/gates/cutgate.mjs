@@ -121,28 +121,32 @@ export function worstWindow(cuts) {
   return best;
 }
 
-// C6 per actor: runs of frames in a row where a close head is cut by the frame edge, a fast-moving head left out
+// C6 per actor: runs of frames in a row where a close head is cut by the frame edge. A fast-moving head (leaving the frame)
+// is left out: that frame neither counts nor ends an open run of the same actor. n counts the cut frames only.
 export function closeCuts(rows, W, H) {
   const runs = [], cur = new Map(), prev = new Map();
   for (const r of rows) {
-    const [w, h] = r.px || [W, H], hit = new Set();
+    const [w, h] = r.px || [W, H], held = new Set();
     for (const [name, a] of Object.entries(r.actors || {})) {
       const b = a.head; if (!b || b.length < 4) continue;
-      const [x0, y0, x1, y1] = b, bh = y1 - y0, c = [(x0 + x1) / 2, (y0 + y1) / 2], q = prev.get(name);
+      const [x0, y0, x1, y1] = b, bh = y1 - y0, c = [(x0 + x1) / 2, (y0 + y1) / 2], q = prev.get(name), s = cur.get(name);
       prev.set(name, { f: r.f, c });
-      if (q && r.f - q.f === 1 && Math.max(Math.abs(c[0] - q.c[0]), Math.abs(c[1] - q.c[1])) > EXIT_H * h) continue;
+      const open = s && s.seen === r.f - 1;
+      if (q && r.f - q.f === 1 && Math.max(Math.abs(c[0] - q.c[0]), Math.abs(c[1] - q.c[1])) > EXIT_H * h) {
+        if (open) { s.seen = r.f; held.add(name); }
+        continue;
+      }
       if (bh < CLOSE_H * h || x1 < 0 || x0 > w || y1 < 0 || y0 > h) continue;
       const out = Math.max(0, -x0, -y0, x1 - w, y1 - h);
       if (out <= CUT_EDGE * bh) continue;
-      const s = cur.get(name);
-      if (s && s.f1 === r.f - 1) { s.f1 = r.f; s.cut = Math.max(s.cut, out / bh); }
-      else { if (s) runs.push(s); cur.set(name, { actor: name, f0: r.f, f1: r.f, cut: out / bh, size: bh / h }); }
-      hit.add(name);
+      if (open) { s.f1 = s.seen = r.f; s.n++; s.cut = Math.max(s.cut, out / bh); }
+      else { if (s) runs.push(s); cur.set(name, { actor: name, f0: r.f, f1: r.f, seen: r.f, n: 1, cut: out / bh, size: bh / h }); }
+      held.add(name);
     }
-    for (const [name, s] of cur) if (!hit.has(name)) { runs.push(s); cur.delete(name); }
+    for (const [name, s] of cur) if (!held.has(name)) { runs.push(s); cur.delete(name); }
   }
   runs.push(...cur.values());
-  return runs.map(s => ({ ...s, n: s.f1 - s.f0 + 1 })).sort((a, b) => b.n - a.n);
+  return runs.map(({ seen, ...s }) => s).sort((a, b) => b.n - a.n);
 }
 
 function longestRun(frames) {

@@ -3,7 +3,7 @@
 // its top 40 % past the top edge for 87 frames, passed C4 (lead only, under half the box) and was called grotesque.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { measure, judge } from '../../styles/stick-man/tools/gates/cutgate.mjs';
+import { measure, judge, closeCuts } from '../../styles/stick-man/tools/gates/cutgate.mjs';
 
 const fps = 30, W = 1080, H = 1920, hh = 0.45 * H;
 const scores = dur => Array.from({ length: Math.round(dur * fps) }, (_, i) => ({ t: i / fps, score: 0.02 }));
@@ -56,4 +56,37 @@ test('C6: a cut under 2 % of the head height is not counted', () => {
 test('C4 is unchanged: the lead-only, under-half rule still reads the same on the v1 case', () => {
   const { all, m } = c6(film(87, () => v1Box));
   assert.equal(m.faceCutRun, 0); assert.equal(all.C4, true);
+});
+
+test('C6: one jittery frame (a jump over 1.2 %) inside a cut neither counts nor splits the run', () => {
+  const jit = [200, -0.4 * hh + 60, 900, 0.6 * hh + 60];
+  const runs = closeCuts(film(40, f => (f === 20 ? jit : v1Box)), W, H).filter(s => s.actor === 'lastman');
+  assert.equal(runs.length, 1);
+  // frame 20 jumps in and frame 21 jumps back: both left out, the other 38 frames count
+  assert.deepEqual([runs[0].f0, runs[0].f1, runs[0].n], [0, 39, 38]);
+});
+
+test('C6: a row with its own px is read at that size', () => {
+  // a 720 x 1280 row: the v1 box scaled to it fails; read at 1080 x 1920 it would be under 20 % and pass
+  const k = 720 / 1080, box = v1Box.map(v => v * k);
+  const rows = Array.from({ length: 10 }, (_, f) => ({ f, px: [720, 1280], actors: { lastman: { head: box } } }));
+  assert.equal(closeCuts(rows, W, H)[0].n, 10);
+  const small = [200, -0.4 * 300, 600, 0.6 * 300];   // 300 px tall: 23 % of 1280, 16 % of 1920
+  const rows2 = Array.from({ length: 10 }, (_, f) => ({ f, px: [720, 1280], actors: { lastman: { head: small } } }));
+  assert.equal(closeCuts(rows2, W, H)[0]?.n, 10);
+  assert.equal(closeCuts(rows2.map(({ px, ...r }) => r), W, H).length, 0);
+});
+
+test('C6: two actors cut at once are two runs, each its own length', () => {
+  const rows = Array.from({ length: 30 }, (_, f) => ({ f, px: [W, H], actors: {
+    a: { head: v1Box }, ...(f < 5 ? { b: { head: [100, 1500, 700, 1500 + hh] } } : {}) } }));
+  const runs = closeCuts(rows, W, H);
+  assert.deepEqual(runs.map(s => [s.actor, s.n]), [['a', 30], ['b', 5]]);
+  assert.equal(Math.round(runs[1].cut * 100), Math.round((1500 + hh - H) / hh * 100));
+});
+
+test('C6: a run that ends at the last frame is counted', () => {
+  const runs = closeCuts(film(50, f => (f >= 45 ? v1Box : null)), W, H);
+  assert.deepEqual([runs[0].f0, runs[0].f1, runs[0].n], [45, 49, 5]);
+  assert.equal(c6(film(50, f => (f >= 45 ? v1Box : null))).row.ok, false);
 });
