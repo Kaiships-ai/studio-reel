@@ -16,8 +16,8 @@ test('control: a card over half the face fails', () => {
 });
 // the full lengths of the long styles (behind the { neck: true, cut: null } flag) curtained the face on the 27/11 sheet
 test('control: the 27/11 long (full length) fails', () => { const r = faceShare('long', { neck: true, cut: null }); assert.ok(Object.values(r).some(x => x < FACE_MIN), JSON.stringify(r)); });
-// failing on 27/11 as shipped (front/q34/low %): pixie 75/73/97 (its fringe).
-// Listed as todo until they are fixed; this list only shrinks.
-const TODO = new Set(['pixie']);
-for (const s of HAIR_STYLES) test(`${s}: the face at least ${FACE_MIN * 100} % in sight, front, 3/4 and low front`, { todo: TODO.has(s) }, () => {
+
+
+
+for (const s of HAIR_STYLES) test(`${s}: the face at least ${FACE_MIN * 100} % in sight, front, 3/4 and low front`, () => {
   const r = faceShare(s), bad = Object.entries(r).filter(([, x]) => x < FACE_MIN); assert.deepEqual(bad.map(([k, x]) => `${k} ${(100 * x).toFixed(1)}%`), []); });

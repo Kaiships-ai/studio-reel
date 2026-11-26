@@ -73,7 +73,7 @@ const STYLES = {
                    { lon: [30, 50], n: 3, from: 0.22, to: -0.80, toAt: [0.75, 1.0, 0.9], rho: 0.10, flat: 0.32, flare: 0.06, jit: 0.35, tip: 'point', ridges: 3, seed: 9 },   // face-framing locks: uneven, tapered, angled out from the temple, laid over the bell's front edge (rho past the bell: inside it they never showed)
                    { lon: [52, 180], n: 8, from: -0.02, to: -1.15, rho: 0.065, flat: 0.32, flare: 0.03, tip: 'blunt', ridges: 3 }] },
   // a pixie: a short feathered cap, a wispy fringe swept to one side, feathered at the nape too
-  pixie: { col: [0.50, 0.30, 0.15], whorl: [0.15, 0.75, -0.64], locks: 18, twist: 0.30, jit: 0.35, clump: 0.026, base: 0.020, lift: 0.024, tips: 0.090, napeTips: 1, sweep: 0.022, part: 0.20, partSkin: false, lo: [[0, 0.15], [30, 0.14], [62, -0.02], [84, -0.08], [125, -0.36], [180, -0.36]] },   // the sideburn down past the ear's top: no skin wedge in 3/4
+  pixie: { col: [0.50, 0.30, 0.15], whorl: [0.15, 0.75, -0.64], locks: 18, twist: 0.30, jit: 0.35, clump: 0.026, base: 0.020, lift: 0.024, tips: 0.090, napeTips: 1, sweep: 0.022, part: 0.20, partSkin: false, lo: [[0, 0.24], [30, 0.22], [62, 0.02], [84, -0.08], [125, -0.36], [180, -0.36]] },   // the sideburn down past the ear's top: no skin wedge in 3/4
   // a high ponytail: the hair drawn tight to a tie high on the crown, one thick club of a tail off it
   ponytail: { cut: -0.54, col: [0.36, 0.20, 0.10], whorl: [0, 0.62, -0.78], locks: 22, twist: 0, clump: 0.016, base: 0.016, lift: 0.010, tips: 0.012, lo: edge({ front: 0.30, side: -0.04 }),
               buns: [{ dir: [0, 0.62, -0.78], r: 0.085, out: -0.01 }],
