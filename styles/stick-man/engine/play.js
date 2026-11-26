@@ -25,6 +25,7 @@ import { ACT, PROPV, MAKE, keyTracks } from './verbs_fx.js';
 import { POSE_VERBS, POSES } from './poses.js';
 import { compileTrack, playActor, toPose, MOTION_POSES } from './motion.js';
 import { propPlan } from './propobj.js';
+import { gripGap } from './grip.js';
 import { solidBoxes, restBoxes, inBoxes, drawnBox, boxPoints, armIn } from './solids.js';
 import * as EXTRAS from '#kit/cast/extras.js';
 import { PHYS } from '#kit/fx/physfx.js';
@@ -39,7 +40,6 @@ Object.assign(MAKE, PHYS, STORY);                               // story props t
 const dye = EXTRAS.dye;
 export const SPECS = { KAI, TELLER, GUARD, ...Object.fromEntries(Object.entries(EXTRAS).filter(([, v]) => v && typeof v === 'object' && !Array.isArray(v) && v.name && v.shirt)) };
 const KEYV = new Set(['set', 'pulse', 'shake', 'fire', 'flash', 'sound']);
-const HAND_R = 0.040 * W;                                        // the hand dot's radius (cast.js)
 const THICK = { b1: 0.045, b2: 0.045, stack: 0.07, note: 0.003 };
 const toB = v => [v.x, -v.z, v.y];
 const PROP_IN_MAX = 1.5, PROP_IN_GRACE = 0.02;   // m: a prop this long or longer is a set piece; this far in is touching
@@ -618,37 +618,33 @@ async function buildAct(R, X) {
         headW: toB(c).map(x => +x.toFixed(4)), figH: +((sole - ys[0]) / height).toFixed(3),
         inFrame: a.S.root.visible && vz < 1 && box[2] > 0 && box[0] < width && box[3] > 0 && box[1] < height };
     }
-    // held props: the gap between the hand dot and the prop's grip socket (or its bounding box), px at this frame size
+    // held props: the gap between the hand dot and the prop's grip socket (or its bounding box), cm (engine/grip.js,
+    // tools/gates/handgrip.mjs) and px at this frame size
     const pxPerM = p => { const d = p.distanceTo(stage.camera.position); return height / 2 / (Math.tan(stage.camera.fov * Math.PI / 360) * d); };
     out.held = [];
     for (const n of Object.keys(segs)) {
       const L = segs[n]; let i = L.length - 1; while (i > 0 && L[i].start > f) i--; const s = L[i];
       if (s.mode !== 'hand' || !props[n].visible) continue;
       const a = byName[s.actor]; if (!a?.S.root.visible) continue;
-      const hp = a.S.parts.hands[s.side].getWorldPosition(new THREE.Vector3()), g = props[n].userData.grip, gl = g && (Array.isArray(g) ? g : g[s.side]);
-      let d;
-      if (gl) d = props[n].localToWorld(new THREE.Vector3(...gl)).distanceTo(hp);
-      else { const bb = new THREE.Box3().setFromObject(props[n]); d = bb.clampPoint(hp, new THREE.Vector3()).distanceTo(hp); }
+      const hp = a.S.parts.hands[s.side].getWorldPosition(new THREE.Vector3()), gap = gripGap(hp, props[n], s.side);
       v.copy(hp).project(stage.camera);
       const on = v.z < 1 && Math.abs(v.x) < 1 && Math.abs(v.y) < 1;
-      out.held.push({ actor: s.actor, prop: n, side: s.side, onScreen: on, gapPx: +(Math.max(0, d - HAND_R) * pxPerM(hp)).toFixed(2) });
+      out.held.push({ actor: s.actor, prop: n, side: s.side, onScreen: on, gapPx: +(gap.cm / 100 * pxPerM(hp)).toFixed(2), gapCm: gap.cm, anchor: gap.anchor });
     }
     // hand props (cast.js x_hp<L|R|B>_<kind>, a bag, a phone): the gap from the hand to the prop's grip socket; a prop held
     // between both hands (B) hangs its socket at the hands' midpoint, so each hand is measured as that midpoint to the socket
     for (const a of actors) {
       if (!a.S.root.visible) continue;
       for (const [id, o] of Object.entries(a.S.props)) {
-        const side = id[0], g = o.userData.grip;
+        const side = id[0];
         if (!o.visible || side === 'H') continue;                 // worn on the head: no hand holds it
         if ((a.S.propState?.[id]?.w ?? 1) < 0.999) continue;       // resting, falling or on its way into the hand (engine/propobj.js): not held
         for (const s of side === 'B' ? ['L', 'R'] : [side]) {
           const hp = side === 'B' ? a.S.parts.hands.L.getWorldPosition(new THREE.Vector3()).add(a.S.parts.hands.R.getWorldPosition(new THREE.Vector3())).multiplyScalar(0.5)
             : a.S.parts.hands[s].getWorldPosition(new THREE.Vector3());
-          let d;
-          if (g) d = o.localToWorld(new THREE.Vector3(...g)).distanceTo(hp);
-          else { const bb = new THREE.Box3().setFromObject(o); d = bb.clampPoint(hp, new THREE.Vector3()).distanceTo(hp); }
+          const gap = gripGap(hp, o, s);
           v.copy(hp).project(stage.camera);
-          out.held.push({ actor: a.name, prop: id.slice(1), side: s, onScreen: v.z < 1 && Math.abs(v.x) < 1 && Math.abs(v.y) < 1, gapPx: +(Math.max(0, d - HAND_R) * pxPerM(hp)).toFixed(2) });
+          out.held.push({ actor: a.name, prop: id.slice(1), side: s, onScreen: v.z < 1 && Math.abs(v.x) < 1 && Math.abs(v.y) < 1, gapPx: +(gap.cm / 100 * pxPerM(hp)).toFixed(2), gapCm: gap.cm, anchor: gap.anchor });
         }
       }
     }
