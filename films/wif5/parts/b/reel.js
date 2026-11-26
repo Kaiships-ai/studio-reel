@@ -1,7 +1,7 @@
 // wif5 part b (film 504-984, here 0-480): the nursery. A doctor in scrubs runs the aisle between two rows of cradles, every
 // second one flat and empty, red alarm light pulsing (panic); he stops at the near-left cradle and finds the boy (worried);
 // lifts him to his chest (a tender catch); the boy's card "23:59" and his mother's photo taped to the cradle (sad).
-// Stills (film frame = 504 + local): beat 564 (run), 719 (finds him), 800 (lifted), contact 804 (the bundle in his arms),
+// Stills (film frame = 504 + local): beat 579 (run), 719 (finds him), 800 (lifted), contact 804 (the bundle in his arms),
 // beat 954 (the card and the photo). Kit only through person()/place() (styles/stick-man/kit/film.js); the set is ./set.js.
 import { person } from '/styles/stick-man/kit/film.js';
 import './props.js';
@@ -25,16 +25,16 @@ export default {
   haze: { color: [0.06, 0.07, 0.08], near: 14, far: 60 },
   set: 'nursery', setModule: '/films/wif5/parts/b/set.js',
   make: { pulse: { kind: 'ao_anim', prop: 'pulse' }, boy: { kind: 'ao_anim', prop: 'boy' } },
-  cast: { doc: doc.cast({ at: [0.1, 7.6, 0], yaw: 0, focus: 'camera', lead: true }) },
+  cast: { doc: doc.cast({ at: [0.1, 9.0, 0], yaw: 0, focus: 'camera', lead: true }) },
   anim: { doc: [
-    doc.clip('Move_Run_Fwd_Loop', { f: 0, pos: [0.1, 7.6], to: [0.1, -0.2], expr: 'panic', look: 'camera0' }),
+    doc.clip('Move_Run_Fwd_Loop', { f: 36, pos: [0.1, 9.0], to: [0.05, 0.6], expr: 'panic', look: 'camera0' }),
     doc.clip('Idle_Stand_Loop', { f: 150, pos: AT, yaw: -62, expr: 'worried', look: 'cradle' }),
     doc.clip('Idle_CarryBag_Loop', { f: 262, pos: AT, yaw: -28, swap: BABY, expr: 'calm', look: 'baby' }),
-    { f: 400, expr: 'sad', look: 'photo' },
+    { f: 400, expr: 'worried', look: 'photo' },
   ] },
   direct: [
-    { at: { f: 0 }, intent: 'high', why: 'B1 · half the cradles empty: the rows run away behind him, he runs at us in the lower third', cut: 'cut',
-      cam: { pos: [0.25, -1.7, 2.7], aim: [0.05, 3.5, 0.35], lens: 20 } },
+    { at: { f: 0 }, intent: 'high', why: 'B1 · he runs down the aisle (seen from the side of it): lit full cradles and dark empty ones alternate, red beacons overhead', cut: 'cut',
+      cam: { pos: [0.6, 2.5, 1.95], aim: [0.1, 4.9, 0.85], lens: 24 } },
     { at: { f: 150 }, intent: 'low', why: 'B2 · he finds the boy: over the cradle, the bundle in front, his face up top', cut: 'cut',
       cam: { pos: [-1.55, -1.15, 1.3], aim: [-0.75, 0.45, 1.05], lens: 24 } },
     { at: { f: 270 }, intent: 'low', why: 'B3 · lifted to his chest', cut: 'cut',
@@ -42,6 +42,6 @@ export default {
     { at: { f: 298 }, intent: 'insert', why: 'contact · the bundle in his arms', cut: 'cut',
       cam: { pos: [-0.1, -0.6, 1.2], aim: [-0.4, 0.4, 1.12], lens: 40 } },
     { at: { f: 400 }, intent: 'low', why: 'B4 · remember him: his card and her photo low, his face over them', cut: 'cut',
-      cam: { pos: [-1.24, -0.27, 1.15], aim: [-0.86, 0.45, 1.06], lens: 18 } },
+      cam: { pos: [-1.3, -0.4, 1.2], aim: [-0.6, 0.45, 1.06], lens: 18 } },
   ],
 };

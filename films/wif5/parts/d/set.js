@@ -9,19 +9,21 @@ export const SUN_DIR = [0.2, 0.9, -0.25];
 export const SUN_CENTER = [0, 1, 1.0], SUN_HALF = 6;
 export const EDGE = 1.8;                                               // the water's edge (the embankment's lip)
 export const RELEASE = 146;                                            // the father lets go (the set lantern takes over)
-export const MARKS = { dad: [0.3, 1.2, 0], son0: [-2.6, -0.2, 0], son1: [-0.6, 1.15, 0] };
-export const LIFT0 = [0.3, 1.62, 0.95];                                // where it leaves his hands
-export const PLACES = { lantern: [0.3, 1.62, 1.0], sky: [0.5, 14, 7], water: [0.3, 4, 0], son: [-0.5, 0.9, 1.0], camera0: [0.6, -2, 1.2] };
+export const MARKS = { dad: [0.3, 1.2, 0], son0: [-0.9, 1.45, 0], son1: [-0.065, 0.69, 0] };   // the son comes in along the path to his father's left
+export const ONTO = [0.135, 0.79, 0.9];                               // the son's left fist on its paper, low on his side (dbg: lantern at the fists' middle)
+export const LIFT0 = [0.247, 0.875, 0.86];                             // where it leaves his hands (dbg f62: the fists' middle)
+export const PLACES = { lantern: [0.247, 0.875, 1.05], sky: [0.5, 14, 7], water: [0.3, 4, 0], son: [-0.5, 0.9, 1.0], camera0: [0.6, -2, 1.2] };
 export const CAMERA_SIDE = [0, -1];
 export const CAMERA_ROOM = [[[-4, -4], [4, 1.7]]];
-const PROPS = ['street/street-lamp', 'street/bench'];
+const PROPS = [];
 const by = 'ep-whatif1-v5-director', why = 'V5 stills, measure not built';
 export const BANK = place('street', { light: 'lake-dusk', props: PROPS, waivers: PROPS.map(p => ({ pair: `light|${p}|lake-dusk`, why, by })) });
 export const COLLIDE = BANK.COLLIDE;
 const ENV_K = 0.4;
 
-// where the released lantern is at film-part frame f (rises, speeds up, drifts out over the water)
-export function liftAt(f) { const t = Math.max(0, (f - RELEASE) / 30); return [LIFT0[0] + 0.08 * t, LIFT0[1] + 0.5 * t + 0.1 * t * t, LIFT0[2] + 0.4 * t + 0.3 * t * t]; }
+// where the released lantern is at film-part frame f: up first, clear of his face (drifting away from him), then
+// speeding up and out over the water
+export function liftAt(f) { const t = Math.max(0, (f - RELEASE) / 30); return [LIFT0[0] - 0.15 * t, LIFT0[1] - 0.2 * t + 0.4 * t * t, LIFT0[2] + 1.1 * t + 0.3 * t * t]; }
 
 export async function build(stage) {
   const K = createKit(stage, { env: { top: [0.22, 0.20, 0.36], mid: [0.52, 0.36, 0.38], bottom: [0.14, 0.12, 0.16] }, envK: ENV_K });
@@ -29,13 +31,13 @@ export async function build(stage) {
   const M = (c, rough = 0.8, o = {}) => K.mat(c, rough, { env: ENV_K, ...o });
   const material = () => src => { const m = new T.MeshStandardMaterial({ color: src.color ? src.color.clone() : new T.Color(0.5, 0.5, 0.5), map: src.map || null,
     roughness: 0.75, metalness: 0, envMap: K.ENV, envMapIntensity: ENV_K }); m.userData.noToon = true; return m; };
-  const { put } = await BANK.open(stage, { kit: K, material });
+  await BANK.open(stage, { kit: K, material });
 
   // ---- the dusk: indigo overhead, mauve, a peach band low over the far shore
   K.skyDome({ zenith: '#262a58', mid: '#7a5688', horizon: '#eea072', clouds: 0, r: 58 });
 
   // ---- the bank: worn grass going down to a paved path and a stone lip; the water below it
-  const grass = tex(512, 512, (g, W) => { g.fillStyle = '#3d4a30'; g.fillRect(0, 0, W, W); for (let i = 0; i < 2600; i++) { g.fillStyle = `rgba(${70 + r() * 50},${84 + r() * 50},${44 + r() * 30},0.55)`; g.fillRect(r() * W, r() * W, 2, 6); } });
+  const grass = tex(512, 512, (g, W) => { g.fillStyle = '#56633f'; g.fillRect(0, 0, W, W); for (let i = 0; i < 2600; i++) { g.fillStyle = `rgba(${70 + r() * 50},${84 + r() * 50},${44 + r() * 30},0.55)`; g.fillRect(r() * W, r() * W, 2, 6); } });
   grass.repeat.set(6, 6);
   K.box([-30, -12, -0.2], [30, 0.6, 0], M([1, 1, 1], 0.95, { map: grass }), { r: 0, cast: false });
   const pave = tex(512, 512, (g, W) => { g.fillStyle = '#8a7a6c'; g.fillRect(0, 0, W, W); g.strokeStyle = 'rgba(40,30,30,0.55)'; g.lineWidth = 3;
@@ -58,10 +60,8 @@ export async function build(stage) {
     for (let i = 0; i < 70; i++) { const x = r() * W, w = 18 + r() * 40, h = 30 + r() * 70; g.fillStyle = '#241e34'; g.fillRect(x, H - h, w, h); for (let k = 0; k < 4; k++) { g.fillStyle = r() < 0.6 ? '#f0b060' : '#d68a4a'; g.fillRect(x + 4 + r() * (w - 10), H - h + 6 + r() * (h - 14), 4, 5); } } });
   K.card([0, 44, 2.0], 110, 10, shore, { emissive: 0.6, transparent: true });
 
-  // ---- a bench and a street lamp on the bank (its warm pool lights the path where they stand)
-  put('street/street-lamp', [-1.4, 1.2, 0], 0);
-  put('street/bench', [2.2, 0.9, 0], 180);
-  K.point([-1.4, 1.0, 3.4], '#ffc888', 26, 6.0);
+  // ---- the bank's light: a street lamp's pool from off shot
+  K.point([-2.6, -0.6, 3.4], '#ffc888', 22, 6.5);   // a lamp off to the left, out of shot: its pool on the path
 
   // ---- the lantern that rises: hidden until they let go, then up and out over the water, its light with it
   const up = K.group([0, 0, 0]); const L = lantern(); up.add(L); up.visible = false;

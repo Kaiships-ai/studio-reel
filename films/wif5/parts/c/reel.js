@@ -1,7 +1,7 @@
 // wif5 part c (film 984-1134, here 0-150): the care home. An old man stands stooped at a table for two, his hand on his cup;
-// hers is poured at the empty chair with her cardigan over its back (an ache). Behind him the one carer left crosses with
-// four trays stacked in her arms, leaning. Stills (film = 984 + local): beat 1024 (him, the two cups, the chair),
-// contact 1028 (his hand on his cup), beat 1094 (the carer and the trays), contact 1098 (the trays in her hands).
+// hers is poured, steaming, at the empty chair across from him, her cardigan over its back (an ache). Behind him the one
+// carer left pushes the meal trolley, four trays on it, bent over the bar. Stills (film = 984 + local): beat 1024 (him, the two cups, the chair),
+// contact 1028 (his hand on his cup), beat 1068 (the carer and the trolley), contact 1084 (both hands on its bar).
 // Elder clips only (CAST.md): Idle_Stooped_Loop; the cup is a film prop in his hand. Kit only through person()/place().
 import { person } from '/styles/stick-man/kit/film.js';
 import './props.js';
@@ -11,9 +11,9 @@ const by = 'ep-whatif1-v5-director', why = 'V5 stills, measure not built';
 const him = person({ name: 'wif5_old', body: 'elder', age: 'elder', outfit: ['sweater:sand'], face: ['sad'], hair: [],
   clips: ['Idle_Stooped_Loop'], waivers: [{ pair: 'hand|wif5_teacup|elder|hand', why, by }] });
 const carer = person({ name: 'wif5_carer', body: 'adult', outfit: ['sweater:teal'], face: ['scared'], hair: [],
-  clips: ['Move_CarryBag_Walk_Loop', 'Idle_CarryBag_Loop'], waivers: [{ pair: 'hand|wif5_trays|adult|hand', why, by }] });
+  clips: ['Move_PushHeavy_Loop'], waivers: [{ pair: 'hand|wif5_trolley|adult|hand', why, by }] });
 
-const TRAYS = { hugbag: 'wif5_trays' };
+const TROLLEY = { crate: 'wif5_trolley' };
 export const CUTS = [0, 42, 70, 98];
 export default {
   title: 'wif5 c: care home', fps: 30, glasses: false, style: 'kaiships', directDrift: 0, name: 'dayroom',
@@ -27,25 +27,25 @@ export default {
   set: 'dayroom', setModule: '/films/wif5/parts/c/set.js',
   cast: {
     him: him.cast({ at: [...MARKS.him.slice(0, 2), 0], yaw: 0, focus: 'hercup', lead: true }),
-    carer: carer.cast({ at: [...MARKS.carer.slice(0, 2), 0], yaw: -90 }),
+    carer: carer.cast({ at: [2.0, 3.4, 0], yaw: -90 }),
   },
   anim: {
     him: [
-      him.clip('Idle_Stooped_Loop', { f: 0, pos: MARKS.him.slice(0, 2), yaw: 0, props: { L: 'wif5_teacup' }, expr: 'sad', look: 'hercup' }),
+      him.clip('Idle_Stooped_Loop', { f: 0, pos: MARKS.him.slice(0, 2), yaw: 0, props: { L: 'wif5_teacup' }, expr: 'worried', look: 'hercup' }),
       { f: 70, look: 'chair' },
     ],
     carer: [
-      carer.clip('Move_CarryBag_Walk_Loop', { f: 0, pos: [2.9, 3.4], to: [-1.6, 3.4], swap: TRAYS, expr: 'scared', look: 'trays' }),
+      carer.clip('Move_PushHeavy_Loop', { f: 0, pos: [2.0, 3.4], to: [1.0, 3.4], swap: TROLLEY, expr: 'nervous', look: 'trays' }),
     ],
   },
   direct: [
     { at: { f: 0 }, intent: 'low', why: 'C1 · two cups, one empty chair: from above the table, him and her chair in the lower third, the carer crossing behind', cut: 'cut',
-      cam: { pos: [0.02, -0.3, 1.9], aim: [0.02, 1.7, 1.5], lens: 20 } },
+      cam: { pos: [-0.1, -1.6, 1.7], aim: [0.1, 1.0, 0.85], lens: 26 } },
     { at: { f: 42 }, intent: 'insert', why: 'contact · his hand on his cup', cut: 'cut',
-      cam: { pos: [0.02, 0.5, 1.0], aim: [-0.14, 1.25, 0.82], lens: 38 } },
-    { at: { f: 70 }, intent: 'low', why: 'C2 · the carer behind with four trays, him in front', cut: 'cut',
-      cam: { pos: [-0.85, 2.95, 1.2], aim: [0.45, 3.3, 0.92], lens: 24 } },
-    { at: { f: 98 }, intent: 'insert', why: 'contact · the trays in her hands', cut: 'cut',
-      cam: { pos: [-0.15, 2.35, 1.05], aim: [0.3, 3.4, 0.85], lens: 40 } },
+      cam: { pos: [0.3, 0.3, 1.1], aim: [-0.15, 1.3, 1.0], lens: 30 } },
+    { at: { f: 70 }, intent: 'low', why: 'C2 · the carer behind, bent over the meal trolley with four trays', cut: 'cut',
+      cam: { pos: [-1.1, 1.9, 1.25], aim: [0.6, 3.4, 0.75], lens: 26 } },
+    { at: { f: 98 }, intent: 'insert', why: 'contact · both hands on the trolley bar', cut: 'cut',
+      cam: { pos: [-0.2, 2.45, 1.45], aim: [0.72, 3.38, 1.0], lens: 26 } },
   ],
 };

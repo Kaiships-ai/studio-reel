@@ -1,6 +1,6 @@
 // wif5 part e: an open-plan office floor at night. One man still at his desk in the front row; behind him four rows of
-// empty desks, chairs pushed back and turned away, monitors dark. At PHONES every desk phone lights up at once (a cyan
-// screen and a red call lamp each, their glow on the desks), and he stands and turns to them.
+// empty desks, chairs pushed back and turned away, monitors dark. At PHONES every desk phone lights up at once (a big red
+// call lamp and a lit screen each, and a red light over each phone that throws its pool on the desk), and he stands.
 // Blender metres: x right, y into the scene, z up; the camera on the y < 0 side. He faces -y (the camera side).
 import { createKit, rng, tex, place, SURF } from '/styles/stick-man/kit/film.js';
 
@@ -13,7 +13,8 @@ export const UP = 84;                                                  // he sta
 export const MARKS = { him: [0, 1.25, 0] };
 export const HIS_DESK = [0, 0.72];                                     // the desk in front of him (centre)
 const COLS = [-3.2, -1.6, 0, 1.6, 3.2], ROWS = [0.72, 2.6, 4.3, 6.0];
-export const PLACES = { desk: [0, 0.72, 0.75], screen: [-0.45, 0.72, 0.95], phones: [0, 4.3, 0.9], phonesL: [-2.4, 3.0, 0.9], camera0: [0, -2, 1.2] };
+export const PLACES = { desk: [0, 0.72, 0.75], screen: [-0.45, 0.72, 0.95], phones: [0, 4.3, 0.9], phonesL: [-2.4, 3.0, 0.9], camera0: [0, -2, 1.2],
+  out: [0.35, -1.2, 1.55], outL: [-0.45, -1.4, 1.45] };   // out: up and out over the desk toward the ringing (his face to the room's front)
 export const CAMERA_SIDE = [0, -1];
 export const CAMERA_ROOM = [[[-4, -4], [4, 0.3]]];
 const PROPS = ['office/desk', 'office/office-chair', 'office/computer-screen'];
@@ -38,7 +39,7 @@ export async function build(stage) {
   K.box([-6, -5, -0.2], [6, 9, 0], M([1, 1, 1], 0.95, { map: carpet }), { r: 0, cast: false });
   const wall = M([0.56, 0.58, 0.60], 0.9, { map: SURF.plaster('#8e949c', 3) }), band = M([0.30, 0.36, 0.46], 0.7);
   K.box([-6.2, -5, 0], [-6, 9, 3.0], wall, { r: 0 }); K.box([6, -5, 0], [6.2, 9, 3.0], wall, { r: 0 });
-  K.box([-6, -5, 2.9], [6, 9, 3.0], M([0.20, 0.21, 0.24], 0.95), { r: 0, cast: false });
+  K.box([-6, -5, 2.9], [6, 9, 3.0], M([0.40, 0.41, 0.46], 0.95), { r: 0, cast: false });
   for (let y = -4; y < 9; y += 1.2) K.box([-6, y, 2.86], [6, y + 0.03, 2.9], M([0.32, 0.33, 0.36], 0.8), { r: 0, cast: false });
   // the back wall: a run of tall windows onto a city at night (a self-lit painted strip), mullions between
   K.box([-6, 8.0, 0], [6, 8.2, 0.9], wall, { r: 0 }); K.box([-6, 8.0, 2.5], [6, 8.2, 2.9], wall, { r: 0 });
@@ -54,10 +55,11 @@ export async function build(stage) {
     const g = K.group([x, y, h], rot), dark = M([0.14, 0.15, 0.17], 0.5);
     K.cube([0, 0, 0.03], [0.22, 0.18, 0.06], dark, { parent: g, r: 0.012 });
     K.cube([-0.06, -0.01, 0.075], [0.05, 0.17, 0.035], dark, { parent: g, r: 0.015 });
-    const off = M([0.10, 0.12, 0.12], 0.3), on = K.glow([0.30, 0.95, 0.85], 1.4), ledOff = M([0.22, 0.05, 0.05], 0.4), ledOn = K.glow([1.0, 0.12, 0.08], 2.0);
+    const off = M([0.10, 0.12, 0.12], 0.3), on = K.glow([1.0, 0.62, 0.56], 1.3), ledOff = M([0.22, 0.05, 0.05], 0.4), ledOn = K.glow([1.0, 0.14, 0.08], 2.6);
     const scr = K.cube([0.05, -0.02, 0.064], [0.09, 0.06, 0.006], off, { parent: g, r: 0.002 });
-    const led = K.sphere([0.085, 0.06, 0.066], 0.009, ledOff, { parent: g });
-    return { scr, led, off, on, ledOff, ledOn };
+    const led = K.sphere([0.07, 0.065, 0.075], 0.024, ledOff, { parent: g });
+    const light = K.point([x, y, h + 0.16], '#ff2a18', 0, 1.0);   // its call light: a red pool on its own desk
+    return { scr, led, off, on, ledOff, ledOn, light };
   };
   const lit = [];
   for (const y of ROWS) for (const x of COLS) {
@@ -92,12 +94,11 @@ export async function build(stage) {
   K.point([-0.4, 1.0, 1.0], '#8ab0f0', 4, 2.0);
   K.point([0, -1.8, 2.2], '#b0b8d8', 5, 5.0);
   K.point([0, 7.0, 2.0], '#7080c0', 10, 7.0);
-  // the phones' glow: cyan-green over each row and red from the call lamps, off until PHONES
-  const rowL = ROWS.flatMap(y => [K.point([-2.4, y - 0.1, 1.3], '#4ef0d0', 0, 2.6), K.point([2.4, y - 0.1, 1.3], '#4ef0d0', 0, 2.6), K.point([0, y - 0.1, 1.2], '#ff4030', 0, 2.2)]);
+  K.point([0.3, -0.9, 0.5], '#9aa6cc', 5, 2.6);   // a low cool bounce on the floor and his desk's front from the corridor
+  // every phone rings from PHONES: its lamp and screen lit, its red light on its desk (flashing: a short dim every 12 frames)
   K.anim('phones', K.group([0, 0, 0]), f => {
-    const on = f >= PHONES, blink = on && Math.floor((f - PHONES) / 8) % 2 === 0;
-    for (const p of lit) { p.scr.material = on ? p.on : p.off; p.led.material = blink ? p.ledOn : p.ledOff; }
-    rowL.forEach((l, i) => { l.intensity = !on ? 0 : i % 3 === 2 ? (blink ? 6 : 2) : 7; });
+    const on = f >= PHONES, dim = on && (f - PHONES) % 12 >= 10;
+    for (const p of lit) { p.scr.material = on ? p.on : p.off; p.led.material = on && !dim ? p.ledOn : p.ledOff; p.light.intensity = !on ? 0 : dim ? 1.2 : 4; }
   });
   return { props: K.props };
 }

@@ -1,6 +1,6 @@
 // wif5 part e (film 1343-1518, here 0-175): the office. One man types at his desk on a floor of empty desks (alone); every
 // phone on the floor lights up at once (shock); he stands and turns to them (alarm). Stills (film = 1343 + local): beat
-// 1373 (him alone among the empty desks), beat 1418 (every phone lit, he looks up), beat 1511 (he has stood, turning).
+// 1373 (him alone among the empty desks), beat 1413 (every phone lit, his head comes up), beat 1483 (he has stood).
 // Clips from CAST.md (adult/g1/pens+shirt:office+tie): Act_Type_Loop, Trans_StandUp_Once, Move_TurnLeft_Once. The loops
 // run longer than their slot: each is cut where the next begins (expanded keys; no hand props in this part).
 import { person } from '/styles/stick-man/kit/film.js';
@@ -10,15 +10,15 @@ import { MARKS, PHONES, UP } from './set.js';
 const man = person({ name: 'wif5_officer', body: 'adult', outfit: ['shirt:office', 'tie:crimson', 'pens'], face: ['scared'], hair: [],
   clips: ['Act_Type_Loop', 'Trans_StandUp_Once', 'Move_TurnLeft_Once'] });
 
-const AT = MARKS.him.slice(0, 2), TURN = 142;
+const AT = MARKS.him.slice(0, 2), TURN = 150;
 const span = (keys, from, to) => keys.filter(k => k.f >= from && k.f < to);
 const MAN = [
-  ...span(expandClips([man.clip('Act_Type_Loop', { f: 0, pos: AT, yaw: 0, expr: 'sad', look: 'screen' })]), 0, UP),
-  { f: PHONES, expr: 'shock', look: 'phones' },
-  ...span(expandClips([man.clip('Trans_StandUp_Once', { f: UP, pos: AT, yaw: 0, expr: 'worried', look: 'phones' })]), UP, TURN),
+  ...span(expandClips([man.clip('Act_Type_Loop', { f: 0, pos: AT, yaw: 0, expr: 'neutral', look: 'screen' })]), 0, UP),
+  { f: PHONES, expr: 'panic', look: 'out' },
+  ...span(expandClips([man.clip('Trans_StandUp_Once', { f: UP, pos: AT, yaw: 0, expr: 'panic', look: 'outL' })]), UP, TURN),
   ...expandClips([man.clip('Move_TurnLeft_Once', { f: TURN, pos: AT, yaw: 0, expr: 'panic', look: 'phonesL' })], { pos: AT, yaw: 0 }),
 ];
-export const CUTS = [0, PHONES, 120];
+export const CUTS = [0, PHONES, 110];
 export default {
   title: 'wif5 e: office', fps: 30, glasses: false, style: 'kaiships', directDrift: 0, name: 'office',
   frames: [0, 175], lines: [], show: [{ from: 0 }], beats: [], overlays: [],
@@ -34,10 +34,10 @@ export default {
   anim: { man: MAN },
   direct: [
     { at: { f: 0 }, intent: 'high', why: 'E1 · alone: him at the front desk, the empty rows running back behind him', cut: 'cut',
-      cam: { pos: [0.45, -0.6, 2.0], aim: [0.0, 1.0, 0.35], lens: 26 } },
-    { at: { f: PHONES }, intent: 'low', why: 'E2 · every phone lit behind him, his head comes up', cut: 'cut',
-      cam: { pos: [0.3, -0.8, 1.4], aim: [0.0, 1.25, 0.66], lens: 30 } },
-    { at: { f: 120 }, intent: 'low', why: 'E3 · he stands and turns to them', cut: 'cut',
-      cam: { pos: [-0.9, -0.1, 1.3], aim: [0.05, 1.4, 1.05], lens: 24 } },
+      cam: { pos: [0.6, -1.0, 1.9], aim: [0.0, 1.8, 0.78], lens: 26 } },
+    { at: { f: PHONES }, intent: 'low', why: 'E2 · every phone on the floor lit and ringing behind him, his head comes up', cut: 'cut',
+      cam: { pos: [0.45, -1.1, 2.0], aim: [0.0, 2.6, 0.5], lens: 24 } },
+    { at: { f: 110 }, intent: 'low', why: 'E3 · he has stood, alarmed, the red-lit floor behind him (he turns to it after)', cut: 'cut',
+      cam: { pos: [-0.3, -0.75, 1.55], aim: [0.0, 1.8, 0.95], lens: 24 } },
   ],
 };

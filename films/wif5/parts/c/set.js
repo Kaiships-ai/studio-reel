@@ -8,8 +8,8 @@ import { teacup } from './props.js';
 export const SUN_DIR = [-0.75, 0.35, -0.45];                          // low, from the window on the right
 export const SUN_CENTER = [0, 1.5, 1.0], SUN_HALF = 6;
 export const TABLE = { at: [0.075, 0.9], w: 1.35, d: 0.8, h: 0.75 };     // h: the top, at the saucer under his hand (dbg: hand z 0.81, grip 0.06)
-export const MARKS = { him: [-0.2, 1.48, 0], chair: [0.3, 1.74, 0], carer: [1.6, 3.4, 0] };
-export const PLACES = { hercup: [0.42, 0.88, 0.8], chair: [0.88, 0.85, 0.85], mycup: [-0.3, 1.1, 0.8], carer: [0.6, 3.4, 1.4], trays: [0.4, 3.3, 0.85] };
+export const MARKS = { him: [-0.2, 1.48, 0], chair: [0.25, 0.2, 0], carer: [1.6, 3.4, 0] };   // her chair across the table from him, its back to the room
+export const PLACES = { hercup: [-0.06, 0.68, 0.8], chair: [0.25, 0.2, 0.85], mycup: [-0.3, 1.1, 0.8], carer: [0.6, 3.4, 1.4], trays: [0.4, 3.3, 0.85] };
 export const CAMERA_SIDE = [0, -1];
 export const CAMERA_ROOM = [[[-3.2, -3.5], [3.2, 0.3]]];
 const PROPS = ['care-home/lamp-round-floor', 'care-home/fancy-picture-frame', 'care-home/wall-clock', 'care-home/armchair', 'care-home/rug-round', 'care-home/walking-frame'];
@@ -48,10 +48,11 @@ export async function build(stage) {
   for (const sx of [-1, 1]) for (const sy of [-1, 1]) K.box([tx + sx * (w / 2 - 0.08) - 0.025, ty + sy * (d / 2 - 0.08) - 0.025, 0], [tx + sx * (w / 2 - 0.08) + 0.025, ty + sy * (d / 2 - 0.08) + 0.025, h - 0.04], wood, { r: 0.008 });
   const lace = tex(256, 256, (g, W) => { g.fillStyle = '#9c8460'; g.fillRect(0, 0, W, W); g.strokeStyle = 'rgba(90,60,40,0.5)'; g.lineWidth = 3; for (let i = 8; i < W; i += 24) { g.beginPath(); g.arc(W / 2, W / 2, i, 0, 7); g.stroke(); } });
   K.box([tx - 0.55, ty - 0.28, h], [tx + 0.55, ty + 0.36, h + 0.004], M([1, 1, 1], 0.9, { map: lace }), { r: 0, cast: false });
-  const hers = teacup(); hers.position.copy(K.B(...PLACES.hercup.slice(0, 2), h + 0.004)); hers.rotation.y = 0.6; K.root.add(hers);
+  const hers = teacup(undefined, { steam: true }); hers.position.copy(K.B(...PLACES.hercup.slice(0, 2), h + 0.004)); hers.rotation.y = 0.6; K.root.add(hers);
 
-  // ---- her chair: a wooden dining chair turned to the table, her plum cardigan over its back (buttons, ribbed cuffs)
-  const [chx, chy] = MARKS.chair, cg = K.group([chx, chy, 0], -12), seatW = M([0.40, 0.25, 0.14], 0.6);
+  // ---- her chair: a wooden dining chair pulled up to the table opposite him, its back to the room, her plum cardigan
+  // hung over that back on the outside (buttons, ribbed cuffs, the shoulders folded over the top rail)
+  const [chx, chy] = MARKS.chair, cg = K.group([chx, chy, 0], 192), seatW = M([0.40, 0.25, 0.14], 0.6);
   K.box([-0.22, -0.22, 0.44], [0.22, 0.22, 0.49], seatW, { parent: cg, r: 0.01 });
   for (const sx of [-1, 1]) for (const sy of [-1, 1]) K.box([sx * 0.19 - 0.022, sy * 0.19 - 0.022, 0], [sx * 0.19 + 0.022, sy * 0.19 + 0.022, 0.44], seatW, { parent: cg, r: 0.006 });
   for (const sx of [-1, 1]) K.box([sx * 0.19 - 0.022, 0.17, 0.49], [sx * 0.19 + 0.022, 0.215, 1.0], seatW, { parent: cg, r: 0.006 });
@@ -65,10 +66,11 @@ export async function build(stage) {
   sh.lineTo(0.3, 0.36); sh.lineTo(0.21, 0.38); sh.lineTo(0.08, 0.40); sh.lineTo(0, 0.30); sh.lineTo(-0.08, 0.40); sh.lineTo(-0.2, 0.38);
   const cgeo = new T.ExtrudeGeometry(sh, { depth: 0.025, bevelEnabled: true, bevelSize: 0.012, bevelThickness: 0.012, bevelSegments: 2 });
   const uv = cgeo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, (uv.getX(i) + 0.36) / 0.72, (uv.getY(i) + 0.12) / 0.52);
-  const card = new T.Mesh(cgeo, knit); card.position.copy(K.B(0, 0.15, 0.6)); card.rotation.x = -0.12; card.castShadow = true; card.userData.noInk = true; cg.add(card);
-  for (let i = 0; i < 4; i++) K.sphere([0.0, 0.11, 0.53 + i * 0.075], 0.014, M([0.92, 0.84, 0.62], 0.4), { parent: cg });
-  for (const sx of [-1, 1]) K.box([sx * 0.315 - 0.05, 0.12, 0.54], [sx * 0.315 + 0.05, 0.17, 0.585], M([0.45, 0.15, 0.26], 0.95), { parent: cg, r: 0.015 });   // ribbed cuffs
-  K.box([-0.22, 0.12, 0.43], [0.22, 0.17, 0.48], M([0.45, 0.15, 0.26], 0.95), { parent: cg, r: 0.015 });   // the hem band
+  const card = new T.Mesh(cgeo, knit); card.position.copy(K.B(0, 0.25, 0.6)); card.castShadow = true; card.userData.noInk = true; cg.add(card);
+  K.box([-0.23, 0.15, 0.96], [0.23, 0.275, 1.03], knit, { parent: cg, r: 0.03 });   // the shoulders over the top rail
+  for (let i = 0; i < 4; i++) K.sphere([0.0, 0.282, 0.53 + i * 0.075], 0.014, M([0.92, 0.84, 0.62], 0.4), { parent: cg });
+  for (const sx of [-1, 1]) K.box([sx * 0.315 - 0.05, 0.245, 0.54], [sx * 0.315 + 0.05, 0.295, 0.585], M([0.45, 0.15, 0.26], 0.95), { parent: cg, r: 0.015 });   // ribbed cuffs
+  K.box([-0.22, 0.245, 0.43], [0.22, 0.295, 0.48], M([0.45, 0.15, 0.26], 0.95), { parent: cg, r: 0.015 });   // the hem band
   // his own chair pushed back against the wall (he cannot sit; it stands empty too)
   put('care-home/armchair', [-2.3, 3.9, 0], 180);
 
