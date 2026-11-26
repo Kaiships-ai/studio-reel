@@ -7,6 +7,7 @@ import { toon, lin, css, B, INK_RGB, INK_SUN, PLACE } from './look.js';
 import { DEG } from './mathx.js';
 import { EXPR, faceRig, mixFace, FACE_STYLE, headTint } from './faces.js';
 import { makeHandProp } from '#kit/cast/handprops.js';
+import { drawnSolid } from '#kit/props/drawn.js';
 import { SOFT, footDown, legReach, limitArm, limitBody, ROM, torsoSlices, ellipsoid, worldBox, solveArm, armPenetration, propPush, PHYS, centreOfMass, balanceShift, headWear, wearVolume } from './body.js';
 
 const SPIN_Q = new THREE.Quaternion(), SPIN_AX = new THREE.Vector3(0, 1, 0), _camL = new THREE.Vector3();
@@ -764,7 +765,7 @@ export function makeStick(spec) {
     const U = o.userData;
     if (!U.box || U.box.isEmpty()) {
       o.updateMatrixWorld(true); const inv = new THREE.Matrix4().copy(o.matrixWorld).invert(), m = new THREE.Matrix4(); U.box = new THREE.Box3();
-      o.traverse(c => { if (!c.isMesh || !c.geometry || c.material?.blending === THREE.AdditiveBlending || c.material?.transparent) return;
+      o.traverse(c => { if (!drawnSolid(c)) return;
         if (!c.geometry.boundingBox) c.geometry.computeBoundingBox(); U.box.union(c.geometry.boundingBox.clone().applyMatrix4(m.multiplyMatrices(inv, c.matrixWorld))); });
       if (U.box.isEmpty()) return null;
     }

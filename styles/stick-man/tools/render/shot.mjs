@@ -231,15 +231,16 @@ if (A.speed && !REEL) {
     if (big < 0.30) { sr++; smallF.push(r.f); if (sr > sBest) { sBest = sr; sAt = r.f; } } else sr = 0;
   }
   L.push(`    largest figure under 30 % of frame height in ${s0}-${s1}: longest run ${sBest} frames${sAt != null ? ' (ends ' + sAt + ')' : ''}; frames: ${compress(smallF) || 'none'}`);
-  // (d) contact: hand dot to held prop's grip socket, px at this frame size (on screen only), per actor
+  // (d) contact: the hand's drawn edge to the held prop's (engine/grip.js), px at this frame size (on screen only), per actor; no gapPx is unmeasured
   const k1080 = 1080 / W, gaps = {};
   for (const r of rows) for (const h of r.held || []) {
     if (!h.onScreen || r.motion.cut) continue;
-    const g = (gaps[h.actor] ||= { max: 0, at: null, props: new Set(), n: 0 }); g.n++; g.props.add(h.prop);
+    const g = (gaps[h.actor] ||= { max: 0, at: null, props: new Set(), n: 0, un: 0 }); g.n++; g.props.add(h.prop);
+    if (h.gapPx == null) { g.un++; continue; }
     if (h.gapPx * k1080 > g.max) { g.max = h.gapPx * k1080; g.at = `${r.f} ${h.prop}`; }
   }
-  L.push(`(d) hand to held prop (grip socket), max gap px at 1080p (target <= 2):`);
-  for (const [n, g] of Object.entries(gaps)) L.push(`    ${n}: ${g.max.toFixed(2)} px${g.at ? ' (frame ' + g.at + ')' : ''} over ${g.n} held frames, props ${[...g.props].join(', ')}`);
+  L.push(`(d) hand to held prop (drawn edges), max gap px at 1080p (target <= 2):`);
+  for (const [n, g] of Object.entries(gaps)) L.push(`    ${n}: ${g.max.toFixed(2)} px${g.at ? ' (frame ' + g.at + ')' : ''} over ${g.n} held frames${g.un ? `, ${g.un} UNMEASURED (no gapPx)` : ''}, props ${[...g.props].join(', ')}`);
   if (!Object.keys(gaps).length) L.push('    no held props on screen');
   L.push(...holdLines(rows, hidden));
   // (e) bodies inside set geometry (and torso in torso)

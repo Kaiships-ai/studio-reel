@@ -199,6 +199,7 @@ styles/stick-man/kit/look/exposure.js
 styles/stick-man/kit/look/highlights.js
 styles/stick-man/kit/props/story.js
 styles/stick-man/kit/props/dyepack.js
+styles/stick-man/kit/props/drawn.js
 styles/stick-man/kit/sets/kit.js
 styles/stick-man/kit/sets/canvas.js
 styles/stick-man/kit/sets/dress.js

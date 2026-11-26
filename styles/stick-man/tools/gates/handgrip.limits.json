@@ -1,0 +1,6 @@
+{
+  "about": "handgrip.mjs limits, frozen 26/11 before anything was measured; never loosened (raise a fault instead)",
+  "GAP_CM": 1.5,
+  "why": "the air between the hand's drawn edge (its world radius with its ink outline, measured per figure: about 3.0 cm on an adult, 5.4 cm gloved, scaled on a child) and the nearest drawn point of the held prop; more than 1.5 cm of it shows as a prop off the hand at a mid shot",
+  "control": { "move_cm": 5, "must": "fail" }
+}
