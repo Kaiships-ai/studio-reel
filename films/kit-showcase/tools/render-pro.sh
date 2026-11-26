@@ -6,7 +6,7 @@ S=styles/stick-man/tools/render/shot.mjs; F=films/kit-showcase; O=$F/renders; mk
 # the loop needs a vo/vo.wav to mux (the showcase has no voice): a silent one, made here, never committed
 [ -f $F/vo/vo.wav ] || .pixi/envs/default/bin/ffmpeg -loglevel error -y -f lavfi -i anullsrc=r=24000:cl=mono -t 8.2 $F/vo/vo.wav
 case "$1" in
-  wide) $N $S --film $F --tier still --frames 119,120 --out $O/w_%d.jpg --no-cache 1 --lock-wait 1800 > $O/wide.log 2>&1; cp -f $O/w_120.jpg $O/wide.jpg;;
+  wide) $N $S --film $F/stills --tier still --frames 119,120 --out $O/w_%d.jpg --no-cache 1 --lock-wait 1800 > $O/wide.log 2>&1; cp -f $O/w_120.jpg $O/wide.jpg;;
   lineup) $N $S --film $F/lineup --tier still --frames 119,120 --out $O/l_%d.jpg --no-cache 1 --lock-wait 1800 > $O/lineup.log 2>&1; cp -f $O/l_120.jpg $O/lineup.jpg;;
   loop) $N $S --film $F --w 480 --h 854 --frames 0-239 --mp4 $O/loop_480.mp4 --pad-audio 1 --no-cache 1 --lock-wait 1800 > $O/loop.log 2>&1;;
   dbg) $N $S --film $F --frames 0-239 --dbg $F/review/rows.jsonl > $O/dbg.log 2>&1;;

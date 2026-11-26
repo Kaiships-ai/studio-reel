@@ -5,12 +5,12 @@ import { expandClips } from '/styles/stick-man/motion-lib/index.js';
 
 const SKIN = [[0.86, 0.72, 0.60], [0.74, 0.56, 0.44], [0.60, 0.43, 0.33], [0.90, 0.78, 0.66]];
 const P = {
-  ana: person({ name: 'ks_ana', body: 'adult', outfit: ['sweater:coral'], face: ['excited'], skin: SKIN[0], hair: [toonHair('side', [0.28, 0.16, 0.08])], prop: 'tin', clips: ['Move_Walk_Fwd_Loop'] }),
-  bo: person({ name: 'ks_bo', body: 'adult', girth: 1.35, outfit: ['shirt:work:crimson'], face: ['excited'], skin: SKIN[1], hair: [toonHair('crop', [0.10, 0.07, 0.05])], prop: 'tin', clips: ['Move_Run_Fwd_Loop'] }),
+  ana: person({ name: 'ks_ana', body: 'adult', outfit: ['sweater:coral'], face: ['excited'], skin: SKIN[0], hair: [toonHair('side', [0.45, 0.28, 0.12])], prop: 'tin', clips: ['Move_Walk_Fwd_Loop'] }),
+  bo: person({ name: 'ks_bo', body: 'adult', girth: 1.35, outfit: ['shirt:work:rose'], face: ['excited'], skin: SKIN[1], hair: [toonHair('crop', [0.10, 0.07, 0.05])], prop: 'tin', clips: ['Move_Run_Fwd_Loop'] }),
   chi: person({ name: 'ks_chi', body: 'adult', girth: 0.9, outfit: ['skirt:navy', 'sweater:teal'], face: ['confused'], skin: SKIN[3], hair: [toonHair('woman', [0.50, 0.30, 0.12])], prop: 'balloon', clips: ['Gest_Point_Once'] }),
   dan: person({ name: 'ks_dan', body: 'adult', girth: 1.12, outfit: ['cardigan:plum', 'shirt:work'], face: ['smug'], skin: SKIN[2], hair: [toonHair('curly', [0.55, 0.22, 0.10])], clips: ['Gest_SitClap_Loop'] }),
-  ong: person({ name: 'ks_ong', body: 'elder', age: 'elder', outfit: ['cardigan:slate', 'shirt:office', 'tie'], face: ['proud'], skin: SKIN[1], hair: [toonHair('elder')], prop: 'tin', clips: ['Act_Give_Once'] }),
-  mai: person({ name: 'ks_mai', body: 'child', age: 'child', outfit: ['scarf:mustard', 'sweater:sky'], face: ['excited'], skin: SKIN[3], hair: [toonHair('girl', [0.30, 0.16, 0.07])], prop: 'balloon', clips: ['Move_Walk_Fwd_Loop'] }),
+  ong: person({ name: 'ks_ong', body: 'elder', age: 'elder', outfit: ['cardigan:sand', 'shirt:office', 'tie'], face: ['proud'], skin: SKIN[1], hair: [toonHair('elder')], prop: 'tin', clips: ['Act_Give_Once'] }),
+  mai: person({ name: 'ks_mai', body: 'child', age: 'child', outfit: ['scarf:mustard', 'sweater:sky'], face: ['excited'], skin: SKIN[3], hair: [toonHair('girl', [0.50, 0.32, 0.15])], prop: 'balloon', clips: ['Move_Walk_Fwd_Loop'] }),
 };
 
 // ---- an 8 s loop (L frames), the camera still: frame 0 is the frame after the last. Statics end where they begin; walkers and the runner go
@@ -52,7 +52,8 @@ const CHI = hold(endAt(P.chi, [['Gest_Point_Once'], ['Gest_Point_Once']], CHI_AT
 const ONG = hold(endAt(P.ong, [['Act_Give_Once']], ONG_AT, -40, { x_hpR_tin: 1 }), 'tin', 'R');
 const ANA = hold(circuit(P.ana, 'Move_Walk_Fwd_Loop', 31, 8, ellipse([0.0, 0.5], 2.1, 9.4), 0.0, { x_hpR_tin: 1 }), 'tin', 'R');
 const MAI = hold(circuit(P.mai, 'Move_Walk_Fwd_Loop', 20, 12, ellipse([0.0, 0.5], 2.1, 6.9), 0.5, { x_hpL_balloon: 1 }), 'balloon', 'L');
-const BO = hold(circuit(P.bo, 'Move_Run_Fwd_Loop', 19, 13, ellipse([0.0, 1.9], 2.0, 37), 0.76, { x_hpL_tin: 1 }), 'tin', 'L');
+const BO = hold(circuit(P.bo, 'Move_Run_Fwd_Loop', 19, 13, ellipse([0.0, 1.9], 2.0, 37), 0.70, { x_hpL_tin: 1 }), 'tin', 'L');
+export { P, circuit, hold, ellipse, endAt, L as LOOP_L };
 const AT = k => [...k[0].pos.slice(0, 2), 0];
 
 const cam = (pos, aim, lens) => ({ at: { f: 0 }, intent: 'loop', why: 'one still camera: the loop closes on itself', cut: 'cut', cam: { pos, aim, lens }, to: { pos, aim, lens }, move: { from: { f: 0 }, dur: 1, ease: 'linear' } });
@@ -60,7 +61,7 @@ export const CAM = { wide: [[0.0, -3.4, 1.15], [0.0, 3.0, 1.95], 21], lineup: [[
 export default {
   title: 'kit-showcase', fps: 30, glasses: false, style: { ...STYLE_PRESETS.kaiships, life: 0.75 }, directDrift: 0, name: 'plaza',
   frames: [0, L - 1], lines: [], show: [{ from: 0 }], beats: [], overlays: [],
-  look: { ao: 0.6, aoRadius: 0.5, shadowRadius: 2.0, sat: 1.0, con: 1.05, vig: 0.05, bloom: 0.14, hot: 0.1, ink: 2.4 },
+  look: { ao: 0.6, aoRadius: 0.5, shadowRadius: 2.0, sat: 1.0, con: 1.05, vig: 0.05, bloom: 0.14, hot: 0.1, ink: 1.5 },
   light: { sun: [0.62, 0.70, 1.0], power: 1.2, sunDir: [0.35, 0.50, -0.78], sky: [0.38, 0.42, 0.66], ground: [0.32, 0.26, 0.22], hemi: 0.6,
     fill: [1.0, 0.86, 0.70], fillPower: 0.5, background: [0.05, 0.06, 0.12], lit: [1.0, 0.90, 0.76], shade: [0.66, 0.62, 0.74], lamp: 0.6 },
   grade: { exp: 1.0, lift: 0.0, sat: 1.0, haze: 0, sky: { clouds: 0 } },

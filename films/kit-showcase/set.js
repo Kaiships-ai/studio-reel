@@ -36,7 +36,7 @@ export async function build(stage) {
 
   // back row of shop fronts with lit windows
   const PL = ['#8a5a3c', '#6d3b34', '#3f5d63', '#a08154', '#4b4a6b', '#7a6248'], ledge = M([0.5, 0.52, 0.6], 0.95);
-  const winOn = K.glow([1.0, 0.62, 0.30], 0.95), winOn2 = K.glow([1.0, 0.78, 0.45], 0.8), winOff = M([0.07, 0.08, 0.12], 0.3);
+  const winOn = K.glow([1.0, 0.62, 0.30], 0.95), winOn2 = K.glow([1.0, 0.78, 0.45], 0.8), winOff = M([0.20, 0.24, 0.34], 0.3);
   let x = -14; for (const [w, h] of [[4.2, 6], [3.6, 7.5], [4.4, 5.5], [3.2, 7], [3.6, 8], [4.4, 6], [4.2, 7]]) {
     K.box([x, 9, 0], [x + w, 10.2, h], M(PL[Math.floor(r() * PL.length)], 0.85), { r: 0.02 });
     K.box([x - 0.05, 8.92, h], [x + w + 0.05, 10.25, h + 0.18], ledge, { r: 0.02 });
@@ -48,7 +48,7 @@ export async function build(stage) {
   put('street/market-stand', [-6.0, 6.0, 0], 0); put('street/market-stand', [6.2, 6.4, 0], 0);
   put('street/street-lamp', [-4.6, 4.6, 0], 0); put('street/street-lamp', [4.8, 4.8, 0], 0); put('street/street-lamp', [0.2, 7.6, 0], 0);
   put('street/bench', [-1.9, 2.7, 0], 0); put('street/bench-2', [5.0, 2.2, 0], 0);
-  put('street/fire-hydrant', [-1.6, 5.4, 0], 0); put('street/cart', [3.6, 6.7, 0], 0); put('street/ad-board', [1.7, 4.3, 0], 0);
+  put('street/fire-hydrant', [-1.6, 5.4, 0], 0); put('street/cart', [3.6, 6.7, 0], 0); put('street/ad-board', [1.7, 4.3, 0], 0, { tint: [0.55, 0.55, 0.55] });
   put('street/traffic-cone', [-0.4, 2.4, 0], 0); put('street/traffic-cone', [0.4, 2.4, 0], 0);
   put('street/flowers', [-5.4, 1.2, 0], 0); put('street/standing-picture-frame', [-2.6, 2.9, 0.4], 0, {}); put('street/taxi', [-8.8, 3.0, 0], 90);
   put('misc/present', [-1.1, 2.4, 0], 0); put('misc/cake-birthday', [3.6, 6.0, 0.62], 0); put('misc/suit-case', [-3.2, 2.9, 0], 0); put('misc/book', [-2.7, 2.5, 0.4], 0);
@@ -57,5 +57,7 @@ export async function build(stage) {
   for (const p of [[-4.6, 4.6], [4.8, 4.8], [0.2, 7.6]]) K.point([p[0], p[1] - 0.3, 3.6], '#ffc98a', 26, 6.0);
   for (const p of [[-2.4, 2.4], [-2.0, 0.4], [0.4, 0.6], [2.0, 1.8], [2.7, 2.6], [0.7, 3.0]]) K.point([p[0], p[1] - 0.6, 2.7], '#ffbe7a', 16, 4.2);
   for (const [sx, sy] of [[-6.0, 6.0], [6.2, 6.4]]) K.point([sx, sy - 1.3, 1.9], '#ffb46a', 12, 3.4);
+  // a warm fill on the near side of the plaza so a figure walking past the lens (ana's circuit, 6.4-6.6 s) is lit, not a black shape
+  for (const [fx, fy] of [[0.4, -2.0], [-1.8, -1.9], [2.2, -1.9], [-3.4, -0.8], [3.6, -0.8]]) K.point([fx, fy, 2.4], '#ffcf9a', 14, 6.0);
   return { props: K.props };
 }
