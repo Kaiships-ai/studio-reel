@@ -4,7 +4,8 @@
 // Light (LIGHT-RECIPE-V3): colour lives in the lamps: practicals reach 2.4-4.6 m at power 8-26, materials env x0.4.
 // V5 stills: the tower stands close with a big lit face and a countdown board; warm pools along the family's walk.
 import { createKit, rng, tex, place } from '/styles/stick-man/kit/film.js';
-import { TOWER, CLOCK, CLOCK_R, BOARD, ELDERS, GONE, START, U, RIGHT, girl, at, camAt, balloonAt } from '/films/wif5/parts/a/path.js';
+import { makeHandProp } from '/styles/stick-man/kit/cast/handprops.js';
+import { TOWER, CLOCK, CLOCK_R, BOARD, ELDERS, GONE, START, U, RIGHT, girl, at, camAt, balloonAt, CHILD_SCALE } from '/films/wif5/parts/a/path.js';
 
 export const SUN_DIR = [0.35, 0.55, -0.76];                       // a cool moon from front-left, high
 export const SUN_CENTER = [0, 3, 1.5], SUN_HALF = 11;
@@ -141,19 +142,11 @@ export async function build(stage) {
   for (const d of [0.2, 3.0, 6.0, 8.8]) { const p = at(START, d); K.point([p[0] + 0.3, p[1] - 0.3, 2.6], '#ffbe7a', 13, 3.6); }
   for (const p of [[-3.1, 5.0], [3.9, 3.2], [4.1, 7.1], [-3.3, -5.7], [-4.3, -4.5], [3.2, 4.3]]) K.point([p[0], p[1] - 0.4, 2.7], '#ffc888', 10, 3.4);
 
-  // ---- her red balloon after midnight: until 330 it is the kit hand prop in her hand (reel.js); from 330 this copy of it
-  // (same size and red) rises from where her hand was, the string trailing loose
-  const bal = new T.Group(), red = M([0.95, 0.20, 0.25], 0.35);
-  const skin = new T.Mesh(new T.SphereGeometry(0.15, 24, 18), red); skin.scale.set(1, 1.18, 1); skin.castShadow = true; bal.add(skin);
-  const knot = new T.Mesh(new T.ConeGeometry(0.018, 0.03, 10), red); knot.position.y = -0.165; bal.add(knot); K.root.add(bal);
-  const strM = M([0.92, 0.90, 0.86], 0.8); let str = null;
-  K.anim('balloon', bal, f => { const b = balloonAt(f); bal.visible = b.free; bal.position.copy(K.B(...b.c)); bal.rotation.z = 0.08 * Math.sin(f / 9);
-    if (!b.free) { if (str) str.visible = false; return; }
-    const top = [b.c[0], b.c[1], b.c[2] - 0.18], e = b.end, sag = 0.10;
-    const P = Array.from({ length: 7 }, (_, i) => { const t = i / 6, w = Math.sin(t * Math.PI) * sag * (b.free ? Math.sin(f / 5 + t * 4) : 1);
-      return K.B(top[0] + (e[0] - top[0]) * t + w, top[1] + (e[1] - top[1]) * t, top[2] + (e[2] - top[2]) * t); });
-    if (str) { K.root.remove(str); str.geometry.dispose(); }
-    str = new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(P), 24, 0.0045, 5), strM); str.userData.noInk = true; K.root.add(str); });
+  // ---- her red balloon after midnight: until 330 it is the kit hand prop in her hand (reel.js); from 330 the same kit
+  // balloon, at her (child) scale, rises from where her hand was, its string hanging under it
+  const bal = makeHandProp('balloon'); bal.scale.setScalar(CHILD_SCALE); bal.visible = false; K.root.add(bal);
+  K.anim('balloon', bal, f => { const b = balloonAt(f); bal.visible = b.free; if (!b.free) return;
+    bal.position.copy(K.B(...b.end)); bal.rotation.set(0, 0, 0.10 * Math.sin(f / 9) * Math.min(1, (f - GONE) / 10)); });
 
   // ---- a skin of snow along the end of their walk, with their footprints in it: hers stop where she stood
   const snowSkin = M([0.40, 0.43, 0.51], 0.95), print = M([0.17, 0.17, 0.22], 0.95);
@@ -163,15 +156,14 @@ export async function build(stage) {
     const d = [g[0] + RIGHT[0] * 0.62, g[1] + RIGHT[1] * 0.62]; if (i % 2 === 0) step(d, (i / 2) % 2 ? 0.08 : -0.08, 0.05, 0.11); }
 
   // ---- her handbag: hangs from the old woman's free hand; at midnight it hangs a moment on nothing, drops, and then the
-  // old man holds it, empty, at his chest
+  // old man looks down at it, his hand still raised on nothing
   const bagM = M([0.44, 0.16, 0.14], 0.7), bag = new T.Group(), body = new T.Mesh(new T.BoxGeometry(0.26, 0.2, 0.09), bagM); body.position.y = -0.17; bag.add(body);
   const strap = new T.Mesh(new T.TorusGeometry(0.075, 0.012, 6, 16, Math.PI), M([0.25, 0.10, 0.08], 0.7)); strap.position.y = -0.075; bag.add(strap);
   bag.traverse(m => { if (m.isMesh) m.castShadow = true; }); K.root.add(bag);
-  const B0 = ELDERS.bag0, B1 = ELDERS.bag1, yawE = Math.atan2(CLOCK[0] - (ELDERS.man[0] + ELDERS.woman[0]) / 2, CLOCK[1] - ELDERS.man[1]);
+  const B0 = ELDERS.bag0, yawE = Math.atan2(CLOCK[0] - (ELDERS.man[0] + ELDERS.woman[0]) / 2, CLOCK[1] - ELDERS.man[1]);
   K.anim('bag', bag, f => { bag.rotation.y = yawE;
     if (f < GONE) { bag.position.copy(K.B(...B0)); return; }
-    if (f < 352) { const t = (f - GONE) / 30, z = Math.max(0.28, B0[2] - 4.9 * t * t); bag.position.copy(K.B(B0[0], B0[1], z)); bag.rotation.z = z <= 0.28 ? 1.3 : 0; return; }
-    bag.position.copy(K.B(B1[0], B1[1], B1[2] + 0.17)); });
+    const t = (f - GONE) / 30, z = Math.max(0.28, B0[2] - 4.9 * t * t); bag.position.copy(K.B(B0[0], B0[1], z)); bag.rotation.z = z <= 0.28 ? 1.3 : 0; });   // it drops and stays on the snow
   K.point([3.25, 5.45, 1.5], '#ffd0a0', 5, 2.0);                                 // lights the old couple's hands
 
   // ---- falling snow: flakes as points, each a pure function of the frame (no state)

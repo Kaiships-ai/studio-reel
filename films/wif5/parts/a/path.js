@@ -11,8 +11,7 @@ export const TOWER = { x0: -2.0, x1: 2.0, y0: 9.0, y1: 11.6, h: 13.4 };
 export const CLOCK = [0, 8.92, 7.4], CLOCK_R = 2.05;             // the face: big, low on the tower, a few metres above the crowd
 export const BOARD = [0, 8.9, 4.55];                               // the lit countdown board under it
 export const ELDERS = { man: [3.0, 4.6], woman: [3.55, 4.6], hand: [3.215, 4.68, 1.52],
-  bag0: [3.85, 4.62, 0.72],                                        // her handbag, hanging from her free hand until midnight
-  bag1: [2.81, 4.855, 1.0] };                                      // after: in his two hands at his chest (0.32 m toward the clock)
+  bag0: [3.85, 4.62, 0.72] };                                      // her handbag, hanging from her free hand until midnight
 export const at = (p, d) => [p[0] + U[0] * d, p[1] + U[1] * d];
 
 // the girl's walk as the motion library plays it (her keys are dense: one a frame), and where things are at frame f
@@ -38,23 +37,24 @@ export const CAMS = () => { const h230 = handAt(230), h329 = handAt(329), he = h
     [196, 'he looks down at her and smiles, hand in hand', [0.99, 4.46, 1.0], [m200[0], m200[1], 1.05], 30],
     [226, 'contact: her hand in his', [h230[0] + U[0] * 1.4 + RIGHT[0] * 0.05, h230[1] + U[1] * 1.4 + RIGHT[1] * 0.05, 0.6], [h230[0], h230[1], 0.8], 26],
     [246, 'contact: the old couple hand in hand', [ELDERS.hand[0] - 0.5, ELDERS.hand[1] + 0.8, 0.7], [ELDERS.hand[0], ELDERS.hand[1] + 0.06, 0.72], 26],
-    [294, 'ONE: from low behind them, close, the big clock at twelve over their heads, the board reads 23:59:59', [0.75, 3.0, 0.5], [0.5, 8.92, 4.0], 22],
-    [306, 'the clock looks back: from under the board, down onto their faces turned up to it, hand in hand', [0.5, 8.4, 3.3], [1.2, 5.55, 0.95], 38],
+    [294, 'ONE: from low behind them, close, the big clock at twelve over their heads, the board reads 23:59:59', [0.75, 3.0, 0.5], [0.68, 8.92, 4.0], 22],
+    [306, 'the clock looks back: from under the board, down onto their faces turned up to it, hand in hand', [0.5, 8.4, 3.3], [0.98, 5.5, 1.0], 32],
     [318, 'midnight: hand in hand, her balloon over her; the next frame she is gone, the balloon rises free and he looks at it', [2.4, 8.0, 1.15], [1.4, 6.0, 1.25], 27],
     [330, 'she is gone: her balloon rises out of where her hand was, string slack; he looks up at it; nobody behind him', [1.11, 8.36, 1.8], [1.22, 6.09, 1.4], 30],
     [350, 'her balloon higher and smaller against the bunting, his head tilted up following it', [2.9, 8.2, 0.9], [1.6, 6.4, 2.3], 22],
-    [440, 'low in front of him: his hand reaches up after her balloon, small and high over the square; tears', [3.32, 7.01, 0.3], [2.0, 6.49, 4.0], 14],
+    [440, 'close in front of him, low: his hand reaches up after her balloon (gone over us, toward the clock); tears', [1.94, 7.61, 0.8], [1.84, 6.12, 1.7], 22],
   ]; };
 export const camAt = f => { let c = null; for (const k of CAMS()) if (k[0] <= f) c = k; return c; };
 
 // her red balloon (the kit hand prop, kit/cast/handprops.js balloon: an 0.80 m string, the ball 0.15 m, centre 0.965 m over the
-// fist) in her free (outer) hand from the start; at midnight the set's copy of it takes over where her hand was and rises free
-export const STRING = 0.80, BALL_UP = 0.965;
+// fist, all at the child's scale 0.62, motion-lib/bodies.js) in her free (outer) hand from the start; at midnight the set's copy of
+// it takes over where her hand was and rises free
+export const CHILD_SCALE = 0.62, BALL_UP = 0.965 * CHILD_SCALE;
 export const balloonHand = f => { const g = girl(Math.min(f, GONE - 1)); return [g[0] - RIGHT[0] * 0.24 + U[0] * 0.05, g[1] - RIGHT[1] * 0.24 + U[1] * 0.05, 0.50]; };   // in her reach: low at her side
 export function balloonAt(f) {
   const h = balloonHand(GONE - 1), c0 = [h[0], h[1], h[2] + BALL_UP];
   if (f < GONE) return { c: c0, end: h, free: false };
   const t = (f - GONE) / 30, sway = 0.05 * Math.sin(t * 3) * Math.min(1, t * 2);
-  const c = [c0[0] + U[0] * 0.5 * t + sway, c0[1] + U[1] * 0.5 * t, c0[2] + 0.9 * t + 0.15 * t * t];   // let go: it rises slowly, drifting toward the clock
-  return { c, end: [c[0] - 0.06 * Math.sin(t * 4) * Math.min(1, t * 3), c[1] - 0.03, c[2] - BALL_UP + 0.04 * Math.min(1, t * 3)], free: true };   // the string hangs under it
+  const c = [c0[0] + U[0] * 0.5 * t + sway, c0[1] + U[1] * 0.5 * t, c0[2] + 1.5 * t + 0.1 * t * t];   // let go: it rises at once (1.5 m/s), drifting toward the clock
+  return { c, end: [c[0], c[1], c[2] - BALL_UP], free: true };   // the string hangs straight under it
 }

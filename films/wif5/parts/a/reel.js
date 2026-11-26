@@ -80,16 +80,12 @@ const elder = (p, pos, n) => { const ks = expandClips([p.clip('Idle_Breath_Loop'
 const handE = f => { const w = ease(ramp(f, 300, 316)); return low.map((v, i) => v * (1 - w) + up[i] * w); };
 let OM = elder(oldM, ELDERS.man, 5), OW = gone(elder(oldW, ELDERS.woman, 3), GONE);
 for (const f of [340, 360, 450]) keyAt(OM, f);
-for (const f of [344, 352]) keyAt(OM, f);
-const fwdE = [Math.sin(yE * DEG), -Math.cos(yE * DEG)], perpE = [-fwdE[1], fwdE[0]], B1 = ELDERS.bag1;
-const bagSide = s => [B1[0] + perpE[0] * 0.12 * s, B1[1] + perpE[1] * 0.12 * s, B1[2]];
+for (const f of [352]) keyAt(OM, f);
 for (const [ks, s] of [[OM, sE], [OW, oldW.spec.scale ?? 1]]) for (const k of ks) if (k.f < GONE || ks === OM) {
   const side = grip(k, handE(Math.min(k.f, GONE)), s); nod(k, ease(ramp(k.f, 286, 300)) * (1 - 0.6 * ramp(k.f, 336, 350)), -26);
   if (ks === OW) { const q = local(ELDERS.bag0, k.pos, k.yaw, s); k[other(side)] = { ...k[other(side)], ik: q, ikw: 1 }; }
-  if (ks === OM && k.f >= 344) { const w = ease(ramp(k.f, 344, 352)), a = [handE(GONE), bagSide(-1)], b = [handE(GONE), bagSide(1)];
-    const P1 = a[0].map((v, i) => v * (1 - w) + a[1][i] * w), q1 = local(P1, k.pos, k.yaw, s), q2 = local(bagSide(1), k.pos, k.yaw, s);
-    const s1 = q1[0] < 0 ? 'armL' : 'armR'; k[s1] = { ...k[s1], ik: q1, ikw: 1 }; k[other(s1)] = { ...k[other(s1)], ik: q2, ikw: w }; } }
-mark(OM, 0, { expr: 'happy', look: 'oldwoman' }); mark(OM, 290, { expr: 'grin', look: CLOCK }); mark(OM, 336, { expr: 'worried', look: [...ELDERS.woman, 1.2] }); mark(OM, 352, { expr: 'sad', look: ELDERS.bag1 });
+} 
+mark(OM, 0, { expr: 'happy', look: 'oldwoman' }); mark(OM, 290, { expr: 'grin', look: CLOCK }); mark(OM, 336, { expr: 'worried', look: [...ELDERS.woman, 1.2] }); mark(OM, 352, { expr: 'sad', look: [ELDERS.bag0[0], ELDERS.bag0[1], 0.1] });   // her bag on the snow; his hand stays up, holding nothing
 mark(OW, 0, { expr: 'happy', look: 'oldman' }); mark(OW, 290, { expr: 'grin', look: CLOCK });
 
 // ---- the crowd: couples clap and wave, look up on ONE, throw their arms up at midnight; the women are gone at 330
