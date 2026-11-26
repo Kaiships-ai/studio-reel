@@ -40,6 +40,10 @@ engine built, not a hand list a film keeps.
   (`engine/grip.js` `nearestGap`: the nearest shown tracked prop, held or loose, stand-ins left out); a held prop under
   `STANDIN_CM` (2) in every dimension (rows' `track.<id>.size`) is a `stand-in` fault; a gripping hand with no `grips[]`
   entry and no held prop is an `unmeasured grip` fault; no held prop and no gripping hand prints `PASS: nothing held`.
+- Kit hand props baby, tin, lantern, photo, balloon (`kit/cast/handprops.js`): a two-hand prop names each fist's point
+  (`userData.hands`, the figure's left at -x). `fits.mjs --hands` (fits_kinds.mjs `hands()`, `HAND_POSES`) plays each pose a
+  film holds them in headless and writes `hand|<prop>|<body>|hand` rows (worst frame vs handgrip `GAP_CM`; the 5 cm control
+  must fail on every frame); `tableFaults` rejects a usable hand row over the limit.
 - Upright along the forearm (`engine/cast.js`, `userData.top`): an `'along'` prop that declares `top` (the kit pistol:
   `[0, 0, 1]`, the slide over the grip) is rolled about the forearm so that axis faces up, or forward when the forearm
   is near vertical. Before, the shortest arc from up left the roll to chance: the kit's own Act_PistolShoot_Once held the
