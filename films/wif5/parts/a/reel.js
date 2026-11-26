@@ -45,9 +45,21 @@ const other = s => (s === 'armL' ? 'armR' : 'armL');
 
 // ---- the girl: walks the whole countdown at her dad's side (a child only walks), her hand in his; gone at midnight
 const sG = girlP.spec.scale ?? 1, sD = dadP.spec.scale ?? 1, sE = oldM.spec.scale ?? 1;
+// a6-5/a6-6 (frames before the cut at WALK_CUT only; from it on the keys are as they were): the child walk's swing foot skims
+// 0.6-2 cm over the floor for its last frames before it lands, so it reads as a planted foot sliding: it clears 2.4 cm while it
+// still travels; her balloon hand's target sat inside her side (out of reach, 17-23 cm off)
+const WALK_CUT = 226;
+// (her arm cannot come in closer than ~30 deg under level, and her shoulder sways with her hips: the target rides 0.35 m out of
+// the shoulder (her side pushes the hand out to that) and 0.14 m under it, the shoulder taken from the key's hip sway, measured on the clip rows 26/11)
+const bHand = (f, k) => { if (f >= WALK_CUT) return balloonHand(f); const g = girl(f), out = 0.086 + 1.1 * (k.hip?.x ?? 0) + 0.35;
+  return [g[0] - RIGHT[0] * out + U[0] * 0.045, g[1] - RIGHT[1] * out + U[1] * 0.045, 0.465]; };
 let G = expandClips([girlP.clip('Move_Walk_Fwd_Loop', { f: 0, pos: START, yaw: YAW, to: at(START, WALK) })]);
+for (let i = 1; i < G.length - 1; i++) { const k = G[i]; if (k.f >= WALK_CUT) break;
+  for (const l of ['legL', 'legR']) { const w = k[l]?.footW, a = G[i - 1][l]?.footW, b = G[i + 1][l]?.footW; if (!w || !a || !b) continue;
+    const v = Math.max(Math.hypot(w[0] - a[0], w[1] - a[1]) / (k.f - G[i - 1].f), Math.hypot(b[0] - w[0], b[1] - w[1]) / (G[i + 1].f - k.f));
+    if (v > 0.01 && w[2] < 0.024) k[l] = { ...k[l], footW: [w[0], w[1], 0.024] }; } }
 G = gone(G, GONE);
-for (const k of G) if (k.f < GONE) { const side = grip(k, handAt(k.f), sG), o = other(side); k[o] = { ...k[o], ik: local(balloonHand(k.f), k.pos, k.yaw, sG), ikw: 1 };
+for (const k of G) if (k.f < GONE) { const side = grip(k, handAt(k.f), sG), o = other(side); k[o] = { ...k[o], ik: local(bHand(k.f, k), k.pos, k.yaw, sG), ikw: 1 };
   k[`x_hp${o === 'armL' ? 'L' : 'R'}_balloon`] = 1; }   // her other hand holds the kit balloon by its string
 for (const k of G) if (k.f >= GONE) for (const x of Object.keys(k)) if (x.startsWith('x_hp')) delete k[x];   // gone: the set's balloon takes over
 for (const k of G) if (k.f < GONE) { nod(k, ease(ramp(k.f, 282, 296)), -24, 20); nod(k, ease(ramp(k.f, 312, 322)), -22, -10); }
@@ -56,9 +68,22 @@ mark(G, 0, { expr: 'happy', look: 'dad' }); mark(G, 120, { expr: 'grin', look: C
 // ---- the dad: walks with her (his feet on her pace), cheers with his free arm, looks up on ONE; after midnight he stands
 // where she left him, his hand still where hers was
 const d0 = dadAt(0);
-let D = expandClips([dadP.clip('Move_Walk_Fwd_Loop', { f: 0, pos: d0, yaw: YAW, to: at(d0, WALK * 1.6) })]).filter(k => k.f < GONE);
+let D = expandClips([dadP.clip('Move_Walk_Fwd_Loop', { f: 0, pos: d0, yaw: YAW, to: at(d0, WALK * 1.6) })]).filter(k => k.f < GONE && k.f >= WALK_CUT);
 for (const k of D) { const p = dadAt(k.f), dx = p[0] - k.pos[0], dy = p[1] - k.pos[1]; k.pos = [p[0], p[1], k.pos[2] || 0]; k.yaw = YAW;   // his body on her pace
   for (const l of ['legL', 'legR']) if (k[l]?.footW) k[l] = { ...k[l], footW: [k[l].footW[0] + dx, k[l].footW[1] + dy, k[l].footW[2]] }; }
+// a6-5: before the cut his own walk (8 strides over the 11 m, 0.97 of his natural pace) played at her progress along the path:
+// each frame shows the moment of his walk that is as far along U as she is, so a planted foot stays exactly where it landed
+{ const along = p => (p[0] - d0[0]) * U[0] + (p[1] - d0[1]) * U[1], s0 = along(dadAt(0));
+  const W8 = expandClips([dadP.clip('Move_Walk_Fwd_Loop', { f: 0, pos: d0, yaw: YAW, to: at(d0, WALK), times: 8 })]);
+  let m = -Infinity; const S = W8.map(k => (m = Math.max(m, along(k.pos))));
+  const lerpK = (a, b, u) => typeof a === 'number' && typeof b === 'number' ? a + (b - a) * u
+    : Array.isArray(a) && Array.isArray(b) && a.length === b.length ? a.map((x, i) => lerpK(x, b[i], u))
+    : a && b && typeof a === 'object' && typeof b === 'object' && !Array.isArray(a) ? Object.fromEntries(Object.keys(a).map(n => [n, n in b ? lerpK(a[n], b[n], u) : a[n]])) : (u < 0.5 ? a : b);
+  const pre = [];
+  for (let f = 0; f < WALK_CUT; f++) { const s = along(dadAt(f)) - s0; let i = S.findIndex(x => x > s); if (i < 0) i = S.length - 1;
+    const a = W8[Math.max(0, i - 1)], b = W8[i], u = i === 0 || S[i] === S[i - 1] ? 1 : Math.max(0, Math.min(1, (s - S[i - 1]) / (S[i] - S[i - 1])));
+    const k = clone(lerpK(a, b, u)); k.f = f; k.yaw = YAW; delete k.expr; delete k.look; delete k.ease; if (f === 0) Object.assign(k, { expr: a.expr, look: a.look }); pre.push(k); }
+  D = [...pre, ...D]; }
 const hold = grip(D[0], handAt(0), sD), free = other(hold);
 for (const k of D) { grip(k, handAt(k.f), sD); nod(k, ease(ramp(k.f, 282, 294)), -32, 40); nod(k, ease(ramp(k.f, 312, 322)), 10, 15); }   // up at the clock (on his left), then down to her   // up at the clock, then down to her
 for (const f of [70, 80, 112, 122, 306, 316]) keyAt(D, f);
