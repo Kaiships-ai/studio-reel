@@ -14,8 +14,12 @@ its row in `styles/stick-man/tools/gates/GATES.json`. It reads two sources:
 - C2: the longest take is 6.5 s or more.
 - C3: the camera looks up at the lead's head by more than 5° in at most 25 % of the frames with a lead in frame.
 - C4: no run longer than 1 s with less than half the lead's head box inside the frame.
+- C6: no close face cut by the frame edge for 3 frames or more: any actor whose head box is 20 % of the frame height or
+  more, with over 2 % of its height past an edge. A head whose centre moves over 1.2 % of the frame height in one frame
+  is leaving the frame (a run past the lens) and is left out. `review/cutgate.md` lists each failing run (actor, frames,
+  head size, how much is cut).
 - Each limit's source (the Kai pick or note it comes from) is printed beside it in `review/cutgate.md`.
-- Verdicts: PASS (all four measured and in limits), FAIL, or PARTIAL (no FAIL, but C3 and C4 not measured because the
+- Verdicts: PASS (every row measured and in limits), FAIL, or PARTIAL (no FAIL, but C3 to C6 not measured because the
   camera could not be read; the reason is printed). Only PASS exits 0.
 - A film rendered in parts (a stub `reel.js`, its parts in `s4/`, `s5/`, `s6/` ...) is read part by part: each part's
   camera rows, the parts placed back to back in the render in the order of their names. Their total must match the
@@ -34,7 +38,7 @@ At stage 5, `node styles/stick-man/tools/gates/stagegate.mjs films/<slug> 5` run
   add `--dbg <jsonl> --w 720 --h 1280` for camera rows made at that size, `--json 1` for JSON.
 - Look for: the Hot Money bible film (`hm-bible-s5`, cut-A) passes with C3 1 % and C4 0.0 s read live; ep01 r2 v7 fails
   C1 (11 cuts in 15 s) with C3 5 % and C4 0.1 s read from parts s4, s5, s6; a film with 53 % low shots fails C3. Every Rick reference clip passes C1 and C2 and is PARTIAL without `--dbg`.
-- Regression: `node --test test/unit/stick-cutgate.test.mjs test/unit/stick-reel-load.test.mjs`.
+- Regression: `node --test test/unit/stick-cutgate.test.mjs test/unit/stick-cutgate-close-head.test.mjs test/unit/stick-reel-load.test.mjs`.
 
 ## Gotchas
 
