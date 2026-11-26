@@ -44,3 +44,31 @@ export function gripGap(hand, prop) {
   if (best === Infinity) return { cm: null, anchor: 'empty' };
   return { cm: +(Math.max(0, best - r) * 100).toFixed(2), anchor: 'edge' };
 }
+
+// a held prop under this in every drawn dimension is a stand-in (a 4 mm placeholder the hand holds while the visible
+// prop is a loose one), never proof of a hold
+export const STANDIN_CM = 2;
+const _w = new THREE.Box3();
+// the drawn solid world box of a prop shown up its whole chain (kit/props/drawn.js), or null
+export function drawnWorldBox(o) {
+  if (!shown(o)) return null; o.updateWorldMatrix(true, true);
+  const b = new THREE.Box3();
+  o.traverseVisible(m => { if (!drawnSolid(m)) return; if (!m.geometry.boundingBox) m.geometry.computeBoundingBox(); b.union(_w.copy(m.geometry.boundingBox).applyMatrix4(m.matrixWorld)); });
+  return b.isEmpty() ? null : b;
+}
+// a gripping hand to the nearest shown prop that is not a stand-in: props [[id, Object3D]] -> { prop, cm, anchor: 'edge' },
+// or { prop: null, cm: null, anchor: 'none' } when the hand grips no shown prop. Nearest box first; stops once a box is
+// farther than the best air found
+export function nearestGap(hand, props) {
+  const c = hand.getWorldPosition(new THREE.Vector3()), r = handRadius(hand), all = [];
+  for (const [id, o] of props) { const b = o?.isObject3D && drawnWorldBox(o); if (!b) continue;
+    const s = b.getSize(new THREE.Vector3()); if (Math.max(s.x, s.y, s.z) * 100 < STANDIN_CM) continue;
+    all.push([b.distanceToPoint(c), id, o]); }
+  all.sort((a, b) => a[0] - b[0]);
+  let best = { prop: null, cm: null, anchor: 'none' };
+  for (const [d, id, o] of all) {
+    if (best.cm != null && (d - r) * 100 >= best.cm) break;
+    const g = gripGap(hand, o); if (g.cm != null && (best.cm == null || g.cm < best.cm)) best = { prop: id, cm: g.cm, anchor: g.anchor };
+  }
+  return best;
+}

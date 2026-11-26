@@ -25,7 +25,7 @@ import { ACT, PROPV, MAKE, keyTracks } from './verbs_fx.js';
 import { POSE_VERBS, POSES } from './poses.js';
 import { compileTrack, playActor, toPose, MOTION_POSES } from './motion.js';
 import { propPlan } from './propobj.js';
-import { gripGap } from './grip.js';
+import { gripGap, nearestGap } from './grip.js';
 import { solidBoxes, restBoxes, inBoxes, drawnBox, boxPoints, armIn } from './solids.js';
 import * as EXTRAS from '#kit/cast/extras.js';
 import { PHYS } from '#kit/fx/physfx.js';
@@ -698,6 +698,20 @@ async function buildAct(R, X) {
       const own = h => { for (let q = h; q; q = q.parent) if (q === o) return true; return false; };
       out.track[id] = { shown: true, held: held.has(id), on: foldVis(pts.map(p => pointVis(stage.camera, stage.scene, p, own))),
         box: Number.isFinite(x0) ? [x0, y0, x1, y1].map(x => +x.toFixed(1)) : null, size: +(Math.max(ls.x, ls.y, ls.z) * o.matrixWorld.getMaxScaleOnAxis()).toFixed(4), dims: [ls.x, ls.y, ls.z].map(x => +(x * o.matrixWorld.getMaxScaleOnAxis()).toFixed(4)), c: toB(c).map(x => +x.toFixed(4)) };
+    }
+    // every gripping hand (limbs.<side>.grip: on its target or holding) to the nearest shown tracked prop, held or loose,
+    // stand-ins left out (engine/grip.js nearestGap; tools/gates/handgrip.mjs): a tin the film moves by itself in the air
+    // beside the hand, or a hand that grips nothing, reads its real air (review 5 of #208: they passed as 'nothing held')
+    out.grips = [];
+    const near = tracked.filter(([id]) => !/^[^:]+:H/.test(id));
+    for (const a of actors) {
+      if (!a.S.root.visible) continue;
+      for (const s of ['L', 'R']) {
+        if (!out.actors[a.name]?.limbs?.[s]?.grip) continue;
+        const hand = a.S.parts.hands[s], g = nearestGap(a.S.parts.hands[s], near);
+        v.copy(hand.getWorldPosition(new THREE.Vector3())).project(stage.camera);
+        out.grips.push({ actor: a.name, side: s, onScreen: v.z < 1 && Math.abs(v.x) < 1 && Math.abs(v.y) < 1, prop: g.prop, gapCm: g.cm, anchor: g.anchor });
+      }
     }
     // a prop inside a head or a solid of the set (Hot Money ep01 r5: a bag carried up past the face, 27 cm into the head for
     // 30 frames, and through the dresser and door 9's jamb; shotgate passed): each hand-sized prop's drawn box as a 4x4x4

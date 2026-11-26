@@ -36,6 +36,10 @@ engine built, not a hand list a film keeps.
   propBox and collide.js: no contact-shadow disc, no glow), outlines included, meshes under a hidden parent left out (`anchor: 'edge'`; any other anchor is unmeasured), never the grip socket the engine
   snaps onto the hand; each hand of a two-hand prop on its own. Any on-screen frame over
   `GAP_CM` (`handgrip.limits.json`, frozen) fails, exit 1; rows with gapPx only exit 2. `--frames a-b` for a still.
+  Every gripping hand (`limbs.<side>.grip`) is measured too: rows `grips: [{ actor, side, onScreen, prop, gapCm, anchor }]`
+  (`engine/grip.js` `nearestGap`: the nearest shown tracked prop, held or loose, stand-ins left out); a held prop under
+  `STANDIN_CM` (2) in every dimension (rows' `track.<id>.size`) is a `stand-in` fault; a gripping hand with no `grips[]`
+  entry and no held prop is an `unmeasured grip` fault; no held prop and no gripping hand prints `PASS: nothing held`.
 - Upright along the forearm (`engine/cast.js`, `userData.top`): an `'along'` prop that declares `top` (the kit pistol:
   `[0, 0, 1]`, the slide over the grip) is rolled about the forearm so that axis faces up, or forward when the forearm
   is near vertical. Before, the shortest arc from up left the roll to chance: the kit's own Act_PistolShoot_Once held the
