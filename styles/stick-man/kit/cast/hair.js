@@ -127,7 +127,7 @@ function scalp(st) {
     if (st.tight) t *= 1 - st.tight * sm(0.30, 0.70, Math.abs(d.x)) * sm(0.40, 0.05, y);    // the sides cut close
     if (st.hang) {     // hair that falls straight from where the head is widest, to a hem (the hem's height y round the head, W); near the
       // face it hugs the head (hug): in 3/4 the far side's curtain sits behind the cheek, not across the face (Studio 26/11)
-      const hs = Math.hypot(d.x, d.z), H = st.hang, rho = (0.5 * Math.sqrt(Math.max(0, 1 - (H.from / (HB / W)) ** 2)) + st.base + 0.5 * st.clump * c) * (1 + (H.flare || 0) * sm(H.from, H.from - 0.5, d.y * rh / W)) * (1 - (H.hug ?? 0.05) * sm(80, 35, lon)), rc = hs > 1e-3 ? rho * W / hs : 0;
+      const hs = Math.hypot(d.x, d.z), H = st.hang, rho = (0.5 * Math.sqrt(Math.max(0, 1 - (H.from / (HB / W)) ** 2)) + st.base + 0.5 * st.clump * c) * (1 + (H.flare || 0) * sm(H.from, H.from - 0.5, d.y * rh / W)) * (1 - (H.hug ?? 0.05) * sm(80, 35, lon)) * (1 + (H.nape || 0) * sm(-0.12, -0.40, d.y * rh / W) * sm(95, 150, lon)), rc = hs > 1e-3 ? rho * W / hs : 0;
       if (rc > rh + t * W && d.y * rc / W < H.from) { t = rc / W - rh / W; const yh = d.y * rc / W; cover = sm(-0.02, 0.02, yh - table(H.hem, lon + (H.edge || 0) * (c - 0.55) * amp) + (H.tips || 0) * (c - 0.55) * amp); }
     }
     if (st.grain) { const n = Math.sin(d.x * 911.7 + d.y * 437.3 + d.z * 719.1) * 43758.5; shade += st.grain * (n - Math.floor(n) - 0.5); }   // a stubble's grain
@@ -146,7 +146,7 @@ function scalp(st) {
     if (st.part != null && d.y > 0.25 && d.z > -0.55) { const p = sm(0.012, 0.040, Math.abs(d.x * rh / W - st.part)); t *= 0.45 + 0.55 * p; shade = Math.min(shade, -(1 - p)); if (st.partSkin === true) cover *= sm(0.004, 0.016, Math.abs(d.x * rh / W - st.part)); }
     shade += 0.45 * Math.exp(-(((Math.asin(d.y) / DEG - 52) / 9) ** 2)) * c * c * sm(130, 60, lon);   // the light band round the crown
     if (st.tipLight) shade += st.tipLight * sm(0.16, 0.0, y - table(st.lo, lon)) * c;   // the lock tips catch the light: grey hair, not a cap
-    if (st.hang) cover = Math.max(cover, sm(-0.02, 0.02, y - table(st.hang.hem, lon + (st.hang.edge || 0) * (c - 0.55) * amp)));   // the hem is the hairline above the fall too: no bare band between the two
+    if (st.hang) cover = Math.max(cover, sm(-0.02, 0.02, y - Math.max(st.hang.skin ?? -9, table(st.hang.hem, lon + (st.hang.edge || 0) * (c - 0.55) * amp))));   // (skin: on the head itself no lower than this: the collar's)   // the hem is the hairline above the fall too: no bare band between the two
     if (st.cut != null) cover *= sm(st.cut - 0.02, st.cut + 0.02, d.y * (rh + t * W) / W);   // shortened (the hair-in-body check): nothing below
     // the floor: every style covers the scalp (kit/cast/scalpline.js) whatever its own hairline, hem or cut leave, thin where
     // only the floor puts hair (it lies on the head). Its soft wall reaches full cover 0.03 W past the line at the nape, where
@@ -255,7 +255,9 @@ function fall(F, cut) {
     if (cut != null && to <= cut) continue;   // a lock the cut stops short stands out beside the jaw (PickUp: 17.7 mm into the arm, 27/11): it goes whole
     const K = 7, path = [];
     for (let k = 0; k <= K; k++) { const u = k / K, y = F.from + (to - F.from) * u, rho = 0.5 + (F.rho ?? 0.03) + (F.flare ?? 0) * u * u + (F.wave ? F.wave[0] * Math.sin(Math.PI * F.wave[1] * u + i) * sm(0, 0.2, u) : 0) + (F.flick ?? 0) * sm(0.7, 1, u), a = lon * DEG;
-      path.push([rho * Math.sin(a), y, rho * Math.cos(a)]); }
+      let px = rho * Math.sin(a), pz = rho * Math.cos(a);
+      if (F.drape) { const [y0, y1, xm, zb] = F.drape, k = sm(y0, y1, y); px += (Math.max(-xm, Math.min(xm, px)) - px) * k; pz += (Math.min(pz, zb) - pz) * k; }   // below the head the lock draws in behind the back, inside the arms' swing
+      path.push([px, y, pz]); }
     path.unshift(onHead(lon, F.from + 0.18, -0.04));                                   // the root: inside the scalp's mass
     const wd = F.w ?? 0.53 * Math.abs(F.lon[1] - F.lon[0]) * DEG / Math.max(1, n - 1) * 0.65;   // half the width: 1.3 of the spacing, the locks overlap
     out.push({ path, w: (F.tip === 'blunt' ? [0.7, 1, 1, 1, 1, 0.95, 0.5] : F.tip === 'club' ? [0.6, 0.9, 1.05, 1.1, 1.0, 0.7, 0.2] : [0.7, 1, 1, 0.95, 0.8, 0.5, 0.06]).map(x => x * wd), flat: F.flat ?? 0.35, ridges: F.ridges ?? 3, braid: F.braid ?? 0, tipLight: F.tipLight, ink: F.ink, sides: F.sides, band: F.band });
