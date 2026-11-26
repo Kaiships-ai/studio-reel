@@ -76,6 +76,10 @@ import Adult_Gest_Clap_Loop_v01 from './body/adult/Adult_Gest_Clap_Loop_v01.js';
 import Adult_Gest_SitClap_Loop_v01 from './body/adult/Adult_Gest_SitClap_Loop_v01.js';
 import Elder_Move_OldWalk_Fwd_Loop_v01 from './body/elder/Elder_Move_OldWalk_Fwd_Loop_v01.js';
 import Elder_Idle_Stooped_Loop_v01 from './body/elder/Elder_Idle_Stooped_Loop_v01.js';
+import Elder_Trans_SitDown_Once_v01 from './body/elder/Elder_Trans_SitDown_Once_v01.js';
+import Elder_Idle_Sit_Loop_v01 from './body/elder/Elder_Idle_Sit_Loop_v01.js';
+import Elder_Act_Give_Once_v01 from './body/elder/Elder_Act_Give_Once_v01.js';
+import Elder_Gest_LookUpShade_Once_v01 from './body/elder/Elder_Gest_LookUpShade_Once_v01.js';
 import Adult_Gest_SitTalk_Loop_v01 from './body/adult/Adult_Gest_SitTalk_Loop_v01.js';
 import Adult_Act_Type_Loop_v01 from './body/adult/Adult_Act_Type_Loop_v01.js';
 import Adult_Gest_PhoneTalk_Loop_v01 from './body/adult/Adult_Gest_PhoneTalk_Loop_v01.js';
@@ -149,6 +153,10 @@ export const ALL = [
   Adult_Gest_SitClap_Loop_v01,
   Elder_Move_OldWalk_Fwd_Loop_v01,
   Elder_Idle_Stooped_Loop_v01,
+  Elder_Trans_SitDown_Once_v01,
+  Elder_Idle_Sit_Loop_v01,
+  Elder_Act_Give_Once_v01,
+  Elder_Gest_LookUpShade_Once_v01,
   Adult_Gest_SitTalk_Loop_v01,
   Adult_Act_Type_Loop_v01,
   Adult_Gest_PhoneTalk_Loop_v01,

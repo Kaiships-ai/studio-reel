@@ -1,6 +1,6 @@
 # Motion library catalogue
 
-The 72 clips of `styles/stick-man/motion-lib` (rules and use: its README.md). An anim key `{ f, clip, body, to?, times? }`
+The 76 clips of `styles/stick-man/motion-lib` (rules and use: its README.md). An anim key `{ f, clip, body, to?, times? }`
 plays one (REEL_DATA.md). `frames` = one cycle or the whole one-off at 30 fps; `base` = the standard pose it starts (→ ends) on;
 `props` = what the hands hold (`x_hp<L|R|B>_<prop>`, motion-lib/props.js and kit/cast/handprops.js; a film swaps its own with
 the key's `swap`), on which hand; `set` = the set pieces it needs (the proof page builds them at the sizes the clip names in
@@ -30,6 +30,7 @@ raw pelvis speed is reported, not gated); the carried mass changes at most 35 % 
 | `Idle_Fidget_Loop` | child | loop | 270 | STAND | - | - | a child (big head, short legs, 25 kg) standing and unable to wait: it turns at the waist to look about, the loose arms swinging after the chest, and shifts its weight on an uneven beat |
 | `Idle_LookAround_Loop` | adult | loop | 161 | STAND | - | - | standing, looking round from side to side, wary, from motion capture (Mixamo "Look Around", ref/mixamo/look_around.js) on this body: a loop in place |
 | `Idle_Sit_Loop` | adult | loop | 156 | SIT | - | seat | sitting at rest on a seat, shifting a little, from motion capture (Mixamo "Sitting Idle", ref/mixamo/sitting_idle.js) on this body, every captured frame |
+| `Idle_Sit_Loop` | elder | loop | 218 | SIT | - | seat | seated, glancing side to side, Mixamo "Sitting" (ref/mixamo/sitting_side_look.js) on the elder body, every captured frame |
 | `Idle_Sleep_Loop` | adult | loop | 265 | LIE | - | - | asleep on the floor, curled on one side, breathing (SH280), from motion capture (Mixamo "Sleeping Idle", ref/mixamo/sleeping_idle.js) on this body, every captured frame |
 | `Idle_Stand_Loop` | adult | loop | 325 | STAND | - | - | standing at rest, breathing, the weight settling foot to foot, from motion capture (Mixamo "Breathing Idle", ref/mixamo/breathing_idle.js) on this body: a loop in place |
 | `Idle_Stooped_Loop` | elder | loop | 393 | STAND | - | - | an old man standing stooped, a slight sway |
@@ -65,6 +66,7 @@ raw pelvis speed is reported, not gated); the carried mass changes at most 35 % 
 | `Act_Consume_Once` | adult | once | 103 | STAND | hotdog (L) | - | bring food to the mouth, bite, chew, lower it, from motion capture (Quaternius UAL "Consume", CC0, ref/ual/consume.js) on this body, every captured frame |
 | `Act_Drive_Loop` | adult | loop | 77 | SIT | - | seat | seated driving, both hands on the wheel, from motion capture (Quaternius UAL "Driving_Loop", CC0, ref/ual/driving_loop.js) on this body, every captured frame |
 | `Act_DropInTrunk_Once` | any (adult, scaled) | once | 80 | CARRY → STAND | bag (both) | trunk | from CARRY, heave the bag over a car's trunk lip (0.68 m) and let it drop in |
+| `Act_Give_Once` | elder | once | 233 | STAND | - | - | reach out and give, Mixamo "Reaching Out" (ref/mixamo/reaching_out.js) on the elder body, every captured frame |
 | `Act_HandOver_Once` | adult | once | 87 | STAND | cash (L) | counter | reach forward and hand a bundle of cash over a counter, leaving it there, from motion capture (Quaternius UAL "Interact", CC0, ref/ual/interact.js) on this body, every captured frame |
 | `Act_Jump_Once` | adult | once | 93 | STAND | - | - | a standing jump straight up (crouch, spring, tuck, land, absorb, stand), from motion capture (Mixamo "Jump", ref/mixamo/jump.js) on this body |
 | `Act_Phone_Once` | adult | once | 349 | STAND | phone (R) | - | a call on a mobile: dial it at the chest, up to the ear, talk, put it away, from motion capture (Mixamo "Talking On A Cell Phone", ref/mixamo/talking_on_a_cell_phone.js: its first 203 frames and its last 114, the long middle of the call cut where the two match within 8 cm, joined by a 6-frame bridge) on this body |
@@ -85,6 +87,7 @@ raw pelvis speed is reported, not gated); the carried mass changes at most 35 % 
 | `Trans_JumpWindow_Once` | adult | once | 148 | STAND | bag (R) | window | a bag in the right fist, a sprint from standing and a flying leap out through a window (sill 0.80 m, top 2.0 m in the capture's metres |
 | `Trans_LieDown_Once` | adult | once | 74 | STAND → LIE | - | - | lie down on the back on the floor, from motion capture (Quaternius UAL "LayToIdle" played backwards, CC0, ref/ual/laytoidle.js) on this body, every captured frame |
 | `Trans_SitDown_Once` | adult | once | 95 | STAND → SIT | - | seat | sit down on a seat behind, from motion capture (Mixamo "Stand To Sit", ref/mixamo/stand_to_sit.js) on this body, every captured frame |
+| `Trans_SitDown_Once` | elder | once | 254 | STAND → SIT | - | seat | sit down on a seat behind, Mixamo "Sitting" (ref/mixamo/sit_down_elder.js) on the elder body, every captured frame |
 | `Trans_StandUp_Once` | adult | once | 96 | SIT → STAND | - | seat | stand up from a seat, from motion capture (Mixamo "Sit To Stand", ref/mixamo/sit_to_stand.js) on this body, every captured frame |
 
 ## React
@@ -106,6 +109,7 @@ raw pelvis speed is reported, not gated); the carried mass changes at most 35 % 
 | `Gest_LookBack_Once` | adult | once | 140 | STAND | - | - | a quick nervous look over the right shoulder, from motion capture (Mixamo "Look Over Shoulder", ref/mixamo/look_over_shoulder.js) on this body, every captured frame |
 | `Gest_LookBackCarry_Once` | adult | once | 140 | HUG | hugbag (both) | - | a quick nervous look over the right shoulder with the duffel hugged to the chest, from motion capture (Mixamo "Look Over Shoulder", ref/mixamo/look_over_shoulder.js) on this body, every captured frame, opened and closed on HUG: the capture's legs, head and turn (neck, the spine's twist, the pelvis), its arms and its lean the HUG pose's (they keep the bag, the motion-lib/props.js hugbag, 20 kg, turning with the chest |
 | `Gest_LookUp_Once` | any (adult, scaled) | once | 70 | STAND | - | - | something above |
+| `Gest_LookUpShade_Once` | elder | once | 284 | STAND | - | - | look up, a hand shading the eyes, Mixamo "Looking" (ref/mixamo/looking_shade.js) on the elder body, every captured frame |
 | `Gest_NodYes_Once` | adult | once | 106 | STAND | - | - | a plain yes nod |
 | `Gest_PhoneCall_Loop` | adult | loop | 115 | STAND | phone (R) | - | standing, talking on a phone held to the ear, from motion capture (Quaternius UAL "Idle_TalkingPhone_Loop", CC0, ref/ual/idle_talkingphone_loop.js) on this body, every captured frame |
 | `Gest_PhoneTalk_Loop` | adult | loop | 190 | STAND | phone (R) | - | standing, a phone in the right hand held to the ear, talking, the left hand with it |
