@@ -67,3 +67,12 @@ with locks from a whorl, a hairline on the forehead, a parting and a painted gro
 (rows: hairCap, bun, the six styles; columns: beat-0 front / low front, close front / 3/4 / low front, all in the coral
 sweater); `?run=1` plays the six in a look-around. Numbers: `node --test test/unit/stick-toon-hair.test.mjs` (6 s): every
 style builds, reaches the forehead, and stays rigid in the head's frame through a look up and a jump.
+
+Ten more (26/11): men `pompadour`, `buzz`, `mullet`, `afro`; women `bob`, `long`, `pixie`, `ponytail`, `braids`, `lob`. New
+parts of the same field: `crest` (a swept wave), `tight` (cut sides), `ball` (a mass wider than the head), `hang` (falls straight
+to a hem), `grain` / `edgeDark` (a buzz cut's stubble and hairline), `grid` (box-braid parts); and locks that leave the head
+(`falls`: rings of flat or braided locks; `tails`: one swept lock, the ponytail), rigid in the head's hair group like the rest.
+`cut` is the length the hair-in-body check left: `node --test test/unit/stick-hair-body.test.mjs` (~3 min) plays every style
+through ten clips (`CLIPS` in test/unit/hair-measure.mjs) in the coral sweater and fails a style whose drawn surface goes over
+4 mm (frozen) into the torso or a limb; `node test/unit/hair-length.mjs <style>` finds the lowest cut that passes. Type sheet:
+add `&type=mw` to the sheet page (frames 0-83) and `hairsheet_compose.py <dir> <out.jpg> mw`.

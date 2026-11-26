@@ -11,6 +11,7 @@
 //   node styles/stick-man/tools/render/shot.mjs --page styles/stick-man/tools/run/hairsheet.html --frames 0-47 --w 720 --h 1280 --out <dir>/h_%d.png
 //   node styles/stick-man/tools/render/shot.mjs --page 'styles/stick-man/tools/run/hairsheet.html?run=1' --frames 0-119 --w 720 --h 1280 --mp4 <dir>/run.mp4
 //   python styles/stick-man/tools/run/hairsheet_compose.py <dir> docs/hair-sheet/hair-sheet.jpg   (the sheet kept for review; docs/hair-sheet/cells is ignored)
+//   a type's sheet: add &type=mw (frames 0-59) and pass the type: hairsheet_compose.py <dir> docs/hair-sheet/hair-sheet-mw.jpg mw
 import * as THREE from 'three';
 import { makeStick, hairCap, HEAD_H, W_M } from '#engine/cast.js';
 import { createStage, lin } from '#engine/look.js';
@@ -27,7 +28,12 @@ import { toonHair } from '#kit/cast/hair.js';
 
 await useFaceStyle();
 const RUN = new URLSearchParams(location.search).get('run');
-const ROWS = [['hairCap (today)', 'adult', hairCap()], ['bun (today)', 'adult', bun()], ['side', 'adult'], ['crop', 'adult'], ['curly', 'adult'], ['elder', 'elder'], ['woman', 'adult'], ['girl', 'child']]
+// ?type=: one sheet a type of style, each on its own body (hairsheet_compose.py takes the same type); none: the first six beside today's caps
+// a style the hair-in-body check shortened also shows as designed (`cut: null`), for the one who picks the length
+const TYPES = { mw: [['pompadour', 'adult'], ['buzz', 'adult'], ['mullet', 'adult'], ['afro', 'adult'], ['bob', 'adult'], ['long', 'adult'], ['pixie', 'adult'], ['ponytail', 'adult'], ['braids', 'adult'], ['lob', 'adult'],
+  ['mullet', 'adult', toonHair('mullet', null, { cut: null })], ['long', 'adult', toonHair('long', null, { cut: null })], ['braids', 'adult', toonHair('braids', null, { cut: null })], ['lob', 'adult', toonHair('lob', null, { cut: null })], ['bob', 'adult', toonHair('bob', null, { cut: null })]] };
+const TYPE = new URLSearchParams(location.search).get('type');
+const ROWS = (TYPES[TYPE] || [['hairCap (today)', 'adult', hairCap()], ['bun (today)', 'adult', bun()], ['side', 'adult'], ['crop', 'adult'], ['curly', 'adult'], ['elder', 'elder'], ['woman', 'adult'], ['girl', 'child']])
   .map(([n, b, f]) => ({ n, b, f: f || toonHair(n) }));
 const COLS = [{ az: 0, el: 0.06 }, { az: 0, el: -0.30 }, { az: 0, el: 0.04, close: 1 }, { az: 38, el: 0.04, close: 1 }, { az: 0, el: -0.32, close: 1 }, { az: 180, el: 0.04, close: 1 }];
 const W = innerWidth, H = innerHeight;
@@ -57,7 +63,7 @@ window.__frame = i => {
   const t0 = performance.now();
   if (RUN) {
     // the six new hairs, 1.1 m apart, playing the look-around from frame 0
-    if (!crowd) crowd = ROWS.slice(2).map((r, k) => figure(r, (k - 2.5) * 1.1));
+    if (!crowd) crowd = ROWS.slice(TYPE ? 0 : 2).map((r, k) => figure(r, (k - (crowd0 => (crowd0 - 1) / 2)(ROWS.length - (TYPE ? 0 : 2))) * 1.1));
     for (const F of crowd) pose(F, i);
     const S = crowd[0].S, dir = new THREE.Vector3(Math.sin(S.yaw + 1.2), 0.08, Math.cos(S.yaw + 1.2)).normalize(), mid = new THREE.Vector3(0, 1.75, 0);
     crowd.forEach(F => F.S.root.updateMatrixWorld(true)); const c = new THREE.Vector3(); crowd.forEach(F => c.add(world(F.S, F.S.skel.head))); c.divideScalar(crowd.length); mid.set(c.x, c.y - 0.35, c.z);

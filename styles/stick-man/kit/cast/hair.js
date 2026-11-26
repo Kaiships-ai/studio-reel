@@ -19,6 +19,10 @@ const headR = d => 1 / Math.hypot(d.x / HA, d.y / HB, d.z / HA);
 const table = (T, x) => { if (x <= T[0][0]) return T[0][1]; for (let i = 1; i < T.length; i++) if (x <= T[i][0]) return T[i - 1][1] + (T[i][1] - T[i - 1][1]) * sm(T[i - 1][0], T[i][0], x); return T[T.length - 1][1]; };
 const edge = ({ front, temple = front - 0.03, side = -0.02, back = -0.40 }) => [[0, front], [30, temple], [62, 0.10], [84, side], [125, back], [180, back]];
 const rand = seed => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+// how far (W) a ray from the head's centre along d runs to the sphere { c: [x, y, z] W, r W }
+const ballR = (b, d) => { const c = new THREE.Vector3(...b.c), k = d.dot(c); return k + Math.sqrt(Math.max(0, k * k - c.lengthSq() + b.r * b.r)); };
+// a point on the head (W) at a height y and a longitude lon (deg, 0 = the face, + = the figure's left), `out` W off it
+const onHead = (lon, y, out = 0) => { const r = 0.5 * Math.sqrt(Math.max(0, 1 - (y / (HB / W)) ** 2)) + out, a = lon * DEG; return [r * Math.sin(a), y, r * Math.cos(a)]; };
 
 // in W. whorl: where the locks start; locks: how many round it; clump: a lock's height over its grooves; base: the mass's
 // thickness; lift: extra volume over the forehead; tips: how far the lock tips reach past the hairline; part: x of a parting
@@ -38,8 +42,48 @@ const STYLES = {
            buns: [{ dir: [0, 0.80, -0.60], r: 0.20, out: 0.05 }] },   // high on the back of the crown: it shows over the head from the front
   girl:  { col: [0.30, 0.17, 0.08], whorl: [0, 1, -0.25], locks: 18, twist: 0.2, clump: 0.026, base: 0.026, lift: 0.030, tips: 0.060, part: 0, lo: edge({ front: 0.21, temple: 0.20, side: -0.02 }),
            buns: [{ dir: [0.78, 0.60, -0.15], r: 0.14, out: 0.04 }, { dir: [-0.78, 0.60, -0.15], r: 0.14, out: 0.04 }] },   // two buns, one each side: a girl, not the woman
+
+  // cut: shortened by the hair-in-body check (test/unit/stick-hair-body.test.mjs, 4 mm): nothing of the style below this height (W
+  // under the head's centre). Rigid hair that reaches the neck goes into the upper back as the head looks up (Gest_LookUp_Once) and
+  // into the shoulder beside the jaw as it bows to the floor (Adult_Act_PickUp_Once); each was cut, 0.02 W at a time, until it passed.
+  // Designed to: mullet -0.83, afro -0.47, bob -0.36, long -1.15, ponytail -0.56, braids -1.04, lob -0.81 (toonHair(style, col, { cut: null })).
+  // long, lob and braids lose every lock below the scalp at their cut, and the bob its hem: they wait for Studio
+  // ---- men
+  // a pompadour: a tall wave over the forehead swept back to the crown, the sides cut tight; the locks run front to back
+  pompadour: { col: [0.22, 0.14, 0.09], whorl: [0, 0.20, -0.98], locks: 16, twist: 0, jit: 0.12, clump: 0.030, base: 0.016, lift: 0.040, tips: 0.030, crest: 0.17, tight: 0.75, lo: edge({ front: 0.31, temple: 0.25, side: 0.03 }) },
+  // a buzz cut: a thin shell on a round skull, a grain of stubble in the map and a clear, squared hairline darker at its edge
+  buzz:  { col: [0.20, 0.15, 0.11], whorl: [0, 0.70, -0.70], locks: 36, twist: 0.1, clump: 0.003, base: 0.008, lift: 0.004, tips: 0.006, grain: 0.30, edgeDark: 0.35, ink: 0.6,
+           lo: [[0, 0.33], [18, 0.33], [26, 0.27], [40, 0.27], [62, 0.10], [84, 0.03], [125, -0.36], [180, -0.36]] },
+  // a mullet: short on top, a thick tail of pointed locks at the nape down to the collar
+  mullet: { cut: -0.42, col: [0.40, 0.25, 0.13], whorl: [0, 0.70, -0.70], locks: 20, twist: 0.12, jit: 0.15, clump: 0.024, base: 0.020, lift: 0.030, tips: 0.050, lo: edge({ front: 0.30, side: -0.04, back: -0.42 }),
+            falls: [{ lon: [112, 180], n: 4, from: -0.20, to: -0.80, rho: 0.03, flat: 0.55, flare: 0.04, jit: 0.12, tip: 'point', ridges: 3 }] },
+  // an afro: one round mass wider than the head, its surface curl clumps
+  afro:  { cut: -0.40, col: [0.24, 0.15, 0.10], whorl: [0, 0.80, -0.60], locks: 12, twist: 0, clump: 0.004, base: 0.02, lift: 0, tips: 0.03, ball: { c: [0, 0.16, -0.05], r: 0.70 }, bumps: [150, 0.13, 0.030, -0.45], lo: edge({ front: 0.30, temple: 0.28, side: -0.02, back: -0.40 }) },
+  // ---- women
+  // a chin bob: a bell that falls straight from the crown to the jaw, a blunt hem, a side part
+  bob:   { cut: -0.12, col: [0.24, 0.14, 0.08], whorl: [0, 1, -0.08], locks: 26, twist: 0, clump: 0.016, base: 0.030, lift: 0.020, tips: 0.006, part: 0.12, lo: edge({ front: 0.30, side: -0.04 }),
+           hang: { from: 0.02, flare: 0.10, hem: [[0, 0.30], [28, 0.28], [52, -0.36], [180, -0.38]], tips: 0.010 } },
+  // long and straight, parted in the middle: the scalp falls to the jaw, two curtains of flat locks on to the chest
+  long:  { cut: -0.14, col: [0.26, 0.15, 0.08], whorl: [0, 1, -0.05], locks: 24, twist: 0, clump: 0.014, base: 0.026, lift: 0.014, tips: 0.006, part: 0, lo: edge({ front: 0.30, side: -0.04 }),
+           hang: { from: 0.02, flare: 0.04, hem: [[0, 0.30], [28, 0.28], [50, -0.40], [180, -0.42]] },
+           falls: [{ lon: [52, 180], n: 8, from: -0.30, to: -1.15, rho: 0.045, flat: 0.32, flare: 0.03, tip: 'blunt', ridges: 3 }] },
+  // a pixie: a short feathered cap, a wispy fringe swept to one side, feathered at the nape too
+  pixie: { col: [0.50, 0.30, 0.15], whorl: [0.15, 0.75, -0.64], locks: 18, twist: 0.30, jit: 0.35, clump: 0.026, base: 0.020, lift: 0.024, tips: 0.090, napeTips: 1, sweep: 0.022, part: 0.20, lo: edge({ front: 0.15, temple: 0.14, side: -0.06, back: -0.36 }) },
+  // a high ponytail: the hair drawn tight to a tie high on the crown, one thick club of a tail off it
+  ponytail: { cut: -0.54, col: [0.36, 0.20, 0.10], whorl: [0, 0.62, -0.78], locks: 22, twist: 0, clump: 0.016, base: 0.016, lift: 0.010, tips: 0.012, lo: edge({ front: 0.30, side: -0.04 }),
+              buns: [{ dir: [0, 0.62, -0.78], r: 0.085, out: -0.01 }],
+              tails: [{ path: [[0, 0.26, -0.30], [0, 0.40, -0.58], [0, 0.28, -0.80], [0, 0.00, -0.86], [0, -0.30, -0.80], [0, -0.55, -0.70]], w: [0.06, 0.10, 0.15, 0.17, 0.16, 0.11, 0.02], flat: 0.8, ridges: 5, seg: 64, sides: 22 }] },
+  // box braids: square parts on the scalp, a curtain of thin braided ropes round the back and sides to the shoulders
+  braids: { cut: -0.14, col: [0.20, 0.13, 0.09], whorl: [0, 1, -0.05], locks: 24, twist: 0, clump: 0.006, base: 0.022, lift: 0.012, tips: 0.010, grid: [14, 22], lo: edge({ front: 0.30, side: -0.04 }),
+            falls: [{ lon: [40, 180], n: 11, from: -0.10, to: -1.00, rho: 0.04, w: 0.040, flat: 1, flare: 0.04, jit: 0.10, tip: 'blunt', braid: 9, ridges: 0, ink: 0.55, sides: 12 }] },
+  // a wavy lob: a soft S-wave mass to the shoulders, the tips turning out
+  lob:   { cut: -0.12, col: [0.46, 0.29, 0.14], whorl: [0, 1, -0.10], locks: 22, twist: 0.10, jit: 0.15, clump: 0.022, base: 0.030, lift: 0.024, tips: 0.010, part: 0.10, lo: edge({ front: 0.30, side: -0.04 }),
+           hang: { from: 0.02, flare: 0.08, hem: [[0, 0.30], [28, 0.28], [50, -0.30], [180, -0.36]] },
+           falls: [{ lon: [50, 180], n: 7, from: -0.20, to: -0.78, rho: 0.06, flat: 0.45, flare: 0.04, wave: [0.035, 2.2], flick: 0.06, jit: 0.08, tip: 'point', ridges: 3 }] },
 };
 export const HAIR_STYLES = Object.keys(STYLES);
+// a style's scalp field (d -> { r, k }, k = 1 where hair grows, less on its hairline wall, which tucks under the skin): for measures
+export const scalpField = (style, patch) => scalp({ ...STYLES[style], ...patch });
 
 // locks radiate from the axis w: c = 1 on a lock's crest, 0 in the groove between two; q = the angle from w
 // jit: uneven lock widths and spacing, and locks that bend on their way up (seeded, the same on every build)
@@ -57,7 +101,7 @@ function scalp(st) {
   if (st.bumps) for (let i = 0; i < st.bumps[0]; i++) { const y = (st.bumps[3] ?? 0.25) + (1 - (st.bumps[3] ?? 0.25)) * r(), a = r() * 2 * Math.PI, s = Math.sqrt(1 - y * y); const v = new THREE.Vector3(s * Math.sin(a), y, s * Math.cos(a)); v.w = r() * 2 * Math.PI; bumps.push(v); }
   return d => {
     const rh = headR(d), y = d.y * rh / W, lon = Math.abs(Math.atan2(d.x, d.z)) / DEG, { c, ph, q } = L(d), amp = sm(0.10, 0.45, q);
-    const tips = st.tips * (0.15 + 0.85 * sm(150, 70, lon));                // the nape's edge is clean, following the head
+    const tips = st.tips * (st.napeTips ? 1 : 0.15 + 0.85 * sm(150, 70, lon));                // the nape's edge is clean, following the head
     let cover = sm(-0.02, 0.02, y - table(st.lo, lon) + tips * (c - 0.55) * amp);
     if (st.sparse) {   // only the lock crests, scalp between them: no flat shell. Each lock its own width, thinning toward the crown
       const thr = st.sparse + 0.10 * Math.sin(2.39 * ph) + 0.06 * Math.sin(0.77 * ph + 1) + 0.10 * sm(0.10, 0.45, y);
@@ -65,6 +109,16 @@ function scalp(st) {
     }
     const front = sm(60, 20, lon) * Math.exp(-(((y - table(st.lo, lon)) / 0.10) ** 2));
     let t = st.base + st.lift * front + st.clump * amp * c, shade = -Math.pow(1 - c, 3) * amp + 0.12 * Math.cos(2 * Math.PI * ph * 3) * amp * c;
+    if (st.ball) t += Math.max(0, ballR(st.ball, d) - rh / W - st.base);                     // a round mass wider than the head (an afro)
+    if (st.crest) t += st.crest * sm(-0.6, 0.55, d.z) * sm(-0.05, 0.30, y) * (1 - 0.35 * sm(0.2, 0.5, Math.abs(d.x)));   // a tall wave over the forehead, swept back
+    if (st.tight) t *= 1 - st.tight * sm(0.30, 0.70, Math.abs(d.x)) * sm(0.40, 0.05, y);    // the sides cut close
+    if (st.hang) {     // hair that falls straight from where the head is widest, to a hem (the hem's height y round the head, W)
+      const hs = Math.hypot(d.x, d.z), H = st.hang, rho = (0.5 * Math.sqrt(Math.max(0, 1 - (H.from / (HB / W)) ** 2)) + st.base + 0.5 * st.clump * c) * (1 + (H.flare || 0) * sm(H.from, H.from - 0.5, d.y * rh / W)), rc = hs > 1e-3 ? rho * W / hs : 0;
+      if (rc > rh + t * W && d.y * rc / W < H.from) { t = rc / W - rh / W; const yh = d.y * rc / W; cover = sm(-0.02, 0.02, yh - table(H.hem, lon) + (H.tips || 0) * (c - 0.55) * amp); }
+    }
+    if (st.grain) { const n = Math.sin(d.x * 911.7 + d.y * 437.3 + d.z * 719.1) * 43758.5; shade += st.grain * (n - Math.floor(n) - 0.5); }   // a stubble's grain
+    if (st.edgeDark) shade -= st.edgeDark * sm(0.07, 0.0, y - table(st.lo, lon));            // denser at the hairline: it reads at a distance
+    if (st.grid) { const gy = Math.abs(Math.sin(Math.PI * Math.asin(d.y) / DEG / st.grid[0])), gx = Math.abs(Math.sin(Math.PI * Math.atan2(d.x, d.z) / DEG / st.grid[1])); if (y > -0.1) shade = Math.min(shade, -sm(0.12, 0.0, Math.min(gy, gx))); }   // the square parts of box braids
     if (bumps.length) {   // curl locks, each in its own cell round the nearest centre
       let f1 = 9, f2 = 9, nb = null; for (const b of bumps) { const g = Math.acos(Math.min(1, d.dot(b))); if (g < f1) { f2 = f1; f1 = g; nb = b; } else if (g < f2) f2 = g; }
       // each clump a C-shaped lock: a raised ring open on one side (turned at random) round a lower middle, the cells kept
@@ -78,6 +132,7 @@ function scalp(st) {
     if (st.part != null && d.y > 0.25 && d.z > -0.55) { const p = sm(0.012, 0.040, Math.abs(d.x * rh / W - st.part)); t *= 0.25 + 0.75 * p; shade = Math.min(shade, -(1 - p)); if (st.sweep) cover *= sm(0.004, 0.016, Math.abs(d.x * rh / W - st.part)); }
     shade += 0.45 * Math.exp(-(((Math.asin(d.y) / DEG - 52) / 9) ** 2)) * c * c * sm(130, 60, lon);   // the light band round the crown
     if (st.tipLight) shade += st.tipLight * sm(0.16, 0.0, y - table(st.lo, lon)) * c;   // the lock tips catch the light: grey hair, not a cap
+    if (st.cut != null) cover *= sm(st.cut - 0.02, st.cut + 0.02, d.y * (rh + t * W) / W);   // shortened (the hair-in-body check): nothing below
     const k = cover;                                             // a soft wall: a sharp one stair-steps on the sphere grid
     return { r: rh * TUCK + (rh + t * W - rh * TUCK) * k, k, shade, ink: st.ink ?? 1 };
   };
@@ -123,8 +178,68 @@ function fieldMesh(f, rgb) {
   return m;
 }
 
-export function toonHair(style = 'side', col) {
-  const st = STYLES[style]; if (!st) throw new Error(`toonHair: no style '${style}' (${HAIR_STYLES.join(', ')})`);
+// ------------------------------------------------------------------ locks that leave the head: a fall, a tail, a braid
+// One lock: a tube swept along a path (W, the head's centre frame) with a cross-section that is flat (flat = depth / width) or round,
+// its half-width along the path (w: values spread evenly from root to tip), and on it the scalp's lock language: strand ridges
+// (ridges round it, a groove between two), the light band near its top, and for a braid the over-under chevrons of three strands
+// (braid: crossings along it). The root starts inside the scalp's mass, so the lock grows out of it; nothing in it moves.
+const lerpA = (A, t) => { const x = t * (A.length - 1), i = Math.min(A.length - 2, Math.floor(x)); return A[i] + (A[i + 1] - A[i]) * (x - i); };
+function lockMesh(L, rgb) {
+  const curve = new THREE.CatmullRomCurve3(L.path.map(p => new THREE.Vector3(...p).multiplyScalar(W)), false, 'centripetal');
+  const M = L.seg ?? 56, N = L.sides ?? 18, flat = L.flat ?? 1, rid = L.ridges ?? 0, br = L.braid ?? 0, pos = [], uvs = [], idx = [];
+  // the width runs round the head (the circle's tangent at the lock's end), carried along the lock: a root that leaves the head
+  // straight outward never turns the section edge-on
+  let B = null, sg = 1; const T = new THREE.Vector3(), n = new THREE.Vector3(), o = new THREE.Vector3(), c = new THREE.Vector3();
+  const end = L.path[L.path.length - 1], B0 = L.across ? new THREE.Vector3(...L.across) : new THREE.Vector3(end[2], 0, -end[0]);
+  if (B0.lengthSq() < 1e-6) B0.set(1, 0, 0);
+  for (let i = 0; i <= M; i++) {
+    const t = i / M; curve.getPointAt(t, c); curve.getTangentAt(t, T);
+    if (!B) { B = B0.clone(); B.addScaledVector(T, -B.dot(T)).normalize(); n.crossVectors(B, T); sg = n.x * c.x + n.z * c.z >= 0 ? 1 : -1; }   // depth faces out from the head
+    B.addScaledVector(T, -B.dot(T)).normalize(); n.crossVectors(B, T).multiplyScalar(sg);
+    const w = lerpA(L.w, t) * W, ps = 2 * Math.PI * br * t, shift = br ? 0.16 * w * Math.sin(ps) : 0, pinch = br ? 0.86 + 0.14 * Math.abs(Math.cos(ps)) : 1;
+    for (let j = 0; j <= N; j++) {
+      const a = j / N * 2 * Math.PI, k = rid ? 1 - 0.10 * Math.pow(0.5 - 0.5 * Math.cos(rid * a), 2) : 1;
+      o.copy(c).addScaledVector(B, Math.cos(a) * w * k * pinch + shift).addScaledVector(n, Math.sin(a) * w * flat * k * pinch);
+      pos.push(o.x, o.y, o.z); uvs.push(j / N, t);
+    }
+  }
+  for (let i = 0; i < M; i++) for (let j = 0; j < N; j++) { const a = i * (N + 1) + j, b = a + N + 1; idx.push(a, b, a + 1, a + 1, b, b + 1); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); g.setIndex(idx); g.computeVertexNormals();
+  const GN = g.attributes.normal; for (let i = 0; i <= M; i++) { const a = i * (N + 1), b = a + N, v = new THREE.Vector3(GN.getX(a) + GN.getX(b), GN.getY(a) + GN.getY(b), GN.getZ(a) + GN.getZ(b)).normalize(); GN.setXYZ(a, v.x, v.y, v.z); GN.setXYZ(b, v.x, v.y, v.z); }   // the seam shades as one
+  const shade = (u, t) => { const a = 2 * Math.PI * u, cr = rid ? 0.5 + 0.5 * Math.cos(rid * a) : 1, face = sm(-0.3, 0.7, Math.sin(a));
+    let s = -0.8 * Math.pow(1 - cr, 3) + 0.45 * Math.exp(-(((t - (L.band ?? 0.22)) / 0.07) ** 2)) * cr * cr * face + (L.tipLight || 0) * sm(0.75, 1, t) - 0.25 * sm(0.3, -0.6, Math.sin(a));
+    if (br) { const q = 2 * br * t + 0.5 * Math.abs(Math.cos(a)) * Math.sign(Math.sin(phase(t))), f = q - Math.floor(q); s = Math.min(s, -0.9 * sm(0.18, 0.0, Math.min(f, 1 - f))) + 0.3 * sm(0.5, 0.2, Math.abs(f - 0.5)) * face; }
+    return s; }, phase = t => 2 * Math.PI * br * t;
+  const m = solid(g, toon(paint(256, 512, shade, rgb) ? [1, 1, 1] : rgb, { shade: [0.82, 0.79, 0.93], sheen: 0, rough: 1, rim: 0.12, map: paint.last }), 0.046 * W * (L.ink ?? 1));
+  m.receiveShadow = false; m.userData.hairStyle = true; return m;
+}
+// a lock's painted map (as fieldMesh's: grooves dark, the band light), u round it and v along it; null headless (paint.last)
+function paint(cw, ch, shade, rgb) {
+  paint.last = null; const cv = typeof document !== 'undefined' ? document.createElement('canvas') : null, x = cv?.getContext?.('2d'); if (cv) { cv.width = cw; cv.height = ch; }
+  const im = x?.createImageData?.(cw, ch); if (!im?.data) return null;
+  for (let j = 0; j < ch; j++) for (let i = 0; i < cw; i++) { const s = Math.max(-1, Math.min(1, shade((i + 0.5) / cw, (j + 0.5) / ch))), k = s < 0 ? 1 + 0.45 * s : 1 + 0.30 * s, o = 4 * (j * cw + i);
+    for (let q = 0; q < 3; q++) im.data[o + q] = Math.min(255, 255 * (rgb[q] * k + (s > 0 ? 0.06 * s : 0))); im.data[o + 3] = 255; }
+  x.putImageData(im, 0, 0); const map = new THREE.CanvasTexture(cv); map.colorSpace = THREE.SRGBColorSpace; map.anisotropy = 8; map.flipY = false; return (paint.last = map);
+}
+// a fall: n locks side by side round the head between two longitudes (deg, both sides of the face when `both`), each from under the
+// scalp's hem at `from` (W) straight down to `to`, `rho` W out from the head's widest ring, flaring, waving and its tip turning out
+function fall(F, cut) {
+  const out = [], sides = F.both === false ? [1] : [1, -1], n = F.n, r = rand(F.seed ?? 5);
+  for (const sg of sides) for (let i = 0; i < n; i++) {
+    const lon = sg * (F.lon[0] + (F.lon[1] - F.lon[0]) * (n === 1 ? 0.5 : i / (n - 1))), j = 1 + (F.jit ?? 0) * (r() - 0.5), to = Math.max(cut ?? -9, F.to * (F.toAt ? lerpA(F.toAt, Math.abs(lon - sg * F.lon[0]) / Math.max(1, Math.abs(F.lon[1] - F.lon[0]))) : 1) * j);
+    if (to > F.from - 0.06) continue;                                                   // shortened away: no lock left below the scalp
+    const K = 7, path = [];
+    for (let k = 0; k <= K; k++) { const u = k / K, y = F.from + (to - F.from) * u, rho = 0.5 + (F.rho ?? 0.03) + (F.flare ?? 0) * u * u + (F.wave ? F.wave[0] * Math.sin(Math.PI * F.wave[1] * u + i) * sm(0, 0.2, u) : 0) + (F.flick ?? 0) * sm(0.7, 1, u), a = lon * DEG;
+      path.push([rho * Math.sin(a), y, rho * Math.cos(a)]); }
+    path.unshift(onHead(lon, F.from + 0.18, -0.04));                                   // the root: inside the scalp's mass
+    const wd = F.w ?? 0.53 * Math.abs(F.lon[1] - F.lon[0]) * DEG / Math.max(1, n - 1) * 0.65;   // half the width: 1.3 of the spacing, the locks overlap
+    out.push({ path, w: (F.tip === 'blunt' ? [0.7, 1, 1, 1, 1, 0.95, 0.5] : F.tip === 'club' ? [0.6, 0.9, 1.05, 1.1, 1.0, 0.7, 0.2] : [0.7, 1, 1, 0.95, 0.8, 0.5, 0.06]).map(x => x * wd), flat: F.flat ?? 0.35, ridges: F.ridges ?? 3, braid: F.braid ?? 0, tipLight: F.tipLight, ink: F.ink, sides: F.sides, band: F.band });
+  }
+  return out;
+}
+
+export function toonHair(style = 'side', col, patch) {   // patch: fields over the style's own (measures try a length with it)
+  if (!STYLES[style]) throw new Error(`toonHair: no style '${style}' (${HAIR_STYLES.join(', ')})`); const st = { ...STYLES[style], ...patch };
   const rgb = col || st.col;
   return () => {
     const g = new THREE.Group(); g.name = 'toonHair:' + style; g.position.y = -HAT_LIFT;   // built on the head's own centre
@@ -133,6 +248,8 @@ export function toonHair(style = 'side', col) {
       const d = new THREE.Vector3(...b.dir).normalize(), m = fieldMesh(bunField(b), rgb);
       m.position.copy(d).multiplyScalar(headR(d) + b.out * W); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d); g.add(m);
     }
+    const tails = (st.tails || []).map(L => { const y0 = L.path[0][1], lo = Math.min(...L.path.map(p => p[1])); if (st.cut == null || lo >= st.cut) return L; const q = (y0 - st.cut) / (y0 - lo); return { ...L, path: L.path.map(p => [p[0], y0 + (p[1] - y0) * q, p[2]]) }; });
+    for (const L of [...tails, ...(st.falls || []).flatMap(F => fall(F, st.cut))]) g.add(lockMesh(L, rgb));
     return g;
   };
 }
