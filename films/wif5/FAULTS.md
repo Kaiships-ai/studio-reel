@@ -76,8 +76,8 @@
 ## Kit faults (filed by the director, for kit PRs)
 | id | fault | where seen | camera | status |
 |---|---|---|---|---|
-| K1 | held prop not touching the holding hand passes every gate (no hand-to-grip distance check) | c trays, f tin, g baby, j photo, a 450 | any | open: kit gate PR queued (handgrip gate, frozen limit + 5 cm-off control) |
-| K2 | face slides to the head's edge / squashes at some camera angles | e beat_1511, f beat_1598 + contact_tin, h beat_2090 | angles to be logged from facegate per still (fix round 1 reports) | open: same or second kit PR; not hidden by camera choice only |
+| K1 (PR #208) | held prop not touching the holding hand passes every gate (no hand-to-grip distance check) | c trays, f tin, g baby, j photo, a 450 | any | open: kit gate PR queued (handgrip gate, frozen limit + 5 cm-off control) |
+| K2 | face unreadable when the head is turned 52-64 deg from camera or the camera is 27-35 deg below the head; engine counts the face fully visible to ~77 deg and no gate scores readability (measured on PR #208) | f 1598-1665, g 1705-1725, e, h | turn 52-64 deg, pitch 27-35 deg below | open kit fault: a face-readability limit (turn + pitch) gate, later; V5 keeps faces under it by camera |
 | K3 | coloured practical light never reaches a head: heads are drawn unlit on purpose (`flatHeadMat`, engine/cast.js), place light tints 25 % only; a red alarm cannot be on faces | h beat_2040, 2090 | any | open: kit design call (faces readable vs lit); film shows red on walls, floor, tank |
 
 ## Parts a, f-j stills, blind read 2
@@ -119,3 +119,4 @@
 | e3-1 | e beat_1483 | standing man's legs end on the desk top behind the keyboard: he reads as standing in/on the desk; hands hover at the desk's front edge | visible |
 | e3-2 | e beat_1413 | the phones are tiny; the red glow reads as red desk lamps or alarm light, not every phone ringing | visible |
 | e3-3 | e beat_1373, 1413, 1483 | desk front a flat pale near-white panel (bottom ~15-20 %); top ~20-25 % dark empty ceiling | minor |
+| K4 | the kit hand props are only cup hammer pencil pad drumstick apple phone megaphone beaker chilli medal box; films faked baby/tin/lantern/photo/balloon as loose set props + an invisible 4 mm stand-in (held:false), invisible to every gate | a, b, d, f, g, j | any | open: kit PR adding 5 hand props with grip points (Studio go 26/11); from now no invisible stand-ins in wif5 |
