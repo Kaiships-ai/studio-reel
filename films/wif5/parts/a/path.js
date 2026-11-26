@@ -10,7 +10,9 @@ export const RIGHT = [U[1], -U[0]];
 export const TOWER = { x0: -2.0, x1: 2.0, y0: 9.0, y1: 11.6, h: 13.4 };
 export const CLOCK = [0, 8.92, 7.4], CLOCK_R = 2.05;             // the face: big, low on the tower, a few metres above the crowd
 export const BOARD = [0, 8.9, 4.55];                               // the lit countdown board under it
-export const ELDERS = { man: [3.0, 4.6], woman: [3.55, 4.6], hand: [3.215, 4.68, 1.52] };
+export const ELDERS = { man: [3.0, 4.6], woman: [3.55, 4.6], hand: [3.215, 4.68, 1.52],
+  bag0: [3.85, 4.62, 0.72],                                        // her handbag, hanging from her free hand until midnight
+  bag1: [2.81, 4.855, 1.0] };                                      // after: in his two hands at his chest (0.32 m toward the clock)
 export const at = (p, d) => [p[0] + U[0] * d, p[1] + U[1] * d];
 
 // the girl's walk as the motion library plays it (her keys are dense: one a frame), and where things are at frame f
@@ -25,3 +27,20 @@ export function girl(f) {
 export const dadAt = f => { const g = girl(f); return [g[0] + RIGHT[0] * SIDE, g[1] + RIGHT[1] * SIDE]; };
 export const handAt = f => { const g = girl(f); return [g[0] + RIGHT[0] * HAND_OFF + U[0] * 0.06, g[1] + RIGHT[1] * HAND_OFF + U[1] * 0.06, HAND_Z]; };
 export const GONE = 330;                                           // midnight: the women are not there any more
+
+// the cameras, one per beat (each a cut): [frame, why, pos, aim, lens]; set.js keeps snow off the lens with them
+const mid = f => { const g = girl(f), d = dadAt(f); return [(g[0] + d[0]) / 2, (g[1] + d[1]) / 2]; };
+const hEmpty = () => handAt(GONE - 1), g330 = () => girl(GONE);
+export const CAMS = () => { const h230 = handAt(230), h329 = handAt(329), he = hEmpty(), g = g330(), m200 = mid(200);
+  return [
+    [0, 'already busy: the dad and his girl walk hand in hand toward us into a full, lit square; the title sits over the square above them', [-1.12, 0.13, 2.6], [-2.32, -2.62, 2.2], 26],
+    [86, 'he waves his free arm with the crowd, her hand in his', [0.06, 2.83, 2.6], [-1.38, -0.47, 2.2], 30],
+    [196, 'he looks down at her and smiles, hand in hand', [0.99, 4.46, 1.0], [m200[0], m200[1], 0.7], 30],
+    [226, 'contact: her hand in his', [h230[0] + U[0] * 1.4 + RIGHT[0] * 0.05, h230[1] + U[1] * 1.4 + RIGHT[1] * 0.05, 0.6], [h230[0], h230[1], 0.8], 26],
+    [246, 'contact: the old couple hand in hand', [ELDERS.hand[0] - 0.5, ELDERS.hand[1] + 0.8, 0.7], [ELDERS.hand[0], ELDERS.hand[1] + 0.06, 0.72], 26],
+    [294, 'ONE: from low behind them, heads up to the big clock at midnight, the board says 1', [0.85, 2.03, 0.6], [1.0, 8.92, 3.0], 24],
+    [318, 'midnight, close on the joined hands: the next frame her hand is gone, her scarf hangs in the air', [h329[0] + U[0] * 1.15 - RIGHT[0] * 0.1, h329[1] + U[1] * 1.15 - RIGHT[1] * 0.1, 0.85], [h329[0], h329[1], 0.7], 26],
+    [350, 'his hand still out on air, her scarf on the snow, the old man holds her empty handbag', [g[0] + U[0] * 1.7 - RIGHT[0] * 0.7, g[1] + U[1] * 1.7 - RIGHT[1] * 0.7, 0.6], [g[0] + RIGHT[0] * 0.35, g[1] + RIGHT[1] * 0.35, 0.75], 22],
+    [440, 'the camera stops on him: tears, his empty hand held up before him', [he[0] + U[0] * 0.75 - RIGHT[0] * 0.45, he[1] + U[1] * 0.75 - RIGHT[1] * 0.45, 0.95], [he[0], he[1], 0.95], 28],
+  ]; };
+export const camAt = f => { let c = null; for (const k of CAMS()) if (k[0] <= f) c = k; return c; };

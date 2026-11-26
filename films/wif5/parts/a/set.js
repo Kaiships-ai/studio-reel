@@ -4,7 +4,7 @@
 // Light (LIGHT-RECIPE-V3): colour lives in the lamps: practicals reach 2.4-4.6 m at power 8-26, materials env x0.4.
 // V5 stills: the tower stands close with a big lit face and a countdown board; warm pools along the family's walk.
 import { createKit, rng, tex, place } from '/styles/stick-man/kit/film.js';
-import { TOWER, CLOCK, CLOCK_R, BOARD, ELDERS, GONE, START, U, girl, at } from '/films/wif5/parts/a/path.js';
+import { TOWER, CLOCK, CLOCK_R, BOARD, ELDERS, GONE, START, U, RIGHT, girl, at, camAt } from '/films/wif5/parts/a/path.js';
 
 export const SUN_DIR = [0.35, 0.55, -0.76];                       // a cool moon from front-left, high
 export const SUN_CENTER = [0, 3, 1.5], SUN_HALF = 11;
@@ -75,7 +75,7 @@ export async function build(stage) {
     const t = K.cube([Math.sin(a) * (R * 0.9 - L / 2), cy - 0.08, cz + Math.cos(a) * (R * 0.9 - L / 2)], [wd, 0.02, L], trim, { r: 0 }); t.rotation.z = -a; }
   const hand = (len, wdt, m, deg) => { const g = new T.Group(); g.position.copy(K.B(0, cy - 0.11, cz)); const b = new T.Mesh(new T.BoxGeometry(wdt, len, 0.03), m);
     b.position.y = len * 0.4; g.add(b); g.rotation.z = -deg * Math.PI / 180; g.userData.noInk = true; K.root.add(g); return g; };
-  hand(R * 0.55, 0.14, trim, -0.5); hand(R * 0.82, 0.09, trim, -6);
+  hand(R * 0.55, 0.14, trim, 0); hand(R * 0.82, 0.09, trim, -1);   // a breath before midnight: both hands at twelve
   const sec = hand(R * 0.88, 0.04, K.glow([0.85, 0.08, 0.06], 1.0), 0);
   K.anim('clock', sec, f => { sec.rotation.z = -((49 + f / 30) * 6) * Math.PI / 180; });   // 23:59:49 + f/30 s
   // the countdown board: warm digits on black glass, the number of seconds left (ONE at frame 300, 0 from 330)
@@ -103,7 +103,7 @@ export async function build(stage) {
   for (const p of LAMPS) K.point([p[0], p[1] - 0.25, 3.55], '#ffc98a', 16, 4.2);
 
   // ---- the tree: stacked cones, coloured bulbs, a gold star (right of the tower, off the walk)
-  const TX = 6.0, TY = 7.6, tg = M('#1f4a2e', 0.85);
+  const TX = 7.4, TY = 8.0, tg = M('#1f4a2e', 0.85);
   for (const [z, rr, h] of [[0.9, 1.7, 1.8], [2.1, 1.35, 1.6], [3.2, 1.0, 1.4], [4.2, 0.6, 1.2]]) K.cyl([TX, TY, z], rr, h, tg, { r2: 0.05, seg: 20 });
   K.cyl([TX, TY, 0.2], 0.16, 0.4, M('#4a3120', 0.9));
   const BULB = [[1.0, 0.55, 0.2], [0.95, 0.2, 0.18], [0.3, 0.8, 0.35], [0.35, 0.55, 1.0], [1.0, 0.8, 0.35]].map(c => K.glow(c, 1.3));
@@ -139,13 +139,34 @@ export async function build(stage) {
   for (const d of [0.2, 3.0, 6.0, 8.8]) { const p = at(START, d); K.point([p[0] + 0.3, p[1] - 0.3, 2.6], '#ffbe7a', 13, 3.6); }
   for (const p of [[-3.1, 5.0], [3.9, 3.2], [4.1, 7.1], [-3.3, -5.7], [-4.3, -4.5], [3.2, 4.3]]) K.point([p[0], p[1] - 0.4, 2.7], '#ffc888', 10, 3.4);
 
-  // ---- her scarf: falls from where her neck was at midnight and lies on the snow
-  const g0 = girl(GONE), scarf = new T.Group(), sm = M([0.70, 0.44, 0.05], 0.9);
-  for (const [x, y, rz, l] of [[0, 0, 20, 0.34], [0.16, 0.08, -35, 0.28], [-0.12, 0.1, 70, 0.22]]) { const b = new T.Mesh(new T.BoxGeometry(l, 0.022, 0.075), sm);
-    b.position.set(x, 0.011, -y); b.rotation.y = rz * Math.PI / 180; b.castShadow = true; scarf.add(b); }
-  scarf.position.copy(K.B(g0[0], g0[1], 0)); K.root.add(scarf);
-  K.anim('scarf', scarf, f => { scarf.visible = f >= GONE; const t = Math.max(0, f - GONE) / 30, z = Math.max(0, 0.42 - 4.9 * t * t);
-    scarf.position.copy(K.B(g0[0], g0[1], z)); scarf.rotation.z = z > 0 ? 0.6 : 0; });
+  // ---- her scarf: at midnight it hangs a moment in the air where her neck was (a loop and its tail), drifts down, and lies
+  // on the snow as a long soft strip, in a lamp pool
+  const g0 = girl(GONE), yawU = Math.atan2(U[0], U[1]), mus = M([0.86, 0.60, 0.10], 0.9), band = M([0.40, 0.24, 0.07], 0.9);
+  const c331 = camAt(GONE + 1)[2], air = new T.Group();
+  const ring = new T.Mesh(new T.TorusGeometry(0.085, 0.032, 8, 22), mus); air.add(ring);      // the loop that was round her neck, facing the lens
+  for (const [dx, rz] of [[-0.035, 6], [0.04, -9]]) for (let k = 0; k < 4; k++) {                // two tails, striped, hanging from it
+    const t = new T.Mesh(new T.BoxGeometry(0.07, 0.07, 0.018), k % 2 ? band : mus); t.position.set(dx + Math.sin(rz * Math.PI / 180) * 0.07 * k, -0.11 - 0.07 * k, 0.03); air.add(t); }
+  K.root.add(air);
+  const pts = Array.from({ length: 9 }, (_, i) => { const t = i / 8; return K.B(g0[0] + RIGHT[0] * (t - 0.5) * 0.95 + U[0] * 0.16 * Math.sin(t * 5), g0[1] + RIGHT[1] * (t - 0.5) * 0.95 + U[1] * 0.16 * Math.sin(t * 5), 0.022); });
+  const strip = new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts), 40, 0.06, 8), mus); strip.scale.set(1, 1, 1); strip.castShadow = true;
+  const flat = new T.Group(); flat.add(strip); K.root.add(flat); strip.geometry.scale(1, 0.35, 1); strip.geometry.translate(0, 0.0, 0);
+  for (const t of [0.02, 0.98]) { const p = pts[Math.round(t * 8)]; const fr = new T.Mesh(new T.BoxGeometry(0.13, 0.025, 0.13), band); fr.position.set(p.x, 0.02, p.z); fr.rotation.y = yawU; flat.add(fr); }
+  const LAND = GONE + 21;
+  K.anim('scarf', air, f => { const t = Math.max(0, f - GONE) / 30, z = 0.84 - 1.7 * t * t;
+    air.visible = f >= GONE && f < LAND; flat.visible = f >= LAND; air.position.copy(K.B(g0[0], g0[1], Math.max(0.1, z))); air.lookAt(K.B(c331[0], c331[1], c331[2] - 0.4)); air.rotateZ(0.6 * t); });
+  K.point([g0[0] - 0.3, g0[1] - 0.5, 1.8], '#ffd08a', 7, 2.6);                 // the pool her scarf lands in
+
+  // ---- her handbag: hangs from the old woman's free hand; at midnight it hangs a moment on nothing, drops, and then the
+  // old man holds it, empty, at his chest
+  const bagM = M([0.44, 0.16, 0.14], 0.7), bag = new T.Group(), body = new T.Mesh(new T.BoxGeometry(0.26, 0.2, 0.09), bagM); body.position.y = -0.17; bag.add(body);
+  const strap = new T.Mesh(new T.TorusGeometry(0.075, 0.012, 6, 16, Math.PI), M([0.25, 0.10, 0.08], 0.7)); strap.position.y = -0.075; bag.add(strap);
+  bag.traverse(m => { if (m.isMesh) m.castShadow = true; }); K.root.add(bag);
+  const B0 = ELDERS.bag0, B1 = ELDERS.bag1, yawE = Math.atan2(CLOCK[0] - (ELDERS.man[0] + ELDERS.woman[0]) / 2, CLOCK[1] - ELDERS.man[1]);
+  K.anim('bag', bag, f => { bag.rotation.y = yawE;
+    if (f < GONE) { bag.position.copy(K.B(...B0)); return; }
+    if (f < 352) { const t = (f - GONE) / 30, z = Math.max(0.28, B0[2] - 4.9 * t * t); bag.position.copy(K.B(B0[0], B0[1], z)); bag.rotation.z = z <= 0.28 ? 1.3 : 0; return; }
+    bag.position.copy(K.B(B1[0], B1[1], B1[2] + 0.17)); });
+  K.point([3.25, 5.45, 1.5], '#ffd0a0', 5, 2.0);                                 // lights the old couple's hands
 
   // ---- falling snow: flakes as points, each a pure function of the frame (no state)
   const N = 1800, base = new Float32Array(N * 4), pos = new Float32Array(N * 3), q = rng(19);
@@ -155,9 +176,10 @@ export async function build(stage) {
   const pm = new T.PointsMaterial({ size: 0.045, map: flake, color: new T.Color(0.62, 0.66, 0.74), transparent: true, depthWrite: false, sizeAttenuation: true });
   pm.userData.noToon = true; pm.userData.noPrepass = true;
   const snow = new T.Points(geo, pm); snow.frustumCulled = false; snow.userData.noInk = true; snow.userData.noPrepass = true; K.root.add(snow);
-  K.anim('snow', snow, f => { const t = f / 30;
+  K.anim('snow', snow, f => { const t = f / 30, c = camAt(f)?.[2];
     for (let i = 0; i < N; i++) { const [bx, by, bz, ph] = base.subarray(i * 4, i * 4 + 4), z = ((bz - 0.55 * t) % 9 + 9) % 9;
-      const v = K.B(bx + 0.18 * Math.sin(t * 0.9 + ph), by + 0.12 * Math.cos(t * 0.7 + ph), z); pos[i * 3] = v.x; pos[i * 3 + 1] = v.y; pos[i * 3 + 2] = v.z; }
+      const v = K.B(bx + 0.18 * Math.sin(t * 0.9 + ph), by + 0.12 * Math.cos(t * 0.7 + ph), z); pos[i * 3] = v.x; pos[i * 3 + 1] = v.y; pos[i * 3 + 2] = v.z;
+      if (c && Math.hypot(bx - c[0], by - c[1], z - c[2]) < 1.8) pos[i * 3 + 1] = -50; }   // no flake fills the lens
     geo.attributes.position.needsUpdate = true; });
   noShadow(snow);
   return { props: K.props };

@@ -4,7 +4,7 @@
 // on the clips' own keys (figure-local W units, engine/cast.js pose2).
 import { person, bun, W_M } from '/styles/stick-man/kit/film.js';
 import { expandClips } from '/styles/stick-man/motion-lib/index.js';
-import { YAW, WALK, START, GONE, ELDERS, CLOCK, U, RIGHT, at, girl, dadAt, handAt } from '/films/wif5/parts/a/path.js';
+import { YAW, WALK, START, GONE, ELDERS, CLOCK, U, RIGHT, at, girl, dadAt, handAt, CAMS } from '/films/wif5/parts/a/path.js';
 
 const SKIN = [[0.86, 0.72, 0.60], [0.74, 0.56, 0.44], [0.60, 0.43, 0.33], [0.90, 0.78, 0.66]];
 const hair = c => [bun(c)];
@@ -48,7 +48,7 @@ let G = expandClips([girlP.clip('Move_Walk_Fwd_Loop', { f: 0, pos: START, yaw: Y
 G = gone(G, GONE);
 for (const k of G) if (k.f < GONE) grip(k, handAt(k.f), sG);
 for (const k of G) if (k.f < GONE) { nod(k, ease(ramp(k.f, 282, 296)), -24, 20); nod(k, ease(ramp(k.f, 312, 322)), -22, -10); }
-mark(G, 0, { expr: 'happy', look: 'dad' }); mark(G, 120, { expr: 'laugh', look: CLOCK }); mark(G, 284, { expr: 'excited', look: CLOCK }); mark(G, 312, { expr: 'laugh', look: 'dad' });
+mark(G, 0, { expr: 'happy', look: 'dad' }); mark(G, 120, { expr: 'grin', look: CLOCK }); mark(G, 284, { expr: 'excited', look: CLOCK }); mark(G, 312, { expr: 'grin', look: 'dad' });
 
 // ---- the dad: walks with her (his feet on her pace), cheers with his free arm, looks up on ONE; after midnight he stands
 // where she left him, his hand still where hers was
@@ -61,15 +61,16 @@ for (const k of D) { grip(k, handAt(k.f), sD); nod(k, ease(ramp(k.f, 282, 294)),
 for (const f of [70, 80, 112, 122, 306, 316]) keyAt(D, f);
 span(D, 70, 122, k => raise(k, free, ease(Math.min(ramp(k.f, 70, 80), 1 - ramp(k.f, 112, 122))), { raise: 112, swing: 38, elbow: 60 }));
 span(D, 306, GONE, k => raise(k, free, ease(ramp(k.f, 306, 316))));
-const dEnd = dadAt(GONE), emptyHand = local(handAt(GONE - 1), [...dEnd, 0], YAW, sD);
-const D2 = expandClips([dadP.clip('Idle_Stand_Loop', { f: GONE, pos: dEnd, yaw: YAW, ease: 'snap' }), dadP.clip('React_Surprise_Once', { f: 336 }), dadP.clip('Idle_Stand_Loop', { f: 396 })]);
-for (const f of [GONE, 331, 340, 352, 380, 420, 450, 500]) keyAt(D2, f);
-for (const k of D2) { k.pos = [...dEnd, 0]; k.yaw = YAW; const w = 1 - 0.25 * ramp(k.f, 331, 352);   // the fingers close on air: the hand a little in
-  k[hold] = { ...k[hold], ik: emptyHand.map((v, i) => (i === 1 ? v : v * w + (i === 0 ? 0 : 0))), ikw: 1 };
-  nod(k, 1, 10, 60); nod(k, ramp(k.f, 336, 352), 24, 45); raise(k, free, Math.max(0, 1 - ramp(k.f, GONE, 340))); }
+const dEnd = dadAt(GONE);
+const D2 = expandClips([dadP.clip('Idle_Stand_Loop', { f: GONE, pos: dEnd, yaw: YAW, ease: 'snap' }), dadP.clip('Idle_Stand_Loop', { f: 400 }), dadP.clip('Idle_Stand_Loop', { f: 470 })]);
+for (const f of [GONE, 331, 340, 352, 380, 400, 420, 436, 450, 500]) keyAt(D2, f);
+const he = handAt(GONE - 1), handUp = [he[0] - RIGHT[0] * 0.28 + U[0] * 0.1, he[1] - RIGHT[1] * 0.28 + U[1] * 0.1, 0.92];   // reaching on, out of frame, where she was
+for (const k of D2) { k.pos = [...dEnd, 0]; k.yaw = YAW; const w = ease(ramp(k.f, 400, 436));   // his hand stays where hers was, then reaches on after her
+  k[hold] = { ...k[hold], ik: local(he.map((v, i) => v * (1 - w) + handUp[i] * w), [...dEnd, 0], YAW, sD), ikw: 1 };
+  nod(k, 1, 10, 60); nod(k, ramp(k.f, 336, 352) * (1 - ramp(k.f, 400, 436)), 24, 45); raise(k, free, Math.max(0, 1 - ramp(k.f, GONE, 340))); }
 D = [...D, ...D2];
-mark(D, 0, { expr: 'laugh', look: CLOCK }); mark(D, 150, { expr: 'happy', look: 'girl' }); mark(D, 284, { expr: 'excited', look: CLOCK }); mark(D, 312, { expr: 'laugh', look: 'girl' });
-mark(D, 331, { expr: 'shock', look: handAt(GONE - 1) }); mark(D, 352, { expr: 'panic', look: [...girl(GONE), 0.05] }); mark(D, 420, { expr: 'sad', look: handAt(GONE - 1) });
+mark(D, 0, { expr: 'grin', look: 'camera' }); mark(D, 150, { expr: 'happy', look: 'girl' }); mark(D, 284, { expr: 'excited', look: CLOCK }); mark(D, 312, { expr: 'grin', look: 'girl' });
+mark(D, GONE, { expr: 'shock', look: he }); mark(D, 352, { expr: 'panic', look: [...girl(GONE), 0.05] }); mark(D, 420, { expr: 'sad', look: handUp });
 
 // ---- the old couple: hand in hand, their joined hands go up at midnight; she is gone, his hand stays up
 const yE = faceClock([(ELDERS.man[0] + ELDERS.woman[0]) / 2, ELDERS.man[1]]), low = [ELDERS.hand[0], ELDERS.hand[1] + 0.06, 0.62], up = ELDERS.hand;
@@ -77,9 +78,17 @@ const elder = (p, pos, n) => { const ks = expandClips([p.clip('Idle_Breath_Loop'
 const handE = f => { const w = ease(ramp(f, 300, 316)); return low.map((v, i) => v * (1 - w) + up[i] * w); };
 let OM = elder(oldM, ELDERS.man, 5), OW = gone(elder(oldW, ELDERS.woman, 3), GONE);
 for (const f of [340, 360, 450]) keyAt(OM, f);
-for (const [ks, s] of [[OM, sE], [OW, oldW.spec.scale ?? 1]]) for (const k of ks) if (k.f < GONE || ks === OM) { grip(k, handE(Math.min(k.f, GONE)), s); nod(k, ease(ramp(k.f, 286, 300)) * (1 - 0.6 * ramp(k.f, 336, 350)), -26); }
-mark(OM, 0, { expr: 'happy', look: 'oldwoman' }); mark(OM, 290, { expr: 'grin', look: CLOCK }); mark(OM, 340, { expr: 'worried', look: [...ELDERS.woman, 1.2] });
-mark(OW, 0, { expr: 'happy', look: 'oldman' }); mark(OW, 290, { expr: 'laugh', look: CLOCK });
+for (const f of [344, 352]) keyAt(OM, f);
+const fwdE = [Math.sin(yE * DEG), -Math.cos(yE * DEG)], perpE = [-fwdE[1], fwdE[0]], B1 = ELDERS.bag1;
+const bagSide = s => [B1[0] + perpE[0] * 0.12 * s, B1[1] + perpE[1] * 0.12 * s, B1[2]];
+for (const [ks, s] of [[OM, sE], [OW, oldW.spec.scale ?? 1]]) for (const k of ks) if (k.f < GONE || ks === OM) {
+  const side = grip(k, handE(Math.min(k.f, GONE)), s); nod(k, ease(ramp(k.f, 286, 300)) * (1 - 0.6 * ramp(k.f, 336, 350)), -26);
+  if (ks === OW) { const q = local(ELDERS.bag0, k.pos, k.yaw, s); k[other(side)] = { ...k[other(side)], ik: q, ikw: 1 }; }
+  if (ks === OM && k.f >= 344) { const w = ease(ramp(k.f, 344, 352)), a = [handE(GONE), bagSide(-1)], b = [handE(GONE), bagSide(1)];
+    const P1 = a[0].map((v, i) => v * (1 - w) + a[1][i] * w), q1 = local(P1, k.pos, k.yaw, s), q2 = local(bagSide(1), k.pos, k.yaw, s);
+    const s1 = q1[0] < 0 ? 'armL' : 'armR'; k[s1] = { ...k[s1], ik: q1, ikw: 1 }; k[other(s1)] = { ...k[other(s1)], ik: q2, ikw: w }; } }
+mark(OM, 0, { expr: 'happy', look: 'oldwoman' }); mark(OM, 290, { expr: 'grin', look: CLOCK }); mark(OM, 336, { expr: 'worried', look: [...ELDERS.woman, 1.2] }); mark(OM, 352, { expr: 'sad', look: ELDERS.bag1 });
+mark(OW, 0, { expr: 'happy', look: 'oldman' }); mark(OW, 290, { expr: 'grin', look: CLOCK });
 
 // ---- the crowd: couples clap and wave, look up on ONE, throw their arms up at midnight; the women are gone at 330
 const cast = {}, anim = {};
@@ -91,8 +100,8 @@ COUPLES.forEach(([mp, wp], i) => {
   for (const ks of [M, Wk]) { for (const f of [300, 308, 318, 324, 329, 336, 344]) keyAt(ks, f);
     span(ks, 300, 346, k => { const w = ease(Math.min(ramp(k.f, 308, 318), 1 - ramp(k.f, 336, 346))); raise(k, 'armL', w); raise(k, 'armR', w, { raise: 150, swing: 18, elbow: 34 }); }); }
   Wk = gone(Wk, GONE);
-  mark(M, 0, { expr: i % 2 ? 'laugh' : 'happy', look: CLOCK }); mark(M, 300, { expr: 'excited' }); mark(M, 346, { expr: 'shock', look: [...wp, 1.4] });
-  mark(Wk, 0, { expr: i % 2 ? 'happy' : 'laugh', look: CLOCK }); mark(Wk, 300, { expr: 'excited' });
+  mark(M, 0, { expr: i % 2 ? 'grin' : 'happy', look: CLOCK }); mark(M, 300, { expr: 'excited' }); mark(M, 346, { expr: 'shock', look: [...wp, 1.4] });
+  mark(Wk, 0, { expr: i % 2 ? 'happy' : 'grin', look: CLOCK }); mark(Wk, 300, { expr: 'excited' });
   cast[`man${i}`] = men[i].cast({ at: [...mp, 0], yaw: ym }); cast[`woman${i}`] = women[i].cast({ at: [...wp, 0], yaw: yw });
   anim[`man${i}`] = M; anim[`woman${i}`] = Wk;
 });
@@ -100,7 +109,6 @@ COUPLES.forEach(([mp, wp], i) => {
 // ---- cameras: one shot a beat (each a cut); a still is read at its beat frame
 const cam = (f, why, pos, aim, lens, to) => ({ at: { f }, intent: 'still', why: `P1 · ${why}`, cut: 'cut', cam: { pos, aim, lens },
   to: to || { pos, aim, lens }, move: { from: { f }, dur: 1, ease: 'linear' } });
-const h230 = handAt(230), dEndHead = [...dEnd, 1.5], hEmpty = handAt(GONE - 1), g330 = girl(GONE);
 export const SHOTS = { 0: 0, 90: 86, 200: 196, contact_hands: 226, contact_old: 246, 300: 294, 329: 318, 331: 318, 360: 350, 450: 440 };
 export const STILLS = { beat_0: 0, beat_90: 90, beat_200: 200, contact_dad_daughter_hands: 230, contact_old_couple_hands: 250, beat_300: 300, beat_329: 329, beat_331: 331, beat_360: 360, beat_450: 450 };
 
@@ -113,19 +121,9 @@ export default {
   grade: { exp: 1.0, lift: 0.0, sat: 1.0, haze: 0, sky: { clouds: 0 } },
   haze: { color: [0.065, 0.08, 0.125], near: 18, far: 80 },
   set: 'square', setModule: '/films/wif5/parts/a/set.js',
-  make: { clock: { kind: 'ao_anim', prop: 'clock' }, snow: { kind: 'ao_anim', prop: 'snow' }, board: { kind: 'ao_anim', prop: 'board' }, scarf: { kind: 'ao_anim', prop: 'scarf' } },
+  make: { clock: { kind: 'ao_anim', prop: 'clock' }, snow: { kind: 'ao_anim', prop: 'snow' }, board: { kind: 'ao_anim', prop: 'board' }, scarf: { kind: 'ao_anim', prop: 'scarf' }, bag: { kind: 'ao_anim', prop: 'bag' } },
   cast: { dad: dadP.cast({ at: [...d0, 0], yaw: YAW, lead: true }), girl: girlP.cast({ at: [...START, 0], yaw: YAW }),
     oldman: oldM.cast({ at: [...ELDERS.man, 0], yaw: yE }), oldwoman: oldW.cast({ at: [...ELDERS.woman, 0], yaw: yE }), ...cast },
   anim: { dad: D, girl: G, oldman: OM, oldwoman: OW, ...anim },
-  direct: [
-    cam(0, 'already busy: the dad and his girl walk hand in hand into a full, lit square; the title sits over the square above them', [1.3, -0.4, 0.45], [-2.3, -2.8, 2.6], 24),
-    cam(86, 'he waves his free arm with the crowd, her hand in his', [-2.7, 2.7, 0.4], [-0.9, -1.5, 3.1], 24),
-    cam(196, 'he looks down at her and smiles', [-1.0, 4.6, 0.6], [0.3, 2.0, 1.3], 26),
-    cam(226, 'contact: her hand in his', [h230[0] + U[0] * 1.4 + RIGHT[0] * 0.05, h230[1] + U[1] * 1.4 + RIGHT[1] * 0.05, 0.6], [h230[0], h230[1], 0.8], 26),
-    cam(246, 'contact: the old couple hand in hand', [ELDERS.hand[0] - 0.8, ELDERS.hand[1] + 1.25, 0.75], [ELDERS.hand[0], ELDERS.hand[1] + 0.06, 0.95], 26),
-    cam(294, 'ONE: his head goes up to the big clock, the board says 1, the crowd looks up', [-1.5, 5.9, 0.35], [0.98, 6.26, 3.21], 15),
-    cam(318, 'midnight: he laughs down at her, fist up; the old couple raise their joined hands; the next frame the women are gone', [1.6, 8.2, 0.55], [1.85, 5.6, 1.05], 22),
-    cam(350, 'his hand closes on air, her scarf on the snow', [g330[0] + U[0] * 1.7 - RIGHT[0] * 0.7, g330[1] + U[1] * 1.7 - RIGHT[1] * 0.7, 0.6], [g330[0] + RIGHT[0] * 0.35, g330[1] + RIGHT[1] * 0.35, 0.75], 22),
-    cam(440, 'the camera stops on his empty hand', [hEmpty[0] + U[0] * 0.75 - RIGHT[0] * 0.45, hEmpty[1] + U[1] * 0.75 - RIGHT[1] * 0.45, 0.95], [hEmpty[0], hEmpty[1], 0.95], 28),
-  ],
+  direct: CAMS().map(c => cam(...c)),
 };

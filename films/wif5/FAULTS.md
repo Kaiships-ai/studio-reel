@@ -72,3 +72,9 @@
 | j1 | j beat_2400, 2620, 2790, contact_photo | The photo floats in front of the chest. Neither hand touches it: they rest at the hips or beside its edge. | blocks |
 | j2 | j beat_2400, contact_photo | In 2400 the face reads as a sly smirk, and in contact_photo as a big open laugh, not calm love. The head is cut at the eyes in contact_photo and at the face in 2620. | visible |
 | j3 | j beat_2400 | A broken, cut-off wall shelf glitches at the right edge. The room is wide and bright (flat light ceiling across the top ~20 %), not a small, warm room. | minor |
+
+## Kit faults (filed by the director, for kit PRs)
+| id | fault | where seen | camera | status |
+|---|---|---|---|---|
+| K1 | held prop not touching the holding hand passes every gate (no hand-to-grip distance check) | c trays, f tin, g baby, j photo, a 450 | any | open: kit gate PR queued (handgrip gate, frozen limit + 5 cm-off control) |
+| K2 | face slides to the head's edge / squashes at some camera angles | e beat_1511, f beat_1598 + contact_tin, h beat_2090 | angles to be logged from facegate per still (fix round 1 reports) | open: same or second kit PR; not hidden by camera choice only |
