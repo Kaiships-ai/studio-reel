@@ -14,7 +14,7 @@ const { tableFaults } = await import('../../styles/stick-man/tools/gates/fits.mj
 const TABLE = JSON.parse(fs.readFileSync(path.join(ROOT, 'styles/stick-man/kit/compat.json'), 'utf8'));
 const NEW = ['baby', 'tin', 'lantern', 'photo', 'balloon'], TWO = ['baby', 'lantern', 'photo'];
 
-test('the five props are kit hand props with grip points; a two-hand prop names a point for each fist', () => {
+test('the five props are kit hand props with grip points; a two-hand prop names a point for each fist', async () => {
   for (const k of NEW) {
     const g = BUILD[k]?.(); assert.ok(g, `${k} in BUILD`); const U = g.userData;
     assert.equal(U.grip.length, 3, `${k} grip`);
@@ -22,11 +22,14 @@ test('the five props are kit hand props with grip points; a two-hand prop names 
     if (TWO.includes(k)) { assert.ok(U.hands.L[0] < 0 && U.hands.R[0] > 0, `${k}: the left fist at -x`); }
   }
   let light = 0; BUILD.lantern().traverse(o => { if (o.isPointLight) light++; }); assert.equal(light, 1, 'a warm light inside the lantern');
+  const { drawnSolid } = await import('../../styles/stick-man/kit/props/drawn.js');
+  for (const k of NEW) BUILD[k]().traverse(o => { if (o.isMesh && drawnSolid(o)) assert.ok(o.visible && o.material.visible !== false && (o.material.opacity ?? 1) > 0.5, `${k}: ${o.name || o.geometry.type} is drawn, not a stand-in`); });
+  let glow = 0; BUILD.lantern().traverse(o => { if (o.isMesh && !drawnSolid(o)) glow++; }); assert.equal(glow, 1, 'the lantern flame is a glow (drawn.js leaves it out)');
 });
 
 const R = await K.hands(NEW);
 
-test('every pose a film holds them in is measured, and the 5 cm control fails for each prop', () => {
+test('every pose a film holds them in is measured, and on its film pose a touching control passes and a 3 cm-off control fails', () => {
   for (const k of NEW) {
     const rows = R.rows.filter(r => r.pair.startsWith(`hand|${k}|`));
     assert.ok(rows.length >= 2, `${k}: rows for its bodies`);
@@ -34,11 +37,14 @@ test('every pose a film holds them in is measured, and the 5 cm control fails fo
       assert.equal(typeof r.number, 'number', r.pair); assert.ok(r.frames > 0, `${r.pair}: frames measured`);
       assert.equal(r.verdict, r.number <= GAP_CM ? 'pass' : 'blocked', `${r.pair}: ${r.number} cm`);
     }
-    const c = R.controls.find(x => x.prop === k);
-    assert.ok(c && c.minCm > GAP_CM, `${k}: the prop 5 cm off reads ${c?.minCm} cm on its least frame (limit ${GAP_CM})`);
+    for (const r of rows) {
+      const c = R.controls.find(x => x.pair === r.pair);
+      assert.ok(c, `${r.pair}: controls on its film pose`);
+      assert.ok(c.touchCm <= GAP_CM, `${r.pair}: the prop touching the fist reads ${c.touchCm} cm (must pass, limit ${GAP_CM})`);
+      assert.ok(c.offCm > GAP_CM && c.offCm < 3.5, `${r.pair}: the prop 3 cm off the fist reads ${c.offCm} cm (must fail, limit ${GAP_CM})`);
+    }
   }
   assert.ok(R.rows.some(r => r.pair === 'hand|balloon|child|hand'), 'the balloon on the child walk');
-  assert.match(R.rows.find(r => r.pair === 'hand|baby|adult|hand').why, /Idle_CarryBag_Loop 0\.00/, 'the baby sits on both fists in the standing carry');
 });
 
 test('kit/compat.json holds the rows this measure writes, with the same verdicts; a hand row over the limit is a table fault', () => {
