@@ -14,7 +14,7 @@ const rows = [
   row('outfit|cardigan|adult', 'pass', 1, 'mm'), row('outfit|shirt:office|adult', 'pass', 1, 'mm'), row('outfit|shirt:police|adult', 'pass', 1, 'mm'), row('outfit|cap:police|adult', 'pass', 1, 'mm'),
   row('outfit|shirt:work|adult', 'pass', 1, 'mm'), row('outfit|coat:lab|adult', 'blocked', 6.1, 'mm', 'the arm runs through it'),
   row(`clip|${GRAN}|Idle_Stand_Loop`, 'pass', 1, 'mm'), row(`clip|${GRAN}|Move_Walk_Fwd_Loop`, 'accepted', 7.3, 'cm/f/f'), row(`clip|${GRAN}|Gest_Clap_Loop`, 'blocked', 2.5, 'mm', 'the sleeve'), row(`clip|${GRAN}|Gest_SitTalk_Loop`, 'pass', 1, 'mm'),
-  row(`clip|${NAN}|Move_Walk_Fwd_Loop`, 'accepted', 6.9, 'cm/f/f'), row(`clip|${COP}|Idle_Stand_Loop`, 'pass', 1, 'mm'), row(`clip|${DAD}|Idle_Stand_Loop`, 'pass', 1, 'mm'), row(`clip|${DAD}|Gest_PhoneTalk_Loop`, 'pass', 1, 'mm'), row(`clip|${DAD}|Gest_SitTalk_Loop`, 'pass', 1, 'mm'),
+  row(`clip|${NAN}|Move_Walk_Fwd_Loop`, 'accepted', 6.9, 'cm/f/f'), row(`clip|${NAN}|Trans_SitDown_Once`, 'pass', 1, 'mm'), row(`clip|${NAN}|Idle_Sit_Loop`, 'pass', 1, 'mm'), row(`clip|${COP}|Idle_Stand_Loop`, 'pass', 1, 'mm'), row(`clip|${DAD}|Idle_Stand_Loop`, 'pass', 1, 'mm'), row(`clip|${DAD}|Gest_PhoneTalk_Loop`, 'pass', 1, 'mm'), row(`clip|${DAD}|Gest_SitTalk_Loop`, 'pass', 1, 'mm'),
   row('mark|bold:star|cap:police', 'pass', 0, 'share'), row('mark|bold:gloom|cap:police', 'blocked', 0.4, 'share', 'under the cap'),
   row('hand|cup|adult|hand', 'pass', 0, 'mm'), row('hand|cup|adult|seat', 'blocked', 30, 'mm', 'in the lap'), row('hand|phone|adult|hand', 'pass', 0, 'mm'), row('hand|hammer|adult|hand', 'blocked', 12, 'mm', 'in the head'),
   row('light|street/bench|night', 'pass', 0.4, 'albedo'), row('light|street/cart|night', 'blocked', 0.95, 'albedo', 'blown'),
@@ -37,7 +37,7 @@ GLTFLoader.prototype.loadAsync = function (url) {
 const F = await import('../../styles/stick-man/kit/film.js');
 const { SPECS, HOOKS } = await import('../../styles/stick-man/engine/play.js');
 const { makeStick } = await import('../../styles/stick-man/engine/cast.js');
-const { getClip, expandClips, CLIPS } = await import('../../styles/stick-man/motion-lib/index.js');
+const { getClip, expandClips, CLIPS, seatTop } = await import('../../styles/stick-man/motion-lib/index.js');
 
 const gran = (o = {}) => ({ name: 'gran', age: 'elder', outfit: ['shirt:office:sky', 'cardigan:plum'], shirt: [0.5, 0.6, 0.8], clips: ['Idle_Stand_Loop', 'Move_Walk_Fwd_Loop'], ...o });
 const cop = (o = {}) => ({ name: 'cop', girth: 1.2, outfit: ['shirt:police', 'cap:police'], clips: ['Idle_Stand_Loop'], ...o });
@@ -92,6 +92,16 @@ test('clip() gives the anim key on this body and asks again: an unlisted clip, a
   assert.ok(d.clip('Gest_PhoneTalk_Loop', { f: 0, swap: { phone: 'cup' } })); assert.throws(() => d.clip('Gest_PhoneTalk_Loop', { f: 0, swap: { phone: 'hammer' } }), /hand\|hammer\|adult\|hand: blocked/);
   assert.throws(() => d.clip('Idle_Stand_Loop', { f: 0, props: { R: 'hammer' } }), /hand\|hammer\|adult\|hand/); assert.throws(() => d.clip('Idle_Stand_Loop', { f: 0, x_hpR_hammer: 1 }), /hand\|hammer\|adult\|hand/);
   assert.throws(() => d.clip('Gest_SitTalk_Loop', { f: 0, props: { R: 'cup' } }), /hand\|cup\|adult\|seat: blocked/);
+});
+test('one seat is not used by two clips whose seat heights differ by more than 2 cm (the elder sits down onto 0.528 m, its idle needs 0.386 m)', () => {
+  const n = F.person({ name: 'seatnan', body: 'elder', age: 'elder', clips: ['Trans_SitDown_Once', 'Idle_Sit_Loop'] });
+  assert.equal(seatTop(getClip('Trans_SitDown_Once', 'elder')).toFixed(3), '0.528'); assert.equal(seatTop(getClip('Idle_Sit_Loop', 'elder')).toFixed(3), '0.386');
+  n.clip('Trans_SitDown_Once', { f: 0, seat: 'chair' });
+  assert.throws(() => n.clip('Idle_Sit_Loop', { f: 90, seat: 'chair' }), /seat "chair".*Trans_SitDown_Once.*0\.528.*Idle_Sit_Loop.*0\.386/);
+  assert.equal(n.clip('Idle_Sit_Loop', { f: 90, seat: 'stool' }).clip, 'Idle_Sit_Loop');     // another seat, or none named: not this check
+  assert.equal(n.clip('Idle_Sit_Loop', { f: 90 }).seat, undefined);                            // `seat` is the film's name for a seat, not an engine key
+  const m = F.person({ name: 'seatnan2', body: 'elder', age: 'elder', clips: ['Idle_Sit_Loop'] });
+  m.clip('Idle_Sit_Loop', { f: 0, seat: 'chair' }); assert.ok(m.clip('Idle_Sit_Loop', { f: 200, seat: 'chair' }));      // the same height: the same seat
 });
 test('expression() gives the beats of a feeling and asks for its marks against the hat', () => {
   const c = F.person(cop({ name: 'f1' })), b = c.expression('proud', { f: 100 }); assert.ok(b.every(x => x.who === 'f1')); assert.ok(b.some(x => x.mark?.[0] === 'star'));
