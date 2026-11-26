@@ -134,6 +134,9 @@ styles/stick-man/
 # at 8359713): Disney's 12 principles for directing and auditing reels, dev only
 .claude/skills/animation-principles/
 AGENT_LEARNING.md
+# Film sources force-added on a film branch (films/ is git-ignored): dev only, never shipped
+films/
+RESUME.md
 PLAN.md
 # The paid TMV kit's own files: tmv/<path> replaces or adds <path> in the tmv zip only
 tmv/
