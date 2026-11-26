@@ -96,10 +96,10 @@ export function hairInBody(S, P, ix = torsoIndex(S), segs = limbSegs(S)) {
 const toonHairLift = H => { let y = 0; H.traverse(o => { if (o.name?.startsWith('toonHair:') || o.userData.hairControl) y = o.position.y; }); return y; };
 
 // one style through every clip of CLIPS: the worst frame of each, { clip: { mm, what, f } }
-export async function sweep(style, clips = CLIPS, patch) {
+export async function sweep(style, clips = CLIPS, patch, { from = 0, to = null } = {}) {   // from / to: only those frames of each clip (the control)
   const { pts } = hairPoints(style, patch), out = {}, make = typeof style === 'function' ? style : toonHair(style, null, patch);
   for (const clip of clips) { let worst = { mm: -1e9, what: '', f: -1 }, headIn = 0;
-    await play(['sweater:coral'], 'adult', { clip, whole: true }, { spec: { hair: [make] }, each: (f, S) => { S.root.updateMatrixWorld(true); const r = hairInBody(S, pts); if (r.mm > worst.mm) worst = { ...r, f }; headIn += r.headIn; } });
+    await play(['sweater:coral'], 'adult', { clip, whole: true }, { from, to, spec: { hair: [make] }, each: (f, S) => { S.root.updateMatrixWorld(true); const r = hairInBody(S, pts); if (r.mm > worst.mm) worst = { ...r, f }; headIn += r.headIn; } });
     worst.headIn = headIn;
     out[clip] = worst; }
   return out;

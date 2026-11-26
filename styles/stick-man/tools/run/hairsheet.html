@@ -11,7 +11,7 @@
 //   node styles/stick-man/tools/render/shot.mjs --page styles/stick-man/tools/run/hairsheet.html --frames 0-47 --w 720 --h 1280 --out <dir>/h_%d.png
 //   node styles/stick-man/tools/render/shot.mjs --page 'styles/stick-man/tools/run/hairsheet.html?run=1' --frames 0-119 --w 720 --h 1280 --mp4 <dir>/run.mp4
 //   python styles/stick-man/tools/run/hairsheet_compose.py <dir> docs/hair-sheet/hair-sheet.jpg   (the sheet kept for review; docs/hair-sheet/cells is ignored)
-//   a type's sheet: add --query type=mw (frames 0-95: 16 rows) and pass the type: hairsheet_compose.py <dir> docs/hair-sheet/hair-sheet-mw.jpg mw
+//   a type's sheet: add --query type=mw (frames 0-109: 11 rows) and pass the type: hairsheet_compose.py <dir> docs/hair-sheet/hair-sheet-mw.jpg mw
 import * as THREE from 'three';
 import { makeStick, hairCap, HEAD_H, W_M } from '#engine/cast.js';
 import { createStage, lin } from '#engine/look.js';
@@ -30,7 +30,7 @@ await useFaceStyle();
 const RUN = new URLSearchParams(location.search).get('run');
 // ?type=: one sheet a type of style, each on its own body (hairsheet_compose.py takes the same type); none: the first six beside today's caps
 // a style the hair-in-body check shortened also shows as designed (`cut: null`, its lengths bound to the neck: `neck: true`), for the one who picks the length
-const TYPES = { mw: [['side', 'adult'], ['pompadour', 'adult'], ['buzz', 'adult'], ['mullet', 'adult'], ['afro', 'adult'], ['pixie', 'adult'], ['ponytail', 'adult']] };   // the shipped styles only (Studio 27/11: bob, long, braids, lob are drafts)   // one row a style, as shipped (Studio 27/11: the designed twins cut)
+const TYPES = { mw: [['side', 'adult'], ['pompadour', 'adult'], ['buzz', 'adult'], ['afro', 'adult'], ['pixie', 'adult'], ['ponytail', 'adult'], ['crop', 'adult'], ['curly', 'adult'], ['elder', 'elder'], ['woman', 'adult'], ['girl', 'child']] };   // the shipped styles only (Studio 27/11: bob, long, braids, lob are drafts)   // one row a style, as shipped (Studio 27/11: the designed twins cut)
 // type=zone: a bald head and the half-face card (test/unit/stick-hair-face.test.mjs) with dbg=zone: the face check's zone painted on
 // the head for the cell's view, red as facegate-hair.mjs puts it (solid), blue with the opposite height shift (wire)
 TYPES.ab = [['pompadour', 'adult'], ['long', 'adult']];

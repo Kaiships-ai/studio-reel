@@ -14,8 +14,8 @@ const HAIR_MM = 0.01;
 test('every style builds one closed scalp (and its buns), on the head', () => {
   assert.deepEqual(HAIR_STYLES.slice(0, 6), ['side', 'crop', 'curly', 'elder', 'woman', 'girl']);
   // the shipped set, pinned (Studio 27/11): the short styles that pass every hair check; the long ones are drafts until the long-hair work
-  assert.deepEqual(HAIR_STYLES, ['side', 'crop', 'curly', 'elder', 'woman', 'girl', 'pompadour', 'buzz', 'mullet', 'afro', 'pixie', 'ponytail']);
-  assert.deepEqual(HAIR_DRAFTS, ['bob', 'long', 'braids', 'lob']);
+  assert.deepEqual(HAIR_STYLES, ['side', 'crop', 'curly', 'elder', 'woman', 'girl', 'pompadour', 'buzz', 'afro', 'pixie', 'ponytail']);
+  assert.deepEqual(HAIR_DRAFTS, ['bob', 'long', 'braids', 'lob', 'mullet']);
   for (const s of HAIR_STYLES) {
     const g = toonHair(s, [0.3, 0.2, 0.1])(), meshes = g.children.filter(o => o.isMesh);
     if (HAIR_STYLES.indexOf(s) < 6) assert.equal(meshes.length, { woman: 2, girl: 3 }[s] ?? 1, s); else assert.ok(meshes.length >= 1, s);

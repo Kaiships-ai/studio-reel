@@ -12,24 +12,18 @@ import { rigStick } from '../../styles/stick-man/tools/gates/motionlib.mjs';
 
 await rigStick();
 const { HAIR_STYLES } = await import('../../styles/stick-man/kit/cast/hair.js');
-const { hairPoints, sweep, sweepAll, CLIPS, HAIR_IN_MM, NEAR_W } = await import('./hair-measure.mjs');   // the limits as the measure itself uses them
+const { sweep, CLIPS, HAIR_IN_MM, NEAR_W } = await import('./hair-measure.mjs');   // the limits as the measure itself uses them
 
 test('the limit is the one written before anything was measured', () => { assert.equal(HAIR_IN_MM, 4); assert.equal(NEAR_W, 0.10); assert.equal(CLIPS.length, 10); });
 
 // the control: a lock hung from the nape straight down the back through the shoulders must fail, or the measure sees nothing
 test('control: a lock hung through the back fails', async () => {
   const THREE = await import('three'), { solid, W_M, HAT_LIFT } = await import('../../styles/stick-man/engine/cast.js');
-  const make = () => { const g = new THREE.Group(); g.position.y = -HAT_LIFT; g.userData.hairControl = true; const m = solid(new THREE.CylinderGeometry(0.12 * W_M, 0.12 * W_M, 1.0 * W_M, 24, 8).translate(0, -0.9 * W_M, -0.25 * W_M), new THREE.MeshBasicMaterial()); g.add(m); return g; };
-  const r = await sweep(make, ['Adult_Gest_NodYes_Once']);
+  const make = () => { const g = new THREE.Group(); g.position.y = -HAT_LIFT; g.userData.hairControl = true; const m = solid(new THREE.CylinderGeometry(0.12 * W_M, 0.12 * W_M, 1.0 * W_M, 8, 3).translate(0, -0.9 * W_M, -0.25 * W_M), new THREE.MeshBasicMaterial()); g.add(m); return g; };
+  const r = await sweep(make, ['Adult_Gest_NodYes_Once'], undefined, { from: 8, to: 12 });   // the nod's few frames: the lock is in the back on each
   assert.ok(r.Adult_Gest_NodYes_Once.mm > 20, `the control lock measured ${r.Adult_Gest_NodYes_Once.mm.toFixed(1)} mm in`);
 });
 
-const all = await sweepAll(HAIR_STYLES);   // each clip played once, every style measured on its frames
-for (const s of HAIR_STYLES) {
-  // measured as it ships (shortened or not), named with the length it was designed to
-  const { low: designed } = hairPoints(s, { cut: null }), { low } = hairPoints(s);
-  test(`${s} (down to ${(-low).toFixed(2)} W, designed to ${(-designed).toFixed(2)}): never more than ${HAIR_IN_MM} mm into the body`, async () => {
-    const r = all[s], bad = Object.entries(r).filter(([, x]) => x.mm > HAIR_IN_MM);
-    assert.deepEqual(bad.map(([c, x]) => `${c} f${x.f}: ${x.mm.toFixed(1)} mm into the ${x.what}`), []);
-  });
-}
+const { GROUPS, bodyGroup } = await import('./hair-body-group.mjs');   // group 1 is here, 2-4 in stick-hair-body-N.test.mjs (run side by side)
+test('the four groups are every shipped style, once', () => assert.deepEqual(GROUPS.flat().sort(), [...HAIR_STYLES].sort()));
+await bodyGroup(0);

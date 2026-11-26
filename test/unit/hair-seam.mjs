@@ -2,7 +2,7 @@
 // as the head moves on the neck. Every vertex of a bound lock the crown covers at rest (inside the scalp's mass or within 2 mm of it, above the bell's hem at -0.45 W: below it the field runs off along the fall), carried by the neck each frame and read in the
 // head's frame, against the crown's drawn surface (its fill vertices where hair grows): how much further from it than at rest, mm (0 = the lengths
 // sit on the crown as built; capped at 50 mm), and how far they slide along it (mm, the top's travel in the head's frame).
-//   node test/unit/hair-seam.mjs [style ...]     (prints the worst frame per style and clip)
+//   node test/unit/hair-seam.mjs [style ...]     (prints the worst frame per style and clip); test/unit/stick-hair-seam.test.mjs pins SEAM_MM
 import * as THREE from 'three';
 import { rigStick } from '../../styles/stick-man/tools/gates/motionlib.mjs';
 await rigStick();
@@ -11,9 +11,13 @@ const { W_M } = await import('../../styles/stick-man/engine/cast.js');
 const { play } = await import('./wardrobe-measure.mjs');
 const { CLIPS } = await import('./hair-measure.mjs');
 
-// measured on the designed lengths bound to the neck (patch { neck: true, cut: null }) until Studio settles the seam
-export async function seam(style, clips = CLIPS, patch = { neck: true, cut: null }) {
-  const g = toonHair(style, null, patch)(), f = scalpField(style, patch), tops = [], d = new THREE.Vector3(), v = new THREE.Vector3(); g.updateMatrixWorld(true);
+// the seam's limit, mm: written before the first measure, never raised (as HAIR_IN_MM). A bound length that opens further than this from
+// the crown's drawn surface as the head moves on the neck reads as a gap between the hair's two parts
+export const SEAM_MM = 5;
+// measured on the designed lengths bound to the neck (patch { neck: true, cut: null }; a draft style needs draft: true); `build`: a group to measure instead of the style's own (the test's control)
+export async function seam(style, clips = CLIPS, patch = { neck: true, cut: null, draft: true }, build = null) {
+  const mk = build ? Object.assign(() => build(), { hairStyle: style }) : toonHair(style, null, patch);
+  const g = mk(), f = scalpField(style, patch), tops = [], d = new THREE.Vector3(), v = new THREE.Vector3(); g.updateMatrixWorld(true);
   const idx = [];   // [lock index in the group, vertex index, rest point]
   g.traverse(o => { if (!o.isMesh || !o.parent?.userData.neckBound) return; const k = o.parent.children.indexOf(o), A = o.geometry.attributes.position, ys = []; for (let i = 0; i < A.count; i++) ys.push(A.getY(i));
     for (let i = 0; i < A.count; i++) { const p = new THREE.Vector3().fromBufferAttribute(A, i); p.out0 = Math.max(0, p.length() - f(d.copy(p).normalize()).r); if (p.out0 < 0.002 && p.y > -0.45 * W_M) { tops.push(p); idx.push([k, i]); } } });
@@ -24,7 +28,7 @@ export async function seam(style, clips = CLIPS, patch = { neck: true, cut: null
   tops.forEach(p => { p.near0 = near(p); });
   const out = {};
   for (const clip of clips) { let w = { mm: 0, f: -1, slide: 0 };
-    await play(['sweater:coral'], 'adult', { clip, whole: true }, { spec: { hair: [toonHair(style, null, patch)] }, each: (fr, S) => { if (!S.neckLm) return; let lg = null; S.parts.hair.traverse(o => { if (o.userData.neckBound) lg = o; });
+    await play(['sweater:coral'], 'adult', { clip, whole: true }, { spec: { hair: [mk] }, each: (fr, S) => { if (!S.neckLm) return; let lg = null; S.parts.hair.traverse(o => { if (o.userData.neckBound) lg = o; });
       for (let n = 0; n < tops.length; n++) { const p = tops[n], [k, i] = idx[n]; v.fromBufferAttribute(lg.children[k].geometry.attributes.position, i);   /* as drawn (blended) */ const mm = 1000 * (near(v) - p.near0); if (mm > w.mm) w = { ...w, mm, f: fr }; w.slide = Math.max(w.slide, 1000 * v.distanceTo(p)); } } });
     out[clip] = w; }
   return out;

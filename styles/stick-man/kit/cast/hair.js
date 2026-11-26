@@ -92,11 +92,10 @@ const STYLES = {
 };
 // drafts (Studio 27/11): the long styles' lengths are not ready (they fall inside the shoulders' width: hair-in-body; their sides read
 // as one short bowl). Their code stays for the long-hair work; they are not offered: HAIR_STYLES leaves them out, person() refuses them and toonHair() refuses them unless patch.draft is set
-export const HAIR_DRAFTS = ['bob', 'long', 'braids', 'lob'];
+export const HAIR_DRAFTS = ['bob', 'long', 'braids', 'lob', 'mullet'];
 export const HAIR_STYLES = Object.keys(STYLES).filter(s => !HAIR_DRAFTS.includes(s));
 export const styleOf = style => STYLES[style];
-// where a style shows its scalp by design: what it declares (st.bare), and a swept style's parting (the scalp shows along it)
-// a parting is never declared skin (Studio 27/11: side's groove cut to the white head read as a seam on a bowed head)
+// where a style shows its scalp by design: only what it declares (st.bare); a parting is never declared skin (Studio 27/11: side's groove cut to the white head read as a seam on a bowed head)
 export const bareOf = st => [...(st.bare || [])];
 // a style's scalp field (d -> { r, k }, k = 1 where hair grows, less on its hairline wall, which tucks under the skin): for measures
 export const scalpField = (style, patch) => scalp({ ...STYLES[style], ...patch });

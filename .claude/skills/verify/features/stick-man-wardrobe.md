@@ -68,7 +68,7 @@ with locks from a whorl, a hairline on the forehead, a parting and a painted gro
 sweater); `?run=1` plays the six in a look-around. Numbers: `node --test test/unit/stick-toon-hair.test.mjs` (6 s): every
 style builds, reaches the forehead, and stays rigid in the head's frame through a look up and a jump.
 
-Ten more (26/11): men `pompadour`, `buzz`, `mullet`, `afro`; women `pixie`, `ponytail` (`bob`, `long`, `braids`, `lob` are drafts: not offered, `person()` and a bare `toonHair()` refuse them). New
+Five more (26/11): men `pompadour`, `buzz`, `afro`; women `pixie`, `ponytail` (`bob`, `long`, `braids`, `lob`, `mullet` are drafts: not offered, `person()` and a bare `toonHair()` refuse them). New
 parts of the same field: `crest` (a swept wave), `tight` (cut sides), `ball` (a mass wider than the head), `hang` (falls straight
 to a hem), `grain` / `edgeDark` (a buzz cut's stubble and hairline), `grid` (box-braid parts); and locks that leave the head
 (`falls`: rings of flat or braided locks; `tails`: one swept lock, the ponytail), rigid in the head's hair group like the rest.
