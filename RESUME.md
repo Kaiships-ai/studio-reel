@@ -68,3 +68,10 @@ RESUME-kit-handprops.md at the worktree root is obsolete (untracked; #209 merged
 - 15:45: #212 at 71aeede4, CI green. Look page https://claude.ai/artifact/PEpovJ94cP4NVxwwjzUm11 (sent to Studio). Studio: side/crop/woman/girl PASS,
   elder (white shell from front) + curly (blobs) FAIL -> builder pass running (elder = crop/side locks in grey, receding; curly = fewer big locks).
   Studio asks Kai: approve 4 now. Wardrobe determinism check started on Pro ~/wd-check (run.sh: 3x alone, 3x full) then paused for the hair renders; rerun after.
+- 16:45 (session 4): Kai approved all 6 hairs; #212 reviewed CLEAN (independent) + merged f45f6f8a; main merged here; hairs wired in reel.js.
+  Pro ~/v5-wif5 rebuilt from this head (old tree kept as ~/v5-wif5.old-68041324: delete after the cut). Stills OK (renders/sheet.jpg), fits PASS,
+  handgrip: only a6-1 (IK hand-in-hand / empty reach, gate limit). Clip render (render-pro.sh clip) running -> then shotgate etc on Pro,
+  post.py cut with audio/a-mix.wav, blind watch, chefkiss, page.
+- B (30 hairstyles, Studio-approved list + 3 conditions in its brief): builder kit-hair30, worktree ~/orca/workspaces/studio-reel/kit-hair-30,
+  Pro ~/kit-hair-30, renders only when part a's Pro jobs are idle. Men+women sheet first -> Studio.
+- Wardrobe determinism check: ~/wd.tar on Pro (old head), not run yet; queue after part a clip.

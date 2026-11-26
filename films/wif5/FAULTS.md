@@ -153,3 +153,8 @@
 | a5-8 | beat_200 / contact | balloon clipped; dad clipped at left | minor | walk shots now travel with the family |
 | a5-9 | beat_342 | dad's face pressed to the left edge | minor | open |
 | a5-10 | motion 0-226 (director) | static cameras: the walking family walks into the lens, then out of an empty frame (f192-216) | visible | walk shots travel with the girl |
+
+### Part a, session 4 (26/11, stills with the 6 toon hairs)
+| id | fault | frames | kind | state |
+|---|---|---|---|---|
+| a6-1 | handgrip FAIL on IK hands with no prop: dad-girl hand-in-hand (310, 329: 63-73 cm to the balloon), dad's empty reach for the flown balloon (342, 360, 450) | 310-450 | gate limit (engine counts any ikw>=0.5 hand as grip; cast.js:916) | ẩn: not a viewer fault; contact stills 230/250 checked by eye; kit item: a non-grip IK flag |
