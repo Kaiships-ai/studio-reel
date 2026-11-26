@@ -158,3 +158,6 @@
 | id | fault | frames | kind | state |
 |---|---|---|---|---|
 | a6-1 | handgrip FAIL on IK hands with no prop: dad-girl hand-in-hand (310, 329: 63-73 cm to the balloon), dad's empty reach for the flown balloon (342, 360, 450) | 310-450 | gate limit (engine counts any ikw>=0.5 hand as grip; cast.js:916) | ẩn: not a viewer fault; contact stills 230/250 checked by eye; kit item: a non-grip IK flag |
+| a6-2 | blind watch 6: vanish reads "grey oval with holes": snow is an island with a hard edge, footprints black holes | 300-360 | look | fixing (builder ep1-snow) |
+| a6-3 | blind watch 6: last 2 s very dark | 455-504 | post fade-out (raw frames lit) | ẩn for part a alone: the fade is the join into part b |
+| a6-4 | blind watch 6: no sound hit on the vanish at ~10 s | 300 | sound | open: one soft hit/whoosh-out at the vanish in a-mix (after the snow fix) |
