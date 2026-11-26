@@ -163,4 +163,4 @@
 | a6-4 | blind watch 6: no sound hit on the vanish at ~10 s | 330 | sound | closed: a-mix has a hit at 11.0 s (f330 = GONE) then the bed drops 6 dB; the "~10 s" was the snow shot before it |
 | a6-5 | shotgate (clip 26/11): walk 0-~226: dad skates (0.89 m/s, stance foot slides 32-44 px, 15 s), girl's planted foot slides ~30 px every step (24 s) | 14-226 | motion: path speed vs walk-clip stride | fixed 505c3f00/bffdb2e2: dad plays his own stride-matched walk; shotgate 0-504 PASS |
 | a6-6 | shotgate: girl's hand R 23 cm off the dad's hand it holds, 86 f from f69 (9 s flagged) | 69-226 | contact | fixed bffdb2e2: was her balloon hand's target out of reach; now < 2 cm |
-| a6-7 | valuegate "crushed subject" 0.13-16.63 s on the old clip and the new one (not from the snow) | all | value | open: check what it flags (ink limbs?) after the walk fix |
+| a6-7 | valuegate "crushed subject" 0.13-16.63 s on every clip of part a | all | value | ẩn: the box (head x1.6, 3 heads down) holds the black ink legs and the night sky; faces and sweaters are lit on every frame. Kit item: mask ink limbs + sky out of CRUSH |

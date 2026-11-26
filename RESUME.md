@@ -80,3 +80,28 @@ RESUME-kit-handprops.md at the worktree root is obsolete (untracked; #209 merged
   Kai page: https://claude.ai/artifact/Aif1wV5iBQ6fwUTAWZw6rP (sent to Studio). Waiting on Kai: "ok a" -> parts b-j.
   Pro backups ~/v5-wif5/films/wif5/parts/a/renders/*.snowfix|walk1.*; ~/v5-wif5.old-68041324 can be deleted.
 - B (PR #213, kit-hair-30 builder): scalp-coverage root cause + gate (top), then long-hair two-part binding (Studio chose A), then children/teens/elders.
+
+## HOLD 26/11 (Kai moving, Studio msg_36e3f9602e49): exact next steps
+
+Nothing runs. Pro fans automatic. Part a page: https://claude.ai/artifact/Aif1wV5iBQ6fwUTAWZw6rP (not sent to Kai).
+
+### Part a: Studio's 2 taste faults (msg_fb90127412d2, not yet answered)
+1. 5.9 s (f170-185): white soft ball in front of dad's legs, left of the joined hands. Seen in f177 crop: translucent,
+   soft-edged, only a few frames: most likely a snowflake passing near the lens (not a hand/prop). Check:
+   `.pixi/envs/default/bin/ffmpeg -v error -i films/wif5/parts/a/renders/a_0-504_720.mp4 -vf "select='between(n\,168\,186)',crop=360:300:120:850,tile=19x1" -frames:v 1 /tmp/ball.jpg`
+   Fix in films/wif5/parts/a/set.js snow: keep flakes out of the near-camera band (min distance from camera) or size-clamp them.
+2. 15.2 s (~f405-504, dad looks up crying): low front + head tilted back = side-part hair only a dark rim behind the skull,
+   head reads BALD (Kai sent this shot back once). Fix in films/wif5/parts/a/reel.js (nod at L99-100 / CAMS in path.js):
+   less tilt-back (nod) and/or raise camera for the 450 shot, so fringe + top read; check in the shot camera.
+3. Render only changed ranges on the Pro (`~/pro-fans.sh run bash films/wif5/parts/a/tools/render-pro.sh clip`, ranges),
+   splice into renders/a_0-504_720.mp4, shotgate 0-504, then
+   `cd films/wif5 && ../../.pixi/envs/default/bin/python tools/post.py parts/a/renders/a_0-504_720.mp4 parts/a/renders/a_cut_720.mp4 --from 0 --to 504 --audio parts/a/audio/a-mix.wav`
+   Republish page (scratchpad pa/index.html is temp: rebuild from page read), send cut to Studio.
+
+### B hair (worktree ~/orca/workspaces/studio-reel/kit-hair-30, PR #213, head 9f8de3ab, do NOT merge)
+- Done (committed): scalp line + frozen bare-scalp limit (a9b49cbd), hair covers scalp at source + gate (ca8a18c6),
+  stills docs/hair-sheet/scalp-why.jpg, scalp-before-after.jpg, sheet hair-sheet-mw.jpg (9f8de3ab).
+  Open: buzz keeps a few white specks at the ear edge; builder's last test run unconfirmed: rerun `node --test test/unit/stick-hair*.test.mjs`.
+- Next: send Studio the scalp root cause + before|after; long hair option A (crown rigid to head, lengths bound to neck/upper back,
+  seam opening measured, close-up run clip, restore lengths, temple patches); women sheet to Studio; then children, teens, elders.
+- Owed: stick-wardrobe determinism check (3x alone vs 3x full suite, depth at f54). Pro cleanup: ~/v5-wif5.old-68041324, ~/wd.tar.
