@@ -1,10 +1,10 @@
 # Gate 1 · Development: brief, treatment, story
 
-**OPEN**
+**LOCK**
 
 | Kind | Evidence | OK | Why |
 | --- | --- | --- | --- |
-| measured | develop.mjs | FAIL | exit 1: review/develop.md: FAIL · 1 FAIL, 0 WARN |
+| measured | develop.mjs | PASS | review/develop.md: PASS · 0 FAIL, 0 WARN |
 | measured | firstrun.mjs {film} | PASS | PASS: no earlier episode on the bench |
 | measured | run logs (logline.mjs --check) | PASS | append-only |
 | made | TREATMENT.md | PASS | ok |

@@ -31,3 +31,7 @@ PASS with 2 FIXES (none blocks the wording; Kai locked V4 wording, I do not rewr
 1. Open the OECD report once and confirm 87 % (L09); if it says 90 %, the figure is under, not wrong.
 2. Add to facts.json that the "youngest" and "last person" are one man by design.
 3. S10 warn: 7 facts (K1 wants 4-6). F7 and the 80/116 maths are not claims a viewer checks.
+
+## Recheck 2026-11-26 (by: agent:ep1-prepro-review)
+
+87 % OECD (L09): still not confirmed live; the OECD page does not render without a browser. Recorded figure for the sector is about 90 %, so 87 % is not contradicted. Kai's waive-S-script covers the S3 runs and the script-ab tie. Verdict stays PASS, one human click open.

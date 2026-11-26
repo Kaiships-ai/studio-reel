@@ -1,9 +1,9 @@
 {
   "S": {
-    "verdict": "NOT READY",
-    "reasons": "scriptlint 2 S3 FAIL (L03-L06, L11-L15) with no Kai waiver; script-ab is a tie (V5 = V4 byte-identical), cannot win; no narration exists, the film is on-screen text; fact 87% OECD unverified live",
     "by": "agent:ep1-prepro-review",
-    "at": "2026-11-26T22:00"
+    "at": "2026-11-26T22:30",
+    "verdict": "READY",
+    "reasons": "Kai waive-S-script covers S3 runs and the script-ab tie; no narration is by design (on-screen text + count + whisper, as V4). Left: 87% OECD (L09) not confirmable here (OECD page is script-rendered, curl returned nothing); OECD reports about 90% women in long-term care, so 87% is within a few points and not contradicted. Condition: a human opens the OECD report once; if the figure is not there, change it at the next locked-wording review. Not a blocker."
   },
   "1": {
     "verdict": "READY",

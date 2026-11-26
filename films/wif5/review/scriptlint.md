@@ -1,13 +1,13 @@
 # Script check · wif5 · vo/script.json
 
-**FAIL**: 2 FAIL, 6 WARN · 26 lines, 160 words, ≈ 60.7 s at 3.1 words/s (max 100.6 s)
+**PASS**: 0 FAIL, 6 WARN, 2 overridden by Kai · 26 lines, 160 words, ≈ 60.7 s at 3.1 words/s (max 100.6 s)
 
 | Level | Check | Where | What |
 | --- | --- | --- | --- |
 | WARN | S2 | L12 | 2 new numbers (a billion · 15): keep one, or mark the line `math: true` if it is the one sum the picture carries |
 | WARN | S2 | L13 | 2 new numbers (4 · 10): keep one, or mark the line `math: true` if it is the one sum the picture carries |
-| FAIL | S3 | L03–L06 | 4 lines, 10.4 s with no action by "you" (≤ 2 lines, ≤ 8 s): the clock stops; let a fact land while you act |
-| FAIL | S3 | L11–L15 | 5 lines, 12.4 s with no action by "you" (≤ 2 lines, ≤ 8 s): the clock stops; let a fact land while you act |
+| KAI | S3 | L03–L06 | 4 lines, 10.4 s with no action by "you" (≤ 2 lines, ≤ 8 s): the clock stops; let a fact land while you act (Kai chose waive-S-script on 2026-11-26: V4 wording and voice fixed for V5 (SPEC-V5), via Studio) |
+| KAI | S3 | L11–L15 | 5 lines, 12.4 s with no action by "you" (≤ 2 lines, ≤ 8 s): the clock stops; let a fact land while you act (Kai chose waive-S-script on 2026-11-26: V4 wording and voice fixed for V5 (SPEC-V5), via Studio) |
 | WARN | S6 | L01 | ALL CAPS in the voiceover (WOMAN): put it on screen, not in the voice |
 | WARN | S6 | L09 | ALL CAPS in the voiceover (OECD): put it on screen, not in the voice |
 | WARN | S10 | facts | 7 real facts (K1: 4-6 per episode) |

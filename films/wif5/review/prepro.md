@@ -1,7 +1,7 @@
 # Pre-production check · wif5
 
 46 shots · 11 scenes · 100.53 s (3016 f at 30 fps) · voice ends f2876
-Climax: SHj03 · cards 4.7 s · **FAIL**: 25 FAIL, 43 WARN
+Climax: SHj03 · cards 4.7 s · **FAIL**: 27 FAIL, 43 WARN
 
 ## Findings
 
@@ -11,7 +11,9 @@ Climax: SHj03 · cards 4.7 s · **FAIL**: 25 FAIL, 43 WARN
 | FAIL | T1 | SHa07 | 12 f is too short to read (min 15 f) |
 | FAIL | T1 | SHa08 | 12 f is too short to read (min 15 f) |
 | FAIL | I1 | SHc04 | visual peak 7 comes before the climax SHj03 (visual 2): save the biggest size/lens/move for the climax |
-| FAIL | D1 | waive-K1-S1 | approved decision not placed anywhere: undefined |
+| FAIL | D1 | waive-K1-S1 | approved decision not placed anywhere: Kai waives the K1 stop (previs + hook) and the S1 look signature for V5; an independent reviewer READY plus Studio stand in, and Kai judges the part a cut and the whole film. |
+| FAIL | D1 | waive-S-script | approved decision not placed anywhere: V5 keeps V4's approved wording and voice (SPEC-V5 'Fixed', Kai's standing V5 decision); the S3 fact runs and the A/B tie are waived, never rewritten. |
+| FAIL | D1 | keep-a-count | approved decision not placed anywhere: Part a's count shots SHa06-a08 stay at 12 f each (the 3-2-1 punch); Kai's notes on the part a cut decide. |
 | FAIL | O1 | SHa03 | flagged FLAT: needs options (safe / emo / bold) cut into the animatic and Kai's pick |
 | FAIL | O1 | SHa04 | flagged FLAT: needs options (safe / emo / bold) cut into the animatic and Kai's pick |
 | FAIL | O1 | SHa05 | flagged FLAT: needs options (safe / emo / bold) cut into the animatic and Kai's pick |
