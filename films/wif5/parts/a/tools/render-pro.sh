@@ -1,12 +1,14 @@
 #!/bin/bash
-# wif5 part a on the Mac Pro (run from ~/v5-wif5): render-pro.sh stills | clip | both. 720x1280 (--tier review) only.
-# A face still renders f-1 first, then f (LIGHT-RECIPE-V3: face light is one frame late); only the asked frames are kept.
-cd ~/v5-wif5 || exit 1; export OPENSSL_CONF=$HOME/v5-wif5/.pixi/envs/default/ssl/openssl.cnf; N=.pixi/envs/default/bin/node; F=films/wif5/parts/a; O=$F/renders; mkdir -p $O
-S=styles/stick-man/tools/render/shot.mjs; what=${1:-both}
-if [ "$what" != clip ]; then t=$(date +%s)
-  $N $S --film $F --tier review --frames 0,59,60,149,150,299,300 --out $O/st_%d.jpg --lock-wait 1800 > $O/stills.log 2>&1; rc=$?
-  rm -f $O/st_59.jpg $O/st_149.jpg $O/st_299.jpg; echo "stills rc=$rc $(( $(date +%s) - t ))s" >> $O/times.txt; fi
-if [ "$what" != stills ]; then t=$(date +%s)
-  $N $S --film $F --tier review --frames 0-150 --mp4 $O/a_0-150_720.mp4 --audio films/wif5/audio/mix.wav --no-cache 1 --lock-wait 1800 > $O/clip.log 2>&1; rc=$?
-  echo "clip rc=$rc $(( $(date +%s) - t ))s" >> $O/times.txt; fi
-echo "done $what" >> $O/times.txt
+# wif5 part a on the Mac Pro (run from ~/v5-wif5): render-pro.sh stills. 720x1280 (--tier review) only, stills only.
+# Each still renders f-1 first, then f (LIGHT-RECIPE-V3: face light is one frame late); only the beat frames are kept, renamed
+# to beat_<f>.jpg / contact_<what>.jpg, then sheet.jpg (5 x 2, 1440 px wide).
+cd ~/v5-wif5 || exit 1; export OPENSSL_CONF=$HOME/v5-wif5/.pixi/envs/default/ssl/openssl.cnf; N=.pixi/envs/default/bin/node; FF=.pixi/envs/default/bin/ffmpeg
+F=films/wif5/parts/a; O=$F/renders; mkdir -p $O; S=styles/stick-man/tools/render/shot.mjs; t=$(date +%s)
+KEEP="beat_0:0 beat_90:90 beat_200:200 contact_dad-daughter-hands:230 contact_old-couple-hands:250 beat_300:300 beat_329:329 beat_331:331 beat_360:360 beat_450:450"
+FR=0; for kv in $KEEP; do f=${kv#*:}; [ $f -gt 0 ] && FR="$FR,$((f-1)),$f"; done
+rm -f $O/st_*.jpg
+$N $S --film $F --tier review --frames $FR --out $O/st_%d.jpg --no-cache 1 --lock-wait 1800 > $O/stills.log 2>&1; rc=$?
+IN=""; for kv in $KEEP; do n=${kv%%:*}; f=${kv#*:}; cp -f $O/st_$f.jpg $O/$n.jpg && IN="$IN -i $O/$n.jpg"; done
+$FF -y -loglevel error $IN -filter_complex "$(for i in 0 1 2 3 4 5 6 7 8 9; do printf "[$i]scale=288:512[s$i];"; done)[s0][s1][s2][s3][s4]hstack=5[a];[s5][s6][s7][s8][s9]hstack=5[b];[a][b]vstack" $O/sheet.jpg
+rm -f $O/st_*.jpg
+echo "stills rc=$rc $(( $(date +%s) - t ))s" >> $O/times.txt; echo "done stills" >> $O/times.txt

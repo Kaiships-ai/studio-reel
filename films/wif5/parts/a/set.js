@@ -2,16 +2,18 @@
 // hand sweeps to twelve at frame 330), shop facades with warm windows, three market stalls, a food truck, a lit tree, string
 // lights and bunting on catenaries, falling snow. Blender metres: x right, y into the scene, z up; camera on the y < 0 side.
 // Light (LIGHT-RECIPE-V3): colour lives in the lamps: practicals reach 2.4-4.6 m at power 8-26, materials env x0.4.
+// V5 stills: the tower stands close with a big lit face and a countdown board; warm pools along the family's walk.
 import { createKit, rng, tex, place } from '/styles/stick-man/kit/film.js';
+import { TOWER, CLOCK, CLOCK_R, BOARD, ELDERS, GONE, START, U, girl, at } from '/films/wif5/parts/a/path.js';
 
 export const SUN_DIR = [0.35, 0.55, -0.76];                       // a cool moon from front-left, high
 export const SUN_CENTER = [0, 3, 1.5], SUN_HALF = 11;
-export const MARKS = { dad: [0, 0, 0] };
-export const PLACES = { clock: [0, 11.9, 10], sky: [0, 4, 9] };
+export const MARKS = { dad: [...START, 0] };
+export const PLACES = { clock: CLOCK, sky: [0, 4, 9] };
 export const CAMERA_SIDE = [0, -1];
-export const CAMERA_ROOM = [[[-8, -9], [8, 0]]];
+export const CAMERA_ROOM = [[[-9, -9], [9, 9]]];
 const PROPS = ['street/market-stand', 'street/food-truck', 'street/street-lamp', 'street/bench', 'street/trashcan-large'];
-const by = 'ep-whatif1-v5-director', why = 'V5 first slice, measure not built';
+const by = 'ep-whatif1-v5-director', why = 'V5 stills, measure not built';
 export const SQUARE = place('street', { light: 'square-night', props: PROPS, waivers: PROPS.map(p => ({ pair: `light|${p}|square-night`, why, by })) });
 export const COLLIDE = SQUARE.COLLIDE;
 const ENV_K = 0.4;                                                // material environment reflection x0.4 (recipe x0.35-0.45)
@@ -33,7 +35,7 @@ export async function build(stage) {
     for (let i = 0; i < 520; i++) { g.fillStyle = `rgba(170,180,200,${0.18 + 0.3 * q()})`; g.beginPath(); g.ellipse(q() * w, q() * h, 6 + 30 * q(), 3 + 12 * q(), q() * 3, 0, 7); g.fill(); } }, { repeat: [7, 7] });
   K.box([-16, -12, -0.1], [16, 22, 0], M([1, 1, 1], 0.85, { map: cobble }), { r: 0, cast: false });
   const drift = M([0.60, 0.64, 0.72], 0.95);
-  for (const [x, y, sx, sy] of [[-11, 4, 2.2, 22], [11, 4, 2.2, 22], [0, 14.2, 26, 1.6], [-6, -2, 1.6, 0.8], [5.5, -3, 1.2, 0.6], [-2.5, 9.5, 1.4, 0.7]])
+  for (const [x, y, sx, sy] of [[-11, 4, 2.2, 22], [11, 4, 2.2, 22], [0, 14.2, 26, 1.6], [0, -9, 26, 1.4], [-7, -3, 1.6, 0.8], [5.5, -3.5, 1.2, 0.6], [-4.2, 8.6, 1.4, 0.7]])
     K.sphere([x, y, 0], 1, drift, { sx: sx / 2, sy: sy / 2, sz: 0.12 });
 
   // ---- facades: a row at the back and one on each side, warm and cool plaster, lit and dark windows, snow on the ledges
@@ -47,56 +49,71 @@ export async function build(stage) {
       const on = r() < 0.55; K.box([x, y - 0.06, z], [x + 0.7, y, z + 1.05], on ? (r() < 0.5 ? winOn : winOn2) : winOff, { r: 0, cast: false });
       K.box([x - 0.05, y - 0.14, z - 0.06], [x + 0.75, y, z], ledge, { r: 0.01, cast: false }); }
   };
-  let x = -16; for (const [w, h] of [[4.2, 9], [3.6, 11], [4.4, 8], [3.2, 10], [3.6, 12], [4.4, 9], [3.8, 10.5], [4.2, 8.5]]) { if (Math.abs(x + w / 2) > 2.2) front(x, x + w, 15.6, h, PL[Math.floor(r() * PL.length)]); x += w; }
+  let x = -16; for (const [w, h] of [[4.2, 9], [3.6, 11], [4.4, 8], [3.2, 10], [3.6, 12], [4.4, 9], [3.8, 10.5], [4.2, 8.5]]) { front(x, x + w, 15.6, h, PL[Math.floor(r() * PL.length)]); x += w; }
   const side = (sx, dir) => { for (let y = -8; y < 15; y += 4.6) { const h = 7 + 4 * r(), g = K.group([sx, y + 2.3, 0], dir * 90);
     K.box([-2.3, 0, 0], [2.3, 1.2, h], M(PL[Math.floor(r() * PL.length)], 0.85), { r: 0.02, parent: g });
     K.box([-2.35, -0.08, h], [2.35, 1.25, h + 0.18], ledge, { parent: g });
     for (let z = 1.2; z < h - 0.9; z += 1.9) for (let xx = -1.9; xx < 1.6; xx += 1.3) K.box([xx, -0.06, z], [xx + 0.7, 0, z + 1.05], r() < 0.55 ? winOn : winOff, { r: 0, parent: g, cast: false }); } };
   side(-12.6, -1); side(12.6, 1);
+  for (let xx = -14; xx < 14; xx += 4.6) { const h = 7 + 4 * r(), g = K.group([xx + 2.3, -10.2, 0], 180);   // the near row, facing the square
+    K.box([-2.3, 0, 0], [2.3, 1.2, h], M(PL[Math.floor(r() * PL.length)], 0.85), { r: 0.02, parent: g });
+    K.box([-2.35, -0.08, h], [2.35, 1.25, h + 0.18], ledge, { parent: g });
+    for (let z = 1.2; z < h - 0.9; z += 1.9) for (let x2 = -1.9; x2 < 1.6; x2 += 1.3) K.box([x2, -0.06, z], [x2 + 0.7, 0, z + 1.05], r() < 0.6 ? winOn : winOff, { r: 0, parent: g, cast: false }); }
 
-  // ---- the clock tower: stone shaft, a lit face at 10 m, a red second hand that reaches twelve at frame 330 (00:00)
-  const stone = M('#6e6458', 0.9), trim = M('#3a3129', 0.7);
-  K.box([-1.7, 12.2, 0], [1.7, 15.6, 12.6], stone, { r: 0.03 });
-  K.box([-1.9, 12.0, 12.6], [1.9, 15.8, 13.0], trim);
-  K.cyl([0, 13.9, 14.6], 2.7, 3.2, M('#2f4a4d', 0.7), { r2: 0.05, seg: 4 }).rotation.y = Math.PI / 4;
-  K.box([-1.9, 12.0, 12.95], [1.9, 15.8, 13.06], ledge, { r: 0.01 });
-  const cz = 10, cy = 12.12;
-  K.cyl([0, cy + 0.02, cz], 1.45, 0.08, trim, { axis: 'y' });
-  K.cyl([0, cy - 0.03, cz], 1.32, 0.04, K.glow([0.86, 0.72, 0.46], 0.85), { axis: 'y' });
-  for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6, L = i % 3 ? 0.14 : 0.24;
-    const t = K.cube([Math.sin(a) * (1.18 - L / 2), cy - 0.06, cz + Math.cos(a) * (1.18 - L / 2)], [0.05, 0.02, L], trim, { r: 0 }); t.rotation.z = -a; }
-  const hand = (len, wdt, m, deg) => { const g = new T.Group(); g.position.copy(K.B(0, cy - 0.09, cz)); const b = new T.Mesh(new T.BoxGeometry(wdt, len, 0.02), m);
+  // ---- the clock tower, close: stone shaft, a big lit face low on it, a red second hand that reaches twelve at frame 330
+  // (00:00), and under the face a lit board counting the last seconds (10 ... 1, then 0)
+  const stone = M('#7a6e60', 0.9), trim = M('#3a3129', 0.7), T0 = TOWER;
+  K.box([T0.x0, T0.y0, 0], [T0.x1, T0.y1, T0.h], stone, { r: 0.03 });
+  K.box([T0.x0 - 0.2, T0.y0 - 0.2, T0.h], [T0.x1 + 0.2, T0.y1 + 0.2, T0.h + 0.4], trim);
+  K.cyl([0, (T0.y0 + T0.y1) / 2, T0.h + 2.0], 3.0, 3.2, M('#2f4a4d', 0.7), { r2: 0.05, seg: 4 }).rotation.y = Math.PI / 4;
+  K.box([T0.x0 - 0.2, T0.y0 - 0.2, T0.h + 0.35], [T0.x1 + 0.2, T0.y1 + 0.2, T0.h + 0.46], ledge, { r: 0.01 });
+  K.box([T0.x0 - 0.15, T0.y0 - 0.25, 2.7], [T0.x1 + 0.15, T0.y0, 3.0], trim);                       // a stone band under the board
+  const [, cy, cz] = CLOCK, R = CLOCK_R;
+  K.cyl([0, cy + 0.02, cz], R + 0.16, 0.1, trim, { axis: 'y' });
+  K.cyl([0, cy - 0.04, cz], R, 0.04, K.glow([0.95, 0.84, 0.62], 0.9), { axis: 'y' });
+  for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6, L = i % 3 ? 0.2 : 0.38, wd = i % 3 ? 0.07 : 0.13;
+    const t = K.cube([Math.sin(a) * (R * 0.9 - L / 2), cy - 0.08, cz + Math.cos(a) * (R * 0.9 - L / 2)], [wd, 0.02, L], trim, { r: 0 }); t.rotation.z = -a; }
+  const hand = (len, wdt, m, deg) => { const g = new T.Group(); g.position.copy(K.B(0, cy - 0.11, cz)); const b = new T.Mesh(new T.BoxGeometry(wdt, len, 0.03), m);
     b.position.y = len * 0.4; g.add(b); g.rotation.z = -deg * Math.PI / 180; g.userData.noInk = true; K.root.add(g); return g; };
-  hand(0.7, 0.09, trim, -0.5); hand(1.05, 0.06, trim, -6);
-  const sec = hand(1.12, 0.025, K.glow([0.85, 0.08, 0.06], 1.0), 0);
+  hand(R * 0.55, 0.14, trim, -0.5); hand(R * 0.82, 0.09, trim, -6);
+  const sec = hand(R * 0.88, 0.04, K.glow([0.85, 0.08, 0.06], 1.0), 0);
   K.anim('clock', sec, f => { sec.rotation.z = -((49 + f / 30) * 6) * Math.PI / 180; });   // 23:59:49 + f/30 s
+  // the countdown board: warm digits on black glass, the number of seconds left (ONE at frame 300, 0 from 330)
+  const bt = tex(512, 256, () => {}), bg = bt.image.getContext('2d');
+  const drawBoard = n => { bg.fillStyle = '#120d0b'; bg.fillRect(0, 0, 512, 256); bg.strokeStyle = '#6b4a2a'; bg.lineWidth = 10; bg.strokeRect(5, 5, 502, 246);
+    bg.fillStyle = n === 0 ? '#ffd27a' : '#ffb547'; bg.font = 'bold 210px sans-serif'; bg.textAlign = 'center'; bg.textBaseline = 'middle'; bg.fillText(String(n), 256, 140); bt.needsUpdate = true; };
+  const board = K.card([BOARD[0], BOARD[1], BOARD[2]], 3.0, 1.5, bt, { emissive: 1.0 });
+  K.box([BOARD[0] - 1.62, BOARD[1] + 0.01, BOARD[2] - 0.82], [BOARD[0] + 1.62, BOARD[1] + 0.12, BOARD[2] + 0.82], trim, { r: 0.02 });
+  let shown = null; K.anim('board', board, f => { const n = Math.max(0, 11 - Math.floor(f / 30)); if (n !== shown) { shown = n; drawBoard(n); } });
+  drawBoard(11);
 
-  // ---- stalls, a food truck, lamps, a bench, a bin (the kit catalogue, quarter turns only)
-  put('street/market-stand', [-5.0, 3.6, 0], 0); put('street/market-stand', [-1.9, 8.2, 0], 0); put('street/market-stand', [5.4, 4.6, 0], 0);
-  put('street/food-truck', [7.2, 10.0, 0], 0);
-  for (const p of [[-2.8, 2.2], [3.0, 1.6], [-7.2, 8.4], [2.6, 10.6]]) put('street/street-lamp', [p[0], p[1], 0], 0);
-  put('street/bench', [-3.6, -0.6, 0], 0); put('street/trashcan-large', [2.0, -1.1, 0], 0);
-  // the stalls' awnings in festive stripes and their warm counters
+  // ---- stalls, a food truck, lamps, a bench, a bin (the kit catalogue, quarter turns only), clear of the family's walk
+  const STALLS = [[-6.2, 4.4], [6.4, 2.6], [-5.8, -5.6]];
+  for (const p of STALLS) put('street/market-stand', [p[0], p[1], 0], 0);
+  put('street/food-truck', [8.2, 9.6, 0], 0);
+  const LAMPS = [[-4.4, 3.0], [3.4, -0.4], [-7.4, 8.6], [3.6, 9.4], [-1.6, -4.6]];
+  for (const p of LAMPS) put('street/street-lamp', [p[0], p[1], 0], 0);
+  put('street/bench', [-7.0, -2.4, 0], 0); put('street/trashcan-large', [1.8, -2.4, 0], 0);
   const stripe = tex(256, 64, (g, w, h) => { for (let i = 0; i < 8; i++) { g.fillStyle = i % 2 ? '#e9dcc0' : '#b3262b'; g.fillRect(i * w / 8, 0, w / 8, h); } });
-  for (const [sx, sy] of [[-5.0, 3.6], [-1.9, 8.2], [5.4, 4.6]]) {
+  for (const [sx, sy] of STALLS) {
     K.card([sx, sy - 1.06, 2.05], 2.6, 0.32, stripe, { env: ENV_K });
     K.box([sx - 1.3, sy - 1.06, 2.2], [sx + 1.3, sy + 1.0, 2.26], ledge, { r: 0.01 });   // snow on the roof
     K.point([sx, sy - 1.3, 1.9], '#ffb46a', 14, 3.4);
   }
-  for (const p of [[-2.8, 2.2], [3.0, 1.6], [-7.2, 8.4], [2.6, 10.6]]) K.point([p[0], p[1] - 0.25, 3.55], '#ffc98a', 16, 4.2);
+  for (const p of LAMPS) K.point([p[0], p[1] - 0.25, 3.55], '#ffc98a', 16, 4.2);
 
-  // ---- the tree: stacked cones, coloured bulbs, a gold star
-  const tg = M('#1f4a2e', 0.85);
-  for (const [z, rr, h] of [[0.9, 1.7, 1.8], [2.1, 1.35, 1.6], [3.2, 1.0, 1.4], [4.2, 0.6, 1.2]]) K.cyl([3.8, 6.4, z], rr, h, tg, { r2: 0.05, seg: 20 });
-  K.cyl([3.8, 6.4, 0.2], 0.16, 0.4, M('#4a3120', 0.9));
+  // ---- the tree: stacked cones, coloured bulbs, a gold star (right of the tower, off the walk)
+  const TX = 6.0, TY = 7.6, tg = M('#1f4a2e', 0.85);
+  for (const [z, rr, h] of [[0.9, 1.7, 1.8], [2.1, 1.35, 1.6], [3.2, 1.0, 1.4], [4.2, 0.6, 1.2]]) K.cyl([TX, TY, z], rr, h, tg, { r2: 0.05, seg: 20 });
+  K.cyl([TX, TY, 0.2], 0.16, 0.4, M('#4a3120', 0.9));
   const BULB = [[1.0, 0.55, 0.2], [0.95, 0.2, 0.18], [0.3, 0.8, 0.35], [0.35, 0.55, 1.0], [1.0, 0.8, 0.35]].map(c => K.glow(c, 1.3));
   const bulbGeo = new T.SphereGeometry(1, 10, 8);
   const bulb = (p, s, m) => { const b = new T.Mesh(bulbGeo, m); b.position.copy(K.B(...p)); b.scale.setScalar(s); b.userData.noInk = true; K.root.add(b); return b; };
-  for (let i = 0; i < 70; i++) { const z = 0.3 + 4.2 * r(), rr = 1.75 * (1 - z / 5.2) + 0.04, a = r() * 6.28; bulb([3.8 + Math.cos(a) * rr, 6.4 + Math.sin(a) * rr, z], 0.05, BULB[i % 5]); }
-  bulb([3.8, 6.4, 5.0], 0.18, K.glow([1.0, 0.78, 0.3], 1.2));
-  K.point([3.8, 5.4, 2.4], '#ffb070', 12, 3.6);
+  for (let i = 0; i < 70; i++) { const z = 0.3 + 4.2 * r(), rr = 1.75 * (1 - z / 5.2) + 0.04, a = r() * 6.28; bulb([TX + Math.cos(a) * rr, TY + Math.sin(a) * rr, z], 0.05, BULB[i % 5]); }
+  bulb([TX, TY, 5.0], 0.18, K.glow([1.0, 0.78, 0.3], 1.2));
+  K.point([TX, TY - 1.0, 2.4], '#ffb070', 12, 3.6);
 
-  // ---- string lights and bunting on catenaries (wires, coloured bulbs every 0.45 m, a lamp every few metres)
+  // ---- string lights and bunting on catenaries, all below the clock face (nothing crosses it)
   const wire = M([0.05, 0.05, 0.06], 0.6);
   const strand = (a, b, sag, { bunting = false, lamps = 0, power = 10, dist = 3.6 } = {}) => {
     const P = t => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t - sag * 4 * t * (1 - t)];
@@ -110,13 +127,25 @@ export async function build(stage) {
         const fl = new T.Mesh(g, FL[i % 5]); fl.userData.noInk = true; fl.castShadow = false; K.root.add(fl); } }
     for (let i = 1; i <= lamps; i++) { const p = P(i / (lamps + 1)); K.point([p[0], p[1], p[2] - 0.2], '#ffc078', power, dist); }
   };
-  strand([-11.4, -1.4, 4.6], [11.4, -1.4, 4.6], 1.2, { lamps: 3, power: 16, dist: 4.4 });     // over the dad, in front: his face light
-  strand([-11.4, 2.4, 6.0], [11.4, 2.4, 6.0], 1.5, { bunting: true, lamps: 2, power: 12, dist: 4.0 });
-  strand([-11.4, 6.5, 6.6], [11.4, 6.5, 6.6], 1.6, { lamps: 2, power: 12, dist: 4.0 });
-  strand([-11.4, 10.5, 7.0], [11.4, 10.5, 7.0], 1.6, { bunting: true });
-  for (const [ex, ey] of [[-11.4, -4], [11.4, -4], [-11.4, 4.5], [11.4, 4.5]]) strand([0, 12.1, 8.6], [ex, ey, 6.2], 1.2, { bunting: ex < 0 });
-  K.point([0, 10.6, 9.4], '#ffd29a', 18, 4.6);   // lights the clock face and tower
-  K.point([-4.2, -3.4, 2.6], '#ffb46a', 18, 4.6); K.point([3.6, -2.6, 2.6], '#ffc078', 14, 4.2);   // off-frame stall lights: warm pools on the near cobbles
+  strand([-11.4, -1.4, 4.6], [11.4, -1.4, 4.6], 1.2, { lamps: 3, power: 16, dist: 4.4 });
+  strand([-11.4, -5.5, 5.2], [11.4, -5.5, 5.2], 1.3, { bunting: true, lamps: 2, power: 12, dist: 4.0 });
+  strand([-11.4, 0.6, 4.8], [11.4, 0.6, 4.8], 1.1, { bunting: true });
+  strand([-11.4, -8.5, 4.6], [6.4, 2.6, 4.4], 1.0, {});
+  strand([-11.4, 2.6, 5.4], [11.4, 2.6, 5.4], 1.3, { bunting: true, lamps: 2, power: 12, dist: 4.0 });
+  for (const sx of [-1, 1]) { strand([sx * 2.0, 8.9, 3.2], [sx * 11.4, 3.0, 5.6], 1.0, { bunting: sx < 0, lamps: 2, power: 12, dist: 4.0 });
+    strand([sx * 2.0, 8.9, 3.2], [sx * 11.4, 11.0, 5.4], 0.8, { bunting: sx > 0 }); }
+  K.point([0, 6.6, 6.0], '#ffd29a', 16, 5.0);       // lights the face of the tower and the people under it
+  // warm pools on the cobbles where people stand: along the walk (her path) and under the couples
+  for (const d of [0.2, 3.0, 6.0, 8.8]) { const p = at(START, d); K.point([p[0] + 0.3, p[1] - 0.3, 2.6], '#ffbe7a', 13, 3.6); }
+  for (const p of [[-3.1, 5.0], [3.9, 3.2], [4.1, 7.1], [-3.3, -5.7], [-4.3, -4.5], [3.2, 4.3]]) K.point([p[0], p[1] - 0.4, 2.7], '#ffc888', 10, 3.4);
+
+  // ---- her scarf: falls from where her neck was at midnight and lies on the snow
+  const g0 = girl(GONE), scarf = new T.Group(), sm = M([0.70, 0.44, 0.05], 0.9);
+  for (const [x, y, rz, l] of [[0, 0, 20, 0.34], [0.16, 0.08, -35, 0.28], [-0.12, 0.1, 70, 0.22]]) { const b = new T.Mesh(new T.BoxGeometry(l, 0.022, 0.075), sm);
+    b.position.set(x, 0.011, -y); b.rotation.y = rz * Math.PI / 180; b.castShadow = true; scarf.add(b); }
+  scarf.position.copy(K.B(g0[0], g0[1], 0)); K.root.add(scarf);
+  K.anim('scarf', scarf, f => { scarf.visible = f >= GONE; const t = Math.max(0, f - GONE) / 30, z = Math.max(0, 0.42 - 4.9 * t * t);
+    scarf.position.copy(K.B(g0[0], g0[1], z)); scarf.rotation.z = z > 0 ? 0.6 : 0; });
 
   // ---- falling snow: flakes as points, each a pure function of the frame (no state)
   const N = 1800, base = new Float32Array(N * 4), pos = new Float32Array(N * 3), q = rng(19);
