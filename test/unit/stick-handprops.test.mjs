@@ -61,3 +61,18 @@ test('kit/compat.json holds the rows this measure writes, with the same verdicts
   const bad = tableFaults({ limits: TABLE.limits, rows: [{ pair: 'hand|tin|adult|hand', kind: 'hand', verdict: 'pass', number: GAP_CM + 1, unit: 'cm', bad: 3 }] });
   assert.ok(bad.some(s => /hand\|tin\|adult\|hand: pass, but/.test(s)), bad.join('; '));
 });
+
+// photoPrint: a one-hand 10 x 15 cm photo print with a thin white border (like the phone: a grip socket in the fist),
+// handed over on the elder's Act_Give_Once; every frame of the clip, the held end included
+test('photoPrint: a one-hand print, a real visible mesh, measured on the elder Give with its controls', async () => {
+  const g = BUILD.photoPrint?.(); assert.ok(g, 'photoPrint in BUILD'); const U = g.userData;
+  assert.equal(U.mode, 'up'); assert.equal(U.grip.length, 3); assert.equal(U.hands, undefined, 'one hand');
+  const THREE = await import('three'); const s = new THREE.Box3().setFromObject(g).getSize(new THREE.Vector3());
+  assert.ok(Math.abs(s.x - 0.10) < 0.01 && Math.abs(s.y - 0.15) < 0.01, `about 10 x 15 cm: ${s.x} x ${s.y}`);
+  assert.deepEqual(K.HAND_POSES.photoPrint, { elder: ['Act_Give_Once'] });
+  const P = await K.hands(['photoPrint']), r = P.rows.find(x => x.pair === 'hand|photoPrint|elder|hand');
+  assert.ok(r && r.frames > 0, 'frames measured');
+  assert.equal(r.verdict, r.number <= GAP_CM ? 'pass' : 'blocked', `${r.number} cm`);
+  const c = P.controls.find(x => x.pair === r.pair); assert.ok(c.touchCm <= GAP_CM && c.offCm > GAP_CM, JSON.stringify(c));
+  const t = TABLE.rows.find(x => x.pair === r.pair); assert.ok(t && t.verdict === r.verdict && Math.abs(t.number - r.number) < 0.05, 'in compat.json');
+});
