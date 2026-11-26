@@ -161,6 +161,6 @@
 | a6-2 | blind watch 6: vanish reads "grey oval with holes": snow is an island with a hard edge, footprints black holes | 300-360 | look | fixed bdf88af4: snow covers the square from 294, soft paired prints (review/snow_before_after_f330_f450.jpg) |
 | a6-3 | blind watch 6: last 2 s very dark | 455-504 | post fade-out (raw frames lit) | ẩn for part a alone: the fade is the join into part b |
 | a6-4 | blind watch 6: no sound hit on the vanish at ~10 s | 330 | sound | closed: a-mix has a hit at 11.0 s (f330 = GONE) then the bed drops 6 dB; the "~10 s" was the snow shot before it |
-| a6-5 | shotgate (clip 26/11): walk 0-~226: dad skates (0.89 m/s, stance foot slides 32-44 px, 15 s), girl's planted foot slides ~30 px every step (24 s) | 14-226 | motion: path speed vs walk-clip stride | open: next builder pass |
-| a6-6 | shotgate: girl's hand R 23 cm off the dad's hand it holds, 86 f from f69 (9 s flagged) | 69-226 | contact | open: next builder pass |
+| a6-5 | shotgate (clip 26/11): walk 0-~226: dad skates (0.89 m/s, stance foot slides 32-44 px, 15 s), girl's planted foot slides ~30 px every step (24 s) | 14-226 | motion: path speed vs walk-clip stride | fixed 505c3f00/bffdb2e2: dad plays his own stride-matched walk; shotgate 0-504 PASS |
+| a6-6 | shotgate: girl's hand R 23 cm off the dad's hand it holds, 86 f from f69 (9 s flagged) | 69-226 | contact | fixed bffdb2e2: was her balloon hand's target out of reach; now < 2 cm |
 | a6-7 | valuegate "crushed subject" 0.13-16.63 s on the old clip and the new one (not from the snow) | all | value | open: check what it flags (ink limbs?) after the walk fix |

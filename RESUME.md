@@ -75,3 +75,8 @@ RESUME-kit-handprops.md at the worktree root is obsolete (untracked; #209 merged
 - B (30 hairstyles, Studio-approved list + 3 conditions in its brief): builder kit-hair30, worktree ~/orca/workspaces/studio-reel/kit-hair-30,
   Pro ~/kit-hair-30, renders only when part a's Pro jobs are idle. Men+women sheet first -> Studio.
 - Wardrobe determinism check: ~/wd.tar on Pro (old head), not run yet; queue after part a clip.
+- 21:xx (session 4): PART A CUT READY. Head bffdb2e2: snow fix (bdf88af4), walk fix, shotgate 0-504 PASS (0 blocking s), facegate/clothgate PASS,
+  handgrip only hand-to-hand rows (a6-1), valuegate "crushed subject" pre-existing (a6-7 open). Cut films/wif5/parts/a/renders/a_cut_720.mp4.
+  Kai page: https://claude.ai/artifact/Aif1wV5iBQ6fwUTAWZw6rP (sent to Studio). Waiting on Kai: "ok a" -> parts b-j.
+  Pro backups ~/v5-wif5/films/wif5/parts/a/renders/*.snowfix|walk1.*; ~/v5-wif5.old-68041324 can be deleted.
+- B (PR #213, kit-hair-30 builder): scalp-coverage root cause + gate (top), then long-hair two-part binding (Studio chose A), then children/teens/elders.
