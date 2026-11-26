@@ -142,3 +142,9 @@ test('film.js hands out no raw figure, clip, body or look', () => {
   for (const k of ['SPECS', 'HOOKS', 'makeStick', 'bodySpec', 'BODIES', 'placeClip', 'expandClips', 'getClip', 'CLIPS', 'ALL', 'createStage', 'setQuality', 'propKit', 'glbKit', 'BUILT', 'builtGroup', 'BUILD', 'makeHandProp', 'pieceGroup', 'boot', 'lookup', 'usable', 'table', 'wardrobe', 'expressionBeats', 'sunHat', 'guardCap', 'flatCap']) assert.ok(!(k in F), k);
   for (const k of ['person', 'place', 'waivers', 'flyCam', 'faceCam', 'createKit', 'room', 'SURF', 'tex', 'lightBar', 'hold', 'polishAt', 'STYLE_PRESETS', 'hairCap', 'bun', 'curls', 'solid', 'lathe', 'outfit']) assert.ok(k in F, k);
 });
+test('person() with no hair, no cap or hat and no bald: true is marked for fits.mjs, and still loads (Kai 24/11)', () => {
+  const bare = F.person({ name: 'bare0', clips: ['Idle_Stand_Loop'], outfit: ['shirt:work'] }); assert.equal(bare.spec.noHair, true);
+  const bald = F.person({ name: 'bare1', clips: ['Idle_Stand_Loop'], outfit: ['shirt:work'], bald: true }); assert.equal(bald.spec.noHair, undefined); assert.equal(bald.spec.bald, true);
+  const hair = F.person({ name: 'bare2', clips: ['Idle_Stand_Loop'], outfit: ['shirt:work'], hair: [F.hairCap()] }); assert.equal(hair.spec.noHair, undefined);
+  assert.equal(F.person(cop({ name: 'bare3' })).spec.noHair, undefined);   // a cap
+});
