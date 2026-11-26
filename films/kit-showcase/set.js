@@ -4,15 +4,15 @@ import { createKit, rng, tex, place } from '/styles/stick-man/kit/film.js';
 
 export const SUN_DIR = [0.35, 0.50, -0.78];
 export const SUN_CENTER = [0, 3, 1.2], SUN_HALF = 9;
-export const MARKS = { bench: [-1.7, 3.3, 0] };
-export const PLACES = { bench: [-1.7, 3.3, 0.4] };
+export const MARKS = { bench: [-1.9, 2.7, 0] };
+export const PLACES = { bench: [-1.9, 2.7, 0.4] };
 export const CAMERA_SIDE = [0, -1];
 export const CAMERA_ROOM = [[[-9, -12], [9, 9]]];
 const STREET = ['street/market-stand', 'street/street-lamp', 'street/bench', 'street/fire-hydrant', 'street/cart', 'street/ad-board', 'street/traffic-cone',
   'street/flowers', 'street/standing-picture-frame', 'street/taxi', 'street/bench-2'];
 const MISC = ['misc/present', 'misc/cake-birthday', 'misc/suit-case', 'misc/book'];
 // no `light|prop|light` row exists in kit/compat.json yet (every light pair is untested): each one is waived by name, nothing loosened
-const why = 'no light rows exist in compat.json (all untested); waived pair by pair for this showcase', by = 'kit-showcase builder (Kai asked to see the kit working)';
+const why = 'no light rows exist in compat.json (all untested); waived pair by pair until measured light rows land', by = 'pending-studio';
 const wv = (L, ps) => ps.map(p => ({ pair: `light|${p}|${L}`, why, by }));
 export const PLAZA = place('street', { light: 'plaza-dusk', props: STREET, waivers: wv('plaza-dusk', STREET) });
 export const GOODS = place('misc', { light: 'plaza-dusk', props: MISC, collide: PLAZA.COLLIDE, waivers: wv('plaza-dusk', MISC) });
@@ -47,11 +47,11 @@ export async function build(stage) {
   // the kit's props
   put('street/market-stand', [-6.0, 6.0, 0], 0); put('street/market-stand', [6.2, 6.4, 0], 0);
   put('street/street-lamp', [-4.6, 4.6, 0], 0); put('street/street-lamp', [4.8, 4.8, 0], 0); put('street/street-lamp', [0.2, 7.6, 0], 0);
-  put('street/bench', [-1.7, 3.3, 0], 0); put('street/bench-2', [5.0, 2.2, 0], 0);
-  put('street/fire-hydrant', [-1.6, 5.4, 0], 0); put('street/cart', [3.6, 6.0, 0], 0); put('street/ad-board', [1.2, 5.0, 0], 0);
+  put('street/bench', [-1.9, 2.7, 0], 0); put('street/bench-2', [5.0, 2.2, 0], 0);
+  put('street/fire-hydrant', [-1.6, 5.4, 0], 0); put('street/cart', [3.6, 6.7, 0], 0); put('street/ad-board', [1.7, 4.3, 0], 0);
   put('street/traffic-cone', [-0.4, 2.4, 0], 0); put('street/traffic-cone', [0.4, 2.4, 0], 0);
-  put('street/flowers', [-5.4, 1.2, 0], 0); put('street/standing-picture-frame', [-2.3, 3.5, 0.4], 0, {}); put('street/taxi', [-8.8, 3.0, 0], 90);
-  put('misc/present', [-0.9, 3.2, 0], 0); put('misc/cake-birthday', [3.6, 6.0, 0.62], 0); put('misc/suit-case', [-2.7, 3.2, 0], 0); put('misc/book', [-2.3, 3.1, 0.4], 0);
+  put('street/flowers', [-5.4, 1.2, 0], 0); put('street/standing-picture-frame', [-2.6, 2.9, 0.4], 0, {}); put('street/taxi', [-8.8, 3.0, 0], 90);
+  put('misc/present', [-1.1, 2.4, 0], 0); put('misc/cake-birthday', [3.6, 6.0, 0.62], 0); put('misc/suit-case', [-3.2, 2.9, 0], 0); put('misc/book', [-2.7, 2.5, 0.4], 0);
 
   // practicals: warm lamp pools over every group, a cool top fill
   for (const p of [[-4.6, 4.6], [4.8, 4.8], [0.2, 7.6]]) K.point([p[0], p[1] - 0.3, 3.6], '#ffc98a', 26, 6.0);
