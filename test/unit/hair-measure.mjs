@@ -18,7 +18,7 @@ export const CLIPS = ['Adult_Idle_LookAround_Loop', 'Gest_LookUp_Once', 'Adult_G
 // (Gest_LookUp_Once: the bare back of the head 61 mm into the upper back; Adult_Act_PickUp_Once: the chin 27 mm into the chest,
 // measured 26/11), such a point is left out: no hair can be cut shorter than the head. Locks, tails, buns and thick masses always count
 export const NEAR_W = 0.10;
-const HA = 0.5 * W_M, HB = 0.5 * HEAD_H * W_M, CELL = 0.04, v = new THREE.Vector3(), _t = new THREE.Triangle(), _q = new THREE.Vector3();
+const G = 0.02, NEAR_M = 0.06, HA = 0.5 * W_M, HB = 0.5 * HEAD_H * W_M, CELL = 0.04, v = new THREE.Vector3(), _t = new THREE.Triangle(), _q = new THREE.Vector3();
 
 // the hair's fill vertices that stand out of the head, in the hair group's frame (the head-centre frame), and the lowest of them (W
 // below the head's centre): every mesh of the style but the ink hulls, and of the scalp only where hair grows (not its hairline wall)
@@ -42,7 +42,11 @@ export function torsoIndex(S) {
     const k = tris.push([a, b, c]) - 1, y0 = Math.floor(Math.min(a.y, b.y, c.y) / CELL), y1 = Math.floor(Math.max(a.y, b.y, c.y) / CELL), z0 = Math.floor(Math.min(a.z, b.z, c.z) / CELL), z1 = Math.floor(Math.max(a.z, b.z, c.z) / CELL);
     for (let y = y0; y <= y1; y++) for (let z = z0; z <= z1; z++) { const key = y * 4096 + z; (cols.get(key) || cols.set(key, []).get(key)).push(k); } }
   const box = new THREE.Box3(); for (const t of tris) for (const p of t) box.expandByPoint(p);
-  return { tris, cols, box };
+  // and by 3D cell (G m), for the nearest triangle to a point inside: only cells within NEAR_M of it (a point deeper than that is
+  // reported at NEAR_M, far past HAIR_IN_MM: the verdict is the same, the search a few hundred triangles instead of all of them)
+  const grid = new Map(), g = v => Math.floor(v / G);
+  tris.forEach(([a, b, c], k) => { for (let x = g(Math.min(a.x, b.x, c.x)); x <= g(Math.max(a.x, b.x, c.x)); x++) for (let y = g(Math.min(a.y, b.y, c.y)); y <= g(Math.max(a.y, b.y, c.y)); y++) for (let z = g(Math.min(a.z, b.z, c.z)); z <= g(Math.max(a.z, b.z, c.z)); z++) { const key = (x * 1024 + y) * 1024 + z; (grid.get(key) || grid.set(key, []).get(key)).push(k); } });
+  return { tris, cols, box, grid };
 }
 const ray = new THREE.Ray(), X = new THREE.Vector3(1, 0, 0), NX = new THREE.Vector3(-1, 0, 0), hit = new THREE.Vector3();
 export function inTorso(p, ix) {
@@ -50,7 +54,9 @@ export function inTorso(p, ix) {
   // in only when the rays both ways along x agree (the shell is open at the neck, inside the head: one ray through that rim miscounts)
   const list = ix.cols.get(Math.floor(p.y / CELL) * 4096 + Math.floor(p.z / CELL)) || [];
   for (const dir of [X, NX]) { let n = 0; ray.set(p, dir); for (const k of list) { const [a, b, c] = ix.tris[k]; if (ray.intersectTriangle(a, b, c, false, hit)) n++; } if (!(n & 1)) return 0; }
-  let m = 1e9; for (const [a, b, c] of ix.tris) { if (Math.abs(a.y - p.y) > 0.2) continue; _t.set(a, b, c).closestPointToPoint(p, _q); const e = _q.distanceTo(p); if (e < m) m = e; }   // (a degenerate triangle gives NaN: never the nearest)
+  let m = NEAR_M; const R = Math.ceil(NEAR_M / G), cx = Math.floor(p.x / G), cy = Math.floor(p.y / G), cz = Math.floor(p.z / G), seen = new Set();
+  for (let x = cx - R; x <= cx + R; x++) for (let y = cy - R; y <= cy + R; y++) for (let z = cz - R; z <= cz + R; z++) for (const k of ix.grid.get((x * 1024 + y) * 1024 + z) || []) {
+    if (seen.has(k)) continue; seen.add(k); const [a, b, c] = ix.tris[k]; _t.set(a, b, c).closestPointToPoint(p, _q); const e = _q.distanceTo(p); if (e < m) m = e; }   // (a degenerate triangle gives NaN: never the nearest)
   return m;
 }
 // limb segments in world space with their drawn radius: the line's rings, a sleeve's radius where it has one, the hand's ring left out
