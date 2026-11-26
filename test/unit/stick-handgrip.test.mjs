@@ -52,6 +52,16 @@ test('engine/grip.js: a socket per hand is read for that hand; a prop with no so
   assert.ok(Math.abs(g.cm - (5 - HAND_R * 100)) < 1e-6, `${g.cm}`);
 });
 
+test('engine/grip.js: a two-hand prop (B) is measured from each hand to its box, never its socket at the hands\' midpoint', () => {
+  // the engine hangs a B prop's socket at the hands' midpoint, so the socket always reads 0: a bundle 30 cm wide
+  // floating 6 cm in front of two hands 30 cm apart, its socket between them, fails on both hands
+  const o = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.2)); o.userData.grip = [0, 0.16, 0];
+  o.position.set(0, -0.16, 1); o.updateMatrixWorld(true);
+  const L = new THREE.Vector3(-0.15, 0, 1), R = new THREE.Vector3(0.15, 0, 1), mid = L.clone().add(R).multiplyScalar(0.5);
+  assert.equal(gripGap(mid, o, 'R').cm, 0, 'the old midpoint-to-socket read: always 0');
+  for (const h of [L, R]) { const g = gripGap(h, o, 'B'); assert.equal(g.anchor, 'bounds'); assert.ok(Math.abs(g.cm - (6 - HAND_R * 100)) < 1e-6, `${g.cm}`); assert.ok(g.cm > GAP_CM); }
+});
+
 const held = (cm, o = {}) => ({ actor: 'mum', prop: 'baby', side: 'B', onScreen: true, gapCm: cm, anchor: 'bounds', ...o });
 const clip = (cms, o) => cms.map((cm, f) => ({ f, held: [held(cm, o)] }));
 

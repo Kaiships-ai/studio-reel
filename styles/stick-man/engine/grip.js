@@ -6,9 +6,11 @@ import { W_M } from './cast.js';
 
 export const HAND_R = 0.040 * W_M;                                 // the hand dot's radius, m (cast.js)
 
-// hand: world point; prop: Object3D with its world matrix up to date -> { cm, anchor: 'grip' | 'bounds' }
+// hand: world point; prop: Object3D with its world matrix up to date; side 'L' | 'R', or 'B' for one hand of a prop held
+// in both (its socket hangs at the hands' midpoint, so it would always read 0: each hand is measured to the box)
+// -> { cm, anchor: 'grip' | 'bounds' }
 export function gripGap(hand, prop, side) {
-  const g = prop.userData.grip, gl = g && (Array.isArray(g) ? g : g[side]);
+  const g = side !== 'B' && prop.userData.grip, gl = g && (Array.isArray(g) ? g : g[side]);
   const d = gl ? prop.localToWorld(new THREE.Vector3(...gl)).distanceTo(hand)
     : new THREE.Box3().setFromObject(prop).clampPoint(hand, new THREE.Vector3()).distanceTo(hand);
   return { cm: +(Math.max(0, d - HAND_R) * 100).toFixed(2), anchor: gl ? 'grip' : 'bounds' };

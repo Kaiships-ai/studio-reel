@@ -2,7 +2,7 @@
 // photo in front of the chest with no hand on it, and every gate passed them). Each frame's rows carry held[]: every prop
 // a hand holds that frame (a set prop in mode 'hand', a cast.js hand prop fully in the hand), with gapCm, the air
 // between the hand dot and the prop's anchor (engine/grip.js): its grip socket (anchor 'grip') or, with none, the
-// nearest point of its box (anchor 'bounds'). A prop held in both hands is measured from the hands' midpoint. Any frame
+// nearest point of its box (anchor 'bounds'); each hand of a prop held in both is measured to its box. Any frame
 // on screen over GAP_CM (handgrip.limits.json, frozen before anything was measured) fails.
 //   node styles/stick-man/tools/gates/handgrip.mjs films/<slug> [--frames 120-300]      rows from review/shot-rows.jsonl
 //   node styles/stick-man/tools/gates/handgrip.mjs --rows <rows.jsonl> [--frames a-b] [--json 1]   -> exit 1 on a fault
