@@ -1,10 +1,10 @@
 // wif5 part a, stills at final light: a busy New Year square counts down; on ONE everyone looks up at the big clock; at
-// midnight (330) the women are gone mid-cheer. The dad's hand closes on air where his daughter's was, her scarf drops to
-// the snow, the old man's raised hand holds nothing. People come only from person() (fits table); hands meet by arm IK
+// midnight (330) the women are gone mid-cheer. The dad's hand stays on air where his daughter's was, her red balloon rises
+// free over where she stood, the old man holds his wife's empty handbag. People come only from person() (fits table); hands meet by arm IK
 // on the clips' own keys (figure-local W units, engine/cast.js pose2).
 import { person, bun, W_M } from '/styles/stick-man/kit/film.js';
 import { expandClips } from '/styles/stick-man/motion-lib/index.js';
-import { YAW, WALK, START, GONE, ELDERS, CLOCK, U, RIGHT, at, girl, dadAt, handAt, CAMS } from '/films/wif5/parts/a/path.js';
+import { YAW, WALK, START, GONE, ELDERS, CLOCK, U, RIGHT, at, girl, dadAt, handAt, CAMS, balloonHand, balloonAt } from '/films/wif5/parts/a/path.js';
 
 const SKIN = [[0.86, 0.72, 0.60], [0.74, 0.56, 0.44], [0.60, 0.43, 0.33], [0.90, 0.78, 0.66]];
 const hair = c => [bun(c)];
@@ -46,7 +46,7 @@ const other = s => (s === 'armL' ? 'armR' : 'armL');
 const sG = girlP.spec.scale ?? 1, sD = dadP.spec.scale ?? 1, sE = oldM.spec.scale ?? 1;
 let G = expandClips([girlP.clip('Move_Walk_Fwd_Loop', { f: 0, pos: START, yaw: YAW, to: at(START, WALK) })]);
 G = gone(G, GONE);
-for (const k of G) if (k.f < GONE) grip(k, handAt(k.f), sG);
+for (const k of G) if (k.f < GONE) { const side = grip(k, handAt(k.f), sG), o = other(side); k[o] = { ...k[o], ik: local(balloonHand(k.f), k.pos, k.yaw, sG), ikw: 1 }; }   // her other hand holds the balloon string
 for (const k of G) if (k.f < GONE) { nod(k, ease(ramp(k.f, 282, 296)), -24, 20); nod(k, ease(ramp(k.f, 312, 322)), -22, -10); }
 mark(G, 0, { expr: 'happy', look: 'dad' }); mark(G, 120, { expr: 'grin', look: CLOCK }); mark(G, 284, { expr: 'excited', look: CLOCK }); mark(G, 312, { expr: 'grin', look: 'dad' });
 
@@ -64,13 +64,13 @@ span(D, 306, GONE, k => raise(k, free, ease(ramp(k.f, 306, 316))));
 const dEnd = dadAt(GONE);
 const D2 = expandClips([dadP.clip('Idle_Stand_Loop', { f: GONE, pos: dEnd, yaw: YAW, ease: 'snap' }), dadP.clip('Idle_Stand_Loop', { f: 400 }), dadP.clip('Idle_Stand_Loop', { f: 470 })]);
 for (const f of [GONE, 331, 340, 352, 380, 400, 420, 436, 450, 500]) keyAt(D2, f);
-const he = handAt(GONE - 1), handUp = [he[0] - RIGHT[0] * 0.28 + U[0] * 0.1, he[1] - RIGHT[1] * 0.28 + U[1] * 0.1, 0.92];   // reaching on, out of frame, where she was
-for (const k of D2) { k.pos = [...dEnd, 0]; k.yaw = YAW; const w = ease(ramp(k.f, 400, 436));   // his hand stays where hers was, then reaches on after her
-  k[hold] = { ...k[hold], ik: local(he.map((v, i) => v * (1 - w) + handUp[i] * w), [...dEnd, 0], YAW, sD), ikw: 1 };
-  nod(k, 1, 10, 60); nod(k, ramp(k.f, 336, 352) * (1 - ramp(k.f, 400, 436)), 24, 45); raise(k, free, Math.max(0, 1 - ramp(k.f, GONE, 340))); }
+const he = handAt(GONE - 1), handUp = he;
+for (const k of D2) { k.pos = [...dEnd, 0]; k.yaw = YAW;          // his hand stays out where hers was; his head goes up after the balloon, then down
+  k[hold] = { ...k[hold], ik: local(he, [...dEnd, 0], YAW, sD), ikw: 1 };
+  nod(k, 1, -12, 25); nod(k, ramp(k.f, 334, 352), -34, 20); nod(k, ramp(k.f, 400, 436), 24, 45); raise(k, free, Math.max(0, 1 - ramp(k.f, GONE, 340))); }
 D = [...D, ...D2];
 mark(D, 0, { expr: 'grin', look: 'camera' }); mark(D, 150, { expr: 'happy', look: 'girl' }); mark(D, 284, { expr: 'excited', look: CLOCK }); mark(D, 312, { expr: 'grin', look: 'girl' });
-mark(D, GONE, { expr: 'shock', look: he }); mark(D, 352, { expr: 'panic', look: [...girl(GONE), 0.05] }); mark(D, 420, { expr: 'sad', look: handUp });
+mark(D, GONE, { expr: 'shock', look: balloonAt(334).c }); mark(D, 352, { expr: 'shock', look: balloonAt(362).c }); mark(D, 420, { expr: 'sad', look: handUp });
 
 // ---- the old couple: hand in hand, their joined hands go up at midnight; she is gone, his hand stays up
 const yE = faceClock([(ELDERS.man[0] + ELDERS.woman[0]) / 2, ELDERS.man[1]]), low = [ELDERS.hand[0], ELDERS.hand[1] + 0.06, 0.62], up = ELDERS.hand;
@@ -121,7 +121,7 @@ export default {
   grade: { exp: 1.0, lift: 0.0, sat: 1.0, haze: 0, sky: { clouds: 0 } },
   haze: { color: [0.065, 0.08, 0.125], near: 18, far: 80 },
   set: 'square', setModule: '/films/wif5/parts/a/set.js',
-  make: { clock: { kind: 'ao_anim', prop: 'clock' }, snow: { kind: 'ao_anim', prop: 'snow' }, board: { kind: 'ao_anim', prop: 'board' }, scarf: { kind: 'ao_anim', prop: 'scarf' }, bag: { kind: 'ao_anim', prop: 'bag' } },
+  make: { clock: { kind: 'ao_anim', prop: 'clock' }, snow: { kind: 'ao_anim', prop: 'snow' }, board: { kind: 'ao_anim', prop: 'board' }, balloon: { kind: 'ao_anim', prop: 'balloon' }, bag: { kind: 'ao_anim', prop: 'bag' } },
   cast: { dad: dadP.cast({ at: [...d0, 0], yaw: YAW, lead: true }), girl: girlP.cast({ at: [...START, 0], yaw: YAW }),
     oldman: oldM.cast({ at: [...ELDERS.man, 0], yaw: yE }), oldwoman: oldW.cast({ at: [...ELDERS.woman, 0], yaw: yE }), ...cast },
   anim: { dad: D, girl: G, oldman: OM, oldwoman: OW, ...anim },

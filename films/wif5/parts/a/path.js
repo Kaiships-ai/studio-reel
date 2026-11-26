@@ -35,12 +35,23 @@ export const CAMS = () => { const h230 = handAt(230), h329 = handAt(329), he = h
   return [
     [0, 'already busy: the dad and his girl walk hand in hand toward us into a full, lit square; the title sits over the square above them', [-1.12, 0.13, 2.6], [-2.32, -2.62, 2.2], 26],
     [86, 'he waves his free arm with the crowd, her hand in his', [0.06, 2.83, 2.6], [-1.38, -0.47, 2.2], 30],
-    [196, 'he looks down at her and smiles, hand in hand', [0.99, 4.46, 1.0], [m200[0], m200[1], 0.7], 30],
+    [196, 'he looks down at her and smiles, hand in hand', [0.99, 4.46, 1.0], [m200[0], m200[1], 1.05], 30],
     [226, 'contact: her hand in his', [h230[0] + U[0] * 1.4 + RIGHT[0] * 0.05, h230[1] + U[1] * 1.4 + RIGHT[1] * 0.05, 0.6], [h230[0], h230[1], 0.8], 26],
     [246, 'contact: the old couple hand in hand', [ELDERS.hand[0] - 0.5, ELDERS.hand[1] + 0.8, 0.7], [ELDERS.hand[0], ELDERS.hand[1] + 0.06, 0.72], 26],
     [294, 'ONE: from low behind them, heads up to the big clock at midnight, the board says 1', [0.85, 2.03, 0.6], [1.0, 8.92, 3.0], 24],
-    [318, 'midnight, close on the joined hands: the next frame her hand is gone, her scarf hangs in the air', [h329[0] + U[0] * 1.15 - RIGHT[0] * 0.1, h329[1] + U[1] * 1.15 - RIGHT[1] * 0.1, 0.85], [h329[0], h329[1], 0.7], 26],
-    [350, 'his hand still out on air, her scarf on the snow, the old man holds her empty handbag', [g[0] + U[0] * 1.7 - RIGHT[0] * 0.7, g[1] + U[1] * 1.7 - RIGHT[1] * 0.7, 0.6], [g[0] + RIGHT[0] * 0.35, g[1] + RIGHT[1] * 0.35, 0.75], 22],
-    [440, 'the camera stops on him: tears, his empty hand held up before him', [he[0] + U[0] * 0.75 - RIGHT[0] * 0.45, he[1] + U[1] * 0.75 - RIGHT[1] * 0.45, 0.95], [he[0], he[1], 0.95], 28],
+    [318, 'midnight: hand in hand, her balloon over her; the next frame she is gone, the balloon rises free and he looks at it', [2.4, 8.0, 1.15], [1.4, 6.0, 1.25], 27],
+    [350, 'her balloon higher and smaller against the bunting, his head tilted up following it', [2.9, 8.2, 0.9], [1.6, 6.4, 2.3], 22],
+    [440, 'the camera stops on him: tears, his hand still out where hers was, her footprints ending in the snow', [1.37, 7.13, 1.3], [1.47, 6.1, 0.95], 20],
   ]; };
 export const camAt = f => { let c = null; for (const k of CAMS()) if (k[0] <= f) c = k; return c; };
+
+// her red balloon: its string in her free (outer) hand from the start; at midnight it rises free over where she stood
+export const STRING = 1.15;
+export const balloonHand = f => { const g = girl(Math.min(f, GONE - 1)); return [g[0] - RIGHT[0] * 0.2 + U[0] * 0.05, g[1] - RIGHT[1] * 0.2 + U[1] * 0.05, 0.62]; };
+export function balloonAt(f) {
+  const h = balloonHand(f), sway = 0.05 * Math.sin(f / 11);
+  const c0 = [h[0] + 0.06 + sway, h[1] + 0.04, h[2] + STRING + 0.17];
+  if (f < GONE) return { c: c0, end: h, free: false };
+  const t = (f - GONE) / 30, c = [c0[0] + U[0] * 0.9 * t + 0.04 * Math.sin(t * 3), c0[1] + U[1] * 0.9 * t, c0[2] + 1.0 * t + 0.3 * t * t];   // up and away toward the clock
+  return { c, end: [c[0] - 0.06 - 0.05 * Math.sin(t * 4), c[1] - 0.03, c[2] - 0.17 - STRING * 0.97], free: true };
+}

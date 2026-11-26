@@ -4,7 +4,7 @@
 // Light (LIGHT-RECIPE-V3): colour lives in the lamps: practicals reach 2.4-4.6 m at power 8-26, materials env x0.4.
 // V5 stills: the tower stands close with a big lit face and a countdown board; warm pools along the family's walk.
 import { createKit, rng, tex, place } from '/styles/stick-man/kit/film.js';
-import { TOWER, CLOCK, CLOCK_R, BOARD, ELDERS, GONE, START, U, RIGHT, girl, at, camAt } from '/films/wif5/parts/a/path.js';
+import { TOWER, CLOCK, CLOCK_R, BOARD, ELDERS, GONE, START, U, RIGHT, girl, at, camAt, balloonAt } from '/films/wif5/parts/a/path.js';
 
 export const SUN_DIR = [0.35, 0.55, -0.76];                       // a cool moon from front-left, high
 export const SUN_CENTER = [0, 3, 1.5], SUN_HALF = 11;
@@ -139,22 +139,24 @@ export async function build(stage) {
   for (const d of [0.2, 3.0, 6.0, 8.8]) { const p = at(START, d); K.point([p[0] + 0.3, p[1] - 0.3, 2.6], '#ffbe7a', 13, 3.6); }
   for (const p of [[-3.1, 5.0], [3.9, 3.2], [4.1, 7.1], [-3.3, -5.7], [-4.3, -4.5], [3.2, 4.3]]) K.point([p[0], p[1] - 0.4, 2.7], '#ffc888', 10, 3.4);
 
-  // ---- her scarf: at midnight it hangs a moment in the air where her neck was (a loop and its tail), drifts down, and lies
-  // on the snow as a long soft strip, in a lamp pool
-  const g0 = girl(GONE), yawU = Math.atan2(U[0], U[1]), mus = M([0.86, 0.60, 0.10], 0.9), band = M([0.40, 0.24, 0.07], 0.9);
-  const c331 = camAt(GONE + 1)[2], air = new T.Group();
-  const ring = new T.Mesh(new T.TorusGeometry(0.085, 0.032, 8, 22), mus); air.add(ring);      // the loop that was round her neck, facing the lens
-  for (const [dx, rz] of [[-0.035, 6], [0.04, -9]]) for (let k = 0; k < 4; k++) {                // two tails, striped, hanging from it
-    const t = new T.Mesh(new T.BoxGeometry(0.07, 0.07, 0.018), k % 2 ? band : mus); t.position.set(dx + Math.sin(rz * Math.PI / 180) * 0.07 * k, -0.11 - 0.07 * k, 0.03); air.add(t); }
-  K.root.add(air);
-  const pts = Array.from({ length: 9 }, (_, i) => { const t = i / 8; return K.B(g0[0] + RIGHT[0] * (t - 0.5) * 0.95 + U[0] * 0.16 * Math.sin(t * 5), g0[1] + RIGHT[1] * (t - 0.5) * 0.95 + U[1] * 0.16 * Math.sin(t * 5), 0.022); });
-  const strip = new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts), 40, 0.06, 8), mus); strip.scale.set(1, 1, 1); strip.castShadow = true;
-  const flat = new T.Group(); flat.add(strip); K.root.add(flat); strip.geometry.scale(1, 0.35, 1); strip.geometry.translate(0, 0.0, 0);
-  for (const t of [0.02, 0.98]) { const p = pts[Math.round(t * 8)]; const fr = new T.Mesh(new T.BoxGeometry(0.13, 0.025, 0.13), band); fr.position.set(p.x, 0.02, p.z); fr.rotation.y = yawU; flat.add(fr); }
-  const LAND = GONE + 21;
-  K.anim('scarf', air, f => { const t = Math.max(0, f - GONE) / 30, z = 0.84 - 1.7 * t * t;
-    air.visible = f >= GONE && f < LAND; flat.visible = f >= LAND; air.position.copy(K.B(g0[0], g0[1], Math.max(0.1, z))); air.lookAt(K.B(c331[0], c331[1], c331[2] - 0.4)); air.rotateZ(0.6 * t); });
-  K.point([g0[0] - 0.3, g0[1] - 0.5, 1.8], '#ffd08a', 7, 2.6);                 // the pool her scarf lands in
+  // ---- her red balloon: its string in her free hand; at midnight it rises free, the string trailing loose
+  const bal = new T.Group(), red = M([0.86, 0.10, 0.10], 0.35);
+  const skin = new T.Mesh(new T.SphereGeometry(0.17, 24, 18), red); skin.scale.set(1, 1.18, 1); skin.castShadow = true; bal.add(skin);
+  const knot = new T.Mesh(new T.ConeGeometry(0.03, 0.05, 10), red); knot.position.y = -0.21; bal.add(knot); K.root.add(bal);
+  const strM = M([0.92, 0.90, 0.86], 0.8); let str = null;
+  K.anim('balloon', bal, f => { const b = balloonAt(f); bal.position.copy(K.B(...b.c)); bal.rotation.z = 0.08 * Math.sin(f / 9);
+    const top = [b.c[0], b.c[1], b.c[2] - 0.23], e = b.end, sag = b.free ? 0.12 : 0.03;
+    const P = Array.from({ length: 7 }, (_, i) => { const t = i / 6, w = Math.sin(t * Math.PI) * sag * (b.free ? Math.sin(f / 5 + t * 4) : 1);
+      return K.B(top[0] + (e[0] - top[0]) * t + w, top[1] + (e[1] - top[1]) * t, top[2] + (e[2] - top[2]) * t); });
+    if (str) { K.root.remove(str); str.geometry.dispose(); }
+    str = new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(P), 24, 0.0045, 5), strM); str.userData.noInk = true; K.root.add(str); });
+
+  // ---- a skin of snow along the end of their walk, with their footprints in it: hers stop where she stood
+  const snowSkin = M([0.40, 0.43, 0.51], 0.95), print = M([0.17, 0.17, 0.22], 0.95);
+  const gm = girl(300); K.sphere([gm[0] + 0.25, gm[1] + 0.2, 0], 1, snowSkin, { sx: 1.15, sy: 2.1, sz: 0.02 });
+  const step = (p, side, w, l) => { const m = K.sphere([p[0] + RIGHT[0] * side, p[1] + RIGHT[1] * side, 0.019], 1, print, { sx: w, sy: l, sz: 0.004 }); m.castShadow = false; };
+  for (let f = 250, i = 0; f <= GONE - 1; f += 7, i++) { const g = girl(f); step(g, i % 2 ? 0.05 : -0.05, 0.035, 0.065);
+    const d = [g[0] + RIGHT[0] * 0.62, g[1] + RIGHT[1] * 0.62]; if (i % 2 === 0) step(d, (i / 2) % 2 ? 0.08 : -0.08, 0.05, 0.11); }
 
   // ---- her handbag: hangs from the old woman's free hand; at midnight it hangs a moment on nothing, drops, and then the
   // old man holds it, empty, at his chest
