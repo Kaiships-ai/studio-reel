@@ -64,9 +64,9 @@ span(D, 306, GONE, k => raise(k, free, ease(ramp(k.f, 306, 316))));
 const dEnd = dadAt(GONE);
 const D2 = expandClips([dadP.clip('Idle_Stand_Loop', { f: GONE, pos: dEnd, yaw: YAW, ease: 'snap' }), dadP.clip('Idle_Stand_Loop', { f: 400 }), dadP.clip('Idle_Stand_Loop', { f: 470 })]);
 for (const f of [GONE, 331, 340, 352, 380, 400, 420, 436, 450, 500]) keyAt(D2, f);
-const he = handAt(GONE - 1), handUp = he;
+const he = handAt(GONE - 1), handUp = [he[0] - RIGHT[0] * 0.30 + U[0] * 0.30, he[1] - RIGHT[1] * 0.30 + U[1] * 0.30, 1.0];   // later he reaches on after her
 for (const k of D2) { k.pos = [...dEnd, 0]; k.yaw = YAW;          // his hand stays out where hers was; his head goes up after the balloon, then down
-  k[hold] = { ...k[hold], ik: local(he, [...dEnd, 0], YAW, sD), ikw: 1 };
+  const w = ease(ramp(k.f, 400, 436)); k[hold] = { ...k[hold], ik: local(he.map((v, i) => v * (1 - w) + handUp[i] * w), [...dEnd, 0], YAW, sD), ikw: 1 };
   nod(k, 1, -12, 25); nod(k, ramp(k.f, 334, 352), -34, 20); nod(k, ramp(k.f, 400, 436), 24, 45); raise(k, free, Math.max(0, 1 - ramp(k.f, GONE, 340))); }
 D = [...D, ...D2];
 mark(D, 0, { expr: 'grin', look: 'camera' }); mark(D, 150, { expr: 'happy', look: 'girl' }); mark(D, 284, { expr: 'excited', look: CLOCK }); mark(D, 312, { expr: 'grin', look: 'girl' });
@@ -109,7 +109,7 @@ COUPLES.forEach(([mp, wp], i) => {
 // ---- cameras: one shot a beat (each a cut); a still is read at its beat frame
 const cam = (f, why, pos, aim, lens, to) => ({ at: { f }, intent: 'still', why: `P1 · ${why}`, cut: 'cut', cam: { pos, aim, lens },
   to: to || { pos, aim, lens }, move: { from: { f }, dur: 1, ease: 'linear' } });
-export const SHOTS = { 0: 0, 90: 86, 200: 196, contact_hands: 226, contact_old: 246, 300: 294, 329: 318, 331: 318, 360: 350, 450: 440 };
+export const SHOTS = { 0: 0, 90: 86, 200: 196, contact_hands: 226, contact_old: 246, 300: 294, 329: 318, 331: 330, 360: 350, 450: 440 };
 export const STILLS = { beat_0: 0, beat_90: 90, beat_200: 200, contact_dad_daughter_hands: 230, contact_old_couple_hands: 250, beat_300: 300, beat_329: 329, beat_331: 331, beat_360: 360, beat_450: 450 };
 
 export default {
