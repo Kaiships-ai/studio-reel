@@ -2,21 +2,21 @@
 // midnight (330) the women are gone mid-cheer. The dad's hand stays on air where his daughter's was, her red balloon rises
 // free over where she stood, the old man holds his wife's empty handbag. People come only from person() (fits table); hands meet by arm IK
 // on the clips' own keys (figure-local W units, engine/cast.js pose2).
-import { person, bun, hairCap, curls, W_M } from '/styles/stick-man/kit/film.js';
+import { person, toonHair, W_M } from '/styles/stick-man/kit/film.js';
 import { expandClips } from '/styles/stick-man/motion-lib/index.js';
 import { YAW, WALK, START, GONE, ELDERS, CLOCK, U, RIGHT, at, girl, dadAt, handAt, CAMS, balloonHand, balloonAt } from '/films/wif5/parts/a/path.js';
 
 const SKIN = [[0.86, 0.72, 0.60], [0.74, 0.56, 0.44], [0.60, 0.43, 0.33], [0.90, 0.78, 0.66]];
-const hair = c => [bun(c)];
-const dadP = person({ name: 'wif5_dad', body: 'adult', outfit: ['sweater:coral'], face: ['excited'], skin: SKIN[0], hair: [hairCap([0.20, 0.12, 0.07], 20)],
+const hair = c => [toonHair('woman', c)];   // Kai approved the 6 toon hairs 26/11 (#212)
+const dadP = person({ name: 'wif5_dad', body: 'adult', outfit: ['sweater:coral'], face: ['excited'], skin: SKIN[0], hair: [toonHair('side', [0.20, 0.12, 0.07])],
   clips: ['Move_Walk_Fwd_Loop', 'Idle_Stand_Loop', 'React_Surprise_Once'] });
-const girlP = person({ name: 'wif5_girl', body: 'child', age: 'child', outfit: ['scarf:mustard', 'sweater:sky'], skin: SKIN[3], hair: hair([0.30, 0.16, 0.07]), prop: 'balloon', clips: ['Move_Walk_Fwd_Loop'] });
-const oldM = person({ name: 'wif5_oldman', body: 'elder', age: 'elder', outfit: ['sweater:slate'], skin: SKIN[1], hair: [hairCap([0.74, 0.74, 0.72], 34)], clips: ['Idle_Breath_Loop'] });
+const girlP = person({ name: 'wif5_girl', body: 'child', age: 'child', outfit: ['scarf:mustard', 'sweater:sky'], skin: SKIN[3], hair: [toonHair('girl', [0.30, 0.16, 0.07])], prop: 'balloon', clips: ['Move_Walk_Fwd_Loop'] });
+const oldM = person({ name: 'wif5_oldman', body: 'elder', age: 'elder', outfit: ['sweater:slate'], skin: SKIN[1], hair: [toonHair('elder')], clips: ['Idle_Breath_Loop'] });
 const oldW = person({ name: 'wif5_oldwoman', body: 'elder', age: 'elder', outfit: ['cardigan:plum', 'shirt:office', 'skirt:navy'], skin: SKIN[0], hair: hair([0.78, 0.76, 0.74]), clips: ['Idle_Breath_Loop'] });
 const MEN = [['sweater:forest'], ['shirt:work'], ['pens', 'shirt:office', 'tie'], ['sweater:navy'], ['sweater:mustard']];
 const GIRTH = [1, 1.35, 1, 1, 1];
 const WOMEN = ['rose', 'sky', 'coral', 'teal', 'sand'];
-const MHAIR = [curls([0.08, 0.06, 0.05]), hairCap([0.42, 0.26, 0.12], 16), curls([0.50, 0.24, 0.10]), hairCap([0.10, 0.08, 0.07], 24), hairCap([0.62, 0.48, 0.26], 18)];   // short, no two neighbours alike
+const MHAIR = [toonHair('curly', [0.08, 0.06, 0.05]), toonHair('crop', [0.42, 0.26, 0.12]), toonHair('side', [0.10, 0.08, 0.07]), toonHair('curly', [0.50, 0.24, 0.10]), toonHair('crop', [0.62, 0.48, 0.26])];   // short, no two neighbours alike
 const MCLIPS = ['Gest_Wave_Loop', 'Gest_Clap_Loop', 'Gest_LookUp_Once', 'React_Surprise_Once', 'Idle_Stand_Loop'];
 const WCLIPS = ['Gest_Clap_Loop', 'Gest_LookUp_Once', 'Idle_Stand_Loop'];
 // couples around the square, each facing the clock: [man, woman] spots
