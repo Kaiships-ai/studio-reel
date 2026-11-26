@@ -3,11 +3,20 @@
 Fixed: words on screen and their frames (tools/timeline.py TEXT), the VO take (the count, the whisper), fonts, V3 light recipe,
 720x1280, 3016 frames (100.5 s). The clock stays V4's so words, voice and sound stay locked; everything inside a part is new.
 
-Three structures considered:
+## Logline
+
+When every woman on Earth vanishes at midnight, the men left must keep a world running that cannot go on, before the boy born one minute earlier dies the last person on Earth.
+
+## Three structures
+
 1. Twelve postcards (one set per line, cut on every line) — V4's shape; reads as a slideshow.
 2. One life (the newborn of 11:59 is the thread: born, held, grows, the last man) — every scene a station of his 116 years.
 3. Hands (every scene turns on one hand that holds or lets go) — strong but abstract.
 Choice: 2 carried by 3. The film is his life, and each scene is told by a hand: held, empty, lifting, letting go.
+
+## Intensity curve
+
+Story intensity per part (1-10): a 6 (warm, then 9 at the vanish) · b 8 · c 5 · d 6 · e 6 · f 7 · g 5 · h 8 · i 6 · j 9 climax (the photo, "She held him for one minute") · k 4 release (the ask). The hook spikes at the vanish (330), each part dips to explain and rises at its turn, the climax is j, the card releases.
 
 | Part | Frames | Kai feels | What the viewer sees (sound off) |
 |---|---|---|---|
@@ -22,6 +31,18 @@ Choice: 2 carried by 3. The film is his life, and each scene is told by a hand: 
 | i Birthday | 2111-2336 | warmth, then alone | Old men in sweaters (claps in coats are unsafe) clap round a cake with 80 on it; he leans in and blows (cheeks, a puff, flames bend out). Pull back: chairs empty one by one. |
 | j The last man | 2336-2876 | calm, love, peace | The boy of 23:59, now 116, alone in a small warm room. On the whispered count he lifts a photo to us: a young mother holding a newborn. He smiles, closes his eyes; the window light warms. |
 | k Card | 2876-3016 | the ask | The fixed end card. |
+
+## Benchmark
+
+- V4 of this film (films/wwr, blind rounds r1-r3: ours first overall) and the Rick bench (styles/stick-man/bench/TABLE.md): continuous camera flight, about 1 hard cut a minute, bright subjects, eye-level, calm faces.
+- Learn: one camera flight per place, bright readable faces, the cut on a held hand, the sound bed never empty.
+- Do not take: V4's shape of twelve postcards (one set per line, a slideshow), any reference's frames, audio or wording.
+
+## Hooks
+
+- H1 (question, the current open): moving from frame 0, a camera glides low through the lit square, dad and daughter hand in hand, the title "What if every WOMAN on Earth disappeared?" over the square.
+- H2 (shock, cold open in the act): open on ONE: the clock at twelve, the cheer, and his hand closes on air, the balloon rising; the title lands over the empty hand.
+- H3 (mystery, flash-forward): open on the last man at 116 lifting the photo of a young mother with a newborn; the title over it, then cut back to the countdown.
 
 Order (from SPEC-V5): look stills at final light for every part before any motion; first slice (part a, 1 person, 1 set, 5 s)
 seen by a non-builder before the rest. Approved looks only (no teen/toddler faces); babies as wrapped bundles.

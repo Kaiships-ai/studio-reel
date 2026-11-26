@@ -1,0 +1,231 @@
+{
+ "film": "wif5",
+ "note": "Decisions V5 already works under. Proposed by the builder; an independent reviewer (agent:<id>) or Kai at K1 marks each approved (DEVELOP.md section 5). The builder never approves its own.",
+ "decisions": [
+  {
+   "id": "D01",
+   "decision": "V5 keeps V4's approved on-screen wording and its frames unchanged (tools/timeline.py TEXT, vo/script.json)",
+   "source": "V4 lock (umibozu films/wwr/tools/timeline.py), TREATMENT.md \"Fixed\"",
+   "where": {
+    "note": "every scene: on-screen text",
+    "scenes": [
+     "a",
+     "b",
+     "c",
+     "d",
+     "e",
+     "f",
+     "g",
+     "h",
+     "i",
+     "j",
+     "k"
+    ]
+   },
+   "check": [
+    {
+     "type": "textMust",
+     "text": "Remember him.",
+     "scenes": [
+      "b"
+     ]
+    },
+    {
+     "type": "textMust",
+     "text": "Remember him?",
+     "scenes": [
+      "j"
+     ]
+    },
+    {
+     "type": "textMust",
+     "text": "Send this to the woman",
+     "scenes": [
+      "j"
+     ]
+    }
+   ],
+   "status": "proposed",
+   "by": null,
+   "at": "2026-11-26",
+   "proposedBy": "agent:ep1-prepro",
+   "approvedPer": "V4 lock (umibozu films/wwr/tools/timeline.py), TREATMENT.md \"Fixed\""
+  },
+  {
+   "id": "D02",
+   "decision": "V5 keeps V4's voice take (vo/takes/take-01.wav: the count and the whispered count) and the film clock: 3016 frames, 100.5 s",
+   "source": "TREATMENT.md \"Fixed\"; status.json script_lock",
+   "where": {
+    "scenes": [
+     "a",
+     "j"
+    ]
+   },
+   "check": [
+    {
+     "type": "maxSec",
+     "sec": 100.6
+    }
+   ],
+   "status": "proposed",
+   "by": null,
+   "at": "2026-11-26",
+   "proposedBy": "agent:ep1-prepro",
+   "approvedPer": "TREATMENT.md \"Fixed\"; status.json script_lock"
+  },
+  {
+   "id": "D03",
+   "decision": "Part order and frames on one film clock: a 0-504, b 504-984, c 984-1134, d 1134-1343, e 1343-1518, f 1518-1671, g 1671-1894, h 1894-2111, i 2111-2336, j 2336-2876, k card 2876-3016",
+   "source": "TREATMENT.md table, tools/timeline.py PARTS",
+   "where": {
+    "scenes": [
+     "a",
+     "b",
+     "c",
+     "d",
+     "e",
+     "f",
+     "g",
+     "h",
+     "i",
+     "j",
+     "k"
+    ]
+   },
+   "status": "proposed",
+   "by": null,
+   "at": "2026-11-26",
+   "proposedBy": "agent:ep1-prepro",
+   "approvedPer": "TREATMENT.md table, tools/timeline.py PARTS"
+  },
+  {
+   "id": "D04",
+   "decision": "Structure: one life (the boy born at 23:59 is the thread) told by hands that hold or let go",
+   "source": "TREATMENT.md Three structures, choice 2 carried by 3",
+   "where": {
+    "scenes": [
+     "b",
+     "j"
+    ]
+   },
+   "check": [
+    {
+     "type": "seeIncludes",
+     "text": "23:59",
+     "scenes": [
+      "b"
+     ]
+    },
+    {
+     "type": "seeIncludes",
+     "text": "photo",
+     "scenes": [
+      "j"
+     ]
+    }
+   ],
+   "status": "proposed",
+   "by": null,
+   "at": "2026-11-26",
+   "proposedBy": "agent:ep1-prepro",
+   "approvedPer": "TREATMENT.md Three structures, choice 2 carried by 3"
+  },
+  {
+   "id": "D05",
+   "decision": "Cast rules (CAST.md): fits.mjs on each part's cast before stills; elders use only Idle_Breath, Idle_Stooped, OldWalk, Walk, Run; children only Move_Walk_Fwd_Loop; no run, sit or stoop in a coat, skirt, dress or apron; babies are wrapped bundles; approved looks only",
+   "source": "CAST.md, Studio 26/11, director's calls 26/11 07:05",
+   "where": {
+    "scenes": [
+     "a",
+     "b",
+     "c",
+     "d",
+     "f",
+     "g",
+     "h",
+     "i",
+     "j"
+    ]
+   },
+   "status": "proposed",
+   "by": null,
+   "at": "2026-11-26",
+   "proposedBy": "agent:ep1-prepro",
+   "approvedPer": "CAST.md, Studio 26/11, director's calls 26/11 07:05"
+  },
+  {
+   "id": "D06",
+   "decision": "Toon hair on every person (kit toonHair), rigid to the head, fitting age and role",
+   "source": "kit hair rounds (f0d5e805), .claude/CLAUDE.md hair rule, no-hair-jiggle",
+   "where": {
+    "scenes": [
+     "a",
+     "b",
+     "c",
+     "d",
+     "e",
+     "f",
+     "g",
+     "h",
+     "i",
+     "j"
+    ]
+   },
+   "status": "proposed",
+   "by": null,
+   "at": "2026-11-26",
+   "proposedBy": "agent:ep1-prepro",
+   "approvedPer": "kit hair rounds (f0d5e805), .claude/CLAUDE.md hair rule, no-hair-jiggle"
+  },
+  {
+   "id": "D07",
+   "decision": "Light recipe V3: practicals 2.4-4.6 m reach at 8-26, sky hemi 0.18-0.35, sun 0.45-1.2 (care home 3.0), material env x0.35-0.45; colour lives in lights, no grade, no full-screen colour fill",
+   "source": "LIGHT-RECIPE-V3.md, BRIEF-STILLS.md",
+   "where": {
+    "scenes": [
+     "a",
+     "b",
+     "c",
+     "d",
+     "e",
+     "f",
+     "g",
+     "h",
+     "i",
+     "j"
+    ]
+   },
+   "status": "proposed",
+   "by": null,
+   "at": "2026-11-26",
+   "proposedBy": "agent:ep1-prepro",
+   "approvedPer": "LIGHT-RECIPE-V3.md, BRIEF-STILLS.md"
+  },
+  {
+   "id": "D08",
+   "decision": "What only the picture says: the vanish happens mid-cheer on ONE; the hand that held her closes on air; the boy of 23:59 is the last man and lifts his mother's photo",
+   "source": "TREATMENT.md table",
+   "where": {
+    "scenes": [
+     "a",
+     "b",
+     "j"
+    ]
+   },
+   "check": [
+    {
+     "type": "seeIncludes",
+     "text": "hand",
+     "scenes": [
+      "a"
+     ]
+    }
+   ],
+   "status": "proposed",
+   "by": null,
+   "at": "2026-11-26",
+   "proposedBy": "agent:ep1-prepro",
+   "approvedPer": "TREATMENT.md table"
+  }
+ ]
+}
