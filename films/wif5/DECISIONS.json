@@ -251,7 +251,14 @@
    "at": "2026-11-26T21:50",
    "via": "Studio msg_3d2d4dad1254",
    "status": "approved",
-   "decision": "V5 keeps V4's approved wording and voice (SPEC-V5 'Fixed', Kai's standing V5 decision); the S3 fact runs and the A/B tie are waived, never rewritten."
+   "decision": "V5 keeps V4's approved wording and voice (SPEC-V5 'Fixed', Kai's standing V5 decision); the S3 fact runs and the A/B tie are waived, never rewritten.",
+   "conflict": {
+    "rule": "scriptlint S3",
+    "winner": "waive-S-script",
+    "by": "kai",
+    "at": "2026-11-26",
+    "how": "V4 wording and voice fixed for V5 (SPEC-V5), via Studio"
+   }
   },
   {
    "id": "keep-a-count",

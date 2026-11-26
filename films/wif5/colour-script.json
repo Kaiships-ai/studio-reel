@@ -1,8 +1,9 @@
 {
  "film": "wif5",
  "approved": {
-  "by": "",
-  "at": ""
+  "by": "kai",
+  "at": "2026-11-26T21:50",
+  "via": "Studio, waiver waive-K1-S1 in DECISIONS.json (Kai: no S1 stop for V5)"
  },
  "palette": {
   "signature": "warm",
