@@ -45,10 +45,10 @@ const other = s => (s === 'armL' ? 'armR' : 'armL');
 
 // ---- the girl: walks the whole countdown at her dad's side (a child only walks), her hand in his; gone at midnight
 const sG = girlP.spec.scale ?? 1, sD = dadP.spec.scale ?? 1, sE = oldM.spec.scale ?? 1;
-// a6-5/a6-6 (frames before the cut at WALK_CUT only; from it on the keys are as they were): the child walk's swing foot skims
+// a6-5/a6-6 (the whole walk, to midnight): the child walk's swing foot skims
 // 0.6-2 cm over the floor for its last frames before it lands, so it reads as a planted foot sliding: it clears 2.4 cm while it
 // still travels; her balloon hand's target sat inside her side (out of reach, 17-23 cm off)
-const WALK_CUT = 226;
+const WALK_CUT = GONE;
 // (her arm cannot come in closer than ~30 deg under level, and her shoulder sways with her hips: the target rides 0.35 m out of
 // the shoulder (her side pushes the hand out to that) and 0.14 m under it, the shoulder taken from the key's hip sway, measured on the clip rows 26/11)
 const bHand = (f, k) => { if (f >= WALK_CUT) return balloonHand(f); const g = girl(f), out = 0.086 + 1.1 * (k.hip?.x ?? 0) + 0.35;
@@ -71,7 +71,7 @@ const d0 = dadAt(0);
 let D = expandClips([dadP.clip('Move_Walk_Fwd_Loop', { f: 0, pos: d0, yaw: YAW, to: at(d0, WALK * 1.6) })]).filter(k => k.f < GONE && k.f >= WALK_CUT);
 for (const k of D) { const p = dadAt(k.f), dx = p[0] - k.pos[0], dy = p[1] - k.pos[1]; k.pos = [p[0], p[1], k.pos[2] || 0]; k.yaw = YAW;   // his body on her pace
   for (const l of ['legL', 'legR']) if (k[l]?.footW) k[l] = { ...k[l], footW: [k[l].footW[0] + dx, k[l].footW[1] + dy, k[l].footW[2]] }; }
-// a6-5: before the cut his own walk (8 strides over the 11 m, 0.97 of his natural pace) played at her progress along the path:
+// a6-5: his own walk (8 strides over the 11 m, 0.97 of his natural pace) played at her progress along the path:
 // each frame shows the moment of his walk that is as far along U as she is, so a planted foot stays exactly where it landed
 { const along = p => (p[0] - d0[0]) * U[0] + (p[1] - d0[1]) * U[1], s0 = along(dadAt(0));
   const W8 = expandClips([dadP.clip('Move_Walk_Fwd_Loop', { f: 0, pos: d0, yaw: YAW, to: at(d0, WALK), times: 8 })]);
@@ -93,8 +93,11 @@ const dEnd = dadAt(GONE);
 const D2 = expandClips([dadP.clip('Idle_Stand_Loop', { f: GONE, pos: dEnd, yaw: YAW, ease: 'snap' }), dadP.clip('Idle_Stand_Loop', { f: 400 }), dadP.clip('Idle_Stand_Loop', { f: 470 })]);
 for (const f of [GONE, 331, 340, 352, 366, 380, 420, 450, 462, 480, 496, 500]) keyAt(D2, f);
 const he = handAt(GONE - 1), handUp = [dEnd[0] + U[0] * 0.30 - RIGHT[0] * 0.48, dEnd[1] + U[1] * 0.30 - RIGHT[1] * 0.48, 1.9];   // he reaches up after her balloon, out on her side (clear of his head)
+// his arm reaches 0.63 m from the shoulder (rows 26/11: shoulder 0.115 m to -x, 0.033 to +y of his spot, 1.18 m up): a target
+// further out is put at 0.59 m on the line to it, so the hand lands on it
+const SH = [dEnd[0] - 0.115, dEnd[1] + 0.033, 1.18], reach = P => { const v = P.map((x, i) => x - SH[i]), n = Math.hypot(...v); return n <= 0.59 ? P : SH.map((x, i) => x + v[i] * 0.59 / n); };
 for (const k of D2) { k.pos = [...dEnd, 0]; k.yaw = YAW;          // his hand stays out where hers was; his head goes up after the balloon, then down
-  const w = ease(ramp(k.f, 352, 380)) * (1 - 0.7 * ease(ramp(k.f, 462, 496))); k[hold] = { ...k[hold], ik: local(he.map((v, i) => v * (1 - w) + handUp[i] * w), [...dEnd, 0], YAW, sD), ikw: 1 };
+  const w = ease(ramp(k.f, 352, 380)) * (1 - 0.7 * ease(ramp(k.f, 462, 496))); k[hold] = { ...k[hold], ik: local(reach(he.map((v, i) => v * (1 - w) + handUp[i] * w)), [...dEnd, 0], YAW, sD), ikw: 1 };
   nod(k, 1, -12, 25); nod(k, ramp(k.f, 334, 352), -34, 20); nod(k, ease(ramp(k.f, 352, 380)), -40, 10); nod(k, ease(ramp(k.f, 462, 496)), 22, 30); raise(k, free, Math.max(0, 1 - ramp(k.f, GONE, 340))); }
 D = [...D, ...D2];
 mark(D, 0, { expr: 'grin', look: 'camera' }); mark(D, 150, { expr: 'happy', look: 'girl' }); mark(D, 284, { expr: 'excited', look: CLOCK }); mark(D, 312, { expr: 'grin', look: 'girl' });
