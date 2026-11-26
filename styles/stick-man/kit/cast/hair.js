@@ -64,11 +64,11 @@ const STYLES = {
   // a chin bob: a bell that falls straight from the crown to the jaw, a blunt hem, a side part
   bob:   { neck: true, col: [0.42, 0.26, 0.14], whorl: [0, 1, -0.08], locks: 30, jit: 0.25, twist: 0, clump: 0.016, base: 0.030, lift: 0.020, tips: 0.006, part: 0.12, lo: edge({ front: 0.30, side: -0.04 }),
            hang: { from: 0.02, flare: 0.10, hem: [[0, 0.30], [30, 0.28], [48, -0.36], [180, -0.38]], tips: 0.06, edge: 14 },
-           falls: [{ lon: [30, 48], n: 3, from: 0.22, to: -0.36, toAt: [0.8, 1.0, 0.9], rho: 0.05, flat: 0.4, flare: 0.05, jit: 0.3, tip: 'point', ridges: 3, seed: 9 }] },   // face-framing locks
+           falls: [{ lon: [30, 48], n: 3, from: 0.22, to: -0.36, toAt: [0.8, 1.0, 0.9], rho: 0.14, flat: 0.4, flare: 0.05, jit: 0.3, tip: 'point', ridges: 3, seed: 9 }] },   // face-framing locks
   // long and straight, parted in the middle: the scalp falls to the jaw, two curtains of flat locks on to the chest
   long:  { neck: true, col: [0.26, 0.15, 0.08], whorl: [0, 1, -0.05], locks: 24, twist: 0, clump: 0.014, base: 0.026, lift: 0.014, tips: 0.006, part: 0, lo: edge({ front: 0.30, side: -0.04 }),
            hang: { from: 0.02, flare: 0.04, hem: [[0, 0.30], [30, 0.28], [48, -0.40], [180, -0.42]], tips: 0.09, edge: 14 },
-           falls: [{ lon: [30, 50], n: 3, from: 0.22, to: -0.80, toAt: [0.75, 1.0, 0.9], rho: 0.03, flat: 0.32, flare: 0.06, jit: 0.35, tip: 'point', ridges: 3, seed: 9 },   // face-framing locks: uneven, tapered, angled out from the temple
+           falls: [{ lon: [30, 50], n: 3, from: 0.22, to: -0.80, toAt: [0.75, 1.0, 0.9], rho: 0.10, flat: 0.32, flare: 0.06, jit: 0.35, tip: 'point', ridges: 3, seed: 9 },   // face-framing locks: uneven, tapered, angled out from the temple, laid over the bell's front edge (rho past the bell: inside it they never showed)
                    { lon: [52, 180], n: 8, from: -0.30, to: -1.15, rho: 0.045, flat: 0.32, flare: 0.03, tip: 'blunt', ridges: 3 }] },
   // a pixie: a short feathered cap, a wispy fringe swept to one side, feathered at the nape too
   pixie: { col: [0.50, 0.30, 0.15], whorl: [0.15, 0.75, -0.64], locks: 18, twist: 0.30, jit: 0.35, clump: 0.026, base: 0.020, lift: 0.024, tips: 0.090, napeTips: 1, sweep: 0.022, part: 0.20, partSkin: false, lo: [[0, 0.15], [30, 0.14], [62, -0.02], [84, -0.08], [125, -0.36], [180, -0.36]] },   // the sideburn down past the ear's top: no skin wedge in 3/4
@@ -84,7 +84,7 @@ const STYLES = {
   // a wavy lob: a soft S-wave mass to the shoulders, the tips turning out
   lob:   { neck: true, col: [0.46, 0.29, 0.14], whorl: [0, 1, -0.10], locks: 22, twist: 0.10, jit: 0.15, clump: 0.022, base: 0.030, lift: 0.024, tips: 0.010, part: 0.10, lo: edge({ front: 0.30, side: -0.04 }),
            hang: { from: 0.02, flare: 0.08, hem: [[0, 0.30], [30, 0.28], [48, -0.30], [180, -0.36]], tips: 0.04, edge: 14 },
-           falls: [{ lon: [30, 50], n: 3, from: 0.22, to: -0.60, toAt: [0.7, 1.0, 0.85], rho: 0.04, flat: 0.45, flare: 0.03, wave: [0.03, 2.2], flick: 0.05, jit: 0.35, tip: 'point', ridges: 3, seed: 9 },   // face-framing locks
+           falls: [{ lon: [30, 50], n: 3, from: 0.22, to: -0.60, toAt: [0.7, 1.0, 0.85], rho: 0.12, flat: 0.45, flare: 0.03, wave: [0.03, 2.2], flick: 0.05, jit: 0.35, tip: 'point', ridges: 3, seed: 9 },   // face-framing locks
                    { lon: [50, 180], n: 7, from: -0.20, to: -0.78, rho: 0.06, flat: 0.45, flare: 0.04, wave: [0.035, 2.2], flick: 0.06, jit: 0.08, tip: 'point', ridges: 3 }] },
 };
 export const HAIR_STYLES = Object.keys(STYLES);
