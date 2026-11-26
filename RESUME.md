@@ -58,3 +58,4 @@ RESUME-kit-handprops.md at the worktree root is obsolete (untracked; #209 merged
 - PR #211 no-hair check (kit-hair-check worktree): open, CI pending, needs an independent reviewer before merge.
 - kit-hair-detail builder (worktree ~/orca/workspaces/studio-reel/kit-hair-detail, Pro ~/kit-hair-detail): running; look sheet -> Studio -> Kai.
 - Next: hair approved -> swap hair in reel.js -> clip render (render-pro.sh clip) -> gates (shotgate needs Pro pixi ffmpeg) -> post.py cut with audio/a-mix.wav -> blind watch off/on -> chefkiss -> VN page -> worker_done.
+- TODO after hair round 3 reaches Studio: stick-wardrobe 3x alone vs 3x under full suite, compare cloth depth at f54 (legR 7 mm seen once under load); differ = kit issue with numbers.
