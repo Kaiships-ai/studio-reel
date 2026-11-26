@@ -8,6 +8,7 @@
 import * as THREE from 'three';
 import { toon } from '#engine/look.js';
 import { W_M, HEAD_H, HAT_LIFT, solid } from '#engine/cast.js';
+import { SCALP_LINE, bareAt } from './scalpline.js';
 
 const W = W_M, HA = 0.5 * W, HB = 0.5 * HEAD_H * W, DEG = Math.PI / 180;
 // where no hair grows the mass tucks this far inside the head: its ink hull (solid(), pushed out 0.036 W) must stay under the
@@ -37,7 +38,7 @@ const STYLES = {
   // an old man's hair: the crop's locks in thin mid grey, lighter at the tips, the temples receded deep, fuller round the
   // ears and the nape. The whorl sits inside the neck, so the locks never meet in a knot anyone sees
   elder: { col: [0.56, 0.56, 0.59], whorl: [0, 0.70, -0.70], locks: 22, twist: 0.04, jit: 0.22, clump: 0.016, base: 0.013, lift: 0.006, tips: 0.040, tipLight: 0.5,
-           lo: [[0, 0.34], [16, 0.36], [36, 0.44], [62, 0.10], [88, -0.08], [125, -0.40], [180, -0.40]] },
+           lo: [[0, 0.34], [16, 0.36], [36, 0.44], [62, 0.10], [88, -0.08], [125, -0.40], [180, -0.40]], bare: [[0, 60, 0.47]] },   // the receded temples: skin by design
   woman: { col: [0.20, 0.11, 0.06], whorl: [0, 0.75, -0.65], locks: 20, twist: 0, clump: 0.016, base: 0.022, lift: 0.018, tips: 0.014, part: 0, lo: edge({ front: 0.30, side: -0.04 }),
            buns: [{ dir: [0, 0.80, -0.60], r: 0.20, out: 0.05 }] },   // high on the back of the crown: it shows over the head from the front
   girl:  { col: [0.30, 0.17, 0.08], whorl: [0, 1, -0.25], locks: 18, twist: 0.2, clump: 0.026, base: 0.026, lift: 0.030, tips: 0.060, part: 0, lo: edge({ front: 0.21, temple: 0.20, side: -0.02 }),
@@ -46,7 +47,7 @@ const STYLES = {
   // cut: shortened by the hair-in-body check (test/unit/stick-hair-body.test.mjs, 4 mm): nothing of the style below this height (W
   // under the head's centre). Rigid hair that reaches the neck goes into the upper back as the head looks up (Gest_LookUp_Once) and
   // into the shoulder beside the jaw as it bows to the floor (Adult_Act_PickUp_Once); each was cut, 0.02 W at a time, until it passed.
-  // Designed to: mullet -0.83, afro -0.47, bob -0.36, long -1.15, ponytail -0.56, braids -1.04, lob -0.81 (toonHair(style, col, { cut: null })).
+  // Designed to: mullet -0.83, bob -0.36, long -1.15, ponytail -0.56, braids -1.04, lob -0.81 (toonHair(style, col, { cut: null })).
   // long, lob and braids lose every lock below the scalp at their cut, and the bob its hem: they wait for Studio
   // ---- men
   // a pompadour: a tall wave over the forehead swept back to the crown, the sides cut tight; the locks run front to back
@@ -58,7 +59,7 @@ const STYLES = {
   mullet: { cut: -0.42, col: [0.40, 0.25, 0.13], whorl: [0, 0.70, -0.70], locks: 20, twist: 0.12, jit: 0.15, clump: 0.024, base: 0.020, lift: 0.030, tips: 0.050, lo: edge({ front: 0.30, side: -0.04, back: -0.42 }),
             falls: [{ lon: [112, 180], n: 4, from: -0.20, to: -0.80, rho: 0.03, flat: 0.55, flare: 0.04, jit: 0.12, tip: 'point', ridges: 3 }] },
   // an afro: one round mass wider than the head, its surface curl clumps
-  afro:  { cut: -0.40, col: [0.24, 0.15, 0.10], whorl: [0, 0.80, -0.60], locks: 12, twist: 0, clump: 0.004, base: 0.02, lift: 0, tips: 0.03, ball: { c: [0, 0.16, -0.05], r: 0.70 }, bumps: [150, 0.13, 0.030, -0.45], lo: edge({ front: 0.30, temple: 0.28, side: -0.02, back: -0.40 }) },
+  afro:  { col: [0.24, 0.15, 0.10], whorl: [0, 0.80, -0.60], locks: 12, twist: 0, clump: 0.004, base: 0.02, lift: 0, tips: 0.03, ball: { c: [0, 0.16, -0.05], r: 0.70, nape: -0.40 }, bumps: [150, 0.13, 0.030, -0.45], lo: edge({ front: 0.30, temple: 0.28, side: -0.02, back: -0.40 }) },
   // ---- women
   // a chin bob: a bell that falls straight from the crown to the jaw, a blunt hem, a side part
   bob:   { cut: -0.12, col: [0.24, 0.14, 0.08], whorl: [0, 1, -0.08], locks: 26, twist: 0, clump: 0.016, base: 0.030, lift: 0.020, tips: 0.006, part: 0.12, lo: edge({ front: 0.30, side: -0.04 }),
@@ -75,13 +76,17 @@ const STYLES = {
               tails: [{ path: [[0, 0.26, -0.30], [0, 0.40, -0.58], [0, 0.28, -0.80], [0, 0.00, -0.86], [0, -0.30, -0.80], [0, -0.55, -0.70]], w: [0.06, 0.10, 0.15, 0.17, 0.16, 0.11, 0.02], flat: 0.8, ridges: 5, seg: 64, sides: 22 }] },
   // box braids: square parts on the scalp, a curtain of thin braided ropes round the back and sides to the shoulders
   braids: { cut: -0.14, col: [0.20, 0.13, 0.09], whorl: [0, 1, -0.05], locks: 24, twist: 0, clump: 0.006, base: 0.022, lift: 0.012, tips: 0.010, grid: [14, 22], lo: edge({ front: 0.30, side: -0.04 }),
-            falls: [{ lon: [40, 180], n: 11, from: -0.10, to: -1.00, rho: 0.04, w: 0.040, flat: 1, flare: 0.04, jit: 0.10, tip: 'blunt', braid: 9, ridges: 0, ink: 0.55, sides: 12 }] },
+            hang: { from: 0.02, flare: 0, hem: [[0, 0.30], [28, 0.28], [56, -0.34], [180, -0.40]] },   // the braids lie on a curtain of hair: no cheek between them
+            falls: [{ lon: [56, 180], n: 10, from: -0.10, to: -1.00, rho: 0.04, w: 0.040, flat: 1, flare: 0.04, jit: 0.10, tip: 'blunt', braid: 9, ridges: 0, ink: 0.55, sides: 12 }] },
   // a wavy lob: a soft S-wave mass to the shoulders, the tips turning out
   lob:   { cut: -0.12, col: [0.46, 0.29, 0.14], whorl: [0, 1, -0.10], locks: 22, twist: 0.10, jit: 0.15, clump: 0.022, base: 0.030, lift: 0.024, tips: 0.010, part: 0.10, lo: edge({ front: 0.30, side: -0.04 }),
            hang: { from: 0.02, flare: 0.08, hem: [[0, 0.30], [28, 0.28], [50, -0.30], [180, -0.36]] },
            falls: [{ lon: [50, 180], n: 7, from: -0.20, to: -0.78, rho: 0.06, flat: 0.45, flare: 0.04, wave: [0.035, 2.2], flick: 0.06, jit: 0.08, tip: 'point', ridges: 3 }] },
 };
 export const HAIR_STYLES = Object.keys(STYLES);
+export const styleOf = style => STYLES[style];
+// where a style shows its scalp by design: what it declares (st.bare), and a swept style's parting (the scalp shows along it)
+export const bareOf = st => [...(st.bare || []), ...(st.sweep && st.part != null ? [{ part: st.part, w: 0.016, above: 0.25 }] : [])];
 // a style's scalp field (d -> { r, k }, k = 1 where hair grows, less on its hairline wall, which tucks under the skin): for measures
 export const scalpField = (style, patch) => scalp({ ...STYLES[style], ...patch });
 
@@ -97,7 +102,7 @@ function locksOf(w, n, twist, jit = 0) {
 }
 
 function scalp(st) {
-  const L = locksOf(st.whorl, st.locks, st.twist, st.jit), r = rand(7), bumps = []
+  const L = locksOf(st.whorl, st.locks, st.twist, st.jit), r = rand(7), bumps = [], bare = bareOf(st)
   if (st.bumps) for (let i = 0; i < st.bumps[0]; i++) { const y = (st.bumps[3] ?? 0.25) + (1 - (st.bumps[3] ?? 0.25)) * r(), a = r() * 2 * Math.PI, s = Math.sqrt(1 - y * y); const v = new THREE.Vector3(s * Math.sin(a), y, s * Math.cos(a)); v.w = r() * 2 * Math.PI; bumps.push(v); }
   return d => {
     const rh = headR(d), y = d.y * rh / W, lon = Math.abs(Math.atan2(d.x, d.z)) / DEG, { c, ph, q } = L(d), amp = sm(0.10, 0.45, q);
@@ -109,7 +114,7 @@ function scalp(st) {
     }
     const front = sm(60, 20, lon) * Math.exp(-(((y - table(st.lo, lon)) / 0.10) ** 2));
     let t = st.base + st.lift * front + st.clump * amp * c, shade = -Math.pow(1 - c, 3) * amp + 0.12 * Math.cos(2 * Math.PI * ph * 3) * amp * c;
-    if (st.ball) t += Math.max(0, ballR(st.ball, d) - rh / W - st.base);                     // a round mass wider than the head (an afro)
+    if (st.ball) t += Math.max(0, ballR(st.ball, d) - rh / W - st.base) * sm(st.ball.nape ?? -9, (st.ball.nape ?? -9) + 0.22, y);   // a round mass wider than the head (an afro), shaped in to a short nape
     if (st.crest) t += st.crest * sm(-0.6, 0.55, d.z) * sm(-0.05, 0.30, y) * (1 - 0.35 * sm(0.2, 0.5, Math.abs(d.x)));   // a tall wave over the forehead, swept back
     if (st.tight) t *= 1 - st.tight * sm(0.30, 0.70, Math.abs(d.x)) * sm(0.40, 0.05, y);    // the sides cut close
     if (st.hang) {     // hair that falls straight from where the head is widest, to a hem (the hem's height y round the head, W)
@@ -132,7 +137,13 @@ function scalp(st) {
     if (st.part != null && d.y > 0.25 && d.z > -0.55) { const p = sm(0.012, 0.040, Math.abs(d.x * rh / W - st.part)); t *= 0.25 + 0.75 * p; shade = Math.min(shade, -(1 - p)); if (st.sweep) cover *= sm(0.004, 0.016, Math.abs(d.x * rh / W - st.part)); }
     shade += 0.45 * Math.exp(-(((Math.asin(d.y) / DEG - 52) / 9) ** 2)) * c * c * sm(130, 60, lon);   // the light band round the crown
     if (st.tipLight) shade += st.tipLight * sm(0.16, 0.0, y - table(st.lo, lon)) * c;   // the lock tips catch the light: grey hair, not a cap
+    if (st.hang) cover = Math.max(cover, sm(-0.02, 0.02, y - table(st.hang.hem, lon)));   // the hem is the hairline above the fall too: no bare band between the two
     if (st.cut != null) cover *= sm(st.cut - 0.02, st.cut + 0.02, d.y * (rh + t * W) / W);   // shortened (the hair-in-body check): nothing below
+    // the floor: every style covers the scalp (kit/cast/scalpline.js) whatever its own hairline, hem or cut leave, thin where
+    // only the floor puts hair (it lies on the head). Its soft wall reaches full cover 0.03 W past the line at the nape, where
+    // the line meets the styles' own edge. A style shows skin inside the scalp only where it declares it (st.bare)
+    if (!st.noFloor && !bareAt(bare, lon, y, d.x * rh / W)) { const kR = sm(-0.02, 0.02, y - SCALP_LINE(lon) + 0.03 * sm(95, 120, lon));
+      if (kR > cover) { t = st.base + (t - st.base) * cover / kR; cover = kR; } }
     const k = cover;                                             // a soft wall: a sharp one stair-steps on the sphere grid
     return { r: rh * TUCK + (rh + t * W - rh * TUCK) * k, k, shade, ink: st.ink ?? 1 };
   };

@@ -20,7 +20,9 @@ test('control: a buzz with its nape left bare fails', () => {
   assert.ok(r.back.share > 5 * SCALP_BARE, `the control measured ${(100 * r.back.share).toFixed(2)} % bare from the back`);
 });
 
-for (const s of HAIR_STYLES) test(`${s}: no view shows more than ${100 * SCALP_BARE} % of the head as bare scalp`, () => {
-  const r = scalpBare(s), bad = Object.entries(r).filter(([, x]) => x.share > SCALP_BARE);
+// every style as it ships, and the shortened ones at the length they were designed to (cut: null) as well
+const { styleOf } = await import('../../styles/stick-man/kit/cast/hair.js');
+for (const [s, patch] of HAIR_STYLES.flatMap(s => styleOf(s).cut != null ? [[s], [s, { cut: null }]] : [[s]])) test(`${s}${patch ? ' (designed length)' : ''}: no view shows more than ${100 * SCALP_BARE} % of the head as bare scalp`, () => {
+  const r = scalpBare(s, patch), bad = Object.entries(r).filter(([, x]) => x.share > SCALP_BARE);
   assert.deepEqual(bad.map(([v, x]) => `${v}: ${(100 * x.share).toFixed(2)} % (${x.px} px)`), []);
 });
