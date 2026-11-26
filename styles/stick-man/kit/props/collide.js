@@ -16,6 +16,7 @@
 import * as THREE from 'three';
 import { solidParts, KNEE } from './parts.js';
 import { SEAT } from './sizes.js';
+import { drawnSolid } from './drawn.js';
 
 export const QUARTER_TOL = 0.5, MAX_BOXES = 6, SEAT_MAX = 8, OVER_MAX = 4, THIN = 0.06, SEAT_GRACE = 0.02, BAND = [0.05, 1.8];
 const CELLS = 24;                // raster cells along the longer side
@@ -32,7 +33,7 @@ export function quarterOf(rad) {
 // own, so where and how it stands changes nothing
 function ownTris(g) {
   const out = [], a = new THREE.Vector3();
-  g.traverse(m => { if (!m.isMesh || m.userData.contact) return;
+  g.traverse(m => { if (!drawnSolid(m)) return;
     const m4 = new THREE.Matrix4(); for (let o = m; o !== g; o = o.parent) { o.updateMatrix(); m4.premultiply(o.matrix); }
     const p = m.geometry.attributes.position, ix = m.geometry.index, n = ix ? ix.count : p.count;
     for (let i = 0; i < n; i += 3) out.push([0, 1, 2].map(v => { a.fromBufferAttribute(p, ix ? ix.getX(i + v) : i + v).applyMatrix4(m4); return [a.x, -a.z, a.y]; })); });

@@ -11,9 +11,9 @@ import { compileTrack, playActor, toPose, STYLE_PRESETS } from '../../styles/sti
 import { DOSE_E, markColliders } from '../../styles/stick-man/motion-lib/base.js';
 import { ellipsoid, solveArm, armPenetration, propPush, centreOfMass } from '../../styles/stick-man/engine/body.js';
 
-test('the library has 72 clips on 7 bodies, and every one passes motionlib.mjs (naming, seam, base, joint gate, feet)', async () => {
-  assert.equal(ALL.length, 72);
-  assert.equal(clipFiles().length, 72);
+test('the library has 75 clips on 7 bodies, and every one passes motionlib.mjs (naming, seam, base, joint gate, feet)', async () => {
+  assert.equal(ALL.length, 75);
+  assert.equal(clipFiles().length, 75);
   assert.deepEqual(Object.keys(BODIES), ['adult', 'heavy', 'thin', 'child', 'teen', 'toddler', 'elder']);
   // every body stands, walks and runs (the adult's standing idle is the captured Idle_Stand_Loop); the teen only stands (its made walk and run
   // fail the body gate) and the toddler has no run (stick-bodies-age.test.mjs)
@@ -639,7 +639,7 @@ test('the KNEEL pose stands on its knees: hips over them, the shins back along t
   }
 });
 test('an elder stays stooped through a standing clip (it stood up to 3 deg for a nod)', async () => {
-  for (const clip of ['Idle_Stooped_Loop']) {
+  for (const clip of ['Idle_Stooped_Loop', 'Act_Give_Once']) {
     const lean = (await rigRows(clip, 'elder')).map(w => w.torsoLean); assert.ok(Math.min(...lean) > 12, `${clip}: ${Math.min(...lean)} deg`);
   }
 });
