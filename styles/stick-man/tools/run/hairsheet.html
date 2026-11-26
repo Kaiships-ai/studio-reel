@@ -33,6 +33,9 @@ const RUN = new URLSearchParams(location.search).get('run');
 const TYPES = { mw: [['pompadour', 'adult'], ['buzz', 'adult'], ['mullet', 'adult'], ['afro', 'adult'], ['bob', 'adult'], ['long', 'adult'], ['pixie', 'adult'], ['ponytail', 'adult'], ['braids', 'adult'], ['lob', 'adult'],
   ['mullet', 'adult', toonHair('mullet', null, { neck: true, cut: null })], ['long', 'adult', toonHair('long', null, { neck: true, cut: null })], ['braids', 'adult', toonHair('braids', null, { neck: true, cut: null })], ['lob', 'adult', toonHair('lob', null, { neck: true, cut: null })], ['bob', 'adult', toonHair('bob', null, { neck: true, cut: null })],
   ['long', 'adult', toonHair('long', [0.58, 0.38, 0.21], { neck: true, cut: null })]] };   // the lighter brown test (Studio 26/11)
+// type=zone: a bald head and the half-face card (test/unit/stick-hair-face.test.mjs) with dbg=zone: the face check's zone painted on
+// the head for the cell's view, red as facegate-hair.mjs puts it (solid), blue with the opposite height shift (wire)
+TYPES.zone = [['bald', 'adult', () => new THREE.Group()], ['card', 'adult', () => { const g = new THREE.Group(); g.add(new THREE.Mesh(new THREE.PlaneGeometry(0.5 * W_M, 1.2 * W_M).translate(0.25 * W_M, 0, 0.7 * W_M), new THREE.MeshBasicMaterial({ color: 0x6a4a30 }))); return g; }]];
 const TYPE = new URLSearchParams(location.search).get('type');
 const ROWS = (TYPES[TYPE] || [['hairCap (today)', 'adult', hairCap()], ['bun (today)', 'adult', bun()], ['side', 'adult'], ['crop', 'adult'], ['curly', 'adult'], ['elder', 'elder'], ['woman', 'adult'], ['girl', 'child']])
   .map(([n, b, f]) => ({ n, b, f: f || toonHair(n) }));
@@ -80,6 +83,17 @@ window.__frame = i => {
     const mid = col.close ? hd.clone() : new THREE.Vector3(hd.x, tall / 2, hd.z), cam = mid.clone().addScaledVector(dir, vis * 60 / 36);
     stage.setCamera(toB(cam), toB(mid), 60); stage.setSun(toB(dir.clone().multiplyScalar(-0.8).add(new THREE.Vector3(dir.z, 0, -dir.x).multiplyScalar(0.42)).setY(-0.5)), toB(mid.clone().setY(0.8)), 2.2);
     face(now, 24, cam);
+    if (new URLSearchParams(location.search).get('dbg') === 'zone') {
+      let headG = null; S.root.traverse(o => { if (!headG && o.isMesh && o.geometry?.type === 'SphereGeometry' && Math.abs(o.geometry.parameters.radius - 0.5 * W_M) < 1e-6) headG = o.parent; });
+      const yaw = col.az, el = Math.atan(col.el) * 180 / Math.PI;
+      for (const [sgn, colr] of [[1, 0xff2020], [-1, 0x2060ff]]) {
+        const g = new THREE.SphereGeometry(0.5 * W_M * 1.03, 96, 64); g.scale(1, HEAD_H, 1); const P = g.attributes.position, ix = g.index.array, keep = [];
+        const dy = -sgn * 0.40 * Math.sin(el * Math.PI / 180) * HEAD_H;
+        const ok = k => { const x = P.getX(k) / W_M, y = P.getY(k) / W_M, z = P.getZ(k) / W_M, lon = Math.atan2(x, z) * 180 / Math.PI - 0.2 * yaw; return z > 0 && Math.abs(lon) <= 40 && y - dy >= -0.42 && y - dy <= 0.30; };
+        for (let t = 0; t < ix.length; t += 3) if (ok(ix[t]) && ok(ix[t + 1]) && ok(ix[t + 2])) keep.push(ix[t], ix[t + 1], ix[t + 2]);
+        g.setIndex(keep); const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: colr, wireframe: sgn < 0, transparent: true, opacity: sgn < 0 ? 1 : 0.3, depthWrite: false }));
+        m.userData.noInk = true; m.userData.noPrepass = true; m.renderOrder = 5; m.position.x += sgn < 0 ? 0.002 : 0; headG.add(m); m.updateMatrixWorld(true); }
+    }
   }
   const dbg = new URLSearchParams(location.search).get('dbg');   // noface / nohull: what draws the line at the hairline
   if (dbg) stage.scene.traverse(o => { if (dbg === 'noface' && o.userData.faceInk) o.visible = false; if (dbg === 'nohull' && o.parent?.userData.hairStyle && o.isMesh) o.visible = false; if (dbg === 'nomap' && o.userData.hairStyle) { o.material.map = null; o.material.color.setRGB(0.1, 0.05, 0.02); o.material.needsUpdate = true; } if (dbg === 'nohair' && o.userData.hairStyle) o.visible = false; });

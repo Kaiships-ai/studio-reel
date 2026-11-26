@@ -15,9 +15,9 @@ export const FACE_MIN = 0.85;
 export const FACE = { lon: 40, lo: -0.42, hi: 0.30 };
 export const FACE_VIEWS = { front: VIEWS.front, q34: VIEWS.q34, low: VIEWS.low };
 // the face as drawn: cast.js turns it 80 % as far as the skull (faceTurn), so its middle sits 0.2 x the lens's yaw toward the lens,
-// and 0.40 sin(el) HEAD_H toward the lens's height (cast.js slide); the zone follows it
+// and -0.40 sin(el) HEAD_H (up for a low lens) (cast.js slide); the zone follows it
 const TURN = 0.8;
-const inFace = (HP, o, [yaw, el]) => { const x = HP[3 * o] / W_M, y = HP[3 * o + 1] / W_M, z = HP[3 * o + 2] / W_M, lon = Math.atan2(x, z) * 180 / Math.PI - (1 - TURN) * yaw, dy = 0.40 * Math.sin(el * Math.PI / 180) * HEAD_H;
+const inFace = (HP, o, [yaw, el]) => { const x = HP[3 * o] / W_M, y = HP[3 * o + 1] / W_M, z = HP[3 * o + 2] / W_M, lon = Math.atan2(x, z) * 180 / Math.PI - (1 - TURN) * yaw, dy = -0.40 * Math.sin(el * Math.PI / 180) * HEAD_H;   // a low lens lifts the face (faces.js dyp = -512 sl[1]; seen in docs/hair-sheet/facezone-low.png)
   return z > 0 && Math.abs(lon) <= FACE.lon && y - dy >= FACE.lo && y - dy <= FACE.hi; };
 
 // { view: share } for a hair group maker (() => THREE.Group) or a style name with its patch
