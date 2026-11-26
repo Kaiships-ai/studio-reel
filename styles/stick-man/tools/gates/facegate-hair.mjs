@@ -13,7 +13,6 @@ const { hairTris, renderView, HEAD, VIEWS } = await import('./scalpgate.mjs');
 export const FACE_MIN = 0.85;
 // the face: within 40 deg of its middle, from the chin (-0.42 W) to the brows' top (0.30 W): both eyes, both cheeks, the mouth
 export const FACE = { lon: 40, lo: -0.42, hi: 0.30 };
-// q34s: the sheet's close 3/4 (hairsheet.html COLS az 38, el atan 0.04), where the slab crossed the far eye
 // q34s: the sheet's close 3/4 (hairsheet.html COLS az 38) with the face where that render drew it: 17 deg from the lens, not
 // the 30 deg faceTurn 0.8 gives (measured on hair-sheet-mw.jpg 27/11, lob 3/4: the eyes 0.1 W nearer the slab), so a third value,
 // the face's own turn

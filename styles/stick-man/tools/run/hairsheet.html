@@ -24,13 +24,13 @@ import { getClip, placeClip } from '#motion-lib/index.js';
 import { bodySpec } from '#motion-lib/bodies.js';
 import '#kit/cast/wardrobe.js';
 import { bun } from '#kit/cast/extras.js';
-import { toonHair } from '#kit/cast/hair.js';
+import { toonHair, HAIR_DRAFTS } from '#kit/cast/hair.js';
 
 await useFaceStyle();
 const RUN = new URLSearchParams(location.search).get('run');
 // ?type=: one sheet a type of style, each on its own body (hairsheet_compose.py takes the same type); none: the first six beside today's caps
 // a style the hair-in-body check shortened also shows as designed (`cut: null`, its lengths bound to the neck: `neck: true`), for the one who picks the length
-const TYPES = { mw: [['side', 'adult'], ['pompadour', 'adult'], ['buzz', 'adult'], ['mullet', 'adult'], ['afro', 'adult'], ['bob', 'adult'], ['long', 'adult'], ['pixie', 'adult'], ['ponytail', 'adult'], ['braids', 'adult'], ['lob', 'adult']] };   // one row a style, as shipped (Studio 27/11: the designed twins cut)
+const TYPES = { mw: [['side', 'adult'], ['pompadour', 'adult'], ['buzz', 'adult'], ['mullet', 'adult'], ['afro', 'adult'], ['pixie', 'adult'], ['ponytail', 'adult']] };   // the shipped styles only (Studio 28/11: bob, long, braids, lob are drafts)   // one row a style, as shipped (Studio 27/11: the designed twins cut)
 // type=zone: a bald head and the half-face card (test/unit/stick-hair-face.test.mjs) with dbg=zone: the face check's zone painted on
 // the head for the cell's view, red as facegate-hair.mjs puts it (solid), blue with the opposite height shift (wire)
 TYPES.ab = [['pompadour', 'adult'], ['long', 'adult']];
@@ -39,8 +39,9 @@ const TYPE = new URLSearchParams(location.search).get('type');
 // ?turn=1.0: this render's faceTurn (cast.js spec.faceTurn, 0.8 by default): the A|B still, never the engine's default
 const FACE_TURN = +new URLSearchParams(location.search).get('turn') || 0;
 const ROWS = (TYPES[TYPE] || [['hairCap (today)', 'adult', hairCap()], ['bun (today)', 'adult', bun()], ['side', 'adult'], ['crop', 'adult'], ['curly', 'adult'], ['elder', 'elder'], ['woman', 'adult'], ['girl', 'child']])
-  .map(([n, b, f]) => ({ n, b, f: f || toonHair(n) }));
-const COLS = [{ az: 0, el: 0.06 }, { az: 0, el: -0.30 }, { az: 0, el: 0.04, close: 1 }, { az: 38, el: 0.04, close: 1 }, { az: 0, el: -0.32, close: 1 }, { az: 180, el: 0.04, close: 1 }, { az: 0, el: 3.0, close: 1 }, { az: 20, el: 0.04, close: 1, nod: 35 }];   // top (lens 72 deg up) and bowed (the head nodded 35 deg on the neck, an eye-level lens): a parting shows (Studio 27/11)
+  .map(([n, b, f]) => ({ n, b, f: f || toonHair(n, null, HAIR_DRAFTS.includes(n) ? { draft: true } : undefined) }));
+const COLS = [{ az: 0, el: 0.06 }, { az: 0, el: -0.30 }, { az: 0, el: 0.04, close: 1 }, { az: 38, el: 0.04, close: 1 }, { az: 0, el: -0.32, close: 1 }, { az: 180, el: 0.04, close: 1 }, { az: 0, el: 3.0, close: 1 }, { az: 20, el: 0.04, close: 1, nod: 35 }, { az: 0, el: 0.04, close: 1, sil: 1 }, { az: 90, el: 0.04, close: 1, sil: 1 }];   // silhouette (Studio 28/11): hair + head, black on white, front and side: a style must read by its outline alone
+//   // top (lens 72 deg up) and bowed (the head nodded 35 deg on the neck, an eye-level lens): a parting shows (Studio 27/11)
 const W = innerWidth, H = innerHeight;
 const stage = createStage({ width: W, height: H, faceInk: true, ao: 0.5, aoRadius: 0.4, shadowRadius: 2, sat: 1.0, con: 1.05, vig: 0, bloom: 0.04, hot: 0.1, ink: 2.4, shafts: 0 });
 stage.scene.background = lin(0.36, 0.38, 0.41);
@@ -80,7 +81,7 @@ window.__frame = i => {
     now = figure(row, 0); pose(now, 24); const S = now.S;
     if (col.nod) { const p = now.at(24); S.pose2({ ...p, neck: { ...(p.neck || {}), nod: (p.neck?.nod || 0) + col.nod } }); S.face({ t: 24, expr: 'neutral' });
       S.root.updateMatrixWorld(true); const hq = new THREE.Quaternion(); S.parts.head.getWorldQuaternion(hq); const up = new THREE.Vector3(0, 1, 0).applyQuaternion(hq);
-      console.log(`nod ${row.n}: head pitched ${(Math.acos(Math.min(1, up.y)) * 180 / Math.PI).toFixed(1)} deg from upright, forward ${up.z.toFixed(2)}`); }
+      console.warn(`[kit] nod ${row.n}: head pitched ${(Math.acos(Math.min(1, up.y)) * 180 / Math.PI).toFixed(1)} deg from upright, forward ${up.z.toFixed(2)}`); }
     S.root.updateMatrixWorld(true);
     const sc = S.root.scale.x, hd = world(S, S.skel.head), az = col.az * Math.PI / 180, dir = new THREE.Vector3(Math.sin(S.yaw + az), col.el, Math.cos(S.yaw + az)).normalize();
     // beat 0: the whole figure 1/5 of the frame tall; close: the head 300 px of the frame's height
@@ -99,6 +100,11 @@ window.__frame = i => {
         g.setIndex(keep); const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: colr, wireframe: sgn < 0, transparent: true, opacity: sgn < 0 ? 1 : 0.3, depthWrite: false }));
         m.userData.noInk = true; m.userData.noPrepass = true; m.renderOrder = 5; m.position.x += sgn < 0 ? 0.002 : 0; headG.add(m); m.updateMatrixWorld(true); }
     }
+  }
+  if (!RUN) {   // a silhouette cell: only the head and its hair, flat black, on white (the floor and the backdrop white too)
+    const sil = !!COLS[i % COLS.length].sil; stage.scene.background = sil ? lin(1, 1, 1) : lin(0.36, 0.38, 0.41); back.material.color.copy(sil ? lin(1, 1, 1) : lin(0.30, 0.32, 0.35)); floor.visible = !sil;
+    if (sil) { const black = new THREE.MeshBasicMaterial({ color: 0x000000 }), head = now.S.parts.hair.parent, inHead = o => { for (let q = o; q; q = q.parent) if (q === head) return true; return false; };
+      now.group.traverse(o => { if (!o.isMesh && !o.isLine) return; if (!inHead(o)) o.visible = false; else o.material = black; }); }
   }
   const dbg = new URLSearchParams(location.search).get('dbg');   // noface / nohull: what draws the line at the hairline
   if (dbg) stage.scene.traverse(o => { if (dbg === 'noface' && o.userData.faceInk) o.visible = false; if (dbg === 'nohull' && o.parent?.userData.hairStyle && o.isMesh) o.visible = false; if (dbg === 'nomap' && o.userData.hairStyle) { o.material.map = null; o.material.color.setRGB(0.1, 0.05, 0.02); o.material.needsUpdate = true; } if (dbg === 'nohair' && o.userData.hairStyle) o.visible = false; });

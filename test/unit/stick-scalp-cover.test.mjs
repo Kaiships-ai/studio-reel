@@ -7,13 +7,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-export const SCALP_BARE = 0.001;
-const pinned = SCALP_BARE;
 const { HAIR_STYLES } = await import('../../styles/stick-man/kit/cast/hair.js');
 const { styleOf } = await import('../../styles/stick-man/kit/cast/hair.js');
-const { scalpBare, VIEWS, partSkin, PART_SKIN_PX } = await import('../../styles/stick-man/tools/gates/scalpgate.mjs');
+const { scalpBare, VIEWS, partSkin, PART_SKIN_PX, SCALP_BARE } = await import('../../styles/stick-man/tools/gates/scalpgate.mjs');
 
-test('the limit is the one written before anything was measured', () => { assert.equal(pinned, 0.001); assert.deepEqual(Object.keys(VIEWS), ['front', 'q34', 'low', 'back', 'turn', 'lookup', 'top', 'bowed']); });
+test('the limit is the one written before anything was measured', () => { assert.equal(SCALP_BARE, 0.001); assert.deepEqual(Object.keys(VIEWS), ['front', 'q34', 'low', 'back', 'turn', 'lookup', 'top', 'bowed']); });
 
 // the control: a style with a bare band round the back of the head fails, or the gate sees nothing
 test('control: a buzz with its nape left bare fails', () => {

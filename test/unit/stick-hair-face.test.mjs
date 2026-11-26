@@ -17,7 +17,7 @@ test('control: a small card over one eye fails that eye and passes the whole fac
   const r = featureShare(make); assert.ok(!passes(r)); assert.ok(r.front.eyeR < FEATURE_MIN && r.front.eyeL >= FEATURE_MIN && r.front.face >= FACE_MIN, JSON.stringify(r.front)); });
 // the chin bob as shipped 27/11 (its bell and locks frozen in the fixture), whose slab crossed the far eye on the sheet's close 3/4
 test('control: the 27/11 chin bob fails at 3/4 (a slab across the far eye)', () => {
-  const r = featureShare('bob', JSON.parse(fs.readFileSync(new URL('../fixtures/hair-face/bob-27-11.json', import.meta.url), 'utf8')));
+  const r = featureShare('bob', { ...JSON.parse(fs.readFileSync(new URL('../fixtures/hair-face/bob-27-11.json', import.meta.url), 'utf8')), draft: true });
   assert.ok(['q34', 'q34s'].some(k => Object.keys(FEATURES).some(f => r[k][f] < FEATURE_MIN)), JSON.stringify(r)); });
 test('bald: the whole face in sight', () => { for (const x of Object.values(faceShare(() => new THREE.Group()))) assert.ok(x > 0.999, x); });
 test('control: a card over half the face fails', () => {
@@ -25,7 +25,7 @@ test('control: a card over half the face fails', () => {
   const r = faceShare(make); assert.ok(r.front < FACE_MIN, `front ${r.front}`);
 });
 // the full lengths of the long styles (behind the { neck: true, cut: null } flag) curtained the face on the 27/11 sheet
-test('control: the 27/11 long (full length) fails', () => { const r = faceShare('long', { neck: true, cut: null }); assert.ok(Object.values(r).some(x => x < FACE_MIN), JSON.stringify(r)); });
+test('control: the 27/11 long (full length) fails', () => { const r = faceShare('long', { neck: true, cut: null, draft: true }); assert.ok(Object.values(r).some(x => x < FACE_MIN), JSON.stringify(r)); });
 
 
 

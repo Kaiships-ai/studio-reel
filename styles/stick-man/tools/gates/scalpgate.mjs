@@ -62,6 +62,8 @@ export function renderView(tris, head, bare, [yaw, el]) {
 function headTris() { const g = headMesh(), P = g.attributes.position, I = g.index, out = [], v = i => new THREE.Vector3().fromBufferAttribute(P, i);
   for (let t = 0; t < I.count; t += 3) out.push([v(I.getX(t)), v(I.getX(t + 1)), v(I.getX(t + 2))]); return out; }
 export const HEAD = headTris();
+// SCALP_BARE: written 26/11 before any style was measured, never raised: the share of a view's head pixels that may be bare scalp (0.1 %)
+export const SCALP_BARE = 0.001;
 
 // { view: { share, px } } for one style (patch: fields over the style's own, as toonHair takes them); keepL: the label buffers too
 export function scalpBare(style, patch, keepL = false) {
@@ -94,6 +96,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const a = process.argv.slice(2), pi = a.indexOf('--png'), dir = pi >= 0 ? a.splice(pi, 2)[1] : null, styles = a.length ? a : HAIR_STYLES;
   if (dir) mkdirSync(dir, { recursive: true });
   for (const s of styles) { const r = scalpBare(s, undefined, !!dir);
-    console.log(s.padEnd(10), Object.entries(r).map(([k, x]) => `${k} ${(100 * x.share).toFixed(2)}%`).join('  '));
+    console.log(s.padEnd(10), Object.entries(r).map(([k, x]) => `${k} ${(100 * x.share).toFixed(2)}%${x.share > SCALP_BARE ? ' !' : ''}`).join('  '));
     if (dir) for (const [k, x] of Object.entries(r)) png(x.L, `${dir}/${s}_${k}.png`); }
 }

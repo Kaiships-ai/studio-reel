@@ -37,6 +37,7 @@ export { solid, lathe, hairCap, curls, W_M, HEAD_H, HAT_LIFT } from '#engine/cas
 export { toon, lin, INK_RGB } from '#engine/look.js';
 export { bun } from './cast/extras.js';
 export { toonHair, HAIR_STYLES } from './cast/hair.js';
+import { HAIR_DRAFTS, HAIR_STYLES } from './cast/hair.js';
 export { PALETTES, PALETTE_ORDER, UNIFORM, outfit } from './cast/wardrobe.js';
 
 const list = v => (v == null ? [] : [].concat(v));
@@ -65,6 +66,7 @@ export function person(def) {
   if (!def?.name || typeof def.name !== 'string') throw new Error('person: needs a name');
   only(where, def, PERSON);
   const { name, body = 'adult', age, face, girth, hair = [], bald = false, shirt, skin, waivers: given = [] } = def, outfit = list(def.outfit), props = list(def.prop), clips = list(def.clips), faces = list(face);
+  for (const h of hair) if (HAIR_DRAFTS.includes(h?.hairStyle)) throw new Error(`person ${name}: hair '${h.hairStyle}' is not offered yet (long styles are still being fitted); pick one of: ${HAIR_STYLES.join(', ')}`);
   const sig = JSON.stringify({ ...def, hair: hair.length });
   if (name in SPECS && OURS.get(name) !== sig) throw new Error(`${where}: the name is taken (${OURS.has(name) ? 'another person of this film' : "the kit's own"})`);
   const ws = checkWaivers(where, given), key = personKey({ body, girth, outfit }), worn = expand(outfit).map(shapeOf), hats = worn.filter(g => /^(cap|hat):/.test(g));
