@@ -30,7 +30,7 @@ test('a long uncut opening does not hide a burst of cuts later in the film', () 
 });
 
 test('one cut a minute, like the Rick clips, passes', () => {
-  assert.deepEqual(verdict(measure({ dur: 65, scores: scores(65, [44]) })), { C1: true, C2: true, C3: null, C4: null, C5: null });
+  assert.deepEqual(verdict(measure({ dur: 65, scores: scores(65, [44]) })), { C1: true, C2: true, C3: null, C4: null, C5: null, C6: null });
 });
 
 const row = (f, cam, head, box) => ({ f, camera: { pos: cam }, actors: { you: { lead: true, inFrame: true, headW: head, head: box } } });
