@@ -17,7 +17,7 @@ export const CLIPS = ['Adult_Idle_LookAround_Loop', 'Gest_LookUp_Once', 'Adult_G
 // kit/compat.json); CLIPS above stays the head-moving set the length search and the seam check use
 const { ALL } = await import('../../styles/stick-man/motion-lib/index.js');
 export const ADULT_CLIPS = ALL.filter(C => (C.body || 'adult') === 'adult').map(C => C.clip);
-// NEAR_W: a scalp point this close (W, along the ray from the head's centre: oblique at the nape, where the six styles of #212 stand
+// NEAR_W (set after measuring, 26/11: not frozen before it like HAIR_IN_MM): a scalp point this close (W, along the ray from the head's centre: oblique at the nape, where the six styles of #212 stand
 // up to 0.09 W off) to the head under it lies on the head. Where the clip itself puts the head in the body
 // (Gest_LookUp_Once: the bare back of the head 61 mm into the upper back; Adult_Act_PickUp_Once: the chin 27 mm into the chest,
 // measured 26/11), such a point is left out: no hair can be cut shorter than the head. Locks, tails, buns and thick masses always count
@@ -42,9 +42,15 @@ export function hairPoints(style, patch) {
 }
 
 // the torso's triangles in world space (closed but for 8 edges at the neck, inside the head), bucketed by their (y, z) cells for a ray along +x, and by 3D cell for the nearest point
+// a mesh's triangles in world space
+export function trisOf(o, out = []) {
+  const A = o.geometry.attributes.position, I = o.geometry.index?.array, M = o.matrixWorld, n = I ? I.length : A.count, at = i => new THREE.Vector3().fromBufferAttribute(A, I ? I[i] : i).applyMatrix4(M);
+  for (let t = 0; t + 2 < n; t += 3) out.push([at(t), at(t + 1), at(t + 2)]);
+  return out;
+}
 export function torsoIndex(S) {
-  const T = S.parts.torso, A = T.geometry.attributes.position, I = T.geometry.index.array, M = T.matrixWorld, cols = new Map(), tris = [];
-  for (let t = 0; t < I.length; t += 3) { const a = new THREE.Vector3().fromBufferAttribute(A, I[t]).applyMatrix4(M), b = new THREE.Vector3().fromBufferAttribute(A, I[t + 1]).applyMatrix4(M), c = new THREE.Vector3().fromBufferAttribute(A, I[t + 2]).applyMatrix4(M);
+  const cols = new Map(), tris = [];
+  for (const [a, b, c] of trisOf(S.parts.torso)) {
     const k = tris.push([a, b, c]) - 1, y0 = Math.floor(Math.min(a.y, b.y, c.y) / CELL), y1 = Math.floor(Math.max(a.y, b.y, c.y) / CELL), z0 = Math.floor(Math.min(a.z, b.z, c.z) / CELL), z1 = Math.floor(Math.max(a.z, b.z, c.z) / CELL);
     for (let y = y0; y <= y1; y++) for (let z = z0; z <= z1; z++) { const key = y * 4096 + z; (cols.get(key) || cols.set(key, []).get(key)).push(k); } }
   const box = new THREE.Box3(); for (const t of tris) for (const p of t) box.expandByPoint(p);
@@ -76,12 +82,12 @@ function limbSegs(S) {
 // every style through every clip, each clip played once: the rig does not move with the hair it wears and every toon style sits at
 // the same lift on the head, so one run of the clip measures them all, frame by frame (CI's 10-minute checks budget).
 // { style: { clip: { mm, what, f } } }
-export async function sweepAll(styles, clips = CLIPS) {
-  const P = Object.fromEntries(styles.map(s => [s, hairPoints(s).pts])), out = Object.fromEntries(styles.map(s => [s, {}]));
+export async function sweepAll(styles, clips = CLIPS, { girth = 1 } = {}) {
+  const P = Object.fromEntries(styles.map(s => [s, hairPoints(s).pts])), out = Object.fromEntries(styles.map(s => [s, {}])), wear = (await worstLayer(girth)).outfit;
   for (const clip of clips) { for (const s of styles) out[s][clip] = { mm: -1e9, what: '', f: -1 };
-    await play(['sweater:coral'], 'adult', { clip, whole: true }, { spec: { hair: [toonHair(styles[0])] }, each: (f, S) => { S.root.updateMatrixWorld(true); const ix = torsoIndex(S), segs = limbSegs(S);
+    await play(wear, 'adult', { clip, whole: true }, { spec: { hair: [toonHair(styles[0])], girth }, each: (f, S) => { S.root.updateMatrixWorld(true); const ix = torsoIndex(S), segs = limbSegs(S);
       for (const s of styles) { const r = hairInBody(S, P[s], ix, segs); if (r.mm > out[s][clip].mm) out[s][clip] = { ...r, f }; } } }); }
-  return out;
+  return Object.defineProperty(out, 'outfit', { value: wear });   // (not a style: hairRows reads only the styles)
 }
 const segD = (p, a, b) => { const ab = _q.subVectors(b, a), t = Math.max(0, Math.min(1, v.subVectors(p, a).dot(ab) / ab.lengthSq())); return p.distanceTo(v.copy(a).addScaledVector(ab, t)); };
 
@@ -100,11 +106,28 @@ export function hairInBody(S, P, ix = torsoIndex(S), segs = limbSegs(S)) {
 const toonHairLift = H => { let y = 0; H.traverse(o => { if (o.name?.startsWith('toonHair:') || o.userData.hairControl) y = o.position.y; }); return y; };
 
 // one style through every clip of CLIPS: the worst frame of each, { clip: { mm, what, f } }
-export async function sweep(style, clips = CLIPS, patch, { from = 0, to = null } = {}) {   // from / to: only those frames of each clip (the control)
+export async function sweep(style, clips = CLIPS, patch, { from = 0, to = null, girth = 1 } = {}) {   // from / to: only those frames of each clip (the control)
   const { pts } = hairPoints(style, patch), out = {}, make = typeof style === 'function' ? style : toonHair(style, null, patch);
   for (const clip of clips) { let worst = { mm: -1e9, what: '', f: -1 }, headIn = 0;
-    await play(['sweater:coral'], 'adult', { clip, whole: true }, { from, to, spec: { hair: [make] }, each: (f, S) => { S.root.updateMatrixWorld(true); const r = hairInBody(S, pts); if (r.mm > worst.mm) worst = { ...r, f }; headIn += r.headIn; } });
+    await play(['sweater:coral'], 'adult', { clip, whole: true }, { from, to, spec: { hair: [make], girth }, each: (f, S) => { S.root.updateMatrixWorld(true); const r = hairInBody(S, pts); if (r.mm > worst.mm) worst = { ...r, f }; headIn += r.headIn; } });
     worst.headIn = headIn;
     out[clip] = worst; }
   return out;
+}
+
+// the builds the hair rows are measured at: every adult girth the clip rows of kit/compat.json hold (a film at another has no hair row:
+// untested, and person() / fits.mjs stop it)
+export const GIRTHS = [0.9, 1, 1.12, 1.2, 1.35];
+// the worst case of what a figure wears, for this body model (the torso shell, which no garment changes, and the limbs at their
+// drawn radius, a sleeve's where it has one): every wearable item of the kit (kit/cast/compat.js SHAPES, hats and the old layers left
+// out), over the coral sweater unless it is itself an outer garment, at rest; the one with the widest sleeve is worn. Found by
+// measure, not by name. Collars, scarves, backpacks and other worn pieces are NOT counted as body (a separate check, kit backlog)
+export async function worstLayer(girth = 1) {
+  const { SHAPES } = await import('../../styles/stick-man/kit/cast/compat.js'), OUTER = /^(sweater|coat|jacket|blazer|cardigan|scrubs|dress|shirt|vest)$/;
+  const items = Object.entries(SHAPES).filter(([k]) => !/^(cap|hat|hoodie|belt|holster)$/.test(k)).flatMap(([k, w]) => (w.length ? w.map(x => `${k}:${x}`) : [k])).filter(it => it !== 'apron:low');
+  let best = { outfit: ['sweater:coral'], item: 'sweater:coral', sleeveMm: -1 };
+  for (const it of items) { const outfit = OUTER.test(it.split(':')[0]) ? [it] : ['sweater:coral', it];
+    await play(outfit, 'adult', { clip: 'Adult_Idle_LookAround_Loop' }, { to: 0, spec: { girth }, each: (f, S) => { const r = 1000 * Math.max(0, ...S.wardrobe.sleeves.map(x => x.r));
+      if (r > best.sleeveMm + 1e-6) best = { outfit, item: it, sleeveMm: +r.toFixed(1) }; } }); }
+  return best;
 }

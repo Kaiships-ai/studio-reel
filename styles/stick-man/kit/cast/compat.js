@@ -4,7 +4,7 @@
 //                                        not the body's own. outfit: a costume list ('job:…' is opened)
 //   pair(kind, ...parts)                 the row's name: 'clip' (personKey, clip) · 'face' (age, body) · 'mark' (mark, hat) ·
 //                                        'hand' (prop, body, 'hand' | 'seat') · 'outfit' (garment, body) · 'light' (prop, light) ·
-//                                        'hair' (toon hair style, adult clip).
+//                                        'hair' (toon hair style, 'adult/g<girth>', adult clip).
 //                                        A bold mark is 'bold:<mark>'
 //   lookup(pair)                         { pair, verdict, number, unit, why? }; a pair with no row is 'untested'
 //   usable(pair, waivers)                { ok, row }: ok for a verdict in USABLE, or a waiver { pair, why, by } of exactly this pair
@@ -36,12 +36,12 @@ export function personKey({ body = 'adult', girth, scale, headScale, legScale, o
 // the bodies each face age is drawn for: a face row is measured, and usable, on these only
 export const FACE_BODIES = { adult: ['adult', 'heavy', 'thin'], elder: ['elder'], child: ['child'], teen: ['teen'], toddler: ['toddler'] };
 
-const KINDS = { clip: 2, face: 2, mark: 2, hand: 3, outfit: 2, light: 2, hair: 2 };
+const KINDS = { clip: 2, face: 2, mark: 2, hand: 3, outfit: 2, light: 2, hair: 3 };
 export function pair(kind, ...parts) {
   if (!KINDS[kind]) throw new Error(`compat: no pair kind "${kind}" (${Object.keys(KINDS).join(', ')})`);
   if (parts.length !== KINDS[kind] || parts.some(p => !p)) throw new Error(`compat: ${kind} takes ${KINDS[kind]} parts, not ${JSON.stringify(parts)}`);
   if (kind === 'hand' && !['hand', 'seat'].includes(parts[2])) throw new Error(`compat: hand|prop|body|hand or seat, not "${parts[2]}"`);
-  return [kind, ...(kind === 'clip' || kind === 'hair' ? [parts[0], clipId(parts[1])] : parts)].join('|');
+  return [kind, ...(kind === 'clip' ? [parts[0], clipId(parts[1])] : kind === 'hair' ? [parts[0], parts[1], clipId(parts[2])] : parts)].join('|');
 }
 
 export function table({ rows }) {

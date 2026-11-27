@@ -39,6 +39,23 @@ test('a draft style is refused by person(): the film\'s way in', async () => {
   const { person } = await import('../../styles/stick-man/kit/film.js');
   for (const s of HAIR_DRAFTS) assert.throws(() => person({ name: 'Ann', hair: [toonHair(s, null, { draft: true })] }), /not offered yet/, s);
 });
+// only the makers toonHair returned for a shipped style with no patch reach a film: what the hair table measured
+test('person() refuses a patched toon hair', async () => {
+  const { person } = await import('../../styles/stick-man/kit/film.js');
+  assert.throws(() => person({ name: 'Pat', hair: [toonHair('side', null, { falls: [] })] }), /as shipped/);
+});
+test('person() refuses a wrapped toon hair maker', async () => {
+  const { person } = await import('../../styles/stick-man/kit/film.js');
+  assert.throws(() => person({ name: 'Wes', hair: [() => toonHair('afro')()] }), /as shipped/);
+});
+test('person() refuses a draft with a forged shipped tag', async () => {
+  const { person } = await import('../../styles/stick-man/kit/film.js');
+  assert.throws(() => person({ name: 'Fay', hair: [Object.assign(toonHair('bob', null, { draft: true }), { hairStyle: 'side' })] }), /as shipped/);
+});
+test('person() takes a shipped toon hair as made, and the kit\'s other hair', async () => {
+  const { person, hairCap } = await import('../../styles/stick-man/kit/film.js');
+  assert.ok(person({ name: 'Sid', hair: [toonHair('side')] })); assert.ok(person({ name: 'Cal', hair: [hairCap([0.1, 0.1, 0.1])] }));
+});
 
 const corners = (a, b) => [0, 1, 2, 3, 4, 5, 6, 7].map(n => a.clone().set(n & 1 ? b.x : a.x, n & 2 ? b.y : a.y, n & 4 ? b.z : a.z));
 for (const s of HAIR_STYLES) test(`${s}: rigid to the head through a look up and a jump`, async () => {

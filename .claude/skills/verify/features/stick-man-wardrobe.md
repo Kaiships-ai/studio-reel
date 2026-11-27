@@ -72,11 +72,14 @@ Five more (26/11): men `pompadour`, `buzz`, `afro`; women `pixie`, `ponytail` (`
 parts of the same field: `crest` (a swept wave), `tight` (cut sides), `ball` (a mass wider than the head), `hang` (falls straight
 to a hem), `grain` / `edgeDark` (a buzz cut's stubble and hairline), `grid` (box-braid parts); and locks that leave the head
 (`falls`: rings of flat or braided locks; `tails`: one swept lock, the ponytail), rigid in the head's hair group like the rest.
-`cut` is the length the hair-in-body check left: `node --test test/unit/stick-hair-body.test.mjs test/unit/stick-hair-trip-*.test.mjs` (~1 min: the stamp, the table and a 10-clip live tripwire on 3 styles); after a change to hair.js, the engine, a clip or the measure the stamp is stale: rewrite the 550 rows with `node styles/stick-man/tools/gates/fits.mjs --hair` (~30 min).
-The writer plays every shipped style through every adult clip (50, `ADULT_CLIPS` in test/unit/hair-measure.mjs) in the coral sweater and measures
-how deep its drawn surface goes into the torso or a limb (4 mm, frozen). A pair over it is a `blocked` row `hair|<style>|<clip>` of
-`kit/compat.json` (written by `node styles/stick-man/tools/gates/fits.mjs --hair [styles] [--clips A,B]`): `person()` and `fits.mjs films/<slug>`
-refuse an adult wearing that style in that clip. The test fails on a stale stamp, on a row over 4 mm not blocked or under it not pass, and when the tripwire
+`cut` is the length the hair-in-body check left: `node --test test/unit/stick-hair-body.test.mjs test/unit/stick-hair-trip-*.test.mjs` (~1 min: the stamp, the table and a 10-clip live tripwire on 3 styles); after a change to hair.js, the engine, a clip or the measure the stamp is stale: rewrite the 2,750 rows with `node styles/stick-man/tools/gates/fits.mjs --hair --girth <g>` (~30 min a girth; one job per girth on the Mac Pro).
+The writer plays every shipped style through every adult clip (50, `ADULT_CLIPS` in test/unit/hair-measure.mjs) at every adult girth of the clip rows
+(`GIRTHS`: 0.9, 1, 1.12, 1.2, 1.35), worn in the widest-sleeved item (`worstLayer()`, by measure: `jacket:chef`), and measures
+how deep its drawn surface goes into the torso shell or a limb (4 mm, frozen; the verdict on the unrounded depth). Collars, scarves, backpacks and other worn
+pieces are not counted (kit backlog). A pair over it is a `blocked` row `hair|<style>|adult/g<girth>|<clip>` of
+`kit/compat.json` (written by `node styles/stick-man/tools/gates/fits.mjs --hair [styles] [--clips A,B] [--girth g]`): `person()` and `fits.mjs films/<slug>`
+refuse an adult wearing that style in that clip at that girth; another girth has no row and stops the film. `person()` takes only `toonHair('<style>')` as returned
+(no patch, no wrapper, no hand-set tag). The test fails on a stale stamp, on a row over 4 mm not blocked or under it not pass, and when the tripwire
 measures a row otherwise. Act_PistolShoot_Once is blocked for every style: the clip's own left arm goes 17 mm into the
 bare head (f83-86), a clip fault. `node test/unit/hair-length.mjs <style>` finds the lowest cut that passes the ten head-moving clips (`CLIPS`). Type sheet:
 add `--query type=mw` to the sheet render (frames 0-89) and `hairsheet_compose.py <dir> <out.jpg> mw`.

@@ -265,12 +265,15 @@ function fall(F, cut) {
   return out;
 }
 
+// the makers toonHair returned for a shipped style with no patch: the only toon hair person() takes (a patched, wrapped or re-tagged maker is not in it)
+const MADE = new WeakSet();
+export const isShippedToonHair = f => MADE.has(f);
 export function toonHair(style = 'side', col, patch) {   // patch: fields over the style's own (measures try a length with it); a draft style needs patch.draft: true
   if (!STYLES[style]) throw new Error(`toonHair: no style '${style}' (${HAIR_STYLES.join(', ')})`);
   if (HAIR_DRAFTS.includes(style) && !patch?.draft) throw new Error(`toonHair: '${style}' is a draft, not offered yet (pass { draft: true } to work on it)`);
   const st = { ...STYLES[style], ...patch };
   const rgb = col || st.col;
-  return Object.assign(() => {
+  const maker = Object.assign(() => {
     const g = new THREE.Group(); g.name = 'toonHair:' + style; g.position.y = -HAT_LIFT;   // built on the head's own centre
     g.add(fieldMesh(scalp(st), rgb));
     for (const b of st.buns || []) {
@@ -288,4 +291,6 @@ export function toonHair(style = 'side', col, patch) {   // patch: fields over t
     if (st.neck) Object.assign(lg.userData, { neckTop: ((st.hang ? Math.min(...st.hang.hem.map(h => h[1])) : table(st.lo, 180)) - 0.08) * W, neckRamp: 0.45 * W });
     return g;
   }, { hairStyle: style });
+  if (!patch && !HAIR_DRAFTS.includes(style)) MADE.add(maker);
+  return maker;
 }

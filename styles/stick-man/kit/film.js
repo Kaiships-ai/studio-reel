@@ -37,7 +37,7 @@ export { solid, lathe, hairCap, curls, W_M, HEAD_H, HAT_LIFT } from '#engine/cas
 export { toon, lin, INK_RGB } from '#engine/look.js';
 export { bun } from './cast/extras.js';
 export { toonHair, HAIR_STYLES } from './cast/hair.js';
-import { HAIR_DRAFTS, HAIR_STYLES } from './cast/hair.js';
+import { HAIR_DRAFTS, HAIR_STYLES, isShippedToonHair } from './cast/hair.js';
 export { PALETTES, PALETTE_ORDER, UNIFORM, outfit } from './cast/wardrobe.js';
 
 const list = v => (v == null ? [] : [].concat(v));
@@ -66,7 +66,13 @@ export function person(def) {
   if (!def?.name || typeof def.name !== 'string') throw new Error('person: needs a name');
   only(where, def, PERSON);
   const { name, body = 'adult', age, face, girth, hair = [], bald = false, shirt, skin, waivers: given = [] } = def, outfit = list(def.outfit), props = list(def.prop), clips = list(def.clips), faces = list(face);
-  for (const h of hair) if (HAIR_DRAFTS.includes(h?.hairStyle)) throw new Error(`person ${name}: hair '${h.hairStyle}' is not offered yet (long styles are still being fitted); pick one of: ${HAIR_STYLES.join(', ')}`);
+  for (const h of hair) {
+    if (HAIR_DRAFTS.includes(h?.hairStyle)) throw new Error(`person ${name}: hair '${h.hairStyle}' is not offered yet (long styles are still being fitted); pick one of: ${HAIR_STYLES.join(', ')}`);
+    if (isShippedToonHair(h)) continue;
+    // a toon hair not made by toonHair(style) as shipped: patched, wrapped, or a tag set by hand (only the hair table's measured styles reach a film)
+    let toon = h?.hairStyle != null; if (!toon && typeof h === 'function') { const g = h(); g?.traverse?.(o => { if (o.name?.startsWith('toonHair:')) toon = true; }); }
+    if (toon) throw new Error(`person ${name}: a toon hair must be toonHair('<style>') as shipped, with no patch and not wrapped (${HAIR_STYLES.join(', ')})`);
+  }
   const sig = JSON.stringify({ ...def, hair: hair.length });
   if (name in SPECS && OURS.get(name) !== sig) throw new Error(`${where}: the name is taken (${OURS.has(name) ? 'another person of this film' : "the kit's own"})`);
   const ws = checkWaivers(where, given), key = personKey({ body, girth, outfit }), worn = expand(outfit).map(shapeOf), hats = worn.filter(g => /^(cap|hat):/.test(g));
@@ -77,8 +83,8 @@ export function person(def) {
   const pMarks = ms => hats.flatMap(h => list(ms).map(m => pair('mark', `bold:${m}`, h)));
   const pHand = (kinds, seated) => kinds.flatMap(k => { if (!BUILD[k]) throw new Error(`${where}: no hand prop "${k}" (${Object.keys(BUILD).join(', ')})`); return ['hand', ...(seated ? ['seat'] : [])].map(at => pair('hand', k, body, at)); });
 
-  // hair|<style>|<clip>: a toon style's drawn surface against the adult body through the clip (test/unit/hair-measure.mjs, measured on the adult only)
-  const styles = body === 'adult' ? hair.map(h => h?.hairStyle).filter(h => typeof h === 'string') : [], pHair = n => styles.map(h => pair('hair', h, n));
+  // hair|<style>|adult/g<girth>|<clip>: a toon style's drawn surface against the adult body at that build through the clip (test/unit/hair-measure.mjs GIRTHS; another build has no row: untested, the film stops)
+  const styles = body === 'adult' ? hair.map(h => h?.hairStyle).filter(h => typeof h === 'string') : [], build = key.split('/').slice(0, 2).join('/'), pHair = n => styles.map(h => pair('hair', h, build, n));
   const recs = clips.map(n => getClip(n, body));
   must(where, [pair('face', age ?? 'adult', body), ...worn.map(g => pair('outfit', g, body)), ...clips.map(pClip), ...clips.flatMap(pHair),
     ...faces.flatMap(f => (EXPRESSIONS[f] ? pMarks(marksOf(EXPRESSIONS[f])) : [])), ...pHand(props, recs.some(sits))], ws);

@@ -21,7 +21,7 @@ import { trip, TRIP_STYLES } from './hair-trip.mjs';
 
 await rigStick();
 const { HAIR_STYLES } = await import('../../styles/stick-man/kit/cast/hair.js');
-const { sweep, CLIPS, ADULT_CLIPS, HAIR_IN_MM, NEAR_W } = await import('./hair-measure.mjs');   // the limits as the measure itself uses them
+const { sweep, CLIPS, ADULT_CLIPS, HAIR_IN_MM, NEAR_W, GIRTHS } = await import('./hair-measure.mjs');   // the limits as the measure itself uses them
 const { default: T } = await import('../../styles/stick-man/kit/compat.json', { with: { type: 'json' } });
 const { pair } = await import('../../styles/stick-man/kit/cast/compat.js');
 const HAIR = T.rows.filter(r => r.kind === 'hair');
@@ -46,14 +46,14 @@ test('the stale check sees an edited input: hair.js changed in a copy, and a row
   assert.deepEqual(staleRows({ rows: [{ pair: 'hair|side|X', kind: 'hair' }] }), ['hair|side|X'], 'a row with no stamp is stale');
 });
 
-test('every adult clip is measured: a hair row for every shipped style and adult clip, and no other', () => {
+test('every adult clip is measured: a hair row for every girth, shipped style and adult clip, and no other', () => {
   return import('../../styles/stick-man/motion-lib/index.js').then(({ ALL }) => {
     assert.deepEqual([...ADULT_CLIPS].sort(), ALL.filter(C => (C.body || 'adult') === 'adult').map(C => C.clip).sort()); assert.equal(ADULT_CLIPS.length, 50);
-    assert.deepEqual(HAIR.map(r => r.pair).sort(), HAIR_STYLES.flatMap(s => ADULT_CLIPS.map(c => pair('hair', s, c))).sort());
+    assert.deepEqual(HAIR.map(r => r.pair).sort(), GIRTHS.flatMap(g => HAIR_STYLES.flatMap(s => ADULT_CLIPS.map(c => pair('hair', s, `adult/g${g}`, c)))).sort());
   });
 });
 test('the table holds the limit: over it blocked, at or under it pass', () => {
-  const wrong = HAIR.filter(r => (r.number > HAIR_IN_MM ? r.verdict !== 'blocked' : r.verdict !== 'pass')).map(r => `${r.pair} ${r.number} ${r.verdict}`);
+  const wrong = HAIR.filter(r => typeof r.exact !== 'number' || Math.abs(r.exact - r.number) > 0.05 || (r.exact > HAIR_IN_MM ? r.verdict !== 'blocked' : r.verdict !== 'pass')).map(r => `${r.pair} ${r.exact} ${r.verdict}`);
   assert.deepEqual(wrong, []);
 });
 test('a hair row over the limit cannot be pass (fits.mjs tableFaults)', async () => {
@@ -62,6 +62,17 @@ test('a hair row over the limit cannot be pass (fits.mjs tableFaults)', async ()
   assert.equal(f.length, 1);
 });
 
+test('the verdict is on the depth as measured, not as rounded: 4.04 mm is blocked (shown 4.0), 4.0 passes', async () => {
+  const { hairRows } = await import('../../styles/stick-man/tools/gates/fits_kinds.mjs');
+  const [a, b] = hairRows({ side: { Gest_LookUp_Once: { mm: 4.04, what: 'torso', f: 3 }, Adult_Gest_NodYes_Once: { mm: 4.0, what: 'torso', f: 3 } } }, HAIR_IN_MM, 1.35);
+  assert.equal(a.pair, 'hair|side|adult/g1.35|Gest_LookUp_Once'); assert.equal(a.number, 4); assert.equal(a.exact, 4.04); assert.equal(a.verdict, 'blocked'); assert.equal(b.verdict, 'pass');
+});
+test('the hair rows cover every adult girth the clip rows hold, and a person at another girth stops (untested)', async () => {
+  const held = [...new Set(T.rows.filter(r => r.kind === 'clip' && r.pair.startsWith('clip|adult/')).map(r => +r.pair.split('/')[1].slice(1).split(',')[0]))].sort();
+  assert.deepEqual(held.filter(g => !GIRTHS.includes(g)), []);
+  const { person, toonHair } = await import('../../styles/stick-man/kit/film.js');
+  assert.throws(() => person({ name: 'Gil', girth: 1.5, hair: [toonHair('side')], clips: ['Idle_Stand_Loop'] }), /untested.*hair\|side\|adult\/g1\.5/s);
+});
 // the control: a lock hung from the nape straight down the back through the shoulders must fail, or the measure sees nothing
 test('control: a lock hung through the back fails', async () => {
   const THREE = await import('three'), { solid, W_M, HAT_LIFT } = await import('../../styles/stick-man/engine/cast.js');
