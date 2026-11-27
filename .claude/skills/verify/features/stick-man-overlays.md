@@ -23,7 +23,7 @@ never touches them. Fields: `.claude/skills/make-reel-stick-man/REEL_DATA.md` "O
   (a flash in the frame's outer band), `endcard` (stacked call-to-action cards kept inside the text-safe box: long lines
   shrink, a stack placed past the edge moves back in, a stack too tall shrinks to fit, `free: true` keeps the film's
   place). `enter: 'slam'` and `box.outline` make a stamp.
-- The rows carry `text`: each readable box per frame (overlays and the caption) for `tools/gates/textgate.mjs`.
+- The rows carry `text`: each readable box per frame (overlays and the caption) for `tools/gates/textgate.mjs`; a film that measures legibility adds `cr` (WCAG ratio against the picture behind) and `alpha` per box for its T6.
 
 ## How to get to it (user POV)
 
@@ -38,7 +38,7 @@ then render the shot. Clocks: one `text` entry per tick with the same `at`, `ent
   clock box the same at each tick, the meter bar rising, the path drawing on and staying on the floor as the camera
   follows, the end label popping on arrival.
 - Numbers: crop the clock region of frames either side of a tick and compare the box's bounding box (it must not move).
-- Regression: `node --test test/unit/stick-overlays.test.mjs test/unit/stick-hud.test.mjs test/unit/stick-textgate.test.mjs` (what reaches the canvas per frame for each kind, the boxes, the text gate).
+- Regression: `node --test test/unit/stick-overlays.test.mjs test/unit/stick-hud.test.mjs test/unit/stick-textgate.test.mjs test/unit/stick-textgate-contrast.test.mjs` (what reaches the canvas per frame for each kind, the boxes, the text gate).
 
 ## Gotchas
 

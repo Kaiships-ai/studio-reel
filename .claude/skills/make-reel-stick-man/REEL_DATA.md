@@ -214,7 +214,7 @@ blur; `dof: { gain: 0 }` turns it off (stick-man-depth.md).
   the height above the end point).
 - A path through a point behind the camera is cut where it crosses the camera plane: only the part in front is drawn,
   the arrowhead shows only while the tip is on a visible stretch and inside the frame, and a hidden end has no label.
-- Every kind but loupe, arrows and path also gives the rows (`--dbg`) the boxes a viewer reads (`text`: kind, overlay index, text, box in shares of the frame), with the caption's; `tools/gates/textgate.mjs` checks them at ◇5 (advisory): nothing under the app's buttons, over a face or stacked, no middle dot.
+- Every kind but loupe, arrows and path also gives the rows (`--dbg`) the boxes a viewer reads (`text`: kind, overlay index, text, box in shares of the frame), with the caption's; `tools/gates/textgate.mjs` checks them at ◇5 (advisory): nothing under the app's buttons, over a face or stacked, no middle dot, and (T6) each box's `cr`, the WCAG ratio the film measures where it draws the glyphs (text luminance against the 90th percentile of a ring round them), at 4.5:1 or more; a shown box without `cr` reads PARTIAL.
 - Check one on the motion-lib proof page: `tools/render/shot.mjs --film styles/stick-man/motion-lib/proof --query
   "clip=Move_CarryBag_Walk_Loop&ov=<url-encoded JSON list>" --w 540 --h 960 --frames 0,30`.
 

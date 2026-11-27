@@ -49,9 +49,9 @@ test('T5: a middle dot fails on a single frame', () => {
   assert.equal(R.ok, false); assert.deepEqual(ids(R), ['T5']);
 });
 
-test('the CLI: PASS on clean rows, PARTIAL (exit 1) on rows from an older kit with no text field', () => {
+test('the CLI: PASS on clean rows (T6 contrast measured), PARTIAL (exit 1) on rows from an older kit with no text field', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'textgate-')), f = path.join(dir, 'rows.jsonl');
-  fs.writeFileSync(f, rows(20, () => ({ text: [word('MOM', [0.3, 0.3, 0.7, 0.4])] })).map(r => JSON.stringify(r)).join('\n'));
+  fs.writeFileSync(f, rows(20, () => ({ text: [{ ...word('MOM', [0.3, 0.3, 0.7, 0.4]), cr: 12 }] })).map(r => JSON.stringify(r)).join('\n'));
   let p = run('node', [GATE, '--rows', f], { capture: true }); assert.equal(p.status, 0, p.stdout); assert.match(p.stdout, /textgate PASS/);
   fs.writeFileSync(f, rows(5, () => ({})).map(r => JSON.stringify(r)).join('\n'));
   p = run('node', [GATE, '--rows', f], { capture: true }); assert.equal(p.status, 1); assert.match(p.stdout, /PARTIAL/);
