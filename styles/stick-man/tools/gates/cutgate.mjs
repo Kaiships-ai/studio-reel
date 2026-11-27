@@ -8,7 +8,9 @@
 //        any mp4 (a reference clip, an old cut); --dbg adds the camera rows, --w/--h are the size the rows were made at
 // A hard cut: the frame-to-frame scene score of ffmpeg (frames scaled to 270 wide) at or over 0.30; frames over it less
 // than 0.2 s apart are one cut. Low camera: the camera looks up at the lead's head by more than 5°. Face cut off: less
-// than half the lead's head box inside the frame. Cuts are counted in the worst 15 s window, not over the film.
+// than half the lead's head box inside the frame. Close head cut (C6): any actor's head box 20 % of the frame height or
+// more with over 2 % of its height past a frame edge; a head whose centre moves over 1.2 % of the frame height in one
+// frame is leaving the frame and is left out. Cuts are counted in the worst 15 s window, not over the film.
 import fs from 'node:fs'; import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { finalRender } from '#tools/render/renders.mjs';
@@ -21,6 +23,9 @@ export const CUT_SCORE = 0.30, CUT_MERGE_S = 0.2, WINDOW_S = 15, LOW_DEG = 5, FA
 // how it looks (low: up at the head over LOW_DEG, high: down over HIGH_DEG, else eye) and how big the head is (close:
 // 20 % of the frame height or more, wide: under 8 %, else medium), read at the middle lead frame of each take
 export const HIGH_DEG = 20, CLOSE_H = 0.2, WIDE_H = 0.08, ANGLE_WINDOW = 5;
+// C6: a close head (CLOSE_H) with more than CUT_EDGE of its height past a frame edge; a centre moving more than EXIT_H of
+// the frame height in one frame is a head leaving the frame (a run past the lens, a camera passing someone), left out
+export const CUT_EDGE = 0.02, EXIT_H = 0.012;
 
 const KAI_PICK = 'Kai 17/11 picked the bible escape cut (4 cuts in 15.4 s, longest take 6.7 s) over v7 (11 cuts, 2.3 s)';
 export const LIMITS = [
@@ -34,6 +39,8 @@ export const LIMITS = [
     source: '"cam lia dưới, mà mặt nhân vật lại ở trên?" 12/11 (a held shot with the head out of frame, not measured); v7 0.1 s, the bible cut 0.03 s; a frame or two passing during a flight is not seen' },
   { id: 'C5', what: `takes in one angle family, most in any ${ANGLE_WINDOW} in a row`, key: 'angleRepeat', max: 3,
     source: 'was the AI review\'s "angle" row (S3-060 hit 2 of 2, no camera rows then); a film Kai approved (its A v9) banks run three back, eye-level, medium takes in a row (58.6-73.5 s) inside the 80 % Kai approved; four is a pattern a viewer reads as the same shot' },
+  { id: 'C6', what: 'longest close face cut by the frame edge (frames)', key: 'closeCutRun', max: 2,
+    source: 'What if 1 REMIX v1 97-99 s: the last man\'s head, 45 % of the frame height, its top 40 % past the edge for 87 frames, passed C4 and Studio called it grotesque 26/11; under 0.1 s (3 frames) is unseen at 1x' },
 ];
 
 export function sceneScores(mp4) {
@@ -114,6 +121,34 @@ export function worstWindow(cuts) {
   return best;
 }
 
+// C6 per actor: runs of frames in a row where a close head is cut by the frame edge. A fast-moving head (leaving the frame)
+// is left out: that frame neither counts nor ends an open run of the same actor. n counts the cut frames only.
+export function closeCuts(rows, W, H) {
+  const runs = [], cur = new Map(), prev = new Map();
+  for (const r of rows) {
+    const [w, h] = r.px || [W, H], held = new Set();
+    for (const [name, a] of Object.entries(r.actors || {})) {
+      const b = a.head; if (!b || b.length < 4) continue;
+      const [x0, y0, x1, y1] = b, bh = y1 - y0, c = [(x0 + x1) / 2, (y0 + y1) / 2], q = prev.get(name), s = cur.get(name);
+      prev.set(name, { f: r.f, c });
+      const open = s && s.seen === r.f - 1;
+      if (q && r.f - q.f === 1 && Math.max(Math.abs(c[0] - q.c[0]), Math.abs(c[1] - q.c[1])) > EXIT_H * h) {
+        if (open) { s.seen = r.f; held.add(name); }
+        continue;
+      }
+      if (bh < CLOSE_H * h || x1 < 0 || x0 > w || y1 < 0 || y0 > h) continue;
+      const out = Math.max(0, -x0, -y0, x1 - w, y1 - h);
+      if (out <= CUT_EDGE * bh) continue;
+      if (open) { s.f1 = s.seen = r.f; s.n++; s.cut = Math.max(s.cut, out / bh); }
+      else { if (s) runs.push(s); cur.set(name, { actor: name, f0: r.f, f1: r.f, seen: r.f, n: 1, cut: out / bh, size: bh / h }); }
+      held.add(name);
+    }
+    for (const [name, s] of cur) if (!held.has(name)) { runs.push(s); cur.delete(name); }
+  }
+  runs.push(...cur.values());
+  return runs.map(({ seen, ...s }) => s).sort((a, b) => b.n - a.n);
+}
+
 function longestRun(frames) {
   let best = 0, run0 = 0;
   frames.forEach((f, i) => { run0 = i && f === frames[i - 1] + 1 ? run0 + 1 : 1; best = Math.max(best, run0); });
@@ -125,9 +160,9 @@ export function measure({ dur, scores, rows = null, W, H, fps = 30 }) {
   const m = { dur, cuts, cutsPerMin: cuts.length * 60 / dur, worstWindow: win.n, win, longestTake: take.s, take };
   if (!rows) return m;
   const v = viewRows(rows, W, H), low = v.filter(x => x.up > LOW_DEG).map(x => x.f), faceCut = v.filter(x => x.face < FACE_VISIBLE).map(x => x.f);
-  const ang = angles(rows, cuts, dur, H, fps);
+  const ang = angles(rows, cuts, dur, H, fps), cc = closeCuts(rows, W, H);
   return { ...m, leadFrames: v.length, low, lowShare: v.length ? low.length / v.length : 0, faceCut, faceCutRun: longestRun(faceCut) / fps,
-    angleTakes: ang.takes, angleRepeat: ang.worst.n, angleWorst: ang.worst };
+    angleTakes: ang.takes, angleRepeat: ang.worst.n, angleWorst: ang.worst, closeCut: cc, closeCutRun: cc[0]?.n ?? 0 };
 }
 
 export function judge(m) {
@@ -148,6 +183,9 @@ export function table(m, rows) {
     `Worst ${WINDOW_S} s from ${m.win.from.toFixed(1)} s. Longest take ${m.take.from.toFixed(1)}-${m.take.to.toFixed(1)} s.`,
     ...(m.angleTakes ? ['', `Angle families by take: ${m.angleTakes.map(t => `${t.t0.toFixed(1)} ${t.family ?? 'no lead'}`).join(' · ')}.${m.angleWorst.n ? ` Most: ${m.angleWorst.n} x ${m.angleWorst.family} from ${m.angleWorst.from.toFixed(1)} s.` : ''}`] : [])];
 }
+
+const closeLines = m => (m.closeCut || []).filter(s => s.n > LIMITS.find(l => l.id === 'C6').max)
+  .map(s => `Close face cut by the frame edge: ${s.actor}, render frames ${s.f0}-${s.f1} (${s.n} f), head ${Math.round(s.size * 100)} % of the frame height, up to ${Math.round(s.cut * 100)} % of it past the edge.`);
 
 const readRows = f => fs.readFileSync(f, 'utf8').trim().split('\n').map(l => JSON.parse(l)).sort((a, b) => a.f - b.f);
 
@@ -186,7 +224,8 @@ async function filmMode(film) {
   fs.writeFileSync(F('review/cutgate.md'), [`# Camera and cut gate · ${final}`, '',
     v === 'PARTIAL' ? `**PARTIAL**: cuts pass, ${unmeasured(res)} not measured, so this is not a PASS` : `**${v}**: ${nF} FAIL`, '', ...table(m, res),
     unread ? `Camera not read: ${unread}.` : '',
-    m.low?.length ? `Low camera, render frames: ${compress(m.low)}.` : '', m.faceCut?.length ? `Face cut off, render frames: ${compress(m.faceCut)}.` : ''].join('\n') + '\n');
+    m.low?.length ? `Low camera, render frames: ${compress(m.low)}.` : '', m.faceCut?.length ? `Face cut off, render frames: ${compress(m.faceCut)}.` : '',
+    ...closeLines(m)].join('\n') + '\n');
   console.log(`review/cutgate.md: ${v} · ${res.map(r => `${r.id} ${fmt(r.key, r.got)}`).join(', ')} · ${final}${unread ? ` · camera not read: ${unread}` : ''}`);
   process.exit(v === 'PASS' ? 0 : 1);
 }
@@ -196,7 +235,7 @@ function fileMode(A) {
   const m = measure({ dur: duration(mp4), scores: sceneScores(mp4), rows, W: Number(A.w || 540), H: Number(A.h || 960) }), res = judge(m);
   const v = verdict(res);
   if (A.json) console.log(JSON.stringify({ file: mp4, ...m, verdict: v, results: res }));
-  else console.log([`${path.basename(mp4)}: ${v}${v === 'PARTIAL' ? ` (${unmeasured(res)} not measured: give --dbg)` : ''}`, ...table(m, res)].join('\n'));
+  else console.log([`${path.basename(mp4)}: ${v}${v === 'PARTIAL' ? ` (${unmeasured(res)} not measured: give --dbg)` : ''}`, ...table(m, res), ...closeLines(m)].join('\n'));
   process.exit(v === 'PASS' ? 0 : 1);
 }
 
