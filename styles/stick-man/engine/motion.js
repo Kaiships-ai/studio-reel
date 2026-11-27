@@ -9,6 +9,10 @@
 //   hold  frames the pose is held (a moving hold: the secondary layer keeps it breathing)
 //   antic share of the move (0..0.6) played backwards first; the move itself then takes the last 40 % of the gap (4 f at least)
 //   cycle secondary business on top until the next key: { 'spine.bend': [amplitude, period frames, phase], ... }
+//   raw   a captured key (motion capture): played as it is, no drag, no moving hold, no balance solve
+//   acted on keys a helper writes one a frame (raw or not): they are authored, so the parts lag, settle and breathe (ACTED
+//         below); true, or a dose 0..1 (0.3: a held breath), anything else throws. Not for captured keys. A change of dose
+//         fades over RAW_FADE frames: make it in a hold or on a snap (turned off in a move, the parts hurry to catch up)
 //
 // Playback, per channel: cubic Hermite through the keys (arcs: every joint swings on a curve, no straight lerps), the
 // time between two keys warped by their ease (slow in / slow out); extremes get flat tangents (no overshoot from the
@@ -65,7 +69,7 @@ export function unflatten(m) {
   }
   return o;
 }
-const NON_POSE = new Set(['f', 'at', 'pose', 'ease', 'hold', 'antic', 'expr', 'look', 'props', 'clipProps', 'cycle', 'line', 'on', 'offset', 'nth', 'cue', 'snap', 'rest', 'raw']);
+const NON_POSE = new Set(['f', 'at', 'pose', 'ease', 'hold', 'antic', 'expr', 'look', 'props', 'clipProps', 'cycle', 'line', 'on', 'offset', 'nth', 'cue', 'snap', 'rest', 'raw', 'acted']);
 
 // ---------------------------------------------------------------- the time warp between two keys
 // cubic Hermite in time: e(0) = 0, e(1) = 1, start slope a, end slope b (0 = a full slow, 1 = passing through)
@@ -84,8 +88,9 @@ export function compileTrack(keys, poses, base, style) {
   const ks = keys.map(k => {
     const named = typeof k.pose === 'string' ? poses[k.pose] : k.pose;
     if (typeof k.pose === 'string' && !named) throw new Error(`anim: unknown pose "${k.pose}"`);
+    if (!(k.acted == null || typeof k.acted === 'boolean' || (typeof k.acted === 'number' && k.acted >= 0 && k.acted <= 1))) throw new Error(`anim: acted ${k.acted} at f ${k.f}: true, false or a dose 0..1`);
     const over = Object.fromEntries(Object.entries(k).filter(([n]) => !NON_POSE.has(n)));
-    return { f: k.f, ease: k.ease || 'slow', hold: k.hold || 0, antic: Math.min(0.6, (k.antic || 0) * dial('anticipation')), expr: k.expr, look: k.look, props: k.props, cycle: k.cycle, raw: !!k.raw,
+    return { f: k.f, ease: k.ease || 'slow', hold: k.hold || 0, antic: Math.min(0.6, (k.antic || 0) * dial('anticipation')), expr: k.expr, look: k.look, props: k.props, cycle: k.cycle, raw: !!k.raw, acted: +(k.acted ?? 0),
       m: { ...flatten(named), ...flatten(over) } };
   }).sort((a, b) => a.f - b.f);
   // carry every channel forward (a key names only what changes); before its first key a channel is neutral (0), except
@@ -102,7 +107,7 @@ export function compileTrack(keys, poses, base, style) {
       const gap = k.f - prev.f, fa = Math.round(k.f - Math.max(4, gap * 0.4));   // the action itself keeps at least 4 frames
       if (fa > prev.f + 2) {
         const m = {}; for (const n of Object.keys(k.m)) m[n] = n.startsWith('pos.') || n === 'yaw' ? prev.m[n] : prev.m[n] - k.antic * (k.m[n] - prev.m[n]);
-        out.push({ f: fa, ease: 'slow', m, antic: true });
+        out.push({ f: fa, ease: 'slow', m, antic: true, acted: prev.acted });
       }
     }
     out.push(k);
@@ -185,6 +190,12 @@ class Spring {
 const DRAG = [
   [/^neck\./, 0.55, 0.55], [/^arm[LR]\.(raise|swing)$/, 0.62, 0.5], [/^arm[LR]\.(elbow|roll)$/, 0.5, 0.45], [/^headSq$/, 0.7, 0.35],
 ];
+// per-frame keys an author wrote (`acted`): the spine leads, the neck comes about 2 frames after it, the upper arms 4, the
+// forearms 5.5, each on its own spring: [channel, delay in frames, rad per frame, damping]. Nothing here for hair or headwear: rigid
+const ACTED = [
+  [/^spine\./, 0, 0.67, 0.5], [/^(neck\.|shrug)/, 2, 0.6, 0.5], [/^arm[LR]\.(raise|swing)$/, 4, 0.6, 0.55], [/^arm[LR]\.(elbow|roll)$/, 5, 0.55, 0.55],
+];
+const ACTED_CH = /^(bob$|spine\.|neck\.|pelvis\.|hip\.|shrug|arm[LR]\.(raise|swing|elbow|roll)$)/;
 // the moving hold's weight per frame over [F0, F1] (0 while the keys move .. 1 held) and the stops it settles after. A key
 // segment holds when no angle changes faster than HOLD_RATE deg a frame and nothing travels faster than HOLD_RATE cm a
 // frame (a slow drift between two near poses is a hold); the layer fades in over HOLD_IN frames after the body stops and
@@ -200,8 +211,10 @@ const SETTLE_WIN = 8, WALK_MIN = 0.005, SETTLE_WALK = 0.6;
 const SETTLE_CH = ['spine.bend', 'spine.side', 'neck.nod', 'neck.tilt'];
 const CM = c => (/^pos\.|footW|\.ik\./.test(c) ? 100 : c === 'bob' || c === 'support' ? 60 : 1);
 const settleOut = d => (d < 0 ? 0 : Math.exp(-d / 4) * Math.sin(0.55 * d));
-function holdWeights(track, F0, F1) {
-  const rate = (A, B) => Math.max(0, ...Object.keys(B.m).map(c => CM(c) * Math.abs((B.m[c] ?? 0) - (A.m[c] ?? 0)) / Math.max(1, B.f - A.f)));
+// acted: how still the figure's own body is (ACTED_CH), whatever carries its root (a car's travel in pos, not a bounce in
+// bob) and however close its keys are
+function holdWeights(track, F0, F1, acted = false) {
+  const rate = (A, B) => Math.max(0, ...Object.keys(B.m).filter(c => !acted || ACTED_CH.test(c)).map(c => CM(c) * Math.abs((B.m[c] ?? 0) - (A.m[c] ?? 0)) / Math.max(1, B.f - A.f)));
   const n = F1 - F0 + 1, moving = new Array(n).fill(false), baked = new Array(n).fill(false), stops = [];
   for (let i = 0; i + 1 < track.length; i++) {
     const A = track[i], B = track[i + 1];
@@ -226,7 +239,7 @@ function holdWeights(track, F0, F1) {
     for (let i = n - 1, d = 1e9; i >= 0; i--) { d = on[i] ? 0 : d + 1; until[i] = d; }
     return since.map((s, i) => smooth(s / HOLD_IN) * smooth(until[i] / HOLD_OUT)); };
   const still = fade(moving), own = fade(baked);
-  return { w: still.map((s, i) => own[i] * s), stops };
+  return { w: acted ? still : still.map((s, i) => own[i] * s), stops };
 }
 // a figure's own seed for its hold (two figures never breathe in step): where its first key stands
 const trackSeed = track => { const m = track[0]?.m || {}; return Math.round(1e3 * (17 + (m['pos.0'] || 0)) + 7919 * (m['pos.1'] || 0) + 31 * track.length) >>> 0; };
@@ -236,11 +249,12 @@ export function playActor(track, F0, F1, opt = {}) {
   const springs = {}, sq = new Spring(0.6, 0.3);
   const frames = [];
   const held = holdWeights(track, F0, F1), seed = trackSeed(track);
-  let prev = null, prev2 = null, rawW = 0;
+  const acted = track.some(t => t.acted) && !opt.stiff ? { w: holdWeights(track, F0, F1, true).w, past: {}, springs: {} } : null;
+  let prev = null, prev2 = null, rawW = 0, actW = acted ? track[0].acted : 0;
   // a 'snap' key is a cut: the secondary layer starts fresh there (no arm still swinging from the last shot's pose)
   const cuts = new Set(track.filter(t => t.ease === 'snap').map(t => t.f));
   for (let f = F0; f <= F1; f++) {
-    if (cuts.has(f)) { for (const sp of Object.values(springs)) { sp.x = null; sp.v = 0; } sq.x = null; sq.v = 0; prev = prev2 = null; }
+    if (cuts.has(f)) { for (const sp of Object.values(springs)) { sp.x = null; sp.v = 0; } sq.x = null; sq.v = 0; prev = prev2 = null; if (acted) { acted.past = {}; acted.springs = {}; } }
     const k = keyed(track, f);
     // exaggeration: every pose channel pushed further from (or pulled back toward) the act's rest pose
     const E = 0.4 + 1.2 * CUR.exaggeration, rest = track.rest || track[0].m;
@@ -253,10 +267,16 @@ export function playActor(track, F0, F1, opt = {}) {
     // out over RAW_FADE frames into a run of captured keys and back in after it (a switch in one frame would jump)
     let rk = null; for (const t of track) { if (t.f > f) break; rk = t; }
     rawW = clamp(rawW + (rk?.raw ? 1 : -1) / RAW_FADE, 0, 1);
+    if (acted) { const to = (rk || track[0]).acted; actW = cuts.has(f) ? to : actW + clamp(to - actW, -1 / RAW_FADE, 1 / RAW_FADE); }
     o.x_raw = rawW;                                                    // (cast.js: a captured pose carries its own balance)
     for (const [c, v] of Object.entries(k)) {
       const d = DRAG.find(([re]) => re.test(c)); if (!d || opt.stiff) continue;
-      const sp = (springs[c] ||= new Spring(d[1], d[2])).step(v); o[c] = v + (sp - v) * dial('followThrough') * (1 - rawW);
+      const sp = (springs[c] ||= new Spring(d[1], d[2])).step(v); o[c] = v + (sp - v) * dial('followThrough') * (1 - rawW) * (1 - actW);
+    }
+    if (acted) for (const [c, v] of Object.entries(k)) {
+      const d = ACTED.find(([re]) => re.test(c)); if (!d) continue;
+      const p = (acted.past[c] ||= []); p.push(v); if (p.length > d[1] + 1) p.shift();
+      const sp = (acted.springs[c] ||= new Spring(d[2], d[3])).step(p[0]); o[c] += (sp - v) * dial('followThrough') * actW;
     }
     // hip vertical speed stretches the body, its sudden stop squashes it; the head follows a beat later
     const by = k.bob ?? 0, vy = prev ? by - (prev.bob ?? 0) : 0, vp = prev && prev2 ? (prev.bob ?? 0) - (prev2.bob ?? 0) : 0, ay = vy - vp;
@@ -266,9 +286,9 @@ export function playActor(track, F0, F1, opt = {}) {
     // a moving hold: a held pose breathes, the head drifts and the weight shifts (acting.js holdLife), never freezes; after
     // a stop the chest carries on a little and settles (follow-through), the head HOLD_LAG frames later; the settle keeps its
     // kit size above life 0.5 (the dose sizes the hold, a bigger overshoot read as a twitch)
-    const L = dial('life', 0, 4) * (1 - rawW);
-    if (L) {
-      const life = holdLife(seed, f), w = L * held.w[f - F0];
+    const L = dial('life', 0, 4) * (1 - rawW) * (1 - actW), La = dial('life', 0, 4) * actW;
+    if (L || La) {
+      const life = holdLife(seed, f), w = L * held.w[f - F0] + (acted ? La * acted.w[f - F0] : 0);
       for (const c in life) o[c] = (o[c] || 0) + w * life[c];
       for (const s of held.stops) { const d = f - s.f; if (d < 0 || d > SETTLE_N + HOLD_LAG) continue;
         for (const [c, v] of Object.entries(s.v)) o[c] = (o[c] || 0) + Math.min(L, 1) * v * settleOut(c.startsWith('neck.') ? d - HOLD_LAG : d); }

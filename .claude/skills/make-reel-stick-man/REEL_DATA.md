@@ -124,8 +124,24 @@ anim: { eng: polish([ hold(0, { ...KNEEL, pos: E0, yaw: -120, expr: 'sly', look:
 | `antic` | 0.1-0.35: a wind-up against the move; it shortens the action itself, so give the move enough `t` |
 | `t` | on the next key: move length in frames (default 7, strokes 4, big arm moves 14-22, a take 9) |
 | `cycle` | `{ 'channel': [amplitude, period, phase] }` on top until the next key (breath, tremble) |
+| `raw`, `acted` | for keys a helper writes one a frame. `raw: true` = played as captured: no drag, no settle, no hold life, no balance solve (the engine's own layers are off, so authored keys play dead); without `raw`, keys 2 f apart or closer keep the drag but get no hold life either. Add `acted: true` to authored ones: see [Acted keys](#acted-keys). A channel a key leaves out holds; a helper that fills it from a base pose snaps it back |
 | `expr`, `look` | the face (EXPR names; how each change is timed: [Face timing](#face-timing)) and the gaze target (an actor, a prop, `camera`) |
 | `take`, `small`, `exprSpeed` | on a key with `expr`: `take: true` makes any face a take, `take: false` makes a take face a fast change; `small: true` = a small take (no anticipation, 10 f); `exprSpeed: 'fast' \| 'normal' \| 'slow'` overrides the class. Beats take the same three fields |
+
+### Acted keys
+
+- `acted: true` on a key one a frame: the neck comes ~2 f after the spine, the upper arms ~4, the forearms ~5.5, each
+  overshoots 6-10 % and settles, and a hold breathes (each figure on its own phase). Hair and headwear get nothing.
+- The parts arrive late: on a 6 f move the arm is at 90 % 5 f after its key stops, the forearm 7 f. Where a gesture must hit
+  a word or an expression accent, stop its key 5-7 f before the word, or turn the layer off for it (`acted: 0`).
+- A dose 0-1 is how much of it plays (0.3: a held breath; another value throws). It sizes the overshoot and the breath
+  (6.3, 3.2, 1.9 % on the arm at 1, 0.5, 0.3) and hardly the arrival (5, 5, 4 f), so it is no fix for a late hit.
+- A change of dose fades over 12 f, at once on a snap: change it in a hold or on a snap. Off in a move the parts catch up
+  (a 10 deg a frame swing peaks at 14-15; on in a move adds nothing over an acted move).
+- The hold's breath needs the body still. A car may carry the root (`pos`); a bounce written in `bob` counts as the figure
+  moving and stops the breath, so put it in `pos` and `support`.
+- Leave it off a captured run and a walk (the arm swing would come 4-5 f behind the legs). One film, one switch: the helper
+  that writes the keys sets it, e.g. `keys.map(k => ({ ...k, acted: k.f >= 300 && k.f < 324 ? 0 : 1 }))`.
 
 ### Face timing
 
