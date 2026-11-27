@@ -7,6 +7,9 @@
 //                             over limits.mark.cover (0) is blocked
 //   hand|<prop>|<body>|hand   the prop held in every pose a film holds it in (HAND_POSES), each frame each fist's drawn edge to the
 //                             prop's drawn surface (engine/grip.js), worst frame over GAP_CM (handgrip.limits.json) is blocked; seat and light: no row (untested)
+//   hair|<style>|<clip>       a shipped toon hair style through an adult clip (test/unit/hair-measure.mjs sweepAll, every frame, coral sweater):
+//                             its drawn surface deepest in the torso shell or a limb, over HAIR_IN_MM (4, frozen 26/11) is blocked;
+//                             stick-hair-body*.test.mjs fails when a row is not what it measures now (either way)
 import * as THREE from 'three';
 import { pair, SHAPES, FACE_BODIES } from '#kit/cast/compat.js';
 import { drawnSolid } from '#kit/props/drawn.js';
@@ -139,4 +142,15 @@ export async function hands(props = Object.keys(HAND_POSES)) {
   return { rows, controls };
 }
 
+export const HAIR_UNIT = 'mm of hair into the body (worst frame; -100: nowhere near it)';
+// a sweepAll result -> its rows (the tests compare the table with exactly these)
+export function hairRows(all, limit) {
+  return Object.entries(all).flatMap(([s, per]) => Object.entries(per).map(([clip, x]) => { const p = pair('hair', s, clip), mm = Math.max(-100, +x.mm.toFixed(1));
+    return mm > limit ? row(p, 'hair', 'blocked', mm, HAIR_UNIT, 1, `f${x.f}: ${mm} mm into the ${x.what}`) : row(p, 'hair', 'pass', mm, HAIR_UNIT, 0); }));
+}
+export async function hairs(styles, clips) {
+  const { rigStick } = await import('./motionlib.mjs'); await rigStick();
+  const { HAIR_STYLES } = await import('#kit/cast/hair.js'), M = await import('../../../../test/unit/hair-measure.mjs');
+  return hairRows(await M.sweepAll(styles || [...HAIR_STYLES], clips || M.ADULT_CLIPS), M.HAIR_IN_MM);
+}
 export async function kinds() { return [...await faces(), ...await marks(), ...await outfits(), ...(await hands()).rows]; }

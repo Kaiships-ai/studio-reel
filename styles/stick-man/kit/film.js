@@ -37,6 +37,7 @@ export { solid, lathe, hairCap, curls, W_M, HEAD_H, HAT_LIFT } from '#engine/cas
 export { toon, lin, INK_RGB } from '#engine/look.js';
 export { bun } from './cast/extras.js';
 export { toonHair, HAIR_STYLES } from './cast/hair.js';
+import { HAIR_DRAFTS, HAIR_STYLES } from './cast/hair.js';
 export { PALETTES, PALETTE_ORDER, UNIFORM, outfit } from './cast/wardrobe.js';
 
 const list = v => (v == null ? [] : [].concat(v));
@@ -65,6 +66,7 @@ export function person(def) {
   if (!def?.name || typeof def.name !== 'string') throw new Error('person: needs a name');
   only(where, def, PERSON);
   const { name, body = 'adult', age, face, girth, hair = [], bald = false, shirt, skin, waivers: given = [] } = def, outfit = list(def.outfit), props = list(def.prop), clips = list(def.clips), faces = list(face);
+  for (const h of hair) if (HAIR_DRAFTS.includes(h?.hairStyle)) throw new Error(`person ${name}: hair '${h.hairStyle}' is not offered yet (long styles are still being fitted); pick one of: ${HAIR_STYLES.join(', ')}`);
   const sig = JSON.stringify({ ...def, hair: hair.length });
   if (name in SPECS && OURS.get(name) !== sig) throw new Error(`${where}: the name is taken (${OURS.has(name) ? 'another person of this film' : "the kit's own"})`);
   const ws = checkWaivers(where, given), key = personKey({ body, girth, outfit }), worn = expand(outfit).map(shapeOf), hats = worn.filter(g => /^(cap|hat):/.test(g));
@@ -75,8 +77,10 @@ export function person(def) {
   const pMarks = ms => hats.flatMap(h => list(ms).map(m => pair('mark', `bold:${m}`, h)));
   const pHand = (kinds, seated) => kinds.flatMap(k => { if (!BUILD[k]) throw new Error(`${where}: no hand prop "${k}" (${Object.keys(BUILD).join(', ')})`); return ['hand', ...(seated ? ['seat'] : [])].map(at => pair('hand', k, body, at)); });
 
+  // hair|<style>|<clip>: a toon style's drawn surface against the adult body through the clip (test/unit/hair-measure.mjs, measured on the adult only)
+  const styles = body === 'adult' ? hair.map(h => h?.hairStyle).filter(h => typeof h === 'string') : [], pHair = n => styles.map(h => pair('hair', h, n));
   const recs = clips.map(n => getClip(n, body));
-  must(where, [pair('face', age ?? 'adult', body), ...worn.map(g => pair('outfit', g, body)), ...clips.map(pClip),
+  must(where, [pair('face', age ?? 'adult', body), ...worn.map(g => pair('outfit', g, body)), ...clips.map(pClip), ...clips.flatMap(pHair),
     ...faces.flatMap(f => (EXPRESSIONS[f] ? pMarks(marksOf(EXPRESSIONS[f])) : [])), ...pHand(props, recs.some(sits))], ws);
 
   const spec = Object.freeze({ ...bodySpec({ name, hair, ...(shirt ? { shirt } : {}), ...(skin ? { skin } : {}), ...(age ? { faceAge: age } : {}) }, body), ...(girth != null ? { girth } : {}),
@@ -94,7 +98,7 @@ export function person(def) {
       never(`${where}: clip ${n}`, k, ['clip', 'body'], 'comes from person()');
       if (!Number.isFinite(k.f)) throw new Error(`${where}: clip ${n}: f (the frame it starts on) is missing`);
       const c = getClip(n, body), swap = propSwap(k.swap), held = [...(c.needs?.props || []).map(p => swap[p] ?? p), ...Object.values(k.props || {}).filter(Boolean), ...Object.keys(k).flatMap(x => /^x_hp[LRBH]_(\w+)$/.exec(x)?.[1] ?? [])];
-      must(where, [pClip(n), ...pHand(held, sits(c))], ws);
+      must(where, [pClip(n), ...pHair(n), ...pHand(held, sits(c))], ws);
       const top = seat != null ? seatTop(c) : null;   // `seat`: the film's name for the seat this clip sits on (not an engine key)
       if (top != null) { const was = seatsUsed.get(seat); if (!was) seatsUsed.set(seat, { clip: n, top }); else if (Math.abs(was.top - top) > 0.02) throw new Error(`${where}: seat "${seat}" is used by ${was.clip} (seat ${was.top.toFixed(3)} m) and ${n} (seat ${top.toFixed(3)} m): clips on one seat are within 2 cm of each other; use them in separate shots`); }
       return { ...k, ...(k.swap ? { swap } : {}), clip: n, body };
