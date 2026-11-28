@@ -137,3 +137,18 @@ test('checks.yml runs the fast tier with its budget, and the heavy files on Linu
   assert.equal(heavy.match(/ALL: \$\{\{ github\.event_name != 'pull_request' \|\| contains\(github\.event\.pull_request\.labels\.\*\.name, 'heavy-all'\) \}\}/g).length, 2);
   assert.equal(heavy.match(/\[ "\$ALL" = true \] && echo --all \|\| echo --base "origin\/\$\{\{ github\.base_ref \}\}"/g).length, 2);
 });
+
+test('no workflow line is a plain YAML value holding ": " (GitHub then drops the whole workflow and no check runs, 28/11)', () => {
+  for (const f of readdirSync(WF).filter(f => /\.ya?ml$/.test(f))) {
+    let block = -1;
+    for (const [i, line] of read(f).split('\n').entries()) {
+      const indent = line.search(/\S/);
+      if (block >= 0 && (indent > block || indent < 0)) continue;
+      block = -1;
+      const m = line.match(/^(\s*)(?:- )?[\w-]+: (.+)$/);
+      if (!m) continue;
+      if (/^[|>]/.test(m[2])) { block = m[1].length; continue; }
+      assert.ok(/^['"{[]/.test(m[2]) || !m[2].includes(': '), `${f}:${i + 1} needs quotes: ${line.trim()}`);
+    }
+  }
+});

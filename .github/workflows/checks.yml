@@ -27,7 +27,7 @@ jobs:
           fetch-depth: 0
       - name: Install the root packages the unit tests and the typecheck import (three, playwright-core; no browser download)
         run: npm ci --no-audit --no-fund --loglevel=error
-      - name: Fast unit tests (every file without `// tier: heavy`; a file over 15 s or the tier over 120 s fails and names the slowest)
+      - name: 'Fast unit tests (every file without `// tier: heavy`; a file over 15 s or the tier over 120 s fails and names the slowest)'
         run: node test/tier.mjs fast
       - name: Release checks without writing zips (manifest coverage, forbidden strings, Chinese in buyer docs, licences, skill sets)
         run: node release/build.mjs --dry-run
