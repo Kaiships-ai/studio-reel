@@ -1,5 +1,7 @@
 // The golden fingerprint of every stick-man look this checkout builds, headless (no GPU): per case a hash of the scene graph
-// (names, visibility, world matrices), every geometry attribute, every material's values and textures, and every 2D canvas
+// (names, visibility, world matrices), every geometry attribute and group, every material's values, userData (the toon
+// uniforms), shader patches (onBeforeCompile source, customProgramCacheKey) and textures with their sampling, every light's
+// colour, intensity and shadow, and every 2D canvas
 // as a log of the draw calls made on it, with the bytes of each putImageData (the hair maps are pixels written straight in).
 // A look that changes by one colour step changes its hash; one that is rebuilt the same way keeps it.
 //   node test/unit/look-fingerprint.mjs [--all | --order wh|hw|h-w [--part k/n] [--only <regex>]] [--mutate coral] [--out file.json] [--write]
@@ -13,6 +15,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync, spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
+import { ShaderLib } from 'three';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const GOLDEN = join(ROOT, 'test/golden/looks.json'), APPROVALS = join(ROOT, 'test/golden/approvals.json');
@@ -53,19 +56,44 @@ function canvasHash(cv) {
   try { return sha(JSON.stringify([cv.width, cv.height, cv.__log], (k, v) => (v?.__log ? 'cv:' + canvasHash(v) : ArrayBuffer.isView(v) ? 'b:' + sha(bytes(v)) : r5(v)))); }
   finally { hashingInProgress.delete(cv); }
 }
+const TEXTURE_PARAMS = ['wrapS', 'wrapT', 'repeat', 'offset', 'center', 'rotation', 'flipY', 'colorSpace', 'magFilter', 'minFilter', 'anisotropy', 'generateMipmaps', 'premultiplyAlpha'];
 function textureHash(t) {
-  const im = t.image;
-  if (im?.__log) return 'cv:' + canvasHash(im);
-  if (im?.data) return 'dt:' + sha(bytes(im.data)) + ':' + im.width + 'x' + im.height;
-  return 'tex';
+  const im = t.image, params = sha(JSON.stringify(TEXTURE_PARAMS.map(k => value(t[k]))));
+  if (im?.__log) return 'cv:' + canvasHash(im) + ':' + params;
+  if (im?.data) return 'dt:' + sha(bytes(im.data)) + ':' + im.width + 'x' + im.height + ':' + params;
+  return 'tex:' + params;
 }
-const value = v => (v == null || typeof v !== 'object' ? r5(v) : v.isTexture ? textureHash(v) : v.isColor ? v.toArray().map(r5)
-  : typeof v.toArray === 'function' ? v.toArray().map(r5) : Array.isArray(v) ? v.map(value) : typeof v);
+// Plain objects (userData, uniforms) are walked; a function is its source (an onBeforeCompile shader patch); an Object3D
+// stands for its type and name (a reference, hashed where the scene graph holds it).
+function value(v, depth = 0) {
+  if (typeof v === 'function') return 'fn:' + sha(String(v));
+  if (v == null || typeof v !== 'object') return r5(v);
+  if (v.isTexture) return textureHash(v);
+  if (v.isObject3D) return `o3d:${v.type}:${v.name}`;
+  if (ArrayBuffer.isView(v)) return 'b:' + sha(bytes(v));
+  if (typeof v.toArray === 'function') return v.toArray().map(r5);
+  if (depth > 4) return typeof v;
+  if (Array.isArray(v)) return v.map(x => value(x, depth + 1));
+  const proto = Object.getPrototypeOf(v);
+  if (proto !== Object.prototype && proto !== null) return typeof v;
+  return Object.keys(v).sort().map(k => [k, value(v[k], depth + 1)]);
+}
+// A shader patch is hashed by what it does: run on the material's own three.js shader, its output covers values its
+// closure holds (a constant in a template, the uniforms it adds), not only its source.
+const SHADERS = { MeshStandardMaterial: 'standard', MeshPhysicalMaterial: 'physical', MeshBasicMaterial: 'basic', MeshLambertMaterial: 'lambert', MeshPhongMaterial: 'phong', MeshToonMaterial: 'toon', MeshMatcapMaterial: 'matcap', LineBasicMaterial: 'basic', PointsMaterial: 'points' };
+function patchHash(m) {
+  if (!Object.prototype.hasOwnProperty.call(m, 'onBeforeCompile')) return null;
+  const lib = ShaderLib[SHADERS[m.type]] || {}, sh = { uniforms: {}, defines: {}, vertexShader: lib.vertexShader || '', fragmentShader: lib.fragmentShader || '' };
+  try { m.onBeforeCompile(sh, {}); } catch (e) { return 'threw:' + e.message; }
+  return sha(JSON.stringify([sh.vertexShader, sh.fragmentShader, value(sh.defines), Object.keys(sh.uniforms).sort().map(k => [k, value(sh.uniforms[k]?.value)])]));
+}
 function materialHash(m) {
-  const own = Object.keys(m).filter(k => !k.startsWith('_') && k !== 'uuid' && k !== 'id' && k !== 'version' && k !== 'userData').sort();
+  const own = Object.keys(m).filter(k => !k.startsWith('_') && k !== 'uuid' && k !== 'id' && k !== 'version').sort();
   const u = m.uniforms ? Object.keys(m.uniforms).sort().map(k => [k, value(m.uniforms[k].value)]) : null;
-  return JSON.stringify([own.map(k => [k, value(m[k])]), u]);
+  return JSON.stringify([own.map(k => [k, value(m[k])]), u, m.customProgramCacheKey?.(), patchHash(m)]);
 }
+const LIGHT_PARAMS = ['color', 'groundColor', 'intensity', 'distance', 'decay', 'angle', 'penumbra', 'castShadow'];
+const lightHash = o => JSON.stringify([LIGHT_PARAMS.map(k => value(o[k])), o.shadow && [o.shadow.bias, o.shadow.normalBias, o.shadow.radius, value(o.shadow.mapSize)].map(r5)]);
 export function hashFigure(S, group) {
   const h = createHash('sha256'); let meshes = 0, canvases = 0;
   for (const top of [S.root, group].filter(Boolean)) {
@@ -76,7 +104,9 @@ export function hashFigure(S, group) {
         meshes++;
         for (const k of Object.keys(o.geometry.attributes).sort()) h.update(k + Array.from(o.geometry.attributes[k].array, r5).join(','));
         if (o.geometry.index) h.update(bytes(o.geometry.index.array));
+        h.update(JSON.stringify(o.geometry.groups));
       }
+      if (o.isLight) h.update(lightHash(o));
       for (const m of [o.material].flat().filter(Boolean)) { h.update(materialHash(m)); for (const v of Object.values(m)) if (v?.isTexture && v.image?.__log) canvases++; }
     });
   }
@@ -139,10 +169,13 @@ export async function fingerprintAll({ mutate = null, orders = ORDERS, processes
   return { face: runs[0].face, cases: Object.assign({}, ...runs.map(r => r.cases)), ms: Object.assign({}, ...runs.map(r => r.ms)) };
 }
 
+// The before|after page Kai looked at: a claude.ai artifact. `by: 'Kai'` is a string any agent can write, so Kai checks every
+// approvals.json row in the PR diff before he merges; this only refuses a row that names no page he could have seen.
+export const ARTIFACT = /^https:\/\/claude\.ai\/(code\/)?artifact\/[\w-]+$/;
 // what fails against the golden: a case whose hash moved with no row { case, from, to, page, by: 'Kai' } chaining from the
 // recorded hash to this one, a recorded case no longer built, and a built case never recorded
 export function judge(golden, approvals, cases) {
-  const fails = [], rows = approvals.filter(a => a && a.by === 'Kai' && a.case && a.from && a.to && a.page);
+  const fails = [], rows = approvals.filter(a => a && a.by === 'Kai' && a.case && a.from && a.to && ARTIFACT.test(a.page || ''));
   for (const [name, want] of Object.entries(golden.cases)) {
     const got = cases[name]?.hash;
     if (!got) { fails.push({ case: name, why: 'no longer built', want }); continue; }

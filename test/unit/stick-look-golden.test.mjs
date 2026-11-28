@@ -29,10 +29,10 @@ test('control: one colour step on coral moves look:dress and nothing else, and t
   assert.deepEqual(judge(golden, approvals, { ...head.cases, ...coral.cases }).map(f => f.case), ['look:dress']);
 });
 
-test('an approval passes a changed look only when Kai signed it and it names the before|after page', () => {
+test('an approval passes a changed look only when Kai signed it and it names the before|after page, a claude.ai artifact', () => {
   const row = { case: 'look:dress', from: golden.cases['look:dress'], to: coral.cases['look:dress'].hash, page: 'https://claude.ai/artifact/example' };
   assert.equal(judge(golden, [{ ...row, by: 'Kai' }], { ...head.cases, ...coral.cases }).length, 0, 'a signed row with its page lets the change through');
-  for (const bad of [row, { ...row, by: 'agent' }, { ...row, by: 'Kai', page: '' }, { ...row, by: 'Kai', from: 'other' }])
+  for (const bad of [row, { ...row, by: 'agent' }, { ...row, by: 'Kai', page: '' }, { ...row, by: 'Kai', page: 'looked at it' }, { ...row, by: 'Kai', page: 'https://example.com/artifact/x' }, { ...row, by: 'Kai', from: 'other' }])
     assert.deepEqual(judge(golden, [bad], { ...head.cases, ...coral.cases }).map(f => f.case), ['look:dress'], JSON.stringify(bad));
 });
 
