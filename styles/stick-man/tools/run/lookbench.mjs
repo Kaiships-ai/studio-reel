@@ -2,8 +2,10 @@
 // and the hair-swap journey on the GPU. Every scenario writes a JSON report and its screenshots into --out.
 //   node styles/stick-man/tools/run/lookbench.mjs serve [--port 8765]      a server on the repo; prints the bench URL, then "lookbench ready"
 //   node styles/stick-man/tools/run/lookbench.mjs doctor                   read-only: the checkout's SHA, the machine, the browser, the GPU (ANGLE Metal), the port
-//   node styles/stick-man/tools/run/lookbench.mjs golden --out <dir> [--mutate coral]   fingerprint + judge -> golden.json, bench.png; exit 1 on a lệch tile
-//   node styles/stick-man/tools/run/lookbench.mjs hairswap --out <dir> [--styles side,afro]   one figure, each toon hair in turn -> hair-<style>.png, hairswap.json
+//   node styles/stick-man/tools/run/lookbench.mjs golden --out <dir> [--mutate coral]   fingerprint + judge + the in-place hair swaps -> golden.json, bench.png; exit 1 on a lệch tile
+//   node styles/stick-man/tools/run/lookbench.mjs hair-swap --out <dir>    the 110 in-place hair swaps against fresh builds (headless) -> swaps.json, hair-swap-110.png; exit 1 on a lệch pair
+//   node styles/stick-man/tools/run/lookbench.mjs hairswap --out <dir> [--styles side,afro] [--loops 50]   one figure on the GPU, its toon hair swapped in place to each style in turn -> hair-<style>.png, hairswap.json (with --loops: the live geometry count after each loop)
+//   node styles/stick-man/tools/run/lookbench.mjs perf-build [--root <checkout>] [--reps 3]   headless: makeStick ms for each toon hair (median, p95), and an in-place swap's when the checkout has S.bakeHair; JSON on the last line
 // --console prints the page's console. GPU scenarios (hairswap) belong on the Mac Pro; golden draws only HTML tiles.
 import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os'; import net from 'node:net';
 import { execFileSync } from 'node:child_process';
@@ -11,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { serveFiles, launchGpu } from '../render/pageserver.mjs';
 import { APPROVALS, GOLDEN, fingerprintAll, judge, readJSON } from '../../../../test/unit/look-fingerprint.mjs';
 import { SCORES } from './codescore.mjs';
+import { swapAll } from '../../../../test/unit/hair-swap.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 const PAGE = 'styles/stick-man/tools/run/lookbench.html';
@@ -35,26 +38,52 @@ async function withPage(dir, query, size, fn) {
 
 async function golden() {
   const dir = out(), t0 = performance.now(), mutate = typeof A.mutate === 'string' ? A.mutate : null;
-  const { cases } = await fingerprintAll({ mutate }), G = readJSON(GOLDEN), fails = judge(G, readJSON(APPROVALS), cases);
-  const report = { sha: sha(), mutate, ms: Math.round(performance.now() - t0), golden: G.cases, cases, fails, scores: SCORES };
+  const [{ cases }, { pairs }] = await Promise.all([fingerprintAll({ mutate }), swapAll()]), G = readJSON(GOLDEN), fails = judge(G, readJSON(APPROVALS), cases);
+  const report = { sha: sha(), mutate, ms: Math.round(performance.now() - t0), golden: G.cases, cases, fails, scores: SCORES, swaps: pairs };
   fs.writeFileSync(path.join(dir, 'golden.json'), JSON.stringify(report, null, 1) + '\n');
   await withPage(dir, 'view=bench&report=/__bench/golden.json', { width: 1200, height: 900 }, p => p.screenshot({ path: path.join(dir, 'bench.png'), fullPage: true }));
-  const bad = fails.map(f => f.case);
-  console.log(`${Object.keys(cases).length} cases, ${bad.length} lệch${bad.length ? ': ' + bad.join(', ') : ''} · ${path.join(dir, 'bench.png')}`);
+  const bad = [...fails.map(f => f.case), ...pairs.filter(p => !p.ok).map(p => `${p.from}>${p.to}`)];
+  console.log(`${Object.keys(cases).length} cases + ${pairs.length} hair swaps, ${bad.length} lệch${bad.length ? ': ' + bad.join(', ') : ''} · ${path.join(dir, 'bench.png')}`);
+  process.exitCode = bad.length ? 1 : 0;
+}
+
+async function hairSwap110() {
+  const dir = out(), t0 = performance.now(), { pairs } = await swapAll();
+  fs.writeFileSync(path.join(dir, 'swaps.json'), JSON.stringify({ sha: sha(), ms: Math.round(performance.now() - t0), pairs }, null, 1) + '\n');
+  await withPage(dir, 'view=swaps&report=/__bench/swaps.json', { width: 1200, height: 900 }, p => p.screenshot({ path: path.join(dir, 'hair-swap-110.png'), fullPage: true }));
+  const bad = pairs.filter(p => !p.ok);
+  console.log(`${pairs.length} hair swaps, ${pairs.length - bad.length} khớp, ${bad.length} lệch${bad.length ? ': ' + bad.map(p => `${p.from}>${p.to}`).join(', ') : ''} · ${path.join(dir, 'hair-swap-110.png')}`);
   process.exitCode = bad.length ? 1 : 0;
 }
 
 async function hairswap() {
   const dir = out(), { HAIR_STYLES } = await import('#kit/cast/hair.js');
-  const styles = typeof A.styles === 'string' ? A.styles.split(',') : HAIR_STYLES, rows = [];
+  const styles = typeof A.styles === 'string' ? A.styles.split(',') : HAIR_STYLES, rows = [], loops = Number(A.loops || 0), geometries = [];
   await withPage(dir, 'view=swap', { width: 720, height: 1280 }, async p => {
     for (const style of styles) {
-      const buildMs = await p.evaluate(s => window.__swap(s), style), file = path.join(dir, `hair-${style}.png`);
-      await p.screenshot({ path: file }); rows.push({ style, buildMs, png: file });
-      console.log(`${style}: rebuilt in ${buildMs} ms`);
+      const swapMs = await p.evaluate(s => window.__swap(s), style), file = path.join(dir, `hair-${style}.png`);
+      await p.screenshot({ path: file }); rows.push({ style, swapMs, png: file });
+      console.log(`${style}: swapped in place in ${swapMs} ms`);
     }
+    for (let k = 0; k < loops; k++) { for (const style of styles) await p.evaluate(s => window.__swap(s), style); geometries.push(await p.evaluate(() => window.__geometries())); }
+    if (loops) console.log(`geometries after each of ${loops} loops: ${geometries.join(' ')}`);
   });
-  fs.writeFileSync(path.join(dir, 'hairswap.json'), JSON.stringify({ sha: sha(), machine: os.hostname(), rows }, null, 1) + '\n');
+  fs.writeFileSync(path.join(dir, 'hairswap.json'), JSON.stringify({ sha: sha(), machine: os.hostname(), rows, geometries }, null, 1) + '\n');
+}
+
+async function perfBuild() {
+  const root = path.resolve(typeof A.root === 'string' ? A.root : ROOT), reps = Number(A.reps || 3), { pathToFileURL } = await import('node:url');
+  const { recordingDocument } = await import('../../../../test/unit/look-fingerprint.mjs');
+  globalThis.document = recordingDocument();
+  const S_ = p => import(pathToFileURL(path.join(root, 'styles/stick-man', p)).href);
+  const { S: base } = await (await S_('tools/gates/motionlib.mjs')).rigStick('adult'), { makeStick } = await S_('engine/cast.js'), { toonHair, HAIR_STYLES } = await S_('kit/cast/hair.js');
+  const q = (xs, p) => { const a = [...xs].sort((x, y) => x - y); return Math.round(a[Math.min(a.length - 1, Math.floor(p * a.length))] * 10) / 10; };
+  const build = [], swap = [];
+  for (let r = 0; r < reps; r++) for (const st of HAIR_STYLES) {
+    const t0 = performance.now(), S = makeStick({ ...base.spec, hair: [toonHair(st)] }); build.push(performance.now() - t0);
+    if (S.bakeHair) { const next = HAIR_STYLES[(HAIR_STYLES.indexOf(st) + 1) % HAIR_STYLES.length], t1 = performance.now(); S.bakeHair([toonHair(next)]); swap.push(performance.now() - t1); }
+  }
+  console.log(JSON.stringify({ root, sha: execFileSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), n: build.length, makeStick: { median: q(build, 0.5), p95: q(build, 0.95) }, ...(swap.length ? { swap: { median: q(swap, 0.5), p95: q(swap, 0.95) } } : {}) }));
 }
 
 const portFree = port => new Promise(ok => { const s = net.createServer().once('error', () => ok(false)).once('listening', () => s.close(() => ok(true))).listen(port, '127.0.0.1'); });
@@ -81,6 +110,6 @@ async function serve() {
   for (const s of ['SIGINT', 'SIGTERM']) process.on(s, () => server.close(() => process.exit(0)));
 }
 
-const RUN = { serve, doctor, golden, hairswap };
+const RUN = { serve, doctor, golden, hairswap, 'hair-swap': hairSwap110, 'perf-build': perfBuild };
 if (RUN[cmd]) await RUN[cmd]();
 else { console.log(fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split(/\n(?!\/\/)/)[0].replace(/^\/\/ ?/gm, '')); process.exitCode = cmd ? 2 : 0; }
