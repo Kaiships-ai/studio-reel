@@ -81,4 +81,4 @@ async function serve() {
 
 const RUN = { serve, doctor, golden, hairswap };
 if (RUN[cmd]) await RUN[cmd]();
-else { console.log(fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').filter(l => l.startsWith('//')).map(l => l.slice(3)).join('\n')); process.exitCode = cmd ? 2 : 0; }
+else { console.log(fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split(/\n(?!\/\/)/)[0].replace(/^\/\/ ?/gm, '')); process.exitCode = cmd ? 2 : 0; }

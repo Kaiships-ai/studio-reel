@@ -19,14 +19,13 @@ export const GOLDEN = join(ROOT, 'test/golden/looks.json'), APPROVALS = join(ROO
 export const ORDERS = ['wh', 'hw', 'h-w'];
 export const HOODIES = [['hoodie', ['hoodie:grey']], ['hoodie + scarf', ['hoodie:grey', 'scarf:mustard']], ['hoodie down', ['hoodie:grey:down']]];
 export const MARK = '\n@@look-fingerprint@@\n';   // engine code may log to stdout: the JSON follows the last marker
-const WH_PARTS = 4;   // the reference order's cases run round-robin in this many processes (hair maps are the slow part)
+const WH_PROCESSES = 4;
 export const BODIES = ['adult', 'heavy', 'thin', 'elder', 'child'];
 
 const sha = b => createHash('sha256').update(b).digest('hex').slice(0, 16);
 const r5 = x => (typeof x === 'number' ? Math.round(x * 1e5) / 1e5 : x);
 const bytes = a => Buffer.from(a.buffer, a.byteOffset, a.byteLength);
 
-// a canvas whose 2D context records every call and property write; ImageData is a real byte buffer
 function recordingDocument() {
   const canvas = () => {
     const cv = { width: 1, height: 1, style: {}, __log: [], addEventListener() {}, toDataURL: () => '' };
@@ -47,12 +46,12 @@ function recordingDocument() {
   };
   return { createElement: canvas, createElementNS: canvas };
 }
-const drawing = new Set();   // a canvas drawn into itself is hashed by its own log so far, once
+const hashingInProgress = new Set();
 function canvasHash(cv) {
-  if (drawing.has(cv)) return 'self';
-  drawing.add(cv);
+  if (hashingInProgress.has(cv)) return 'self';
+  hashingInProgress.add(cv);
   try { return sha(JSON.stringify([cv.width, cv.height, cv.__log], (k, v) => (v?.__log ? 'cv:' + canvasHash(v) : ArrayBuffer.isView(v) ? 'b:' + sha(bytes(v)) : r5(v)))); }
-  finally { drawing.delete(cv); }
+  finally { hashingInProgress.delete(cv); }
 }
 function textureHash(t) {
   const im = t.image;
@@ -67,7 +66,6 @@ function materialHash(m) {
   const u = m.uniforms ? Object.keys(m.uniforms).sort().map(k => [k, value(m.uniforms[k].value)]) : null;
   return JSON.stringify([own.map(k => [k, value(m[k])]), u]);
 }
-// one built figure (and the stage group its costume draws into)
 export function hashFigure(S, group) {
   const h = createHash('sha256'); let meshes = 0, canvases = 0;
   for (const top of [S.root, group].filter(Boolean)) {
@@ -129,9 +127,8 @@ export async function fingerprintCases({ order = 'wh', part = [0, 1], only = nul
   return { order, face, cases, ms };
 }
 
-// all three orders, each in its own node process, merged: { face, cases }
 export async function fingerprintAll({ mutate = null } = {}) {
-  const jobs = [...Array.from({ length: WH_PARTS }, (_, k) => ['wh', k, WH_PARTS]), ['hw', 0, 1], ['h-w', 0, 1]];
+  const jobs = [...Array.from({ length: WH_PROCESSES }, (_, k) => ['wh', k, WH_PROCESSES]), ['hw', 0, 1], ['h-w', 0, 1]];
   const runs = await Promise.all(jobs.map(([order, k, n]) => new Promise((ok, fail) => {
     const args = [fileURLToPath(import.meta.url), '--order', order, '--part', `${k}/${n}`, ...(mutate ? ['--mutate', mutate] : [])];
     const p = spawn(process.execPath, args, { cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'] });

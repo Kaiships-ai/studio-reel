@@ -85,7 +85,6 @@ export function longestCastFn(root) {
   visit(ast, null);
   return best;
 }
-// the repo's own specs (engine/play.js SPECS: cast.js and the kit's extras, rail.js loaded): hair that survives JSON
 export async function specsJsonSafe(root) {
   const S_ = p => import(pathToFileURL(join(root, 'styles/stick-man', p)).href);
   await (await S_('tools/gates/motionlib.mjs')).rigStick('adult');   // the headless canvas
@@ -93,7 +92,6 @@ export async function specsJsonSafe(root) {
   const all = Object.entries(SPECS), safe = all.filter(([, s]) => JSON.stringify(JSON.parse(JSON.stringify(s.hair ?? null))) === JSON.stringify(s.hair ?? null) && !(s.hair || []).some(h => typeof h === 'function'));
   return { safe: safe.length, of: all.length, unsafe: all.filter(x => !safe.includes(x)).map(([n]) => n) };
 }
-// the hoodie looks built under each of today's import orders (test/unit/look-fingerprint.mjs): how many differ
 export async function importOrderMatters(root) {
   const fp = join(root, 'test/unit/look-fingerprint.mjs'), { ORDERS, HOODIES, MARK } = await import(pathToFileURL(fp).href);
   const runs = await Promise.all(ORDERS.map(order => new Promise((ok, fail) => {
@@ -116,7 +114,6 @@ export async function measure(root = ROOT, { run = true } = {}) {
   }
   return { card, detail };
 }
-// the scores at head that are worse than the recorded card
 export function worse(recorded, card) {
   return Object.entries(SCORES).filter(([k, { better }]) => k in card && k in recorded && (better === 'lower' ? card[k] > recorded[k] : card[k] < recorded[k]))
     .map(([k, s]) => `${k}: ${recorded[k]} -> ${card[k]} (${s.what}, ${s.better} is better)`);

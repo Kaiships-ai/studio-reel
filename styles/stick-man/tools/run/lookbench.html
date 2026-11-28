@@ -69,7 +69,7 @@ async function swap() {
     const t0 = performance.now(), group = new THREE.Group(); stage.scene.add(group);
     const S = makeStick(bodySpec({ name: style, shirt: [0.62, 0.62, 0.66], hair: style ? [toonHair(style)] : [] }, 'adult')); group.add(S.root);
     HOOKS.costume(S, ['sweater:coral'], { group }); S.pose({}); now = { group, S };
-    const ms = performance.now() - t0, head = S.skel.head.clone().multiplyScalar(0.6).applyMatrix4(S.root.matrixWorld), dir = new THREE.Vector3(0.35, 0.05, 1).normalize();
+    S.root.updateMatrixWorld(true); const ms = performance.now() - t0, head = S.parts.head.getWorldPosition(new THREE.Vector3()), dir = new THREE.Vector3(0.35, 0.05, 1).normalize();
     const cam = head.clone().addScaledVector(dir, 1.25);
     stage.setCamera(toB(cam), toB(head.clone().setY(head.y - 0.12)), 50); stage.setSun(toB(dir.clone().multiplyScalar(-0.8).setY(-0.5)), toB(head), 2.2);
     S.face({ t: 0, expr: 'neutral', cam: toB(cam) });

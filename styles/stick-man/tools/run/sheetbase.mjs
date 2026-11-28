@@ -42,7 +42,6 @@ function capture(out, only) {
   console.log(`${files.length} images, ${out}/SHA`);
 }
 
-// an image as RGBA bytes (ffmpeg decodes PNG and JPEG alike)
 function pixels(f) {
   const probe = run('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', f], { capture: true });
   const [w, h] = probe.stdout.trim().split(',').map(Number);
@@ -54,7 +53,6 @@ function writePng(f, w, h, data) {
   const r = run('ffmpeg', ['-v', 'error', '-y', '-f', 'rawvideo', '-pix_fmt', 'rgba', '-s', `${w}x${h}`, '-i', '-', f], { input: data, stdio: ['pipe', 'ignore', 'pipe'] });
   if (r.status) throw new Error(`ffmpeg could not write ${f}: ${r.stderr}`);
 }
-// pixels that differ, and a picture of where: the after image dimmed, every differing pixel red
 function diffImages(a, b) {
   if (a.w !== b.w || a.h !== b.h) return { px: Math.max(a.w * a.h, b.w * b.h), size: `${a.w}x${a.h} -> ${b.w}x${b.h}` };
   let px = 0; const out = Buffer.alloc(a.data.length);
@@ -100,4 +98,4 @@ const [cmd, ...rest] = process.argv.slice(2), A = {};
 for (let i = 0; i < rest.length; i += 2) A[rest[i].replace(/^--/, '')] = rest[i + 1];
 if (cmd === 'capture' && A.out) capture(path.resolve(A.out), A.only?.split(','));
 else if (cmd === 'compare' && A.base && A.head && A.out) compare(path.resolve(A.base), path.resolve(A.head), path.resolve(A.out));
-else { console.log(fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').filter(l => l.startsWith('//')).map(l => l.slice(3)).join('\n')); process.exitCode = cmd ? 2 : 0; }
+else { console.log(fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split(/\n(?!\/\/)/)[0].replace(/^\/\/ ?/gm, '')); process.exitCode = cmd ? 2 : 0; }
