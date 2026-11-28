@@ -5,6 +5,7 @@
 //   node styles/stick-man/tools/run/lookbench.mjs golden --out <dir> [--mutate coral]   fingerprint + judge + the in-place hair swaps -> golden.json, bench.png; exit 1 on a lệch tile
 //   node styles/stick-man/tools/run/lookbench.mjs hair-swap --out <dir>    the 110 in-place hair swaps against fresh builds (headless) -> swaps.json, hair-swap-110.png; exit 1 on a lệch pair
 //   node styles/stick-man/tools/run/lookbench.mjs hairswap --out <dir> [--styles side,afro] [--loops 50]   one figure on the GPU, its toon hair swapped in place to each style in turn -> hair-<style>.png, hairswap.json (with --loops: the live geometry count after each loop)
+//   node styles/stick-man/tools/run/lookbench.mjs lanes --out <dir>      GPU: an in-place change beside a fresh build, pixel by pixel -> hat-afro.png, child-hair.png, elder-hair.png, girth-bent.png, and swap-50.png (live geometries over 50 loops), lanes.json; exit 1 on a lệch lane
 //   node styles/stick-man/tools/run/lookbench.mjs perf-build [--root <checkout>] [--reps 3]   headless: makeStick ms for each toon hair (median, p95), and an in-place swap's when the checkout has S.bakeHair; JSON on the last line
 // --console prints the page's console. GPU scenarios (hairswap) belong on the Mac Pro; golden draws only HTML tiles.
 import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os'; import net from 'node:net';
@@ -85,6 +86,29 @@ async function perfBuild() {
   console.log(JSON.stringify({ root, sha: execFileSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), n: build.length, makeStick: { median: q(build, 0.5), p95: q(build, 0.95) }, ...(swap.length ? { swap: { median: q(swap, 0.5), p95: q(swap, 0.95) } } : {}) }));
 }
 
+const savePng = (file, url) => fs.writeFileSync(file, Buffer.from(url.split(',')[1], 'base64'));
+async function lanes() {
+  const dir = out(), rows = [];
+  const pair = async (name, query, change, fresh, labels) => withPage(dir, `view=swap&${query}`, { width: 540, height: 960 }, async p => {
+    await p.evaluate(change); const a = await p.evaluate(() => window.__grab());
+    await p.evaluate(fresh); const b = await p.evaluate(() => window.__grab());
+    const { diff, png } = await p.evaluate(([x, y, la, lb]) => window.__pair(x, y, la, lb), [a, b, ...labels]);
+    savePng(path.join(dir, `${name}.png`), png); rows.push({ lane: name, diff, ok: diff === 0 }); console.log(`${name}: ${diff} px differ`);
+  });
+  await pair('hat-afro', 'wear=cap:police&hair=pompadour', () => window.__swap('afro'), () => window.__fresh('afro'), ['police cap: pompadour -> afro tại chỗ', 'dựng mới: afro']);
+  for (const body of ['child', 'elder']) await pair(`${body}-hair`, `body=${body}&wear=&hair=side`, () => window.__swap('afro'), () => window.__fresh('afro'), [`${body}: side -> afro tại chỗ`, 'dựng mới: afro']);
+  await pair('girth-bent', 'frame=body&wear=', () => window.__girth(1.3), () => window.__fresh(null, 1.3), ['girth 1 -> 1.3 tại chỗ', 'dựng mới: girth 1.3']);
+  const { HAIR_STYLES } = await import('#kit/cast/hair.js');
+  await withPage(dir, `view=swap&hair=${HAIR_STYLES[0]}`, { width: 540, height: 960 }, async p => {
+    const ys = [await p.evaluate(() => window.__geometries())];
+    for (let k = 0; k < 50; k++) { for (const st of [...HAIR_STYLES.slice(1), HAIR_STYLES[0]]) await p.evaluate(s => window.__swap(s), st); ys.push(await p.evaluate(() => window.__geometries())); }
+    savePng(path.join(dir, 'swap-50.png'), await p.evaluate(([y, t]) => window.__chart(y, t), [ys, `live geometries: start ${ys[0]}, after 50 loops of 11 swaps ${ys.at(-1)} (max ${Math.max(...ys)})`]));
+    rows.push({ lane: 'swap-50', start: ys[0], end: ys.at(-1), max: Math.max(...ys), ok: ys.at(-1) === ys[0] }); console.log(`swap-50: ${ys[0]} -> ${ys.at(-1)} (max ${Math.max(...ys)})`);
+  });
+  fs.writeFileSync(path.join(dir, 'lanes.json'), JSON.stringify({ sha: sha(), machine: os.hostname(), rows }, null, 1) + '\n');
+  process.exitCode = rows.every(r => r.ok) ? 0 : 1;
+}
+
 const portFree = port => new Promise(ok => { const s = net.createServer().once('error', () => ok(false)).once('listening', () => s.close(() => ok(true))).listen(port, '127.0.0.1'); });
 async function doctor() {
   const port = Number(A.port || 8765), lines = [], fail = [];
@@ -109,6 +133,6 @@ async function serve() {
   for (const s of ['SIGINT', 'SIGTERM']) process.on(s, () => server.close(() => process.exit(0)));
 }
 
-const RUN = { serve, doctor, golden, hairswap, 'hair-swap': hairSwap110, 'perf-build': perfBuild };
+const RUN = { serve, doctor, golden, hairswap, 'hair-swap': hairSwap110, 'perf-build': perfBuild, lanes };
 if (RUN[cmd]) await RUN[cmd]();
 else { console.log(fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split(/\n(?!\/\/)/)[0].replace(/^\/\/ ?/gm, '')); process.exitCode = cmd ? 2 : 0; }
