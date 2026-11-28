@@ -19,7 +19,7 @@ const flat = col => toon(col, { shade: [0.80, 0.76, 0.92], sheen: 0.1, rough: 0.
 
 // knitted beanie with a folded cuff and a pom-pom
 export function beanie(col = [0.95, 0.60, 0.10], pom = [1, 1, 1], tilt = 10) {
-  return () => {
+  return Object.assign(() => {
     const g = new THREE.Group(); g.rotation.x = -tilt * DEG;
     g.add(solid(dome(14, 0.035 * W), flat(col)));
     const cuff = []; for (let i = 0; i <= 8; i++) { const la = (8 + 22 * i / 8) * DEG; cuff.push([(HA + 0.075 * W) * Math.cos(la), (HB + 0.06 * W) * Math.sin(la)]); }
@@ -27,11 +27,11 @@ export function beanie(col = [0.95, 0.60, 0.10], pom = [1, 1, 1], tilt = 10) {
     g.add(solid(lathe(cuff), flat(col.map(c => c * 0.78))));
     const p = solid(new THREE.SphereGeometry(0.11 * W, 20, 14), flat(pom)); p.position.set(0, HB + 0.12 * W, 0); g.add(p);
     return g;
-  };
+  }, { part: 'beanie', params: { col, pom, tilt } });
 }
 // wide-brim sun hat with a ribbon
 export function sunHat(col = [0.95, 0.80, 0.46], ribbon = [0.10, 0.18, 0.45], tilt = 8) {
-  return () => {
+  return Object.assign(() => {
     const g = new THREE.Group(); g.rotation.x = -tilt * DEG;
     const y = HB * Math.sin(22 * DEG), rIn = HA * Math.cos(22 * DEG) + 0.03 * W, R = 0.95 * W;
     g.add(solid(dome(22, 0.05 * W), flat(col)));
@@ -41,17 +41,17 @@ export function sunHat(col = [0.95, 0.80, 0.46], ribbon = [0.10, 0.18, 0.45], ti
     const brim = lathe([[rIn, y + 0.01 * W], [R, y - 0.05 * W], [R, y - 0.075 * W], [rIn, y - 0.02 * W], [rIn, y + 0.01 * W]], 64);
     brim.userData.sheet = true; g.add(solid(brim, flat(col.map(c => c * 0.95))));
     return g;
-  };
+  }, { part: 'sunHat', params: { col, ribbon, tilt } });
 }
 // short cap of hair plus a round bun on the crown
 export function bun(col = [0.16, 0.09, 0.05], tilt = 16) {
   const cap = hairCap(col, tilt);
-  return () => {
+  return Object.assign(() => {
     const g = cap();
     const b = solid(new THREE.SphereGeometry(0.20 * W, 24, 16), toon(col, { shade: [0.82, 0.79, 0.93], sheen: 0, rough: 1, rim: 0.12 }));
     b.position.set(0, HB + 0.10 * W, -0.22 * W); g.add(b);
     return g;
-  };
+  }, { part: 'bun', params: { col, tilt } });
 }
 
 // ---------------------------------------------------------------- specs

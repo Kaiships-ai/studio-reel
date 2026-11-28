@@ -46,12 +46,14 @@ Every journey writes to `--out`; use `/tmp/swarm-<pr>/<journey>/`.
 |---|---|---|
 | Golden bench | `node styles/stick-man/tools/run/lookbench.mjs golden --out /tmp/swarm-<pr>/golden` | exit 0, `bench.png` shows every tile `khớp`; `golden.json` lists `fails: []` |
 | Golden, no browser | `node --test test/unit/stick-look-golden.test.mjs` | 5 pass (about 8 s); the coral control moves only `look:dress` |
-| Hair swap | `node styles/stick-man/tools/run/lookbench.mjs hairswap --out /tmp/swarm-<pr>/hairswap` | one `hair-<style>.png` per toon hair (11), each showing that hair on the figure; `hairswap.json` has a build ms per style |
+| Hair swap | `node styles/stick-man/tools/run/lookbench.mjs hairswap --out /tmp/swarm-<pr>/hairswap [--loops 50]` | one figure whose hair is swapped in place (`S.bakeHair`) to each toon hair in turn: one `hair-<style>.png` per style (11); `hairswap.json` has a swap ms per style and, with `--loops`, the live geometry count after each loop |
+| Hair swap, 110 pairs | `node styles/stick-man/tools/run/lookbench.mjs hair-swap --out /tmp/swarm-<pr>/hair-swap` | exit 0, `hair-swap-110.png` shows 110 tiles `khớp` (every ordered pair of toon hairs swapped in place equals a fresh build, headless); `swaps.json` lists each pair |
+| In place beside fresh | `node styles/stick-man/tools/run/lookbench.mjs lanes --out /tmp/swarm-<pr>/lanes` | exit 0; `hat-afro.png`, `child-hair.png`, `elder-hair.png`, `girth-bent.png` each say `khớp: 0 px lệch` (an in-place change on the GPU beside a fresh build); `swap-50.png` ends at its start geometry count; `lanes.json` has every row `ok` |
 | Wardrobe sheet | `node styles/stick-man/tools/run/sheetbase.mjs capture --out /tmp/swarm-<pr>/sheets --only wardrobe` | 90 cells `wardrobe/c_<i>.png` (cells listed in `kit/cast/sheetcells.js`) |
 | Hair sheet | `... capture --out /tmp/swarm-<pr>/sheets --only hair` | 110 frames `hair/h_<i>.png` (`type=mw`: 11 styles x 10 views) |
 | Faces sheet | `... capture --out /tmp/swarm-<pr>/sheets --only faces` | `faces/faces.png`, the s2 expressions |
 | Rig sheet | `... capture --out /tmp/swarm-<pr>/sheets --only rig` | `rig/rig-sheet.jpg`, one row per Mixamo clip, front / 3-4 / side / back |
-| Against the baseline | `node styles/stick-man/tools/run/sheetbase.mjs compare --base ~/stick-sync/c1-baseline --head /tmp/swarm-<pr>/sheets --out /tmp/swarm-<pr>/compare` | exit 0 and `index.html` says all images match; else it lists each differing cell with before, after and a red diff |
+| Against the baseline | `node styles/stick-man/tools/run/sheetbase.mjs compare --base ~/stick-sync/c1-baseline-f8c1411d --head /tmp/swarm-<pr>/sheets --out /tmp/swarm-<pr>/compare` | exit 0 and `index.html` says all images match; else it lists each differing cell with before, after and a red diff |
 | Scorecard | `node styles/stick-man/tools/run/codescore.mjs` | no `WORSE` line against `test/golden/codescore.json` |
 
 A sheet capture without `--only` renders all four (about 180 images, the longest journey: run it with a timeout in the background and post a line when it ends). `--console` on `lookbench.mjs` prints the page console. A changed look is never fixed by editing `looks.json`: show Kai the `compare` page, and only his row in `test/golden/approvals.json` (`by: "Kai"`, `page` = that page's link) lets the new hash through.
@@ -60,11 +62,11 @@ A sheet capture without `--only` renders all four (about 180 images, the longest
 
 Screenshots and JSON reports stay in `/tmp/swarm-<pr>/` (on the Pro; copy what the report needs back with `scp pro:/tmp/swarm-<pr>/<file> <here>`, which works because `/tmp` is not under `~/Desktop`). A proof names the head SHA (`SHA` file of a capture, `sha` in `golden.json`), shows the action and the end state (the bench before and after a change, the before|after page), and cites the command that made it.
 
-The C1 baseline lives at `~/stick-sync/c1-baseline/` on the Pro: 90 wardrobe cells, 110 hair frames, the faces sheet, the rig sheet, `SHA` (the commit and its `main`) and `manifest.json` (a sha256 per image).
+The C1 baseline lives at `~/stick-sync/c1-baseline-f8c1411d/` on the Pro: 90 wardrobe cells, 110 hair frames, the faces sheet, the rig sheet, `SHA` (the commit and its `main`) and `manifest.json` (a sha256 per image).
 
 ## Cleanup
 
-Stop only what this run started: `kill <pid printed by serve>`. The scenarios close their own browser and server. Then `git -C /Users/kienbeovl/Desktop/kaiships/studio-reel worktree remove --force ~/stick-sync/verify-<pr>` (remove the two links first: `rm -f node_modules .pixi`). Never delete `/tmp/swarm-<pr>/` or `~/stick-sync/c1-baseline/`: they are the evidence.
+Stop only what this run started: `kill <pid printed by serve>`. The scenarios close their own browser and server. Then `git -C /Users/kienbeovl/Desktop/kaiships/studio-reel worktree remove --force ~/stick-sync/verify-<pr>` (remove the two links first: `rm -f node_modules .pixi`). Never delete `/tmp/swarm-<pr>/` or `~/stick-sync/c1-baseline-f8c1411d/`: they are the evidence.
 
 ## Feature map
 

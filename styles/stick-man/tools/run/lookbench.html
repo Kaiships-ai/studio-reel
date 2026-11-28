@@ -28,10 +28,25 @@ canvas { display: block; }
 //   ?view=bench&report=<json>  one tile per golden case (test/golden/looks.json) with its state at this checkout: khớp (matches),
 //                              lệch (moved without Kai's approval), mới (not in the golden yet); then the codebase scorecard
 //                              (test/golden/codescore.json), the add-a-part drill and the code review
-//   ?view=swap                 one figure on the GPU; window.__swap(style) rebuilds it with that toon hair (today a swap is a
-//                              rebuild) and returns the build ms
+//                              and, when the report holds them, the in-place hair swaps (đổi tóc tại chỗ)
+//   ?view=swaps&report=<json>  only the in-place hair swaps: one tile per ordered style pair, khớp when the swapped figure
+//                              equals a fresh build of that style (test/unit/hair-swap.mjs)
+//   ?view=swap[&body=child][&wear=cap:police][&hair=pompadour][&frame=body]   one figure on the GPU; window.__swap(style) swaps
+//                              its toon hair in place (S.bakeHair) and returns the ms, window.__girth(g) changes its girth in
+//                              place (undressed only: pass &wear=, a dressed figure refuses it), window.__fresh(style, girth) builds it again from scratch to compare against;
+//                              window.__geometries() is the renderer's live geometry count
 const Q = new URLSearchParams(location.search), VIEW = Q.get('view') || 'bench';
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const swapRow = pairs => { const bad = pairs.filter(p => !p.ok).length;
+  return `<h2>đổi tóc tại chỗ <span class="mono">${pairs.length} cặp kiểu tóc · ${pairs.length - bad} khớp · ${bad} lệch</span></h2>
+    <div class="grid">${pairs.map(p => `<div class="tile ${p.ok ? 'ok' : 'bad'}" data-pair="${esc(p.from + '>' + p.to)}"><div class="n">${esc(p.from)} → ${esc(p.to)}</div>
+      <div class="h">${esc(p.hash)} · ${esc(p.ms)} ms${p.ok ? '' : ' · fresh ' + esc(p.want) + (p.shell ? '' : ' · worn shell')}</div><span class="s">${p.ok ? 'khớp' : 'lệch'}</span></div>`).join('')}</div>`; };
+
+async function swaps() {
+  const R = await (await fetch(Q.get('report') || '/__bench/swaps.json')).json();
+  document.body.innerHTML = `<main><h1>Look bench</h1><div class="sub">${esc(R.sha)} · ${esc(R.ms)} ms</div>${swapRow(R.pairs)}</main>`;
+  window.__ready = true;
+}
 
 async function bench() {
   const R = await (await fetch(Q.get('report') || '/__bench/golden.json')).json();
@@ -47,6 +62,7 @@ async function bench() {
     <div class="sum"><div><b>${count('ok')}</b>khớp</div><div><b>${count('bad')}</b>lệch</div><div><b>${count('new')}</b>mới</div></div>
     <div class="grid">${names.map(n => `<div class="tile ${state(n)}" data-case="${esc(n)}"><div class="n">${esc(n)}</div>
       <div class="h">${esc(R.cases[n]?.hash ?? 'not built')}${fails.get(n)?.want ? ' · was ' + esc(fails.get(n).want) : ''}</div><span class="s">${label[state(n)]}</span></div>`).join('')}</div>
+    ${R.swaps ? swapRow(R.swaps) : ''}
     ${card ? `<h2>Codebase scorecard <span class="mono">${esc(card.sha)}</span></h2><table><tr><th>score</th><th>what</th><th>where</th></tr>${rows}</table>` : ''}
     ${drill ? `<h2>Add-a-part drill (beret, today's code)</h2><table><tr><td class="v">${esc(drill.files)} files</td><td>+${esc(drill.added)} / -${esc(drill.removed)} lines</td><td class="mono">${esc(drill.touched.join(' · '))}</td></tr></table>` : ''}
     ${card?.review ? `<h2>Code review</h2><p class="mono">${esc(card.review)}</p>` : ''}
@@ -60,24 +76,57 @@ async function swap() {
   await import('#kit/cast/wardrobe.js'); const { HOOKS } = await import('#engine/play.js');
   await useFaceStyle();
   const W = innerWidth, H = innerHeight, toB = v => [v.x, -v.z, v.y];
+  const BODY = Q.get('body') || 'adult', WEAR = (Q.get('wear') ?? 'sweater:coral').split(',').filter(Boolean), CLOSE = Q.get('frame') !== 'body';
+  const POSE = { neck: { nod: 6, turn: 12 }, spine: { bend: 8, twist: 6 }, armR: { raise: 30 } };
   const stage = createStage({ width: W, height: H, faceInk: true, ao: 0.5, aoRadius: 0.4, shadowRadius: 2, sat: 1.0, con: 1.05, vig: 0, bloom: 0.04, hot: 0.1, ink: 2.4, shafts: 0 });
   stage.scene.background = lin(0.36, 0.38, 0.41);
   stage.hemi.intensity = 0.5; stage.fill.intensity = 0.4; stage.sun.intensity = 3.0;
   let now = null;
-  window.__swap = style => {
-    if (now) { stage.scene.remove(now.group); now.group.traverse(o => o.geometry?.dispose?.()); }
-    const t0 = performance.now(), group = new THREE.Group(); stage.scene.add(group);
-    const S = makeStick(bodySpec({ name: style, shirt: [0.62, 0.62, 0.66], hair: style ? [toonHair(style)] : [] }, 'adult')); group.add(S.root);
-    HOOKS.costume(S, ['sweater:coral'], { group }); S.pose({}); now = { group, S };
-    S.root.updateMatrixWorld(true); const ms = performance.now() - t0, head = S.parts.head.getWorldPosition(new THREE.Vector3()), dir = new THREE.Vector3(0.35, 0.05, 1).normalize();
-    const cam = head.clone().addScaledVector(dir, 1.25);
-    stage.setCamera(toB(cam), toB(head.clone().setY(head.y - 0.12)), 50); stage.setSun(toB(dir.clone().multiplyScalar(-0.8).setY(-0.5)), toB(head), 2.2);
+  const show = () => {
+    const S = now.S; S.root.updateMatrixWorld(true);
+    const head = S.parts.head.getWorldPosition(new THREE.Vector3()), dir = new THREE.Vector3(0.35, 0.05, 1).normalize();
+    const aim = CLOSE ? head.clone().setY(head.y - 0.12) : head.clone().setY(head.y * 0.55), cam = aim.clone().addScaledVector(dir, CLOSE ? 1.25 : 3.4);
+    stage.setCamera(toB(cam), toB(aim), 50); stage.setSun(toB(dir.clone().multiplyScalar(-0.8).setY(-0.5)), toB(head), 2.2);
     S.face({ t: 0, expr: 'neutral', cam: toB(cam) });
     stage.scene.updateMatrixWorld(true); stage.render({ grade: { exp: 1, lift: 0, sat: 1, haze: 0, sky: false, air: false } });
-    return Math.round(ms);
   };
+  // a figure built from scratch with this hair and girth (the old one disposed): what an in-place change must look like
+  window.__fresh = (style, girth) => {
+    if (now) { stage.scene.remove(now.group); now.group.traverse(o => o.geometry?.dispose?.()); }
+    const group = new THREE.Group(); stage.scene.add(group);
+    const spec = bodySpec({ name: 'swap', shirt: [0.62, 0.62, 0.66], hair: style ? [toonHair(style)] : [] }, BODY);
+    const S = makeStick(girth == null ? spec : { ...spec, girth }); group.add(S.root);
+    if (WEAR.length) HOOKS.costume(S, WEAR, { group });
+    S.pose2(POSE); now = { group, S }; show();
+  };
+  window.__swap = style => { const t0 = performance.now(); now.S.bakeHair(style ? [toonHair(style)] : []); now.S.pose2(POSE); const ms = performance.now() - t0; show(); return Math.round(ms); };
+  window.__girth = g => { now.S.setGirth(g); now.S.pose2(POSE); show(); };
+  window.__geometries = () => stage.renderer.info.memory.geometries;
+  window.__grab = () => stage.renderer.domElement.toDataURL('image/png');
+  const img = src => new Promise(ok => { const im = new Image(); im.onload = () => ok(im); im.src = src; });
+  // pixels that differ between two grabs, and the two side by side with their labels (a lane's screenshot)
+  window.__pair = async (a, b, la, lb) => {
+    const [A, B] = await Promise.all([img(a), img(b)]), w = A.width, h = A.height, cv = document.createElement('canvas'); cv.width = 2 * w; cv.height = h + 40;
+    const c = cv.getContext('2d'); c.drawImage(A, 0, 40); c.drawImage(B, w, 40);
+    const pa = c.getImageData(0, 40, w, h).data, pb = c.getImageData(w, 40, w, h).data; let diff = 0;
+    for (let i = 0; i < pa.length; i += 4) if (pa[i] !== pb[i] || pa[i + 1] !== pb[i + 1] || pa[i + 2] !== pb[i + 2]) diff++;
+    c.fillStyle = '#fff'; c.fillRect(0, 0, 2 * w, 40); c.fillStyle = '#111'; c.font = '20px system-ui'; c.fillText(la, 12, 27); c.fillText(lb, w + 12, 27);
+    c.fillStyle = diff ? '#b3261e' : '#1d7a46'; c.fillText(diff ? `${diff} px lệch` : 'khớp: 0 px lệch', w - 180, 27);
+    return { diff, png: cv.toDataURL('image/png') };
+  };
+  // a line of numbers drawn as a small chart (the live geometry count after each swap loop)
+  window.__chart = (ys, title) => {
+    const cv = document.createElement('canvas'); cv.width = 900; cv.height = 420; const c = cv.getContext('2d'), lo = Math.min(...ys) - 5, hi = Math.max(...ys) + 5;
+    const X = i => 60 + i * (800 / Math.max(1, ys.length - 1)), Y = v => 380 - (v - lo) / (hi - lo) * 320;
+    c.fillStyle = '#fff'; c.fillRect(0, 0, 900, 420); c.fillStyle = '#111'; c.font = '18px system-ui'; c.fillText(title, 60, 34);
+    c.strokeStyle = '#ccc'; c.beginPath(); c.moveTo(60, 380); c.lineTo(860, 380); c.stroke();
+    c.font = '13px ui-monospace, monospace'; c.fillText(String(hi - 5), 8, Y(hi - 5) + 4); c.fillText(String(lo + 5), 8, Y(lo + 5) + 4);
+    c.strokeStyle = '#1d7a46'; c.lineWidth = 2; c.beginPath(); ys.forEach((v, i) => (i ? c.lineTo(X(i), Y(v)) : c.moveTo(X(i), Y(v)))); c.stroke();
+    return cv.toDataURL('image/png');
+  };
+  window.__fresh(Q.get('hair') || null);
   window.__ready = true;
 }
-(VIEW === 'swap' ? swap() : bench()).catch(e => { console.error(e); document.body.textContent = String(e?.stack || e); window.__ready = 'error'; });
+({ swap, swaps }[VIEW] || bench)().catch(e => { console.error(e); document.body.textContent = String(e?.stack || e); window.__ready = 'error'; });
 </script>
 </body></html>

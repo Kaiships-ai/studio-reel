@@ -38,6 +38,13 @@ hullMat.onBeforeCompile = sh => {
       float ndl = dot(normalize(mat3(modelMatrix) * normal), inkSun);
       transformed += normal * inkT * (clamp(1.0 - 0.45 * ndl, 0.8, 1.45) - 1.0);   // lit side never under ~0.6x: the reference line stays bold all round (thick/thin ~2)`);
 };
+// what every figure shares: the ink and outline materials and the scene's light uniforms. A figure never writes or disposes
+// them (Object.freeze would not stop a colour write: test/unit/stick-shared-materials.test.mjs checks their values)
+export const SHARED = { inkMat, hullMat, PLACE, INK_SUN };
+const disposeTree = top => top.traverse(o => {
+  o.geometry?.dispose();
+  for (const m of [o.material].flat()) if (m && m !== inkMat && m !== hullMat) { for (const v of Object.values(m)) if (v?.isTexture) v.dispose(); m.dispose(); }
+});
 
 // ------------------------------------------------------------------ outline
 function hullGeo(geo, t) {
@@ -113,7 +120,7 @@ function massGeo(balls, mask, tilt, soft = 0) {
   const m = mergeVertices(g, 1e-6); m.computeVertexNormals(); return m;
 }
 export function curls(col = [0.45, 0.25, 0.12], tilt = 18) {
-  return () => {
+  return Object.assign(() => {
     const balls = [], t = -tilt * DEG, c = Math.cos(t), s = Math.sin(t);
     const add = (lat, lon, r, out) => { const p = ell(lat, lon, out); balls.push([p.x, p.y * c - p.z * s, p.y * s + p.z * c, r]); };
     for (let i = 0; i < 12; i++) add(42 * DEG, (i * 30 + 15) * DEG, 0.17 * W * (1 + 0.10 * Math.sin(i * 2.1)), -0.03 * W);
@@ -130,21 +137,21 @@ export function curls(col = [0.45, 0.25, 0.12], tilt = 18) {
     const mop = solid(massGeo(balls, mask, -t, 0.034 * W), hairMat(col), INK_T, massGeo(balls, mask, -t, 0.034 * W)); mop.receiveShadow = false;
     const g = new THREE.Group(); g.add(mop);
     return g;
-  };
+  }, { part: 'curls', params: { col, tilt } });
 }
 export function hairCap(col = [0.30, 0.19, 0.12], tilt = 20) {
-  return () => {
+  return Object.assign(() => {
     const pr = [[0, -0.30 * W]];
     for (let i = 0; i <= 16; i++) { const la = (8 + 82 * i / 16) * DEG; pr.push([(HA + 0.03 * W) * Math.cos(la), (HB + 0.035 * W) * Math.sin(la)]); }
     const g = new THREE.Group(); g.rotation.x = -tilt * DEG;
     const cap = solid(lathe(pr, 48), hairMat(col)); g.add(cap);
     return g;
-  };
+  }, { part: 'hairCap', params: { col, tilt } });
 }
 // flat cap (Bram, bible v1.1: "flat cap with a pale grey band" - his thumbnail silhouette): a low wide crown that
 // overhangs the head, a short stiff peak at the front, and a pale band round the bottom that always shows
 export function flatCap(col = [0.13, 0.15, 0.22], band = [0.80, 0.82, 0.86], tilt = 16) {
-  return () => {
+  return Object.assign(() => {
     const g = new THREE.Group(); g.rotation.x = -tilt * DEG;
     const y0 = 0.31 * W, R = 0.50 * W, Hc = 0.17 * W, pr = [[0, y0], [R * 0.95, y0]];   // sits above the brows (never over the eyes; round 4: ep1 close shot)
     for (let i = 0; i <= 14; i++) { const a = 90 * i / 14 * DEG; pr.push([R * Math.pow(Math.cos(a), 0.4) * (1 + 0.06 * Math.sin(2 * a)), y0 + Hc * Math.sin(a)]); }
@@ -153,7 +160,7 @@ export function flatCap(col = [0.13, 0.15, 0.22], band = [0.80, 0.82, 0.86], til
     const peak = solid(brimGeo(HA * Math.cos(34 * DEG) + 0.03 * W, 0.50 * W, 0.68 * W), toon(col.map(c => c * 0.8), { sheen: 0, rough: 1, char: 1 }));
     peak.position.set(0, y0 - 0.01 * W, 0); peak.rotation.x = 0.22; g.add(peak);
     return g;
-  };
+  }, { part: 'flatCap', params: { col, band, tilt } });
 }
 function stripeTex(base, draw) {
   const cv = document.createElement('canvas'); cv.width = 1024; cv.height = 128; const c = cv.getContext('2d');
@@ -161,7 +168,7 @@ function stripeTex(base, draw) {
   const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
 }
 export function bandana(col = [0.86, 0.06, 0.06], tilt = 18) {
-  return () => {
+  return Object.assign(() => {
     // the band's outer face is the first half of the lathe profile (v 0..0.5); chevrons sit at the front (u 0.5)
     const map = stripeTex(col, c => {
       c.strokeStyle = '#fff'; c.lineWidth = 11; c.lineCap = 'round'; c.lineJoin = 'round';
@@ -175,20 +182,20 @@ export function bandana(col = [0.86, 0.06, 0.06], tilt = 18) {
       const t = solid(k, m); const p = ell(lat * DEG, 118 * DEG, 0.14 * W); t.position.copy(p); t.rotation.set(0, 128 * DEG, ry); g.add(t);
     }
     return g;
-  };
+  }, { part: 'bandana', params: { col, tilt } });
 }
 export function visor(col = [0.10, 0.42, 0.30], tilt = 12) {
-  return () => {
+  return Object.assign(() => {
     const g = new THREE.Group(); g.rotation.x = -tilt * DEG;
     g.add(solid(bandGeo(22 * DEG, 38 * DEG, 0.06 * W), toon(col, { sheen: 0.3 })));
     const la = 22 * DEG, y = HB * Math.sin(la), rIn = HA * Math.cos(la) + 0.02 * W;
     const brim = solid(brimGeo(rIn, 0.62 * W, 0.86 * W), toon(col.map(c => Math.min(1, c * 1.5 + 0.05)), { sheen: 0.4, rough: 0.3 }));
     brim.position.set(0, y + 0.01 * W, 0); brim.rotation.x = 0.30; g.add(brim);
     return g;
-  };
+  }, { part: 'visor', params: { col, tilt } });
 }
 export function guardCap(col = [0.10, 0.15, 0.32], tilt = 8) {
-  return () => {
+  return Object.assign(() => {
     const g = new THREE.Group(); g.rotation.x = -tilt * DEG;
     const y0 = 0.10 * W, R = 0.56 * W, Hc = 0.42 * W, pr = [[0, y0], [R * 0.9, y0]];
     for (let i = 0; i <= 16; i++) { const a = 90 * i / 16 * DEG; pr.push([R * Math.pow(Math.cos(a), 0.55), y0 + Hc * Math.sin(a)]); }
@@ -201,7 +208,7 @@ export function guardCap(col = [0.10, 0.15, 0.32], tilt = 8) {
     const a = 42 * DEG; badge.position.set(0, y0 + Hc * Math.sin(a), R * Math.pow(Math.cos(a), 0.55) + 0.01 * W); badge.rotation.x = -0.5;
     g.add(badge);
     return g;
-  };
+  }, { part: 'guardCap', params: { col, tilt } });
 }
 // frames are tubes drawn ON the head surface (projected straight back onto it), so they hug it from any angle
 function glasses() {
@@ -215,7 +222,7 @@ function glasses() {
 
 // hats and hair sit HAT_LIFT higher than they were modelled so the brows always show (Kai, gate A 2026-11-12)
 export const HAT_LIFT = 0.035;
-const _hm = new THREE.Matrix4(), _nm = new THREE.Matrix4(), _hm2 = new THREE.Matrix4();
+const _nm = new THREE.Matrix4(), _hm2 = new THREE.Matrix4();
 // a neck-bound hair group (toonHair st.neck): each vertex a blend of the head and the neck, skin-weight style. On the head at the
 // lengths' top (userData.neckTop, m in the head frame), on the neck userData.neckRamp m below it: the crown never leaves the head,
 // the hem does not swing with every nod. Rest positions are kept on the geometry; normals stay the rest ones (toon shading)
@@ -580,6 +587,30 @@ function armDirs(a, sg) {
 }
 
 // ------------------------------------------------------------------ the figure
+// the head's hair and hats from their builders, the old ones disposed, and what follows from them: the solid the head wears
+// (held props stop on it, body.js headWear) and the hair lengths bound to the neck. Points are taken in the head's own frame,
+// so a figure already posed gets the same shell as a fresh build
+function bakeHair(head, hairG, fns) {
+  const next = fns.map(f => f());   // built first: a builder that throws leaves the old hair in place
+  for (const o of [...hairG.children]) { hairG.remove(o); disposeTree(o); }
+  for (const o of next) hairG.add(o);
+  hairG.updateMatrixWorld(true);
+  const inHead = o => { const m = o.matrix.clone(); for (let q = o.parent; q !== head; q = q.parent) m.premultiply(q.matrix); return m; };
+  const crown = [], sheets = [], neckBound = []; hairG.traverse(o => { if (o.userData.neckBound) neckBound.push(o);
+    if (!o.isMesh || o.material?.transparent || o.material?.blending === THREE.AdditiveBlending) return;
+    const P = o.geometry.attributes.position, m = inHead(o), at = i => new THREE.Vector3().fromBufferAttribute(P, i).applyMatrix4(m);
+    if (!o.geometry.userData.sheet) { for (let i = 0; i < P.count; i++) crown.push(at(i)); return; }
+    const I = o.geometry.index; for (let i = 0; i < (I ? I.count : P.count); i += 3) sheets.push([0, 1, 2].map(j => at(I ? I.getX(i + j) : i + j))); });
+  return { wornShell: headWear(crown, sheets, HA, HB), neckBound };
+}
+// from the end of a build on: a repainted torso, or anything on the figure but a hand prop, is a costume put on it. A costume
+// keeps the girth it was put on at and is never taken off, so setGirth refuses a dressed figure (build it again instead)
+function dressedSince(S, holders) {
+  const torso = S.parts.torso, built = new Set(holders.flatMap(o => o.children)), map0 = torso.material.map;
+  return () => torso.material.map !== map0 || holders.some(o => o.children.some(c => !built.has(c) && !Object.values(S.props).includes(c)));
+}
+// the torso and its ink shell back at their rest positions (the copies pose2 took before bending them)
+const restBent = bent => { for (const b of bent || []) { const P = b.g.attributes.position, N = b.g.attributes.normal; P.array.set(b.p); N.array.set(b.n); P.needsUpdate = N.needsUpdate = true; b.g.computeBoundingSphere(); } };
 export function makeStick(spec) {
   const root = new THREE.Group(); root.name = spec.name || 'stick'; root.userData.stick = true;   // look.js: no screen ink (own hull)
   const body = new THREE.Group(); root.add(body);
@@ -588,15 +619,14 @@ export function makeStick(spec) {
   // figure only a little (char: 1)
   // girth: a body silhouette per actor (judge t2: "a grey blob body"); 1 = the default, Bram is stocky, Mabel slim.
   // rimCool: a cool rim light on dark places (bible v1.1: a dark figure keeps an edge on any set darker than Y 95)
-  const girth = spec.girth ?? 1, rc = spec.rimCool ? 1 : 0;
+  let girth = spec.girth ?? 1; const rc = spec.rimCool ? 1 : 0;
   // body proportions (motion v2, styles/stick-man/motion-lib/bodies.js): scale = the whole figure from its soles; headScale =
   // the head (and its contact volume) larger than the body, on the same neck; legScale = shorter legs, the hip lowered with
   // them (feet stay where they are keyed); kg = the body's mass (a carried load's share of the centre of mass)
   const SC = spec.scale ?? 1, HK = spec.headScale ?? 1, LK = spec.legScale ?? 1, LT = LIMB.thigh * LK, DROP = (1 - LK) * 2 * LIMB.thigh, KG = spec.kg ?? 70;
   if (SC !== 1) root.scale.setScalar(SC);
   const torso = solid(torsoGeo(), toon([1, 1, 1], { map: clothesCanvas(spec), sheen: 0, rough: 1, rim: 0, soft: 0, shade: [0.78, 0.78, 0.86], char: 1, rimCool: rc }));
-  torso.scale.set(girth, 1, 0.9 + 0.1 * girth);
-  torso.position.y = (TORSO.cy - TORSO.h / 2 - HIP_V) * W; body.add(torso);
+  const restTorso = () => { torso.scale.set(girth, 1, 0.9 + 0.1 * girth); torso.position.set(0, (TORSO.cy - TORSO.h / 2 - HIP_V) * W, 0); }; restTorso(); body.add(torso);
 
   const head = new THREE.Group(); root.add(head);
   const hg = new THREE.SphereGeometry(HA, 64, 40); hg.scale(1, HEAD_H, 1);
@@ -626,16 +656,8 @@ export function makeStick(spec) {
   if (spec.glasses) rig.add(glasses());
   // hair and hats: one group fixed to the head (Kai 20/11: a cap that swung after the head's nods read as a wobble)
   const hairG = new THREE.Group(); head.add(hairG);
-  for (const f of spec.hair || []) hairG.add(f());
   hairG.position.y = HAT_LIFT; hairG.updateMatrix(); hairG.matrixAutoUpdate = false;
-  // what the head wears, as a solid held props stop on (body.js headWear)
-  head.updateMatrixWorld(true); _hm.copy(head.matrixWorld).invert();
-  const crown = [], sheets = []; hairG.traverse(o => { if (!o.isMesh || o.material?.transparent || o.material?.blending === THREE.AdditiveBlending) return;
-    const P = o.geometry.attributes.position, m = _hm.clone().multiply(o.matrixWorld), at = i => new THREE.Vector3().fromBufferAttribute(P, i).applyMatrix4(m);
-    if (!o.geometry.userData.sheet) { for (let i = 0; i < P.count; i++) crown.push(at(i)); return; }
-    const I = o.geometry.index; for (let i = 0; i < (I ? I.count : P.count); i += 3) sheets.push([0, 1, 2].map(j => at(I ? I.getX(i + j) : i + j))); });
-  const wornShell = headWear(crown, sheets, HA, HB);
-  const neckBound = []; hairG.traverse(o => { if (o.userData.neckBound) neckBound.push(o); });
+  const first = bakeHair(head, hairG, spec.hair || []); let neckBound = first.neckBound;
 
   const limbs = { armL: new Tube(16, LIMB_R), armR: new Tube(16, LIMB_R), legL: new Tube(18, LIMB_R), legR: new Tube(18, LIMB_R) };
   // hand mitt: reference hands are ~0.10 W across, about twice the arm line
@@ -656,7 +678,9 @@ export function makeStick(spec) {
   if (spec.tidyFeet) { contact.material.color.copy(lin(0.10, 0.10, 0.10)); contact.material.opacity = 0.3; }
 
   // (spec: the build a costume layer sizes itself from, kit/cast/wardrobe.js; parts.limbs: the drawn limb lines, root metres)
-  const S = { root, spec, yaw: 0, hand: {}, parts: { head: headSolid, torso, toes, ankles, hands, face, marks: FR.group, hair: hairG, limbs: Object.fromEntries(Object.entries(limbs).map(([k, t]) => [k, t.mesh])) }, xmarks: [], props: {} };
+  const S = { root, spec, yaw: 0, hand: {}, parts: { head: headSolid, torso, toes, ankles, hands, face, marks: FR.group, hair: hairG, limbs: Object.fromEntries(Object.entries(limbs).map(([k, t]) => [k, t.mesh])) }, xmarks: [], props: {}, wornShell: first.wornShell };
+  // the hair and hats swapped on this figure, as a fresh build with spec.hair = fns would have them (the next pose places them)
+  S.bakeHair = fns => { ({ wornShell: S.wornShell, neckBound } = bakeHair(head, hairG, fns)); S.spec = { ...S.spec, hair: fns }; delete S.neckLm; };
   const inv = new THREE.Matrix4();
 
   // pos (Blender metres), and either yaw (deg, 0 = facing Blender -Y) or face (a Blender point to turn toward)
@@ -861,6 +885,8 @@ export function makeStick(spec) {
   // arm{L,R} {raise, swing, elbow, roll, ik: [x, y, z] figure W, ikw, pole}, leg{L,R} {foot: [x, y, z] W, pitch, yaw, knee},
   // plus the x_ keys (props, marks) and contact.
   let bent = null, slices = null;
+  // a new girth on this figure: the torso and its ink shell go back to rest, so the next pose bends them as a fresh build would
+  S.setGirth = g => { if (dressed()) throw new Error('setGirth: this figure is dressed, and its costume keeps the girth it was put on at; build it again at the new girth'); restBent(bent); girth = g; S.spec = { ...S.spec, girth: g }; bent = slices = null; restTorso(); };
   const _e = new THREE.Euler();
   // spec.posture, spec.stance (motion-lib/bodies.js bodySpec(spec, body, { posture: true }), opt-in): the body's own way of standing on every
   // channel a pose does not name (an elder's stoop, a toddler's held-out arms and wide feet)
@@ -1046,7 +1072,7 @@ export function makeStick(spec) {
     // is reported (targetGap). With PHYS off the overlap is only measured.
     const legSegs = ['L', 'R'].flatMap(sd => [[rig[sd].hip, rig[sd].knee], [rig[sd].knee, rig[sd].ankle]]);
     // (a held prop also stops on what the head wears: the arms do not, they are solved against the skull as before)
-    const propVols = wornShell ? [...vols, wearVolume(vols[0].c, vols[0].q, vols[0].r, wornShell)] : vols;
+    const propVols = S.wornShell ? [...vols, wearVolume(vols[0].c, vols[0].q, vols[0].r, S.wornShell)] : vols;
     let held = handProps(Q, rig), pp = held.length ? propOverlap(held, legSegs, propVols) : null;
     const propPen0 = heldPen(pp);
     for (let it = 0; PHYS.on && pp && it < 6; it++) {
@@ -1151,6 +1177,7 @@ export function makeStick(spec) {
     return o;
   };
   S.pose({});
+  const dressed = dressedSince(S, [root, body, head, torso]);
   return S;
 }
 

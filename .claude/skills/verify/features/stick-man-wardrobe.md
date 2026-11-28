@@ -45,6 +45,16 @@ A crowd: `costume: ['sweater:' + outfit(i)]` (`outfit` from wardrobe.js).
   The pixel half is the Mac Pro baseline (`styles/stick-man/tools/run/sheetbase.mjs capture|compare`, the wardrobe sheet, the
   hair sheet `type=mw`, the faces sheet and the rig sheet at review tier). The bench page and the scorecard:
   `styles/stick-man/.claude/skills/verify/SKILL.md` (the stick-man verify skill), `node styles/stick-man/tools/run/codescore.mjs`.
+- Changed in place (C2): `S.bakeHair(fns)` swaps a figure's hair and hats, disposes the old meshes (never the shared ink and
+  outline materials, `SHARED` in `engine/cast.js`) and recomputes the worn shell and the neck-bound lengths; under a wardrobe
+  cap or hat the new hair is tucked again. `S.setGirth(g)` puts the torso back to rest so the next pose bends it at the new
+  girth. Each equals a fresh build after a pose: `node --test test/unit/stick-shared-materials.test.mjs` (about 30 s: all
+  110 ordered toon-hair pairs, the shared values before and after a colour loop, the P3 slider loop as the control) and
+  `test/unit/stick-rebake.test.mjs` (girth, a police cap, the child and elder bodies). Bench row `đổi tóc tại chỗ`:
+  `node styles/stick-man/tools/run/lookbench.mjs hair-swap --out <dir>` (hair-swap-110.png); on the GPU, `hairswap --loops 50`
+  prints the live geometry count after each loop. Every head factory tags its builder `{ part, params }`
+  (`test/unit/stick-head-parts.test.mjs`); the engine's kit imports are an allowlist that only shrinks
+  (`test/unit/engine-imports.test.mjs`).
 
 ## Gotchas
 

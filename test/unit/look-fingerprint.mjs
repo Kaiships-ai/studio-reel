@@ -29,7 +29,7 @@ const sha = b => createHash('sha256').update(b).digest('hex').slice(0, 16);
 const r5 = x => (typeof x === 'number' ? Math.round(x * 1e5) / 1e5 : x);
 const bytes = a => Buffer.from(a.buffer, a.byteOffset, a.byteLength);
 
-function recordingDocument() {
+export function recordingDocument() {
   const canvas = () => {
     const cv = { width: 1, height: 1, style: {}, __log: [], addEventListener() {}, toDataURL: () => '' };
     const base = {
@@ -111,6 +111,14 @@ export function hashFigure(S, group) {
     });
   }
   return { hash: h.digest('hex').slice(0, 16), meshes, canvases };
+}
+
+// the one place these harnesses build a figure (a recording document first, so its canvases are hashed), from the engine of
+// any checkout: the fingerprint, the in-place swaps (hair-swap.mjs), the rebake test, the bench's perf probe
+export async function stickBuilder(root = ROOT) {
+  globalThis.document ??= recordingDocument();
+  const { makeStick } = await import(pathToFileURL(join(root, 'styles/stick-man/engine/cast.js')).href);
+  return spec => makeStick(spec);
 }
 
 // every case on this checkout under one import order, in this process (the import order is module state: one per process)

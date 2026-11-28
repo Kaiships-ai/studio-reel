@@ -110,20 +110,11 @@
   "guards": "always"
  },
  "test/unit/stick-hair-body.test.mjs": {
-  "secs": 78.1,
+  "secs": 105.7,
   "guards": [
    "kit",
-   "styles/stick-man/engine",
-   "styles/stick-man/kit",
-   "styles/stick-man/motion-lib",
-   "styles/stick-man/tools/gates",
-   "test/unit/hair-measure.mjs",
-   "test/unit/hair-stamp.mjs",
-   "test/unit/hair-trip.mjs",
-   "test/unit/stick-hair-body.test.mjs",
-   "test/unit/stick-hair-trip-afro.test.mjs",
-   "test/unit/stick-hair-trip-ponytail.test.mjs",
-   "test/unit/wardrobe-measure.mjs"
+   "styles/stick-man",
+   "test/unit"
   ]
  },
  "test/unit/stick-hair-face.test.mjs": {
@@ -155,7 +146,7 @@
   ]
  },
  "test/unit/stick-hair-trip-afro.test.mjs": {
-  "secs": 82.9,
+  "secs": 39.3,
   "guards": [
    "kit",
    "styles/stick-man/engine",
@@ -169,7 +160,7 @@
   ]
  },
  "test/unit/stick-hair-trip-ponytail.test.mjs": {
-  "secs": 85,
+  "secs": 39.3,
   "guards": [
    "kit",
    "styles/stick-man/engine",
@@ -266,6 +257,19 @@
    "test/unit/stick-propswap.test.mjs"
   ]
  },
+ "test/unit/stick-rebake.test.mjs": {
+  "secs": 9.5,
+  "guards": [
+   "kit",
+   "styles/stick-man/engine",
+   "styles/stick-man/kit",
+   "styles/stick-man/motion-lib",
+   "styles/stick-man/tools/gates",
+   "test/unit/hair-swap.mjs",
+   "test/unit/look-fingerprint.mjs",
+   "test/unit/stick-rebake.test.mjs"
+  ]
+ },
  "test/unit/stick-render-tiers.test.mjs": {
   "secs": 11.4,
   "guards": "always"
@@ -283,6 +287,21 @@
    "styles/stick-man/kit/props",
    "styles/stick-man/tools/gates",
    "test/unit/stick-scalp-cover.test.mjs"
+  ]
+ },
+ "test/unit/stick-shared-materials.test.mjs": {
+  "secs": 30.3,
+  "guards": [
+   "kit",
+   "styles/stick-man/engine",
+   "styles/stick-man/kit/cast",
+   "styles/stick-man/kit/look",
+   "styles/stick-man/kit/props",
+   "styles/stick-man/motion-lib",
+   "styles/stick-man/tools/gates",
+   "test/unit/hair-swap.mjs",
+   "test/unit/look-fingerprint.mjs",
+   "test/unit/stick-shared-materials.test.mjs"
   ]
  },
  "test/unit/stick-toon-hair.test.mjs": {

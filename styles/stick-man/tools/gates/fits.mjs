@@ -7,7 +7,9 @@
 //   node …/fits.mjs --person '{"body":"elder","outfit":["shirt:office","cardigan"],"girth":1}' [--clips A,B]     measures one person (every clip of
 //                                                       the body without --clips) and writes the rows
 //   node …/fits.mjs --kinds                             the kinds that are not clips (faces, marks, outfits, hand props; lights stay untested)
-//   node …/fits.mjs --hair [side,crop] [--clips A,B]    the toon hair styles through every adult clip (fits_kinds.mjs hairs(): hair|<style>|<clip>, each row stamped `inputs` with test/unit/hair-stamp.mjs hairStamp())
+//   node …/fits.mjs --hair [side,crop] [--clips A,B]    the toon hair styles through every adult clip (fits_kinds.mjs hairs(): hair|<style>|<clip>, each row stamped `inputs` with test/unit/hair-stamp.mjs hairStamps(): what the measure read for it)
+//   node …/fits.mjs --restamp                           only the hair rows' stamps, recomputed from what the measure reads today (~30 s), after each stale
+//                                                       style's two deepest rows are measured again (~1-2 min) and read as stored; refuses (exit 1) when one does not; never a verdict or a number
 //   node …/fits.mjs --hands [baby,tin]                  the hand props only (fits_kinds.mjs hands(): each pose a film holds them in)
 //   --table <file>  another table   --no-controls  (only with --table) skip the known-bad and known-good pairs a writing run starts with
 // What a film lists: each clip key in an act's `anim`, and a `clips` list on a cast entry (['Idle_Stand_Loop', …]): a film that bakes its
@@ -165,7 +167,7 @@ async function main(argv) {
   const opt = n => { const i = argv.indexOf(n); return i < 0 ? null : argv[i + 1]; }, has = n => argv.includes(n);
   if (has('--read')) { const [dir, reel] = argv.slice(argv.indexOf('--read') + 1); let r; try { r = await readReel(dir, reel); } catch (e) { r = { error: String(e.message || e).slice(0, 300) }; } process.stdout.write(`\n${MARK}${JSON.stringify(r)}`); return 0; }
   const file = path.resolve(opt('--table') || TABLE), film = argv[0] && !argv[0].startsWith('-') ? path.resolve(ROOT, argv[0]) : null, read = () => JSON.parse(fs.readFileSync(file, 'utf8'));
-  if (!film && !has('--person') && !has('--kinds') && !has('--hands') && !has('--hair')) { console.error("usage: fits.mjs films/<slug> [--measure] | --person '{…}' [--clips A,B] | --kinds   [--table file]"); return 2; }
+  if (!film && !has('--person') && !has('--kinds') && !has('--hands') && !has('--hair') && !has('--restamp')) { console.error("usage: fits.mjs films/<slug> [--measure] | --person '{…}' [--clips A,B] | --kinds | --hair [styles] | --restamp   [--table file]"); return 2; }
   if (has('--no-controls') && file === TABLE) { console.error('the controls are never skipped on the committed table'); return 2; }
   const started = Date.now(), secs = t => ((Date.now() - t) / 1000).toFixed(1), commit = commitOf();
   const ready = async () => { if (has('--no-controls')) return true; const t = Date.now(), bad = (await controls()).filter(c => { console.log(`control ${c.got === c.must ? 'ok' : 'WRONG'}: ${c.name}: ${c.got} (must be ${c.must}): ${c.why}`); return c.got !== c.must; }); console.log(`controls ${secs(t)} s`); return !bad.length; };
@@ -176,8 +178,14 @@ async function main(argv) {
     const ok = c => c.touchCm <= GAP_CM && c.offCm > GAP_CM, wrong = R.controls.filter(c => !ok(c)); for (const c of R.controls) console.log(`control ${ok(c) ? 'ok' : 'WRONG'}: ${c.pair} on ${c.pose} (${c.fist} fist): touching ${c.touchCm} cm (must pass), 3 cm off ${c.offCm} cm (must fail), limit ${GAP_CM}`); if (wrong.length) return 1;
     const rows = R.rows.map(({ frames, ...r }) => ({ ...r, commit })); write(rows); for (const r of rows) console.log(`${r.verdict} ${r.pair} ${r.number} ${r.why || ''}`); console.log(`${rows.length} rows, ${secs(started)} s`); return 0; }
   if (has('--hair')) { const { hairs } = await import('./fits_kinds.mjs'), clips = opt('--clips') ? opt('--clips').split(',') : undefined, styles = opt('--hair') && !opt('--hair').startsWith('-') ? opt('--hair').split(',') : undefined;
-    const { hairStamp } = await import('../../../../test/unit/hair-stamp.mjs'), inputs = hairStamp(), rows = (await hairs(styles, clips)).map(r => ({ ...r, commit, inputs })), T = read(), now = new Map(rows.map(r => [r.pair, r]));   // a hair row is what the measure says now, either way: it replaces, never merges
+    const { hairStamps } = await import('../../../../test/unit/hair-stamp.mjs'), rows0 = await hairs(styles, clips), st = await hairStamps({ styles, clips }), rows = rows0.map(r => ({ ...r, commit, inputs: st[r.pair] })), T = read(), now = new Map(rows.map(r => [r.pair, r]));   // a hair row is what the measure says now, either way: it replaces, never merges
     fs.writeFileSync(file, text({ ...T, rows: merge(T.rows.filter(r => !now.has(r.pair)), rows) })); for (const r of rows) if (r.verdict === 'blocked') console.log(`blocked ${r.pair} ${r.number} ${r.unit} ${r.why || ''}`); console.log(`${rows.length} rows, ${secs(started)} s`); return 0; }
+  if (has('--restamp')) { const { hairStamps, staleRows, restampCheck } = await import('../../../../test/unit/hair-stamp.mjs'), st = await hairStamps(), T = read(), stale = staleRows(T, st);
+    if (stale.some(p => !st[p])) { console.error('--restamp: a hair row the measure has no stamp for (run --hair)'); return 1; }
+    if (stale.length) { const { sample, wrong } = await restampCheck(T, stale); console.log(`re-measured ${sample.length} of the ${stale.length} rows (each style's two deepest): ${sample.join(', ')}`);
+      if (wrong.length) { for (const w of wrong) console.error(w); console.error('--restamp: refused, these rows no longer measure as stored: run fits.mjs --hair'); return 1; } }
+    const rows = T.rows.map(r => (stale.includes(r.pair) ? { ...r, inputs: st[r.pair] } : r));
+    fs.writeFileSync(file, text({ ...T, rows })); console.log(`${stale.length} hair stamps rewritten (verdicts and numbers untouched), ${secs(started)} s`); return 0; }
   if (has('--kinds')) { if (!await ready()) return 1; const { kinds } = await import('./fits_kinds.mjs'), rows = (await kinds(opt('--film') ? path.resolve(ROOT, opt('--film')) : null)).map(r => ({ ...r, commit })); write(rows); for (const r of rows) if (r.verdict === 'blocked') console.log(`blocked ${r.pair} ${r.number} ${r.unit} ${r.why || ''}`); console.log(`${rows.length} rows, ${secs(started)} s`); return 0; }
   if (has('--person')) {
     let person, key; try { person = JSON.parse(opt('--person')); key = personKey(person); } catch (e) { console.error(`--person: ${e.message}`); return 2; }
