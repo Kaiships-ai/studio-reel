@@ -1,3 +1,4 @@
+// tier: heavy
 // The Hot Money bible (styles/stick-man/bible): one closed list of approved parts and their numbers. The validator must pass
 // on the real files and fail on a broken entry, so the list can never point at a part the kit no longer has.
 import test from 'node:test';

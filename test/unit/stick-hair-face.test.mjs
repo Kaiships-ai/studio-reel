@@ -1,3 +1,4 @@
+// tier: heavy
 // A toon hair never curtains the face (Studio 27/11): tools/gates/facegate-hair.mjs, its limit written before any style was measured.
 import test from 'node:test';
 import fs from 'node:fs';

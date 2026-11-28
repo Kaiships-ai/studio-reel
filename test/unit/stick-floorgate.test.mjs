@@ -1,3 +1,4 @@
+// tier: heavy
 // The sound floor: the gate (styles/stick-man/tools/gates/floorgate.mjs) on made-up sound, and the mixer's opt-in floor
 // (tools/run/mix.py, music.json "floor") filling a hole between two lines.
 import test from 'node:test';

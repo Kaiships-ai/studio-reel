@@ -1,3 +1,4 @@
+// tier: heavy
 // The wardrobe (kit/cast/wardrobe.js) and kit faces v4 (#204: faceAge, tidyFeet, head_yaw, headMarks) on the same figure: both
 // hook engine/cast.js makeStick, so a merge that keeps one side's lines drops the other's. Headless, on the real rig.
 // PLAIN_0704DE3E: what main 0704de3e draws for figures with no costume, hashed by this harness run on a copy of it:

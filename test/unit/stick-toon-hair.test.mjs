@@ -1,3 +1,4 @@
+// tier: heavy
 // Sculpted toon hair (kit/cast/hair.js): every style builds, sits on the head (its hairline reaches the forehead's front, so a
 // low front camera sees it), and is rigid to the head through the clips that swing a head the most (no follow-through:
 // the hair keeps its place in the head's own frame on every frame).

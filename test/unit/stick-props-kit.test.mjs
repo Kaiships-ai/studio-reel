@@ -1,3 +1,4 @@
+// tier: heavy
 // propKit (styles/stick-man/kit/props/catalog.js) as a film uses it: load, place, tint, shadow, and the solid boxes it
 // writes into the set's exported COLLIDE (collide.js), read back through the real gate code: engine/solids.js inBoxes and
 // armIn, tools/gates/shotfaults.mjs. Review of 25/11: propKit emptied the film's COLLIDE (glb.js glbKit does

@@ -1,3 +1,4 @@
+// tier: heavy
 // The fits table (styles/stick-man/kit/compat.json, its reader kit/cast/compat.js, its tool tools/gates/fits.mjs): which person, clip,
 // face, hat and prop go together, measured, and a gate nobody can talk round.
 import test from 'node:test';

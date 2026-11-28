@@ -1,0 +1,91 @@
+{
+ "sha": "5fdc4945",
+ "card": {
+  "garmentLists": 4,
+  "costumeHookWriters": 3,
+  "engineKitImports": 14,
+  "makeStickFiles": 12,
+  "longestCastFn": 573,
+  "longestCastFnName": "makeStick",
+  "specsJsonSafe": 0,
+  "specs": 17,
+  "importOrderMatters": 3
+ },
+ "detail": {
+  "garmentLists": [
+   "styles/stick-man/kit/cast/clothsafe.js",
+   "styles/stick-man/kit/cast/compat.js",
+   "styles/stick-man/kit/cast/garments.js",
+   "styles/stick-man/kit/cast/wardrobe.js"
+  ],
+  "costumeHookWriters": [
+   "styles/stick-man/kit/cast/costume.js",
+   "styles/stick-man/kit/cast/hoodie.js",
+   "styles/stick-man/kit/cast/wardrobe.js"
+  ],
+  "engineKitImports": [
+   "styles/stick-man/engine/cast.js:10",
+   "styles/stick-man/engine/cast.js:9",
+   "styles/stick-man/engine/grip.js:8",
+   "styles/stick-man/engine/look.js:19",
+   "styles/stick-man/engine/play.js:122",
+   "styles/stick-man/engine/play.js:30",
+   "styles/stick-man/engine/play.js:31",
+   "styles/stick-man/engine/play.js:32",
+   "styles/stick-man/engine/play.js:33",
+   "styles/stick-man/engine/play.js:34",
+   "styles/stick-man/engine/play.js:539",
+   "styles/stick-man/engine/verbs_fx.js:7",
+   "styles/stick-man/engine/verbs_fx.js:8",
+   "styles/stick-man/engine/verbs_fx.js:9"
+  ],
+  "makeStickFiles": [
+   "styles/stick-man/tools/gates/motionlib.mjs",
+   "styles/stick-man/tools/run/hairsheet.html",
+   "styles/stick-man/tools/run/lookbench.html",
+   "styles/stick-man/wardrobe.html",
+   "test/unit/bodies-measure.mjs",
+   "test/unit/look-fingerprint.mjs",
+   "test/unit/stick-bodies-age.test.mjs",
+   "test/unit/stick-film-wayin.test.mjs",
+   "test/unit/stick-head-marks.test.mjs",
+   "test/unit/stick-wardrobe-age.test.mjs",
+   "test/unit/stick-wardrobe.test.mjs",
+   "test/unit/wardrobe-measure.mjs"
+  ],
+  "longestCastFn": "makeStick at engine/cast.js:583",
+  "specsJsonSafe": "lose their hair: KAI TELLER GUARD BRAM JUNE MABEL OFFICER OTIS WARREN WREN ENGINEER BOSS MAGNATE CONDUCTOR CREW1 CREW2 CREW3",
+  "importOrderMatters": [
+   "hoodie",
+   "hoodie + scarf",
+   "hoodie down"
+  ]
+ },
+ "trunk": {
+  "sha": "5fdc4945",
+  "makeStickFiles": 10,
+  "note": "C1 adds two callers of its own: test/unit/look-fingerprint.mjs and tools/run/lookbench.html"
+ },
+ "drill": {
+  "part": "hat beret, worn as hat:beret and shown on the wardrobe sheet",
+  "base": "5fdc4945",
+  "by": "fresh agent, Opus medium, throwaway worktree (deleted)",
+  "files": 10,
+  "added": 42,
+  "removed": 17,
+  "touched": [
+   "styles/stick-man/kit/cast/hats.js",
+   "styles/stick-man/kit/cast/palette.js",
+   "styles/stick-man/kit/cast/wardrobe.js",
+   "styles/stick-man/kit/cast/compat.js",
+   "styles/stick-man/tools/gates/fits_kinds.mjs",
+   "styles/stick-man/kit/compat.json",
+   "styles/stick-man/kit/cast/sheetcells.js",
+   "test/unit/stick-wardrobe-age.test.mjs",
+   "styles/stick-man/kit/README.md",
+   ".claude/skills/verify/features/stick-man-wardrobe.md"
+  ],
+  "left": "stick-hair-body stamp test red until fits.mjs --hair (about 30 min) re-measures 550 hair rows"
+ },
+ "review": "~/.claude/orchestrate/engine-dashboard/media/codescore-review-C1.md (thermo-nuclear, Sonnet medium, code only): 22 findings, 3 critical, 6 high, 7 medium, 6 low"
+}

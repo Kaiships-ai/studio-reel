@@ -1,3 +1,4 @@
+// tier: heavy
 // The wardrobe (kit/cast/wardrobe.js), through the real rig, headless. Each check is a fault Kai's director saw on the first
 // costume sheets (25/11) and what would have caught it there:
 //   seated rag, a scrap out of the chair   cloth: no point in a solid, no limb through it, stretch, area, no fold-over, a lap over the thighs that hangs past the knees

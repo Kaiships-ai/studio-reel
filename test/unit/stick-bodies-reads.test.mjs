@@ -1,3 +1,4 @@
+// tier: heavy
 // What a viewer reads off a body (bodies-measure.mjs): an idle that moves and is nobody else's, a face its hood does not hide.
 // The limits and these controls were committed before anything was measured.
 import { test } from 'node:test';

@@ -1,3 +1,4 @@
+// tier: heavy
 // A rigid hair never goes into the body it sits on (Studio 26/11: hair is rigid to the head, so a long style cuts into the shoulders
 // and the chest as the head turns or bends). Every toon style is played through every adult clip of the motion library (test/unit/hair-measure.mjs
 // ADULT_CLIPS, 50) in the coral sweater, and its drawn surface measured against the torso shell and the limbs as drawn on every frame.

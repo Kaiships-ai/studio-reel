@@ -118,3 +118,38 @@ test('the tmv smoke renders in the styles a PR touches (all of them for shared c
   assert.match(y, /test\/clean-install\.mjs .*format\('--style \{0\}', matrix\.style\)/, 'the leg passes its style to the install test');
   assert.match(y, /format\('tmv-\{0\}-episode-\{1\}-\{2\}-\{3\}', matrix\.episode \|\| 'smoke', matrix\.style \|\| '3d'/, 'each style uploads its own episode');
 });
+
+test('checks.yml runs the fast tier with its budget, and the heavy files on Linux legs before merge, nightly and with heavy-all', async () => {
+  const { FAST, HEAVY } = await import('../tier.mjs');
+  assert.deepEqual(FAST, { fileSecs: 15, wallSecs: 120 }, 'the fast budget is pinned: loosening it is a reviewed change to this test');
+  assert.deepEqual(HEAVY, { fileSecs: 480, legSecs: 480, shards: 4 });
+  assert.equal((y => y.match(/uses: actions\/setup-node@v4\n\s+with:\n\s+node-version: 22\n/g)?.length)(read('checks.yml')), 2, 'both jobs pin Node 22: test/trace.mjs needs module.registerHooks (22.15+)');
+  for (const f of readdirSync(WF).filter(f => /\.ya?ml$/.test(f)))
+    assert.doesNotMatch(read(f), /node --test[^\n]*test\/unit/, `${f} runs test/unit with a raw glob, which puts heavy files back in the fast job`);
+  const y = read('checks.yml'), heavy = y.slice(y.indexOf('\n  heavy:'));
+  assert.match(section(y.slice(0, y.indexOf('\n  heavy:')), 'checks'), /run: node test\/tier\.mjs fast\n/, 'the checks job runs the fast tier');
+  assert.match(heavy, /runs-on: ubuntu-/);
+  assert.doesNotMatch(heavy, /windows|macos/);
+  for (const m of y.matchAll(/timeout-minutes: (\d+)/g)) assert.ok(+m[1] <= 10, `timeout-minutes ${m[1]} is over 10`);
+  assert.match(heavy, new RegExp(`leg: \\[${Array.from({ length: HEAVY.shards }, (_, i) => i + 1).join(', ')}\\]`), 'one matrix leg per HEAVY shard');
+  assert.equal(heavy.match(new RegExp(`--shard \\$\\{\\{ matrix\\.leg \\}\\}/${HEAVY.shards}`, 'g')).length, 2);
+  assert.match(y, /schedule:\n\s+- cron:/, 'every heavy file nightly on main');
+  assert.match(section(y.replace(/^on:\n/m, ''), 'pull_request'), /types: \[[^\]]*labeled/, 'a label reruns the checks');
+  assert.equal(heavy.match(/ALL: \$\{\{ github\.event_name != 'pull_request' \|\| contains\(github\.event\.pull_request\.labels\.\*\.name, 'heavy-all'\) \}\}/g).length, 2);
+  assert.equal(heavy.match(/\[ "\$ALL" = true \] && echo --all \|\| echo --base "origin\/\$\{\{ github\.base_ref \}\}"/g).length, 2);
+});
+
+test('no workflow line is a plain YAML value holding ": " (GitHub then drops the whole workflow and no check runs, 28/11)', () => {
+  for (const f of readdirSync(WF).filter(f => /\.ya?ml$/.test(f))) {
+    let block = -1;
+    for (const [i, line] of read(f).split('\n').entries()) {
+      const indent = line.search(/\S/);
+      if (block >= 0 && (indent > block || indent < 0)) continue;
+      block = -1;
+      const m = line.match(/^(\s*)(?:- )?[\w-]+: (.+)$/);
+      if (!m) continue;
+      if (/^[|>]/.test(m[2])) { block = m[1].length; continue; }
+      assert.ok(/^['"{[]/.test(m[2]) || !m[2].includes(': '), `${f}:${i + 1} needs quotes: ${line.trim()}`);
+    }
+  }
+});

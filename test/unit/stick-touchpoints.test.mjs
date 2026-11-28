@@ -1,3 +1,4 @@
+// tier: heavy
 // Kai's touchpoints in a stick-man episode are exactly S1 S2 K1 K2 K3 Post (Kai 22/11). Every other gate locks on
 // machine checks plus an independent reviewer's READY; an AI verdict never locks K1 or K2. A new Kai approval point in
 // the gates or the skill text fails here until it is listed.

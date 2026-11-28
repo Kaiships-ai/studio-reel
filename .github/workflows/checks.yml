@@ -1,13 +1,20 @@
-# Fast checks on every PR (about a minute, Linux only), docs-only PRs included: they are where Chinese text,
-# private names and unlisted files slip in. The slow install tests are install.yml.
+# Checks on every PR (Linux only), docs-only PRs included: they are where Chinese text, private names and unlisted
+# files slip in. The slow install tests are install.yml.
+#   checks: the fast unit tier (test/tier.mjs fast: a file over 15 s or the tier over 120 s fails and names the slowest),
+#     release, typecheck, lint, pack-guard and the verify feature map.
+#   heavy: the files marked `// tier: heavy`, on four Linux legs, each only when the PR touches a path it read
+#     (test/heavy.json, traced), every one nightly on main, by hand, or with the PR label `heavy-all`.
 name: checks
 on:
   pull_request:
     branches: [main, 'lane/**']
+    types: [opened, synchronize, reopened, labeled]
   workflow_dispatch:
+  schedule:
+    - cron: '0 20 * * *'
 
 concurrency:
-  group: checks-${{ github.ref }}
+  group: checks-${{ github.ref }}${{ github.event_name != 'pull_request' && format('-{0}', github.event_name) || '' }}
   cancel-in-progress: true
 
 jobs:
@@ -18,10 +25,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: Install the root packages the unit tests and the typecheck import (three, playwright-core; no browser download)
         run: npm ci --no-audit --no-fund --loglevel=error
-      - name: Unit and lint tests (cross-platform rules, CI minute policy)
-        run: node --test test/unit/*.test.mjs
+      - name: 'Fast unit tests (every file without `// tier: heavy`; a file over 15 s or the tier over 120 s fails and names the slowest)'
+        run: node test/tier.mjs fast
       - name: Release checks without writing zips (manifest coverage, forbidden strings, Chinese in buyer docs, licences, skill sets)
         run: node release/build.mjs --dry-run
       - name: Typecheck core/, kit/ and release/ (JSDoc, dev-only TypeScript in tools/typecheck)
@@ -34,3 +44,31 @@ jobs:
       - name: A change to what a reel does updates the verify feature map
         if: github.event_name == 'pull_request'
         run: git diff --name-only "origin/${{ github.base_ref }}...HEAD" | node .claude/skills/verify/check-coverage.mjs
+
+  heavy:
+    name: heavy (${{ matrix.leg }}/4)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        leg: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Which heavy files this change needs (a guarded path changed; every file nightly, by hand or with the label heavy-all)
+        id: pick
+        env:
+          ALL: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'heavy-all') }}
+        run: node test/tier.mjs heavy --shard ${{ matrix.leg }}/4 --dry-run $([ "$ALL" = true ] && echo --all || echo --base "origin/${{ github.base_ref }}")
+      - if: steps.pick.outputs.run == 'true'
+        run: npm ci --no-audit --no-fund --loglevel=error
+      - name: Heavy unit tests, traced (a read outside test/heavy.json or a file over 480 s fails)
+        if: steps.pick.outputs.run == 'true'
+        env:
+          ALL: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'heavy-all') }}
+        run: node test/tier.mjs heavy --shard ${{ matrix.leg }}/4 $([ "$ALL" = true ] && echo --all || echo --base "origin/${{ github.base_ref }}")

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Look bench</title>
+<style>
+:root { --bg: #f4f3ef; --ink: #1f1f1d; --mute: #6b6a64; --card: #fff; --line: #dedcd4; --ok: #1d7a46; --okbg: #e3f2e8; --bad: #b3261e; --badbg: #fbe5e2; --new: #8a5a00; --newbg: #fbf0d9; }
+@media (prefers-color-scheme: dark) { :root { --bg: #17171a; --ink: #ecebe6; --mute: #9a9991; --card: #222226; --line: #34343a; --ok: #6fd39a; --okbg: #1d3527; --bad: #ff8f86; --badbg: #3d1f1d; --new: #f0c46a; --newbg: #3a3020; } }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, sans-serif; }
+main { max-width: 1200px; margin: 0 auto; padding: 20px 16px 40px; }
+h1 { font-size: 22px; margin: 0 0 4px; } h2 { font-size: 16px; margin: 28px 0 10px; }
+.sub, .mono { color: var(--mute); } .mono { font: 12px ui-monospace, Menlo, monospace; }
+.sum { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0; } .sum b { font-size: 20px; display: block; }
+.sum div { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; min-width: 110px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+.tile { border-radius: 8px; padding: 8px 10px; border: 1px solid var(--line); background: var(--card); }
+.tile .n { font-weight: 600; word-break: break-word; } .tile .h { font: 11px ui-monospace, Menlo, monospace; color: var(--mute); }
+.tile .s { display: inline-block; margin-top: 4px; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 1px 6px; }
+.tile.ok { border-color: var(--ok); } .tile.ok .s { color: var(--ok); background: var(--okbg); }
+.tile.bad { border-color: var(--bad); background: var(--badbg); } .tile.bad .s { color: var(--bad); background: var(--card); }
+.tile.new { border-color: var(--new); } .tile.new .s { color: var(--new); background: var(--newbg); }
+table { border-collapse: collapse; width: 100%; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+td, th { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: top; } th { font-weight: 600; color: var(--mute); font-size: 12px; }
+td.v { font-weight: 700; white-space: nowrap; }
+canvas { display: block; }
+</style>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/","#engine/":"/styles/stick-man/engine/","#kit/":"/styles/stick-man/kit/","#motion-lib/":"/styles/stick-man/motion-lib/","#tools/":"/styles/stick-man/tools/"}}</script>
+</head><body>
+<script type="module">
+// The look bench (tools/run/lookbench.mjs drives it headless):
+//   ?view=bench&report=<json>  one tile per golden case (test/golden/looks.json) with its state at this checkout: khớp (matches),
+//                              lệch (moved without Kai's approval), mới (not in the golden yet); then the codebase scorecard
+//                              (test/golden/codescore.json), the add-a-part drill and the code review
+//   ?view=swap                 one figure on the GPU; window.__swap(style) rebuilds it with that toon hair (today a swap is a
+//                              rebuild) and returns the build ms
+const Q = new URLSearchParams(location.search), VIEW = Q.get('view') || 'bench';
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+async function bench() {
+  const R = await (await fetch(Q.get('report') || '/__bench/golden.json')).json();
+  const card = await (await fetch('/test/golden/codescore.json')).json().catch(() => null);
+  const fails = new Map(R.fails.map(f => [f.case, f])), names = [...new Set([...Object.keys(R.golden), ...Object.keys(R.cases)])].sort();
+  const state = n => (!(n in R.golden) ? 'new' : fails.has(n) ? 'bad' : 'ok'), label = { ok: 'khớp', bad: 'lệch', new: 'mới' };
+  const count = s => names.filter(n => state(n) === s).length;
+  const rows = card ? Object.entries(R.scores).map(([k, s]) => `<tr><td class="v">${esc(card.card[k])}${s.of ? ' / ' + esc(card.card[s.of]) : ''}</td><td>${esc(s.what)}</td><td class="mono">${esc([].concat(card.detail?.[k] ?? '').join(' · '))}</td></tr>`).join('') : '';
+  const drill = card?.drill;
+  document.body.innerHTML = `<main>
+    <h1>Look bench</h1>
+    <div class="sub">${esc(R.sha)} · ${names.length} cases · ${esc(R.ms)} ms${R.mutate ? ' · mutation: ' + esc(R.mutate) : ''}</div>
+    <div class="sum"><div><b>${count('ok')}</b>khớp</div><div><b>${count('bad')}</b>lệch</div><div><b>${count('new')}</b>mới</div></div>
+    <div class="grid">${names.map(n => `<div class="tile ${state(n)}" data-case="${esc(n)}"><div class="n">${esc(n)}</div>
+      <div class="h">${esc(R.cases[n]?.hash ?? 'not built')}${fails.get(n)?.want ? ' · was ' + esc(fails.get(n).want) : ''}</div><span class="s">${label[state(n)]}</span></div>`).join('')}</div>
+    ${card ? `<h2>Codebase scorecard <span class="mono">${esc(card.sha)}</span></h2><table><tr><th>score</th><th>what</th><th>where</th></tr>${rows}</table>` : ''}
+    ${drill ? `<h2>Add-a-part drill (beret, today's code)</h2><table><tr><td class="v">${esc(drill.files)} files</td><td>+${esc(drill.added)} / -${esc(drill.removed)} lines</td><td class="mono">${esc(drill.touched.join(' · '))}</td></tr></table>` : ''}
+    ${card?.review ? `<h2>Code review</h2><p class="mono">${esc(card.review)}</p>` : ''}
+  </main>`;
+  window.__ready = true;
+}
+
+async function swap() {
+  const THREE = await import('three'), { makeStick } = await import('#engine/cast.js'), { createStage, lin } = await import('#engine/look.js');
+  const { useFaceStyle } = await import('#engine/facestyles/index.js'), { bodySpec } = await import('#motion-lib/bodies.js'), { toonHair } = await import('#kit/cast/hair.js');
+  await import('#kit/cast/wardrobe.js'); const { HOOKS } = await import('#engine/play.js');
+  await useFaceStyle();
+  const W = innerWidth, H = innerHeight, toB = v => [v.x, -v.z, v.y];
+  const stage = createStage({ width: W, height: H, faceInk: true, ao: 0.5, aoRadius: 0.4, shadowRadius: 2, sat: 1.0, con: 1.05, vig: 0, bloom: 0.04, hot: 0.1, ink: 2.4, shafts: 0 });
+  stage.scene.background = lin(0.36, 0.38, 0.41);
+  stage.hemi.intensity = 0.5; stage.fill.intensity = 0.4; stage.sun.intensity = 3.0;
+  let now = null;
+  window.__swap = style => {
+    if (now) { stage.scene.remove(now.group); now.group.traverse(o => o.geometry?.dispose?.()); }
+    const t0 = performance.now(), group = new THREE.Group(); stage.scene.add(group);
+    const S = makeStick(bodySpec({ name: style, shirt: [0.62, 0.62, 0.66], hair: style ? [toonHair(style)] : [] }, 'adult')); group.add(S.root);
+    HOOKS.costume(S, ['sweater:coral'], { group }); S.pose({}); now = { group, S };
+    S.root.updateMatrixWorld(true); const ms = performance.now() - t0, head = S.parts.head.getWorldPosition(new THREE.Vector3()), dir = new THREE.Vector3(0.35, 0.05, 1).normalize();
+    const cam = head.clone().addScaledVector(dir, 1.25);
+    stage.setCamera(toB(cam), toB(head.clone().setY(head.y - 0.12)), 50); stage.setSun(toB(dir.clone().multiplyScalar(-0.8).setY(-0.5)), toB(head), 2.2);
+    S.face({ t: 0, expr: 'neutral', cam: toB(cam) });
+    stage.scene.updateMatrixWorld(true); stage.render({ grade: { exp: 1, lift: 0, sat: 1, haze: 0, sky: false, air: false } });
+    return Math.round(ms);
+  };
+  window.__ready = true;
+}
+(VIEW === 'swap' ? swap() : bench()).catch(e => { console.error(e); document.body.textContent = String(e?.stack || e); window.__ready = 'error'; });
+</script>
+</body></html>

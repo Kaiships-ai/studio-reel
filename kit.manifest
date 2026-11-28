@@ -124,6 +124,8 @@ kit.manifest
 styles/kai-hand-draw/engine/kai-v3.js
 # Kai's 3D reels (Blocky Kai, casting book with real people and franchise nods): Kai's own use only
 styles/kai-reel-3d/
+# the stick-man verify skill (golden bench, Mac Pro sheets): verify never ships, and [stick] must not pick it up
+styles/stick-man/.claude/
 # Stick-man 3D look (three.js): dev-only P0 slice (stage, cast, bank set) until it is proven
 styles/stick-man/
 .claude/skills/make-reel-3d/
