@@ -25,7 +25,7 @@ const stripes = (a, b, n = 18) => { const cv = document.createElement('canvas');
 // ---------------------------------------------------------------- hats (spec `hair` builders: () => Group on the head)
 // railroad cap: a puffy round crown of blue-and-white pinstripe, wider than the head, a short stiff bill (rail f0-f120)
 export function railCap(a = '#e9eef6', b = '#3b5f9e', tilt = 10) {
-  return () => {
+  return Object.assign(() => {
     const g = new THREE.Group(); g.rotation.x = -tilt * DEG;
     const y0 = 0.30 * W, R = 0.55 * W, Hc = 0.30 * W, pr = [[0, y0], [R * 0.88, y0]];
     for (let i = 0; i <= 16; i++) { const t = i / 16, ang = t * Math.PI / 2; pr.push([R * (1 + 0.10 * Math.sin(ang * 2)) * Math.pow(Math.cos(ang), 0.55), y0 + Hc * Math.sin(ang)]); }
@@ -34,11 +34,11 @@ export function railCap(a = '#e9eef6', b = '#3b5f9e', tilt = 10) {
     const bill = new THREE.CylinderGeometry(0.40 * W, 0.40 * W, 0.03 * W, 40, 1, false, -0.95, 1.9); const bm = solid(bill, mat(L([0.16, 0.22, 0.38])));
     bm.scale.set(1.05, 1, 1.25); bm.position.set(0, y0 - 0.01 * W, 0.06 * W); bm.rotation.x = 0.18; g.add(bm);
     return g;
-  };
+  }, { part: 'railCap', params: { a, b, tilt } });
 }
 // bowler: a round dome, a narrow brim curled up at the sides
 export function bowler(c = [0.03, 0.03, 0.035], band = [0.012, 0.012, 0.014], tilt = 6) {
-  return () => {
+  return Object.assign(() => {
     const g = new THREE.Group(); g.rotation.x = -tilt * DEG; const y0 = 0.36 * W, pr = [[0, y0]];
     for (let i = 0; i <= 16; i++) { const a = i / 16 * Math.PI / 2; pr.push([0.42 * W * Math.pow(Math.cos(a), 0.65), y0 + 0.50 * W * Math.sin(a)]); }
     g.add(solid(lathe(pr, 56), mat(c, { shade: [0.75, 0.75, 0.9] })));
@@ -46,23 +46,23 @@ export function bowler(c = [0.03, 0.03, 0.035], band = [0.012, 0.012, 0.014], ti
     const bp = []; for (let i = 0; i <= 10; i++) { const r = 0.41 * W + 0.16 * W * i / 10; bp.push([r, y0 + 0.10 * W * Math.pow(i / 10, 2.2)]); }   // the brim curls up at the edge
     const brim = solid(lathe(bp.concat([[0.575 * W, y0 + 0.13 * W], [0.41 * W, y0 + 0.03 * W]]), 56), mat(c.map(x => x * 1.6 + 0.02))); brim.scale.z = 0.86; g.add(brim);
     return g;
-  };
+  }, { part: 'bowler', params: { c, band, tilt } });
 }
 // top hat: a tall slightly flared silk crown, a ribbon band, a curled brim (the magnate)
 export function topHat(c = [0.03, 0.03, 0.04], band = [0.30, 0.04, 0.06], tilt = 4) {
-  return () => {
+  return Object.assign(() => {
     const g = new THREE.Group(); g.rotation.x = -tilt * DEG; const y0 = 0.36 * W, Hh = 0.95 * W;
     const crown = solid(lathe([[0, y0], [0.40 * W, y0], [0.37 * W, y0 + Hh * 0.55], [0.43 * W, y0 + Hh], [0, y0 + Hh]], 48), mat(c, { shade: [0.7, 0.7, 0.9] })); g.add(crown);
     const bd = solid(new THREE.CylinderGeometry(0.395 * W, 0.405 * W, 0.15 * W, 48, 1, true), mat(band)); bd.material.side = THREE.DoubleSide; bd.position.y = y0 + 0.09 * W; g.add(bd);
     const bp = []; for (let i = 0; i <= 10; i++) { const r = 0.40 * W + 0.26 * W * i / 10; bp.push([r, y0 + 0.08 * W * Math.pow(i / 10, 2.5)]); }
     const brim = solid(lathe(bp.concat([[0.66 * W, y0 + 0.10 * W], [0.40 * W, y0 + 0.02 * W]]), 56), mat(c)); brim.scale.z = 0.86; g.add(brim);
     return g;
-  };
+  }, { part: 'topHat', params: { c, band, tilt } });
 }
 // a monocle on its chain: a gold ring over the face's right eye (rides the head, not the face card)
 export function monocle(c = L([0.95, 0.74, 0.25])) {
-  return () => { const g = new THREE.Group(), r = solid(new THREE.TorusGeometry(0.075 * W, 0.010 * W, 8, 28), mat(c, { sheen: 0.6 }), 0.004);
-    r.position.set(0.16 * W, 0.04 * W, HA * 0.98); g.add(r); return g; };
+  return Object.assign(() => { const g = new THREE.Group(), r = solid(new THREE.TorusGeometry(0.075 * W, 0.010 * W, 8, 28), mat(c, { sheen: 0.6 }), 0.004);
+    r.position.set(0.16 * W, 0.04 * W, HA * 0.98); g.add(r); return g; }, { part: 'monocle', params: { c } });
 }
 
 // ---------------------------------------------------------------- cast specs (registered into engine/play.js SPECS)

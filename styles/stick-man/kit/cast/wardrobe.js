@@ -91,7 +91,10 @@ export function wardrobe(S, items, { group = null } = {}) {
     for (const gm of garments) at(gm, (D, c) => D.build(X, c));
   }
   for (const it of parsed) if (ITEMS[it.k]) { X.arg = it.a; ITEMS[it.k](X, it.a, it.b); }
-  for (const it of parsed) if (it.k === 'cap' || it.k === 'hat') { const h = hatOf(it.a); head.add(h); hats.push(h); tuckHair(S, it.a); if (group) { const f = hatOf(it.a); f.visible = false; group.add(f); flyOff(S, h, f); } }
+  const worn = parsed.filter(it => it.k === 'cap' || it.k === 'hat');
+  for (const it of worn) { const h = hatOf(it.a); head.add(h); hats.push(h); tuckHair(S, it.a); if (group) { const f = hatOf(it.a); f.visible = false; group.add(f); flyOff(S, h, f); } }
+  // hair swapped in place goes in under the hats as a fresh build's does
+  if (worn.length) { const bake = S.bakeHair; S.bakeHair = fns => { bake(fns); for (const it of worn) tuckHair(S, it.a); }; }
   // the sleeves on the drawn arm lines: the sleeve, its cuff (or the shirt's, showing past a jacket's), a uniform's rings
   if (arm) for (const k of ['armL', 'armR']) {
     const line = S.parts.limbs[k], put = o => { const s = sleeve(line, o); root.add(s.m); sleeves.push({ ...s, arm: k }); }, end = arm.to ?? (arm.shirt ? 12 : 13);

@@ -29,7 +29,7 @@ const sha = b => createHash('sha256').update(b).digest('hex').slice(0, 16);
 const r5 = x => (typeof x === 'number' ? Math.round(x * 1e5) / 1e5 : x);
 const bytes = a => Buffer.from(a.buffer, a.byteOffset, a.byteLength);
 
-function recordingDocument() {
+export function recordingDocument() {
   const canvas = () => {
     const cv = { width: 1, height: 1, style: {}, __log: [], addEventListener() {}, toDataURL: () => '' };
     const base = {

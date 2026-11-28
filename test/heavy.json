@@ -266,6 +266,17 @@
    "test/unit/stick-propswap.test.mjs"
   ]
  },
+ "test/unit/stick-rebake.test.mjs": {
+  "secs": 8.8,
+  "guards": [
+   "kit",
+   "styles/stick-man/engine",
+   "styles/stick-man/kit",
+   "styles/stick-man/motion-lib",
+   "styles/stick-man/tools/gates",
+   "test/unit"
+  ]
+ },
  "test/unit/stick-render-tiers.test.mjs": {
   "secs": 11.4,
   "guards": "always"
@@ -283,6 +294,19 @@
    "styles/stick-man/kit/props",
    "styles/stick-man/tools/gates",
    "test/unit/stick-scalp-cover.test.mjs"
+  ]
+ },
+ "test/unit/stick-shared-materials.test.mjs": {
+  "secs": 29.2,
+  "guards": [
+   "kit",
+   "styles/stick-man/engine",
+   "styles/stick-man/kit/cast",
+   "styles/stick-man/kit/look",
+   "styles/stick-man/kit/props",
+   "styles/stick-man/motion-lib",
+   "styles/stick-man/tools/gates",
+   "test/unit"
   ]
  },
  "test/unit/stick-toon-hair.test.mjs": {

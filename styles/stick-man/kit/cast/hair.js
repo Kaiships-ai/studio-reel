@@ -287,5 +287,5 @@ export function toonHair(style = 'side', col, patch) {   // patch: fields over t
     // so nothing the crown covers ever leaves it, then all neck 0.45 W lower (a lock's top fixed to the neck opened 11-49 mm)
     if (st.neck) Object.assign(lg.userData, { neckTop: ((st.hang ? Math.min(...st.hang.hem.map(h => h[1])) : table(st.lo, 180)) - 0.08) * W, neckRamp: 0.45 * W });
     return g;
-  }, { hairStyle: style });
+  }, { hairStyle: style, part: 'toonHair', params: { style, col, patch } });
 }
