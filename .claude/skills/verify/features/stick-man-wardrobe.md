@@ -38,6 +38,13 @@ A crowd: `costume: ['sweater:' + outfit(i)]` (`outfit` from wardrobe.js).
   (about 40 s); a film: `node styles/stick-man/tools/gates/fits.mjs films/<slug>` (exit 1 names each blocked or untested pair).
 - Group shots and motion: `films/kitbody-costumes/sheet2.html` (line-up at true scale, a crowd of twelve in `outfit(i)`, walk,
   run and sit clips of three outfits).
+- The golden lock (C1, before any edit of the appearance path): `node --test test/unit/stick-look-golden.test.mjs` (about 8 s)
+  fingerprints 65 looks headless (5 bodies, the s2 face on each, 11 toon hairs with their map bytes, the 15 sheet looks at
+  frame 4, 3 walking at frame 12, the 17 repo specs, the hoodie under each of the three import orders) against
+  `test/golden/looks.json`; a moved hash needs a row `{ case, from, to, page, by: 'Kai' }` in `test/golden/approvals.json`.
+  The pixel half is the Mac Pro baseline (`styles/stick-man/tools/run/sheetbase.mjs capture|compare`, the wardrobe sheet, the
+  hair sheet `type=mw`, the faces sheet and the rig sheet at review tier). The bench page and the scorecard:
+  `styles/stick-man/.claude/skills/verify/SKILL.md` (the stick-man verify skill), `node styles/stick-man/tools/run/codescore.mjs`.
 
 ## Gotchas
 
