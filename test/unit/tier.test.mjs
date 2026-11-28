@@ -39,6 +39,7 @@ test('a read guards its folder; tests and root files guard themselves; node_modu
   assert.equal(guardOf(`r ${R}/styles`, R, tracked), null, 'a stat of a tracked folder is not a read of it');
   assert.equal(guardOf('o python x.py', R, tracked), 'always');
   assert.equal(guardOf(`r ${R}/new-root.json`, R, tracked), 'new-root.json', 'a probe for a missing root file guards that file');
+  assert.equal(guardOf(`r ${R}/films`, R, { ...tracked, ignored: p => p === 'films' }), null, 'an ignored root path (films/) guards nothing: no PR changes it (ci-queue 28/11, stick-bible)');
   assert.deepEqual(guardsOf([`r ${R}/kit/env.mjs`, `l ${R}/kit`, `r ${R}/styles/stick-man/kit/compat.json`], R, tracked), ['kit', 'styles/stick-man/kit']);
   assert.equal(guardsOf([`r ${R}/kit/env.mjs`, 'o ffmpeg -i x'], R, tracked), 'always');
   assert.ok(covers('kit', 'kit/cast/hair.js') && !covers('kit', 'kitchen/x') && covers('.', 'anything'));

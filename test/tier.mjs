@@ -36,13 +36,14 @@ export function trackedSets(root = ROOT) {
   const files = new Set(spawnSync('git', ['ls-files'], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 }).stdout.split('\n').filter(Boolean));
   const dirs = new Set(['.']);
   for (const f of files) for (let d = dirname(f); d !== '.'; d = dirname(d)) dirs.add(d);
-  return { files, dirs };
+  const ignored = rel => spawnSync('git', ['check-ignore', '-q', '--no-index', rel], { cwd: root }).status === 0;
+  return { files, dirs, ignored };
 }
 
 // The guard a traced line stands for: a file under test/ or at the root guards itself, any other file its folder, a
 // listed folder itself. Paths git does not track (outside the repo, temp output, ignored folders, node_modules and
 // .pixi, whose lockfiles are in RUN_ALL) guard nothing. A missing path guards the tracked folder it would be in.
-export function guardOf(line, root, { files, dirs }) {
+export function guardOf(line, root, { files, dirs, ignored = () => false }) {
   const kind = line[0], abs = line.slice(2);
   if (kind === 'o') return 'always';
   const rel = relative(root, abs).split('\\').join('/');
@@ -50,7 +51,7 @@ export function guardOf(line, root, { files, dirs }) {
   if (/^(node_modules|\.pixi)(\/|$)/.test(rel)) return null;
   if (files.has(rel)) return !rel.includes('/') || rel.startsWith('test/') ? rel : dirname(rel);
   if (dirs.has(rel || '.')) return kind === 'l' ? rel || '.' : null;
-  if (!rel.includes('/')) return rel;
+  if (!rel.includes('/')) return ignored(rel) ? null : rel;   // films/ is ignored: no PR can change it, and machines differ
   for (let d = dirname(rel); ; d = dirname(d)) { if (dirs.has(d)) return d === '.' ? null : d; if (d === '.') return null; }
 }
 
