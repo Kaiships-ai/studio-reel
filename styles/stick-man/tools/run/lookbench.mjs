@@ -1,7 +1,7 @@
 // The look bench, headless: the golden fingerprint of every look at this checkout shown as tiles (tools/run/lookbench.html),
 // and the hair-swap journey on the GPU. Every scenario writes a JSON report and its screenshots into --out.
 //   node styles/stick-man/tools/run/lookbench.mjs serve [--port 8765]      a server on the repo; prints the bench URL, then "lookbench ready"
-//   node styles/stick-man/tools/run/lookbench.mjs doctor                   read-only: the checkout's SHA, the machine, the GPU (ANGLE Metal), the port
+//   node styles/stick-man/tools/run/lookbench.mjs doctor                   read-only: the checkout's SHA, the machine, the browser, the GPU (ANGLE Metal), the port
 //   node styles/stick-man/tools/run/lookbench.mjs golden --out <dir> [--mutate coral]   fingerprint + judge -> golden.json, bench.png; exit 1 on a lệch tile
 //   node styles/stick-man/tools/run/lookbench.mjs hairswap --out <dir> [--styles side,afro]   one figure, each toon hair in turn -> hair-<style>.png, hairswap.json
 // --console prints the page's console. GPU scenarios (hairswap) belong on the Mac Pro; golden draws only HTML tiles.
@@ -63,8 +63,9 @@ async function doctor() {
   lines.push(`checkout ${sha()} (${execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim()})`);
   const pro = os.hostname().startsWith(PRO_HOST); lines.push(`machine ${os.hostname()}: ${pro ? 'the Mac Pro, sheets may run' : 'not the Mac Pro: no pixel sheets here'}`);
   const free = await portFree(port); lines.push(`port ${port} ${free ? 'free' : 'in use (serve --port <other>)'}`); if (!free) fail.push('port');
-  const browser = await launchGpu();
-  try {
+  const browser = await launchGpu().catch(e => { lines.push(`browser missing (${e.message.split('\n')[0]}): node node_modules/playwright-core/cli.js install chromium-headless-shell`); fail.push('browser'); });
+  if (browser) try {
+    lines.push(`browser chromium ${browser.version()}`);
     const gl = await (await browser.newPage()).evaluate(() => { const c = document.createElement('canvas').getContext('webgl2'); const e = c?.getExtension('WEBGL_debug_renderer_info'); return c ? c.getParameter(e ? e.UNMASKED_RENDERER_WEBGL : c.RENDERER) : null; });
     const metal = /ANGLE.*Metal/i.test(gl || ''); lines.push(`gpu ${gl || 'no WebGL2'}${metal ? '' : ' (not ANGLE Metal)'}`); if (!metal) fail.push('gpu');
   } finally { await browser.close(); }

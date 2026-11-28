@@ -4,13 +4,14 @@
 //   node styles/stick-man/tools/run/sheetbase.mjs capture --out <dir> [--only wardrobe,hair,faces,rig]
 //   node styles/stick-man/tools/run/sheetbase.mjs compare --base <dir> --head <dir> --out <page dir>
 // capture writes <dir>/{wardrobe/c_<i>.png (90 cells), hair/h_<i>.png (110 frames: type=mw, 11 styles x 10 views), faces/faces.png, rig/rig-sheet.jpg},
-// <dir>/SHA (the commit, its merge base with origin/main, the machine) and <dir>/manifest.json (a sha256 per file).
+// <dir>/SHA (the commit, its merge base with origin/main, the machine, the Chromium build: pixels hold for one build only) and <dir>/manifest.json (a sha256 per file).
 // compare exits 1 when any pixel differs and writes <page dir>/index.html + report.json.
 import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { run } from '../../../../kit/env.mjs';
+import { launchGpu } from '../render/pageserver.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 const SHOT = 'styles/stick-man/tools/render/shot.mjs';
@@ -24,7 +25,7 @@ const git = (...a) => execFileSync('git', a, { cwd: ROOT, encoding: 'utf8' }).tr
 const sha256 = f => createHash('sha256').update(fs.readFileSync(f)).digest('hex');
 const images = dir => (fs.existsSync(dir) ? fs.readdirSync(dir, { recursive: true }).filter(f => /\.(png|jpe?g)$/i.test(f)).sort() : []);
 
-function capture(out, only) {
+async function capture(out, only) {
   fs.mkdirSync(out, { recursive: true });
   for (const [name, s] of Object.entries(SHEETS)) {
     if (only && !only.includes(name)) continue;
@@ -35,9 +36,9 @@ function capture(out, only) {
     console.log(`${name}: ${n} images in ${((Date.now() - t0) / 1000).toFixed(0)} s`);
     if (n !== s.cells) { console.error(`sheetbase: ${name} made ${n} images, expected ${s.cells}`); process.exit(1); }
   }
-  const files = images(out);
+  const files = images(out), browser = await launchGpu(), version = browser.version(); await browser.close();
   fs.writeFileSync(path.join(out, 'SHA'), [`head ${git('rev-parse', 'HEAD')}`, `main ${git('merge-base', 'HEAD', 'origin/main')}`,
-    `machine ${os.hostname()}`, `captured ${new Date().toISOString()}`, ''].join('\n'));
+    `machine ${os.hostname()}`, `browser chromium ${version}`, `captured ${new Date().toISOString()}`, ''].join('\n'));
   fs.writeFileSync(path.join(out, 'manifest.json'), JSON.stringify(Object.fromEntries(files.map(f => [f, sha256(path.join(out, f))])), null, 1) + '\n');
   console.log(`${files.length} images, ${out}/SHA`);
 }
@@ -96,6 +97,6 @@ figure{margin:0}img{width:240px;display:block;background:#ccc}h2{font-size:14px;
 
 const [cmd, ...rest] = process.argv.slice(2), A = {};
 for (let i = 0; i < rest.length; i += 2) A[rest[i].replace(/^--/, '')] = rest[i + 1];
-if (cmd === 'capture' && A.out) capture(path.resolve(A.out), A.only?.split(','));
+if (cmd === 'capture' && A.out) await capture(path.resolve(A.out), A.only?.split(','));
 else if (cmd === 'compare' && A.base && A.head && A.out) compare(path.resolve(A.base), path.resolve(A.head), path.resolve(A.out));
 else { console.log(fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split(/\n(?!\/\/)/)[0].replace(/^\/\/ ?/gm, '')); process.exitCode = cmd ? 2 : 0; }

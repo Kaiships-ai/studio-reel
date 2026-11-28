@@ -36,7 +36,7 @@ Ready when it prints `lookbench ready` (it prints its `pid` first: Cleanup stops
 node styles/stick-man/tools/run/lookbench.mjs doctor
 ```
 
-Read-only. Prints the checked-out SHA and branch, the machine (pixel sheets only when it names the Mac Pro, `hermes-mac`), whether port 8765 is free, and the WebGL renderer (must say ANGLE ... Metal). `doctor: ready` or it names what is not. Compare the SHA with the head you meant to test before trusting any picture.
+Read-only. Prints the checked-out SHA and branch, the machine (pixel sheets only when it names the Mac Pro, `hermes-mac`), whether port 8765 is free, the Chromium build, and the WebGL renderer (must say ANGLE ... Metal). `doctor: ready` or it names what is not. `browser missing` means the Playwright browser cache was cleared: run the install command it prints (it downloads the build the repo's `playwright-core` pins), then doctor again. Pixel sheets hold for one Chromium build only: a capture's `SHA` file names it, and a compare against a baseline of another build is not proof. Compare the SHA with the head you meant to test before trusting any picture.
 
 ## Drive
 
