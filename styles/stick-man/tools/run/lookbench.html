@@ -33,7 +33,7 @@ canvas { display: block; }
 //                              equals a fresh build of that style (test/unit/hair-swap.mjs)
 //   ?view=swap[&body=child][&wear=cap:police][&hair=pompadour][&frame=body]   one figure on the GPU; window.__swap(style) swaps
 //                              its toon hair in place (S.bakeHair) and returns the ms, window.__girth(g) changes its girth in
-//                              place, window.__fresh(style, girth) builds it again from scratch to compare against;
+//                              place (undressed only: pass &wear=, a dressed figure refuses it), window.__fresh(style, girth) builds it again from scratch to compare against;
 //                              window.__geometries() is the renderer's live geometry count
 const Q = new URLSearchParams(location.search), VIEW = Q.get('view') || 'bench';
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));

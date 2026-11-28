@@ -267,7 +267,7 @@
   ]
  },
  "test/unit/stick-rebake.test.mjs": {
-  "secs": 9.9,
+  "secs": 9.5,
   "guards": [
    "kit",
    "styles/stick-man/engine",
@@ -299,7 +299,7 @@
   ]
  },
  "test/unit/stick-shared-materials.test.mjs": {
-  "secs": 31.3,
+  "secs": 30.3,
   "guards": [
    "kit",
    "styles/stick-man/engine",

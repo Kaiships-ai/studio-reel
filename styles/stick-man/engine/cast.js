@@ -591,8 +591,9 @@ function armDirs(a, sg) {
 // (held props stop on it, body.js headWear) and the hair lengths bound to the neck. Points are taken in the head's own frame,
 // so a figure already posed gets the same shell as a fresh build
 function bakeHair(head, hairG, fns) {
+  const next = fns.map(f => f());   // built first: a builder that throws leaves the old hair in place
   for (const o of [...hairG.children]) { hairG.remove(o); disposeTree(o); }
-  for (const f of fns) hairG.add(f());
+  for (const o of next) hairG.add(o);
   hairG.updateMatrixWorld(true);
   const inHead = o => { const m = o.matrix.clone(); for (let q = o.parent; q !== head; q = q.parent) m.premultiply(q.matrix); return m; };
   const crown = [], sheets = [], neckBound = []; hairG.traverse(o => { if (o.userData.neckBound) neckBound.push(o);
@@ -601,6 +602,12 @@ function bakeHair(head, hairG, fns) {
     if (!o.geometry.userData.sheet) { for (let i = 0; i < P.count; i++) crown.push(at(i)); return; }
     const I = o.geometry.index; for (let i = 0; i < (I ? I.count : P.count); i += 3) sheets.push([0, 1, 2].map(j => at(I ? I.getX(i + j) : i + j))); });
   return { wornShell: headWear(crown, sheets, HA, HB), neckBound };
+}
+// from the end of a build on: a repainted torso, or anything on the figure but a hand prop, is a costume put on it. A costume
+// keeps the girth it was put on at and is never taken off, so setGirth refuses a dressed figure (build it again instead)
+function dressedSince(S, holders) {
+  const torso = S.parts.torso, built = new Set(holders.flatMap(o => o.children)), map0 = torso.material.map;
+  return () => torso.material.map !== map0 || holders.some(o => o.children.some(c => !built.has(c) && !Object.values(S.props).includes(c)));
 }
 // the torso and its ink shell back at their rest positions (the copies pose2 took before bending them)
 const restBent = bent => { for (const b of bent || []) { const P = b.g.attributes.position, N = b.g.attributes.normal; P.array.set(b.p); N.array.set(b.n); P.needsUpdate = N.needsUpdate = true; b.g.computeBoundingSphere(); } };
@@ -619,8 +626,7 @@ export function makeStick(spec) {
   const SC = spec.scale ?? 1, HK = spec.headScale ?? 1, LK = spec.legScale ?? 1, LT = LIMB.thigh * LK, DROP = (1 - LK) * 2 * LIMB.thigh, KG = spec.kg ?? 70;
   if (SC !== 1) root.scale.setScalar(SC);
   const torso = solid(torsoGeo(), toon([1, 1, 1], { map: clothesCanvas(spec), sheen: 0, rough: 1, rim: 0, soft: 0, shade: [0.78, 0.78, 0.86], char: 1, rimCool: rc }));
-  const restTorso = () => { torso.scale.set(girth, 1, 0.9 + 0.1 * girth); torso.position.set(0, (TORSO.cy - TORSO.h / 2 - HIP_V) * W, 0); };
-  restTorso(); body.add(torso);
+  const restTorso = () => { torso.scale.set(girth, 1, 0.9 + 0.1 * girth); torso.position.set(0, (TORSO.cy - TORSO.h / 2 - HIP_V) * W, 0); }; restTorso(); body.add(torso);
 
   const head = new THREE.Group(); root.add(head);
   const hg = new THREE.SphereGeometry(HA, 64, 40); hg.scale(1, HEAD_H, 1);
@@ -651,7 +657,7 @@ export function makeStick(spec) {
   // hair and hats: one group fixed to the head (Kai 20/11: a cap that swung after the head's nods read as a wobble)
   const hairG = new THREE.Group(); head.add(hairG);
   hairG.position.y = HAT_LIFT; hairG.updateMatrix(); hairG.matrixAutoUpdate = false;
-  let { wornShell, neckBound } = bakeHair(head, hairG, spec.hair || []);
+  const first = bakeHair(head, hairG, spec.hair || []); let neckBound = first.neckBound;
 
   const limbs = { armL: new Tube(16, LIMB_R), armR: new Tube(16, LIMB_R), legL: new Tube(18, LIMB_R), legR: new Tube(18, LIMB_R) };
   // hand mitt: reference hands are ~0.10 W across, about twice the arm line
@@ -672,7 +678,7 @@ export function makeStick(spec) {
   if (spec.tidyFeet) { contact.material.color.copy(lin(0.10, 0.10, 0.10)); contact.material.opacity = 0.3; }
 
   // (spec: the build a costume layer sizes itself from, kit/cast/wardrobe.js; parts.limbs: the drawn limb lines, root metres)
-  const S = { root, spec, yaw: 0, hand: {}, parts: { head: headSolid, torso, toes, ankles, hands, face, marks: FR.group, hair: hairG, limbs: Object.fromEntries(Object.entries(limbs).map(([k, t]) => [k, t.mesh])) }, xmarks: [], props: {}, wornShell };
+  const S = { root, spec, yaw: 0, hand: {}, parts: { head: headSolid, torso, toes, ankles, hands, face, marks: FR.group, hair: hairG, limbs: Object.fromEntries(Object.entries(limbs).map(([k, t]) => [k, t.mesh])) }, xmarks: [], props: {}, wornShell: first.wornShell };
   // the hair and hats swapped on this figure, as a fresh build with spec.hair = fns would have them (the next pose places them)
   S.bakeHair = fns => { ({ wornShell: S.wornShell, neckBound } = bakeHair(head, hairG, fns)); S.spec = { ...S.spec, hair: fns }; delete S.neckLm; };
   const inv = new THREE.Matrix4();
@@ -880,7 +886,7 @@ export function makeStick(spec) {
   // plus the x_ keys (props, marks) and contact.
   let bent = null, slices = null;
   // a new girth on this figure: the torso and its ink shell go back to rest, so the next pose bends them as a fresh build would
-  S.setGirth = g => { restBent(bent); girth = g; S.spec = { ...S.spec, girth: g }; bent = slices = null; restTorso(); };
+  S.setGirth = g => { if (dressed()) throw new Error('setGirth: this figure is dressed, and its costume keeps the girth it was put on at; build it again at the new girth'); restBent(bent); girth = g; S.spec = { ...S.spec, girth: g }; bent = slices = null; restTorso(); };
   const _e = new THREE.Euler();
   // spec.posture, spec.stance (motion-lib/bodies.js bodySpec(spec, body, { posture: true }), opt-in): the body's own way of standing on every
   // channel a pose does not name (an elder's stoop, a toddler's held-out arms and wide feet)
@@ -1171,6 +1177,7 @@ export function makeStick(spec) {
     return o;
   };
   S.pose({});
+  const dressed = dressedSince(S, [root, body, head, torso]);
   return S;
 }
 

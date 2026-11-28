@@ -4,7 +4,7 @@
 // test/golden/codescore.json (test/unit/stick-codescore.test.mjs), and a better one is written back with --write.
 //   node styles/stick-man/tools/run/codescore.mjs [--write] [--json]
 import { readFileSync, readdirSync, statSync, writeFileSync, existsSync } from 'node:fs';
-import { dirname, join, relative } from 'node:path';
+import { dirname, join, relative, posix, sep } from 'node:path';
 import { execFileSync, spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import * as acorn from 'acorn';
@@ -55,16 +55,27 @@ export function costumeHookWriters(root) {
     return hit;
   })).map(f => relative(root, f)).sort();
 }
+// the kit module an import's source names, or null: '#kit/…', a relative path from `file` (root-relative) that lands in
+// styles/stick-man/kit/, or the page's root path to it; a computed source counts by its static start (`#kit/sets/${n}.js`,
+// '#kit/' + n). A film's set or reel (import(R.setModule)) has no static start and is not the kit.
+const KIT = 'styles/stick-man/kit/';
+const head = n => (n?.type === 'Literal' && typeof n.value === 'string' ? n.value : n?.type === 'TemplateLiteral' ? n.quasis[0].value.cooked
+  : n?.type === 'BinaryExpression' && n.operator === '+' ? head(n.left) : null);
+export function kitTarget(source, file) {
+  const s = head(source);
+  if (s == null || s.startsWith('#kit/')) return s;
+  const at = s.startsWith('.') ? posix.join(posix.dirname(file.split(sep).join('/')), s) : s.startsWith('/') ? posix.normalize(s.slice(1)) : '';
+  return at.startsWith(KIT) ? s : null;
+}
+// every import, re-export and dynamic import in `src` (of root-relative `file`) that reaches the kit: [{ spec, line }]
+export function kitImportsOf(src, file) {
+  const out = [], ast = acorn.parse(src, { ecmaVersion: 'latest', sourceType: 'module', allowHashBang: true, locations: true });
+  const hit = n => { const spec = n.source && kitTarget(n.source, file); if (spec != null) out.push({ spec, line: n.loc.start.line }); };
+  simple(ast, { ImportDeclaration: hit, ExportNamedDeclaration: hit, ExportAllDeclaration: hit, ImportExpression: hit });
+  return out;
+}
 export function engineKitImports(root) {
-  const E = join(root, 'styles/stick-man/engine'), out = [];
-  const toKit = s => typeof s === 'string' && (s.startsWith('#kit/') || /^(\.\.\/)+kit\//.test(s));
-  for (const f of jsFiles(E)) for (const ast of asts(f)) simple(ast, {
-    ImportDeclaration(n) { if (toKit(n.source.value)) out.push(`${relative(root, f)}:${n.loc.start.line}`); },
-    ExportNamedDeclaration(n) { if (toKit(n.source?.value)) out.push(`${relative(root, f)}:${n.loc.start.line}`); },
-    ExportAllDeclaration(n) { if (toKit(n.source.value)) out.push(`${relative(root, f)}:${n.loc.start.line}`); },
-    ImportExpression(n) { if (toKit(n.source.value)) out.push(`${relative(root, f)}:${n.loc.start.line}`); },
-  });
-  return out.sort();
+  return jsFiles(join(root, 'styles/stick-man/engine')).flatMap(f => kitImportsOf(readFileSync(f, 'utf8'), relative(root, f)).map(i => `${relative(root, f)}:${i.line}`)).sort();
 }
 export function makeStickFiles(root) {
   return tracked(root, '*.js', '*.mjs', '*.html').filter(f => !f.startsWith('styles/stick-man/engine/')).filter(f => asts(join(root, f)).some(ast => {

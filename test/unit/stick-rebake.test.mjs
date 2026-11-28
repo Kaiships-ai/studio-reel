@@ -1,6 +1,7 @@
 // tier: heavy
-// A posed stick-man figure changed in place poses as a fresh build with that change: a new girth (S.setGirth) puts the
-// torso and its ink shell back to rest so the next pose bends them again, the body's volumes with them; new hair
+// A posed stick-man figure changed in place poses as a fresh build with that change: a new girth (S.setGirth) on an
+// undressed figure puts the torso and its ink shell back to rest so the next pose bends them again, the body's volumes
+// with them (a dressed one refuses it); new hair
 // (S.bakeHair) on a figure wearing a hat goes in under the hat as a fresh build's does, and on the child and elder bodies
 // keeps their crown shell.
 import test from 'node:test';
@@ -31,9 +32,15 @@ test('girth changed on a posed figure, then posed, equals a fresh build at that 
   }
 });
 
-test('control: without the reset the torso keeps the old girth', () => {
-  const S = makeFigure({ name: 'g', girth: 1 }); S.pose2(POSE); S.spec = { ...S.spec, girth: 1.3 };
-  assert.notEqual(look(S).hash, look(makeFigure({ name: 'g', girth: 1.3 })).hash);
+// a costume is sized to the girth it was put on at and never taken off (solution.md #1), so a dressed figure refuses a new
+// girth instead of keeping garments sized to the old one (review C2 M1: these three outfits differed from a fresh build)
+test('a dressed figure refuses setGirth and is left as it was', () => {
+  for (const wear of [['sweater:coral'], ['coat:lab', 'shirt:office'], ['skirt', 'sweater'], ['cap:police']]) {
+    const { S, group } = dressed({ ...adult, girth: 1 }, wear), before = look(S, group);
+    assert.throws(() => S.setGirth(1.3), /dressed/, wear.join(','));
+    assert.deepEqual(look(S, group), before, wear.join(','));
+    assert.equal(S.spec.girth, 1);
+  }
 });
 
 test('a figure under a police cap swapped from pompadour to afro tucks the afro under the cap as a fresh build does', () => {

@@ -1,8 +1,10 @@
 // In-place hair swaps against fresh builds, headless: one figure walks every ordered pair of toon hair styles (an Euler
 // circuit of the 110 pairs, cut into parts, each part a process) with S.bakeHair, and after each swap and a pose its
-// fingerprint and its worn shell must equal a fresh build of that style in the same pose. Each part also keeps a second
-// figure beside the first and hashes the engine's SHARED materials and uniforms before and after, then runs a colour loop
-// on the first figure's own materials; `control: true` (one swap) runs the slider loop that wrote the shared outline instead.
+// fingerprint and its worn shell must equal a fresh build of that style in the same pose. Each swap listens for 'dispose'
+// on the old hair's own geometries, materials and textures (each must fire) and on SHARED's materials (none may). Each part
+// also keeps a second figure beside the first and hashes SHARED's values before and after the swaps; `control: true` (one
+// swap) then writes the shared outline colour, as the live prototype's (P3) slider did, to show the hash and the second
+// figure see such a write.
 //   node test/unit/hair-swap.mjs [--part k/n] [--control]
 import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
@@ -26,6 +28,14 @@ export const sharedHash = SHARED => sha(JSON.stringify(Object.entries(SHARED).ma
   ? [v.color.getHexString(), v.side, v.opacity, v.transparent, v.visible, v.version]
   : Object.entries(v.value !== undefined ? { value: v } : v).map(([u, x]) => [u, x.value?.toArray?.() ?? x.value])])));
 
+// the geometries, materials and textures a hair group owns (what a swap must free), SHARED's materials left out
+const ownedBy = (group, shared) => {
+  const out = new Set();
+  group.traverse(o => { if (o.geometry) out.add(o.geometry);
+    for (const m of [o.material].flat()) if (m && !shared.includes(m)) { out.add(m); for (const v of Object.values(m)) if (v?.isTexture) out.add(v); } });
+  return [...out];
+};
+
 export async function walkPart({ part = [0, 1], control = false } = {}) {
   globalThis.document = recordingDocument();
   const S_ = p => import(pathToFileURL(join(ROOT, 'styles/stick-man', p)).href);
@@ -37,19 +47,19 @@ export async function walkPart({ part = [0, 1], control = false } = {}) {
   const mine = control ? edges.slice(0, 1) : edges.filter((_, i) => Math.floor(i * part[1] / edges.length) === part[0]);
   const fresh = new Map(), want = st => { if (!fresh.has(st)) fresh.set(st, look(build(st))); return fresh.get(st); };
   const bystander = build('afro'), by0 = look(bystander).hash, shared0 = sharedHash(SHARED);
+  const sharedMats = Object.values(SHARED).filter(v => v.isMaterial), freed = new Set(), sharedFreed = [];
+  for (const m of sharedMats) m.addEventListener('dispose', () => sharedFreed.push(m.type));
   const S = build(mine[0][0]), pairs = [];
   for (const [from, to] of mine) {
+    const owned = ownedBy(S.parts.hair, sharedMats);
+    for (const x of owned) x.addEventListener('dispose', () => freed.add(x));
     const t0 = performance.now(); S.bakeHair([toonHair(to)]); S.pose2(POSE); const ms = performance.now() - t0;
-    const got = look(S), w = want(to);
-    pairs.push({ from, to, ms: Math.round(ms), ok: got.hash === w.hash && got.shell === w.shell, hash: got.hash, want: w.hash, shell: got.shell === w.shell });
+    const got = look(S), w = want(to), kept = owned.filter(x => !freed.has(x)).map(x => x.type);
+    pairs.push({ from, to, ms: Math.round(ms), ok: got.hash === w.hash && got.shell === w.shell, hash: got.hash, want: w.hash, shell: got.shell === w.shell, owned: owned.length, kept });
   }
-  const sharedAfterSwaps = sharedHash(SHARED);
-  // a colour slider dragged over the figure: every material the figure owns, never one in SHARED
-  const shared = new Set(Object.values(SHARED));
-  const hull = bystander.parts.head.children.find(o => o.material === SHARED.hullMat), hullBefore = hull?.material.color.getHexString();
-  for (let k = 0; k < 20; k++) S.root.traverse(o => { for (const m of [o.material].flat()) if (m?.color && (control || !shared.has(m))) m.color.setRGB(0.4 + k / 50, 0.08, 0.05); });
+  const shared1 = sharedHash(SHARED), hull = bystander.parts.head.children.find(o => o.material === SHARED.hullMat), hullBefore = hull?.material.color.getHexString();
   if (control) S.parts.hair.traverse(o => { if (o.material === SHARED.hullMat) o.material.color.set('#aa503f'); });
-  return { part, control, pairs, shared: [shared0, sharedAfterSwaps, sharedHash(SHARED)], bystander: [by0, look(bystander).hash], hull: [hullBefore, hull?.material.color.getHexString()] };
+  return { part, control, pairs, sharedFreed, shared: [shared0, shared1, sharedHash(SHARED)], bystander: [by0, look(bystander).hash], hull: [hullBefore, hull?.material.color.getHexString()] };
 }
 
 export async function swapAll({ control = false, parts = PARTS } = {}) {
