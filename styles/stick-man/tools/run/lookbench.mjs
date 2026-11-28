@@ -62,7 +62,8 @@ async function doctor() {
   const port = Number(A.port || 8765), lines = [], fail = [];
   lines.push(`checkout ${sha()} (${execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim()})`);
   const pro = os.hostname().startsWith(PRO_HOST); lines.push(`machine ${os.hostname()}: ${pro ? 'the Mac Pro, sheets may run' : 'not the Mac Pro: no pixel sheets here'}`);
-  const free = await portFree(port); lines.push(`port ${port} ${free ? 'free' : 'in use (serve --port <other>)'}`); if (!free) fail.push('port');
+  const free = await portFree(port), ours = !free && (await fetch(`http://127.0.0.1:${port}/${PAGE}`).catch(() => null))?.ok;
+  lines.push(`port ${port} ${free ? 'free' : ours ? 'serving the bench (lookbench serve)' : 'in use by something else (serve --port <other>)'}`); if (!free && !ours) fail.push('port');
   const browser = await launchGpu().catch(e => { lines.push(`browser missing (${e.message.split('\n')[0]}): node node_modules/playwright-core/cli.js install chromium-headless-shell`); fail.push('browser'); });
   if (browser) try {
     lines.push(`browser chromium ${browser.version()}`);
