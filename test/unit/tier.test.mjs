@@ -6,7 +6,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ROOT } from '../../kit/env.mjs';
-import { FAST, GUARDS, HEAVY, budget, changedSince, covers, guardOf, guardsOf, pack, select, tierOf, tiers, uncovered } from '../tier.mjs';
+import { FAST, GUARDS, HEAVY, budget, changedSince, covers, guardOf, guardsOf, pack, select, tierOf, tiers, trackedSets, uncovered } from '../tier.mjs';
 
 const tracked = { files: new Set(['kit.manifest', 'kit/env.mjs', 'styles/stick-man/kit/compat.json', 'test/unit/a.test.mjs']), dirs: new Set(['.', 'kit', 'styles', 'styles/stick-man', 'styles/stick-man/kit', 'test', 'test/unit']) };
 const R = '/repo';
@@ -120,5 +120,17 @@ test('a file moved out of a guarded folder counts at its old path (git diff --no
     git('checkout', '-qb', 'pr'); git('mv', 'guarded.json', 'moved.json'); git('commit', '-qm', 'b');
     assert.deepEqual(changedSince('main', dir).sort(), ['guarded.json', 'moved.json']);
     assert.equal(changedSince('nope', dir), null, 'no usable base');
+  } finally { rmSync(dir, { recursive: true, force: true }); Object.assign(process.env, hookEnv); }
+});
+
+test('a slash-only ignore (/films/) matches a root path whose folder does not exist (CI has no films/)', () => {
+  const hookEnv = Object.fromEntries(Object.entries(process.env).filter(([k]) => k.startsWith('GIT_')));
+  for (const k of Object.keys(hookEnv)) delete process.env[k];
+  const dir = mkdtempSync(join(tmpdir(), 'tier-ign-'));
+  try {
+    execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: dir });
+    writeFileSync(join(dir, '.gitignore'), '/films/\n');
+    const tracked = trackedSets(dir);
+    assert.equal(guardOf(`r ${dir}/films`, dir, tracked), null, 'films missing on disk still guards nothing');
   } finally { rmSync(dir, { recursive: true, force: true }); Object.assign(process.env, hookEnv); }
 });

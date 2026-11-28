@@ -36,7 +36,7 @@ export function trackedSets(root = ROOT) {
   const files = new Set(spawnSync('git', ['ls-files'], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 }).stdout.split('\n').filter(Boolean));
   const dirs = new Set(['.']);
   for (const f of files) for (let d = dirname(f); d !== '.'; d = dirname(d)) dirs.add(d);
-  const ignored = rel => spawnSync('git', ['check-ignore', '-q', '--no-index', rel], { cwd: root }).status === 0;
+  const ignored = rel => [rel, rel + '/'].some(p => spawnSync('git', ['check-ignore', '-q', '--no-index', p], { cwd: root }).status === 0);
   return { files, dirs, ignored };
 }
 
