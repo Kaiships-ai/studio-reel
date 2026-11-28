@@ -1,3 +1,4 @@
+// tier: heavy
 // The bible check (styles/stick-man/bible/check.mjs) on small fixture films, and the render gate that runs it before
 // tools/render/shot.mjs renders a film. A film under the Hot Money bible (slug hm-ep*) may only use catalog parts: a body action
 // keyed by hand where the library has the clip for that body blocks, a missing clip for the body is a gap, an exception

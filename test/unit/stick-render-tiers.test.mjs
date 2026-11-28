@@ -1,3 +1,4 @@
+// tier: heavy
 // Render by purpose (styles/stick-man/tools/render/): tiers, the segment cache, the render lock and the Mac Pro job.
 import test from 'node:test';
 import assert from 'node:assert/strict';

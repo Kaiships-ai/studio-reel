@@ -1,3 +1,4 @@
+// tier: heavy
 // The costume cloth (styles/stick-man/kit/cast/cloth.js, the hoodie's cords): a pinned chain falls under gravity, stays
 // outside a body volume it drapes over, keeps its length, and gives the same result from the same start.
 import { test } from 'node:test';

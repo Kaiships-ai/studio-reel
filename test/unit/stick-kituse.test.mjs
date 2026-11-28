@@ -1,3 +1,4 @@
+// tier: heavy
 // Kit use at ◇4 and ◇5: a stick-man film that skips the moving hold, the far backdrop, the sound plan, a credited kit
 // music track or the Rick bench of its final render fails with a reason; a complete film passes; an approved waiver on
 // record lets an old film opt out.

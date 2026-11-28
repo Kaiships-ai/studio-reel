@@ -1,0 +1,329 @@
+{
+ "test/unit/refbench.test.mjs": {
+  "secs": 65.1,
+  "guards": "always"
+ },
+ "test/unit/sound-fit.test.mjs": {
+  "secs": 13.8,
+  "guards": "always"
+ },
+ "test/unit/sound-lib.test.mjs": {
+  "secs": 23.9,
+  "guards": "always"
+ },
+ "test/unit/stick-acting-rig.test.mjs": {
+  "secs": 31.5,
+  "guards": [
+   "kit",
+   "pixi.lock",
+   "styles/stick-man/engine",
+   "styles/stick-man/kit/cast",
+   "styles/stick-man/kit/look",
+   "styles/stick-man/kit/props",
+   "styles/stick-man/motion-lib",
+   "styles/stick-man/tools/gates",
+   "styles/stick-man/tools/series",
+   "test/unit/stick-acting-rig.test.mjs"
+  ]
+ },
+ "test/unit/stick-bible-check.test.mjs": {
+  "secs": 9.4,
+  "guards": [
+   "kit",
+   "pixi.lock",
+   "styles/stick-man/bible",
+   "styles/stick-man/engine",
+   "styles/stick-man/kit",
+   "styles/stick-man/motion-lib",
+   "styles/stick-man/tools/gates",
+   "styles/stick-man/tools/render",
+   "styles/stick-man/tools/review",
+   "styles/stick-man/tools/run",
+   "test/unit/stick-bible-check.test.mjs"
+  ]
+ },
+ "test/unit/stick-bible.test.mjs": {
+  "secs": 7.2,
+  "guards": [
+   ".claude/skills/animation-camera-pass",
+   "kit",
+   "styles/stick-man/assets/costume",
+   "styles/stick-man/bible",
+   "styles/stick-man/engine",
+   "styles/stick-man/kit",
+   "styles/stick-man/motion-lib",
+   "styles/stick-man/tools/gates",
+   "test/unit/stick-bible.test.mjs"
+  ]
+ },
+ "test/unit/stick-bodies-age.test.mjs": {
+  "secs": 22.1,
+  "guards": [
+   "kit",
+   "styles/stick-man/assets/costume",
+   "styles/stick-man/engine",
+   "styles/stick-man/kit",
+   "styles/stick-man/motion-lib",
+   "styles/stick-man/tools/gates",
+   "test/unit/stick-bodies-age.test.mjs"
+  ]
+ },
+ "test/unit/stick-bodies-reads.test.mjs": {
+  "secs": 27.4,
+  "guards": [
+   "kit",
+   "styles/stick-man/assets/costume",
+   "styles/stick-man/engine",
+   "styles/stick-man/kit",
+   "styles/stick-man/motion-lib",
+   "styles/stick-man/tools/gates",
+   "test/unit/bodies-measure.mjs",
+   "test/unit/stick-bodies-reads.test.mjs"
+  ]
+ },
+ "test/unit/stick-cloth.test.mjs": {
+  "secs": 12.1,
+  "guards": [
+   "kit",
+   "styles/stick-man/assets/costume",
+   "styles/stick-man/engine",
+   "styles/stick-man/kit",
+   "styles/stick-man/motion-lib",
+   "styles/stick-man/tools/gates",
+   "test/unit/stick-cloth.test.mjs"
+  ]
+ },
+ "test/unit/stick-codescore.test.mjs": {
+  "secs": 6.9,
+  "guards": "always"
+ },
+ "test/unit/stick-colourgate.test.mjs": {
+  "secs": 6.5,
+  "guards": "always"
+ },
+ "test/unit/stick-fits.test.mjs": {
+  "secs": 58.7,
+  "guards": "always"
+ },
+ "test/unit/stick-floorgate.test.mjs": {
+  "secs": 8.9,
+  "guards": "always"
+ },
+ "test/unit/stick-hair-body.test.mjs": {
+  "secs": 78.1,
+  "guards": [
+   "kit",
+   "styles/stick-man/engine",
+   "styles/stick-man/kit",
+   "styles/stick-man/motion-lib",
+   "styles/stick-man/tools/gates",
+   "test/unit/hair-measure.mjs",
+   "test/unit/hair-stamp.mjs",
+   "test/unit/hair-trip.mjs",
+   "test/unit/stick-hair-body.test.mjs",
+   "test/unit/stick-hair-trip-afro.test.mjs",
+   "test/unit/stick-hair-trip-ponytail.test.mjs",
+   "test/unit/wardrobe-measure.mjs"
+  ]
+ },
+ "test/unit/stick-hair-face.test.mjs": {
+  "secs": 9,
+  "guards": [
+   "kit",
+   "styles/stick-man/engine",
+   "styles/stick-man/kit/cast",
+   "styles/stick-man/kit/look",
+   "styles/stick-man/kit/props",
+   "styles/stick-man/motion-lib",
+   "styles/stick-man/tools/gates",
+   "test/fixtures/hair-face/bob-27-11.json",
+   "test/unit/stick-hair-face.test.mjs"
+  ]
+ },
+ "test/unit/stick-hair-seam.test.mjs": {
+  "secs": 42.9,
+  "guards": [
+   "kit",
+   "styles/stick-man/engine",
+   "styles/stick-man/kit",
+   "styles/stick-man/motion-lib",
+   "styles/stick-man/tools/gates",
+   "test/unit/hair-measure.mjs",
+   "test/unit/hair-seam.mjs",
+   "test/unit/stick-hair-seam.test.mjs",
+   "test/unit/wardrobe-measure.mjs"
+  ]
+ },
+ "test/unit/stick-hair-trip-afro.test.mjs": {
+  "secs": 82.9,
+  "guards": [
+   "kit",
+   "styles/stick-man/engine",
+   "styles/stick-man/kit",
+   "styles/stick-man/motion-lib",
+   "styles/stick-man/tools/gates",
+   "test/unit/hair-measure.mjs",
+   "test/unit/hair-trip.mjs",
+   "test/unit/stick-hair-trip-afro.test.mjs",
+   "test/unit/wardrobe-measure.mjs"
+  ]
+ },
+ "test/unit/stick-hair-trip-ponytail.test.mjs": {
+  "secs": 85,
+  "guards": [
+   "kit",
+   "styles/stick-man/engine",
+   "styles/stick-man/kit",
+   "styles/stick-man/motion-lib",
+   "styles/stick-man/tools/gates",
+   "test/unit/hair-measure.mjs",
+   "test/unit/hair-trip.mjs",
+   "test/unit/stick-hair-trip-ponytail.test.mjs",
+   "test/unit/wardrobe-measure.mjs"
+  ]
+ },
+ "test/unit/stick-handprops.test.mjs": {
+  "secs": 8.3,
+  "guards": [
+   "kit",
+   "styles/stick-man/engine",
+   "styles/stick-man/kit",
+   "styles/stick-man/motion-lib",
+   "styles/stick-man/tools/gates",
+   "test/unit/hair-measure.mjs",
+   "test/unit/stick-handprops.test.mjs",
+   "test/unit/wardrobe-measure.mjs"
+  ]
+ },
+ "test/unit/stick-kituse.test.mjs": {
+  "secs": 14.7,
+  "guards": [
+   "kit",
+   "styles/stick-man/bench",
+   "styles/stick-man/engine",
+   "styles/stick-man/kit/cast",
+   "styles/stick-man/kit/look",
+   "styles/stick-man/kit/props",
+   "styles/stick-man/motion-lib",
+   "styles/stick-man/tools/gates",
+   "styles/stick-man/tools/render",
+   "styles/stick-man/tools/review",
+   "test/unit/stick-kituse.test.mjs"
+  ]
+ },
+ "test/unit/stick-look-golden.test.mjs": {
+  "secs": 15.3,
+  "guards": [
+   "kit",
+   "styles/stick-man/assets/costume",
+   "styles/stick-man/engine",
+   "styles/stick-man/kit",
+   "styles/stick-man/motion-lib",
+   "styles/stick-man/tools/gates",
+   "test/golden/approvals.json",
+   "test/golden/looks.json",
+   "test/unit/look-fingerprint.mjs",
+   "test/unit/stick-look-golden.test.mjs",
+   "test/unit/wardrobe-measure.mjs"
+  ]
+ },
+ "test/unit/stick-motionlib.test.mjs": {
+  "secs": 168.1,
+  "guards": [
+   "kit",
+   "styles/stick-man/docs",
+   "styles/stick-man/engine",
+   "styles/stick-man/kit/cast",
+   "styles/stick-man/kit/look",
+   "styles/stick-man/kit/props",
+   "styles/stick-man/motion-lib",
+   "styles/stick-man/tools/gates",
+   "styles/stick-man/tools/run",
+   "test/unit/stick-motionlib.test.mjs"
+  ]
+ },
+ "test/unit/stick-props-kit.test.mjs": {
+  "secs": 19.3,
+  "guards": [
+   "styles/stick-man/assets/props",
+   "styles/stick-man/engine",
+   "styles/stick-man/kit",
+   "styles/stick-man/tools/gates",
+   "test/fixtures/hm-ep01/counter-v-old.jsonl.gz",
+   "test/unit/stick-props-kit.test.mjs"
+  ]
+ },
+ "test/unit/stick-propswap.test.mjs": {
+  "secs": 5.5,
+  "guards": [
+   "kit",
+   "styles/stick-man/engine",
+   "styles/stick-man/kit/cast",
+   "styles/stick-man/kit/look",
+   "styles/stick-man/kit/props",
+   "styles/stick-man/motion-lib",
+   "styles/stick-man/tools/gates",
+   "test/unit/stick-propswap.test.mjs"
+  ]
+ },
+ "test/unit/stick-render-tiers.test.mjs": {
+  "secs": 11.4,
+  "guards": "always"
+ },
+ "test/unit/stick-retakes.test.mjs": {
+  "secs": 7.5,
+  "guards": "always"
+ },
+ "test/unit/stick-scalp-cover.test.mjs": {
+  "secs": 13.5,
+  "guards": [
+   "styles/stick-man/engine",
+   "styles/stick-man/kit/cast",
+   "styles/stick-man/kit/look",
+   "styles/stick-man/kit/props",
+   "styles/stick-man/tools/gates",
+   "test/unit/stick-scalp-cover.test.mjs"
+  ]
+ },
+ "test/unit/stick-toon-hair.test.mjs": {
+  "secs": 18.9,
+  "guards": [
+   "kit",
+   "styles/stick-man/assets/props",
+   "styles/stick-man/engine",
+   "styles/stick-man/kit",
+   "styles/stick-man/motion-lib",
+   "styles/stick-man/tools/gates",
+   "test/unit/stick-toon-hair.test.mjs"
+  ]
+ },
+ "test/unit/stick-touchpoints.test.mjs": {
+  "secs": 9.8,
+  "guards": "always"
+ },
+ "test/unit/stick-wardrobe-age.test.mjs": {
+  "secs": 18.4,
+  "guards": [
+   "styles/stick-man/engine",
+   "styles/stick-man/kit",
+   "styles/stick-man/motion-lib",
+   "test/unit/stick-wardrobe-age.test.mjs"
+  ]
+ },
+ "test/unit/stick-wardrobe.test.mjs": {
+  "secs": 292.3,
+  "guards": [
+   "kit",
+   "styles/stick-man/engine",
+   "styles/stick-man/kit",
+   "styles/stick-man/motion-lib",
+   "styles/stick-man/tools/gates",
+   "test/unit/stick-wardrobe.test.mjs",
+   "test/unit/wardrobe-measure.mjs"
+  ]
+ },
+ "test/unit/stick-whochecks.test.mjs": {
+  "secs": 14.9,
+  "guards": "always"
+ }
+}

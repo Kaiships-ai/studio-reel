@@ -1,3 +1,4 @@
+// tier: heavy
 // The stick-man appearance path's codebase scorecard (styles/stick-man/tools/run/codescore.mjs) is no worse at this head than
 // the card recorded in test/golden/codescore.json. The control adds a fifth hand-kept garment list in a copy of the kit and
 // must read as worse.

@@ -1,3 +1,4 @@
+// tier: heavy
 // The teen and toddler bodies, the elder's stoop and the standing pose of every body (motion-lib/bodies.js, base.js stand),
 // measured on the solved figure. Every limit was written with its reason before the bodies were measured (25/11) and none was
 // moved after. What no line here sees: whether a body reads as its age. That is for a viewer, in motion.

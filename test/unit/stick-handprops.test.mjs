@@ -1,3 +1,4 @@
+// tier: heavy
 // The five hand props whatif1 v5 faked (a 4 mm stand-in in the hand, a loose set prop beside it): baby, tin, lantern,
 // photo, balloon. Each is a kit hand prop (kit/cast/handprops.js BUILD), measured headless in every pose a film holds it
 // in (fits_kinds.mjs hands(): the clip played with the prop in the hand, engine/grip.js each frame, each hand of a

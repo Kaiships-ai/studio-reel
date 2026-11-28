@@ -1,3 +1,4 @@
+// tier: heavy
 // No toon hair style leaves the scalp bare (Studio 26/11, the third round of white showing where hair should be): every
 // style is drawn (tools/gates/scalpgate.mjs: a depth-buffered render of the head and the hair as built, fill and ink hull)
 // from the front, 3/4, low front, the back, in profile (the head turned) and from under the chin (the head looking up),

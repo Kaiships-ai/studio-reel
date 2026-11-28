@@ -1,3 +1,4 @@
+// tier: heavy
 // The stick-man motion library (styles/stick-man/motion-lib) and the two rig rules it leans on: a hand on a target stays
 // there or says how far it is off (rig K4), and a carried prop is a solid with mass (rig K5).
 import { test } from 'node:test';

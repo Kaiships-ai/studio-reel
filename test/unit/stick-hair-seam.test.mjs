@@ -1,3 +1,4 @@
+// tier: heavy
 // A neck-bound length never opens a seam from the crown (Studio 27/11: the long styles' lengths are bound to the neck and the upper back,
 // the crown to the head; where the two meet the lengths' tops must stay on the crown's drawn surface as the head moves).
 //   SEAM_MM  written before the first measure and never raised: the furthest, mm, a bound lock's top the crown covered at rest

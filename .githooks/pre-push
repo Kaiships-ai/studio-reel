@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-// Dev-only pre-push hook: the cheap checks of .github/workflows/checks.yml, run here in seconds instead of 20 minutes later in CI.
+// Dev-only pre-push hook: the checks job of .github/workflows/checks.yml (the fast unit tier, not the heavy legs), run here first.
 // Install once per clone: git config core.hooksPath .githooks      Skip once: git push --no-verify
 import { spawnSync } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 const CI = {
-  unit: 'node --test test/unit/*.test.mjs',
+  unit: 'node test/tier.mjs fast',
   release: 'node release/build.mjs --dry-run',
   coverage: 'node .claude/skills/verify/check-coverage.mjs',
   typecheck: 'node tools/typecheck/run.mjs',
@@ -32,15 +32,9 @@ process.chdir(root);
 const pushes = readFileSync(0, 'utf8').split('\n').filter(Boolean);
 if (pushes.length && pushes.every(l => /^\S+ 0{40,} /.test(l))) process.exit(0);
 
-const expand = tok => {
-  if (!tok.includes('*')) return [tok];
-  const dir = dirname(tok), re = new RegExp(`^${tok.slice(dir.length + 1).replace(/[.]/g, '\\.').replace(/\*/g, '.*')}$`);
-  return readdirSync(dir).filter(f => re.test(f)).sort().map(f => join(dir, f));
-};
 const exec = (cmd, input) => {
-  const [bin, ...args] = cmd.split(' ').flatMap(expand);
-  const nodeArgs = bin === 'node' && args[0] === '--test' ? [args[0], '--test-concurrency=2', ...args.slice(1)] : args;
-  const r = spawnSync(bin === 'node' ? process.execPath : bin, nodeArgs, { encoding: 'utf8', input });
+  const [bin, ...args] = cmd.split(' ');
+  const r = spawnSync(bin === 'node' ? process.execPath : bin, args, { encoding: 'utf8', input });
   return { ok: r.status === 0, out: `${r.stdout || ''}${r.stderr || ''}` };
 };
 

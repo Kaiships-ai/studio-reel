@@ -1,3 +1,4 @@
+// tier: heavy
 // The motion library's gate plays a clip as a film's key does: with the prop the film swaps in and where the film stands
 // it, beside its set pieces (Hot Money ep01 SH245: the kit gate said Gest_PhoneCall_Loop grip 0 cm PASS, the film's render
 // had the hand 40 cm off its target and the handset 15.7 cm in the head).

@@ -1,3 +1,4 @@
+// tier: heavy
 // Every stick-man look this checkout builds matches its golden fingerprint (test/golden/looks.json, locked at C1 before any
 // edit of the appearance path), unless Kai approved the change: a row { case, from, to, page, by: 'Kai' } in
 // test/golden/approvals.json, `page` being the before|after he looked at. The control (one palette step on coral) must move
