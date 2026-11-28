@@ -19,7 +19,7 @@ export const GOLDEN = join(ROOT, 'test/golden/looks.json'), APPROVALS = join(ROO
 export const ORDERS = ['wh', 'hw', 'h-w'];
 export const HOODIES = [['hoodie', ['hoodie:grey']], ['hoodie + scarf', ['hoodie:grey', 'scarf:mustard']], ['hoodie down', ['hoodie:grey:down']]];
 export const MARK = '\n@@look-fingerprint@@\n';   // engine code may log to stdout: the JSON follows the last marker
-const WH_PROCESSES = 4;
+const WH_PROCESSES = 2;
 export const BODIES = ['adult', 'heavy', 'thin', 'elder', 'child'];
 
 const sha = b => createHash('sha256').update(b).digest('hex').slice(0, 16);
@@ -127,8 +127,8 @@ export async function fingerprintCases({ order = 'wh', part = [0, 1], only = nul
   return { order, face, cases, ms };
 }
 
-export async function fingerprintAll({ mutate = null } = {}) {
-  const jobs = [...Array.from({ length: WH_PROCESSES }, (_, k) => ['wh', k, WH_PROCESSES]), ['hw', 0, 1], ['h-w', 0, 1]];
+export async function fingerprintAll({ mutate = null, orders = ORDERS, processes = WH_PROCESSES } = {}) {
+  const jobs = [...(orders.includes('wh') ? Array.from({ length: processes }, (_, k) => ['wh', k, processes]) : []), ...orders.filter(o => o !== 'wh').map(o => [o, 0, 1])];
   const runs = await Promise.all(jobs.map(([order, k, n]) => new Promise((ok, fail) => {
     const args = [fileURLToPath(import.meta.url), '--order', order, '--part', `${k}/${n}`, ...(mutate ? ['--mutate', mutate] : [])];
     const p = spawn(process.execPath, args, { cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'] });
