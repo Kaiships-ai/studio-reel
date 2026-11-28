@@ -14,7 +14,7 @@ import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const FAST = { fileSecs: 15, wallSecs: 120 };
-export const HEAVY = { fileSecs: 480, shards: 4 };
+export const HEAVY = { fileSecs: 480, legSecs: 480, shards: 4 };   // a leg's test wall stays well under the job's 10 min cap (Linux 28/11: 166-310 s)
 export const MARK = /^\/\/ tier: heavy$/m;
 export const GUARDS = 'test/heavy.json';
 // A change to any of these runs every heavy file: the tier machinery itself, or what every test loads.
@@ -36,13 +36,14 @@ export function trackedSets(root = ROOT) {
   const files = new Set(spawnSync('git', ['ls-files'], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 }).stdout.split('\n').filter(Boolean));
   const dirs = new Set(['.']);
   for (const f of files) for (let d = dirname(f); d !== '.'; d = dirname(d)) dirs.add(d);
-  return { files, dirs };
+  const ignored = rel => [rel, rel + '/'].some(p => spawnSync('git', ['check-ignore', '-q', '--no-index', p], { cwd: root }).status === 0);
+  return { files, dirs, ignored };
 }
 
 // The guard a traced line stands for: a file under test/ or at the root guards itself, any other file its folder, a
 // listed folder itself. Paths git does not track (outside the repo, temp output, ignored folders, node_modules and
 // .pixi, whose lockfiles are in RUN_ALL) guard nothing. A missing path guards the tracked folder it would be in.
-export function guardOf(line, root, { files, dirs }) {
+export function guardOf(line, root, { files, dirs, ignored = () => false }) {
   const kind = line[0], abs = line.slice(2);
   if (kind === 'o') return 'always';
   const rel = relative(root, abs).split('\\').join('/');
@@ -50,6 +51,7 @@ export function guardOf(line, root, { files, dirs }) {
   if (/^(node_modules|\.pixi)(\/|$)/.test(rel)) return null;
   if (files.has(rel)) return !rel.includes('/') || rel.startsWith('test/') ? rel : dirname(rel);
   if (dirs.has(rel || '.')) return kind === 'l' ? rel || '.' : null;
+  if (!rel.includes('/')) return ignored(rel) ? null : rel;   // films/ is ignored: no PR can change it, and machines differ
   for (let d = dirname(rel); ; d = dirname(d)) { if (dirs.has(d)) return d === '.' ? null : d; if (d === '.') return null; }
 }
 
@@ -92,7 +94,7 @@ export function budget(results, { fileSecs, wallSecs }, wall, tier) {
     ? 'Make it faster, or put `// tier: heavy` in its first lines and run `node test/tier.mjs guards <file>`: then it runs in the heavy legs when a path it reads changes.'
     : 'Split it like the hair writer: a stamped table plus small tripwire tests (the hair rows of .claude/CLAUDE.md).';
   const over = results.filter(r => r.secs > fileSecs).map(r => `${r.file} took ${r.secs.toFixed(1)} s, over the ${tier} tier's ${fileSecs} s a file. ${fix}`);
-  if (wallSecs && wall > wallSecs) over.push(`the ${tier} tier took ${wall.toFixed(0)} s of wall time, over its ${wallSecs} s. Make the slowest files below faster or move them to the heavy tier.`);
+  if (wallSecs && wall > wallSecs) over.push(tier === 'fast' ? `the fast tier took ${wall.toFixed(0)} s of wall time, over its ${wallSecs} s. Make the slowest files below faster or move them to the heavy tier.` : `this heavy leg took ${wall.toFixed(0)} s of wall time, over its ${wallSecs} s (the job is cancelled at 10 min). Split the slowest files below, or raise HEAVY.shards and the matrix in checks.yml together.`);
   return over;
 }
 
@@ -124,13 +126,19 @@ const jobsFor = () => process.env.CI ? Math.max(1, availableParallelism() - 1) :
 const slowest = rs => [...rs].sort((a, b) => b.secs - a.secs).slice(0, 5).map(r => `${r.secs.toFixed(1)} ${r.file.replace(/^test\/unit\//, '')}`).join(' · ');
 const summary = text => process.env.GITHUB_STEP_SUMMARY && appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${text}\n`);
 
+// --no-renames: a file moved out of a guarded folder must count at its old path too
+export function changedSince(base, root = ROOT) {
+  const d = spawnSync('git', ['diff', '--name-only', '--no-renames', `${base}...HEAD`], { cwd: root, encoding: 'utf8' });
+  return d.status === 0 ? d.stdout.split('\n').filter(Boolean) : null;
+}
+
 function changedFiles(argv, root) {
   if (argv.includes('--all')) return null;
   const base = arg(argv, '--base');
   if (!base) return null;
-  const d = spawnSync('git', ['diff', '--name-only', `${base}...HEAD`], { cwd: root, encoding: 'utf8' });
-  if (d.status !== 0) { console.log(`no usable base "${base}": every heavy file runs`); return null; }
-  return d.stdout.split('\n').filter(Boolean);
+  const changed = changedSince(base, root);
+  if (!changed) console.log(`no usable base "${base}": every heavy file runs`);
+  return changed;
 }
 
 function report(results, failed) {
@@ -168,7 +176,7 @@ async function heavy(argv, root) {
     return add.length ? [`${r.file} read outside its guards in ${GUARDS}: ${add.join(', ')}. Run \`node test/tier.mjs guards ${r.file}\` and commit ${GUARDS}.`] : [];
   });
   rmSync(dir, { recursive: true, force: true });
-  const over = budget(results, { fileSecs: HEAVY.fileSecs }, (Date.now() - t) / 1000, 'heavy');
+  const over = budget(results, { fileSecs: HEAVY.fileSecs, wallSecs: HEAVY.legSecs }, (Date.now() - t) / 1000, 'heavy');
   const head = `heavy leg ${k}/${n}: ${results.length} files, ${((Date.now() - t) / 1000).toFixed(1)} s wall\nslowest: ${slowest(results)}`;
   console.log(head); summary(head);
   for (const o of [...stale, ...over]) console.log(`✗ ${o}`);

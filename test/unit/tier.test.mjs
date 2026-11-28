@@ -6,7 +6,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ROOT } from '../../kit/env.mjs';
-import { FAST, GUARDS, budget, covers, guardOf, guardsOf, pack, select, tierOf, tiers, uncovered } from '../tier.mjs';
+import { FAST, GUARDS, HEAVY, budget, changedSince, covers, guardOf, guardsOf, pack, select, tierOf, tiers, trackedSets, uncovered } from '../tier.mjs';
 
 const tracked = { files: new Set(['kit.manifest', 'kit/env.mjs', 'styles/stick-man/kit/compat.json', 'test/unit/a.test.mjs']), dirs: new Set(['.', 'kit', 'styles', 'styles/stick-man', 'styles/stick-man/kit', 'test', 'test/unit']) };
 const R = '/repo';
@@ -38,6 +38,8 @@ test('a read guards its folder; tests and root files guard themselves; node_modu
   assert.equal(guardOf('r /tmp/x.json', R, tracked), null);
   assert.equal(guardOf(`r ${R}/styles`, R, tracked), null, 'a stat of a tracked folder is not a read of it');
   assert.equal(guardOf('o python x.py', R, tracked), 'always');
+  assert.equal(guardOf(`r ${R}/new-root.json`, R, tracked), 'new-root.json', 'a probe for a missing root file guards that file');
+  assert.equal(guardOf(`r ${R}/films`, R, { ...tracked, ignored: p => p === 'films' }), null, 'an ignored root path (films/) guards nothing: no PR changes it (ci-queue 28/11, stick-bible)');
   assert.deepEqual(guardsOf([`r ${R}/kit/env.mjs`, `l ${R}/kit`, `r ${R}/styles/stick-man/kit/compat.json`], R, tracked), ['kit', 'styles/stick-man/kit']);
   assert.equal(guardsOf([`r ${R}/kit/env.mjs`, 'o ffmpeg -i x'], R, tracked), 'always');
   assert.ok(covers('kit', 'kit/cast/hair.js') && !covers('kit', 'kitchen/x') && covers('.', 'anything'));
@@ -100,4 +102,35 @@ execFileSync('git', ['--version']);
     execFileSync(process.execPath, [fx], { env: { ...process.env, TIER_TRACE: '', NODE_OPTIONS: `--import=${join(ROOT, 'test', 'trace.mjs')}` } });
     assert.throws(() => readFileSync(out), /ENOENT/, 'without TIER_TRACE the tracer writes nothing');
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('a heavy leg over its wall time fails, naming the fix', () => {
+  assert.deepEqual(budget([{ file: 'x', secs: 100 }], { fileSecs: HEAVY.fileSecs, wallSecs: HEAVY.legSecs }, HEAVY.legSecs - 1, 'heavy'), []);
+  assert.match(budget([{ file: 'x', secs: 100 }], { fileSecs: HEAVY.fileSecs, wallSecs: HEAVY.legSecs }, HEAVY.legSecs + 1, 'heavy')[0], /heavy leg took 481 s.*HEAVY\.shards/);
+});
+
+test('a file moved out of a guarded folder counts at its old path (git diff --no-renames)', () => {
+  // a git hook exports GIT_DIR and friends, which would point these calls at the real repository
+  const hookEnv = Object.fromEntries(Object.entries(process.env).filter(([k]) => k.startsWith('GIT_')));
+  for (const k of Object.keys(hookEnv)) delete process.env[k];
+  const dir = mkdtempSync(join(tmpdir(), 'tier-git-')), git = (...a) => execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', ...a], { cwd: dir, encoding: 'utf8' });
+  try {
+    git('init', '-q', '-b', 'main');
+    writeFileSync(join(dir, 'guarded.json'), 'x'.repeat(200)); git('add', '.'); git('commit', '-qm', 'a');
+    git('checkout', '-qb', 'pr'); git('mv', 'guarded.json', 'moved.json'); git('commit', '-qm', 'b');
+    assert.deepEqual(changedSince('main', dir).sort(), ['guarded.json', 'moved.json']);
+    assert.equal(changedSince('nope', dir), null, 'no usable base');
+  } finally { rmSync(dir, { recursive: true, force: true }); Object.assign(process.env, hookEnv); }
+});
+
+test('a slash-only ignore (/films/) matches a root path whose folder does not exist (CI has no films/)', () => {
+  const hookEnv = Object.fromEntries(Object.entries(process.env).filter(([k]) => k.startsWith('GIT_')));
+  for (const k of Object.keys(hookEnv)) delete process.env[k];
+  const dir = mkdtempSync(join(tmpdir(), 'tier-ign-'));
+  try {
+    execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: dir });
+    writeFileSync(join(dir, '.gitignore'), '/films/\n');
+    const tracked = trackedSets(dir);
+    assert.equal(guardOf(`r ${dir}/films`, dir, tracked), null, 'films missing on disk still guards nothing');
+  } finally { rmSync(dir, { recursive: true, force: true }); Object.assign(process.env, hookEnv); }
 });

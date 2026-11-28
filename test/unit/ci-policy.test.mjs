@@ -122,7 +122,8 @@ test('the tmv smoke renders in the styles a PR touches (all of them for shared c
 test('checks.yml runs the fast tier with its budget, and the heavy files on Linux legs before merge, nightly and with heavy-all', async () => {
   const { FAST, HEAVY } = await import('../tier.mjs');
   assert.deepEqual(FAST, { fileSecs: 15, wallSecs: 120 }, 'the fast budget is pinned: loosening it is a reviewed change to this test');
-  assert.deepEqual(HEAVY, { fileSecs: 480, shards: 4 });
+  assert.deepEqual(HEAVY, { fileSecs: 480, legSecs: 480, shards: 4 });
+  assert.equal((y => y.match(/uses: actions\/setup-node@v4\n\s+with:\n\s+node-version: 22\n/g)?.length)(read('checks.yml')), 2, 'both jobs pin Node 22: test/trace.mjs needs module.registerHooks (22.15+)');
   for (const f of readdirSync(WF).filter(f => /\.ya?ml$/.test(f)))
     assert.doesNotMatch(read(f), /node --test[^\n]*test\/unit/, `${f} runs test/unit with a raw glob, which puts heavy files back in the fast job`);
   const y = read('checks.yml'), heavy = y.slice(y.indexOf('\n  heavy:'));
