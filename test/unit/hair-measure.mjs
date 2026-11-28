@@ -6,7 +6,7 @@
 import * as THREE from 'three';
 import { play, line, LIMB_R } from './wardrobe-measure.mjs';
 
-const { toonHair, scalpField } = await import('../../styles/stick-man/kit/cast/hair.js');
+const { toonHair, scalpField, HAIR_STYLES } = await import('../../styles/stick-man/kit/cast/hair.js');
 const { W_M, HEAD_H } = await import('../../styles/stick-man/engine/cast.js');
 
 // the clips a long hair meets the body in: the head turned, looked up, back and down, nodded and shaken, the body bent to the floor,
@@ -74,12 +74,14 @@ export function limbSegs(S) {
 }
 
 // every style through every clip, each clip played once: the rig does not move with the hair it wears and every toon style sits at
-// the same lift on the head, so one run of the clip measures them all, frame by frame (CI's 10-minute checks budget).
+// the same lift on the head, so one run of the clip measures them all, frame by frame (CI's 10-minute checks budget). The figure
+// always wears the first shipped style, whichever styles are measured: a hand prop keeps clear of the worn hair, so the arm of
+// Act_PistolShoot_Once poses otherwise under the afro (buzz 9.6 mm instead of 16.8, 28/11), and a part run must measure as the full one.
 // { style: { clip: { mm, what, f } } }
 export async function sweepAll(styles, clips = CLIPS) {
   const P = Object.fromEntries(styles.map(s => [s, hairPoints(s).pts])), out = Object.fromEntries(styles.map(s => [s, {}]));
   for (const clip of clips) { for (const s of styles) out[s][clip] = { mm: -1e9, what: '', f: -1 };
-    await play(['sweater:coral'], 'adult', { clip, whole: true }, { spec: { hair: [toonHair(styles[0])] }, each: (f, S) => { S.root.updateMatrixWorld(true); const ix = torsoIndex(S), segs = limbSegs(S);
+    await play(['sweater:coral'], 'adult', { clip, whole: true }, { spec: { hair: [toonHair(HAIR_STYLES[0])] }, each: (f, S) => { S.root.updateMatrixWorld(true); const ix = torsoIndex(S), segs = limbSegs(S);
       for (const s of styles) { const r = hairInBody(S, P[s], ix, segs); if (r.mm > out[s][clip].mm) out[s][clip] = { ...r, f }; } } }); }
   return out;
 }

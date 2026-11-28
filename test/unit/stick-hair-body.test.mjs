@@ -20,7 +20,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { rigStick } from '../../styles/stick-man/tools/gates/motionlib.mjs';
 import { execFileSync } from 'node:child_process'; import { fileURLToPath } from 'node:url';
-import { hairStamps, staleRows, STALE, MARK } from './hair-stamp.mjs';
+import { hairStamps, staleRows, restampCheck, STALE, MARK } from './hair-stamp.mjs';
 import { trip, TRIP_STYLES } from './hair-trip.mjs';
 
 await rigStick();
@@ -57,7 +57,17 @@ test('control: a style\'s geometry and a clip\'s keys move their rows\' stamps o
     assert.deepEqual(moved('styles/stick-man/kit/cast/hair.js', 'lerpA', 'lerpAlong'), [], 'a function renamed in hair.js');
     assert.deepEqual(moved('styles/stick-man/motion-lib/acts/Gest_NodYes_Once.js', '// A plain yes nod.', '// A plain yes nod, edited.'), [], 'a comment in a clip');
     assert.deepEqual(moved('test/unit/hair-measure.mjs', 'export const HAIR_IN_MM = 4;', 'export const HAIR_IN_MM = 5;').length, 4, 'the limit changed: every row');
+    assert.deepEqual(moved('styles/stick-man/engine/cast.js', 'const g = lathe(pr, 64); g.scale(1, 1, T.depth);', 'const g = lathe(pr, 64); g.scale(1, 1, T.depth); g.index.array.reverse();').length, 4, 'the torso\'s triangles rewound, its vertices kept: every row');
+    assert.deepEqual(moved('styles/stick-man/tools/gates/fits_kinds.mjs', 'Math.max(-100, +x.mm.toFixed(1))', 'Math.max(-100, +x.mm.toFixed(2))').length, 4, 'the verdict code (hairRows) changed: every row');
   } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
+});
+
+// fits.mjs --restamp re-measures a sample of the rows it would rewrite first (restampCheck) and refuses when one reads otherwise
+test('control: the restamp check passes a row as stored and names a row whose number was changed', async () => {
+  const p = 'hair|side|Gest_NodYes_Once', row = HAIR.find(r => r.pair === p);
+  assert.deepEqual((await restampCheck(T, [p], { per: 1 })).wrong, [], 'the row as stored');
+  const bent = { rows: T.rows.map(r => (r.pair === p ? { ...r, number: +(r.number + 0.5).toFixed(1) } : r)) }, R = await restampCheck(bent, [p], { per: 1 });
+  assert.deepEqual(R.sample, [p]); assert.equal(R.wrong.length, 1); assert.match(R.wrong[0], new RegExp(`^${p.replace(/\|/g, '\\|')}: measures ${row.number} mm`));
 });
 
 test('every adult clip is measured: a hair row for every shipped style and adult clip, and no other', () => {

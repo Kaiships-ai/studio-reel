@@ -110,7 +110,7 @@
   "guards": "always"
  },
  "test/unit/stick-hair-body.test.mjs": {
-  "secs": 86.2,
+  "secs": 105.7,
   "guards": [
    "kit",
    "styles/stick-man",
@@ -146,7 +146,7 @@
   ]
  },
  "test/unit/stick-hair-trip-afro.test.mjs": {
-  "secs": 82.9,
+  "secs": 39.3,
   "guards": [
    "kit",
    "styles/stick-man/engine",
@@ -160,7 +160,7 @@
   ]
  },
  "test/unit/stick-hair-trip-ponytail.test.mjs": {
-  "secs": 85,
+  "secs": 39.3,
   "guards": [
    "kit",
    "styles/stick-man/engine",
