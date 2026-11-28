@@ -25,6 +25,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: Install the root packages the unit tests and the typecheck import (three, playwright-core; no browser download)
         run: npm ci --no-audit --no-fund --loglevel=error
       - name: 'Fast unit tests (every file without `// tier: heavy`; a file over 15 s or the tier over 120 s fails and names the slowest)'
