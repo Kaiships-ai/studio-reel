@@ -109,6 +109,9 @@ test('a heavy leg over its wall time fails, naming the fix', () => {
 });
 
 test('a file moved out of a guarded folder counts at its old path (git diff --no-renames)', () => {
+  // a git hook exports GIT_DIR and friends, which would point these calls at the real repository
+  const hookEnv = Object.fromEntries(Object.entries(process.env).filter(([k]) => k.startsWith('GIT_')));
+  for (const k of Object.keys(hookEnv)) delete process.env[k];
   const dir = mkdtempSync(join(tmpdir(), 'tier-git-')), git = (...a) => execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', ...a], { cwd: dir, encoding: 'utf8' });
   try {
     git('init', '-q', '-b', 'main');
@@ -116,5 +119,5 @@ test('a file moved out of a guarded folder counts at its old path (git diff --no
     git('checkout', '-qb', 'pr'); git('mv', 'guarded.json', 'moved.json'); git('commit', '-qm', 'b');
     assert.deepEqual(changedSince('main', dir).sort(), ['guarded.json', 'moved.json']);
     assert.equal(changedSince('nope', dir), null, 'no usable base');
-  } finally { rmSync(dir, { recursive: true, force: true }); }
+  } finally { rmSync(dir, { recursive: true, force: true }); Object.assign(process.env, hookEnv); }
 });
