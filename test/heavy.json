@@ -267,14 +267,16 @@
   ]
  },
  "test/unit/stick-rebake.test.mjs": {
-  "secs": 8.8,
+  "secs": 9.9,
   "guards": [
    "kit",
    "styles/stick-man/engine",
    "styles/stick-man/kit",
    "styles/stick-man/motion-lib",
    "styles/stick-man/tools/gates",
-   "test/unit"
+   "test/unit/hair-swap.mjs",
+   "test/unit/look-fingerprint.mjs",
+   "test/unit/stick-rebake.test.mjs"
   ]
  },
  "test/unit/stick-render-tiers.test.mjs": {
@@ -297,7 +299,7 @@
   ]
  },
  "test/unit/stick-shared-materials.test.mjs": {
-  "secs": 29.2,
+  "secs": 31.3,
   "guards": [
    "kit",
    "styles/stick-man/engine",
@@ -306,7 +308,9 @@
    "styles/stick-man/kit/props",
    "styles/stick-man/motion-lib",
    "styles/stick-man/tools/gates",
-   "test/unit"
+   "test/unit/hair-swap.mjs",
+   "test/unit/look-fingerprint.mjs",
+   "test/unit/stick-shared-materials.test.mjs"
   ]
  },
  "test/unit/stick-toon-hair.test.mjs": {

@@ -1,11 +1,11 @@
 {
- "sha": "5fdc4945",
+ "sha": "301d85ce",
  "card": {
   "garmentLists": 4,
   "costumeHookWriters": 3,
   "engineKitImports": 14,
   "makeStickFiles": 12,
-  "longestCastFn": 573,
+  "longestCastFn": 569,
   "longestCastFnName": "makeStick",
   "specsJsonSafe": 0,
   "specs": 17,
@@ -53,7 +53,7 @@
    "test/unit/stick-wardrobe.test.mjs",
    "test/unit/wardrobe-measure.mjs"
   ],
-  "longestCastFn": "makeStick at engine/cast.js:583",
+  "longestCastFn": "makeStick at engine/cast.js:607",
   "specsJsonSafe": "lose their hair: KAI TELLER GUARD BRAM JUNE MABEL OFFICER OTIS WARREN WREN ENGINEER BOSS MAGNATE CONDUCTOR CREW1 CREW2 CREW3",
   "importOrderMatters": [
    "hoodie",

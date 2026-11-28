@@ -11,7 +11,7 @@ import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os'
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { serveFiles, launchGpu } from '../render/pageserver.mjs';
-import { APPROVALS, GOLDEN, fingerprintAll, judge, readJSON } from '../../../../test/unit/look-fingerprint.mjs';
+import { APPROVALS, GOLDEN, fingerprintAll, judge, readJSON, stickBuilder } from '../../../../test/unit/look-fingerprint.mjs';
 import { SCORES } from './codescore.mjs';
 import { swapAll } from '../../../../test/unit/hair-swap.mjs';
 
@@ -73,14 +73,13 @@ async function hairswap() {
 
 async function perfBuild() {
   const root = path.resolve(typeof A.root === 'string' ? A.root : ROOT), reps = Number(A.reps || 3), { pathToFileURL } = await import('node:url');
-  const { recordingDocument } = await import('../../../../test/unit/look-fingerprint.mjs');
-  globalThis.document = recordingDocument();
+  const stick = await stickBuilder(root);
   const S_ = p => import(pathToFileURL(path.join(root, 'styles/stick-man', p)).href);
-  const { S: base } = await (await S_('tools/gates/motionlib.mjs')).rigStick('adult'), { makeStick } = await S_('engine/cast.js'), { toonHair, HAIR_STYLES } = await S_('kit/cast/hair.js');
+  const { S: base } = await (await S_('tools/gates/motionlib.mjs')).rigStick('adult'), { toonHair, HAIR_STYLES } = await S_('kit/cast/hair.js');
   const q = (xs, p) => { const a = [...xs].sort((x, y) => x - y); return Math.round(a[Math.min(a.length - 1, Math.floor(p * a.length))] * 10) / 10; };
   const build = [], swap = [];
   for (let r = 0; r < reps; r++) for (const st of HAIR_STYLES) {
-    const t0 = performance.now(), S = makeStick({ ...base.spec, hair: [toonHair(st)] }); build.push(performance.now() - t0);
+    const t0 = performance.now(), S = stick({ ...base.spec, hair: [toonHair(st)] }); build.push(performance.now() - t0);
     if (S.bakeHair) { const next = HAIR_STYLES[(HAIR_STYLES.indexOf(st) + 1) % HAIR_STYLES.length], t1 = performance.now(); S.bakeHair([toonHair(next)]); swap.push(performance.now() - t1); }
   }
   console.log(JSON.stringify({ root, sha: execFileSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), n: build.length, makeStick: { median: q(build, 0.5), p95: q(build, 0.95) }, ...(swap.length ? { swap: { median: q(swap, 0.5), p95: q(swap, 0.95) } } : {}) }));

@@ -6,18 +6,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import { hashFigure, recordingDocument } from './look-fingerprint.mjs';
+import { hashFigure, recordingDocument, stickBuilder } from './look-fingerprint.mjs';
 import { shellHash } from './hair-swap.mjs';
 
 globalThis.document ??= recordingDocument();
 const { rigStick } = await import('../../styles/stick-man/tools/gates/motionlib.mjs');
-const { makeStick } = await import('../../styles/stick-man/engine/cast.js');
+const makeFigure = await stickBuilder();
 const { toonHair } = await import('../../styles/stick-man/kit/cast/hair.js');
 await import('../../styles/stick-man/kit/cast/wardrobe.js');
 const { HOOKS } = await import('../../styles/stick-man/engine/play.js');
 const POSE = { spine: { bend: 14, side: 6, twist: 10 }, neck: { nod: 8, turn: 20 }, armR: { raise: 40 } };
 const look = (S, group) => { S.pose2(POSE); return { hash: hashFigure(S, group).hash, shell: shellHash(S.wornShell), vols: JSON.stringify(S.vols) }; };
-const dressed = (spec, wear) => { const S = makeStick(spec), group = new THREE.Group(); if (wear.length) HOOKS.costume(S, wear, { group }); return { S, group }; };
+const dressed = (spec, wear) => { const S = makeFigure(spec), group = new THREE.Group(); if (wear.length) HOOKS.costume(S, wear, { group }); return { S, group }; };
 const swapped = (spec, from, to, wear = []) => { const { S, group } = dressed({ ...spec, hair: [toonHair(from)] }, wear); S.pose2(POSE); S.bakeHair([toonHair(to)]); return look(S, group); };
 const fresh = (spec, to, wear = []) => { const { S, group } = dressed({ ...spec, hair: [toonHair(to)] }, wear); return look(S, group); };
 const adult = (await rigStick('adult')).S.spec;
@@ -25,15 +25,15 @@ const adult = (await rigStick('adult')).S.spec;
 test('girth changed on a posed figure, then posed, equals a fresh build at that girth', () => {
   const spec = g => ({ name: 'g', shirt: [0.6, 0.6, 0.66], girth: g });
   for (const [from, to] of [[1, 1.3], [1.3, 0.86], [0.86, 1]]) {
-    const S = makeStick(spec(from)); S.pose2(POSE); S.setGirth(to);
-    assert.deepEqual(look(S), look(makeStick(spec(to))), `${from} -> ${to}`);
+    const S = makeFigure(spec(from)); S.pose2(POSE); S.setGirth(to);
+    assert.deepEqual(look(S), look(makeFigure(spec(to))), `${from} -> ${to}`);
     assert.equal(S.spec.girth, to);
   }
 });
 
 test('control: without the reset the torso keeps the old girth', () => {
-  const S = makeStick({ name: 'g', girth: 1 }); S.pose2(POSE); S.spec = { ...S.spec, girth: 1.3 };
-  assert.notEqual(look(S).hash, look(makeStick({ name: 'g', girth: 1.3 })).hash);
+  const S = makeFigure({ name: 'g', girth: 1 }); S.pose2(POSE); S.spec = { ...S.spec, girth: 1.3 };
+  assert.notEqual(look(S).hash, look(makeFigure({ name: 'g', girth: 1.3 })).hash);
 });
 
 test('a figure under a police cap swapped from pompadour to afro tucks the afro under the cap as a fresh build does', () => {

@@ -8,7 +8,7 @@ import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { join } from 'node:path';
-import { ROOT, MARK, hashFigure, recordingDocument } from './look-fingerprint.mjs';
+import { ROOT, MARK, hashFigure, recordingDocument, stickBuilder } from './look-fingerprint.mjs';
 
 const PARTS = 4;
 export const POSE = { neck: { nod: 12, turn: 25, tilt: 6 }, spine: { bend: 10, twist: 8 }, armL: { raise: 30 } };
@@ -30,8 +30,8 @@ export async function walkPart({ part = [0, 1], control = false } = {}) {
   globalThis.document = recordingDocument();
   const S_ = p => import(pathToFileURL(join(ROOT, 'styles/stick-man', p)).href);
   const { rigStick } = await S_('tools/gates/motionlib.mjs'), { S: base } = await rigStick('adult');
-  const { makeStick, SHARED } = await S_('engine/cast.js'), { toonHair, HAIR_STYLES } = await S_('kit/cast/hair.js');
-  const build = st => { const S = makeStick({ ...base.spec, hair: [toonHair(st)] }); S.pose2(POSE); return S; };
+  const { SHARED } = await S_('engine/cast.js'), { toonHair, HAIR_STYLES } = await S_('kit/cast/hair.js'), stick = await stickBuilder();
+  const build = st => { const S = stick({ ...base.spec, hair: [toonHair(st)] }); S.pose2(POSE); return S; };
   const look = S => ({ hash: hashFigure(S).hash, shell: shellHash(S.wornShell) });
   const walk = circuit(HAIR_STYLES), edges = walk.slice(1).map((to, i) => [walk[i], to]);
   const mine = control ? edges.slice(0, 1) : edges.filter((_, i) => Math.floor(i * part[1] / edges.length) === part[0]);
