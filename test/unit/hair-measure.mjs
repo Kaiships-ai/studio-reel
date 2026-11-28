@@ -66,7 +66,7 @@ export function inTorso(p, ix) {
   return m;
 }
 // limb segments in world space with their drawn radius: the line's rings, a sleeve's radius where it has one, the hand's ring left out
-function limbSegs(S) {
+export function limbSegs(S) {
   const out = [];
   for (const k of ['armL', 'armR', 'legL', 'legR']) { const L = line(S, k).map(p => p.applyMatrix4(S.parts.limbs[k].matrixWorld)), sl = S.wardrobe.sleeves.filter(s => s.arm === k);
     for (let i = k.startsWith('arm') ? 4 : 2; i + 2 < L.length; i++) out.push({ k, i, n: L.length, a: L[i], b: L[i + 1], r: Math.max(LIMB_R, ...sl.filter(s => i >= s.rings[0] && i < s.rings[1]).map(s => s.r)) }); }
@@ -97,7 +97,7 @@ export function hairInBody(S, P, ix = torsoIndex(S), segs = limbSegs(S)) {
   worst.headIn = headIn; return worst;
 }
 // the toon hair group's offset under the head's hair group (toonHair builds on the head's own centre)
-const toonHairLift = H => { let y = 0; H.traverse(o => { if (o.name?.startsWith('toonHair:') || o.userData.hairControl) y = o.position.y; }); return y; };
+export const toonHairLift = H => { let y = 0; H.traverse(o => { if (o.name?.startsWith('toonHair:') || o.userData.hairControl) y = o.position.y; }); return y; };
 
 // one style through every clip of CLIPS: the worst frame of each, { clip: { mm, what, f } }
 export async function sweep(style, clips = CLIPS, patch, { from = 0, to = null } = {}) {   // from / to: only those frames of each clip (the control)

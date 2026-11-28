@@ -110,20 +110,11 @@
   "guards": "always"
  },
  "test/unit/stick-hair-body.test.mjs": {
-  "secs": 78.1,
+  "secs": 86.2,
   "guards": [
    "kit",
-   "styles/stick-man/engine",
-   "styles/stick-man/kit",
-   "styles/stick-man/motion-lib",
-   "styles/stick-man/tools/gates",
-   "test/unit/hair-measure.mjs",
-   "test/unit/hair-stamp.mjs",
-   "test/unit/hair-trip.mjs",
-   "test/unit/stick-hair-body.test.mjs",
-   "test/unit/stick-hair-trip-afro.test.mjs",
-   "test/unit/stick-hair-trip-ponytail.test.mjs",
-   "test/unit/wardrobe-measure.mjs"
+   "styles/stick-man",
+   "test/unit"
   ]
  },
  "test/unit/stick-hair-face.test.mjs": {
