@@ -4,6 +4,7 @@
 //   node styles/stick-man/tools/run/sheetbase.mjs capture --out <dir> [--only wardrobe,hair,faces,rig]
 //   node styles/stick-man/tools/run/sheetbase.mjs compare --base <dir> --head <dir> --out <page dir>
 // capture writes <dir>/{wardrobe/c_<i>.png (90 cells), hair/h_<i>.png (110 frames: type=mw, 11 styles x 10 views), faces/faces.png, rig/rig-sheet.jpg},
+// Every page draws with a seeded Math.random (STICK_SEED, shot.mjs), so a repeat capture on the same machine is the same to the byte.
 // <dir>/SHA (the commit, its merge base with origin/main, the machine, the Chromium build: pixels hold for one build only) and <dir>/manifest.json (a sha256 per file).
 // compare exits 1 when any pixel differs and writes <page dir>/index.html + report.json.
 import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os';
@@ -27,6 +28,7 @@ const images = dir => (fs.existsSync(dir) ? fs.readdirSync(dir, { recursive: tru
 
 async function capture(out, only) {
   fs.mkdirSync(out, { recursive: true });
+  process.env.STICK_SEED = '1';
   for (const [name, s] of Object.entries(SHEETS)) {
     if (only && !only.includes(name)) continue;
     const dir = path.join(out, name), t0 = Date.now(); fs.mkdirSync(dir, { recursive: true });

@@ -15,6 +15,8 @@
 //                                                                     always, and a warning says how many frames it lacks
 //   --no-bible-check '<reason>'  render although bible/check.mjs blocks (prints a warning, logged in films/<slug>/bible-bypass.tsv)
 //   --fast 1 (report without the frame-difference pass), --w/--h (default 1080x1920), --query k=v (page flags); --help
+//   STICK_SEED=<n> in the environment: the page's Math.random is a seeded generator, so two captures give the same pixels
+//   (three's GTAOPass draws its denoise noise from Math.random; sheetbase.mjs sets it, films do not)
 // Render by purpose (tools/render/tiers.mjs): --tier dbg|still|proof|review|final sets the size and the look
 //   dbg (T0) data only; still (T1) 1080x1920 stills, --scenes 1 = the middle frame of each storyboard shot in --frames;
 //   proof (T2) 480x854 cheap look; review (T3) 720x1280, what pixel gates read; final (T4) 1080x1920 only on Kai's own request, normally for Post: --kai-ok "<his words>"
@@ -91,6 +93,10 @@ p.on('pageerror', e => { console.error('pageerror:', e.message, '\n', e.stack ||
 p.on('console', m => { if (m.type() === 'error' || (m.type() === 'warning' && m.text().startsWith('[kit]'))) console.error('console', m.text()); });   // [kit] warnings: kit/look/*
 const deps = new Set();
 if (CACHE) p.on('request', r => { const u = new URL(r.url()); if (u.host === `127.0.0.1:${server.address().port}`) deps.add(decodeURIComponent(u.pathname).replace(/^\//, '')); });
+if (process.env.STICK_SEED) await p.addInitScript(seed => {
+  let s = seed >>> 0;
+  Math.random = () => { s = (s + 0x6D2B79F5) >>> 0; let t = Math.imul(s ^ (s >>> 15), s | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}, Number(process.env.STICK_SEED));
 await p.goto(url); await p.waitForFunction(() => window.__ready === true, null, { timeout: 180000 });
 if (A.frames === 'all') { const [a, b] = await p.evaluate(() => window.__F); frames = Array.from({ length: b - a + 1 }, (_, i) => a + i); }
 const shot = file => p.screenshot(/\.png$/i.test(file) ? { path: file } : { path: file, type: 'jpeg', quality: 92 });
